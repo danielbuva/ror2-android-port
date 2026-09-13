@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='controller-prepare':
+  if a.action=='avatar-prepare':
+   from scene_runtime import avatar_prepare
+   avatar_prepare()
+  elif a.action=='controller-prepare':
    from scene_runtime import controller_prepare
    controller_prepare()
   elif a.action=='controller-run':

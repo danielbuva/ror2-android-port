@@ -65,7 +65,7 @@ def scene_run():
     stage=Path(attempt['stage'])
     for name,h in attempt['original_assemblies'].items():
         if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original assembly changed '+name)
-    result={'success':False,'attempt':out.name,'build':built,'scope':'Original controller deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
+    result={'success':False,'attempt':out.name,'build':built,'scope':'Original '+('avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
     d=Device();had=d.exists()
     try:
         result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync();result['launch']=d.launch();pid=result['launch']['pid'];start=time.monotonic()
@@ -219,4 +219,29 @@ def controller_prepare():
     shutil.copy2(ROOT/'tools/unity/ControllerAddressLink.xml',stage/'ControllerPreservation/link.xml')
     shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     write(out/'prior-art.json',{'reference':'docs/community-prior-art.md','sources':['RoR2EditorKit AddressablesPathDictionary','ThunderKit ImportAddressableCatalog','R2API AddressReferencedAsset'],'decision':'Original providers first, real local initialization, explicit original cleanup scheduler; no fake initialization flags'})
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+
+def avatar_prepare():
+    """One original GUID[subobject] request mapped to its recovered standalone Avatar."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_CONTROLLER_LOADER.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    base=ROOT/r['parent_evidence'];catalog=read(base/'default-skin-addresses.json');identities=read(base/'default-asset-identities.json')
+    key='47f06aa0c19f14749840757bbb39d4c8';sub='mdlCommandoDualiesAvatar'
+    location=next(x for x in catalog['locations'] if x['key']==key and x['type']=='UnityEngine.Avatar')
+    identity=next(x for x in identities['rows'] if x['objectType']=='UnityEngine.Avatar' and x['name']==sub and x['resolved'])
+    relative=Path(r['prefab']).relative_to('Assets/LabLoadingScene');prefab=(previous/'stage'/relative).read_text()
+    if not re.search(r'_avatarAddress:\s*\n\s*m_AssetGUID: '+key+r'\s*\n\s*m_SubObjectName: '+sub+r'\s*\n',prefab):raise RuntimeError('Original avatar address differs')
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'avatar':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original avatar subobject request pending; startup inactive'})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
+    write(stage/'Resources/ControllerAddressProbe.json',{'attempt':out.name,'kind':'avatar','key':key,'subObjectName':sub,'runtimeKey':key+'['+sub+']','asset':identity['path'].lower(),'bundle':'commando-prefab-lab'})
+    shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    write(out/'avatar-identity.json',{'original_location':{k:location[k] for k in ['key','internalId','type','provider']},'recovered_identity':identity,'mapping':'Original GUID[subobject] to measured standalone recovered Avatar, not an invented FBX path','prior_art':'RoR2EditorKit BaseGameAssetReferenceTDrawer preserves GUID and subobject separately; original AssetReference.RuntimeKey composes brackets'})
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
