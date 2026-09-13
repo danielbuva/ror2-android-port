@@ -2,11 +2,16 @@
 from common import *
 import re, shutil
 
-def scene_prepare():
+def scene_prepare(include_prefab=False):
     from build import preflight
     preflight()
     prior=ROOT/read(WORK/'experiments/scene-closure/latest.json')['path']
     closure=read(prior/'loadingbasic.json'); identities=read(prior/'editor-identities.json')['rows']
+    prefab=None
+    if include_prefab:
+        prefab=read(prior/'CommandoBody.json')
+        closure['files']=sorted(set(closure['files']+prefab['files']))
+        closure['script_references']+=prefab['script_references']
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     project=WORK/'lab-project';stage=project/'Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Previous scene stage exists; preserve and classify it first')
@@ -42,6 +47,8 @@ def scene_prepare():
         shutil.copy2(src,dst);shutil.copy2(export/'Assets/Plugins'/(name+'.meta'),Path(str(dst)+'.meta'))
     (stage/'link.xml').write_text('<linker><assembly fullname="RoR2" preserve="all" /></linker>\n')
     result={'attempt':out.name,'stage':str(stage),'scene':'Assets/LabLoadingScene/'+str(Path(closure['root']).relative_to('Assets')),'copied_source_hashes':copied,'original_assemblies':original,'ui_remaps':edits,'status':'staged; import and identity assertions required before any scene execution','evidence':str(out.relative_to(ROOT))}
+    result['ui_query_count']=len(queries)
+    if prefab:result['prefab']='Assets/LabLoadingScene/'+str(Path(prefab['root']).relative_to('Assets'))
     write(out/'attempt.json',result);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
     write(project/'Assets/LabReferenceQuery.json',{'attempt':out.name,'output':str(out/'ui-identities.json'),'queries':queries})
     shutil.copy2(ROOT/'tools/unity/ReferenceIdentityProbe.cs',project/'Assets/Editor/ReferenceIdentityProbe.cs')
@@ -87,7 +94,12 @@ def scene_arm():
     preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json')
     if 'isolation' in r:raise RuntimeError('Scene already armed; do not apply the transformation twice')
     ui=read(out/'ui-identities.json')
-    if len(ui['rows'])!=4 or not all(x['resolved'] and x['scriptType'].startswith('UnityEngine.UI.') for x in ui['rows']):raise RuntimeError('Required UI script identity assertions failed')
+    if len(ui['rows'])!=r.get('ui_query_count',4) or not all(x['resolved'] and x['scriptType'].startswith('UnityEngine.UI.') for x in ui['rows']):raise RuntimeError('Required UI script identity assertions failed')
+    if r.get('prefab'):
+        expected=['UnityEditor.Animations.AnimatorController','UnityEngine.Avatar','UnityEngine.Mesh','UnityEngine.Mesh','UnityEngine.Mesh','UnityEngine.Material']
+        if not r.get('default_assets'):raise RuntimeError('Trace and bind default-skin dependencies before arming prefab')
+        asset_rows=read(out/'default-asset-identities.json')['rows']
+        if len(asset_rows)!=6 or [x['objectType'] for x in asset_rows]!=expected or not all(x['resolved'] for x in asset_rows):raise RuntimeError('Default-skin imported asset identity assertions failed')
     identities=read(ROOT/read(WORK/'experiments/scene-closure/latest.json')['path']/'editor-identities.json')['rows']
     script=next(x for x in identities if x['scriptType']=='RoR2.RoR2Application')
     path=WORK/'lab-project'/r['scene'];blocks=re.split(r'(?=^--- !u!)',path.read_text(),flags=re.M)
@@ -100,8 +112,56 @@ def scene_arm():
     if 'm_Name: RoR2Application\n' not in blocks[i] or 'm_IsActive: 1' not in blocks[i]:raise RuntimeError('Unexpected application object state')
     blocks[i]=blocks[i].replace('m_IsActive: 1','m_IsActive: 0');path.write_text(''.join(blocks))
     r['isolation']={'gameObjectFileID':int(object_id),'name':'RoR2Application','m_IsActive':0,'reason':'Content-only scene probe; startup and entitlement/authentication logic unchanged and unexecuted'};write(out/'attempt.json',r)
-    write(WORK/'scene-probe-build.json',{'scene':r['scene']})
+    if r.get('prefab'):
+        prefab_path=WORK/'lab-project'/r['prefab'];text=prefab_path.read_text();parts=re.split(r'(?=^--- !u!)',text,flags=re.M)
+        candidates=[i for i,b in enumerate(parts) if b.startswith('--- !u!1 ') and 'm_Name: CommandoBody\n' in b]
+        if len(candidates)!=1 or 'm_IsActive: 1' not in parts[candidates[0]]:raise RuntimeError('Unexpected original Commando root')
+        parts[candidates[0]]=parts[candidates[0]].replace('m_IsActive: 1','m_IsActive: 0');prefab_path.write_text(''.join(parts))
+        r['prefab_isolation']='Original CommandoBody root inactive before instantiation; no Awake/OnEnable or simulation acceptance'
+        write(out/'attempt.json',r)
+    write(WORK/'scene-probe-build.json',{'scene':r['scene'],'prefab':r.get('prefab',''),'prefabAssets':r.get('default_assets',[])})
     resources=Path(r['stage'])/'Resources';resources.mkdir()
-    write(resources/'LoadingSceneProbe.json',{'attempt':out.name,'bundle':'loadingbasic-lab','scene':r['scene']})
+    write(resources/'LoadingSceneProbe.json',{'attempt':out.name,'bundle':'loadingbasic-lab','scene':r['scene'],'prefab':r.get('prefab',''),'prefabAssets':r.get('default_assets',[])})
     shutil.copy2(ROOT/'tools/unity/LoadingSceneProbe.cs',Path(r['stage'])/'LoadingSceneProbe.cs')
     print(json.dumps({'armed':True,'evidence':str(out.relative_to(ROOT)),'scope':r['isolation']['reason']}))
+
+def prefab_bind():
+    """Stage only measured default-skin content for binding on an inactive clone."""
+    from build import preflight
+    from collections import deque
+    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
+    if not r.get('prefab') or r.get('default_assets'):raise RuntimeError('Expected a fresh prefab staging attempt')
+    catalog=read(out/'default-skin-addresses.json')['locations']+read(out/'default-material-address.json')['locations']
+    required={'48ef8327759dd43439416d4823124d9c':('UnityEngine.RuntimeAnimatorController','animCommando.controller'),'47f06aa0c19f14749840757bbb39d4c8':('UnityEngine.Avatar','mdlCommandoDualies.fbx'),'529399f7071eb2641897f2895c5d4ef0':('RoR2.SkinDefParams','skinCommandoDefault_params.asset'),'79721deb6c4df58499b339f81ac8b33d':('UnityEngine.Material','matCommandoDualies.mat')}
+    for key,(kind,name) in required.items():
+        found=[x for x in catalog if x['key']==key and x['type']==kind]
+        if len(found)!=1 or not found[0]['internalId'].endswith('/'+name):raise RuntimeError('Unexpected catalog mapping '+key)
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0];base='Assets/RoR2/Base/Characters/Commando/'
+    names=['animCommando.controller','mdlCommandoDualiesAvatar.asset','CommandoMesh.asset','GunMesh.asset','GunMesh.001.asset','matCommandoDualies.mat']
+    index={}
+    for meta in (export/'Assets').rglob('*.meta'):
+        match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+        if match:index[match[1]]=Path(str(meta)[:-5])
+    queue=deque(export/(base+n) for n in names);seen=set();added={}
+    while queue:
+        src=queue.popleft()
+        if src in seen:continue
+        seen.add(src)
+        if src.suffix=='.dll':continue
+        dst=stage/src.relative_to(export/'Assets')
+        if not dst.exists():
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'));added[str(src.relative_to(export))]=sha(src)
+        if src.read_bytes()[:5]==b'%YAML':
+            for guid in re.findall(r'guid:\s*([a-f0-9]{32})',src.read_text()):
+                if guid.startswith('0000000000000000'):continue
+                target=index.get(guid)
+                if not target or not target.is_file():raise RuntimeError('Unresolved default-skin static GUID '+guid)
+                queue.append(target)
+    r['default_assets']=['Assets/LabLoadingScene/'+str(Path(base+n).relative_to('Assets')) for n in names]
+    r['default_added_hashes']=added;r['default_binding_scope']='Explicit diagnostic binding on inactive clone; original Addressables/skin-loader execution unproven'
+    write(out/'attempt.json',r)
+    queries=[]
+    for path in r['default_assets']:
+        text=(WORK/'lab-project'/path).read_text();file_id=re.search(r'^--- !u!\d+ &(-?\d+)',text,re.M)[1];queries.append({'path':path,'fileID':file_id})
+    write(WORK/'lab-project/Assets/LabReferenceQuery.json',{'attempt':out.name,'output':str(out/'default-asset-identities.json'),'queries':queries})
+    print(json.dumps({'added_files':len(added),'assets':len(names),'evidence':str(out.relative_to(ROOT))}))

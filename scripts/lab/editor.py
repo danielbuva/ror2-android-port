@@ -27,6 +27,7 @@ async def main():
    project=(await s.read_resource('mcpforunity://project/info')).model_dump(mode='json');evidence['project']=project
    if str(expected) not in json.dumps(project):raise RuntimeError('MCP selected project path mismatch')
    if action=='build':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Build ARM64'})
+   elif action=='catalog-addresses':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Inspect Catalog Addresses'})
    elif action=='reference-identities':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Inspect Reference Identities'})
    elif action=='backend':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Record Backend Constraints'})
    elif action=='refresh':evidence['result']=await call('refresh_unity',{'mode':'force','scope':'all','compile':'request','wait_for_ready':True})
