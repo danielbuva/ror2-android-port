@@ -1,0 +1,11 @@
+<linker>
+  <!-- Original ResourceManager.CreateOperation uses Activator, including initialization
+       groups, typed request chains and failed-request completed operations.
+       InstanceOperation is outside this asset-only probe; typeless chains use new. -->
+  <assembly fullname="Unity.ResourceManager">
+    <type fullname="UnityEngine.ResourceManagement.AsyncOperations.ProviderOperation`1" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.AsyncOperations.GroupOperation" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ChainOperation`2" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceManager/CompletedOperation`1" preserve="all" />
+  </assembly>
+</linker>

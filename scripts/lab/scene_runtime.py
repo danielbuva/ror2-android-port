@@ -65,15 +65,18 @@ def scene_run():
     stage=Path(attempt['stage'])
     for name,h in attempt['original_assemblies'].items():
         if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original assembly changed '+name)
-    result={'success':False,'attempt':out.name,'build':built,'scope':'Isolated original loadingbasic content with application startup inactive'}
+    result={'success':False,'attempt':out.name,'build':built,'scope':'Original controller deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
     d=Device();had=d.exists()
     try:
         result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync();result['launch']=d.launch();pid=result['launch']['pid'];start=time.monotonic()
-        while time.monotonic()-start<35:
+        while time.monotonic()-start<(50 if attempt.get('controller') else 35):
             if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Scene process died or changed')
             time.sleep(1)
-        path=read(WORK/'device/runtime.json')['persistentDataPath'];report=json.loads(d.sh('cat',path+'/loading-scene-probe.json'));write(out/'device-probe.json',report)
+        path=read(WORK/'device/runtime.json')['persistentDataPath'];report_name='controller-address-probe.json' if attempt.get('controller') else 'loading-scene-probe.json';report=json.loads(d.sh('cat',path+'/'+report_name));write(out/'device-probe.json',report)
         result['success']=report['success'] and report['attempt']==out.name and str(report['pid'])==pid;result['survival_seconds']=time.monotonic()-start
+        if not result['success']:result['error']=report.get('error') or 'Probe assertions or attempt/PID attribution failed'
+        if attempt.get('controller'):
+            d.cmd('pull',path+'/controller-catalog',str(out/'controller-catalog'))
         if attempt.get('pose'):
             pose=json.loads(d.sh('cat',path+'/commando-pose.json'));write(out/'pose-probe.json',pose)
             result['success']=result['success'] and pose['success'] and pose['attempt']==out.name and str(pose['pid'])==pid
@@ -192,3 +195,28 @@ def pose_prepare():
     shutil.copy2(ROOT/'tools/unity/CommandoPreview.shader',stage/'Resources/CommandoPreview.shader')
     shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':'Transform/renderer-only preview; original gameplay remains inactive'}))
+
+
+def controller_prepare():
+    """Reuse accepted content; replace diagnostic binding with one original request."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_PREFAB_CONTENT.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve and classify previous stage first')
+    for name,h in checkpoint['transformations']['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
+    shutil.copytree(previous/'stage',stage)
+    r=read(previous/'attempt.json');r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'controller':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original controller request pending; no scene/prefab activation'})
+    prefab=WORK/'lab-project'/r['prefab'];text=prefab.read_text();key='48ef8327759dd43439416d4823124d9c'
+    if not re.search(r'_animatorControllerAddress:\s*\n\s*m_AssetGUID: '+key,text):raise RuntimeError('Original controller address differs')
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
+    (stage/'Resources/LoadingSceneProbe.json').unlink();(stage/'LoadingSceneProbe.cs').unlink()
+    write(stage/'Resources/ControllerAddressProbe.json',{'attempt':out.name,'key':key,'bundle':'commando-prefab-lab','asset':r['default_assets'][0].lower()})
+    shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
+    (stage/'ControllerPreservation').mkdir()
+    shutil.copy2(ROOT/'tools/unity/ControllerAddressLink.xml',stage/'ControllerPreservation/link.xml')
+    shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    write(out/'prior-art.json',{'reference':'docs/community-prior-art.md','sources':['RoR2EditorKit AddressablesPathDictionary','ThunderKit ImportAddressableCatalog','R2API AddressReferencedAsset'],'decision':'Original providers first, real local initialization, explicit original cleanup scheduler; no fake initialization flags'})
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
