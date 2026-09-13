@@ -29,3 +29,7 @@ After meaningful progress update concise PORTING_STATE.md, append failed experim
 ## Prior-art-first rule
 
 Before implementing a new RoR2-specific reconstruction, Addressables/content loader, serialization repair, gameplay observer, platform adapter, shader mechanism, middleware workaround or runtime diagnostic: identify the subsystem, consult `docs/community-prior-art.md`, inspect the relevant pinned community source, and cite its API knowledge, workaround, failure/version clue or observation technique in the experiment notes. Implement new machinery only for requirements still unsolved on Android. Current legitimate input and device evidence outrank community assumptions. This rule does not require ecosystem research for generic adb/Gradle/shell problems. Keep passed Rewired/Burst/L3/L4 results and package pins unless a concrete new contract or regression justifies revisiting them. Use Conventional Commit messages.
+
+## Public-repository privacy gate
+
+Before committing, run `python3 scripts/audit-public.py` against staged content. Raw bootstrap evidence stays ignored locally, as do all game-derived outputs. Publish authored summaries, never device/storage/display identifiers, private home paths, personal emails or authentication-session records. Use a GitHub noreply commit email. A passing pattern scan supplements manual IP/provenance and secret review; it does not replace them.

@@ -4,13 +4,13 @@
 
 ## 1. Host summary
 
-macOS **26.6.2**, build **25G83**, Apple Silicon **arm64**, zsh, 16 GiB RAM. Discovery found about 363 GiB free on the host data volume; sufficient for this bootstrap. Live disk/version data is in `tool-versions.json`. Xcode Command Line Tools: `/Library/Developer/CommandLineTools`. Native Homebrew: `/opt/homebrew`.
+macOS **26.6.2**, build **25G83**, Apple Silicon **arm64**, zsh, 16 GiB RAM. Discovery found about 363 GiB free on the host data volume; sufficient for this bootstrap. Live disk/version data is in ignored local `environment/tool-versions.json`. Xcode Command Line Tools: `/Library/Developer/CommandLineTools`. Native Homebrew: `/opt/homebrew`.
 
 Initial PATH had duplicate entries, an unexpanded literal `~/.dotnet/tools`, and app-bundled rg/codex. .NET was not discoverable. `source scripts/env.sh` selects deterministic tools without changing global shell configuration. The global OpenJDK 26 must not be used for this Unity Android build.
 
 ## 2. Installed tools
 
-Exact paths, version output, and Homebrew package inventory: **`environment/tool-versions.json`**. The baseline includes Git 2.55.0, gh 2.96.0, jq 1.7.1 (Apple), ripgrep 15.2.0, fd 10.5.0, Python 3.14.7, uv 0.12.13, .NET SDK 10.0.401, CMake 4.4.0, Ninja 1.13.2, pkg-config 3.0.4, sevenzip 26.02, ImageMagick 7.1.2-31, ffmpeg 9.0.1, scrcpy 4.1, curl, wget, Node 26.5.0 and npm 11.17.0. Existing tools were retained where usable; Homebrew resolved dependencies for the missing tools.
+Private paths and raw version/package output remain in ignored local `environment/tool-versions.json`. The baseline includes Git 2.55.0, gh 2.96.0, jq 1.7.1 (Apple), ripgrep 15.2.0, fd 10.5.0, Python 3.14.7, uv 0.12.13, .NET SDK 10.0.401, CMake 4.4.0, Ninja 1.13.2, pkg-config 3.0.4, sevenzip 26.02, ImageMagick 7.1.2-31, ffmpeg 9.0.1, scrcpy 4.1, curl, wget, Node 26.5.0 and npm 11.17.0. Existing tools were retained where usable; Homebrew resolved dependencies for the missing tools.
 
 - **AssetRipper 2.0.0**: official macOS ARM64 executable, `.local/tools/assetripper/AssetRipper.GUI.Free`. Help and version commands passed. Use `./scripts/assetripper --headless`. No game was imported.
 - **ilspycmd 11.0.0.9375**: installed under `$HOME/.local/bin`, wrapper `./scripts/ilspycmd`. Native .NET root `$HOME/.local/share/dotnet`. Version execution passed.
@@ -42,7 +42,7 @@ Use **`/opt/homebrew/bin/adb`**, version **37.0.1 / 1.0.41**. Unity also bundles
 
 ## 5. Android device profile
 
-**`environment/device-profile.json`** contains the live captured values: serial `AUTHORIZED_SERIAL`, **Retroid Pocket Nova / QCS8550 / Adreno 740**, Android **13 / API 33**, ABI `arm64-v8a` plus advertised 32-bit ABIs. About 11 GiB RAM, about 6.4 GiB available at initial capture. Display **960×1280**, **60/120 Hz** modes. Build fingerprint is recorded in the JSON.
+**Ignored local `environment/device-profile.json`** contains the live captured values: serial `AUTHORIZED_SERIAL`, **Retroid Pocket Nova / QCS8550 / Adreno 740**, Android **13 / API 33**, ABI `arm64-v8a` plus advertised 32-bit ABIs. About 11 GiB RAM, about 6.4 GiB available at initial capture. Display **960×1280**, **60/120 Hz** modes. Build fingerprint is recorded in the JSON.
 
 Advertised Vulkan feature version **4206592 = 1.3.0**, level 1, compute supported. This feature declaration is separate from an application's driver selection. SurfaceFlinger reports Qualcomm GLES V@0676.53. The smoke log records the GPU actually used by Unity.
 
@@ -52,7 +52,7 @@ Requested **MrPurple T30 toasted** driver release is recorded in `turnip-target.
 
 **Physical internal `/data` is nearly full: about 2.7 GiB free of 100.8 GiB.** Future work must not assume space for large APKs or payloads.
 
-Mounted private/adopted f2fs volume **`private:179,2`**, UUID **`REDACTED_UUID`**, has approximately **425 GiB free of 922 GiB**. Its system mount is `/mnt/expand/<UUID>`; emulated shared storage is also backed by the adopted volume. `df` can display a bind-mount destination, so the profile records explicit path queries. Existing packages have code paths under `/mnt/expand/<UUID>/app/.../base.apk`.
+Mounted private/adopted f2fs volume **`private:<device-volume>`**, a locally discovered UUID, has approximately **425 GiB free of 922 GiB**. Its system mount is `/mnt/expand/<UUID>`; emulated shared storage is also backed by the adopted volume. `df` can display a bind-mount destination, so the profile records explicit path queries. Existing packages have code paths under `/mnt/expand/<UUID>/app/.../base.apk`.
 
 Global install location remains **`0[auto]`**. The test manifest declares **`android:installLocation="auto"`**. Android selected `/data/app` for the first small-APK test. A second installation used the device-supported **per-install `--force-uuid <adopted UUID>` option**, and the package was installed and launched successfully from the adopted volume. This option did not change global settings or move any existing packages. Both test installations were uninstalled successfully.
 
@@ -73,7 +73,7 @@ Verification:
 .local/tools/unity-mcp/Server/.venv/bin/python scripts/mcp-exercise.py
 ```
 
-The read-only probe checks MCP initialize/tools/resources and editor instances. The exercise guards the project path, loads the smoke scene, reads hierarchy, enters Play Mode, reads the distinctive marker from the Unity console, exits Play Mode, and activates the testing tool group. **All passed**, evidence in `mcp-exercise.json`. Scene/assets/components, console, Play Mode, test tools and build tools are exposed. Test execution and MCP-triggered builds were not separately exercised; the actual Android build is verified through the deterministic Unity CLI script. Enable the `testing` group with `manage_tools` when `run_tests`/`get_test_job` are not visible.
+The read-only probe checks MCP initialize/tools/resources and editor instances. The exercise guards the project path, loads the smoke scene, reads hierarchy, enters Play Mode, reads the distinctive marker from the Unity console, exits Play Mode, and activates the testing tool group. **All passed**, private evidence in ignored local `environment/mcp-exercise.json`. Scene/assets/components, console, Play Mode, test tools and build tools are exposed. Test execution and MCP-triggered builds were not separately exercised; the actual Android build is verified through the deterministic Unity CLI script. Enable the `testing` group with `manage_tools` when `run_tests`/`get_test_job` are not visible.
 
 ## 8. Authentication and legitimate game acquisition
 
@@ -92,7 +92,7 @@ SteamCMD startup/update/quit was verified without login. A future fresh Windows 
 - Default install, launch, filtered PID logcat, marker, screenshot, stop and uninstall passed.
 - Adopted-volume install, launch, log marker, screenshot, path/volume verification, stop and uninstall also passed.
 - Marker: **`ROR2_BOOTSTRAP_ARM64_OK`**.
-- Evidence: `smoke-auto-result.json`, `smoke-result.json`, `smoke-logcat.txt`, `smoke-screenshot.png`.
+- Private evidence remains in ignored local `environment/`: smoke result JSON, logcat and screenshot captures.
 - Screenshot visually checked: obvious ARM64 bootstrap text on the test background and Development Build indicator.
 - scrcpy **4.1** connected and recorded a three-second stream. Interactive input control was not separately exercised.
 

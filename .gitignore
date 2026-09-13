@@ -30,3 +30,25 @@ __pycache__/
 /tools/**/bin/
 *.so
 *.dylib
+
+# Private bootstrap captures remain local; never publish raw device/auth evidence.
+/environment/auth-notes.md
+/environment/bootstrap.log
+/environment/device-profile.json
+/environment/doctor-result.json
+/environment/mcp-check.json
+/environment/mcp-exercise.json
+/environment/scrcpy-check.log
+/environment/smoke-auto-result.json
+/environment/smoke-logcat.txt
+/environment/smoke-result.json
+/environment/smoke-screenshot.png
+/environment/steamcmd-check.log
+/environment/tool-versions.json
+
+# New environment captures are private unless deliberately reviewed.
+/environment/*
+!/environment/ENVIRONMENT_REPORT.md
+!/environment/lab-config.example.json
+!/environment/paths.env.example
+!/environment/turnip-target.json
