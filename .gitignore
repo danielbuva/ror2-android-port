@@ -21,3 +21,12 @@ builds/
 .DS_Store
 
 __pycache__/
+
+# Porting lab: proprietary inputs, generated source/assets and device evidence.
+/work/
+/build/
+/logs/
+/screenshots/
+/tools/**/bin/
+*.so
+*.dylib

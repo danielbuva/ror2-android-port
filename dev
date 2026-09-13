@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")"
+source scripts/env.sh
+export PYTHONPATH="$PWD/scripts/lab"
+exec "$PWD/.local/lab-venv/bin/python" "$PWD/scripts/lab/main.py" "$@"
