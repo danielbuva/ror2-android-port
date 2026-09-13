@@ -74,9 +74,15 @@ def scene_run():
             time.sleep(1)
         path=read(WORK/'device/runtime.json')['persistentDataPath'];report=json.loads(d.sh('cat',path+'/loading-scene-probe.json'));write(out/'device-probe.json',report)
         result['success']=report['success'] and report['attempt']==out.name and str(report['pid'])==pid;result['survival_seconds']=time.monotonic()-start
+        if attempt.get('pose'):
+            pose=json.loads(d.sh('cat',path+'/commando-pose.json'));write(out/'pose-probe.json',pose)
+            result['success']=result['success'] and pose['success'] and pose['attempt']==out.name and str(pose['pid'])==pid
+            for name in ['commando-pose-A.png','commando-pose-B.png']:
+                d.cmd('pull',path+'/'+name,str(out/name))
+                if not (out/name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):raise RuntimeError('Pose capture missing or invalid')
         d.collect('all',out/'device')
     except Exception as e:
-        result['error']=str(e)
+        result['success']=False;result['error']=str(e)
         if 'install' in result:
             try:d.collect('all',out/'device')
             except Exception as capture:result['capture_error']=str(capture)
@@ -123,6 +129,7 @@ def scene_arm():
     resources=Path(r['stage'])/'Resources';resources.mkdir()
     write(resources/'LoadingSceneProbe.json',{'attempt':out.name,'bundle':'loadingbasic-lab','scene':r['scene'],'prefab':r.get('prefab',''),'prefabAssets':r.get('default_assets',[])})
     shutil.copy2(ROOT/'tools/unity/LoadingSceneProbe.cs',Path(r['stage'])/'LoadingSceneProbe.cs')
+    shutil.copy2(ROOT/'tools/unity/CommandoPosePreview.cs',Path(r['stage'])/'CommandoPosePreview.cs')
     print(json.dumps({'armed':True,'evidence':str(out.relative_to(ROOT)),'scope':r['isolation']['reason']}))
 
 def prefab_bind():
@@ -165,3 +172,23 @@ def prefab_bind():
         text=(WORK/'lab-project'/path).read_text();file_id=re.search(r'^--- !u!\d+ &(-?\d+)',text,re.M)[1];queries.append({'path':path,'fileID':file_id})
     write(WORK/'lab-project/Assets/LabReferenceQuery.json',{'attempt':out.name,'output':str(out/'default-asset-identities.json'),'queries':queries})
     print(json.dumps({'added_files':len(added),'assets':len(names),'evidence':str(out.relative_to(ROOT))}))
+
+
+def pose_prepare():
+    """Reuse the passing inactive content recipe, changing only the visual probe."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_PREFAB_CONTENT.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs from prefab checkpoint')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Previous stage remains; preserve/classify before restoring')
+    for name,h in checkpoint['transformations']['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
+    shutil.copytree(previous/'stage',stage)
+    r=read(previous/'attempt.json');r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'pose':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'restored passing content, visual probe pending'})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
+    cfg=read(stage/'Resources/LoadingSceneProbe.json');cfg.update({'attempt':out.name,'pose':True});write(stage/'Resources/LoadingSceneProbe.json',cfg)
+    for name in ['LoadingSceneProbe.cs','CommandoPosePreview.cs']:shutil.copy2(ROOT/'tools/unity'/name,stage/name)
+    shutil.copy2(ROOT/'tools/unity/CommandoPreview.shader',stage/'Resources/CommandoPreview.shader')
+    shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':'Transform/renderer-only preview; original gameplay remains inactive'}))

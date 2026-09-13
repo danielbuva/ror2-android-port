@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='prefab-bind':
+  if a.action=='pose-prepare':
+   from scene_runtime import pose_prepare
+   pose_prepare()
+  elif a.action=='prefab-bind':
    from scene_runtime import prefab_bind
    prefab_bind()
   elif a.action=='prefab-prepare':

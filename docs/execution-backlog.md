@@ -248,6 +248,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L4d — Visible recovered Commando content
 - **ID:** L4d
+- **STATUS:** PASS — J28 paired visual poses and bone changes; L4 isolated content accepted
 - **TITLE:** Validate visible pose and animation of recovered character content
 - **CONTEXT:** J26 proves inactive prefab component/rig identities with six diagnostically bound default assets.
 - **OBSERVATION:** The character is intentionally inactive and absent from captures; 35 clips and a valid avatar are present but not sampled.
@@ -260,3 +261,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First mesh/bind-pose/controller/material failure, sampled clip/time/bone transforms and matching capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Record bounded visual acceptance; replan before L5; retain runtime/prefab rollback.
 - **DEPENDENCIES:** L4c/J26.
+
+
+## L5a — Original asset-loading and startup boundary audit
+- **ID:** L5a
+- **TITLE:** Select the first truthful startup integration experiment
+- **CONTEXT:** L4 content passes with diagnostic bindings; original startup remains inactive.
+- **OBSERVATION:** Original skin content is deferred through AssetReference GUIDs; the current probe supplies six measured assets explicitly.
+- **HYPOTHESIS:** A bounded local provider can satisfy measured content requests without platform initialization or altering original gameplay methods.
+- **TASK:** Trace original skin-loader lifecycle and exact typed requests, release/failure semantics, and startup ordering. Review mandatory entitlement/native-service dependencies and Android-only profile paths. Select one provider assertion before activating the original application.
+- **CONSTRAINTS:** Common contract; original installation/profile untouched, no fabricated service success, no broad catalog transfer or speculative middleware rewrite.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Local recovered-source reports under work/, concise authored boundary analysis; thin provider probe only after measured contract.
+- **TEST COMMAND:** Read existing local recovered code and catalog evidence; use existing ./dev preflight/build/scene-run lifecycle when a device test is justified.
+- **PASS CONDITION:** Exact next original method/request, expected result, content identity, startup prerequisites and profile boundary recorded. Audit alone does not pass L5.
+- **FAILURE EVIDENCE TO CAPTURE:** First unresolved API/native/ownership contract, source location, typed key, lifecycle and failure propagation.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record L4 replan and L5 first hypothesis; retain L3/runtime and L4 content checkpoints.
+- **DEPENDENCIES:** L4d. T03/T04/T08/T10 remain conditional.

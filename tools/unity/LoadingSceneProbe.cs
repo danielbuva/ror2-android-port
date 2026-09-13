@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 // Isolated recovered scene probe. The application startup object stays inactive.
 public class LoadingSceneProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt,bundle,scene,prefab;public string[] prefabAssets;}
+ [Serializable] public class Config {public string attempt,bundle,scene,prefab;public string[] prefabAssets;public bool pose;}
  [Serializable] public class Report {public string attempt,error,scene;public int pid,objects,missingScripts,activeCameras,persistentObjects,persistentMissingScripts,spriteChanges,activeTextObjects,missingFonts;public string[] persistentRoots;public bool loaded,startupInactive,success;public PrefabReport prefab;}
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
  static void Init(){if(Resources.Load<TextAsset>("LoadingSceneProbe"))new GameObject("Loading scene probe").AddComponent<LoadingSceneProbe>();}
@@ -91,6 +91,7 @@ public class LoadingSceneProbe : MonoBehaviour {
    r.hasAvatar=animators.Any(a=>a.avatar&&a.avatar.isValid);
    r.skins=instance.GetComponentsInChildren<SkinnedMeshRenderer>(true).Select(x=>new Skin{name=x.name,mesh=x.sharedMesh?x.sharedMesh.name:null,vertices=x.sharedMesh?x.sharedMesh.vertexCount:0,bones=x.bones.Length,missingBones=x.bones.Count(b=>!b),bindPoses=x.sharedMesh?x.sharedMesh.bindposes.Length:0,missingMaterials=x.sharedMaterials.Count(m=>!m),shaders=x.sharedMaterials.Select(m=>m&&m.shader?m.shader.name:null).ToArray()}).ToArray();
    r.success=r.inactive&&r.diagnosticDefaultBinding&&r.missingFilterMeshes==0&&r.hasBody&&r.hasModel&&r.missingScripts==0&&r.skins.Length>0&&r.skins.All(x=>x.vertices>0&&x.bones>0&&x.missingBones==0&&x.bindPoses==x.bones&&x.missingMaterials==0)&&r.controllers>0&&r.clips>0&&r.hasAvatar;
+   if(r.success&&cfg.pose)CommandoPosePreview.Begin(instance,controller,avatar,material,cfg.attempt);
   }catch(Exception e){r.error=e.ToString();}
   return r;
  }
