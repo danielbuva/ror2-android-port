@@ -25,6 +25,17 @@ def middleware():
  xml=base/'Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/SoundbanksInfo.xml';banks=ET.parse(xml).getroot().attrib
  major=version.get('CSharp_GetMajorMinorVersion',{});minor=version.get('CSharp_GetSubminorBuildVersion',{})
  result={'wwise':{'native_version':'.'.join(str(x) for x in [major.get('hi'),major.get('lo'),minor.get('hi'),minor.get('lo')]),'evidence':version,'banks':banks,'native_sha256':sha(p)},'rewired':{'version':'1.1.47.0.U2021','evidence':'decompiled Rewired_Core/Rewired/ReInput.cs programVersion getter'}}
+ report={}
+ managed=read(WORK/'inventory/managed.json')
+ for term in ['discord','PlayFab','PartyXbox','AkSoundEngine','Rewired']:
+  imports=[dict(x,assembly=a['file']) for a in managed for x in a.get('pinvokes',[]) if term.lower() in x['library'].lower()]
+  hits=[]
+  for f in (base/'Risk of Rain 2_Data/Managed').glob('*.dll'):
+   data=f.read_bytes().lower()
+   if term.lower().encode() in data or term.lower().encode('utf-16-le') in data:hits.append(f.name)
+  report[term]={'pinvoke_count':len(imports),'pinvoke_assemblies':sorted(set(x['assembly'] for x in imports)),'managed_binary_string_hits':sorted(hits)}
+ report['wwise_authoring_projects']=[x['path'] for x in read(WORK/'inventory/files.json')['files'] if x['path'].lower().endswith(('.wproj','.wwu'))]
+ write(WORK/'inventory/middleware-reachability.json',report)
  write(WORK/'inventory/middleware.json',result);print(json.dumps(result,indent=2))
 
 def reconstruction_report():
