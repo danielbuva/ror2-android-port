@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='dependency-boundaries':
+  if a.action=='scene-closure':
+   from scene_closure import scene_closure
+   scene_closure()
+  elif a.action=='dependency-boundaries':
    from boundaries import dependency_boundaries
    dependency_boundaries()
   elif a.action=='rewired-original':
