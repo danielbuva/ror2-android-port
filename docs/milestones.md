@@ -5,7 +5,7 @@ Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evi
 | Gate | Status | Objective, scope and acceptance | Dependencies / principal risk |
 | --- | --- | --- | --- |
 | L0–L2 baseline | PASS, T01 reproduced | Accepted input; exact toolchain; original utility AOT, converted mesh on adopted data; GLES/Vulkan historical proof, fresh Vulkan capture | T01; not game readiness |
-| L3 managed execution | BOUNDED SLICE PASS; full closure OPEN | Original RoR2 slice expected results, three cold launches ≥30 s; preserve API/type identity | T02/T05/T06/T07; AOT/middleware |
+| L3 managed execution | PASS — full original DLL, ten assertions × three cold launches | Original RoR2 slice expected results, three cold launches ≥30 s; preserve API/type identity | T02/T05/T06/T07; AOT/middleware |
 | L4 recovered scene | OPEN | loadingbasic plus dependency-rich animated prefab on device; required GUID/local fileID/script/subasset/catalog audit | L3; serialization; T10 before large data |
 | L5 lawful startup/menu | OPEN | Observed initialization, truthful services, optional no-audio lifecycle, Android profile/content roots, original menu navigation | L4/L9 foundation; entitlement/native lifecycle |
 | L5.5 original simulation | OPEN | Original Commando master/body/authority/state ticks; deterministic movement then built-in controls; three cold launches ≥60 s | L5; see detailed plan; no complete stage needed |

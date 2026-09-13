@@ -17,3 +17,5 @@ Likelihood is uncertainty, not a statistical estimate. Each risk is resolved by 
 | T30 custom driver | Unmeasured / optional graphics | Separate per-app loader/runtime identification | Passing Vulkan device driver first; no system-wide modification |
 
 After two supported candidates at a boundary fail, reassess the hypothesis. Reconstruction cannot cure missing permissions, entitlement, authoring inputs or storage. Only real-device evidence advances capability gates.
+
+L3 update (J11–J20): the Rewired AOT failure was induced by exported metadata; original slots and the full original RoR2 assembly pass on ARM64. Ten original game-method assertions repeat across three cold launches. Managed execution uncertainty is substantially reduced; serialized prefab identity and wider runtime/native contracts remain open. Pinned Collections/Burst representative jobs pass editor and device; full reconstructed Play Mode is still not established.

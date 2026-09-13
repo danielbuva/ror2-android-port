@@ -32,6 +32,15 @@ try:
   elif a.action=='ror2-slice':
    from boundaries import ror2_slice
    ror2_slice()
+  elif a.action=='original-closure-runtime':
+   from boundaries import ror2_slice
+   ror2_slice(full_original=True)
+  elif a.action=='original-closure-prepare':
+   from boundaries import original_closure_prepare
+   original_closure_prepare()
+  elif a.action=='original-closure-build':
+   from boundaries import original_closure_build
+   original_closure_build()
   elif a.action=='recompile':
    from experiments import recompile
    recompile()

@@ -36,7 +36,7 @@ public static class RoR2SliceProbe {
             mask.RemoveProc(ProcType.Behemoth);Check(mask.mask==2u,r,"absent removal");
             r.success=true;
         }catch(Exception e){r.error=e.ToString();Debug.LogException(e);}
-        File.WriteAllText(Path.Combine(Application.persistentDataPath,"ror2-slice.json"),JsonUtility.ToJson(r,true));
+        File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"ror2-slice.json"),JsonUtility.ToJson(r,true));
         Debug.Log("LAB_ROR2_SLICE "+r.success+" assertions="+r.assertions+" "+r.attempt);
     }
 }

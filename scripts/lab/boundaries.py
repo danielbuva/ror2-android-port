@@ -1,4 +1,4 @@
-"""Bounded metadata attribution for the recorded J09 failure, without running input code."""
+"""Bounded dependency analysis and attributed editor/device experiments."""
 from common import *
 import shutil
 
@@ -148,32 +148,44 @@ def collections_runtime():
     print(json.dumps({'success':result['success'],'evidence':str(out.relative_to(ROOT)),'error':result.get('error')},indent=2))
     if not result['success']:raise RuntimeError('Collections candidate incomplete; inspect '+str(out))
 
-def ror2_slice():
+def ror2_slice(full_original=False):
     """Retain original self-contained game method IL; three measured cold starts."""
     from build import preflight, build
     from device import Device
     import time
     preflight()
-    out=WORK/'experiments/ror2-slice'/now();out.mkdir(parents=True)
-    stage=WORK/'lab-project/Assets/LabRoR2Slice'
-    if stage.exists():raise RuntimeError('Prior slice stage remains; inspect first')
-    write(out/'attempt.json',{'attempt':out.name,'status':'preparing original IL slice'})
-    command=probe_tool();source=game()/'Risk of Rain 2_Data/Managed/RoR2.dll'
-    selected=['RoR2.Trajectory','RoR2.ProcChainMask','RoR2.ProcType']
-    process=run(command+['--slice',source,out/'RoR2.dll']+selected,check=False)
-    (out/'preparation.stdout').write_bytes(process.stdout);(out/'preparation.stderr').write_bytes(process.stderr)
-    if process.returncode:
-        write(out/'result.json',{'success':False,'category':'slice-preparation','exit_code':process.returncode})
-        raise RuntimeError('Slice preparation failed; full output at '+str(out))
-    provenance=json.loads(process.stdout);write(out/'slice-provenance.json',provenance)
-    stage.mkdir();resources=stage/'Resources';resources.mkdir()
-    shutil.copy2(out/'RoR2.dll',stage/'RoR2.dll');shutil.copy2(ROOT/'tools/unity/RoR2SliceProbe.cs',stage/'RoR2SliceProbe.cs')
+    out=WORK/'experiments'/('original-closure-runtime' if full_original else 'ror2-slice')/now();out.mkdir(parents=True)
+    stage=WORK/'lab-project/Assets'/('LabOriginalClosure' if full_original else 'LabRoR2Slice')
+    if full_original:
+        prior=read(ROOT/read(WORK/'experiments/original-closure/current.json')['path']/'result.json')
+        if not prior['success']:raise RuntimeError('Original closure build must pass first')
+        for name,h in prior['original_assemblies'].items():
+            if sha(stage/name)!=h:raise RuntimeError('Original assembly drift: '+name)
+        provenance={'inputSha256':prior['original_assemblies']['RoR2.dll'],'outputSha256':prior['original_assemblies']['RoR2.dll'],'fullOriginal':True,'original_assemblies':prior['original_assemblies']}
+    else:
+        if stage.exists():raise RuntimeError('Prior slice stage remains; inspect first')
+        if (WORK/'lab-project/Assets/LabOriginalClosure').exists():raise RuntimeError('Full original closure already staged; do not add duplicate RoR2 assembly')
+        command=probe_tool();source=game()/'Risk of Rain 2_Data/Managed/RoR2.dll'
+        selected=['RoR2.Trajectory','RoR2.ProcChainMask','RoR2.ProcType']
+        process=run(command+['--slice',source,out/'RoR2.dll']+selected,check=False)
+        (out/'preparation.stdout').write_bytes(process.stdout);(out/'preparation.stderr').write_bytes(process.stderr)
+        if process.returncode:
+            write(out/'result.json',{'success':False,'category':'slice-preparation','exit_code':process.returncode})
+            raise RuntimeError('Slice preparation failed; full output at '+str(out))
+        provenance=json.loads(process.stdout);stage.mkdir();shutil.copy2(out/'RoR2.dll',stage/'RoR2.dll')
+    write(out/'slice-provenance.json',provenance)
+    resources=stage/'Resources';resources.mkdir()
+    shutil.copy2(ROOT/'tools/unity/RoR2SliceProbe.cs',stage/'RoR2SliceProbe.cs')
     write(resources/'RoR2SliceProbe.json',{'attempt':out.name,'inputHash':provenance['inputSha256'],'sliceHash':provenance['outputSha256']})
     (stage/'link.xml').write_text('<linker><assembly fullname="RoR2" preserve="all" /></linker>\n')
-    result={'success':False,'attempt':out.name,'input_id':read(WORK/'inventory/files.json')['input_id'],'scope':'35 retained method bodies in type-pruned original RoR2 assembly; no EntityStates, full closure, startup or character simulation','launches':[]}
+    scope='Full unchanged original RoR2 assembly; ten trajectory/proc assertions, not startup or simulation' if full_original else '35 retained method bodies in type-pruned original RoR2 assembly; no EntityStates, full closure, startup or character simulation'
+    result={'success':False,'attempt':out.name,'input_id':read(WORK/'inventory/files.json')['input_id'],'scope':scope,'launches':[]}
     write(out/'attempt.json',result);d=Device();had=d.exists()
     try:
-        built=build('vulkan',True);result['build']=built;result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync()
+        built=build('vulkan',True);result['build']=built
+        for name,h in provenance.get('original_assemblies',{'RoR2.dll':provenance['outputSha256']}).items():
+            if sha(stage/name)!=h:raise RuntimeError('Assembly changed during build: '+name)
+        result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync()
         for index in range(3):
             run_dir=out/('launch-'+str(index+1));run_dir.mkdir()
             start=time.monotonic();runtime=d.launch();pid=runtime['pid']
@@ -203,3 +215,57 @@ def ror2_slice():
         write(out/'result.json',result);write(out.parent/'latest.json',{'path':str(out.relative_to(ROOT)),'success':result['success']})
     print(json.dumps({'success':result['success'],'evidence':str(out.relative_to(ROOT)),'error':result.get('error')},indent=2))
     if not result['success']:raise RuntimeError('Original game slice failed; inspect '+str(out))
+
+def original_closure_prepare():
+    """Stage original input DLLs for a full-game AOT experiment; no startup adapter."""
+    from build import preflight
+    preflight()
+    stage=WORK/'lab-project/Assets/LabOriginalClosure'
+    if stage.exists():raise RuntimeError('Original closure stage already exists; inspect recorded attempt')
+    out=WORK/'experiments/original-closure'/now();out.mkdir(parents=True)
+    project=WORK/'lab-project';manifest=project/'Packages/manifest.json'
+    (out/'packages-before.json').write_bytes(manifest.read_bytes())
+    cfg=read(manifest);reconstruction=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    cfg['dependencies'].update({k:v for k,v in read(reconstruction/'Packages/manifest.json')['dependencies'].items() if k.startswith('com.unity.modules.')})
+    write(manifest,cfg)
+    supplied={'Unity.Burst','Unity.Burst.Unsafe','Unity.Collections','Unity.Collections.LowLevel.ILSupport','Unity.Mathematics','UnityEngine.UI','SimpleJSON'}
+    source=game()/'Risk of Rain 2_Data/Managed';stage.mkdir();inputs={};export_only=[]
+    inventory=read(WORK/'inventory/managed.json')
+    for p in sorted((reconstruction/'Assets/Plugins').glob('*.dll')):
+        if p.stem in supplied:continue
+        original=source/p.name
+        if not original.exists():
+            consumers=[a['name'] for a in inventory if any(r['name']==p.stem for r in a['references'])]
+            if consumers:raise RuntimeError('Missing referenced original input for '+p.name)
+            export_only.append(p.name);continue
+        shutil.copy2(original,stage/p.name);inputs[p.name]=sha(original)
+    (stage/'link.xml').write_text('<linker><assembly fullname="RoR2" preserve="all" /></linker>\n')
+    result={'attempt':out.name,'status':'staged; resolve packages/restart isolated editor before build','input_id':read(WORK/'inventory/files.json')['input_id'],'original_assemblies':inputs,'provided_by_packages_or_existing_lab':sorted(supplied),'excluded_export_only_unreferenced':export_only,'scope':'Full original RoR2.dll rooted, dependency set from exported project names but original bytes; no game startup/auth modifications','stage':str(stage),'evidence':str(out.relative_to(ROOT))}
+    write(out/'attempt.json',result);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
+    print(json.dumps({'staged_original_dlls':len(inputs),'evidence':result['evidence'],'next':'Resolve pinned manifest in isolated editor, then ./dev prototype --action original-closure-build'},indent=2))
+
+def original_closure_build():
+    from build import preflight, build
+    preflight();out=ROOT/read(WORK/'experiments/original-closure/current.json')['path'];result=read(out/'attempt.json');stage=Path(result['stage'])
+    for name,h in result['original_assemblies'].items():
+        if sha(stage/name)!=h:raise RuntimeError('Staged original assembly drift: '+name)
+    if (out/'result.json').exists():raise RuntimeError('Attempt already terminal; preserve it and create a new attempt')
+    logfile=Path(read(WORK/'editor/lab-process.json')['log']);offset=logfile.stat().st_size
+    result['success']=False
+    try:
+        result['build']=build('vulkan',True)
+        for name,h in result['original_assemblies'].items():
+            if sha(stage/name)!=h:raise RuntimeError('Original assembly changed during import/build: '+name)
+        result['post_build_original_hashes_verified']=True
+        result['success']=True;result['status']='AOT build passed; not yet installed or launched'
+    except Exception as e:result['error']=str(e);result['status']='build failed or incomplete; inspect first failure'
+    finally:
+        with logfile.open('rb') as f:f.seek(offset);raw=f.read()
+        (out/'editor-build.log').write_bytes(raw)
+        import re
+        errors=[line for line in raw.decode(errors='replace').splitlines() if re.search(r'error CS|IL2CPP error|InvalidOperationException|error:|Exception:',line)]
+        write(out/'first-failure.json',{'success':result['success'],'messages':errors[:60],'no_apk_installed':True})
+        if (WORK/'lab-build/result.json').exists():shutil.copy2(WORK/'lab-build/result.json',out/'unity-build-result.json')
+        write(out/'result.json',result)
+    print(json.dumps({'success':result['success'],'evidence':str(out.relative_to(ROOT)),'status':result['status'],'error':result.get('error')},indent=2))
+    if not result['success']:raise RuntimeError('Full original closure did not pass; inspect '+str(out))

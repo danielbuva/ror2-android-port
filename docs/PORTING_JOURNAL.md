@@ -138,3 +138,26 @@ Experiment: retain three self-contained original RoR2 types (35 method bodies), 
 Result: ten authored assertions pass on each of three fresh Android PIDs, each alive over 36 seconds. Ballistic apex/duration/position and solve-integrate consistency; proc bits/idempotence/removal/value-copy behavior. ARM64 IL2CPP Vulkan; adopted package/payload; visual capture checked; owned package removed.
 Evidence: work/experiments/ror2-slice/20260913T022358.230312Z, slice-provenance.json and launch-1..3/probe.json; local LAST_KNOWN_GOOD_MANAGED_SLICE receipt. Ten host safety/transform tests pass.
 Decision: T07 bounded original-code execution passes. Full closure/EntityStates, original startup, character and stage remain unproven. Next discriminate full original-assembly AOT with the passing package candidates, without export-added forwarding getters. This is a new assembly-input hypothesis, not a repeat of J09's exported closure.
+
+## J17 — Original closure provenance excludes an export-only dependency
+
+Observation: full original-set staging found System.Runtime.CompilerServices.Unsafe.dll only in exported Plugins, not in the legitimate installed Managed directory. Original managed inventory has zero assembly references to that name.
+Result: staging stopped; no build dispatched. Partial staging and first-failure evidence retained under work/experiments/original-closure/20260913T022959.574125Z.
+Decision: omit an export-only assembly only when no original assembly references it. The next attempt stages 45 original DLLs; package/current-lab providers supply Burst/Collections/Mathematics/UI/SimpleJSON. Full RoR2 is rooted, with no game startup/auth changes. This compares original inputs, not another export rewrite.
+
+## J18 — Full original RoR2 assembly AOT and harness smoke pass
+
+Experiment: 45 unchanged original DLLs, full RoR2 assembly explicitly preserved, pinned package providers from J14, existing Vulkan lab scene. No game startup, authentication or native-service adapter.
+Result: terminal ARM64 IL2CPP build succeeds in 204.7 seconds, zero build errors. All 45 staged DLL hashes verified after build. Existing utility/geometry smoke passes on the authorized device, package and payload on adopted backing, screenshot visually reviewed, owned package removed. Only captured error is the intentionally tested incompatible Windows shader bundle.
+Evidence: work/experiments/original-closure/20260913T023057.067759Z; work/runs/20260913T023811.889560Z-68c7c68a5f74. APK SHA-256 68c7c68a5f743bf22ecc0bfe98e7839ddb935ecbcdf8d107529b50e34171040e.
+Decision: original input metadata removes the exported closure's AOT blocker without recreating Rewired. The full game assembly can coexist in the harness; this does not prove game startup or all native/API contracts. Next repeat the measured game-method assertions against the full assembly before recovered scene work. Preserve the staged closure and package lock; do not stage a second RoR2.dll alongside it.
+
+## J19 — Full namespace exposes an authored probe ambiguity
+
+First T07c build fails CS0104: Path resolves to both RoR2.Path and System.IO.Path. The pruned slice had hidden the former. No device installation occurred. Full failed stage and terminal build/console preserved at work/experiments/original-closure-runtime/20260913T024020.230186Z. Qualify the authored file path with System.IO; no original code changes.
+
+## J20 — Full unchanged RoR2 DLL passes original method assertions
+
+Retry after J19 changes only the authored System.IO.Path reference. All 45 staged DLL hashes match original inputs after build. Ten trajectory/proc assertions pass on three distinct cold Android processes; measured survival 36.83, 36.91 and 36.89 seconds. Only captured errors are the known Windows-target shader rejection. Screenshot reviewed; adopted placement/data backing retained; owned package removed.
+Evidence: work/experiments/original-closure-runtime/20260913T024051.910924Z; APK SHA-256 b55aaed78502246f19d6125b3d0f6a832f2cb6cc3510580dbb51604a13a27e73. The historical JSON field sliceHash equals the full original input hash in this attempt; provenance explicitly records fullOriginal=true. Stage and package graph archived.
+Decision: L3 meaningful managed execution passes with the full original assembly, without reconstructing game code or changing authentication. This does not exercise all methods, native middleware, original startup, EntityStates or character simulation. Replan advances to L4a required scene/prefab reference audit.

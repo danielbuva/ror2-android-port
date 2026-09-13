@@ -25,6 +25,8 @@ The prepared environment already contains the exact Unity/Android toolchain and 
 | `./dev prototype --action rewired-original` | Test the J09 virtual slots using original DLL inputs on ARM64; no controller initialization claim. |
 | `./dev prototype --action collections-runtime` | Pinned native-list/job candidate on editor and Android; package resolution required before probing. |
 | `./dev prototype --action ror2-slice` | Original trajectory/proc-mask IL with three cold-start assertion/survival runs; not full game closure. |
+| `./dev prototype --action original-closure-prepare` | Stage original full managed inputs and package providers; preserve provenance. |
+| `./dev prototype --action original-closure-build` | Force full RoR2 AOT build with terminal evidence; no automatic game startup. |
 | `./dev prototype --action middleware` | Exact native Wwise version and bank metadata evidence. |
 | `./dev prototype --action recompile` | Full recovered RoR2 source compile probes using modern and Unity compilers. |
 | `./dev prototype --action reconstruction` | Export scene/shader/source summary. |
@@ -53,3 +55,5 @@ Output roots: work/inventory, work/decompiled, work/assetripper, work/lab-projec
 Repository content is original tooling, small transformations and evidence summaries. User-supplied game data and generated proprietary content are Git-ignored. No DRM/ownership/authentication bypass is included. Middleware licensing/Android binaries remain unresolved. Do not redistribute raw work/ outputs.
 
 The adopted-storage policy and limits are in [storage strategy](docs/storage-strategy.md). Diagnostics/acceptance limits are in [testing strategy](docs/testing-strategy.md); cache and update behavior are in [caching and updates](docs/caching-and-updates.md). Host safety checks: `.local/lab-venv/bin/python -m unittest discover -s tests -v`.
+
+Full original assembly assertion experiment: `./dev prototype --action original-closure-runtime` after original-closure-prepare/build. Reuses the ten game-method assertions on three cold launches and verifies unchanged input DLL hashes; does not initiate game startup. Passing stages are archived under ignored experiment evidence.
