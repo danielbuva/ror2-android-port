@@ -20,7 +20,13 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='skin-apply-prepare':
+  if a.action=='startup-prepare':
+   from scene_runtime import startup_prepare
+   startup_prepare()
+  elif a.action=='startup-run':
+   from scene_runtime import scene_run
+   scene_run()
+  elif a.action=='skin-apply-prepare':
    from scene_runtime import skin_apply_prepare
    skin_apply_prepare()
   elif a.action=='skin-prepare':

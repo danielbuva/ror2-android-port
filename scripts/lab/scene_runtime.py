@@ -65,14 +65,14 @@ def scene_run():
     stage=Path(attempt['stage'])
     for name,h in attempt['original_assemblies'].items():
         if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original assembly changed '+name)
-    result={'success':False,'attempt':out.name,'build':built,'scope':'Original '+('skin baking' if attempt.get('skin') else 'avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
+    result={'success':False,'attempt':out.name,'build':built,'scope':'Original startup first-yield/PreFrame segment and profile filesystem candidate' if attempt.get('startup') else 'Original '+('skin baking' if attempt.get('skin') else 'avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
     d=Device();had=d.exists()
     try:
         result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync();result['launch']=d.launch();pid=result['launch']['pid'];start=time.monotonic()
-        while time.monotonic()-start<(70 if attempt.get('skin') else 50 if attempt.get('controller') else 35):
+        while time.monotonic()-start<(50 if attempt.get('startup') else 70 if attempt.get('skin') else 50 if attempt.get('controller') else 35):
             if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Scene process died or changed')
             time.sleep(1)
-        path=read(WORK/'device/runtime.json')['persistentDataPath'];report_name='controller-address-probe.json' if attempt.get('controller') else 'loading-scene-probe.json';report=json.loads(d.sh('cat',path+'/'+report_name));write(out/'device-probe.json',report)
+        path=read(WORK/'device/runtime.json')['persistentDataPath'];report_name='startup-segment-probe.json' if attempt.get('startup') else 'controller-address-probe.json' if attempt.get('controller') else 'loading-scene-probe.json';report=json.loads(d.sh('cat',path+'/'+report_name));write(out/'device-probe.json',report)
         result['success']=report['success'] and report['attempt']==out.name and str(report['pid'])==pid;result['survival_seconds']=time.monotonic()-start
         if not result['success']:result['error']=report.get('error') or 'Probe assertions or attempt/PID attribution failed'
         if attempt.get('controller'):
@@ -319,3 +319,23 @@ def skin_apply_prepare():
     write(out/'skin-application-contract.json',dict(cfg,prior_art='Current original RuntimeSkin.ApplyAsync assigns mesh components and CharacterModel.baseRendererInfos; ModelSkinController cleans returned ownership lists. Community skin guidance distinguishes baking from application.',material_scope='Renderer records only; material update and original model lifecycle inactive'))
     shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
+
+
+def startup_prepare():
+    """Restore accepted runtime and isolate the first original startup phase."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_SKIN_APPLICATION.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'startup':True,'controller':False,'skin':False,'skin_apply':False,'avatar':False,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original startup PreFrame and independent profile filesystem candidate pending'})
+    (stage/'ControllerAddressProbe.cs').unlink();(stage/'Resources/ControllerAddressProbe.json').unlink()
+    shutil.copy2(ROOT/'tools/unity/StartupSegmentProbe.cs',stage/'StartupSegmentProbe.cs');write(stage/'Resources/StartupSegmentProbe.json',{'attempt':out.name})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    for name in ['original-metadata.json','reflection-metadata.json']:shutil.copy2(WORK/'experiments/startup-boundary'/name,out/name)
+    write(out/'startup-contract.json',{'segment':'Original InitializeGameRoutine first MoveNext, then reviewed PreFrame enumerator only; Awake and later startup remain inactive','expected_targets':['FlashWindow.Init'],'predicted_boundary':'FlashWindow cctor calls kernel32 GetCurrentProcessId; establish actual device outcome without patching','profile':'Original Zio SubFileSystem under fresh owned persistent directory; read-only content view, no vanilla saves or global filesystem assignment','prior_art':'ProperSave filesystem policy separation; community-prior-art.md startup trace; actual original DLL IL rechecked'})
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
