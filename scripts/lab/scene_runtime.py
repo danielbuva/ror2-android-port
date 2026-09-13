@@ -290,3 +290,32 @@ def skin_prepare():
     recipe=read(previous/'scene-probe-build.json');recipe['prefabAssets']+=['Assets/LabLoadingScene/'+str(relative), 'Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))]
     write(WORK/'scene-probe-build.json',recipe)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'renderer_paths':cfg['rendererPaths'],'mesh_paths':cfg['meshPaths']}))
+
+
+def skin_apply_prepare():
+    """Add only measured material/mesh locations to the accepted original baking probe."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_SKIN_BAKE.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    cfg=read(previous/'stage/Resources/ControllerAddressProbe.json');prefix='Assets/LabLoadingScene/';base='RoR2/Base/Characters/Commando/'
+    # J26 measured exported identities; inspect their current archived serialization again.
+    names=[key.split('[',1)[1].rstrip(']') for key in cfg['meshKeys']];mesh_paths=[base+n+'.asset' for n in names]
+    vertices=[]
+    for name,path in zip(names,mesh_paths):
+        text=(previous/'stage'/path).read_text()
+        if re.search(r'^  m_Name: (.*)$',text,re.M)[1]!=name:raise RuntimeError('Mesh name differs')
+        vertices.append(int(re.search(r'm_VertexCount: (\d+)',text)[1]))
+    material_path=base+'matCommandoDualies.mat';material=(previous/'stage'/material_path).read_text();material_name=re.search(r'^  m_Name: (.*)$',material,re.M)[1]
+    if material_name!='matCommandoDualies':raise RuntimeError('Material identity differs')
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'skin_apply':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original skin application on inactive model pending'})
+    cfg.update({'attempt':out.name,'applySkin':True,'meshAssets':[(prefix+x).lower() for x in mesh_paths],'meshNames':names,'meshVertices':vertices,'materialAsset':(prefix+material_path).lower(),'materialName':material_name})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});write(stage/'Resources/ControllerAddressProbe.json',cfg)
+    write(out/'skin-application-contract.json',dict(cfg,prior_art='Current original RuntimeSkin.ApplyAsync assigns mesh components and CharacterModel.baseRendererInfos; ModelSkinController cleans returned ownership lists. Community skin guidance distinguishes baking from application.',material_scope='Renderer records only; material update and original model lifecycle inactive'))
+    shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
