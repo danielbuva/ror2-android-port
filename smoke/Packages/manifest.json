@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.2.0",
+    "com.unity.modules.androidjni": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.ui": "1.0.0"
+  }
+}
