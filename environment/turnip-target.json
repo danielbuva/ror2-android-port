@@ -1,0 +1,13 @@
+{
+  "assets": [
+    {
+      "browser_download_url": "https://github.com/MrPurple666/purple-turnip/releases/download/vturnip_mrpurple_T30-toasted.adpkg/turnip_mrpurple_T30-toasted.adpkg.zip",
+      "digest": "sha256:f65b2d3353fd4aa7190bb5426b94468e99ffea7a58a830bc0c4651db89353227",
+      "name": "turnip_mrpurple_T30-toasted.adpkg.zip",
+      "size": 3713730
+    }
+  ],
+  "html_url": "https://github.com/MrPurple666/purple-turnip/releases/tag/vturnip_mrpurple_T30-toasted.adpkg",
+  "published_at": "2026-08-17T12:38:01Z",
+  "tag_name": "vturnip_mrpurple_T30-toasted.adpkg"
+}

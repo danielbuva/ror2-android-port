@@ -50,6 +50,8 @@ if ok:
 smoke=root/'environment/smoke-result.json'
 passed=smoke.exists() and json.loads(smoke.read_text()).get('success',False)
 check('Completed ARM64 device smoke test',passed,str(smoke))
+exercise=root/'environment/mcp-exercise.json'
+check('Completed Unity MCP editor exercise',exercise.exists() and json.loads(exercise.read_text()).get('success',False),str(exercise))
 result={'checked_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'ready':all(c['ok'] for c in checks),'checks':checks}
 if '--json' in sys.argv:print(json.dumps(result,indent=2))
 else:
