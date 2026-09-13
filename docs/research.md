@@ -19,3 +19,10 @@ Checked 2026-09-12 PDT. Local installation evidence outranks assumptions about o
 | [Rewired supported products/platforms](https://guavaman.com/projects/rewired/) | Android is supported by the product. This does not establish that the Windows-compiled managed subset is a complete Android integration. |
 
 No Steam login, ownership emulation, entitlement patch, DRM bypass, EOS authentication emulation, or original-install modification was performed. SDK licensing and exact legacy Android binary availability remain explicit backlog items.
+
+
+## RoR2-specific prior art at L5a
+
+Inspected 2026-09-13 UTC / 2026-09-12 PDT against HEAD 3cfc3a4. See [community-prior-art.md](community-prior-art.md) for subsystem conclusions and the exact first provider experiment, and [community-sources.json](../reference/community-sources.json) for pinned source revisions/licenses/activity. Major inspected sources: Risk of Thunder R2Wiki, RoR2EditorKit, RoR2ImportExtensions, ThunderKit, R2API, RoR2ThunderBurster/BurstsOfRain, Starstorm2/MSU, RoRSkinBuilder, ProperSave, DebugToolkit, UnityExplorer, upstream BepInEx and experimental NextBep Android projects.
+
+VERIFIED source/local comparison: the community memory-update description matches this input's AssetOrDirectReference/AssetAsyncReferenceManager/SkinDefParams system. EditorKit lookup has versioned-map and subasset/cache caveats; ThunderKit copies catalogs rather than converting Windows bundles. Original providers are the first candidate before writing a custom provider. Original delayed release requires explicit scheduler observation while RoR2Application remains inactive. Source inspection is not Android acceptance. Local input/experiments outrank community assumptions; no package, architecture or passed gate changed. See [mod-compatibility-strategy.md](mod-compatibility-strategy.md) for post-vanilla guidance only.

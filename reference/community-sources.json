@@ -1,0 +1,639 @@
+{
+  "inspection_date": "2026-09-13 UTC (2026-09-12 PDT)",
+  "local_head": "3cfc3a4f5375da72fb89ad648cae813e77f57612",
+  "sources": [
+    {
+      "name": "R2Wiki",
+      "url": "https://github.com/risk-of-thunder/R2Wiki",
+      "revision": "0eefb7ab1c96393cd19e13e140a42c401f5d76e4",
+      "license": "License not found at repository root; no text/code copied",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-08-16T00:58:29Z",
+        "head_subject": "[GitHub Action] Update docs",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Mixed releases; 1.3.9 memory-update guide and current extraction page differ",
+      "unity_version": "Extraction page says 2021.3.33.23082; not our editor pin",
+      "subsystems": [
+        "extraction",
+        "Addressables",
+        "skins",
+        "networking",
+        "diagnostics"
+      ],
+      "local_reuse": "Consult versioned API changes and source-diff method; cross-check every runtime fact",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a\u2013L13",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "docs/Mod-Creation/Updating-Your-Mods/1.3.9-Memory-Optimization/Core-API-Changelog-1.3.9.md",
+          "url": "https://github.com/risk-of-thunder/R2Wiki/blob/0eefb7ab1c96393cd19e13e140a42c401f5d76e4/docs/Mod-Creation/Updating-Your-Mods/1.3.9-Memory-Optimization/Core-API-Changelog-1.3.9.md"
+        },
+        {
+          "path": "docs/Mod-Creation/Assets/Extraction.md",
+          "url": "https://github.com/risk-of-thunder/R2Wiki/blob/0eefb7ab1c96393cd19e13e140a42c401f5d76e4/docs/Mod-Creation/Assets/Extraction.md"
+        },
+        {
+          "path": "docs/Mod-Creation/Developer-Reference/Prefabs.md",
+          "url": "https://github.com/risk-of-thunder/R2Wiki/blob/0eefb7ab1c96393cd19e13e140a42c401f5d76e4/docs/Mod-Creation/Developer-Reference/Prefabs.md"
+        },
+        {
+          "path": "docs/Mod-Creation/Assets/Stage.md",
+          "url": "https://github.com/risk-of-thunder/R2Wiki/blob/0eefb7ab1c96393cd19e13e140a42c401f5d76e4/docs/Mod-Creation/Assets/Stage.md"
+        },
+        {
+          "path": "docs/Tools/Source-Code-Diff.md",
+          "url": "https://github.com/risk-of-thunder/R2Wiki/blob/0eefb7ab1c96393cd19e13e140a42c401f5d76e4/docs/Tools/Source-Code-Diff.md"
+        }
+      ]
+    },
+    {
+      "name": "RoR2EditorKit",
+      "url": "https://github.com/risk-of-thunder/RoR2EditorKit",
+      "revision": "4128710f74ffbd90bfebc523812e7155fa7bdee3",
+      "license": "MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-05-17T18:56:12-04:00",
+        "head_subject": "Some extra tidbits",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Bundled lookup explicitly labeled 1.4.1; package 5.7.0",
+      "unity_version": "2021.3 in package.json",
+      "subsystems": [
+        "Addressables",
+        "subassets",
+        "editor",
+        "shaders"
+      ],
+      "local_reuse": "Learn typed GUID/path/cache and missing-result handling; optional isolated editor assistance, no installation",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/L11",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "Editor/RoR2/AddressablePathDictionary/AddressablesPathDictionary.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2EditorKit/blob/4128710f74ffbd90bfebc523812e7155fa7bdee3/Editor/RoR2/AddressablePathDictionary/AddressablesPathDictionary.cs"
+        },
+        {
+          "path": "Editor/RoR2/AddressablePathDictionary/AddressablesPathDictionaryCache.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2EditorKit/blob/4128710f74ffbd90bfebc523812e7155fa7bdee3/Editor/RoR2/AddressablePathDictionary/AddressablesPathDictionaryCache.cs"
+        },
+        {
+          "path": "AssetRipperShaderImporter/AssetRipperShaderPostprocessor.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2EditorKit/blob/4128710f74ffbd90bfebc523812e7155fa7bdee3/AssetRipperShaderImporter/AssetRipperShaderPostprocessor.cs"
+        },
+        {
+          "path": "package.json",
+          "url": "https://github.com/risk-of-thunder/RoR2EditorKit/blob/4128710f74ffbd90bfebc523812e7155fa7bdee3/package.json"
+        }
+      ]
+    },
+    {
+      "name": "RoR2ImportExtensions",
+      "url": "https://github.com/risk-of-thunder/RoR2ImportExtensions",
+      "revision": "477ad9b52e66e59080049fc3a65645ddb4db2cef",
+      "license": "MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-06-16T12:29:53-04:00",
+        "head_subject": "MERGED: Changed R2APISubmoduleInstaller to only update packages when opening UI or executing (#29)",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Current import assumptions; not a shipped-game manifest",
+      "unity_version": "2021-era RoR2 importer; compare pinned input",
+      "subsystems": [
+        "import",
+        "assemblies",
+        "graphics"
+      ],
+      "local_reuse": "Conditional provider exclusions and graphics mapping; do not publicize originals or install hook stack",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/L11/L13",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "Editor/AssemblyBlacklist.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ImportExtensions/blob/477ad9b52e66e59080049fc3a65645ddb4db2cef/Editor/AssemblyBlacklist.cs"
+        },
+        {
+          "path": "Editor/ConfigureAddressableGraphics.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ImportExtensions/blob/477ad9b52e66e59080049fc3a65645ddb4db2cef/Editor/ConfigureAddressableGraphics.cs"
+        },
+        {
+          "path": "Editor/AssemblyPublicizerProcessor.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ImportExtensions/blob/477ad9b52e66e59080049fc3a65645ddb4db2cef/Editor/AssemblyPublicizerProcessor.cs"
+        },
+        {
+          "path": "Editor/MMHookGeneratorProcessor.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ImportExtensions/blob/477ad9b52e66e59080049fc3a65645ddb4db2cef/Editor/MMHookGeneratorProcessor.cs"
+        }
+      ]
+    },
+    {
+      "name": "ThunderKit",
+      "url": "https://github.com/PassivePicasso/ThunderKit",
+      "revision": "95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a",
+      "license": "MS-PL",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-08-22T16:27:18-04:00",
+        "head_subject": "Merge pull request #133 from PassivePicasso/path-resolution-safety",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Game-agnostic authoring pipeline",
+      "unity_version": "Editor package, not Android runtime",
+      "subsystems": [
+        "catalog",
+        "content build",
+        "project settings"
+      ],
+      "local_reuse": "Understand catalog/settings import; copies existing files rather than retargeting bundles",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/L13",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "Editor/Addressable/Config/ImportAddressableCatalog.cs",
+          "url": "https://github.com/PassivePicasso/ThunderKit/blob/95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a/Editor/Addressable/Config/ImportAddressableCatalog.cs"
+        },
+        {
+          "path": "Editor/Addressable/Config/AddressableGraphicsImport.cs",
+          "url": "https://github.com/PassivePicasso/ThunderKit/blob/95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a/Editor/Addressable/Config/AddressableGraphicsImport.cs"
+        }
+      ]
+    },
+    {
+      "name": "R2API",
+      "url": "https://github.com/risk-of-thunder/R2API",
+      "revision": "f539511eabf87f02afddb5a83cafd2f4704c85ad",
+      "license": "MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-09-03T08:44:47+02:00",
+        "head_subject": "R2API.Director: add enabling/disabling stage Combat Directors event (#692)",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Current checkout includes modern SkinDefParams and DLC3 types; patched game declarations are not upstream authority",
+      "unity_version": "Mono mod host; no Android support asserted",
+      "subsystems": [
+        "Addressables",
+        "content",
+        "skins",
+        "prefab",
+        "networking",
+        "director",
+        "damage",
+        "items",
+        "language",
+        "sound"
+      ],
+      "local_reuse": "Extension-seam index and lifecycle comparisons; no runtime dependency or copied game declarations",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a\u2013L11",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "R2API.Addressables/AddressReferencedAssets/AddressReferencedAsset.cs",
+          "url": "https://github.com/risk-of-thunder/R2API/blob/f539511eabf87f02afddb5a83cafd2f4704c85ad/R2API.Addressables/AddressReferencedAssets/AddressReferencedAsset.cs"
+        },
+        {
+          "path": "R2API.ContentManagement/R2APIContentPackProvider.cs",
+          "url": "https://github.com/risk-of-thunder/R2API/blob/f539511eabf87f02afddb5a83cafd2f4704c85ad/R2API.ContentManagement/R2APIContentPackProvider.cs"
+        },
+        {
+          "path": "R2API.Skins/Skins.cs",
+          "url": "https://github.com/risk-of-thunder/R2API/blob/f539511eabf87f02afddb5a83cafd2f4704c85ad/R2API.Skins/Skins.cs"
+        },
+        {
+          "path": "R2API.Prefab/PrefabAPI.cs",
+          "url": "https://github.com/risk-of-thunder/R2API/blob/f539511eabf87f02afddb5a83cafd2f4704c85ad/R2API.Prefab/PrefabAPI.cs"
+        },
+        {
+          "path": "R2API.Sound/SoundAPI.cs",
+          "url": "https://github.com/risk-of-thunder/R2API/blob/f539511eabf87f02afddb5a83cafd2f4704c85ad/R2API.Sound/SoundAPI.cs"
+        }
+      ]
+    },
+    {
+      "name": "RoR2ThunderBurster",
+      "url": "https://github.com/risk-of-thunder/RoR2ThunderBurster",
+      "revision": "9cbfd8c807e887111227b98f2803991c653d4717",
+      "license": "MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2024-10-30T21:44:19-03:00",
+        "head_subject": "compiler directive fix",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Mod-side Burst build tooling, 2024 head",
+      "unity_version": "Installer Burst1.8.18/Collections1.5.1/Mathematics1.2.6",
+      "subsystems": [
+        "Burst",
+        "Collections",
+        "build"
+      ],
+      "local_reuse": "Known Cecil/codegen coexistence workaround only if measured failure recurs",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "T06 only on new contract/L13",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "Editor/Core/DependencyInstaller.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ThunderBurster/blob/9cbfd8c807e887111227b98f2803991c653d4717/Editor/Core/DependencyInstaller.cs"
+        },
+        {
+          "path": "Editor/Core/CollectionsEmbedder.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ThunderBurster/blob/9cbfd8c807e887111227b98f2803991c653d4717/Editor/Core/CollectionsEmbedder.cs"
+        },
+        {
+          "path": "Editor/Core/PipelineJobs/BurstStagedAssemblies.cs",
+          "url": "https://github.com/risk-of-thunder/RoR2ThunderBurster/blob/9cbfd8c807e887111227b98f2803991c653d4717/Editor/Core/PipelineJobs/BurstStagedAssemblies.cs"
+        }
+      ]
+    },
+    {
+      "name": "BurstsOfRain",
+      "url": "https://github.com/risk-of-thunder/BurstsOfRain",
+      "revision": "842395b20c3e947479f0aa89ec56e0b13f30ec9b",
+      "license": "MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2024-10-27T14:00:09-03:00",
+        "head_subject": "Merge remote-tracking branch 'origin/main'",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "BepInEx mod companion, 2024 head",
+      "unity_version": "Additional native Burst library loading",
+      "subsystems": [
+        "Burst",
+        "native loading"
+      ],
+      "local_reuse": "Learn LoadAdditionalLibrary path/failure behavior; Windows .dll assumption not Android integration",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "Future middleware/mods",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "BurstsOfRain/BurstsOfRainMain.cs",
+          "url": "https://github.com/risk-of-thunder/BurstsOfRain/blob/842395b20c3e947479f0aa89ec56e0b13f30ec9b/BurstsOfRain/BurstsOfRainMain.cs"
+        }
+      ]
+    },
+    {
+      "name": "Starstorm2",
+      "url": "https://github.com/TeamMoonstorm/Starstorm2",
+      "revision": "a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8",
+      "license": "GPL-3.0; bundled third-party assets/middleware require separate review",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-06-26T01:05:25-07:00",
+        "head_subject": "Merge pull request #1043 from TeamMoonstorm/0.6.39",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Modern project includes DLC3 references; not exact stock build oracle",
+      "unity_version": "2021.3.33f1 ee5a2aa03ab2; TK9.1.6/R2EK5.6.5 importer1.7.1 in manifest",
+      "subsystems": [
+        "skins",
+        "content",
+        "EntityStates",
+        "stages",
+        "Wwise",
+        "networking"
+      ],
+      "local_reuse": "Study real content collections and lifecycle; no source transplant; potential future source/content port",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/L5.5\u2013L10/post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "SS2-Project/ProjectSettings/ProjectVersion.txt",
+          "url": "https://github.com/TeamMoonstorm/Starstorm2/blob/a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8/SS2-Project/ProjectSettings/ProjectVersion.txt"
+        },
+        {
+          "path": "SS2-Project/Packages/manifest.json",
+          "url": "https://github.com/TeamMoonstorm/Starstorm2/blob/a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8/SS2-Project/Packages/manifest.json"
+        },
+        {
+          "path": "SS2-Project/Assets/ThunderKitSettings/ImportConfiguration.asset",
+          "url": "https://github.com/TeamMoonstorm/Starstorm2/blob/a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8/SS2-Project/Assets/ThunderKitSettings/ImportConfiguration.asset"
+        },
+        {
+          "path": "SS2-Project/Assets/Starstorm2/ContentClasses/SS2VanillaSurvivor.cs",
+          "url": "https://github.com/TeamMoonstorm/Starstorm2/blob/a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8/SS2-Project/Assets/Starstorm2/ContentClasses/SS2VanillaSurvivor.cs"
+        },
+        {
+          "path": "SS2-Project/Assets/Starstorm2/SS2Content.cs",
+          "url": "https://github.com/TeamMoonstorm/Starstorm2/blob/a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8/SS2-Project/Assets/Starstorm2/SS2Content.cs"
+        },
+        {
+          "path": "SS2-Project/Assets/Starstorm2/Modules/Scenes/SceneTypes/SlateMines.cs",
+          "url": "https://github.com/TeamMoonstorm/Starstorm2/blob/a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8/SS2-Project/Assets/Starstorm2/Modules/Scenes/SceneTypes/SlateMines.cs"
+        }
+      ]
+    },
+    {
+      "name": "DebugToolkit",
+      "url": "https://github.com/harbingerofme/DebugToolkit",
+      "revision": "d1e2f0aa4b8ac4747547db0fcd87344953432f06",
+      "license": "BSD-3-Clause",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-07-28T20:12:19+01:00",
+        "head_subject": "3.22.0 and changelog",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Current 3.22.0 source; runtime method signatures require local check",
+      "unity_version": "BepInEx/Mono hooks",
+      "subsystems": [
+        "observers",
+        "master/body",
+        "Run",
+        "director",
+        "authority"
+      ],
+      "local_reuse": "Use semantic query paths rather than object-name heuristics; commands mutate game and do not count as normal completion",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5.5\u2013L8/T08",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "Code/Util.cs",
+          "url": "https://github.com/harbingerofme/DebugToolkit/blob/d1e2f0aa4b8ac4747547db0fcd87344953432f06/Code/Util.cs"
+        },
+        {
+          "path": "Code/NetworkManager.cs",
+          "url": "https://github.com/harbingerofme/DebugToolkit/blob/d1e2f0aa4b8ac4747547db0fcd87344953432f06/Code/NetworkManager.cs"
+        },
+        {
+          "path": "Code/Hooks.cs",
+          "url": "https://github.com/harbingerofme/DebugToolkit/blob/d1e2f0aa4b8ac4747547db0fcd87344953432f06/Code/Hooks.cs"
+        },
+        {
+          "path": "Code/AutoCompletion/AutoCompleteManager.cs",
+          "url": "https://github.com/harbingerofme/DebugToolkit/blob/d1e2f0aa4b8ac4747547db0fcd87344953432f06/Code/AutoCompletion/AutoCompleteManager.cs"
+        }
+      ]
+    },
+    {
+      "name": "UnityExplorer",
+      "url": "https://github.com/sinai-dev/UnityExplorer",
+      "revision": "1e1fb0e27bff9ab0212b4e61ef1ecb38a502b290",
+      "license": "GPL-3.0; third-party licenses also present",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2022-06-23T10:53:16+10:00",
+        "head_subject": "Merge branch 'master' of https://github.com/sinai-dev/UnityExplorer",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Generic inspector; R2Wiki documents RoR2 use and lobby overlay caveat",
+      "unity_version": "README Unity5.2\u20132021+; inspected head is from 2022",
+      "subsystems": [
+        "diagnostics",
+        "reference oracle"
+      ],
+      "local_reuse": "Optional isolated desktop observation; stale upstream head, Android applicability untested",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/T08",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/sinai-dev/UnityExplorer/blob/1e1fb0e27bff9ab0212b4e61ef1ecb38a502b290/README.md"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/sinai-dev/UnityExplorer/blob/1e1fb0e27bff9ab0212b4e61ef1ecb38a502b290/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "BepInEx",
+      "url": "https://github.com/BepInEx/BepInEx",
+      "revision": "5b766a3b7f6c164d4798924a93f3acf4db769d06",
+      "license": "LGPL-2.1",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-09-01T07:03:47+02:00",
+        "head_subject": "Follow PE export jmp thunks before applying a native detour (#1387)",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Generic loader, no RoR2 version equivalence",
+      "unity_version": "README stable Mono; IL2CPP desktop support, ARM column unsupported",
+      "subsystems": [
+        "mod loader",
+        "hooks",
+        "IL2CPP"
+      ],
+      "local_reuse": "Future-host reference only; do not infer Android support from desktop IL2CPP",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "Post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/BepInEx/BepInEx/blob/5b766a3b7f6c164d4798924a93f3acf4db769d06/README.md"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/BepInEx/BepInEx/blob/5b766a3b7f6c164d4798924a93f3acf4db769d06/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "BepInEx.Android",
+      "url": "https://github.com/NextBep/BepInEx.Android",
+      "revision": "33c989e9099b5f36404480aa842d203a04497c0b",
+      "license": "LGPL-2.1",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-08-03T22:22:22+08:00",
+        "head_subject": "Bump Version",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Experimental generic loader; no RoR2 test found",
+      "unity_version": "Android IL2CPP/CoreCLR fork",
+      "subsystems": [
+        "Android",
+        "IL2CPP",
+        "mod loader"
+      ],
+      "local_reuse": "Future research only; no dependency, build, install or success assertion",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "Post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/NextBep/BepInEx.Android/blob/33c989e9099b5f36404480aa842d203a04497c0b/README.md"
+        },
+        {
+          "path": "Runtimes/Unity/BepInEx.Unity.IL2CPP/NextCoreEntrypoint.cs",
+          "url": "https://github.com/NextBep/BepInEx.Android/blob/33c989e9099b5f36404480aa842d203a04497c0b/Runtimes/Unity/BepInEx.Unity.IL2CPP/NextCoreEntrypoint.cs"
+        },
+        {
+          "path": "Runtimes/Unity/BepInEx.Unity.IL2CPP/NextInterop.cs",
+          "url": "https://github.com/NextBep/BepInEx.Android/blob/33c989e9099b5f36404480aa842d203a04497c0b/Runtimes/Unity/BepInEx.Unity.IL2CPP/NextInterop.cs"
+        },
+        {
+          "path": "Runtimes/Unity/BepInEx.Unity.IL2CPP/Il2CppInteropManager.cs",
+          "url": "https://github.com/NextBep/BepInEx.Android/blob/33c989e9099b5f36404480aa842d203a04497c0b/Runtimes/Unity/BepInEx.Unity.IL2CPP/Il2CppInteropManager.cs"
+        }
+      ]
+    },
+    {
+      "name": "BepInEx.Android.Launcher",
+      "url": "https://github.com/NextBep/BepInEx.Android.Launcher",
+      "revision": "fd1a4023fa2f899b24cd75e3e944dfba4e9874a9",
+      "license": "No root license found; component licenses separate; no copying approved",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-09-12T22:57:11+08:00",
+        "head_subject": "fix: settings Switch toggles not working (parent clickable intercepted Switch clicks)",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Experimental generic launcher; no RoR2 validation",
+      "unity_version": "ARM64 Android; native bootstrap architecture",
+      "subsystems": [
+        "Android",
+        "native hooks",
+        "diagnostics"
+      ],
+      "local_reuse": "Read architecture only: il2cpp_init/Dobby/CoreCLR/logcat; vanilla cannot depend on it",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "Post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "README.md",
+          "url": "https://github.com/NextBep/BepInEx.Android.Launcher/blob/fd1a4023fa2f899b24cd75e3e944dfba4e9874a9/README.md"
+        },
+        {
+          "path": "app/src/main/cpp/fusion/src/fusion.cpp",
+          "url": "https://github.com/NextBep/BepInEx.Android.Launcher/blob/fd1a4023fa2f899b24cd75e3e944dfba4e9874a9/app/src/main/cpp/fusion/src/fusion.cpp"
+        },
+        {
+          "path": "app/src/main/cpp/fusion/src/exports.cpp",
+          "url": "https://github.com/NextBep/BepInEx.Android.Launcher/blob/fd1a4023fa2f899b24cd75e3e944dfba4e9874a9/app/src/main/cpp/fusion/src/exports.cpp"
+        },
+        {
+          "path": "app/src/main/cpp/main/main.cpp",
+          "url": "https://github.com/NextBep/BepInEx.Android.Launcher/blob/fd1a4023fa2f899b24cd75e3e944dfba4e9874a9/app/src/main/cpp/main/main.cpp"
+        }
+      ]
+    },
+    {
+      "name": "MoonstormSharedUtils",
+      "url": "https://github.com/TeamMoonstorm/MoonstormSharedUtils",
+      "revision": "fdafff9423ee2efaab44832f95dcd45ae0d4cc39",
+      "license": "Custom license requiring notice and README thanks; not labeled MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-05-27T01:12:40-04:00",
+        "head_subject": "Fix HGDistortion.shader render queue",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Current UberSkinDef versus obsolete VanillaSkinDef",
+      "unity_version": "RoR2 Unity authoring/runtime mod library",
+      "subsystems": [
+        "skins",
+        "content"
+      ],
+      "local_reuse": "Trace SS2 UberSkinDef dependency; concepts only, inspect custom terms before any reuse",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "LICENSE.md",
+          "url": "https://github.com/TeamMoonstorm/MoonstormSharedUtils/blob/fdafff9423ee2efaab44832f95dcd45ae0d4cc39/LICENSE.md"
+        },
+        {
+          "path": "Runtime/Code/ScriptableObjects/UberSkinDef.cs",
+          "url": "https://github.com/TeamMoonstorm/MoonstormSharedUtils/blob/fdafff9423ee2efaab44832f95dcd45ae0d4cc39/Runtime/Code/ScriptableObjects/UberSkinDef.cs"
+        },
+        {
+          "path": "Runtime/Code/ScriptableObjects/Deprecated/VanillaSkinDef.cs",
+          "url": "https://github.com/TeamMoonstorm/MoonstormSharedUtils/blob/fdafff9423ee2efaab44832f95dcd45ae0d4cc39/Runtime/Code/ScriptableObjects/Deprecated/VanillaSkinDef.cs"
+        }
+      ]
+    },
+    {
+      "name": "RoRSkinBuilder",
+      "url": "https://github.com/KingEnderBrine/RoRSkinBuilder",
+      "revision": "fcfc5dfe520dd1f14e9e8e156984bc37b8947cdc",
+      "license": "MIT",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-08-04T00:19:58+07:00",
+        "head_subject": "2.5.2",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Current generator creates SkinDefParams; older tutorials obsolete",
+      "unity_version": "Editor generator for desktop plugins",
+      "subsystems": [
+        "skins",
+        "content",
+        "shader substitution"
+      ],
+      "local_reuse": "Compare explicit renderer/mesh/skinParams generation and body/display conventions; not original deferred loading proof",
+      "notes": "Source inspection only. No third-party code copied. Community behavior is not device evidence.",
+      "milestones": "L5a/L11/post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "Editor/CodeGeneration/PluginCodeTemplate.cs",
+          "url": "https://github.com/KingEnderBrine/RoRSkinBuilder/blob/fcfc5dfe520dd1f14e9e8e156984bc37b8947cdc/Editor/CodeGeneration/PluginCodeTemplate.cs"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://github.com/KingEnderBrine/RoRSkinBuilder/blob/fcfc5dfe520dd1f14e9e8e156984bc37b8947cdc/LICENSE"
+        }
+      ]
+    },
+    {
+      "name": "ProperSave",
+      "url": "https://github.com/KingEnderBrine/-RoR2-ProperSave",
+      "revision": "d20c6c8e593cacce7de94cba7a211b010b15e33b",
+      "license": "No license file found in inspected git tree; concepts only, no copying approved",
+      "last_verified": "2026-09-13",
+      "activity": {
+        "head_commit_date": "2026-07-30T20:02:25+07:00",
+        "head_subject": "Update 3.0.7",
+        "interpretation": "Commit metadata only"
+      },
+      "ror2_version": "Plugin3.0.7; current develop branch; not exact stock build equivalence",
+      "unity_version": "BepInEx/Mono mod; no Android runtime proof",
+      "subsystems": [
+        "profile",
+        "run saves",
+        "filesystem",
+        "local users"
+      ],
+      "local_reuse": "Compare separate physical/cloud filesystem selection and profile linkage, not import stock saves or implement run resumption",
+      "notes": "Source only; mod run-save format is not vanilla UserProfile serialization",
+      "milestones": "L5a/L9/post-vanilla",
+      "confidence": "VERIFIED source / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "ProperSave/ProperSavePlugin.cs",
+          "url": "https://github.com/KingEnderBrine/-RoR2-ProperSave/blob/d20c6c8e593cacce7de94cba7a211b010b15e33b/ProperSave/ProperSavePlugin.cs"
+        },
+        {
+          "path": "ProperSave/SaveFileHeader.cs",
+          "url": "https://github.com/KingEnderBrine/-RoR2-ProperSave/blob/d20c6c8e593cacce7de94cba7a211b010b15e33b/ProperSave/SaveFileHeader.cs"
+        },
+        {
+          "path": "ProperSave/SaveFile.cs",
+          "url": "https://github.com/KingEnderBrine/-RoR2-ProperSave/blob/d20c6c8e593cacce7de94cba7a211b010b15e33b/ProperSave/SaveFile.cs"
+        },
+        {
+          "path": "ProperSave/Saving.cs",
+          "url": "https://github.com/KingEnderBrine/-RoR2-ProperSave/blob/d20c6c8e593cacce7de94cba7a211b010b15e33b/ProperSave/Saving.cs"
+        }
+      ]
+    }
+  ]
+}

@@ -24,3 +24,8 @@ Keep offline single-player first unless evidence requires otherwise. Retain loca
 The real device is the final authority. Never declare success from compilation, a loaded bundle container, or an editor screenshot alone. Runtime diagnostics are instrumented only in the lab harness; actual RoR2 run/audio/network state remains to be integrated.
 
 After meaningful progress update concise PORTING_STATE.md, append failed experiments with evidence/revisit conditions to docs/PORTING_JOURNAL.md, and maintain milestones/backlog. Commit small logical changes after checking staged files for proprietary material. Avoid unrelated rewrites. Read ADR-001 before changing architecture.
+
+
+## Prior-art-first rule
+
+Before implementing a new RoR2-specific reconstruction, Addressables/content loader, serialization repair, gameplay observer, platform adapter, shader mechanism, middleware workaround or runtime diagnostic: identify the subsystem, consult `docs/community-prior-art.md`, inspect the relevant pinned community source, and cite its API knowledge, workaround, failure/version clue or observation technique in the experiment notes. Implement new machinery only for requirements still unsolved on Android. Current legitimate input and device evidence outrank community assumptions. This rule does not require ecosystem research for generic adb/Gradle/shell problems. Keep passed Rewired/Burst/L3/L4 results and package pins unless a concrete new contract or regression justifies revisiting them. Use Conventional Commit messages.
