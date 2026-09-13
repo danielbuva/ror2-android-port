@@ -55,7 +55,7 @@ Every record uses the required issue schema. All outputs containing game-derived
 ## T06 — Isolate Burst/Collections
 - **ID:** T06
 - **TITLE:** Isolate Burst/Collections
-- **STATUS:** PENDING
+- **STATUS:** REPRESENTATIVE PACKAGE PASS; full game compatibility OPEN
 - **CONTEXT:** L0–L3 execution, or conditional supporting gate per DEVELOPMENT_PLAN.md.
 - **OBSERVATION:** J05 direct-call initialization crashes editor.
 - **HYPOTHESIS:** Compatible artifacts or valid managed fallback preserve operations.
@@ -71,7 +71,7 @@ Every record uses the required issue schema. All outputs containing game-derived
 ## T07 — Execute meaningful original code on Android
 - **ID:** T07
 - **TITLE:** Execute meaningful original code on Android
-- **STATUS:** PENDING
+- **STATUS:** BOUNDED SLICE PASS; full closure OPEN
 - **CONTEXT:** L0–L3 execution, or conditional supporting gate per DEVELOPMENT_PLAN.md.
 - **OBSERVATION:** Utility execution does not prove game code.
 - **HYPOTHESIS:** Selected boundary permits original slice AOT and execution.
@@ -161,3 +161,7 @@ L4: required reference closure → animated prefab → loadingbasic device load.
 J11 attributes both conflicts to extra exported forwarding getters; original DLL bytes have one implementation per slot. Evidence: work/experiments/dependency-boundaries/20260913T021130.995984Z. T05 first tests original DLLs with the actual disputed types rooted/invoked. T07 selected Trajectory and ProcChainMask/ProcType; slice success is not full closure acceptance.
 
 T05/J12: original Core/Windows bytes pass both explicitly rooted conflicting virtual slots on device, work/experiments/rewired-original/20260913T021247.788313Z. T06 next.
+
+## Next gate refinement — T07b
+
+T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AOT-build the full original managed set with compatible packages. This distinguishes actual assembly preservation from the export-modified J09 closure; do not infer full closure from a type-pruned slice.

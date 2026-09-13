@@ -3,6 +3,8 @@ using Mono.Cecil.Cil;
 using System.Security.Cryptography;
 using System.Text.Json;
 
+if (args.Length > 0 && args[0] == "--slice") { Slice.Run(args.Skip(1).ToArray()); return; }
+
 // Read-only metadata attribution. Never loads or runs the inspected game assembly.
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(args[0]))!);

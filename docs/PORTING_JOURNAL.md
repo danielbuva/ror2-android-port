@@ -109,3 +109,32 @@ Experiment: original Rewired_Core and Rewired_Windows in the existing lab; expli
 Result: forced ARM64 IL2CPP Vulkan build succeeds in 67 seconds; both actual slots execute correctly on the authorized device, with PID/attempt-correlated JSON, G2 screenshot, adopted placement and cleanup. Original DLL hashes recorded. No middleware code, original assets or evidence committed.
 Evidence: work/experiments/rewired-original/20260913T021247.788313Z; APK SHA-256 19dab055b304e08fc5429d40e77e105d6b64aef5b20627b796be7239810aeb43.
 Decision: T05's recorded AOT conflict is resolved for this bounded probe. Preserve originals as the next closure candidate. Full closure, ReInput initialization, serialized mapping and Android controller operation remain open; do not label Rewired fully compatible. The original exporter failure is retained, not overwritten.
+
+## J13 — Package resolution precedes Collections probe compilation
+
+Observation/hypothesis: pinned Collections 1.2.4/Burst 1.8.11 (versions bundled with exact editor) should permit a representative native list/job probe.
+Result: first attempt failed before player compilation, CS0246 BurstCompileAttribute. The live package lock still lacked the requested packages after MCP refresh; this is package-resolution sequencing, not a runtime compatibility result. No APK installed.
+Evidence: work/experiments/collections-runtime/20260913T021631.935352Z, including full editor log, stage, build failure and first-failure.json.
+Next/revisit: restart only the isolated lab editor after the terminal failed build, allow manifest resolution before staging/compiling the probe, then retry. No version change or cache clearing is justified by this failure.
+
+## J14 — Pinned Collections/Burst candidate executes in editor and on ARM64
+
+Hypothesis: package-built artifacts from a justified exact-editor-era package set avoid the recovered player direct-call setup for representative operations.
+Experiment: Collections 1.2.4, Burst 1.8.11 (both versions bundled with the exact editor), Mathematics 1.2.1; NativeList add/swap-remove, NativeArray/NativeSlice, scheduled sum job and disposal. A BurstDiscard sentinel distinguishes compiled execution from managed fallback. Packages resolved after J13's isolated restart.
+Result: editor and Android both return sum 31 and post-removal sum 24; Burst execution sentinel true in both. Android PID/attempt correlated; build terminal before editor Play; device installed on adopted storage and cleaned up. This validates a package candidate, not every game-consumed API/layout or full reconstructed Play Mode.
+Evidence: work/experiments/collections-runtime/20260913T021910.087323Z/editor-probe.json and android-probe.json, APK/build/capture receipts.
+Next: T07 selected original game IL; later test full original managed closure with these package candidates. No arbitrary version sweep or broad cache clear.
+
+## J15 — Slice metadata reader failure, before Unity build
+
+Hypothesis: retain compiler/runtime attributes while pruning only the selected mathematical types and full-game discovery registration.
+Result: legacy Cecil attempted GAC resolution while decoding a compiler attribute enum under modern .NET; the preparation subprocess failed before Unity build dispatch. The first stage/console are preserved under work/experiments/ror2-slice. No game method rewrite or device install occurred.
+Repair: preserve primitive/enum attribute blobs without unnecessary value decoding, inspect their constructor references, and use source-directory dependency resolution. Compiler/runtime attributes remain; only the full-game HG discovery opt-in is omitted from the isolated slice. Four authored-fixture tests cover retained IL/source identity, missing types, dangling dependencies and output outside ignored work. All ten host tests now pass.
+Revisit only if a new attribute form requires supported closure inspection. This is a metadata-tool failure, not a game/AOT compatibility finding.
+
+## J16 — Original RoR2 trajectory/proc-mask IL executes on ARM64
+
+Experiment: retain three self-contained original RoR2 types (35 method bodies), preserve assembly/type identities and verify normalized method IL/locals/handler fingerprints after writing. Remove other types/resources and full-game HG discovery opt-in; retain compiler/runtime attributes. This is a type-pruned original-code assembly, not an unchanged full DLL and not C# source reconstruction.
+Result: ten authored assertions pass on each of three fresh Android PIDs, each alive over 36 seconds. Ballistic apex/duration/position and solve-integrate consistency; proc bits/idempotence/removal/value-copy behavior. ARM64 IL2CPP Vulkan; adopted package/payload; visual capture checked; owned package removed.
+Evidence: work/experiments/ror2-slice/20260913T022358.230312Z, slice-provenance.json and launch-1..3/probe.json; local LAST_KNOWN_GOOD_MANAGED_SLICE receipt. Ten host safety/transform tests pass.
+Decision: T07 bounded original-code execution passes. Full closure/EntityStates, original startup, character and stage remain unproven. Next discriminate full original-assembly AOT with the passing package candidates, without export-added forwarding getters. This is a new assembly-input hypothesis, not a repeat of J09's exported closure.

@@ -26,6 +26,12 @@ try:
   elif a.action=='rewired-original':
    from boundaries import rewired_original
    rewired_original()
+  elif a.action=='collections-runtime':
+   from boundaries import collections_runtime
+   collections_runtime()
+  elif a.action=='ror2-slice':
+   from boundaries import ror2_slice
+   ror2_slice()
   elif a.action=='recompile':
    from experiments import recompile
    recompile()

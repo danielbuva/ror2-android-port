@@ -23,6 +23,8 @@ The prepared environment already contains the exact Unity/Android toolchain and 
 | `./dev prototype` | Stage source-owned harness, one original utility DLL and one converted mesh under work/. |
 | `./dev prototype --action dependency-boundaries` | Attribute original/exported Rewired differences and record the bounded original-code probe. |
 | `./dev prototype --action rewired-original` | Test the J09 virtual slots using original DLL inputs on ARM64; no controller initialization claim. |
+| `./dev prototype --action collections-runtime` | Pinned native-list/job candidate on editor and Android; package resolution required before probing. |
+| `./dev prototype --action ror2-slice` | Original trajectory/proc-mask IL with three cold-start assertion/survival runs; not full game closure. |
 | `./dev prototype --action middleware` | Exact native Wwise version and bank metadata evidence. |
 | `./dev prototype --action recompile` | Full recovered RoR2 source compile probes using modern and Unity compilers. |
 | `./dev prototype --action reconstruction` | Export scene/shader/source summary. |
