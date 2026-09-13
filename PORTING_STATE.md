@@ -16,3 +16,5 @@
 - **Health:** Doctor, preflight and eleven host tests pass. Required capture failure now forces a failed receipt; J27 preserves the initial Android capture-path failure. Query live storage/adopted UUID every install; serialized editor operations only.
 
 Read DEVELOPMENT_PLAN.md, ADR-001, PORTING_JOURNAL.md and execution-backlog.md before the next experiment. Compilation, inert instantiation and synthetic binding do not establish gameplay or platform success.
+
+Public repository audit: private bootstrap captures removed from tracking and public reachable history; local evidence retained. See docs/public-repo-audit.md. Commit IDs were rewritten; ignored work/checkpoints/PUBLIC_HISTORY_MAP.json maps prior evidence commits. GitHub still serves an old commit by SHA; residual cache/object removal requires GitHub Support. L5a-2 remains the next game experiment.

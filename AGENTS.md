@@ -32,4 +32,4 @@ Before implementing a new RoR2-specific reconstruction, Addressables/content loa
 
 ## Public-repository privacy gate
 
-Before committing, run `python3 scripts/audit-public.py` against staged content. Raw bootstrap evidence stays ignored locally, as do all game-derived outputs. Publish authored summaries, never device/storage/display identifiers, private home paths, personal emails or authentication-session records. Use a GitHub noreply commit email. A passing pattern scan supplements manual IP/provenance and secret review; it does not replace them.
+Before committing, run `python3 scripts/audit-public.py` against staged content. Raw bootstrap evidence stays ignored locally, as do all game-derived outputs. Publish authored summaries, never device/storage/display identifiers, private home paths, personal emails or authentication-session records. Use a GitHub noreply commit email. Never mirror-push local app snapshot refs or private backup bundles. A passing pattern scan supplements manual IP/provenance and secret review; it does not replace them.
