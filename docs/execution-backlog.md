@@ -23,7 +23,7 @@ Every record uses the required issue schema. All outputs containing game-derived
 ## T02 — Identify smallest meaningful RoR2 slice
 - **ID:** T02
 - **TITLE:** Identify smallest meaningful RoR2 slice
-- **STATUS:** NEXT
+- **STATUS:** DONE
 - **CONTEXT:** L0–L3 execution, or conditional supporting gate per DEVELOPMENT_PLAN.md.
 - **OBSERVATION:** SimpleJSON does not prove RoR2; J09 identifies Rewired conflicts.
 - **HYPOTHESIS:** A bounded dependency transformation enables actual original game code.
@@ -39,7 +39,7 @@ Every record uses the required issue schema. All outputs containing game-derived
 ## T05 — Isolate Rewired boundary
 - **ID:** T05
 - **TITLE:** Isolate Rewired boundary
-- **STATUS:** PENDING
+- **STATUS:** BOUNDED AOT PASS; controller/native integration OPEN
 - **CONTEXT:** L0–L3 execution, or conditional supporting gate per DEVELOPMENT_PLAN.md.
 - **OBSERVATION:** Windows closure conflicts in Core/Windows.
 - **HYPOTHESIS:** Android-capable integration retains required contract.
@@ -155,3 +155,9 @@ Passed fresh doctor/preflight, six safety tests and Vulkan smoke. work/runs/2026
 ## Subsequent issue expansion
 
 L4: required reference closure → animated prefab → loadingbasic device load. L5/L9: writable profile root → observed lawful startup boundary → menu. L5.5: master/body spawn/authority → deterministic original simulation → built-in input. L6: stage integration → camera/abilities. L7: enemy/damage → pickup/interactable → director → teleporter. L8: transitions/lifetime → finale → victory persistence. Expand each into this full schema only when its prerequisite evidence exists.
+
+## T02 result / T05 candidate refinement
+
+J11 attributes both conflicts to extra exported forwarding getters; original DLL bytes have one implementation per slot. Evidence: work/experiments/dependency-boundaries/20260913T021130.995984Z. T05 first tests original DLLs with the actual disputed types rooted/invoked. T07 selected Trajectory and ProcChainMask/ProcType; slice success is not full closure acceptance.
+
+T05/J12: original Core/Windows bytes pass both explicitly rooted conflicting virtual slots on device, work/experiments/rewired-original/20260913T021247.788313Z. T06 next.

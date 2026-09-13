@@ -20,7 +20,13 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='recompile':
+  if a.action=='dependency-boundaries':
+   from boundaries import dependency_boundaries
+   dependency_boundaries()
+  elif a.action=='rewired-original':
+   from boundaries import rewired_original
+   rewired_original()
+  elif a.action=='recompile':
    from experiments import recompile
    recompile()
   elif a.action=='middleware':

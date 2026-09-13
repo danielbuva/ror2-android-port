@@ -92,3 +92,20 @@ Workflow correction: one early inspection request overlapped the long reconstruc
 Final validation: six host safety tests pass; doctor/preflight pass; unchanged inventory/decompilation/graphics/build caches reuse results. work/build-cache-final-check.json records a cached=true result for the exact last passing APK. Generated game material remains ignored; commits contain tooling and authored findings only.
 
 Additional diagnostics proof: `work/experiments/diagnostics-toggle/result.json` verifies that changing the subtree configuration without rebuilding reduces the next runtime hierarchy snapshot to the selected recovered geometry object. Public-field collection was enabled; this object's built-in components expose no matching public fields, so an empty field list is expected. The disposable package was removed after the test.
+
+## J11 — Export-modified Rewired metadata, not an unchanged-original closure
+
+Observation: J09's failing override names differed from recovered source metadata. Compare the same four types in original and exported DLLs without executing either assembly.
+Result: exported Core/Windows hashes differ from originals. The Core derived type grows from 5 to 6 methods; the Windows derived type from 2 to 3. Each acquires a forwarding getter targeting the same base slot as its surviving virtual method. The original has one implementation. This matches both J09 conflicting method names. The exported DLLs are transformed artifacts, not byte-preserved original assemblies.
+Evidence: work/experiments/dependency-boundaries/20260913T021130.995984Z/ (original/export method bodies and override tables, hashes, reports).
+Decision: first T05 candidate becomes original DLL preservation with those exact virtual slots rooted and invoked on ARM64. This is a new discriminating experiment, not a repeat of J09. Full Android controller support, native backend availability, serialized maps and full game closure remain unproven. Revisit replacement middleware only after testing this boundary.
+
+T02 also selects original RoR2.Trajectory and ProcChainMask/ProcType method IL for a bounded ballistic/combat-mask probe with numerical/bit-state assertions. This does not exercise EntityStates, character simulation, platform initialization or full RoR2 closure. Do not promote a future slice pass to full game compatibility.
+
+## J12 — Original Rewired virtual slots pass Android IL2CPP
+
+Hypothesis: bypass the export's added forwarding getters by preserving original DLL bytes, not by patching input behavior.
+Experiment: original Rewired_Core and Rewired_Windows in the existing lab; explicit linker roots for both failing base/derived pairs; allocate uninitialized instances, suppress finalizers, invoke the original base virtual method. Core returns expected 1; Windows returns the assigned expected 37. Constructors/native input backends are deliberately not initialized.
+Result: forced ARM64 IL2CPP Vulkan build succeeds in 67 seconds; both actual slots execute correctly on the authorized device, with PID/attempt-correlated JSON, G2 screenshot, adopted placement and cleanup. Original DLL hashes recorded. No middleware code, original assets or evidence committed.
+Evidence: work/experiments/rewired-original/20260913T021247.788313Z; APK SHA-256 19dab055b304e08fc5429d40e77e105d6b64aef5b20627b796be7239810aeb43.
+Decision: T05's recorded AOT conflict is resolved for this bounded probe. Preserve originals as the next closure candidate. Full closure, ReInput initialization, serialized mapping and Android controller operation remain open; do not label Rewired fully compatible. The original exporter failure is retained, not overwritten.

@@ -21,6 +21,8 @@ The prepared environment already contains the exact Unity/Android toolchain and 
 | `./dev decompile [--assembly RoR2.dll]` | Local ilspycmd C#9 project export with per-assembly receipts. |
 | `./dev export-project` | Cached AssetRipper local reconstruction with pinned settings; starts local service if needed. |
 | `./dev prototype` | Stage source-owned harness, one original utility DLL and one converted mesh under work/. |
+| `./dev prototype --action dependency-boundaries` | Attribute original/exported Rewired differences and record the bounded original-code probe. |
+| `./dev prototype --action rewired-original` | Test the J09 virtual slots using original DLL inputs on ARM64; no controller initialization claim. |
 | `./dev prototype --action middleware` | Exact native Wwise version and bank metadata evidence. |
 | `./dev prototype --action recompile` | Full recovered RoR2 source compile probes using modern and Unity compilers. |
 | `./dev prototype --action reconstruction` | Export scene/shader/source summary. |
