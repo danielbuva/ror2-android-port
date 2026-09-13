@@ -385,7 +385,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3 — Recovered application host and startup component lifecycle
 - **ID:** L5b-3
-- **STATUS:** NEXT
+- **STATUS:** SPLIT — L5b-3a real recovered application Awake, then individually measured component lifecycles
 - **TITLE:** Measure the six startup components before crossing into audio
 - **CONTEXT:** J40 proves loading-scene/UI handoff with the routine on an inactive diagnostic host.
 - **OBSERVATION:** The recovered application's enable list has GlobalShaderTextures, two PostProcessVolume entries, InterpolationController, NGSS_Local and FPSQueue, all disabled/inactive. The diagnostic host's empty list cannot establish their lifecycle.
@@ -398,3 +398,35 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First component initialization/reference/shader/native failure, enabled/active states, actual lifecycle events, original method and source/APK/payload identities.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J40 rollback; select next component or Wwise boundary from evidence. Keep actual saves/menu/simulation open.
 - **DEPENDENCIES:** L5b-2/J40 and measured original component/application lifecycle audit.
+
+## L5b-3a — Original Awake on the recovered application component
+- **ID:** L5b-3a
+- **STATUS:** PASS — J41, explicitly invoked real recovered Awake; automatic lifecycle unproven
+- **TITLE:** Establish the real application singleton without starting every component
+- **CONTEXT:** J40 uses an inactive diagnostic host for the bounded startup coroutine.
+- **OBSERVATION:** Original Awake assigns instance/build ID/assembly types and registers callbacks. It starts OnLoad only when isLoading is false; the tested original first yield has already set that flag true.
+- **HYPOTHESIS:** Explicit original Awake invocation on the actual inactive recovered component can establish its identity while preserving the current bounded coroutine.
+- **TASK:** Reuse J40, require the naturally established loading flag, invoke the original method unchanged, and verify singleton identity, Application.version build ID, expected assembly types, inactive object and disabled six-component list.
+- **CONSTRAINTS:** Common contract; do not set loading/authentication flags manually, skip checks or activate the entire object. Event subscription is not entitlement success. Explicit method invocation does not establish automatic Unity Start/Update behavior. Keep app installed.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing startup probe/preparation and ignored component audit/evidence.
+- **TEST COMMAND:** `./dev prototype --action startup-application-prepare`, forced Vulkan build and `./dev prototype --action startup-run`; existing preflight/install guards.
+- **PASS CONDITION:** Real recovered singleton, correct build/type identities and bounded inactive state persist on the device; no extra startup coroutine, filesystem assignment or new unexplained exception.
+- **FAILURE EVIDENCE TO CAPTURE:** First original Awake/static initializer error, current-PID singleton/loading/component state and source/APK/payload identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J40; record bounded method outcome, keep full component lifecycle/menu/simulation open, choose the first actual component method next.
+- **DEPENDENCIES:** L5b-2/J40 and six-component/application source and pinned metadata audit.
+
+## L5b-3b — Original global texture initialization
+- **ID:** L5b-3b
+- **STATUS:** NEXT
+- **TITLE:** Verify the first measured startup component method
+- **CONTEXT:** J41 establishes the recovered application singleton without enabling its six-component list.
+- **OBSERVATION:** GlobalShaderTextures.Start binds the serialized warp, elite and snow textures to three named shader globals.
+- **HYPOTHESIS:** The recovered component retains valid texture identities and its unchanged original method can bind them on Android.
+- **TASK:** Restore J41, independently record serialized texture GUID/imported identities and variable names, explicitly invoke original Start on the real component, then compare Shader.GetGlobalTexture results to each non-null source. Capture previous globals and restore after assertions where appropriate.
+- **CONSTRAINTS:** Common contract; no authored replacement binding as proof, no full application activation, no automatic lifecycle or rendering-parity claim. Keep owned app installed.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow startup probe/preparation, ignored texture identity evidence, state/journal.
+- **TEST COMMAND:** Existing forced Vulkan build and startup-run lifecycle with a thin measured component option.
+- **PASS CONDITION:** All three original global assignments match independently verified recovered textures and stable device lifetime; no new exception.
+- **FAILURE EVIDENCE TO CAPTURE:** First missing/wrong texture identity or global binding, method invocation, original DLL/APK/payload hashes and current-PID evidence.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J41; record method proof separately from visual shaders/lifecycle, then select the next component from the stored audit.
+- **DEPENDENCIES:** L5b-3a/J41, component-audit.json and current recovered serialized texture references.

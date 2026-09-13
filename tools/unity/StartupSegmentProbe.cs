@@ -10,10 +10,10 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -25,6 +25,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  IEnumerator Start(){
   cfg=JsonUtility.FromJson<Config>(Resources.Load<TextAsset>("StartupSegmentProbe").text);report=new Report{attempt=cfg.attempt};
   if(cfg.loadingScene)report.stopBoundary="After two original loading-UI frame yields, before EnableBehaviours and Wwise";
+  if(cfg.applicationAwake)report.stopBoundary="After explicitly invoked original Awake on inactive recovered application; no Start/Update/component enabling/audio";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -83,6 +84,13 @@ public class StartupSegmentProbe : MonoBehaviour {
    // Pinned routine yields exactly twice here before enabling components. Never request a third MoveNext.
    for(int i=0;i<2;i++){Require(routine.MoveNext()&&routine.Current is WaitForEndOfFrame,"Unexpected original loading-UI yield");report.loadingUiYields++;Save();yield return routine.Current;}
    Require(RoR2.RoR2Application.instance==null&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Startup escaped selected loading-UI boundary");
+   if(cfg.applicationAwake){
+    Phase("recovered-application-awake");report.loadingFlagBeforeAwake=RoR2.RoR2Application.isLoading;Require(report.loadingFlagBeforeAwake,"Original routine has not established loading state");
+    var awake=typeof(RoR2.RoR2Application).GetMethod("Awake",BindingFlags.Instance|BindingFlags.NonPublic);Require(awake!=null,"Original Awake missing");awake.Invoke(apps[0],null);
+    report.realSingleton=RoR2.RoR2Application.instance==apps[0];report.buildId=RoR2.RoR2Application.GetBuildId();report.assemblyTypesReady=RoR2.RoR2Application.AssemblyTypes!=null&&RoR2.RoR2Application.AssemblyTypes.Contains(typeof(RoR2.CharacterBody));
+    Require(report.realSingleton&&report.buildId==Application.version&&report.assemblyTypesReady,"Original application identity assertions failed");
+    Require(!apps[0].gameObject.activeInHierarchy&&enable.All(x=>!x.enabled)&&RoR2.RoR2Application.isLoading&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Awake escaped selected boundary");report.recoveredAwakeCompleted=true;
+   }
   }
   // Never advance into component enabling/audio/platform/profile initialization.
   report.success=true;Phase("segment-complete");Debug.Log("LAB_STARTUP_SEGMENT_PASS");

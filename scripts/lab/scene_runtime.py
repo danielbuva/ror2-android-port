@@ -321,10 +321,10 @@ def skin_apply_prepare():
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
 
 
-def startup_prepare(loading_scene=False):
+def startup_prepare(loading_scene=False, application_awake=False):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
+    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
     previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Preserve previous stage first')
@@ -334,11 +334,14 @@ def startup_prepare(loading_scene=False):
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
     r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'startup':True,'controller':False,'skin':False,'skin_apply':False,'avatar':False,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original startup PreFrame and independent profile filesystem candidate pending'})
     (stage/'ControllerAddressProbe.cs').unlink(missing_ok=True);(stage/'Resources/ControllerAddressProbe.json').unlink(missing_ok=True)
-    shutil.copy2(ROOT/'tools/unity/StartupSegmentProbe.cs',stage/'StartupSegmentProbe.cs');write(stage/'Resources/StartupSegmentProbe.json',{'attempt':out.name,'loadingScene':loading_scene})
+    shutil.copy2(ROOT/'tools/unity/StartupSegmentProbe.cs',stage/'StartupSegmentProbe.cs');write(stage/'Resources/StartupSegmentProbe.json',{'attempt':out.name,'loadingScene':loading_scene,'applicationAwake':application_awake})
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     for name in ['original-metadata.json','reflection-metadata.json']:shutil.copy2(WORK/'experiments/startup-boundary'/name,out/name)
     write(out/'startup-contract.json',{'segment':'Original InitializeGameRoutine first MoveNext, then reviewed PreFrame enumerator only; Awake and later startup remain inactive','expected_targets':['FlashWindow.Init'],'predicted_boundary':'FlashWindow cctor calls kernel32 GetCurrentProcessId; establish actual device outcome without patching','profile':'Original Zio SubFileSystem under fresh owned persistent directory; read-only content view, no vanilla saves or global filesystem assignment','prior_art':'ProperSave filesystem policy separation; community-prior-art.md startup trace; actual original DLL IL rechecked'})
     if loading_scene:
         r['startup_loading_scene']=True;r['status']='Original recovered loading-scene handoff pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Original PreFrame then actual recovered loadingbasic and two original loading UI yields; stop before EnableBehaviours', 'predicted_boundary':'Recovered Canvas/percentage and enable-list identities; no new adapter'});write(out/'startup-contract.json',contract)
+    if application_awake:
+        r['startup_application_awake']=True;r['status']='Original recovered application Awake pending';write(out/'attempt.json',r)
+        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted loading UI then explicitly invoke original Awake on inactive recovered component; no automatic Start/Update', 'predicted_boundary':'Original loading flag prevents duplicate coroutine; real singleton, build ID and assembly types must match; entitlement subscriptions do not assert entitlement success'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
