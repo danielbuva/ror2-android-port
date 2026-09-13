@@ -21,9 +21,17 @@ public static class LabBuild {
    PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android,false);PlayerSettings.SetGraphicsAPIs(BuildTarget.Android,new[]{api=="vulkan"?GraphicsDeviceType.Vulkan:GraphicsDeviceType.OpenGLES3});
    PlayerSettings.enableFrameTimingStats=true;
    Directory.CreateDirectory(Path.Combine(root,"generated-android-data"));
+   var bundleBuilds=new System.Collections.Generic.List<AssetBundleBuild>();
+   string sceneProbeConfig=Path.Combine(root,"scene-probe-build.json");
+   if(File.Exists(sceneProbeConfig)){
+    var cfg=JsonUtility.FromJson<SceneProbeConfig>(File.ReadAllText(sceneProbeConfig));
+    if(!cfg.scene.StartsWith("Assets/LabLoadingScene/") || !File.Exists(cfg.scene))throw new Exception("Unexpected loading scene probe path");
+    bundleBuilds.Add(new AssetBundleBuild{assetBundleName="loadingbasic-lab",assetNames=new[]{cfg.scene}});
+   }
    var mesh=AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Recovered/geometry.obj");
    if(mesh==null)throw new Exception("Recovered mesh missing; prototype preparation required");
-   BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),new[]{new AssetBundleBuild{assetBundleName="labgeometry",assetNames=new[]{"Assets/Recovered/geometry.obj"}}},BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android);
+   bundleBuilds.Add(new AssetBundleBuild{assetBundleName="labgeometry",assetNames=new[]{"Assets/Recovered/geometry.obj"}});
+   if(!BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),bundleBuilds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android))throw new Exception("Requested bundle build failed");
    var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
    var camera=new GameObject("Lab Camera").AddComponent<Camera>();camera.tag="MainCamera";camera.backgroundColor=new Color(.04f,.06f,.09f);camera.clearFlags=CameraClearFlags.SolidColor;camera.gameObject.AddComponent<LabDiagnostics>();
    var light=new GameObject("Lab Light").AddComponent<Light>();light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(35,40,0);
@@ -35,6 +43,7 @@ public static class LabBuild {
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
+ [Serializable] class SceneProbeConfig {public string scene;}
  [MenuItem("Porting Lab/Record Backend Constraints")]
  public static void Backend(){
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));

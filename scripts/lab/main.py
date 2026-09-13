@@ -20,7 +20,16 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='scene-closure':
+  if a.action=='scene-arm':
+   from scene_runtime import scene_arm
+   scene_arm()
+  elif a.action=='scene-run':
+   from scene_runtime import scene_run
+   scene_run()
+  elif a.action=='scene-prepare':
+   from scene_runtime import scene_prepare
+   scene_prepare()
+  elif a.action=='scene-closure':
    from scene_closure import scene_closure
    scene_closure()
   elif a.action=='dependency-boundaries':
