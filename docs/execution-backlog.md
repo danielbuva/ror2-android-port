@@ -417,7 +417,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3b — Original global texture initialization
 - **ID:** L5b-3b
-- **STATUS:** NEXT
+- **STATUS:** PASS — J42, three original global bindings and previous-state restoration
 - **TITLE:** Verify the first measured startup component method
 - **CONTEXT:** J41 establishes the recovered application singleton without enabling its six-component list.
 - **OBSERVATION:** GlobalShaderTextures.Start binds the serialized warp, elite and snow textures to three named shader globals.
@@ -430,3 +430,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First missing/wrong texture identity or global binding, method invocation, original DLL/APK/payload hashes and current-PID evidence.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J41; record method proof separately from visual shaders/lifecycle, then select the next component from the stored audit.
 - **DEPENDENCIES:** L5b-3a/J41, component-audit.json and current recovered serialized texture references.
+
+## L5b-3c — Original interpolation timing
+- **ID:** L5b-3c
+- **STATUS:** NEXT
+- **TITLE:** Verify the recovered interpolation controller with real frame timing
+- **CONTEXT:** J42 passes the first isolated startup component method; the application object remains inactive.
+- **OBSERVATION:** InterpolationController.Start allocates a two-sample history, FixedUpdate records Time.fixedTime and Update derives the render interpolation factor. No application singleton or service initialization is required by these methods.
+- **HYPOTHESIS:** Original methods preserve valid fixed-frame history and interpolation behavior under Android scheduling.
+- **TASK:** Inspect pinned signatures, initialize the real recovered component, then call its original methods at measured fixed/frame boundaries. Record initial fallback and multiple distinct fixed-time samples, compare reported interpolation against an independently recorded timing oracle and restore temporary state where appropriate. Label diagnostic scheduling explicitly.
+- **CONSTRAINTS:** Common contract; no fabricated timing results, no synthetic implementation replacing original methods, no full application/component activation or movement claim. Keep owned app installed.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow startup probe option and ignored timing/identity evidence, state/journal.
+- **TEST COMMAND:** Existing forced Vulkan build/startup-run lifecycle; thin preparation option with current-attempt/PID assertions.
+- **PASS CONDITION:** Original initialization and timing methods produce finite expected values across distinct real fixed ticks and stable device lifetime. Automatic lifecycle and character movement remain separate.
+- **FAILURE EVIDENCE TO CAPTURE:** First initialization/history/nonfinite/timing mismatch, real timestamps and observed result, original DLL/APK/payload identity, current-PID logs/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J42 rollback and distinguish manual method scheduling from engine lifecycle; then select FPSQueue or the next measured component from J41 audit.
+- **DEPENDENCIES:** L5b-3b/J42 and original InterpolationController source/metadata audit.

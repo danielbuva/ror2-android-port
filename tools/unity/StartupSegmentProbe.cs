@@ -10,10 +10,11 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures;public TextureExpectation[] textures;}
+ [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -26,6 +27,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   cfg=JsonUtility.FromJson<Config>(Resources.Load<TextAsset>("StartupSegmentProbe").text);report=new Report{attempt=cfg.attempt};
   if(cfg.loadingScene)report.stopBoundary="After two original loading-UI frame yields, before EnableBehaviours and Wwise";
   if(cfg.applicationAwake)report.stopBoundary="After explicitly invoked original Awake on inactive recovered application; no Start/Update/component enabling/audio";
+  if(cfg.globalTextures)report.stopBoundary="After explicit original GlobalShaderTextures.Start and binding/restore assertions; application remains inactive";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -55,6 +57,21 @@ public class StartupSegmentProbe : MonoBehaviour {
   }
   report.profileGlobalsUntouched=RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null;
   Require(report.profileRoundTrip&&report.profileReopen&&report.rootsSeparate&&report.pathEscapeRejected&&report.contentReadOnly&&report.profileCleaned&&report.profileGlobalsUntouched,"Profile filesystem boundary assertions failed");
+ }
+ void TestGlobalTextures(RoR2.RoR2Application app){
+  Phase("original-global-textures");var target=app.GetComponent<GlobalShaderTextures>();Require(target&&!target.enabled&&!target.gameObject.activeInHierarchy,"Expected inactive recovered texture component");
+  var textures=new[]{target.warpRampTexture,target.eliteRampTexture,target.snowMicrofacetTexture};var names=new[]{target.warpRampShaderVariableName,target.eliteRampShaderVariableName,target.snowMicrofacetNoiseVariableName};
+  Require(cfg.textures!=null&&cfg.textures.Length==3&&names.Distinct().Count()==3,"Expected three measured texture bindings");
+  for(int i=0;i<3;i++){var e=cfg.textures[i];Require(textures[i]&&textures[i].name==e.name&&textures[i].width==e.width&&textures[i].height==e.height&&names[i]==e.variable,"Recovered texture identity mismatch at "+i);}
+  var previous=names.Select(n=>Shader.GetGlobalTexture(n)).ToArray();
+  try{
+   foreach(var name in names)Shader.SetGlobalTexture(name,(Texture)null);
+   Require(names.All(n=>!Shader.GetGlobalTexture(n)),"Diagnostic global reset failed");
+   var start=typeof(GlobalShaderTextures).GetMethod("Start",BindingFlags.Instance|BindingFlags.NonPublic);Require(start!=null,"Original texture Start missing");start.Invoke(target,null);
+   report.textureBindings=Enumerable.Range(0,3).Select(i=>names[i]+"="+textures[i].name+":"+textures[i].width+"x"+textures[i].height).ToArray();
+   report.globalTexturesPassed=Enumerable.Range(0,3).All(i=>Shader.GetGlobalTexture(names[i])==textures[i]);Require(report.globalTexturesPassed,"Original texture binding failed");
+  }finally{for(int i=0;i<3;i++)Shader.SetGlobalTexture(names[i],previous[i]);report.globalsRestored=Enumerable.Range(0,3).All(i=>Shader.GetGlobalTexture(names[i])==previous[i]);}
+  Require(report.globalsRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"Texture probe restoration or inactive boundary failed");
  }
  IEnumerator Run(){
   Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
@@ -90,6 +107,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     report.realSingleton=RoR2.RoR2Application.instance==apps[0];report.buildId=RoR2.RoR2Application.GetBuildId();report.assemblyTypesReady=RoR2.RoR2Application.AssemblyTypes!=null&&RoR2.RoR2Application.AssemblyTypes.Contains(typeof(RoR2.CharacterBody));
     Require(report.realSingleton&&report.buildId==Application.version&&report.assemblyTypesReady,"Original application identity assertions failed");
     Require(!apps[0].gameObject.activeInHierarchy&&enable.All(x=>!x.enabled)&&RoR2.RoR2Application.isLoading&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Awake escaped selected boundary");report.recoveredAwakeCompleted=true;
+    if(cfg.globalTextures)TestGlobalTextures(apps[0]);
    }
   }
   // Never advance into component enabling/audio/platform/profile initialization.

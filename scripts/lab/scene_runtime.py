@@ -321,10 +321,10 @@ def skin_apply_prepare():
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
 
 
-def startup_prepare(loading_scene=False, application_awake=False):
+def startup_prepare(loading_scene=False, application_awake=False, global_textures=False):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
+    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
     previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Preserve previous stage first')
@@ -344,4 +344,23 @@ def startup_prepare(loading_scene=False, application_awake=False):
     if application_awake:
         r['startup_application_awake']=True;r['status']='Original recovered application Awake pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted loading UI then explicitly invoke original Awake on inactive recovered component; no automatic Start/Update', 'predicted_boundary':'Original loading flag prevents duplicate coroutine; real singleton, build ID and assembly types must match; entitlement subscriptions do not assert entitlement success'});write(out/'startup-contract.json',contract)
+    if global_textures:
+        import struct
+        scene=(stage/'RoR2/Base/Scenes/loadingbasic/loadingbasic.unity').read_text()
+        block=re.search(r'^--- !u!114 &218\n.*?(?=^---|\Z)',scene,re.M|re.S).group(0)
+        pairs=[('warpRampTexture','warpRampShaderVariableName'),('eliteRampTexture','eliteRampShaderVariableName'),('snowMicrofacetTexture','snowMicrofacetNoiseVariableName')]
+        textures=[];identities=[]
+        for field,variable_field in pairs:
+            match=re.search(r'^  '+field+r': \{fileID: (\d+), guid: ([a-f0-9]+), type: 3\}',block,re.M)
+            if not match or match[1]!='2800000':raise RuntimeError('Unreviewed texture reference '+field)
+            guid=match[2];matches=[p for p in stage.rglob('*.png.meta') if 'guid: '+guid in p.read_text()]
+            if len(matches)!=1:raise RuntimeError('Ambiguous texture GUID '+guid)
+            source=Path(str(matches[0])[:-5]);data=source.read_bytes()
+            if data[:8]!=b'\x89PNG\r\n\x1a\n':raise RuntimeError('Expected PNG source')
+            width,height=struct.unpack('>II',data[16:24]);variable=re.search(r'^  '+variable_field+r': (.+)$',block,re.M)[1]
+            textures.append({'name':source.stem,'variable':variable,'width':width,'height':height})
+            identities.append({'field':field,'guid':guid,'fileID':match[1],'source':str(source.relative_to(stage)),'sha256':sha(source),'expected':textures[-1]})
+        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'globalTextures':True,'textures':textures});write(stage/'Resources/StartupSegmentProbe.json',cfg)
+        write(out/'texture-identities.json',identities);r['startup_global_textures']=True;r['status']='Original global texture Start pending';write(out/'attempt.json',r)
+        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted recovered Awake then original GlobalShaderTextures.Start on actual inactive component','assertions':'Three serialized GUID/PNG identities and globals; clear only measured globals before original invocation and restore previous values afterward; no rendering claim'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
