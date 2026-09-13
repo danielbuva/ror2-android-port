@@ -319,7 +319,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5a-3 — Original skin parameters and baking
 - **ID:** L5a-3
-- **STATUS:** NEXT
+- **STATUS:** PASS — J36, original baking/template identities/parameter release on Android; 70.92 seconds
 - **TITLE:** Resolve default SkinDefParams and run original BakeAsync
 - **CONTEXT:** Original controller and avatar deferred request lifecycles pass, with startup inactive.
 - **OBSERVATION:** Original SkinDef.BakeAsync resolves deferred parameters and produces renderer/activation/mesh templates. Existing static content proof manually supplied defaults.
@@ -332,3 +332,20 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First unresolved key/reference/static initializer, nested coroutine exception, template/result identity, source/APK/payload hashes and current-PID device evidence.
 - **STATE/JOURNAL UPDATES REQUIRED:** Record outcome and any split task, preserve failed attempts and controller/avatar rollback; L5 remains open.
 - **DEPENDENCIES:** L5a-2/J34, measured default skin/params and existing prior-art audit.
+
+
+## L5a-4 — Original skin application to the inactive model
+- **ID:** L5a-4
+- **STATUS:** NEXT
+- **TITLE:** Load and apply the baked default material/mesh references
+- **CONTEXT:** Original controller/avatar loading and default skin baking pass separately.
+- **OBSERVATION:** Baked templates retain deferred material and mesh references; baking alone does not assign renderers or load those assets.
+- **HYPOTHESIS:** Measured material and three mesh subobject mappings let original RuntimeSkin.ApplyAsync populate the inactive recovered model correctly.
+- **TASK:** Inspect pinned skin/community implementations and current original ApplyAsync; measure exact deferred keys/provider mappings and resulting renderer assignments. Apply using the original method on an inactive model, assert mesh/material identities and reference counts, then release. Split at the first new loading/assignment boundary before adding activation or visuals.
+- **CONSTRAINTS:** Common contract; original DLLs unchanged, no CharacterBody/application/profile activation, no diagnostic assignment substituted for original skin application. Diagnostic rendering can follow but does not imply gameplay or shader parity.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow existing probe extension, measured local material/mesh locations, ignored restored skin stage and evidence.
+- **TEST COMMAND:** Existing preflight, forced Vulkan build and owned device lifecycle; add only the skin-application preparation needed for this task.
+- **PASS CONDITION:** Original ApplyAsync completes; expected renderer paths receive the correct recovered material/mesh identities; ownership/release assertions and stable device lifetime pass. No missing required references or new unexplained exceptions.
+- **FAILURE EVIDENCE TO CAPTURE:** First typed key/provider/subobject/assignment failure, original coroutine results, current renderer identities and reference ownership, APK/payload hashes and device evidence.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve failed attempts, update bounded skin status without passing startup/simulation, retain J36 rollback.
+- **DEPENDENCIES:** L5a-3/J36 and current-input material/mesh identity mappings; shared controller/avatar providers stay accepted.

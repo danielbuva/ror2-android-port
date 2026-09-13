@@ -65,11 +65,11 @@ def scene_run():
     stage=Path(attempt['stage'])
     for name,h in attempt['original_assemblies'].items():
         if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original assembly changed '+name)
-    result={'success':False,'attempt':out.name,'build':built,'scope':'Original '+('avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
+    result={'success':False,'attempt':out.name,'build':built,'scope':'Original '+('skin baking' if attempt.get('skin') else 'avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
     d=Device();had=d.exists()
     try:
         result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync();result['launch']=d.launch();pid=result['launch']['pid'];start=time.monotonic()
-        while time.monotonic()-start<(50 if attempt.get('controller') else 35):
+        while time.monotonic()-start<(70 if attempt.get('skin') else 50 if attempt.get('controller') else 35):
             if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Scene process died or changed')
             time.sleep(1)
         path=read(WORK/'device/runtime.json')['persistentDataPath'];report_name='controller-address-probe.json' if attempt.get('controller') else 'loading-scene-probe.json';report=json.loads(d.sh('cat',path+'/'+report_name));write(out/'device-probe.json',report)
@@ -245,3 +245,48 @@ def avatar_prepare():
     shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     write(out/'avatar-identity.json',{'original_location':{k:location[k] for k in ['key','internalId','type','provider']},'recovered_identity':identity,'mapping':'Original GUID[subobject] to measured standalone recovered Avatar, not an invented FBX path','prior_art':'RoR2EditorKit BaseGameAssetReferenceTDrawer preserves GUID and subobject separately; original AssetReference.RuntimeKey composes brackets'})
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+
+def skin_prepare():
+    """Measure six template paths from serialized references before original baking."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_AVATAR_LOADER.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0];relative=Path('RoR2/Base/Characters/Commando/skinCommandoDefault_params.asset');src=export/'Assets'/relative;params=src.read_text();skin=(previous/'stage'/relative.with_name('skinCommandoDefault.asset')).read_text()
+    if 'baseSkins: []' not in skin:raise RuntimeError('Unexpected base skins')
+    key=re.search(r'skinDefParamsAddress:\s*\n\s*m_AssetGUID: ([a-f0-9]{32})',skin)[1]
+    if key!='529399f7071eb2641897f2895c5d4ef0':raise RuntimeError('Skin params address drift')
+    prefab=(previous/'stage'/Path(r['prefab']).relative_to('Assets/LabLoadingScene')).read_text()
+    blocks={m[1]:m[2] for m in re.finditer(r'^--- !u!\d+ &(-?\d+)\n(.*?)(?=^---|\Z)',prefab,re.M|re.S)}
+    names={i:re.search(r'^  m_Name: (.*)$',b,re.M)[1] for i,b in blocks.items() if b.startswith('GameObject:')}
+    transforms={};go_to_transform={}
+    for i,b in blocks.items():
+        if b.startswith('Transform:'):
+            go=re.search(r'm_GameObject: \{fileID: (-?\d+)',b)[1];parent=re.search(r'm_Father: \{fileID: (-?\d+)',b)[1];transforms[i]=(go,parent);go_to_transform[go]=i
+    root_go=re.search(r'rootObject: \{fileID: (-?\d+)',skin)[1];root_transform=go_to_transform[root_go]
+    def renderer_path(i):
+        go=re.search(r'm_GameObject: \{fileID: (-?\d+)',blocks[i])[1];node=go_to_transform[go];parts=[];seen=set()
+        while node!=root_transform:
+            if node in seen or node not in transforms:raise RuntimeError('Renderer outside skin root')
+            seen.add(node);go,node=transforms[node];parts.append(names[go])
+        return '/'.join(reversed(parts))
+    renderer_ids=re.findall(r'- renderer: \{fileID: (-?\d+)',params.split('  gameObjectActivations:')[0]);mesh_part=params.split('  meshReplacements:')[1].split('  projectileGhostReplacements:')[0];mesh_ids=re.findall(r'- renderer: \{fileID: (-?\d+)',mesh_part)
+    mesh_pairs=re.findall(r'm_AssetGUID: ([a-f0-9]{32})\s+ m_SubObjectName: (\S+)',mesh_part)
+    materials=re.findall(r'defaultMaterialAddress:\s*\n\s*m_AssetGUID: ([a-f0-9]{32})',params)
+    if len(renderer_ids)!=3 or len(mesh_ids)!=3 or len(mesh_pairs)!=3 or len(set(materials))!=1:raise RuntimeError('Unexpected default skin template contract')
+    for field in ['gameObjectActivations','projectileGhostReplacements','minionSkinReplacements','lightReplacements']:
+        if field+': []' not in params:raise RuntimeError('Unexpected nonempty '+field)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage);shutil.copy2(src,stage/relative);shutil.copy2(Path(str(src)+'.meta'),Path(str(stage/relative)+'.meta'))
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'skin':True,'avatar':False,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original skin baking pending; startup inactive','skin_params_sha256':sha(src)})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
+    root_key=re.search(r'^guid: ([a-f0-9]{32})',(previous/'stage'/Path(str(relative.with_name('skinCommandoDefault.asset'))+'.meta')).read_text(),re.M)[1]
+    cfg={'attempt':out.name,'kind':'skin','key':root_key,'asset':('Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))).lower(),'bundle':'commando-prefab-lab','paramsKey':key,'paramsAsset':('Assets/LabLoadingScene/'+str(relative)).lower(),'rendererPaths':[renderer_path(i) for i in renderer_ids],'meshPaths':[renderer_path(i) for i in mesh_ids],'meshKeys':[g+'['+n+']' for g,n in mesh_pairs],'materialKey':materials[0]}
+    write(stage/'Resources/ControllerAddressProbe.json',cfg);write(out/'skin-contract.json',dict(cfg,root_key_provenance='Diagnostic root uses exported SkinDef GUID; deferred paramsKey is original game address'));shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
+    recipe=read(previous/'scene-probe-build.json');recipe['prefabAssets']+=['Assets/LabLoadingScene/'+str(relative), 'Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))]
+    write(WORK/'scene-probe-build.json',recipe)
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'renderer_paths':cfg['rendererPaths'],'mesh_paths':cfg['meshPaths']}))
