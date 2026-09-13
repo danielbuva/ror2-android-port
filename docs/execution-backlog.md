@@ -369,7 +369,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-2 — Original startup loading-scene handoff
 - **ID:** L5b-2
-- **STATUS:** NEXT
+- **STATUS:** PASS — J40, real loadingbasic/Canvas and two original frame yields; no component activation
 - **TITLE:** Connect the proven first startup phase to recovered loadingbasic
 - **CONTEXT:** J39 proves original PreFrame and an isolated Android filesystem candidate; L4 proves recovered loading scene content independently.
 - **OBSERVATION:** The next original routine segment redirects console output, subscribes scene events, waits for loadingbasic, accesses LoadingScreenCanvas.Instance.percentage and yields two frames before enabling components.
@@ -382,3 +382,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First scene/singleton/component/reference failure, original yield position, current-PID exception/capture, preserved source/APK/payload identities.
 - **STATE/JOURNAL UPDATES REQUIRED:** Record the exact reached boundary, retain J39 rollback, then select the measured component/audio boundary. Keep L5/L9/L5.5 open.
 - **DEPENDENCIES:** L5b-1/J39 and accepted L4 recovered scene evidence.
+
+## L5b-3 — Recovered application host and startup component lifecycle
+- **ID:** L5b-3
+- **STATUS:** NEXT
+- **TITLE:** Measure the six startup components before crossing into audio
+- **CONTEXT:** J40 proves loading-scene/UI handoff with the routine on an inactive diagnostic host.
+- **OBSERVATION:** The recovered application's enable list has GlobalShaderTextures, two PostProcessVolume entries, InterpolationController, NGSS_Local and FPSQueue, all disabled/inactive. The diagnostic host's empty list cannot establish their lifecycle.
+- **HYPOTHESIS:** Their measured initialization requirements can be isolated while retaining real serialized references and preventing automatic full application startup.
+- **TASK:** Inspect original Awake/OnEnable/Start/update paths and native/shader requirements of these six components plus application Awake. Select the smallest real-host/component experiment, preserve references, and explicitly record inactive enable flags versus executed lifecycle. Stop before Wwise and split at the first component failure. Reuse prior-art audit where applicable.
+- **CONSTRAINTS:** Common contract; no automatic full startup, empty-list success, speculative graphics rewrites, fake audio/services or saves. Keep user's owned app installed; update in place.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing narrow startup probe/preparation, ignored component metadata/serialized-contract reports, only a measured lifecycle adapter if needed.
+- **TEST COMMAND:** Existing startup preparation, preflight, forced Vulkan build and current-attempt/PID device assertions; use a thin component action only if required.
+- **PASS CONDITION:** Selected real component lifecycle and serialized references execute with correct assertions and stable device lifetime; report exactly which components ran. No L5 menu pass from toggled flags on inactive objects.
+- **FAILURE EVIDENCE TO CAPTURE:** First component initialization/reference/shader/native failure, enabled/active states, actual lifecycle events, original method and source/APK/payload identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J40 rollback; select next component or Wwise boundary from evidence. Keep actual saves/menu/simulation open.
+- **DEPENDENCIES:** L5b-2/J40 and measured original component/application lifecycle audit.

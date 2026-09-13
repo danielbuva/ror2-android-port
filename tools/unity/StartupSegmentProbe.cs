@@ -4,15 +4,16 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Zio;
 using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public int pid; public string[] preFrameTargets;
+  public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -23,6 +24,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  static void Require(bool condition,string message){if(!condition)throw new Exception(message);}
  IEnumerator Start(){
   cfg=JsonUtility.FromJson<Config>(Resources.Load<TextAsset>("StartupSegmentProbe").text);report=new Report{attempt=cfg.attempt};
+  if(cfg.loadingScene)report.stopBoundary="After two original loading-UI frame yields, before EnableBehaviours and Wwise";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -33,7 +35,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   Application.backgroundLoadingPriority=priorPriority;
  }
  void TestProfileRoots(){
-  report.applicationDataPath=Application.dataPath;report.profileRoot=Path.Combine(Application.persistentDataPath,"profile-probe",cfg.attempt);report.contentRoot=Path.Combine(Application.persistentDataPath,"payload");
+  report.applicationDataPath=Application.dataPath;report.profileRoot=Path.Combine(Application.persistentDataPath,"profile-probe",cfg.attempt+"-"+Guid.NewGuid().ToString("N"));report.contentRoot=Path.Combine(Application.persistentDataPath,"payload");
   Require(!Directory.Exists(report.profileRoot),"Profile candidate already exists");Directory.CreateDirectory(report.profileRoot);
   using(var physical=new PhysicalFileSystem())
   using(var profiles=new SubFileSystem(physical,physical.ConvertPathFromInternal(report.profileRoot),false))
@@ -64,7 +66,25 @@ public class StartupSegmentProbe : MonoBehaviour {
   Require(report.preFrameTargets.SequenceEqual(new[]{"FlashWindow.Init"}),"Unreviewed or missing PreFrame targets");Phase("original-preframe");
   while(phase.MoveNext())yield return phase.Current;
   report.preFrameCompleted=true;Require(RoR2.RoR2Application.instance==null&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Startup escaped selected boundary");
-  // Do not advance routine: next phases would introduce audio/platform/profile side effects.
+  if(cfg.loadingScene){
+   Phase("recovered-loading-scene");
+   var bundle=AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath,"payload","loadingbasic-lab"));Require(bundle,"Loading scene bundle unavailable");
+   var scenes=bundle.GetAllScenePaths();Require(scenes.Length==1,"Expected one recovered scene");var cameras=Camera.allCameras;
+   yield return SceneManager.LoadSceneAsync(scenes[0],LoadSceneMode.Additive);
+   var scene=SceneManager.GetSceneByPath(scenes[0]);Require(scene.IsValid()&&scene.isLoaded,"Recovered scene failed to load");SceneManager.SetActiveScene(scene);
+   report.activeScene=SceneManager.GetActiveScene().name;report.loadingSceneReady=report.activeScene=="loadingbasic";Require(report.loadingSceneReady,"Original scene name mismatch");
+   foreach(var camera in cameras)camera.enabled=false;
+   var apps=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<RoR2.RoR2Application>(true)).ToArray();Require(apps.Length==1,"Expected one recovered application component");
+   report.sceneApplicationInactive=!apps[0].gameObject.activeInHierarchy&&RoR2.RoR2Application.instance==null;Require(report.sceneApplicationInactive,"Recovered application activated unexpectedly");
+   var enable=apps[0].BehavioursToEnableDuringStartup;Require(enable!=null&&enable.All(x=>x),"Missing startup enable-list reference");
+   report.enableTargets=enable.Select(x=>x.GetType().FullName+":"+x.name+":enabled="+x.enabled+":active="+x.gameObject.activeInHierarchy).ToArray();
+   report.loadingCanvasReady=LoadingScreenCanvas.Instance;Require(report.loadingCanvasReady,"Original LoadingScreenCanvas instance missing");
+   report.percentageReady=LoadingScreenCanvas.Instance.percentage;Require(report.percentageReady,"Original percentage reference missing");Phase("original-loading-ui");
+   // Pinned routine yields exactly twice here before enabling components. Never request a third MoveNext.
+   for(int i=0;i<2;i++){Require(routine.MoveNext()&&routine.Current is WaitForEndOfFrame,"Unexpected original loading-UI yield");report.loadingUiYields++;Save();yield return routine.Current;}
+   Require(RoR2.RoR2Application.instance==null&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Startup escaped selected loading-UI boundary");
+  }
+  // Never advance into component enabling/audio/platform/profile initialization.
   report.success=true;Phase("segment-complete");Debug.Log("LAB_STARTUP_SEGMENT_PASS");
  }
 }

@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='startup-prepare':
+  if a.action=='startup-scene-prepare':
+   from scene_runtime import startup_prepare
+   startup_prepare(loading_scene=True)
+  elif a.action=='startup-prepare':
    from scene_runtime import startup_prepare
    startup_prepare()
   elif a.action=='startup-run':
