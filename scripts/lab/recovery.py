@@ -38,7 +38,7 @@ def export_project(force=False):
  if status.exists() and read(status).get('success') and not force:
   cached=read(status)
   if not all((ROOT/p/'ProjectSettings/ProjectVersion.txt').exists() for p in cached.get('projects',[])):raise RuntimeError('Cached export missing project; use --force for a new export')
-  write(WORK/'config/reconstruction.json',cached);print(json.dumps(cached,indent=2));return
+  write(WORK/'config/reconstruction.json',cached);wire_reconstruction();print(json.dumps(cached,indent=2));return
  if dest.exists():dest=dest.parent/(key[:16]+'-'+now())
  dest.mkdir(parents=True);start=time.monotonic();result={'key':key,'input_id':inv['input_id'],'output':str(dest.relative_to(ROOT)),'success':False}
  try:
@@ -61,7 +61,24 @@ def export_project(force=False):
   (dest/'export-response.html').write_bytes(post('/Export/UnityProject',{'Path':str(dest/'export'),'CreateSubfolder':'false'}))
   projects=list((dest/'export').rglob('ProjectVersion.txt'))
   result['projects']=[str(p.parent.parent.relative_to(ROOT)) for p in projects];result['success']=bool(projects)
-  if result['success']:write(WORK/'config/reconstruction.json',result)
+  if result['success']:
+   write(WORK/'config/reconstruction.json',result);wire_reconstruction()
  except Exception as e:result['error']=str(e)
  result['seconds']=time.monotonic()-start;write(status,result);print(json.dumps(result,indent=2))
  if not result['success']:raise RuntimeError('AssetRipper export failed; see '+str(status))
+
+def wire_reconstruction():
+ cfg=read(WORK/'config/reconstruction.json')
+ for name in cfg['projects']:
+  project=ROOT/name
+  if WORK not in project.resolve().parents:raise RuntimeError('Connector may only be staged into ignored reconstruction')
+  manifest=project/'Packages/manifest.json';data=read(manifest) if manifest.exists() else {'dependencies':{}}
+  data['dependencies']['com.coplaydev.unity-mcp']='https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v10.2.0'
+  if not manifest.exists() or read(manifest)!=data:write(manifest,data)
+  dest=project/'Assets/Editor/LabConnector';dest.mkdir(parents=True,exist_ok=True)
+  for source in [ROOT/'android/Assets/Editor/BootstrapMcp.cs',ROOT/'tools/unity/ReconstructionProbe.cs']:
+   target=dest/source.name
+   if not target.exists() or sha(source)!=sha(target):shutil.copy2(source,target)
+  asmdef=dest/'LabConnector.asmdef';data={'name':'LabConnector','references':['MCPForUnity.Editor'],'includePlatforms':['Editor'],'autoReferenced':False}
+  if not asmdef.exists() or read(asmdef)!=data:write(asmdef,data)
+ return cfg

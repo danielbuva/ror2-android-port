@@ -11,7 +11,9 @@ def prepare():
  managed=dest/'Assets/Plugins';managed.mkdir(parents=True,exist_ok=True)
  shutil.copy2(game()/'Risk of Rain 2_Data/Managed/SimpleJSON.dll',managed/'SimpleJSON.dll')
  recovered=dest/'Assets/Recovered';recovered.mkdir(parents=True,exist_ok=True)
- if not (recovered/'geometry.obj').exists():
+ provenance=WORK/'inventory/geometry-provenance.json'
+ reusable=(recovered/'geometry.obj').exists() and provenance.exists() and read(provenance).get('input_id')==read(WORK/'inventory/files.json')['input_id'] and read(provenance).get('output_sha256')==sha(recovered/'geometry.obj')
+ if not reusable:
   bundles=list((game()/'Risk of Rain 2_Data/StreamingAssets').rglob('*commando_assets*.bundle'))
   for p in bundles:
    e=UnityPy.load(str(p))

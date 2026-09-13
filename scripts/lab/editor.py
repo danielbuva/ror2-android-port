@@ -1,22 +1,24 @@
 """Pinned Unity MCP client; project selection is checked before every action."""
-import asyncio,json,sys
+import asyncio,json,sys,datetime
 from pathlib import Path
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 ROOT=Path(__file__).resolve().parents[2]
 async def main():
  target,action=sys.argv[1:3]; expected=(ROOT/'work/lab-project') if target=='lab' else (ROOT/'smoke') if target=='smoke' else Path(json.loads((ROOT/'work/config/reconstruction.json').read_text())['projects'][0]);expected=expected if expected.is_absolute() else ROOT/expected
- out=ROOT/'work/editor';out.mkdir(parents=True,exist_ok=True);evidence={'target':str(expected),'action':action}
+ out=ROOT/'work/editor';out.mkdir(parents=True,exist_ok=True);archive=out/(datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')+'-'+target+'-'+action);archive.mkdir();evidence={'target':str(expected),'action':action}
  async with streamablehttp_client('http://127.0.0.1:8080/mcp') as (r,w,_):
   async with ClientSession(r,w) as s:
    await s.initialize()
    async def call(name,args):
     row={'tool':name,'args':args,'status':'sent'};evidence.setdefault('calls',[]).append(row)
     (out/(target+'-'+action+'-progress.json')).write_text(json.dumps(evidence,indent=2)+'\n')
+    (archive/'progress.json').write_text(json.dumps(evidence,indent=2)+'\n')
     response=await s.call_tool(name,args)
     row['status']='returned';row['response']=response.model_dump(mode='json')
     (out/(target+'-'+action+'-progress.json')).write_text(json.dumps(evidence,indent=2)+'\n')
     texts=[x.text for x in response.content if getattr(x,'type',None)=='text'];data=json.loads(texts[0]) if texts else {}
+    (archive/'progress.json').write_text(json.dumps(evidence,indent=2)+'\n')
     if response.isError or data.get('success') is False:raise RuntimeError(str(data))
     return data
    instances=json.loads((await s.read_resource('mcpforunity://instances')).contents[0].text)['instances'];matches=[i for i in instances if i['name']==expected.name]
@@ -49,5 +51,6 @@ async def main():
     evidence['hierarchy']=await call('manage_scene',{'action':'get_hierarchy'})
     evidence['console']=await call('read_console',{'action':'get','count':'100','include_stacktrace':True})
    evidence['success']=True
+ (archive/'result.json').write_text(json.dumps(evidence,indent=2)+'\n')
  (out/(target+'-'+action+'.json')).write_text(json.dumps(evidence,indent=2)+'\n');print(json.dumps(evidence,indent=2))
 asyncio.run(asyncio.wait_for(main(),180))

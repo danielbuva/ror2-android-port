@@ -1,8 +1,9 @@
 import argparse,sys
 from common import *
 p=argparse.ArgumentParser(description='Local RoR2 porting laboratory; generated evidence lives under ignored work/.')
-p.add_argument('command',choices=['test','doctor','inspect','decompile','export-project','preflight','build','install','sync-data','run','logs','crash','screenshot','reset','smoke','storage','perf','graphics','editor','prototype'])
+p.add_argument('command',choices=['diagnostics','test','doctor','inspect','decompile','export-project','preflight','build','install','sync-data','run','logs','crash','screenshot','reset','smoke','storage','perf','graphics','editor','prototype'])
 p.add_argument('--full',action='store_true');p.add_argument('--force',action='store_true');p.add_argument('--json',action='store_true');p.add_argument('--assembly');p.add_argument('--target',default='lab');p.add_argument('--action',default='inspect')
+p.add_argument('--subtree',default='');p.add_argument('--fields',action='store_true');p.add_argument('--disable',action='store_true')
 a=p.parse_args()
 try:
  if a.command=='test':sys.exit(subprocess.call([sys.executable,'-m','unittest','discover','-s',str(ROOT/'tests'),'-v']))
@@ -25,6 +26,8 @@ try:
   elif a.action=='middleware':
    from experiments import middleware
    middleware()
+  elif a.action=='repair-reconstruction':
+   sys.exit(subprocess.call([sys.executable,str(ROOT/'patches/reconstruction-ambiguities.py')]))
   elif a.action=='storage-lifecycle':
    from lifecycle import lifecycle
    lifecycle()
@@ -37,6 +40,12 @@ try:
   else:
    from prepare import prepare
    prepare()
+ elif a.command=='diagnostics':
+  from device import Device
+  d=Device();d.owned();path=read(WORK/'device/runtime.json')['persistentDataPath']
+  if not path.endswith('/Android/data/'+__import__('device').PACKAGE+'/files'):raise RuntimeError('Unexpected diagnostics path')
+  payload=WORK/'device/diagnostics.json';write(payload,{'enabled':not a.disable,'subtree':a.subtree,'fields':a.fields})
+  d.cmd('push',str(payload),path+'/diagnostics.json');print(json.dumps({'success':True,'config':read(payload)}))
  elif a.command=='preflight':
   from build import preflight
   print(json.dumps(preflight(),indent=2))
