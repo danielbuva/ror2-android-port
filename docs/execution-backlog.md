@@ -609,7 +609,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L5b-6 — Coupled profile and platform boundary
 - **ID:** L5b-6
 - **TITLE:** Isolate filesystem setup from mandatory platform startup
-- **STATUS:** NEXT
+- **STATUS:** BOUNDED PASS — J57 temporary config bindings; original platform/filesystem continuation unproven; J56 preserved
 - **CONTEXT:** J55 stops after the Addressables yield, before filesystem creation and PlatformSystems.Init.
 - **OBSERVATION:** The next original coroutine step performs both without an intervening yield; Application.dataPath is not the Android writable profile root.
 - **HYPOTHESIS:** A measured Android path policy and explicit platform boundary can preserve truthful startup semantics.
@@ -621,3 +621,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First path, constructor or service dependency; changed-method provenance and current-launch state.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J55 rollback; update profile/platform risks and next action without claiming menu readiness.
 - **DEPENDENCIES:** J55, original startup/profile research, L9 foundation.
+
+## L5b-7 — Concrete offline platform boundary
+- **ID:** L5b-7
+- **TITLE:** Classify original platform initialization and mandatory checks
+- **STATUS:** NEXT
+- **CONTEXT:** J57 proves temporary writable configuration bindings; original coroutine remains before PlatformSystems.Init.
+- **OBSERVATION:** SteamworksClientManager starts before crossplay selection and can replace cloudStorage; concrete entitlement/save/achievement implementations follow.
+- **HYPOTHESIS:** Exact consumer and initialization evidence can separate optional services from required checks without fabricating success.
+- **TASK:** Inspect original SteamworksClientManager, save-system initialization and entitlement resolver call paths. Identify a bounded truthful candidate and required legitimate access; stop dependent startup if a mandatory check has no legitimate route.
+- **CONSTRAINTS:** No fabricated ownership/authentication, no broad successful service stubs, no Steam profile access. Preserve original networking/authority semantics and later audio obligations.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing metadata/source audit and narrow adapter only after justified selection.
+- **TEST COMMAND:** Existing inspection tools first; device probe only for a defined contract.
+- **PASS CONDITION:** Required versus optional contracts and first candidate documented from exact input; actual execution needs independent assertions.
+- **FAILURE EVIDENCE TO CAPTURE:** Mandatory access gap, native/API dependency, profile-root replacement or service failure.
+- **STATE/JOURNAL UPDATES REQUIRED:** Update platform/profile risks and first failure; retain J57 rollback and explicit unproven gates.
+- **DEPENDENCIES:** J55/J57 and existing prior-art startup audit.

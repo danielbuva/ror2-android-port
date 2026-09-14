@@ -448,3 +448,11 @@ def audio_guard_prepare():
     write(out/'audio-guard-transformation.json',result);shutil.copy2(original,out/'RoR2.original.dll');shutil.copy2(candidate,original)
     r['transformed_assemblies']={'RoR2.dll':result['output_sha256']};r['audio_guard']=True;write(out/'attempt.json',r)
     cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['audioGuard']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+
+
+def profile_binding_prepare():
+    audio_guard_prepare()
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
+    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['profileBinding']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+    r['profile_binding']=True;write(out/'attempt.json',r)
+    write(out/'profile-binding-contract.json',{'scope':'Temporary actual globals; original config writer/reader; no coroutine filesystem/platform continuation','app_data':'Writable Config and RunReports role; not read-only content','profiles':'Separate Android-only writable root; sentinel only, not vanilla profile','restore':'Both globals restored before return; unique owned temporary files removed'})

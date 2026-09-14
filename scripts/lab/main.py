@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='audio-guard-prepare':
+  if a.action=='profile-binding-prepare':
+   from scene_runtime import profile_binding_prepare
+   profile_binding_prepare()
+  elif a.action=='audio-guard-prepare':
    from scene_runtime import audio_guard_prepare
    audio_guard_prepare()
   elif a.action=='audio-native-prepare':

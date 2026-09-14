@@ -11,7 +11,7 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss,integration,audioGuard;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss,integration,audioGuard,profileBinding;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
  [Serializable] public class GlobalFloatExpectation {public string name;public float value;}
  [Serializable] public class EffectExpectation {public string name;public bool active,enabled;}
  [Serializable] public class VolumeExpectation {public string name;public float priority;public EffectExpectation[] settings;}
@@ -20,7 +20,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool audioGuardPassed;public bool audioAssetsPassed;public string[] audioResults;public bool integratedPassed;public int automaticStarts,automaticUpdates,automaticFixedUpdates,automaticLateUpdates;public string[] integratedComponents;public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool profileBindingPassed;public bool audioGuardPassed;public bool audioAssetsPassed;public string[] audioResults;public bool integratedPassed;public int automaticStarts,automaticUpdates,automaticFixedUpdates,automaticLateUpdates;public string[] integratedComponents;public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -69,6 +69,33 @@ public class StartupSegmentProbe : MonoBehaviour {
   }
   report.profileGlobalsUntouched=RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null;
   Require(report.profileRoundTrip&&report.profileReopen&&report.rootsSeparate&&report.pathEscapeRejected&&report.contentReadOnly&&report.profileCleaned&&report.profileGlobalsUntouched,"Profile filesystem boundary assertions failed");
+ }
+ void TestProfileBinding(){
+  Phase("original-config-profile-binding");
+  Require(RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Expected uninitialized filesystem globals");
+  string root=Path.Combine(Application.persistentDataPath,"profile-binding-probe",cfg.attempt+"-"+Guid.NewGuid().ToString("N"));
+  Require(!Directory.Exists(root),"Binding probe root exists");Directory.CreateDirectory(Path.Combine(root,"app"));Directory.CreateDirectory(Path.Combine(root,"profiles"));
+  var fileSetter=typeof(RoR2.RoR2Application).GetProperty("fileSystem",BindingFlags.Public|BindingFlags.Static).GetSetMethod(true);Require(fileSetter!=null,"Original filesystem setter missing");
+  var oldFile=RoR2.RoR2Application.fileSystem;var oldCloud=RoR2.RoR2Application.cloudStorage;
+  using(var physical=new PhysicalFileSystem())
+  using(var appFiles=new SubFileSystem(physical,physical.ConvertPathFromInternal(Path.Combine(root,"app")),false))
+  using(var profileFiles=new SubFileSystem(physical,physical.ConvertPathFromInternal(Path.Combine(root,"profiles")),false)){
+   try{
+    fileSetter.Invoke(null,new object[]{appFiles});RoR2.RoR2Application.cloudStorage=profileFiles;
+    appFiles.CreateDirectory("/Config");profileFiles.CreateDirectory("/UserProfiles");
+    var write=typeof(RoR2.Console).GetMethod("WriteConfigFile",BindingFlags.NonPublic|BindingFlags.Static);Require(write!=null,"Original config writer missing");
+    string expected="ANDROID_CONFIG_BOUNDARY "+cfg.attempt;
+    using(var memory=new MemoryStream()){var bytes=System.Text.Encoding.UTF8.GetBytes(expected);memory.Write(bytes,0,bytes.Length);write.Invoke(null,new object[]{memory,"/Config/probe.cfg",RoR2.RoR2Application.fileSystem});}
+    var reader=new RoR2.StreamingAssetsTextDataManager();Require(reader.GetConfFile("probe.cfg","/Config/probe.cfg")==expected,"Original config read/write mismatch");
+    using(var memory=new MemoryStream()){var bytes=System.Text.Encoding.UTF8.GetBytes(expected+" PROFILE");memory.Write(bytes,0,bytes.Length);write.Invoke(null,new object[]{memory,"/UserProfiles/probe.cfg",RoR2.RoR2Application.cloudStorage});}
+    using(var stream=new StreamReader(profileFiles.OpenFile("/UserProfiles/probe.cfg",FileMode.Open,FileAccess.Read)))Require(stream.ReadToEnd()==expected+" PROFILE","Profile-root write mismatch");
+    Require(!appFiles.FileExists("/UserProfiles/probe.cfg")&&!profileFiles.FileExists("/Config/probe.cfg"),"App/profile roots overlap");
+    Require(!appFiles.ConvertPathToInternal("/Config/probe.cfg").StartsWith(report.contentRoot+Path.DirectorySeparatorChar),"App writes target payload");
+    appFiles.DeleteFile("/Config/probe.cfg");profileFiles.DeleteFile("/UserProfiles/probe.cfg");
+   }finally{fileSetter.Invoke(null,new object[]{oldFile});RoR2.RoR2Application.cloudStorage=oldCloud;}
+  }
+  Directory.Delete(root,true);Require(RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null&&!Directory.Exists(root),"Binding restoration failed");
+  report.profileBindingPassed=true;report.stopBoundary="Original config methods with temporary Android filesystem globals restored; platform startup not entered";
  }
  void TestGlobalTextures(RoR2.RoR2Application app){
   Phase("original-global-textures");var target=app.GetComponent<GlobalShaderTextures>();Require(target&&!target.enabled&&!target.gameObject.activeInHierarchy,"Expected inactive recovered texture component");
@@ -188,6 +215,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     while(!init.IsDone)yield return null;Require(init.Status==UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationStatus.Succeeded,"Original Addressables initialization failed");
     Require(RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null&&!UnityEngine.Object.FindObjectOfType<AkInitializer>(),"Escaped unavailable-audio boundary");
     Require(string.IsNullOrEmpty(report.error),"Guarded startup error: "+report.error);report.audioGuardPassed=true;report.stopBoundary="Original Addressables yield complete; before filesystem and PlatformSystems.Init; audio unavailable";
+    if(cfg.profileBinding)TestProfileBinding();
    }report.integratedPassed=true;report.success=true;Phase("integration-pre-audio-complete");
  }
  IEnumerator Run(){
