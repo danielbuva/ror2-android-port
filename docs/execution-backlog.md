@@ -544,7 +544,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-5 — Wwise startup resource and native boundary
 - **ID:** L5b-5
-- **STATUS:** NEXT
+- **STATUS:** AUDITED — J50; resource identity closure remains open, next L5b-5a
 - **TITLE:** Identify and test the next actual audio initialization dependency
 - **CONTEXT:** J49 reaches the yield immediately before original WwiseIntegrationManager.Init.
 - **OBSERVATION:** Init requests WwiseGlobal and AudioManager through LegacyResourcesAPI; compatible Android middleware/bank access remains unresolved.
@@ -557,3 +557,18 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First missing resource, callback, API or native dependency; artifact provenance and current-launch diagnostics.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J49 rollback; record candidate and first failure, update audio risk and next action.
 - **DEPENDENCIES:** L5b-4/J49 and existing audio/prior-art evidence.
+
+## L5b-5a — Audio prefab identity and asynchronous asset loading
+- **ID:** L5b-5a
+- **TITLE:** Resolve and load the two audio prefab assets without activating native callbacks
+- **CONTEXT:** J50 identifies the resource/native split and absent separate native library in the accepted APK.
+- **OBSERVATION:** Existing editor reports do not resolve most audio prefab script references; Init schedules callbacks rather than waiting for completion.
+- **HYPOTHESIS:** The established small Android catalog can support original legacy-path loads independently of sound-engine instantiation.
+- **TASK:** Resolve all prefab script and initialization-settings identities first. Stage only the measured closure; invoke original legacy-path loading with diagnostic callbacks that inspect assets without instantiation.
+- **CONSTRAINTS:** Common contract; keep Wwise Init suspended, no native success substitution, preserve originals and J49 rollback.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing identity/catalog tooling, narrow startup probe and ignored audio closure.
+- **TEST COMMAND:** Existing editor identity reports, then preflight, forced Vulkan build and foreground-verified startup-run.
+- **PASS CONDITION:** Both original mappings resolve; asynchronous operations succeed with expected non-null prefab identities, balanced pending counts and released handles; no prefab activation or unexplained exception.
+- **FAILURE EVIDENCE TO CAPTURE:** Unresolved script/settings reference, catalog/provider failure, result status, pending counts and current-launch diagnostics.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve separate resource/native outcomes and source hashes; do not advance L10 or claim sound.
+- **DEPENDENCIES:** J49, J50, existing Addressables initialization and preservation evidence.
