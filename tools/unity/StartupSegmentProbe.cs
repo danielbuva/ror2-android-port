@@ -10,11 +10,12 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation;public TextureExpectation[] textures;}
+ [Serializable] public class TimingSample {public float previousFixed,currentFixed,renderTime,expected,observed;}
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -28,6 +29,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   if(cfg.loadingScene)report.stopBoundary="After two original loading-UI frame yields, before EnableBehaviours and Wwise";
   if(cfg.applicationAwake)report.stopBoundary="After explicitly invoked original Awake on inactive recovered application; no Start/Update/component enabling/audio";
   if(cfg.globalTextures)report.stopBoundary="After explicit original GlobalShaderTextures.Start and binding/restore assertions; application remains inactive";
+  if(cfg.interpolation)report.stopBoundary="After original interpolation methods at diagnostic fixed/frame boundaries; application remains inactive";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -73,6 +75,24 @@ public class StartupSegmentProbe : MonoBehaviour {
   }finally{for(int i=0;i<3;i++)Shader.SetGlobalTexture(names[i],previous[i]);report.globalsRestored=Enumerable.Range(0,3).All(i=>Shader.GetGlobalTexture(names[i])==previous[i]);}
   Require(report.globalsRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"Texture probe restoration or inactive boundary failed");
  }
+ IEnumerator TestInterpolation(RoR2.RoR2Application app){
+  Phase("original-interpolation");var target=app.GetComponent<InterpolationController>();Require(target&&!target.enabled&&!app.gameObject.activeInHierarchy,"Expected inactive recovered interpolation component");
+  var flags=BindingFlags.NonPublic|BindingFlags.Instance;var history=typeof(InterpolationController).GetField("m_lastFixedUpdateTimes",flags);var index=typeof(InterpolationController).GetField("m_newTimeIndex",flags);var factor=typeof(InterpolationController).GetField("m_interpolationFactor",BindingFlags.NonPublic|BindingFlags.Static);
+  Require(history!=null&&index!=null&&factor!=null,"Original timing state fields missing");var oldHistory=history.GetValue(target);var oldIndex=index.GetValue(target);var oldFactor=factor.GetValue(null);
+  var samples=new System.Collections.Generic.List<TimingSample>();
+  try{
+   target.Start();target.Update();report.interpolationFallback=InterpolationController.InterpolationFactor;Require(report.interpolationFallback==1f,"Original initial interpolation fallback mismatch");
+   float previous=0f;
+   for(int i=0;i<9;i++){
+    yield return new WaitForFixedUpdate();float current=Time.fixedTime;Require(i==0||current>previous,"No distinct fixed-time sample");target.FixedUpdate();
+    yield return null;float render=Time.time;target.Update();
+    if(i>0){var sample=new TimingSample{previousFixed=previous,currentFixed=current,renderTime=render,expected=(render-current)/(current-previous),observed=InterpolationController.InterpolationFactor};samples.Add(sample);report.timingSamples=samples.ToArray();Save();Require(!float.IsNaN(sample.observed)&&!float.IsInfinity(sample.observed)&&Mathf.Abs(sample.expected-sample.observed)<0.0001f,"Original interpolation timing mismatch");var times=(float[])history.GetValue(target);Require(times.Length==2&&times.Contains(previous)&&times.Contains(current),"Original history differs from measured fixed ticks");}
+    previous=current;
+   }
+   report.interpolationPassed=samples.Count==8;
+  }finally{history.SetValue(target,oldHistory);index.SetValue(target,oldIndex);factor.SetValue(null,oldFactor);report.interpolationRestored=ReferenceEquals(history.GetValue(target),oldHistory)&&index.GetValue(target).Equals(oldIndex)&&factor.GetValue(null).Equals(oldFactor);}
+  Require(report.interpolationPassed&&report.interpolationRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"Interpolation restoration or inactive boundary failed");
+ }
  IEnumerator Run(){
   Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
   var host=new GameObject("Inactive original startup host");host.SetActive(false);var app=host.AddComponent<RoR2.RoR2Application>();Require(RoR2.RoR2Application.instance==null,"Unexpected application Awake");
@@ -108,6 +128,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     Require(report.realSingleton&&report.buildId==Application.version&&report.assemblyTypesReady,"Original application identity assertions failed");
     Require(!apps[0].gameObject.activeInHierarchy&&enable.All(x=>!x.enabled)&&RoR2.RoR2Application.isLoading&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Awake escaped selected boundary");report.recoveredAwakeCompleted=true;
     if(cfg.globalTextures)TestGlobalTextures(apps[0]);
+    if(cfg.interpolation){var timing=TestInterpolation(apps[0]);while(timing.MoveNext())yield return timing.Current;}
    }
   }
   // Never advance into component enabling/audio/platform/profile initialization.

@@ -433,7 +433,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3c — Original interpolation timing
 - **ID:** L5b-3c
-- **STATUS:** NEXT
+- **STATUS:** PASS — J43, eight real timing comparisons and state restoration
 - **TITLE:** Verify the recovered interpolation controller with real frame timing
 - **CONTEXT:** J42 passes the first isolated startup component method; the application object remains inactive.
 - **OBSERVATION:** InterpolationController.Start allocates a two-sample history, FixedUpdate records Time.fixedTime and Update derives the render interpolation factor. No application singleton or service initialization is required by these methods.
@@ -446,3 +446,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First initialization/history/nonfinite/timing mismatch, real timestamps and observed result, original DLL/APK/payload identity, current-PID logs/capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J42 rollback and distinguish manual method scheduling from engine lifecycle; then select FPSQueue or the next measured component from J41 audit.
 - **DEPENDENCIES:** L5b-3b/J42 and original InterpolationController source/metadata audit.
+
+## L5b-3d — Original FPSQueue initialization and callback
+- **ID:** L5b-3d
+- **STATUS:** NEXT
+- **TITLE:** Verify original frame sampling without activating full application update
+- **CONTEXT:** J43 proves original interpolation methods under diagnostic scheduling.
+- **OBSERVATION:** FPSQueue.Start subscribes its callback to RoR2Application.onUpdate and allocates samples; the callback advances queue turns and computes sampled FPS.
+- **HYPOTHESIS:** The original callback and sample queue can operate correctly with measured real frame deltas while the full application remains inactive.
+- **TASK:** Revalidate exact callback/state signatures; capture prior subscription/static state, invoke original Start, identify only the newly registered original callback, exercise it across real frames, and verify frame sampling/queue wrap behavior. Restore state/subscription afterward. Never invoke unrelated onUpdate subscribers.
+- **CONSTRAINTS:** Common contract; no fabricated frame metrics or rewritten queue, no whole application Update call, no gameplay-performance claim. Clean or in-place installation permitted under owned-package safeguards.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow startup probe/preparation and ignored timing/callback evidence, state/journal.
+- **TEST COMMAND:** Existing preflight, forced Vulkan build and startup-run lifecycle; add only the needed option.
+- **PASS CONDITION:** Original subscription and callback produce expected queue/sample behavior over real frames, restore ownership/state and survive on device. Automatic game-loop integration remains separate.
+- **FAILURE EVIDENCE TO CAPTURE:** First missing callback/array/state/timing mismatch, real deltas, invocation identity, original DLL/APK/payload identity, current-PID report/log/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J43; distinguish callback proof from full frame loop; select postprocessing/NGSS next using the existing audit.
+- **DEPENDENCIES:** L5b-3c/J43 and J41 component audit plus pinned FPSQueue signatures.

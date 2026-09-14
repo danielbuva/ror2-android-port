@@ -321,10 +321,10 @@ def skin_apply_prepare():
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
 
 
-def startup_prepare(loading_scene=False, application_awake=False, global_textures=False):
+def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
+    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
     previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Preserve previous stage first')
@@ -363,4 +363,8 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
         cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'globalTextures':True,'textures':textures});write(stage/'Resources/StartupSegmentProbe.json',cfg)
         write(out/'texture-identities.json',identities);r['startup_global_textures']=True;r['status']='Original global texture Start pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted recovered Awake then original GlobalShaderTextures.Start on actual inactive component','assertions':'Three serialized GUID/PNG identities and globals; clear only measured globals before original invocation and restore previous values afterward; no rendering claim'});write(out/'startup-contract.json',contract)
+    if interpolation:
+        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['interpolation']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+        r['startup_interpolation']=True;r['status']='Original interpolation methods pending';write(out/'attempt.json',r)
+        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted texture probe then original interpolation Start/FixedUpdate/Update under diagnostic scheduling','assertions':'Initial fallback, nine real fixed samples/eight independent render timing comparisons, two-sample history and previous-state restoration; no character motion or automatic lifecycle claim'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
