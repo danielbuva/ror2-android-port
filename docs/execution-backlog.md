@@ -559,7 +559,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **DEPENDENCIES:** L5b-4/J49 and existing audio/prior-art evidence.
 
 ## L5b-5a — Audio prefab identity and asynchronous asset loading
-- **STATUS:** IN PROGRESS — J51 exact-editor script/settings identities pass; 14-file serialized closure recorded; device loading pending.
+- **STATUS:** PASS — J52, original legacy-path loads on Android; no prefab activation or native audio.
 - **ID:** L5b-5a
 - **TITLE:** Resolve and load the two audio prefab assets without activating native callbacks
 - **CONTEXT:** J50 identifies the resource/native split and absent separate native library in the accepted APK.
@@ -573,3 +573,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** Unresolved script/settings reference, catalog/provider failure, result status, pending counts and current-launch diagnostics.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve separate resource/native outcomes and source hashes; do not advance L10 or claim sound.
 - **DEPENDENCIES:** J49, J50, existing Addressables initialization and preservation evidence.
+
+## L5b-5b — Native audio feasibility and bounded unavailable-audio alternative
+- **ID:** L5b-5b
+- **TITLE:** Select a lawful next audio lifecycle candidate
+- **STATUS:** NEXT
+- **CONTEXT:** J52 proves audio asset loading independently of activation.
+- **OBSERVATION:** Preserved bindings import AkSoundEngine and default to Windows; accepted APK has no separate native engine. Activation also starts eight bank loaders.
+- **HYPOTHESIS:** A compatible authorized runtime, or explicit unavailable-audio handling over a measured lifecycle, can support further startup.
+- **TASK:** Check existing authorized middleware inputs and matching API/settings/native contract first. If unavailable, audit all immediate startup audio calls and define one bounded no-audio candidate without reporting engine/bank success.
+- **CONSTRAINTS:** Common contract; no speculative SDK acquisition, fabricated AK success, entitlement bypass or broad gameplay rewriting. Preserve J52 and J49.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Local middleware inventory, narrow lifecycle audit and only the selected probe/adapter if justified.
+- **TEST COMMAND:** Existing inventory/source reports; preflight and forced Android lifecycle only after selecting the candidate.
+- **PASS CONDITION:** Exact candidate and access requirements recorded; execution must satisfy independent lifecycle assertions before advancing.
+- **FAILURE EVIDENCE TO CAPTURE:** ABI/API mismatch, native resolution, bank/init errors or unhandled audio call; current-launch evidence.
+- **STATE/JOURNAL UPDATES REQUIRED:** Update audio risk and first failure; never advance audio/menu acceptance from asset loading.
+- **DEPENDENCIES:** J50–J52, existing audio prior art.

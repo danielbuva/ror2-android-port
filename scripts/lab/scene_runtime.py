@@ -338,6 +338,7 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
     r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'startup':True,'controller':False,'skin':False,'skin_apply':False,'avatar':False,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original startup PreFrame and independent profile filesystem candidate pending'})
     (stage/'ControllerAddressProbe.cs').unlink(missing_ok=True);(stage/'Resources/ControllerAddressProbe.json').unlink(missing_ok=True)
+    shutil.copy2(ROOT/'tools/unity/AudioAssetProbe.cs',stage/'AudioAssetProbe.cs')
     shutil.copy2(ROOT/'tools/unity/StartupSegmentProbe.cs',stage/'StartupSegmentProbe.cs');write(stage/'Resources/StartupSegmentProbe.json',{'attempt':out.name,'loadingScene':loading_scene,'applicationAwake':application_awake})
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     for name in ['original-metadata.json','reflection-metadata.json']:shutil.copy2(WORK/'experiments/startup-boundary'/name,out/name)
@@ -411,3 +412,26 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
         r['startup_integration']=True;r['status']='Automatic recovered host startup before audio pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Fresh actual recovered host owns original routine; its first yield establishes loading state, then Unity activation invokes automatic callbacks; advance through component enabling only','assertions':'Exact eight-MonoBehaviour closure including FontCleaner, automatic Start/Update/FixedUpdate/LateUpdate observations, six active enabled components, no new errors or filesystem assignment; next routine instruction is Wwise and is not executed'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+
+def audio_assets_prepare():
+    """J51 measured prefab closure; asset loading only, no audio activation."""
+    startup_prepare(integration=True)
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
+    audit=WORK/'experiments/audio-boundary/20260914T032612Z'
+    identities=read(audit/'identities.json')['rows']
+    if len(identities)!=8 or not all(x['resolved'] and not x['error'] for x in identities):raise RuntimeError('Audio identity gate failed')
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets'
+    closure=read(audit/'serialized-closure.json')
+    if closure['unresolved']:raise RuntimeError('Unresolved audio closure')
+    for row in closure['files']:
+        src=export/row['path']
+        if sha(src)!=row['sha256']:raise RuntimeError('Audio input drift '+row['path'])
+        if src.suffix=='.dll':continue
+        dst=stage/row['path'];dst.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'))
+    names=['WwiseGlobal','AudioManager'];assets=['Assets/LabLoadingScene/RoR2/Base/Core/Audio/'+n+'.prefab' for n in names]
+    cfg={'names':names,'paths':['Prefabs/'+n for n in names],'keys':['8efd031dc149abb42a4ba4021856af9d','d42d5c95eee66a348a4c4abf71e0352b'],'assets':assets}
+    write(stage/'Resources/AudioAssetProbe.json',cfg);shutil.copy2(ROOT/'tools/unity/AudioAssetProbe.cs',stage/'AudioAssetProbe.cs')
+    build=read(WORK/'scene-probe-build.json');build['prefabAssets']+=assets;write(WORK/'scene-probe-build.json',build)
+    r['audio_assets']=True;write(out/'attempt.json',r);write(out/'audio-closure.json',closure);write(out/'audio-config.json',cfg)
