@@ -559,6 +559,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **DEPENDENCIES:** L5b-4/J49 and existing audio/prior-art evidence.
 
 ## L5b-5a — Audio prefab identity and asynchronous asset loading
+- **STATUS:** IN PROGRESS — J51 exact-editor script/settings identities pass; 14-file serialized closure recorded; device loading pending.
 - **ID:** L5b-5a
 - **TITLE:** Resolve and load the two audio prefab assets without activating native callbacks
 - **CONTEXT:** J50 identifies the resource/native split and absent separate native library in the accepted APK.
