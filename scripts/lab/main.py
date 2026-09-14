@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='steam-boundary-prepare':
+  if a.action=='steam-exception-prepare':
+   from scene_runtime import steam_exception_prepare
+   steam_exception_prepare()
+  elif a.action=='steam-boundary-prepare':
    from scene_runtime import steam_boundary_prepare
    steam_boundary_prepare()
   elif a.action=='profile-binding-prepare':

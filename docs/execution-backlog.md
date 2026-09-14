@@ -641,7 +641,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L5b-7a — Attribute the caught Steam failure
 - **ID:** L5b-7a
 - **TITLE:** Observe the first failure without changing platform outcome
-- **STATUS:** NEXT
+- **STATUS:** ATTRIBUTED — J60 Windows native library missing; J59 contaminated second-call result rejected
 - **CONTEXT:** J58 original load returns false, but its catch discards exception details.
 - **OBSERVATION:** The result cannot distinguish native initialization, API validation or mandatory subscription paths.
 - **HYPOTHESIS:** One input-gated diagnostic observation can identify the first failed prerequisite while preserving original checks and result.
@@ -653,3 +653,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** Exception type/stack or first prerequisite result, assembly/APK provenance and current-launch capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Record cause and legitimate next options, preserve J58; reassess architecture access risks.
 - **DEPENDENCIES:** J58 and minimal T08 observation only.
+
+## L5b-7b — Legitimate platform runtime feasibility
+- **ID:** L5b-7b
+- **TITLE:** Evaluate authorized runtime options against the measured Steam dependency
+- **STATUS:** NEXT
+- **CONTEXT:** J60 fails in Win64 SteamAPI_Init on Android before ownership checks.
+- **OBSERVATION:** The original managed binding selects a Windows DLL; no compatible authenticated Android route is established.
+- **HYPOTHESIS:** Official runtime/platform documentation and existing authorized inputs can determine whether a legitimate bounded integration exists.
+- **TASK:** Verify supported native targets and the exact binding contract, reuse prior research, and record feasible authorized options or an access blocker. Preserve mandatory ownership checks; separate optional services from the base client.
+- **CONSTRAINTS:** No fake successful service/authentication/entitlement responses or arbitrary backend substitution. Do not acquire proprietary SDKs without appropriate access.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Source/runtime inventory and cited feasibility evidence; no speculative adapter.
+- **TEST COMMAND:** Read-only source/runtime inspection and authoritative documentation; new device probe only for a justified candidate.
+- **PASS CONDITION:** Concrete legitimate route or explicit prerequisite gap documented; this does not itself pass L5.
+- **FAILURE EVIDENCE TO CAPTURE:** Unsupported ABI/platform, unavailable authorized runtime or unresolved mandatory checks.
+- **STATE/JOURNAL UPDATES REQUIRED:** Reassess architecture/access risks; keep dependent startup stopped if no legitimate route exists and select useful independent work.
+- **DEPENDENCIES:** J58–J60, existing platform prior art.
