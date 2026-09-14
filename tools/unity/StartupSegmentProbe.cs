@@ -5,18 +5,21 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering.PostProcessing;
 using Zio;
 using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class EffectExpectation {public string name;public bool active,enabled;}
+ [Serializable] public class VolumeExpectation {public string name;public float priority;public EffectExpectation[] settings;}
  [Serializable] public class FpsSample {public float delta,expected,observed;public int index,turn;}
  [Serializable] public class TimingSample {public float previousFixed,currentFixed,renderTime,expected,observed;}
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -32,6 +35,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   if(cfg.globalTextures)report.stopBoundary="After explicit original GlobalShaderTextures.Start and binding/restore assertions; application remains inactive";
   if(cfg.interpolation)report.stopBoundary="After original interpolation methods at diagnostic fixed/frame boundaries; application remains inactive";
   if(cfg.fpsQueue)report.stopBoundary="After isolated original FPSQueue callback sampling and state/subscription restoration; no full application Update";
+  if(cfg.volume)report.stopBoundary="After explicit first PostProcessVolume registration/update/unregistration; no postprocessing rendering";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -116,6 +120,18 @@ public class StartupSegmentProbe : MonoBehaviour {
   }finally{if(added!=null)RoR2.RoR2Application.onUpdate-=added;for(int i=0;i<fields.Length;i++)fields[i].SetValue(null,saved[i]);report.fpsRestored=Equals(eventField.GetValue(null),before)&&fields.Select((f,i)=>Equals(f.GetValue(null),saved[i])).All(x=>x);}
   Require(report.fpsPassed&&report.fpsRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"FPSQueue restoration or inactive boundary failed");
  }
+ void TestVolume(RoR2.RoR2Application app){
+  Phase("recovered-volume-profiles");var volumes=app.GetComponents<PostProcessVolume>().OrderBy(v=>v.priority).ToArray();Require(cfg.volumes!=null&&volumes.Length==2&&cfg.volumes.Length==2,"Expected two measured recovered volumes");
+  for(int i=0;i<2;i++){var v=volumes[i];var e=cfg.volumes[i];Require(v.sharedProfile&&v.sharedProfile.name==e.name&&v.priority==e.priority&&v.isGlobal&&!v.enabled&&!v.HasInstantiatedProfile(),"Recovered profile/volume identity mismatch");Require(v.sharedProfile.settings.Count==e.settings.Length,"Recovered setting count mismatch");for(int j=0;j<e.settings.Length;j++){var setting=v.sharedProfile.settings[j];var expected=e.settings[j];Require(setting&&setting.name==expected.name&&setting.active==expected.active&&setting.enabled.value==expected.enabled,"Recovered effect setting mismatch");}}
+  var target=volumes[0];report.volumeProfile=target.sharedProfile.name;report.volumeSettings=target.sharedProfile.settings.Count;Phase("original-volume-manager");var manager=PostProcessManager.instance;
+  var flags=BindingFlags.Instance|BindingFlags.NonPublic;var listField=typeof(PostProcessManager).GetField("m_Volumes",flags);Require(listField!=null,"Original manager registration field missing");var registrations=(System.Collections.Generic.List<PostProcessVolume>)listField.GetValue(manager);var before=registrations.ToArray();Require(!before.Contains(target),"Target already registered");report.registeredBefore=before.Length;
+  var fields=new[]{"m_PreviousLayer","m_PreviousPriority","m_TempColliders","oldWeight"}.Select(n=>typeof(PostProcessVolume).GetField(n,flags)).ToArray();Require(fields.All(f=>f!=null),"Volume lifecycle state fields missing");var saved=fields.Select(f=>f.GetValue(target)).ToArray();bool entered=false;
+  try{
+   Phase("original-volume-enable");entered=true;typeof(PostProcessVolume).GetMethod("OnEnable",flags).Invoke(target,null);report.registeredDuring=registrations.Count;Require(registrations.Count==before.Length+1&&registrations.Count(v=>v==target)==1&&before.All(v=>registrations.Contains(v)),"Original registration mismatch");
+   Require(fields[2].GetValue(target)!=null&&(int)fields[0].GetValue(target)==target.gameObject.layer,"Original volume initialization missing");Phase("original-volume-update");typeof(PostProcessVolume).GetMethod("Update",flags).Invoke(target,null);Require((float)fields[3].GetValue(target)==target.weight,"Original volume weight update missing");report.volumePassed=true;
+  }finally{if(entered)typeof(PostProcessVolume).GetMethod("OnDisable",flags).Invoke(target,null);for(int i=0;i<fields.Length;i++)fields[i].SetValue(target,saved[i]);report.volumeRestored=registrations.SequenceEqual(before)&&fields.Select((f,i)=>Equals(f.GetValue(target),saved[i])).All(x=>x);}
+  Require(report.volumePassed&&report.volumeRestored&&!target.enabled&&!target.HasInstantiatedProfile()&&!app.gameObject.activeInHierarchy,"Volume lifecycle restoration or inactive boundary failed");
+ }
  IEnumerator Run(){
   Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
   var host=new GameObject("Inactive original startup host");host.SetActive(false);var app=host.AddComponent<RoR2.RoR2Application>();Require(RoR2.RoR2Application.instance==null,"Unexpected application Awake");
@@ -153,6 +169,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     if(cfg.globalTextures)TestGlobalTextures(apps[0]);
     if(cfg.interpolation){var timing=TestInterpolation(apps[0]);while(timing.MoveNext())yield return timing.Current;}
     if(cfg.fpsQueue){var fps=TestFpsQueue(apps[0]);while(fps.MoveNext())yield return fps.Current;}
+    if(cfg.volume)TestVolume(apps[0]);
    }
   }
   // Never advance into component enabling/audio/platform/profile initialization.

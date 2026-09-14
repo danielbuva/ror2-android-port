@@ -480,7 +480,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3e — Recovered postprocessing volume lifecycle
 - **ID:** L5b-3e
-- **STATUS:** NEXT
+- **STATUS:** PASS — J46, first volume registration/update/removal; both profiles audited
 - **TITLE:** Verify original volume registration against recovered profiles
 - **CONTEXT:** J45 passes isolated FPSQueue callbacks; two disabled PostProcessVolume entries remain in the recovered application enable list.
 - **OBSERVATION:** Original OnEnable registers with PostProcessManager and initializes volume state; OnDisable unregisters. Two serialized profile references and their settings need inspection before execution.
@@ -493,3 +493,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First profile/setting/manager/resource failure, actual registration state and lifecycle boundaries, source/APK/payload identities and current foreground capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J45 accepted verification; record bounded volume outcome and next volume or NGSS boundary.
 - **DEPENDENCIES:** L5b-3d/J45 and J41 component audit with fresh profile/manager inspection.
+
+## L5b-3f — Second volume and priority ordering
+- **ID:** L5b-3f
+- **STATUS:** NEXT
+- **TITLE:** Verify recovered override-volume registration and ordering
+- **CONTEXT:** J46 passes ppApplication_opt lifecycle and audits ppDisabler_opt without invoking it.
+- **OBSERVATION:** The second volume has priority 99999 and disabled effect settings; original manager sorts registered volumes by priority for eligible layers.
+- **HYPOTHESIS:** Original registration/sorting preserves both recovered profile identities and removes them cleanly without rendering effects.
+- **TASK:** Revalidate original manager query/sort contract; register the second volume and first in an order that discriminates priority sorting, inspect the original manager result for their actual layer, and unregister both with balanced cleanup. Preserve existing entries and exact recovered priority/profile values.
+- **CONSTRAINTS:** Common contract; no authored sorting substituted for manager behavior, no rendering or visual-disable claim, no full application activation. Stop on first second-volume or manager-query failure.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Small existing volume-probe extension, ignored manager/query evidence, state/journal.
+- **TEST COMMAND:** Existing preflight, forced Vulkan build and startup-run with verified foreground capture.
+- **PASS CONDITION:** Both real profiles register, original query orders them as specified, and registrations cleanly return to baseline; stable device lifetime without new exceptions.
+- **FAILURE EVIDENCE TO CAPTURE:** First registration/profile/layer/query-order failure, before/during/after manager state, source/APK/payload identities and current-PID capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J46 rollback, distinguish manager ordering from rendered effects, then select NGSS from the existing audit.
+- **DEPENDENCIES:** L5b-3e/J46 and pinned manager query/sort contract.
