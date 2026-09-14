@@ -15,7 +15,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Asset-only audio boundary: never instantiate either returned prefab.
 public static class AudioAssetProbe {
- [Serializable] public class Config {public string[] paths,keys,assets,names;}
+ [Serializable] public class Config {public string[] paths,keys,assets,names;public bool nativeAvailability;}
  static void Require(bool value,string error){if(!value)throw new Exception(error);}
  public static IEnumerator Run(Action<string> observe){
  var cfg=JsonUtility.FromJson<Config>(Resources.Load<TextAsset>("AudioAssetProbe").text);
@@ -55,5 +55,13 @@ public static class AudioAssetProbe {
  }
  Require(UnityEngine.Object.FindObjectOfType<AkInitializer>()==null,"Audio initializer activated unexpectedly");
  Addressables.RemoveResourceLocator(locator);
+ if(cfg.nativeAvailability){
+  string unavailable=null;
+  try{bool initialized=AkSoundEngine.IsInitialized();observe("NativeQueryReturned:"+initialized);}
+  catch(DllNotFoundException e){unavailable=e.GetType().Name;observe("AudioUnavailable:"+unavailable);}
+  // A missing export or another exception is a different failure, not proof of absent runtime.
+  Require(unavailable=="DllNotFoundException","Expected missing native library was not observed; reassess runtime inventory");
+ }
+
  }
 }

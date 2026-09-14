@@ -414,7 +414,7 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
 
 
-def audio_assets_prepare():
+def audio_assets_prepare(native_availability=False):
     """J51 measured prefab closure; asset loading only, no audio activation."""
     startup_prepare(integration=True)
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
@@ -432,6 +432,7 @@ def audio_assets_prepare():
         shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'))
     names=['WwiseGlobal','AudioManager'];assets=['Assets/LabLoadingScene/RoR2/Base/Core/Audio/'+n+'.prefab' for n in names]
     cfg={'names':names,'paths':['Prefabs/'+n for n in names],'keys':['8efd031dc149abb42a4ba4021856af9d','d42d5c95eee66a348a4c4abf71e0352b'],'assets':assets}
+    cfg['nativeAvailability']=native_availability
     write(stage/'Resources/AudioAssetProbe.json',cfg);shutil.copy2(ROOT/'tools/unity/AudioAssetProbe.cs',stage/'AudioAssetProbe.cs')
     build=read(WORK/'scene-probe-build.json');build['prefabAssets']+=assets;write(WORK/'scene-probe-build.json',build)
     r['audio_assets']=True;write(out/'attempt.json',r);write(out/'audio-closure.json',closure);write(out/'audio-config.json',cfg)

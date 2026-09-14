@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='audio-assets-prepare':
+  if a.action=='audio-native-prepare':
+   from scene_runtime import audio_assets_prepare
+   audio_assets_prepare(native_availability=True)
+  elif a.action=='audio-assets-prepare':
    from scene_runtime import audio_assets_prepare
    audio_assets_prepare()
   elif a.action=='startup-integration-prepare':

@@ -9,7 +9,7 @@ Likelihood is uncertainty, not a statistical estimate. Each risk is resolved by 
 | Middleware/native/legal distribution | High / capability-blocking | Exact authorized package/API/ELF access and load probe | User-supplied authorized package or bounded lawful alternative; tooling-only repo |
 | Burst/Unity | High / editor or runtime-blocking | Separate direct-call package and Android probe | Compatible artifacts/valid fallback; exact editor stays pinned |
 | Content/shaders | High / scene/readability-blocking | Required reference closure and one material family | Narrow repair; progressive replacement, parity later |
-| Wwise banks/codecs | High / audio-blocking | J50: accepted APK lacks separate AkSoundEngine library; resolve prefab identities before asset-only probe, then authorized engine/bank test | Explicit no-audio where functional; no assumed regeneration |
+| Wwise banks/codecs | High / audio-blocking | J52 asset loads pass; J53 original native query throws DllNotFoundException on Android. Explicit unavailable-audio candidate next; authorized engine/bank test remains open | Explicit no-audio where functional; no assumed regeneration |
 | Input/local networking | Medium–high / simulation-blocking | L5.5 separates authority/ticking/scripted input/handheld | Retain local HLAPI and action contracts; remote transport separate |
 | Android storage scale | Unmeasured / install/transfer loss | T10 before large content; every install live capacity/backing | Small APK, changed sync, staged dependent generations and host rollback |
 | Memory/performance/thermal | Unmeasured / usability | Samples at gates, warmed stage/combat and transitions | Fix measured bottleneck; stable 30 FPS, avoid polish first |

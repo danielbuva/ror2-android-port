@@ -577,7 +577,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L5b-5b — Native audio feasibility and bounded unavailable-audio alternative
 - **ID:** L5b-5b
 - **TITLE:** Select a lawful next audio lifecycle candidate
-- **STATUS:** NEXT
+- **STATUS:** DISCRIMINATING PASS — J53 confirms absent native runtime; audio capability remains unavailable
 - **CONTEXT:** J52 proves audio asset loading independently of activation.
 - **OBSERVATION:** Preserved bindings import AkSoundEngine and default to Windows; accepted APK has no separate native engine. Activation also starts eight bank loaders.
 - **HYPOTHESIS:** A compatible authorized runtime, or explicit unavailable-audio handling over a measured lifecycle, can support further startup.
@@ -589,3 +589,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** ABI/API mismatch, native resolution, bank/init errors or unhandled audio call; current-launch evidence.
 - **STATE/JOURNAL UPDATES REQUIRED:** Update audio risk and first failure; never advance audio/menu acceptance from asset loading.
 - **DEPENDENCIES:** J50–J52, existing audio prior art.
+
+## L5b-5c — Explicit unavailable-audio startup boundary
+- **ID:** L5b-5c
+- **TITLE:** Test one input-gated early audio guard
+- **STATUS:** NEXT
+- **CONTEXT:** J53 confirms missing native runtime through original code on Android.
+- **OBSERVATION:** Original early Init activates native-dependent prefabs; the following yields precede filesystem/platform setup.
+- **HYPOTHESIS:** An explicit unavailable-audio guard can preserve original coroutine ordering through the next Addressables yield.
+- **TASK:** Inspect original IL and exact call-site semantics; implement one narrowly gated candidate with authored unavailable capability evidence. Continue only through Addressables initialization, stopping before filesystem/platform code.
+- **CONSTRAINTS:** No fabricated native success, no service/entitlement changes, no original installation edits. Distinguish transformed assembly hashes. Do not claim complete no-audio lifecycle; later queries/dialogs/bank waits remain open.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow local assembly transformation, provenance validation and existing startup probe.
+- **TEST COMMAND:** Transformation contract assertions, preflight, forced Vulkan build and startup-run.
+- **PASS CONDITION:** Explicit audio-unavailable observation, original coroutine reaches expected yield, real Addressables completion, unchanged filesystem globals and stable device lifetime.
+- **FAILURE EVIDENCE TO CAPTURE:** IL mismatch, altered unexpected method, native call, initialization or preservation error; assembly/APK identities and current-launch capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J52/J53 and record exact altered method and limits; update next boundary.
+- **DEPENDENCIES:** J49, J52, J53; minimum provenance tooling only.
