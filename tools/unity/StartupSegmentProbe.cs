@@ -10,12 +10,13 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue;public TextureExpectation[] textures;}
+ [Serializable] public class FpsSample {public float delta,expected,observed;public int index,turn;}
  [Serializable] public class TimingSample {public float previousFixed,currentFixed,renderTime,expected,observed;}
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -30,6 +31,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   if(cfg.applicationAwake)report.stopBoundary="After explicitly invoked original Awake on inactive recovered application; no Start/Update/component enabling/audio";
   if(cfg.globalTextures)report.stopBoundary="After explicit original GlobalShaderTextures.Start and binding/restore assertions; application remains inactive";
   if(cfg.interpolation)report.stopBoundary="After original interpolation methods at diagnostic fixed/frame boundaries; application remains inactive";
+  if(cfg.fpsQueue)report.stopBoundary="After isolated original FPSQueue callback sampling and state/subscription restoration; no full application Update";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -93,6 +95,27 @@ public class StartupSegmentProbe : MonoBehaviour {
   }finally{history.SetValue(target,oldHistory);index.SetValue(target,oldIndex);factor.SetValue(null,oldFactor);report.interpolationRestored=ReferenceEquals(history.GetValue(target),oldHistory)&&index.GetValue(target).Equals(oldIndex)&&factor.GetValue(null).Equals(oldFactor);}
   Require(report.interpolationPassed&&report.interpolationRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"Interpolation restoration or inactive boundary failed");
  }
+ IEnumerator TestFpsQueue(RoR2.RoR2Application app){
+  Phase("original-fps-queue");var target=app.GetComponent<FPSQueue>();Require(target&&!target.enabled&&!app.gameObject.activeInHierarchy,"Expected inactive recovered FPSQueue");
+  var flags=BindingFlags.Static|BindingFlags.NonPublic|BindingFlags.Public;var fields=new[]{"sampleIndex","unitySamples","waitTurn","waitIndex","currentFPS"}.Select(n=>typeof(FPSQueue).GetField(n,flags)).ToArray();Require(fields.All(f=>f!=null),"FPSQueue state fields missing");var saved=fields.Select(f=>f.GetValue(null)).ToArray();
+  var eventField=typeof(RoR2.RoR2Application).GetField("onUpdate",flags);Require(eventField!=null,"Original update event backing field missing");var before=(Action)eventField.GetValue(null);Action added=null;
+  var rows=new System.Collections.Generic.List<FpsSample>();
+  try{
+   Require(FPSQueue.numSamples==30&&(int)saved[0]==0&&(int)saved[2]==0&&(int)saved[3]==0,"Unreviewed initial FPSQueue state");
+   typeof(FPSQueue).GetMethod("Start",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(target,null);
+   var after=(Action)eventField.GetValue(null);var oldCalls=before==null?new Delegate[0]:before.GetInvocationList();var calls=after.GetInvocationList();Require(calls.Length==oldCalls.Length+1&&calls.Take(oldCalls.Length).SequenceEqual(oldCalls),"Unexpected callback registration change");added=(Action)calls.Last();
+   report.fpsCallback=added.Method.DeclaringType.FullName+"."+added.Method.Name;report.callbackRegistered=added.Target==null&&added.Method.DeclaringType==typeof(FPSQueue)&&added.Method.Name=="UpdateFPSLimitVars";Require(report.callbackRegistered,"Unexpected original callback identity");
+   var observedRates=new System.Collections.Generic.Queue<float>();
+   for(int i=0;i<36;i++){
+    yield return null;float delta=Time.unscaledDeltaTime;Require(delta>0f,"Invalid real frame delta");observedRates.Enqueue(1f/delta);if(observedRates.Count>30)observedRates.Dequeue();added();
+    var row=new FpsSample{delta=delta,expected=observedRates.Sum()/30f,observed=FPSQueue.currentFPS,index=(int)fields[0].GetValue(null),turn=(int)fields[2].GetValue(null)};rows.Add(row);report.fpsSamples=rows.ToArray();
+    Require(!float.IsNaN(row.observed)&&!float.IsInfinity(row.observed)&&Mathf.Abs(row.expected-row.observed)<0.001f&&row.index==(i+1)%30&&row.turn==(i+1)%6,"Original FPS sample/index/turn mismatch");
+    int slot=1;bool allowed=FPSQueue.CheckFPSQueue(ref slot);Require(allowed==(row.observed>=FPSQueue.fpsThrottlingCutoff||slot==row.turn),"Original throttling decision mismatch");
+   }
+   for(int i=1;i<=12;i++)Require(FPSQueue.GetWaitIndex()==i%6,"Original wait slot wrap mismatch");report.fpsPassed=true;
+  }finally{if(added!=null)RoR2.RoR2Application.onUpdate-=added;for(int i=0;i<fields.Length;i++)fields[i].SetValue(null,saved[i]);report.fpsRestored=Equals(eventField.GetValue(null),before)&&fields.Select((f,i)=>Equals(f.GetValue(null),saved[i])).All(x=>x);}
+  Require(report.fpsPassed&&report.fpsRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"FPSQueue restoration or inactive boundary failed");
+ }
  IEnumerator Run(){
   Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
   var host=new GameObject("Inactive original startup host");host.SetActive(false);var app=host.AddComponent<RoR2.RoR2Application>();Require(RoR2.RoR2Application.instance==null,"Unexpected application Awake");
@@ -129,6 +152,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     Require(!apps[0].gameObject.activeInHierarchy&&enable.All(x=>!x.enabled)&&RoR2.RoR2Application.isLoading&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Awake escaped selected boundary");report.recoveredAwakeCompleted=true;
     if(cfg.globalTextures)TestGlobalTextures(apps[0]);
     if(cfg.interpolation){var timing=TestInterpolation(apps[0]);while(timing.MoveNext())yield return timing.Current;}
+    if(cfg.fpsQueue){var fps=TestFpsQueue(apps[0]);while(fps.MoveNext())yield return fps.Current;}
    }
   }
   // Never advance into component enabling/audio/platform/profile initialization.

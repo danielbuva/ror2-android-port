@@ -449,7 +449,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3d — Original FPSQueue initialization and callback
 - **ID:** L5b-3d
-- **STATUS:** NEXT
+- **STATUS:** PENDING CAPTURE — J44 method assertions pass; unrelated foreground screenshot rejected
 - **TITLE:** Verify original frame sampling without activating full application update
 - **CONTEXT:** J43 proves original interpolation methods under diagnostic scheduling.
 - **OBSERVATION:** FPSQueue.Start subscribes its callback to RoR2Application.onUpdate and allocates samples; the callback advances queue turns and computes sampled FPS.
@@ -462,3 +462,18 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First missing callback/array/state/timing mismatch, real deltas, invocation identity, original DLL/APK/payload identity, current-PID report/log/capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J43; distinguish callback proof from full frame loop; select postprocessing/NGSS next using the existing audit.
 - **DEPENDENCIES:** L5b-3c/J43 and J41 component audit plus pinned FPSQueue signatures.
+
+## T08-J44 — Foreground attribution for scene capture
+- **ID:** T08-J44
+- **TITLE:** Reject a screenshot belonging to another app
+- **CONTEXT:** Supports immediate L5b-3d acceptance, not a general observability expansion.
+- **OBSERVATION:** J44 method report passed while screenshot showed another foreground app.
+- **HYPOTHESIS:** Checking resumed activity before capture prevents silently accepting this mismatch.
+- **TASK:** Record current activity dump locally, require the lab resumed component, and reject unknown/other app identity. Review the resulting screenshot as before.
+- **CONSTRAINTS:** Keep private activity details/captures ignored. Do not switch away from an actively used app without resolving device availability.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing scene runner and one regression test.
+- **TEST COMMAND:** `./dev test`; next foreground device verification.
+- **PASS CONDITION:** Host regression rejects a passing method marker with another app foreground; actual capture still requires visual review.
+- **FAILURE EVIDENCE TO CAPTURE:** Current resumed activity, PID/report and image mismatch.
+- **STATE/JOURNAL UPDATES REQUIRED:** J44 rejection remains immutable; only fresh verified capture can advance acceptance. Roll back this guard with its focused change if parsing is incompatible, after recording the exact failure.
+- **DEPENDENCIES:** J44 observed capture mismatch.

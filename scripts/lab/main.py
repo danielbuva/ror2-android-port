@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='startup-interpolation-prepare':
+  if a.action=='startup-fps-prepare':
+   from scene_runtime import startup_prepare
+   startup_prepare(loading_scene=True,application_awake=True,global_textures=True,interpolation=True,fps_queue=True)
+  elif a.action=='startup-interpolation-prepare':
    from scene_runtime import startup_prepare
    startup_prepare(loading_scene=True,application_awake=True,global_textures=True,interpolation=True)
   elif a.action=='startup-textures-prepare':

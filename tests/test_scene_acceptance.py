@@ -24,3 +24,16 @@ class SceneAcceptanceTests(unittest.TestCase):
    with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=[0,36,36]):
     with self.assertRaisesRegex(RuntimeError,'Scene probe failed'):scene_runtime.scene_run()
    result=read(out/'runtime-result.json');self.assertFalse(result['success']);self.assertIn('capture transfer failed',result['error']);d.reset.assert_called_once()
+
+ def test_other_foreground_app_cannot_pass_capture_acceptance(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);work=root/'work';out=work/'experiments/scene-runtime/attempt'
+   write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
+   write(out/'attempt.json',{'stage':str(root/'stage'),'original_assemblies':{},'startup':True})
+   write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','payload':{'loadingbasic-lab':'mock'}})
+   write(work/'device/runtime.json',{'persistentDataPath':'mock-owned-path'})
+   d=MagicMock();d.exists.return_value=True;d.launch.return_value={'pid':'123'};d.install.return_value={};d.sync.return_value={}
+   d.sh.side_effect=lambda *args,**kw: 'mResumedActivity: ActivityRecord{other.app/.Main}' if args[0]=='dumpsys' else json.dumps({'success':True,'attempt':'attempt','pid':123})
+   with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=[0,51,51]):
+    with self.assertRaisesRegex(RuntimeError,'Scene probe failed'):scene_runtime.scene_run()
+   result=read(out/'runtime-result.json');self.assertFalse(result['success']);self.assertFalse(result['foreground_verified']);self.assertIn('foreground',result['error']);d.reset.assert_not_called()
