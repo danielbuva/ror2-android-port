@@ -11,7 +11,8 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class GlobalFloatExpectation {public string name;public float value;}
  [Serializable] public class EffectExpectation {public string name;public bool active,enabled;}
  [Serializable] public class VolumeExpectation {public string name;public float priority;public EffectExpectation[] settings;}
  [Serializable] public class FpsSample {public float delta,expected,observed;public int index,turn;}
@@ -19,7 +20,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -37,6 +38,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   if(cfg.fpsQueue)report.stopBoundary="After isolated original FPSQueue callback sampling and state/subscription restoration; no full application Update";
   if(cfg.volume)report.stopBoundary="After explicit first PostProcessVolume registration/update/unregistration; no postprocessing rendering";
   if(cfg.volumeOrder)report.stopBoundary="After both original volume lifecycles and manager priority/layer queries; no rendering";
+  if(cfg.ngss)report.stopBoundary="After locally recompiled NGSS initialization/update/disable and global restoration; no shadow rendering";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -147,6 +149,20 @@ public class StartupSegmentProbe : MonoBehaviour {
   }finally{foreach(var v in entered.AsEnumerable().Reverse())typeof(PostProcessVolume).GetMethod("OnDisable",flags).Invoke(v,null);for(int i=0;i<volumes.Length;i++)for(int j=0;j<fields.Length;j++)fields[j].SetValue(volumes[i],saved[i][j]);var afterSorted=(System.Collections.Generic.List<PostProcessVolume>)query.Invoke(manager,new object[]{mask});report.volumeOrderRestored=registrations.SequenceEqual(before)&&afterSorted.SequenceEqual(priorSorted);}
   Require(report.volumeOrderPassed&&report.volumeOrderRestored&&volumes.All(v=>!v.enabled&&!v.HasInstantiatedProfile())&&!app.gameObject.activeInHierarchy,"Volume pair restoration or inactive boundary failed");
  }
+ void TestNgss(RoR2.RoR2Application app){
+  Phase("recovered-ngss-identity");var target=app.GetComponent<NGSS_Local>();Require(target&&!target.enabled&&!app.gameObject.activeInHierarchy,"Expected inactive recovered NGSS component");report.ngssAssembly=typeof(NGSS_Local).Assembly.GetName().Name;Require(report.ngssAssembly==typeof(StartupSegmentProbe).Assembly.GetName().Name,"NGSS provenance differs from locally recompiled source expectation");
+  var texture=target.NGSS_NOISE_TEXTURE;var e=cfg.noise;Require(texture&&e!=null&&texture.name==e.name&&texture.width==e.width&&texture.height==e.height,"Recovered noise texture identity mismatch");report.noiseIdentity=texture.name+":"+texture.width+"x"+texture.height;
+  Require(cfg.ngssGlobals!=null&&cfg.ngssGlobals.Length==8&&!target.NGSS_NO_UPDATE_ON_PLAY,"Unreviewed NGSS globals/update contract");var flags=BindingFlags.Instance|BindingFlags.NonPublic;var initialized=typeof(NGSS_Local).GetField("isInitialized",flags);Require(initialized!=null&&!(bool)initialized.GetValue(target),"NGSS already initialized");
+  var previous=cfg.ngssGlobals.Select(g=>Shader.GetGlobalFloat(g.name)).ToArray();var oldTexture=Shader.GetGlobalTexture("_BlueNoiseTexture");int oldSamples=target.NGSS_SAMPLING_TEST;
+  try{
+   foreach(var g in cfg.ngssGlobals)Shader.SetGlobalFloat(g.name,-123f);Shader.SetGlobalTexture("_BlueNoiseTexture",(Texture)null);Phase("recovered-ngss-enable");typeof(NGSS_Local).GetMethod("OnEnable",flags).Invoke(target,null);
+   Require((bool)initialized.GetValue(target)&&Shader.GetGlobalTexture("_BlueNoiseTexture")==texture,"NGSS initialization/noise binding failed");
+   foreach(var g in cfg.ngssGlobals)Require(Mathf.Abs(Shader.GetGlobalFloat(g.name)-g.value)<0.0001f,"NGSS global mismatch: "+g.name);report.ngssGlobalsChecked=cfg.ngssGlobals.Length;
+   foreach(var g in cfg.ngssGlobals)Shader.SetGlobalFloat(g.name,-123f);Phase("recovered-ngss-update");typeof(NGSS_Local).GetMethod("Update",flags).Invoke(target,null);foreach(var g in cfg.ngssGlobals)Require(Mathf.Abs(Shader.GetGlobalFloat(g.name)-g.value)<0.0001f,"NGSS update global mismatch: "+g.name);
+   typeof(NGSS_Local).GetMethod("OnDisable",flags).Invoke(target,null);Require(!(bool)initialized.GetValue(target),"NGSS disable failed");report.ngssPassed=true;
+  }finally{typeof(NGSS_Local).GetMethod("OnDisable",flags).Invoke(target,null);target.NGSS_SAMPLING_TEST=oldSamples;for(int i=0;i<previous.Length;i++)Shader.SetGlobalFloat(cfg.ngssGlobals[i].name,previous[i]);Shader.SetGlobalTexture("_BlueNoiseTexture",oldTexture);report.ngssRestored=cfg.ngssGlobals.Select((g,i)=>Shader.GetGlobalFloat(g.name)==previous[i]).All(x=>x)&&Shader.GetGlobalTexture("_BlueNoiseTexture")==oldTexture&&!(bool)initialized.GetValue(target);}
+  Require(report.ngssPassed&&report.ngssRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"NGSS restoration or inactive boundary failed");
+ }
  IEnumerator Run(){
   Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
   var host=new GameObject("Inactive original startup host");host.SetActive(false);var app=host.AddComponent<RoR2.RoR2Application>();Require(RoR2.RoR2Application.instance==null,"Unexpected application Awake");
@@ -186,6 +202,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     if(cfg.fpsQueue){var fps=TestFpsQueue(apps[0]);while(fps.MoveNext())yield return fps.Current;}
     if(cfg.volume)TestVolume(apps[0]);
     if(cfg.volumeOrder)TestVolumeOrder(apps[0]);
+    if(cfg.ngss)TestNgss(apps[0]);
    }
   }
   // Never advance into component enabling/audio/platform/profile initialization.

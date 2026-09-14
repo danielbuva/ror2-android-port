@@ -325,10 +325,10 @@ def skin_apply_prepare():
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
 
 
-def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False):
+def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False, ngss=False):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_VOLUME.json' if volume_order else 'LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
+    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_VOLUME_ORDER.json' if ngss else 'LAST_KNOWN_GOOD_VOLUME.json' if volume_order else 'LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
     previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Preserve previous stage first')
@@ -393,4 +393,17 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
         cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['volumeOrder']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
         r['startup_volume_order']=True;r['status']='Original volume pair priority ordering pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Both original volume lifecycles registered in reverse priority order; original GrabVolumes query','assertions':'Original manager returns ascending priority for actual layer and excludes pair from zero mask; registrations and queried list return to baseline; component fields restored; no rendering claim'});write(out/'startup-contract.json',contract)
+    if ngss:
+        import struct
+        source=stage/'Scripts/Assembly-CSharp/NGSS_Local.cs';expected=r['copied_source_hashes']['Assets/Scripts/Assembly-CSharp/NGSS_Local.cs']
+        if sha(source)!=expected:raise RuntimeError('Recovered NGSS source drift')
+        scene=(stage/'RoR2/Base/Scenes/loadingbasic/loadingbasic.unity').read_text();block=re.search(r'^--- !u!114 &225\n.*?(?=^---|\Z)',scene,re.M|re.S)[0]
+        guid=re.search(r'NGSS_NOISE_TEXTURE: \{fileID: 2800000, guid: ([a-f0-9]+), type: 3\}',block)[1];matches=[p for p in stage.rglob('*.png.meta') if 'guid: '+guid in p.read_text()]
+        if len(matches)!=1:raise RuntimeError('Ambiguous noise texture')
+        noise=Path(str(matches[0])[:-5]);width,height=struct.unpack('>II',noise.read_bytes()[16:24]);fields={k:float(v) for k,v in re.findall(r'^  (NGSS_\w+): (-?[\d.]+)$',block,re.M)}
+        values={'NGSS_TEST_SAMPLERS':max(4,min(fields['NGSS_SAMPLING_TEST'],fields['NGSS_SAMPLING_FILTER'])),'NGSS_PCSS_FILTER_LOCAL_MIN':fields['NGSS_PCSS_SOFTNESS_NEAR'],'NGSS_PCSS_FILTER_LOCAL_MAX':fields['NGSS_PCSS_SOFTNESS_FAR'],'NGSS_NOISE_TO_DITHERING_SCALE':fields['NGSS_NOISE_TO_DITHERING_SCALE'],'NGSS_FILTER_SAMPLERS':fields['NGSS_SAMPLING_FILTER'],'NGSS_GLOBAL_OPACITY':1-fields['NGSS_SHADOWS_OPACITY'],'NGSS_LOCAL_SAMPLING_DISTANCE':fields['NGSS_SAMPLING_DISTANCE'],'NGSS_LOCAL_NORMAL_BIAS':fields['NGSS_NORMAL_BIAS']*0.1}
+        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'ngss':True,'noise':{'name':noise.stem,'width':width,'height':height},'ngssGlobals':[{'name':k,'value':v} for k,v in values.items()]});write(stage/'Resources/StartupSegmentProbe.json',cfg)
+        write(out/'ngss-provenance.json',{'code':'Locally recompiled recovered source, NOT preserved original Assembly-CSharp DLL','source':str(source.relative_to(stage)),'source_sha256':expected,'noise_guid':guid,'noise_source':str(noise.relative_to(stage)),'noise_sha256':sha(noise),'serialized_fields':fields,'expected_globals':values})
+        r['startup_ngss']=True;r['status']='Recovered NGSS initialization pending';write(out/'attempt.json',r)
+        contract=read(out/'startup-contract.json');contract.update({'segment':'Locally recompiled recovered NGSS OnEnable/Update/OnDisable, serialized noise path only','assertions':'Noise identity, eight shader globals, initialized/disabled state and previous-global restoration; no fallback-resource or rendered-shadow proof'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))

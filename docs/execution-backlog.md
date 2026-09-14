@@ -512,7 +512,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3g — Recovered NGSS initialization
 - **ID:** L5b-3g
-- **STATUS:** NEXT
+- **STATUS:** PASS — J48, locally recompiled NGSS noise/global contract and restoration
 - **TITLE:** Verify the remaining shadow component initialization contract
 - **CONTEXT:** J47 passes both postprocessing volume lifecycles; NGSS_Local remains unexecuted in the measured enable list.
 - **OBSERVATION:** Prior audit shows graphics support checking, shader-global initialization and a possible LegacyResourcesAPI noise fallback when the serialized texture is null. Its current compiled-code provenance must be explicit.
@@ -525,3 +525,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First graphics-support/noise/resource/global mismatch, actual lifecycle state, source/assembly/APK/payload identities and current-PID capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J47, then review evidence for integrated startup rather than adding more speculative component probes. L5 menu remains open.
 - **DEPENDENCIES:** L5b-3f/J47 and current staged NGSS provenance/serialized contract audit.
+
+## L5b-4 — Controlled integrated startup
+- **ID:** L5b-4
+- **STATUS:** NEXT
+- **TITLE:** Move from isolated method probes to actual application/component startup
+- **CONTEXT:** J48 completes bounded method evidence for the six listed startup components. Application automatic lifecycle and full initialization remain unproven.
+- **OBSERVATION:** Existing probes use inactive objects, explicit calls and a diagnostic coroutine host. Activating a host after manual Awake risks original singleton destruction; other attached components may have untested automatic callbacks.
+- **HYPOTHESIS:** A fresh recovered application host with a reviewed callback closure can reach a bounded integrated startup state while preserving original ordering and truthful service state.
+- **TASK:** Inventory all components and Awake/OnEnable/Start/Update obligations on the actual host, including those outside the six-item enable list. Trace exact original coroutine and singleton ordering. Choose the smallest integration experiment that executes actual callbacks without duplicate initialization, then stop before the first unreviewed audio/platform boundary. Split if required callbacks introduce a new subsystem.
+- **CONSTRAINTS:** Common contract; no fake loading/entitlement/authentication flags, empty-list success or broad callback deletion, no vanilla profile writes before Android paths are established. Do not activate a previously manually awakened host. Any targeted adapter requires measured necessity and explicit provenance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing startup probe and generated scene configuration, narrow ignored callback/ordering evidence, state/journal.
+- **TEST COMMAND:** Existing preflight, forced Vulkan build and foreground-verified device lifecycle; thin integration action when the exact boundary is recorded.
+- **PASS CONDITION:** The selected actual callback/startup segment reaches its declared boundary with real host/component identities, stable device lifetime and no unexplained exception. Menu acceptance remains separate until reached and navigated.
+- **FAILURE EVIDENCE TO CAPTURE:** First singleton/callback/reference/native/service failure, exact execution boundary and original component state, source/APK/payload identities, current-PID foreground capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J48 and earlier accepted checkpoints; review architecture evidence and select the next measured integration/audio boundary. Do not declare L5 from isolated tests.
+- **DEPENDENCIES:** L5b-3a–g/J41–J48, existing startup/profile prior-art audit and complete attached callback inventory.
