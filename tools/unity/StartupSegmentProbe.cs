@@ -11,7 +11,7 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss,integration,audioGuard,profileBinding;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss,integration,audioGuard,profileBinding,steamBoundary;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
  [Serializable] public class GlobalFloatExpectation {public string name;public float value;}
  [Serializable] public class EffectExpectation {public string name;public bool active,enabled;}
  [Serializable] public class VolumeExpectation {public string name;public float priority;public EffectExpectation[] settings;}
@@ -20,7 +20,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool profileBindingPassed;public bool audioGuardPassed;public bool audioAssetsPassed;public string[] audioResults;public bool integratedPassed;public int automaticStarts,automaticUpdates,automaticFixedUpdates,automaticLateUpdates;public string[] integratedComponents;public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool steamBoundaryPassed;public bool steamLoadResult;public bool profileBindingPassed;public bool audioGuardPassed;public bool audioAssetsPassed;public string[] audioResults;public bool integratedPassed;public int automaticStarts,automaticUpdates,automaticFixedUpdates,automaticLateUpdates;public string[] integratedComponents;public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -69,6 +69,21 @@ public class StartupSegmentProbe : MonoBehaviour {
   }
   report.profileGlobalsUntouched=RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null;
   Require(report.profileRoundTrip&&report.profileReopen&&report.rootsSeparate&&report.pathEscapeRejected&&report.contentReadOnly&&report.profileCleaned&&report.profileGlobalsUntouched,"Profile filesystem boundary assertions failed");
+ }
+ void TestSteamBoundary(){
+  Phase("original-steam-load-boundary");
+  Require(!File.Exists("steam_appid.txt"),"Original constructor may remove an existing app-id file; probe refused");
+  Require(RoR2.SteamworksClientManager.instance==null&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Unexpected existing Steam/profile state");
+  var oldLoad=RoR2.RoR2Application.loadSteamworksClient;var oldUnload=RoR2.RoR2Application.unloadSteamworksClient;
+  try{
+   RoR2.SteamworksClientManager.Init();Require(RoR2.RoR2Application.loadSteamworksClient!=null&&RoR2.RoR2Application.unloadSteamworksClient!=null,"Original callbacks missing");
+   report.steamLoadResult=RoR2.RoR2Application.loadSteamworksClient();
+   Require(!report.steamLoadResult,"Steam load unexpectedly succeeded; reassess authorization/runtime evidence");
+   RoR2.RoR2Application.unloadSteamworksClient();
+   Require(RoR2.SteamworksClientManager.instance==null&&RoR2.RoR2Application.cloudStorage==null&&RoR2.RoR2Application.fileSystem==null,"Failed Steam load altered storage or retained manager");
+   Require(string.IsNullOrEmpty(report.error),"Unhandled Steam boundary error: "+report.error);
+   report.steamBoundaryPassed=true;report.stopBoundary="Original Steam load returned false; no platform/profile continuation or fabricated ownership";
+  }finally{RoR2.RoR2Application.loadSteamworksClient=oldLoad;RoR2.RoR2Application.unloadSteamworksClient=oldUnload;}
  }
  void TestProfileBinding(){
   Phase("original-config-profile-binding");
@@ -216,6 +231,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     Require(RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null&&!UnityEngine.Object.FindObjectOfType<AkInitializer>(),"Escaped unavailable-audio boundary");
     Require(string.IsNullOrEmpty(report.error),"Guarded startup error: "+report.error);report.audioGuardPassed=true;report.stopBoundary="Original Addressables yield complete; before filesystem and PlatformSystems.Init; audio unavailable";
     if(cfg.profileBinding)TestProfileBinding();
+    if(cfg.steamBoundary)TestSteamBoundary();
    }report.integratedPassed=true;report.success=true;Phase("integration-pre-audio-complete");
  }
  IEnumerator Run(){

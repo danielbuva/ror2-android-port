@@ -456,3 +456,11 @@ def profile_binding_prepare():
     cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['profileBinding']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
     r['profile_binding']=True;write(out/'attempt.json',r)
     write(out/'profile-binding-contract.json',{'scope':'Temporary actual globals; original config writer/reader; no coroutine filesystem/platform continuation','app_data':'Writable Config and RunReports role; not read-only content','profiles':'Separate Android-only writable root; sentinel only, not vanilla profile','restore':'Both globals restored before return; unique owned temporary files removed'})
+
+
+def steam_boundary_prepare():
+    profile_binding_prepare()
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
+    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['steamBoundary']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+    r['steam_boundary']=True;write(out/'attempt.json',r)
+    write(out/'steam-boundary-contract.json',{'scope':'Original Init callback registration, load result and unload; no PlatformSystems.Init','expected':'Load returns false; no authenticated/owned state is manufactured','guards':'No existing app-id file or Steam/profile state; original callbacks restored','limitations':'Original catch hides failure cause; false alone does not identify which native or mandatory check failed'})

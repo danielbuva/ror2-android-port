@@ -20,7 +20,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='profile-binding-prepare':
+  if a.action=='steam-boundary-prepare':
+   from scene_runtime import steam_boundary_prepare
+   steam_boundary_prepare()
+  elif a.action=='profile-binding-prepare':
    from scene_runtime import profile_binding_prepare
    profile_binding_prepare()
   elif a.action=='audio-guard-prepare':

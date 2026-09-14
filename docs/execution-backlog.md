@@ -625,7 +625,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L5b-7 — Concrete offline platform boundary
 - **ID:** L5b-7
 - **TITLE:** Classify original platform initialization and mandatory checks
-- **STATUS:** NEXT
+- **STATUS:** DISCRIMINATING RESULT — J58 original load false; platform capability unproven
 - **CONTEXT:** J57 proves temporary writable configuration bindings; original coroutine remains before PlatformSystems.Init.
 - **OBSERVATION:** SteamworksClientManager starts before crossplay selection and can replace cloudStorage; concrete entitlement/save/achievement implementations follow.
 - **HYPOTHESIS:** Exact consumer and initialization evidence can separate optional services from required checks without fabricating success.
@@ -637,3 +637,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** Mandatory access gap, native/API dependency, profile-root replacement or service failure.
 - **STATE/JOURNAL UPDATES REQUIRED:** Update platform/profile risks and first failure; retain J57 rollback and explicit unproven gates.
 - **DEPENDENCIES:** J55/J57 and existing prior-art startup audit.
+
+## L5b-7a — Attribute the caught Steam failure
+- **ID:** L5b-7a
+- **TITLE:** Observe the first failure without changing platform outcome
+- **STATUS:** NEXT
+- **CONTEXT:** J58 original load returns false, but its catch discards exception details.
+- **OBSERVATION:** The result cannot distinguish native initialization, API validation or mandatory subscription paths.
+- **HYPOTHESIS:** One input-gated diagnostic observation can identify the first failed prerequisite while preserving original checks and result.
+- **TASK:** Inspect the exact catch/control flow; add minimal failure attribution or an equivalent isolated prerequisite probe. Preserve false and do not proceed into profile/gameplay startup.
+- **CONSTRAINTS:** No replaced success, ownership/authentication bypass, or service emulation. Attribute any diagnostic assembly change separately.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow metadata/diagnostic transformation and existing startup harness.
+- **TEST COMMAND:** Input/control-flow assertions, preflight, forced Vulkan build and startup-run.
+- **PASS CONDITION:** First failure attributable to this launch; original false result and filesystem isolation preserved. A diagnostic pass does not pass platform acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Exception type/stack or first prerequisite result, assembly/APK provenance and current-launch capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record cause and legitimate next options, preserve J58; reassess architecture access risks.
+- **DEPENDENCIES:** J58 and minimal T08 observation only.
