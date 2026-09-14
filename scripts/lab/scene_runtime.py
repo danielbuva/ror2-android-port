@@ -325,10 +325,10 @@ def skin_apply_prepare():
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
 
 
-def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False):
+def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
+    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_VOLUME.json' if volume_order else 'LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
     previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Preserve previous stage first')
@@ -389,4 +389,8 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
         cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'volume':True,'volumes':profiles});write(stage/'Resources/StartupSegmentProbe.json',cfg);write(out/'volume-identities.json',identities)
         r['startup_volume']=True;r['status']='Original first postprocessing volume lifecycle pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Audit both recovered profiles, execute first volume OnEnable/Update/OnDisable only','assertions':'Exact profile/settings identity and balanced manager registrations; restore component fields; no renderer or second-volume lifecycle claim'});write(out/'startup-contract.json',contract)
+    if volume_order:
+        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['volumeOrder']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+        r['startup_volume_order']=True;r['status']='Original volume pair priority ordering pending';write(out/'attempt.json',r)
+        contract=read(out/'startup-contract.json');contract.update({'segment':'Both original volume lifecycles registered in reverse priority order; original GrabVolumes query','assertions':'Original manager returns ascending priority for actual layer and excludes pair from zero mask; registrations and queried list return to baseline; component fields restored; no rendering claim'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))

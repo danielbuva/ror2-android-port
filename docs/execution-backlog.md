@@ -496,7 +496,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3f — Second volume and priority ordering
 - **ID:** L5b-3f
-- **STATUS:** NEXT
+- **STATUS:** PASS — J47, both lifecycles, original priority/layer query and balanced cleanup
 - **TITLE:** Verify recovered override-volume registration and ordering
 - **CONTEXT:** J46 passes ppApplication_opt lifecycle and audits ppDisabler_opt without invoking it.
 - **OBSERVATION:** The second volume has priority 99999 and disabled effect settings; original manager sorts registered volumes by priority for eligible layers.
@@ -509,3 +509,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First registration/profile/layer/query-order failure, before/during/after manager state, source/APK/payload identities and current-PID capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J46 rollback, distinguish manager ordering from rendered effects, then select NGSS from the existing audit.
 - **DEPENDENCIES:** L5b-3e/J46 and pinned manager query/sort contract.
+
+## L5b-3g — Recovered NGSS initialization
+- **ID:** L5b-3g
+- **STATUS:** NEXT
+- **TITLE:** Verify the remaining shadow component initialization contract
+- **CONTEXT:** J47 passes both postprocessing volume lifecycles; NGSS_Local remains unexecuted in the measured enable list.
+- **OBSERVATION:** Prior audit shows graphics support checking, shader-global initialization and a possible LegacyResourcesAPI noise fallback when the serialized texture is null. Its current compiled-code provenance must be explicit.
+- **HYPOTHESIS:** The recovered component retains its required noise reference and can initialize the measured globals on Vulkan without a broad shadow implementation.
+- **TASK:** Verify whether the staged NGSS type comes from preserved DLL or locally recovered source, record hashes and exact lifecycle signatures, resolve the serialized noise identity and expected globals, then execute the smallest initialization/update/disable probe with previous-state restoration. Split on missing native/resource/shader contract.
+- **CONSTRAINTS:** Common contract; no recovered source committed, no original-DLL claim for recompiled code, no rendered-shadow parity claim, no full application activation.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow existing startup probe/preparation, ignored provenance/noise/shader-global evidence, state/journal.
+- **TEST COMMAND:** Existing preflight, forced Vulkan build and foreground-verified startup-run; thin NGSS option only if needed.
+- **PASS CONDITION:** Measured initialization and reference/global assertions pass and state restores on device, with truthful code provenance and no new unexplained exception.
+- **FAILURE EVIDENCE TO CAPTURE:** First graphics-support/noise/resource/global mismatch, actual lifecycle state, source/assembly/APK/payload identities and current-PID capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J47, then review evidence for integrated startup rather than adding more speculative component probes. L5 menu remains open.
+- **DEPENDENCIES:** L5b-3f/J47 and current staged NGSS provenance/serialized contract audit.

@@ -93,3 +93,5 @@ Frame queue: `./dev prototype --action startup-fps-prepare`, forced Vulkan build
 Scene acceptance now checks that the lab is Android’s resumed activity before accepting a capture. A passing runtime marker paired with another foreground app fails acceptance; activity dumps and screenshots remain private local evidence.
 
 Postprocessing volume: `./dev prototype --action startup-volume-prepare`, forced Vulkan build and `./dev prototype --action startup-run` audit both serialized profiles and their setting flags, then explicitly call the first original volume’s OnEnable/Update/OnDisable. Manager registration and component state must balance. This does not enable postprocessing rendering or establish the second volume’s lifecycle.
+
+Volume ordering: `./dev prototype --action startup-volume-order-prepare`, forced Vulkan build and `./dev prototype --action startup-run` register both recovered volumes in descending priority order, then verify original GrabVolumes returns ascending priority for their actual layer and excludes them from a zero mask. Original unregistration must restore the prior registration/query lists; no rendering claim.

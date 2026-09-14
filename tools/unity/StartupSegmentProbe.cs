@@ -11,7 +11,7 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
  [Serializable] public class EffectExpectation {public string name;public bool active,enabled;}
  [Serializable] public class VolumeExpectation {public string name;public float priority;public EffectExpectation[] settings;}
  [Serializable] public class FpsSample {public float delta,expected,observed;public int index,turn;}
@@ -19,7 +19,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -36,6 +36,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   if(cfg.interpolation)report.stopBoundary="After original interpolation methods at diagnostic fixed/frame boundaries; application remains inactive";
   if(cfg.fpsQueue)report.stopBoundary="After isolated original FPSQueue callback sampling and state/subscription restoration; no full application Update";
   if(cfg.volume)report.stopBoundary="After explicit first PostProcessVolume registration/update/unregistration; no postprocessing rendering";
+  if(cfg.volumeOrder)report.stopBoundary="After both original volume lifecycles and manager priority/layer queries; no rendering";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -132,6 +133,20 @@ public class StartupSegmentProbe : MonoBehaviour {
   }finally{if(entered)typeof(PostProcessVolume).GetMethod("OnDisable",flags).Invoke(target,null);for(int i=0;i<fields.Length;i++)fields[i].SetValue(target,saved[i]);report.volumeRestored=registrations.SequenceEqual(before)&&fields.Select((f,i)=>Equals(f.GetValue(target),saved[i])).All(x=>x);}
   Require(report.volumePassed&&report.volumeRestored&&!target.enabled&&!target.HasInstantiatedProfile()&&!app.gameObject.activeInHierarchy,"Volume lifecycle restoration or inactive boundary failed");
  }
+ void TestVolumeOrder(RoR2.RoR2Application app){
+  Phase("original-volume-order");var volumes=app.GetComponents<PostProcessVolume>().OrderBy(v=>v.priority).ToArray();Require(volumes.Length==2&&volumes[0].priority==0f&&volumes[1].priority==99999f,"Unreviewed volume priority pair");
+  var flags=BindingFlags.Instance|BindingFlags.NonPublic;var manager=PostProcessManager.instance;var registrations=(System.Collections.Generic.List<PostProcessVolume>)typeof(PostProcessManager).GetField("m_Volumes",flags).GetValue(manager);var before=registrations.ToArray();Require(volumes.All(v=>!before.Contains(v)),"Volume already registered");
+  var query=typeof(PostProcessManager).GetMethod("GrabVolumes",flags);Require(query!=null,"Original layer query missing");LayerMask mask=1<<app.gameObject.layer;
+  var priorSorted=((System.Collections.Generic.List<PostProcessVolume>)query.Invoke(manager,new object[]{mask})).ToArray();
+  var fields=new[]{"m_PreviousLayer","m_PreviousPriority","m_TempColliders","oldWeight"}.Select(n=>typeof(PostProcessVolume).GetField(n,flags)).ToArray();Require(fields.All(f=>f!=null),"Volume state missing");var saved=volumes.Select(v=>fields.Select(f=>f.GetValue(v)).ToArray()).ToArray();var entered=new System.Collections.Generic.List<PostProcessVolume>();
+  try{
+   foreach(var v in volumes.Reverse()){entered.Add(v);typeof(PostProcessVolume).GetMethod("OnEnable",flags).Invoke(v,null);typeof(PostProcessVolume).GetMethod("Update",flags).Invoke(v,null);}
+   Require(registrations.SequenceEqual(before.Concat(volumes.Reverse())),"Registration order was not the discriminating reverse order");
+   var sorted=(System.Collections.Generic.List<PostProcessVolume>)query.Invoke(manager,new object[]{mask});var selected=sorted.Where(v=>volumes.Contains(v)).ToArray();report.sortedProfiles=selected.Select(v=>v.sharedProfile.name+":"+v.priority).ToArray();Require(selected.SequenceEqual(volumes),"Original manager priority order mismatch");
+   var excluded=(System.Collections.Generic.List<PostProcessVolume>)query.Invoke(manager,new object[]{(LayerMask)0});Require(!excluded.Any(v=>volumes.Contains(v)),"Original layer mask failed to exclude volumes");report.volumeOrderPassed=true;
+  }finally{foreach(var v in entered.AsEnumerable().Reverse())typeof(PostProcessVolume).GetMethod("OnDisable",flags).Invoke(v,null);for(int i=0;i<volumes.Length;i++)for(int j=0;j<fields.Length;j++)fields[j].SetValue(volumes[i],saved[i][j]);var afterSorted=(System.Collections.Generic.List<PostProcessVolume>)query.Invoke(manager,new object[]{mask});report.volumeOrderRestored=registrations.SequenceEqual(before)&&afterSorted.SequenceEqual(priorSorted);}
+  Require(report.volumeOrderPassed&&report.volumeOrderRestored&&volumes.All(v=>!v.enabled&&!v.HasInstantiatedProfile())&&!app.gameObject.activeInHierarchy,"Volume pair restoration or inactive boundary failed");
+ }
  IEnumerator Run(){
   Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
   var host=new GameObject("Inactive original startup host");host.SetActive(false);var app=host.AddComponent<RoR2.RoR2Application>();Require(RoR2.RoR2Application.instance==null,"Unexpected application Awake");
@@ -170,6 +185,7 @@ public class StartupSegmentProbe : MonoBehaviour {
     if(cfg.interpolation){var timing=TestInterpolation(apps[0]);while(timing.MoveNext())yield return timing.Current;}
     if(cfg.fpsQueue){var fps=TestFpsQueue(apps[0]);while(fps.MoveNext())yield return fps.Current;}
     if(cfg.volume)TestVolume(apps[0]);
+    if(cfg.volumeOrder)TestVolumeOrder(apps[0]);
    }
   }
   // Never advance into component enabling/audio/platform/profile initialization.
