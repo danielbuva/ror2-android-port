@@ -325,10 +325,10 @@ def skin_apply_prepare():
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
 
 
-def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False, ngss=False):
+def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False, ngss=False, integration=False):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_VOLUME_ORDER.json' if ngss else 'LAST_KNOWN_GOOD_VOLUME.json' if volume_order else 'LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
+    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_NGSS.json' if integration else 'LAST_KNOWN_GOOD_VOLUME_ORDER.json' if ngss else 'LAST_KNOWN_GOOD_VOLUME.json' if volume_order else 'LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
     previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
     if stage.exists():raise RuntimeError('Preserve previous stage first')
@@ -406,4 +406,8 @@ def startup_prepare(loading_scene=False, application_awake=False, global_texture
         write(out/'ngss-provenance.json',{'code':'Locally recompiled recovered source, NOT preserved original Assembly-CSharp DLL','source':str(source.relative_to(stage)),'source_sha256':expected,'noise_guid':guid,'noise_source':str(noise.relative_to(stage)),'noise_sha256':sha(noise),'serialized_fields':fields,'expected_globals':values})
         r['startup_ngss']=True;r['status']='Recovered NGSS initialization pending';write(out/'attempt.json',r)
         contract=read(out/'startup-contract.json');contract.update({'segment':'Locally recompiled recovered NGSS OnEnable/Update/OnDisable, serialized noise path only','assertions':'Noise identity, eight shader globals, initialized/disabled state and previous-global restoration; no fallback-resource or rendered-shadow proof'});write(out/'startup-contract.json',contract)
+    if integration:
+        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['integration']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+        r['startup_integration']=True;r['status']='Automatic recovered host startup before audio pending';write(out/'attempt.json',r)
+        contract=read(out/'startup-contract.json');contract.update({'segment':'Fresh actual recovered host owns original routine; its first yield establishes loading state, then Unity activation invokes automatic callbacks; advance through component enabling only','assertions':'Exact eight-MonoBehaviour closure including FontCleaner, automatic Start/Update/FixedUpdate/LateUpdate observations, six active enabled components, no new errors or filesystem assignment; next routine instruction is Wwise and is not executed'});write(out/'startup-contract.json',contract)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))

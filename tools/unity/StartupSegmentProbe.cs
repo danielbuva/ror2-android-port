@@ -11,7 +11,7 @@ using Zio.FileSystems;
 
 // Execute only the original routine's first yield and its reviewed PreFrame phase.
 public class StartupSegmentProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
+ [Serializable] public class Config {public string attempt;public bool loadingScene,applicationAwake,globalTextures,interpolation,fpsQueue,volume,volumeOrder,ngss,integration;public TextureExpectation noise;public GlobalFloatExpectation[] ngssGlobals;public VolumeExpectation[] volumes;public TextureExpectation[] textures;}
  [Serializable] public class GlobalFloatExpectation {public string name;public float value;}
  [Serializable] public class EffectExpectation {public string name;public bool active,enabled;}
  [Serializable] public class VolumeExpectation {public string name;public float priority;public EffectExpectation[] settings;}
@@ -20,7 +20,7 @@ public class StartupSegmentProbe : MonoBehaviour {
  [Serializable] public class TextureExpectation {public string name,variable;public int width,height;}
  [Serializable] public class Report {
   public string attempt,phase,error,profileRoot,contentRoot,applicationDataPath;
-  public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
+  public bool integratedPassed;public int automaticStarts,automaticUpdates,automaticFixedUpdates,automaticLateUpdates;public string[] integratedComponents;public bool ngssPassed,ngssRestored;public string ngssAssembly,noiseIdentity;public int ngssGlobalsChecked;public bool volumeOrderPassed,volumeOrderRestored;public string[] sortedProfiles;public bool volumePassed,volumeRestored;public string volumeProfile;public int volumeSettings,registeredBefore,registeredDuring;public FpsSample[] fpsSamples;public bool fpsPassed,fpsRestored,callbackRegistered;public string fpsCallback;public TimingSample[] timingSamples;public bool interpolationPassed,interpolationRestored;public float interpolationFallback;public bool globalTexturesPassed,globalsRestored;public string[] textureBindings;public bool recoveredAwakeCompleted,loadingFlagBeforeAwake,realSingleton,assemblyTypesReady; public string buildId; public int pid,loadingUiYields; public string[] preFrameTargets,enableTargets; public bool loadingSceneReady,loadingCanvasReady,percentageReady,sceneApplicationInactive; public string activeScene;
   public bool success,profileRoundTrip,profileReopen,contentReadOnly,pathEscapeRejected,profileCleaned,rootsSeparate,profileGlobalsUntouched,firstYieldReached,preFrameCompleted;
   public string stopBoundary="Before resuming InitializeGameRoutine after PreFrame; no audio/platform/save initialization";
  }
@@ -39,6 +39,7 @@ public class StartupSegmentProbe : MonoBehaviour {
   if(cfg.volume)report.stopBoundary="After explicit first PostProcessVolume registration/update/unregistration; no postprocessing rendering";
   if(cfg.volumeOrder)report.stopBoundary="After both original volume lifecycles and manager priority/layer queries; no rendering";
   if(cfg.ngss)report.stopBoundary="After locally recompiled NGSS initialization/update/disable and global restoration; no shadow rendering";
+  if(cfg.integration)report.stopBoundary="Automatic recovered host callbacks and original EnableBehaviours yield; stop before WwiseIntegrationManager.Init";
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
 #endif
@@ -163,8 +164,26 @@ public class StartupSegmentProbe : MonoBehaviour {
   }finally{typeof(NGSS_Local).GetMethod("OnDisable",flags).Invoke(target,null);target.NGSS_SAMPLING_TEST=oldSamples;for(int i=0;i<previous.Length;i++)Shader.SetGlobalFloat(cfg.ngssGlobals[i].name,previous[i]);Shader.SetGlobalTexture("_BlueNoiseTexture",oldTexture);report.ngssRestored=cfg.ngssGlobals.Select((g,i)=>Shader.GetGlobalFloat(g.name)==previous[i]).All(x=>x)&&Shader.GetGlobalTexture("_BlueNoiseTexture")==oldTexture&&!(bool)initialized.GetValue(target);}
   Require(report.ngssPassed&&report.ngssRestored&&!target.enabled&&!app.gameObject.activeInHierarchy,"NGSS restoration or inactive boundary failed");
  }
+ IEnumerator RunIntegrated(){
+  Phase("integration-load-scene");var bundle=AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath,"payload","loadingbasic-lab"));Require(bundle,"Integration scene bundle missing");var paths=bundle.GetAllScenePaths();Require(paths.Length==1,"Expected one integration scene");var cameras=Camera.allCameras;
+  yield return SceneManager.LoadSceneAsync(paths[0],LoadSceneMode.Additive);var scene=SceneManager.GetSceneByPath(paths[0]);Require(scene.isLoaded&&scene.name=="loadingbasic","Recovered integration scene mismatch");SceneManager.SetActiveScene(scene);foreach(var camera in cameras)camera.enabled=false;
+  var apps=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<RoR2.RoR2Application>(true)).ToArray();Require(apps.Length==1&&!apps[0].gameObject.activeInHierarchy&&RoR2.RoR2Application.instance==null,"Expected fresh inactive recovered host");var app=apps[0];
+  var behaviours=app.GetComponents<MonoBehaviour>();report.integratedComponents=behaviours.Select(x=>x.GetType().FullName).OrderBy(x=>x).ToArray();var expected=new[]{"FPSQueue","GlobalShaderTextures","InterpolationController","NGSS_Local","RoR2.FontCleaner","RoR2.RoR2Application","UnityEngine.Rendering.PostProcessing.PostProcessVolume","UnityEngine.Rendering.PostProcessing.PostProcessVolume"}.OrderBy(x=>x);Require(report.integratedComponents.SequenceEqual(expected),"Unreviewed integration callback closure");
+  var routine=(IEnumerator)typeof(RoR2.RoR2Application).GetMethod("InitializeGameRoutine",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(app,null);Require(routine.MoveNext()&&routine.Current is IEnumerator,"Original first yield missing");var pre=(IEnumerator)routine.Current;
+  var targets=HG.Reflection.SearchableAttribute.GetInstances<RoR2.InitDuringStartupPhaseAttribute>().OfType<RoR2.InitDuringStartupPhaseAttribute>().Where(x=>x.InitPhase==RoR2.GameInitPhase.PreFrame).Select(x=>{var m=(MethodInfo)x.target;return m.DeclaringType.FullName+"."+m.Name;}).ToArray();Require(targets.SequenceEqual(new[]{"FlashWindow.Init"}),"Unreviewed integration PreFrame");while(pre.MoveNext())yield return pre.Current;
+  Require(RoR2.RoR2Application.isLoading&&RoR2.RoR2Application.instance==null,"Original loading state not established before activation");
+  Application.logMessageReceived+=(message,stack,type)=>{if(type==LogType.Exception||type==LogType.Error||type==LogType.Assert){report.success=false;report.error=message+"\n"+stack;Save();}};
+  RoR2.RoR2Application.onStart+=()=>report.automaticStarts++;RoR2.RoR2Application.onUpdate+=()=>report.automaticUpdates++;RoR2.RoR2Application.onFixedUpdate+=()=>report.automaticFixedUpdates++;RoR2.RoR2Application.onLateUpdate+=()=>report.automaticLateUpdates++;
+  Phase("integration-activate-host");app.gameObject.SetActive(true);yield return null;Require(string.IsNullOrEmpty(report.error),"Automatic activation error: "+report.error);Require(RoR2.RoR2Application.instance==app&&report.automaticStarts==1,"Automatic application initialization failed");
+  for(int i=0;i<2;i++){Require(routine.MoveNext()&&routine.Current is WaitForEndOfFrame,"Unexpected loading UI yield during integration");yield return routine.Current;}
+  Phase("integration-enable-components");Require(routine.MoveNext()&&routine.Current is WaitForEndOfFrame,"Unexpected component-enable yield");yield return routine.Current;
+  // Never advance again: the next original instruction calls Wwise initialization.
+  yield return new WaitForSeconds(3);Require(string.IsNullOrEmpty(report.error),"Integrated callback error: "+report.error);
+  Require(app.BehavioursToEnableDuringStartup.Length==6&&app.BehavioursToEnableDuringStartup.All(x=>x.isActiveAndEnabled),"Original component enable list did not become active");Require(report.automaticUpdates>10&&report.automaticFixedUpdates>10&&report.automaticLateUpdates>10,"Automatic application loop did not tick");
+  Require(RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null,"Integration escaped pre-audio/profile boundary");report.integratedPassed=true;report.success=true;Phase("integration-pre-audio-complete");
+ }
  IEnumerator Run(){
-  Phase("profile-filesystems");TestProfileRoots();Phase("original-first-yield");
+  Phase("profile-filesystems");TestProfileRoots();if(cfg.integration){var integrated=RunIntegrated();while(integrated.MoveNext())yield return integrated.Current;yield break;}Phase("original-first-yield");
   var host=new GameObject("Inactive original startup host");host.SetActive(false);var app=host.AddComponent<RoR2.RoR2Application>();Require(RoR2.RoR2Application.instance==null,"Unexpected application Awake");
   var method=typeof(RoR2.RoR2Application).GetMethod("InitializeGameRoutine",BindingFlags.Instance|BindingFlags.NonPublic);Require(method!=null,"Original routine missing");
   var routine=(IEnumerator)method.Invoke(app,null);Require(routine.MoveNext(),"Original startup ended before first yield");report.firstYieldReached=true;

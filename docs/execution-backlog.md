@@ -528,7 +528,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-4 — Controlled integrated startup
 - **ID:** L5b-4
-- **STATUS:** NEXT
+- **STATUS:** PASS — J49, controlled pre-audio segment only
 - **TITLE:** Move from isolated method probes to actual application/component startup
 - **CONTEXT:** J48 completes bounded method evidence for the six listed startup components. Application automatic lifecycle and full initialization remain unproven.
 - **OBSERVATION:** Existing probes use inactive objects, explicit calls and a diagnostic coroutine host. Activating a host after manual Awake risks original singleton destruction; other attached components may have untested automatic callbacks.
@@ -541,3 +541,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First singleton/callback/reference/native/service failure, exact execution boundary and original component state, source/APK/payload identities, current-PID foreground capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J48 and earlier accepted checkpoints; review architecture evidence and select the next measured integration/audio boundary. Do not declare L5 from isolated tests.
 - **DEPENDENCIES:** L5b-3a–g/J41–J48, existing startup/profile prior-art audit and complete attached callback inventory.
+
+## L5b-5 — Wwise startup resource and native boundary
+- **ID:** L5b-5
+- **STATUS:** NEXT
+- **TITLE:** Identify and test the next actual audio initialization dependency
+- **CONTEXT:** J49 reaches the yield immediately before original WwiseIntegrationManager.Init.
+- **OBSERVATION:** Init requests WwiseGlobal and AudioManager through LegacyResourcesAPI; compatible Android middleware/bank access remains unresolved.
+- **HYPOTHESIS:** Existing resource and middleware evidence can identify a bounded legitimate next step without speculative replacement.
+- **TASK:** Review prior audio research, exact resource closures and callback/native requirements; select the first discriminating resource or authorized native probe. Preserve separate missing-resource and middleware outcomes.
+- **CONSTRAINTS:** Common contract; no fabricated audio/service success, no unreviewed startup continuation, no Steam profile writes. Reuse prior evidence before acquiring or rebuilding anything.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow ignored dependency audit, existing startup harness only if required, state/journal.
+- **TEST COMMAND:** Existing dependency reports first; then preflight, forced Vulkan build and startup-run only for the selected device probe.
+- **PASS CONDITION:** Exact next contract and access requirements are recorded; any executed probe satisfies independent assertions. Audio acceptance remains separate.
+- **FAILURE EVIDENCE TO CAPTURE:** First missing resource, callback, API or native dependency; artifact provenance and current-launch diagnostics.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J49 rollback; record candidate and first failure, update audio risk and next action.
+- **DEPENDENCIES:** L5b-4/J49 and existing audio/prior-art evidence.
