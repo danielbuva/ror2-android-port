@@ -64,7 +64,7 @@ def scene_run():
     if not built.get('success') or 'loadingbasic-lab' not in built.get('payload',{}):raise RuntimeError('No attributed scene payload build')
     stage=Path(attempt['stage'])
     for name,h in attempt['original_assemblies'].items():
-        if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original assembly changed '+name)
+        if sha(stage/'Plugins'/name)!=attempt.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Staged assembly changed '+name)
     result={'success':False,'attempt':out.name,'build':built,'scope':'Original startup first-yield/PreFrame segment and profile filesystem candidate' if attempt.get('startup') else 'Original '+('skin baking' if attempt.get('skin') else 'avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
     d=Device();had=d.exists()
     try:
@@ -436,3 +436,15 @@ def audio_assets_prepare(native_availability=False):
     write(stage/'Resources/AudioAssetProbe.json',cfg);shutil.copy2(ROOT/'tools/unity/AudioAssetProbe.cs',stage/'AudioAssetProbe.cs')
     build=read(WORK/'scene-probe-build.json');build['prefabAssets']+=assets;write(WORK/'scene-probe-build.json',build)
     r['audio_assets']=True;write(out/'attempt.json',r);write(out/'audio-closure.json',closure);write(out/'audio-config.json',cfg)
+
+
+def audio_guard_prepare():
+    from boundaries import probe_tool
+    audio_assets_prepare(native_availability=True)
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
+    original=stage/'Plugins/RoR2.dll';candidate=out/'RoR2.audio-unavailable.dll'
+    command=probe_tool()
+    result=json.loads(run(command+['--audio-guard',original,candidate,r['original_assemblies']['RoR2.dll'],game()/'Risk of Rain 2_Data/Managed'],timeout=120).stdout)
+    write(out/'audio-guard-transformation.json',result);shutil.copy2(original,out/'RoR2.original.dll');shutil.copy2(candidate,original)
+    r['transformed_assemblies']={'RoR2.dll':result['output_sha256']};r['audio_guard']=True;write(out/'attempt.json',r)
+    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['audioGuard']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)

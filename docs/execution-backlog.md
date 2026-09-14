@@ -593,7 +593,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L5b-5c — Explicit unavailable-audio startup boundary
 - **ID:** L5b-5c
 - **TITLE:** Test one input-gated early audio guard
-- **STATUS:** NEXT
+- **STATUS:** PASS — J55 early guard only; J54 preparation failure preserved
 - **CONTEXT:** J53 confirms missing native runtime through original code on Android.
 - **OBSERVATION:** Original early Init activates native-dependent prefabs; the following yields precede filesystem/platform setup.
 - **HYPOTHESIS:** An explicit unavailable-audio guard can preserve original coroutine ordering through the next Addressables yield.
@@ -605,3 +605,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** IL mismatch, altered unexpected method, native call, initialization or preservation error; assembly/APK identities and current-launch capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J52/J53 and record exact altered method and limits; update next boundary.
 - **DEPENDENCIES:** J49, J52, J53; minimum provenance tooling only.
+
+## L5b-6 — Coupled profile and platform boundary
+- **ID:** L5b-6
+- **TITLE:** Isolate filesystem setup from mandatory platform startup
+- **STATUS:** NEXT
+- **CONTEXT:** J55 stops after the Addressables yield, before filesystem creation and PlatformSystems.Init.
+- **OBSERVATION:** The next original coroutine step performs both without an intervening yield; Application.dataPath is not the Android writable profile root.
+- **HYPOTHESIS:** A measured Android path policy and explicit platform boundary can preserve truthful startup semantics.
+- **TASK:** Inspect exact filesystem/platform IL and concrete initialization calls, reusing prior startup research. Select a bounded filesystem-only proof before invoking platform services; identify mandatory ownership checks rather than bypassing them.
+- **CONSTRAINTS:** Common contract; no Steam profile writes, fabricated authentication/ownership or successful service stubs. Preserve later no-audio obligations.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow ignored IL/source audit, Android path adapter and existing probe only when justified.
+- **TEST COMMAND:** Existing metadata inspection first; preflight and forced device lifecycle for the chosen candidate.
+- **PASS CONDITION:** Exact safe boundary and truthful contracts recorded; runtime proof must use owned writable paths and preserve required checks.
+- **FAILURE EVIDENCE TO CAPTURE:** First path, constructor or service dependency; changed-method provenance and current-launch state.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J55 rollback; update profile/platform risks and next action without claiming menu readiness.
+- **DEPENDENCIES:** J55, original startup/profile research, L9 foundation.
