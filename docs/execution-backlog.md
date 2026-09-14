@@ -449,7 +449,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 
 ## L5b-3d — Original FPSQueue initialization and callback
 - **ID:** L5b-3d
-- **STATUS:** PENDING CAPTURE — J44 method assertions pass; unrelated foreground screenshot rejected
+- **STATUS:** PASS — J45 fresh foreground verification; J44 rejected capture preserved
 - **TITLE:** Verify original frame sampling without activating full application update
 - **CONTEXT:** J43 proves original interpolation methods under diagnostic scheduling.
 - **OBSERVATION:** FPSQueue.Start subscribes its callback to RoR2Application.onUpdate and allocates samples; the callback advances queue turns and computes sampled FPS.
@@ -477,3 +477,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** Current resumed activity, PID/report and image mismatch.
 - **STATE/JOURNAL UPDATES REQUIRED:** J44 rejection remains immutable; only fresh verified capture can advance acceptance. Roll back this guard with its focused change if parsing is incompatible, after recording the exact failure.
 - **DEPENDENCIES:** J44 observed capture mismatch.
+
+## L5b-3e — Recovered postprocessing volume lifecycle
+- **ID:** L5b-3e
+- **STATUS:** NEXT
+- **TITLE:** Verify original volume registration against recovered profiles
+- **CONTEXT:** J45 passes isolated FPSQueue callbacks; two disabled PostProcessVolume entries remain in the recovered application enable list.
+- **OBSERVATION:** Original OnEnable registers with PostProcessManager and initializes volume state; OnDisable unregisters. Two serialized profile references and their settings need inspection before execution.
+- **HYPOTHESIS:** Real recovered profiles and unchanged original registration methods can satisfy the manager contract without enabling full postprocessing rendering.
+- **TASK:** Resolve both profile identities/settings and inspect pinned manager initialization requirements. Select one volume first, record existing registration state, execute original OnEnable/Update/OnDisable where justified, and assert balanced registration plus required profile identities. Stop at the first manager/profile/resource failure before testing the second volume.
+- **CONSTRAINTS:** Common contract; no synthetic profile or manager success, no final effect/shader parity claim, no full application activation. Explicit method invocation remains distinguished from automatic lifecycle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing startup probe/preparation and narrow ignored profile/manager evidence, state/journal.
+- **TEST COMMAND:** Existing preflight, forced Vulkan build and startup-run with current-PID foreground capture; add only the needed volume option.
+- **PASS CONDITION:** Selected original registration lifecycle balances and recovered references match; stable device lifetime and no new unexplained exception. Rendering and the second volume are separate until measured.
+- **FAILURE EVIDENCE TO CAPTURE:** First profile/setting/manager/resource failure, actual registration state and lifecycle boundaries, source/APK/payload identities and current foreground capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J45 accepted verification; record bounded volume outcome and next volume or NGSS boundary.
+- **DEPENDENCIES:** L5b-3d/J45 and J41 component audit with fresh profile/manager inspection.
