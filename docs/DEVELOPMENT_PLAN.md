@@ -54,7 +54,7 @@ Local checkpoint pointers: LAST_KNOWN_GOOD_RUNTIME, SCENE, SIMULATION, PLAYABLE,
 
 ## Architecture review
 
-Review ADR-001 if required original code cannot AOT without pervasive rewriting, type identity cannot be retained, essential content cannot be reconstructed, or required middleware/platform access has no legitimate bounded alternative. First run the smallest discriminating C#9 trial against the same failed probe/device assertions. Eleven initial compiler errors are not a total-work estimate. After two supported candidates fail at a boundary, reassess the hypothesis before another version. Reconstruction does not solve licensing/entitlement/absent authoring/storage.
+Review ADR-001 if required original code cannot AOT without pervasive rewriting, type identity cannot be retained, essential content cannot be reconstructed, or required middleware/platform access has no legitimate bounded alternative. J61 meets the last condition and requires review before another game experiment. A controlled C#9 trial is appropriate only when it tests an independent architecture question against the same bounded assertions; it cannot solve missing lawful platform access, ownership, authentication, entitlement, licensing or unavailable middleware. Eleven initial compiler errors are not a total-work estimate. After two supported candidates fail at a boundary, reassess the hypothesis before another version. Reconstruction does not solve licensing/entitlement/absent authoring/storage.
 
 Replan at L3, L4, L5.5, L6, L7 and L8. Authentication, licensing, OS permission, physical device action or an evidence-dependent material architecture choice can require user input; ordinary bounded development continues autonomously.
 
