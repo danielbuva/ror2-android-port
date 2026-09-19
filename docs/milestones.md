@@ -14,7 +14,7 @@ Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evi
 | L8 complete offline victory | OPEN | Route transitions/lifetime/finale/victory/results/return menu/profile; normal uninterrupted victory then second stable run | L7/L9; late dependencies/memory |
 | L9 profile | OPEN — J39/J57 isolate roots/config; real original save/cold reload unproven and Steam-backed profile flow blocked by J61 | Fresh Android-only foundation before L5; cold reload, interrupted write, update retention, backup/restore by L8 | Path audit; host Steam profile immutable; lawful platform/profile boundary |
 | L10 audio | OPEN | Early lawful engine/bank/codec access; later init bank, SFX/music/spatial events/callbacks/shutdown | Authorized compatible engine; banks/authoring |
-| L11 graphics | OPEN beyond G2 | Minimum surface/terrain/character/UI/hazard families with L4–L7; G5/G6 parity later | Required scene families; shaders/dummy export |
+| L11 graphics | L11-a PASS J66: original Commando material assignment and bounded Vulkan albedo/emission; broader families open | Minimum surface/terrain/character/UI/hazard families with L4–L7; G5/G6 parity later | Required scene families; shaders/dummy export |
 | L12 performance | OPEN | Warm stage/combat, transitions, memory and thermals; optimize measured bottleneck, stable 30 FPS first | Meaningful gameplay; final after L8 |
 | L13 transformation | OPEN | Clean ignored regeneration/provenance/cache checks; same accepted input; real second-build compatibility when available | Stable route; update/toolchain |
 

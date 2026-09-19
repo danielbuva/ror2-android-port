@@ -74,6 +74,12 @@ try:
   elif a.action=='skin-apply-prepare':
    from scene_runtime import skin_apply_prepare
    skin_apply_prepare()
+  elif a.action=='material-render-verify':
+   from scene_runtime import scene_run
+   scene_run(verification=True)
+  elif a.action=='material-render-prepare':
+   from scene_runtime import material_render_prepare
+   material_render_prepare()
   elif a.action=='skin-prepare':
    from scene_runtime import skin_prepare
    skin_prepare()

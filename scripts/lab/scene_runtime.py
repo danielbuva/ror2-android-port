@@ -54,13 +54,17 @@ def scene_prepare(include_prefab=False):
     shutil.copy2(ROOT/'tools/unity/ReferenceIdentityProbe.cs',project/'Assets/Editor/ReferenceIdentityProbe.cs')
     print(json.dumps({'evidence':result['evidence'],'ui_reference_edits':sum(e['count'] for e in edits),'status':result['status']},indent=2))
 
-def scene_run():
+def scene_run(verification=False):
     from device import Device, PACKAGE
     from build import preflight
     import time
     preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
-    if (out/'runtime-result.json').exists():raise RuntimeError('Attempt already terminal; preserve before retry')
     built=read(WORK/'config/current-build.json')
+    if verification:
+        previous=read(out/'runtime-result.json')
+        if not attempt.get('material_render') or not previous['success'] or previous['build']['apk_sha256']!=built['apk_sha256'] or previous['build']['payload']!=built['payload']:raise RuntimeError('Verification requires passing material attempt and same APK/payload')
+        parent=out;out=parent/'verification'/now()/parent.name;out.mkdir(parents=True);write(out/'attempt.json',{**attempt,'verification_of':str(parent.relative_to(ROOT))})
+    elif (out/'runtime-result.json').exists():raise RuntimeError('Attempt already terminal; preserve before retry')
     if not built.get('success') or 'loadingbasic-lab' not in built.get('payload',{}):raise RuntimeError('No attributed scene payload build')
     stage=Path(attempt['stage'])
     for name,h in attempt['original_assemblies'].items():
@@ -77,6 +81,13 @@ def scene_run():
         if not result['success']:result['error']=report.get('error') or 'Probe assertions or attempt/PID attribution failed'
         if attempt.get('controller'):
             d.cmd('pull',path+'/controller-catalog',str(out/'controller-catalog'))
+        if attempt.get('material_render'):
+            material=json.loads(d.sh('cat',path+'/commando-material-probe.json'));write(out/'material-probe.json',material)
+            result['success']=result['success'] and material['success'] and material['attempt']==out.name and str(material['pid'])==pid
+            if not material['success']:result['error']=material.get('error') or 'Material assertions failed'
+            for name in ['commando-material-control.png','commando-material-albedo.png','commando-material-emission.png']:
+                d.cmd('pull',path+'/'+name,str(out/name))
+                if not (out/name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):raise RuntimeError('Material capture missing or invalid')
         if attempt.get('pose'):
             pose=json.loads(d.sh('cat',path+'/commando-pose.json'));write(out/'pose-probe.json',pose)
             result['success']=result['success'] and pose['success'] and pose['attempt']==out.name and str(pose['pid'])==pid
@@ -218,7 +229,7 @@ def controller_prepare():
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
     (stage/'Resources/LoadingSceneProbe.json').unlink();(stage/'LoadingSceneProbe.cs').unlink()
     write(stage/'Resources/ControllerAddressProbe.json',{'attempt':out.name,'key':key,'bundle':'commando-prefab-lab','asset':r['default_assets'][0].lower()})
-    shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
+    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
     (stage/'ControllerPreservation').mkdir()
     shutil.copy2(ROOT/'tools/unity/ControllerAddressLink.xml',stage/'ControllerPreservation/link.xml')
     shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
@@ -246,7 +257,7 @@ def avatar_prepare():
     r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'avatar':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original avatar subobject request pending; startup inactive'})
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
     write(stage/'Resources/ControllerAddressProbe.json',{'attempt':out.name,'kind':'avatar','key':key,'subObjectName':sub,'runtimeKey':key+'['+sub+']','asset':identity['path'].lower(),'bundle':'commando-prefab-lab'})
-    shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     write(out/'avatar-identity.json',{'original_location':{k:location[k] for k in ['key','internalId','type','provider']},'recovered_identity':identity,'mapping':'Original GUID[subobject] to measured standalone recovered Avatar, not an invented FBX path','prior_art':'RoR2EditorKit BaseGameAssetReferenceTDrawer preserves GUID and subobject separately; original AssetReference.RuntimeKey composes brackets'})
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
 
@@ -290,7 +301,7 @@ def skin_prepare():
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
     root_key=re.search(r'^guid: ([a-f0-9]{32})',(previous/'stage'/Path(str(relative.with_name('skinCommandoDefault.asset'))+'.meta')).read_text(),re.M)[1]
     cfg={'attempt':out.name,'kind':'skin','key':root_key,'asset':('Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))).lower(),'bundle':'commando-prefab-lab','paramsKey':key,'paramsAsset':('Assets/LabLoadingScene/'+str(relative)).lower(),'rendererPaths':[renderer_path(i) for i in renderer_ids],'meshPaths':[renderer_path(i) for i in mesh_ids],'meshKeys':[g+'['+n+']' for g,n in mesh_pairs],'materialKey':materials[0]}
-    write(stage/'Resources/ControllerAddressProbe.json',cfg);write(out/'skin-contract.json',dict(cfg,root_key_provenance='Diagnostic root uses exported SkinDef GUID; deferred paramsKey is original game address'));shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
+    write(stage/'Resources/ControllerAddressProbe.json',cfg);write(out/'skin-contract.json',dict(cfg,root_key_provenance='Diagnostic root uses exported SkinDef GUID; deferred paramsKey is original game address'));shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
     recipe=read(previous/'scene-probe-build.json');recipe['prefabAssets']+=['Assets/LabLoadingScene/'+str(relative), 'Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))]
     write(WORK/'scene-probe-build.json',recipe)
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'renderer_paths':cfg['rendererPaths'],'mesh_paths':cfg['meshPaths']}))
@@ -321,8 +332,27 @@ def skin_apply_prepare():
     cfg.update({'attempt':out.name,'applySkin':True,'meshAssets':[(prefix+x).lower() for x in mesh_paths],'meshNames':names,'meshVertices':vertices,'materialAsset':(prefix+material_path).lower(),'materialName':material_name})
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});write(stage/'Resources/ControllerAddressProbe.json',cfg)
     write(out/'skin-application-contract.json',dict(cfg,prior_art='Current original RuntimeSkin.ApplyAsync assigns mesh components and CharacterModel.baseRendererInfos; ModelSkinController cleans returned ownership lists. Community skin guidance distinguishes baking from application.',material_scope='Renderer records only; material update and original model lifecycle inactive'))
-    shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
+
+def material_render_prepare():
+    """L11-a: restore J38 and add only original slot assignment plus owned display copies."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_SKIN_APPLICATION.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    cfg=read(stage/'Resources/ControllerAddressProbe.json');cfg.update({'attempt':out.name,'materialRender':True})
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'skin_apply':True,'material_render':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'L11-a original renderer assignment and owned Android material display pending'})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});write(stage/'Resources/ControllerAddressProbe.json',cfg)
+    for name in ['ControllerAddressProbe.cs','CommandoMaterialPreview.cs','CommandoMaterialPreview.shader','CommandoPreview.shader']:shutil.copy2(ROOT/'tools/unity'/name,stage/('Resources/'+name if name.endswith('.shader') else name))
+    write(out/'material-render-contract.json',{'source':'J38 accepted skin application','prior_art':'Pinned RoR2EditorKit ShaderPostprocessor is editor-only; original CharacterModel selection is invoked without lifecycle','scope':'Three original renderer slots then detached owned shader material copies; no gameplay/platform/audio/startup'})
+    shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
 
 
 def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False, ngss=False, integration=False):

@@ -695,7 +695,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L11-a — Original skin material assignment and Vulkan rendering
 - **ID:** L11-a
 - **TITLE:** Turn J38 material records into a visible Android material result
-- **STATUS:** NEXT — implementation and device execution authorized by J64
+- **STATUS:** PASS — J66, original assignments and Vulkan material/emission captures in two fresh processes; J65 inherited build failure preserved
 - **CONTEXT:** Independent L11 work while J61 defers platform startup; J38 skin and J28 display evidence remain accepted.
 - **OBSERVATION:** Original ApplyAsync fills mesh/material records, but original renderer slot assignment and converted material rendering are not yet proven together.
 - **HYPOTHESIS:** Original material selection in a detached display context plus one authored Android albedo/emission shader can render the recovered three-mesh skin on Vulkan.
