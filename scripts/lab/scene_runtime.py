@@ -548,3 +548,54 @@ def steam_exception_prepare():
     cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['steamException']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
     r['steam_exception']=True;write(out/'attempt.json',r)
     write(out/'steam-exception-contract.json',{'scope':'Fresh process original private constructor before any load callback; observe first inner exception','assembly_changes':'No new transformation beyond accepted no-audio getter','pass':'No prior Facepunch singleton; original constructor exception recorded; no manager/cloud state','limits':'Original callback false is prior J58 evidence, not repeated in this mode; do not infer subscription check ran'})
+
+
+def movement_batch_prepare():
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHARACTER_DIRECTION.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    for name in ['ControllerAddressProbe','EntityStateTickProbe','CharacterDirectionProbe']:
+        (stage/('Resources/'+name+'.json')).unlink()
+    write(stage/'Resources/MovementBatchProbe.json',{'attempt':out.name});shutil.copy2(ROOT/'tools/unity/MovementBatchProbe.cs',stage/'MovementBatchProbe.cs')
+    r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'parent_evidence':str(previous.relative_to(ROOT))})
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
+
+def movement_batch_run():
+    from build import preflight
+    from device import Device,PACKAGE
+    import time
+    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');b=read(WORK/'config/current-build.json')
+    if not a.get('movement_batch') or (out/'batch-result.json').exists():raise RuntimeError('Not a fresh batch')
+    if not b.get('success') or sha(Path(b['apk']))!=b['apk_sha256']:raise RuntimeError('Build not valid')
+    for name,h in a['original_assemblies'].items():
+        if sha(Path(a['stage'])/'Plugins'/name)!=h:raise RuntimeError('Original assembly drift')
+    d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
+    for probe in ['buttons','input','motor-output','motor-acceleration']:
+        attempt=out/probe;attempt.mkdir();selection={'attempt':out.name,'id':probe};write(attempt/'selection.json',selection)
+        result={'success':False,'probe':probe}
+        try:
+            d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
+            launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic()
+            while time.monotonic()-start<25:
+                if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Probe process died')
+                time.sleep(1)
+            report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)
+            result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==out.name and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
+        except Exception as e:result['error']=str(e)
+        finally:
+            if not (attempt/'probe.json').exists():
+                try:write(attempt/'interrupted-probe.json',json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json')))
+                except Exception as e:result['report_recovery_error']=str(e)
+            try:d.collect('all',attempt/'device')
+            except Exception as e:result['capture_error']=str(e);result['success']=False
+            write(attempt/'result.json',result);results[probe]=result;print(json.dumps(result),flush=True)
+    d.sh('am','force-stop',PACKAGE);d.sh('rm',runtime+'/movement-batch-selection.json')
+    write(out/'batch-result.json',results)
+    if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')

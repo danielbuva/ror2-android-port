@@ -77,6 +77,12 @@ try:
   elif a.action=='material-render-verify':
    from scene_runtime import scene_run
    scene_run(verification=True)
+  elif a.action=='movement-batch-prepare':
+   from scene_runtime import movement_batch_prepare
+   movement_batch_prepare()
+  elif a.action=='movement-batch-run':
+   from scene_runtime import movement_batch_run
+   movement_batch_run()
   elif a.action=='direction-prepare':
    from scene_runtime import direction_prepare
    direction_prepare()

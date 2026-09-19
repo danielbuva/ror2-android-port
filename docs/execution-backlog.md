@@ -739,3 +739,20 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve build/run evidence and rollback; distinguish component ownership from full character authority and L5.5.
 - **DEPENDENCIES:** S01; pinned DebugToolkit NetworkManager actual active-server/Spawn/Destroy usage and original CharacterDirection/Util/HLAPI source reviewed. No community code copied.
 - **STATUS:** PASS — J69; unauthorised control, real server spawn/authority, east-facing convergence, neutral hold and owned shutdown all pass on Android.
+
+## S03–S06 — Sequential isolated input/motor batch
+Shared task contract:
+- **CONTEXT:** User requests multiple independent experiments per pass, sequentially without subagents. S01/S02 pass; full movement remains unproven.
+- **CONSTRAINTS:** One APK, separate fresh process per experiment. Separate durable started/terminal reports and captures; continue after independent failure. No original assembly changes, fabricated authority or gameplay startup. Inactive body fixtures only.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** MovementBatchProbe, thin prepare/run actions, existing device safeguards.
+- **TEST COMMAND:** `./dev prototype --action movement-batch-prepare`; forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **FAILURE EVIDENCE TO CAPTURE:** Probe ID, current attempt/PID, started/terminal phase, first exception, survival, native/managed logs and cleanup. Never promote another probe's pass as a failed probe's result.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record each result separately; archive exact stage/build/input hashes and retain previous checkpoint. No L5.5 promotion.
+- **DEPENDENCIES:** S02 closure; original InputBankTest/CharacterMotor/CharacterBody and pinned DebugToolkit network/motor references inspected.
+
+| ID / TITLE | OBSERVATION | HYPOTHESIS | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- | --- | --- |
+| S03 — Button edges | InputBank button state is a standalone original value type. | Press/hold/release and claim reset work under AOT. | Six exact edge/claim assertions plus attributed stable process. | PASS — J70 |
+| S04 — Directional input and aim | InputBank requires a body but these methods do not run its lifecycle. | Inactive fixture supports original thresholds and normalization. | Verify press/hold/release hysteresis, opposite axes, normalized aim, zero fallback and button aggregation. | PASS — J70 |
+| S05 — Motor output callbacks | UpdateVelocity/UpdateRotation have no simulation-side effects. | Original callbacks return configured velocity and upright rotation. | Verify velocity (2,3,-4), identity rotation and inactive body. | PASS — J70 |
+| S06 — Motor acceleration/braking | PreMove requires authority, body stats and kinematic grounding context. | Real server identity plus inactive fixture can execute original velocity calculation. | With diagnostic speed 7, acceleration 10 and air control 1, verify first 0.1-second step yields 1, cap 7 and neutral braking 0; real authority and cleanup required. No translation claim. | PASS — J70 |

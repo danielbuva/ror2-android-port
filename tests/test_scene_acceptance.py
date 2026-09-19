@@ -37,3 +37,32 @@ class SceneAcceptanceTests(unittest.TestCase):
    with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=[0,51,51]):
     with self.assertRaisesRegex(RuntimeError,'Scene probe failed'):scene_runtime.scene_run()
    result=read(out/'runtime-result.json');self.assertFalse(result['success']);self.assertFalse(result['foreground_verified']);self.assertIn('foreground',result['error']);d.reset.assert_not_called()
+
+
+class MovementBatchTests(unittest.TestCase):
+ def test_failed_launch_does_not_hide_later_probes(self):
+  import itertools
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);work=root/'work';out=work/'experiments/scene-runtime/attempt'
+   write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
+   write(out/'attempt.json',{'stage':str(root/'stage'),'original_assemblies':{},'movement_batch':True})
+   write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','apk_sha256':'hash'})
+   write(work/'device/runtime.json',{'persistentDataPath':'mock-owned-path'})
+   d=MagicMock();d.install.return_value={};d.launch.side_effect=[{'pid':'1'},RuntimeError('first process crashed'),{'pid':'3'},{'pid':'4'},{'pid':'5'}]
+   current={}
+   def command(*args,**kwargs):
+    if args[0]=='push':current.update(read(Path(args[1])))
+   d.cmd.side_effect=command
+   def shell(*args,**kwargs):
+    if args[0]=='cat':
+     ids={'buttons':2,'input':3,'motor-output':4,'motor-acceleration':5}
+     return json.dumps(dict(current,pid=ids[current['id']],success=True,phase='complete'))
+    return ''
+   d.sh.side_effect=shell
+   with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch.object(scene_runtime,'sha',return_value='hash'),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=itertools.count(0,30)):
+    with self.assertRaisesRegex(RuntimeError,'Batch completed with failed probes'):scene_runtime.movement_batch_run()
+   results=read(out/'batch-result.json')
+   self.assertFalse(results['buttons']['success'])
+   self.assertIn('crashed',results['buttons']['error'])
+   self.assertTrue(all(results[k]['success'] for k in ['input','motor-output','motor-acceleration']))
+   self.assertEqual(d.collect.call_count,4)
