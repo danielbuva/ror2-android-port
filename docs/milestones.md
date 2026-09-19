@@ -23,3 +23,5 @@ Replan at L3, L4, L5.5, L6, L7, L8. No gate advances from a stripped empty build
 ## Evidence
 
 T01: work/runs/20260913T020341.114229Z-46130c90d7a1, visible Vulkan geometry, utility marker, ARM64 IL2CPP, adopted placement and cleanup. Doctor/preflight and six host tests passed. LAST_KNOWN_GOOD_RUNTIME under work/checkpoints binds baseline APK and payload; no scene/simulation/playable/run pointer exists yet.
+
+J62 architecture review retains C as platform-deferred and selects L10-a read-only lifecycle attribution. No milestone advances; L5, Steam-backed profile startup and L5.5 remain blocked. See architecture-review-j61.md for the bounded contract and decision rationale.

@@ -671,3 +671,20 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **DEPENDENCIES:** J58–J60, existing platform prior art.
 
 **J61 result:** Read-only exact-binding and authoritative-documentation review finds no lawful candidate on the authorized generic Android device. The preserved Facepunch source exposes only Windows, Linux x86/x64 and macOS implementations, and its fallback reaches the J60 Win64 `steam_api64.dll` import. Valve's current Android path requires rights-holder Steam Frame/Steamworks configuration of an Android depot, APK launch option and package access; the accepted desktop entitlement/input supplies none of those and no Android ARM64 runtime is present. See `docs/l5b-7b-platform-runtime-feasibility.md`. Do not run another constructor/load probe or add a stub. Reopen only with a rights-holder-provided compatible runtime and integration authority; L5, original profile startup and L5.5 remain blocked.
+
+
+## L10-a — Remaining unavailable-audio lifecycle audit
+- **ID:** L10-a
+- **TITLE:** Attribute remaining no-audio obligations without crossing J61
+- **STATUS:** NEXT — read-only investigation only; selected by J62
+- **CONTEXT:** L10 supporting work and unfinished L5b-5c/J55 obligations; C remains platform-deferred.
+- **OBSERVATION:** J55 guards early initialization only; later query/dialog, bank waits and teardown are not covered by its device proof.
+- **HYPOTHESIS:** Exact-input static tracing can separate suppressed, remaining and platform-coupled audio obligations without running startup.
+- **TASK:** Execute the bounded matrix/evidence contract in architecture-review-j61.md. Reuse J50–J55 evidence and inspect pinned R2API.Sound prior art. Trace query/dialog, identified audio-prefab callbacks/bank producers/waits, shutdown registrations and cleanup; annotate unresolved indirect calls. Return results to Astra for runtime candidate selection.
+- **CONSTRAINTS:** Read-only input/project/assembly/device/checkpoints; no Steam retry, stub, backend switch, middleware substitution, broad rewrite or weakened assertion. Preserve all accepted evidence and pins.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored audit summary/state/journal/backlog and ignored source-hashed evidence only.
+- **TEST COMMAND:** ./dev doctor (record current attachment failure honestly); existing input/source/transform receipt verification; git diff --check; python3 scripts/audit-public.py after staging. No build/install/run is authorized by this issue.
+- **PASS CONDITION:** Every scoped obligation traced or explicitly unresolved; first uncovered dependency and independence limits recorded. No runtime/no-audio/menu capability claim. Astra, not Terra, selects any next runtime candidate.
+- **FAILURE EVIDENCE TO CAPTURE:** Input mismatch, unresolved callbacks/lifetime, missing producer, native dependency or platform coupling; distinguish inference from execution.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve local evidence, publish only authored conclusions, record limits, review status/privacy, commit/push coherent checkpoint and transfer sole control to Astra Low.
+- **DEPENDENCIES:** J52/J53/J55 accepted evidence and J62 architecture decision; no requirement to cross blocked L5. Runtime prerequisites remain separate.
