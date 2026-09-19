@@ -756,3 +756,22 @@ Shared task contract:
 | S04 — Directional input and aim | InputBank requires a body but these methods do not run its lifecycle. | Inactive fixture supports original thresholds and normalization. | Verify press/hold/release hysteresis, opposite axes, normalized aim, zero fallback and button aggregation. | PASS — J70 |
 | S05 — Motor output callbacks | UpdateVelocity/UpdateRotation have no simulation-side effects. | Original callbacks return configured velocity and upright rotation. | Verify velocity (2,3,-4), identity rotation and inactive body. | PASS — J70 |
 | S06 — Motor acceleration/braking | PreMove requires authority, body stats and kinematic grounding context. | Real server identity plus inactive fixture can execute original velocity calculation. | With diagnostic speed 7, acceleration 10 and air control 1, verify first 0.1-second step yields 1, cap 7 and neutral braking 0; real authority and cleanup required. No translation claim. | PASS — J70 |
+
+## S07–S11 — Sequential shipped-kinematic solver batch
+- **CONTEXT:** Input and motor arithmetic pass J70; actual position integration and collision solving remain unproven.
+- **OBSERVATION:** Shipped KinematicCharacterMotor exposes phases, collision/ground callbacks and computed transient position. Full CharacterMotor landing reaches GlobalEventManager/body dependencies.
+- **HYPOTHESIS:** Original solver can integrate and resolve fixtures with an authored diagnostic velocity supplier, independently of those game-wide callbacks.
+- **CONSTRAINTS:** Separate cold launches and results; no CharacterBody, gameplay controller replacement or character-simulation acceptance. Original solver performs movement; harness supplies velocities and publishes solver results via original API. Owned collision geometry only.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** KinematicBatchProbe and existing sequential batch selector.
+- **TEST COMMAND:** `./dev prototype --action kinematic-batch-prepare`; successful forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **FAILURE EVIDENCE TO CAPTURE:** Started/terminal marker, original solver exception, position, grounding, hit callbacks, process crash and per-launch logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** Keep each pass/failure independent, retain stage/APK and accepted parent; do not advance L5.5.
+- **DEPENDENCIES:** J70 batch runner; pinned DebugToolkit collision-layer prior art and exact-input KinematicCharacterMotor/System phases inspected.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S07 — Free integration | Original solver produces 2m displacement from 2m/s over 1s. | PASS — J71 |
+| S08 — Wall stop | Capsule stops at expected wall boundary and original hit callback occurs. | PASS — J71 |
+| S09 — Wall slide | Same normal boundary with continued tangent displacement. | PASS — J71 |
+| S10 — Floor grounding | Solver reports stable floor and expected foot height. | PASS — J71 |
+| S11 — Unground | After verified grounding, original ForceUnground plus upward velocity leaves floor. | PASS — J71 |

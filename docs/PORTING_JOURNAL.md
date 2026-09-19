@@ -542,3 +542,17 @@ Prior art: community-prior-art Character/Networking guidance and pinned DebugToo
 All four current-process logs contain only the existing Windows shader bundle rejection, no matched-process crashes. Twenty-seven device assertions and seventeen host tests pass. All 45 original DLLs unchanged; APK SHA-256 0e3758a380c5eb2ac4690259411bdabb27de64b16e02d77ac5df317d74e83e1d. Four separate known-good receipts preserve per-experiment outcomes and shared build/configuration provenance. Owned app stopped and selection file removed afterward.
 
 This batch demonstrates original input and velocity calculation, not character movement, collisions, grounding, normal stat computation, full local client/master/body relationships or L5.5. Next isolate actual kinematic position integration and collision/grounding, with separate launches so one failure cannot hide another. Platform-dependent L5 remains deferred.
+
+## J71 — Five shipped kinematic solver tests pass independently
+
+Batch work/experiments/scene-runtime/20260919T225851.741541Z retains the exact editor/packages and all 45 original DLLs. Prior art: community-prior-art Character/Networking guidance and pinned DebugToolkit d1e2f0aa4b8ac4747547db0fcd87344953432f06 Command_Noclip distinguishes collision layers and kinematic/body behavior. Original KinematicCharacterMotor and KinematicCharacterSystem define the inspected phase ordering and result publication. No algorithms copied: an authored ICharacterController supplies diagnostic velocities and observes callbacks; shipped UpdatePhase1/2 perform integration/sweeps/grounding and original SetPositionAndRotation publishes their computed result. Inactive motor prevents automatic double ticking; only owned layer-filtered box geometry participates.
+
+- S07 free integration: 50 steps at 0.02 seconds with velocity 2 yield x=1.9999992, expected 2m.
+- S08 wall: capsule stops at x=0.9900000 before the wall face at 1.5, with radius 0.5 and collision margin; 38 hit callbacks.
+- S09 slide: x=0.9910558 remains constrained while z=1.9999992 advances along the wall; 38 hit callbacks.
+- S10 floor: stable grounding at y=10.0099993 for floor height 10; original collision margin retained.
+- S11 unground: verified floor first, original ForceUnground and upward velocity reach y=11.2475061 with stable grounding false. This is not original jump-state acceptance.
+
+All five cold launches pass sixteen assertions and roughly 26-second survival each, with separate attempt/PID reports and captures. Current-process errors contain only existing Windows shader bundle rejection; no current-process crash. Seventeen host tests pass, including prior batch failure-isolation regression. APK SHA-256 b977401c3fbf3def84cd013ef43372652e645e96fca15b7421ef0739e1aeeb4c. Five separate KINEMATIC known-good receipts retain accepted evidence. Owned app stopped and selector removed.
+
+No original CharacterMotor collision/landing lifecycle is invoked: its landing path reaches GlobalEventManager and body state. L5/L5.5 do not advance. Next connect original CharacterMotor to the solver in free space and test movement-hit/landing dependencies independently; keep the passed solver contracts intact.

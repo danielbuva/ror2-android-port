@@ -77,6 +77,9 @@ try:
   elif a.action=='material-render-verify':
    from scene_runtime import scene_run
    scene_run(verification=True)
+  elif a.action=='kinematic-batch-prepare':
+   from scene_runtime import movement_batch_prepare
+   movement_batch_prepare(kinematic=True)
   elif a.action=='movement-batch-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare()

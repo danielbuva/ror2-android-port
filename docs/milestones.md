@@ -33,3 +33,5 @@ S01 / J68 independently verifies original EntityStateMachine queue, update/fixed
 S02 / J69 verifies original CharacterDirection facing and its authority guard using a real local server-owned identity. Original movement, full character authority and L5.5 remain unproven.
 
 S03–S06 / J70 pass independent input-edge/normalization and inactive motor output/acceleration tests in four fresh Android processes. No translation, collisions, normal body stat calculation or L5.5 acceptance is implied.
+
+S07–S11 / J71 pass shipped kinematic solver integration, wall stop/slide, stable grounding and ungrounding in five separate Android processes. An authored diagnostic velocity controller drives these probes; original CharacterMotor/body integration and L5.5 remain unproven.

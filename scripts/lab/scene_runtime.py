@@ -550,7 +550,7 @@ def steam_exception_prepare():
     write(out/'steam-exception-contract.json',{'scope':'Fresh process original private constructor before any load callback; observe first inner exception','assembly_changes':'No new transformation beyond accepted no-audio getter','pass':'No prior Facepunch singleton; original constructor exception recorded; no manager/cloud state','limits':'Original callback false is prior J58 evidence, not repeated in this mode; do not infer subscription check ran'})
 
 
-def movement_batch_prepare():
+def movement_batch_prepare(kinematic=False):
     from build import preflight
     preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHARACTER_DIRECTION.json')
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
@@ -562,8 +562,9 @@ def movement_batch_prepare():
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
     for name in ['ControllerAddressProbe','EntityStateTickProbe','CharacterDirectionProbe']:
         (stage/('Resources/'+name+'.json')).unlink()
-    write(stage/'Resources/MovementBatchProbe.json',{'attempt':out.name});shutil.copy2(ROOT/'tools/unity/MovementBatchProbe.cs',stage/'MovementBatchProbe.cs')
-    r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'parent_evidence':str(previous.relative_to(ROOT))})
+    probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
+    write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
+    r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
 
@@ -577,7 +578,7 @@ def movement_batch_run():
     for name,h in a['original_assemblies'].items():
         if sha(Path(a['stage'])/'Plugins'/name)!=h:raise RuntimeError('Original assembly drift')
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
-    for probe in ['buttons','input','motor-output','motor-acceleration']:
+    for probe in a.get('batch_ids',['buttons','input','motor-output','motor-acceleration']):
         attempt=out/probe;attempt.mkdir();selection={'attempt':out.name,'id':probe};write(attempt/'selection.json',selection)
         result={'success':False,'probe':probe}
         try:
