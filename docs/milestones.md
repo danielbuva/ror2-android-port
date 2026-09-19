@@ -27,3 +27,5 @@ T01: work/runs/20260913T020341.114229Z-46130c90d7a1, visible Vulkan geometry, ut
 J62 architecture review retains C as platform-deferred. J63 completes L10-a read-only lifecycle attribution: the later native query/dialog, bank producer/callback lifetime, and platform-coupled teardown remain unproven, and no runtime candidate is selected. No milestone advances; L5, Steam-backed profile startup and L5.5 remain blocked. See architecture-review-j61.md and l10-a-unavailable-audio-lifecycle-audit.md.
 
 J64: L11-a is selected for constructive device execution. Independent simulation precursors may be scoped before L5, but cannot pass formal L5.5. No milestone advances from this selection; see l11-commando-material-device-contract.md.
+
+S01 / J68 independently verifies original EntityStateMachine queue, update/fixed scheduling, automatic ticks and cleanup on Android. It does not advance formal L5.5: actual character states, movement and authority remain unproven.

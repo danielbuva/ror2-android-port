@@ -77,6 +77,9 @@ try:
   elif a.action=='material-render-verify':
    from scene_runtime import scene_run
    scene_run(verification=True)
+  elif a.action=='state-tick-prepare':
+   from scene_runtime import state_tick_prepare
+   state_tick_prepare()
   elif a.action=='material-render-prepare':
    from scene_runtime import material_render_prepare
    material_render_prepare()

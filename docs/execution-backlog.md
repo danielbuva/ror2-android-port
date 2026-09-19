@@ -707,3 +707,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** First closure/ApplyAsync/AOT/assignment/shader/device-output failure, APK/payload/material identities and current foreground evidence; no substituted success.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve failures, record actual capability and limits, staged privacy review, coherent commit/push, hand evidence back to Astra.
 - **DEPENDENCIES:** J38/J28, accepted input, restored editor/device and passing runtime prerequisites; L5 is not required for this independent fixture.
+
+## S01 — Original state-machine scheduling precursor
+- **ID:** S01
+- **TITLE:** Original EntityStateMachine queue, tick and destruction behavior on Android
+- **CONTEXT:** J66 content/material proof passes; platform-dependent L5 remains blocked. This independent precursor does not pass L5.5.
+- **OBSERVATION:** Original scheduler separates fixed/update transitions; Idle inherits original age accumulation without character/native-service dependencies.
+- **HYPOTHESIS:** The original component can initialize, transition, tick and clean up under Android IL2CPP without application startup.
+- **TASK:** Extend accepted material fixture with an isolated original EntityStateMachine; assert deferred Idle transition, both scheduling branches, exact fixed-age accumulation, interrupt acceptance, Unity-driven ticks and destruction.
+- **CONSTRAINTS:** No authority fabrication, body/master activation, game-assembly changes or catalog substitution. Idle only; this does not establish actual character-state behavior.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** One lab probe, thin prepare action, current-attempt runtime assertions.
+- **TEST COMMAND:** `./dev prototype --action state-tick-prepare`; forced Vulkan build; `./dev prototype --action controller-run`.
+- **PASS CONDITION:** Attributed device report passes all scheduler assertions and inherited content checks, with 70-second process survival and no unexplained failure.
+- **FAILURE EVIDENCE TO CAPTURE:** First compiler/runtime exception, state/age observations, attempt/PID, unchanged original DLL hashes, current process logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve failed attempts, record exact tested scope and next dependency; keep L5/L5.5 open.
+- **DEPENDENCIES:** J66; original source and pinned Starstorm2 BarrageCharge inspected for queue/age/authority usage. No community code copied.
+- **STATUS:** PASS — J68; original queue/timing/cleanup assertions and 70.54-second Android run. Character simulation remains separate.

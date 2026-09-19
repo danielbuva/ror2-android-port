@@ -88,6 +88,10 @@ def scene_run(verification=False):
             for name in ['commando-material-control.png','commando-material-albedo.png','commando-material-emission.png']:
                 d.cmd('pull',path+'/'+name,str(out/name))
                 if not (out/name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):raise RuntimeError('Material capture missing or invalid')
+        if attempt.get('state_tick'):
+            state=json.loads(d.sh('cat',path+'/entity-state-tick-probe.json'));write(out/'state-tick-probe.json',state)
+            result['success']=result['success'] and state['success'] and state['attempt']==out.name and str(state['pid'])==pid
+            if not result['success']:result['error']=state.get('error') or result.get('error') or 'State tick assertions/attribution failed'
         if attempt.get('pose'):
             pose=json.loads(d.sh('cat',path+'/commando-pose.json'));write(out/'pose-probe.json',pose)
             result['success']=result['success'] and pose['success'] and pose['attempt']==out.name and str(pose['pid'])==pid
@@ -352,6 +356,25 @@ def material_render_prepare():
     for name in ['ControllerAddressProbe.cs','CommandoMaterialPreview.cs','CommandoMaterialPreview.shader','CommandoPreview.shader']:shutil.copy2(ROOT/'tools/unity'/name,stage/('Resources/'+name if name.endswith('.shader') else name))
     write(out/'material-render-contract.json',{'source':'J38 accepted skin application','prior_art':'Pinned RoR2EditorKit ShaderPostprocessor is editor-only; original CharacterModel selection is invoked without lifecycle','scope':'Three original renderer slots then detached owned shader material copies; no gameplay/platform/audio/startup'})
     shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+
+def state_tick_prepare():
+    """One scheduling precursor, on the accepted material/content closure."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_MATERIAL_RENDERING.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'state_tick':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original state scheduling precursor pending; no character or authority'})
+    cfg=read(stage/'Resources/ControllerAddressProbe.json');cfg['attempt']=out.name
+    write(stage/'Resources/ControllerAddressProbe.json',cfg);write(stage/'Resources/EntityStateTickProbe.json',{'attempt':out.name})
+    shutil.copy2(ROOT/'tools/unity/EntityStateTickProbe.cs',stage/'EntityStateTickProbe.cs')
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
 
 
