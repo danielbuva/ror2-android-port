@@ -25,3 +25,5 @@ Replan at L3, L4, L5.5, L6, L7, L8. No gate advances from a stripped empty build
 T01: work/runs/20260913T020341.114229Z-46130c90d7a1, visible Vulkan geometry, utility marker, ARM64 IL2CPP, adopted placement and cleanup. Doctor/preflight and six host tests passed. LAST_KNOWN_GOOD_RUNTIME under work/checkpoints binds baseline APK and payload; no scene/simulation/playable/run pointer exists yet.
 
 J62 architecture review retains C as platform-deferred. J63 completes L10-a read-only lifecycle attribution: the later native query/dialog, bank producer/callback lifetime, and platform-coupled teardown remain unproven, and no runtime candidate is selected. No milestone advances; L5, Steam-backed profile startup and L5.5 remain blocked. See architecture-review-j61.md and l10-a-unavailable-audio-lifecycle-audit.md.
+
+J64: L11-a is selected for constructive device execution. Independent simulation precursors may be scoped before L5, but cannot pass formal L5.5. No milestone advances from this selection; see l11-commando-material-device-contract.md.

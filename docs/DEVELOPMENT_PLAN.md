@@ -26,6 +26,14 @@ Supporting gates: L9 profile foundation before L5 and persistence alongside L8; 
 
 L4 audits required GUIDs, local fileIDs, scripts, subassets and catalogs; loadingbasic and a dependency-rich animated prefab must work on device. A scene container or editor hierarchy alone does not pass. L5 traces actual initialization; optional no-audio handling must cover observed lifecycle, callbacks and teardown, not report a fake initialized engine. Mandatory entitlement remains an independent gate. L6 introduces a complete original stage to the already proven character. L7 isolates enemy/damage, pickups/interactables, director and teleporter before normal stage completion. L8 requires normal victory/results, profile persistence and a second run before marking stable; no forced completion.
 
+## Independent constructive experiments (J64)
+
+Gate order controls formal acceptance, not every experiment. While J61 defers platform startup, bounded original simulation precursors may execute before L5 if their actual dependencies can be provided without faking or bypassing platform/ownership checks. Such a result must identify its diagnostic fixtures and cannot pass L5.5, replace its L5 prerequisite or unlock downstream gates. Do not fabricate Run, catalogs, master/body linkage or authority to claim a precursor pass. Retain original simulation/serialization semantics.
+
+Prefer new Android execution, rendering, simulation or persistence over another static audit. Static inspection is limited to bounding the chosen executable experiment. After one read-only review, another consecutive read-only task requires concrete reasons no constructive candidate can run. Do not prove all theoretical downstream lifecycles first; reuse existing harnesses and preserve first-failure discipline.
+
+J64 selects L11-a original skin material assignment and Vulkan rendering, defined in l11-commando-material-device-contract.md. Terra implements and runs it, then returns evidence to Astra. J61–J63 are accepted; no further expansion of those audits is requested.
+
 ## L5.5 — original character simulation
 
 Prerequisite: L5. Use the smallest functioning recovered environment and original Commando prefab dependency closure. A diagnostic camera, simple collision surface, neutral lighting and replacement materials are allowed. Do not require a whole stage/director/full camera rig.

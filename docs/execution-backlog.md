@@ -690,3 +690,20 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **DEPENDENCIES:** J52/J53/J55 accepted evidence and J62 architecture decision; no requirement to cross blocked L5. Runtime prerequisites remain separate.
 
 **J63 result:** The exact-input source-hashed matrix is recorded in `docs/l10-a-unavailable-audio-lifecycle-audit.md`. It attributes the first uncovered obligation to the later original native query and Windows-runtime dialog, downstream of J61's platform/Steam boundary. It also identifies that J55 suppresses the known bank-load producers, so a zero pending counter would not prove bank/callback lifecycle, and that whole-app teardown invokes platform shutdown callbacks. No isolated runtime candidate is specified; no capability advances. Current doctor additionally reports no authorized ADB device as well as no editor attachment, so both prerequisites must be restored before Astra selects or runs any runtime work.
+
+
+## L11-a — Original skin material assignment and Vulkan rendering
+- **ID:** L11-a
+- **TITLE:** Turn J38 material records into a visible Android material result
+- **STATUS:** NEXT — implementation and device execution authorized by J64
+- **CONTEXT:** Independent L11 work while J61 defers platform startup; J38 skin and J28 display evidence remain accepted.
+- **OBSERVATION:** Original ApplyAsync fills mesh/material records, but original renderer slot assignment and converted material rendering are not yet proven together.
+- **HYPOTHESIS:** Original material selection in a detached display context plus one authored Android albedo/emission shader can render the recovered three-mesh skin on Vulkan.
+- **TASK:** Implement and execute docs/l11-commando-material-device-contract.md using existing skin/probe/display infrastructure. No standalone audit replacement.
+- **CONSTRAINTS:** Original DLLs unchanged; inactive gameplay; explicit display-only body-null fixture; no platform/profile/audio/Run initialization, fake capability or original-installation changes. Preserve pins and accepted results.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing ControllerAddressProbe/LoadingSceneProbe, narrow shader/material conversion and scene_runtime preparation; ignored derived closure/evidence; concise state/journal.
+- **TEST COMMAND:** ./dev doctor; ./dev preflight; relevant ./dev test checks; existing forced Vulkan build/install/run/capture with the new thin action documented before use.
+- **PASS CONDITION:** Three original slot-identity assertions, two fresh device runs, Vulkan rendering and emission sensitivity captures, unchanged original assemblies and balanced owned cleanup. Display bridge is explicit; no gameplay or shader parity claim.
+- **FAILURE EVIDENCE TO CAPTURE:** First closure/ApplyAsync/AOT/assignment/shader/device-output failure, APK/payload/material identities and current foreground evidence; no substituted success.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve failures, record actual capability and limits, staged privacy review, coherent commit/push, hand evidence back to Astra.
+- **DEPENDENCIES:** J38/J28, accepted input, restored editor/device and passing runtime prerequisites; L5 is not required for this independent fixture.
