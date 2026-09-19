@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 // Each selected experiment runs in a fresh process. Inactive body fixtures never run gameplay lifecycle.
 public sealed class MovementBatchProbe : MonoBehaviour {
  [Serializable] public class Result {public string attempt,id,phase,error;public int pid;public bool success,cleanup;public float x,y,z;public int assertions;}
- Result r;GameObject host;bool ownsServer;
+ Result r;GameObject host,obstacle;bool ownsServer;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
  void Save(){File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+r.id+".json"),JsonUtility.ToJson(r,true));}
@@ -24,10 +24,10 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
-  finally{if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
+  finally{if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
  }
  void Buttons(){
   var b=new InputBankTest.ButtonState();Check(!b.justPressed&&!b.justReleased,"Initial edge");
@@ -72,4 +72,30 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   Check(!host.activeInHierarchy&&host.transform.position==Vector3.zero,"Unexpected activation/translation");
   NetworkServer.UnSpawn(host);
  }
+ void Integrated(){
+  Check(!NetworkServer.active&&!NetworkClient.active,"Existing session");host=new GameObject("Original integrated motor");host.layer=30;var identity=host.AddComponent<NetworkIdentity>();
+  Check(NetworkServer.Listen("127.0.0.1",0),"Local listen failed");ownsServer=true;NetworkServer.Spawn(host);Check(identity.isServer&&identity.netId.Value!=0,"Spawn failed");
+  host.SetActive(false);host.AddComponent<CapsuleCollider>();var motor=host.AddComponent<CharacterMotor>();var k=host.AddComponent<KinematicCharacterMotor>();
+  Call(motor,"Awake");Call(k,"Awake");motor.SetupCharacterMotor(k);Call(motor,"UpdateAuthority");Check(motor.hasEffectiveAuthority,"Original authority failed");
+  k.SetCapsuleDimensions(.5f,2,1);k.CollidableLayers=1<<30;k.StableGroundLayers=1<<30;k.InteractiveRigidbodyHandling=false;k.SetGroundSolvingActivation(false);k.SetPosition(new Vector3(0,10,0));
+  var body=host.GetComponent<CharacterBody>();typeof(CharacterBody).GetProperty("moveSpeed").SetValue(body,7f);typeof(CharacterBody).GetProperty("acceleration").SetValue(body,10f);typeof(CharacterBody).GetProperty("jumpPower").SetValue(body,5f);
+  motor.airControl=1;motor.moveDirection=Vector3.right;motor.velocity=Vector3.zero;
+  if(r.id=="integrated-wall"||r.id=="integrated-land"){
+   obstacle=new GameObject("Owned integrated collision fixture");obstacle.layer=30;var box=obstacle.AddComponent<BoxCollider>();
+   if(r.id=="integrated-wall"){obstacle.transform.position=new Vector3(2,11,0);box.size=new Vector3(1,10,20);motor.disableAirControlUntilCollision=true;motor.velocity=Vector3.right*7;}
+   else{obstacle.transform.position=new Vector3(0,9.5f,0);box.size=new Vector3(20,1,20);k.SetPosition(new Vector3(0,10.2f,0));k.SetGroundSolvingActivation(true);motor.moveDirection=Vector3.zero;motor.velocity=Vector3.down;}
+   Physics.SyncTransforms();
+  }
+  if(r.id=="integrated-jump"){motor.Jump(1,1);Check(motor.velocity==new Vector3(7,5,0),"Original Jump impulse mismatch");}
+  r.phase="original-motor-solver";Save();
+  Step(k,r.id=="integrated-jump"?25:50);r.x=k.TransientPosition.x;r.y=k.TransientPosition.y;r.z=k.TransientPosition.z;
+  if(r.id=="integrated-free"){
+   Check(Mathf.Abs(r.x-4.62f)<.01f,"Integrated acceleration displacement");Check(Mathf.Abs(motor.velocity.x-7)<.001f,"Velocity cap");motor.moveDirection=Vector3.zero;Step(k,50);Check(motor.velocity.sqrMagnitude<.000001f,"Integrated braking");
+  }else if(r.id=="integrated-wall"){Check(r.x>.9f&&r.x<1.01f,"Original motor wall position outside expected boundary");Check(!motor.disableAirControlUntilCollision,"Original movement callback not observed");}
+  else if(r.id=="integrated-jump")Check(Mathf.Abs(r.x-3.5f)<.01f&&Mathf.Abs(r.y-12.5f)<.01f,"Jump velocity integration");
+  else Check(k.GroundingStatus.IsStableOnGround,"Original landing not stable");
+  Check(!host.activeInHierarchy,"Unexpected body lifecycle");NetworkServer.UnSpawn(host);
+ }
+ static void Step(KinematicCharacterMotor k,int ticks){for(int i=0;i<ticks;i++){k.UpdatePhase1(.02f,true);k.UpdatePhase2(.02f,true);k.SetPositionAndRotation(k.TransientPosition,k.TransientRotation);}}
+
 }

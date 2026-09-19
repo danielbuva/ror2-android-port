@@ -550,7 +550,7 @@ def steam_exception_prepare():
     write(out/'steam-exception-contract.json',{'scope':'Fresh process original private constructor before any load callback; observe first inner exception','assembly_changes':'No new transformation beyond accepted no-audio getter','pass':'No prior Facepunch singleton; original constructor exception recorded; no manager/cloud state','limits':'Original callback false is prior J58 evidence, not repeated in this mode; do not infer subscription check ran'})
 
 
-def movement_batch_prepare(kinematic=False):
+def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
     from build import preflight
     preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHARACTER_DIRECTION.json')
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
@@ -564,7 +564,8 @@ def movement_batch_prepare(kinematic=False):
         (stage/('Resources/'+name+'.json')).unlink()
     probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
     write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
-    r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
+    r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['integrated-free','integrated-wall','integrated-jump','integrated-land'] if integrated else ['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
+    if cases is not None:r['batch_ids']=cases
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
 

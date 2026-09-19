@@ -556,3 +556,21 @@ Batch work/experiments/scene-runtime/20260919T225851.741541Z retains the exact e
 All five cold launches pass sixteen assertions and roughly 26-second survival each, with separate attempt/PID reports and captures. Current-process errors contain only existing Windows shader bundle rejection; no current-process crash. Seventeen host tests pass, including prior batch failure-isolation regression. APK SHA-256 b977401c3fbf3def84cd013ef43372652e645e96fca15b7421ef0739e1aeeb4c. Five separate KINEMATIC known-good receipts retain accepted evidence. Owned app stopped and selector removed.
 
 No original CharacterMotor collision/landing lifecycle is invoked: its landing path reaches GlobalEventManager and body state. L5/L5.5 do not advance. Next connect original CharacterMotor to the solver in free space and test movement-hit/landing dependencies independently; keep the passed solver contracts intact.
+
+## J72 — Original motor integration: two passes and two isolated failures
+
+Batch work/experiments/scene-runtime/20260919T231103.776250Z uses original CharacterMotor as the shipped solver controller, including Before/AfterCharacterUpdate, rotation/velocity, collision filter and ground callbacks. Pinned DebugToolkit motor/network prior art and exact original motor/global-event source inspected. Actual local server-owned identity retained; body lifecycle inactive with explicit diagnostic stats. No callbacks or original DLLs replaced.
+
+S12 passes: original acceleration10/speed7 yields x=4.6200004 in 1s; neutral input subsequently brakes to zero. S14 passes: original Jump with speed7/power5 yields (7,5,0), then solver integrates 0.5s to (3.500001,12.500010,0) from height10; gravity is disabled, so this is not a gameplay jump trajectory. Each survives 26s and cleans up.
+
+S13 initially fails its boundary assertion with x=0: the fixture starts at rest while disableAirControlUntilCollision is true. Original PreMove correctly suppresses acceleration in this condition; the assertion's initial wording incorrectly described penetration. Preserve report and stage. Next candidate supplies initial velocity toward the wall without changing game methods.
+
+S15 fails in original CharacterMotor.OnLanded with NullReferenceException, reached from KinematicCharacterMotor.UpdatePhase1. Source review identifies GlobalEventManager.instance dereference in this path and downstream RunArtifactManager/content dependencies; exact dependency initialization remains next. Do not claim stable original landing from the passed standalone solver. No callback suppression or fabricated global state added. Failed runtime report/stack retained separately; process survives and owned server shuts down.
+
+All 45 original assemblies unchanged, 17 host tests pass. No process crashes; current Unity errors remain the known Windows-bundle rejection, while caught probe failures are in their individual reports. Batch correctly returns failure after running all four probes. Passing checkpoints advance only S12/S14.
+
+## J73 — Corrected wall fixture passes original collision callback
+
+Wall-only retry work/experiments/scene-runtime/20260919T231535.157371Z changes initial diagnostic velocity to7 toward the wall, retaining the original acceleration-disable flag. Original motor/solver stops at x=0.9900000; actual movement collision clears the flag. 7 assertions and 26.14s device survival pass; original body remains inactive. No original code/authority fields modified. Failed J72 wall attempt remains preserved.
+
+Exact build/stage/selection/runtime evidence archived and MOTOR_WALL checkpoint advanced; S12/S14 retain their distinct earlier APK. Current-process log has only known Windows-bundle rejection. All 45 original assemblies unchanged; 17 host tests and privacy review pass. S15/landing stays failed; L5/L5.5 do not advance. Next measure the missing original landing context, preserving the passed movement and wall paths.

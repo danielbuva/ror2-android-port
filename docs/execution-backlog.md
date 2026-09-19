@@ -775,3 +775,21 @@ Shared task contract:
 | S09 — Wall slide | Same normal boundary with continued tangent displacement. | PASS — J71 |
 | S10 — Floor grounding | Solver reports stable floor and expected foot height. | PASS — J71 |
 | S11 — Unground | After verified grounding, original ForceUnground plus upward velocity leaves floor. | PASS — J71 |
+
+## S12–S15 — Original CharacterMotor plus solver
+- **CONTEXT:** J70 original motor arithmetic and J71 shipped solver pass independently.
+- **OBSERVATION:** CharacterMotor implements the solver callbacks; its landing callback additionally reaches global game-event state.
+- **HYPOTHESIS:** Original motor can drive free motion/collision before those broader dependencies are initialized.
+- **CONSTRAINTS:** Separate fresh launches, original callbacks unmodified, actual server-owned identity; body lifecycle inactive and diagnostic stats supplied explicitly. No gravity trajectory or full character acceptance claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing MovementBatchProbe and selector.
+- **TEST COMMAND:** `./dev prototype --action motor-integration-prepare`; successful forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **FAILURE EVIDENCE TO CAPTURE:** First original exception/stack, phase, movement values, separate process report, shutdown and logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** Advance only individual passing checkpoints; record failed landing dependency without bypassing it.
+- **DEPENDENCIES:** J70/J71; pinned DebugToolkit motor/network prior art and exact original callbacks inspected.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S12 — Original integrated motion | Original acceleration gives 4.62m in 1s at diagnostic acceleration10/speed7, then brakes to zero. | PASS — J72 |
+| S13 — Original wall callback | Original motor/solver stops at wall and clears disable-air-control collision flag. | PASS — J73, corrected initial-velocity fixture |
+| S14 — Original Jump method | Diagnostic speed7/power5 produces velocity(7,5,0), integrated for0.5s without gravity. | PASS — J72 |
+| S15 — Original landing boundary | Execute original ground/landing callbacks; stable grounding without exceptions passes, otherwise classify first missing dependency. | FAILED — J72 original OnLanded null-reference; game-wide context unresolved |
