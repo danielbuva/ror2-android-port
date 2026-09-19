@@ -723,3 +723,19 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve failed attempts, record exact tested scope and next dependency; keep L5/L5.5 open.
 - **DEPENDENCIES:** J66; original source and pinned Starstorm2 BarrageCharge inspected for queue/age/authority usage. No community code copied.
 - **STATUS:** PASS — J68; original queue/timing/cleanup assertions and 70.54-second Android run. Character simulation remains separate.
+
+## S02 — Original facing with local server authority
+- **ID:** S02
+- **TITLE:** CharacterDirection authority guard and deterministic turning
+- **CONTEXT:** S01 scheduler passes; full body/master activation still needs measured dependencies.
+- **OBSERVATION:** CharacterMotor/InputBank require CharacterBody; CharacterDirection independently consumes a direction vector and checks original effective authority.
+- **HYPOTHESIS:** An actual local server-owned NetworkIdentity enables original direction simulation while the same fixture without authority cannot turn.
+- **TASK:** Verify negative authority control, start a loopback-only HLAPI server, spawn the owned fixture, invoke original direction initialization/simulation, verify east-facing convergence and neutral-input hold, then destroy/shut down owned state.
+- **CONSTRAINTS:** No authority/property patching, platform adapters, CharacterBody/master or walking claim. Refuse pre-existing network sessions. No remote client or matchmaking.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** One direction probe and thin existing prepare/run integration.
+- **TEST COMMAND:** `./dev prototype --action direction-prepare`; forced Vulkan build; `./dev prototype --action controller-run`.
+- **PASS CONDITION:** Current-attempt/PID assertions pass, real spawned identity/effective authority recorded, unauthorised turn blocked, original rotation converges, local server shuts down, inherited checks and 70-second survival pass.
+- **FAILURE EVIDENCE TO CAPTURE:** Native transport errors, spawn/authority state, rotation, first exception, cleanup and current-process logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve build/run evidence and rollback; distinguish component ownership from full character authority and L5.5.
+- **DEPENDENCIES:** S01; pinned DebugToolkit NetworkManager actual active-server/Spawn/Destroy usage and original CharacterDirection/Util/HLAPI source reviewed. No community code copied.
+- **STATUS:** PASS — J69; unauthorised control, real server spawn/authority, east-facing convergence, neutral hold and owned shutdown all pass on Android.

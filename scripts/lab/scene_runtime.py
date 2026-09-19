@@ -92,6 +92,10 @@ def scene_run(verification=False):
             state=json.loads(d.sh('cat',path+'/entity-state-tick-probe.json'));write(out/'state-tick-probe.json',state)
             result['success']=result['success'] and state['success'] and state['attempt']==out.name and str(state['pid'])==pid
             if not result['success']:result['error']=state.get('error') or result.get('error') or 'State tick assertions/attribution failed'
+        if attempt.get('direction_probe'):
+            direction=json.loads(d.sh('cat',path+'/character-direction-probe.json'));write(out/'direction-probe.json',direction)
+            result['success']=result['success'] and direction['success'] and direction['attempt']==out.name and str(direction['pid'])==pid
+            if not result['success']:result['error']=direction.get('error') or result.get('error') or 'Direction assertions/attribution failed'
         if attempt.get('pose'):
             pose=json.loads(d.sh('cat',path+'/commando-pose.json'));write(out/'pose-probe.json',pose)
             result['success']=result['success'] and pose['success'] and pose['attempt']==out.name and str(pose['pid'])==pid
@@ -374,6 +378,25 @@ def state_tick_prepare():
     cfg=read(stage/'Resources/ControllerAddressProbe.json');cfg['attempt']=out.name
     write(stage/'Resources/ControllerAddressProbe.json',cfg);write(stage/'Resources/EntityStateTickProbe.json',{'attempt':out.name})
     shutil.copy2(ROOT/'tools/unity/EntityStateTickProbe.cs',stage/'EntityStateTickProbe.cs')
+    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
+    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+
+def direction_prepare():
+    """Reuse accepted scheduler closure for one original direction/authority probe."""
+    from build import preflight
+    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_STATE_SCHEDULER.json')
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
+    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
+    if stage.exists():raise RuntimeError('Preserve previous stage first')
+    r=read(previous/'attempt.json')
+    for name,h in r['original_assemblies'].items():
+        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
+    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'direction_probe':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original facing and local server-owned authority pending; no body/master'})
+    for name in ['ControllerAddressProbe','EntityStateTickProbe']:
+        cfg=read(stage/('Resources/'+name+'.json'));cfg['attempt']=out.name;write(stage/('Resources/'+name+'.json'),cfg)
+    write(stage/'Resources/CharacterDirectionProbe.json',{'attempt':out.name});shutil.copy2(ROOT/'tools/unity/CharacterDirectionProbe.cs',stage/'CharacterDirectionProbe.cs')
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
 

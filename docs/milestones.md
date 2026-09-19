@@ -29,3 +29,5 @@ J62 architecture review retains C as platform-deferred. J63 completes L10-a read
 J64: L11-a is selected for constructive device execution. Independent simulation precursors may be scoped before L5, but cannot pass formal L5.5. No milestone advances from this selection; see l11-commando-material-device-contract.md.
 
 S01 / J68 independently verifies original EntityStateMachine queue, update/fixed scheduling, automatic ticks and cleanup on Android. It does not advance formal L5.5: actual character states, movement and authority remain unproven.
+
+S02 / J69 verifies original CharacterDirection facing and its authority guard using a real local server-owned identity. Original movement, full character authority and L5.5 remain unproven.
