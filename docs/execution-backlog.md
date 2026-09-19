@@ -657,7 +657,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L5b-7b — Legitimate platform runtime feasibility
 - **ID:** L5b-7b
 - **TITLE:** Evaluate authorized runtime options against the measured Steam dependency
-- **STATUS:** NEXT
+- **STATUS:** BLOCKED — J61 documented missing compatible Android ARM64 binding/runtime and absent publisher authorization
 - **CONTEXT:** J60 fails in Win64 SteamAPI_Init on Android before ownership checks.
 - **OBSERVATION:** The original managed binding selects a Windows DLL; no compatible authenticated Android route is established.
 - **HYPOTHESIS:** Official runtime/platform documentation and existing authorized inputs can determine whether a legitimate bounded integration exists.
@@ -669,3 +669,5 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** Unsupported ABI/platform, unavailable authorized runtime or unresolved mandatory checks.
 - **STATE/JOURNAL UPDATES REQUIRED:** Reassess architecture/access risks; keep dependent startup stopped if no legitimate route exists and select useful independent work.
 - **DEPENDENCIES:** J58–J60, existing platform prior art.
+
+**J61 result:** Read-only exact-binding and authoritative-documentation review finds no lawful candidate on the authorized generic Android device. The preserved Facepunch source exposes only Windows, Linux x86/x64 and macOS implementations, and its fallback reaches the J60 Win64 `steam_api64.dll` import. Valve's current Android path requires rights-holder Steam Frame/Steamworks configuration of an Android depot, APK launch option and package access; the accepted desktop entitlement/input supplies none of those and no Android ARM64 runtime is present. See `docs/l5b-7b-platform-runtime-feasibility.md`. Do not run another constructor/load probe or add a stub. Reopen only with a rights-holder-provided compatible runtime and integration authority; L5, original profile startup and L5.5 remain blocked.
