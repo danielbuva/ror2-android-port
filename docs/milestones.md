@@ -39,3 +39,5 @@ S07–S11 / J71 pass shipped kinematic solver integration, wall stop/slide, stab
 S12/S14 (J72) and S13 (J73) pass original CharacterMotor-driven movement/braking, Jump-method impulse integration without gravity, and wall contact. S15 fails in original OnLanded with a null-reference exception; landing and full character simulation remain open.
 
 S16–S19 / J75–J77 establish bounded original landing context and resolve the J72 null-reference for this fixture. Diagnostic artifact catalog and inactive body/Run remain; fall damage, effects/audio, normal character initialization and L5.5 are not accepted.
+
+S20–S24 / J78 pass original gravity and GenericCharacterMain input-driven movement/stop in isolated diagnostic fixtures. This is original state-to-motor execution, while full Commando/master lifecycle, normal stats/catalogs, physical controls and formal L5.5 remain open.

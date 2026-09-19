@@ -77,6 +77,9 @@ try:
   elif a.action=='material-render-verify':
    from scene_runtime import scene_run
    scene_run(verification=True)
+  elif a.action=='gravity-state-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare(cases=['gravity-rules','gravity-fall','gravity-jump-land','state-input','state-motion'])
   elif a.action=='landing-context-prepare':
    from scene_runtime import landing_batch_prepare
    landing_batch_prepare(cases=['landing-context'])

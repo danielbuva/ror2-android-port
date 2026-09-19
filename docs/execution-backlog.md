@@ -811,3 +811,22 @@ Shared task contract:
 | S17 — Artifact catalog identity | Original recovered definition and references load; original one-entry catalog assigns/resolves its index. | PASS — J75 |
 | S18 — Artifact manager initialization | Original pool initialization, Awake and OnEnable establish manager; recovered artifact correctly reports disabled. | PASS — J75 |
 | S19 — Landing with measured context | Original motor landing reaches stable floor without exception or unexplained log error; managers/catalog restored afterward. | PASS — J77 after full measured layer-name repair |
+
+## S20–S24 — Gravity and original movement-state batch
+- **CONTEXT:** J77 bounded original landing passes; original movement-state input and gravity remain separate gates.
+- **OBSERVATION:** CharacterGravityParameters has explicit precedence, original motor exposes the public gravity-parameter setter, and GenericCharacterMain gathers InputBank state and drives motor direction.
+- **HYPOTHESIS:** These original paths can execute against the accepted inactive-body/landing context without broad character startup.
+- **CONSTRAINTS:** Independent cold launches; no state/motor replacements. Original GenericCharacterMain entry, gathering, fixed ticks and exit where applicable. Diagnostic stats/catalog remain explicit; no sprint/skill/full-body or controller acceptance claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement batch probe and selector.
+- **TEST COMMAND:** `./dev prototype --action gravity-state-prepare`; successful forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **FAILURE EVIDENCE TO CAPTURE:** Current attempt/PID, gravity and position, state-entry/gather exceptions, cleanup and per-launch logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve independent outcomes; retain landing rollback and classify first failure without broad initialization patches.
+- **DEPENDENCIES:** J77; pinned Starstorm2 BorgMain uses original GenericCharacterMain base ticks and input; original gravity/state methods inspected. No mod hooks/code copied.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S20 — Gravity precedence | Original default/channeled/neutralizer/environmental precedence assertions. | PASS — J78 |
+| S21 — Original falling | Original gravity setter and motor produce expected velocity/discrete displacement over 0.5 s. | PASS — J78 |
+| S22 — Gravity jump/landing | Settle on floor, original Jump rises, then original gravity/landing returns to stable floor and resets jump count. | PASS — J78 |
+| S23 — Original state input | Original state entry/GatherInputs reads direction/jump edge, consumes emote and rejects claimed press; exit cleans up. | PASS — J78 |
+| S24 — Original state movement | Original state fixed ticks consume direction and drive motor/solver through acceleration and neutral stop. | PASS — J78 |

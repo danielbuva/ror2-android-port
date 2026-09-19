@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Each selected experiment runs in a fresh process. Inactive body fixtures never run gameplay lifecycle.
 public sealed class MovementBatchProbe : MonoBehaviour {
- [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset;public int pid;public bool success,cleanup;public float x,y,z;public int assertions;}
+ [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak;public int assertions;}
  Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
@@ -24,7 +24,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "gravity-rules":GravityRules();break;case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
   finally{try{CleanupLanding();}catch(Exception e){r.error+=" Cleanup: "+e;r.success=false;}if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
@@ -79,8 +79,9 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   Call(motor,"Awake");Call(k,"Awake");motor.SetupCharacterMotor(k);Call(motor,"UpdateAuthority");Check(motor.hasEffectiveAuthority,"Original authority failed");
   k.SetCapsuleDimensions(.5f,2,1);k.CollidableLayers=1<<30;k.StableGroundLayers=1<<30;k.InteractiveRigidbodyHandling=false;k.SetGroundSolvingActivation(false);k.SetPosition(new Vector3(0,10,0));
   var body=host.GetComponent<CharacterBody>();typeof(CharacterBody).GetProperty("moveSpeed").SetValue(body,7f);typeof(CharacterBody).GetProperty("acceleration").SetValue(body,10f);typeof(CharacterBody).GetProperty("jumpPower").SetValue(body,5f);
-  if(r.id=="landing-context"){typeof(CharacterBody).GetProperty("characterMotor").SetValue(body,motor);typeof(CharacterBody).GetField("transform",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(body,host.transform);}
+  if(r.id=="landing-context"||r.id.StartsWith("gravity-")||r.id.StartsWith("state-")){typeof(CharacterBody).GetProperty("characterMotor").SetValue(body,motor);typeof(CharacterBody).GetField("transform",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(body,host.transform);}
   motor.airControl=1;motor.moveDirection=Vector3.right;motor.velocity=Vector3.zero;
+  if(r.id.StartsWith("gravity-")||r.id.StartsWith("state-")){Additional(motor,k,body);NetworkServer.UnSpawn(host);return;}
   if(r.id=="integrated-wall"||(r.id=="integrated-land"||r.id=="landing-context")){
    obstacle=new GameObject("Owned integrated collision fixture");obstacle.layer=30;var box=obstacle.AddComponent<BoxCollider>();
    if(r.id=="integrated-wall"){obstacle.transform.position=new Vector3(2,11,0);box.size=new Vector3(1,10,20);motor.disableAirControlUntilCollision=true;motor.velocity=Vector3.right*7;}
@@ -102,7 +103,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
  static void StaticCall(Type type,string name,params object[] args){type.GetMethod(name,BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,args);}
  void LandingContext(){
   Check(!GlobalEventManager.instance&&!RunArtifactManager.instance,"Existing game manager context");
-  if(r.id=="global-lifecycle"||r.id=="landing-context"){
+  if(r.id=="global-lifecycle"||r.id=="landing-context"||r.id.StartsWith("gravity-")||r.id.StartsWith("state-")){
    eventHost=new GameObject("Owned event context");eventHost.SetActive(false);var manager=eventHost.AddComponent<GlobalEventManager>();Call(manager,"OnEnable");Check(GlobalEventManager.instance==manager,"Original event singleton assignment failed");
    if(r.id=="global-lifecycle"){Call(manager,"OnDisable");Check(!GlobalEventManager.instance,"Original event singleton release failed");return;}
   }
@@ -126,6 +127,32 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   if(eventHost){Call(eventHost.GetComponent<GlobalEventManager>(),"OnDisable");Destroy(eventHost);}
   if(priorArtifacts!=null){RoR2Content.Artifacts.WeakAssKnees=priorFallArtifact;StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{priorArtifacts});StaticCall(typeof(RunArtifactManager),"Init");}
   if(artifactBundle)artifactBundle.Unload(true);
+ }
+
+ void GravityRules(){
+  var g=new CharacterGravityParameters();Check(g.CheckShouldUseGravity(),"Default gravity");g.channeledAntiGravityGranterCount=1;Check(!g.CheckShouldUseGravity(),"Channeled antigravity");g.antiGravityNeutralizerCount=1;Check(g.CheckShouldUseGravity(),"Neutralizer precedence");g.environmentalAntiGravityGranterCount=1;Check(!g.CheckShouldUseGravity(),"Environmental precedence");
+ }
+ void Additional(CharacterMotor motor,KinematicCharacterMotor k,CharacterBody body){
+  if(r.id.StartsWith("gravity-")){
+   motor.gravityParameters=new CharacterGravityParameters{environmentalAntiGravityGranterCount=1};Check(!motor.useGravity,"Antigravity setter");motor.gravityParameters=new CharacterGravityParameters();Check(motor.useGravity,"Gravity setter did not enable original gravity");r.gravity=Physics.gravity.y;Check(r.gravity<0,"Expected downward gravity");motor.moveDirection=Vector3.zero;
+   if(r.id=="gravity-fall"){
+    Step(k,25);r.y=k.TransientPosition.y;Check(Mathf.Abs(motor.velocity.y-r.gravity*.5f)<.001f,"Gravity velocity");Check(Mathf.Abs(r.y-(10+r.gravity*.02f*.02f*325))<.001f,"Gravity integration");
+   }else{
+    obstacle=new GameObject("Owned gravity floor");obstacle.layer=30;obstacle.transform.position=new Vector3(0,9.5f,0);obstacle.AddComponent<BoxCollider>().size=new Vector3(20,1,20);Physics.SyncTransforms();k.SetGroundSolvingActivation(true);k.SetPosition(new Vector3(0,10.2f,0));Step(k,40);Check(k.GroundingStatus.IsStableOnGround,"Initial gravity landing");
+    motor.Jump(0,1);r.peak=k.TransientPosition.y;for(int i=0;i<100;i++){Step(k,1);r.peak=Mathf.Max(r.peak,k.TransientPosition.y);}r.y=k.TransientPosition.y;Check(r.peak>10.5f,"Jump did not rise");Check(k.GroundingStatus.IsStableOnGround&&Mathf.Abs(r.y-10.01f)<.02f,"Gravity jump did not land");Check(motor.jumpCount==0,"Original landing jump reset");
+   }
+  }else{
+   var input=host.AddComponent<InputBankTest>();var machine=host.AddComponent<EntityStateMachine>();Call(machine,"Awake");var state=new EntityStates.GenericCharacterMain();machine.SetState(state);Check(machine.state==state&&machine.commonComponents.inputBank==input,"Original state entry or component cache");
+   input.moveVector=Vector3.right;input.aimDirection=new Vector3(3,0,4);
+   if(r.id=="state-input"){
+    input.emoteRequest=2;input.jump.PushState(true);Call(state,"GatherInputs");var flags=BindingFlags.NonPublic|BindingFlags.Instance;
+    Check((Vector3)typeof(EntityStates.GenericCharacterMain).GetField("moveVector",flags).GetValue(state)==Vector3.right,"State move input");Check((bool)typeof(EntityStates.GenericCharacterMain).GetField("jumpInputReceived",flags).GetValue(state),"State jump edge");Check(input.emoteRequest==-1,"Emote consumption");input.jump.hasPressBeenClaimed=true;Call(state,"GatherInputs");Check(!(bool)typeof(EntityStates.GenericCharacterMain).GetField("jumpInputReceived",flags).GetValue(state),"Claimed jump not excluded");
+   }else{
+    motor.moveDirection=Vector3.zero;for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);Step(k,1);}r.x=k.TransientPosition.x;Check(Mathf.Abs(r.x-4.62f)<.01f,"Original state-driven displacement");input.moveVector=Vector3.zero;for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);Step(k,1);}Check(motor.moveDirection==Vector3.zero&&motor.velocity.sqrMagnitude<.000001f,"State-driven stop");
+   }
+   Call(machine,"OnDestroy");Check(machine.state==null&&motor.moveDirection==Vector3.zero,"Original state exit cleanup");
+  }
+  Check(!host.activeInHierarchy,"Unexpected body activation");
  }
 
 }
