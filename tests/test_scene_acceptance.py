@@ -66,3 +66,20 @@ class MovementBatchTests(unittest.TestCase):
    self.assertIn('crashed',results['buttons']['error'])
    self.assertTrue(all(results[k]['success'] for k in ['input','motor-output','motor-acceleration']))
    self.assertEqual(d.collect.call_count,4)
+
+ def test_missing_layer_log_rejects_true_runtime_result(self):
+  import itertools
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);work=root/'work';out=work/'experiments/scene-runtime/attempt'
+   write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
+   write(out/'attempt.json',{'stage':str(root/'stage'),'original_assemblies':{},'movement_batch':True,'batch_ids':['input']})
+   write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','apk_sha256':'hash'})
+   write(work/'device/runtime.json',{'persistentDataPath':'mock-owned-path'})
+   d=MagicMock();d.install.return_value={};d.launch.return_value={'pid':'123'}
+   d.sh.return_value=json.dumps({'id':'input','attempt':'attempt','pid':123,'success':True,'phase':'complete'})
+   def collect(kind,directory):
+    directory.mkdir(parents=True);(directory/'unity.log').write_text('09-19 12:00:00.000 123 124 E Unity : Layer "FakeActor" is not defined in this project')
+   d.collect.side_effect=collect
+   with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch.object(scene_runtime,'sha',return_value='hash'),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=itertools.count(0,30)):
+    with self.assertRaisesRegex(RuntimeError,'Batch completed with failed probes'):scene_runtime.movement_batch_run()
+   self.assertFalse(read(out/'batch-result.json')['input']['success'])

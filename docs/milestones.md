@@ -37,3 +37,5 @@ S03–S06 / J70 pass independent input-edge/normalization and inactive motor out
 S07–S11 / J71 pass shipped kinematic solver integration, wall stop/slide, stable grounding and ungrounding in five separate Android processes. An authored diagnostic velocity controller drives these probes; original CharacterMotor/body integration and L5.5 remain unproven.
 
 S12/S14 (J72) and S13 (J73) pass original CharacterMotor-driven movement/braking, Jump-method impulse integration without gravity, and wall contact. S15 fails in original OnLanded with a null-reference exception; landing and full character simulation remain open.
+
+S16–S19 / J75–J77 establish bounded original landing context and resolve the J72 null-reference for this fixture. Diagnostic artifact catalog and inactive body/Run remain; fall damage, effects/audio, normal character initialization and L5.5 are not accepted.

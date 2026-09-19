@@ -77,6 +77,12 @@ try:
   elif a.action=='material-render-verify':
    from scene_runtime import scene_run
    scene_run(verification=True)
+  elif a.action=='landing-context-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare(cases=['landing-context'])
+  elif a.action=='landing-batch-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare()
   elif a.action=='motor-wall-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare(integrated=True,cases=['integrated-wall'])

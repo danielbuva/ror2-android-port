@@ -574,3 +574,27 @@ All 45 original assemblies unchanged, 17 host tests pass. No process crashes; cu
 Wall-only retry work/experiments/scene-runtime/20260919T231535.157371Z changes initial diagnostic velocity to7 toward the wall, retaining the original acceleration-disable flag. Original motor/solver stops at x=0.9900000; actual movement collision clears the flag. 7 assertions and 26.14s device survival pass; original body remains inactive. No original code/authority fields modified. Failed J72 wall attempt remains preserved.
 
 Exact build/stage/selection/runtime evidence archived and MOTOR_WALL checkpoint advanced; S12/S14 retain their distinct earlier APK. Current-process log has only known Windows-bundle rejection. All 45 original assemblies unchanged; 17 host tests and privacy review pass. S15/landing stays failed; L5/L5.5 do not advance. Next measure the missing original landing context, preserving the passed movement and wall paths.
+
+## J74 — Landing-context fixture compile errors preserved
+
+Attempt work/experiments/scene-runtime/20260919T232436.809144Z introduces four independent landing-context probes and a narrow recovered fall-artifact closure (17 source files including the already-provided original assembly; no unresolved GUIDs). Pinned DebugToolkit CurrentRun uses original ArtifactCatalog/RunArtifactManager definitions; original GlobalEventManager and RunArtifactManager lifecycle, catalog initialization and landing code inspected. Diagnostic one-entry catalog does not claim full game initialization or unlock/entitlement state.
+
+Build failed before device execution: authored fixture used ArtifactDef.name, which is obsolete-as-error, and assigned the read-only legacy weakAssKneesArtifactDef property. Current input defines cachedName and the actual writable WeakAssKnees field. Preserve failed stage/console/build; correct these two API references only. No original assembly or source transformation needed.
+
+## J75 — Three landing-context prerequisites pass; runtime landing rejected on logs
+
+Batch work/experiments/scene-runtime/20260919T232551.198715Z passes original GlobalEventManager singleton assignment/release (3 assertions), recovered WeakAssKnees artifact identity/references and original one-entry catalog index (6), and original RunArtifactManager pool/Awake/OnEnable with artifact disabled (8). Separate 25–26s device launches and unchanged 45 original assemblies. Recovered unlockable/icons/pickup references retained; no artifact unlock, entitlement or full-catalog claim. Required Run component remains inactive. Original static catalog/content bindings restored after each probe.
+
+Landing with these managers, original artifact content binding and measured body motor/transform caches returns stable ground without the previous OnLanded exception. However current-process logs contain missing-layer errors, so this launch is rejected despite a true probe marker. LayerIndex resolves named layers on initialization; initial review only examined the first two errors. Failed/rejected landing remains separate from the three accepted context probes.
+
+## J76 — Two-layer correction rejected; inspect complete initializer contract
+
+Retry work/experiments/scene-runtime/20260919T233124.334480Z restored measured FakeActor 8 and PlayerFakeActor 31 but still logs 20 other missing names. This was an overly narrow fixture correction, not a game-method failure. Preserve its stage/logs and do not promote landing. Re-inspected the complete original LayerIndex initializer and exported 32-slot table; restore the whole original name list, reject conflicts with existing names, leave physics collision matrix unchanged. Added a batch acceptance check and host regression test: current-process missing-layer errors must reject a true runtime marker.
+
+## J77 — Original landing completes with measured context and layer names
+
+Landing-only attempt work/experiments/scene-runtime/20260919T233421.323117Z passes 16 assertions and 26.13s device survival. Original CharacterMotor.OnLanded, GlobalEventManager server landing path and artifact query complete; stable floor settles at y10.0099993. Catalog is a diagnostic subset containing the recovered original fall artifact; the artifact manager reports it disabled. Body caches point at the actual fixture motor/transform; diagnostic stats and original server ownership retained. No original method or assembly transformed.
+
+Current-process errors are only the inherited Windows-bundle rejection; no matched-process crash. Four warnings report original exported split-screen layer names not represented in LayerIndex's assigned mask. Original LayerIndex source explicitly warns on these names; preserve the input table, no evidence they invalidate this bounded fixture. Full layer list and source hash receipted; physics collision matrix unchanged.
+
+Eighteen host tests pass. All 45 original DLLs unchanged. Four accepted context/landing checkpoints retain their distinct build/payload/configuration receipts; earlier compile, layer and J72 runtime failures preserved. Owned app stopped, selector removed. Surface geometry is isolated from world/water effect masks; fixture has no inventory, so fall damage and surface effects/audio are untested. Inactive Run/body and one-entry catalog do not establish ordinary startup, full character lifecycle, local client semantics or L5.5. Next separate gravity and original movement-state/input integration against the accepted motor context.

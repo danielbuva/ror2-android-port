@@ -793,3 +793,21 @@ Shared task contract:
 | S13 — Original wall callback | Original motor/solver stops at wall and clears disable-air-control collision flag. | PASS — J73, corrected initial-velocity fixture |
 | S14 — Original Jump method | Diagnostic speed7/power5 produces velocity(7,5,0), integrated for0.5s without gravity. | PASS — J72 |
 | S15 — Original landing boundary | Execute original ground/landing callbacks; stable grounding without exceptions passes, otherwise classify first missing dependency. | FAILED — J72 original OnLanded null-reference; game-wide context unresolved |
+
+## S16–S19 — Landing context batch
+- **CONTEXT:** J72 landing failed in original OnLanded; free/wall/jump method paths pass.
+- **OBSERVATION:** Original landing dereferences GlobalEventManager, then RunArtifactManager and the fall-damage artifact definition. Recovered artifact closure contains 17 files with no unresolved GUIDs.
+- **HYPOTHESIS:** Original manager methods and a measured original artifact in a diagnostic catalog can supply this bounded landing context.
+- **CONSTRAINTS:** Separate processes, original assemblies unchanged; one-entry diagnostic catalog is not full content initialization. Required Run remains inactive. Original artifact/serialized dependencies retained; no ownership/unlock or artifact availability claim. No callback suppression.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing batch probe/runner, narrow artifact closure staging into separate bundle, original content cache slots for the duration of the fixture.
+- **TEST COMMAND:** `./dev prototype --action landing-batch-prepare`; forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **FAILURE EVIDENCE TO CAPTURE:** Original stack, artifact identity/reference checks, manager identity, catalog state, landing position, RPC/native errors, cleanup and per-process logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** Keep results independent, retain J72 failure, distinguish landing fixture from full body/master, effects/audio and actual game startup.
+- **DEPENDENCIES:** J72/J73; pinned DebugToolkit CurrentRun artifact manager/catalog usage and exact original manager/landing source inspected.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S16 — Event manager lifecycle | Original OnEnable assigns singleton; OnDisable releases it. | PASS — J75 |
+| S17 — Artifact catalog identity | Original recovered definition and references load; original one-entry catalog assigns/resolves its index. | PASS — J75 |
+| S18 — Artifact manager initialization | Original pool initialization, Awake and OnEnable establish manager; recovered artifact correctly reports disabled. | PASS — J75 |
+| S19 — Landing with measured context | Original motor landing reaches stable floor without exception or unexplained log error; managers/catalog restored afterward. | PASS — J77 after full measured layer-name repair |

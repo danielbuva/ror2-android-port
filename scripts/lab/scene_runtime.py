@@ -581,7 +581,7 @@ def movement_batch_run():
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
     for probe in a.get('batch_ids',['buttons','input','motor-output','motor-acceleration']):
         attempt=out/probe;attempt.mkdir();selection={'attempt':out.name,'id':probe};write(attempt/'selection.json',selection)
-        result={'success':False,'probe':probe}
+        result={'success':False,'probe':probe};pid=None
         try:
             d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
             launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic()
@@ -597,7 +597,60 @@ def movement_batch_run():
                 except Exception as e:result['report_recovery_error']=str(e)
             try:d.collect('all',attempt/'device')
             except Exception as e:result['capture_error']=str(e);result['success']=False
+            log=attempt/'device/unity.log'
+            if log.exists() and pid:
+                missing=[line for line in log.read_text(errors='replace').splitlines() if re.search(r'\s'+re.escape(str(pid))+r'\s',line) and 'is not defined in this project' in line]
+                if missing:result['success']=False;result['error']='Required Unity layer missing; inspect current-process log'
             write(attempt/'result.json',result);results[probe]=result;print(json.dumps(result),flush=True)
     d.sh('am','force-stop',PACKAGE);d.sh('rm',runtime+'/movement-batch-selection.json')
     write(out/'batch-result.json',results)
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
+
+
+def landing_batch_prepare(cases=None):
+    movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    # Reuse the YAML GUID traversal used by scene_closure, bounded to this measured artifact.
+    root=export/'Assets/RoR2/Base/Artifacts/WeakAssKnees/WeakAssKnees.asset';index={}
+    for meta in (export/'Assets').rglob('*.meta'):
+        match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+        if match:index[match[1]]=Path(str(meta)[:-5])
+    existing={}
+    for meta in stage.rglob('*.meta'):
+        match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+        if match:existing[match[1]]=Path(str(meta)[:-5])
+    pending=[root];seen=set();rows=[];asset=None
+    while pending:
+        src=pending.pop()
+        if src in seen:continue
+        seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
+        if src.suffix=='.dll':
+            if guid not in existing:raise RuntimeError('Unprovided artifact script assembly')
+            continue
+        dst=existing.get(guid,stage/'LandingArtifactClosure'/src.relative_to(export/'Assets'))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
+        rows.append({'source':str(src.relative_to(export)),'sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
+        if src==root:asset=str(dst.relative_to(WORK/'lab-project'))
+        with src.open('rb') as f:prefix=f.read(5)
+        if prefix==b'%YAML':
+            for dependency in set(re.findall(r'guid: ([a-f0-9]{32})',src.read_text())):
+                if dependency.startswith('0000000000000000'):continue
+                if dependency not in index:raise RuntimeError('Unresolved artifact GUID')
+                pending.append(index[dependency])
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['artifactAsset']=asset.lower();write(stage/'Resources/MovementBatchProbe.json',cfg)
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].append(asset);write(WORK/'scene-probe-build.json',recipe)
+    write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'scope':'Original fall artifact and serialized dependency closure; diagnostic one-entry catalog only'})
+
+    tag=WORK/'lab-project/ProjectSettings/TagManager.asset';source=export/'ProjectSettings/TagManager.asset'
+    before=tag.read_text();original=source.read_text()
+    def layers(text):return text.split('  layers:\n',1)[1].split('  m_SortingLayers:',1)[0].splitlines()
+    current=layers(before);expected=layers(original)
+    if len(current)!=len(expected):raise RuntimeError('Layer array shape changed')
+    for slot,line in enumerate(expected):
+        if current[slot].strip() not in ['-',line.strip(),'']:raise RuntimeError('Conflicting existing layer slot '+str(slot))
+    current=expected
+    after=before.replace('  layers:\n'+'\n'.join(layers(before))+'\n','  layers:\n'+'\n'.join(current)+'\n')
+    (out/'TagManager-before.asset').write_text(before);tag.write_text(after)
+    write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})

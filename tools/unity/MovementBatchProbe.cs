@@ -9,8 +9,8 @@ using UnityEngine.Networking;
 
 // Each selected experiment runs in a fresh process. Inactive body fixtures never run gameplay lifecycle.
 public sealed class MovementBatchProbe : MonoBehaviour {
- [Serializable] public class Result {public string attempt,id,phase,error;public int pid;public bool success,cleanup;public float x,y,z;public int assertions;}
- Result r;GameObject host,obstacle;bool ownsServer;
+ [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset;public int pid;public bool success,cleanup;public float x,y,z;public int assertions;}
+ Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
  void Save(){File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+r.id+".json"),JsonUtility.ToJson(r,true));}
@@ -24,10 +24,10 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
-  finally{if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
+  finally{try{CleanupLanding();}catch(Exception e){r.error+=" Cleanup: "+e;r.success=false;}if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
  }
  void Buttons(){
   var b=new InputBankTest.ButtonState();Check(!b.justPressed&&!b.justReleased,"Initial edge");
@@ -79,8 +79,9 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   Call(motor,"Awake");Call(k,"Awake");motor.SetupCharacterMotor(k);Call(motor,"UpdateAuthority");Check(motor.hasEffectiveAuthority,"Original authority failed");
   k.SetCapsuleDimensions(.5f,2,1);k.CollidableLayers=1<<30;k.StableGroundLayers=1<<30;k.InteractiveRigidbodyHandling=false;k.SetGroundSolvingActivation(false);k.SetPosition(new Vector3(0,10,0));
   var body=host.GetComponent<CharacterBody>();typeof(CharacterBody).GetProperty("moveSpeed").SetValue(body,7f);typeof(CharacterBody).GetProperty("acceleration").SetValue(body,10f);typeof(CharacterBody).GetProperty("jumpPower").SetValue(body,5f);
+  if(r.id=="landing-context"){typeof(CharacterBody).GetProperty("characterMotor").SetValue(body,motor);typeof(CharacterBody).GetField("transform",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(body,host.transform);}
   motor.airControl=1;motor.moveDirection=Vector3.right;motor.velocity=Vector3.zero;
-  if(r.id=="integrated-wall"||r.id=="integrated-land"){
+  if(r.id=="integrated-wall"||(r.id=="integrated-land"||r.id=="landing-context")){
    obstacle=new GameObject("Owned integrated collision fixture");obstacle.layer=30;var box=obstacle.AddComponent<BoxCollider>();
    if(r.id=="integrated-wall"){obstacle.transform.position=new Vector3(2,11,0);box.size=new Vector3(1,10,20);motor.disableAirControlUntilCollision=true;motor.velocity=Vector3.right*7;}
    else{obstacle.transform.position=new Vector3(0,9.5f,0);box.size=new Vector3(20,1,20);k.SetPosition(new Vector3(0,10.2f,0));k.SetGroundSolvingActivation(true);motor.moveDirection=Vector3.zero;motor.velocity=Vector3.down;}
@@ -97,5 +98,34 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   Check(!host.activeInHierarchy,"Unexpected body lifecycle");NetworkServer.UnSpawn(host);
  }
  static void Step(KinematicCharacterMotor k,int ticks){for(int i=0;i<ticks;i++){k.UpdatePhase1(.02f,true);k.UpdatePhase2(.02f,true);k.SetPositionAndRotation(k.TransientPosition,k.TransientRotation);}}
+
+ static void StaticCall(Type type,string name,params object[] args){type.GetMethod(name,BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,args);}
+ void LandingContext(){
+  Check(!GlobalEventManager.instance&&!RunArtifactManager.instance,"Existing game manager context");
+  if(r.id=="global-lifecycle"||r.id=="landing-context"){
+   eventHost=new GameObject("Owned event context");eventHost.SetActive(false);var manager=eventHost.AddComponent<GlobalEventManager>();Call(manager,"OnEnable");Check(GlobalEventManager.instance==manager,"Original event singleton assignment failed");
+   if(r.id=="global-lifecycle"){Call(manager,"OnDisable");Check(!GlobalEventManager.instance,"Original event singleton release failed");return;}
+  }
+  var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+  artifactBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Artifact bundle missing");
+  var artifact=artifactBundle.LoadAsset<ArtifactDef>(cfg.artifactAsset);Check(artifact&&artifact.cachedName=="WeakAssKnees"&&artifact.nameToken=="ARTIFACT_WEAKASSKNEES_NAME","Wrong recovered artifact");
+  Check(artifact.unlockableDef&&artifact.smallIconSelectedSprite&&artifact.smallIconDeselectedSprite&&artifact.pickupModelPrefab,"Artifact closure incomplete");
+  var defs=typeof(ArtifactCatalog).GetField("artifactDefs",BindingFlags.NonPublic|BindingFlags.Static);priorArtifacts=(ArtifactDef[])defs.GetValue(null);priorFallArtifact=RoR2Content.Artifacts.weakAssKneesArtifactDef;Check(priorArtifacts.Length==0,"Existing artifact catalog; refusing replacement");
+  StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{new[]{artifact}});Check(ArtifactCatalog.artifactCount==1&&ArtifactCatalog.GetArtifactDef(artifact.artifactIndex)==artifact,"Original catalog identity failed");
+  if(r.id=="artifact-catalog")return;
+  StaticCall(typeof(RunArtifactManager),"Init");artifactHost=new GameObject("Inactive artifact context");artifactHost.SetActive(false);artifactManager=artifactHost.AddComponent<RunArtifactManager>();
+  Call(artifactManager,"Awake");Call(artifactManager,"OnEnable");Check(RunArtifactManager.instance==artifactManager&&!artifactManager.IsArtifactEnabled(artifact),"Original artifact manager disabled-state mismatch");
+  Check(!artifactHost.activeInHierarchy,"Run lifecycle unexpectedly active");
+  if(r.id=="artifact-manager")return;
+  priorFallArtifact=RoR2Content.Artifacts.weakAssKneesArtifactDef;Check(!priorFallArtifact,"Existing fall artifact binding");RoR2Content.Artifacts.WeakAssKnees=artifact;
+  Integrated();
+ }
+ void CleanupLanding(){
+  if(artifactManager){Call(artifactManager,"OnDisable");Call(artifactManager,"OnDestroy");}
+  if(artifactHost)Destroy(artifactHost);
+  if(eventHost){Call(eventHost.GetComponent<GlobalEventManager>(),"OnDisable");Destroy(eventHost);}
+  if(priorArtifacts!=null){RoR2Content.Artifacts.WeakAssKnees=priorFallArtifact;StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{priorArtifacts});StaticCall(typeof(RunArtifactManager),"Init");}
+  if(artifactBundle)artifactBundle.Unload(true);
+ }
 
 }
