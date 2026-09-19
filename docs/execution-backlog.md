@@ -676,7 +676,7 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 ## L10-a — Remaining unavailable-audio lifecycle audit
 - **ID:** L10-a
 - **TITLE:** Attribute remaining no-audio obligations without crossing J61
-- **STATUS:** NEXT — read-only investigation only; selected by J62
+- **STATUS:** COMPLETE — J63 source-only attribution; Astra must select any subsequent runtime candidate
 - **CONTEXT:** L10 supporting work and unfinished L5b-5c/J55 obligations; C remains platform-deferred.
 - **OBSERVATION:** J55 guards early initialization only; later query/dialog, bank waits and teardown are not covered by its device proof.
 - **HYPOTHESIS:** Exact-input static tracing can separate suppressed, remaining and platform-coupled audio obligations without running startup.
@@ -688,3 +688,5 @@ T07 passes at work/experiments/ror2-slice/20260913T022358.230312Z. Before L4, AO
 - **FAILURE EVIDENCE TO CAPTURE:** Input mismatch, unresolved callbacks/lifetime, missing producer, native dependency or platform coupling; distinguish inference from execution.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve local evidence, publish only authored conclusions, record limits, review status/privacy, commit/push coherent checkpoint and transfer sole control to Astra Low.
 - **DEPENDENCIES:** J52/J53/J55 accepted evidence and J62 architecture decision; no requirement to cross blocked L5. Runtime prerequisites remain separate.
+
+**J63 result:** The exact-input source-hashed matrix is recorded in `docs/l10-a-unavailable-audio-lifecycle-audit.md`. It attributes the first uncovered obligation to the later original native query and Windows-runtime dialog, downstream of J61's platform/Steam boundary. It also identifies that J55 suppresses the known bank-load producers, so a zero pending counter would not prove bank/callback lifecycle, and that whole-app teardown invokes platform shutdown callbacks. No isolated runtime candidate is specified; no capability advances. Current doctor additionally reports no authorized ADB device as well as no editor attachment, so both prerequisites must be restored before Astra selects or runs any runtime work.
