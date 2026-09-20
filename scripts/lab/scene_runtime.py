@@ -615,7 +615,7 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False):
+def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False):
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -632,6 +632,11 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False):
     if jump_items:
         roots.update({'jumpBoostAsset':export/'Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset','jumpStrikeAsset':export/'Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset'})
     if body_lifecycle:roots['masterAsset']=export/'Assets/RoR2/Base/Core/PlayerMaster.prefab'
+    if adoption:
+        for slot in ['Primary','Secondary','Utility','Special']:
+            name='Lunar'+slot+'Replacement'
+            roots['lunar'+slot+'Asset']=export/('Assets/RoR2/Base/Items/LunarSkillReplacements/'+name+'/'+name+'.asset')
+        roots['batteryAsset']=export/'Assets/RoR2/Base/Equipment/QuestVolatileBattery/QuestVolatileBattery.asset'
     pending=list(roots.values());seen=set();rows=[];asset=None;root_assets={}
     ui_remaps={row['from']:row['to'] for row in a.get('ui_remaps',[])};ui_edits=[]
     while pending:

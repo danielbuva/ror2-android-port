@@ -31,3 +31,9 @@ Static review of OnInventoryChanged also reaches hurtbox availability, optional 
 Original state-machine networking setup and actual server spawning of recovered body/master pass on Android. The original body setter stores a distinct real master ID, and actual server lookup resolves it; both roots remain inactive. Original effective-authority queries pass without assigned flags. Owned unspawn removes the registered objects.
 
 The getter is still uncalled: inventory adoption, its callbacks and the master's reciprocal body reference are explicitly asserted absent. These tests remove network-ID uncertainty before the required content/empty-inventory adoption experiment. No connected-client, replication, full Start or player-session result is implied.
+
+## J87 inventory-adoption outcome and next boundary
+
+Five original definitions and original empty-inventory adoption pass in separate Android processes. The getter resolves the real master, adopts its inventory, detects the player controller and completes one callback; subsequent reads do not repeat it. The reciprocal master body remains absent. Optional absent definitions still use original zero-count fallbacks; full catalogs, item grants and later inventory notifications remain untested.
+
+Next isolate meaningful RecalculateStats prerequisites: an absent Run causes an immediate silent return, while the active path immediately reads TeamManager experience/level through body.teamComponent. Actual original team setup and a bounded Run context must be measured before accepting stats. SpawnBody also needs populated body caches, loadout and Run spawn callbacks. Preserve original methods and separate these from full prefab activation; directly writing reciprocal caches cannot establish the original spawn path.

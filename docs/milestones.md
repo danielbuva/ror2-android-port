@@ -49,3 +49,5 @@ S29–S32 / J81–J82 pass recovered jump-item identity, empty original inventor
 S33–S36 / J84 pass selective original setup on actual recovered CommandoBody and PlayerMaster, plus diagnostic buff storage and original registries. Prefab caches/relationships are proven, but these roots are inactive: complete Start/stat/body-master/client/controller simulation remains unproven. No formal L5.5 advancement.
 
 S37–S40 / J85 pass original recovered state-machine network setup, actual server body/master spawning/authority and original master-ID recording/resolution. Inventory adoption and reciprocal linkage remain unproven; this does not advance formal L5.5 or establish a local client/player.
+
+J87 adds bounded original inventory adoption to L5.5 prerequisites: five original definitions, actual master resolution, inventory identity and one original callback pass in two fresh Android launches. Inactive roots and subset catalogs remain. Normal stats, reciprocal linkage, local player/client and formal L5.5 remain open; L5 platform blocker unchanged.

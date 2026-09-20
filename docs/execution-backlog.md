@@ -924,3 +924,21 @@ J83 retains the authored compile failures; J84 accepts all four corrected lifecy
 | S38 — Recovered body server spawn | Actual server registers recovered body and original authority query succeeds; owned unspawn removes it. | PASS — J85 |
 | S39 — Recovered master server spawn | Actual server registers recovered player master and original authority query succeeds; owned unspawn removes it. | PASS — J85 |
 | S40 — Body master-ID recording | Two distinct real IDs; original body setter records the master ID and actual server lookup resolves it. Inventory and reciprocal linkage remain unset. | PASS — J85 |
+
+## S41–S42 — Original inventory adoption
+- **CONTEXT:** J85 proves actual master IDs, but has not invoked the adopting getter.
+- **OBSERVATION:** The original getter resolves the server object and invokes inventory callbacks. Four Lunar ItemDefs are directly dereferenced; absent quest equipment can incorrectly equal empty equipment.
+- **HYPOTHESIS:** Five actual recovered definitions allow the original empty-inventory adoption path to complete without suppressing callbacks.
+- **TASK:** Separate launches for typed definition/catalog identity and actual recovered body getter/adoption.
+- **CONSTRAINTS:** Inactive roots, four-item/one-equipment diagnostic catalogs and empty buff storage. Other absent definitions retain original zero-count behavior. No direct cached relationship assignment, Start/stat or reciprocal-link claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing preparation traversal, movement probe and thin selector; ignored recovered closure.
+- **TEST COMMAND:** `./dev prototype --action body-adoption-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** S41 original catalog identity/name/index checks; S42 actual master/inventory identities, player-controller detection, one original inventory callback, stable repeated getter and no empty-equipment quest behavior. Owned cleanup.
+- **FAILURE EVIDENCE TO CAPTURE:** First content/compile/getter exception, callback count, current-process logs/crashes and immutable per-launch report.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate results/checkpoints; retain failures, no formal L5.5 advancement.
+- **DEPENDENCIES:** J85; pinned DebugToolkit NetworkManager actual server spawning; current CharacterBody/ItemCatalog/EquipmentCatalog source.
+
+| ID / TITLE | STATUS |
+| --- | --- |
+| S41 — Adoption definition identities | PASS — J87 |
+| S42 — Original master getter and inventory adoption | PASS — J87 |

@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Each experiment runs in a fresh process. Inactive roots prevent automatic startup; selected lifecycle calls are explicit.
 public sealed class MovementBatchProbe : MonoBehaviour {
- [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset,jumpBoostAsset,jumpStrikeAsset,bodyAsset,masterAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions,jumpEvents,awakeEvents;public uint bodyId,masterId;}
+ [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset,jumpBoostAsset,jumpStrikeAsset,bodyAsset,masterAsset,lunarPrimaryAsset,lunarSecondaryAsset,lunarUtilityAsset,lunarSpecialAsset,batteryAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions,jumpEvents,awakeEvents,inventoryEvents;public uint bodyId,masterId;}
  Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
@@ -24,7 +24,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "body-network-state":case "body-network-spawn":case "master-network-spawn":case "body-master-id":case "body-buff-storage":case "body-awake":case "body-registration":case "master-awake":BodyLifecycle();break;case "state-jump-items":case "state-jump-inventory":case "state-jump-event":case "state-jump-input":LandingContext();break;case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "body-adoption-content":case "body-inventory-adoption":case "body-network-state":case "body-network-spawn":case "master-network-spawn":case "body-master-id":case "body-buff-storage":case "body-awake":case "body-registration":case "master-awake":BodyLifecycle();break;case "state-jump-items":case "state-jump-inventory":case "state-jump-event":case "state-jump-input":LandingContext();break;case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
   finally{try{CleanupLanding();}catch(Exception e){r.error+=" Cleanup: "+e;r.success=false;}if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
@@ -236,6 +236,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   var fields=typeof(BuffCatalog).GetFields(BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic);var previous=new System.Collections.Generic.Dictionary<FieldInfo,object>();
   foreach(var f in fields)if(f.FieldType.IsArray)previous[f]=f.GetValue(null);
   var names=(IDictionary)typeof(BuffCatalog).GetField("nameToBuffIndex",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);Check(names.Count==0,"Existing buff catalog; refuse diagnostic replacement");
+  Action restoreAdoption=null;
   GameObject linkedMasterHost=null;CharacterMaster linkedMaster=null;Inventory linkedInventory=null;
   CharacterBody body=null;Action<Transform> modelSubscription=null;Action<CharacterBody> awake=observed=>{if(observed==body)r.awakeEvents++;};bool registered=false;
   try{
@@ -243,6 +244,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
    var first=BuffCatalog.GetPerBuffBuffer<int>();var second=BuffCatalog.GetPerBuffBuffer<int>();Check(first.Length==0&&second.Length==0&&!ReferenceEquals(first,second),"Original buff buffer allocation");
    if(r.id!="body-buff-storage"){
     var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);artifactBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Body bundle missing");var prefab=artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset);Check(prefab&&!prefab.activeSelf,"Recovered body root not isolated");
+    if(r.id=="body-adoption-content"||r.id=="body-inventory-adoption"){restoreAdoption=PrepareAdoption(cfg);if(r.id=="body-adoption-content")return;}
     host=Instantiate(prefab);body=host.GetComponent<CharacterBody>();Check(body&&!host.activeInHierarchy,"Recovered body missing or active");foreach(var component in host.GetComponentsInChildren<Component>(true))Check(component,"Missing recovered body script");
     CharacterBody.onBodyAwakeGlobal+=awake;try{Call(body,"Awake");}finally{CharacterBody.onBodyAwakeGlobal-=awake;}
     modelSubscription=(Action<Transform>)Delegate.CreateDelegate(typeof(Action<Transform>),body,typeof(CharacterBody).GetMethod("OnModelChanged",BindingFlags.NonPublic|BindingFlags.Instance));
@@ -254,12 +256,17 @@ public sealed class MovementBatchProbe : MonoBehaviour {
     if(r.id=="body-network-state"){
      Call(network,"Awake");for(int i=0;i<machines.Length;i++)Check(machines[i].networkIndex==i&&machines[i].networker==network&&machines[i].networkIdentity==body.networkIdentity,"Original network state-machine binding");
     }
-    if(r.id=="body-network-spawn"||r.id=="body-master-id"){
+    if(r.id=="body-network-spawn"||r.id=="body-master-id"||r.id=="body-inventory-adoption"){
      SpawnRecovered(host);Call(body,"UpdateAuthority");r.bodyId=body.networkIdentity.netId.Value;Check(body.hasEffectiveAuthority&&Util.HasEffectiveAuthority(body.networkIdentity),"Recovered body effective authority");
-     if(r.id=="body-master-id"){
+     if(r.id=="body-master-id"||r.id=="body-inventory-adoption"){
       var masterPrefab=artifactBundle.LoadAsset<GameObject>(cfg.masterAsset);Check(masterPrefab&&!masterPrefab.activeSelf,"Recovered master not isolated");linkedMasterHost=Instantiate(masterPrefab);linkedInventory=linkedMasterHost.GetComponent<Inventory>();Call(linkedInventory,"Awake");linkedMaster=linkedMasterHost.GetComponent<CharacterMaster>();Call(linkedMaster,"Awake");SpawnRecovered(linkedMasterHost);Call(linkedMaster,"UpdateAuthority");r.masterId=linkedMaster.networkIdentity.netId.Value;
       Check(r.masterId!=r.bodyId&&linkedMaster.hasEffectiveAuthority,"Distinct recovered master identity/authority");Check(!body.inventory,"Unexpected adopted inventory before link");body.masterObject=linkedMasterHost;
       Check(body.GetMasterObjectId()==linkedMaster.networkIdentity.netId,"Original body master ID setter");Check(NetworkServer.FindLocalObject(body.GetMasterObjectId())==linkedMasterHost,"Actual server master resolution");Check(!body.inventory&&!linkedMaster.hasBody,"Unexpected inventory adoption or reciprocal link");Check(!linkedMasterHost.activeInHierarchy,"Master activation occurred");
+      if(r.id=="body-inventory-adoption"){
+       r.phase="original-master-getter";Save();Action observed=()=>r.inventoryEvents++;body.onInventoryChanged+=observed;
+       try{Check(body.masterObject==linkedMasterHost&&body.master==linkedMaster,"Original master getter identity");Check(body.inventory==linkedInventory&&body.isPlayerControlled,"Original inventory/player-controller adoption");Check(r.inventoryEvents==1,"Original inventory callback count");Check(body.masterObject==linkedMasterHost&&r.inventoryEvents==1,"Cached getter repeated callback");Check(!linkedMaster.hasBody,"Unexpected reciprocal link");Check(!host.GetComponent<CharacterBody.QuestVolatileBatteryBehaviorServer>(),"Empty equipment created quest behavior");}
+       finally{body.onInventoryChanged-=observed;}
+      }
      }
     }
     if(r.id=="body-registration"){
@@ -268,12 +275,31 @@ public sealed class MovementBatchProbe : MonoBehaviour {
     Check(!host.activeInHierarchy,"Broad body activation occurred");
    }
   }finally{
+   if(body&&body.inventory){var callback=(Action)Delegate.CreateDelegate(typeof(Action),body,typeof(CharacterBody).GetMethod("OnInventoryChanged",BindingFlags.NonPublic|BindingFlags.Instance));body.inventory.onInventoryChanged-=callback;}
    if(linkedMasterHost){NetworkServer.UnSpawn(linkedMasterHost);if(linkedMaster)Call(linkedMaster,"OnDestroy");if(linkedInventory){Call(linkedInventory,"OnDestroy");StaticCall(typeof(Inventory),"StaticFixedUpdate");}Destroy(linkedMasterHost);}
    if(host&&ownsServer){var id=host.GetComponent<NetworkIdentity>().netId;NetworkServer.UnSpawn(host);Check(!NetworkServer.FindLocalObject(id),"Body network object not removed");}
    if(registered)Call(body,"OnDisable");if(body&&body.modelLocator&&modelSubscription!=null)body.modelLocator.onModelChanged-=modelSubscription;
-   foreach(var pair in previous)pair.Key.SetValue(null,pair.Value);
+   foreach(var pair in previous)pair.Key.SetValue(null,pair.Value);if(restoreAdoption!=null)restoreAdoption();
   }
   foreach(var pair in previous)Check(ReferenceEquals(pair.Key.GetValue(null),pair.Value),"Buff catalog restoration");
+ }
+ void RestoreAdoption(ItemDef[] priorItems,FieldInfo[] fields,ItemDef[] old,EquipmentDef oldBattery){
+  for(int i=0;i<fields.Length;i++)fields[i].SetValue(null,old[i]);RoR2Content.Equipment.QuestVolatileBattery=oldBattery;
+  StaticCall(typeof(ItemCatalog),"SetItemDefs",new object[]{new ItemDef[0]});ItemCatalog.tier1ItemList.Clear();ItemCatalog.tier2ItemList.Clear();ItemCatalog.tier3ItemList.Clear();ItemCatalog.lunarItemList.Clear();RoR2.ContentManagement.ContentManager._itemDefs=priorItems;
+  StaticCall(typeof(EquipmentCatalog),"SetEquipmentDefs",new object[]{new EquipmentDef[0]});
+ }
+ Action PrepareAdoption(Result cfg){
+  Check(ItemCatalog.itemCount==0&&EquipmentCatalog.equipmentCount==0,"Existing catalog; refuse replacement");
+  var paths=new[]{cfg.lunarPrimaryAsset,cfg.lunarSecondaryAsset,cfg.lunarUtilityAsset,cfg.lunarSpecialAsset};var names=new[]{"LunarPrimaryReplacement","LunarSecondaryReplacement","LunarUtilityReplacement","LunarSpecialReplacement"};var defs=new ItemDef[4];var fields=new FieldInfo[4];var old=new ItemDef[4];
+  for(int i=0;i<4;i++){defs[i]=artifactBundle.LoadAsset<ItemDef>(paths[i]);Check(defs[i]&&defs[i].name==names[i],"Required recovered ItemDef identity "+names[i]);fields[i]=typeof(RoR2Content.Items).GetField(names[i]);old[i]=(ItemDef)fields[i].GetValue(null);Check(!old[i],"Existing item binding");}
+  var battery=artifactBundle.LoadAsset<EquipmentDef>(cfg.batteryAsset);Check(battery&&battery.name=="QuestVolatileBattery","Required original EquipmentDef identity");var oldBattery=RoR2Content.Equipment.QuestVolatileBattery;Check(!oldBattery,"Existing equipment binding");var priorItems=RoR2.ContentManagement.ContentManager._itemDefs;
+  Action restore=()=>RestoreAdoption(priorItems,fields,old,oldBattery);
+  try{
+   RoR2.ContentManagement.ContentManager._itemDefs=new ItemDef[0];StaticCall(typeof(ItemCatalog),"SetItemDefs",new object[]{defs});StaticCall(typeof(EquipmentCatalog),"SetEquipmentDefs",new object[]{new[]{battery}});
+   for(int i=0;i<4;i++){Check(defs[i].itemIndex!=ItemIndex.None&&ItemCatalog.GetItemDef(defs[i].itemIndex)==defs[i]&&ItemCatalog.FindItemIndex(names[i])==defs[i].itemIndex,"Original Lunar catalog identity");fields[i].SetValue(null,defs[i]);}
+   RoR2Content.Equipment.QuestVolatileBattery=battery;Check(battery.equipmentIndex!=EquipmentIndex.None&&EquipmentCatalog.GetEquipmentDef(battery.equipmentIndex)==battery,"Original battery catalog identity");Check(!EquipmentCatalog.GetEquipmentDef(EquipmentIndex.None),"Empty equipment must remain absent");Check(ItemCatalog.itemCount==4&&EquipmentCatalog.equipmentCount==1,"Diagnostic catalog size");
+   return restore;
+  }catch{restore();throw;}
  }
  void MasterLifecycle(){
   var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);artifactBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Master bundle missing");var prefab=artifactBundle.LoadAsset<GameObject>(cfg.masterAsset);Check(prefab&&!prefab.activeSelf,"Recovered master root not isolated");host=Instantiate(prefab);var master=host.GetComponent<CharacterMaster>();var inventory=host.GetComponent<Inventory>();Check(master&&inventory&&!host.activeInHierarchy,"Original master components missing or active");foreach(var c in host.GetComponentsInChildren<Component>(true))Check(c,"Missing recovered master script");
