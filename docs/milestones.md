@@ -45,3 +45,5 @@ S20–S24 / J78 pass original gravity and GenericCharacterMain input-driven move
 S25–S28 / J79 pass source-gravity motor jumping and original grounded state movement, reversal, stopping and wall contact (101 assertions). S26 accepted only after isolated same-APK retry following device disconnection. Diagnostic fixture scope remains; input-driven jump inventory/networking and full L5.5 remain open.
 
 S29–S32 / J81–J82 pass recovered jump-item identity, empty original inventory lifecycle, server-only jump-event dispatch and original input-to-jump/landing (96 accepted assertions). Original movement-state execution now includes the first jump press. Full recovered Commando/master/body lifecycle, normal catalogs/stats, local-client delivery and physical controls still prevent L5.5 acceptance.
+
+S33–S36 / J84 pass selective original setup on actual recovered CommandoBody and PlayerMaster, plus diagnostic buff storage and original registries. Prefab caches/relationships are proven, but these roots are inactive: complete Start/stat/body-master/client/controller simulation remains unproven. No formal L5.5 advancement.

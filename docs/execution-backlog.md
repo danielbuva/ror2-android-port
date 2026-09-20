@@ -882,3 +882,25 @@ Shared task contract:
 | S32 — Original jump press | Original state handles press/release, produces one jump event, rises, lands and resets jump count. | PASS — J82 |
 
 S29/S30/S32 first failed the shared null prior content-array precondition in J81; J82 preserves that failure and accepts the corrected diagnostic setup. S31 retains its independent earlier build. UI closure preparation failure is J80. No formal L5.5 advancement.
+
+## S33–S36 — Recovered body and player-master setup
+- **CONTEXT:** J82 original input-to-jump works in a diagnostic body; recovered prefab lifecycle is unproven.
+- **OBSERVATION:** Awake and registration are separable from Start/stat/master/network initialization. Body Awake requires BuffCatalog buffers; player-master Awake requires its actual inventory.
+- **HYPOTHESIS:** Selective original setup methods can establish recovered component relationships without broadly activating gameplay.
+- **TASK:** Four fresh launches: buff allocation, recovered Commando Awake, body registration, recovered PlayerMaster Awake/registration.
+- **CONSTRAINTS:** Inactive original roots; no original method changes or cached-reference assignments. Empty diagnostic buff catalog explicit and restored. No full Start, audio teardown, network spawn or body/master-link claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing closure preparation and movement probe; ignored PlayerMaster prefab root isolation.
+- **TEST COMMAND:** `./dev prototype --action body-lifecycle-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Original caches/events/registries match actual recovered components; each process survives and logs remain explained.
+- **FAILURE EVIDENCE TO CAPTURE:** First setup exception, serialized references, exact input/build/payload and per-process diagnostics.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate outcomes and checkpoints; retain failed attempt stages.
+- **DEPENDENCIES:** J82; current original lifecycle code; pinned Starstorm2 state-machine relationships and DebugToolkit server boundaries.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S33 — Buff storage | Original empty catalog and distinct zero-length body buffers, prior arrays restored. | PASS — J84 |
+| S34 — Recovered Commando Awake | Original awake event, component caches, model/hurtbox/core references, capsule radius and state-machine identities agree. | PASS — J84 |
+| S35 — Recovered body registration | Original OnEnable/OnDisable add and remove exactly this body while the root stays inactive. | PASS — J84 |
+| S36 — Recovered player-master Awake | Actual inventory/identity/player-controller caches and master registration work; original bounded cleanup succeeds. | PASS — J84 |
+
+J83 retains the authored compile failures; J84 accepts all four corrected lifecycle probes. These methods run selectively on inactive recovered roots. Body/master network linkage and complete Start/stat behavior remain separate; see character-lifecycle-boundary.md.

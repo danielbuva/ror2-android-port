@@ -615,7 +615,7 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None, jump_items=False):
+def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False):
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -631,6 +631,7 @@ def landing_batch_prepare(cases=None, jump_items=False):
     roots={'artifactAsset':root}
     if jump_items:
         roots.update({'jumpBoostAsset':export/'Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset','jumpStrikeAsset':export/'Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset'})
+    if body_lifecycle:roots['masterAsset']=export/'Assets/RoR2/Base/Core/PlayerMaster.prefab'
     pending=list(roots.values());seen=set();rows=[];asset=None;root_assets={}
     ui_remaps={row['from']:row['to'] for row in a.get('ui_remaps',[])};ui_edits=[]
     while pending:
@@ -661,7 +662,15 @@ def landing_batch_prepare(cases=None, jump_items=False):
                 if dependency.startswith('0000000000000000'):continue
                 if dependency not in index:raise RuntimeError('Unresolved artifact GUID')
                 pending.append(index[dependency])
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update({k:v.lower() for k,v in root_assets.items()});write(stage/'Resources/MovementBatchProbe.json',cfg)
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update({k:v.lower() for k,v in root_assets.items()})
+    if body_lifecycle:
+        cfg['bodyAsset']=a['prefab'].lower()
+        master=WORK/'lab-project'/root_assets['masterAsset'];text=master.read_text();parts=re.split(r'(?=^--- !u!)',text,flags=re.M)
+        candidates=[i for i,b in enumerate(parts) if b.startswith('--- !u!1 ') and 'm_Name: PlayerMaster\n' in b]
+        if len(candidates)!=1 or 'm_IsActive: 1' not in parts[candidates[0]]:raise RuntimeError('Unexpected original PlayerMaster root')
+        before=sha(master);parts[candidates[0]]=parts[candidates[0]].replace('m_IsActive: 1','m_IsActive: 0');master.write_text(''.join(parts))
+        write(out/'master-isolation.json',{'source_sha256':before,'staged_sha256':sha(master),'scope':'Only original PlayerMaster root deactivated before import; lifecycle called selectively by diagnostic probe'})
+    write(stage/'Resources/MovementBatchProbe.json',cfg)
     recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].extend(root_assets.values());write(WORK/'scene-probe-build.json',recipe)
     write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'roots':root_assets,'ui_remaps':ui_edits,'scope':'Measured original artifact/item definitions and serialized closure; diagnostic subset catalogs only'})
 
