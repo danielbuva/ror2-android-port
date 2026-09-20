@@ -47,6 +47,7 @@ class MovementBatchTests(unittest.TestCase):
    write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
    write(out/'attempt.json',{'stage':str(root/'stage'),'original_assemblies':{},'movement_batch':True})
    write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','apk_sha256':'hash'})
+   write(work/'lab-build/result.json',{'success':True,'apk':'mock.apk'})
    write(work/'device/runtime.json',{'persistentDataPath':'mock-owned-path'})
    d=MagicMock();d.install.return_value={};d.launch.side_effect=[{'pid':'1'},RuntimeError('first process crashed'),{'pid':'3'},{'pid':'4'},{'pid':'5'}]
    current={}
@@ -74,6 +75,7 @@ class MovementBatchTests(unittest.TestCase):
    write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
    write(out/'attempt.json',{'stage':str(root/'stage'),'original_assemblies':{},'movement_batch':True,'batch_ids':['input']})
    write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','apk_sha256':'hash'})
+   write(work/'lab-build/result.json',{'success':True,'apk':'mock.apk'})
    write(work/'device/runtime.json',{'persistentDataPath':'mock-owned-path'})
    d=MagicMock();d.install.return_value={};d.launch.return_value={'pid':'123'}
    d.sh.return_value=json.dumps({'id':'input','attempt':'attempt','pid':123,'success':True,'phase':'complete'})
@@ -83,3 +85,39 @@ class MovementBatchTests(unittest.TestCase):
    with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch.object(scene_runtime,'sha',return_value='hash'),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=itertools.count(0,30)):
     with self.assertRaisesRegex(RuntimeError,'Batch completed with failed probes'):scene_runtime.movement_batch_run()
    self.assertFalse(read(out/'batch-result.json')['input']['success'])
+
+ def test_unfinished_or_stale_build_cannot_install_previous_apk(self):
+  import os
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);work=root/'work';out=work/'experiments/scene-runtime/attempt'
+   write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
+   write(out/'attempt.json',{'movement_batch':True})
+   write(work/'config/current-build.json',{'success':True,'apk':'previous.apk','apk_sha256':'old'})
+   terminal=work/'lab-build/result.json'
+   with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch('build.preflight'),patch('device.Device') as device:
+    with self.assertRaisesRegex(RuntimeError,'No completed forced build'):scene_runtime.movement_batch_run()
+    write(terminal,{'success':True,'apk':'previous.apk'});os.utime(terminal,(1,1))
+    with self.assertRaisesRegex(RuntimeError,'No completed forced build'):scene_runtime.movement_batch_run()
+    os.utime(terminal,None)
+    with patch.object(scene_runtime,'sha',return_value='different'):
+     with self.assertRaisesRegex(RuntimeError,'does not match'):scene_runtime.movement_batch_run()
+    device.assert_not_called()
+
+ def test_retry_keeps_original_failure_and_uses_original_attempt_identity(self):
+  import itertools
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);work=root/'work';out=work/'experiments/scene-runtime/attempt'
+   write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
+   write(out/'attempt.json',{'movement_batch':True,'original_assemblies':{}})
+   write(out/'batch-result.json',{'input':{'success':False}})
+   write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','apk_sha256':'hash'})
+   write(work/'lab-build/result.json',{'success':True,'apk':'mock.apk'})
+   write(work/'device/runtime.json',{'persistentDataPath':'mock-owned-path'})
+   d=MagicMock();d.install.return_value={};d.launch.return_value={'pid':'123'}
+   d.sh.return_value=json.dumps({'id':'input','attempt':'attempt','pid':123,'success':True,'phase':'complete'})
+   with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch.object(scene_runtime,'sha',return_value='hash'),patch('build.preflight'),patch('device.Device',return_value=d),patch('time.monotonic',side_effect=itertools.count(0,30)):
+    scene_runtime.movement_batch_run(cases=['input'],retry=True)
+   self.assertFalse(read(out/'batch-result.json')['input']['success'])
+   retry=next((out/'verification').iterdir())
+   self.assertTrue(read(retry/'batch-result.json')['input']['success'])
+   self.assertEqual(read(retry/'input/selection.json')['attempt'],'attempt')

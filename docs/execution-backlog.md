@@ -830,3 +830,33 @@ Shared task contract:
 | S22 — Gravity jump/landing | Settle on floor, original Jump rises, then original gravity/landing returns to stable floor and resets jump count. | PASS — J78 |
 | S23 — Original state input | Original state entry/GatherInputs reads direction/jump edge, consumes emote and rejects claimed press; exit cleans up. | PASS — J78 |
 | S24 — Original state movement | Original state fixed ticks consume direction and drive motor/solver through acceleration and neutral stop. | PASS — J78 |
+
+## S25–S28 — Grounded original state and source gravity
+- **CONTEXT:** J78 proves gravity and original state movement separately.
+- **OBSERVATION:** Exported gravity is -30; prior fixture used -9.81. Grounded state input/collision integration is untested.
+- **HYPOTHESIS:** Original state and motor preserve grounding while moving, reversing and contacting a wall under the measured source gravity.
+- **TASK:** Four independent cold launches; see individual assertions below.
+- **CONSTRAINTS:** No original method changes; restore gravity; diagnostic inactive body/stats/catalog explicit. No full character or physical-controller claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement probe, thin preparation selector, physics-setting receipt.
+- **TEST COMMAND:** `./dev prototype --action grounded-state-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`. Transport-only S26 retry: `./dev prototype --action grounded-motion-retry`.
+- **PASS CONDITION:** Original method results, grounding and cleanup match each row; current process survives and logs remain explained.
+- **FAILURE EVIDENCE TO CAPTURE:** Separate report, current PID, connection/crash logs, gravity/positions and build identity.
+- **STATE/JOURNAL UPDATES REQUIRED:** J79, physics receipt and distinct checkpoints; never overwrite rejected runs.
+- **DEPENDENCIES:** J78, original exported gravity and pinned Starstorm2 BorgMain base-method observation.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S25 — Source gravity jump | Original jump rises and lands under measured -30 gravity; original landing resets jump count. | PASS — J79 |
+| S26 — Grounded state movement | Original input/state drives expected 4.62 m acceleration and neutral stop while grounded. | PASS — J79 isolated retry; first transport failure retained |
+| S27 — Grounded reversal | Opposite input reverses original velocity and moves back while grounded; neutral stop succeeds. | PASS — J79 |
+| S28 — Grounded wall | Original state/motor respects measured wall boundary and retains grounding. | PASS — J79 |
+
+### T03-J79 — Reject incomplete batch builds
+- **CONTEXT / OBSERVATION:** A premature runner selected the old current-build receipt during an outstanding forced build.
+- **HYPOTHESIS / TASK:** Requiring a newer successful terminal receipt and matching APK prevents this observed stale installation.
+- **CONSTRAINTS:** Batch-only guard; no general locking or cache redesign. Reject rather than guess.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** movement_batch_run and host acceptance tests.
+- **TEST COMMAND / PASS CONDITION:** `./dev test`; absent/stale/mismatched terminal records refuse before Device construction. PASS.
+- **FAILURE EVIDENCE TO CAPTURE:** Rejected premature-run directory and assertion output.
+- **STATE/JOURNAL UPDATES REQUIRED:** J79; failed records remain separate from successful same-build retries.
+- **DEPENDENCIES / ROLLBACK:** Triggered by S25–S28; restore prior harness from the preceding commit if necessary, never accept its rejected launch.

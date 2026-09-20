@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Each selected experiment runs in a fresh process. Inactive body fixtures never run gameplay lifecycle.
 public sealed class MovementBatchProbe : MonoBehaviour {
- [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak;public int assertions;}
+ [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions;}
  Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
@@ -24,7 +24,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "gravity-rules":GravityRules();break;case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
   finally{try{CleanupLanding();}catch(Exception e){r.error+=" Cleanup: "+e;r.success=false;}if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
@@ -133,14 +133,19 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   var g=new CharacterGravityParameters();Check(g.CheckShouldUseGravity(),"Default gravity");g.channeledAntiGravityGranterCount=1;Check(!g.CheckShouldUseGravity(),"Channeled antigravity");g.antiGravityNeutralizerCount=1;Check(g.CheckShouldUseGravity(),"Neutralizer precedence");g.environmentalAntiGravityGranterCount=1;Check(!g.CheckShouldUseGravity(),"Environmental precedence");
  }
  void Additional(CharacterMotor motor,KinematicCharacterMotor k,CharacterBody body){
+  if(r.id.StartsWith("state-ground-")){GroundedState(motor,k);return;}
   if(r.id.StartsWith("gravity-")){
+   var savedGravity=Physics.gravity;try{
+   if(r.id=="gravity-source-jump"){var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);Check(cfg.sourceGravity<0,"Missing measured source gravity");Physics.gravity=new Vector3(0,cfg.sourceGravity,0);}
    motor.gravityParameters=new CharacterGravityParameters{environmentalAntiGravityGranterCount=1};Check(!motor.useGravity,"Antigravity setter");motor.gravityParameters=new CharacterGravityParameters();Check(motor.useGravity,"Gravity setter did not enable original gravity");r.gravity=Physics.gravity.y;Check(r.gravity<0,"Expected downward gravity");motor.moveDirection=Vector3.zero;
    if(r.id=="gravity-fall"){
     Step(k,25);r.y=k.TransientPosition.y;Check(Mathf.Abs(motor.velocity.y-r.gravity*.5f)<.001f,"Gravity velocity");Check(Mathf.Abs(r.y-(10+r.gravity*.02f*.02f*325))<.001f,"Gravity integration");
    }else{
     obstacle=new GameObject("Owned gravity floor");obstacle.layer=30;obstacle.transform.position=new Vector3(0,9.5f,0);obstacle.AddComponent<BoxCollider>().size=new Vector3(20,1,20);Physics.SyncTransforms();k.SetGroundSolvingActivation(true);k.SetPosition(new Vector3(0,10.2f,0));Step(k,40);Check(k.GroundingStatus.IsStableOnGround,"Initial gravity landing");
-    motor.Jump(0,1);r.peak=k.TransientPosition.y;for(int i=0;i<100;i++){Step(k,1);r.peak=Mathf.Max(r.peak,k.TransientPosition.y);}r.y=k.TransientPosition.y;Check(r.peak>10.5f,"Jump did not rise");Check(k.GroundingStatus.IsStableOnGround&&Mathf.Abs(r.y-10.01f)<.02f,"Gravity jump did not land");Check(motor.jumpCount==0,"Original landing jump reset");
+    motor.Jump(0,1);r.peak=k.TransientPosition.y;for(int i=0;i<100;i++){Step(k,1);r.peak=Mathf.Max(r.peak,k.TransientPosition.y);}r.y=k.TransientPosition.y;Check(r.peak>(r.id=="gravity-source-jump"?10.2f:10.5f),"Jump did not rise");Check(k.GroundingStatus.IsStableOnGround&&Mathf.Abs(r.y-10.01f)<.02f,"Gravity jump did not land");Check(motor.jumpCount==0,"Original landing jump reset");
    }
+   }finally{Physics.gravity=savedGravity;}
+   Check(Physics.gravity==savedGravity,"Gravity restoration");
   }else{
    var input=host.AddComponent<InputBankTest>();var machine=host.AddComponent<EntityStateMachine>();Call(machine,"Awake");var state=new EntityStates.GenericCharacterMain();machine.SetState(state);Check(machine.state==state&&machine.commonComponents.inputBank==input,"Original state entry or component cache");
    input.moveVector=Vector3.right;input.aimDirection=new Vector3(3,0,4);
@@ -153,6 +158,28 @@ public sealed class MovementBatchProbe : MonoBehaviour {
    Call(machine,"OnDestroy");Check(machine.state==null&&motor.moveDirection==Vector3.zero,"Original state exit cleanup");
   }
   Check(!host.activeInHierarchy,"Unexpected body activation");
+ }
+
+ void GroundedState(CharacterMotor motor,KinematicCharacterMotor k){
+  var savedGravity=Physics.gravity;EntityStateMachine machine=null;
+  try{
+   var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);Check(cfg.sourceGravity<0,"Missing source gravity");Physics.gravity=new Vector3(0,cfg.sourceGravity,0);r.gravity=Physics.gravity.y;
+   motor.gravityParameters=new CharacterGravityParameters{environmentalAntiGravityGranterCount=1};motor.gravityParameters=new CharacterGravityParameters();Check(motor.useGravity,"Original gravity not active");motor.moveDirection=Vector3.zero;
+   obstacle=new GameObject("Owned grounded state floor");obstacle.layer=30;obstacle.transform.position=new Vector3(0,9.5f,0);obstacle.AddComponent<BoxCollider>().size=new Vector3(40,1,40);
+   if(r.id=="state-ground-wall"){var wall=new GameObject("Owned state wall");wall.transform.SetParent(obstacle.transform);wall.layer=30;wall.transform.position=new Vector3(2,11,0);wall.AddComponent<BoxCollider>().size=new Vector3(1,10,20);}
+   Physics.SyncTransforms();k.SetGroundSolvingActivation(true);k.SetPosition(new Vector3(0,10.2f,0));Step(k,40);Check(k.GroundingStatus.IsStableOnGround,"State fixture failed initial landing");
+   var input=host.AddComponent<InputBankTest>();machine=host.AddComponent<EntityStateMachine>();Call(machine,"Awake");var state=new EntityStates.GenericCharacterMain();machine.SetState(state);Check(machine.state==state,"Original grounded state entry");input.moveVector=Vector3.right;
+   for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);Step(k,1);}r.x=k.TransientPosition.x;r.y=k.TransientPosition.y;
+   Check(k.GroundingStatus.IsStableOnGround&&Mathf.Abs(r.y-10.01f)<.02f,"State movement lost grounding");
+   if(r.id=="state-ground-wall")Check(r.x>.9f&&r.x<1.01f,"State movement crossed wall boundary");
+   else Check(Mathf.Abs(r.x-4.62f)<.02f,"Grounded state acceleration displacement");
+   if(r.id=="state-ground-reverse"){
+    input.moveVector=Vector3.left;for(int i=0;i<100;i++){machine.ManagedFixedUpdate(.02f);Step(k,1);}r.z=k.TransientPosition.x;
+    Check(r.z<r.x-3&&Mathf.Abs(motor.velocity.x+7)<.001f,"Original input reversal failed");Check(k.GroundingStatus.IsStableOnGround,"Reversal lost grounding");
+   }
+   input.moveVector=Vector3.zero;for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);Step(k,1);}Check(Mathf.Abs(motor.velocity.x)<.001f&&motor.moveDirection==Vector3.zero,"Grounded state failed to stop");Check(k.GroundingStatus.IsStableOnGround,"Stopped state lost grounding");Check(!host.activeInHierarchy,"Body unexpectedly active");
+  }finally{if(machine)Call(machine,"OnDestroy");Physics.gravity=savedGravity;}
+  Check(machine.state==null&&motor.moveDirection==Vector3.zero,"Grounded state exit cleanup");Check(Physics.gravity==savedGravity,"Gravity not restored");
  }
 
 }

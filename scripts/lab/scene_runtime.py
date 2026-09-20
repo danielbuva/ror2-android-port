@@ -569,18 +569,26 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
 
-def movement_batch_run():
+def movement_batch_run(cases=None, retry=False):
     from build import preflight
     from device import Device,PACKAGE
     import time
     preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');b=read(WORK/'config/current-build.json')
-    if not a.get('movement_batch') or (out/'batch-result.json').exists():raise RuntimeError('Not a fresh batch')
+    if not a.get('movement_batch') or ((out/'batch-result.json').exists() and not retry):raise RuntimeError('Not a fresh batch')
+    terminal=WORK/'lab-build/result.json'
+    if not terminal.exists() or terminal.stat().st_mtime_ns<(out/'attempt.json').stat().st_mtime_ns:raise RuntimeError('No completed forced build for this batch; wait for build completion')
+    finished=read(terminal)
+    if not finished.get('success') or sha(Path(finished['apk']))!=b.get('apk_sha256'):raise RuntimeError('Terminal build does not match selected APK')
     if not b.get('success') or sha(Path(b['apk']))!=b['apk_sha256']:raise RuntimeError('Build not valid')
     for name,h in a['original_assemblies'].items():
         if sha(Path(a['stage'])/'Plugins'/name)!=h:raise RuntimeError('Original assembly drift')
+    attempt_id=out.name
+    if retry:
+        parent=out;out=parent/'verification'/now();out.mkdir(parents=True)
+        write(out/'retry.json',{'parent':str(parent.relative_to(ROOT)),'attempt':attempt_id,'cases':cases,'apk_sha256':b['apk_sha256']})
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
-    for probe in a.get('batch_ids',['buttons','input','motor-output','motor-acceleration']):
-        attempt=out/probe;attempt.mkdir();selection={'attempt':out.name,'id':probe};write(attempt/'selection.json',selection)
+    for probe in cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration']):
+        attempt=out/probe;attempt.mkdir();selection={'attempt':attempt_id,'id':probe};write(attempt/'selection.json',selection)
         result={'success':False,'probe':probe};pid=None
         try:
             d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
@@ -589,7 +597,7 @@ def movement_batch_run():
                 if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Probe process died')
                 time.sleep(1)
             report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)
-            result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==out.name and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
+            result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==attempt_id and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
         except Exception as e:result['error']=str(e)
         finally:
             if not (attempt/'probe.json').exists():
@@ -654,3 +662,16 @@ def landing_batch_prepare(cases=None):
     after=before.replace('  layers:\n'+'\n'.join(layers(before))+'\n','  layers:\n'+'\n'.join(current)+'\n')
     (out/'TagManager-before.asset').write_text(before);tag.write_text(after)
     write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
+
+
+def grounded_state_prepare():
+    landing_batch_prepare(cases=['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall'])
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    source=export/'ProjectSettings/DynamicsManager.asset'
+    match=re.search(r'  m_Gravity: \{x: ([^,]+), y: ([^,]+), z: ([^}]+)\}',source.read_text())
+    if not match:raise RuntimeError('Missing original gravity setting')
+    gravity=[float(v) for v in match.groups()]
+    if gravity[0]!=0 or gravity[2]!=0 or gravity[1]>=0:raise RuntimeError('Unexpected gravity shape; review input')
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['sourceGravity']=gravity[1];write(stage/'Resources/MovementBatchProbe.json',cfg)
+    write(out/'physics-contract.json',{'source_sha256':sha(source),'gravity':gravity,'scope':'Only measured gravity supplied during each probe and restored; collision matrix/default material unchanged','prior_art':'Starstorm2 a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8 BorgMain calls original GenericCharacterMain base ticks and ProcessJump; actual current original paths inspected','limits':'Inactive diagnostic body/stats/catalog; no normal character lifecycle or physical input'})
