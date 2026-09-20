@@ -51,3 +51,5 @@ S33–S36 / J84 pass selective original setup on actual recovered CommandoBody a
 S37–S40 / J85 pass original recovered state-machine network setup, actual server body/master spawning/authority and original master-ID recording/resolution. Inventory adoption and reciprocal linkage remain unproven; this does not advance formal L5.5 or establish a local client/player.
 
 J87 adds bounded original inventory adoption to L5.5 prerequisites: five original definitions, actual master resolution, inventory identity and one original callback pass in two fresh Android launches. Inactive roots and subset catalogs remain. Normal stats, reciprocal linkage, local player/client and formal L5.5 remain open; L5 platform blocker unchanged.
+
+J88–J90 add five separately accepted Android prerequisites: team experience, recovered team membership, minimal Run singleton lifecycle, default skill setup and motor capsule bounds. Original stat calculation still fails at the measured knockback BuffDef dependency; no stat or formal L5.5 acceptance. Three distinct failed attempts remain preserved.

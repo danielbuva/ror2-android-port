@@ -942,3 +942,27 @@ J83 retains the authored compile failures; J84 accepts all four corrected lifecy
 | --- | --- |
 | S41 — Adoption definition identities | PASS — J87 |
 | S42 — Original master getter and inventory adoption | PASS — J87 |
+
+## S43–S46 — Original stat prerequisites and calculation
+- **CONTEXT:** J87 establishes original empty-inventory adoption on recovered body/master.
+- **OBSERVATION:** RecalculateStats returns immediately without Run; otherwise it reads team level, direct equipment definitions, Glass artifact state and health/skill callbacks.
+- **HYPOTHESIS:** Selective original team/Run lifecycle and recovered content permit meaningful base-stat calculation without activating full startup.
+- **TASK:** Four separate fresh launches: team experience/level initialization, recovered team/hurtbox membership, Run singleton enable/disable, original recovered-body stats.
+- **CONSTRAINTS:** Original methods/assemblies unchanged; inactive roots; diagnostic catalogs and empty inventory. No fabricated player/auth state or reciprocal cache assignments; absent optional definitions retain original fallbacks.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement probe/preparation selector and narrow recovered Glass/Void equipment/Lunar Potion closure.
+- **TEST COMMAND:** `./dev prototype --action body-stats-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** S43 initial level one, threshold at 20 experience and reset; S44 original team membership/hurtbox propagation/removal; S45 original Run singleton lifecycle; S46 original completion event and level-one Commando health 110, speed 7, damage 12, jump 15.
+- **FAILURE EVIDENCE TO CAPTURE:** Per-process first exception, observed stats/completion count, current-process errors/crashes and lifecycle cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Independent results and checkpoint receipts; preserve failures; no formal L5.5 advancement.
+- **DEPENDENCIES:** J87; pinned DebugToolkit CurrentRun actual TeamComponent membership queries; current original TeamManager, TeamComponent, Run, CharacterBody and HealthComponent source.
+
+| ID / TITLE | STATUS |
+| --- | --- |
+| S43 — Original team experience context | PASS — J88 |
+| S44 — Recovered body team membership | PASS — J88 |
+| S45 — Minimal original Run singleton lifecycle | PASS — J88 |
+| S46 — Recovered original base stats | FAILED — J88/J89/J90 at distinct dependencies; next: two measured BuffDefs |
+
+S47 — Recovered default skill setup inherits the S43–S46 contract and depends on J88's observed missing SkillDef. Hypothesis/task: original GenericSkill.Awake assigns the recovered family's default, original body and named state machine, with finite cooldown; original OnDestroy unassigns. No direct skill/cooldown substitution. Test `./dev prototype --action body-stats-retry-prepare`, completed forced Vulkan build, then existing batch runner: independent S47 followed by S46 retry. Preserve first assignment/cleanup exception and separate original-failure evidence. STATUS: PASS — J89.
+
+S48 — Recovered motor capsule setup inherits the S43–S46 contract and depends on J89's observed missing capsule cache. Hypothesis/task: original CharacterMotor.Awake reads actual recovered collider dimensions, making original body effect-bound queries valid; original OnDestroy returns its pooled collection. Test `./dev prototype --action body-stats-motor-prepare`, completed forced Vulkan build, then batch runner: independent S48 and S46 retry. Preserve first exception and both earlier failed stat attempts. No solver movement/full motor Start claim. STATUS: PASS — J90.

@@ -83,6 +83,15 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='body-stats-motor-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare(body_lifecycle=True,adoption=True,stats=True,cases=['body-motor-awake','body-original-stats'])
+  elif a.action=='body-stats-retry-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare(body_lifecycle=True,adoption=True,stats=True,cases=['body-skill-awake','body-original-stats'])
+  elif a.action=='body-stats-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare(body_lifecycle=True,adoption=True,stats=True,cases=['team-manager-context','body-team-context','run-singleton-context','body-original-stats'])
   elif a.action=='body-adoption-prepare':
    from scene_runtime import landing_batch_prepare
    landing_batch_prepare(body_lifecycle=True,adoption=True,cases=['body-adoption-content','body-inventory-adoption'])

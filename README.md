@@ -137,3 +137,9 @@ Recovered lifecycle batch: `./dev prototype --action body-lifecycle-prepare`, co
 Recovered networking batch: `./dev prototype --action body-network-prepare`, completed forced Vulkan build, then `./dev prototype --action movement-batch-run`. Tests original state-machine network wiring, actual recovered body/master server spawning and the body's original master-ID setter. Inventory adoption, reciprocal linkage and connected-client behavior remain separate.
 
 Recovered inventory adoption: `./dev prototype --action body-adoption-prepare`, completed forced Vulkan build, then `./dev prototype --action movement-batch-run`. Separate launches check five recovered definitions and original master-getter inventory callbacks. Diagnostic subset catalogs and inactive roots remain; reciprocal linkage and normal stats/startup are separate.
+
+Original stat batch: `./dev prototype --action body-stats-prepare`, completed forced Vulkan build, then `./dev prototype --action movement-batch-run`. Tests team experience, recovered team membership, minimal Run singleton lifecycle and concrete original Commando base stats separately. Inactive roots and diagnostic subset catalogs remain; this does not initialize a complete run or player session.
+
+`body-stats-retry-prepare` selects the original recovered skill-initialization probe and stat retry after J88, retaining the three separate passing prerequisite receipts.
+
+`body-stats-motor-prepare` selects recovered motor capsule initialization and stat retry after J89; earlier skill/team/Run results remain separately receipted.
