@@ -904,3 +904,23 @@ S29/S30/S32 first failed the shared null prior content-array precondition in J81
 | S36 — Recovered player-master Awake | Actual inventory/identity/player-controller caches and master registration work; original bounded cleanup succeeds. | PASS — J84 |
 
 J83 retains the authored compile failures; J84 accepts all four corrected lifecycle probes. These methods run selectively on inactive recovered roots. Body/master network linkage and complete Start/stat behavior remain separate; see character-lifecycle-boundary.md.
+
+## S37–S40 — Recovered network identity prerequisites
+- **CONTEXT:** J84 recovered body/master setup passes; actual network spawning and master-ID recording remain unproven.
+- **OBSERVATION:** Original NetworkStateMachine.Awake wires sibling machines; NetworkServer.Spawn registers identities; the body's public masterObject setter records a network ID without invoking its inventory-adopting getter.
+- **HYPOTHESIS:** These original paths work on the recovered inactive prefabs with actual loopback server ownership and no assigned authority flags.
+- **TASK:** Four separate launches for state-machine binding, body spawn, master spawn and master-ID assignment/resolution.
+- **CONSTRAINTS:** Original methods and prefab identities retained; roots inactive; no direct cache assignment. Getter/inventory adoption, reciprocal master body cache, full Start/stats and connected-client behavior remain excluded.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement probe and thin preparation selector; existing recovered body/master payload.
+- **TEST COMMAND:** `./dev prototype --action body-network-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Original network bindings, distinct registered IDs, effective authority, actual server lookup and owned unspawn assertions agree with each probe.
+- **FAILURE EVIDENCE TO CAPTURE:** Per-process first exception, original spawn warnings, registry/authority failures and native crashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Individual accepted receipts and all failed reports; no full body/master-link milestone from an ID-only result.
+- **DEPENDENCIES:** J84; pinned DebugToolkit actual server Spawn and Starstorm2 state-machine wiring; exact original NetworkIdentity/NetworkServer/Util/CharacterBody source.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S37 — State-machine networking setup | Original Awake assigns correct index, networker and identity to every recovered sibling machine. | PASS — J85 |
+| S38 — Recovered body server spawn | Actual server registers recovered body and original authority query succeeds; owned unspawn removes it. | PASS — J85 |
+| S39 — Recovered master server spawn | Actual server registers recovered player master and original authority query succeeds; owned unspawn removes it. | PASS — J85 |
+| S40 — Body master-ID recording | Two distinct real IDs; original body setter records the master ID and actual server lookup resolves it. Inventory and reciprocal linkage remain unset. | PASS — J85 |

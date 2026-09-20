@@ -19,3 +19,15 @@ UpdateMasterLink then invokes CharacterMaster.OnBodyStart, recalculates stats, r
 All four selective probes pass on Android: empty buff storage, recovered Commando Awake, body registration and recovered PlayerMaster Awake/registration. Original caches agree with actual prefab components, and the body's awake event fires once. Source/read-only state-machine inspection uses the current private field; the older community accessibility did not match this input and caused the preserved J83 compiler failure.
 
 This establishes original setup on recovered objects, beyond the prior assembled diagnostic body. The roots remain inactive and no Start/stat/master-link/network-spawn path runs. Continue with actual identity resolution and measured inventory callback definitions before reciprocal body-master linkage; preserve the distinction between registration, network ownership and fully initialized simulation.
+
+## Next inventory-adoption content candidate
+
+Current input contains the original LunarPrimaryReplacement, LunarSecondaryReplacement, LunarUtilityReplacement and LunarSpecialReplacement ItemDefs in their corresponding item directories, plus QuestVolatileBattery EquipmentDef. Some directories also contain identically named SkillDefs; select by exact path and original script type, not basename. A future empty-inventory linkage probe must bind the actual required definitions and distinguish optional zero-count queries from directly dereferenced definitions.
+
+Static review of OnInventoryChanged also reaches hurtbox availability, optional item behaviors, equipment changes, item/buff availability and drone checks. Empty inventory plus a non-drone Commando narrows those branches, but does not establish a full content catalog or normal stat computation. Preserve individual first-failure reports when invoking the real getter; do not replace it with NetworkServer.FindLocalObject and call that complete linkage.
+
+## J85 network prerequisite outcome
+
+Original state-machine networking setup and actual server spawning of recovered body/master pass on Android. The original body setter stores a distinct real master ID, and actual server lookup resolves it; both roots remain inactive. Original effective-authority queries pass without assigned flags. Owned unspawn removes the registered objects.
+
+The getter is still uncalled: inventory adoption, its callbacks and the master's reciprocal body reference are explicitly asserted absent. These tests remove network-ID uncertainty before the required content/empty-inventory adoption experiment. No connected-client, replication, full Start or player-session result is implied.

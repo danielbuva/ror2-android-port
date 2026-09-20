@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Each experiment runs in a fresh process. Inactive roots prevent automatic startup; selected lifecycle calls are explicit.
 public sealed class MovementBatchProbe : MonoBehaviour {
- [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset,jumpBoostAsset,jumpStrikeAsset,bodyAsset,masterAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions,jumpEvents,awakeEvents;}
+ [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset,jumpBoostAsset,jumpStrikeAsset,bodyAsset,masterAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions,jumpEvents,awakeEvents;public uint bodyId,masterId;}
  Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
@@ -24,7 +24,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "body-buff-storage":case "body-awake":case "body-registration":case "master-awake":BodyLifecycle();break;case "state-jump-items":case "state-jump-inventory":case "state-jump-event":case "state-jump-input":LandingContext();break;case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "body-network-state":case "body-network-spawn":case "master-network-spawn":case "body-master-id":case "body-buff-storage":case "body-awake":case "body-registration":case "master-awake":BodyLifecycle();break;case "state-jump-items":case "state-jump-inventory":case "state-jump-event":case "state-jump-input":LandingContext();break;case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
   finally{try{CleanupLanding();}catch(Exception e){r.error+=" Cleanup: "+e;r.success=false;}if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
@@ -232,10 +232,11 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 
  void BodyLifecycle(){
   Check(!NetworkServer.active&&!NetworkClient.active,"Unexpected network session");
-  if(r.id=="master-awake"){MasterLifecycle();return;}
+  if(r.id=="master-awake"||r.id=="master-network-spawn"){MasterLifecycle();return;}
   var fields=typeof(BuffCatalog).GetFields(BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic);var previous=new System.Collections.Generic.Dictionary<FieldInfo,object>();
   foreach(var f in fields)if(f.FieldType.IsArray)previous[f]=f.GetValue(null);
   var names=(IDictionary)typeof(BuffCatalog).GetField("nameToBuffIndex",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);Check(names.Count==0,"Existing buff catalog; refuse diagnostic replacement");
+  GameObject linkedMasterHost=null;CharacterMaster linkedMaster=null;Inventory linkedInventory=null;
   CharacterBody body=null;Action<Transform> modelSubscription=null;Action<CharacterBody> awake=observed=>{if(observed==body)r.awakeEvents++;};bool registered=false;
   try{
    StaticCall(typeof(BuffCatalog),"SetBuffDefs",new object[]{new BuffDef[0]});Check(BuffCatalog.buffCount==0,"Empty diagnostic buff catalog initialization");
@@ -250,12 +251,25 @@ public sealed class MovementBatchProbe : MonoBehaviour {
     Check(body.hurtBoxGroup==body.modelLocator.modelTransform.GetComponent<HurtBoxGroup>()&&body.mainHurtBox==body.hurtBoxGroup.mainHurtBox,"Original hurtbox identity");Check(Mathf.Abs(body.radius-host.GetComponent<CapsuleCollider>().radius)<.0001f,"Original capsule radius cache");
     var buffs=(int[])typeof(CharacterBody).GetField("buffs",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(body);Check(buffs!=null&&buffs.Length==0,"Original body buff storage");
     var network=host.GetComponent<NetworkStateMachine>();Check(network,"Recovered network state-machine missing");var machines=(EntityStateMachine[])typeof(NetworkStateMachine).GetField("stateMachines",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(network);Check(machines.Length>0,"Recovered network state-machine list");foreach(var machine in machines)Check(machine&&machine.gameObject==host,"Recovered state-machine linkage");
+    if(r.id=="body-network-state"){
+     Call(network,"Awake");for(int i=0;i<machines.Length;i++)Check(machines[i].networkIndex==i&&machines[i].networker==network&&machines[i].networkIdentity==body.networkIdentity,"Original network state-machine binding");
+    }
+    if(r.id=="body-network-spawn"||r.id=="body-master-id"){
+     SpawnRecovered(host);Call(body,"UpdateAuthority");r.bodyId=body.networkIdentity.netId.Value;Check(body.hasEffectiveAuthority&&Util.HasEffectiveAuthority(body.networkIdentity),"Recovered body effective authority");
+     if(r.id=="body-master-id"){
+      var masterPrefab=artifactBundle.LoadAsset<GameObject>(cfg.masterAsset);Check(masterPrefab&&!masterPrefab.activeSelf,"Recovered master not isolated");linkedMasterHost=Instantiate(masterPrefab);linkedInventory=linkedMasterHost.GetComponent<Inventory>();Call(linkedInventory,"Awake");linkedMaster=linkedMasterHost.GetComponent<CharacterMaster>();Call(linkedMaster,"Awake");SpawnRecovered(linkedMasterHost);Call(linkedMaster,"UpdateAuthority");r.masterId=linkedMaster.networkIdentity.netId.Value;
+      Check(r.masterId!=r.bodyId&&linkedMaster.hasEffectiveAuthority,"Distinct recovered master identity/authority");Check(!body.inventory,"Unexpected adopted inventory before link");body.masterObject=linkedMasterHost;
+      Check(body.GetMasterObjectId()==linkedMaster.networkIdentity.netId,"Original body master ID setter");Check(NetworkServer.FindLocalObject(body.GetMasterObjectId())==linkedMasterHost,"Actual server master resolution");Check(!body.inventory&&!linkedMaster.hasBody,"Unexpected inventory adoption or reciprocal link");Check(!linkedMasterHost.activeInHierarchy,"Master activation occurred");
+     }
+    }
     if(r.id=="body-registration"){
      var count=CharacterBody.readOnlyInstancesList.Count;Call(body,"OnEnable");registered=true;Check(CharacterBody.readOnlyInstancesList.Count==count+1&&CharacterBody.readOnlyInstancesList.Contains(body),"Original body registration");Call(body,"OnDisable");registered=false;Check(CharacterBody.readOnlyInstancesList.Count==count&&!CharacterBody.readOnlyInstancesList.Contains(body),"Original body unregistration");
     }
     Check(!host.activeInHierarchy,"Broad body activation occurred");
    }
   }finally{
+   if(linkedMasterHost){NetworkServer.UnSpawn(linkedMasterHost);if(linkedMaster)Call(linkedMaster,"OnDestroy");if(linkedInventory){Call(linkedInventory,"OnDestroy");StaticCall(typeof(Inventory),"StaticFixedUpdate");}Destroy(linkedMasterHost);}
+   if(host&&ownsServer){var id=host.GetComponent<NetworkIdentity>().netId;NetworkServer.UnSpawn(host);Check(!NetworkServer.FindLocalObject(id),"Body network object not removed");}
    if(registered)Call(body,"OnDisable");if(body&&body.modelLocator&&modelSubscription!=null)body.modelLocator.onModelChanged-=modelSubscription;
    foreach(var pair in previous)pair.Key.SetValue(null,pair.Value);
   }
@@ -267,8 +281,14 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   try{
    Call(inventory,"Awake");inventoryAwake=true;Call(master,"Awake");masterAwake=true;
    Check(master.inventory==inventory&&master.networkIdentity==host.GetComponent<NetworkIdentity>(),"Original master component caches");Check(master.playerCharacterMasterController==host.GetComponent<PlayerCharacterMasterController>()&&master.playerCharacterMasterController,"Original player-master controller linkage");Check(!master.GetBody()&&!master.hasBody,"Unexpected spawned body");
+   if(r.id=="master-network-spawn"){SpawnRecovered(host);Call(master,"UpdateAuthority");r.masterId=master.networkIdentity.netId.Value;Check(master.hasEffectiveAuthority&&Util.HasEffectiveAuthority(master.networkIdentity),"Recovered master effective authority");}
    var count=CharacterMaster.readOnlyInstancesList.Count;Call(master,"OnEnable");registered=true;Check(CharacterMaster.readOnlyInstancesList.Count==count+1&&CharacterMaster.readOnlyInstancesList.Contains(master),"Original master registration");Call(master,"OnDisable");registered=false;Check(CharacterMaster.readOnlyInstancesList.Count==count,"Original master unregistration");Check(!host.activeInHierarchy,"Master startup unexpectedly active");
-  }finally{if(registered)Call(master,"OnDisable");if(masterAwake)Call(master,"OnDestroy");if(inventoryAwake){Call(inventory,"OnDestroy");StaticCall(typeof(Inventory),"StaticFixedUpdate");}}
+  }finally{if(ownsServer){var id=host.GetComponent<NetworkIdentity>().netId;NetworkServer.UnSpawn(host);Check(!NetworkServer.FindLocalObject(id),"Master network object not removed");}if(registered)Call(master,"OnDisable");if(masterAwake)Call(master,"OnDestroy");if(inventoryAwake){Call(inventory,"OnDestroy");StaticCall(typeof(Inventory),"StaticFixedUpdate");}}
+ }
+
+ void SpawnRecovered(GameObject target){
+  if(!ownsServer){Check(!NetworkServer.active&&!NetworkClient.active,"Existing network session");Check(NetworkServer.Listen("127.0.0.1",0),"Owned server listen failed");ownsServer=true;}
+  Check(!target.activeInHierarchy,"Recovered root unexpectedly active");var identity=target.GetComponent<NetworkIdentity>();Check(identity,"Recovered identity missing");NetworkServer.Spawn(target);Check(identity.isServer&&identity.netId.Value!=0&&NetworkServer.FindLocalObject(identity.netId)==target,"Original recovered object spawn/lookup failed");
  }
 
 }

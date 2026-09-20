@@ -47,3 +47,5 @@ S25–S28 / J79 pass source-gravity motor jumping and original grounded state mo
 S29–S32 / J81–J82 pass recovered jump-item identity, empty original inventory lifecycle, server-only jump-event dispatch and original input-to-jump/landing (96 accepted assertions). Original movement-state execution now includes the first jump press. Full recovered Commando/master/body lifecycle, normal catalogs/stats, local-client delivery and physical controls still prevent L5.5 acceptance.
 
 S33–S36 / J84 pass selective original setup on actual recovered CommandoBody and PlayerMaster, plus diagnostic buff storage and original registries. Prefab caches/relationships are proven, but these roots are inactive: complete Start/stat/body-master/client/controller simulation remains unproven. No formal L5.5 advancement.
+
+S37–S40 / J85 pass original recovered state-machine network setup, actual server body/master spawning/authority and original master-ID recording/resolution. Inventory adoption and reciprocal linkage remain unproven; this does not advance formal L5.5 or establish a local client/player.
