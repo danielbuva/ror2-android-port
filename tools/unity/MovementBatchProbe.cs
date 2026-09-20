@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Each selected experiment runs in a fresh process. Inactive body fixtures never run gameplay lifecycle.
 public sealed class MovementBatchProbe : MonoBehaviour {
- [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions;}
+ [Serializable] public class Result {public string attempt,id,phase,error,artifactAsset,jumpBoostAsset,jumpStrikeAsset;public int pid;public bool success,cleanup;public float x,y,z,gravity,peak,sourceGravity;public int assertions,jumpEvents;}
  Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value)throw new Exception(message);}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
@@ -24,7 +24,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
 #endif
   r.phase="started";Save();
   try{
-   switch(r.id){case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
+   switch(r.id){case "state-jump-items":case "state-jump-inventory":case "state-jump-event":case "state-jump-input":LandingContext();break;case "gravity-rules":GravityRules();break;case "gravity-source-jump":case "state-ground-motion":case "state-ground-reverse":case "state-ground-wall":case "gravity-fall":case "gravity-jump-land":case "state-input":case "state-motion":LandingContext();break;case "buttons":Buttons();break;case "input":Input();break;case "motor-output":MotorOutput();break;case "motor-acceleration":MotorAcceleration();break;case "global-lifecycle":case "artifact-catalog":case "artifact-manager":case "landing-context":LandingContext();break;case "integrated-free":case "integrated-wall":case "integrated-jump":case "integrated-land":Integrated();break;default:throw new Exception("Unknown experiment");}
    r.success=true;
   }catch(Exception e){r.error=e.ToString();}
   finally{try{CleanupLanding();}catch(Exception e){r.error+=" Cleanup: "+e;r.success=false;}if(obstacle)Destroy(obstacle);if(host)Destroy(host);if(ownsServer)NetworkServer.Shutdown();r.cleanup=!ownsServer||!NetworkServer.active;r.success&=r.cleanup;r.phase="complete";Save();}
@@ -133,6 +133,7 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   var g=new CharacterGravityParameters();Check(g.CheckShouldUseGravity(),"Default gravity");g.channeledAntiGravityGranterCount=1;Check(!g.CheckShouldUseGravity(),"Channeled antigravity");g.antiGravityNeutralizerCount=1;Check(g.CheckShouldUseGravity(),"Neutralizer precedence");g.environmentalAntiGravityGranterCount=1;Check(!g.CheckShouldUseGravity(),"Environmental precedence");
  }
  void Additional(CharacterMotor motor,KinematicCharacterMotor k,CharacterBody body){
+  if(r.id.StartsWith("state-jump-")){JumpInputContext(motor,k,body);return;}
   if(r.id.StartsWith("state-ground-")){GroundedState(motor,k);return;}
   if(r.id.StartsWith("gravity-")){
    var savedGravity=Physics.gravity;try{
@@ -181,5 +182,52 @@ public sealed class MovementBatchProbe : MonoBehaviour {
   }finally{if(machine)Call(machine,"OnDestroy");Physics.gravity=savedGravity;}
   Check(machine.state==null&&motor.moveDirection==Vector3.zero,"Grounded state exit cleanup");Check(Physics.gravity==savedGravity,"Gravity not restored");
  }
+
+ void JumpInputContext(CharacterMotor motor,KinematicCharacterMotor k,CharacterBody body){
+  if(r.id=="state-jump-event"){
+   Check(body.isServer&&body.hasAuthority&&body.netId.Value!=0,"Body server identity not available");
+   body.onJump+=CountJump;try{body.TriggerJumpEventGlobally();Check(r.jumpEvents==1,"Original authority jump event missing");}finally{body.onJump-=CountJump;}
+   Check(!NetworkClient.active,"Unexpected client; server-only dispatch fixture");return;
+  }
+  var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+  var boost=artifactBundle.LoadAsset<ItemDef>(cfg.jumpBoostAsset);var strike=artifactBundle.LoadAsset<ItemDef>(cfg.jumpStrikeAsset);
+  Check(boost&&strike&&boost.name=="JumpBoost"&&strike.name=="JumpDamageStrike","Wrong recovered jump items");
+  Check(boost.pickupIconSprite&&strike.pickupIconSprite&&boost.pickupModelPrefab&&strike.pickupModelPrefab,"Missing serialized item references");
+  Check(ItemCatalog.itemCount==0&&ItemCatalog.tier1ItemList.Count==0&&ItemCatalog.tier2ItemList.Count==0&&ItemCatalog.tier3ItemList.Count==0&&ItemCatalog.lunarItemList.Count==0,"Existing item catalog; refuse replacement");
+  var priorItems=RoR2.ContentManagement.ContentManager._itemDefs;
+  var oldBoost=RoR2Content.Items.JumpBoost;var oldStrike=DLC3Content.Items.JumpDamageStrike;Inventory inventory=null;GameObject inventoryHost=null;var savedGravity=Physics.gravity;EntityStateMachine machine=null;
+  try{
+   RoR2.ContentManagement.ContentManager._itemDefs=new ItemDef[0];
+   StaticCall(typeof(ItemCatalog),"SetItemDefs",new object[]{new[]{boost,strike}});
+   Check(ItemCatalog.itemCount==2&&boost.itemIndex!=strike.itemIndex&&ItemCatalog.GetItemDef(boost.itemIndex)==boost&&ItemCatalog.GetItemDef(strike.itemIndex)==strike,"Original item catalog identity");
+   Check(ItemCatalog.FindItemIndex("JumpBoost")==boost.itemIndex&&ItemCatalog.FindItemIndex("JumpDamageStrike")==strike.itemIndex,"Original item name lookup");
+   if(r.id!="state-jump-items"){
+    inventoryHost=new GameObject("Inactive original inventory");inventoryHost.SetActive(false);inventoryHost.AddComponent<NetworkIdentity>();inventory=inventoryHost.AddComponent<Inventory>();Call(inventory,"Awake");
+    Check(inventory.GetItemCountEffective(boost)==0&&inventory.GetItemCountEffective(strike)==0,"Empty original inventory counts");
+    Check(inventory.GetItemCountPermanent(boost)==0&&inventory.GetItemCountPermanent(strike)==0,"Empty permanent inventory counts");
+    var stacks=typeof(Inventory).GetField("effectiveItemStacks",BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public);
+    Check(((ItemCollection)stacks.GetValue(inventory)).isValid,"Original pooled item storage invalid");
+    if(r.id=="state-jump-input"){
+     Check(!oldBoost&&!oldStrike,"Existing original item bindings");RoR2Content.Items.JumpBoost=boost;DLC3Content.Items.JumpDamageStrike=strike;
+     typeof(CharacterBody).GetProperty("inventory").SetValue(body,inventory);typeof(CharacterBody).GetProperty("maxJumpCount").SetValue(body,1);body.baseJumpCount=1;
+     Check(body.isServer&&body.hasAuthority,"Original body authority missing");body.onJump+=CountJump;
+     Check(cfg.sourceGravity<0,"Missing original gravity");Physics.gravity=new Vector3(0,cfg.sourceGravity,0);r.gravity=Physics.gravity.y;
+     motor.gravityParameters=new CharacterGravityParameters{environmentalAntiGravityGranterCount=1};motor.gravityParameters=new CharacterGravityParameters();motor.moveDirection=Vector3.zero;
+     obstacle=new GameObject("Owned input jump floor");obstacle.layer=30;obstacle.transform.position=new Vector3(0,9.5f,0);obstacle.AddComponent<BoxCollider>().size=new Vector3(40,1,40);Physics.SyncTransforms();k.SetGroundSolvingActivation(true);k.SetPosition(new Vector3(0,10.2f,0));Step(k,40);Check(k.GroundingStatus.IsStableOnGround,"Jump input initial grounding");
+     var input=host.AddComponent<InputBankTest>();machine=host.AddComponent<EntityStateMachine>();Call(machine,"Awake");machine.SetState(new EntityStates.GenericCharacterMain());
+     input.jump.PushState(true);machine.ManagedFixedUpdate(.02f);Check(motor.jumpCount==1&&motor.velocity.y>0&&r.jumpEvents==1,"Original input did not produce jump/event");
+     input.jump.PushState(false);r.peak=k.TransientPosition.y;
+     for(int i=0;i<100;i++){machine.ManagedFixedUpdate(.02f);Step(k,1);r.peak=Mathf.Max(r.peak,k.TransientPosition.y);}
+     r.y=k.TransientPosition.y;Check(r.peak>10.2f,"Input jump did not rise");Check(k.GroundingStatus.IsStableOnGround&&Mathf.Abs(r.y-10.01f)<.02f&&motor.jumpCount==0,"Input jump did not land/reset");Check(r.jumpEvents==1,"Unexpected repeated jump events");
+    }
+    Call(inventory,"OnDestroy");StaticCall(typeof(Inventory),"StaticFixedUpdate");Check(!((ItemCollection)stacks.GetValue(inventory)).isValid,"Original inventory disposal failed");inventory=null;
+   }
+  }finally{
+   try{if(machine)Call(machine,"OnDestroy");body.onJump-=CountJump;if(inventory){Call(inventory,"OnDestroy");StaticCall(typeof(Inventory),"StaticFixedUpdate");}}
+   finally{Physics.gravity=savedGravity;RoR2Content.Items.JumpBoost=oldBoost;DLC3Content.Items.JumpDamageStrike=oldStrike;typeof(CharacterBody).GetProperty("inventory").SetValue(body,null);StaticCall(typeof(ItemCatalog),"SetItemDefs",new object[]{new ItemDef[0]});ItemCatalog.tier1ItemList.Clear();ItemCatalog.tier2ItemList.Clear();ItemCatalog.tier3ItemList.Clear();ItemCatalog.lunarItemList.Clear();RoR2.ContentManagement.ContentManager._itemDefs=priorItems;if(inventoryHost)Destroy(inventoryHost);}
+  }
+  Check(ItemCatalog.itemCount==0&&RoR2.ContentManagement.ContentManager._itemDefs==priorItems&&Physics.gravity==savedGravity,"Jump fixture restoration");Check(!host.activeInHierarchy,"Body lifecycle unexpectedly active");
+ }
+ void CountJump(){r.jumpEvents++;}
 
 }

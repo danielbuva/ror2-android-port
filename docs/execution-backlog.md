@@ -860,3 +860,25 @@ Shared task contract:
 - **FAILURE EVIDENCE TO CAPTURE:** Rejected premature-run directory and assertion output.
 - **STATE/JOURNAL UPDATES REQUIRED:** J79; failed records remain separate from successful same-build retries.
 - **DEPENDENCIES / ROLLBACK:** Triggered by S25–S28; restore prior harness from the preceding commit if necessary, never accept its rejected launch.
+
+## S29–S32 — Original jump-input dependencies
+- **CONTEXT:** J79 original grounded movement passes; direct motor Jump does not prove the original jump-input path.
+- **OBSERVATION:** ProcessJump queries an inventory and item definitions, then applies velocity and dispatches the body's jump event.
+- **HYPOTHESIS:** A recovered two-item diagnostic catalog, empty original inventory and real server ownership can support a normal first jump press without method replacement.
+- **TASK:** Separate item identity, inventory lifecycle, server-event and input-to-jump launches.
+- **CONSTRAINTS:** No items granted, unlock/ownership changes, forced requirement bypass or replacement game methods. Inactive body/Run and supplied stats/jump capacity remain explicit. Server-only dispatch does not prove local-client delivery.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing closure preparation, movement probe, thin command selector; ignored item assets and receipts.
+- **TEST COMMAND:** `./dev prototype --action jump-input-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Per-row assertions, fresh process survival, clean owned cleanup and explained logs.
+- **FAILURE EVIDENCE TO CAPTURE:** Preparation dependency chain, exact APK/payload, per-probe exception/logs and independent results.
+- **STATE/JOURNAL UPDATES REQUIRED:** J80 preparation failure and subsequent device outcome; individual checkpoints only on accepted results.
+- **DEPENDENCIES:** J79; pinned Starstorm2 BorgMain base ProcessJump; DebugToolkit inventory inspection and actual server Spawn; current original inventory/catalog/event implementations.
+
+| ID / TITLE | TASK / PASS CONDITION | STATUS |
+| --- | --- | --- |
+| S29 — Recovered jump items | Original definitions retain references and receive distinct, resolvable original catalog indices. | PASS — J82 |
+| S30 — Empty original inventory | Original allocation, zero-count queries and queued disposal succeed. | PASS — J82 |
+| S31 — Server jump event | Real body server authority invokes one original jump callback and completes server dispatch without a client. | PASS — J81 |
+| S32 — Original jump press | Original state handles press/release, produces one jump event, rises, lands and resets jump count. | PASS — J82 |
+
+S29/S30/S32 first failed the shared null prior content-array precondition in J81; J82 preserves that failure and accepts the corrected diagnostic setup. S31 retains its independent earlier build. UI closure preparation failure is J80. No formal L5.5 advancement.

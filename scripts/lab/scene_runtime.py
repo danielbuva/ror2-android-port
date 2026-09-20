@@ -615,7 +615,7 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None):
+def landing_batch_prepare(cases=None, jump_items=False):
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -628,28 +628,42 @@ def landing_batch_prepare(cases=None):
     for meta in stage.rglob('*.meta'):
         match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
         if match:existing[match[1]]=Path(str(meta)[:-5])
-    pending=[root];seen=set();rows=[];asset=None
+    roots={'artifactAsset':root}
+    if jump_items:
+        roots.update({'jumpBoostAsset':export/'Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset','jumpStrikeAsset':export/'Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset'})
+    pending=list(roots.values());seen=set();rows=[];asset=None;root_assets={}
+    ui_remaps={row['from']:row['to'] for row in a.get('ui_remaps',[])};ui_edits=[]
     while pending:
         src=pending.pop()
         if src in seen:continue
         seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
         if src.suffix=='.dll':
-            if guid not in existing:raise RuntimeError('Unprovided artifact script assembly')
+            if src.name=='UnityEngine.UI.dll' and ui_remaps:continue
+            if guid not in existing:raise RuntimeError('Unprovided closure script assembly '+src.name)
             continue
         dst=existing.get(guid,stage/'LandingArtifactClosure'/src.relative_to(export/'Assets'))
         if guid not in existing:
             dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
         rows.append({'source':str(src.relative_to(export)),'sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
         if src==root:asset=str(dst.relative_to(WORK/'lab-project'))
+        for key,value in roots.items():
+            if src==value:root_assets[key]=str(dst.relative_to(WORK/'lab-project'))
         with src.open('rb') as f:prefix=f.read(5)
         if prefix==b'%YAML':
+            text=src.read_text()
+            if guid not in existing:
+                for old,new in ui_remaps.items():
+                    count=text.count(old)
+                    if count:ui_edits.append({'staged':str(dst.relative_to(WORK/'lab-project')),'from':old,'to':new,'count':count});text=text.replace(old,new)
+                if 'guid: d3e719b59ab71ba3f6b398058c866280' in text:raise RuntimeError('Unmeasured Unity UI script identity in item closure')
+                dst.write_text(text)
             for dependency in set(re.findall(r'guid: ([a-f0-9]{32})',src.read_text())):
                 if dependency.startswith('0000000000000000'):continue
                 if dependency not in index:raise RuntimeError('Unresolved artifact GUID')
                 pending.append(index[dependency])
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['artifactAsset']=asset.lower();write(stage/'Resources/MovementBatchProbe.json',cfg)
-    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].append(asset);write(WORK/'scene-probe-build.json',recipe)
-    write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'scope':'Original fall artifact and serialized dependency closure; diagnostic one-entry catalog only'})
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update({k:v.lower() for k,v in root_assets.items()});write(stage/'Resources/MovementBatchProbe.json',cfg)
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].extend(root_assets.values());write(WORK/'scene-probe-build.json',recipe)
+    write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'roots':root_assets,'ui_remaps':ui_edits,'scope':'Measured original artifact/item definitions and serialized closure; diagnostic subset catalogs only'})
 
     tag=WORK/'lab-project/ProjectSettings/TagManager.asset';source=export/'ProjectSettings/TagManager.asset'
     before=tag.read_text();original=source.read_text()
@@ -664,8 +678,8 @@ def landing_batch_prepare(cases=None):
     write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
 
 
-def grounded_state_prepare():
-    landing_batch_prepare(cases=['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall'])
+def grounded_state_prepare(jump_items=False, cases=None):
+    landing_batch_prepare(jump_items=jump_items,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     source=export/'ProjectSettings/DynamicsManager.asset'

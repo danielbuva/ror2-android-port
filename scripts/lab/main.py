@@ -80,6 +80,12 @@ try:
   elif a.action=='grounded-motion-retry':
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['state-ground-motion'],retry=True)
+  elif a.action=='jump-input-retry-prepare':
+   from scene_runtime import grounded_state_prepare
+   grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='jump-input-prepare':
+   from scene_runtime import grounded_state_prepare
+   grounded_state_prepare(jump_items=True)
   elif a.action=='grounded-state-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare()
