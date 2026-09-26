@@ -698,8 +698,8 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
     write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
 
 
-def grounded_state_prepare(jump_items=False, cases=None):
-    landing_batch_prepare(jump_items=jump_items,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
+def grounded_state_prepare(jump_items=False, cases=None, recovered=False):
+    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     source=export/'ProjectSettings/DynamicsManager.asset'
@@ -708,4 +708,4 @@ def grounded_state_prepare(jump_items=False, cases=None):
     gravity=[float(v) for v in match.groups()]
     if gravity[0]!=0 or gravity[2]!=0 or gravity[1]>=0:raise RuntimeError('Unexpected gravity shape; review input')
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['sourceGravity']=gravity[1];write(stage/'Resources/MovementBatchProbe.json',cfg)
-    write(out/'physics-contract.json',{'source_sha256':sha(source),'gravity':gravity,'scope':'Only measured gravity supplied during each probe and restored; collision matrix/default material unchanged','prior_art':'Starstorm2 a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8 BorgMain calls original GenericCharacterMain base ticks and ProcessJump; actual current original paths inspected','limits':'Inactive diagnostic body/stats/catalog; no normal character lifecycle or physical input'})
+    write(out/'physics-contract.json',{'source_sha256':sha(source),'gravity':gravity,'scope':'Only measured gravity supplied during each probe and restored; collision matrix/default material unchanged','prior_art':'Starstorm2 a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8 BorgMain calls original GenericCharacterMain base ticks and ProcessJump; actual current original paths inspected','limits':('Inactive recovered body with original computed stats and subset catalogs; no full lifecycle or physical input' if recovered else 'Inactive diagnostic body/stats/catalog; no normal character lifecycle or physical input')})

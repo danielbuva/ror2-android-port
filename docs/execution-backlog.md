@@ -1010,3 +1010,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts only for accepted cases; preserve first failures and formal L5.5 limits.
 - **DEPENDENCIES:** J92/J93; pinned Starstorm2 SS2VanillaSurvivor named-machine and network relationships, current recovered mainStateType and original state/lifecycle source.
 - **STATUS:** S53/S54/S55 PASS — J94.
+
+## S56–S58 — Recovered motor startup, gravity and landing
+- **TITLE:** Original motor Start and state-driven gravity/floor contact.
+- **CONTEXT / OBSERVATION:** J94 passes recovered state motion without gravity/collision. Original Start configures gravity/solver and emits onMotorStart; landing calls the original event manager and fall-artifact query.
+- **HYPOTHESIS:** Existing recovered components and measured landing context support original gravity and short-drop grounding with computed stats.
+- **TASK:** Separate fresh launches: S56 original Start/event/authority; S57 source-gravity free fall; S58 short landing on a plain owned floor.
+- **CONSTRAINTS:** No replacement stats, suppressed landing callbacks or fabricated ownership. Inactive roots, explicit stepping, subset catalogs; diagnostic floor without SurfaceDef. No full lifecycle/client/controller or audio claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement harness, source-gravity preparation and thin CLI selector; ignored stage/evidence.
+- **TEST COMMAND:** `./dev prototype --action body-gravity-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** One original motor-start event and real authority; free-fall velocity/displacement match measured gravity; one landing event, stable grounding, zero vertical speed and reset jump count; global gravity restores.
+- **FAILURE EVIDENCE TO CAPTURE:** First lifecycle/solver/landing exception, event counts, grounding and position, current-process logs/crash/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Independent receipts for accepted capabilities; preserve failed attempts; retain formal L5.5 limits.
+- **DEPENDENCIES:** J94; J75/J77 landing context; pinned Starstorm2 named-state relationships; current original motor Start/OnLanded and GlobalEventManager landing paths.
+- **STATUS:** S56/S57 PASS — J95; S58 PASS — J96 after correcting overlapping initial placement. Failed landing retained. `body-landing-retry-prepare` reruns only that case.

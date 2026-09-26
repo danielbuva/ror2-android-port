@@ -59,3 +59,5 @@ J92 completes bounded S46 original level-one stat calculation after S49 buff sto
 J93 adds S52: recovered solver binding/authority and original motor acceleration/cap/braking using original calculated stats pass on Android. S51 level-up fails at original application/effect context, with missing Addressables runtime data; no level-two acceptance. Full recovered state/solver motion and formal L5.5 remain open.
 
 J94 passes S53–S55 on Android: recovered named Body main-state entry/exit, original input gathering and state-driven free-space solver motion with computed stats. Motion reaches x5.844 after one simulated second and stops at x7 after neutral input. Inactive selective lifecycle, no gravity/collision or visual character-motion acceptance; formal L5.5 remains open.
+
+J95/J96 pass S56–S58: recovered original motor Start/event, source-gravity free fall, and short-drop floor contact with original landing/server callbacks. Initial floor-overlap failure is preserved; corrected clearance yields one landing and stable grounding. Inactive explicitly stepped fixture, no material effects/audio or full L5.5 acceptance.

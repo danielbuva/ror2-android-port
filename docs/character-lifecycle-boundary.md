@@ -65,3 +65,9 @@ Team level-up reaches the original LevelUpEffectManager subscriber, which access
 The existing recovered Body machine and InputBankTest now run original GenericCharacterMain entry/exit, input gathering and state-driven motor/solver motion with original computed stats. Three fresh Android launches pass. Direction input produces x5.844 after one simulated second and neutral input stops at x7. Roots stay inactive; simulation is stepped explicitly, without gravity or collision.
 
 Next inspect original recovered motor Start and landing callback dependencies, then add gravity and floor collision separately. Preserve the existing state/input relationships and computed stats. Visual character motion, automatic full lifecycle, reciprocal spawning and client/controller acceptance remain unproven.
+
+## J95/J96 recovered gravity and landing
+
+Original motor Start now enables gravity/authority and emits its event. Source gravity -30 produces expected free fall. The recovered capsule is centered on its root (height 1.82/offset 0), unlike the earlier diagnostic capsule: initial floor clearance must account for its lower half. Starting at 12 above floor top 9.5 yields one original landing event and a stable center at 10.42. The failed overlapping start remains preserved.
+
+Combine this context with recovered state-driven horizontal motion next; isolate stop/reversal/wall acceptance. No original landing callback is removed, but the plain diagnostic floor does not establish material effects or audio. Full lifecycle, reciprocal body/client and physical controls remain open.
