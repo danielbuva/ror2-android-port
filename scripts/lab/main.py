@@ -83,6 +83,9 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='body-level-motor-prepare':
+   from scene_runtime import landing_batch_prepare
+   landing_batch_prepare(body_lifecycle=True,adoption=True,stats=True,stat_buffs=True,cases=['body-level-stats','body-computed-motor'])
   elif a.action=='body-buffs-methods-run':
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['body-knockback-handler','body-original-stats'],retry=True)

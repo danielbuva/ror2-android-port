@@ -55,3 +55,5 @@ J87 adds bounded original inventory adoption to L5.5 prerequisites: five origina
 J88–J90 add five separately accepted Android prerequisites: team experience, recovered team membership, minimal Run singleton lifecycle, default skill setup and motor capsule bounds. Original stat calculation still fails at the measured knockback BuffDef dependency; no stat or formal L5.5 acceptance. Three distinct failed attempts remain preserved.
 
 J92 completes bounded S46 original level-one stat calculation after S49 buff storage and S50 zero-buff handler pass. Expected health/speed/damage/jump values and original completion event agree on Android. J91 malformed bundle/reference failure preserved; no formal L5.5 advancement or recovered character-motion claim.
+
+J93 adds S52: recovered solver binding/authority and original motor acceleration/cap/braking using original calculated stats pass on Android. S51 level-up fails at original application/effect context, with missing Addressables runtime data; no level-two acceptance. Full recovered state/solver motion and formal L5.5 remain open.

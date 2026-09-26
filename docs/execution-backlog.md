@@ -982,3 +982,17 @@ S48 — Recovered motor capsule setup inherits the S43–S46 contract and depend
 - **STATUS:** S49/S50 and S46 retry PASS — J92; J91 import/reference failure preserved.
 
 J91 supporting observation: `body-buffs-reference-prepare` adds one precise reference failure report and a buff-disabled Awake control alongside S49. After the controls pass, `body-buffs-methods-run` executes S50/S46 using the same APK and separate verification evidence. No generic cache redesign or original asset repair was added; the first malformed serialized payload remains rejected.
+
+## S51–S52 — Level-derived stats and recovered motor binding
+- **TITLE:** Original team-level stat changes; recovered motor uses computed stats.
+- **CONTEXT / OBSERVATION:** J92 completes original level-one stats on recovered inactive Commando; earlier movement fixtures supplied stats.
+- **HYPOTHESIS:** Original team membership propagates level changes, and the recovered motor can consume computed acceleration/speed without replacement values.
+- **TASK:** Separate fresh launches: S51 raises the original team to level two, observes dirty/completion/level events and restores level one; S52 binds the recovered solver, obtains actual authority and checks acceleration, cap and braking through original PreMove.
+- **CONSTRAINTS:** Inactive roots, subset catalogs, no direct stat assignment, no reciprocal cache injection. No solver translation/full Start/controller acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing MovementBatchProbe, thin CLI selector, ignored stage/evidence.
+- **TEST COMMAND:** `./dev prototype --action body-level-motor-prepare`; preflight and completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Level two health143/damage14.4 with one level-up event; reset110/12 with no extra level-up. Motor uses original acceleration and reaches speed7 then stops, with actual recovered solver/authority.
+- **FAILURE EVIDENCE TO CAPTURE:** First compilation/runtime exception, dirty flags/events/numeric results, current-process logs/crashes and capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate capability receipts, preserve failure, update state/milestones without formal L5.5 advancement.
+- **DEPENDENCIES:** J92; pinned DebugToolkit CurrentRun actual TeamComponent membership observation, current original TeamManager/CharacterBody/CharacterMotor signatures and calculations.
+- **STATUS:** S52 PASS — J93; S51 FAILED at original application/effect context. Retry only after measured TeamCatalog legacy loads and application/audio dependencies are addressed.

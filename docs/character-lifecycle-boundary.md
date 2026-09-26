@@ -53,3 +53,9 @@ The two recovered knockback BuffDefs now receive original indices before body Aw
 J91 initially failed earlier because its bundle omitted ModelLocator serialized fields despite unchanged original files. Regenerated staging/import restores those fields; buff-disabled/enabled controls both pass. The exact import-cache trigger is still unisolated, and the rejected payload remains archived. Do not patch the original prefab or clear broad caches based on that observation.
 
 Next test original team-level-derived stat changes, then recovered motor/state setup using computed stats. Keep subset catalogs and selective inactive lifecycle explicit; reciprocal spawning, loadout/body catalog, client/player semantics and formal L5.5 remain separate.
+
+## J93 computed-stat motor and level-up boundary
+
+Recovered solver binding and motor authority now consume original computed acceleration 80/speed 7 in PreMove; cap/braking pass without replacing stats. Original state-driven solver displacement on this recovered body remains next. Full Start and reciprocal/client relationships remain separate.
+
+Team level-up reaches the original LevelUpEffectManager subscriber, which accesses the absent application singleton. TeamCatalog static initialization also tries legacy effect loads and logs missing Addressables RuntimeData. Preserve the failed launch. Before retrying, inspect actual team effect closure and legitimate audio/application context; do not suppress subscriber/sound or infer level-two success from partial team mutation.
