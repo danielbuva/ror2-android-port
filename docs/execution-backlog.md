@@ -1024,3 +1024,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Independent receipts for accepted capabilities; preserve failed attempts; retain formal L5.5 limits.
 - **DEPENDENCIES:** J94; J75/J77 landing context; pinned Starstorm2 named-state relationships; current original motor Start/OnLanded and GlobalEventManager landing paths.
 - **STATUS:** S56/S57 PASS — J95; S58 PASS — J96 after correcting overlapping initial placement. Failed landing retained. `body-landing-retry-prepare` reruns only that case.
+
+## S59–S61 — Recovered grounded state motion
+- **TITLE:** Grounded movement/stop, reversal and wall collision on recovered Commando.
+- **CONTEXT / OBSERVATION:** J94 proves free state motion; J96 proves original startup/gravity/landing with correct capsule clearance.
+- **HYPOTHESIS:** The same recovered state/motor consumes computed stats while grounded and respects a simple wall.
+- **TASK:** Three fresh processes after measured landing: S59 movement and neutral stop; S60 reversal then stop; S61 wall contact then stop.
+- **CONSTRAINTS:** Preserve recovered capsule, original stats/state/input/landing handlers and source gravity. Inactive roots, diagnostic floor/layer/subset catalogs; no controller, full lifecycle or visual acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement probe and thin CLI selector; ignored build/run evidence.
+- **TEST COMMAND:** `./dev prototype --action body-grounded-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Grounded one-second displacement 6.76 and speed 7; neutral stop; reverse more than 10 units over two seconds at final speed -7; wall limits center to approximately 0.99; grounding retained throughout assertions.
+- **FAILURE EVIDENCE TO CAPTURE:** First callback/movement assertion, positions, grounding, per-process logs/crash/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate accepted receipts and failures, state/milestones; no formal L5.5 advancement.
+- **DEPENDENCIES:** J94/J96; pinned Starstorm2 BorgMain original base FixedUpdate and named-machine relationships; current original motor/solver/state methods.
+- **STATUS:** S59/S60/S61 PASS — J97.

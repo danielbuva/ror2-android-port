@@ -71,3 +71,9 @@ Next inspect original recovered motor Start and landing callback dependencies, t
 Original motor Start now enables gravity/authority and emits its event. Source gravity -30 produces expected free fall. The recovered capsule is centered on its root (height 1.82/offset 0), unlike the earlier diagnostic capsule: initial floor clearance must account for its lower half. Starting at 12 above floor top 9.5 yields one original landing event and a stable center at 10.42. The failed overlapping start remains preserved.
 
 Combine this context with recovered state-driven horizontal motion next; isolate stop/reversal/wall acceptance. No original landing callback is removed, but the plain diagnostic floor does not establish material effects or audio. Full lifecycle, reciprocal body/client and physical controls remain open.
+
+## J97 grounded motion acceptance
+
+Recovered original state/motor/solver now combine ground contact with forward movement, reversal and wall stopping. Measured forward displacement is 6.76 in one simulated second; reversal reaches -6.152 after two more seconds; wall contact stops at 0.99. Neutral input stops in all cases and grounding remains.
+
+Next review recovered jump item/event/SfxLocator dependencies against J81/J82 before running jump input. The earlier assembled fixture lacked recovered sound fields, so it cannot establish the Android native-audio path. Visual agreement using the accepted skin/material display is also outstanding; current screenshots show only the lab fixture. Preserve inactive/subset-catalog and full-lifecycle/client/control limits.

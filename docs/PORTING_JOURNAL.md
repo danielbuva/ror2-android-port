@@ -619,8 +619,8 @@ Attempt work/experiments/scene-runtime/20260919T235349.563058Z. Consulted commun
 
 - S25: original motor Jump under source gravity peaks at y10.415498 and lands at y10.009999; original landing resets jump count. 24 assertions, 26.05 seconds.
 - S26: original GenericCharacterMain drives grounded acceleration to x4.620000, then stops while remaining grounded. 25 assertions, 26.10 seconds in isolated same-APK verification.
-- S27: right input reaches x4.62; two seconds of left input produce x0.280001 and velocity -7, then neutral input stops. Grounding persists. 27 assertions, 26.05 seconds.
-- S28: original state/motor/solver stops at x0.990000 against the wall and remains grounded. 25 assertions, 26.11 seconds.
+- S27: right input reaches x4.62; two seconds of left input produce x 0.280001 and velocity -7, then neutral input stops. Grounding persists. 27 assertions, 26.05 seconds.
+- S28: original state/motor/solver stops at x 0.990000 against the wall and remains grounded. 25 assertions, 26.11 seconds.
 
 Two rejected observations remain preserved. First, the host runner was mistakenly dispatched while the build command was still outstanding and selected the previous current-build receipt. It was terminated; its install/launch/capture is in premature-run and never advances a checkpoint. A small T03 guard now requires a successful terminal build newer than the batch preparation and a matching APK hash before installation. Regression checks cover absent/stale/mismatched completion. Second, initial S26 lost the device connection during survival polling; report recovery also recorded a missing device. Its captured current-process crash log has no matching crash. Connectivity recovered, S27/S28 passed independently, and only S26 was retried under verification/20260919T235854.973641Z with the same APK. The original failed result remains untouched; a regression test covers retry identity and evidence preservation. This is a rejected transport observation, not proof of an application crash or a passing launch.
 
@@ -789,3 +789,15 @@ Landing-only attempt work/experiments/scene-runtime/20260926T215624.150883Z chan
 Current-process logs contain five inherited Windows shader rejection lines and the four previously explained split-screen LayerIndex warnings with stacks; no other warning/error or matched-process crash. Reviewed capture shows the foreground lab fixture, not visualized character motion. All 45 original DLL hashes remain unchanged; 20 host tests pass. RECOVERED_STATE_LANDING preserves the accepted APK/payload/stage and original failing attempt remains intact. App stopped, selector removed, stage/recipe archived.
 
 Next combine this recovered grounding with the already proven state-driven horizontal motion, then test stop/reversal/wall as independent launches. Keep original computed stats and capsule geometry. Jump input, effects/audio, continuous lifecycle, visible animated character, reciprocal linkage and physical controls remain separate gates. S51 is not retried.
+
+## J97 — Recovered grounded movement, reversal and wall contact pass
+
+Attempt work/experiments/scene-runtime/20260926T220301.266434Z combines J94 original recovered state motion with J96 original startup/gravity/landing. Pinned Starstorm2 BorgMain calls original base FixedUpdate; named-machine relationships remain those of the actual recovered prefab. The experiment retains original calculated stats, capsule geometry, source gravity -30, actual server authority and original landing callbacks. Only deterministic input and owned diagnostic geometry vary.
+
+- S59: grounded acceleration reaches x 6.759999 at speed 7 after one simulated second; neutral input stops while grounded. 361 assertions, 26.09 seconds.
+- S60: same forward movement, then two seconds of opposite input reach x -6.151999 at speed -7; neutral input stops while grounded. 362 assertions, 25.11 seconds.
+- S61: wall centered at x 2, width 1, limits the recovered half-unit-radius capsule to x 0.9899998; neutral input stops and grounding remains.361 assertions, 25.09 seconds.
+
+All three fresh launches pass. Current-process logs contain only five inherited Windows shader rejection lines and four previously explained split-screen LayerIndex warnings with stacks; no matched crash. Reviewed capture is the foreground lab mesh, not visualized character motion. Doctor/preflight, completed forced Vulkan ARM64 build and 20 host tests pass; all 45 original DLL hashes unchanged. Separate RECOVERED_GROUNDED_STOP/REVERSE/WALL receipts retain accepted evidence. App stopped, selector removed, active stage/recipe archived.
+
+The recovered character now has measured original state-driven motion under gravity/collision with actual computed stats. Roots remain inactive, simulation explicitly stepped, inventory empty, catalogs diagnostic and floor without material effects. This is not full Start/automatic simulation, reciprocal spawning, local-client/controller or L5.5 acceptance. Next inspect the recovered jump path's item, event and SfxLocator/native-audio contracts before enabling jump input; reuse J81/J82 evidence but do not assume its assembled diagnostic body covers recovered SFX. Separately bring the already accepted skin/material display into agreement with measured motion for visual evidence.
