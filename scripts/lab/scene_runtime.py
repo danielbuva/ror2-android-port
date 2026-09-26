@@ -591,6 +591,8 @@ def movement_batch_run(cases=None, retry=False):
         attempt=out/probe;attempt.mkdir();selection={'attempt':attempt_id,'id':probe};write(attempt/'selection.json',selection)
         result={'success':False,'probe':probe};pid=None
         try:
+            if probe=='body-state-ground-visual':
+                d.sh('rm','-f',runtime+'/recovered-motion-before.png',runtime+'/recovered-motion-after.png')
             d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
             launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic()
             while time.monotonic()-start<25:
@@ -609,6 +611,11 @@ def movement_batch_run(cases=None, retry=False):
             if log.exists() and pid:
                 missing=[line for line in log.read_text(errors='replace').splitlines() if re.search(r'\s'+re.escape(str(pid))+r'\s',line) and 'is not defined in this project' in line]
                 if missing:result['success']=False;result['error']='Required Unity layer missing; inspect current-process log'
+            if probe=='body-state-ground-visual':
+                try:
+                    for name in ['recovered-motion-before.png','recovered-motion-after.png']:
+                        d.cmd('pull',runtime+'/'+name,str(attempt/name))
+                except Exception as e:result['capture_error']=str(e);result['success']=False
             write(attempt/'result.json',result);results[probe]=result;print(json.dumps(result),flush=True)
     d.sh('am','force-stop',PACKAGE);d.sh('rm',runtime+'/movement-batch-selection.json')
     write(out/'batch-result.json',results)
@@ -709,3 +716,10 @@ def grounded_state_prepare(jump_items=False, cases=None, recovered=False):
     if gravity[0]!=0 or gravity[2]!=0 or gravity[1]>=0:raise RuntimeError('Unexpected gravity shape; review input')
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['sourceGravity']=gravity[1];write(stage/'Resources/MovementBatchProbe.json',cfg)
     write(out/'physics-contract.json',{'source_sha256':sha(source),'gravity':gravity,'scope':'Only measured gravity supplied during each probe and restored; collision matrix/default material unchanged','prior_art':'Starstorm2 a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8 BorgMain calls original GenericCharacterMain base ticks and ProcessJump; actual current original paths inspected','limits':('Inactive recovered body with original computed stats and subset catalogs; no full lifecycle or physical input' if recovered else 'Inactive diagnostic body/stats/catalog; no normal character lifecycle or physical input')})
+
+
+def recovered_visual_prepare():
+    grounded_state_prepare(recovered=True,cases=['body-state-ground-visual'])
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['displayAssets']=read(WORK/'scene-probe-build.json')['prefabAssets'][:6];write(stage/'Resources/MovementBatchProbe.json',cfg)
+    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')

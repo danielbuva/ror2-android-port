@@ -59,6 +59,21 @@ public sealed class CommandoMaterialPreview {
   }catch(Exception e){r.error=e.ToString();}
   finally{if(host)UnityEngine.Object.Destroy(host);foreach(var m in materials)UnityEngine.Object.Destroy(m);File.WriteAllText(Path.Combine(Application.persistentDataPath,"commando-material-probe.json"),JsonUtility.ToJson(r,true));done(r);}
  }
+ // Snapshot-only diagnostic binding; copies follow the measured body pose, without activating gameplay.
+ public static void CaptureMotion(GameObject body,AssetBundle bundle,string[] assets,string name){
+  Require(!body.activeInHierarchy&&assets.Length==6,"Invalid motion display source");var host=new GameObject("Owned motion snapshot");Material material=null;
+  try{
+   var map=new Dictionary<Transform,Transform>();Copy(body.transform,host.transform,map);var source=bundle.LoadAsset<Material>(assets[5]);var shader=Resources.Load<Shader>("CommandoMaterialPreview");Require(source&&shader&&shader.isSupported,"Motion material unavailable");material=new Material(source);material.shader=shader;material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",1);Require(material.GetTexture("_MainTex"),"Motion texture missing");
+   var renderers=body.GetComponentsInChildren<Renderer>(true);int count=0;
+   foreach(var path in assets.Skip(2).Take(3)){
+    var mesh=bundle.LoadAsset<Mesh>(path);Require(mesh,"Motion mesh missing");var src=renderers.Single(x=>x.name==mesh.name);var target=map[src.transform];Renderer dst;
+    if(src is SkinnedMeshRenderer skin){var sk=target.gameObject.AddComponent<SkinnedMeshRenderer>();sk.sharedMesh=mesh;sk.bones=skin.bones.Select(x=>map[x]).ToArray();sk.rootBone=map[skin.rootBone];sk.localBounds=skin.localBounds;sk.updateWhenOffscreen=true;dst=sk;}
+    else{target.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;dst=target.gameObject.AddComponent<MeshRenderer>();}
+    dst.sharedMaterial=material;count++;
+   }
+   Require(count==3&&host.GetComponentsInChildren<MonoBehaviour>(true).Length==0,"Motion display component contract");var cameraObject=new GameObject("Owned fixed motion camera");cameraObject.transform.SetParent(host.transform);var cam=cameraObject.AddComponent<Camera>();cam.cullingMask=1<<30;cam.clearFlags=CameraClearFlags.SolidColor;cam.backgroundColor=new Color(.055f,.07f,.09f);cam.orthographic=true;cam.orthographicSize=3.5f;cam.nearClipPlane=.01f;cam.transform.position=new Vector3(3.5f,11,18);cam.transform.LookAt(new Vector3(3.5f,11,0));Read(cam,name,1024,512);
+  }finally{host.SetActive(false);UnityEngine.Object.Destroy(host);if(material)UnityEngine.Object.Destroy(material);}
+ }
  static Transform Copy(Transform s,Transform p,Dictionary<Transform,Transform> map){var t=new GameObject(s.name).transform;t.gameObject.layer=30;t.SetParent(p,false);t.localPosition=s.localPosition;t.localRotation=s.localRotation;t.localScale=s.localScale;map[s]=t;foreach(Transform c in s)Copy(c,t,map);return t;}
- static Color[] Read(Camera c,string name){var rt=new RenderTexture(512,768,24);var oldTarget=c.targetTexture;var oldActive=RenderTexture.active;Texture2D tex=null;try{c.targetTexture=rt;c.Render();RenderTexture.active=rt;tex=new Texture2D(512,768,TextureFormat.RGB24,false);tex.ReadPixels(new Rect(0,0,512,768),0,0);tex.Apply();File.WriteAllBytes(Path.Combine(Application.persistentDataPath,name),tex.EncodeToPNG());return tex.GetPixels();}finally{c.targetTexture=oldTarget;RenderTexture.active=oldActive;rt.Release();UnityEngine.Object.Destroy(rt);if(tex)UnityEngine.Object.Destroy(tex);}}
+ static Color[] Read(Camera c,string name,int width=512,int height=768){var rt=new RenderTexture(width,height,24);var oldTarget=c.targetTexture;var oldActive=RenderTexture.active;Texture2D tex=null;try{c.targetTexture=rt;c.Render();RenderTexture.active=rt;tex=new Texture2D(width,height,TextureFormat.RGB24,false);tex.ReadPixels(new Rect(0,0,width,height),0,0);tex.Apply();File.WriteAllBytes(Path.Combine(Application.persistentDataPath,name),tex.EncodeToPNG());return tex.GetPixels();}finally{c.targetTexture=oldTarget;RenderTexture.active=oldActive;rt.Release();UnityEngine.Object.Destroy(rt);if(tex)UnityEngine.Object.Destroy(tex);}}
 }

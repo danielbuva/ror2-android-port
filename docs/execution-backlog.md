@@ -1038,3 +1038,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate accepted receipts and failures, state/milestones; no formal L5.5 advancement.
 - **DEPENDENCIES:** J94/J96; pinned Starstorm2 BorgMain original base FixedUpdate and named-machine relationships; current original motor/solver/state methods.
 - **STATUS:** S59/S60/S61 PASS — J97.
+
+## S62 — Visual agreement with recovered grounded motion
+- **TITLE:** Fixed-camera before/after captures follow actual original simulation positions.
+- **CONTEXT / OBSERVATION:** J97 proves numeric movement; current screenshots show only the lab mesh. J66 already accepts diagnostic material rendering of recovered assets.
+- **HYPOTHESIS:** Renderer-only copies at the actual body poses can visually corroborate original movement without activating broad gameplay.
+- **TASK:** Reuse grounded movement/stop; capture before and after using three recovered meshes/textures, fixed camera and accepted shader.
+- **CONSTRAINTS:** Direct diagnostic display binding only, no skin-loader or animation claim. No gameplay components on copies; simulation stats/caches unchanged. Raw captures remain ignored.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing material preview, movement probe, thin preparation and two-file capture collection.
+- **TEST COMMAND:** `./dev prototype --action body-visual-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Existing numeric grounded motion passes; actual stop position 7; both captures belong to this launch, visibly contain recovered character at distinct positions matching fixed-camera projection.
+- **FAILURE EVIDENCE TO CAPTURE:** First binding/render/simulation exception, missing capture, current-process logs/crash and pixel evidence.
+- **STATE/JOURNAL UPDATES REQUIRED:** Distinguish diagnostic display from activated/animated character; preserve failures and accepted capture receipt.
+- **DEPENDENCIES:** J66/J97; pinned Starstorm2 separates body/display skin controllers; accepted authored renderer-only preview. No new native shader/middleware route.
+- **STATUS:** S62 PASS — J98. Exact projected displacement and reviewed recovered shape agree; three one-unit channel pixel differences prevent strict pixel equality.

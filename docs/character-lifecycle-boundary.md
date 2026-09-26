@@ -77,3 +77,9 @@ Combine this context with recovered state-driven horizontal motion next; isolate
 Recovered original state/motor/solver now combine ground contact with forward movement, reversal and wall stopping. Measured forward displacement is 6.76 in one simulated second; reversal reaches -6.152 after two more seconds; wall contact stops at 0.99. Neutral input stops in all cases and grounding remains.
 
 Next review recovered jump item/event/SfxLocator dependencies against J81/J82 before running jump input. The earlier assembled fixture lacked recovered sound fields, so it cannot establish the Android native-audio path. Visual agreement using the accepted skin/material display is also outstanding; current screenshots show only the lab fixture. Preserve inactive/subset-catalog and full-lifecycle/client/control limits.
+
+## J98 visible pose agreement and jump audit
+
+The recovered character is now visible in two fixed-camera captures at its actual measured start/stop poses. Original simulation moves seven units; diagnostic renderer-only copies shift 512 pixels as projected. Display is bind pose with direct mesh/material binding, not skin-loader/animation or live controller integration.
+
+The current recovered jumpSound field is empty; original GenericCharacterMain guards that call. Landing and fall-damage sound fields are populated. Next test the normal recovered jump with actual runtime field/count checks and original input/event/landing behavior. Do not clear sound fields, suppress callbacks or treat the earlier assembled-body jump as recovered-character acceptance. Bonus-jump effects and surface/audio remain separate.

@@ -63,3 +63,5 @@ J94 passes S53–S55 on Android: recovered named Body main-state entry/exit, ori
 J95/J96 pass S56–S58: recovered original motor Start/event, source-gravity free fall, and short-drop floor contact with original landing/server callbacks. Initial floor-overlap failure is preserved; corrected clearance yields one landing and stable grounding. Inactive explicitly stepped fixture, no material effects/audio or full L5.5 acceptance.
 
 J97 passes S59–S61: recovered original grounded movement/stop, reversal and wall collision with original computed stats/capsule/source gravity. Three fresh Android processes pass; formal L5.5 remains open because simulation is explicitly stepped on inactive roots, without visual animated-character, reciprocal/client or physical-control acceptance.
+
+J98 adds S62 visual agreement: recovered bind-pose display copies at original simulation start/stop positions produce the expected 512-pixel displacement under a fixed camera. Original grounded motion remains passing. This is two diagnostic captures, not animation, automatic lifecycle or controller acceptance; formal L5.5 remains open.
