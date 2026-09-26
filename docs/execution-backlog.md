@@ -1052,3 +1052,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Distinguish diagnostic display from activated/animated character; preserve failures and accepted capture receipt.
 - **DEPENDENCIES:** J66/J97; pinned Starstorm2 separates body/display skin controllers; accepted authored renderer-only preview. No new native shader/middleware route.
 - **STATUS:** S62 PASS — J98. Exact projected displacement and reviewed recovered shape agree; three one-unit channel pixel differences prevent strict pixel equality.
+
+## S63–S65 — Recovered normal jump
+- **TITLE:** Recovered jump context, original event dispatch, input-driven jump and landing.
+- **CONTEXT / OBSERVATION:** J97 proves grounded recovered motion; J98 finds original empty jumpSound but populated landing sound. J81/J82 used an assembled body with supplied jump stats.
+- **HYPOTHESIS:** Actual recovered jump definitions, empty adopted inventory and computed jump power support a normal original jump without native audio changes.
+- **TASK:** Fresh launches: S63 context; S64 original server jump event; S65 input press/release, rise and landing.
+- **CONSTRAINTS:** No stat assignment, sound clearing, event suppression or fabricated authority. Six-item diagnostic catalog, inactive explicitly stepped roots, plain floor; no bonus-jump effects/audio or controller claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing probe/catalog setup and thin CLI selector; ignored recovered jump-item closure/evidence.
+- **TEST COMMAND:** `./dev prototype --action body-jump-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual empty jumpSound and populated landingSound; zero counts for recovered jump items; original jump power 15/count 1; event dispatch once; input jump rises 3–4 units, lands at prior ground height, resets jump count with one jump and two total landing events.
+- **FAILURE EVIDENCE TO CAPTURE:** First content/input/native/event exception, computed values, event counts/peak, current-process logs/crash/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Independent accepted receipts; preserve failures and formal L5.5 limits.
+- **DEPENDENCIES:** J81/J82/J96–J98; pinned Starstorm2 BorgMain original ProcessJump/FixedUpdate calls; current original GenericCharacterMain, CharacterBody and SfxLocator contract.
+- **STATUS:** S63 PASS — J99. S64/S65 FAILED: zero observed local jump events. Measure hasAuthority versus effective authority and establish actual local client/ownership before retry; no flag injection or event suppression.

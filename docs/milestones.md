@@ -65,3 +65,5 @@ J95/J96 pass S56–S58: recovered original motor Start/event, source-gravity fre
 J97 passes S59–S61: recovered original grounded movement/stop, reversal and wall collision with original computed stats/capsule/source gravity. Three fresh Android processes pass; formal L5.5 remains open because simulation is explicitly stepped on inactive roots, without visual animated-character, reciprocal/client or physical-control acceptance.
 
 J98 adds S62 visual agreement: recovered bind-pose display copies at original simulation start/stop positions produce the expected 512-pixel displacement under a fixed camera. Original grounded motion remains passing. This is two diagnostic captures, not animation, automatic lifecycle or controller acceptance; formal L5.5 remains open.
+
+J99 passes S63 recovered jump prerequisites (actual sound/item/count/computed-stat context). S64/S65 fail because no local jump event is observed in the server-only recovered setup; no recovered jump acceptance. Effective movement authority differs from original HLAPI local event ownership. Real client/owner semantics must be tested next; formal L5.5 remains open.

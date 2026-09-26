@@ -83,6 +83,9 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='body-jump-prepare':
+   from scene_runtime import grounded_state_prepare
+   grounded_state_prepare(recovered=True,jump_items=True,cases=['body-state-jump-context','body-state-jump-event','body-state-jump-input'])
   elif a.action=='body-visual-prepare':
    from scene_runtime import recovered_visual_prepare
    recovered_visual_prepare()

@@ -83,3 +83,9 @@ Next review recovered jump item/event/SfxLocator dependencies against J81/J82 be
 The recovered character is now visible in two fixed-camera captures at its actual measured start/stop poses. Original simulation moves seven units; diagnostic renderer-only copies shift 512 pixels as projected. Display is bind pose with direct mesh/material binding, not skin-loader/animation or live controller integration.
 
 The current recovered jumpSound field is empty; original GenericCharacterMain guards that call. Landing and fall-damage sound fields are populated. Next test the normal recovered jump with actual runtime field/count checks and original input/event/landing behavior. Do not clear sound fields, suppress callbacks or treat the earlier assembled-body jump as recovered-character acceptance. Bonus-jump effects and surface/audio remain separate.
+
+## J99 ownership boundary in recovered jump
+
+Runtime jumpSound is actually empty and landingSound remains populated; two recovered jump items have zero counts and original computed jump power/count are correct. Both direct original event dispatch and input-jump acceptance observe no local onJump event. Input impulse was not independently recorded; do not infer it from the combined failed assertion.
+
+Original TriggerJumpEventGlobally gates local delivery on hasAuthority. The recovered prefab requests local-player authority, whereas the server-only effective-authority fallback can still drive movement without a client owner. This source-backed distinction needs direct runtime observations and a real local client/ownership experiment. Do not force flags, change the prefab setting or invoke events manually. Network/client serialization and player/master/body relationships remain separate dependencies.
