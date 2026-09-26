@@ -71,3 +71,5 @@ J99 passes S63 recovered jump prerequisites (actual sound/item/count/computed-st
 J100 confirms recovered raw authority=false/effective=true with no client owner. J101 passes minimal original local connection/readiness and authority assignment/message delivery/removal with clean teardown. The earlier teardown-error runs remain rejected. Recovered-object client callbacks and jump acceptance are next; formal L5.5 remains open.
 
 J102 observes recovered client ownership and original input-driven jump/landing, but rejects S69–S72 acceptance because readiness serialization lacks the active state catalog index and logs packet failure. No checkpoint advances. Entity-state catalog/serialization is the next bounded prerequisite; formal L5.5 remains open.
+
+J103/J105 pass original bounded state-catalog serialization and recovered body initial serialization independently. Client readiness still fails; J104 identifies uninitialized master entitlement-tracker storage. Entitlement semantics must remain truthful during any lifecycle follow-up. Formal L5.5 remains open; no clean client/jump milestone advancement.

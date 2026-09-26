@@ -857,3 +857,29 @@ Manual current-process log review rejects all four runs: original ClientScene.Re
 Current original EntityStateCatalog.SetElements is a coroutine which sorts types and builds their indices before configurations. Next inspect pinned community content/state registration, establish the bounded required state set through original initialization, and verify index/type and serialization behavior before retrying client readiness. Do not manually assign state indices or suppress logged errors. Preserve this failed attempt unchanged.
 
 Doctor/preflight, completed forced Vulkan build and 20 host tests pass. All 45 original DLL hashes remain unchanged. App stopped and selector removed by the runner; stage, recipe, build receipt and raw evidence archived locally. Formal L5.5 remains open; no automatic lifecycle, full player-session, animated view or physical-control claim.
+
+## J103 — Original state catalog passes; separate readiness exception remains
+
+Attempt work/experiments/scene-runtime/20260926T225409.476505Z runs S73 and four S69–S72 retries. Pinned R2API.ContentManagement ContentAddition.AddEntityState rejects registration after catalog initialization and validates concrete state types. The harness instead calls the preserved game's original SetElements coroutine for the single measured active diagnostic state, with no configuration overrides, and clears its owned catalog after teardown. It refuses a preexisting catalog. No private indices are assigned.
+
+S73 passes 375 assertions over 25.08 seconds: original type/index/instance identity, original NetworkStateMachine initial serialization, decoded state identities and complete byte consumption. RECOVERED_STATE_CATALOG retained. This does not prove a full content pack or remote peer deserialization.
+
+Client, owner, event and input retries pass their 382/386/387/389 assertions but remain rejected: the missing GenericCharacterMain index error disappears, while the original generic packet-handler error persists. Source inspection confirms missing-index lookup logs and returns Invalid rather than throwing; the independent exception must be exposed before client acceptance. Current-process logs otherwise retain only the five known shader errors and four split-screen layer warning stacks; no matched crash. Twenty host tests pass and 45 DLLs remain unchanged. App stopped, selector removed, evidence/stage archived.
+
+Next S74/S75 directly invoke original body/master serializers in the original cached component order, saving the current component and retaining the full exception. This small diagnostic replaces the handler's lost exception detail without altering its behavior or claiming readiness success.
+
+## J104 — Original master serializer exposes uninitialized entitlement tracker; body probe needs lifecycle parity
+
+Attempt work/experiments/scene-runtime/20260926T225920.430820Z runs S74/S75 independently, preserving the original cached NetworkIdentity serializer order and shared writer. Both fail at 365 assertions. The body throws NullReferenceException in SkillLocator.OnSerialize. This diagnostic omitted original SkillLocator.Awake, whereas the actual client experiment already invokes it. Therefore this body failure does not explain the client readiness failure. Retry body serialization with the same existing original Awake/cache prerequisite; preserve the mismatched diagnostic.
+
+The master throws NullReferenceException in PlayerCharacterMasterControllerEntitlementTracker.OnSerialize through NetworkExtensions.WriteBitArray. Source inspection identifies its uninitialized entitlementsSet: original Awake allocates it to EntitlementCatalog size and subscribes to the controller's network-user linkage event. Actual entitlement acquisition is a separate path through EntitlementManager and network-user checks. No entitlement value, ownership success or authenticated user is fabricated. This is a concrete master serialization prerequisite; do not solve it by dropping the tracker, suppressing serialization or asserting entitlements. Audit original catalog/allocation and unavailable-user behavior before any follow-up initialization experiment.
+
+All 45 original DLLs unchanged, 20 host tests pass; current-process logs retain only known shader/layer messages and no matched crash. Probe exceptions are captured in their result files. No capability checkpoint advances from these failures. App stopped, selector removed and stage/build/evidence archived. Only the body parity correction is selected for immediate retry; unchanged master failure is not repeated.
+
+## J105 — Recovered body initial serialization passes with matching lifecycle context
+
+Attempt work/experiments/scene-runtime/20260926T230303.396867Z retries only S74, adding the same original SkillLocator.Awake/cache check already present before client readiness. All original body NetworkBehaviour initial serializers complete in their cached NetworkIdentity order using a shared writer; payload is nonempty. 378 assertions over 26.14 seconds. RECOVERED_BODY_SERIALIZATION retained alongside J103's independent state catalog checkpoint. This is not a full peer-deserialization or client-readiness proof.
+
+Current-process logs contain only the five inherited shader errors and four known split-screen layer warning stacks; no matched crash. Twenty host tests pass; all 45 original DLL hashes unchanged. App stopped, selector removed and stage/build/evidence archived. J104's body mismatch remains preserved and is not attributed to the original client failure.
+
+Next audit original master entitlement catalog/allocation and absent-network-user behavior before invoking a justified lifecycle prerequisite. The measured failure is null serialization storage, not evidence of valid ownership. Do not supply successful entitlement/authentication results, omit the tracker or bypass service checks. J104's unchanged master failure is not retried this pass; formal L5.5 remains open.

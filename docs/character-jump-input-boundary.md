@@ -24,3 +24,6 @@ Four accepted probes span two receipted builds; null-array failures remain prese
 
 ### J102: recovered owner and jump observations, acceptance withheld
 Original local client authority assignment produces actual body ownership; original jump input emits one event, rises approximately 3.64 units and lands with reset jump count. All four recovered-client cases nevertheless log missing GenericCharacterMain catalog index during readiness serialization followed by packet-handler failure. These are diagnostic observations, not a clean jump proof. Initialize and verify the required original state catalog before repeating acceptance; preserve prefab flags and original authority APIs.
+
+### J103–J105: serialization prerequisites separated
+Original state catalog initialization removes the missing-index error and passes identity/payload assertions. Recovered body initial serializers pass after using the existing original SkillLocator Awake prerequisite. The separate master serializer throws on uninitialized entitlement-tracker storage; this requires an original lifecycle/catalog audit without inventing entitlements or bypassing checks. Client readiness and integrated jump acceptance remain unproven despite J102 numeric jump observations.

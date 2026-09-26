@@ -1094,3 +1094,31 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate outcomes and receipts; preserve failed attempts; formal L5.5 remains open.
 - **DEPENDENCIES:** J99–J101; pinned DebugToolkit original NetworkServer spawning observation; current original SkillLocator Awake and authority callbacks, ClientScene and NetworkIdentity APIs.
 - **STATUS:** S69–S72 acceptance FAILED — J102. All probe assertions pass, but original readiness serialization logs missing GenericCharacterMain catalog index and packet-handler failure. Preserve numeric jump observations without advancing capability receipts. Next isolate original entity-state catalog initialization and serialization.
+
+## S73 — Original state catalog and serialization prerequisite
+- **TITLE:** Initialize measured active state identity before recovered client readiness.
+- **CONTEXT / OBSERVATION:** J102 lacks GenericCharacterMain index during original NetworkStateMachine serialization; handler failure may have further causes.
+- **HYPOTHESIS:** Original catalog initialization resolves the first error and permits a clean state payload.
+- **TASK:** Separate catalog/serialized-index/byte-consumption probe, then fresh S69–S72 retries with the same prerequisite.
+- **CONSTRAINTS:** One measured active diagnostic type, empty configuration set; original SetElements coroutine assigns indices. Refuse existing catalog and clear owned diagnostic catalog after teardown. No full content-pack or remote peer claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement probe, thin CLI, ignored build/evidence.
+- **TEST COMMAND:** `./dev prototype --action state-catalog-prepare`; preflight; forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Original type/index/instance round trip, serialized machine identities and full byte consumption; retries additionally require clean readiness/ownership/jump results and current-process log review.
+- **FAILURE EVIDENCE TO CAPTURE:** First catalog/serialization exception, subsequent packet error, logs/crash and unchanged DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve independent outcomes and failed attempts; advance no capability on logged errors.
+- **DEPENDENCIES:** J102; pinned R2API.ContentManagement ContentAddition.AddEntityState checks registration before catalog initialization; original EntityStateCatalog.SetElements and NetworkStateMachine.OnSerialize.
+- **STATUS:** S73 PASS — J103; S69–S72 remain rejected due separate packet-handler failure.
+
+## S74–S75 — Recovered identity serializer attribution
+- **TITLE:** Attribute the remaining readiness exception to original body/master serializers.
+- **CONTEXT / OBSERVATION:** S73 removes missing state-index errors, but client readiness still logs only the original handler's generic failure.
+- **HYPOTHESIS:** A recovered component's uninitialized serialization dependency throws inside the handler.
+- **TASK:** Separate fresh body/master launches; invoke each original OnSerialize in original cached NetworkIdentity component order with a shared writer, saving component identity before invocation.
+- **CONSTRAINTS:** No replacement serializer, suppressed failure, private gameplay assignment or network-compatibility claim. Preserve original exception as inner exception. This is direct serialization diagnosis, not a client connection.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing probe and CLI; ignored diagnostic evidence.
+- **TEST COMMAND:** `./dev prototype --action recovered-serialization-prepare`; preflight; forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** All original serializers finish and produce a nonempty payload independently for each identity; runtime logs contain no new unexplained errors.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact component, original exception/stack, logs, crashes, DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record body/master outcomes independently; isolate first required lifecycle/catalog dependency before retrying readiness.
+- **DEPENDENCIES:** S73/J103; pinned DebugToolkit original network spawning context, current original NetworkIdentity.UNetSerializeAllVars sequential dispatch and NetworkConnection.InvokeHandler catch behavior.
+- **STATUS:** S74 PASS after parity correction — J105 (`recovered-body-serialization-retry-prepare`). J104 body mismatch preserved. S75 FAILED: original master entitlement tracker serializes uninitialized array; preserve entitlement checks and audit required allocation/catalog before extending.
