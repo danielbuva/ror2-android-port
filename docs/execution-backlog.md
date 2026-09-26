@@ -1122,3 +1122,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Record body/master outcomes independently; isolate first required lifecycle/catalog dependency before retrying readiness.
 - **DEPENDENCIES:** S73/J103; pinned DebugToolkit original network spawning context, current original NetworkIdentity.UNetSerializeAllVars sequential dispatch and NetworkConnection.InvokeHandler catch behavior.
 - **STATUS:** S74 PASS after parity correction — J105 (`recovered-body-serialization-retry-prepare`). J104 body mismatch preserved. S75 FAILED: original master entitlement tracker serializes uninitialized array; preserve entitlement checks and audit required allocation/catalog before extending.
+
+## S76 — Original master tracker allocation without a network user
+- **TITLE:** Original tracker lifecycle prerequisite and recovered client retries.
+- **CONTEXT / OBSERVATION:** J104 master serialization throws on null entitlement storage. Original Awake allocates storage from the catalog; entitlement updates require a network user.
+- **HYPOTHESIS:** Original Awake repairs storage while preserving the diagnostic's unavailable user/entitlement state.
+- **TASK:** Verify original allocation and absent-user update, retry S75, then independently retry S69–S72.
+- **CONSTRAINTS:** Keep existing empty diagnostic catalog unchanged and explicitly assert its scope. No ownership/authentication/entitlement success, content authorization, tracker removal or bypass. Empty storage is not entitlement-system acceptance; full catalog/user linkage remains untested.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing harness and CLI; ignored device evidence.
+- **TEST COMMAND:** `./dev prototype --action master-tracker-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Original allocation matches catalog, absent-user update preserves storage and no user; original master serialization completes. Client retries separately require clean readiness, actual ownership and original jump assertions.
+- **FAILURE EVIDENCE TO CAPTURE:** Original allocation/serializer/callback exception, logs/crash, catalog/user observations and DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts and first failures; no platform or formal L5.5 advancement.
+- **DEPENDENCIES:** J103–J105; community prior-art networking guidance and pinned DebugToolkit Code/Util.cs actual user/master queries; current EntitlementCatalog and PlayerCharacterMasterControllerEntitlementTracker original methods. Community entitlement alterations explicitly excluded.
+- **STATUS:** S76 and S75 PASS — J106; S69–S72 clean retries PASS independently. Empty diagnostic entitlement catalog and absent network user only; no entitlement-service or formal L5.5 acceptance.

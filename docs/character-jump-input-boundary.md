@@ -27,3 +27,6 @@ Original local client authority assignment produces actual body ownership; origi
 
 ### J103–J105: serialization prerequisites separated
 Original state catalog initialization removes the missing-index error and passes identity/payload assertions. Recovered body initial serializers pass after using the existing original SkillLocator Awake prerequisite. The separate master serializer throws on uninitialized entitlement-tracker storage; this requires an original lifecycle/catalog audit without inventing entitlements or bypassing checks. Client readiness and integrated jump acceptance remain unproven despite J102 numeric jump observations.
+
+### J106: recovered client and original jump accepted
+Original master tracker Awake resolves its null serialization storage without changing entitlement state; absent-user update returns normally. Together with original state catalog initialization, readiness has no new logged errors. Actual body ownership delivers one original jump event; original input/state/motor/solver rises 3.6375 units, lands and resets jump count. Separate accepted receipts preserve readiness, ownership, event and input results. Scope remains inactive explicitly stepped roots and diagnostic catalogs, without reciprocal spawn, real user/entitlement services or physical controls.
