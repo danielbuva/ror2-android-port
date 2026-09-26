@@ -1136,3 +1136,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts and first failures; no platform or formal L5.5 advancement.
 - **DEPENDENCIES:** J103–J105; community prior-art networking guidance and pinned DebugToolkit Code/Util.cs actual user/master queries; current EntitlementCatalog and PlayerCharacterMasterControllerEntitlementTracker original methods. Community entitlement alterations explicitly excluded.
 - **STATUS:** S76 and S75 PASS — J106; S69–S72 clean retries PASS independently. Empty diagnostic entitlement catalog and absent network user only; no entitlement-service or formal L5.5 acceptance.
+
+## S77–S78 — Original reciprocal spawn boundary
+- **TITLE:** Untouched master loadout and original recovered SpawnBody entry.
+- **CONTEXT / OBSERVATION:** J106 accepts local client/jump simulation, but the diagnostic still links body to master in one direction only.
+- **HYPOTHESIS:** Default loadout remains serializable; original SpawnBody will either establish the reciprocal relationship or expose its first missing lifecycle dependency.
+- **TASK:** Two fresh launches: S77 default loadout round trip; S78 original SpawnBody with the actual inactive recovered prefab, existing original team/stats/Run context and default master loadout.
+- **CONSTRAINTS:** No private master body-reference writes, fake spawn, or substituted loadout logic. Inactive prefab intentionally retains the bounded lifecycle; success is not automatic active gameplay. Clean up only newly created body objects belonging to this isolated invocation, including partial failures.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing probe/CLI, ignored device evidence.
+- **TEST COMMAND:** `./dev prototype --action reciprocal-spawn-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** S77 original default loadout serializes/deserializes with value equality and full byte consumption. S78 original spawn returns a distinct body with reciprocal master/body link and actual server object mapping, without new unexplained errors.
+- **FAILURE EVIDENCE TO CAPTURE:** Original first exception, actual lifecycle phase, logs/crash and DLL hashes; do not infer reciprocal success from a partial clone.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate pass/failure receipts; preserve partial-spawn evidence and identify the next lifecycle dependency.
+- **DEPENDENCIES:** J106; pinned DebugToolkit PlayerCommands calls original master.Respawn and queries actual body/master; current CharacterMaster.SpawnBody, CharacterBody.SetLoadoutServer, SkillLocator.ApplyLoadoutServer and Run notification.
+- **STATUS:** S77 PASS — J107. S78 FAILED — J107–J109. Observation-only retries (`reciprocal-spawn-observe-prepare`) confirm missing clone Awake caches and no actual server registration; original body initialization lifecycle is the next prerequisite.
