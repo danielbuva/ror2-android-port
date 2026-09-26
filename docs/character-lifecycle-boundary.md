@@ -59,3 +59,9 @@ Next test original team-level-derived stat changes, then recovered motor/state s
 Recovered solver binding and motor authority now consume original computed acceleration 80/speed 7 in PreMove; cap/braking pass without replacing stats. Original state-driven solver displacement on this recovered body remains next. Full Start and reciprocal/client relationships remain separate.
 
 Team level-up reaches the original LevelUpEffectManager subscriber, which accesses the absent application singleton. TeamCatalog static initialization also tries legacy effect loads and logs missing Addressables RuntimeData. Preserve the failed launch. Before retrying, inspect actual team effect closure and legitimate audio/application context; do not suppress subscriber/sound or infer level-two success from partial team mutation.
+
+## J94 recovered state-motion acceptance
+
+The existing recovered Body machine and InputBankTest now run original GenericCharacterMain entry/exit, input gathering and state-driven motor/solver motion with original computed stats. Three fresh Android launches pass. Direction input produces x5.844 after one simulated second and neutral input stops at x7. Roots stay inactive; simulation is stepped explicitly, without gravity or collision.
+
+Next inspect original recovered motor Start and landing callback dependencies, then add gravity and floor collision separately. Preserve the existing state/input relationships and computed stats. Visual character motion, automatic full lifecycle, reciprocal spawning and client/controller acceptance remain unproven.

@@ -789,9 +789,9 @@ Shared task contract:
 
 | ID / TITLE | TASK / PASS CONDITION | STATUS |
 | --- | --- | --- |
-| S12 — Original integrated motion | Original acceleration gives 4.62m in 1s at diagnostic acceleration10/speed7, then brakes to zero. | PASS — J72 |
+| S12 — Original integrated motion | Original acceleration gives 4.62m in 1s at diagnostic acceleration10/speed 7, then brakes to zero. | PASS — J72 |
 | S13 — Original wall callback | Original motor/solver stops at wall and clears disable-air-control collision flag. | PASS — J73, corrected initial-velocity fixture |
-| S14 — Original Jump method | Diagnostic speed7/power5 produces velocity(7,5,0), integrated for0.5s without gravity. | PASS — J72 |
+| S14 — Original Jump method | Diagnostic speed 7/power5 produces velocity(7,5,0), integrated for0.5s without gravity. | PASS — J72 |
 | S15 — Original landing boundary | Execute original ground/landing callbacks; stable grounding without exceptions passes, otherwise classify first missing dependency. | FAILED — J72 original OnLanded null-reference; game-wide context unresolved |
 
 ## S16–S19 — Landing context batch
@@ -991,8 +991,22 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **CONSTRAINTS:** Inactive roots, subset catalogs, no direct stat assignment, no reciprocal cache injection. No solver translation/full Start/controller acceptance.
 - **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing MovementBatchProbe, thin CLI selector, ignored stage/evidence.
 - **TEST COMMAND:** `./dev prototype --action body-level-motor-prepare`; preflight and completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
-- **PASS CONDITION:** Level two health143/damage14.4 with one level-up event; reset110/12 with no extra level-up. Motor uses original acceleration and reaches speed7 then stops, with actual recovered solver/authority.
+- **PASS CONDITION:** Level two health143/damage14.4 with one level-up event; reset110/12 with no extra level-up. Motor uses original acceleration and reaches speed 7 then stops, with actual recovered solver/authority.
 - **FAILURE EVIDENCE TO CAPTURE:** First compilation/runtime exception, dirty flags/events/numeric results, current-process logs/crashes and capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate capability receipts, preserve failure, update state/milestones without formal L5.5 advancement.
 - **DEPENDENCIES:** J92; pinned DebugToolkit CurrentRun actual TeamComponent membership observation, current original TeamManager/CharacterBody/CharacterMotor signatures and calculations.
 - **STATUS:** S52 PASS — J93; S51 FAILED at original application/effect context. Retry only after measured TeamCatalog legacy loads and application/audio dependencies are addressed.
+
+## S53–S55 — Recovered main-state input and solver movement
+- **TITLE:** Existing Commando Body state machine consumes original input and computed stats.
+- **CONTEXT / OBSERVATION:** J93 proves recovered motor binding and computed-stat acceleration; state motion previously used an assembled diagnostic body.
+- **HYPOTHESIS:** The recovered named Body machine and input component can run their original main state with the established selective lifecycle.
+- **TASK:** Three fresh processes: S53 entry/exit; S54 input gathering and claimed jump exclusion; S55 state-driven free displacement and braking.
+- **CONSTRAINTS:** Inactive roots, diagnostic catalogs, no direct stat replacement or injected body caches. Free-space solver probe without gravity/collision; no full Start, client or controller claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** MovementBatchProbe, thin CLI selector, ignored stage/evidence.
+- **TEST COMMAND:** `./dev prototype --action body-state-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual named machine/input identity and authority; original state input assertions; original solver moves more than 5 and less than 7 units in one simulated second, reaches speed 7, then stops on neutral input; original state exit clears movement.
+- **FAILURE EVIDENCE TO CAPTURE:** Per-case first state/cache/animation/input/motor exception, position/velocity, current-process logs and crash/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts only for accepted cases; preserve first failures and formal L5.5 limits.
+- **DEPENDENCIES:** J92/J93; pinned Starstorm2 SS2VanillaSurvivor named-machine and network relationships, current recovered mainStateType and original state/lifecycle source.
+- **STATUS:** S53/S54/S55 PASS — J94.
