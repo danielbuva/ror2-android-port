@@ -45,3 +45,11 @@ Original team experience initialization/thresholds, recovered team/hurtbox membe
 RecalculateStats remains unaccepted. The first attempt lacked GenericSkill.Awake; the second reached effect bounds without CharacterMotor.Awake; the third reaches UpdateKnockBackHitVisualsAndGracePeriod, which directly dereferences two absent DLC2 BuffDefs. These are distinct measured dependencies, not repeated unchanged failures. Neither partial values nor absence of a crash passes the completion assertion.
 
 Next recover bdKnockUpHitEnemies and bdKnockUpHitEnemiesJuggleCount from the original KnockBackHitEnemies directory, verify typed identities and catalog indices separately, and allocate body buff storage after this diagnostic catalog is populated. Restore both name mappings and arrays afterward. Trace the grounded/authority branch before retrying the original handler/stat calculation. Do not suppress its callback, inject completed stats or activate full startup. Keep level-one expected values and completion-event assertions unchanged.
+
+## J92 base-stat acceptance
+
+The two recovered knockback BuffDefs now receive original indices before body Awake allocates storage. The original zero-buff handler and original RecalculateStats pass independently; level-one results are health 110, speed 7, damage 12 and jump 15, with one completion event. The handler uses the original non-authoritative grounding branch; neither solver motion nor full motor authority is established here.
+
+J91 initially failed earlier because its bundle omitted ModelLocator serialized fields despite unchanged original files. Regenerated staging/import restores those fields; buff-disabled/enabled controls both pass. The exact import-cache trigger is still unisolated, and the rejected payload remains archived. Do not patch the original prefab or clear broad caches based on that observation.
+
+Next test original team-level-derived stat changes, then recovered motor/state setup using computed stats. Keep subset catalogs and selective inactive lifecycle explicit; reciprocal spawning, loadout/body catalog, client/player semantics and formal L5.5 remain separate.

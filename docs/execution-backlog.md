@@ -961,8 +961,24 @@ J83 retains the authored compile failures; J84 accepts all four corrected lifecy
 | S43 — Original team experience context | PASS — J88 |
 | S44 — Recovered body team membership | PASS — J88 |
 | S45 — Minimal original Run singleton lifecycle | PASS — J88 |
-| S46 — Recovered original base stats | FAILED — J88/J89/J90 at distinct dependencies; next: two measured BuffDefs |
+| S46 — Recovered original base stats | PASS — J92; earlier failed attempts preserved |
 
 S47 — Recovered default skill setup inherits the S43–S46 contract and depends on J88's observed missing SkillDef. Hypothesis/task: original GenericSkill.Awake assigns the recovered family's default, original body and named state machine, with finite cooldown; original OnDestroy unassigns. No direct skill/cooldown substitution. Test `./dev prototype --action body-stats-retry-prepare`, completed forced Vulkan build, then existing batch runner: independent S47 followed by S46 retry. Preserve first assignment/cleanup exception and separate original-failure evidence. STATUS: PASS — J89.
 
 S48 — Recovered motor capsule setup inherits the S43–S46 contract and depends on J89's observed missing capsule cache. Hypothesis/task: original CharacterMotor.Awake reads actual recovered collider dimensions, making original body effect-bound queries valid; original OnDestroy returns its pooled collection. Test `./dev prototype --action body-stats-motor-prepare`, completed forced Vulkan build, then batch runner: independent S48 and S46 retry. Preserve first exception and both earlier failed stat attempts. No solver movement/full motor Start claim. STATUS: PASS — J90.
+
+## S49–S50 / S46 retry — Required knockback buff context
+- **CONTEXT:** J90 stat calculation reaches a handler that directly dereferences two absent BuffDefs.
+- **OBSERVATION:** Original BuffCatalog indexes definitions; CharacterBody.Awake allocates catalog-sized buffers. The empty-buff handler queries the motor's original non-authoritative netIsGrounded branch in this inactive fixture.
+- **HYPOTHESIS:** Actual indexed definitions and correctly sized storage permit zero-buff handler execution and original stat completion.
+- **TASK:** S49 typed definition/catalog/storage identity; S50 original parameterless handler; S46 original stats. Separate fresh launches.
+- **CONSTRAINTS:** No method replacement, buff-count injection or suppressed effect handler. Diagnostic two-buff catalog, inactive roots; no authoritative motor/full simulation claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing closure preparation and movement probe; two ignored original BuffDefs and dependencies.
+- **TEST COMMAND:** `./dev prototype --action body-stats-buffs-prepare`; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Original indexed identities, catalog-sized zero buffers, unchanged zero counts after handler; S46 original completion event and unchanged expected base stats. Catalog name mappings and prior arrays restore.
+- **FAILURE EVIDENCE TO CAPTURE:** Per-process first exception, method phase, callback/results, current-process logs and crash capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts and preserved failures; no formal L5.5 advancement.
+- **DEPENDENCIES:** J90; pinned R2API ContentAddition.AddBuffDef pre-catalog content contract; current original BuffCatalog/CharacterBody/CharacterMotor.
+- **STATUS:** S49/S50 and S46 retry PASS — J92; J91 import/reference failure preserved.
+
+J91 supporting observation: `body-buffs-reference-prepare` adds one precise reference failure report and a buff-disabled Awake control alongside S49. After the controls pass, `body-buffs-methods-run` executes S50/S46 using the same APK and separate verification evidence. No generic cache redesign or original asset repair was added; the first malformed serialized payload remains rejected.

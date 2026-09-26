@@ -615,7 +615,7 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False):
+def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False):
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -639,6 +639,9 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
         roots['batteryAsset']=export/'Assets/RoR2/Base/Equipment/QuestVolatileBattery/QuestVolatileBattery.asset'
     if stats:
         roots.update({'glassAsset':export/'Assets/RoR2/Base/Artifacts/Glass/Glass.asset','voidEquipmentAsset':export/'Assets/RoR2/DLC1/Elites/EliteVoid/EliteVoidEquipment.asset','potionAsset':export/'Assets/RoR2/Base/Equipment/LunarPotion/LunarPotion.asset'})
+    if stat_buffs:
+        for key,name in [('knockBuffAsset','bdKnockUpHitEnemies'),('juggleBuffAsset','bdKnockUpHitEnemiesJuggleCount')]:
+            roots[key]=export/('Assets/RoR2/DLC2/Items/KnockBackHitEnemies/'+name+'.asset')
     pending=list(roots.values());seen=set();rows=[];asset=None;root_assets={}
     ui_remaps={row['from']:row['to'] for row in a.get('ui_remaps',[])};ui_edits=[]
     while pending:
@@ -677,6 +680,7 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
         if len(candidates)!=1 or 'm_IsActive: 1' not in parts[candidates[0]]:raise RuntimeError('Unexpected original PlayerMaster root')
         before=sha(master);parts[candidates[0]]=parts[candidates[0]].replace('m_IsActive: 1','m_IsActive: 0');master.write_text(''.join(parts))
         write(out/'master-isolation.json',{'source_sha256':before,'staged_sha256':sha(master),'scope':'Only original PlayerMaster root deactivated before import; lifecycle called selectively by diagnostic probe'})
+    cfg['statBuffs']=stat_buffs
     write(stage/'Resources/MovementBatchProbe.json',cfg)
     recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].extend(root_assets.values());write(WORK/'scene-probe-build.json',recipe)
     write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'roots':root_assets,'ui_remaps':ui_edits,'scope':'Measured original artifact/item definitions and serialized closure; diagnostic subset catalogs only'})

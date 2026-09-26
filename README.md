@@ -143,3 +143,7 @@ Original stat batch: `./dev prototype --action body-stats-prepare`, completed fo
 `body-stats-retry-prepare` selects the original recovered skill-initialization probe and stat retry after J88, retaining the three separate passing prerequisite receipts.
 
 `body-stats-motor-prepare` selects recovered motor capsule initialization and stat retry after J89; earlier skill/team/Run results remain separately receipted.
+
+`body-stats-buffs-prepare` selects separate recovered knockback-buff catalog/storage, original zero-buff handler and stat probes after J90. Populate the diagnostic catalog before original body allocation; preserve name-map cleanup and the non-authoritative motor-branch limitation.
+
+After a recovered-reference regression, `body-buffs-reference-prepare` selects buff-disabled/enabled controls. Once both pass, `body-buffs-methods-run` runs the handler/stat assertions on the same APK with separate verification evidence.
