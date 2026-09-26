@@ -83,6 +83,9 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='recovered-client-prepare':
+   from scene_runtime import grounded_state_prepare
+   grounded_state_prepare(recovered=True,jump_items=True,cases=['body-state-jump-client','body-state-jump-owner','body-state-jump-client-event','body-state-jump-client-input'])
   elif a.action=='local-ownership-retry-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare(cases=['network-local-connect','network-local-owner'])

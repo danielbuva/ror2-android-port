@@ -69,3 +69,5 @@ J98 adds S62 visual agreement: recovered bind-pose display copies at original si
 J99 passes S63 recovered jump prerequisites (actual sound/item/count/computed-stat context). S64/S65 fail because no local jump event is observed in the server-only recovered setup; no recovered jump acceptance. Effective movement authority differs from original HLAPI local event ownership. Real client/owner semantics must be tested next; formal L5.5 remains open.
 
 J100 confirms recovered raw authority=false/effective=true with no client owner. J101 passes minimal original local connection/readiness and authority assignment/message delivery/removal with clean teardown. The earlier teardown-error runs remain rejected. Recovered-object client callbacks and jump acceptance are next; formal L5.5 remains open.
+
+J102 observes recovered client ownership and original input-driven jump/landing, but rejects S69–S72 acceptance because readiness serialization lacks the active state catalog index and logs packet failure. No checkpoint advances. Entity-state catalog/serialization is the next bounded prerequisite; formal L5.5 remains open.

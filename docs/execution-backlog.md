@@ -1080,3 +1080,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts and explicit minimal-versus-recovered limits; preserve failures and formal L5.5 status.
 - **DEPENDENCIES:** J99; pinned DebugToolkit actual NetworkServer spawning; current original ClientScene/LocalClient/NetworkIdentity and RoR2 authority query.
 - **STATUS:** S66 PASS — J100; S67/S68 PASS — J101. J100 teardown-error cases rejected and preserved. `local-ownership-retry-prepare` isolates the two minimal cases with corrected cleanup order.
+
+## S69–S72 — Recovered local client and jump delivery
+- **TITLE:** Recovered client initialization, ownership, jump event and input-driven landing.
+- **CONTEXT / OBSERVATION:** J101 proves minimal local ownership; recovered callbacks remain untested and J99 lacks raw authority.
+- **HYPOTHESIS:** Original local client APIs can initialize recovered objects and deliver ownership-dependent jump events.
+- **TASK:** Four fresh launches: S69 client/readiness/mapping; S70 body ownership; S71 original jump event; S72 original input jump and landing.
+- **CONSTRAINTS:** Preserve recovered flags and original methods. Read private cached authority only for observation; never assign it. Inactive roots and explicit stepping remain diagnostic, not a full player session.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing movement probe and thin CLI; ignored staged content and evidence.
+- **TEST COMMAND:** `./dev prototype --action recovered-client-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual recovered client mapping/readiness; matching owner and original authority callbacks; one jump event; computed impulse, rise, grounding and jump reset. Current-process logs must have no new unexplained errors.
+- **FAILURE EVIDENCE TO CAPTURE:** First callback, ownership or jump assertion; process logs, crash, capture and unchanged assembly hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate outcomes and receipts; preserve failed attempts; formal L5.5 remains open.
+- **DEPENDENCIES:** J99–J101; pinned DebugToolkit original NetworkServer spawning observation; current original SkillLocator Awake and authority callbacks, ClientScene and NetworkIdentity APIs.
+- **STATUS:** S69–S72 acceptance FAILED — J102. All probe assertions pass, but original readiness serialization logs missing GenericCharacterMain catalog index and packet-handler failure. Preserve numeric jump observations without advancing capability receipts. Next isolate original entity-state catalog initialization and serialization.
