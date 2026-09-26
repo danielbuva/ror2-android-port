@@ -89,3 +89,9 @@ The current recovered jumpSound field is empty; original GenericCharacterMain gu
 Runtime jumpSound is actually empty and landingSound remains populated; two recovered jump items have zero counts and original computed jump power/count are correct. Both direct original event dispatch and input-jump acceptance observe no local onJump event. Input impulse was not independently recorded; do not infer it from the combined failed assertion.
 
 Original TriggerJumpEventGlobally gates local delivery on hasAuthority. The recovered prefab requests local-player authority, whereas the server-only effective-authority fallback can still drive movement without a client owner. This source-backed distinction needs direct runtime observations and a real local client/ownership experiment. Do not force flags, change the prefab setting or invoke events manually. Network/client serialization and player/master/body relationships remain separate dependencies.
+
+## J100/J101 local authority prerequisite
+
+Direct Android observation confirms the recovered server-only body has raw authority false, effective authority true, player-authority configuration true and no client owner. On a separate minimal identity, original local connection/readiness and client-authority message delivery/removal now pass with clean cleanup. Stop the owned server before ClientScene resets the shared transport; reverse order caused the preserved teardown error.
+
+Next observe recovered-object OnStartClient/ownership paths. Minimal connection success does not establish recovered serialization, player/master/body relationships or jump-event delivery. Keep actual original connection/authority APIs and never replace missing ownership with private flag writes.

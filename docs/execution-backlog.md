@@ -1066,3 +1066,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Independent accepted receipts; preserve failures and formal L5.5 limits.
 - **DEPENDENCIES:** J81/J82/J96–J98; pinned Starstorm2 BorgMain original ProcessJump/FixedUpdate calls; current original GenericCharacterMain, CharacterBody and SfxLocator contract.
 - **STATUS:** S63 PASS — J99. S64/S65 FAILED: zero observed local jump events. Measure hasAuthority versus effective authority and establish actual local client/ownership before retry; no flag injection or event suppression.
+
+## S66–S68 — Local ownership distinction and original connection APIs
+- **TITLE:** Observe recovered authority; isolate real local connection and client ownership.
+- **CONTEXT / OBSERVATION:** J99 sees zero local jump events despite effective movement authority. Original local event delivery uses raw HLAPI ownership.
+- **HYPOTHESIS:** Recovered server-only flags differ as predicted, and original local connection/authority messages can establish ownership on a minimal identity.
+- **TASK:** Separate fresh launches: S66 recovered runtime flags; S67 original local connection/readiness/object mapping; S68 original authority assignment/message delivery/removal.
+- **CONSTRAINTS:** Never change recovered authority flags. The minimal newly authored identity requests client ownership before spawn through its public configuration. No private authority writes or direct event invocation; no recovered client serialization/full player claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing probe and thin CLI; ignored build/run evidence.
+- **TEST COMMAND:** `./dev prototype --action local-ownership-prepare`; preflight; completed forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Recovered raw authority false/effective true/no owner/no client; actual local connected/ready endpoints and mapping; original assignment yields authority and matching owner after original message processing, then removal/cleanup succeeds.
+- **FAILURE EVIDENCE TO CAPTURE:** Per-phase flags, connect event count, identity/owner assertions, current-process logs/crash/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate receipts and explicit minimal-versus-recovered limits; preserve failures and formal L5.5 status.
+- **DEPENDENCIES:** J99; pinned DebugToolkit actual NetworkServer spawning; current original ClientScene/LocalClient/NetworkIdentity and RoR2 authority query.
+- **STATUS:** S66 PASS — J100; S67/S68 PASS — J101. J100 teardown-error cases rejected and preserved. `local-ownership-retry-prepare` isolates the two minimal cases with corrected cleanup order.

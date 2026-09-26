@@ -67,3 +67,5 @@ J97 passes S59–S61: recovered original grounded movement/stop, reversal and wa
 J98 adds S62 visual agreement: recovered bind-pose display copies at original simulation start/stop positions produce the expected 512-pixel displacement under a fixed camera. Original grounded motion remains passing. This is two diagnostic captures, not animation, automatic lifecycle or controller acceptance; formal L5.5 remains open.
 
 J99 passes S63 recovered jump prerequisites (actual sound/item/count/computed-stat context). S64/S65 fail because no local jump event is observed in the server-only recovered setup; no recovered jump acceptance. Effective movement authority differs from original HLAPI local event ownership. Real client/owner semantics must be tested next; formal L5.5 remains open.
+
+J100 confirms recovered raw authority=false/effective=true with no client owner. J101 passes minimal original local connection/readiness and authority assignment/message delivery/removal with clean teardown. The earlier teardown-error runs remain rejected. Recovered-object client callbacks and jump acceptance are next; formal L5.5 remains open.

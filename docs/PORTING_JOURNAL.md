@@ -827,3 +827,21 @@ First-failure classification: local event ownership, not evidence of native audi
 Next isolate actual local client/connection and original ownership APIs with explicit network-state observations, first on minimal owned identities if necessary, before applying them to recovered objects. Preserve the prefab's authority setting; never assign private authority flags, directly invoke the missing event/RPC to claim delivery, or lower the jump acceptance count to zero. Local client creation may introduce new serialization/catalog callbacks; classify those separately. Full player/master/body semantics are still unproven.
 
 Doctor/preflight, corrected Vulkan ARM64 build and 20 host tests pass; 45 original assemblies unchanged. All three current-process logs show only five inherited Windows shader rejection lines and four known split-screen LayerIndex warnings/stacks; no matched crash. App stopped, selector removed and stage/recipe archived. Formal L5.5 remains open.
+
+## J100 — Recovered ownership distinction measured; minimal local ownership works before teardown error
+
+Attempt work/experiments/scene-runtime/20260926T222933.194498Z runs S66/S67/S68 independently. Pinned DebugToolkit uses actual NetworkServer spawning; current original ClientScene, LocalClient and NetworkIdentity APIs determine the local-host experiment. No private authority values or recovered prefab flags are changed.
+
+S66 passes: recovered raw hasAuthority=false, effective authority=true, localPlayerAuthority=true, clientAuthorityOwner absent and NetworkClient inactive. 368 assertions. This directly confirms J99's source-backed explanation of the missing local jump event. RECOVERED_AUTHORITY_DISTINCTION records only this observation.
+
+S67/S68 functional assertions pass on newly authored minimal identities: original local connection/readiness/object mapping, and original AssignClientAuthority message processing produce true raw authority with the actual matching local owner; removal clears owner. However both runs log a teardown error when NetworkServer.Stop tries to remove a host already removed by ClientScene.Shutdown. They are not accepted as clean lifecycle proofs. The harness called ClientScene.Shutdown before the outer server shutdown; original ClientScene.Shutdown resets the shared transport. Preserve both reports/logs despite their in-probe success flags.
+
+Next retry only S67/S68 with server shutdown before ClientScene transport shutdown. The original connection/authority methods and assertions remain unchanged; no game/middleware change is justified. Recovered-object OnStartClient/serialization/player callbacks remain untested. All 45 original DLLs unchanged; 20 host tests pass; no matched-process crashes.
+
+## J101 — Minimal original local connection and authority lifecycle pass cleanly
+
+Retry attempt work/experiments/scene-runtime/20260926T223341.627932Z changes cleanup ordering only: original local client disconnect/shutdown, server shutdown, then ClientScene shared-transport reset. Two fresh Android launches pass without the J100 teardown error. S67 connection/readiness/object mapping passes 7 assertions over 25.14 seconds; S68 actual authority assignment/message delivery/matching owner/removal passes 11 assertions over 25.22 seconds. The original LocalClient message queue is explicitly processed; no authority flags or events are assigned directly.
+
+Current-process logs contain only five inherited Windows shader rejection lines; no matched crash. Twenty host tests pass; all 45 original assemblies unchanged. LOCAL_CLIENT_CONNECTION and LOCAL_CLIENT_AUTHORITY receipts retain separate accepted assertions and shared build/payload/stage. J100's functional-but-unclean runs remain rejected. App stopped, selector removed, stage/recipe archived.
+
+Next introduce recovered-object client callbacks with direct ownership observations. The minimal identity has no gameplay components; its success cannot establish CharacterBody/CharacterMaster OnStartClient, serialization/catalog loading or a normal player session. Preserve recovered prefab authority configuration. Measure the first recovered client initialization failure before extending to jump-event/input acceptance. S66's confirmed raw/effective distinction remains the explanation for J99; no recovered jump milestone advances yet.
