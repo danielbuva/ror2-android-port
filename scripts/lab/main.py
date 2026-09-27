@@ -83,6 +83,15 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='automatic-spawn-prepare':
+   from scene_runtime import body_root_order_prepare
+   body_root_order_prepare(cases=['body-state-spawn-automatic'])
+  elif a.action=='body-root-order-prepare':
+   from scene_runtime import body_root_order_prepare
+   body_root_order_prepare()
+  elif a.action=='body-root-awake-prepare':
+   from scene_runtime import grounded_state_prepare
+   grounded_state_prepare(recovered=True,cases=['body-state-spawn-awake'])
   elif a.action=='reciprocal-spawn-observe-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(recovered=True,cases=['body-state-spawn-original'])

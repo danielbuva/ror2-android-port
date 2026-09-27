@@ -1150,3 +1150,45 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate pass/failure receipts; preserve partial-spawn evidence and identify the next lifecycle dependency.
 - **DEPENDENCIES:** J106; pinned DebugToolkit PlayerCommands calls original master.Respawn and queries actual body/master; current CharacterMaster.SpawnBody, CharacterBody.SetLoadoutServer, SkillLocator.ApplyLoadoutServer and Run notification.
 - **STATUS:** S77 PASS — J107. S78 FAILED — J107–J109. Observation-only retries (`reciprocal-spawn-observe-prepare`) confirm missing clone Awake caches and no actual server registration; original body initialization lifecycle is the next prerequisite.
+
+## S79 — Automatic recovered root initialization
+- **TITLE:** Original automatic Awake/OnEnable and immediate root teardown.
+- **CONTEXT / OBSERVATION:** J109 fresh inactive clone lacks required body caches. Recovered root includes network, input/state/physics, equipment and AkBank components; full child activation would mix rendering/animation dependencies.
+- **HYPOTHESIS:** Root-only activation initializes original body caches, or reveals a specific automatic callback prerequisite before Start.
+- **TASK:** Instantiate a fresh inactive recovered body; keep direct child objects inactive; activate/deactivate synchronously, observe original awake event/caches and registration, then destroy owned clone. Inspect all current-process errors including deferred destruction.
+- **CONSTRAINTS:** No component removals, private cache injection, audio success fabrication or forced reciprocal reference. Child isolation is diagnostic; no full-prefab/lifecycle acceptance. No frame yield while active, so Start and ongoing simulation are out of scope.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing probe/CLI, ignored evidence.
+- **TEST COMMAND:** `./dev prototype --action body-root-awake-prepare`; preflight; forced Vulkan build; `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** One original Awake event, matching required caches, registration/deregistration and cleanup, with no new unexplained log error or crash.
+- **FAILURE EVIDENCE TO CAPTURE:** Callback/phase, logged Unity exceptions, teardown failures, current-process crash and DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Classify first automatic callback failure; preserve original spawn and earlier client/jump receipts; no L5.5 advancement from caches alone.
+- **DEPENDENCIES:** J109; pinned Starstorm2 SS2VanillaSurvivor named-state/network relationship and DebugToolkit actual master spawning; original CharacterBody Awake/OnEnable/Start, root script identity inventory and AkBank/ModelLocator callbacks.
+- **STATUS:** S79 baseline rejected — J110 motor ordering exception; unchanged probe passes after measured restoration — J111.
+
+## S80 — Restore measured CharacterMotor execution order
+- **TITLE:** Preserve original lifecycle ordering metadata for the root activation retry.
+- **CONTEXT / OBSERVATION:** J110 automatic body caches pass, but CharacterMotor OnEnable runs before solver binding. Original MonoScript order is 200; exported plugin metadata loses it.
+- **HYPOTHESIS:** Restoring the exact input order lets original solver Awake bind the motor before OnEnable.
+- **TASK:** Read exact original script metadata, apply only its order through MonoImporter, verify the editor receipt, force build and repeat S79.
+- **CONSTRAINTS:** No original DLL changes, invented priority, manual cache assignment or broad order restoration. This small helper serves only the observed initialization failure. Preserve failed baseline and reject drift/ambiguous script identity.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow preparation/helper and pinned editor action, ignored plugin metadata/receipts.
+- **TEST COMMAND:** `./dev prototype --action body-root-order-prepare`; editor refresh; `./dev editor --target lab --action character-motor-order`; inspect matching receipt; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** Applied order matches input; root activation/deactivation and teardown pass without the motor exception or another unexplained error.
+- **FAILURE EVIDENCE TO CAPTURE:** Original/applicable order, editor receipt, first runtime callback/error/crash, DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate measured metadata fix from full prefab/start/spawn capability; retain earlier failures.
+- **DEPENDENCIES:** J110 source/input evidence, pinned community state/network relationships from S79; Unity importer API verified in exact local editor.
+- **STATUS:** S80 PASS — J111. Applied original 0→200 order removes motor exception; automatic root lifecycle accepted separately from Start.
+
+## S81 — Original spawn with automatic root initialization
+- **TITLE:** Reciprocal master/body spawning before Start.
+- **CONTEXT / OBSERVATION:** S79/S80 now pass root initialization after restoring original motor order; J109 inactive spawn lacked those caches.
+- **HYPOTHESIS:** Original SpawnBody can complete its reciprocal link when Unity runs required root callbacks automatically.
+- **TASK:** With measured order restored, temporarily enable the recovered prefab root and isolate direct children in memory; call original SpawnBody, deactivate returned body synchronously, check reciprocal link and actual server registration; restore prefab activation values and clean owned clone.
+- **CONSTRAINTS:** Original spawn/loadout/network code retained. No Start, child rendering/animation, manual controller or populated BodyCatalog claim; default loadout only. No private link/cache assignments. Restore temporary asset activation values even on failure.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing probe and preparation; ignored receipts/evidence.
+- **TEST COMMAND:** `./dev prototype --action automatic-spawn-prepare`; editor refresh/order action and receipt; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** Distinct returned body, actual master.GetBody/body.master reciprocal identity, server mapping and clean lifecycle logs.
+- **FAILURE EVIDENCE TO CAPTURE:** Original exception/callback, partial clone observations, cleanup, current-process logs/crash and DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate pre-Start reciprocal proof from full lifecycle; preserve earlier failures and next first dependency.
+- **DEPENDENCIES:** J109/J111 and pinned DebugToolkit original spawning relationship; measured original motor metadata restoration.
+- **STATUS:** S81 PASS — J112. Original reciprocal spawn/server mapping and clean teardown before Start; full lifecycle remains open.

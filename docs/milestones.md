@@ -77,3 +77,5 @@ J103/J105 pass original bounded state-catalog serialization and recovered body i
 J106 passes recovered master initial serialization, local-client readiness, body authority, original jump-event delivery and input-driven jump/landing in five separate fresh launches. Original tracker allocation preserves the absent-user/empty diagnostic catalog state; no entitlement-service proof. Reciprocal master/body lifecycle, sustained simulation and physical controls remain open, so formal L5.5 does not advance.
 
 J107–J109 pass untouched default master loadout serialization but find original reciprocal spawning blocked before server registration: the fresh inactive body lacks original Awake-populated team/skill caches. Lifecycle initialization is the next prerequisite. Prior client/jump checkpoints remain accepted; formal L5.5 remains open.
+
+J111/J112 restore measured original CharacterMotor order and pass automatic root lifecycle plus original reciprocal master/body spawning and server registration. Children remain inactive; body is stopped before Start. Full startup/catalog lifecycle, sustained simulation and physical controls are still required for formal L5.5.

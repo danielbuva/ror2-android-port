@@ -724,3 +724,21 @@ def recovered_visual_prepare():
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['displayAssets']=read(WORK/'scene-probe-build.json')['prefabAssets'][:6];write(stage/'Resources/MovementBatchProbe.json',cfg)
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
+
+
+def body_root_order_prepare(cases=None):
+    import UnityPy
+    grounded_state_prepare(recovered=True,cases=cases or ['body-state-spawn-awake'])
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
+    source=game()/'Risk of Rain 2_Data/globalgamemanagers.assets'
+    rows=[]
+    for obj in UnityPy.load(str(source)).objects:
+        if obj.type.name!='MonoScript':continue
+        data=obj.read_typetree()
+        if data.get('m_AssemblyName')=='RoR2.dll' and data.get('m_Namespace')=='RoR2' and data.get('m_ClassName')=='CharacterMotor':
+            rows.append({'type':'RoR2.CharacterMotor','order':data['m_ExecutionOrder']})
+    if len(rows)!=1:raise RuntimeError('Expected one original CharacterMotor script metadata record')
+    write(out/'original-motor-order.json',{'source_sha256':sha(source),'input_id':read(WORK/'inventory/files.json')['input_id'],'rows':rows})
+    editor=stage/'Editor';editor.mkdir(exist_ok=True)
+    shutil.copy2(ROOT/'tools/unity/CharacterMotorOrderProbe.cs',editor/'CharacterMotorOrderProbe.cs')
+    write(editor/'character-motor-order.json',{'order':rows[0]['order']})
