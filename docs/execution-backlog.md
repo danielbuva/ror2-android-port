@@ -1192,3 +1192,17 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate pre-Start reciprocal proof from full lifecycle; preserve earlier failures and next first dependency.
 - **DEPENDENCIES:** J109/J111 and pinned DebugToolkit original spawning relationship; measured original motor metadata restoration.
 - **STATUS:** S81 PASS — J112. Original reciprocal spawn/server mapping and clean teardown before Start; full lifecycle remains open.
+
+## S82–S83 — Original master/body Start boundary
+- **TITLE:** Master body-start callback and CharacterBody.Start on the original spawned body.
+- **CONTEXT / OBSERVATION:** J112 establishes reciprocal spawning before Start. Original body Start invokes master.OnBodyStart before validating BodyCatalog identity; master callback directly dereferences GummyCloneIdentifier.
+- **HYPOTHESIS:** Supplying that actual indexed definition with zero inventory count permits the master callback, allowing the next body Start failure to be classified independently.
+- **TASK:** Add the measured original ItemDef to the bounded catalog before inventory allocation; two fresh launches invoke original master callback or original body Start on the original spawned body, checking completion events/health.
+- **CONSTRAINTS:** No body-index injection, fake item counts, suppressed callbacks or full active-loop claim. Preserve original order and root-only spawn, keep children inactive, original DLLs unchanged. Empty/default loadout remains diagnostic.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing closure/catalog probe and thin CLI; ignored original item/evidence.
+- **TEST COMMAND:** `./dev prototype --action body-start-boundary-prepare`; editor refresh/order action and matching receipt; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** S82 one master body-start event and original health initialization; S83 additionally original body-start completion. No new unexplained log errors or crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** Original first exception, callback counts, catalog context, current-process logs/crash and DLL hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate callback acceptance from full body Start; preserve failures and identify first catalog/content dependency.
+- **DEPENDENCIES:** J112; pinned Starstorm2 state/network setup and DebugToolkit actual master/body queries; current original CharacterBody.Start/UpdateMasterLink, CharacterMaster.OnBodyStart/SetUpGummyClone and Inventory nullable-definition contract.
+- **STATUS:** S82 PASS — J113; S83 FAILED at original UpdateMasterLink missing BodyCatalog index after master callback. Register original body catalog/content behavior before retry; no index injection.

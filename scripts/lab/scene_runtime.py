@@ -623,7 +623,8 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False):
+def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False, start_items=False):
+    if start_items and jump_items:raise RuntimeError("Combined start/jump item catalog is not measured")
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -639,6 +640,7 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
     roots={'artifactAsset':root}
     if jump_items:
         roots.update({'jumpBoostAsset':export/'Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset','jumpStrikeAsset':export/'Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset'})
+    if start_items:roots['gummyAsset']=export/'Assets/RoR2/DLC1/Equipment/GummyClone/GummyCloneIdentifier.asset'
     if body_lifecycle:roots['masterAsset']=export/'Assets/RoR2/Base/Core/PlayerMaster.prefab'
     if adoption:
         for slot in ['Primary','Secondary','Utility','Special']:
@@ -706,8 +708,8 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
     write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
 
 
-def grounded_state_prepare(jump_items=False, cases=None, recovered=False):
-    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
+def grounded_state_prepare(jump_items=False, cases=None, recovered=False, start_items=False):
+    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items,start_items=start_items,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     source=export/'ProjectSettings/DynamicsManager.asset'
@@ -726,9 +728,9 @@ def recovered_visual_prepare():
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
 
 
-def body_root_order_prepare(cases=None):
+def body_root_order_prepare(cases=None, start_items=False):
     import UnityPy
-    grounded_state_prepare(recovered=True,cases=cases or ['body-state-spawn-awake'])
+    grounded_state_prepare(recovered=True,start_items=start_items,cases=cases or ['body-state-spawn-awake'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     source=game()/'Risk of Rain 2_Data/globalgamemanagers.assets'
     rows=[]
