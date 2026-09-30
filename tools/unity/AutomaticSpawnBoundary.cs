@@ -65,7 +65,7 @@ public sealed partial class MovementBatchProbe {
    if(scripted){input.moveVector=Vector3.right;input.aimDirection=Vector3.right;}
    r.phase=scripted?"automatic-spawned-scripted-motion":"automatic-spawned-neutral-hold";Save();
    while(Time.realtimeSinceStartup-began<60){
-    ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();
+    ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();if(r.id=="body-state-spawn-state-auto-barrier")ObserveBarrierEffect(body);
     float elapsed=Time.realtimeSinceStartup-began;
     Check(machine.state==state&&body.gameObject.activeInHierarchy,"Automatic original main state/root changed");
     if(scripted&&!moved&&elapsed>=1){
@@ -85,6 +85,7 @@ public sealed partial class MovementBatchProbe {
    Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55,"Automatic original sustained frame/fixed ages");
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
    }
+   if(r.id=="body-state-spawn-state-auto-barrier"){ObserveBarrierEffect(body);Check(r.barrierEffectEntries==1&&r.barrierEffectExited&&r.barrierEffectDestroyed&&!BodyBarrier(body),"Original automatic barrier effect entry/exit/destruction");}
    if(IsAutomaticHealth())Check(body.healthComponent.enabled&&body.healthComponent.health==110&&body.healthComponent.barrier==0,"Original automatic health sustained full health/barrier expiry");
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);

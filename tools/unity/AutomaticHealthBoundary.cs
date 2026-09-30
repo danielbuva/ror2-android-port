@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
   if(barrier){health.AddBarrier(20);r.barrierBefore=health.barrier;Check(r.barrierBefore==20&&health.fullBarrier==110,"Original public AddBarrier result");}
   float initialFixed=SpawnedStateAge(machine.state,"fixedAge"),duration=barrier?1f:.5f;
   r.phase=barrier?"automatic-original-barrier-decay":"automatic-original-health-regeneration";Save();
-  while(SpawnedStateAge(machine.state,"fixedAge")-initialFixed<duration){TemporaryOverlayManager.OverlayUpdate();yield return null;}
+  while(SpawnedStateAge(machine.state,"fixedAge")-initialFixed<duration){TemporaryOverlayManager.OverlayUpdate();if(barrier)ObserveBarrierEffect(body);yield return null;}
   r.healthTickSeconds=SpawnedStateAge(machine.state,"fixedAge")-initialFixed;r.regenAfter=(float)accumulator.GetValue(health);r.barrierAfter=health.barrier;Save();
   // Original accumulator subtracts whole positive healing units; compare its remainder independently.
   float expected=r.regenBefore+r.healthRegen*r.healthTickSeconds;if(expected>1)expected-=Mathf.Floor(expected);

@@ -35,6 +35,10 @@ public static class LabBuild {
      if(!cfg.teleportMaterial.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.teleportMaterial))throw new Exception("Unexpected teleport material probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="teleport-material-lab",assetNames=new[]{cfg.teleportMaterial}});
     }
+    if(!string.IsNullOrEmpty(cfg.barrierEffect)){
+     if(!cfg.barrierEffect.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.barrierEffect))throw new Exception("Unexpected barrier effect probe path");
+     bundleBuilds.Add(new AssetBundleBuild{assetBundleName="barrier-effect-lab",assetNames=new[]{cfg.barrierEffect}});
+    }
    }
    var mesh=AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Recovered/geometry.obj");
    if(mesh==null)throw new Exception("Recovered mesh missing; prototype preparation required");
@@ -51,7 +55,7 @@ public static class LabBuild {
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
- [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial;public string[] prefabAssets;}
+ [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect;public string[] prefabAssets;}
  [MenuItem("Porting Lab/Record Backend Constraints")]
  public static void Backend(){
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));
