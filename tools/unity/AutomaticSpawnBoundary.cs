@@ -54,6 +54,9 @@ public sealed partial class MovementBatchProbe {
    Check(r.teleportOverlays==1,"Original automatic spawn overlay not observed");r.spawnState=machine.state.GetType().FullName;
    r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
    Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
+   if(IsAutomaticHealth()){
+    var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;
+   }
    if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){
     var groundRoutine=AutomaticGroundBoundary(body,machine,cfg);while(groundRoutine.MoveNext())yield return groundRoutine.Current;
    }else{
@@ -82,6 +85,7 @@ public sealed partial class MovementBatchProbe {
    Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55,"Automatic original sustained frame/fixed ages");
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
    }
+   if(IsAutomaticHealth())Check(body.healthComponent.enabled&&body.healthComponent.health==110&&body.healthComponent.barrier==0,"Original automatic health sustained full health/barrier expiry");
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
     r.stationarySeconds=(float)typeof(CharacterBody).GetField("notMovingStopwatch",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);Save();
