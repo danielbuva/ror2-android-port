@@ -103,6 +103,17 @@ class MovementBatchTests(unittest.TestCase):
      with self.assertRaisesRegex(RuntimeError,'does not match'):scene_runtime.movement_batch_run()
     device.assert_not_called()
 
+ def test_invalid_survival_interval_cannot_touch_device(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);work=root/'work';out=work/'experiments/scene-runtime/attempt'
+   write(work/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(root))})
+   write(out/'attempt.json',{'movement_batch':True,'original_assemblies':{},'batch_ids':['input'],'batch_seconds':{'input':0}})
+   write(work/'config/current-build.json',{'success':True,'apk':'mock.apk','apk_sha256':'hash'})
+   write(work/'lab-build/result.json',{'success':True,'apk':'mock.apk'})
+   with patch.object(scene_runtime,'ROOT',root),patch.object(scene_runtime,'WORK',work),patch.object(scene_runtime,'sha',return_value='hash'),patch('build.preflight'),patch('device.Device') as device:
+    with self.assertRaisesRegex(RuntimeError,'Invalid bounded'):scene_runtime.movement_batch_run()
+    device.assert_not_called()
+
  def test_retry_keeps_original_failure_and_uses_original_attempt_identity(self):
   import itertools
   with tempfile.TemporaryDirectory() as temp:

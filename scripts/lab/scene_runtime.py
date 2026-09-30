@@ -564,7 +564,7 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
         (stage/('Resources/'+name+'.json')).unlink()
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
     if not kinematic:
-        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
+        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary','AutomaticSpawnBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
     probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
     write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
     r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['integrated-free','integrated-wall','integrated-jump','integrated-land'] if integrated else ['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
@@ -589,8 +589,11 @@ def movement_batch_run(cases=None, retry=False):
     if retry:
         parent=out;out=parent/'verification'/now();out.mkdir(parents=True)
         write(out/'retry.json',{'parent':str(parent.relative_to(ROOT)),'attempt':attempt_id,'cases':cases,'apk_sha256':b['apk_sha256']})
+    probes=cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration'])
+    durations={probe:a.get('batch_seconds',{}).get(probe,25) for probe in probes}
+    if any(not isinstance(seconds,int) or not 25<=seconds<=180 for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
-    for probe in cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration']):
+    for probe in probes:
         attempt=out/probe;attempt.mkdir();selection={'attempt':attempt_id,'id':probe};write(attempt/'selection.json',selection)
         result={'success':False,'probe':probe};pid=None
         try:
@@ -598,7 +601,7 @@ def movement_batch_run(cases=None, retry=False):
                 d.sh('rm','-f',runtime+'/recovered-motion-before.png',runtime+'/recovered-motion-after.png')
             d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
             launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic()
-            while time.monotonic()-start<25:
+            while time.monotonic()-start<durations[probe]:
                 if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Probe process died')
                 time.sleep(1)
             report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)

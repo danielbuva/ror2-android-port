@@ -1,0 +1,79 @@
+using System;
+using System.Collections;
+using System.Linq;
+using System.Reflection;
+using EntityStates;
+using KinematicCharacterController;
+using RoR2;
+using UnityEngine;
+
+// Original Unity callbacks; the harness only observes and supplies diagnostic input.
+public sealed partial class MovementBatchProbe {
+ IEnumerator AutomaticSpawnBoundary(CharacterBody body,Result cfg){
+  PrepareSpawnStateCatalog(cfg);
+  var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");
+  var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
+  bool movingMotor=r.id!="body-state-spawn-state-auto-state",scripted=r.id=="body-state-spawn-state-auto-motion";
+  Check(machine&&machine.state is Uninitialized&&machine.initialStateType.stateType==typeof(SpawnTeleporterState)&&machine.mainStateType.stateType==typeof(GenericCharacterMain),"Original automatic state starting identity");
+  Check(motor&&solver&&motor.Motor==solver&&input&&!body.gameObject.activeInHierarchy,"Automatic fixture motor/input isolation");
+  var model=body.modelLocator.modelTransform.GetComponent<CharacterModel>();int invisible=model.invisibilityCount;
+  var savedGravity=Physics.gravity;var savedLayers=solver.CollidableLayers;
+  bool savedSolving=(bool)typeof(KinematicCharacterMotor).GetField("_solveGrounding",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(solver);
+  Action<CharacterBody> observed=b=>{if(b==body)r.motorStartEvents++;};motor.onMotorStart+=observed;
+  try{
+   // Root Awake and diagnostic body Start already passed. Other Start/Update callbacks remain unmeasured.
+   foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
+   machine.enabled=true;if(movingMotor)motor.enabled=true;
+   r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
+   Check(r.automaticCallbacks.Length==(movingMotor?2:1),"Unexpected enabled root callback");
+   Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
+   r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
+   Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
+   if(movingMotor){
+    r.rawAuthority=body.hasAuthority;r.effectiveAuthority=RoR2.Util.HasEffectiveAuthority(body.gameObject);
+    Check(r.motorStartEvents==1&&motor.hasEffectiveAuthority&&r.effectiveAuthority&&!r.rawAuthority&&motor.useGravity,"Automatic original motor Start/authority");
+    Check(solver.enabled&&KinematicCharacterSystem.CharacterMotors_Important.Contains(solver)&&KinematicCharacterSystem.Settings.AutoSimulation,"Original automatic solver registration/settings");r.automaticSolverRegistered=true;
+    solver.CollidableLayers=0; // Start rebuilds layers; isolate collisions only after the original callback.
+   }else Check(!solver.enabled&&!KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),"State-only probe unexpectedly schedules solver");
+   var deadline=Time.realtimeSinceStartup+cfg.sourceSpawnDelay+3;
+   while(machine.state is SpawnTeleporterState&&Time.realtimeSinceStartup<deadline){
+    ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();yield return null;
+   }
+   r.spawnState=machine.state.GetType().FullName;r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnedStateAge=SpawnedStateAge(machine.state,"age");r.spawnedFixedAge=SpawnedStateAge(machine.state,"fixedAge");Save();
+   Check(machine.state is GenericCharacterMain&&model.invisibilityCount==invisible,"Automatic original timed transition/model exit");
+   float buffDuration;Check(r.hiddenBuffCount==1&&body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration)&&buffDuration==3f,"Original spawn exit timed hidden buff; body timer callbacks remain inactive");
+   Check(r.teleportOverlays==1,"Original automatic spawn overlay not observed");r.spawnState=machine.state.GetType().FullName;
+   r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
+   Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
+   var state=machine.state;float age=SpawnedStateAge(state,"age"),fixedAge=SpawnedStateAge(state,"fixedAge");var origin=solver.TransientPosition;
+   float began=Time.realtimeSinceStartup;bool moved=false,stopped=false;Vector3 stopPosition=origin;
+   if(scripted){input.moveVector=Vector3.right;input.aimDirection=Vector3.right;}
+   r.phase=scripted?"automatic-spawned-scripted-motion":"automatic-spawned-neutral-hold";Save();
+   while(Time.realtimeSinceStartup-began<60){
+    ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();
+    float elapsed=Time.realtimeSinceStartup-began;
+    Check(machine.state==state&&body.gameObject.activeInHierarchy,"Automatic original main state/root changed");
+    if(scripted&&!moved&&elapsed>=1){
+     r.x=solver.TransientPosition.x-origin.x;r.y=solver.TransientPosition.y-origin.y;
+     Check(r.x>4&&r.x<9&&Mathf.Abs(r.y)<.001f&&Mathf.Abs(motor.velocity.x-body.moveSpeed)<.001f,"Automatic original state/motor/solver movement");
+     input.moveVector=Vector3.zero;moved=true;
+    }
+    if(scripted&&moved&&!stopped&&elapsed>=2){
+     r.z=solver.TransientPosition.x-origin.x;stopPosition=solver.TransientPosition;
+     Check(r.z>=r.x&&r.z<r.x+2&&motor.velocity.sqrMagnitude<.000001f&&motor.moveDirection==Vector3.zero,"Automatic original state braking");stopped=true;
+    }
+    if(stopped)Check(Vector3.Distance(solver.TransientPosition,stopPosition)<.001f,"Automatic neutral hold drift");
+    if(!scripted)Check(Vector3.Distance(solver.TransientPosition,origin)<.001f,"Automatic neutral position drift");
+    r.automaticFrames++;yield return null;
+   }
+   r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-age;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-fixedAge;
+   Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55,"Automatic original sustained frame/fixed ages");
+   Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
+  }finally{
+   body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
+   // Explicit original exit keeps measured buff/material dependencies alive during teardown.
+   Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
+  }
+  Check(machine.state==null&&!KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),"Automatic state exit/solver unregistration");
+ }
+}

@@ -96,3 +96,5 @@ J120 passes original teleport Material cold sync/async loading, overlay setup/up
 
 
 J121 passes original motor Start, neutral main-state ticks and scripted input/motor/solver motion on the actual original SpawnBody clone after body Start and timed spawn progression. Original computed speed 7/acceleration 80 yield 5.844-unit movement and braking to rest at 7. Three separate receipts retained (434/435/437 assertions); inactive roots, explicit scheduling, zero gravity/no collisions remain diagnostic limitations. Automatic lifecycle/ticking, clone gravity/collisions, client ownership and physical controls remain open; formal L5.5 does not advance.
+
+J123 passes automatic original spawned FSM callbacks and a separate original automatic motor-start/solver-registration neutral hold, each over 60 seconds. Body continuing callbacks and children remain inactive; body Start and overlay application updates are diagnostic. Automatic motion rejects before input at a final-frame overlay observation/ownership race; no motion or formal L5.5 acceptance. Correct that observer lifetime before motion retry; retain the two independent accepted receipts.
