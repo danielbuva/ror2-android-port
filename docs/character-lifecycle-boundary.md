@@ -110,3 +110,6 @@ J114 passes original bounded BodyCatalog registration on Android, including an h
 
 
 J115 exposes original indexed loadout defaults as the next dependency. J116 passes their original catalog/initializer path and diagnostic CharacterBody.Start on the original spawned inactive clone: body index 0, skin 0, health 110 and one master/body event each. Separate loadout/Start receipts retained (395/402 assertions). Automatic root Start, original SpawnTeleporterState→main progression, continuing simulation, spawned-body client integration and physical controls remain open; formal L5.5 does not advance.
+
+
+J118 accepts original spawn state catalog/configuration and Weapon/Slide Idle Start/exit. J119 accepts the complete original hidden-buff removal/timed contract and original SpawnTeleporterState entry/exit on an inactive spawned body. Rejected attempts remain preserved. Original timed transition is still blocked at null teleport material; exact legacy GUID/type/asset locations are now verified for the next bounded provider experiment. No automatic or sustained simulation gate advances; formal L5.5 remains open.

@@ -1251,3 +1251,33 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J115, distinguish loadout acceptance from body Start and full simulation, retain separate receipts only for accepted cases.
 - **DEPENDENCIES:** S84 and J115 source audit; pinned DebugToolkit original Loadout/bodyLoadoutManager contract plus R2API registration timing. Exact original SkillCatalog and BodyLoadoutManager initializer are authoritative.
 - **STATUS:** S86 PASS — J116. Original catalog/default initialization and S85/S83 assertions pass in separate fresh Android launches. Initial private-helper compile error retained; 45 unchanged DLLs, no new logged errors/crashes.
+
+
+## S87–S90 — Original spawn state sequence
+- **TITLE:** Original state configuration, Idle entry, spawn entry and timed transition.
+- **CONTEXT / OBSERVATION:** J116 passes selected body Start; actual Commando Body initial/main types are SpawnTeleporterState/GenericCharacterMain, Weapon/Slide use Idle. Source configuration supplies the spawn delay and sound. Spawn entry applies HiddenInvincibility and model/camera state; the timed path reaches teleport material/content.
+- **HYPOTHESIS:** Accepted catalogs/lifecycle plus the actual buff and configuration allow original entry; timed content requirements can be classified independently.
+- **TASK:** Four sequential fresh launches: original catalog/configuration identity and static application; original Weapon/Slide Start; original Body Start into SpawnTeleporterState; original managed fixed ticks toward main. Capture actual states, effects and first exceptions.
+- **CONSTRAINTS:** Preserve original state types, configuration and OnEnter/OnExit. No direct main-state replacement, fabricated delay, private state-cache writes or fake loaded resource. Children stay inactive; selected callbacks/ticks are diagnostic, not automatic sustained simulation. Original state destruction runs before actual buff/catalog teardown; static configuration values are restored afterward.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Small partial probe, existing closure/preparation and thin CLI; ignored original configuration/buff/source receipt and device evidence.
+- **TEST COMMAND:** `./dev prototype --action spawn-state-prepare`; editor refresh/original motor order; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** S87 original type/index/instance and source-derived static values agree; S88 both original Idle entries; S89 original spawn entry with hidden buff and model invisibility; S90 original timed transition to GenericCharacterMain. Assess each independently against current-process errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** First callback/resource/native exception, current state and buff effects, primary versus teardown errors, PID-scoped logs/crash, original DLL hashes and source/configuration receipt.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate accepted entry/configuration from timed transition and continuing simulation; preserve all failures and formal L5.5 limits.
+- **DEPENDENCIES:** S83/S84/S85/S86; pinned Starstorm2 SS2VanillaSurvivor named state-machine/NetworkStateMachine contract, R2API content registration timing and community catalog readiness notes; exact original state/configuration/buff and teleport code govern the experiment.
+- **STATUS:** S87/S88 PASS — J118 (404/420 assertions); S89 PASS — J119 (419 assertions) after complete removal contract. S90 FAILED at null original teleport material; no transition receipt. J117/J118 failures retained.
+
+
+## S91 — Complete original spawn-buff exit contract
+- **TITLE:** Original hidden-buff removal and timed restoration before spawn-state exit.
+- **CONTEXT / OBSERVATION:** J118 entry reaches original removal, whose complete source unconditionally compares MedkitHeal, TonicBuff, SoulCost and KnockUpHitEnemies indices after OnBuffFinalStackLost needs Intangible.
+- **HYPOTHESIS:** The actual indexed definitions at count zero allow original hidden-buff removal and timed grace behavior without rewriting the path.
+- **TASK:** Complete the measured seven-definition diagnostic buff catalog; independently exercise original add/remove/timed-add/clear methods, then retry original spawn entry/exit in a fresh launch.
+- **CONSTRAINTS:** No unrelated buff/item grants, skipped OnExit, direct buff counts or altered material loader. Keep the timed-transition material failure preserved and defer its unchanged retry.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing closure/buff bindings and narrow probe/preparation; ignored actual BuffDefs and evidence.
+- **TEST COMMAND:** `./dev prototype --action spawn-state-exit-prepare`; editor refresh/order verification; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** Original hidden-buff cycle completes, unrelated counts remain zero, original timed duration matches spawn exit; original spawn entry and destruction complete without unexplained errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** First original removal/timed/exit exception, buff/state observations, teardown and current-process logs/crashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Retain J117/J118, distinguish entry/exit from original timed transition, preserve catalog/Idle checkpoints and formal L5.5 limits.
+- **DEPENDENCIES:** J118 complete-method audit and reassessment; S87/S88 original state registration/machine knowledge; current legitimate buff assets and code outrank wider community assumptions.
+- **STATUS:** S91 PASS — J119 (420 assertions); S89 entry/exit also passes separately (419). Known shader messages only; original definitions at zero unrelated counts, no DLL changes.
