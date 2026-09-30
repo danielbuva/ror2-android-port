@@ -23,6 +23,7 @@ public sealed partial class MovementBatchProbe {
  void CleanupSpawnConfig(){if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
  void ProbeSpawnStates(CharacterBody body,Result cfg){
   PrepareSpawnStateCatalog(cfg);
+  if(r.id=="body-state-spawn-state-overlay"){ProbeTeleportOverlay(body,cfg);return;}
   if(r.id=="body-state-spawn-state-buff-removal"){
    Check(RoR2Content.Buffs.MedkitHeal&&RoR2Content.Buffs.TonicBuff&&DLC2Content.Buffs.SoulCost,"Original removal definitions");
    Check(body.GetBuffCount(RoR2Content.Buffs.MedkitHeal)==0&&body.GetBuffCount(RoR2Content.Buffs.TonicBuff)==0&&body.GetBuffCount(DLC2Content.Buffs.SoulCost)==0,"Unrelated removal buffs remain absent");
@@ -54,6 +55,7 @@ public sealed partial class MovementBatchProbe {
     }
    }
   }catch(Exception e){failure=e;}
+  if(!string.IsNullOrEmpty(cfg.teleportMaterialAsset))ObserveTeleportOverlays(body);
   // Original destruction exits selected states while their actual catalog/buff dependencies still exist.
   foreach(var stateMachine in selected){try{Call(stateMachine,"OnDestroy");}catch(Exception e){failure=failure==null?e:new AggregateException(failure,e);}}
   if(failure!=null)throw failure;

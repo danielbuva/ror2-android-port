@@ -564,7 +564,7 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
         (stage/('Resources/'+name+'.json')).unlink()
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
     if not kinematic:
-        for helper in ['BodyCatalogBoundary','SpawnStateBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
+        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
     probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
     write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
     r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['integrated-free','integrated-wall','integrated-jump','integrated-land'] if integrated else ['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
@@ -625,7 +625,7 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False, start_items=False, spawn_states=False):
+def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False, start_items=False, spawn_states=False, teleport_material=False):
     if start_items and jump_items:raise RuntimeError("Combined start/jump item catalog is not measured")
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
@@ -644,6 +644,7 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
         roots.update({'jumpBoostAsset':export/'Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset','jumpStrikeAsset':export/'Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset'})
     if start_items:roots['gummyAsset']=export/'Assets/RoR2/DLC1/Equipment/GummyClone/GummyCloneIdentifier.asset'
     if spawn_states:roots.update({'spawnConfigAsset':export/'Assets/RoR2/Base/Common/EntityStates.SpawnTeleporterState.asset','hiddenBuffAsset':export/'Assets/RoR2/Base/Common/Buffs/HiddenInvincibility/bdHiddenInvincibility.asset','intangibleBuffAsset':export/'Assets/RoR2/Base/Common/Buffs/Intangible/bdIntangible.asset','medkitBuffAsset':export/'Assets/RoR2/Base/Items/Medkit/bdMedkitHeal.asset','tonicBuffAsset':export/'Assets/RoR2/Base/Equipment/Tonic/bdTonicBuff.asset','soulBuffAsset':export/'Assets/RoR2/DLC2/Interactables/Shrines/ShrineColossusAccess/bdSoulCost.asset'})
+    if teleport_material:roots['teleportMaterialAsset']=export/'Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat'
     if body_lifecycle:roots['masterAsset']=export/'Assets/RoR2/Base/Core/PlayerMaster.prefab'
     if adoption:
         for slot in ['Primary','Secondary','Utility','Special']:
@@ -695,7 +696,9 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
         write(out/'master-isolation.json',{'source_sha256':before,'staged_sha256':sha(master),'scope':'Only original PlayerMaster root deactivated before import; lifecycle called selectively by diagnostic probe'})
     cfg['statBuffs']=stat_buffs
     write(stage/'Resources/MovementBatchProbe.json',cfg)
-    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].extend(root_assets.values());write(WORK/'scene-probe-build.json',recipe)
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].extend(v for k,v in root_assets.items() if k!='teleportMaterialAsset')
+    if teleport_material:recipe['teleportMaterial']=root_assets['teleportMaterialAsset']
+    write(WORK/'scene-probe-build.json',recipe)
     write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'roots':root_assets,'ui_remaps':ui_edits,'scope':'Measured original artifact/item definitions and serialized closure; diagnostic subset catalogs only'})
 
     tag=WORK/'lab-project/ProjectSettings/TagManager.asset';source=export/'ProjectSettings/TagManager.asset'
@@ -711,8 +714,8 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
     write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
 
 
-def grounded_state_prepare(jump_items=False, cases=None, recovered=False, start_items=False, spawn_states=False):
-    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items,start_items=start_items,spawn_states=spawn_states,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
+def grounded_state_prepare(jump_items=False, cases=None, recovered=False, start_items=False, spawn_states=False, teleport_material=False):
+    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items,start_items=start_items,spawn_states=spawn_states,teleport_material=teleport_material,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     source=export/'ProjectSettings/DynamicsManager.asset'
@@ -731,9 +734,9 @@ def recovered_visual_prepare():
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
 
 
-def body_root_order_prepare(cases=None, start_items=False, spawn_states=False):
+def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, teleport_material=False):
     import UnityPy
-    grounded_state_prepare(recovered=True,start_items=start_items,spawn_states=spawn_states,cases=cases or ['body-state-spawn-awake'])
+    grounded_state_prepare(recovered=True,start_items=start_items,spawn_states=spawn_states,teleport_material=teleport_material,cases=cases or ['body-state-spawn-awake'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     source=game()/'Risk of Rain 2_Data/globalgamemanagers.assets'
     rows=[]
@@ -749,12 +752,20 @@ def body_root_order_prepare(cases=None, start_items=False, spawn_states=False):
     write(editor/'character-motor-order.json',{'order':rows[0]['order']})
 
 
-def body_start_loadout_prepare(spawn_states=False, cases=None):
-    body_root_order_prepare(start_items=True,spawn_states=spawn_states,cases=cases or (['body-state-spawn-state-catalog','body-state-spawn-state-idle','body-state-spawn-state-entry','body-state-spawn-state-transition'] if spawn_states else ['body-state-spawn-loadout-catalog','body-state-spawn-body-start-catalog']))
+def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material=False):
+    body_root_order_prepare(start_items=True,spawn_states=spawn_states,teleport_material=teleport_material,cases=cases or (['body-state-spawn-state-catalog','body-state-spawn-state-idle','body-state-spawn-state-entry','body-state-spawn-state-transition'] if spawn_states else ['body-state-spawn-loadout-catalog','body-state-spawn-body-start-catalog']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];stage=Path(read(out/'attempt.json')['stage'])
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['initializeLoadoutTables']=True
     if spawn_states:
         source=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets/RoR2/Base/Common/EntityStates.SpawnTeleporterState.asset'
         text=source.read_text();cfg['sourceSpawnDelay']=float(re.search(r'fieldName: initialDelay\s+fieldValue:\s+stringValue: ([^\n]+)',text)[1]);cfg['sourceSpawnSound']=re.search(r'fieldName: soundString\s+fieldValue:\s+stringValue: ([^\n]+)',text)[1]
         write(out/'spawn-state-source.json',{'sha256':sha(source),'delay':cfg['sourceSpawnDelay'],'sound':cfg['sourceSpawnSound'],'scope':'Actual state configuration staged unchanged; values independently parsed for runtime assertions'})
+    if teleport_material:
+        source=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat'
+        export_guid=re.search(r'^guid: ([a-f0-9]{32})',Path(str(source)+'.meta').read_text(),re.M)[1]
+        query=read(WORK/'experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json')
+        locations=[x for x in query['locations'] if x['internalId']=='Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat' and x['type']=='UnityEngine.Material']
+        if len(locations)!=1 or not locations[0]['internalId'].endswith('/TeleportOutController/matTPInOut.mat'):raise RuntimeError('Teleport material catalog identity differs')
+        cfg['teleportMaterialKey']=locations[0]['key']
+        write(out/'teleport-material-contract.json',{'export_guid':export_guid,'source_sha256':sha(source),'key':cfg['teleportMaterialKey'],'catalog_query':'work/experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json','bundle':'teleport-material-lab','scope':'Actual material and serialized closure; separate original-provider ownership, exported dummy shader retained; no graphics parity claim','prior_art':'R2API AddressReferencedAsset synchronous/async handle and release semantics; community-prior-art.md original-provider candidate; accepted ControllerAddressProbe/AudioAssetProbe'})
     write(stage/'Resources/MovementBatchProbe.json',cfg)

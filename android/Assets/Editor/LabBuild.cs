@@ -31,6 +31,10 @@ public static class LabBuild {
      if(!cfg.prefab.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.prefab))throw new Exception("Unexpected prefab probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="commando-prefab-lab",assetNames=new System.Collections.Generic.List<string>(cfg.prefabAssets??new string[0]){cfg.prefab}.ToArray()});
     }
+    if(!string.IsNullOrEmpty(cfg.teleportMaterial)){
+     if(!cfg.teleportMaterial.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.teleportMaterial))throw new Exception("Unexpected teleport material probe path");
+     bundleBuilds.Add(new AssetBundleBuild{assetBundleName="teleport-material-lab",assetNames=new[]{cfg.teleportMaterial}});
+    }
    }
    var mesh=AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Recovered/geometry.obj");
    if(mesh==null)throw new Exception("Recovered mesh missing; prototype preparation required");
@@ -47,7 +51,7 @@ public static class LabBuild {
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
- [Serializable] class SceneProbeConfig {public string scene,prefab;public string[] prefabAssets;}
+ [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial;public string[] prefabAssets;}
  [MenuItem("Porting Lab/Record Backend Constraints")]
  public static void Backend(){
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));

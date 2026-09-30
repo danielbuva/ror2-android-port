@@ -1281,3 +1281,18 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Retain J117/J118, distinguish entry/exit from original timed transition, preserve catalog/Idle checkpoints and formal L5.5 limits.
 - **DEPENDENCIES:** J118 complete-method audit and reassessment; S87/S88 original state registration/machine knowledge; current legitimate buff assets and code outrank wider community assumptions.
 - **STATUS:** S91 PASS — J119 (420 assertions); S89 entry/exit also passes separately (419). Known shader messages only; original definitions at zero unrelated counts, no DLL changes.
+
+
+## S92–S94 — Original teleport material and overlay boundary
+- **TITLE:** Separate typed material loading, original overlay lifecycle and timed spawn progression.
+- **CONTEXT / OBSERVATION:** J119 passes original spawn entry/exit; S90 fails because original synchronous legacy teleport material resolves null. Exact catalog maps the legacy GUID to the recovered Material, with desktop dependencies unsuitable for Android. Exported asset GUID differs from the original catalog GUID.
+- **HYPOTHESIS:** A bounded Android material bundle served by original providers resolves the original request without changing game code, allowing overlay setup and a discriminating transition retry.
+- **TASK:** Three sequential fresh processes: S92 cold original synchronous load plus asynchronous identity/pending-count/release checks; S93 original AddTPOutEffect on the recovered model, diagnostic overlay update and original removal; S94/S90 original timed spawn progression after changing only material availability.
+- **CONSTRAINTS:** Keep the prefab bundle with its current owner; use a separate material bundle and measured original GUID/type location. Retain exported shader as an explicit graphics limitation. No fake result, alias, direct main-state shortcut, altered configuration, effect bypass or original DLL patch. Capture the next effect/main-state failure independently. Track and release actual owned handles/material copies after original cleanup.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow partial probe, optional material bundle entry in existing build recipe, existing closure/preparation, thin CLI; ignored assets/receipts/evidence.
+- **TEST COMMAND:** `./dev prototype --action teleport-material-prepare`; serial editor refresh/original motor order; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** S92 original sync/async Material identity agrees and pending count drains; S93 original copy/assignment/update/removal and bundle release; S94 original timed transition to main without unexplained errors/crashes. Component proofs do not pass graphics or formal L5.5 acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Preparation identity mismatch, first provider/native/callback exception, typed material/shader/overlay observations, primary/cleanup errors, PID-scoped logs/crash, original DLL hashes, APK/payload identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve rejected attempts; separate material, overlay and transition receipts; keep L5/L5.5 limitations and next measured dependency current.
+- **DEPENDENCIES:** S87–S91/J119; pinned R2API AddressReferencedAsset source for synchronous/async handle and release semantics; community-prior-art.md original-provider candidate and accepted controller/audio provider experiments. Exact current LegacyResourcesAPI/TeleportOutController/TemporaryOverlayManager code governs behavior.
+- **STATUS:** S92/S93/S94 PASS — J120 (416/428/430 assertions). S90 timed state transition now passes as a bounded method proof; effect/audio remain unavailable and exported shader remains a dummy. Separate receipts retained.

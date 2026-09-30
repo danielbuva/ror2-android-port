@@ -83,6 +83,9 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='teleport-material-prepare':
+   from scene_runtime import body_start_loadout_prepare
+   body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-material','body-state-spawn-state-overlay','body-state-spawn-state-transition'])
   elif a.action=='spawn-state-exit-prepare':
    from scene_runtime import body_start_loadout_prepare
    body_start_loadout_prepare(spawn_states=True,cases=['body-state-spawn-state-buff-removal','body-state-spawn-state-entry'])

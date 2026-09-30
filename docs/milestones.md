@@ -90,3 +90,6 @@ J115 exposes original indexed loadout defaults as the next dependency. J116 pass
 
 
 J118 accepts original spawn state catalog/configuration and Weapon/Slide Idle Start/exit. J119 accepts the complete original hidden-buff removal/timed contract and original SpawnTeleporterState entry/exit on an inactive spawned body. Rejected attempts remain preserved. Original timed transition is still blocked at null teleport material; exact legacy GUID/type/asset locations are now verified for the next bounded provider experiment. No automatic or sustained simulation gate advances; formal L5.5 remains open.
+
+
+J120 passes original teleport Material cold sync/async loading, overlay setup/update/explicit removal, and original SpawnTeleporterState→GenericCharacterMain progression. Separate receipts retained (416/428/430 assertions). Effect/audio are unavailable in this bounded mapping; exported shader is a dummy. Selected callbacks/fixed stepping on inactive roots do not establish automatic sustained simulation or formal L5.5.
