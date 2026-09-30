@@ -39,6 +39,8 @@ public sealed partial class MovementBatchProbe {
    while(machine.state is SpawnTeleporterState&&Time.realtimeSinceStartup<deadline){
     ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();yield return null;
    }
+   // The final spawn tick and transition can occur before the coroutine resumes.
+   ObserveTeleportOverlays(body);
    r.spawnState=machine.state.GetType().FullName;r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnedStateAge=SpawnedStateAge(machine.state,"age");r.spawnedFixedAge=SpawnedStateAge(machine.state,"fixedAge");Save();
    Check(machine.state is GenericCharacterMain&&model.invisibilityCount==invisible,"Automatic original timed transition/model exit");
    float buffDuration;Check(r.hiddenBuffCount==1&&body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration)&&buffDuration==3f,"Original spawn exit timed hidden buff; body timer callbacks remain inactive");

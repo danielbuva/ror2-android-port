@@ -83,10 +83,10 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
-  elif a.action=='spawn-automatic-prepare':
+  elif a.action in ['spawn-automatic-prepare','spawn-automatic-motion-prepare']:
    from scene_runtime import body_start_loadout_prepare
    from common import WORK,ROOT,read,write
-   body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-transition','body-state-spawn-state-main-motion','body-state-spawn-state-auto-state'])
+   body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-motion'] if a.action=='spawn-automatic-motion-prepare' else ['body-state-spawn-state-transition','body-state-spawn-state-main-motion','body-state-spawn-state-auto-state'])
    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
    attempt['batch_seconds']={probe:80 for probe in ['body-state-spawn-state-auto-state','body-state-spawn-state-auto-motor','body-state-spawn-state-auto-motion']};write(out/'attempt.json',attempt)
   elif a.action=='spawn-automatic-motor-run':
