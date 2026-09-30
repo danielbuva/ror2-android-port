@@ -47,6 +47,9 @@ public sealed partial class MovementBatchProbe {
    Check(r.teleportOverlays==1,"Original automatic spawn overlay not observed");r.spawnState=machine.state.GetType().FullName;
    r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
    Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
+   if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){
+    var groundRoutine=AutomaticGroundBoundary(body,machine,cfg);while(groundRoutine.MoveNext())yield return groundRoutine.Current;
+   }else{
    var state=machine.state;float age=SpawnedStateAge(state,"age"),fixedAge=SpawnedStateAge(state,"fixedAge");var origin=solver.TransientPosition;
    float began=Time.realtimeSinceStartup;bool moved=false,stopped=false;Vector3 stopPosition=origin;
    if(scripted){input.moveVector=Vector3.right;input.aimDirection=Vector3.right;}
@@ -71,6 +74,7 @@ public sealed partial class MovementBatchProbe {
    r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-age;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-fixedAge;
    Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55,"Automatic original sustained frame/fixed ages");
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
+   }
   }finally{
    body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
    // Explicit original exit keeps measured buff/material dependencies alive during teardown.
