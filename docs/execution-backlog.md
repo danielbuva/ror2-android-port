@@ -1221,3 +1221,33 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Record catalog-only result separately from S83 and formal L5.5; preserve failed preparations and source/query evidence.
 - **DEPENDENCIES:** S81/S82; community-prior-art Addressables/catalog section, pinned R2API ContentAddition.AddBody registration timing and CharacterBody contract; exact original BodyCatalog/LegacyResourcesAPI and accepted controller initialization.
 - **STATUS:** S84 PASS — J114. Fifteen assertions, 26.09 seconds, expected failed portrait request and original assigned identities/fallback; clean owned teardown, known shader messages only. S83 still awaits a fresh integrated retry.
+
+
+## S85 / S83 retry — Catalog-aware loadout and original body Start
+- **TITLE:** Carry accepted original body registration into fresh lifecycle experiments.
+- **CONTEXT / OBSERVATION:** S84 proves original assigned identity and asynchronous portrait fallback; S83 previously fails before skin selection because no body catalog exists.
+- **HYPOTHESIS:** The original default loadout can select the indexed Commando skin, and original body Start can advance past the missing-index guard.
+- **TASK:** Two sequential fresh launches register the original prefab and drain portrait callbacks, then check catalog-aware default loadout or original reciprocal SpawnBody/Start. Record spawned index, skin, health and completion events.
+- **CONSTRAINTS:** Shared prefab/bundle lifetime; no direct index/skin/cache writes, duplicate bundle loading, skipped original Start calls or altered audio fields. Keep children inactive and stop the spawned body before its automatic Start; the selected original body Start call is diagnostic. Destroy owned clones before catalog/bundle release.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing catalog and movement probes, thin CLI preparation, ignored build/device evidence.
+- **TEST COMMAND:** `./dev prototype --action body-start-catalog-prepare`; editor refresh and original motor-order verification; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** S85 original default loadout round trip and catalog-aware skin selection agree; S83 actual original body Start returns, emits one completion event, preserves catalog identity and initializes health/skin as expected. Reject unexplained log errors/crashes independently.
+- **FAILURE EVIDENCE TO CAPTURE:** First original exception, actual spawned identity and completion fields, current-process logs/crash, cleanup and original assembly hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate accepted loadout and body Start results; retain prior failures and formal L5.5 limits.
+- **DEPENDENCIES:** S81/S82/S84; pinned R2API ContentAddition.AddBody registration timing, existing community Addressables callback/status knowledge; current original BodyCatalog, Loadout and CharacterBody.Start/UpdateMasterLink. Actual Commando alive-loop field is empty; retain its original PlaySound behavior.
+- **STATUS:** J115 initial integrated cases FAILED; J116 corrected S85/S83 retry PASS with original table initialization: 395/402 assertions. Independent receipts retained; body Start is diagnostically invoked on an inactive original clone, not sustained automatic simulation.
+
+
+## S86 — Original skill catalog and loadout defaults
+- **TITLE:** Initialize original indexed Commando loadout dependencies.
+- **CONTEXT / OBSERVATION:** J115 reveals null defaultBodyLoadouts during original skill/skin selection after real body registration.
+- **HYPOTHESIS:** Registering actual prefab skill families/definitions and calling original BodyLoadoutManager.Init produces consistent original defaults.
+- **TASK:** Assert empty diagnostic catalogs/tables, register actual bounded families and definitions through original setters, verify identities, invoke the complete original initializer, compare every default variant with its family and rerun S85/S83 independently.
+- **CONSTRAINTS:** No fabricated skill definitions, private default-table values, profile/unlockable modifications or replacement initializer. Private writes are limited to restoring snapshotted table state after owned clone destruction. Preserve original viewable initialization; diagnostic SurvivorCatalog is empty, so its safe lookup skips survivor-specific viewables.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing catalog probe and thin preparation; ignored original closure/evidence.
+- **TEST COMMAND:** `./dev prototype --action body-start-loadout-prepare`; editor refresh/original motor-order verification; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** Original indexed default skill and skin selections agree with actual families; original defaults enable the S85/S83 assertions without unexplained runtime errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** Catalog identities, first initializer/skill/start exception, callback/result counts, teardown and current-process diagnostics.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J115, distinguish loadout acceptance from body Start and full simulation, retain separate receipts only for accepted cases.
+- **DEPENDENCIES:** S84 and J115 source audit; pinned DebugToolkit original Loadout/bodyLoadoutManager contract plus R2API registration timing. Exact original SkillCatalog and BodyLoadoutManager initializer are authoritative.
+- **STATUS:** S86 PASS — J116. Original catalog/default initialization and S85/S83 assertions pass in separate fresh Android launches. Initial private-helper compile error retained; 45 unchanged DLLs, no new logged errors/crashes.

@@ -1,6 +1,10 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using RoR2.Skills;
 using Path = System.IO.Path;
 using RoR2;
 using UnityEngine;
@@ -12,6 +16,39 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
 public sealed partial class MovementBatchProbe {
+ bool ownsLoadoutTables,ownsSkillCatalog;
+ object priorLoadoutDefaults,priorBodyInfos;
+ readonly Dictionary<object,object> priorViewables=new Dictionary<object,object>();
+ readonly HashSet<ViewablesCatalog.Node> priorViewableChildren=new HashSet<ViewablesCatalog.Node>();
+ static FieldInfo LoadoutField(string name){return typeof(Loadout.BodyLoadoutManager).GetField(name,BindingFlags.NonPublic|BindingFlags.Static);}
+ static FieldInfo ViewableField(string name){return typeof(ViewablesCatalog).GetField(name,BindingFlags.NonPublic|BindingFlags.Static);}
+ void PrepareLoadoutTables(GameObject prefab){
+  Check(!SkillCatalog.allSkillDefs.Any()&&!SkillCatalog.allSkillFamilies.Any(),"Existing skill catalog ownership");
+  priorLoadoutDefaults=LoadoutField("defaultBodyLoadouts").GetValue(null);priorBodyInfos=LoadoutField("allBodyInfos").GetValue(null);
+  Check(priorLoadoutDefaults==null&&priorBodyInfos==null,"Existing loadout defaults ownership");
+  var slots=prefab.GetComponents<GenericSkill>();Check(slots.Length==4,"Original Commando skill-slot count");
+  var families=slots.Select(x=>x.skillFamily).Distinct().ToArray();Check(families.Length==4&&families.All(x=>x&&x.variants.Length>0&&x.defaultVariantIndex<x.variants.Length),"Actual family/default-variant contract");
+  var defs=families.SelectMany(x=>x.variants.Select(v=>v.skillDef)).Distinct().ToArray();Check(defs.All(x=>x),"Original skill definition missing");
+  ownsSkillCatalog=true;StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)defs);StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)families);
+  foreach(var family in families)Check(SkillCatalog.GetSkillFamily(family.catalogIndex)==family,"Original family catalog identity");
+  foreach(var def in defs)Check(SkillCatalog.GetSkillDef(def.skillIndex)==def,"Original skill catalog identity");
+  Check(SurvivorCatalog.GetSurvivorIndexFromBodyIndex(prefab.GetComponent<CharacterBody>().bodyIndex)==SurvivorIndex.None,"Unexpected survivor-specific viewable context");
+  var map=(IDictionary)ViewableField("fullNameToNodeMap").GetValue(null);foreach(DictionaryEntry entry in map)priorViewables.Add(entry.Key,entry.Value);
+  var root=(ViewablesCatalog.Node)ViewableField("rootNode").GetValue(null);foreach(var child in root.children)priorViewableChildren.Add(child);
+  ownsLoadoutTables=true;r.phase="original-loadout-initialize";Save();StaticCall(typeof(Loadout.BodyLoadoutManager),"Init");
+  var body=prefab.GetComponent<CharacterBody>();var defaults=(Array)LoadoutField("defaultBodyLoadouts").GetValue(null);
+  Check(defaults!=null&&defaults.Length==BodyCatalog.bodyCount,"Original default body loadout missing");var loadout=new Loadout();Check(loadout.bodyLoadoutManager.GetSkinIndex(body.bodyIndex)==0,"Original default skin");
+  for(int i=0;i<slots.Length;i++)Check(loadout.bodyLoadoutManager.GetSkillVariant(body.bodyIndex,i)==slots[i].skillFamily.defaultVariantIndex,"Original default skill variant");
+ }
+ void CleanupLoadoutTables(){
+  if(ownsLoadoutTables){
+   LoadoutField("defaultBodyLoadouts").SetValue(null,priorLoadoutDefaults);LoadoutField("allBodyInfos").SetValue(null,priorBodyInfos);
+   var root=(ViewablesCatalog.Node)ViewableField("rootNode").GetValue(null);foreach(var child in root.children.ToArray())if(!priorViewableChildren.Contains(child))child.SetParent(null);
+   var map=(IDictionary)ViewableField("fullNameToNodeMap").GetValue(null);map.Clear();foreach(var pair in priorViewables)map.Add(pair.Key,pair.Value);ownsLoadoutTables=false;
+  }
+  if(ownsSkillCatalog){StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)new SkillFamily[0]);StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)new SkillDef[0]);ownsSkillCatalog=false;}
+ }
+
  IEnumerator RegisterBodyCatalog(){
   Check(BodyCatalog.bodyCount==0&&LegacyResourcesAPI.ActiveCount==0,"Existing catalog/request ownership");
   r.phase="body-catalog-initialize";Save();
@@ -40,7 +77,7 @@ public sealed partial class MovementBatchProbe {
   var body=prefab.GetComponent<CharacterBody>();var portrait=body.portraitIcon;
   Check(portrait&&portrait.name=="texCommandoIcon","Serialized portrait missing");
   r.phase="original-body-catalog-register";Save();
-  StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new[]{prefab});
+  ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new[]{prefab});
   deadline=Time.realtimeSinceStartup+3;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;
   yield return null;yield return null;
   Check(LegacyResourcesAPI.ActiveCount==0,"Catalog portrait callback still pending");
@@ -49,5 +86,12 @@ public sealed partial class MovementBatchProbe {
   Check(BodyCatalog.GetBodyPrefab(body.bodyIndex)==prefab,"Original prefab lookup failed");
   Check(body.portraitIcon==portrait,"Missing-key callback replaced serialized portrait");
   Check(!prefab.activeSelf,"Catalog registration activated gameplay");
+  if(cfg.initializeLoadoutTables)PrepareLoadoutTables(prefab);
+ }
+ void CleanupBodyCatalog(){
+  Check(LegacyResourcesAPI.ActiveCount==0,"Refuse teardown with pending portrait callbacks");
+  CleanupLoadoutTables();
+  if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
+  if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
  }
 }

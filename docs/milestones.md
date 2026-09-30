@@ -84,3 +84,6 @@ J113 passes original master body-start callback on the reciprocally spawned body
 
 
 J114 passes original bounded BodyCatalog registration on Android, including an honestly failed body-name portrait lookup and retention of the actual serialized icon. Catalog-assigned index/name/prefab identities agree after callbacks drain. Next integrate the registered prefab into S83 before original SpawnBody/Start; share bundle ownership and postpone catalog cleanup until clone destruction. This does not pass body Start or formal L5.5.
+
+
+J115 exposes original indexed loadout defaults as the next dependency. J116 passes their original catalog/initializer path and diagnostic CharacterBody.Start on the original spawned inactive clone: body index 0, skin 0, health 110 and one master/body event each. Separate loadout/Start receipts retained (395/402 assertions). Automatic root Start, original SpawnTeleporterState→main progression, continuing simulation, spawned-body client integration and physical controls remain open; formal L5.5 does not advance.

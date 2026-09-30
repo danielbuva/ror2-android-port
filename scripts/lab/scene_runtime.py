@@ -745,3 +745,9 @@ def body_root_order_prepare(cases=None, start_items=False):
     editor=stage/'Editor';editor.mkdir(exist_ok=True)
     shutil.copy2(ROOT/'tools/unity/CharacterMotorOrderProbe.cs',editor/'CharacterMotorOrderProbe.cs')
     write(editor/'character-motor-order.json',{'order':rows[0]['order']})
+
+
+def body_start_loadout_prepare():
+    body_root_order_prepare(start_items=True,cases=['body-state-spawn-loadout-catalog','body-state-spawn-body-start-catalog'])
+    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];stage=Path(read(out/'attempt.json')['stage'])
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['initializeLoadoutTables']=True;write(stage/'Resources/MovementBatchProbe.json',cfg)
