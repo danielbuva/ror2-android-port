@@ -116,3 +116,6 @@ J118 accepts original spawn state catalog/configuration and Weapon/Slide Idle St
 
 
 J120 passes original teleport Material cold sync/async loading, overlay setup/update/explicit removal, and original SpawnTeleporterState→GenericCharacterMain progression. Separate receipts retained (416/428/430 assertions). Effect/audio are unavailable in this bounded mapping; exported shader is a dummy. Selected callbacks/fixed stepping on inactive roots do not establish automatic sustained simulation or formal L5.5.
+
+
+J121 passes original motor Start, neutral main-state ticks and scripted input/motor/solver motion on the actual original SpawnBody clone after body Start and timed spawn progression. Original computed speed 7/acceleration 80 yield 5.844-unit movement and braking to rest at 7. Three separate receipts retained (434/435/437 assertions); inactive roots, explicit scheduling, zero gravity/no collisions remain diagnostic limitations. Automatic lifecycle/ticking, clone gravity/collisions, client ownership and physical controls remain open; formal L5.5 does not advance.

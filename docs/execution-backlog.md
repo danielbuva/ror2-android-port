@@ -1265,7 +1265,7 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **FAILURE EVIDENCE TO CAPTURE:** First callback/resource/native exception, current state and buff effects, primary versus teardown errors, PID-scoped logs/crash, original DLL hashes and source/configuration receipt.
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate accepted entry/configuration from timed transition and continuing simulation; preserve all failures and formal L5.5 limits.
 - **DEPENDENCIES:** S83/S84/S85/S86; pinned Starstorm2 SS2VanillaSurvivor named state-machine/NetworkStateMachine contract, R2API content registration timing and community catalog readiness notes; exact original state/configuration/buff and teleport code govern the experiment.
-- **STATUS:** S87/S88 PASS — J118 (404/420 assertions); S89 PASS — J119 (419 assertions) after complete removal contract. S90 FAILED at null original teleport material; no transition receipt. J117/J118 failures retained.
+- **STATUS:** S87/S88 PASS — J118 (404/420 assertions); S89 PASS — J119 (419 assertions) after complete removal contract. S90 initially failed at null original teleport material; J120/S94 passes the bounded timed-transition retry with the measured material provider. J117/J118 failures retained.
 
 
 ## S91 — Complete original spawn-buff exit contract
@@ -1296,3 +1296,18 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve rejected attempts; separate material, overlay and transition receipts; keep L5/L5.5 limitations and next measured dependency current.
 - **DEPENDENCIES:** S87–S91/J119; pinned R2API AddressReferencedAsset source for synchronous/async handle and release semantics; community-prior-art.md original-provider candidate and accepted controller/audio provider experiments. Exact current LegacyResourcesAPI/TeleportOutController/TemporaryOverlayManager code governs behavior.
 - **STATUS:** S92/S93/S94 PASS — J120 (416/428/430 assertions). S90 timed state transition now passes as a bounded method proof; effect/audio remain unavailable and exported shader remains a dummy. Separate receipts retained.
+
+
+## S95–S97 — Original spawned main-state scheduling and motion
+- **TITLE:** Original motor Start, neutral state ticks and scripted main-state movement on the original spawned clone.
+- **CONTEXT / OBSERVATION:** J120 passes original timed spawn progression into GenericCharacterMain; earlier movement proofs used an independently prepared body. Original CharacterBody.Start recalculates the actual spawned clone's stats.
+- **HYPOTHESIS:** The accepted reciprocal spawn/Start/transition provides the original dependencies for motor Start and original main-state input/motion without replacing simulation.
+- **TASK:** Three fresh processes through accepted spawn path: S95 original motor Start/event/parameters and measured server authority; S96 50 neutral original update/fixed callbacks; S97 one-second scripted input/motor/solver displacement and one-second braking.
+- **CONSTRAINTS:** Actual clone and original computed stats; no direct state replacement or object translation. Keep body/children inactive, callbacks and solver stepping diagnostic. Movement fixture uses zero global gravity and no collisions/ground solving, restores those settings, and does not establish stage physics. Preserve original spawn delay/configuration/material path. Missing effect/audio and dummy shader remain explicit. Client/physical controls are separate.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing partial state probe and thin batch selector; ignored unchanged closure/build/runtime evidence.
+- **TEST COMMAND:** `./dev prototype --action spawn-main-prepare`; serial editor refresh/motor-order verification; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** Separate original motor completion/event/authority assertions; stable original neutral state with one-second fixed age and unchanged solver position; original input-driven displacement/speed/braking and unchanged main-state identity. Current-process errors/crashes must match accepted baseline only.
+- **FAILURE EVIDENCE TO CAPTURE:** First lifecycle/input/motor/state exception, actual stats/authority/ages/displacement, primary and teardown errors, current-process log/crash, 45 assembly hashes and independent APK/payload identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate three component receipts from formal sustained/automatic simulation; preserve failures; next action addresses first new measured dependency.
+- **DEPENDENCIES:** J120/S94; pinned Starstorm2 BorgMain original base FixedUpdate/ProcessJump and SS2VanillaSurvivor machine relationships; exact original CharacterBody.Start/CharacterMotor.Start/GenericCharacterMain and accepted solver-step probes govern behavior.
+- **STATUS:** S95/S96/S97 PASS — J121 (434/435/437 assertions). Original spawned clone/motor/neutral ticks and scripted motion/braking accepted separately; inactive roots/explicit stepping and zero-gravity/no-collision movement limits retained.

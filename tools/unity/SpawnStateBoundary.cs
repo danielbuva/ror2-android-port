@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using EntityStates;
+using KinematicCharacterController;
 using RoR2;
 using UnityEngine;
 
@@ -47,18 +48,56 @@ public sealed partial class MovementBatchProbe {
      Check(RoR2Content.Buffs.HiddenInvincibility&&RoR2Content.Buffs.HiddenInvincibility.buffIndex!=BuffIndex.None&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==0,"Original hidden buff context");
      r.phase="original-spawn-state-start";Save();Call(stateMachine,"Start");r.spawnState=stateMachine.state.GetType().FullName;r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);
      Check(stateMachine.state is SpawnTeleporterState&&r.hiddenBuffCount==1&&model.invisibilityCount==priorInvisible+1,"Original spawn OnEnter and buff/model effects");r.spawnStateEntries++;
-     if(r.id=="body-state-spawn-state-transition"){
+     if(r.id=="body-state-spawn-state-transition"||r.id.StartsWith("body-state-spawn-state-main-")){
       r.phase="original-spawn-state-ticks";Save();int limit=Mathf.CeilToInt(cfg.sourceSpawnDelay/Time.fixedDeltaTime)+5;
       for(int i=0;i<limit&&stateMachine.state is SpawnTeleporterState;i++)stateMachine.ManagedFixedUpdate(Time.fixedDeltaTime);
       r.spawnState=stateMachine.state.GetType().FullName;Check(stateMachine.state is GenericCharacterMain,"Original timed transition to main");
+      if(r.id.StartsWith("body-state-spawn-state-main-"))ProbeSpawnedMain(body,stateMachine,cfg);
      }
     }
    }
   }catch(Exception e){failure=e;}
-  if(!string.IsNullOrEmpty(cfg.teleportMaterialAsset))ObserveTeleportOverlays(body);
+  try{if(!string.IsNullOrEmpty(cfg.teleportMaterialAsset))ObserveTeleportOverlays(body);}catch(Exception e){failure=failure==null?e:new AggregateException(failure,e);}
   // Original destruction exits selected states while their actual catalog/buff dependencies still exist.
   foreach(var stateMachine in selected){try{Call(stateMachine,"OnDestroy");}catch(Exception e){failure=failure==null?e:new AggregateException(failure,e);}}
   if(failure!=null)throw failure;
   Check(selected.All(x=>x.state==null),"Original selected state teardown");
+ }
+
+ static float SpawnedStateAge(EntityState state,string property){return (float)typeof(EntityState).GetProperty(property,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(state);}
+ void ProbeSpawnedMain(CharacterBody body,EntityStateMachine machine,Result cfg){
+  var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
+  r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
+  Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Actual spawned body original computed stats");
+  Check(motor&&solver&&input&&motor.Motor==solver&&!body.gameObject.activeInHierarchy,"Actual spawned motor/input isolation");
+  if(r.id!="body-state-spawn-state-main-neutral"){
+   r.phase="original-spawned-motor-start";Save();Action<CharacterBody> observed=b=>{if(b==body)r.motorStartEvents++;};motor.onMotorStart+=observed;
+   try{Call(motor,"Start");}finally{motor.onMotorStart-=observed;}
+   r.rawAuthority=body.hasAuthority;r.effectiveAuthority=RoR2.Util.HasEffectiveAuthority(body.gameObject);
+   Check(r.motorStartEvents==1&&motor.hasEffectiveAuthority&&r.effectiveAuthority&&!r.rawAuthority&&motor.useGravity,"Original spawned motor Start/event/server authority");
+   Check(solver.MaxStableSlopeAngle==70&&solver.MaxStableDenivelationAngle==55&&motor.capsuleHeight==body.GetComponent<CapsuleCollider>().height,"Original spawned motor parameters");
+   if(r.id=="body-state-spawn-state-main-motor")return;
+  }
+  var state=machine.state;float age=SpawnedStateAge(state,"age"),fixedAge=SpawnedStateAge(state,"fixedAge");var origin=solver.TransientPosition;
+  if(r.id=="body-state-spawn-state-main-neutral"){
+   r.phase="original-spawned-main-neutral-ticks";Save();Check(input.moveVector==Vector3.zero&&!input.jump.down,"Original neutral input baseline");
+   for(int i=0;i<50;i++){machine.ManagedUpdate();machine.ManagedFixedUpdate(.02f);r.spawnedMainTicks++;}
+   r.spawnedStateAge=SpawnedStateAge(state,"age")-age;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-fixedAge;
+   Check(machine.state==state&&Mathf.Abs(r.spawnedFixedAge-1)<.0001f&&r.spawnedStateAge>0,"Original main neutral scheduling/ages");
+   Check(motor.moveDirection==Vector3.zero&&solver.TransientPosition==origin&&!body.gameObject.activeInHierarchy,"Neutral state changed inactive solver position");return;
+  }
+  var savedGravity=Physics.gravity;var savedLayers=solver.CollidableLayers;var savedSolving=(bool)typeof(KinematicCharacterMotor).GetField("_solveGrounding",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(solver);
+  try{
+   r.phase="original-spawned-main-motion";Save();Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);solver.CollidableLayers=0;motor.velocity=Vector3.zero;
+   input.moveVector=Vector3.right;input.aimDirection=Vector3.right;
+   for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);Step(solver,1);r.spawnedMainTicks++;}
+   r.x=solver.TransientPosition.x-origin.x;r.y=solver.TransientPosition.y-origin.y;
+   Check(r.x>5&&r.x<7&&Mathf.Abs(r.y)<.001f&&Mathf.Abs(motor.velocity.x-body.moveSpeed)<.001f,"Original spawned main/motor/solver displacement");
+   input.moveVector=Vector3.zero;
+   for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);Step(solver,1);r.spawnedMainTicks++;}
+   r.z=solver.TransientPosition.x-origin.x;
+   Check(r.z>=r.x&&r.z<r.x+2&&motor.velocity.sqrMagnitude<.000001f&&motor.moveDirection==Vector3.zero,"Original spawned main braking");
+   Check(machine.state==state&&!body.gameObject.activeInHierarchy,"Spawned main state identity/isolation changed");
+  }finally{input.moveVector=Vector3.zero;Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);}
  }
 }
