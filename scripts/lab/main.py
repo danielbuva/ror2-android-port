@@ -83,6 +83,14 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
+  elif a.action=='spawn-automatic-body-prepare':
+   from scene_runtime import body_start_loadout_prepare
+   body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-body'])
+   out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
+   attempt['batch_seconds']={probe:85 for probe in ['body-state-spawn-state-auto-body','body-state-spawn-state-auto-body-ground']};write(out/'attempt.json',attempt)
+  elif a.action=='spawn-automatic-body-ground-run':
+   from scene_runtime import movement_batch_run
+   movement_batch_run(cases=['body-state-spawn-state-auto-body-ground'],retry=True)
   elif a.action=='spawn-automatic-gravity-prepare':
    from scene_runtime import body_start_loadout_prepare
    body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-gravity','body-state-spawn-state-auto-land'])

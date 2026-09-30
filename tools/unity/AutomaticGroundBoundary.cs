@@ -9,7 +9,7 @@ using UnityEngine;
 public sealed partial class MovementBatchProbe {
  IEnumerator AutomaticGroundBoundary(CharacterBody body,EntityStateMachine machine,Result cfg){
   bool floor=r.id!="body-state-spawn-state-auto-gravity",wall=r.id=="body-state-spawn-state-auto-ground-wall";
-  bool scripted=r.id=="body-state-spawn-state-auto-ground-stop"||wall;
+  bool scripted=r.id=="body-state-spawn-state-auto-ground-stop"||r.id=="body-state-spawn-state-auto-body-ground"||wall;
   var motor=body.characterMotor;var solver=motor.Motor;var input=body.inputBank;var state=machine.state;
   Check(cfg.sourceGravity<0&&motor.useGravity&&state is GenericCharacterMain,"Original automatic gravity prerequisites");
   var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;

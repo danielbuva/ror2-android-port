@@ -13,6 +13,7 @@ public sealed partial class MovementBatchProbe {
   PrepareSpawnStateCatalog(cfg);
   var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");
   var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
+  bool automaticBody=IsAutomaticBody();
   bool movingMotor=r.id!="body-state-spawn-state-auto-state",scripted=r.id=="body-state-spawn-state-auto-motion";
   Check(machine&&machine.state is Uninitialized&&machine.initialStateType.stateType==typeof(SpawnTeleporterState)&&machine.mainStateType.stateType==typeof(GenericCharacterMain),"Original automatic state starting identity");
   Check(motor&&solver&&motor.Motor==solver&&input&&!body.gameObject.activeInHierarchy,"Automatic fixture motor/input isolation");
@@ -20,15 +21,21 @@ public sealed partial class MovementBatchProbe {
   var savedGravity=Physics.gravity;var savedLayers=solver.CollidableLayers;
   bool savedSolving=(bool)typeof(KinematicCharacterMotor).GetField("_solveGrounding",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(solver);
   Action<CharacterBody> observed=b=>{if(b==body)r.motorStartEvents++;};motor.onMotorStart+=observed;
+  Action<CharacterBody> masterStarted=b=>{if(b==body)r.masterStartEvents++;},bodyStarted=b=>{if(b==body)r.bodyStartEvents++;},stats=b=>{if(b==body)r.automaticBodyStatsEvents++;};
+  if(automaticBody){body.master.onBodyStart+=masterStarted;CharacterBody.onBodyStartGlobal+=bodyStarted;body.onRecalculateStats+=stats;}
   try{
-   // Root Awake and diagnostic body Start already passed. Other Start/Update callbacks remain unmeasured.
+   // Body-enabled probes use only Unity Start/Update/FixedUpdate; other root callbacks remain inactive.
    foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
-   machine.enabled=true;if(movingMotor)motor.enabled=true;
+   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;
    r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
-   Check(r.automaticCallbacks.Length==(movingMotor?2:1),"Unexpected enabled root callback");
+   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0),"Unexpected enabled root callback");
    Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
    r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
+   if(automaticBody){
+    r.spawnedHealth=body.healthComponent.health;r.spawnedSkinIndex=body.skinIndex;r.automaticBodyRegistered=CharacterBody.readOnlyInstancesList.Contains(body);Save();
+    Check(r.masterStartEvents==1&&r.bodyStartEvents==1&&r.automaticBodyStatsEvents>=1&&r.automaticBodyRegistered&&r.spawnedHealth==110,"Original automatic body Start/events/stats/registration");
+   }
    if(movingMotor){
     r.rawAuthority=body.hasAuthority;r.effectiveAuthority=RoR2.Util.HasEffectiveAuthority(body.gameObject);
     Check(r.motorStartEvents==1&&motor.hasEffectiveAuthority&&r.effectiveAuthority&&!r.rawAuthority&&motor.useGravity,"Automatic original motor Start/authority");
@@ -43,7 +50,7 @@ public sealed partial class MovementBatchProbe {
    ObserveTeleportOverlays(body);
    r.spawnState=machine.state.GetType().FullName;r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnedStateAge=SpawnedStateAge(machine.state,"age");r.spawnedFixedAge=SpawnedStateAge(machine.state,"fixedAge");Save();
    Check(machine.state is GenericCharacterMain&&model.invisibilityCount==invisible,"Automatic original timed transition/model exit");
-   float buffDuration;Check(r.hiddenBuffCount==1&&body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration)&&buffDuration==3f,"Original spawn exit timed hidden buff; body timer callbacks remain inactive");
+   float buffDuration=0;Check(r.hiddenBuffCount==1&&body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration)&&buffDuration>2.5f&&buffDuration<=3f&&(automaticBody||buffDuration==3f),"Original spawn exit timed hidden buff duration");r.spawnExitBuffSeconds=buffDuration;
    Check(r.teleportOverlays==1,"Original automatic spawn overlay not observed");r.spawnState=machine.state.GetType().FullName;
    r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
    Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
@@ -75,11 +82,19 @@ public sealed partial class MovementBatchProbe {
    Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55,"Automatic original sustained frame/fixed ages");
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
    }
+   if(automaticBody){
+    r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
+    r.stationarySeconds=(float)typeof(CharacterBody).GetField("notMovingStopwatch",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);Save();
+    Check(r.spawnBuffExpired&&r.stationarySeconds>55&&r.automaticBodyStatsEvents>=2,"Original automatic body buff expiry/update timer/stat recalculation");
+    Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
+   }
   }finally{
    body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
+   if(automaticBody){body.master.onBodyStart-=masterStarted;CharacterBody.onBodyStartGlobal-=bodyStarted;body.onRecalculateStats-=stats;}
    // Explicit original exit keeps measured buff/material dependencies alive during teardown.
    Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
   }
+  Check(!automaticBody||!CharacterBody.readOnlyInstancesList.Contains(body),"Original automatic body deregistration");
   Check(machine.state==null&&!KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),"Automatic state exit/solver unregistration");
  }
 }
