@@ -1206,3 +1206,18 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate callback acceptance from full body Start; preserve failures and identify first catalog/content dependency.
 - **DEPENDENCIES:** J112; pinned Starstorm2 state/network setup and DebugToolkit actual master/body queries; current original CharacterBody.Start/UpdateMasterLink, CharacterMaster.OnBodyStart/SetUpGummyClone and Inventory nullable-definition contract.
 - **STATUS:** S82 PASS — J113; S83 FAILED at original UpdateMasterLink missing BodyCatalog index after master callback. Register original body catalog/content behavior before retry; no index injection.
+
+
+## S84 — Original body catalog and portrait fallback
+- **TITLE:** Register the original Commando prefab without inventing a portrait alias.
+- **CONTEXT / OBSERVATION:** S83 stops at the original missing-body-index guard. Exact legitimate catalog decoding finds no `Textures/BodyIcons/CommandoBody` key; the serialized portrait resolves to the real Commando icon.
+- **HYPOTHESIS:** Original SetBodyPrefabs assigns the index and retains the serialized portrait after the expected failed asynchronous lookup.
+- **TASK:** Initialize real Addressables with the accepted empty-catalog recipe, verify the original legacy missing-key request fails, register the actual inactive prefab through original BodyCatalog, drain callbacks, verify index/name/prefab identity and portrait preservation.
+- **CONSTRAINTS:** No direct index assignment, fake successful request, invented alias, body activation or Body.Start acceptance. Use a fresh process and wait for callbacks before owned catalog/bundle teardown.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Narrow partial movement probe, existing preparation/CLI, ignored catalog query and device evidence.
+- **TEST COMMAND:** `./dev prototype --action body-catalog-prepare`; editor refresh/order verification; preflight; forced Vulkan build; movement-batch-run.
+- **PASS CONDITION:** Original index and lookup identities agree; missing request fails with InvalidKeyException; serialized portrait survives original callback; no unexplained errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** Current process, first request/callback/index error, pending request count, original assembly hashes, actual build and capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record catalog-only result separately from S83 and formal L5.5; preserve failed preparations and source/query evidence.
+- **DEPENDENCIES:** S81/S82; community-prior-art Addressables/catalog section, pinned R2API ContentAddition.AddBody registration timing and CharacterBody contract; exact original BodyCatalog/LegacyResourcesAPI and accepted controller initialization.
+- **STATUS:** S84 PASS — J114. Fifteen assertions, 26.09 seconds, expected failed portrait request and original assigned identities/fallback; clean owned teardown, known shader messages only. S83 still awaits a fresh integrated retry.

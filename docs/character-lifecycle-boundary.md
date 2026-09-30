@@ -104,3 +104,6 @@ Original input MonoScript metadata sets CharacterMotor execution order to 200, w
 
 ### J113: master callback accepted; body catalog required
 Original master.OnBodyStart now passes on the reciprocally spawned body, initializing health to 110 and emitting one event. SetUpGummyClone requires the actual indexed GummyCloneIdentifier even at zero count; the narrow catalog supplies that definition before inventory allocation. Body Start reaches the master event but fails its original missing BodyCatalog-index check. Next register the original prefab through BodyCatalog and trace its exact asynchronous portrait request/fallback; no private index assignment or invented content success. Full Start and sustained simulation remain unproven.
+
+
+J114 passes original bounded BodyCatalog registration on Android, including an honestly failed body-name portrait lookup and retention of the actual serialized icon. Catalog-assigned index/name/prefab identities agree after callbacks drain. Next integrate the registered prefab into S83 before original SpawnBody/Start; share bundle ownership and postpone catalog cleanup until clone destruction. This does not pass body Start or formal L5.5.

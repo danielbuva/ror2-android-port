@@ -81,3 +81,6 @@ J107–J109 pass untouched default master loadout serialization but find origina
 J111/J112 restore measured original CharacterMotor order and pass automatic root lifecycle plus original reciprocal master/body spawning and server registration. Children remain inactive; body is stopped before Start. Full startup/catalog lifecycle, sustained simulation and physical controls are still required for formal L5.5.
 
 J113 passes original master body-start callback on the reciprocally spawned body: one event and health 110 with actual zero-count GummyCloneIdentifier context. Original body Start stops at its explicit BodyCatalog-index guard. Catalog registration/content behavior is next; formal L5.5 remains open.
+
+
+J114 passes original bounded BodyCatalog registration on Android, including an honestly failed body-name portrait lookup and retention of the actual serialized icon. Catalog-assigned index/name/prefab identities agree after callbacks drain. Next integrate the registered prefab into S83 before original SpawnBody/Start; share bundle ownership and postpone catalog cleanup until clone destruction. This does not pass body Start or formal L5.5.
