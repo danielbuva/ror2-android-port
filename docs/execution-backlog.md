@@ -1366,7 +1366,7 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **FAILURE EVIDENCE TO CAPTURE:** First original fixed/heal/API/native exception, callback list, rate/accumulator/interval, barrier observed/expected, logs/crash/cleanup, APK/payload/original hashes.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve failures, separate health/barrier component receipts only after review, retain formal L5/L5.5 limits and next measured dependency.
 - **DEPENDENCIES:** J126; community-prior-art.md items/damage boundary and pinned R2API DamageAPI source: hooks concern damage-type serialization/projectile contracts, not a replacement health loop or Android proof. Current exact HealthComponent.ManagedFixedUpdate/ServerFixedUpdate/Heal/AddBarrier and nullable buff/empty-equipment context govern this no-damage probe. No community code copied.
-- **STATUS:** S107 PASS — J128 (4046 assertions, clean 60-second automatic health hold) after J127 measurement correction. S108 acceptance FAILED — J129: 4047 assertions and barrier decay agree, but original stat recalculation logs missing BarrierEffect prefab. No barrier receipt. Recover that exact original-provider closure/lifecycle before retry; preserve both rejected attempts.
+- **STATUS:** S107 PASS — J128 (4046 assertions). J129 rejected S108 and J127 observer failure preserved. S109/S112/S111 recover the measured original barrier asset/completion/lifecycle; S108 retry PASS — J133 (4118 assertions, natural expiry/effect lifecycle and clean 60-second automatic hold). Separate automatic-barrier receipt retained; formal gates remain open.
 
 
 ## S109–S111 — Original barrier prefab loading, initialization and lifecycle
@@ -1381,4 +1381,19 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **FAILURE EVIDENCE TO CAPTURE:** First unresolved catalog/GUID/component/shader/native callback, Init pending count/slot identities, effect linkage/state/destruction, current-process logs/capture, build/payload/input identities and cleanup.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve every attempt. Separate receipts only after real-device/log review; formal L5/L5.5 remain open.
 - **DEPENDENCIES:** J128/J129. Consulted community-prior-art.md and pinned R2API AddressReferencedAsset handle completion/type/release contract; accepted original material/audio provider ownership. Exact current CharacterBody.Init/AssetReferences.Resolve, UpdateSingleTemporaryVisualEffect, TemporaryVisualEffect and VFXAttributes determine the probe; no community/game code copied.
-- **STATUS:** S109 PASS — J131 (56 assertions). S110 clean acceptance FAILED despite actual slot completion: 21 missing unrelated direct Addressables requests. S111/S108 remain stopped pending the separately measured original completion-callback candidate. No Init or barrier-decay receipt advances.
+- **STATUS:** S109 PASS — J131 (56 assertions). S110 clean Init acceptance FAILED on 21 missing unrelated direct requests. S112 original completion PASS — J132 (115 assertions). Corrected S111 lifecycle PASS — J133 (487 assertions); S108 automatic decay/effect/60-second hold PASS — J133 (4118 assertions). Separate receipts retained; full Init/formal gates remain open.
+
+
+## S112 — Original successful barrier completion callback
+- **TITLE:** Isolate the successful original Init callback from J131's unrelated missing requests.
+- **CONTEXT / OBSERVATION:** S109 passes actual loading/release. S110's original barrier callback succeeds but the broad resolver logs 21 unrelated missing direct requests, rejecting clean Init acceptance.
+- **HYPOTHESIS:** The exact original compiler callback can populate its measured slot from the actual successful legacy handle without running the unrelated resolver.
+- **TASK:** Semantically attribute the one callback in the unchanged DLL with read-only Mono.Cecil; verify hash/declaring type/signature; invoke its original singleton delegate target against the successful original handle. Verify exactly one loaded slot, zero pending legacy calls, restoration and release. Accept before S111 and S108.
+- **CONSTRAINTS:** Explicit diagnostic callback invocation, not full Init or automatic resolver acceptance. No harness writes to populate the slot, synthetic handles/results, error suppression, unrelated content or original assembly modification. Restore only owned slots on cleanup.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing barrier helper/configuration/selector and ignored IL attribution; existing original loaders unchanged.
+- **TEST COMMAND:** `./dev prototype --action barrier-completion-prepare`; serial refresh/motor-order, preflight, forced Vulkan build, movement-batch-run. After acceptance, separate barrier-lifecycle-run and spawn-automatic-barrier-run.
+- **PASS CONDITION:** Actual handle and original callback fill only the barrier slot; owned references release; no new current-process errors/warnings/crash. S110 remains rejected.
+- **FAILURE EVIDENCE TO CAPTURE:** Source hash, semantic callback attribution, runtime type/signature/slot mismatch, pending callbacks, first exception, PID logs and cleanup/build/payload identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate completion receipt, explicit invocation limits and retained S110 rejection; then independently assess lifecycle/decay.
+- **DEPENDENCIES:** J131/S109; the same pinned R2API AddressReferencedAsset actual successful-handle/completion ownership observation, exact original callback semantic attribution. No game/community implementation copied.
+- **STATUS:** S112 PASS — J132 (115 assertions, explicit original completion only). J132 initial S111 observer lookup failure retained. J133 corrected S111 lifecycle/material-copy cleanup and S108 automatic decay pass with no new runtime errors; no full Init claim.

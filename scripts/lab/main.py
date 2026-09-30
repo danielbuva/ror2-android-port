@@ -83,11 +83,11 @@ try:
   elif a.action=='jump-input-retry-prepare':
    from scene_runtime import grounded_state_prepare
    grounded_state_prepare(jump_items=True,cases=['state-jump-items','state-jump-inventory','state-jump-input'])
-  elif a.action=='barrier-effect-prepare':
+  elif a.action in ['barrier-effect-prepare','barrier-completion-prepare','barrier-lifecycle-prepare']:
    from scene_runtime import body_start_loadout_prepare
-   body_start_loadout_prepare(spawn_states=True,teleport_material=True,barrier_effect=True,cases=['body-state-spawn-state-barrier-asset'])
+   body_start_loadout_prepare(spawn_states=True,teleport_material=True,barrier_effect=True,cases=['body-state-spawn-state-barrier-asset' if a.action=='barrier-effect-prepare' else 'body-state-spawn-state-barrier-effect' if a.action=='barrier-lifecycle-prepare' else 'body-state-spawn-state-barrier-completion'])
    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
-   attempt['batch_seconds']={probe:25 for probe in ['body-state-spawn-state-barrier-asset','body-state-spawn-state-barrier-init','body-state-spawn-state-barrier-effect']};attempt['batch_seconds']['body-state-spawn-state-auto-barrier']=85;write(out/'attempt.json',attempt)
+   attempt['batch_seconds']={probe:25 for probe in ['body-state-spawn-state-barrier-asset','body-state-spawn-state-barrier-init','body-state-spawn-state-barrier-completion','body-state-spawn-state-barrier-effect']};attempt['batch_seconds']['body-state-spawn-state-auto-barrier']=85;write(out/'attempt.json',attempt)
   elif a.action in ['barrier-init-run','barrier-lifecycle-run']:
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['body-state-spawn-state-barrier-init' if a.action=='barrier-init-run' else 'body-state-spawn-state-barrier-effect'],retry=True)

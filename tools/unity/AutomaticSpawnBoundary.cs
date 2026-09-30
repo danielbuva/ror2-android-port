@@ -85,7 +85,7 @@ public sealed partial class MovementBatchProbe {
    Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55,"Automatic original sustained frame/fixed ages");
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
    }
-   if(r.id=="body-state-spawn-state-auto-barrier"){ObserveBarrierEffect(body);Check(r.barrierEffectEntries==1&&r.barrierEffectExited&&r.barrierEffectDestroyed&&!BodyBarrier(body),"Original automatic barrier effect entry/exit/destruction");}
+   if(r.id=="body-state-spawn-state-auto-barrier"){ObserveBarrierEffect(body);Check(r.barrierMaterialCopies>0&&r.barrierEffectEntries==1&&r.barrierEffectExited&&r.barrierEffectDestroyed&&!BodyBarrier(body),"Original automatic barrier effect entry/exit/destruction");}
    if(IsAutomaticHealth())Check(body.healthComponent.enabled&&body.healthComponent.health==110&&body.healthComponent.barrier==0,"Original automatic health sustained full health/barrier expiry");
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);

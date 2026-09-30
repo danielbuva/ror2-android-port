@@ -779,6 +779,9 @@ def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material
         rows=[x for x in query['locations'] if x['key']==contract['key'] and x['type']=='UnityEngine.GameObject' and x['internalId']=='Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab']
         if query.get('error') or len(rows)!=1:raise RuntimeError('Barrier catalog identity differs')
         cfg['barrierEffectKey']=contract['key']
+        completion=contract['completion']
+        if completion['ror2_sha256']!=sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll'):raise RuntimeError('Barrier callback input drift')
+        cfg['barrierCompletionType']=completion['type'];cfg['barrierCompletionMethod']=completion['method']
         source=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab'
         write(out/'barrier-effect-contract.json',{'source_sha256':sha(source),'key':contract['key'],'catalog_query':str((query_out/'catalog-query.json').relative_to(ROOT)),'bundle':'barrier-effect-lab','scope':'One actual original temporary-effect prefab and serialized closure; original providers and dummy shaders, no graphics parity','prior_art':'R2API AddressReferencedAsset actual handle status/identity/release; accepted original material/audio providers; CharacterBody.Init and TemporaryVisualEffect source'})
     write(stage/'Resources/MovementBatchProbe.json',cfg)
