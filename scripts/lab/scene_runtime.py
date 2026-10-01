@@ -564,7 +564,7 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
         (stage/('Resources/'+name+'.json')).unlink()
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
     if not kinematic:
-        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary','AutomaticSpawnBoundary','AutomaticGroundBoundary','AutomaticHealthBoundary','BarrierEffectBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
+        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary','AutomaticSpawnBoundary','AutomaticGroundBoundary','AutomaticHealthBoundary','AutomaticDirectionBoundary','BarrierEffectBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
     probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
     write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
     r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['integrated-free','integrated-wall','integrated-jump','integrated-land'] if integrated else ['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})

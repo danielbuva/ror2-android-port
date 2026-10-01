@@ -13,7 +13,7 @@ public sealed partial class MovementBatchProbe {
   health.enabled=true;r.automaticHealthEnabled=true;r.healthRegen=body.regen;
   var active=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).ToArray();
   r.automaticCallbacks=active.Select(x=>x.GetType().FullName).ToArray();
-  Check(active.Length==5&&active.Contains(body)&&active.Contains(body.characterMotor)&&active.Contains(body.characterMotor.Motor)&&active.Contains(machine)&&active.Contains(health),"Unexpected health callback activation");
+  Check(active.Length==(IsAutomaticDirection()?6:5)&&(!IsAutomaticDirection()||active.Contains(body.GetComponent<CharacterDirection>()))&&active.Contains(body)&&active.Contains(body.characterMotor)&&active.Contains(body.characterMotor.Motor)&&active.Contains(machine)&&active.Contains(health),"Unexpected health callback activation");
   var accumulator=typeof(HealthComponent).GetField("regenAccumulator",BindingFlags.Instance|BindingFlags.NonPublic);
   r.regenBefore=(float)accumulator.GetValue(health);
   if(barrier){health.AddBarrier(20);r.barrierBefore=health.barrier;Check(r.barrierBefore==20&&health.fullBarrier==110,"Original public AddBarrier result");}

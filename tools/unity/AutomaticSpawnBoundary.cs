@@ -13,7 +13,9 @@ public sealed partial class MovementBatchProbe {
   PrepareSpawnStateCatalog(cfg);
   var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");
   var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
-  bool automaticBody=IsAutomaticBody();
+  bool automaticBody=IsAutomaticBody(),automaticDirection=IsAutomaticDirection();
+  var direction=body.GetComponent<CharacterDirection>();
+  if(automaticDirection)Check(direction&&!direction.modelAnimator,"Direction Start already ran; refuse automatic scheduling claim");
   bool movingMotor=r.id!="body-state-spawn-state-auto-state",scripted=r.id=="body-state-spawn-state-auto-motion";
   Check(machine&&machine.state is Uninitialized&&machine.initialStateType.stateType==typeof(SpawnTeleporterState)&&machine.mainStateType.stateType==typeof(GenericCharacterMain),"Original automatic state starting identity");
   Check(motor&&solver&&motor.Motor==solver&&input&&!body.gameObject.activeInHierarchy,"Automatic fixture motor/input isolation");
@@ -26,9 +28,9 @@ public sealed partial class MovementBatchProbe {
   try{
    // Body-enabled probes use only Unity Start/Update/FixedUpdate; other root callbacks remain inactive.
    foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
-   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;
+   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;
    r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
-   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0),"Unexpected enabled root callback");
+   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0),"Unexpected enabled root callback");
    Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
    r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
@@ -57,7 +59,9 @@ public sealed partial class MovementBatchProbe {
    if(IsAutomaticHealth()){
     var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;
    }
-   if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){
+   if(automaticDirection){
+    var directionRoutine=AutomaticDirectionBoundary(body,machine);while(directionRoutine.MoveNext())yield return directionRoutine.Current;
+   }else if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){
     var groundRoutine=AutomaticGroundBoundary(body,machine,cfg);while(groundRoutine.MoveNext())yield return groundRoutine.Current;
    }else{
    var state=machine.state;float age=SpawnedStateAge(state,"age"),fixedAge=SpawnedStateAge(state,"fixedAge");var origin=solver.TransientPosition;
