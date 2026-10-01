@@ -6,10 +6,10 @@ using UnityEngine;
 
 // Only diagnostic input and observations; original main-state and direction callbacks turn the model base.
 public sealed partial class MovementBatchProbe {
- bool IsAutomaticDirection(){return r.id.StartsWith("body-state-spawn-state-auto-direction-");}
+ bool IsAutomaticDirection(){return IsAutomaticModel()||r.id.StartsWith("body-state-spawn-state-auto-direction-");}
  IEnumerator AutomaticDirectionBoundary(CharacterBody body,EntityStateMachine machine){
   var direction=body.GetComponent<CharacterDirection>();var input=body.inputBank;var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;
-  bool motion=r.id=="body-state-spawn-state-auto-direction-motion",reverse=r.id=="body-state-spawn-state-auto-direction-reverse",aim=r.id=="body-state-spawn-state-auto-direction-aim";
+  bool motion=r.id.EndsWith("-motion"),reverse=r.id.EndsWith("-reverse"),aim=r.id.EndsWith("-aim");
   Check(direction.enabled&&direction.hasEffectiveAuthority&&direction.targetTransform==body.modelLocator.modelBaseTransform&&direction.modelAnimator==body.modelLocator.modelTransform.GetComponent<Animator>(),"Original automatic direction Start/cache/authority");
   Check(!direction.driveFromRootRotation&&!direction.shouldDirectPitch&&direction.turnSpeed==720&&!direction.targetTransform.gameObject.activeInHierarchy&&!body.shouldAim,"Measured recovered direction contract changed");
   r.automaticDirectionStarted=true;r.directionTarget=direction.targetTransform.name;r.directionTurnSpeed=direction.turnSpeed;r.directionStartYaw=direction.yaw;
@@ -50,7 +50,7 @@ public sealed partial class MovementBatchProbe {
    if(stopped)Check(Vector3.Distance(solver.TransientPosition,resting)<.001f&&Mathf.Abs(Mathf.DeltaAngle(direction.yaw,heldYaw))<.02f&&Mathf.Abs(Mathf.DeltaAngle(direction.targetTransform.eulerAngles.y,heldYaw))<.03f,"Original automatic neutral facing/position hold");
    if(!motion&&!reverse)Check(Vector3.Distance(solver.TransientPosition,origin)<.001f,"Direction-only input translated actor");
    if(!motion&&!reverse&&!aim)Check(Mathf.Abs(Mathf.DeltaAngle(direction.yaw,r.directionStartYaw))<.001f&&Mathf.Abs(Mathf.DeltaAngle(direction.targetTransform.eulerAngles.y,r.directionStartYaw))<.001f,"Original automatic neutral facing drift");
-   r.automaticFrames++;yield return null;
+   r.automaticFrames++;if(IsAutomaticModel()){yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);}else yield return null;
   }
   r.directionFinalYaw=direction.yaw;r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-age;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-fixedAge;
   Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55&&(!(motion||reverse||aim)||first&&stopped)&&(!reverse&&!aim||second),"Original automatic direction sequence/hold incomplete");Save();

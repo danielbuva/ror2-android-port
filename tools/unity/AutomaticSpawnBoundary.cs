@@ -13,7 +13,7 @@ public sealed partial class MovementBatchProbe {
   PrepareSpawnStateCatalog(cfg);
   var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");
   var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
-  bool automaticBody=IsAutomaticBody(),automaticDirection=IsAutomaticDirection();
+  bool automaticBody=IsAutomaticBody(),automaticDirection=IsAutomaticDirection(),automaticModel=IsAutomaticModel();
   var direction=body.GetComponent<CharacterDirection>();
   if(automaticDirection)Check(direction&&!direction.modelAnimator,"Direction Start already ran; refuse automatic scheduling claim");
   bool movingMotor=r.id!="body-state-spawn-state-auto-state",scripted=r.id=="body-state-spawn-state-auto-motion";
@@ -28,9 +28,10 @@ public sealed partial class MovementBatchProbe {
   try{
    // Body-enabled probes use only Unity Start/Update/FixedUpdate; other root callbacks remain inactive.
    foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
-   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;
+   if(automaticModel)PrepareAutomaticModel(body);
+   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;if(automaticModel)body.modelLocator.enabled=true;
    r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
-   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0),"Unexpected enabled root callback");
+   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0),"Unexpected enabled root callback");
    Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
    r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;

@@ -91,6 +91,14 @@ try:
   elif a.action in ['barrier-init-run','barrier-lifecycle-run']:
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['body-state-spawn-state-barrier-init' if a.action=='barrier-init-run' else 'body-state-spawn-state-barrier-effect'],retry=True)
+  elif a.action=='spawn-automatic-model-prepare':
+   from scene_runtime import body_start_loadout_prepare
+   body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-model-neutral'])
+   out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
+   attempt['batch_seconds']={('body-state-spawn-state-auto-model-'+suffix):85 for suffix in ['neutral','motion','reverse','aim']};write(out/'attempt.json',attempt)
+  elif a.action in ['spawn-automatic-model-motion-run','spawn-automatic-model-reverse-run','spawn-automatic-model-aim-run']:
+   from scene_runtime import movement_batch_run
+   movement_batch_run(cases=['body-state-spawn-state-auto-model-'+a.action.split('-')[-2]],retry=True)
   elif a.action=='spawn-automatic-direction-prepare':
    from scene_runtime import body_start_loadout_prepare
    body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-direction-neutral'])
