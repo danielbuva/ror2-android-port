@@ -91,6 +91,9 @@ try:
   elif a.action in ['barrier-init-run','barrier-lifecycle-run']:
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['body-state-spawn-state-barrier-init' if a.action=='barrier-init-run' else 'body-state-spawn-state-barrier-effect'],retry=True)
+  elif a.action in ['rewired-trial-inventory','rewired-trial-run']:
+   from rewired_trial import inventory,controller_run
+   inventory() if a.action=='rewired-trial-inventory' else controller_run()
   elif a.action=='rewired-platform-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare(cases=['rewired-platform-contract'])

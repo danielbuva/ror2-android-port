@@ -3,6 +3,8 @@ using Mono.Cecil.Cil;
 using System.Security.Cryptography;
 using System.Text.Json;
 
+if (args.Length > 0 && args[0] == "--rewired-contract") { RewiredContract.Run(args.Skip(1).ToArray()); return; }
+
 if (args.Length > 0 && args[0] == "--audio-guard") { AudioGuard.Run(args.Skip(1).ToArray()); return; }
 
 if (args.Length > 0 && args[0] == "--slice") { Slice.Run(args.Skip(1).ToArray()); return; }

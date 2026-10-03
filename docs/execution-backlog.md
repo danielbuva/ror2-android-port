@@ -1508,3 +1508,36 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** J146 and durable user workflow; public staged audit and logical commit.
 - **DEPENDENCIES:** User OLED request; immediate S127 runtime must wake after host work.
 - **STATUS:** PASS — 29 host tests including four display safety cases, real runtime/run/capture wake and subsequent asleep verification. Current Nova asleep.
+
+
+## S128 — Compare the official Rewired Unity-2021 trial in isolation
+- **ID:** S128
+- **TITLE:** Measure API, serialized contracts and installer changes before an Android SDK probe.
+- **CONTEXT:** S127 finds a Windows binding on Android. User supplies official Unity-2021 trial and explicitly forbids replacing accepted originals.
+- **OBSERVATION:** Actual trial 1.1.65.3 differs from shipped1.1.47; Unity-major compatibility does not prove binary or serialization compatibility.
+- **HYPOTHESIS:** An ignored exact-editor reference can expose integration feasibility and concrete incompatibilities without altering accepted lab inputs.
+- **TASK:** Inventory archive/assets/runtime/importers, public/protected APIs and original consumers, passive original input data import, controller registry and installer changes; preserve separate hashes and negative findings.
+- **CONSTRAINTS:** No trial IL/resource/enforcement inspection or modifications, game installation or accepted lab changes. Trial evaluation only, five-minute restriction retained. Proprietary/raw material ignored; no distribution or formal controller acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Original metadata observer, reference-only Unity observer, narrow comparison CLI, authored notes, ignored reference project and reports.
+- **TEST COMMAND:** `./dev doctor`; `./dev prototype --action rewired-trial-inventory`; exact reference MCP observations; original DLL hash verification; `./dev test`.
+- **PASS CONDITION:** Exact compared members/types, data identity/schema differences, runtime/installer inventory and first candidate decision recorded; a negative drop-in finding completes the experiment.
+- **FAILURE EVIDENCE TO CAPTURE:** Missing signatures/accessibility/scopes/inheritance, dynamic reflection failure, optional missing script, before/after importer/settings hashes and unchanged originals.
+- **STATE/JOURNAL UPDATES REQUIRED:** J147/J148, reference report, state/milestones/risk/backlog; staged public/IP review and Conventional Commit. Advance no game controller pointer.
+- **DEPENDENCIES:** S127/J145 and user-supplied official archive. Prior art community input map and pinned BorgMain distinguish inputBank semantics from an Android backend; vendor installation/troubleshooting govern axes/order, controller assignment and maps.
+- **STATUS:** COMPLETE / NOT DROP-IN — 170/172 signatures match, two missing/inaccessible, ten scope changes and a sealed inherited UI base. Passive input identities retained with documented schema differences. Accepted45 DLLs unchanged. One isolated SDK physical probe is justified; original integration needs a separately bounded compatible candidate.
+
+## S129 — Official trial Android physical-controller observation
+- **ID:** S129
+- **TITLE:** Observe SDK readiness and copied original input maps on Nova without integrating RoR2.
+- **CONTEXT:** S128 completes comparison before constructing a reference-only probe.
+- **OBSERVATION:** Trial contains Android assembly/source, installer 512 axes and early manager order; neither import nor ARM64 compilation proves physical input.
+- **HYPOTHESIS:** The official trial can initialize Android input and expose Nova physical controls through copied original action/player/map data, independently of original binary compatibility.
+- **TASK:** Build one SDK-only scene, verify terminal build and package, preflight/install under existing owned lab safeguards, record90-second human-labelled raw/mapped input, collect current-PID evidence, restore prior APK and sleep Nova.
+- **CONSTRAINTS:** Nova only, Thor untouched. No trial timeout bypass, original DLL replacement, platform/ownership services, game simulation or automatic human mapping acceptance. Definition IDs and runtime player IDs remain distinct. Preserve all failures and original APK/payload.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Small reference scene builder/runtime observer, thin CLI, specific safety cases, ignored APK/device records; no accepted lab project edits.
+- **TEST COMMAND:** Reference-only MCP refresh/guarded build; `./dev preflight`; `./dev prototype --action rewired-trial-run`; `./dev test`; visual/current-PID report review and human sequence confirmation.
+- **PASS CONDITION:** ReInput initialized, exact44 action identities and measured original runtime player lookup retained, one joystick, gameplay/UI maps loaded, physically labelled axes/buttons and mapped outputs recorded without unexplained failures; previous APK restored and display asleep. SDK success cannot pass original game integration or L5.5.
+- **FAILURE EVIDENCE TO CAPTURE:** Start/terminal build receipts, dispatch/signing/copy/compile/assertion failure, ABI/hash/storage/PID/current report/native/managed logs/screenshot, human ordering uncertainty and rollback/sleep failures.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve J148 failed candidates and J149 outcome, scoped observation receipt, reference notes and durable state/backlog/milestones/risk. No original controller capability pointer advance.
+- **DEPENDENCIES:** S128; existing Device ownership/adopted-storage/display safeguards. Exact original runtime player creation and game GetPlayer(0), official public controller/player APIs; no copied implementation.
+- **STATUS:** COMPLETE / SDK OBSERVATION PASS — J149: 90.001-second Nova Vulkan ARM64 capture, 264 events, initialized SDK/one joystick, 44 retained action identities, runtime player0 lookup, gameplay/UI maps and standard physical controls observed. User confirms delayed L3/R3; reviewed capture/no new errors or matched crashes, prior APK restored and Nova asleep. M1/M2 have no distinct SDK events; original game controller/formal gates stay unaccepted. 35 host tests pass. Next measure authorized matching 1.1.47 integration, otherwise explicitly scoped newer-package compatibility candidate.
