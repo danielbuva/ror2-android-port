@@ -1,4 +1,4 @@
-import unittest,tempfile,json,zipfile,sys
+import unittest,tempfile,json,zipfile,sys,types,runpy,io,contextlib
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts/lab'))
@@ -33,4 +33,36 @@ class SafetyTests(unittest.TestCase):
  def test_reset_absent_package_does_not_call_adb_uninstall(self):
   self.d.exists=lambda:False
   self.assertFalse(self.d.reset()['removed'])
+ def test_display_control_refuses_non_nova_before_sending_key(self):
+  calls=[]
+  self.d.sh=lambda *args,**kwargs:(calls.append(args) or 'different-model')
+  with patch.object(device,'config',return_value={'sleep_display_when_idle':True}):
+   with self.assertRaisesRegex(RuntimeError,'authorized only for Nova'):self.d.display(False)
+  self.assertEqual(calls,[('getprop','ro.product.model')])
+ def test_display_opt_out_never_queries_device(self):
+  self.d.sh=lambda *args,**kwargs:self.fail('Unrequested display operation')
+  with patch.object(device,'config',return_value={}):self.assertFalse(self.d.display(False))
+ def test_display_wake_and_sleep_verify_power_state(self):
+  calls=[]
+  def shell(*args,**kwargs):
+   calls.append(args)
+   if args==('getprop','ro.product.model'):return 'Retroid Pocket Nova'
+   if args==('dumpsys','power'):return 'mWakefulness='+('Awake' if ('input','keyevent','KEYCODE_WAKEUP') in calls and ('input','keyevent','KEYCODE_SLEEP') not in calls else 'Asleep')
+   return ''
+  self.d.sh=shell
+  with patch.object(device,'config',return_value={'sleep_display_when_idle':True}):
+   self.assertTrue(self.d.display(True));self.assertTrue(device.Device.display_awakened)
+   self.assertTrue(self.d.display(False));self.assertFalse(device.Device.display_awakened)
+ def test_failed_cli_sleeps_awakened_display_and_keeps_first_error(self):
+  calls=[];fake=types.ModuleType('device');scene=types.ModuleType('scene_runtime')
+  class FakeDevice:
+   display_awakened=True
+   def display(self,awake):calls.append(awake)
+  fake.Device=FakeDevice;stderr=io.StringIO()
+  def fail_run():raise RuntimeError('deliberate runtime failure')
+  scene.movement_batch_run=fail_run
+  with patch.dict(sys.modules,{'device':fake,'scene_runtime':scene}),patch.object(sys,'argv',['dev','prototype','--action','movement-batch-run']),contextlib.redirect_stderr(stderr):
+   with self.assertRaises(SystemExit) as ended:runpy.run_path(str(Path(__file__).resolve().parents[1]/'scripts/lab/main.py'),run_name='__main__')
+  self.assertEqual(ended.exception.code,1);self.assertEqual(calls,[False])
+  self.assertIn('deliberate runtime failure',stderr.getvalue())
 if __name__=='__main__':unittest.main()

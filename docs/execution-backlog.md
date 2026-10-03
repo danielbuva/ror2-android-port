@@ -1476,3 +1476,35 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve raw records ignored; document preparation versus physical acceptance, user gate and next contract; Conventional Commit/privacy gate.
 - **DEPENDENCIES:** Explicit Nova target J139; existing original input boundary; prior-art community input map plus exact original RewiredIntegrationManager controller/player/map initialization and pinned BorgMain inputBank consumption. These establish the distinction between raw device observation and actual original input integration; getevent is a read-only native observation, not a middleware replacement.
 - **STATUS:** PASS raw physical observation — J144. Human 60-second Nova capture records 765 events, expected timeout, no stderr or dropped-sync marker, requested sticks/hats/triggers/shoulders/clicks and face controls. User confirms physical Xbox south/east/west/north order; captured west/north kernel names differ. M1/M2/Start/Select extras identified as a group; individually confirm Start/Select in the next Unity/Rewired exposure probe. Separate raw-observation receipt retained; original ReInput/game binding and formal gates remain unproven. Next inspect actual original integration before implementing any remap.
+
+
+## S127 — Original Rewired platform contract on Nova
+- **TITLE:** Measure the shipped Windows binding before initializing native input on Android.
+- **CONTEXT:** S126 accepts raw physical controls; J11/J12 only proved original disputed AOT slots, not a ReInput backend.
+- **OBSERVATION:** Exact original InputManager.DetectPlatform hardcodes Windows/Mono/NetStandard20; original ExternalTools.GetAndroidAPILevel returns -1. Original prefab declares Android settings but also references an unresolved optional Switch component. Settings do not establish Android runtime support.
+- **HYPOTHESIS:** Actual original platform methods on ARM64 reproduce this mismatch, separating binding compatibility from Nova hardware/Unity input availability.
+- **TASK:** In one inactive owned InputManager, invoke only original DetectPlatform and GetExternalTools/GetAndroidAPILevel, observe inherited platform/backend/API fields, actual Android SDK and Unity joystick enumeration; verify ReInput never initializes and owned cleanup completes. Do not instantiate the recovered manager prefab or call game integration.
+- **CONSTRAINTS:** Only configured Nova, Thor untouched. Original DLLs unchanged; no field/config writes, fake readiness, platform services, native controller initialization, asset/security-resource extraction or license/authentication bypass. A diagnostic method observation is not middleware/controller acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** One small partial probe, existing batch dispatch/result/staging, thin CLI and ignored evidence.
+- **TEST COMMAND:** `./dev prototype --action rewired-platform-prepare`; serial editor refresh; preflight; forced Vulkan build; movement-batch-run; host tests and current-PID diagnostics.
+- **PASS CONDITION:** Actual original detector/backend/API values and true Android SDK recorded with attempt/PID, stable process and unchanged originals. A reproduced Windows/Mono/-1 mismatch completes the discriminating experiment but fails Android binding capability. If mismatch reproduces, audit the exact backend-loading contract and choose only a lawful compatible integration or justified bounded adapter.
+- **FAILURE EVIDENCE TO CAPTURE:** Source/DLL hashes, selected original method identities, platform/backend/API values, ReInput readiness before/after, Unity joystick availability, AOT/managed/native first failure, build/install/storage/PID/capture/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record measured positive/negative result separately from game binding, journal first failures, preserve attempt, update state/backlog/milestones/risk and Conventional Commit/privacy gate. No formal controller or simulation pointer advance.
+- **DEPENDENCIES:** S126/J144, accepted exact original input. Prior art: community-prior-art.md input/startup map distinguishes ReInput initialization from AOT slots; pinned Starstorm2 BorgMain preserves original inputBank/base state semantics without establishing Android backend support. Exact legitimate RewiredIntegrationManager and InputManager/InputManager_Base/ExternalTools govern this new contract. No implementation copied.
+- **STATUS:** COMPLETE discriminator / Android binding NOT ACCEPTED — J145. Five assertions and 25.37-second Nova survival confirm original Windows/Mono/NetStandard20/-1 versus actual Android API33; Unity sees one joystick. ReInput never initializes, cleanup passes, 45 DLLs unchanged; known shader messages only. Ask compatible licensed Unity package availability before candidate selection; if unavailable evaluate a bounded documented Unity-input adapter. No formal input/simulation advance.
+
+
+## T03-nova-display — Sleep the OLED when device work ends
+- **TITLE:** Preserve Nova OLED during host-only work and after runtime operations.
+- **CONTEXT:** User explicitly requests display sleep whenever the agent is not actively using Nova.
+- **OBSERVATION:** The prepared Lab can remain foreground while host builds run; sleeping a runtime probe also pauses it, so wake/sleep must follow actual device use.
+- **HYPOTHESIS:** Guarded system power keys around existing launch/capture and CLI completion provide the requested behavior without changing display/storage settings.
+- **TASK:** Enable local Nova-only idle-display option; wake on launch/capture, sleep on command completion including failures, verify actual power states.
+- **CONSTRAINTS:** Configured Nova only; refuse other models before emitting a key; never touch Thor, settings/storage or controller input. Keep original experiment failure visible.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing Device and CLI finally, Nova input capture, four meaningful safety cases, example/README/state.
+- **TEST COMMAND:** `./dev test`; accepted S127 runtime; standalone `./dev run` and `./dev screenshot`; targeted read-only power-state verification.
+- **PASS CONDITION:** Wake only during device use; verified sleep afterward; failure cleanup sleeps while preserving original failure, non-Nova and opt-out safeguards pass.
+- **FAILURE EVIDENCE TO CAPTURE:** Power transition/model/CLI first failure locally, no identifiers published.
+- **STATE/JOURNAL UPDATES REQUIRED:** J146 and durable user workflow; public staged audit and logical commit.
+- **DEPENDENCIES:** User OLED request; immediate S127 runtime must wake after host work.
+- **STATUS:** PASS — 29 host tests including four display safety cases, real runtime/run/capture wake and subsequent asleep verification. Current Nova asleep.

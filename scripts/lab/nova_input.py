@@ -9,6 +9,7 @@ def observe(capture=False):
     if d.sh('getprop','ro.product.model')!='Retroid Pocket Nova':
         raise RuntimeError('This physical-control experiment requires the configured Nova')
     d.owned()
+    if capture:d.display(True)
     capabilities=d.sh('getevent','-lp')
     blocks=re.split(r'(?=add device \d+:)',capabilities)
     candidates=[b for b in blocks if all(label in b for label in ['BTN_GAMEPAD','ABS_X','ABS_Y'])]
@@ -33,7 +34,7 @@ def observe(capture=False):
     result['lab_foreground']=bool(resumed) and all(PACKAGE+'/' in line for line in resumed)
     if not result['lab_foreground']:raise RuntimeError('Owned Lab must be foreground before physical input capture')
     if capture:
-        # Device-side timeout terminates getevent; no input is injected and no other device is queried.
+        # Device-side timeout terminates getevent; no controller input is injected and no other device is queried.
         process=run(d.base+['shell','timeout','60','getevent','-lt',match[0]],check=False,timeout=75)
         (out/'events.txt').write_bytes(process.stdout);(out/'stderr.txt').write_bytes(process.stderr)
         events=sum('EV_' in line for line in process.stdout.decode(errors='replace').splitlines())

@@ -91,6 +91,9 @@ try:
   elif a.action in ['barrier-init-run','barrier-lifecycle-run']:
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['body-state-spawn-state-barrier-init' if a.action=='barrier-init-run' else 'body-state-spawn-state-barrier-effect'],retry=True)
+  elif a.action=='rewired-platform-prepare':
+   from scene_runtime import movement_batch_prepare
+   movement_batch_prepare(cases=['rewired-platform-contract'])
   elif a.action in ['nova-input-prepare','nova-input-capture']:
    from nova_input import observe
    print(json.dumps(observe(capture=a.action=='nova-input-capture'),indent=2))
@@ -402,3 +405,8 @@ try:
  else: raise RuntimeError('Unknown command')
 except Exception as e:
  print(json.dumps({'success':False,'command':a.command,'error':str(e)}),file=sys.stderr);sys.exit(1)
+
+finally:
+ from device import Device
+ if Device.display_awakened:
+  Device().display(False)

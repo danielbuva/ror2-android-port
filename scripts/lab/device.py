@@ -3,12 +3,25 @@ import time,re,shlex,zipfile
 PACKAGE='dev.ror2lab.arm64'
 ADB='/opt/homebrew/bin/adb'
 class Device:
+ display_awakened=False
  def __init__(self):
   serial=config()['device_serial'];lines=run([ADB,'devices']).stdout.decode().splitlines()[1:]
   if [serial,'device'] not in [l.split()[:2] for l in lines]:raise RuntimeError('Configured device is not connected and authorized: '+serial)
   self.base=[ADB,'-s',serial];self.serial=serial
  def cmd(self,*args,check=True,timeout=120):return run(self.base+list(args),check=check,timeout=timeout).stdout.decode(errors='replace').strip()
  def sh(self,*args,check=True):return self.cmd('shell',shlex.join(str(a) for a in args),check=check)
+ def display(self,awake):
+  if not config().get('sleep_display_when_idle',False):return False
+  if self.sh('getprop','ro.product.model')!='Retroid Pocket Nova':raise RuntimeError('Idle display control is authorized only for Nova')
+  self.sh('input','keyevent','KEYCODE_WAKEUP' if awake else 'KEYCODE_SLEEP')
+  if awake:Device.display_awakened=True
+  expected='Awake' if awake else 'Asleep'
+  deadline=time.monotonic()+5
+  while time.monotonic()<deadline:
+   if 'mWakefulness='+expected in self.sh('dumpsys','power'):
+    Device.display_awakened=awake;return True
+   time.sleep(.25)
+  raise RuntimeError('Nova display did not reach '+expected+'; inspect current power state')
  def exists(self):return ('package:'+PACKAGE) in self.sh('pm','list','packages',PACKAGE).splitlines()
  def owned(self):
   receipt=WORK/'device/installed.json'
@@ -39,7 +52,7 @@ class Device:
   if '/mnt/expand/'+storage['uuid']+'/' not in r['package_path']:raise RuntimeError('Placement verification failed; lab receipt saved, inspect before next action')
   return r
  def launch(self):
-  self.owned();self.sh('am','force-stop',PACKAGE);start=self.sh('date','+%s.%N')
+  self.owned();self.display(True);self.sh('am','force-stop',PACKAGE);start=self.sh('date','+%s.%N')
   launch=self.sh('am','start','-W','-n',PACKAGE+'/com.unity3d.player.UnityPlayerActivity');deadline=time.monotonic()+45;logs='';pid=''
   while time.monotonic()<deadline:
    pid=self.sh('pidof',PACKAGE,check=False).strip()
@@ -82,6 +95,7 @@ class Device:
    manifest.append({'name':p.name,'sha256':h,'bytes':p.stat().st_size,'transferred':changed})
   result={'runtime_path':path,'backing_df':self.sh('df','-k',path),'files':manifest};write(WORK/'device/sync.json',result);return result
  def collect(self,kind,out):
+  if kind in ['all','screenshot']:self.display(True)
   out.mkdir(parents=True,exist_ok=True);result={}
   if kind in ['all','logs']:
    pid=self.sh('pidof',PACKAGE,check=False).strip();logs=self.cmd('logcat','-d',*(['--pid='+pid] if pid else []),'-v','threadtime','Unity:I','AndroidRuntime:E','*:S');(out/'unity.log').write_text(logs)

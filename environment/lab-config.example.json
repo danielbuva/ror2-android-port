@@ -1,5 +1,6 @@
 {
   "game_path": "/absolute/path/to/legitimate/Risk of Rain 2",
   "device_serial": "AUTHORIZED_SERIAL",
-  "internal_reserve_mib": 1024
+  "internal_reserve_mib": 1024,
+  "sleep_display_when_idle": false
 }
