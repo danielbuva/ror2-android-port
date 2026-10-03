@@ -29,9 +29,9 @@ public sealed partial class MovementBatchProbe {
    // Body-enabled probes use only Unity Start/Update/FixedUpdate; other root callbacks remain inactive.
    foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
    if(automaticModel)PrepareAutomaticModel(body);
-   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;if(automaticModel)body.modelLocator.enabled=true;
+   machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;if(automaticModel)body.modelLocator.enabled=true;if(IsAutomaticSkill())EnableAutomaticSkills(body);
    r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
-   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0),"Unexpected enabled root callback");
+   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0)+AutomaticSkillCount(),"Unexpected enabled root callback");
    Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
    r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
@@ -60,6 +60,7 @@ public sealed partial class MovementBatchProbe {
    if(IsAutomaticHealth()){
     var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;
    }
+   if(IsAutomaticSkill())StartAutomaticSkillTiming(body);
    if(automaticDirection){
     var directionRoutine=AutomaticDirectionBoundary(body,machine);while(directionRoutine.MoveNext())yield return directionRoutine.Current;
    }else if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){

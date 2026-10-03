@@ -91,6 +91,17 @@ try:
   elif a.action in ['barrier-init-run','barrier-lifecycle-run']:
    from scene_runtime import movement_batch_run
    movement_batch_run(cases=['body-state-spawn-state-barrier-init' if a.action=='barrier-init-run' else 'body-state-spawn-state-barrier-effect'],retry=True)
+  elif a.action in ['nova-input-prepare','nova-input-capture']:
+   from nova_input import observe
+   print(json.dumps(observe(capture=a.action=='nova-input-capture'),indent=2))
+  elif a.action=='spawn-automatic-skill-prepare':
+   from scene_runtime import body_start_loadout_prepare
+   body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-skill-neutral'])
+   out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
+   attempt['batch_seconds']={('body-state-spawn-state-auto-skill-'+suffix):85 for suffix in ['neutral','primary','secondary','utility','special']};write(out/'attempt.json',attempt)
+  elif a.action in ['spawn-automatic-skill-primary-run','spawn-automatic-skill-secondary-run','spawn-automatic-skill-utility-run','spawn-automatic-skill-special-run']:
+   from scene_runtime import movement_batch_run
+   movement_batch_run(cases=['body-state-spawn-state-auto-skill-'+a.action.split('-')[-2]],retry=True)
   elif a.action=='spawn-automatic-model-prepare':
    from scene_runtime import body_start_loadout_prepare
    body_start_loadout_prepare(spawn_states=True,teleport_material=True,cases=['body-state-spawn-state-auto-model-neutral'])

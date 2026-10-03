@@ -23,7 +23,7 @@ public sealed partial class MovementBatchProbe {
   }
   r.phase=aim?"automatic-original-direction-aim":motion||reverse?"automatic-original-direction-input":"automatic-original-direction-neutral";Save();
   while(Time.realtimeSinceStartup-began<60){
-   ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();float elapsed=Time.realtimeSinceStartup-began;
+   ObserveTeleportOverlays(body);TemporaryOverlayManager.OverlayUpdate();if(IsAutomaticSkill())ObserveAutomaticSkills();float elapsed=Time.realtimeSinceStartup-began;
    Check(machine.state==state&&state is GenericCharacterMain&&direction.enabled&&direction.hasEffectiveAuthority,"Original automatic direction/state changed");
    Check(Quaternion.Angle(body.transform.rotation,Quaternion.identity)<.001f&&Mathf.Abs(direction.pitch)<.001f,"Direction changed solver root rotation or unsupported pitch");
    if((motion||reverse)&&!first&&elapsed>=1){
@@ -52,7 +52,7 @@ public sealed partial class MovementBatchProbe {
    if(!motion&&!reverse&&!aim)Check(Mathf.Abs(Mathf.DeltaAngle(direction.yaw,r.directionStartYaw))<.001f&&Mathf.Abs(Mathf.DeltaAngle(direction.targetTransform.eulerAngles.y,r.directionStartYaw))<.001f,"Original automatic neutral facing drift");
    r.automaticFrames++;if(IsAutomaticModel()){yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);}else yield return null;
   }
-  r.directionFinalYaw=direction.yaw;r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-age;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-fixedAge;
+  if(IsAutomaticSkill())FinishAutomaticSkills();r.directionFinalYaw=direction.yaw;r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-age;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-fixedAge;
   Check(r.automaticSeconds>=60&&r.automaticFrames>300&&r.spawnedStateAge>55&&r.spawnedFixedAge>55&&(!(motion||reverse||aim)||first&&stopped)&&(!reverse&&!aim||second),"Original automatic direction sequence/hold incomplete");Save();
  }
 }
