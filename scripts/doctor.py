@@ -24,10 +24,17 @@ for name,cmd in [('ilspycmd',[str(root/'scripts/ilspycmd'),'--version']),('Asset
     ok,out=run(cmd);check(name,ok,out)
 check('SteamCMD',(root/'.local/tools/steamcmd/steamcmd.sh').exists(),'Run .local/tools/steamcmd/steamcmd.sh +quit to reverify')
 ok,_=run(['gh','auth','status']);check('GitHub authentication',ok,'Authenticated' if ok else 'Run gh auth login')
-ok,out=run([os.environ['ADB'],'devices']); devices=[l.split()[0] for l in out.splitlines()[1:] if len(l.split())>=2 and l.split()[1]=='device']
-check('ADB target',len(devices)==1,'Exactly one authorized device required; found '+str(len(devices)))
-if len(devices)==1:
-    base=[os.environ['ADB'],'-s',devices[0],'shell']
+from adb_target import authorized_target
+ok,out=run([os.environ['ADB'],'devices']); target=None
+try:
+    config_path=root/'work/config/local.json'
+    config=json.loads(config_path.read_text()) if config_path.exists() else json.loads((root/'environment/device-profile.json').read_text())
+    if not ok:raise ValueError('ADB device inventory failed')
+    target=authorized_target(config.get('device_serial',config.get('serial')),out)
+    check('ADB target',True,'Explicitly configured device authorized; other devices ignored')
+except (OSError,ValueError) as e:check('ADB target',False,str(e))
+if target:
+    base=[os.environ['ADB'],'-s',target,'shell']
     ok,abi=run(base+['getprop ro.product.cpu.abilist']);check('Target ARM64',ok and 'arm64-v8a' in abi,abi)
     ok,vols=run(base+['sm list-volumes all']); private=[l.split() for l in vols.splitlines() if l.startswith('private:') and ' mounted ' in l]
     check('Adopted storage mounted',ok and private,vols)

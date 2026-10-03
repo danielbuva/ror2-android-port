@@ -1428,3 +1428,19 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Separate accepted neutral/motion/reversal/aim model receipts; first-failure journal and no advance on failure; state/milestones/risk status with formal gate limits.
 - **DEPENDENCIES:** S113–S116/J135, passed package pins/content. Prior art: docs/community-prior-art.md character map; pinned Starstorm2 SS2-Project/Assets/Starstorm2/ContentClasses/SS2VanillaSurvivor.cs AddToModelSkinControllers preserves body/display model identity, AddEntityStateMachine preserves named machine relationships; Modules/EntityStates/Cyborg/BorgMain.cs retains original base fixed callbacks/input/authority. These inform identity/scheduling observation, not Android detachment support. Exact legitimate ModelLocator Awake/Start/UpdateModelTransform/LateUpdate/OnDestroy and recovered Commando fields supply the unsolved Android lifetime assertions. No community/game implementation copied.
 - **STATUS:** PASS S117–S120 — J137/J138, 13070/11208/11179/13012 assertions; four separate 60-second holds and 1803 zero-error model pose samples each; actual original destruction/owned cleanup pass, 45 originals unchanged, 21 host tests. J136 failed harness ordering attempt preserved; corrected retry accepted. Separate model receipts; formal L5/L5.5 unchanged. Next audit original GenericSkill/default SkillDef fixed timing before ability execution.
+
+
+## T03-nova-target — Explicit target with multiple connected devices
+- **TITLE:** Make bootstrap health checks select the authorized Nova explicitly.
+- **CONTEXT:** User's Thor is connected and in use; Nova is the sole authorized test target.
+- **OBSERVATION:** Initial doctor fails on two authorized devices despite valid Nova configuration; lab Device already uses an explicit serial.
+- **HYPOTHESIS:** Exact configured-serial selection permits the Nova experiment without touching other devices.
+- **TASK:** Select only the configured connected/authorized serial; reject missing/offline/unauthorized/no configuration and never infer a fallback.
+- **CONSTRAINTS:** No commands to other devices, no serial publication, no ADB server restart or device configuration changes.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Bootstrap doctor selection, tiny selector and four safety tests; authored evidence summary.
+- **TEST COMMAND:** `./dev doctor`; `./dev preflight`; `./dev test`.
+- **PASS CONDITION:** Nova is selected with another device present; all rejection cases fail safely; health checks and tests pass.
+- **FAILURE EVIDENCE TO CAPTURE:** First prerequisite result and configured-target model/selection receipt under ignored work; never publish identifiers.
+- **STATE/JOURNAL UPDATES REQUIRED:** J139, state next action and Conventional Commit/privacy review.
+- **DEPENDENCIES:** Immediate S121 original skill callback experiment; explicitly configured authorized Nova.
+- **STATUS:** PASS — doctor/preflight and 25 host tests; no gameplay milestone advance.

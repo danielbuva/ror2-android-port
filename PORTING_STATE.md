@@ -1,4 +1,4 @@
-# Porting state — 2026-09-30 PDT
+# Porting state — 2026-10-03 PDT
 
 - **Current plan gate:** L5 lawful startup/menu — IN PROGRESS. L3 managed execution and L4 recovered content pass; L5.5 character simulation follows a proven L5. Individual component method proofs do not pass L5.
 - **Architecture:** C remains the conditional laboratory direction: exact-editor Android IL2CPP, original managed preservation, local converted content and explicit platform adapters. J61 triggers ADR-001 revisit condition (4), required middleware/runtime access unavailable with no legitimate bounded replacement. J62 review retains C as active and platform-deferred; no independent C failure justifies an A trial. J63 completes L10-a. J66 completes the selected L11-a original material assignment and Vulkan rendering proof in two fresh device runs; see docs/l11-commando-material-device-contract.md. Reconstruction remains a fallback, not a solution to ownership, entitlement, authentication, licensing or unavailable middleware.
@@ -124,3 +124,6 @@ Public repository audit: private bootstrap captures removed from tracking and pu
 
 
 - **Latest automatic model proof:** J138 passes S117–S120 original automatic ModelLocator: natural Start detaches the exact inactive original model from ModelBase; original LateUpdate follows neutral/movement/reversal/aim facing, and original OnDestroy destroys it before provider release. Four separate 60-second holds, 1803 pose samples each with zero errors, 13070/11208/11179/13012 assertions, 45 unchanged DLLs, 21 host tests; known shader/layer messages only, no new errors/crashes. J136 harness ordering failure preserved and corrected before retry. Inactive visual hierarchy, Run clock/zero gravity/no collision and diagnostic overlay/state teardown remain; animation/live visuals/controls/abilities/full Init and formal L5/L5.5 remain open. Next audit original GenericSkill/default SkillDef callbacks for isolated timing/recharge. Accepted stage/build/source/community provenance and four run receipts: work/experiments/scene-runtime/20261001T001651.313602Z; separate automatic-model rollback pointers retained. L5 remains platform-blocked under J61.
+
+
+- **Current continuation:** J139 revalidates the configured Retroid Pocket Nova with a second handheld connected. Bootstrap doctor now requires the explicit authorized target and never falls back to another device; only Nova is operated. Doctor/live preflight and 25 host tests pass. Next original GenericSkill/default SkillDef timing/recharge audit; prior model checkpoints remain accepted.
