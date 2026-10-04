@@ -46,7 +46,7 @@ def prepare():
     a.update({'nova_input_bridge':True,'batch_seconds':{RAW:140,BODY:120}});write(out/'attempt.json',a)
     write(out/'nova-contract.json',{'input_manager_before_sha256':sha(out/'InputManager-before.asset'),'input_manager_after_sha256':sha(settings),'scope':'Nova only; original InputBankTest producer; no movement/state/motor/skill rewrites; no Rewired replacement','prior_art':'Starstorm2 a9a4badd BorgMain consumes inputBank and retains GenericCharacterMain base ProcessJump/FixedUpdate; no Android backend provided','catalog':'Measured JumpBoost/JumpDamageStrike plus GummyCloneIdentifier in original empty inventory; explicit new combined subset, old cases unchanged','mapping':'Measure Unity slot-1 axes/buttons, then push attempt-bound JSON; skills disabled in movement proof','visual':'Recovered transform/renderer-only model display follows original ModelLocator; fixed bind pose, diagnostic floor/camera/aim stance'})
 
-def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False,money=False,client=False):
+def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False,money=False,client=False,selection=False):
     """Continue the accepted active stage; use the measured mapping without repeating its capture."""
     import shutil
     from build import preflight
@@ -58,14 +58,14 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
-    cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client
+    cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
-        cfg.update(stage_barrel(stage,out,pickup=pickup,money=money))
+        cfg.update(stage_barrel(stage,out,pickup=pickup,money=money,selection=selection,previous=a))
     write(stage/'Resources/MovementBatchProbe.json',cfg)
     cfg['directorSpawnLimit']=3 if director_batch else 1;write(stage/'Resources/MovementBatchProbe.json',cfg)
     if director_batch:
@@ -332,7 +332,7 @@ def stage_run_scene_metadata(stage,out):
     write(out/'run-metadata-closure.json',{'root':root,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'unrequested_addresses':addresses,'scope':'Original base SceneDef/static metadata, preserved unchanged. No scene-address/diorama/progression/menu/native audio load. Converted static geometry retains original scene name/GUID for measured catalog identity only.'})
     return {'runSceneDefAsset':root.lower()}
 
-def stage_barrel(stage,out,pickup=False,money=False):
+def stage_barrel(stage,out,pickup=False,money=False,selection=False,previous=None):
     """Only the original cash-barrel static dependency closure; no generated rewards or shop logic."""
     import shutil
     from scene_closure import REFERENCE
@@ -351,12 +351,15 @@ def stage_barrel(stage,out,pickup=False,money=False):
         if not all(x in text for x in ['costType: 1','cost: 25','automaticallyScaleCostWithDifficulty: 0','requiredUnlockable:\n','requiredExpansion: {fileID: 0}']):raise RuntimeError('Original base Chest1 cost/requirement source contract changed')
         write(out/'money-cost-source.json',{'source':str(chest.relative_to(export)),'source_sha256':sha(chest),'cost':25,'cost_type':'Money','automatic_scale':False,'scope':'Host-measured immutable source data only; no chest prefab on device.'})
         roots['multiShopCardAsset']=export/'Assets/RoR2/DLC1/Equipment/MultiShopCard/MultiShopCard.asset'
+    if selection:roots.update(recycleAsset=export/'Assets/RoR2/Base/Equipment/Recycle/Recycle.asset',lowerPricedChestsAsset=export/'Assets/RoR2/DLC2/Items/LowerPricedChests/LowerPricedChests.asset')
     pending=list(roots.values());seen=set();rows=[];paths={};root=None
+    remaps={r['from']:r['to'] for r in (previous or {}).get('ui_remaps',[])}
     while pending:
         src=pending.pop()
         if src in seen:continue
         seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
         if src.suffix=='.dll':
+            if src.name=='UnityEngine.UI.dll' and remaps:continue
             if guid not in existing or existing[guid].name!=src.name:raise RuntimeError('Missing interactable assembly '+src.name)
             continue
         dst=existing.get(guid,stage/'BarrelClosure'/src.relative_to(export/'Assets'))
@@ -368,6 +371,10 @@ def stage_barrel(stage,out,pickup=False,money=False):
         rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing,'bytes':src.stat().st_size})
         with src.open('rb') as f:prefix=f.read(5)
         if prefix==b'%YAML':
+            if guid not in existing:
+                generated=dst.read_text()
+                for old,new in remaps.items():generated=generated.replace(old,new)
+                dst.write_text(generated)
             for dep in {g for _,g,_ in REFERENCE.findall(src.read_text()) if g and not g.startswith('0000000000000000')}:
                 if dep not in index:raise RuntimeError('Missing barrel reference '+src.name+': '+dep)
                 pending.append(index[dep])
@@ -375,6 +382,7 @@ def stage_barrel(stage,out,pickup=False,money=False):
     write(out/'barrel-contract.json',{'root':root,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_RUN_CLOCK.json'),'scope':'Original Barrel1 clone, original Interactor query/server dispatch, original Opening/Opened and source gold8/XP4 scaled by actual Run. Explicit no-audio owned clone and diagnostic materials. No purchase/item/drop-table/full interaction-driver/client/progression acceptance.','prior_art':'Pinned R2API.Director f539511e InteractableSpawnCardClone preserves source placement/eligibility/stage caps as distinct contracts; do not substitute manually placed barrel for director acceptance. Exact original Interactor and BarrelInteraction determine query/dispatch/rewards; no implementation copied.'})
     if pickup:write(out/'item-pickup-contract.json',{'roots':paths,'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_BARREL_INTERACTION.json'),'scope':'Original base Syringe and internal Junk definitions cataloged before inventory allocation; original CreatePickupDef/CreatePickup/half-second wait/Interactor/ItemDef.AttemptGrant/natural stats. Junk never granted and remains locked. Owned display component disabled, diagnostic source icon; no normal chest/drop/progression/profile/client pickup effects or original item model acceptance. Only original animated barrel renderer duplicated on established diagnostic view layer; original collider/query layers and accepted camera retained.','prior_art':'Pinned R2API.Items f539511e requires item registration before catalog initialization and later FindItemIndex; DebugToolkit d1e2f0aa Items.CCCreatePickup uses original UniquePickup/factory contract. Controlled spawned pickup does not establish normal item progression. No original/community implementation copied.'})
     if money:write(out/'money-cost-contract.json',{'source':read(out/'money-cost-source.json'),'roots':{'multiShopCardAsset':paths['multiShopCardAsset']},'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_ITEM_ACQUISITION.json'),'scope':'Uninstantiated source Chest1 cost25, original CostTypeCatalog.Init Money delegates and original empty MultiShopCard comparison. Diagnostic original GiveMoney funding17+8=25, actual player affordability/pay25/remaining0, item/equipment conservation and catalog restore. No source PurchaseInteraction callbacks/chest opening/drop/profile/progression.','prior_art':'Pinned R2API.Director f539511e InteractableSpawnCardClone separates real placement/eligibility/stage caps from diagnostic contracts. Exact legitimate CostTypeCatalog/CostTypeDef/MultiShopCardUtils establish money deduction and original equipment comparison; source Chest1 separately needs buff/item/event/drop contracts. No implementation copied.'})
+    if selection:write(out/'interaction-selection-contract.json',{'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_ACTIVE_CLIENT.json'),'roots':paths,'scope':'Original automatic InteractionDriver target selection only with actual local ownership/source barrel and original unpaused PauseStopController. Original Recycle/LowerPricedChests comparison definitions never granted; source unlockable/expansion remain. No input/dispatch/reward effects/physical/controller/profile/platform/progression acceptance.','prior_art':'Pinned R2API.Items f539511e ItemAPI requires catalog registration before indices; R2API.Director InteractableSpawnCardClone preserves original placement/eligibility as separate from diagnostic placement. Exact original driver/Interactor/pause/outline and current source data govern this probe; no implementation copied.'})
     result={key:value.lower() for key,value in paths.items()}
     if money:result.update(moneySourceCost=25,moneySourceSha256=sha(chest))
     return result

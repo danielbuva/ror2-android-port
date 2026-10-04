@@ -24,31 +24,7 @@ public sealed partial class MovementBatchProbe {
  IEnumerator ProbeOriginalBarrel(CharacterBody player,Result cfg){
   r.barrel=new BarrelReport{scope="Original cash-barrel query/server interaction/Opening/Opened/gold/timed XP; manually placed owned source clone, explicit no audio/diagnostic materials. No original InteractionDriver/physical/client/purchase/item/drop-table/stage progression proof."};r.phase="original-barrel-prepare";Save();
   Check(NetworkServer.active&&!NetworkClient.active&&Run.instance&&r.runClock.cleaned==false&&ExperienceManager.instance,"Accepted server clock/reward context required");
-  var source=artifactBundle.LoadAsset<GameObject>(cfg.barrelAsset);Check(source&&source.name=="Barrel1"&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original barrel prefab/reference contract missing");
-  var original=source.GetComponent<BarrelInteraction>();Check(original&&original.goldReward==8&&original.expReward==4,"Original source barrel rewards changed");r.barrel.sourceGold=original.goldReward;r.barrel.sourceExperience=original.expReward;
-  barrelTemplates=new GameObject("Owned inactive barrel staging");barrelTemplates.SetActive(false);barrelObject=Instantiate(source,barrelTemplates.transform);barrelObject.name=source.name;
-  var allowed=new[]{typeof(NetworkIdentity),typeof(NetworkStateMachine),typeof(EntityStateMachine),typeof(BarrelInteraction),typeof(ModelLocator),typeof(EntityLocator),typeof(ChildLocator),typeof(PingInfoProvider)};
-  foreach(var behaviour in barrelObject.GetComponentsInChildren<MonoBehaviour>(true))behaviour.enabled=allowed.Contains(behaviour.GetType());
-  // Only the owned clone omits native audio. Original Opening sees no SfxLocator; no fake middleware success.
-  var sound=barrelObject.GetComponent<SfxLocator>();Check(sound,"Original barrel sound component absent");DestroyImmediate(sound);
-  var model=barrelObject.GetComponent<ModelLocator>();Check(model&&model.modelTransform,"Original barrel model binding missing");barrelModel=model.modelTransform;
-  var shader=Resources.Load<Shader>("StageSurfacePreview");Check(shader&&shader.isSupported,"Accepted diagnostic material shader unavailable");
-  foreach(var renderer in barrelObject.GetComponentsInChildren<Renderer>(true)){
-   var copies=renderer.sharedMaterials.Select(material=>{Check(material,"Original barrel material missing");var copy=new Material(material);copy.shader=shader;barrelMaterials.Add(copy);return copy;}).ToArray();renderer.sharedMaterials=copies;r.barrel.renderers++;
-  }
-  if(cfg.originalItemPickup){
-   var originalRenderer=barrelObject.GetComponentInChildren<SkinnedMeshRenderer>(true);Check(originalRenderer&&originalRenderer.sharedMesh&&originalRenderer.bones.Length>0&&originalRenderer.rootBone,"Original barrel mesh/bone references missing");
-   barrelPreview=new GameObject("Owned original barrel renderer view");barrelPreview.layer=30;barrelPreview.transform.SetParent(originalRenderer.transform,false);var preview=barrelPreview.AddComponent<SkinnedMeshRenderer>();preview.sharedMesh=originalRenderer.sharedMesh;preview.sharedMaterials=originalRenderer.sharedMaterials;preview.bones=originalRenderer.bones;preview.rootBone=originalRenderer.rootBone;preview.localBounds=originalRenderer.localBounds;preview.updateWhenOffscreen=true;
-   r.barrel.diagnosticRendererCopy=preview.sharedMesh==originalRenderer.sharedMesh&&preview.bones.SequenceEqual(originalRenderer.bones)&&barrelPreview.layer==30&&originalRenderer.gameObject.layer==LayerIndex.defaultLayer.intVal;Check(r.barrel.diagnosticRendererCopy,"Barrel view changed source mesh/bones/query layer");
-  }
-  foreach(var collider in barrelObject.GetComponentsInChildren<Collider>(true)){collider.enabled=true;r.barrel.colliders++;}
-  Check(r.barrel.renderers>0&&r.barrel.colliders>0,"Original barrel display/collision absent");
-  barrelObject.transform.position=player.characterMotor.Motor.TransientPosition+Vector3.right*2;barrelComponent=barrelObject.GetComponent<BarrelInteraction>();barrelMachine=barrelObject.GetComponent<EntityStateMachine>();Check(barrelMachine&&barrelMachine.initialStateType.stateType==typeof(Idle),"Original barrel initial state changed");
-  r.barrel.difficulty=Run.instance.difficultyCoefficient;r.barrel.goldExpected=(int)(r.barrel.sourceGold*r.barrel.difficulty);r.barrel.experienceExpected=(uint)(r.barrel.sourceExperience*r.barrel.difficulty);
-  barrelObject.transform.SetParent(null,true);barrelObject.SetActive(true);NetworkServer.Spawn(barrelObject);Physics.SyncTransforms();yield return null;yield return null;
-  r.barrel.netId=barrelObject.GetComponent<NetworkIdentity>().netId.Value;r.barrel.stateIndex=(int)EntityStateCatalog.GetStateIndex(barrelMachine.state.GetType());
-  r.barrel.sourceReady=r.barrel.netId!=0&&barrelComponent.goldReward==r.barrel.goldExpected&&barrelComponent.expReward==r.barrel.experienceExpected&&barrelMachine.state is Idle;
-  Check(r.barrel.sourceReady,"Original natural barrel Start/network/state contract failed");
+  var setup=PrepareOriginalBarrelClone(player,cfg,r.barrel);while(setup.MoveNext())yield return setup.Current;
   var interactor=player.GetComponent<Interactor>();Check(interactor&&barrelComponent.GetInteractability(interactor)==Interactability.Available,"Original body interactor/available barrel missing");
   var colliders=barrelModel.GetComponentsInChildren<Collider>(true);Check(colliders.Any(x=>x.enabled),"Original detached barrel model collider missing");var target=colliders.First(x=>x.enabled).bounds.center;
   var origin=player.corePosition;var found=interactor.FindBestInteractableObject(new Ray(origin,(target-origin).normalized),Vector3.Distance(origin,target)+2,origin,4);
@@ -76,6 +52,33 @@ public sealed partial class MovementBatchProbe {
   r.barrel.repeatRejected=barrelComponent.GetInteractability(interactor)==Interactability.Disabled&&r.barrel.interactions==1&&barrelPlayer.money==r.barrel.moneyAfter&&TeamManager.instance.GetTeamExperience(TeamIndex.Player)==r.barrel.experienceAfter;
   Check(r.barrel.repeatRejected,"Opened barrel paid twice or remained interactable");CleanupOriginalBarrel();yield return null;yield return null;
   r.barrel.cleaned=!barrelObject&&!barrelTemplates&&!barrelModel&&!barrelPreview&&barrelMaterials.All(x=>!x);Check(r.barrel.cleaned,"Owned barrel/model/material teardown incomplete");Save();
+ }
+ IEnumerator PrepareOriginalBarrelClone(CharacterBody player,Result cfg,BarrelReport report){
+  var source=artifactBundle.LoadAsset<GameObject>(cfg.barrelAsset);Check(source&&source.name=="Barrel1"&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original barrel prefab/reference contract missing");
+  var original=source.GetComponent<BarrelInteraction>();Check(original&&original.goldReward==8&&original.expReward==4,"Original source barrel rewards changed");report.sourceGold=original.goldReward;report.sourceExperience=original.expReward;
+  barrelTemplates=new GameObject("Owned inactive barrel staging");barrelTemplates.SetActive(false);barrelObject=Instantiate(source,barrelTemplates.transform);barrelObject.name=source.name;
+  var allowed=new[]{typeof(NetworkIdentity),typeof(NetworkStateMachine),typeof(EntityStateMachine),typeof(BarrelInteraction),typeof(ModelLocator),typeof(EntityLocator),typeof(ChildLocator),typeof(PingInfoProvider)};
+  foreach(var behaviour in barrelObject.GetComponentsInChildren<MonoBehaviour>(true))behaviour.enabled=allowed.Contains(behaviour.GetType());
+  // Only the owned clone omits native audio. Original Opening sees no SfxLocator; no fake middleware success.
+  var sound=barrelObject.GetComponent<SfxLocator>();Check(sound,"Original barrel sound component absent");DestroyImmediate(sound);
+  var model=barrelObject.GetComponent<ModelLocator>();Check(model&&model.modelTransform,"Original barrel model binding missing");barrelModel=model.modelTransform;
+  var shader=Resources.Load<Shader>("StageSurfacePreview");Check(shader&&shader.isSupported,"Accepted diagnostic material shader unavailable");
+  foreach(var renderer in barrelObject.GetComponentsInChildren<Renderer>(true)){
+   var copies=renderer.sharedMaterials.Select(material=>{Check(material,"Original barrel material missing");var copy=new Material(material);copy.shader=shader;barrelMaterials.Add(copy);return copy;}).ToArray();renderer.sharedMaterials=copies;report.renderers++;
+  }
+  if(cfg.originalItemPickup){
+   var originalRenderer=barrelObject.GetComponentInChildren<SkinnedMeshRenderer>(true);Check(originalRenderer&&originalRenderer.sharedMesh&&originalRenderer.bones.Length>0&&originalRenderer.rootBone,"Original barrel mesh/bone references missing");
+   barrelPreview=new GameObject("Owned original barrel renderer view");barrelPreview.layer=30;barrelPreview.transform.SetParent(originalRenderer.transform,false);var preview=barrelPreview.AddComponent<SkinnedMeshRenderer>();preview.sharedMesh=originalRenderer.sharedMesh;preview.sharedMaterials=originalRenderer.sharedMaterials;preview.bones=originalRenderer.bones;preview.rootBone=originalRenderer.rootBone;preview.localBounds=originalRenderer.localBounds;preview.updateWhenOffscreen=true;
+   report.diagnosticRendererCopy=preview.sharedMesh==originalRenderer.sharedMesh&&preview.bones.SequenceEqual(originalRenderer.bones)&&barrelPreview.layer==30&&originalRenderer.gameObject.layer==LayerIndex.defaultLayer.intVal;Check(report.diagnosticRendererCopy,"Barrel view changed source mesh/bones/query layer");
+  }
+  foreach(var collider in barrelObject.GetComponentsInChildren<Collider>(true)){collider.enabled=true;report.colliders++;}
+  Check(report.renderers>0&&report.colliders>0,"Original barrel display/collision absent");
+  barrelObject.transform.position=player.characterMotor.Motor.TransientPosition+Vector3.right*2;barrelComponent=barrelObject.GetComponent<BarrelInteraction>();barrelMachine=barrelObject.GetComponent<EntityStateMachine>();Check(barrelMachine&&barrelMachine.initialStateType.stateType==typeof(Idle),"Original barrel initial state changed");
+  report.difficulty=Run.instance.difficultyCoefficient;report.goldExpected=(int)(report.sourceGold*report.difficulty);report.experienceExpected=(uint)(report.sourceExperience*report.difficulty);
+  barrelObject.transform.SetParent(null,true);barrelObject.SetActive(true);NetworkServer.Spawn(barrelObject);Physics.SyncTransforms();yield return null;yield return null;
+  report.netId=barrelObject.GetComponent<NetworkIdentity>().netId.Value;report.stateIndex=(int)EntityStateCatalog.GetStateIndex(barrelMachine.state.GetType());
+  report.sourceReady=report.netId!=0&&barrelComponent.goldReward==report.goldExpected&&barrelComponent.expReward==report.experienceExpected&&barrelMachine.state is Idle;
+  Check(report.sourceReady,"Original natural barrel Start/network/state contract failed");
  }
  int BarrelCoinReferences(){return (int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(barrelCoinWitness);}
  void CleanupOriginalBarrel(){
