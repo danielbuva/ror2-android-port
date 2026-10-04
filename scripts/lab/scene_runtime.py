@@ -619,6 +619,8 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                             d.collect('screenshot',attempt/'visual-barrel');captured.add('barrel')
                         if last_phase=='original-interaction-selected' and 'selection' not in captured:
                             d.collect('screenshot',attempt/'visual-selection');captured.add('selection')
+                        if last_phase=='original-client-coin-active' and 'client-coin' not in captured:
+                            d.collect('screenshot',attempt/'visual-client-coin');captured.add('client-coin')
                         if last_phase=='active-local-client-owned' and 'client' not in captured:
                             d.collect('screenshot',attempt/'visual-client');captured.add('client')
                         if last_phase=='original-item-grant' and 'item' not in captured:

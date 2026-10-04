@@ -1857,3 +1857,37 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** First failure/exit, concise state/milestone/risk/backlog; scoped selection checkpoint only after acceptance; staged public/manual review and Conventional Commit.
 - **DEPENDENCIES:** S148. Consulted community-prior-art networking/input/content map; pinned R2API.Items f539511e ItemAPI registers before catalog indices, R2API.Director InteractableSpawnCardClone separates source placement/eligibility from diagnostic placement. Exact current InteractionDriver/Interactor/PauseStopController/OutlineHighlight and prefab/definitions determine actual contracts. Connected reward effects remain independent per exact EffectManager source. No implementation copied.
 - **STATUS:** PASS — J193. Automatic original source-barrel selection, original cache/ungranted prerequisites, natural release before owned destruction, conserved money/XP/Syringe and full original client/subsystem cleanup;20903 assertions/150.001-second process/60.018-second hold,45 unchanged DLLs/40 tests, no new errors/crashes. J188–J192 retained. Input dispatch/client effects/physical interaction remain separate.
+
+
+## S150 — Original connected-client coin effect
+- **ID:** S150
+- **TITLE:** Prove original effect message decoding, coin tiers and natural pool return.
+- **CONTEXT:** S149 passes automatic selection; interaction dispatch needs a measured connected-client effect boundary first.
+- **OBSERVATION:** Existing original CoinEmitter has no sound event/native audio component, source pooling enabled, duration3 and tiers500/150/25/5/1. Original server message52 forwards to original client factory; source timer returns its original pool.
+- **HYPOTHESIS:** Registering the genuine original client handler lets the existing unchanged source prefab execute on Nova without middleware adaptation.
+- **TASK:** Retain S149; register one owned original message52 delegate with a narrow observation wrapper, transmit cosmetic diagnostic count683 and independently assert decoded identity/data, original CoinBehavior count and bursts1/1/1/1/3, natural3-second timer/pool return, money/XP/Syringe/budget conservation and exact owned handler/pool/cache/default-value cleanup. J196 requires prior0/declared200/original setter200/restored0; full Console stays unproven.
+- **CONSTRAINTS:** No reward/funds grant, interaction input/physical binding/full startup/normal placement/audio or particle-material parity. Only measured skipped original medium-budget default initialization/restoration is allowed through its original setter; no custom thresholds/global pooling/VFX disabling/random changes; no DLL/package/new content/provider replacement. Nova asleep while idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** ClientCoinBoundary plus existing lab config/CLI/capture orchestration; ignored source/stage/settings/receipts/device evidence.
+- **TEST COMMAND:** nova-client-coin-prepare; pinned MCP compilation; preflight; forced Vulkan build; bounded movement-batch-run; current-PID/visual/45-DLL checks and host tests.
+- **PASS CONDITION:** One original message/clone, exact decoded data/catalog/pool/tier bursts, original natural timer-return event with fixed-clock/tick agreement and owned restoration; prior selection/client60-second/subsystem checks, no new errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** First message/AOT/VFX/factory/data/tier/timer/pool/cleanup failure, exact stage/settings/build/payload/current-PID records; no failed checkpoint advancement.
+- **STATE/JOURNAL UPDATES REQUIRED:** First failure/exit; state/backlog/milestone/risk and scoped coin receipt on device acceptance; public/manual staged review, Conventional Commit.
+- **DEPENDENCIES:** S149. Consulted community-prior-art network/content map and pinned R2API.ContentManagement f539511e R2APISerializableContentPack original EffectDef registration. Inspected exact current EffectManager/EffectData/CoinBehavior/DestroyOnTimer/EffectPool/Grumpy pool source and typed source prefab. J196 also inspects pinned R2API.CommandHelper ConsoleReady/default application and exact IntConVar/BaseConVar/Console source; initialization uses the original setter only. No original/community implementation copied.
+- **STATUS:** PASS — J199. Original message/factory/count683/tier bursts/seven particles and natural3.020-second fixed/151-tick pool return; funds/XP/item/budget/owned cleanup, original60.010-second client hold and prior checks pass.20925 assertions/153.019-second process,45 unchanged DLLs/40 tests, no new errors/crashes. Explicit original medium-default setter200 restores0, read-only return clock witness; J194–J198 retained. Coin rendering/input/reward linkage/physical/full Console/startup remain unproven.
+
+
+## S151 — Physical default Commando skill acceptance
+- **ID:** S151
+- **TITLE:** Capture manual Y/FMJ, LB/roll and RB/barrage through the existing Nova bridge.
+- **CONTEXT:** J156 already records user-confirmed physical move/aim/A/X; J157 proves remaining original skills under diagnostic input.
+- **OBSERVATION:** Existing mapping measures physical secondary3/utility4/special5; scripted counters do not establish human operation.
+- **HYPOTHESIS:** The accepted unchanged original skill path responds to physical controls using the same measured input boundary.
+- **TASK:** After explicit operator readiness, use the existing physical command and actual character-ready cue. Capture move/aim/A/X then Y, LB and RB with releases and state completion; review individual original skill/projectile/damage counters, raw button evidence, visual captures and user observations.
+- **CONSTRAINTS:** No scripted input, pose/health/grant changes, new mapping/framework or DLL/package replacement. Server-local physical route only; connected physical-client/interaction, audio/graphics parity and formal startup/stage gates remain separate. Nova asleep while idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing physical runner and ignored verification/operator records only; authored gate/state/journal summaries.
+- **TEST COMMAND:** `./dev prototype --action nova-bridge-commando-run` using completed input-matched forced APK/payload; PID-scoped logs/crash/captures and original hashes.
+- **PASS CONDITION:** Actual90-second physical phase, mapped controls and individual original secondary/utility/special entries plus existing move/aim/jump/primary/projectile/damage/actor cleanup checks, reviewed capture and human confirmation agree; no unexplained errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** First physical input/state/target/authority/death/error, individual counters/raw controls/sequence, exact APK/payload/config/current-PID verification.
+- **STATE/JOURNAL UPDATES REQUIRED:** Operator readiness/cue/outcome and first failure/exit; scoped physical receipt only after acceptance, maintain formal gates; public/manual review and Conventional Commit.
+- **DEPENDENCIES:** J156/J157 and accepted current runtime. Reuse documented pinned Starstorm2 a9a4badd BorgMain original InputBank/base character-state contract and measured original skill configs/callbacks from J157. No new reconstruction/observer or community implementation.
+- **STATUS:** WAITING FOR OPERATOR — readiness question pending; no fresh physical acceptance.
