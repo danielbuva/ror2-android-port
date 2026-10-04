@@ -1,5 +1,7 @@
 # Development plan — prove more RoR2 before expanding the laboratory
 
+**Current execution mode (user direction, 2026-10-04): whole-game integration.** Assemble as much coherent offline gameplay as possible before verification; use temporary Android adapters with truthful unavailable capabilities and preserve legal/platform boundaries. Build/run the integrated game on Nova and iterate its first failures. This supersedes the prior preference for isolated subsystem proofs, while retaining exact inputs/toolchain, provenance, storage safety, rollback and truthful capability reporting. Existing gates describe evidence; they are not a requirement to serialize every feature into a new micro-probe.
+
 Approved direction: Architecture C in ADR-001: exact-editor Android IL2CPP player, selective managed preservation, locally converted content and explicit platform adapters. Controlled C#9 reconstruction is the bounded fallback. This roadmap is the canonical execution policy; current results belong in PORTING_STATE.md and milestones.md.
 
 ## Immediate execution

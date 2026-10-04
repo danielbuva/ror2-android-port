@@ -2010,3 +2010,36 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** First failure/accepted exit with scoped default-pickup pointer; state/journal/backlog/milestones/risk; public/manual staged review and Conventional Commit.
 - **DEPENDENCIES:** S157/S146/S155. Consulted community-prior-art Addressables/skin/network map, pinned R2API.Addressables f539511e AddressReferencedAsset handle ownership and DebugToolkit d1e2f0aa Items.CCCreatePickup original factory. Exact current GenericPickupController/PickupDisplay/ItemDef/AssetOrDirectReference and typed source/direct-model observations govern the candidate; no implementation copied.
 - **STATUS:** PASS — J213, original default Init/source leases/no-override factory/active direct Syringe display/natural spin/delay/cleanup and reviewed real-device rendering pass. J212 authored compile rejected attempt retained. Source chest Animator/ejection, connected acquisition/effects/progression and formal gates remain separate.
+
+## S159 — Original chest animation and default loot ejection
+- **ID:** S159
+- **TITLE:** Let source animation events complete the original chest-to-pickup chain.
+- **CONTEXT:** S154 input purchase, S155–S157 droplet physics and S158 default pickup/display pass independently.
+- **OBSERVATION:** The original chest Open clip has two ChestUnzip events, one Chest1Starburst and ItemDrop. Original AnimationEvents caches its ChildLocator/EntityLocator and calls IChestBehavior.ItemDrop. Both source effects use original pools/timers, empty sound names/noEffectData, and have no Ak components. Syringe and ChainLightning have direct original model references.
+- **HYPOTHESIS:** Enabling the original chest Animator/AnimationEvents with accepted source leases permits one automatic ejection, native collision and default pickup/display, while preserving payment and source effects.
+- **TASK:** Reuse the source purchase probe for one animated chest, with accepted pickup source leases initialized before it; retain the independent animator-disabled command. Keep source roll/two base domains and callbacks; observe original animation/effects/droplet info/network maps/collision/default display/availability. Walk the original actor away through its input boundary on measured terrain to prevent acquisition. Prove owned cleanup and the existing sixty-second client hold.
+- **CONSTRAINTS:** No manual ItemDrop/collision/factory/lifecycle/physics calls, post-factory pose/velocity writes, effect suppression, forced loot selection or item grant. Existing diagnostic funding/placement/materials and silent owned SfxLocator omission explicit. Preserve original DLLs/pins and prior rollbacks; no normal placement/profile/startup/progression/controller-gate claim. Nova asleep while idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Small ChestEjectionBoundary, conditional hooks in source purchase/droplet lease, existing config/prepare/CLI/capture; ignored exact stage/build/device evidence.
+- **TEST COMMAND:** `./dev prototype --action nova-chest-ejection-prepare`; exact-editor compile; `./dev preflight`; forced Vulkan build; existing `movement-batch-run`; current-PID/hash/capture/cleanup review; `./dev test`.
+- **PASS CONDITION:** One original payment/opening, animation-driven original droplet carrying exact chest/rolled identity/no override, natural terrain collision/default pickup/active direct model, original delay, unchanged inventory/XP, three natural effect instances/returns, complete owned cleanup and stable client hold; no new errors/crashes.
+- **FAILURE EVIDENCE TO CAPTURE:** First animation/reference/pool/ejection/physics/model/authority/conservation/cleanup failure with current attempt, state, event targets, source hashes and logs; immutable rejected stage/receipt.
+- **STATE/JOURNAL UPDATES REQUIRED:** Update state/journal/backlog/milestone/risk at exit; scoped checkpoint only after device acceptance; staged public audit/manual IP review and Conventional Commit.
+- **DEPENDENCIES:** S154–S158. Consulted community-prior-art map, pinned R2API.ContentManagement f539511e original EffectDef registration and DebugToolkit d1e2f0aa original pickup factories. Exact current AnimationEvents/ChestBehavior/Opening/EffectPool/DestroyOnTimer and recovered source clip/prefabs determine callbacks and assertions; no original/community implementation copied.
+- **STATUS:** PASS — J219. J219/S159 passes original source chest animation-to-loot chain on Nova: one original input/Money25 purchase (wallet8 + diagnostic17 →25→0), natural Opening/Opened1.080s and115.013-degree bone motion, original ItemDrop0.470s carrying exact rolled identity/chest/no override. Source droplet velocity observed(0,19.361,1.996), native terrain collision1.436s, one default GenericPickup/direct Syringe model655vertices/automatic152.314-degree spin; original delay0.520s. Original input moves actor5.917units away, inventory/XP11 conserved; three source effects return naturally. Pre-purchase Idle/zero effects, complete owned cleanup and60.006-second client hold/3001fixed ticks/1796frames pass.21459 assertions/165.538-second process,45 unchanged DLLs/40 tests, no new errors/crashes; existing missing-script warning count stays11→11. Scoped LAST_KNOWN_GOOD_CHEST_EJECTION retains S158 rollback. J214–J218 rejected attempts preserved; first-assertion/lease-cleanup and native-position witness corrections verified. Connected acquisition/feedback and physical all-skill S151 remain separate. L5 blocked and formal L5.5/L6/L7 open. APK installed/stopped, Nova asleep.
+
+
+## S159-a — Preserve the first assertion across cleanup failures (conditional T08)
+- **ID:** S159-a
+- **TITLE:** Expose the actual prerequisite failure before debugging S159.
+- **CONTEXT:** J217 never reaches default loading/collision/ejection; an unentered cleanup assertion masks an earlier actor failure.
+- **OBSERVATION:** Deserialized empty reports exist even when their probes have not run; outer finally tests an uninitialized generic lease.
+- **HYPOTHESIS:** A two-field first-assertion record plus a strict unentered-cleanup no-op preserves attribution and later cleanup.
+- **TASK:** Persist only first predicate/phase before throwing; guard default cleanup on absent field/locator/acquisitions.
+- **CONSTRAINTS:** No skipped checks after initialization, rewritten source gameplay or broad diagnostic framework. Original DLLs unchanged.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** MovementBatchProbe.Check/Result, GenericPickupBoundary cleanup, ignored failure records.
+- **TEST COMMAND:** Same forced Vulkan S159 run and existing host tests.
+- **PASS CONDITION:** A real earlier failure remains explicit through teardown, or the fresh run passes with original source lease cleanup.
+- **FAILURE EVIDENCE TO CAPTURE:** First predicate/phase plus later cleanup exceptions, exact build/stage/current PID.
+- **STATE/JOURNAL UPDATES REQUIRED:** J217 and next result; no failed capability checkpoint.
+- **DEPENDENCIES:** J217; prior-art diagnostic map and existing file-based lab observer; no original/community implementation copied.
+- **STATUS:** PASS — J218 preserves the real first predicate/phase and outer cleanup; J219 normal source lease cleanup/full run passes. No separate capability gate claimed.

@@ -42,7 +42,7 @@ public sealed partial class MovementBatchProbe {
   if(cfg.originalClientCoin){var coin=ProbeOriginalClientCoin(player);while(coin.MoveNext())yield return coin.Current;}
   if(cfg.originalInputBarrel){var input=ProbeOriginalInputBarrel(player,cfg);while(input.MoveNext())yield return input.Current;}
   if(cfg.originalChestDropTable){var drops=ProbeOriginalChestDropTable(player,cfg);while(drops.MoveNext())yield return drops.Current;}
-  if(cfg.originalChestPurchase){var chest=ProbeOriginalChestPurchase(player,cfg);while(chest.MoveNext())yield return chest.Current;}
+  if(cfg.originalChestPurchase&&!cfg.originalChestEjection){var chest=ProbeOriginalChestPurchase(player,cfg);while(chest.MoveNext())yield return chest.Current;}
   if(cfg.originalPickupDropletLoad){var droplet=ProbeOriginalPickupDropletLoad(player,cfg);while(droplet.MoveNext())yield return droplet.Current;}
   if(cfg.originalDefaultPickup){var pickup=ProbeOriginalDefaultPickup(player,cfg);while(pickup.MoveNext())yield return pickup.Current;}
   r.phase="active-local-client-owned";Save();yield return null;yield return new WaitForEndOfFrame();var state=EntityStateMachine.FindByCustomName(player.gameObject,"Body").state;Check(state is EntityStates.GenericCharacterMain,"Original neutral state changed");float began=Time.realtimeSinceStartup,fixedBegan=Run.FixedTimeStamp.now.t,stateBegan=SpawnedStateAge(state,"fixedAge");r.activeClient.healthBefore=player.healthComponent.health;int fixedTickBegan=r.runClock.fixedTicks;
