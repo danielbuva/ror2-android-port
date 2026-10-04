@@ -617,6 +617,8 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
                         if last_phase=='original-barrel-opening' and 'barrel' not in captured:
                             d.collect('screenshot',attempt/'visual-barrel');captured.add('barrel')
+                        if last_phase=='original-item-grant' and 'item' not in captured:
+                            d.collect('screenshot',attempt/'visual-item');captured.add('item')
                         # The director probe needs a long deadline, not an idle display after completion.
                         if probe in a.get('batch_stop_when_complete',[]) and live.get('id')==probe and last_phase=='complete' and time.monotonic()-start>=30:
                             break

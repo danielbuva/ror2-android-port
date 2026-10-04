@@ -46,7 +46,7 @@ public sealed partial class MovementBatchProbe {
   Check(report.selectedDifficulty==1&&report.difficulty>1.1f&&report.compensatedDifficulty>1.1f&&report.ambient>1&&clockRun.ambientLevelFloor==1,"Original elapsed-time difficulty/ambient progression failed");Save();
  }
  void CleanupRunClock(){
-  if(!ownsRunSceneCatalog)return;ownedRunFixed=null;ownedRunFrame=null;
+  if(!ownsRunSceneCatalog)return;if(clockRun&&string.IsNullOrEmpty(r.runClock.error))ObserveOriginalRunClock();ownedRunFixed=null;ownedRunFrame=null;
   SceneManager.activeSceneChanged-=(UnityEngine.Events.UnityAction<Scene,Scene>)Delegate.CreateDelegate(typeof(UnityEngine.Events.UnityAction<Scene,Scene>),typeof(SceneCatalog).GetMethod("OnActiveSceneChanged",BindingFlags.NonPublic|BindingFlags.Static));
   if(priorClockScene.IsValid()&&priorClockScene.isLoaded)Check(SceneManager.SetActiveScene(priorClockScene),"Prior active scene restoration failed");
   if(clockSceneDef)clockSceneDef.sceneDefIndex=SceneIndex.Invalid;ContentManager._sceneDefs=priorContentScenes;clockSceneMap.Clear();foreach(var entry in clockSceneFields)entry.Key.SetValue(null,entry.Value);SceneCatalog.availability=priorSceneAvailability;

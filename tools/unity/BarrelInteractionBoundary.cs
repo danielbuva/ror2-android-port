@@ -13,11 +13,11 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 // Configures/observes an owned source prefab; all query, interaction, state and reward code is original.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class BarrelReport {
-  public bool sourceReady,queryMatched,serverDispatched,opening,opened,repeatRejected,cleaned;
+  public bool diagnosticRendererCopy,sourceReady,queryMatched,serverDispatched,opening,opened,repeatRejected,cleaned;
   public int sourceGold,goldExpected,interactions,stateIndex,renderers,colliders,pendingAwards,coinReferencesBefore,coinReferencesAfter;public uint sourceExperience,experienceExpected,moneyBefore,moneyAfter,netId;
   public ulong experienceBefore,experienceAfter;public float difficulty,goldEvents,openingSeconds,experienceSeconds,experienceFirstSeconds,experienceExpectedSeconds;public string state,scope;
  }
- GameObject barrelTemplates,barrelObject;Transform barrelModel;BarrelInteraction barrelComponent;EntityStateMachine barrelMachine;
+ GameObject barrelTemplates,barrelObject,barrelPreview;Transform barrelModel;BarrelInteraction barrelComponent;EntityStateMachine barrelMachine;
  readonly List<Material> barrelMaterials=new List<Material>();CharacterMaster barrelPlayer;bool observesBarrel,ownsBarrelCoinWitness,hasBarrelCoinBaseline;AsyncOperationHandle<GameObject> barrelCoinWitness;
  void BarrelGold(float amount){r.barrel.goldEvents+=amount;}
  void BarrelInteracted(Interactor interactor,IInteractable interactable,GameObject obj){if(obj==barrelObject){Check(interactor.GetComponent<CharacterBody>().master==barrelPlayer&&ReferenceEquals(interactable,barrelComponent),"Original barrel interaction event identity changed");r.barrel.interactions++;}}
@@ -35,6 +35,11 @@ public sealed partial class MovementBatchProbe {
   var shader=Resources.Load<Shader>("StageSurfacePreview");Check(shader&&shader.isSupported,"Accepted diagnostic material shader unavailable");
   foreach(var renderer in barrelObject.GetComponentsInChildren<Renderer>(true)){
    var copies=renderer.sharedMaterials.Select(material=>{Check(material,"Original barrel material missing");var copy=new Material(material);copy.shader=shader;barrelMaterials.Add(copy);return copy;}).ToArray();renderer.sharedMaterials=copies;r.barrel.renderers++;
+  }
+  if(cfg.originalItemPickup){
+   var originalRenderer=barrelObject.GetComponentInChildren<SkinnedMeshRenderer>(true);Check(originalRenderer&&originalRenderer.sharedMesh&&originalRenderer.bones.Length>0&&originalRenderer.rootBone,"Original barrel mesh/bone references missing");
+   barrelPreview=new GameObject("Owned original barrel renderer view");barrelPreview.layer=30;barrelPreview.transform.SetParent(originalRenderer.transform,false);var preview=barrelPreview.AddComponent<SkinnedMeshRenderer>();preview.sharedMesh=originalRenderer.sharedMesh;preview.sharedMaterials=originalRenderer.sharedMaterials;preview.bones=originalRenderer.bones;preview.rootBone=originalRenderer.rootBone;preview.localBounds=originalRenderer.localBounds;preview.updateWhenOffscreen=true;
+   r.barrel.diagnosticRendererCopy=preview.sharedMesh==originalRenderer.sharedMesh&&preview.bones.SequenceEqual(originalRenderer.bones)&&barrelPreview.layer==30&&originalRenderer.gameObject.layer==LayerIndex.defaultLayer.intVal;Check(r.barrel.diagnosticRendererCopy,"Barrel view changed source mesh/bones/query layer");
   }
   foreach(var collider in barrelObject.GetComponentsInChildren<Collider>(true)){collider.enabled=true;r.barrel.colliders++;}
   Check(r.barrel.renderers>0&&r.barrel.colliders>0,"Original barrel display/collision absent");
@@ -70,7 +75,7 @@ public sealed partial class MovementBatchProbe {
   interactor.AttemptInteraction(barrelObject);yield return null;
   r.barrel.repeatRejected=barrelComponent.GetInteractability(interactor)==Interactability.Disabled&&r.barrel.interactions==1&&barrelPlayer.money==r.barrel.moneyAfter&&TeamManager.instance.GetTeamExperience(TeamIndex.Player)==r.barrel.experienceAfter;
   Check(r.barrel.repeatRejected,"Opened barrel paid twice or remained interactable");CleanupOriginalBarrel();yield return null;yield return null;
-  r.barrel.cleaned=!barrelObject&&!barrelTemplates&&!barrelModel&&barrelMaterials.All(x=>!x);Check(r.barrel.cleaned,"Owned barrel/model/material teardown incomplete");Save();
+  r.barrel.cleaned=!barrelObject&&!barrelTemplates&&!barrelModel&&!barrelPreview&&barrelMaterials.All(x=>!x);Check(r.barrel.cleaned,"Owned barrel/model/material teardown incomplete");Save();
  }
  int BarrelCoinReferences(){return (int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(barrelCoinWitness);}
  void CleanupOriginalBarrel(){
