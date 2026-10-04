@@ -58,11 +58,11 @@ def prepare_spine():
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
     spine='body-state-spawn-state-auto-nova-spine'
-    a.update({'attempt':out.name,'playable_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':55,spine:120}});write(out/'attempt.json',a)
+    a.update({'attempt':out.name,'playable_spine':True,'enemy_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':55,spine:120}});write(out/'attempt.json',a)
     mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
     write(WORK/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(ROOT))});print(json.dumps({'attempt':str(out.relative_to(ROOT)),'spine':True}))
 
@@ -147,6 +147,86 @@ def stage_first_stage_geometry(stage,out):
     recipe=read(WORK/'scene-probe-build.json');recipe['stageScene']=str(dest.relative_to(WORK/'lab-project'));write(WORK/'scene-probe-build.json',recipe)
     write(out/'stage-geometry-contract.json',{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep),'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; no original scene scripts/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
     return {'stageGeometry':True}
+
+
+def stage_enemy_spine(stage,previous,out):
+    """Exact Beetle prefab/config/visual and Titanic Plains navigation closure for original AI."""
+    import shutil
+    from scene_closure import REFERENCE
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0];index={};existing={}
+    for base,target in [(export/'Assets',index),(stage,existing)]:
+        for meta in base.rglob('*.meta'):
+            m=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+            if m:target[m[1]]=Path(str(meta)[:-5])
+    beetle=export/'Assets/RoR2/Base/Characters/BeetleGroup/Beetle';body=beetle/'BeetleBody.prefab';scene=(export/'Assets/RoR2/Base/Scenes/golemplains/golemplains.unity').read_text()
+    catalog=read(WORK/'config/enemy-catalog.json')
+    if catalog['input_id']!=read(WORK/'inventory/files.json')['input_id'] or catalog['catalog_sha256']!=sha(export/'Assets/StreamingAssets/aa/catalog.json'):
+        raise RuntimeError('Enemy catalog input changed; repeat original catalog query')
+    runtime={}
+    for row in catalog['locations']:
+        src=export/row['internalId']
+        if src.exists():runtime[row['key']]=src
+    def addressed(field,kind):
+        block=re.search(field+r':\n((?:    .*\n){3})',body.read_text())[1]
+        key=re.search(r'm_AssetGUID: ([a-f0-9]{32})',block)[1]
+        locations=[x for x in catalog['locations'] if x['key']==key and x['type']==kind]
+        if len(locations)!=1:raise RuntimeError('Unexpected enemy runtime address '+field)
+        src=export/locations[0]['internalId']
+        if kind=='UnityEngine.Avatar':
+            sub=re.search(r'm_SubObjectName: (.*)',block)[1]
+            candidates=[p for p in src.parent.glob('*.asset') if re.search(r'^--- !u!90 ',p.read_text(errors='replace'),re.M) and re.search(r'^  m_Name: '+re.escape(sub)+r'$',p.read_text(errors='replace'),re.M)]
+            if len(candidates)!=1:raise RuntimeError('Unresolved enemy avatar subobject '+sub)
+            src=candidates[0];runtime[key]=src
+        if not src.exists():raise RuntimeError('Unresolved recovered enemy address '+field)
+        return src
+    roots={'enemyBodyAsset':body,'enemyMasterAsset':beetle/'BeetleMaster.prefab','enemySpawnConfigAsset':beetle/'EntityStates.BeetleMonster.SpawnState.asset','enemyAttackConfigAsset':beetle/'Skills/EntityStates.BeetleMonster.HeadbuttState.asset','enemySleepConfigAsset':beetle/'Skills/EntityStates.SleepState.asset'}
+    for key,field in [('enemyGroundGraphAsset','groundNodesAsset'),('enemyAirGraphAsset','airNodesAsset')]:
+        roots[key]=index[re.search(field+r': \{fileID: -?\d+, guid: ([a-f0-9]{32})',scene)[1]]
+    roots['enemyControllerAsset']=addressed('_animatorControllerAddress','UnityEngine.RuntimeAnimatorController')
+    roots['enemyAvatarAsset']=addressed('_avatarAddress','UnityEngine.Avatar')
+    params=(beetle/'skinBeetleDefault_params.asset').read_text();material_key=re.search(r'defaultMaterialAddress:\n      m_AssetGUID: ([a-f0-9]{32})',params)[1];roots['enemyMaterialAsset']=runtime[material_key]
+    death_items=['RoR2/Base/Items/ExtraLife/ExtraLife.asset','RoR2/Base/Items/ExtraLife/ExtraLifeConsumed/ExtraLifeConsumed.asset','RoR2/DLC1/Items/ExtraLifeVoid/ExtraLifeVoid.asset','RoR2/DLC1/Items/ExtraLifeVoid/ExtraLifeVoidConsumed.asset']
+    for i,path in enumerate(death_items):roots['enemyDeathItem'+str(i)]=export/'Assets'/path
+    for i,name in enumerate(['HealAndRevive','HealAndReviveConsumed']):roots['enemyDeathEquipment'+str(i)]=export/'Assets/RoR2/DLC2/Equipment/HealAndRevive'/(name+'.asset')
+    roots['enemyDeathBuffAsset']=export/'Assets/RoR2/DLC2/Interactables/Shrines/ShrineColossusAccess/bdExtraLifeBuff.asset'
+    roots['enemyWispArtifactAsset']=export/'Assets/RoR2/Base/Artifacts/WispOnDeath/WispOnDeath.asset'
+    for name,folder in [('Poison','Base/Elites/ElitePoison'),('Haunted','Base/Elites/EliteHaunted'),('Lunar','Base/Elites/EliteLunar'),('Void','DLC1/Elites/EliteVoid')]:
+        roots['enemyElite'+name]=export/('Assets/RoR2/'+folder+'/ed'+name+'.asset')
+    pending=list(roots.values());seen=set();paths={};rows=[];remaps={r['from']:r['to'] for r in previous.get('ui_remaps',[])}
+    while pending:
+        src=pending.pop()
+        if src in seen:continue
+        seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
+        if src.suffix=='.dll':
+            if src.name=='UnityEngine.UI.dll' and remaps:continue
+            if guid not in existing:raise RuntimeError('Unprovided enemy assembly '+src.name)
+            continue
+        dst=existing.get(guid,stage/'EnemyClosure'/src.relative_to(export/'Assets'))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
+        rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing,'bytes':src.stat().st_size})
+        for key,value in roots.items():
+            if src==value:paths[key]=str(dst.relative_to(WORK/'lab-project')).lower()
+        with src.open('rb') as f:prefix=f.read(5)
+        if prefix==b'%YAML':
+            original=src.read_text();generated=original
+            if src in [body,roots['enemyMasterAsset']]:
+                root_id=re.search(r'^--- !u!1 &(-?\d+)',original,re.M)[1]
+                generated=re.sub(r'(^--- !u!1 &'+root_id+r'\n.*?)(?=^--- !u!|\Z)',lambda m:re.sub(r'  m_IsActive: [01]','  m_IsActive: 0',m[0]),generated,flags=re.M|re.S)
+            if guid not in existing:
+                for old,new_guid in remaps.items():generated=generated.replace(old,new_guid)
+                dst.write_text(generated)
+            deps={g for _,g,_ in REFERENCE.findall(original) if g and not g.startswith('0000000000000000')}
+            # These are measured actor skin/avatar/controller/material runtime references, not a new runtime loader.
+            for dep in deps:
+                if dep not in index:raise RuntimeError('Unresolved enemy GUID in '+src.name+': '+dep)
+                pending.append(index[dep])
+            for dep in re.findall(r'm_AssetGUID: ([a-f0-9]{32})',original):
+                if dep not in runtime:raise RuntimeError('Query original catalog for enemy runtime key in '+src.name+': '+dep)
+                pending.append(runtime[dep])
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+list(paths.values())));write(WORK/'scene-probe-build.json',recipe)
+    write(out/'enemy-contract.json',{'roots':paths,'closure':rows,'bytes':sum(r['bytes'] for r in rows),'catalog':catalog,'prior_art':'Pinned Starstorm2 Runshroom/SS2Monster uses MonsterAssetCollection/body/model/team collision. EditorKit preserves runtime GUID/subobject separately from exported identity; original catalog resolves measured Avatar subobject. R2API.Director scene/catalog boundaries remain separate. Exact original BaseAI requires SceneInfo.GetNodeGraph and drives original InputBank/AI walker states.','scope':'Original Beetle actor/navigation/AI/skill/death integration in accepted terrain; optional audio/effects excluded on owned clones only, no DLL changes, director/progression claim or actor motion writes.'})
+    return dict(paths,enemySpine=True,enemyDeathItems=[paths['enemyDeathItem'+str(i)] for i in range(4)],enemyDeathEquipment=[paths['enemyDeathEquipment'+str(i)] for i in range(2)],enemyEliteAssets=[paths['enemyElite'+name] for name in ['Poison','Haunted','Lunar','Void']])
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run

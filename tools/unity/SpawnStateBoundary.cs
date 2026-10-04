@@ -18,12 +18,13 @@ public sealed partial class MovementBatchProbe {
   priorSpawnDelay=SpawnTeleporterState.initialDelay;priorSpawnSound=SpawnTeleporterState.soundString;ownsSpawnConfig=true;
   var configs=new[]{config};if(IsPlayableSpine()){types=types.Concat(new[]{typeof(EntityStates.Commando.CommandoWeapon.FirePistol2),typeof(EntityStates.Commando.CommandoWeapon.ReloadPistols)}).ToArray();configs=PrepareSpineConfigs(cfg,config);}
   if(cfg.combatSpine)types=types.Concat(new[]{typeof(EntityStates.Commando.CommandoWeapon.FireFMJ),typeof(EntityStates.Commando.DodgeState),typeof(EntityStates.Commando.CommandoWeapon.FireBarrage)}).ToArray();
-  ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();BuildStateCatalog(types,configs);if(IsPlayableSpine())ApplySpineExclusions();
+  if(cfg.enemySpine){types=types.Concat(EnemyTypes()).Distinct().ToArray();configs=configs.Concat(PrepareEnemyConfigs(cfg)).ToArray();}
+  ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();BuildStateCatalog(types,configs);if(IsPlayableSpine())ApplySpineExclusions();if(cfg.enemySpine)EnemyExclusions();
   foreach(var type in types){var index=EntityStateCatalog.GetStateIndex(type);Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==type&&EntityStateCatalog.InstantiateState(index).GetType()==type,"Original spawn state identity round trip");}
   Check(cfg.sourceSpawnDelay>0&&cfg.sourceSpawnDelay<10&&SpawnTeleporterState.initialDelay==cfg.sourceSpawnDelay,"Original configured spawn delay");
   Check(SpawnTeleporterState.soundString==cfg.sourceSpawnSound,"Original configured spawn sound");
  }
- void CleanupSpawnConfig(){CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
+ void CleanupSpawnConfig(){CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
  void ProbeSpawnStates(CharacterBody body,Result cfg){
   PrepareSpawnStateCatalog(cfg);
   if(r.id=="body-state-spawn-state-overlay"){ProbeTeleportOverlay(body,cfg);return;}

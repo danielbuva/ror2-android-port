@@ -27,7 +27,7 @@ public sealed partial class MovementBatchProbe {
   priorLoadoutDefaults=LoadoutField("defaultBodyLoadouts").GetValue(null);priorBodyInfos=LoadoutField("allBodyInfos").GetValue(null);
   Check(priorLoadoutDefaults==null&&priorBodyInfos==null,"Existing loadout defaults ownership");
   var slots=prefab.GetComponents<GenericSkill>();Check(slots.Length==4,"Original Commando skill-slot count");
-  var families=slots.Select(x=>x.skillFamily).Distinct().ToArray();Check(families.Length==4&&families.All(x=>x&&x.variants.Length>0&&x.defaultVariantIndex<x.variants.Length),"Actual family/default-variant contract");
+  var families=BodyCatalog.allBodyPrefabs.SelectMany(x=>x.GetComponents<GenericSkill>()).Select(x=>x.skillFamily).Where(x=>x).Distinct().ToArray();Check(families.Length>=4&&families.All(x=>x&&x.variants.Length>0&&x.defaultVariantIndex<x.variants.Length),"Actual family/default-variant contract");
   var defs=families.SelectMany(x=>x.variants.Select(v=>v.skillDef)).Distinct().ToArray();Check(defs.All(x=>x),"Original skill definition missing");
   ownsSkillCatalog=true;StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)defs);StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)families);
   foreach(var family in families)Check(SkillCatalog.GetSkillFamily(family.catalogIndex)==family,"Original family catalog identity");
@@ -77,11 +77,11 @@ public sealed partial class MovementBatchProbe {
   var body=prefab.GetComponent<CharacterBody>();var portrait=body.portraitIcon;
   Check(portrait&&portrait.name=="texCommandoIcon","Serialized portrait missing");
   r.phase="original-body-catalog-register";Save();
-  ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new[]{prefab});
+  ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)(cfg.enemySpine?new[]{prefab,artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset)}:new[]{prefab}));
   deadline=Time.realtimeSinceStartup+3;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;
   yield return null;yield return null;
   Check(LegacyResourcesAPI.ActiveCount==0,"Catalog portrait callback still pending");
-  Check(BodyCatalog.bodyCount==1&&body.bodyIndex!=(BodyIndex)(-1),"Original index assignment failed");
+  Check(BodyCatalog.bodyCount==(cfg.enemySpine?2:1)&&body.bodyIndex!=(BodyIndex)(-1),"Original index assignment failed");
   Check(BodyCatalog.FindBodyIndex("CommandoBody")==body.bodyIndex&&BodyCatalog.FindBodyIndex("CommandoBody(Clone)")==body.bodyIndex,"Original name/index lookup failed");
   Check(BodyCatalog.GetBodyPrefab(body.bodyIndex)==prefab,"Original prefab lookup failed");
   Check(body.portraitIcon==portrait,"Missing-key callback replaced serialized portrait");

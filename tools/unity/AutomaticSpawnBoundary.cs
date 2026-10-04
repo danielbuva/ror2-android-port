@@ -57,7 +57,7 @@ public sealed partial class MovementBatchProbe {
    float buffDuration=0;Check(r.hiddenBuffCount==1&&body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration)&&buffDuration>2.5f&&buffDuration<=3f&&(automaticBody||buffDuration==3f),"Original spawn exit timed hidden buff duration");r.spawnExitBuffSeconds=buffDuration;
    Check(r.teleportOverlays==1,"Original automatic spawn overlay not observed");r.spawnState=machine.state.GetType().FullName;
    r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
-   Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
+   Check((cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110)&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
    if(IsAutomaticHealth()){
     if(IsPlayableSpine())body.healthComponent.enabled=true;else{var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;}
    }
@@ -95,12 +95,12 @@ public sealed partial class MovementBatchProbe {
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
    }
    if(r.id=="body-state-spawn-state-auto-barrier"){ObserveBarrierEffect(body);Check(r.barrierMaterialCopies>0&&r.barrierEffectEntries==1&&r.barrierEffectExited&&r.barrierEffectDestroyed&&!BodyBarrier(body),"Original automatic barrier effect entry/exit/destruction");}
-   if(IsAutomaticHealth())Check(body.healthComponent.enabled&&body.healthComponent.health==110&&body.healthComponent.barrier==0,"Original automatic health sustained full health/barrier expiry");
+   if(IsAutomaticHealth())Check(body.healthComponent.enabled&&(cfg.enemySpine?body.healthComponent.health>0&&body.healthComponent.health<=body.maxHealth:body.healthComponent.health==110)&&body.healthComponent.barrier==0,"Original automatic health sustained full health/barrier expiry");
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
     r.stationarySeconds=(float)typeof(CharacterBody).GetField("notMovingStopwatch",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);Save();
     Check(r.spawnBuffExpired&&(IsNovaInput()||r.stationarySeconds>55)&&r.automaticBodyStatsEvents>=2,"Original automatic body buff expiry/update timer/stat recalculation");
-    Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
+    Check((cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110)&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
    }
   }finally{
    body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;

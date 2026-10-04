@@ -617,7 +617,7 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
                         seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
                         if (probe=='body-state-spawn-state-auto-nova-controls' or probe.startswith('body-state-spawn-state-auto-nova-spine')) and last_phase in ['nova-commando-ready','nova-spine-bringup']:
-                            for mark in ([5,15] if probe.endswith('-bringup') else [5,25,50,75]):
+                            for mark in ([1,5,15] if probe.endswith('-bringup') and a.get('enemy_spine') else [5,15] if probe.endswith('-bringup') else [5,25,50,75]):
                                 if seconds>=mark and mark not in captured:
                                     d.collect('screenshot',attempt/('visual-'+str(mark)));captured.add(mark)
                 time.sleep(1)
