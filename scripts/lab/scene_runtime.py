@@ -627,6 +627,8 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                             d.collect('screenshot',attempt/'visual-client-coin');captured.add('client-coin')
                         if last_phase=='active-local-client-owned' and 'client' not in captured:
                             d.collect('screenshot',attempt/'visual-client');captured.add('client')
+                        if last_phase=='original-default-pickup-visible' and 'default-pickup' not in captured:
+                            d.collect('screenshot',attempt/'visual-default-pickup');captured.add('default-pickup')
                         if last_phase=='original-item-grant' and 'item' not in captured:
                             d.collect('screenshot',attempt/'visual-item');captured.add('item')
                         # The director probe needs a long deadline, not an idle display after completion.

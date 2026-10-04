@@ -53,6 +53,10 @@ public static class LabBuild {
      if(!cfg.pickupDroplet.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.pickupDroplet))throw new Exception("Unexpected pickup droplet probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="pickup-droplet-lab",assetNames=new[]{cfg.pickupDroplet}});
     }
+    if(!string.IsNullOrEmpty(cfg.genericPickup)){
+     if(!cfg.genericPickup.StartsWith("Assets/LabLoadingScene/",StringComparison.OrdinalIgnoreCase)||!File.Exists(cfg.genericPickup))throw new Exception("Unexpected generic pickup path");
+     bundleBuilds.Add(new AssetBundleBuild{assetBundleName="generic-pickup-lab",assetNames=new[]{cfg.genericPickup}});
+    }
     if(cfg.enemyRewardAssets!=null&&cfg.enemyRewardAssets.Length>0){
      if((cfg.enemyRewardAssets.Length!=3&&cfg.enemyRewardAssets.Length!=5)||cfg.enemyRewardAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected enemy reward/team probe paths");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="enemy-reward-lab",assetNames=cfg.enemyRewardAssets});
@@ -73,7 +77,7 @@ public static class LabBuild {
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
- [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,playerDeathEffect,pickupDroplet;public string[] prefabAssets,enemyRewardAssets;}
+ [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,playerDeathEffect,pickupDroplet,genericPickup;public string[] prefabAssets,enemyRewardAssets;}
  [MenuItem("Porting Lab/Record Backend Constraints")]
  public static void Backend(){
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));

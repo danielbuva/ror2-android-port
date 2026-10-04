@@ -82,9 +82,10 @@ public sealed partial class MovementBatchProbe {
   if(cfg.enemyRewards&&bringup){if(DirectorBatch())VerifyDirectorBatch();else VerifyEnemyRewardDelivery();}
   if(cfg.originalRunClock&&bringup)VerifyOriginalRunClock();
   if(cfg.barrelInteraction&&bringup){var interaction=ProbeOriginalBarrel(body,cfg);while(interaction.MoveNext())yield return interaction.Current;}
+  if(cfg.originalDefaultPickup&&bringup){var generic=PrepareOriginalDefaultPickup(cfg);while(generic.MoveNext())yield return generic.Current;}
   if(cfg.originalItemPickup&&bringup){var pickup=ProbeOriginalItemPickup(body,cfg);while(pickup.MoveNext())yield return pickup.Current;}
   if(cfg.originalMoneyCost&&bringup){var cost=ProbeOriginalMoneyCost(body,cfg);while(cost.MoveNext())yield return cost.Current;}
   if(cfg.originalActiveClient&&bringup){var client=ProbeActiveBodyClient(body,cfg);while(client.MoveNext())yield return client.Current;}
-  }finally{CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
+  }finally{CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&bringup)CleanupOriginalDefaultPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }
