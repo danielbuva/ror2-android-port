@@ -20,6 +20,7 @@ public sealed partial class MovementBatchProbe {
   if(cfg.combatSpine)types=types.Concat(new[]{typeof(EntityStates.Commando.CommandoWeapon.FireFMJ),typeof(EntityStates.Commando.DodgeState),typeof(EntityStates.Commando.CommandoWeapon.FireBarrage)}).ToArray();
   if(cfg.enemySpine){types=types.Concat(EnemyTypes()).Distinct().ToArray();configs=configs.Concat(PrepareEnemyConfigs(cfg)).ToArray();}
   if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset))types=types.Concat(new[]{typeof(EntityStates.Commando.DeathState)}).Distinct().ToArray();
+  if(cfg.barrelInteraction)types=types.Concat(new[]{typeof(EntityStates.Barrel.Opening),typeof(EntityStates.Barrel.Opened)}).Distinct().ToArray();
   ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();BuildStateCatalog(types,configs);if(IsPlayableSpine())ApplySpineExclusions();if(cfg.enemySpine)EnemyExclusions();
   foreach(var type in types){var index=EntityStateCatalog.GetStateIndex(type);Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==type&&EntityStateCatalog.InstantiateState(index).GetType()==type,"Original spawn state identity round trip");}
   Check(cfg.sourceSpawnDelay>0&&cfg.sourceSpawnDelay<10&&SpawnTeleporterState.initialDelay==cfg.sourceSpawnDelay,"Original configured spawn delay");

@@ -46,7 +46,7 @@ def prepare():
     a.update({'nova_input_bridge':True,'batch_seconds':{RAW:140,BODY:120}});write(out/'attempt.json',a)
     write(out/'nova-contract.json',{'input_manager_before_sha256':sha(out/'InputManager-before.asset'),'input_manager_after_sha256':sha(settings),'scope':'Nova only; original InputBankTest producer; no movement/state/motor/skill rewrites; no Rewired replacement','prior_art':'Starstorm2 a9a4badd BorgMain consumes inputBank and retains GenericCharacterMain base ProcessJump/FixedUpdate; no Android backend provided','catalog':'Measured JumpBoost/JumpDamageStrike plus GummyCloneIdentifier in original empty inventory; explicit new combined subset, old cases unchanged','mapping':'Measure Unity slot-1 axes/buttons, then push attempt-bound JSON; skills disabled in movement proof','visual':'Recovered transform/renderer-only model display follows original ModelLocator; fixed bind pose, diagnostic floor/camera/aim stance'})
 
-def prepare_spine(director_batch=False,run_clock=False):
+def prepare_spine(director_batch=False,run_clock=False,barrel=False):
     """Continue the accepted active stage; use the measured mapping without repeating its capture."""
     import shutil
     from build import preflight
@@ -58,10 +58,14 @@ def prepare_spine(director_batch=False,run_clock=False):
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
+    cfg['barrelInteraction']=barrel
+    if barrel:
+        if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
+        cfg.update(stage_barrel(stage,out))
     write(stage/'Resources/MovementBatchProbe.json',cfg)
     cfg['directorSpawnLimit']=3 if director_batch else 1;write(stage/'Resources/MovementBatchProbe.json',cfg)
     if director_batch:
@@ -324,6 +328,40 @@ def stage_run_scene_metadata(stage,out):
     recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[root]));write(WORK/'scene-probe-build.json',recipe)
     write(out/'run-metadata-closure.json',{'root':root,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'unrequested_addresses':addresses,'scope':'Original base SceneDef/static metadata, preserved unchanged. No scene-address/diorama/progression/menu/native audio load. Converted static geometry retains original scene name/GUID for measured catalog identity only.'})
     return {'runSceneDefAsset':root.lower()}
+
+def stage_barrel(stage,out):
+    """Only the original cash-barrel static dependency closure; no generated rewards or shop logic."""
+    import shutil
+    from scene_closure import REFERENCE
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    source=export/'Assets/RoR2/Base/Interactables/Barrel1/Barrel1.prefab'
+    if not all(x in source.read_text() for x in ['goldReward: 8','expReward: 4']):raise RuntimeError('Original cash barrel reward contract changed')
+    index={};existing={}
+    for base,target in [(export/'Assets',index),(stage,existing)]:
+        for meta in base.rglob('*.meta'):
+            m=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+            if m:target[m[1]]=Path(str(meta)[:-5])
+    pending=[source];seen=set();rows=[];root=None
+    while pending:
+        src=pending.pop()
+        if src in seen:continue
+        seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
+        if src.suffix=='.dll':
+            if guid not in existing or existing[guid].name!=src.name:raise RuntimeError('Missing interactable assembly '+src.name)
+            continue
+        dst=existing.get(guid,stage/'BarrelClosure'/src.relative_to(export/'Assets'))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
+        if src==source:root=str(dst.relative_to(WORK/'lab-project'))
+        rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing,'bytes':src.stat().st_size})
+        with src.open('rb') as f:prefix=f.read(5)
+        if prefix==b'%YAML':
+            for dep in {g for _,g,_ in REFERENCE.findall(src.read_text()) if g and not g.startswith('0000000000000000')}:
+                if dep not in index:raise RuntimeError('Missing barrel reference '+src.name+': '+dep)
+                pending.append(index[dep])
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[root]));write(WORK/'scene-probe-build.json',recipe)
+    write(out/'barrel-contract.json',{'root':root,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_RUN_CLOCK.json'),'scope':'Original Barrel1 clone, original Interactor query/server dispatch, original Opening/Opened and source gold8/XP4 scaled by actual Run. Explicit no-audio owned clone and diagnostic materials. No purchase/item/drop-table/full interaction-driver/client/progression acceptance.','prior_art':'Pinned R2API.Director f539511e InteractableSpawnCardClone preserves source placement/eligibility/stage caps as distinct contracts; do not substitute manually placed barrel for director acceptance. Exact original Interactor and BarrelInteraction determine query/dispatch/rewards; no implementation copied.'})
+    return {'barrelAsset':root.lower()}
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run

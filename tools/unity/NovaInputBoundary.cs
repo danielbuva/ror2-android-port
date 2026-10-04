@@ -81,6 +81,7 @@ public sealed partial class MovementBatchProbe {
   if(cfg.automaticDirector&&bringup)Check(r.director.navigationTicks>500&&r.director.navigationNext&&r.director.navigationReachable&&r.director.navigationPathUpdate>0&&(DirectorBatch()?r.director.navigationAgentPeak>=2:r.director.navigationAgentPeak==1),"Original broad route output/scheduling not observed");
   if(cfg.enemyRewards&&bringup){if(DirectorBatch())VerifyDirectorBatch();else VerifyEnemyRewardDelivery();}
   if(cfg.originalRunClock&&bringup)VerifyOriginalRunClock();
-  }finally{CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
+  if(cfg.barrelInteraction&&bringup){var interaction=ProbeOriginalBarrel(body,cfg);while(interaction.MoveNext())yield return interaction.Current;}
+  }finally{CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }
