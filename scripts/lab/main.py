@@ -20,7 +20,13 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='steam-exception-prepare':
+  if a.action=='primary-fire-prepare':
+   from primary_fire import prepare
+   prepare()
+  elif a.action=='primary-fire-run':
+   from primary_fire import run
+   run()
+  elif a.action=='steam-exception-prepare':
    from scene_runtime import steam_exception_prepare
    steam_exception_prepare()
   elif a.action=='steam-boundary-prepare':

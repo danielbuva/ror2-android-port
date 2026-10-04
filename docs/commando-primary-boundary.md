@@ -1,0 +1,15 @@
+# Original Commando primary boundary
+
+S132 passes original primary factory and activation on Nova. Actual default SteppedSkillDef and Weapon Idle create an original FirePistol2 with the real GenericSkill slot and pistol step0. Original ExecuteIfReady queues it, consumes stock1 to0, advances the factory's next step to1 and emits one effective-authority event and one server event. Pending/empty execution rejects. Scheduling is diagnostic; the state has not fired in this contract case.
+
+S133 separately enters the unchanged, fully configured original state. Its first native consumer fails at AkSoundEngine's pre-event IsInitialized query, reached through original PostEvent/FireBullet/OnEnter. Missing Android AkSoundEngine produces the measured DllNotFoundException. This is an accepted negative observation, with firingAvailable/audioAvailable false; it does not pass firing, effects, audio or combat.
+
+Prior art: pinned Starstorm2 a9a4badd Deadeye uses authority-gated original BulletAttack.Fire with separate tracer/hit effects. R2API.Sound's native bank/results lifetime does not supply an Android engine. Exact current original source, configurations and real device outrank those clues. SkillDef intentionally hides Object.name with a null property; observers must cast to ScriptableObject, as the previous automatic stock probe does.
+
+The stage adds only two original state configurations, their missing static dependencies and the IncreasePrimaryDamage item required by original OnSkillActivated. Sixteen new assets total about520KiB; source hashes and original configuration copies stay ignored. Full original sound/effect fields remain intact in S133. All45 original DLL hashes are unchanged. No middleware replacement, game-method patch, platform service or physical skill claim.
+
+Accepted evidence: work/experiments/scene-runtime/20261004T015019.155836Z/verification/20261004T015943.341325Z and20261004T020033.131022Z. Each cold launch survives over35 seconds;427/429 assertions, current-PID review, mandatory capture and fixture/provider cleanup pass. APK SHA-25674a994e5060bc20752c1b4c8b45011ccf831d325a8e5c4ce527ed06af7f5a3da. Rejected staging/compile/observer attempts remain separate under J153; no rejected result advanced a capability pointer.
+
+Commands: `./dev prototype --action primary-fire-prepare` derives the accepted active Nova stage; refresh through pinned MCP, run preflight and a forced Vulkan build, then `./dev prototype --action primary-fire-run`. The second cold launch dispatches only after the first contract passes. The parent physical-control APK/stage/mapping rollback remains recoverable.
+
+Next isolate an explicitly silent, effect-excluded firing fixture before physical primary input. Retain original numerical pistol/stock/state behavior and report audio, effects, hit damage and animation unavailable/unproven. This is a component experiment, not whole-application no-audio safety. Formal L5 remains platform-blocked and L5.5 open.

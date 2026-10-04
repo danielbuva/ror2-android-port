@@ -1574,3 +1574,35 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Scoped physical simulation precursor receipt only after reviewed acceptance; archive failures and state/backlog/milestone/risk updates; conventional commit/public audit/push.
 - **DEPENDENCIES:** S130, accepted automatic original body/state/motor/model callback proofs; J64 allows independent simulation precursors before platform-blocked L5.
 - **STATUS:** PASS — J152:90.03-second physical original Commando simulation,43.53m planar motion/stop, original aim consumption, one jump-count transition/3.6375m rise/landing/reset, user confirmation and reviewed captures.14019 assertions;45 unchanged DLLs,40 host tests, cleanup/OLED sleep pass. Scoped precursor only; formal gates remain open.
+
+## S132 — Original Commando primary factory and activation
+- **ID:** S132
+- **TITLE:** Original primary state factory, stepping, stock and authority events.
+- **CONTEXT:** S131 physical movement/aim/jump passes; skills remain unaccepted.
+- **OBSERVATION:** Original primary uses SteppedSkillDef, Weapon Idle and FirePistol2; CharacterBody.OnSkillActivated consumes the empty IncreasePrimaryDamage item contract.
+- **HYPOTHESIS:** Actual default primary can instantiate, schedule and consume stock with original step/event semantics before entering the native-consuming state.
+- **TASK:** Derive one ignored stage from accepted Nova rollback; recover only two state configurations and the measured item closure; execute original factory/ExecuteIfReady and observe scheduling without entering FirePistol2.
+- **CONSTRAINTS:** All45 original DLLs unchanged; no physical input claim, actor writes, audio/effect success, platform services or formal gate advancement. Diagnostic original scheduling is explicit. Keep Nova asleep when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** PrimaryFireBoundary, thin primary CLI/staging, existing batch routing/catalog subset, ignored state/effect/item closure and receipts.
+- **TEST COMMAND:** ./dev doctor; ./dev prototype --action primary-fire-prepare; pinned MCP refresh/console; ./dev preflight; ./dev build --target vulkan --force; ./dev prototype --action primary-fire-run; ./dev test.
+- **PASS CONDITION:** Original factory binds actual slot/step0; original ExecuteIfReady queues FirePistol2, consumes1 stock, advances next step1, emits one server and authority event; pending/empty execution rejects; cleanup/current-PID evidence passes.
+- **FAILURE EVIDENCE TO CAPTURE:** First state identity/configuration/item/activation exception, current attempt/PID, build/hash/original assembly receipts and screenshots.
+- **STATE/JOURNAL UPDATES REQUIRED:** Scoped factory/activation result and provenance; preserve failed attempts, update concise state/backlog/milestones and commit/public audit.
+- **DEPENDENCIES:** S131; prior-art map and pinned Starstorm2 a9a4badd Deadeye authority-gated original BulletAttack/effect contract; exact original source overrides assumptions.
+- **STATUS:** PASS — J154: original factory/activation/step/stock/events and rejection assertions pass on device; scheduling only, no firing claim.
+
+## S133 — Original primary first native consumer
+- **ID:** S133
+- **TITLE:** Attribute first unmodified FirePistol2.OnEnter failure.
+- **CONTEXT:** S132 separates original skill scheduling from firing; J53 already records unavailable Wwise Android native query.
+- **OBSERVATION:** Original FirePistol2 posts Play_commando_R before muzzle effects, recoil and BulletAttack.
+- **HYPOTHESIS:** Original firing reaches the missing Wwise native leaf; this specific consumer must be observed before selecting no-audio handling.
+- **TASK:** Separate cold launch repeats S132 then original Weapon.ManagedFixedUpdate enters the configured original state; record exact native exception and false firing/audio capability.
+- **CONSTRAINTS:** No blanking sound/effects, native stub, DLL modification, suppressed unexpected exception, audio/service success or firing acceptance. Expected negative observation is distinct from capability success.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Same narrow probe; separate ignored device report and result.
+- **TEST COMMAND:** Second individually reported primary-fire-run case; current-PID/capture/cleanup and original hashes.
+- **PASS CONDITION:** Discriminating observation identifies original pistol native call and survives cleanly; does not pass primary-fire capability.
+- **FAILURE EVIDENCE TO CAPTURE:** Earlier first failure, managed/native stack, state and stock/events, process survival/capture/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Append first-failure journal and next justified experiment; no gameplay pointer from native failure.
+- **DEPENDENCIES:** S132; pinned R2API.Sound bank/native-result lifetime knowledge, J53/J63 audit; no Android SDK access follows from community code.
+- **STATUS:** COMPLETE / NEGATIVE OBSERVATION — J154: original pistol enters and missing native Wwise IsInitialized fails before bullets/effects. No firing/audio capability advances.

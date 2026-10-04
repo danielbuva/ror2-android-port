@@ -175,3 +175,5 @@ Nova OLED protection: current ignored local configuration enables `sleep_display
 
 
 Temporary Nova input producer: `./dev prototype --action nova-bridge-prepare`, restore measured motor/producer order, force Vulkan build, then `nova-bridge-raw-run`, `nova-bridge-bind` and `nova-bridge-commando-run`. This feeds original InputBankTest without replacing gameplay or Rewired; skill execution is disabled for the movement proof. See [scope, measured mappings and rollback](docs/nova-input-bridge.md). Exact Rewired compatibility is deferred by current user direction.
+
+Original primary boundary: `./dev prototype --action primary-fire-prepare`, pinned editor refresh, preflight and forced Vulkan build, then `primary-fire-run` isolate original factory/activation and the first unmodified native firing consumer. The dependent firing case dispatches only after the contract passes. See [accepted scope and next probe](docs/commando-primary-boundary.md).
