@@ -113,12 +113,17 @@ def stage_first_stage_geometry(stage,out):
     source=export/'Assets/RoR2/Base/Scenes/golemplains/golemplains.unity'
     text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
     # Preserve object/transform/mesh/collider/LOD data. Omit gameplay, native sound, particles and baked lighting.
-    keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={}
+    keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
+    # Measured original MonoScript identity: only the source escape-pod preview disable callback.
+    preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     for block in blocks:
         match=re.match(r'--- !u!(\d+) &(-?\d+)',block);kind=int(match[1]);file_id=match[2]
-        if kind not in keep:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
+        preview=kind==114 and preview_script in block
+        if preview:preview_ids.append(file_id)
+        if kind not in keep and not preview:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
         kept.append((kind,file_id,block))
+    if len(preview_ids)!=23:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
         if kind==1:
@@ -137,7 +142,9 @@ def stage_first_stage_geometry(stage,out):
         seen.add(guid)
         if guid not in index:raise RuntimeError('Unresolved static stage dependency '+guid)
         src=index[guid]
-        if src.suffix=='.dll':raise RuntimeError('Unexpected managed dependency in static geometry '+src.name)
+        if src.suffix=='.dll':
+            if src.name=='RoR2.dll' and guid in existing and existing[guid]==stage/'Plugins/RoR2.dll':continue
+            raise RuntimeError('Unexpected managed dependency in static geometry '+src.name)
         dst=existing.get(guid,stage/'StageGeometry/Assets'/src.relative_to(export/'Assets'))
         if guid not in existing:
             dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'))
@@ -145,7 +152,7 @@ def stage_first_stage_geometry(stage,out):
         if prefix==b'%YAML':pending.extend(g for _,g,_ in REFERENCE.findall(src.read_text()) if g and not g.startswith('0000000000000000'))
         rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'bytes':src.stat().st_size,'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
     recipe=read(WORK/'scene-probe-build.json');recipe['stageScene']=str(dest.relative_to(WORK/'lab-project'));write(WORK/'scene-probe-build.json',recipe)
-    write(out/'stage-geometry-contract.json',{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep),'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; no original scene scripts/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
+    write(out/'stage-geometry-contract.json',{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids},'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; only measured original DisableOnStart preview callbacks retained, no stage lifecycle/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
     return {'stageGeometry':True}
 
 

@@ -1677,3 +1677,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** J162/J163 and scoped defeat/direct-launch receipt after actual device acceptance; concise state/milestone/risk update, staged public audit/manual IP review and Conventional Commit.
 - **DEPENDENCIES:** S137; original-provider prior art and pinned Starstorm2 Mimic observation knowledge; exact original game/type/catalog input and authorized Nova.
 - **STATUS:** PASS bounded original defeat/state/ragdoll/effect/lifetime and30-second stable lab hold — J163. Scripted combat/managed cleanup5110 assertions; separate default launch66.59-second process,45 unchanged DLLs/40 host tests. J162 rejections preserved; original game-over/menu/progression and physical new combat remain OPEN.
+
+
+## S139 — Original escape-pod preview deactivation
+- **ID:** S139
+- **TITLE:** Restore the original scene preview-disable callback to expose the integrated character.
+- **CONTEXT:** S138 accepts original defeat, but gray EscapePodMesh objects obstruct the owned camera.
+- **OBSERVATION:** Current device snapshot and source hierarchy identify23 EscapePodMesh children of SurvivorPodSpawnPoint. Exact original MonoScript/fileID resolves to DisableOnStart; its Start deactivates the object. Static extraction stripped that callback.
+- **HYPOTHESIS:** Retaining only those measured original components restores natural preview deactivation without changing terrain, spawn markers, simulation, camera or source assets.
+- **TASK:** Preserve only the exact input-gated callback references, supply the already accepted original RoR2.dll, wait for natural Start, assert23 inactive pod previews/no other scene scripts; reprove combat/death and review character visibility.
+- **CONSTRAINTS:**45 original DLLs unchanged; no manual actor/scene-object motion, scene-root purge, fabricated service state or stage-lifecycle claim. Source flags/geometry untouched. Nova asleep while idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing stage geometry transformation/StageGeometryBoundary only; ignored serialized scene/bundle/evidence.
+- **TEST COMMAND:** Existing nova-bridge-prepare, pinned MCP compile/console, preflight/forced Vulkan build, movement-batch-run and separate no-selector defeat capture; existing host tests.
+- **PASS CONDITION:** All23 original callbacks naturally deactivate only the measured previews, no other scene MonoBehaviours; original source collision/spawn/combat/managed cleanup and natural player defeat remain clean. Reviewed current-process capture shows the original character without those gray pods.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact source component identity/count, import/missing script/activation/geometry/rendering first failure, stage/APK/payload hashes, current-PID report/logs/screenshots and rollback.
+- **STATE/JOURNAL UPDATES REQUIRED:** J164, concise state/milestone/risk and separate accepted view checkpoint; public audit/manual provenance review, Conventional Commit.
+- **DEPENDENCIES:** S138; prior-art map and pinned EditorKit AddressablesPathDictionaryCache component inspection technique; exact current source/MonoScript evidence overrides assumptions. No community implementation copied.
+- **STATUS:** PASS bounded original preview deactivation/clear actor view — J164;23 original callbacks,5090 scripted assertions/65.62-second process and separate clean default-launch defeat. Second defeat capture contains observed LB/aim input, so no neutral/confirmed physical-controls claim. Formal gates stay OPEN; next human all-skill/enemy capture after readiness.

@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker;public bool loaded,cleaned,groundHit;
-  public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours;
+  public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal;
  }
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
@@ -22,9 +22,12 @@ public sealed partial class MovementBatchProbe {
   Check(stageGeometryBundle,"Recovered stage geometry bundle missing");var scenes=stageGeometryBundle.GetAllScenePaths();Check(scenes.Length==1,"Expected one recovered stage geometry scene");
   yield return SceneManager.LoadSceneAsync(scenes[0],LoadSceneMode.Additive);stageGeometryScene=SceneManager.GetSceneByPath(scenes[0]);
   r.stage.loaded=stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded;r.stage.scene=stageGeometryScene.name;Check(r.stage.loaded,"Stage geometry did not load");
+  yield return null; // Allow original scene preview Start callbacks; no manual deactivation.
   var roots=stageGeometryScene.GetRootGameObjects();var transforms=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>(true)).ToArray();
   r.stage.objects=transforms.Length;r.stage.behaviours=roots.Sum(x=>x.GetComponentsInChildren<MonoBehaviour>(true).Length);
-  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(r.stage.behaviours==0&&r.stage.activeRoots>0,"Geometry scene contains behaviours or no active source roots");
+  var previewCallbacks=roots.SelectMany(x=>x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
+  r.stage.previewDisableComponents=previewCallbacks.Count(x=>x&&x.GetType()==typeof(DisableOnStart));r.stage.previewsInactive=previewCallbacks.Count(x=>x&&!x.gameObject.activeSelf&&x.gameObject.name=="EscapePodMesh");
+  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(r.stage.behaviours==23&&r.stage.previewDisableComponents==23&&r.stage.previewsInactive==23&&r.stage.activeRoots>0,"Original escape-pod preview Start or scene behaviour allowlist failed");
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();
