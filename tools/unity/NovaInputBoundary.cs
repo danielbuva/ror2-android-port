@@ -61,9 +61,10 @@ public sealed partial class MovementBatchProbe {
     if(bringup){
      bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
      // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
-     if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&r.enemy.playerDamageEvents>0){combatBegan=elapsed;r.nova.diagnosticReturnFireAt=elapsed;}
+     if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&r.enemy.playerDamageEvents>0&&(!DirectorBatch()||r.director.actors.Count>=2)){combatBegan=elapsed;r.nova.diagnosticReturnFireAt=elapsed;}
      float fireAge=cfg.enemySpine?(combatBegan<0?-1:elapsed-combatBegan+9):elapsed;
      if(cfg.automaticDirector&&enemyBody&&fireAge>9&&fireAge<12){var enemyAimDelta=enemyBody.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(enemyAimDelta.x,enemyAimDelta.z).normalized;}bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
+     if(DirectorBatch()&&fireAge>18.5f){var target=DirectorReturnFireTarget();bridge.diagnosticPrimary=target;if(target){var batchAim=target.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(batchAim.x,batchAim.z).normalized;}}
     }
     display.Observe(position,bank.aimDirection);
     if(elapsed>=next){if(r.freePlay&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
@@ -75,9 +76,9 @@ public sealed partial class MovementBatchProbe {
    if(cfg.combatSpine)Check(r.combat.secondaryEntries>0&&r.combat.utilityEntries>0&&r.combat.specialEntries>0&&r.combat.projectiles>0&&r.combat.damageEvents>0&&r.combat.healthAfter<r.combat.healthBefore,"Integrated original skills/projectile/target damage incomplete");
   if(cfg.enemySpine)Check(r.enemy.graphReady&&r.enemy.linked&&r.enemy.authority&&r.enemy.targetFound&&r.enemy.planarBeforeDamage>4&&r.enemy.groundedBeforeDamage>100&&r.enemy.maxFallBeforeDamage<10,"Original grounded enemy chase before incoming damage not observed");
   if(cfg.enemySpine&&bringup)Check(r.enemy.headbutts>0&&r.enemy.playerDamageEvents>0&&r.enemy.enemyDamageEvents>0&&r.enemy.dead,"Original enemy melee, return damage and death not observed");
-  if(cfg.enemySpine&&bringup)Check(r.enemy.deathGlobalEvents==1&&r.enemy.playerKillsAfter==r.enemy.playerKillsBefore+1&&r.enemy.naturalBodyDestroyed&&r.enemy.naturalMasterDestroyed,"Original enemy death event/kill count/natural teardown incomplete");
-  if(cfg.automaticDirector&&bringup)Check(r.director.navigationTicks>500&&r.director.navigationNext&&r.director.navigationReachable&&r.director.navigationPathUpdate>0&&r.director.navigationAgentPeak==1,"Original broad route output/scheduling not observed");
-  if(cfg.enemyRewards&&bringup)VerifyEnemyRewardDelivery();
+  if(cfg.enemySpine&&bringup)Check(r.enemy.deathGlobalEvents==1&&r.enemy.playerKillsAfter==r.enemy.playerKillsBefore+(DirectorBatch()?3:1)&&r.enemy.naturalBodyDestroyed&&r.enemy.naturalMasterDestroyed,"Original enemy death event/kill count/natural teardown incomplete");
+  if(cfg.automaticDirector&&bringup)Check(r.director.navigationTicks>500&&r.director.navigationNext&&r.director.navigationReachable&&r.director.navigationPathUpdate>0&&(DirectorBatch()?r.director.navigationAgentPeak>=2:r.director.navigationAgentPeak==1),"Original broad route output/scheduling not observed");
+  if(cfg.enemyRewards&&bringup){if(DirectorBatch())VerifyDirectorBatch();else VerifyEnemyRewardDelivery();}
   }finally{if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }
