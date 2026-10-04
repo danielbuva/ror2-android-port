@@ -56,14 +56,52 @@ def prepare_spine():
     for name,h in checkpoint['original_assemblies'].items():
         if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original spine assembly drift')
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
-    write(out/'rollback.json',{'physical':checkpoint,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
+    write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['attempt']=out.name;write(stage/'Resources/MovementBatchProbe.json',cfg)
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
     spine='body-state-spawn-state-auto-nova-spine'
     a.update({'attempt':out.name,'playable_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':55,spine:120}});write(out/'attempt.json',a)
     mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
     write(WORK/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(ROOT))});print(json.dumps({'attempt':str(out.relative_to(ROOT)),'spine':True}))
+
+def stage_combat_configs(stage,previous,out):
+    """Existing YAML closure traversal for the three default Commando state configurations."""
+    import shutil
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0];index={};existing={}
+    for base,target in [(export/'Assets',index),(stage,existing)]:
+        for meta in base.rglob('*.meta'):
+            match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+            if match:target[match[1]]=Path(str(meta)[:-5])
+    skills=export/'Assets/RoR2/Base/Characters/Commando/Skills'
+    roots={'secondaryConfigAsset':skills/'EntityStates.Commando.CommandoWeapon.FireFMJ.asset','utilityConfigAsset':skills/'EntityStates.Commando.DodgeState.asset','specialConfigAsset':export/'Assets/RoR2/Junk/Characters/CommandoPerformanceTest/EntityStates.Commando.CommandoWeapon.FireBarrage.asset'}
+    pending=list(roots.values());seen=set();paths={};rows=[];remaps={r['from']:r['to'] for r in previous.get('ui_remaps',[])}
+    while pending:
+        src=pending.pop()
+        if src in seen:continue
+        seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
+        if src.suffix=='.dll':
+            if src.name=='UnityEngine.UI.dll' and remaps:continue
+            if guid not in existing:raise RuntimeError('Unprovided combat assembly '+src.name)
+            continue
+        dst=existing.get(guid,stage/'CombatClosure'/src.relative_to(export/'Assets'))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
+        rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
+        for key,value in roots.items():
+            if src==value:paths[key]=str(dst.relative_to(WORK/'lab-project'))
+        if src.read_bytes()[:5]==b'%YAML':
+            if guid not in existing:
+                text=dst.read_text()
+                for old,new in remaps.items():text=text.replace(old,new)
+                dst.write_text(text)
+            for dep in set(re.findall(r'guid: ([a-f0-9]{32})',src.read_text())):
+                if dep.startswith('0000000000000000'):continue
+                if dep not in index:raise RuntimeError('Unresolved combat GUID')
+                pending.append(index[dep])
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+list(paths.values())));write(WORK/'scene-probe-build.json',recipe)
+    write(out/'combat-contract.json',{'scope':'Integrated default FMJ/roll/barrage and original BulletAttack/HealthComponent target; explicit silent effects-excluded owned copies','prior_art':'Pinned Starstorm2 a9a4badd Deadeye uses authority-gated original BulletAttack and separate visual effects; BorgMain retains original inputBank/GenericCharacterMain behavior. No community code copied.','special_config':'Only exported configuration for exact FireBarrage targetType; preserve its original parameters despite recovered Junk directory.','closure':rows})
+    return {key:value.lower() for key,value in paths.items()}
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run

@@ -30,9 +30,9 @@ public sealed partial class MovementBatchProbe {
    foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
    if(automaticModel)PrepareAutomaticModel(body);
    machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;if(automaticModel)body.modelLocator.enabled=true;if(IsAutomaticSkill())EnableAutomaticSkills(body);
-   if(IsPlayableSpine()){body.skillLocator.primary.enabled=true;body.skillLocator.primary.stateMachine.enabled=true;}
+   if(IsPlayableSpine()){foreach(var skill in cfg.combatSpine?new[]{body.skillLocator.primary,body.skillLocator.secondary,body.skillLocator.utility,body.skillLocator.special}:new[]{body.skillLocator.primary}){skill.enabled=true;skill.stateMachine.enabled=true;}}
    r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
-   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0)+AutomaticSkillCount()+(IsPlayableSpine()?2:0),"Unexpected enabled root callback");
+   if(!cfg.combatSpine)Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0)+AutomaticSkillCount()+(IsPlayableSpine()?2:0),"Unexpected enabled root callback");
    Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
    r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
@@ -106,7 +106,7 @@ public sealed partial class MovementBatchProbe {
    body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
    if(automaticBody){body.master.onBodyStart-=masterStarted;CharacterBody.onBodyStartGlobal-=bodyStarted;body.onRecalculateStats-=stats;}
    // Explicit original exit keeps measured buff/material dependencies alive during teardown.
-   if(IsPlayableSpine())Call(body.skillLocator.primary.stateMachine,"OnDestroy");Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
+   if(IsPlayableSpine())foreach(var weapon in new[]{body.skillLocator.primary.stateMachine,body.skillLocator.secondary.stateMachine,body.skillLocator.utility.stateMachine,body.skillLocator.special.stateMachine}.Distinct().Where(x=>x!=machine))Call(weapon,"OnDestroy");Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
   }
   Check(!automaticBody||!CharacterBody.readOnlyInstancesList.Contains(body),"Original automatic body deregistration");
   Check(machine.state==null&&!KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),"Automatic state exit/solver unregistration");

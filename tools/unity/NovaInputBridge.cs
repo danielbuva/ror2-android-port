@@ -19,7 +19,7 @@ public sealed class NovaInputBridge : MonoBehaviour {
  }
  [Serializable] public class Raw {public float[] axes=new float[16];public bool[] buttons=new bool[20];}
  public InputBankTest bank;public Mapping mapping;public string error;
- public bool enablePrimary,diagnosticInput;public bool diagnosticPrimary;public Vector2 movement,aim;public int fixedTicks,jumpPresses,aimTicks;
+ public bool enablePrimary,enableAllSkills,diagnosticInput;public bool diagnosticPrimary,diagnosticSecondary,diagnosticUtility,diagnosticSpecial;public Vector2 movement,aim;public int fixedTicks,jumpPresses,aimTicks;
  bool focused=true,jumpHeld,jumpLatched;
  public static void RequireNova(){
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -47,8 +47,8 @@ public sealed class NovaInputBridge : MonoBehaviour {
   bank.moveVector=new Vector3(movement.x,0,movement.y);bank.SetRawMoveStates(movement);
   if(aim.sqrMagnitude>0){bank.aimDirection=new Vector3(aim.x,0,aim.y);aimTicks++;}
   bank.jump.PushState(jumpHeld||jumpLatched);if(bank.jump.justPressed)jumpPresses++;jumpLatched=false;
-  // Ability execution is a separate gate. Bindings are ready, but inactive in movement proof.
-  var raw=ReadRaw();bank.skill1.PushState((diagnosticInput?diagnosticPrimary:(mapping.enableSkills||enablePrimary)&&raw.buttons[mapping.primary]));bank.skill2.PushState(mapping.enableSkills&&raw.buttons[mapping.secondary]);bank.skill3.PushState(mapping.enableSkills&&raw.buttons[mapping.utility]);bank.skill4.PushState(mapping.enableSkills&&raw.buttons[mapping.special]);fixedTicks++;
+  var raw=ReadRaw();bool all=mapping.enableSkills||enableAllSkills;
+  bank.skill1.PushState(diagnosticInput?diagnosticPrimary:(all||enablePrimary)&&raw.buttons[mapping.primary]);bank.skill2.PushState(diagnosticInput?diagnosticSecondary:all&&raw.buttons[mapping.secondary]);bank.skill3.PushState(diagnosticInput?diagnosticUtility:all&&raw.buttons[mapping.utility]);bank.skill4.PushState(diagnosticInput?diagnosticSpecial:all&&raw.buttons[mapping.special]);fixedTicks++;
  }
  public void DiagnosticJump(bool down){jumpLatched|=down&&!jumpHeld;jumpHeld=down;}
  public void Neutral(){movement=aim=Vector2.zero;jumpHeld=jumpLatched=false;if(!bank)return;bank.moveVector=Vector3.zero;bank.SetRawMoveStates(Vector2.zero);bank.jump.PushState(false);bank.skill1.PushState(false);bank.skill2.PushState(false);bank.skill3.PushState(false);bank.skill4.PushState(false);}

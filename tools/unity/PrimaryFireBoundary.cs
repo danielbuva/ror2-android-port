@@ -13,18 +13,19 @@ public sealed partial class MovementBatchProbe {
  FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;
  EntityState lastSpineWeaponState;
  EntityStateConfiguration[] PrepareSpineConfigs(Result cfg,EntityStateConfiguration spawn){
-  spineFields=typeof(FirePistol2).GetFields(BindingFlags.Public|BindingFlags.Static|BindingFlags.DeclaredOnly);spinePrior=spineFields.Select(x=>x.GetValue(null)).ToArray();
+  spineFields=(cfg.combatSpine?new[]{typeof(FirePistol2),typeof(FireBarrage),typeof(EntityStates.Commando.DodgeState)}:new[]{typeof(FirePistol2)}).SelectMany(t=>t.GetFields(BindingFlags.Public|BindingFlags.Static|BindingFlags.DeclaredOnly)).ToArray();spinePrior=spineFields.Select(x=>x.GetValue(null)).ToArray();
   var fire=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryFireConfigAsset);
   var reload=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryReloadConfigAsset);
   Check(fire&&reload,"Spine primary configurations missing");spineReload=Instantiate(reload);
   spineReload.serializedFieldsCollection.serializedFields=reload.serializedFieldsCollection.serializedFields.ToArray();
   int index=Array.FindIndex(spineReload.serializedFieldsCollection.serializedFields,x=>x.fieldName=="enterSoundString");Check(index>=0,"Spine reload sound field missing");
   spineReload.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue="";
-  r.primary=new PrimaryFireReport{silentFixture=true};return new[]{spawn,fire,spineReload};
+  r.primary=new PrimaryFireReport{silentFixture=true};var configs=new[]{spawn,fire,spineReload};return cfg.combatSpine?configs.Concat(PrepareCombatConfigs(cfg)).ToArray():configs;
  }
  void ApplySpineExclusions(){
   FirePistol2.firePistolSoundString="";FirePistol2.muzzleEffectPrefab=null;FirePistol2.hitEffectPrefab=null;FirePistol2.tracerEffectPrefab=null;
   r.primary.damageCoefficient=FirePistol2.damageCoefficient;r.primary.force=FirePistol2.force;r.primary.baseDuration=FirePistol2.baseDuration;
+  if(r.combat!=null){FireBarrage.fireBarrageSoundString="";FireBarrage.effectPrefab=null;FireBarrage.hitEffectPrefab=null;FireBarrage.tracerEffectPrefab=null;EntityStates.Commando.DodgeState.dodgeSoundString="";EntityStates.Commando.DodgeState.jetEffect=null;}
  }
  void ObserveSpinePrimary(CharacterBody body){
   var weapon=body.skillLocator.primary.stateMachine;var state=weapon.state;
@@ -36,6 +37,7 @@ public sealed partial class MovementBatchProbe {
   r.primary.stockAfter=body.skillLocator.primary.stock;r.primary.state=state.GetType().FullName;
  }
  void CleanupSpineConfig(){
+  CleanupCombatConfigs();
   if(spineFields!=null){for(int i=0;i<spineFields.Length;i++)spineFields[i].SetValue(null,spinePrior[i]);spineFields=null;}
   if(spineReload)Destroy(spineReload);
  }

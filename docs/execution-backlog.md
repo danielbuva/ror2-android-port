@@ -1610,3 +1610,20 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 S134 standalone silent-cycle proof is superseded by the user-directed integrated spine. Its zero-error host build and source patch are preserved locally; no device capability was claimed.
 
 Current priority: integrated first-failure bring-up, one fresh run per ordinary iteration. J155 diagnostic bring-up and J156 human physical move/aim/jump/X-primary pass. Existing nova-bridge commands select the integrated stage; the first host dispatch NameError is fixed without rebuilding the accepted APK. Scoped physical spine checkpoint retains the90-second control/two-minute process evidence. Next integrate an original bullet-hit/damage path and visible target into this spine; inspect relevant pinned prior art and fix only the first observed device blocker. Audio/effects/menu/full run remain unaccepted; no new experiment action is required.
+
+
+## S135 — Integrated default skills, damage target and direct app launch
+- **ID:** S135
+- **TITLE:** Bring original FMJ/roll/barrage and original damage into the physical Commando spine.
+- **CONTEXT:** J156 accepts physical motion/aim/jump/primary; remaining skills and target damage are unproven.
+- **OBSERVATION:** Exact original skills use existing GenericSkill/Body/Weapon state machines, FMJ projectile and HealthComponent; missing Android Wwise is an independent optional sound leaf.
+- **HYPOTHESIS:** Owned sound/effect exclusions and the measured serialized closure preserve original default skill/damage behavior without changing gameplay assemblies.
+- **TASK:** Add the three exact state configurations and projectile, original damage target and structured damage/state observation; reuse original inputBank boundary. Make the accepted installed slice start when opened directly and remain active beyond bounded captures.
+- **CONSTRAINTS:**45 unchanged DLLs; original simulation/skill/stock/physics/damage code; no actor pose writes, native stubs, platform/authentication claims, original enemy/full-stage/game claim. Keep Nova asleep when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing nova-bridge/MovementBatch helpers, narrow CombatSpineBoundary/instance sound guard; ignored25-asset closure/configuration/stage/build/payload/captures.
+- **TEST COMMAND:** Existing nova-bridge-prepare; pinned MCP refresh/console; preflight; forced Vulkan build; movement-batch-run; local no-selector device capture;40 host tests. Physical all-skill capture after human readiness.
+- **PASS CONDITION:** Actual original skill-state entries/projectile and DamageReport health loss, no current-process errors/crashes, original diagnostic fixture cleanup; separate no-selector current-attempt/PID freeplay survives beyond90 seconds with bounded observations. Manual new skill/damage acceptance requires actual physical capture.
+- **FAILURE EVIDENCE TO CAPTURE:** First asset/GUID/state/native/observer failure, exact build/source/45 hashes, original damage events, current-PID logs/capture/cleanup. Keep each rejected attempt.
+- **STATE/JOURNAL UPDATES REQUIRED:** J157/J158, concise state/milestone status, scoped diagnostic combat/freeplay receipts; public staged audit/manual review and Conventional Commit.
+- **DEPENDENCIES:** Accepted J156; pinned Starstorm2 Deadeye/BorgMain and exact original source; authorized current Nova mapping.
+- **STATUS:** Diagnostic skills/damage PASS J157; final-build diagnostic and default freeplay stability PASS J158. Physical Y/LB/RB and target aiming PENDING human readiness. No formal L5/L5.5/L6/L7 advance.
