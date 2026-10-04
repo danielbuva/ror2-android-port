@@ -26,7 +26,7 @@ public sealed partial class MovementBatchProbe {
   var row=new DirectorActorReport{masterId=master.netId.Value,bodyId=body.netId.Value,spawnedAt=Time.realtimeSinceStartup-automaticDirectorBegan,spawnDistance=Vector3.Distance(player.transform.position,body.transform.position),spawnPosition=body.transform.position,position=body.transform.position,levelBeforeStart=body.level,gold=rewards.goldReward,experience=rewards.expReward,deathAt=-1};
   var actor=new DirectorActor{master=master,body=body,ai=master.GetComponent<BaseAI>(),model=body.modelLocator.modelTransform.gameObject,previous=body.transform.position,report=row};directorActors.Add(actor);r.director.actors.Add(row);
   actor.motorStarted=started=>{Check(started==body,"Original motor event body mismatch");row.motorStarts++;};body.characterMotor.onMotorStart+=actor.motorStarted;
-  Check(row.masterId!=0&&row.bodyId!=0&&row.gold==3&&row.experience==1&&body.cost==8&&master.inventory.GetItemCountPermanent(RoR2Content.Items.UseAmbientLevel)==1&&master.inventory.itemAcquisitionOrder.Count==1&&master.inventory.currentEquipmentIndex==EquipmentIndex.None,"Original per-actor spawn/reward/inventory contract changed");
+  Check(row.masterId!=0&&row.bodyId!=0&&(r.integratedWorld?row.gold>0&&row.experience>0:row.gold==3&&row.experience==1)&&body.cost==8&&master.inventory.GetItemCountPermanent(RoR2Content.Items.UseAmbientLevel)==1&&master.inventory.itemAcquisitionOrder.Count==1&&master.inventory.currentEquipmentIndex==EquipmentIndex.None,"Original per-actor spawn/reward/inventory contract changed");
   Check(directorActors.Select(x=>x.report.masterId).Distinct().Count()==directorActors.Count&&directorActors.Select(x=>x.report.bodyId).Distinct().Count()==directorActors.Count,"Director reused actor network identities");
  }
  void ObserveDirectorActors(){
@@ -34,7 +34,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var actor in directorActors){
    var row=actor.report;var body=actor.body;
    if(body){
-    if(!row.started&&row.motorStarts==1&&actor.ai&&actor.ai.body==body&&body.level==1){
+    if(!row.started&&row.motorStarts==1&&actor.ai&&actor.ai.body==body&&(r.integratedWorld?body.level>=1:body.level==1)){
      row.started=true;row.levelAfterStart=body.level;row.linked=actor.master.GetBody()==body&&body.master==actor.master;row.authority=body.isServer&&body.hasEffectiveAuthority;
      Check(row.linked&&row.authority,"Original batch actor Start/link/authority failed");
      // Same measured world-only collision scope as the accepted first actor, applied to each owned clone.

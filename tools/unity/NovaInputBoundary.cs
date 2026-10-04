@@ -11,7 +11,7 @@ using UnityEngine;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class NovaSample {public float seconds;public NovaInputBridge.Raw raw;public Vector3 input,aim,stateAim,velocity,position;public bool grounded,jump;public int jumpCount;}
  [Serializable] public class NovaReport {public bool novaOnly,originalInputConsumer,stopped,aimConsumed,rendersOriginalModel,diagnosticInput;public int samples,fixedTicks,jumpPresses,localJumpCallbacks,jumpTransitions,landings;public float seconds,pathLength,planarPathLength,maxRise,diagnosticReturnFireAt;public uint spawnedBodyId,masterId;public NovaInputBridge.Mapping mapping;public List<NovaSample> observations=new List<NovaSample>();}
- void OnGUI(){if(r!=null)DrawItemPickupObservation();if(r!=null&&r.phase=="commando-defeated"){GUI.Label(new Rect(20,70,800,40),"Commando defeated. Close the test, then open Porting Lab again to retry.");if(GUI.Button(new Rect(20,115,200,40),"Close test"))Application.Quit();return;}if(r!=null&&IsPlayableSpine()&&r.primary!=null)GUI.Label(new Rect(20,70,850,100),"Commando | A: jump | X: primary | Y: secondary | LB: roll | RB: barrage | audio unavailable\nOriginal primary entries: "+r.primary.shots+" | stock: "+r.primary.stockAfter+(r.combat==null?"":"\nTarget HP: "+r.combat.healthAfter.ToString("F1")+" | damage: "+r.combat.damageDealt.ToString("F1")+" | secondary/roll/barrage: "+r.combat.secondaryEntries+"/"+r.combat.utilityEntries+"/"+r.combat.specialEntries)+(r.enemy==null?"":"\nBeetle HP: "+r.enemy.health.ToString("F1")+" | player HP: "+r.enemy.playerHealth.ToString("F1")+" | AI: "+r.enemy.aiState+" | attacks: "+r.enemy.headbutts));}
+ void OnGUI(){if(r!=null&&r.integratedWorld&&r.world!=null&&r.world.ready){DrawIntegratedWorld();return;}if(r!=null)DrawItemPickupObservation();if(r!=null&&r.phase=="commando-defeated"){GUI.Label(new Rect(20,70,800,40),"Commando defeated. Close the test, then open Porting Lab again to retry.");if(GUI.Button(new Rect(20,115,200,40),"Close test"))Application.Quit();return;}if(r!=null&&IsPlayableSpine()&&r.primary!=null)GUI.Label(new Rect(20,70,850,100),"Commando | A: jump | X: primary | Y: secondary | LB: roll | RB: barrage | audio unavailable\nOriginal primary entries: "+r.primary.shots+" | stock: "+r.primary.stockAfter+(r.combat==null?"":"\nTarget HP: "+r.combat.healthAfter.ToString("F1")+" | damage: "+r.combat.damageDealt.ToString("F1")+" | secondary/roll/barrage: "+r.combat.secondaryEntries+"/"+r.combat.utilityEntries+"/"+r.combat.specialEntries)+(r.enemy==null?"":"\nBeetle HP: "+r.enemy.health.ToString("F1")+" | player HP: "+r.enemy.playerHealth.ToString("F1")+" | AI: "+r.enemy.aiState+" | attacks: "+r.enemy.headbutts));}
  bool IsNovaInput(){return IsPlayableSpine()||r.id=="body-state-spawn-state-auto-nova-controls";}
  IEnumerator NovaRawBoundary(){
   NovaInputBridge.RequireNova();r.nova=new NovaReport{novaOnly=true};r.phase="nova-raw-ready";Save();float began=Time.realtimeSinceStartup,next=0;
@@ -23,13 +23,13 @@ public sealed partial class MovementBatchProbe {
   Check(r.nova.samples>300,"Nova Unity raw capture incomplete");Save();
  }
  IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,Result cfg){
-  bool spine=IsPlayableSpine(),bringup=r.id.EndsWith("-bringup");NovaInputBridge.RequireNova();r.nova=new NovaReport{rendersOriginalModel=spine,diagnosticInput=bringup,novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
+  bool spine=IsPlayableSpine(),bringup=r.id.EndsWith("-bringup");r.integratedWorld=cfg.integratedWorld;NovaInputBridge.RequireNova();r.nova=new NovaReport{rendersOriginalModel=spine,diagnosticInput=bringup,novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
   var mappingPath=System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json");
   Check(File.Exists(mappingPath),"Measured Nova mapping required before physical Commando test");var mapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));mapping.Validate(r.attempt);Check(!mapping.enableSkills,"Ability execution is a separate probe");r.nova.mapping=mapping;
   var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;var bank=body.inputBank;
   Check(state is GenericCharacterMain&&body.master.GetBody()==body&&body.isServer&&motor.hasEffectiveAuthority,"Original spawned Commando input/authority contract");
   Check(RoR2Content.Items.JumpBoost&&DLC3Content.Items.JumpDamageStrike&&DLC1Content.Items.GummyCloneIdentifier&&string.IsNullOrEmpty(body.GetComponent<SfxLocator>().jumpSound),"Combined original empty inventory/jump contract");
-  var priorTriggerQueries=Physics.queriesHitTriggers;var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;NovaInputBridge bridge=null;NovaDiagnosticDisplay display=null;
+  var priorTriggerQueries=Physics.queriesHitTriggers;var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;NovaInputBridge bridge=null;NovaDiagnosticDisplay display=null;int sleepTimeout=Screen.sleepTimeout;Screen.sleepTimeout=SleepTimeout.NeverSleep;
   CharacterBody.JumpDelegate jumped=()=>{r.nova.localJumpCallbacks++;};CharacterMotor.HitGroundDelegate landed=(ref CharacterMotor.HitGroundInfo hit)=>{r.nova.landings++;};body.onJump+=jumped;motor.onHitGroundAuthority+=landed;
   try{
    if(cfg.automaticDirector){Check(!cfg.sourceQueriesHitTriggers,"Source placement trigger-query flag changed");Physics.queriesHitTriggers=cfg.sourceQueriesHitTriggers;}
@@ -45,10 +45,11 @@ public sealed partial class MovementBatchProbe {
    if(cfg.originalRunClock){var sceneContext=PrepareRunSceneContext(cfg);while(sceneContext.MoveNext())yield return sceneContext.Current;}
    if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
    if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
+   if(cfg.integratedWorld){var world=PrepareIntegratedWorld(body,cfg);while(world.MoveNext())yield return world.Current;}
    bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;r.nova.originalInputConsumer=true;
-   r.phase=bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
+   r.phase=cfg.integratedWorld?"integrated-world-playing":bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
-   while(r.freePlay||Time.realtimeSinceStartup-began<(bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
+   while(r.freePlay||Time.realtimeSinceStartup-began<(cfg.integratedWorld?120:bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
     yield return new WaitForEndOfFrame();
     if(r.freePlay&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;}
     ObserveAutomaticModelFollow(body);TemporaryOverlayManager.OverlayUpdate();
@@ -59,7 +60,8 @@ public sealed partial class MovementBatchProbe {
     if(r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)r.nova.stopped=true;
     if(spine)ObserveSpinePrimary(body);
     if(cfg.combatSpine)ObserveCombat(body,machine);if(cfg.enemySpine)ObserveEnemy();ObserveOriginalRunClock();
-    if(bringup){
+    if(cfg.integratedWorld){ObserveIntegratedWorld(body,elapsed);if(bringup)IntegratedWorldStimulus(body,bridge,elapsed);}
+    if(bringup&&!cfg.integratedWorld){
      bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
      // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
      if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&r.enemy.playerDamageEvents>0&&(!DirectorBatch()||r.director.actors.Count>=2)){combatBegan=elapsed;r.nova.diagnosticReturnFireAt=elapsed;}
@@ -73,6 +75,11 @@ public sealed partial class MovementBatchProbe {
    }
    r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-initialAge;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-initialFixed;
    bridge.enabled=false;yield return new WaitForSeconds(.5f);
+   if(cfg.integratedWorld){
+    r.world.simulationSeconds=r.automaticSeconds;
+    Check(r.world.ready&&r.world.simulationSeconds>=120&&r.world.frames>1000&&r.world.openedBarrels>=3&&r.world.openedChests>=1&&r.world.pickupMessages>=1&&r.world.syringe+r.world.lightning>=1&&r.world.kills>0&&r.world.coinMessages>0&&r.world.xpMessages>0,"Integrated world gameplay loop incomplete");
+    Check(r.world.authority&&body.healthComponent.alive&&rewardDirector.enabled&&r.director.actors.Count>3,"Integrated continuous combat/authority/survival incomplete");Save();yield break;
+   }
    Check(r.automaticSeconds>=(bringup?20:90)&&r.nova.fixedTicks>(bringup?300:1000)&&r.nova.samples>(bringup?100:300),"Physical Commando sustained callbacks");Check(r.nova.planarPathLength>5&&r.nova.stopped,"Physical movement and original stopping not observed");Check(r.nova.aimConsumed&&(bringup||bridge.aimTicks>10),"Physical right-stick aim not consumed by original state");if(spine)Check(r.primary.shots>0&&(cfg.combatSpine?body.skillLocator.primary.CanExecute():body.skillLocator.primary.stock==1),"Original primary firing/readiness not observed");Check(r.nova.jumpTransitions>0&&r.nova.jumpPresses>=r.nova.jumpTransitions&&r.nova.maxRise>.5f&&r.nova.landings>=2&&solver.GroundingStatus.IsStableOnGround&&motor.jumpCount==0,"Physical jump/original landing incomplete");Save();
    if(cfg.combatSpine)Check(r.combat.secondaryEntries>0&&r.combat.utilityEntries>0&&r.combat.specialEntries>0&&r.combat.projectiles>0&&r.combat.damageEvents>0&&r.combat.healthAfter<r.combat.healthBefore,"Integrated original skills/projectile/target damage incomplete");
   if(cfg.enemySpine)Check(r.enemy.graphReady&&r.enemy.linked&&r.enemy.authority&&r.enemy.targetFound&&r.enemy.planarBeforeDamage>4&&r.enemy.groundedBeforeDamage>100&&r.enemy.maxFallBeforeDamage<10,"Original grounded enemy chase before incoming damage not observed");
@@ -86,6 +93,6 @@ public sealed partial class MovementBatchProbe {
   if(cfg.originalItemPickup&&bringup){var pickup=ProbeOriginalItemPickup(body,cfg);while(pickup.MoveNext())yield return pickup.Current;}
   if(cfg.originalMoneyCost&&bringup){var cost=ProbeOriginalMoneyCost(body,cfg);while(cost.MoveNext())yield return cost.Current;}
   if(cfg.originalActiveClient&&bringup){var client=ProbeActiveBodyClient(body,cfg);while(client.MoveNext())yield return client.Current;}
-  }finally{CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&bringup)CleanupOriginalDefaultPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
+  }finally{if(cfg.integratedWorld)CleanupIntegratedWorld();CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&(bringup||cfg.integratedWorld))CleanupOriginalDefaultPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);Screen.sleepTimeout=sleepTimeout;}
  }
 }

@@ -2043,3 +2043,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** J217 and next result; no failed capability checkpoint.
 - **DEPENDENCIES:** J217; prior-art diagnostic map and existing file-based lab observer; no original/community implementation copied.
 - **STATUS:** PASS — J218 preserves the real first predicate/phase and outer cleanup; J219 normal source lease cleanup/full run passes. No separate capability gate claimed.
+
+
+## I01 — Assemble persistent offline gameplay (whole-game integration)
+- **ID:** I01
+- **TITLE:** Keep recovered stage, original simulation/combat, local authority, rewards and loot active together.
+- **CONTEXT:** User supersedes isolated-proof sequencing with whole-game integration; J219 is the retained rollback.
+- **OBSERVATION:** Direct launch has original player/enemy combat, but source interactables/catalogs/client and loot are currently one-shot fixtures after combat. Stock startup remains blocked at J61.
+- **HYPOTHESIS:** Existing accepted source/provider/authority routes can be composed into persistent local gameplay without rewriting original simulation or claiming platform success.
+- **TASK:** Assemble continuous original director, source barrels/chests/purchases/animated ejection/default pickups/server grants, original reward/clock/stats, measured physical B interaction, HUD and explicit silent client presentation. Build the composition before device verification; iterate its first failures in this integrated path.
+- **CONSTRAINTS:** Original installation/DLLs/pins unchanged; no authentication/entitlement/ownership/license success, NetworkUser/LocalUser/profile fabrication, forced progress/victory, original source copying or proprietary tracked inputs. Authored placement/material/HUD/input adapters explicit; default physical launch remains distinct from diagnostic validation. Retain rollback/evidence/storage ownership and idle OLED sleep.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** IntegratedWorldBoundary; conditional connection/director/input/combat hooks; thin existing prepare/runner action; ignored source closure/receipts/device evidence.
+- **TEST COMMAND:** `./dev doctor`; `./dev prototype --action nova-whole-game-prepare`; exact-editor compile; `./dev preflight`; `./dev build --target vulkan --force`; `./dev prototype --action movement-batch-run`; actual current-PID/visual/hash/source review; `./dev test`.
+- **PASS CONDITION:** Persistent source stage/player/skills/director/local authority and loot operate together on Nova, with original purchases and connected grants/rewards/stats, meaningful sustained combat and no new unexplained errors/crashes; retained playable direct-launch APK. Report limits separately from formal game gates.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual first integrated predicate/phase/native or managed error, source/context/network identity, current build/APK/payload/stage/mapping/PID/capture; preserve each rejected attempt.
+- **STATE/JOURNAL UPDATES REQUIRED:** State/journal/backlog/milestones/risk and scoped integrated checkpoint only after acceptance; review staged provenance/privacy, Conventional Commit and push.
+- **DEPENDENCIES:** J219 and accepted component routes. Consulted prior-art map, pinned R2API.Director f539511e SceneCatalog/director activity, R2API.ContentManagement EffectDef and DebugToolkit d1e2f0aa Run drop lists/original factories. Exact current source governs API/message/serialization; no implementations copied. Measured button1/B binding comes from accepted Nova full capture.
+- **STATUS:** PASS — J223 persistent120-second composed gameplay and normal physical-input direct launch/death pass;45 unchanged DLLs/40 tests/no errors/crashes/owned cleanup. J220–J222 failures retained. Scoped integration rollback only; stock startup/profile/route/victory/formal gates remain unprovided. Next fix observed stale defeat HUD.

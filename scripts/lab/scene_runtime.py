@@ -591,7 +591,8 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
         write(out/'retry.json',{'parent':str(parent.relative_to(ROOT)),'attempt':attempt_id,'cases':cases,'apk_sha256':b['apk_sha256']})
     probes=cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration'])
     durations={probe:a.get('batch_seconds',{}).get(probe,25) for probe in probes}
-    if any(not isinstance(seconds,int) or not 25<=seconds<=180 for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
+    max_seconds=240 if a.get('integrated_world') else 180
+    if any(not isinstance(seconds,int) or not 25<=seconds<=max_seconds for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
     if a.get('playable_spine'):
         mapping=read((ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'])/'nova-input-mapping.json')
@@ -615,6 +616,8 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                         write(attempt/'live-probe.json',live)
                         if live.get('phase')!=last_phase:
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
+                        if last_phase=='integrated-world-playing' and 'world' not in captured:
+                            d.collect('screenshot',attempt/'visual-world');captured.add('world')
                         if last_phase=='original-barrel-opening' and 'barrel' not in captured:
                             d.collect('screenshot',attempt/'visual-barrel');captured.add('barrel')
                         if last_phase=='original-interaction-selected' and 'selection' not in captured:
@@ -637,6 +640,10 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                         if probe in a.get('batch_stop_when_complete',[]) and live.get('id')==probe and last_phase=='complete' and time.monotonic()-start>=30:
                             break
                         seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
+                        if last_phase=='integrated-world-playing':
+                            for mark in [5,25,60,100]:
+                                if seconds>=mark and ('world-'+str(mark)) not in captured:
+                                    d.collect('screenshot',attempt/('visual-world-'+str(mark)));captured.add('world-'+str(mark))
                         if (probe=='body-state-spawn-state-auto-nova-controls' or probe.startswith('body-state-spawn-state-auto-nova-spine')) and last_phase in ['nova-commando-ready','nova-spine-bringup']:
                             for mark in ([1,5,15,35] if probe.endswith('-bringup') and a.get('director_batch') else [1,5,15] if probe.endswith('-bringup') and a.get('enemy_spine') else [5,15] if probe.endswith('-bringup') else [5,25,50,75]):
                                 if seconds>=mark and mark not in captured:

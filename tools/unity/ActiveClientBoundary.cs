@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
  void CheckActiveClientSerializers(){
   Check(RoR2.EntitlementManagement.EntitlementCatalog.entitlementDefs.Length==0&&LocalUserManager.readOnlyLocalUsersList.Count==0,"Diagnostic absent-user/catalog scope changed");
   foreach(var identity in NetworkServer.objects.Values.Where(x=>x).ToArray()){
-   var skills=identity.GetComponent<SkillLocator>();if(skills){if(skills.AllSkills==null){Call(skills,"Awake");r.activeClient.skillCacheInitializations++;}Check(skills.AllSkills.SequenceEqual(identity.GetComponents<GenericSkill>())&&skills.AllSkills.Length>=4&&ReferenceEquals(typeof(SkillLocator).GetField("networkIdentity",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(skills),identity),"Original active skill serializer cache mismatch");}
+   var skills=identity.GetComponent<SkillLocator>();if(skills){if(skills.AllSkills==null){Call(skills,"Awake");r.activeClient.skillCacheInitializations++;}Check(skills.AllSkills.SequenceEqual(identity.GetComponents<GenericSkill>())&&skills.AllSkills.Length>=(r.integratedWorld?1:4)&&ReferenceEquals(typeof(SkillLocator).GetField("networkIdentity",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(skills),identity),"Original active skill serializer cache mismatch");}
    var tracker=identity.GetComponent<PlayerCharacterMasterControllerEntitlementTracker>();
    if(tracker){var controller=tracker.GetComponent<PlayerCharacterMasterController>();Check(controller&&!controller.networkUser,"Unexpected platform/user-linked master");var field=typeof(PlayerCharacterMasterControllerEntitlementTracker).GetField("entitlementsSet",BindingFlags.Instance|BindingFlags.NonPublic);var values=(bool[])field.GetValue(tracker);if(values==null){Call(tracker,"Awake");r.activeClient.trackerAllocations++;values=(bool[])field.GetValue(tracker);}Call(tracker,"UpdateEntitlementsServer");Check(values!=null&&values.Length==0&&ReferenceEquals(values,field.GetValue(tracker))&&!controller.networkUser,"Original absent-user tracker allocation changed");}
    var behaviours=(NetworkBehaviour[])typeof(NetworkIdentity).GetField("m_NetworkBehaviours",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(identity);Check(behaviours!=null,"Original cached serializer list missing");var writer=new NetworkWriter();
@@ -28,9 +28,8 @@ public sealed partial class MovementBatchProbe {
   }
   Check(r.activeClient.identities>=2&&r.activeClient.behaviours>0,"Original active body/master serializers not observed");r.activeClient.serializers=true;Save();
  }
- IEnumerator ProbeActiveBodyClient(CharacterBody player,Result cfg){
-  r.activeClient=new ActiveClientReport{scope="Actual loopback local HLAPI client, original active Commando/master mapping, raw client authority callbacks and neutral ticking/teardown. No NetworkUser/LocalUser/platform session/entitlement grant, InteractionDriver/client effects/remote peers/full startup acceptance."};r.phase="active-client-serializers";Save();
-  Check(r.moneyCost.paid&&r.moneyCost.cleaned&&NetworkServer.active&&!NetworkClient.active&&NetworkClient.allClients.Count==0&&player.gameObject.activeInHierarchy&&player.master.hasBody&&player.master.GetBody()==player,"Accepted active actor/server context changed");
+ IEnumerator ConnectActiveBodyClient(CharacterBody player){
+  if(r.activeClient==null)r.activeClient=new ActiveClientReport();
   var identity=player.networkIdentity;Check(identity.localPlayerAuthority&&!identity.hasAuthority&&identity.clientAuthorityOwner==null&&player.hasEffectiveAuthority,"Original pre-client authority configuration changed");CheckActiveClientSerializers();
   NetworkServer.RegisterHandler(MsgType.Connect,msg=>{});NetworkServer.RegisterHandler(MsgType.Disconnect,msg=>{});
   r.phase="active-local-client-ready";Save();ownsActiveClientScene=true;activeBodyClient=ClientScene.ConnectLocalServer();activeBodyClient.RegisterHandler(MsgType.Connect,msg=>r.activeClient.connectEvents++);activeBodyClient.RegisterHandler(MsgType.Disconnect,msg=>{});Call(activeBodyClient,"Update");
@@ -38,6 +37,12 @@ public sealed partial class MovementBatchProbe {
   r.activeClient.bodyId=identity.netId.Value;r.activeClient.masterId=player.master.netId.Value;r.activeClient.ready=activeBodyOwner.isReady&&activeBodyClient.connection.isReady;r.activeClient.bodyMapped=player.isClient&&ClientScene.FindLocalObject(identity.netId)==player.gameObject;r.activeClient.masterMapped=player.master.isClient&&ClientScene.FindLocalObject(player.master.netId)==player.master.gameObject;Check(r.activeClient.ready&&r.activeClient.bodyMapped&&r.activeClient.masterMapped,"Original active client registry mapping failed");
   Check(identity.AssignClientAuthority(activeBodyOwner),"Original active client ownership rejected");activeOwnedBody=identity;Call(activeBodyClient,"Update");
   r.activeClient.localAuthority=identity.hasAuthority&&player.hasAuthority;r.activeClient.ownerMatched=identity.clientAuthorityOwner==activeBodyOwner;r.activeClient.effectiveAuthority=player.hasEffectiveAuthority&&player.characterMotor.hasEffectiveAuthority;r.activeClient.skillsAuthority=(bool)typeof(SkillLocator).GetField("hasEffectiveAuthority",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(player.skillLocator);Check(r.activeClient.localAuthority&&r.activeClient.ownerMatched&&r.activeClient.effectiveAuthority&&r.activeClient.skillsAuthority,"Original active authority callbacks incomplete");
+  yield return null;
+ }
+ IEnumerator ProbeActiveBodyClient(CharacterBody player,Result cfg){
+  r.activeClient=new ActiveClientReport{scope="Actual loopback local HLAPI client, original active Commando/master mapping, raw client authority callbacks and neutral ticking/teardown. No NetworkUser/LocalUser/platform session/entitlement grant, InteractionDriver/client effects/remote peers/full startup acceptance."};r.phase="active-client-serializers";Save();
+  Check(r.moneyCost.paid&&r.moneyCost.cleaned&&NetworkServer.active&&!NetworkClient.active&&NetworkClient.allClients.Count==0&&player.gameObject.activeInHierarchy&&player.master.hasBody&&player.master.GetBody()==player,"Accepted active actor/server context changed");
+  var connect=ConnectActiveBodyClient(player);while(connect.MoveNext())yield return connect.Current;var identity=player.networkIdentity;
   if(cfg.originalInteractionSelection){var selection=ProbeOriginalInteractionSelection(player,cfg);while(selection.MoveNext())yield return selection.Current;}
   if(cfg.originalClientCoin){var coin=ProbeOriginalClientCoin(player);while(coin.MoveNext())yield return coin.Current;}
   if(cfg.originalInputBarrel){var input=ProbeOriginalInputBarrel(player,cfg);while(input.MoveNext())yield return input.Current;}

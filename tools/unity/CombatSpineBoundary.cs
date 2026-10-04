@@ -59,6 +59,7 @@ public sealed partial class MovementBatchProbe {
  void PrepareCombatScene(CharacterBody player,Result cfg){
   r.phase="integrated-combat-setup";Save();Check(!ProjectileManager.instance,"Existing projectile manager");
   projectileHost=new GameObject("Owned original projectile manager");projectileHost.AddComponent<ProjectileManager>();
+  if(cfg.integratedWorld){GlobalEventManager.onServerDamageDealt+=ObserveCombatDamage;return;}
   targetHost=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset));targetHost.name="Owned original damage target";
   foreach(var component in targetHost.GetComponentsInChildren<MonoBehaviour>(true)){
    component.enabled=false;if(component.GetType().Name.StartsWith("Ak",StringComparison.Ordinal))DestroyImmediate(component);
@@ -80,13 +81,13 @@ public sealed partial class MovementBatchProbe {
   GlobalEventManager.onServerDamageDealt+=ObserveCombatDamage;Save();
  }
  Vector2 CombatAim(CharacterBody player){var delta=targetBody.corePosition-player.inputBank.aimOrigin;return new Vector2(delta.x,delta.z).normalized;}
- void ObserveCombatDamage(DamageReport report){if(report.victimBody!=targetBody)return;r.combat.damageEvents++;r.combat.lastDamage=report.damageDealt;r.combat.damageDealt+=report.damageDealt;}
+ void ObserveCombatDamage(DamageReport report){if(r.integratedWorld){if(report.attackerBody!=worldPlayer)return;}else if(report.victimBody!=targetBody)return;r.combat.damageEvents++;r.combat.lastDamage=report.damageDealt;r.combat.damageDealt+=report.damageDealt;}
  void ObserveCombat(CharacterBody player,EntityStateMachine machine){
   var weapon=player.skillLocator.primary.stateMachine.state;r.combat.weaponState=weapon.GetType().FullName;r.combat.bodyState=machine.state.GetType().FullName;
   if(weapon!=lastCombatWeapon){if(weapon is FireFMJ)r.combat.secondaryEntries++;if(weapon is FireBarrage)r.combat.specialEntries++;lastCombatWeapon=weapon;}
   if(machine.state!=lastCombatBody){if(machine.state is DodgeState)r.combat.utilityEntries++;lastCombatBody=machine.state;}
   foreach(var projectile in FindObjectsOfType<ProjectileController>())observedProjectiles.Add(projectile.GetInstanceID());r.combat.projectiles=observedProjectiles.Count;r.combat.projectileSoundGuards=SilentProjectileBoundary.prepared;
-  r.combat.healthAfter=targetBody.healthComponent.health;
+  r.combat.healthAfter=targetBody?targetBody.healthComponent.health:0;
  }
  void CleanupCombatScene(){
   GlobalEventManager.onServerDamageDealt-=ObserveCombatDamage;

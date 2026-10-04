@@ -182,3 +182,6 @@ Integrated continuation: when the active stage already contains the measured pri
 
 
 Original chest loot chain: `./dev prototype --action nova-chest-ejection-prepare`, pinned editor refresh, preflight, completed forced Vulkan build, then `movement-batch-run`. The bounded probe joins original input/payment, source animation events, droplet physics, default pickup/display and effect return. Funding, placement, input withdrawal and preview materials are diagnostic; connected acquisition, native audio, normal stage progression and full startup remain separate.
+
+
+Persistent integration: `./dev prototype --action nova-whole-game-prepare` composes the recovered stage/player/combat/director/local authority/rewards/interactables/loot into one live session. Use the existing preflight, forced Vulkan build and movement-batch runner. See [integration scope and limitations](docs/whole-game-integration.md). This does not bypass the documented stock startup/platform gate.

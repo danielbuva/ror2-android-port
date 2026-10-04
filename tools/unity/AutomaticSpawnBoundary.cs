@@ -100,7 +100,7 @@ public sealed partial class MovementBatchProbe {
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
     r.stationarySeconds=(float)typeof(CharacterBody).GetField("notMovingStopwatch",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);Save();
     Check(r.spawnBuffExpired&&(IsNovaInput()||r.stationarySeconds>55)&&r.automaticBodyStatsEvents>=2,"Original automatic body buff expiry/update timer/stat recalculation");
-    Check((cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110)&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
+    Check((cfg.integratedWorld?body.healthComponent.health>0&&body.maxHealth>=110&&body.attackSpeed>=1:(cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110))&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
    }
   }finally{
    body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
