@@ -1,0 +1,78 @@
+using System;
+using System.Collections;
+using System.Linq;
+using System.Collections.Generic;
+using System.Reflection;
+using RoR2;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.Networking;
+using UnityEngine.ResourceManagement.ResourceLocations;
+using UnityEngine.ResourceManagement.ResourceProviders;
+
+// Owned configuration/observation around original director, summon and reward callbacks.
+public sealed partial class MovementBatchProbe {
+ [Serializable] public class RewardReport {
+  public bool assetsReady,directedSpawn,spawnContract,queuedExperience,delivered,cleaned;public int playerTeamBefore,playerTeamAfter;public bool inactiveFixtureRemoved;public int summonEvents,spawnEvents,creditCost,spawnValue,pendingPeak,ambientItems,boostHpItems,boostDamageItems;public uint goldExpected,experienceExpected,moneyBefore,moneyAfter,teamLevel;public ulong experienceBefore,experienceAfter;public float spawnLevelBeforeStart,spawnLevelAfterStart;public int acquisitionCount,equipmentIndex;public float bodyCost,compensatedDifficulty,deathAt,experienceAt,goldEvents;public string scope;
+ }
+ const string RewardBundle="enemy-reward-lab";
+ readonly string[] rewardPaths={"Prefabs/Effects/CoinEmitter","Prefabs/NetworkedObjects/LogPickup","Prefabs/ExpOrb"};
+ ResourceLocationMap rewardLocator;GameObject[] rewardPrefabs;GameObject rewardExperienceHost,rewardDirectorHost,rewardPlacementHost;
+ ExperienceManager rewardExperience;CombatDirector rewardDirector;CharacterSpawnCard rewardCard;CharacterMaster rewardPlayerMaster;
+ EffectDef[] priorRewardEffects;bool ownsRewardEffects,observesRewardSummon;object priorCoinPrefab,priorLogPrefab,priorOrbPrefab;
+ Xoroshiro128Plus priorStageRng,priorStageGenerator;ItemMask ownedRewardMask;Run rewardRun;TeamComponent rewardFixtureTeam;TeamIndex priorRewardFixtureTeam;readonly List<CharacterMaster> ownedRewardSummons=new List<CharacterMaster>();
+ static FieldInfo RewardField(Type type,string name){return type.GetField(name,BindingFlags.NonPublic|BindingFlags.Static);}
+ IEnumerator PrepareEnemyRewards(CharacterBody player,Result cfg){
+  r.rewards=new RewardReport{scope="Original directed spawn and server gold/timed XP; no automatic waves, connected-client effects, level-up, logbook/profile or full Run lifecycle",deathAt=-1,experienceAt=-1};r.phase="enemy-reward-provider";Save();
+  Check(!ExperienceManager.instance&&!DirectorCore.instance&&CombatDirector.instancesList.Count==0,"Existing reward/director context");Check(NetworkServer.active&&!NetworkClient.active,"Measured server-only reward scope changed");
+  priorCoinPrefab=RewardField(typeof(DeathRewards),"coinEffectPrefab").GetValue(null);priorLogPrefab=RewardField(typeof(DeathRewards),"logbookPrefab").GetValue(null);priorOrbPrefab=RewardField(typeof(ExperienceManager),"experienceOrbPrefab").GetValue(null);Check(priorCoinPrefab==null&&priorLogPrefab==null&&priorOrbPrefab==null,"Existing reward prefab references");
+  var bundle=new ResourceLocationBase(RewardBundle,System.IO.Path.Combine(Application.persistentDataPath,"payload",RewardBundle),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));bundle.Data=new AssetBundleRequestOptions{BundleName=RewardBundle};rewardLocator=new ResourceLocationMap("enemy-reward-probe");
+  Check(cfg.enemyRewardKeys.Length==3&&cfg.enemyRewardAssets.Length==3,"Measured reward asset count");
+  for(int i=0;i<3;i++){string key;Check(LegacyResourcesAPI.GetGuid(rewardPaths[i],out key)&&key==cfg.enemyRewardKeys[i],"Original reward legacy identity "+rewardPaths[i]);rewardLocator.Add(key,new ResourceLocationBase(key,cfg.enemyRewardAssets[i],typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));}
+  Addressables.AddResourceLocator(rewardLocator);StaticCall(typeof(DeathRewards),"LoadAssets");
+  rewardExperienceHost=new GameObject("Owned original ExperienceManager");rewardExperienceHost.SetActive(false);rewardExperience=rewardExperienceHost.AddComponent<ExperienceManager>();rewardExperienceHost.SetActive(true);
+  float deadline=Time.realtimeSinceStartup+8;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;yield return null;
+  rewardPrefabs=new[]{(GameObject)RewardField(typeof(DeathRewards),"coinEffectPrefab").GetValue(null),(GameObject)RewardField(typeof(DeathRewards),"logbookPrefab").GetValue(null),(GameObject)RewardField(typeof(ExperienceManager),"experienceOrbPrefab").GetValue(null)};
+  var names=new[]{"CoinEmitter","LogPickup","ExpOrb"};Check(LegacyResourcesAPI.ActiveCount==0&&ExperienceManager.instance==rewardExperience,"Original reward callbacks incomplete");for(int i=0;i<3;i++)Check(rewardPrefabs[i]&&rewardPrefabs[i].name==names[i]&&rewardPrefabs[i].GetComponentsInChildren<Component>(true).All(x=>x),"Genuine reward prefab contract "+names[i]);
+  var entries=typeof(EffectCatalog).GetField("entries",BindingFlags.NonPublic|BindingFlags.Static);priorRewardEffects=(EffectDef[])entries.GetValue(null);Check(priorRewardEffects.Length==0,"Existing effect catalog");ownsRewardEffects=true;EffectCatalog.SetEntries(new[]{new EffectDef(rewardPrefabs[0])});Check(EffectCatalog.FindEffectIndexFromPrefab(rewardPrefabs[0])!=EffectIndex.Invalid,"Original coin effect catalog identity");
+  rewardRun=Run.instance;Check(rewardRun&&rewardRun.expansionLockedItems==null,"Existing expansion item mask");ownedRewardMask=ItemMask.Rent();rewardRun.expansionLockedItems=ownedRewardMask;
+  var internalItems=new[]{RoR2Content.Items.UseAmbientLevel,RoR2Content.Items.BoostHp,RoR2Content.Items.BoostDamage};Check(internalItems.All(x=>x&&!x.requiredExpansion),"Required spawn items must be original base internal definitions");
+  foreach(var item in ItemCatalog.allItemDefs)if(!internalItems.Contains(item))ownedRewardMask.Add(item.itemIndex);
+  Check(internalItems.All(x=>!rewardRun.IsItemExpansionLocked(x.itemIndex))&&ItemCatalog.allItemDefs.Where(x=>!internalItems.Contains(x)).All(x=>rewardRun.IsItemExpansionLocked(x.itemIndex)),"Owned diagnostic grant mask changed");
+  rewardPlayerMaster=player.master;Check(player.isPlayerControlled&&rewardPlayerMaster&&TeamManager.instance,"Original reward recipient missing");
+  rewardFixtureTeam=host.GetComponent<TeamComponent>();priorRewardFixtureTeam=rewardFixtureTeam.teamIndex;r.rewards.playerTeamBefore=TeamComponent.GetTeamMembers(TeamIndex.Player).Count;
+  Check(host!=player.gameObject&&!host.activeInHierarchy&&rewardFixtureTeam.body.master==rewardPlayerMaster&&priorRewardFixtureTeam==TeamIndex.Player&&r.rewards.playerTeamBefore==2,"Measured inactive fixture/team identity changed");rewardFixtureTeam.teamIndex=TeamIndex.None;r.rewards.playerTeamAfter=TeamComponent.GetTeamMembers(TeamIndex.Player).Count;Check(r.rewards.playerTeamAfter==1&&TeamComponent.GetTeamMembers(TeamIndex.Player)[0]==player.teamComponent,"Original reward recipient must be the sole live player body");r.rewards.inactiveFixtureRemoved=true;r.rewards.moneyBefore=rewardPlayerMaster.money;r.rewards.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);rewardPlayerMaster.OnGoldCollected+=RewardGold;
+  r.rewards.assetsReady=true;Save();
+ }
+ void RewardGold(float amount){r.rewards.goldEvents+=amount;}
+ void RewardSummon(MasterSummon.MasterSummonReport report){if(report.summonMasterInstance&&report.masterSummon.masterPrefab==rewardCard.prefab){r.rewards.summonEvents++;Check(report.masterSummon.useAmbientLevel==true&&report.summonMasterInstance.teamIndex==TeamIndex.Monster,"Original summon contract changed");}}
+ void SpawnRewardEnemy(GameObject bodyTemplate,Vector3 position,CharacterBody player,Result cfg){
+  var source=artifactBundle.LoadAsset<CharacterSpawnCard>(cfg.enemySpawnCardAsset);Check(source&&source.name=="cscBeetle"&&source.directorCreditCost==8&&source.prefab.GetComponent<CharacterMaster>()&&source.sendOverNetwork&&!source.occupyPosition&&source.equipmentToGrant.Length==0&&source.itemsToGrant.Length==0&&(source.loadout==null||source.loadout.isEmpty),"Original cscBeetle contract changed");
+  rewardCard=Instantiate(source);rewardCard.name=source.name;var template=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.enemyMasterAsset),enemyTemplates.transform);template.name=source.prefab.name;template.GetComponent<Inventory>().enabled=false;template.GetComponent<CharacterMaster>().bodyPrefab=bodyTemplate;template.SetActive(true);rewardCard.prefab=template;
+  // Same deterministic segment as original Run.Start; full platform-dependent Start remains deferred.
+  priorStageGenerator=Run.instance.stageRngGenerator;priorStageRng=Run.instance.stageRng;Check(priorStageGenerator==null&&priorStageRng==null,"Existing stage RNG");var seedRng=new Xoroshiro128Plus(140);_ = seedRng.nextUlong;Run.instance.stageRngGenerator=new Xoroshiro128Plus(seedRng.nextUlong);Call(Run.instance,"GenerateStageRNG");
+  rewardDirectorHost=new GameObject("Owned directed original spawn context");rewardDirectorHost.SetActive(false);rewardDirectorHost.AddComponent<DirectorCore>();rewardDirector=rewardDirectorHost.AddComponent<CombatDirector>();rewardDirector.enabled=false;rewardDirector.moneyWaveIntervals=new RangeFloat[0];rewardDirector.ignoreTeamSizeLimit=true;rewardDirectorHost.SetActive(true);Check(DirectorCore.instance==rewardDirectorHost.GetComponent<DirectorCore>(),"Original DirectorCore singleton missing");
+  rewardPlacementHost=new GameObject("Owned initial spawn target");rewardPlacementHost.transform.SetPositionAndRotation(position,Quaternion.LookRotation(player.transform.position-position));rewardDirector.onSpawnedServer=new CombatDirector.OnSpawnedServer();rewardDirector.onSpawnedServer.AddListener(obj=>{r.rewards.spawnEvents++;enemyMasterHost=obj;enemyMaster=obj.GetComponent<CharacterMaster>();enemyBody=enemyMaster.GetBody();});MasterSummon.onServerMasterSummonGlobal+=RewardSummon;observesRewardSummon=true;
+  try{Check(rewardDirector.Spawn(rewardCard,null,rewardPlacementHost.transform,DirectorCore.MonsterSpawnDistance.Standard,false,1,DirectorPlacementRule.PlacementMode.Direct),"Original directed spawn failed");}
+  finally{ownedRewardSummons.AddRange(Resources.FindObjectsOfTypeAll<CharacterMaster>().Where(x=>x.gameObject.scene.IsValid()&&x.gameObject!=template&&x.bodyPrefab==bodyTemplate));}
+  Check(enemyMaster&&enemyBody&&r.rewards.spawnEvents==1&&r.rewards.summonEvents==1,"Original director/summon/body result missing");
+  var rewards=enemyBody.GetComponent<DeathRewards>();Check(rewards&&!rewards.logUnlockableDef,"Original rewards or optional logbook scope missing");r.rewards.creditCost=rewardCard.directorCreditCost;r.rewards.bodyCost=enemyBody.cost;r.rewards.compensatedDifficulty=Run.instance.compensatedDifficultyCoefficient;r.rewards.spawnValue=rewards.spawnValue;r.rewards.goldExpected=rewards.goldReward;r.rewards.experienceExpected=rewards.expReward;
+  r.rewards.ambientItems=enemyMaster.inventory.GetItemCountPermanent(RoR2Content.Items.UseAmbientLevel);r.rewards.boostHpItems=enemyMaster.inventory.GetItemCountPermanent(RoR2Content.Items.BoostHp);r.rewards.boostDamageItems=enemyMaster.inventory.GetItemCountPermanent(RoR2Content.Items.BoostDamage);
+  r.rewards.spawnLevelBeforeStart=enemyBody.level;r.rewards.acquisitionCount=enemyMaster.inventory.itemAcquisitionOrder.Count;r.rewards.equipmentIndex=(int)enemyMaster.inventory.currentEquipmentIndex;
+  Check(r.rewards.bodyCost==8&&r.rewards.compensatedDifficulty==1&&r.rewards.spawnValue==1,"Original spawn cost/difficulty assertions failed");Check(r.rewards.goldExpected==3&&r.rewards.experienceExpected==1,"Original director reward values failed");Check(r.rewards.ambientItems==1&&r.rewards.boostHpItems==0&&r.rewards.boostDamageItems==0&&r.rewards.acquisitionCount==1&&enemyMaster.inventory.currentEquipmentIndex==EquipmentIndex.None,"Original spawn internal inventory assertions failed");r.rewards.directedSpawn=true;r.rewards.spawnContract=true;Save();
+ }
+ void ObserveEnemyRewards(){
+  if(r.rewards==null||!rewardExperience||!TeamManager.instance)return;var pending=(IList)typeof(ExperienceManager).GetField("pendingAwards",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(rewardExperience);r.rewards.pendingPeak=Math.Max(r.rewards.pendingPeak,pending.Count);r.rewards.queuedExperience|=pending.Count>0;
+  if(r.enemy.dead&&r.rewards.deathAt<0)r.rewards.deathAt=Time.realtimeSinceStartup;r.rewards.moneyAfter=rewardPlayerMaster?rewardPlayerMaster.money:0;r.rewards.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);r.rewards.teamLevel=TeamManager.instance.GetTeamLevel(TeamIndex.Player);
+  if(r.rewards.experienceAfter>r.rewards.experienceBefore&&r.rewards.experienceAt<0)r.rewards.experienceAt=Time.realtimeSinceStartup;r.rewards.delivered=r.rewards.moneyAfter-r.rewards.moneyBefore==r.rewards.goldExpected&&r.rewards.experienceAfter-r.rewards.experienceBefore==r.rewards.experienceExpected;
+ }
+ void VerifyEnemyRewardDelivery(){ObserveEnemyRewards();Check(r.rewards.assetsReady&&r.rewards.directedSpawn&&r.rewards.spawnContract&&r.rewards.delivered&&r.rewards.queuedExperience&&r.rewards.pendingPeak==1&&r.rewards.goldEvents==3&&r.rewards.teamLevel==1&&r.rewards.experienceAt-r.rewards.deathAt>1.5f&&r.rewards.experienceAt-r.rewards.deathAt<2.2f,"Original gold/timed experience delivery incomplete");}
+ void CleanupRewardHosts(){if(r.rewards==null)return;if(observesRewardSummon){MasterSummon.onServerMasterSummonGlobal-=RewardSummon;observesRewardSummon=false;}if(rewardPlayerMaster)rewardPlayerMaster.OnGoldCollected-=RewardGold;if(rewardFixtureTeam)rewardFixtureTeam.teamIndex=priorRewardFixtureTeam;foreach(var summon in ownedRewardSummons)if(summon&&summon.gameObject!=enemyMasterHost)NetworkServer.Destroy(summon.gameObject);if(rewardExperienceHost)Destroy(rewardExperienceHost);if(rewardDirectorHost)Destroy(rewardDirectorHost);if(rewardPlacementHost)Destroy(rewardPlacementHost);if(rewardCard)Destroy(rewardCard);if(rewardRun){rewardRun.stageRng=priorStageRng;rewardRun.stageRngGenerator=priorStageGenerator;if(ownedRewardMask!=null&&rewardRun.expansionLockedItems==ownedRewardMask)rewardRun.expansionLockedItems=null;}if(ownedRewardMask!=null){ItemMask.Return(ownedRewardMask);ownedRewardMask=null;}}
+ IEnumerator CleanupEnemyRewards(){
+  if(rewardLocator==null)yield break;yield return null;Check(ownedRewardSummons.All(x=>!x)&&!rewardExperienceHost&&!rewardDirectorHost&&!rewardPlacementHost&&!rewardCard&&!ExperienceManager.instance&&!DirectorCore.instance&&CombatDirector.instancesList.Count==0,"Owned reward/director teardown incomplete");
+  if(ownsRewardEffects){EffectCatalog.SetEntries(priorRewardEffects);ownsRewardEffects=false;}
+  RewardField(typeof(DeathRewards),"coinEffectPrefab").SetValue(null,priorCoinPrefab);RewardField(typeof(DeathRewards),"logbookPrefab").SetValue(null,priorLogPrefab);RewardField(typeof(ExperienceManager),"experienceOrbPrefab").SetValue(null,priorOrbPrefab);
+  var poolCache=(IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);if(rewardPrefabs!=null)foreach(var prefab in rewardPrefabs)if(prefab){poolCache.Remove(prefab);Addressables.Release(prefab);}yield return null;Check(!AssetBundle.GetAllLoadedAssetBundles().Any(x=>x.name==RewardBundle),"Reward provider bundle retained");Addressables.RemoveResourceLocator(rewardLocator);rewardLocator=null;r.rewards.cleaned=true;Save();
+ }
+}

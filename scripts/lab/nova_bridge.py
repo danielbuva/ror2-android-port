@@ -58,7 +58,7 @@ def prepare_spine():
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
     spine='body-state-spawn-state-auto-nova-spine'
@@ -201,6 +201,16 @@ def stage_enemy_spine(stage,previous,out):
     if death['input_id']!=catalog['input_id'] or death['catalog_sha256']!=catalog['catalog_sha256']:
         raise RuntimeError('Player death effect catalog input changed; review query')
     roots['playerDeathEffectAsset']=export/death['location']['internalId']
+    rewards=read(WORK/'config/enemy-reward-catalog.json')
+    if rewards['input_id']!=catalog['input_id'] or rewards['catalog_sha256']!=catalog['catalog_sha256']:
+        raise RuntimeError('Reward catalog input changed; review original query')
+    if len(rewards['locations'])!=3 or any(x['type']!='UnityEngine.GameObject' for x in rewards['locations']):
+        raise RuntimeError('Measured reward prefab contract changed')
+    roots['enemySpawnCardAsset']=beetle/'cscBeetle.asset'
+    for i,name in enumerate(['UseAmbientLevel','BoostHp','BoostDamage']):
+        roots['enemySpawnItem'+str(i)]=export/'Assets/RoR2/Base/Items'/name/(name+'.asset')
+    for i,row in enumerate(rewards['locations']):roots['enemyRewardPrefab'+str(i)]=export/row['internalId']
+
     for name,folder in [('Poison','Base/Elites/ElitePoison'),('Haunted','Base/Elites/EliteHaunted'),('Lunar','Base/Elites/EliteLunar'),('Void','DLC1/Elites/EliteVoid')]:
         roots['enemyElite'+name]=export/('Assets/RoR2/'+folder+'/ed'+name+'.asset')
     pending=list(roots.values());seen=set();paths={};rows=[];remaps={r['from']:r['to'] for r in previous.get('ui_remaps',[])}
@@ -235,9 +245,10 @@ def stage_enemy_spine(stage,previous,out):
             for dep in re.findall(r'm_AssetGUID: ([a-f0-9]{32})',original):
                 if dep not in runtime:raise RuntimeError('Query original catalog for enemy runtime key in '+src.name+': '+dep)
                 pending.append(runtime[dep])
-    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[v for k,v in paths.items() if k!='playerDeathEffectAsset']));recipe['playerDeathEffect']=next(r['staged'] for r in rows if r['source']==str(roots['playerDeathEffectAsset'].relative_to(export)));write(WORK/'scene-probe-build.json',recipe)
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[v for k,v in paths.items() if k!='playerDeathEffectAsset' and not k.startswith('enemyRewardPrefab')]));recipe['playerDeathEffect']=next(r['staged'] for r in rows if r['source']==str(roots['playerDeathEffectAsset'].relative_to(export)));recipe['enemyRewardAssets']=[next(r['staged'] for r in rows if r['source']==str(roots['enemyRewardPrefab'+str(i)].relative_to(export))) for i in range(3)];write(WORK/'scene-probe-build.json',recipe)
+    write(out/'reward-contract.json',dict(rewards,spawn_card=paths['enemySpawnCardAsset'],spawn_items=[paths['enemySpawnItem'+str(i)] for i in range(3)],reward_prefabs=[paths['enemyRewardPrefab'+str(i)] for i in range(3)],scope='Original directed CombatDirector/CharacterSpawnCard/MasterSummon and gold/timed XP; server-only, no automatic waves, client effects, level-up, logbook/profile or full Run lifecycle.'))
     write(out/'enemy-contract.json',{'roots':paths,'closure':rows,'bytes':sum(r['bytes'] for r in rows),'catalog':catalog,'prior_art':'Pinned Starstorm2 Runshroom/SS2Monster uses MonsterAssetCollection/body/model/team collision. EditorKit preserves runtime GUID/subobject separately from exported identity; original catalog resolves measured Avatar subobject. R2API.Director scene/catalog boundaries remain separate. Exact original BaseAI requires SceneInfo.GetNodeGraph and drives original InputBank/AI walker states.','scope':'Original Beetle actor/navigation/AI/skill/death integration in accepted terrain; optional audio/effects excluded on owned clones only, no DLL changes, director/progression claim or actor motion writes.'})
-    return dict(paths,enemySpine=True,playerDeathEffectKey=death['key'],enemyDeathItems=[paths['enemyDeathItem'+str(i)] for i in range(4)],enemyDeathEquipment=[paths['enemyDeathEquipment'+str(i)] for i in range(2)],enemyEliteAssets=[paths['enemyElite'+name] for name in ['Poison','Haunted','Lunar','Void']])
+    return dict(paths,enemyRewards=True,enemyRewardKeys=[x['key'] for x in rewards['locations']],enemyRewardAssets=[paths['enemyRewardPrefab'+str(i)] for i in range(3)],enemySpawnItems=[paths['enemySpawnItem'+str(i)] for i in range(3)],enemySpine=True,playerDeathEffectKey=death['key'],enemyDeathItems=[paths['enemyDeathItem'+str(i)] for i in range(4)],enemyDeathEquipment=[paths['enemyDeathEquipment'+str(i)] for i in range(2)],enemyEliteAssets=[paths['enemyElite'+name] for name in ['Poison','Haunted','Lunar','Void']])
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run
