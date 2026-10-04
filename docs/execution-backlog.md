@@ -1660,3 +1660,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** Journal and concise next action after failures; scoped enemy capability receipt only after real device acceptance, milestone/risk status, staged public audit/manual IP review and Conventional Commit.
 - **DEPENDENCIES:** S136; pinned Starstorm2 Runshroom monster/body/model/team collision knowledge, EditorKit runtime GUID/subobject identity distinction, exact original BaseAI/SceneInfo/Beetle state code and authorized Nova.
 - **STATUS:** PASS bounded scripted enemy/navigation/melee/damage/death/cleanup — J161,3600 assertions/55.19-second process and45 unchanged DLLs. J160 setup/callback/ownership failures remain preserved. Physical combat, direct-launch enemy/player-death lifetime, rewards/director/stage progression stay OPEN.
+
+
+## S138 — Original Commando defeat and direct-launch lifetime
+- **ID:** S138
+- **TITLE:** Handle original fatal NPC damage/death without continuing alive-body lab observations.
+- **CONTEXT:** J161 accepts scripted enemy chase/melee/death; direct launch keeps original enemy active.
+- **OBSERVATION:** J162 neutral direct launch receives144 damage, then original Commando.DeathState fails on missing PlayerDeathEffect; the lab observer unwinds through a destroyed body.
+- **HYPOTHESIS:** The genuine effect/provider closure and original ragdoll callback satisfy death entry, while a death-aware lab hold allows original body lifetime to complete naturally.
+- **TASK:** Add only the typed measured PlayerDeathEffect location and narrow serialized closure, original RagdollController Start, death-event/state/effect/ragdoll/body observation, and input-disabled defeat screen. Reprove the accepted scripted combat path, then fresh neutral direct-launch death/stable hold.
+- **CONSTRAINTS:**45 original DLLs unchanged; original health/death/ragdoll/timers/authority; no artificial kill, resurrection, actor motion, profile/service/entitlement/victory or original-menu/game-over claim. Nova asleep while idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing staging/build recipe, narrow PlayerDefeatBoundary and existing Nova input/main coroutine; ignored typed catalog receipt/closure/separate bundle/current-PID captures.
+- **TEST COMMAND:** nova-bridge-prepare; pinned MCP compile/console; preflight; forced Vulkan build; movement-batch-run; local direct-launch defeat capture; existing host safety tests.
+- **PASS CONDITION:** Accepted scripted skills/target/enemy path remains clean; original fatal NPC damage produces exactly one original player death event, original death/ragdoll and correctly targeted effect with natural effect/body destruction, followed by30 seconds of stable lab defeat display. No unexpected current-PID error/crash. Process-close cleanup distinct from managed scripted fixture cleanup.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact provider/key/serialized/ragdoll/state/lifetime first failure; attempt/APK/payload/45 assembly hashes, original death/damage data and current-process logs/capture; retain accepted enemy rollback.
+- **STATE/JOURNAL UPDATES REQUIRED:** J162/J163 and scoped defeat/direct-launch receipt after actual device acceptance; concise state/milestone/risk update, staged public audit/manual IP review and Conventional Commit.
+- **DEPENDENCIES:** S137; original-provider prior art and pinned Starstorm2 Mimic observation knowledge; exact original game/type/catalog input and authorized Nova.
+- **STATUS:** PASS bounded original defeat/state/ragdoll/effect/lifetime and30-second stable lab hold — J163. Scripted combat/managed cleanup5110 assertions; separate default launch66.59-second process,45 unchanged DLLs/40 host tests. J162 rejections preserved; original game-over/menu/progression and physical new combat remain OPEN.

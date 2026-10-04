@@ -58,11 +58,11 @@ def prepare_spine():
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
     spine='body-state-spawn-state-auto-nova-spine'
-    a.update({'attempt':out.name,'playable_spine':True,'enemy_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':55,spine:120}});write(out/'attempt.json',a)
+    a.update({'attempt':out.name,'playable_spine':True,'enemy_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':65,spine:120}});write(out/'attempt.json',a)
     mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
     write(WORK/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(ROOT))});print(json.dumps({'attempt':str(out.relative_to(ROOT)),'spine':True}))
 
@@ -190,6 +190,10 @@ def stage_enemy_spine(stage,previous,out):
     for i,name in enumerate(['HealAndRevive','HealAndReviveConsumed']):roots['enemyDeathEquipment'+str(i)]=export/'Assets/RoR2/DLC2/Equipment/HealAndRevive'/(name+'.asset')
     roots['enemyDeathBuffAsset']=export/'Assets/RoR2/DLC2/Interactables/Shrines/ShrineColossusAccess/bdExtraLifeBuff.asset'
     roots['enemyWispArtifactAsset']=export/'Assets/RoR2/Base/Artifacts/WispOnDeath/WispOnDeath.asset'
+    death=read(WORK/'config/player-death-effect.json')
+    if death['input_id']!=catalog['input_id'] or death['catalog_sha256']!=catalog['catalog_sha256']:
+        raise RuntimeError('Player death effect catalog input changed; review query')
+    roots['playerDeathEffectAsset']=export/death['location']['internalId']
     for name,folder in [('Poison','Base/Elites/ElitePoison'),('Haunted','Base/Elites/EliteHaunted'),('Lunar','Base/Elites/EliteLunar'),('Void','DLC1/Elites/EliteVoid')]:
         roots['enemyElite'+name]=export/('Assets/RoR2/'+folder+'/ed'+name+'.asset')
     pending=list(roots.values());seen=set();paths={};rows=[];remaps={r['from']:r['to'] for r in previous.get('ui_remaps',[])}
@@ -224,9 +228,9 @@ def stage_enemy_spine(stage,previous,out):
             for dep in re.findall(r'm_AssetGUID: ([a-f0-9]{32})',original):
                 if dep not in runtime:raise RuntimeError('Query original catalog for enemy runtime key in '+src.name+': '+dep)
                 pending.append(runtime[dep])
-    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+list(paths.values())));write(WORK/'scene-probe-build.json',recipe)
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[v for k,v in paths.items() if k!='playerDeathEffectAsset']));recipe['playerDeathEffect']=next(r['staged'] for r in rows if r['source']==str(roots['playerDeathEffectAsset'].relative_to(export)));write(WORK/'scene-probe-build.json',recipe)
     write(out/'enemy-contract.json',{'roots':paths,'closure':rows,'bytes':sum(r['bytes'] for r in rows),'catalog':catalog,'prior_art':'Pinned Starstorm2 Runshroom/SS2Monster uses MonsterAssetCollection/body/model/team collision. EditorKit preserves runtime GUID/subobject separately from exported identity; original catalog resolves measured Avatar subobject. R2API.Director scene/catalog boundaries remain separate. Exact original BaseAI requires SceneInfo.GetNodeGraph and drives original InputBank/AI walker states.','scope':'Original Beetle actor/navigation/AI/skill/death integration in accepted terrain; optional audio/effects excluded on owned clones only, no DLL changes, director/progression claim or actor motion writes.'})
-    return dict(paths,enemySpine=True,enemyDeathItems=[paths['enemyDeathItem'+str(i)] for i in range(4)],enemyDeathEquipment=[paths['enemyDeathEquipment'+str(i)] for i in range(2)],enemyEliteAssets=[paths['enemyElite'+name] for name in ['Poison','Haunted','Lunar','Void']])
+    return dict(paths,enemySpine=True,playerDeathEffectKey=death['key'],enemyDeathItems=[paths['enemyDeathItem'+str(i)] for i in range(4)],enemyDeathEquipment=[paths['enemyDeathEquipment'+str(i)] for i in range(2)],enemyEliteAssets=[paths['enemyElite'+name] for name in ['Poison','Haunted','Lunar','Void']])
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run

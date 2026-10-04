@@ -10,8 +10,8 @@ using UnityEngine;
 
 public sealed partial class MovementBatchProbe {
  [Serializable] public class NovaSample {public float seconds;public NovaInputBridge.Raw raw;public Vector3 input,aim,stateAim,velocity,position;public bool grounded,jump;public int jumpCount;}
- [Serializable] public class NovaReport {public bool novaOnly,originalInputConsumer,stopped,aimConsumed,rendersOriginalModel,diagnosticInput;public int samples,fixedTicks,jumpPresses,localJumpCallbacks,jumpTransitions,landings;public float seconds,pathLength,planarPathLength,maxRise;public uint spawnedBodyId,masterId;public NovaInputBridge.Mapping mapping;public List<NovaSample> observations=new List<NovaSample>();}
- void OnGUI(){if(r!=null&&IsPlayableSpine()&&r.primary!=null)GUI.Label(new Rect(20,70,850,100),"Commando | A: jump | X: primary | Y: secondary | LB: roll | RB: barrage | audio unavailable\nOriginal primary entries: "+r.primary.shots+" | stock: "+r.primary.stockAfter+(r.combat==null?"":"\nTarget HP: "+r.combat.healthAfter.ToString("F1")+" | damage: "+r.combat.damageDealt.ToString("F1")+" | secondary/roll/barrage: "+r.combat.secondaryEntries+"/"+r.combat.utilityEntries+"/"+r.combat.specialEntries)+(r.enemy==null?"":"\nBeetle HP: "+r.enemy.health.ToString("F1")+" | player HP: "+r.enemy.playerHealth.ToString("F1")+" | AI: "+r.enemy.aiState+" | attacks: "+r.enemy.headbutts));}
+ [Serializable] public class NovaReport {public bool novaOnly,originalInputConsumer,stopped,aimConsumed,rendersOriginalModel,diagnosticInput;public int samples,fixedTicks,jumpPresses,localJumpCallbacks,jumpTransitions,landings;public float seconds,pathLength,planarPathLength,maxRise,diagnosticReturnFireAt;public uint spawnedBodyId,masterId;public NovaInputBridge.Mapping mapping;public List<NovaSample> observations=new List<NovaSample>();}
+ void OnGUI(){if(r!=null&&r.phase=="commando-defeated"){GUI.Label(new Rect(20,70,800,40),"Commando defeated. Close the test, then open Porting Lab again to retry.");if(GUI.Button(new Rect(20,115,200,40),"Close test"))Application.Quit();return;}if(r!=null&&IsPlayableSpine()&&r.primary!=null)GUI.Label(new Rect(20,70,850,100),"Commando | A: jump | X: primary | Y: secondary | LB: roll | RB: barrage | audio unavailable\nOriginal primary entries: "+r.primary.shots+" | stock: "+r.primary.stockAfter+(r.combat==null?"":"\nTarget HP: "+r.combat.healthAfter.ToString("F1")+" | damage: "+r.combat.damageDealt.ToString("F1")+" | secondary/roll/barrage: "+r.combat.secondaryEntries+"/"+r.combat.utilityEntries+"/"+r.combat.specialEntries)+(r.enemy==null?"":"\nBeetle HP: "+r.enemy.health.ToString("F1")+" | player HP: "+r.enemy.playerHealth.ToString("F1")+" | AI: "+r.enemy.aiState+" | attacks: "+r.enemy.headbutts));}
  bool IsNovaInput(){return IsPlayableSpine()||r.id=="body-state-spawn-state-auto-nova-controls";}
  IEnumerator NovaRawBoundary(){
   NovaInputBridge.RequireNova();r.nova=new NovaReport{novaOnly=true};r.phase="nova-raw-ready";Save();float began=Time.realtimeSinceStartup,next=0;
@@ -41,12 +41,15 @@ public sealed partial class MovementBatchProbe {
    display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle,spine);
    if(cfg.stageGeometry)display.camera.cullingMask|=LayerIndex.world.mask;
    if(cfg.combatSpine)PrepareCombatScene(body,cfg);
+   if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
    if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
    bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;r.nova.originalInputConsumer=true;
-   r.phase=bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
+   r.phase=bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
-   while(r.freePlay||Time.realtimeSinceStartup-began<(bringup?20:90)){
-    yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);TemporaryOverlayManager.OverlayUpdate();
+   while(r.freePlay||Time.realtimeSinceStartup-began<(bringup?(cfg.enemySpine?30:20):90)){
+    yield return new WaitForEndOfFrame();
+    if(r.freePlay&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;}
+    ObserveAutomaticModelFollow(body);TemporaryOverlayManager.OverlayUpdate();
     Check(string.IsNullOrEmpty(bridge.error),"Nova bridge input failure: "+bridge.error);Check((cfg.combatSpine||machine.state==state)&&body.gameObject.activeInHierarchy&&body.master.GetBody()==body&&motor.hasEffectiveAuthority,"Original physical simulation state/link/authority changed");
     float elapsed=Time.realtimeSinceStartup-began;var position=solver.TransientPosition;r.nova.pathLength+=Vector3.Distance(position,previous);var delta=position-previous;delta.y=0;r.nova.planarPathLength+=delta.magnitude;previous=position;if(motor.jumpCount>priorJumpCount)r.nova.jumpTransitions+=motor.jumpCount-priorJumpCount;priorJumpCount=motor.jumpCount;r.nova.maxRise=Mathf.Max(r.nova.maxRise,position.y-restingY);
     var stateAim=machine.state is GenericCharacterMain?(Vector3)aimField.GetValue(machine.state):Vector3.zero;
@@ -54,7 +57,13 @@ public sealed partial class MovementBatchProbe {
     if(r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)r.nova.stopped=true;
     if(spine)ObserveSpinePrimary(body);
     if(cfg.combatSpine)ObserveCombat(body,machine);if(cfg.enemySpine)ObserveEnemy();
-    if(bringup){bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);bridge.diagnosticPrimary=elapsed>9&&elapsed<12;bridge.diagnosticSecondary=cfg.combatSpine&&elapsed>12.3f&&elapsed<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&elapsed>14&&elapsed<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&elapsed>16&&elapsed<16.2f;}
+    if(bringup){
+     bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
+     // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
+     if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&r.enemy.playerDamageEvents>0){combatBegan=elapsed;r.nova.diagnosticReturnFireAt=elapsed;}
+     float fireAge=cfg.enemySpine?(combatBegan<0?-1:elapsed-combatBegan+9):elapsed;
+     bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
+    }
     display.Observe(position,bank.aimDirection);
     if(elapsed>=next){if(r.freePlay&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
     r.nova.seconds=elapsed;r.nova.fixedTicks=bridge.fixedTicks;r.nova.jumpPresses=bridge.jumpPresses;r.automaticFrames++;if(Time.frameCount%30==0)Save();
