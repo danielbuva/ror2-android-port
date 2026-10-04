@@ -32,7 +32,9 @@ public sealed partial class MovementBatchProbe {
  }
  void ObservePlayerDeathEvent(DamageReport report){if(report.victimBody==observedDefeatBody)r.playerDefeat.deathEvents++;}
  IEnumerator ObservePlayerDefeat(CharacterBody body,EntityStateMachine machine,NovaInputBridge bridge){
-  Check(body&&!body.healthComponent.alive&&r.playerDefeat!=null,"Original fatal player damage missing");r.playerDefeat.health=body.healthComponent.health;var playerRoot=body.gameObject;var master=body.master;bridge.enabled=false;r.phase="commando-death";Save();float began=Time.realtimeSinceStartup;
+  Check(body&&!body.healthComponent.alive&&r.playerDefeat!=null,"Original fatal player damage missing");r.playerDefeat.health=body.healthComponent.health;
+  if(r.integratedWorld&&r.world!=null){r.world.health=r.playerDefeat.health;r.world.target="";r.world.objective="Commando defeated";}
+  var playerRoot=body.gameObject;var master=body.master;bridge.enabled=false;r.phase="commando-death";Save();float began=Time.realtimeSinceStartup;
   while(Time.realtimeSinceStartup-began<8){
    foreach(var effect in Resources.FindObjectsOfTypeAll<LocalCameraEffect>().Where(x=>x.gameObject.scene.IsValid()&&x.targetCharacter==playerRoot))if(!playerDeathEffects.Contains(effect)){playerDeathEffects.Add(effect);r.playerDefeat.effects++;r.playerDefeat.effectTargetMatched=true;}
    if(body&&machine&&machine.state is EntityStates.Commando.DeathState){r.playerDefeat.deathEntered=true;r.playerDefeat.state=machine.state.GetType().FullName;Check(!body.characterMotor.enabled,"Original death did not disable character motor");}

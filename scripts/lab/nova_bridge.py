@@ -65,7 +65,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     cfg['integratedWorld']=integrated_world;cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection;cfg['originalClientCoin']=client_coin;cfg['originalInputBarrel']=input_barrel;cfg['originalChestDropTable']=chest_drop;cfg['originalChestPurchase']=chest_purchase;cfg['originalPickupDropletLoad']=droplet_load;cfg['originalPickupDropletFlight']=droplet_flight;cfg['originalPickupDropletCollision']=droplet_collision;cfg['originalDefaultPickup']=default_pickup;cfg['originalChestEjection']=chest_ejection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
-        cfg.update(stage_barrel(stage,out,pickup=pickup,money=money,selection=selection,drop_table=chest_drop,purchase=chest_purchase,droplet_load=droplet_load,droplet_flight=droplet_flight,previous=a))
+        cfg.update(stage_barrel(stage,out,pickup=pickup,money=money,selection=selection,drop_table=chest_drop,purchase=chest_purchase,droplet_load=droplet_load,droplet_flight=droplet_flight,previous=a,integrated_world=integrated_world))
     if client_coin:
         if not selection or not client:raise RuntimeError('Client coin probe requires accepted original selection/active-client context')
         write(out/'client-coin-contract.json',{'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTERACTION_SELECTION.json'),'count':683,'source_tiers':[500,150,25,5,1],'expected_bursts':[1,1,1,1,3],'source_duration':3,'scope':'Original message52/client factory/CoinBehavior/timer pool return with cosmetic diagnostic count; no funds grant, interaction/reward linkage, physical input/audio/graphics parity. Original pooling/randomness retained; only skipped original medium-budget declared default200 initialized through original setter and restored, no full Console claim.','prior_art':'Pinned R2API.ContentManagement f539511e R2APISerializableContentPack registers genuine prefabs through original EffectDef. Exact EffectManager/EffectData/CoinBehavior/DestroyOnTimer/EffectPool and immutable prefab determine network/lifetime contracts; no implementation copied.'})
@@ -116,7 +116,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     if integrated_world:
         a['integrated_world']=True;a['batch_seconds'][spine+'-bringup']=240
         mapping.update({'interact':1,'enableInteraction':True})
-        write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/skills/enemy/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source two-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHEST_EJECTION.json'),'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
+        write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/skills/enemy/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHEST_EJECTION.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
     write(out/'attempt.json',a)
     mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
     write(WORK/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(ROOT))});print(json.dumps({'attempt':str(out.relative_to(ROOT)),'spine':True}))
@@ -372,7 +372,7 @@ def stage_run_scene_metadata(stage,out):
     write(out/'run-metadata-closure.json',{'root':root,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'unrequested_addresses':addresses,'scope':'Original base SceneDef/static metadata, preserved unchanged. No scene-address/diorama/progression/menu/native audio load. Converted static geometry retains original scene name/GUID for measured catalog identity only.'})
     return {'runSceneDefAsset':root.lower()}
 
-def stage_barrel(stage,out,pickup=False,money=False,selection=False,drop_table=False,purchase=False,droplet_load=False,droplet_flight=False,previous=None):
+def stage_barrel(stage,out,pickup=False,money=False,selection=False,drop_table=False,purchase=False,droplet_load=False,droplet_flight=False,previous=None,integrated_world=False):
     """Only the original cash-barrel static dependency closure; no generated rewards or shop logic."""
     import shutil
     from scene_closure import REFERENCE
@@ -393,6 +393,11 @@ def stage_barrel(stage,out,pickup=False,money=False,selection=False,drop_table=F
         roots['multiShopCardAsset']=export/'Assets/RoR2/DLC1/Equipment/MultiShopCard/MultiShopCard.asset'
     if selection:roots.update(recycleAsset=export/'Assets/RoR2/Base/Equipment/Recycle/Recycle.asset',lowerPricedChestsAsset=export/'Assets/RoR2/DLC2/Items/LowerPricedChests/LowerPricedChests.asset')
     if drop_table:roots.update(chestDropTableAsset=export/'Assets/RoR2/Base/Interactables/Chest1/dtChest1.asset',randomlyLunarAsset=export/'Assets/RoR2/DLC1/Items/RandomlyLunar/RandomlyLunar.asset',chestLootItemAsset=export/'Assets/RoR2/Base/Items/ChainLightning/ChainLightning.asset')
+    if integrated_world:
+        for key,name in [('worldGlassesAsset','CritGlasses'),('worldSlugAsset','HealWhileSafe')]:
+            item=export/'Assets/RoR2/Base/Items'/name/(name+'.asset');text=item.read_text()
+            if not all(x in text for x in ['unlockableDef: {fileID: 0}','requiredExpansion: {fileID: 0}','m_AssetGUID:\n','pickupModelPrefab: {fileID: ']):raise RuntimeError('Integrated unlocked direct-model item contract changed: '+name)
+            roots[key]=item
     if purchase:roots.update(chestAsset=export/'Assets/RoR2/Base/Interactables/Chest1/Chest1.prefab',freeUnlockBuffAsset=export/'Assets/RoR2/DLC2/Items/OnLevelUpFreeUnlock/bdFreeUnlocks.asset',lowerPricedConsumedAsset=export/'Assets/RoR2/DLC2/Items/LowerPricedChests/LowerPricedChestsConsumed.asset',delusionArtifactAsset=export/'Assets/RoR2/CU8/Artifacts/Delusion/Delusion.asset')
     if droplet_load:roots['pickupDropletAsset']=export/'Assets/RoR2/Base/Common/PickupDroplet.prefab'
     if droplet_flight:roots['commandArtifactAsset']=export/'Assets/RoR2/Base/Artifacts/Command/Command.asset'
