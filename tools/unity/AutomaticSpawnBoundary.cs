@@ -61,7 +61,9 @@ public sealed partial class MovementBatchProbe {
     var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;
    }
    if(IsAutomaticSkill())StartAutomaticSkillTiming(body);
-   if(automaticDirection){
+   if(IsNovaInput()){
+    var novaRoutine=NovaInputBoundary(body,machine,cfg);while(novaRoutine.MoveNext())yield return novaRoutine.Current;
+   }else if(automaticDirection){
     var directionRoutine=AutomaticDirectionBoundary(body,machine);while(directionRoutine.MoveNext())yield return directionRoutine.Current;
    }else if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){
     var groundRoutine=AutomaticGroundBoundary(body,machine,cfg);while(groundRoutine.MoveNext())yield return groundRoutine.Current;
@@ -96,7 +98,7 @@ public sealed partial class MovementBatchProbe {
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
     r.stationarySeconds=(float)typeof(CharacterBody).GetField("notMovingStopwatch",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);Save();
-    Check(r.spawnBuffExpired&&r.stationarySeconds>55&&r.automaticBodyStatsEvents>=2,"Original automatic body buff expiry/update timer/stat recalculation");
+    Check(r.spawnBuffExpired&&(IsNovaInput()||r.stationarySeconds>55)&&r.automaticBodyStatsEvents>=2,"Original automatic body buff expiry/update timer/stat recalculation");
     Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
    }
   }finally{

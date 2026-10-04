@@ -97,6 +97,11 @@ try:
   elif a.action=='rewired-platform-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare(cases=['rewired-platform-contract'])
+  elif a.action in ['nova-bridge-prepare','nova-bridge-raw-run','nova-bridge-raw-retry','nova-bridge-bind','nova-bridge-commando-run']:
+   from nova_bridge import prepare,run_probe,bind
+   if a.action=='nova-bridge-prepare':prepare()
+   elif a.action=='nova-bridge-bind':bind()
+   else:run_probe(physical=a.action=='nova-bridge-commando-run',retry=a.action=='nova-bridge-raw-retry')
   elif a.action in ['nova-input-prepare','nova-input-capture']:
    from nova_input import observe
    print(json.dumps(observe(capture=a.action=='nova-input-capture'),indent=2))

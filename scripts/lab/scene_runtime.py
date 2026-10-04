@@ -564,7 +564,7 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
         (stage/('Resources/'+name+'.json')).unlink()
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
     if not kinematic:
-        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary','AutomaticSpawnBoundary','AutomaticGroundBoundary','AutomaticHealthBoundary','AutomaticDirectionBoundary','AutomaticModelBoundary','AutomaticSkillBoundary','RewiredPlatformBoundary','BarrierEffectBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
+        for helper in ['BodyCatalogBoundary','SpawnStateBoundary','TeleportMaterialBoundary','AutomaticSpawnBoundary','AutomaticGroundBoundary','AutomaticHealthBoundary','AutomaticDirectionBoundary','AutomaticModelBoundary','AutomaticSkillBoundary','RewiredPlatformBoundary','BarrierEffectBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
     probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
     write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
     r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['integrated-free','integrated-wall','integrated-jump','integrated-land'] if integrated else ['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
@@ -572,7 +572,7 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
 
-def movement_batch_run(cases=None, retry=False):
+def movement_batch_run(cases=None, retry=False, interactive=False):
     from build import preflight
     from device import Device,PACKAGE
     import time
@@ -600,9 +600,22 @@ def movement_batch_run(cases=None, retry=False):
             if probe=='body-state-ground-visual':
                 d.sh('rm','-f',runtime+'/recovered-motion-before.png',runtime+'/recovered-motion-after.png')
             d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
-            launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic()
+            launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic();last_phase=None;captured=set()
             while time.monotonic()-start<durations[probe]:
                 if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Probe process died')
+                if interactive:
+                    raw=d.sh('cat',runtime+'/movement-batch-'+probe+'.json',check=False)
+                    try:live=json.loads(raw)
+                    except ValueError:live=None
+                    if live and live.get('attempt')==attempt_id and str(live.get('pid'))==pid:
+                        write(attempt/'live-probe.json',live)
+                        if live.get('phase')!=last_phase:
+                            last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
+                        seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
+                        if probe=='body-state-spawn-state-auto-nova-controls' and last_phase=='nova-commando-ready':
+                            for mark in [5,25,50,75]:
+                                if seconds>=mark and mark not in captured:
+                                    d.collect('screenshot',attempt/('visual-'+str(mark)));captured.add(mark)
                 time.sleep(1)
             report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)
             result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==attempt_id and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
@@ -617,6 +630,10 @@ def movement_batch_run(cases=None, retry=False):
             if log.exists() and pid:
                 missing=[line for line in log.read_text(errors='replace').splitlines() if re.search(r'\s'+re.escape(str(pid))+r'\s',line) and 'is not defined in this project' in line]
                 if missing:result['success']=False;result['error']='Required Unity layer missing; inspect current-process log'
+                if interactive:
+                    from nova_bridge import current_errors
+                    errors=current_errors(log.read_text(errors='replace'),pid)
+                    if errors:result['success']=False;result['runtime_errors']=errors;result['error']=result.get('error') or 'Unexpected current-process runtime error'
             if probe=='body-state-ground-visual':
                 try:
                     for name in ['recovered-motion-before.png','recovered-motion-after.png']:
@@ -628,8 +645,8 @@ def movement_batch_run(cases=None, retry=False):
     if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
 
 
-def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False):
-    if start_items and jump_items:raise RuntimeError("Combined start/jump item catalog is not measured")
+def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
+    if start_items and jump_items and not nova_input:raise RuntimeError("Combined start/jump item catalog is not measured")
     movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -719,8 +736,8 @@ def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, ad
     write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
 
 
-def grounded_state_prepare(jump_items=False, cases=None, recovered=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False):
-    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items,start_items=start_items,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
+def grounded_state_prepare(jump_items=False, cases=None, recovered=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
+    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items or nova_input,nova_input=nova_input,start_items=start_items,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     source=export/'ProjectSettings/DynamicsManager.asset'
@@ -739,9 +756,9 @@ def recovered_visual_prepare():
     shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
 
 
-def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False):
+def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
     import UnityPy
-    grounded_state_prepare(recovered=True,start_items=start_items,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or ['body-state-spawn-awake'])
+    grounded_state_prepare(recovered=True,start_items=start_items,nova_input=nova_input,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or ['body-state-spawn-awake'])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
     source=game()/'Risk of Rain 2_Data/globalgamemanagers.assets'
     rows=[]
@@ -757,8 +774,8 @@ def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, t
     write(editor/'character-motor-order.json',{'order':rows[0]['order']})
 
 
-def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material=False, barrier_effect=False):
-    body_root_order_prepare(start_items=True,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or (['body-state-spawn-state-catalog','body-state-spawn-state-idle','body-state-spawn-state-entry','body-state-spawn-state-transition'] if spawn_states else ['body-state-spawn-loadout-catalog','body-state-spawn-body-start-catalog']))
+def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material=False, barrier_effect=False, nova_input=False):
+    body_root_order_prepare(start_items=True,nova_input=nova_input,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or (['body-state-spawn-state-catalog','body-state-spawn-state-idle','body-state-spawn-state-entry','body-state-spawn-state-transition'] if spawn_states else ['body-state-spawn-loadout-catalog','body-state-spawn-body-start-catalog']))
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];stage=Path(read(out/'attempt.json')['stage'])
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['initializeLoadoutTables']=True
     if spawn_states:

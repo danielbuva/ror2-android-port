@@ -6,7 +6,7 @@ using UnityEngine;
 // Observe original detachment/following/destruction; never move or turn the model in the harness.
 public sealed partial class MovementBatchProbe {
  GameObject ownedDetachedModel;
- bool IsAutomaticModel(){return IsAutomaticSkill()||r.id.StartsWith("body-state-spawn-state-auto-model-");}
+ bool IsAutomaticModel(){return IsNovaInput()||IsAutomaticSkill()||r.id.StartsWith("body-state-spawn-state-auto-model-");}
  void PrepareAutomaticModel(CharacterBody body){
   var locator=body.modelLocator;var model=locator.modelTransform;
   Check(locator&&model&&model.parent==locator.modelBaseTransform&&!locator.enabled,"Original model pre-Start identity/isolation");

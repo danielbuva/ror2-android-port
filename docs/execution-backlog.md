@@ -1541,3 +1541,36 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J148 failed candidates and J149 outcome, scoped observation receipt, reference notes and durable state/backlog/milestones/risk. No original controller capability pointer advance.
 - **DEPENDENCIES:** S128; existing Device ownership/adopted-storage/display safeguards. Exact original runtime player creation and game GetPlayer(0), official public controller/player APIs; no copied implementation.
 - **STATUS:** COMPLETE / SDK OBSERVATION PASS — J149: 90.001-second Nova Vulkan ARM64 capture, 264 events, initialized SDK/one joystick, 44 retained action identities, runtime player0 lookup, gameplay/UI maps and standard physical controls observed. User confirms delayed L3/R3; reviewed capture/no new errors or matched crashes, prior APK restored and Nova asleep. M1/M2 have no distinct SDK events; original game controller/formal gates stay unaccepted. 35 host tests pass. Next measure authorized matching 1.1.47 integration, otherwise explicitly scoped newer-package compatibility candidate.
+
+
+## S130 — Temporary Nova input producer and Unity exposure
+- **ID:** S130
+- **TITLE:** Measure Unity physical axes/buttons and stage an isolated Nova input producer.
+- **CONTEXT:** User defers exact Rewired compatibility after S129 and requests direct physical Commando progress.
+- **OBSERVATION:** Original InputBankTest is consumed by original GenericCharacterMain; SDK raw numbering does not establish Unity numbering.
+- **HYPOTHESIS:** Existing Unity legacy controller APIs can supply the measured original input boundary without replacing middleware or gameplay.
+- **TASK:** Append sixteen slot-1 diagnostic axes locally, capture labelled physical controls, validate an attempt-bound mapping, then stage only input-field writes before original fixed ticks.
+- **CONSTRAINTS:** Nova only; ignore M1/M2; original45 DLLs and serialization unchanged. No new framework, original motion/state/skill logic replacement, entitlement/service claims or formal gate advance. Neutral on focus loss/disable; reject ambiguous controller or stale mapping. OLED asleep when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** NovaInputBridge, small batch/helper staging, ignored InputManager backup/mapping/raw observation.
+- **TEST COMMAND:** ./dev doctor; ./dev prototype --action nova-bridge-prepare; ./dev preflight; ./dev build --target vulkan --force; ./dev prototype --action nova-bridge-raw-run; ./dev test.
+- **PASS CONDITION:** Labelled real Unity axes/buttons and removable, validated mapping recorded; originals unchanged, raw capture has current attempt/PID.
+- **FAILURE EVIDENCE TO CAPTURE:** Compiler/build error, controller-slot ambiguity, raw axes/buttons and human order, hashes/current process logs/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record results and failed attempts; keep scoped evidence separate from gameplay acceptance.
+- **DEPENDENCIES:** S129; pinned Starstorm2 BorgMain consumes inputBank while retaining original GenericCharacterMain ProcessJump/FixedUpdate. Community source supplies no Android backend.
+- **STATUS:** PASS — J150/J152: full120-second labelled Unity capture, measured sticks/buttons and attempt-bound mapping; original45 DLLs unchanged, stale/invalid mappings rejected. Rewired matching-package work deferred by user instruction.
+
+## S131 — Physical Nova controls original spawned Commando
+- **ID:** S131
+- **TITLE:** Movement, aim, jump and landing through original automatically scheduled simulation.
+- **CONTEXT:** S130 isolates the physical input producer; earlier automatic body/motor/model proofs already pass.
+- **OBSERVATION:** Actual CharacterMaster.SpawnBody, authority, computed stats, original GenericCharacterMain and solver callbacks are separately proven.
+- **HYPOTHESIS:** Physical input at InputBankTest drives the same original callbacks with the combined measured empty-inventory jump/start item subset.
+- **TASK:** Run recovered spawned Commando on a small diagnostic floor; feed physical movement/aim/jump, record original state/motor positions and events, visually review renderer-only recovered model display.
+- **CONSTRAINTS:** No scripted input or actor transform/velocity writes in physical phase. Original visual child behaviours stay inactive; bind-pose renderer copy and diagnostic camera/aim stance are explicit. Skills remain disabled pending their execution gate. Original network server semantics retained; L5 and formal L5.5 stay open.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** NovaInputBoundary, renderer-only NovaDiagnosticDisplay, measured combined item subset, existing original callback fixture and thin interactive observation.
+- **TEST COMMAND:** ./dev prototype --action nova-bridge-commando-run after S130 mapping; current-PID logs and visual review; unchanged45 DLL hashes.
+- **PASS CONDITION:** At least90 seconds real-device callbacks; physical movement over5m plus stop, right-stick aim consumed by original main state, original jump-count transition/rise/landing; exact spawned body/master linkage and authority stable, cleanup and mandatory captures pass.
+- **FAILURE EVIDENCE TO CAPTURE:** First prefab/creation/authority/state/physics/input failure, attempt/PID, trajectory/raw input correlation, original jump events and native/managed errors.
+- **STATE/JOURNAL UPDATES REQUIRED:** Scoped physical simulation precursor receipt only after reviewed acceptance; archive failures and state/backlog/milestone/risk updates; conventional commit/public audit/push.
+- **DEPENDENCIES:** S130, accepted automatic original body/state/motor/model callback proofs; J64 allows independent simulation precursors before platform-blocked L5.
+- **STATUS:** PASS — J152:90.03-second physical original Commando simulation,43.53m planar motion/stop, original aim consumption, one jump-count transition/3.6375m rise/landing/reset, user confirmation and reviewed captures.14019 assertions;45 unchanged DLLs,40 host tests, cleanup/OLED sleep pass. Scoped precursor only; formal gates remain open.
