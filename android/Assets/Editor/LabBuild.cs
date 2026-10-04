@@ -49,7 +49,7 @@ public static class LabBuild {
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="player-death-effect-lab",assetNames=new[]{cfg.playerDeathEffect}});
     }
     if(cfg.enemyRewardAssets!=null&&cfg.enemyRewardAssets.Length>0){
-     if(cfg.enemyRewardAssets.Length!=3||cfg.enemyRewardAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected enemy reward probe paths");
+     if((cfg.enemyRewardAssets.Length!=3&&cfg.enemyRewardAssets.Length!=5)||cfg.enemyRewardAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected enemy reward/team probe paths");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="enemy-reward-lab",assetNames=cfg.enemyRewardAssets});
     }
    }

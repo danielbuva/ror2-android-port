@@ -615,6 +615,9 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                         write(attempt/'live-probe.json',live)
                         if live.get('phase')!=last_phase:
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
+                        # The director probe needs a long deadline, not an idle display after completion.
+                        if probe in a.get('batch_stop_when_complete',[]) and live.get('id')==probe and last_phase=='complete' and time.monotonic()-start>=30:
+                            break
                         seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
                         if (probe=='body-state-spawn-state-auto-nova-controls' or probe.startswith('body-state-spawn-state-auto-nova-spine')) and last_phase in ['nova-commando-ready','nova-spine-bringup']:
                             for mark in ([1,5,15] if probe.endswith('-bringup') and a.get('enemy_spine') else [5,15] if probe.endswith('-bringup') else [5,25,50,75]):

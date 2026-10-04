@@ -29,9 +29,10 @@ public sealed partial class MovementBatchProbe {
   var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;var bank=body.inputBank;
   Check(state is GenericCharacterMain&&body.master.GetBody()==body&&body.isServer&&motor.hasEffectiveAuthority,"Original spawned Commando input/authority contract");
   Check(RoR2Content.Items.JumpBoost&&DLC3Content.Items.JumpDamageStrike&&DLC1Content.Items.GummyCloneIdentifier&&string.IsNullOrEmpty(body.GetComponent<SfxLocator>().jumpSound),"Combined original empty inventory/jump contract");
-  var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;NovaInputBridge bridge=null;NovaDiagnosticDisplay display=null;
+  var priorTriggerQueries=Physics.queriesHitTriggers;var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;NovaInputBridge bridge=null;NovaDiagnosticDisplay display=null;
   CharacterBody.JumpDelegate jumped=()=>{r.nova.localJumpCallbacks++;};CharacterMotor.HitGroundDelegate landed=(ref CharacterMotor.HitGroundInfo hit)=>{r.nova.landings++;};body.onJump+=jumped;motor.onHitGroundAuthority+=landed;
   try{
+   if(cfg.automaticDirector){Check(!cfg.sourceQueriesHitTriggers,"Source placement trigger-query flag changed");Physics.queriesHitTriggers=cfg.sourceQueriesHitTriggers;}
    if(!cfg.stageGeometry){obstacle=GameObject.CreatePrimitive(PrimitiveType.Cube);obstacle.name="Owned Nova floor";obstacle.layer=30;obstacle.transform.position=new Vector3(0,9,0);obstacle.transform.localScale=new Vector3(200,1,200);}
    solver.StableGroundLayers=cfg.stageGeometry?LayerIndex.world.mask:1<<30;solver.CollidableLayers=solver.StableGroundLayers;solver.SetGroundSolvingActivation(true);Physics.SyncTransforms();Physics.gravity=new Vector3(0,cfg.sourceGravity,0);
    var deadline=Time.realtimeSinceStartup+3;while(!solver.GroundingStatus.IsStableOnGround&&Time.realtimeSinceStartup<deadline){yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);}
@@ -46,7 +47,7 @@ public sealed partial class MovementBatchProbe {
    bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;r.nova.originalInputConsumer=true;
    r.phase=bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
-   while(r.freePlay||Time.realtimeSinceStartup-began<(bringup?(cfg.enemySpine?30:20):90)){
+   while(r.freePlay||Time.realtimeSinceStartup-began<(bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
     yield return new WaitForEndOfFrame();
     if(r.freePlay&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;}
     ObserveAutomaticModelFollow(body);TemporaryOverlayManager.OverlayUpdate();
@@ -62,7 +63,7 @@ public sealed partial class MovementBatchProbe {
      // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
      if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&r.enemy.playerDamageEvents>0){combatBegan=elapsed;r.nova.diagnosticReturnFireAt=elapsed;}
      float fireAge=cfg.enemySpine?(combatBegan<0?-1:elapsed-combatBegan+9):elapsed;
-     bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
+     if(cfg.automaticDirector&&enemyBody&&fireAge>9&&fireAge<12){var enemyAimDelta=enemyBody.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(enemyAimDelta.x,enemyAimDelta.z).normalized;}bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
     }
     display.Observe(position,bank.aimDirection);
     if(elapsed>=next){if(r.freePlay&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
@@ -75,7 +76,8 @@ public sealed partial class MovementBatchProbe {
   if(cfg.enemySpine)Check(r.enemy.graphReady&&r.enemy.linked&&r.enemy.authority&&r.enemy.targetFound&&r.enemy.planarBeforeDamage>4&&r.enemy.groundedBeforeDamage>100&&r.enemy.maxFallBeforeDamage<10,"Original grounded enemy chase before incoming damage not observed");
   if(cfg.enemySpine&&bringup)Check(r.enemy.headbutts>0&&r.enemy.playerDamageEvents>0&&r.enemy.enemyDamageEvents>0&&r.enemy.dead,"Original enemy melee, return damage and death not observed");
   if(cfg.enemySpine&&bringup)Check(r.enemy.deathGlobalEvents==1&&r.enemy.playerKillsAfter==r.enemy.playerKillsBefore+1&&r.enemy.naturalBodyDestroyed&&r.enemy.naturalMasterDestroyed,"Original enemy death event/kill count/natural teardown incomplete");
+  if(cfg.automaticDirector&&bringup)Check(r.director.navigationTicks>500&&r.director.navigationNext&&r.director.navigationReachable&&r.director.navigationPathUpdate>0&&r.director.navigationAgentPeak==1,"Original broad route output/scheduling not observed");
   if(cfg.enemyRewards&&bringup)VerifyEnemyRewardDelivery();
-  }finally{if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
+  }finally{if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }
