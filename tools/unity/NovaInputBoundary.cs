@@ -42,6 +42,7 @@ public sealed partial class MovementBatchProbe {
    display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle,spine);
    if(cfg.stageGeometry)display.camera.cullingMask|=LayerIndex.world.mask;
    if(cfg.combatSpine)PrepareCombatScene(body,cfg);
+   if(cfg.originalRunClock){var sceneContext=PrepareRunSceneContext(cfg);while(sceneContext.MoveNext())yield return sceneContext.Current;}
    if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
    if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
    bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;r.nova.originalInputConsumer=true;
@@ -57,7 +58,7 @@ public sealed partial class MovementBatchProbe {
     if(bridge.aim.sqrMagnitude>.1f&&Vector3.Distance(stateAim,bank.aimDirection)<.001f)r.nova.aimConsumed=true;
     if(r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)r.nova.stopped=true;
     if(spine)ObserveSpinePrimary(body);
-    if(cfg.combatSpine)ObserveCombat(body,machine);if(cfg.enemySpine)ObserveEnemy();
+    if(cfg.combatSpine)ObserveCombat(body,machine);if(cfg.enemySpine)ObserveEnemy();ObserveOriginalRunClock();
     if(bringup){
      bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
      // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
@@ -79,6 +80,7 @@ public sealed partial class MovementBatchProbe {
   if(cfg.enemySpine&&bringup)Check(r.enemy.deathGlobalEvents==1&&r.enemy.playerKillsAfter==r.enemy.playerKillsBefore+(DirectorBatch()?3:1)&&r.enemy.naturalBodyDestroyed&&r.enemy.naturalMasterDestroyed,"Original enemy death event/kill count/natural teardown incomplete");
   if(cfg.automaticDirector&&bringup)Check(r.director.navigationTicks>500&&r.director.navigationNext&&r.director.navigationReachable&&r.director.navigationPathUpdate>0&&(DirectorBatch()?r.director.navigationAgentPeak>=2:r.director.navigationAgentPeak==1),"Original broad route output/scheduling not observed");
   if(cfg.enemyRewards&&bringup){if(DirectorBatch())VerifyDirectorBatch();else VerifyEnemyRewardDelivery();}
-  }finally{if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
+  if(cfg.originalRunClock&&bringup)VerifyOriginalRunClock();
+  }finally{CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }

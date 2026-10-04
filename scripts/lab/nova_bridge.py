@@ -46,7 +46,7 @@ def prepare():
     a.update({'nova_input_bridge':True,'batch_seconds':{RAW:140,BODY:120}});write(out/'attempt.json',a)
     write(out/'nova-contract.json',{'input_manager_before_sha256':sha(out/'InputManager-before.asset'),'input_manager_after_sha256':sha(settings),'scope':'Nova only; original InputBankTest producer; no movement/state/motor/skill rewrites; no Rewired replacement','prior_art':'Starstorm2 a9a4badd BorgMain consumes inputBank and retains GenericCharacterMain base ProcessJump/FixedUpdate; no Android backend provided','catalog':'Measured JumpBoost/JumpDamageStrike plus GummyCloneIdentifier in original empty inventory; explicit new combined subset, old cases unchanged','mapping':'Measure Unity slot-1 axes/buttons, then push attempt-bound JSON; skills disabled in movement proof','visual':'Recovered transform/renderer-only model display follows original ModelLocator; fixed bind pose, diagnostic floor/camera/aim stance'})
 
-def prepare_spine(director_batch=False):
+def prepare_spine(director_batch=False,run_clock=False):
     """Continue the accepted active stage; use the measured mapping without repeating its capture."""
     import shutil
     from build import preflight
@@ -58,13 +58,16 @@ def prepare_spine(director_batch=False):
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
+    if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
+    write(stage/'Resources/MovementBatchProbe.json',cfg)
     cfg['directorSpawnLimit']=3 if director_batch else 1;write(stage/'Resources/MovementBatchProbe.json',cfg)
     if director_batch:
         accepted=read(WORK/'checkpoints/LAST_KNOWN_GOOD_AUTOMATIC_DIRECTOR_NAVIGATION.json')
         write(out/'director-batch-contract.json',{'rollback':accepted,'limit':3,'scope':'Original enabled director until three natural spawns; individually observe each original master/body/AI/route/combat/death/reward/cleanup. No manual credits/spawn/reward or pose writes. Diagnostic input only; no full deck/elites/stage progression.','prior_art':'Pinned R2API.Director f539511e separates Unity enabled scheduling from disabled-director ticks; exact original OnSpawnedServer and MasterSummon global events identify each actor. Original source cost accounting and TeamManager/ExperienceManager determine aggregate rewards; no implementation copied.'})
+    if run_clock:write(out/'run-clock-contract.json',{'rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_MULTI_ACTOR_COMBAT.json'),'scope':'Original source SceneDef and SceneCatalog initialization on the same recovered geometry using its original scene name; original Run Update/FixedUpdate scheduled by the lab while Run/GameApplication remain inactive. Original stopwatch/time/difficulty, no manual clock or fake stage progression/entitlement.','prior_art':'Pinned R2API.Director f539511e InitStageEnumToSceneDefs waits for original SceneCatalog.Init before using stage definitions. Exact original Run.FixedUpdate requires SceneCatalog.mostRecentSceneDef and live-player count; original GenericPickupController wait uses Run.FixedTimeStamp.'})
     spine='body-state-spawn-state-auto-nova-spine'
     a.update({'attempt':out.name,'playable_spine':True,'enemy_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':150,spine:180},'batch_stop_when_complete':[spine+'-bringup']});write(out/'attempt.json',a)
     a['director_batch']=director_batch;write(out/'attempt.json',a)
@@ -110,7 +113,7 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out):
+def stage_first_stage_geometry(stage,out,original_name=False):
     """Recover Titanic Plains static scene/collision; keep original stage scripts out of this lab scope."""
     import shutil
     from scene_closure import REFERENCE
@@ -134,7 +137,12 @@ def stage_first_stage_geometry(stage,out):
         if kind==1:
             block=re.sub(r'^  - component: \{fileID: (-?\d+)\}\n',lambda m:'' if m[1] in removed else m[0],block,flags=re.M)
         updated.append(block)
-    geometry=header+''.join(updated);dest=stage/'StageGeometry/golemplains-spine.unity';dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(geometry);shutil.copy2(Path(str(source)+'.meta'),Path(str(dest)+'.meta'))
+    geometry=header+''.join(updated);dest=stage/'StageGeometry'/('golemplains.unity' if original_name else 'golemplains-spine.unity');dest.parent.mkdir(parents=True,exist_ok=True)
+    other=dest.with_name('golemplains-spine.unity' if original_name else 'golemplains.unity')
+    if other.exists():
+        if Path(str(other)+'.meta').read_bytes()!=Path(str(source)+'.meta').read_bytes():raise RuntimeError('Refuse to remove an unowned alternate stage scene')
+        other.unlink();Path(str(other)+'.meta').unlink()
+    dest.write_text(geometry);shutil.copy2(Path(str(source)+'.meta'),Path(str(dest)+'.meta'))
     index={};existing={}
     for base,target in [(export/'Assets',index),(stage,existing)]:
         for meta in base.rglob('*.meta'):
@@ -278,6 +286,44 @@ def stage_enemy_spine(stage,previous,out):
     write(out/'enemy-contract.json',{'roots':paths,'closure':rows,'bytes':sum(r['bytes'] for r in rows),'catalog':catalog,'prior_art':'Pinned Starstorm2 Runshroom/SS2Monster uses MonsterAssetCollection/body/model/team collision. EditorKit preserves runtime GUID/subobject separately from exported identity; original catalog resolves measured Avatar subobject. R2API.Director scene/catalog boundaries remain separate. Exact original BaseAI requires SceneInfo.GetNodeGraph and drives original InputBank/AI walker states.','scope':'Original Beetle actor/navigation/AI/skill/death integration in accepted terrain; optional audio/effects excluded on owned clones only, no DLL changes, director/progression claim or actor motion writes.'})
     write(out/'director-physics-contract.json',{'source_sha256':sha(physics_source),'source_queries_hit_triggers':False,'scope':'Only source trigger-query flag during owned original scheduling/combat probe; restore prior value in finally. Original node/collider/placement algorithms unchanged.','observation':'S141 editor original CheckPositionFree:27 eligible nodes, zero free with lab trigger queries enabled,27 with source flag false. Device acceptance remains required.'})
     return dict(paths,sourceQueriesHitTriggers=False,automaticDirector=True,enemyDirectorAsset=str(director_dest.relative_to(WORK/'lab-project')).lower(),enemyDirectorDeckAsset=str(deck_dest.relative_to(WORK/'lab-project')).lower(),enemyDirectorTeamKeys=[x['key'] for x in director_assets['locations']],enemyDirectorTeamAssets=[paths['enemyDirectorTeamPrefab'+str(i)] for i in range(2)],enemyRewards=True,enemyRewardKeys=[x['key'] for x in rewards['locations']],enemyRewardAssets=[paths['enemyRewardPrefab'+str(i)] for i in range(3)],enemySpawnItems=[paths['enemySpawnItem'+str(i)] for i in range(3)],enemySpine=True,playerDeathEffectKey=death['key'],enemyDeathItems=[paths['enemyDeathItem'+str(i)] for i in range(4)],enemyDeathEquipment=[paths['enemyDeathEquipment'+str(i)] for i in range(2)],enemyEliteAssets=[paths['enemyElite'+name] for name in ['Poison','Haunted','Lunar','Void']])
+
+def stage_run_scene_metadata(stage,out):
+    """Preserve source metadata/static references; do not load its addressed scene or diorama."""
+    import shutil
+    from scene_closure import REFERENCE
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    source=export/'Assets/RoR2/Base/Scenes/golemplains/golemplains.asset'
+    text=source.read_text()
+    if not all(x in text for x in ['m_Name: golemplains','sceneType: 1','stageOrder: 1','requiredExpansion: {fileID: 0}']):raise RuntimeError('Original base-stage metadata contract changed')
+    index={};existing={}
+    for base,target in [(export/'Assets',index),(stage,existing)]:
+        for meta in base.rglob('*.meta'):
+            m=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+            if m:target[m[1]]=Path(str(meta)[:-5])
+    pending=[source];seen=set();rows=[];addresses=[];root=None
+    while pending:
+        src=pending.pop()
+        if src in seen:continue
+        seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
+        if src.suffix=='.dll':
+            if guid not in existing or existing[guid].name!=src.name:raise RuntimeError('Missing metadata assembly '+src.name)
+            continue
+        if src.suffix=='.unity':raise RuntimeError('Metadata unexpectedly imports a full scene; review closure')
+        dst=existing.get(guid,stage/'RunMetadata'/src.relative_to(export/'Assets'))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
+        if src==source:root=str(dst.relative_to(WORK/'lab-project'))
+        rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing,'bytes':src.stat().st_size})
+        with src.open('rb') as f:prefix=f.read(5)
+        if prefix==b'%YAML':
+            original=src.read_text()
+            for dep in {g for _,g,_ in REFERENCE.findall(original) if g and not g.startswith('0000000000000000')}:
+                if dep not in index:raise RuntimeError('Missing metadata reference '+src.name+': '+dep)
+                pending.append(index[dep])
+            addresses.extend({'source':str(src.relative_to(export)),'key':key,'requested':False} for key in re.findall(r'm_AssetGUID: ([a-f0-9]{32})',original))
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[root]));write(WORK/'scene-probe-build.json',recipe)
+    write(out/'run-metadata-closure.json',{'root':root,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'unrequested_addresses':addresses,'scope':'Original base SceneDef/static metadata, preserved unchanged. No scene-address/diorama/progression/menu/native audio load. Converted static geometry retains original scene name/GUID for measured catalog identity only.'})
+    return {'runSceneDefAsset':root.lower()}
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run

@@ -103,10 +103,11 @@ try:
   elif a.action=='rewired-platform-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare(cases=['rewired-platform-contract'])
-  elif a.action in ['nova-bridge-prepare','nova-director-batch-prepare','nova-bridge-raw-run','nova-bridge-raw-retry','nova-bridge-bind','nova-bridge-commando-run']:
+  elif a.action in ['nova-bridge-prepare','nova-director-batch-prepare','nova-run-clock-prepare','nova-bridge-raw-run','nova-bridge-raw-retry','nova-bridge-bind','nova-bridge-commando-run']:
    from nova_bridge import prepare,prepare_spine,run_probe,bind
    if a.action=='nova-bridge-prepare':prepare()
    elif a.action=='nova-director-batch-prepare':prepare_spine(director_batch=True)
+   elif a.action=='nova-run-clock-prepare':prepare_spine(director_batch=True,run_clock=True)
    elif a.action=='nova-bridge-bind':bind()
    else:run_probe(physical=a.action=='nova-bridge-commando-run',retry=a.action=='nova-bridge-raw-retry')
   elif a.action in ['nova-input-prepare','nova-input-capture']:
