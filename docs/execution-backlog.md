@@ -1609,4 +1609,4 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 
 S134 standalone silent-cycle proof is superseded by the user-directed integrated spine. Its zero-error host build and source patch are preserved locally; no device capability was claimed.
 
-Current priority: integrated J155 spine, one fresh run per ordinary iteration. Bring-up passes; human physical move/aim/jump/X-primary test pending. Existing nova-bridge commands select the integrated stage; no new experiment actions required.
+Current priority: integrated first-failure bring-up, one fresh run per ordinary iteration. J155 diagnostic bring-up and J156 human physical move/aim/jump/X-primary pass. Existing nova-bridge commands select the integrated stage; the first host dispatch NameError is fixed without rebuilding the accepted APK. Scoped physical spine checkpoint retains the90-second control/two-minute process evidence. Next integrate an original bullet-hit/damage path and visible target into this spine; inspect relevant pinned prior art and fix only the first observed device blocker. Audio/effects/menu/full run remain unaccepted; no new experiment action is required.

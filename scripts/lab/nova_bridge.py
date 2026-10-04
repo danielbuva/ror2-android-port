@@ -68,7 +68,7 @@ def prepare_spine():
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run
     if physical:
-        out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];stage=Path(read(out/'attempt.json')['stage'])
+        out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
         receipt=stage/'Editor/character-motor-order-result.json';order=read(receipt);expected=read(out/'original-motor-order.json')['rows'][0]['order']
         terminal=WORK/'lab-build/result.json'
         if order.get('after')!=expected or order.get('novaAfter')!=-20000 or not terminal.exists() or receipt.stat().st_mtime_ns>terminal.stat().st_mtime_ns:raise RuntimeError('Restore original motor/Nova producer order, then complete forced build before physical simulation')
