@@ -576,7 +576,7 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
     from build import preflight
     from device import Device,PACKAGE
     import time
-    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');b=read(WORK/'config/current-build.json')
+    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');b=read(WORK/'config/current-build.json');interactive=interactive or bool(a.get('playable_spine'))
     if not a.get('movement_batch') or ((out/'batch-result.json').exists() and not retry):raise RuntimeError('Not a fresh batch')
     terminal=WORK/'lab-build/result.json'
     if not terminal.exists() or terminal.stat().st_mtime_ns<(out/'attempt.json').stat().st_mtime_ns:raise RuntimeError('No completed forced build for this batch; wait for build completion')
@@ -593,6 +593,10 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
     durations={probe:a.get('batch_seconds',{}).get(probe,25) for probe in probes}
     if any(not isinstance(seconds,int) or not 25<=seconds<=180 for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
+    if a.get('playable_spine'):
+        mapping=read((ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'])/'nova-input-mapping.json')
+        if mapping['attempt']!=attempt_id or sha(ROOT/mapping['observation'])!=mapping['observation_sha256']:raise RuntimeError('Accepted spine mapping changed')
+        d.cmd('push',str((ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'])/'nova-input-mapping.json'),runtime+'/nova-input-mapping.json')
     for probe in probes:
         attempt=out/probe;attempt.mkdir();selection={'attempt':attempt_id,'id':probe};write(attempt/'selection.json',selection)
         result={'success':False,'probe':probe};pid=None
@@ -612,8 +616,8 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                         if live.get('phase')!=last_phase:
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
                         seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
-                        if probe=='body-state-spawn-state-auto-nova-controls' and last_phase=='nova-commando-ready':
-                            for mark in [5,25,50,75]:
+                        if (probe=='body-state-spawn-state-auto-nova-controls' or probe.startswith('body-state-spawn-state-auto-nova-spine')) and last_phase in ['nova-commando-ready','nova-spine-bringup']:
+                            for mark in ([5,15] if probe.endswith('-bringup') else [5,25,50,75]):
                                 if seconds>=mark and mark not in captured:
                                     d.collect('screenshot',attempt/('visual-'+str(mark)));captured.add(mark)
                 time.sleep(1)

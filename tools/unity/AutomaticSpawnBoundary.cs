@@ -30,8 +30,9 @@ public sealed partial class MovementBatchProbe {
    foreach(var component in body.GetComponents<MonoBehaviour>())component.enabled=false;
    if(automaticModel)PrepareAutomaticModel(body);
    machine.enabled=true;if(movingMotor)motor.enabled=true;if(automaticBody)body.enabled=true;if(automaticDirection)direction.enabled=true;if(automaticModel)body.modelLocator.enabled=true;if(IsAutomaticSkill())EnableAutomaticSkills(body);
+   if(IsPlayableSpine()){body.skillLocator.primary.enabled=true;body.skillLocator.primary.stateMachine.enabled=true;}
    r.automaticCallbacks=body.GetComponents<MonoBehaviour>().Where(x=>x.enabled).Select(x=>x.GetType().FullName).ToArray();
-   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0)+AutomaticSkillCount(),"Unexpected enabled root callback");
+   Check(r.automaticCallbacks.Length==(movingMotor?2:1)+(automaticBody?1:0)+(automaticDirection?1:0)+(automaticModel?1:0)+AutomaticSkillCount()+(IsPlayableSpine()?2:0),"Unexpected enabled root callback");
    Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);input.moveVector=Vector3.zero;
    r.phase="automatic-spawn-state-start";Save();body.gameObject.SetActive(true);yield return null;
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
@@ -58,7 +59,7 @@ public sealed partial class MovementBatchProbe {
    r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
    Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
    if(IsAutomaticHealth()){
-    var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;
+    if(IsPlayableSpine())body.healthComponent.enabled=true;else{var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;}
    }
    if(IsAutomaticSkill())StartAutomaticSkillTiming(body);
    if(IsNovaInput()){
@@ -105,7 +106,7 @@ public sealed partial class MovementBatchProbe {
    body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
    if(automaticBody){body.master.onBodyStart-=masterStarted;CharacterBody.onBodyStartGlobal-=bodyStarted;body.onRecalculateStats-=stats;}
    // Explicit original exit keeps measured buff/material dependencies alive during teardown.
-   Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
+   if(IsPlayableSpine())Call(body.skillLocator.primary.stateMachine,"OnDestroy");Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
   }
   Check(!automaticBody||!CharacterBody.readOnlyInstancesList.Contains(body),"Original automatic body deregistration");
   Check(machine.state==null&&!KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),"Automatic state exit/solver unregistration");

@@ -9,12 +9,42 @@ using UnityEngine;
 
 // Diagnostic scheduling isolates the original skill factory/activation from its first native consumer.
 public sealed partial class MovementBatchProbe {
+ bool IsPlayableSpine(){return r.id.StartsWith("body-state-spawn-state-auto-nova-spine");}
+ FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;
+ EntityState lastSpineWeaponState;
+ EntityStateConfiguration[] PrepareSpineConfigs(Result cfg,EntityStateConfiguration spawn){
+  spineFields=typeof(FirePistol2).GetFields(BindingFlags.Public|BindingFlags.Static|BindingFlags.DeclaredOnly);spinePrior=spineFields.Select(x=>x.GetValue(null)).ToArray();
+  var fire=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryFireConfigAsset);
+  var reload=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryReloadConfigAsset);
+  Check(fire&&reload,"Spine primary configurations missing");spineReload=Instantiate(reload);
+  spineReload.serializedFieldsCollection.serializedFields=reload.serializedFieldsCollection.serializedFields.ToArray();
+  int index=Array.FindIndex(spineReload.serializedFieldsCollection.serializedFields,x=>x.fieldName=="enterSoundString");Check(index>=0,"Spine reload sound field missing");
+  spineReload.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue="";
+  r.primary=new PrimaryFireReport{silentFixture=true};return new[]{spawn,fire,spineReload};
+ }
+ void ApplySpineExclusions(){
+  FirePistol2.firePistolSoundString="";FirePistol2.muzzleEffectPrefab=null;FirePistol2.hitEffectPrefab=null;FirePistol2.tracerEffectPrefab=null;
+  r.primary.damageCoefficient=FirePistol2.damageCoefficient;r.primary.force=FirePistol2.force;r.primary.baseDuration=FirePistol2.baseDuration;
+ }
+ void ObserveSpinePrimary(CharacterBody body){
+  var weapon=body.skillLocator.primary.stateMachine;var state=weapon.state;
+  if(state!=lastSpineWeaponState){
+   if(state is FirePistol2){r.primary.shots++;r.primary.entered=true;r.primary.firingAvailable=true;r.primary.spreadAfter=body.spreadBloomAngle;}
+   if(state is ReloadPistols)r.primary.reloads++;
+   lastSpineWeaponState=state;
+  }
+  r.primary.stockAfter=body.skillLocator.primary.stock;r.primary.state=state.GetType().FullName;
+ }
+ void CleanupSpineConfig(){
+  if(spineFields!=null){for(int i=0;i<spineFields.Length;i++)spineFields[i].SetValue(null,spinePrior[i]);spineFields=null;}
+  if(spineReload)Destroy(spineReload);
+ }
  [Serializable] public class PrimaryFireReport {
   public string skill,state,firstFailure,audioException,weaponInitialState,definitionType;
   public bool weaponEnabled,slotWeaponMatched,rootActive;
   public int stockBefore,stockAfter,stepBefore,stepAfter,authorityEvents,serverEvents;
   public float damageCoefficient,force,baseDuration;
-  public bool scheduled,entered,firingAvailable,audioAvailable;
+  public bool scheduled,entered,firingAvailable,audioAvailable,silentFixture;public int shots,reloads;public float spreadAfter;
  }
  bool IsPrimaryFire(){return r.id.StartsWith("body-state-spawn-state-primary-");}
  void PrimaryFireBoundary(CharacterBody body,Result cfg){

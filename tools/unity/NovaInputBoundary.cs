@@ -10,8 +10,9 @@ using UnityEngine;
 
 public sealed partial class MovementBatchProbe {
  [Serializable] public class NovaSample {public float seconds;public NovaInputBridge.Raw raw;public Vector3 input,aim,stateAim,velocity,position;public bool grounded,jump;public int jumpCount;}
- [Serializable] public class NovaReport {public bool novaOnly,originalInputConsumer,stopped,aimConsumed;public int samples,fixedTicks,jumpPresses,localJumpCallbacks,jumpTransitions,landings;public float seconds,pathLength,planarPathLength,maxRise;public uint spawnedBodyId,masterId;public NovaInputBridge.Mapping mapping;public List<NovaSample> observations=new List<NovaSample>();}
- bool IsNovaInput(){return r.id=="body-state-spawn-state-auto-nova-controls";}
+ [Serializable] public class NovaReport {public bool novaOnly,originalInputConsumer,stopped,aimConsumed,rendersOriginalModel,diagnosticInput;public int samples,fixedTicks,jumpPresses,localJumpCallbacks,jumpTransitions,landings;public float seconds,pathLength,planarPathLength,maxRise;public uint spawnedBodyId,masterId;public NovaInputBridge.Mapping mapping;public List<NovaSample> observations=new List<NovaSample>();}
+ void OnGUI(){if(r!=null&&IsPlayableSpine()&&r.primary!=null)GUI.Label(new Rect(20,70,650,70),"Commando | A: jump | X: primary | audio unavailable\nOriginal primary entries: "+r.primary.shots+" | stock: "+r.primary.stockAfter);}
+ bool IsNovaInput(){return IsPlayableSpine()||r.id=="body-state-spawn-state-auto-nova-controls";}
  IEnumerator NovaRawBoundary(){
   NovaInputBridge.RequireNova();r.nova=new NovaReport{novaOnly=true};r.phase="nova-raw-ready";Save();float began=Time.realtimeSinceStartup,next=0;
   while(Time.realtimeSinceStartup-began<120){
@@ -22,7 +23,7 @@ public sealed partial class MovementBatchProbe {
   Check(r.nova.samples>300,"Nova Unity raw capture incomplete");Save();
  }
  IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,Result cfg){
-  NovaInputBridge.RequireNova();r.nova=new NovaReport{novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
+  bool spine=IsPlayableSpine(),bringup=r.id.EndsWith("-bringup");NovaInputBridge.RequireNova();r.nova=new NovaReport{rendersOriginalModel=spine,diagnosticInput=bringup,novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
   var mappingPath=System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json");
   Check(File.Exists(mappingPath),"Measured Nova mapping required before physical Commando test");var mapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));mapping.Validate(r.attempt);Check(!mapping.enableSkills,"Ability execution is a separate probe");r.nova.mapping=mapping;
   var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;var bank=body.inputBank;
@@ -37,24 +38,26 @@ public sealed partial class MovementBatchProbe {
    Check(solver.GroundingStatus.IsStableOnGround&&r.nova.landings==1&&body.healthComponent.health==110,"Original spawned body landing before physical input");
    // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.
    body.SetAimTimer(130);
-   display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle);
-   bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;r.nova.originalInputConsumer=true;
-   r.phase="nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
+   display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle,spine);
+   bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.diagnosticInput=bringup;r.nova.originalInputConsumer=true;
+   r.phase=bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
-   while(Time.realtimeSinceStartup-began<90){
+   while(Time.realtimeSinceStartup-began<(bringup?20:90)){
     yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);TemporaryOverlayManager.OverlayUpdate();
     Check(string.IsNullOrEmpty(bridge.error),"Nova bridge input failure: "+bridge.error);Check(machine.state==state&&body.gameObject.activeInHierarchy&&body.master.GetBody()==body&&motor.hasEffectiveAuthority,"Original physical simulation state/link/authority changed");
     float elapsed=Time.realtimeSinceStartup-began;var position=solver.TransientPosition;r.nova.pathLength+=Vector3.Distance(position,previous);var delta=position-previous;delta.y=0;r.nova.planarPathLength+=delta.magnitude;previous=position;if(motor.jumpCount>priorJumpCount)r.nova.jumpTransitions+=motor.jumpCount-priorJumpCount;priorJumpCount=motor.jumpCount;r.nova.maxRise=Mathf.Max(r.nova.maxRise,position.y-restingY);
     var stateAim=(Vector3)aimField.GetValue(state);
     if(bridge.aim.sqrMagnitude>.1f&&Vector3.Distance(stateAim,bank.aimDirection)<.001f)r.nova.aimConsumed=true;
     if(r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)r.nova.stopped=true;
+    if(spine)ObserveSpinePrimary(body);
+    if(bringup){bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);bridge.diagnosticPrimary=elapsed>9&&elapsed<12;}
     display.Observe(position,bank.aimDirection);
     if(elapsed>=next){r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
     r.nova.seconds=elapsed;r.nova.fixedTicks=bridge.fixedTicks;r.nova.jumpPresses=bridge.jumpPresses;r.automaticFrames++;if(Time.frameCount%30==0)Save();
    }
    r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-initialAge;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-initialFixed;
    bridge.enabled=false;yield return new WaitForSeconds(.5f);
-   Check(r.automaticSeconds>=90&&r.nova.fixedTicks>1000&&r.nova.samples>300,"Physical Commando sustained callbacks");Check(r.nova.planarPathLength>5&&r.nova.stopped,"Physical movement and original stopping not observed");Check(r.nova.aimConsumed&&bridge.aimTicks>10,"Physical right-stick aim not consumed by original state");Check(r.nova.jumpTransitions>0&&r.nova.jumpPresses>=r.nova.jumpTransitions&&r.nova.maxRise>.5f&&r.nova.landings>=2&&solver.GroundingStatus.IsStableOnGround&&motor.jumpCount==0,"Physical jump/original landing incomplete");Save();
+   Check(r.automaticSeconds>=(bringup?20:90)&&r.nova.fixedTicks>(bringup?300:1000)&&r.nova.samples>(bringup?100:300),"Physical Commando sustained callbacks");Check(r.nova.planarPathLength>5&&r.nova.stopped,"Physical movement and original stopping not observed");Check(r.nova.aimConsumed&&(bringup||bridge.aimTicks>10),"Physical right-stick aim not consumed by original state");if(spine)Check(r.primary.shots>0&&body.skillLocator.primary.stock==1,"Original primary firing/restock not observed");Check(r.nova.jumpTransitions>0&&r.nova.jumpPresses>=r.nova.jumpTransitions&&r.nova.maxRise>.5f&&r.nova.landings>=2&&solver.GroundingStatus.IsStableOnGround&&motor.jumpCount==0,"Physical jump/original landing incomplete");Save();
   }finally{if(bridge){bridge.enabled=false;Destroy(bridge);}if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }

@@ -17,7 +17,7 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveAutomaticModelFollow(CharacterBody body){
   var locator=body.modelLocator;var model=locator.modelTransform;var parent=locator.modelBaseTransform;
-  Check(locator.enabled&&model&&model.gameObject==ownedDetachedModel&&!model.parent&&!model.gameObject.activeInHierarchy,"Original detached model identity/isolation");
+  Check(locator.enabled&&model&&model.gameObject==ownedDetachedModel&&!model.parent&&(!model.gameObject.activeInHierarchy||IsPlayableSpine()),"Original detached model identity/isolation");
   Check(typeof(ModelLocator).GetField("modelParentTransform",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(locator)==parent,"Original model Start parent cache");
   float position=Vector3.Distance(model.position,parent.position),rotation=Quaternion.Angle(model.rotation,parent.rotation);
   r.modelPositionError=Mathf.Max(r.modelPositionError,position);r.modelRotationError=Mathf.Max(r.modelRotationError,rotation);r.modelFollowFrames++;

@@ -12,6 +12,9 @@ def insert_axes(before,axes):
     return before[:index]+axes+before[index:]
 
 def prepare():
+    active=WORK/'lab-project/Assets/LabLoadingScene'
+    if (active/'Resources/MovementBatchProbe.json').exists() and read(active/'Resources/MovementBatchProbe.json').get('primaryFireConfigAsset'):
+        return prepare_spine()
     from scene_runtime import body_start_loadout_prepare
     body_start_loadout_prepare(spawn_states=True,teleport_material=True,nova_input=True,cases=[RAW])
     out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
@@ -43,6 +46,25 @@ def prepare():
     a.update({'nova_input_bridge':True,'batch_seconds':{RAW:140,BODY:120}});write(out/'attempt.json',a)
     write(out/'nova-contract.json',{'input_manager_before_sha256':sha(out/'InputManager-before.asset'),'input_manager_after_sha256':sha(settings),'scope':'Nova only; original InputBankTest producer; no movement/state/motor/skill rewrites; no Rewired replacement','prior_art':'Starstorm2 a9a4badd BorgMain consumes inputBank and retains GenericCharacterMain base ProcessJump/FixedUpdate; no Android backend provided','catalog':'Measured JumpBoost/JumpDamageStrike plus GummyCloneIdentifier in original empty inventory; explicit new combined subset, old cases unchanged','mapping':'Measure Unity slot-1 axes/buttons, then push attempt-bound JSON; skills disabled in movement proof','visual':'Recovered transform/renderer-only model display follows original ModelLocator; fixed bind pose, diagnostic floor/camera/aim stance'})
 
+def prepare_spine():
+    """Continue the accepted active stage; use the measured mapping without repeating its capture."""
+    import shutil
+    from build import preflight
+    preflight();parent=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(parent/'attempt.json');stage=Path(a['stage'])
+    checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_NOVA_INPUT_BRIDGE.json');mapping=dict(checkpoint['mapping'])
+    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id'] or sha(ROOT/mapping['observation'])!=mapping['observation_sha256']:raise RuntimeError('Accepted input/mapping changed')
+    for name,h in checkpoint['original_assemblies'].items():
+        if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original spine assembly drift')
+    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
+    write(out/'rollback.json',{'physical':checkpoint,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
+    shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['attempt']=out.name;write(stage/'Resources/MovementBatchProbe.json',cfg)
+    spine='body-state-spawn-state-auto-nova-spine'
+    a.update({'attempt':out.name,'playable_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':55,spine:120}});write(out/'attempt.json',a)
+    mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
+    write(WORK/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(ROOT))});print(json.dumps({'attempt':str(out.relative_to(ROOT)),'spine':True}))
+
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run
     if physical:
@@ -50,7 +72,8 @@ def run_probe(physical=False,retry=False):
         receipt=stage/'Editor/character-motor-order-result.json';order=read(receipt);expected=read(out/'original-motor-order.json')['rows'][0]['order']
         terminal=WORK/'lab-build/result.json'
         if order.get('after')!=expected or order.get('novaAfter')!=-20000 or not terminal.exists() or receipt.stat().st_mtime_ns>terminal.stat().st_mtime_ns:raise RuntimeError('Restore original motor/Nova producer order, then complete forced build before physical simulation')
-    movement_batch_run(cases=[BODY if physical else RAW],retry=physical or retry,interactive=True)
+    selected='body-state-spawn-state-auto-nova-spine' if physical and a.get('playable_spine') else BODY if physical else RAW
+    movement_batch_run(cases=[selected],retry=physical or retry,interactive=True)
 
 def bind():
     from device import Device

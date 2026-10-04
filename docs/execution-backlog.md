@@ -1606,3 +1606,7 @@ J91 supporting observation: `body-buffs-reference-prepare` adds one precise refe
 - **STATE/JOURNAL UPDATES REQUIRED:** Append first-failure journal and next justified experiment; no gameplay pointer from native failure.
 - **DEPENDENCIES:** S132; pinned R2API.Sound bank/native-result lifetime knowledge, J53/J63 audit; no Android SDK access follows from community code.
 - **STATUS:** COMPLETE / NEGATIVE OBSERVATION — J154: original pistol enters and missing native Wwise IsInitialized fails before bullets/effects. No firing/audio capability advances.
+
+S134 standalone silent-cycle proof is superseded by the user-directed integrated spine. Its zero-error host build and source patch are preserved locally; no device capability was claimed.
+
+Current priority: integrated J155 spine, one fresh run per ordinary iteration. Bring-up passes; human physical move/aim/jump/X-primary test pending. Existing nova-bridge commands select the integrated stage; no new experiment actions required.
