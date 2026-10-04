@@ -1627,3 +1627,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** J157/J158, concise state/milestone status, scoped diagnostic combat/freeplay receipts; public staged audit/manual review and Conventional Commit.
 - **DEPENDENCIES:** Accepted J156; pinned Starstorm2 Deadeye/BorgMain and exact original source; authorized current Nova mapping.
 - **STATUS:** Diagnostic skills/damage PASS J157; final-build diagnostic and default freeplay stability PASS J158. Physical Y/LB/RB and target aiming PENDING human readiness. No formal L5/L5.5/L6/L7 advance.
+
+
+## S136 — Original Commando on recovered first-stage terrain
+- **ID:** S136
+- **TITLE:** Replace the diagnostic floor with recovered whole Titanic Plains static geometry/collision.
+- **CONTEXT:** J157/J158 integrate default skills/damage/freeplay but use a synthetic floor.
+- **OBSERVATION:** Exact source scene contains2250 objects and104 mesh colliders; static closure is52MB. Original stage lifecycle/director contracts are separate.
+- **HYPOTHESIS:** Source transforms/active flags/mesh/LOD/collider data and original survivor spawn markers can support the same original character simulation without stage gameplay callbacks.
+- **TASK:** Reuse existing serialized closure staging, build a separate scene bundle, source-world raycast before original SpawnBody, original terrain collision/gravity, owned material previews; verify skills/damage/cleanup and default-launch stability.
+- **CONSTRAINTS:**45 original DLLs unchanged; source scene/assets/shaders immutable; preserve static batching/RectTransform hierarchy. No actor pose writes, synthetic floor, stage/director/authentication success or original shader parity. Keep Nova asleep when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing nova-bridge staging, LabBuild scene bundle recipe, Movement/Nova spawn/display hooks, narrow StageGeometryBoundary and two authored preview shaders. Ignored source/converted geometry/receipts/captures only.
+- **TEST COMMAND:** Existing nova-bridge-prepare; MCP refresh/console; preflight; forced Vulkan build; movement-batch-run; local no-selector capture; host safety tests.
+- **PASS CONDITION:** Original source spawn marker/ground collision, zero missing render/collider meshes, stable original motion/jump/default skills and target damage, reviewed textured terrain/cutout screenshot, original fixture/scene cleanup; separate default launch survives beyond90 seconds.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact compile/runtime/mesh/collider/material first failure, source properties, native/current-PID logs, APK/payload hashes, rejected visual attempt and accepted retry separately.
+- **STATE/JOURNAL UPDATES REQUIRED:** J159 and scoped terrain checkpoint, public source/privacy/IP review, Conventional Commit; keep formal gates open.
+- **DEPENDENCIES:** S135; pinned Starstorm2 SlateMines, R2API.Director scene timing, R2Wiki HG terrain channels, MSU/EditorKit shader ownership knowledge; measured legitimate input and Nova evidence outrank assumptions.
+- **STATUS:** PASS bounded geometry/collision/scripted skills/damage/default stability — J159. Physical all-skill/new-stage acceptance, original stage lifecycle/directors and complete stage remain OPEN. Next integrate original enemy behavior.

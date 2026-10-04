@@ -58,8 +58,9 @@ def prepare_spine():
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
+    for name in ['MovementBatchProbe','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
+    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True});write(stage/'Resources/MovementBatchProbe.json',cfg)
     spine='body-state-spawn-state-auto-nova-spine'
     a.update({'attempt':out.name,'playable_spine':True,'nova_input_bridge':True,'parent':str(parent.relative_to(ROOT)),'batch_ids':[spine+'-bringup'],'batch_seconds':{spine+'-bringup':55,spine:120}});write(out/'attempt.json',a)
     mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
@@ -102,6 +103,50 @@ def stage_combat_configs(stage,previous,out):
     recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+list(paths.values())));write(WORK/'scene-probe-build.json',recipe)
     write(out/'combat-contract.json',{'scope':'Integrated default FMJ/roll/barrage and original BulletAttack/HealthComponent target; explicit silent effects-excluded owned copies','prior_art':'Pinned Starstorm2 a9a4badd Deadeye uses authority-gated original BulletAttack and separate visual effects; BorgMain retains original inputBank/GenericCharacterMain behavior. No community code copied.','special_config':'Only exported configuration for exact FireBarrage targetType; preserve its original parameters despite recovered Junk directory.','closure':rows})
     return {key:value.lower() for key,value in paths.items()}
+
+
+def stage_first_stage_geometry(stage,out):
+    """Recover Titanic Plains static scene/collision; keep original stage scripts out of this lab scope."""
+    import shutil
+    from scene_closure import REFERENCE
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    source=export/'Assets/RoR2/Base/Scenes/golemplains/golemplains.unity'
+    text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
+    # Preserve object/transform/mesh/collider/LOD data. Omit gameplay, native sound, particles and baked lighting.
+    keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={}
+    for block in blocks:
+        match=re.match(r'--- !u!(\d+) &(-?\d+)',block);kind=int(match[1]);file_id=match[2]
+        if kind not in keep:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
+        if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
+        kept.append((kind,file_id,block))
+    updated=[]
+    for kind,file_id,block in kept:
+        if kind==1:
+            block=re.sub(r'^  - component: \{fileID: (-?\d+)\}\n',lambda m:'' if m[1] in removed else m[0],block,flags=re.M)
+        updated.append(block)
+    geometry=header+''.join(updated);dest=stage/'StageGeometry/golemplains-spine.unity';dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(geometry);shutil.copy2(Path(str(source)+'.meta'),Path(str(dest)+'.meta'))
+    index={};existing={}
+    for base,target in [(export/'Assets',index),(stage,existing)]:
+        for meta in base.rglob('*.meta'):
+            m=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
+            if m:target[m[1]]=Path(str(meta)[:-5])
+    pending=[guid for _,guid,_ in REFERENCE.findall(geometry) if guid and not guid.startswith('0000000000000000')];seen=set();rows=[]
+    while pending:
+        guid=pending.pop()
+        if guid in seen:continue
+        seen.add(guid)
+        if guid not in index:raise RuntimeError('Unresolved static stage dependency '+guid)
+        src=index[guid]
+        if src.suffix=='.dll':raise RuntimeError('Unexpected managed dependency in static geometry '+src.name)
+        dst=existing.get(guid,stage/'StageGeometry/Assets'/src.relative_to(export/'Assets'))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'))
+        with src.open('rb') as stream:prefix=stream.read(5)
+        if prefix==b'%YAML':pending.extend(g for _,g,_ in REFERENCE.findall(src.read_text()) if g and not g.startswith('0000000000000000'))
+        rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'bytes':src.stat().st_size,'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
+    recipe=read(WORK/'scene-probe-build.json');recipe['stageScene']=str(dest.relative_to(WORK/'lab-project'));write(WORK/'scene-probe-build.json',recipe)
+    write(out/'stage-geometry-contract.json',{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep),'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; no original scene scripts/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
+    return {'stageGeometry':True}
 
 def run_probe(physical=False,retry=False):
     from scene_runtime import movement_batch_run
