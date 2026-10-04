@@ -18,7 +18,7 @@ public sealed partial class MovementBatchProbe {
   public ulong experienceBefore,experienceAfter;public float difficulty,goldEvents,openingSeconds,experienceSeconds,experienceFirstSeconds,experienceExpectedSeconds;public string state,scope;
  }
  GameObject barrelTemplates,barrelObject,barrelPreview;Transform barrelModel;BarrelInteraction barrelComponent;EntityStateMachine barrelMachine;
- readonly List<Material> barrelMaterials=new List<Material>();CharacterMaster barrelPlayer;bool observesBarrel,ownsBarrelCoinWitness,hasBarrelCoinBaseline;AsyncOperationHandle<GameObject> barrelCoinWitness;
+ readonly List<Material> barrelMaterials=new List<Material>();CharacterMaster barrelPlayer;bool observesBarrel,ownsBarrelCoinWitness,hasBarrelCoinBaseline;int barrelCoinBaseline;AsyncOperationHandle<GameObject> barrelCoinWitness;
  void BarrelGold(float amount){r.barrel.goldEvents+=amount;}
  void BarrelInteracted(Interactor interactor,IInteractable interactable,GameObject obj){if(obj==barrelObject){Check(interactor.GetComponent<CharacterBody>().master==barrelPlayer&&ReferenceEquals(interactable,barrelComponent),"Original barrel interaction event identity changed");r.barrel.interactions++;}}
  IEnumerator ProbeOriginalBarrel(CharacterBody player,Result cfg){
@@ -32,7 +32,7 @@ public sealed partial class MovementBatchProbe {
   barrelPlayer=player.master;r.barrel.moneyBefore=barrelPlayer.money;r.barrel.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);
   // Freeze the already-verified enemy reward observation before starting this independent reward phase.
   rewardPlayerMaster.OnGoldCollected-=RewardGold;barrelPlayer.OnGoldCollected+=BarrelGold;GlobalEventManager.OnInteractionsGlobal+=BarrelInteracted;observesBarrel=true;
-  barrelCoinWitness=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/CoinEmitter");ownsBarrelCoinWitness=true;yield return barrelCoinWitness;Check(barrelCoinWitness.Status==AsyncOperationStatus.Succeeded&&barrelCoinWitness.Result==rewardPrefabs[0]&&LegacyResourcesAPI.ActiveCount==0,"Original coin-reference witness failed");r.barrel.coinReferencesBefore=BarrelCoinReferences();hasBarrelCoinBaseline=true;
+  barrelCoinWitness=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/CoinEmitter");ownsBarrelCoinWitness=true;yield return barrelCoinWitness;Check(barrelCoinWitness.Status==AsyncOperationStatus.Succeeded&&barrelCoinWitness.Result==rewardPrefabs[0]&&LegacyResourcesAPI.ActiveCount==0,"Original coin-reference witness failed");r.barrel.coinReferencesBefore=barrelCoinBaseline=BarrelCoinReferences();hasBarrelCoinBaseline=true;
   float began=Time.realtimeSinceStartup;interactor.AttemptInteraction(found);r.barrel.coinReferencesAfter=BarrelCoinReferences();Check(r.barrel.coinReferencesAfter==r.barrel.coinReferencesBefore+1,"Original CoinDrop acquisition count changed");r.barrel.serverDispatched=barrelComponent.Networkopened&&r.barrel.interactions==1;Check(r.barrel.serverDispatched,"Original server interaction dispatch/open flag failed");
   var pending=(IList)typeof(ExperienceManager).GetField("pendingAwards",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(rewardExperience);float managerTime=(float)typeof(ExperienceManager).GetField("localTime",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(rewardExperience);ulong queued=0;
   r.barrel.pendingAwards=pending.Count;foreach(var award in pending){var type=award.GetType();queued+=(ulong)type.GetField("awardAmount").GetValue(award);Check((TeamIndex)type.GetField("recipient").GetValue(award)==TeamIndex.Player,"Original barrel queued XP recipient changed");r.barrel.experienceExpectedSeconds=Mathf.Max(r.barrel.experienceExpectedSeconds,(float)type.GetField("awardTime").GetValue(award)-managerTime);}
@@ -85,6 +85,6 @@ public sealed partial class MovementBatchProbe {
   if(observesBarrel){GlobalEventManager.OnInteractionsGlobal-=BarrelInteracted;if(barrelPlayer)barrelPlayer.OnGoldCollected-=BarrelGold;observesBarrel=false;}
   if(barrelObject){if(NetworkServer.active)NetworkServer.Destroy(barrelObject);else Destroy(barrelObject);}if(barrelTemplates)Destroy(barrelTemplates);
   foreach(var material in barrelMaterials)if(material)Destroy(material);
-  if(ownsBarrelCoinWitness){if(barrelCoinWitness.IsValid()){if(hasBarrelCoinBaseline){int extra=BarrelCoinReferences()-r.barrel.coinReferencesBefore;Check(extra==0||extra==1,"Unowned coin acquisition during barrel teardown");if(extra==1)Addressables.Release(barrelCoinWitness.Result);}Addressables.Release(barrelCoinWitness);}barrelCoinWitness=default;ownsBarrelCoinWitness=false;hasBarrelCoinBaseline=false;}
+  if(ownsBarrelCoinWitness){if(barrelCoinWitness.IsValid()){if(hasBarrelCoinBaseline){int extra=BarrelCoinReferences()-barrelCoinBaseline;Check(extra==0||extra==1,"Unowned coin acquisition during barrel teardown");if(extra==1)Addressables.Release(barrelCoinWitness.Result);}Addressables.Release(barrelCoinWitness);}barrelCoinWitness=default;ownsBarrelCoinWitness=false;hasBarrelCoinBaseline=false;}
  }
 }
