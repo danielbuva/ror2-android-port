@@ -83,6 +83,7 @@ public sealed partial class MovementBatchProbe {
   if(cfg.originalRunClock&&bringup)VerifyOriginalRunClock();
   if(cfg.barrelInteraction&&bringup){var interaction=ProbeOriginalBarrel(body,cfg);while(interaction.MoveNext())yield return interaction.Current;}
   if(cfg.originalItemPickup&&bringup){var pickup=ProbeOriginalItemPickup(body,cfg);while(pickup.MoveNext())yield return pickup.Current;}
-  }finally{CleanupOriginalItemPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
+  if(cfg.originalMoneyCost&&bringup){var cost=ProbeOriginalMoneyCost(body,cfg);while(cost.MoveNext())yield return cost.Current;}
+  }finally{CleanupOriginalMoneyCost();CleanupOriginalItemPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}
  }
 }
