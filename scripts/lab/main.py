@@ -103,7 +103,7 @@ try:
   elif a.action=='rewired-platform-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare(cases=['rewired-platform-contract'])
-  elif a.action in ['nova-bridge-prepare','nova-director-batch-prepare','nova-run-clock-prepare','nova-barrel-prepare','nova-pickup-prepare','nova-money-cost-prepare','nova-active-client-prepare','nova-interaction-selection-prepare','nova-client-coin-prepare','nova-input-barrel-prepare','nova-bridge-raw-run','nova-bridge-raw-retry','nova-bridge-bind','nova-bridge-commando-run']:
+  elif a.action in ['nova-bridge-prepare','nova-director-batch-prepare','nova-run-clock-prepare','nova-barrel-prepare','nova-pickup-prepare','nova-money-cost-prepare','nova-active-client-prepare','nova-interaction-selection-prepare','nova-client-coin-prepare','nova-input-barrel-prepare','nova-chest-drop-table-prepare','nova-bridge-raw-run','nova-bridge-raw-retry','nova-bridge-bind','nova-bridge-commando-run']:
    from nova_bridge import prepare,prepare_spine,run_probe,bind
    if a.action=='nova-bridge-prepare':prepare()
    elif a.action=='nova-director-batch-prepare':prepare_spine(director_batch=True)
@@ -115,6 +115,7 @@ try:
    elif a.action=='nova-interaction-selection-prepare':prepare_spine(director_batch=True,run_clock=True,barrel=True,pickup=True,money=True,client=True,selection=True)
    elif a.action=='nova-client-coin-prepare':prepare_spine(director_batch=True,run_clock=True,barrel=True,pickup=True,money=True,client=True,selection=True,client_coin=True)
    elif a.action=='nova-input-barrel-prepare':prepare_spine(director_batch=True,run_clock=True,barrel=True,pickup=True,money=True,client=True,selection=True,client_coin=True,input_barrel=True)
+   elif a.action=='nova-chest-drop-table-prepare':prepare_spine(director_batch=True,run_clock=True,barrel=True,pickup=True,money=True,client=True,selection=True,client_coin=True,input_barrel=True,chest_drop=True)
    elif a.action=='nova-bridge-bind':bind()
    else:run_probe(physical=a.action=='nova-bridge-commando-run',retry=a.action=='nova-bridge-raw-retry')
   elif a.action in ['nova-input-prepare','nova-input-capture']:
