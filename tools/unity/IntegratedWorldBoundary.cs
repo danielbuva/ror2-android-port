@@ -16,6 +16,8 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // remain in the preserved assemblies. The shell supplies content/context and unavailable audio UI.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldReport {
+  public NovaThirdPersonView.Report camera;
+  public bool lunarDefinition,lunarCurrencyAvailable;
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
   public int lootDomain,syringe,lightning,glasses,slug,secondary,roll,barrage;public uint money;public ulong experience;
@@ -35,6 +37,9 @@ public sealed partial class MovementBatchProbe {
  AsyncOperationHandle<GameObject> worldCoinLease;bool ownsWorldCoinLease;int worldCoinBaseline;
  Action<Interactor,IInteractable,GameObject> worldInteraction;
  int worldObjective;float worldLastPress=-1;
+ NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
+ bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
+ ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
 Action<TeamIndex> unavailableTeamLevelSound;Action<Run> unavailableAmbientSound;Action<CharacterBody> unavailableLevelEffect;
 Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
 
@@ -53,7 +58,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   pickupTierMap=(IDictionary)typeof(PickupCatalog).GetField("itemTierToPickupIndex",flags).GetValue(null);
   Check(pickupNameMap.Count==0&&pickupTierMap.Count==0,"Unowned integrated pickup maps");
   priorPickupAvailability=PickupCatalog.availability;ownsPickupCatalog=true;
-  PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).ToArray());
+  Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Unowned integrated misc catalog");
+  worldLunarCoin=artifactBundle.LoadAsset<LunarCoinDef>(cfg.worldLunarCoinAsset);
+  Check(worldLunarCoin&&worldLunarCoin.name=="LunarCoin"&&worldLunarCoin.coinValue==1&&worldLunarCoin.displayPrefab&&worldLunarCoin.dropletDisplayPrefab,"Original lunar coin definition/display missing");
+  previousWorldMiscContent=RoR2.ContentManagement.ContentManager._miscPickupDefs;previousWorldMiscCatalog=RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").GetValue(null);previousWorldMiscAvailability=MiscPickupCatalog.availability;ownsWorldMisc=true;
+  RoR2.ContentManagement.ContentManager._miscPickupDefs=new MiscPickupDef[]{worldLunarCoin};RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;StaticCall(typeof(MiscPickupCatalog),"Init");
+  var lunarPickup=worldLunarCoin.CreatePickupDef();PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).Concat(new[]{lunarPickup}).ToArray());
+  r.world.lunarDefinition=MiscPickupCatalog.GetMiscDef(worldLunarCoin.miscPickupIndex)==worldLunarCoin&&PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex)==lunarPickup.pickupIndex&&lunarPickup.attemptGrant.Method.DeclaringType==typeof(LunarCoinDef);
+  Check(r.world.lunarDefinition&&!Util.LookUpBodyNetworkUser(player),"Original lunar definition or unavailable currency contract changed");r.world.lunarCurrencyAvailable=false;
   Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0,"Unowned integrated loot lists");
   ownsWorldLists=true;
   foreach(var item in new[]{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe}){
@@ -190,15 +202,22 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;
-  r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation;
+  r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc;
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();
  }
  void DrawIntegratedWorld(){
   var world=r.world;if(world==null||!world.ready)return;
   var style=new GUIStyle(GUI.skin.label){fontSize=22};var shadow=new GUIStyle(style);shadow.normal.textColor=Color.black;
   string text="Offline gameplay lab — Titanic Plains\nHP "+Mathf.Max(0,world.health).ToString("F0")+" / "+world.maxHealth.ToString("F0")+"    Lv "+world.level.ToString("F0")+"    $"+world.money+"    "+world.seconds.ToString("F0")+"s\nKills "+world.kills+"    Enemies "+world.liveEnemies+"    Chests "+world.openedChests+" / "+world.chests+"\nSyringe "+world.syringe+" · Glasses "+world.glasses+" · Slug "+world.slug+" · Ukulele "+world.lightning+"\n"+world.lastPickup+"    Crit "+world.crit.ToString("F0")+"% · Regen "+world.regen.ToString("F1")+"\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n"+(string.IsNullOrEmpty(world.target)?"Explore, fight and earn money":"B: "+world.target)+"\nAudio, stock startup, profiles and stage progression unavailable";
-  if(world.health<=0){text+="\nCommando defeated. Close and reopen the lab to restart.";if(GUI.Button(new Rect(20,350,240,48),"Close session"))Application.Quit();}
+  if(world.health<=0){text+="\nCommando defeated. Press A to restart a fresh run.";if(GUI.Button(new Rect(20,350,240,48),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(280,350,180,48),"Close session"))Application.Quit();}else if(worldView!=null)worldView.DrawReticle();
   GUI.Label(new Rect(21,61,1100,290),text,shadow);GUI.Label(new Rect(20,60,1100,290),text,style);
+ }
+ void RequestWorldRestart(){if(r!=null&&r.freePlay&&r.integratedWorld&&r.phase=="commando-defeated"&&r.playerDefeat.bodyDestroyed){restartRequested=true;r.phase="restarting-world";Save();}}
+ void ObserveWorldRestartInput(){if(r==null||!r.freePlay||!r.integratedWorld||r.phase!="commando-defeated"||r.nova==null)return;if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump)))RequestWorldRestart();}
+ void RestartWorldAfterCleanup(){
+  if(!restartRequested)return;Check(r.success&&r.cleanup&&r.world.cleaned&&r.modelDestroyed&&!Run.instance&&!SceneInfo.instance&&!NetworkServer.active&&!NetworkClient.active,"Defeated world not clean enough to restart");
+  System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
+  var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){
   if(r.world==null)return;
@@ -213,6 +232,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);
   if(worldVfxOption!=null)worldVfxOption.AttemptSetString(priorWorldVfx);if(priorWorldXp!=null)SettingsConVars.cvExpAndMoneyEffects.AttemptSetString(priorWorldXp);
   if(ownsWorldLists&&Run.instance){Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();if(worldChestTable)worldChestTable.RegenerateDropTable(Run.instance);Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&(!worldChestTable||worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;}
+  if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}
   if(worldDropletField!=null)worldDropletField.SetValue(null,priorWorldDroplet);if(ownsWorldDroplet&&worldDropletSource){Addressables.Release(worldDropletSource);ownsWorldDroplet=false;}if(worldDropletLocator!=null){Addressables.RemoveResourceLocator(worldDropletLocator);worldDropletLocator=null;}
   foreach(var material in worldMaterials)if(material)Destroy(material);
   Save();

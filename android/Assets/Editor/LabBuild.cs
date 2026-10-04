@@ -7,11 +7,26 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
- [Serializable] class Result {public bool success; public string result,apk,backend;public double seconds;public int errors;}
+ const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
+ [Serializable] class Request {public string request_id,api;}
+ [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
+ [InitializeOnLoadMethod] static void ResumeQueuedBuild(){if(!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,""))){EditorApplication.update-=DispatchBuild;EditorApplication.update+=DispatchBuild;}}
  [MenuItem("Porting Lab/Build ARM64")]
- public static void QueueBuild(){EditorApplication.delayCall+=Build;}
+ public static void QueueBuild(){
+  if(BuildPipeline.isBuildingPlayer||!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,"")))throw new InvalidOperationException("A lab build is already active or queued");
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));var request=File.ReadAllText(Path.Combine(root,"build-request.json"));
+  if(string.IsNullOrEmpty(JsonUtility.FromJson<Request>(request).request_id))throw new InvalidOperationException("Missing lab build request identity");
+  SessionState.SetString(PendingBuild,request);ResumeQueuedBuild();
+ }
+ static void DispatchBuild(){
+  if(EditorApplication.isCompiling||EditorApplication.isUpdating||BuildPipeline.isBuildingPlayer)return;
+  var request=SessionState.GetString(PendingBuild,"");EditorApplication.update-=DispatchBuild;if(string.IsNullOrEmpty(request))return;
+  SessionState.SetString(PendingBuild,"");SessionState.SetString(RunningBuild,JsonUtility.FromJson<Request>(request).request_id);
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));Directory.CreateDirectory(Path.Combine(root,"lab-build"));File.WriteAllText(Path.Combine(root,"lab-build/started.json"),request);
+  Build();
+ }
  public static void Build(){
-  string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result();
+  string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};
   try{
    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android,"dev.ror2lab.arm64");PlayerSettings.companyName="PortingLab";PlayerSettings.productName="RoR2 Porting Lab";
    PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android,ScriptingImplementation.IL2CPP);PlayerSettings.Android.targetArchitectures=AndroidArchitecture.ARM64;
@@ -75,7 +90,7 @@ public static class LabBuild {
    var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=BuildOptions.Development});
    result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded;
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
-  result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
+  result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
  [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,playerDeathEffect,pickupDroplet,genericPickup;public string[] prefabAssets,enemyRewardAssets;}
  [MenuItem("Porting Lab/Record Backend Constraints")]

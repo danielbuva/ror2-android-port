@@ -7,6 +7,7 @@ using UnityEngine;
 public sealed class NovaDiagnosticDisplay : IDisposable {
  public GameObject root;public Camera camera;Material material,floorMaterial;Texture2D grid;
  Transform copy,source;LineRenderer aim;bool actualModel;
+ public NovaThirdPersonView thirdPerson;
  static Transform Copy(Transform s,Transform parent,Dictionary<Transform,Transform> map){var t=new GameObject(s.name).transform;t.gameObject.layer=30;t.SetParent(parent,false);t.localPosition=s.localPosition;t.localRotation=s.localRotation;t.localScale=s.localScale;map[s]=t;foreach(Transform child in s)Copy(child,t,map);return t;}
  public NovaDiagnosticDisplay(Transform model,AssetBundle bundle,string[] assets,GameObject floor,bool actual=false){
   actualModel=actual;
@@ -38,6 +39,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   var light=new GameObject("Nova diagnostic light").AddComponent<Light>();light.transform.SetParent(root.transform,false);light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(45,-30,0);
   aim=new GameObject("Input aim indicator").AddComponent<LineRenderer>();aim.transform.SetParent(root.transform,false);aim.gameObject.layer=30;aim.sharedMaterial=floorMaterial;aim.positionCount=2;aim.startWidth=aim.endWidth=.1f;
  }
- public void Observe(Vector3 bodyPosition,Vector3 direction){if(!actualModel)copy.SetPositionAndRotation(source.position,source.rotation);camera.transform.position=new Vector3(bodyPosition.x,bodyPosition.y+10,bodyPosition.z-12);camera.transform.LookAt(bodyPosition+Vector3.up);aim.SetPosition(0,bodyPosition+Vector3.up);aim.SetPosition(1,bodyPosition+Vector3.up+direction*3);}
+ public void ConfigureThirdPerson(RoR2.CharacterBody body){thirdPerson=new NovaThirdPersonView(camera,body);aim.enabled=false;}
+ public void Observe(Vector3 bodyPosition,Vector3 direction){if(!actualModel)copy.SetPositionAndRotation(source.position,source.rotation);if(thirdPerson!=null){thirdPerson.Place();return;}camera.transform.position=new Vector3(bodyPosition.x,bodyPosition.y+10,bodyPosition.z-12);camera.transform.LookAt(bodyPosition+Vector3.up);aim.SetPosition(0,bodyPosition+Vector3.up);aim.SetPosition(1,bodyPosition+Vector3.up+direction*3);}
  public void Dispose(){if(actualModel&&source)source.gameObject.SetActive(false);if(root)UnityEngine.Object.Destroy(root);if(material)UnityEngine.Object.Destroy(material);if(floorMaterial)UnityEngine.Object.Destroy(floorMaterial);if(grid)UnityEngine.Object.Destroy(grid);}
 }

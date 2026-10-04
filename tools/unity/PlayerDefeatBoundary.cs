@@ -44,8 +44,8 @@ public sealed partial class MovementBatchProbe {
   }
   Check(r.playerDefeat.deathEvents==1&&r.playerDefeat.deathEntered&&r.playerDefeat.effects==1&&r.playerDefeat.effectTargetMatched&&r.playerDefeat.effectDestroyed&&r.playerDefeat.bodyDestroyed&&r.playerDefeat.masterRetained&&r.playerDefeat.ragdollBodies>0,"Original player death/ragdoll/effect/natural body lifetime incomplete");
   GlobalEventManager.onCharacterDeathGlobal-=ObservePlayerDeathEvent;r.phase="commando-defeated";Save();
-  // Freeplay keeps its owned context until process close. No alive-body observer or synthetic resurrection.
-  while(r.freePlay){r.playerDefeat.holdSeconds+=Time.unscaledDeltaTime;if(Time.frameCount%30==0)Save();yield return null;}
+  // Restart waits for original death/body lifetime, then uses the full session teardown.
+  while(r.freePlay&&!restartRequested){r.playerDefeat.holdSeconds+=Time.unscaledDeltaTime;if(Time.frameCount%30==0)Save();yield return null;}
  }
  IEnumerator CleanupPlayerDeathEffect(){
   GlobalEventManager.onCharacterDeathGlobal-=ObservePlayerDeathEvent;if(playerDeathLocator==null)yield break;

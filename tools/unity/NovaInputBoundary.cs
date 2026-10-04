@@ -46,12 +46,13 @@ public sealed partial class MovementBatchProbe {
    if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
    if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
    if(cfg.integratedWorld){var world=PrepareIntegratedWorld(body,cfg);while(world.MoveNext())yield return world.Current;}
-   bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;r.nova.originalInputConsumer=true;
+   if(cfg.integratedWorld){display.ConfigureThirdPerson(body);worldView=display.thirdPerson;r.world.camera=worldView.report;}
+   bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;bridge.thirdPerson=display.thirdPerson;r.nova.originalInputConsumer=true;
    r.phase=cfg.integratedWorld?"integrated-world-playing":bringup?"nova-spine-bringup":"nova-commando-ready";Save();float began=Time.realtimeSinceStartup,next=0,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
    while(r.freePlay||Time.realtimeSinceStartup-began<(cfg.integratedWorld?120:bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
     yield return new WaitForEndOfFrame();
-    if(r.freePlay&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;}
+    if(r.freePlay&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;if(restartRequested)yield break;}
     ObserveAutomaticModelFollow(body);TemporaryOverlayManager.OverlayUpdate();
     Check(string.IsNullOrEmpty(bridge.error),"Nova bridge input failure: "+bridge.error);Check((cfg.combatSpine||machine.state==state)&&body.gameObject.activeInHierarchy&&body.master.GetBody()==body&&motor.hasEffectiveAuthority,"Original physical simulation state/link/authority changed");
     float elapsed=Time.realtimeSinceStartup-began;var position=solver.TransientPosition;r.nova.pathLength+=Vector3.Distance(position,previous);var delta=position-previous;delta.y=0;r.nova.planarPathLength+=delta.magnitude;previous=position;if(motor.jumpCount>priorJumpCount)r.nova.jumpTransitions+=motor.jumpCount-priorJumpCount;priorJumpCount=motor.jumpCount;r.nova.maxRise=Mathf.Max(r.nova.maxRise,position.y-restingY);
@@ -69,7 +70,7 @@ public sealed partial class MovementBatchProbe {
      if(cfg.automaticDirector&&enemyBody&&fireAge>9&&fireAge<12){var enemyAimDelta=enemyBody.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(enemyAimDelta.x,enemyAimDelta.z).normalized;}bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
      if(DirectorBatch()&&fireAge>18.5f){var target=DirectorReturnFireTarget();bridge.diagnosticPrimary=target;if(target){var batchAim=target.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(batchAim.x,batchAim.z).normalized;}}
     }
-    display.Observe(position,bank.aimDirection);
+    if(bringup&&worldView!=null)worldView.DiagnosticDirection(bank.aimDirection);display.Observe(position,bank.aimDirection);
     if(elapsed>=next){if(r.freePlay&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
     r.nova.seconds=elapsed;r.nova.fixedTicks=bridge.fixedTicks;r.nova.jumpPresses=bridge.jumpPresses;r.automaticFrames++;if(Time.frameCount%30==0)Save();
    }
@@ -93,6 +94,6 @@ public sealed partial class MovementBatchProbe {
   if(cfg.originalItemPickup&&bringup){var pickup=ProbeOriginalItemPickup(body,cfg);while(pickup.MoveNext())yield return pickup.Current;}
   if(cfg.originalMoneyCost&&bringup){var cost=ProbeOriginalMoneyCost(body,cfg);while(cost.MoveNext())yield return cost.Current;}
   if(cfg.originalActiveClient&&bringup){var client=ProbeActiveBodyClient(body,cfg);while(client.MoveNext())yield return client.Current;}
-  }finally{if(cfg.integratedWorld)CleanupIntegratedWorld();CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&(bringup||cfg.integratedWorld))CleanupOriginalDefaultPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();body.onJump-=jumped;motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);Screen.sleepTimeout=sleepTimeout;}
+  }finally{if(cfg.integratedWorld)CleanupIntegratedWorld();CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&(bringup||cfg.integratedWorld))CleanupOriginalDefaultPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();if(!ReferenceEquals(body,null))body.onJump-=jumped;if(!ReferenceEquals(motor,null))motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;if(solver){solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}worldView=null;Screen.sleepTimeout=sleepTimeout;}
  }
 }

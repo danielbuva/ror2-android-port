@@ -20,6 +20,7 @@ public sealed class NovaInputBridge : MonoBehaviour {
  }
  [Serializable] public class Raw {public float[] axes=new float[16];public bool[] buttons=new bool[20];}
  public InputBankTest bank;public Mapping mapping;public string error;
+ public NovaThirdPersonView thirdPerson;
  public bool enablePrimary,enableAllSkills,diagnosticInput;public bool diagnosticPrimary,diagnosticSecondary,diagnosticUtility,diagnosticSpecial,diagnosticInteract;public Vector3 diagnosticAim;public Vector2 movement,aim;public int fixedTicks,jumpPresses,aimTicks;
  bool focused=true,jumpHeld,jumpLatched;
  public static void RequireNova(){
@@ -39,14 +40,15 @@ public sealed class NovaInputBridge : MonoBehaviour {
  void Update(){
   try{
    if(!bank||mapping==null||!focused){Neutral();return;}
-   RequireNova();if(diagnosticInput)return;var raw=ReadRaw();movement=Stick(raw,mapping.moveX,mapping.moveY,mapping.moveYSign);aim=Stick(raw,mapping.aimX,mapping.aimY,mapping.aimYSign);
+   RequireNova();if(diagnosticInput)return;var raw=ReadRaw();movement=Stick(raw,mapping.moveX,mapping.moveY,mapping.moveYSign);aim=Stick(raw,mapping.aimX,mapping.aimY,mapping.aimYSign);if(thirdPerson!=null)thirdPerson.Look(aim);
    bool down=raw.buttons[mapping.jump];jumpLatched|=down&&!jumpHeld;jumpHeld=down;
   }catch(Exception e){error=e.ToString();enabled=false;Neutral();}
  }
  void FixedUpdate(){
   if(!bank||mapping==null||!focused)return;
-  bank.moveVector=new Vector3(movement.x,0,movement.y);bank.SetRawMoveStates(movement);
+  bank.moveVector=thirdPerson!=null&&!diagnosticInput?thirdPerson.Movement(movement):new Vector3(movement.x,0,movement.y);bank.SetRawMoveStates(movement);
   if(diagnosticInput&&diagnosticAim.sqrMagnitude>0){bank.aimDirection=diagnosticAim;aimTicks++;}
+  else if(thirdPerson!=null&&!diagnosticInput){bank.aimDirection=thirdPerson.Aim();aimTicks++;thirdPerson.report.maxAimError=Mathf.Max(thirdPerson.report.maxAimError,Vector3.Angle(bank.aimDirection,thirdPerson.report.direction));}
   else if(aim.sqrMagnitude>0){bank.aimDirection=new Vector3(aim.x,0,aim.y);aimTicks++;}
   bank.jump.PushState(jumpHeld||jumpLatched);if(bank.jump.justPressed)jumpPresses++;jumpLatched=false;
   var raw=ReadRaw();bank.interact.PushState(diagnosticInput?diagnosticInteract:mapping.enableInteraction&&raw.buttons[mapping.interact]);bool all=mapping.enableSkills||enableAllSkills;

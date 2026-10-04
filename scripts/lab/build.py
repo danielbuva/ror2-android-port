@@ -48,11 +48,15 @@ def build(api='gles',force=False):
    write(WORK/'config/current-build.json',r);print(json.dumps({'cached':True,**r},indent=2));return r
  (WORK/'graphics-api.txt').write_text(api);result=WORK/'lab-build/result.json'
  if result.exists():result.rename(result.with_name('previous-'+now()+'.json'))
+ request_id=now();write(WORK/'build-request.json',{'request_id':request_id,'api':api})
  print(editor('lab','refresh'),flush=True)
  print(editor('lab','build'),flush=True)
- deadline=time.monotonic()+1200
+ dispatch_deadline=time.monotonic()+120;deadline=time.monotonic()+1200
  while time.monotonic()<deadline:
-  if result.exists():break
+  if result.exists():
+   if read(result).get('request_id')!=request_id:raise RuntimeError('Terminal build receipt belongs to a different request')
+   break
+  if time.monotonic()>dispatch_deadline and (not (WORK/'lab-build/started.json').exists() or read(WORK/'lab-build/started.json').get('request_id')!=request_id):raise RuntimeError('Queued build never started; inspect editor dispatch evidence')
   time.sleep(2)
  else:raise RuntimeError('Build timeout; inspect work/lab-editor.log; no cache stamp written')
  r=read(result)

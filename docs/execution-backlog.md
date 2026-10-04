@@ -2076,3 +2076,35 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** Update state/journal/backlog and integration summary; advance scoped rollback only on acceptance. Staged privacy/IP/manual provenance review and Conventional Commit/push.
 - **DEPENDENCIES:** I01/J223. Consulted community-prior-art map, pinned R2API.Items f539511e registration before original catalogs and DebugToolkit d1e2f0aa CollectItemTiers/Run lists; current original ItemDef/CharacterBody and recovered source govern the contract. No source implementations copied; no new loader or diagnostic framework.
 - **STATUS:** PASS — J224. Four original loot choices, three earned-money source chest purchases/connected grants (Glasses2/Syringe1), original crit21%/attack speed1.15/XP40/level2/max-health143/wallet21,16 kills,120.007 seconds/35979 assertions and owned cleanup.45 unchanged DLLs/40 tests/no new errors/crashes. Normal physical-input launch/original death and reviewed HP0/defeat/close UI pass, with report fatal health-4 preserved. Slug/Ukulele were not randomly acquired; no new human physical acceptance or formal gate advancement. Scoped integrated checkpoint retains I01/J223 rollback. APK installed/stopped, Nova asleep.
+
+## I03 — Third-person view and death-to-restart in the composed game
+- **ID:** I03
+- **TITLE:** Replace the diagnostic view and restart a defeated session without closing the app.
+- **CONTEXT:** I02/J224 remains the persistent integrated rollback; broad whole-loop integration is active.
+- **OBSERVATION:** The world has real stage collision, original character/combat/loot and actual controller bindings, but uses an orthographic camera and requires closing after original death. Recovered Commando ccpStandard has pitch limits, pivot, camera offset and wall cushion; original CameraTargetParams provides overrides and recoil.
+- **HYPOTHESIS:** A temporary perspective Android view/input adapter using those original parameters can provide camera-relative movement and reticle aiming. Fully tearing down the defeated owned world allows a fresh local session in the same process without rewriting death or inventing profiles/platform state.
+- **TASK:** Integrate perspective orbit/terrain collision/camera-relative input/reticle directly into the world. Add physical A and UI restart after original death/body destruction, retain completed-session evidence, fully clean owned runtime/catalog/network/source resources, then instantiate a fresh session. Integrate the original lunar-coin definition/catalog exposed by the running combat build; preserve its original absent-NetworkUser grant refusal. Build/run the composed game and repair its first actual failure.
+- **CONSTRAINTS:** I02 legal/privacy/storage boundaries remain. No direct movement/state/skill execution, synthetic resurrection, stock CameraRig/LocalUser/profile/authentication claim, progress or victory fabrication. Replay remains diagnostic; actual human controller acceptance is reported separately. Retain I02 rollback and idle OLED sleep.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** NovaThirdPersonView, existing display/input/world/death/spawn/clock lifecycle hooks and thin script-copy list; ignored full stage/build/device/capture/session receipts.
+- **TEST COMMAND:** Doctor; existing nova-whole-game-prepare; pinned MCP compile; preflight; forced Vulkan build; movement-batch-run; normal direct launch through natural defeat and UI restart; current-PID/hash/capture/cleanup review; existing host tests.
+- **PASS CONDITION:** Sustained composed combat/loot still passes with perspective source-parameter view. Normal physical-mode launch uses camera-relative/ray input. Actual original defeat followed by full owned teardown and a fresh healthy session in the same PID, with reset session inventory/clock and no new errors/crashes. New manual camera acceptance remains distinct from automated UI verification.
+- **FAILURE EVIDENCE TO CAPTURE:** First actual camera/input/death/teardown/reinitialization failure and phase, completed/new session records, exact stage/settings/config/APK/payload/PID/current errors/captures. Preserve each rejected build/run.
+- **STATE/JOURNAL UPDATES REQUIRED:** State/journal/backlog/milestones/risk at exit; advance only scoped accepted integration checkpoint. Staged public audit/manual provenance review and Conventional Commit/push.
+- **DEPENDENCIES:** I02/J224. Consulted community-prior-art camera map and pinned Starstorm2 a9a4badd BossAttackCharge CameraTargetParams override ownership; exact current CameraTargetParams/CharacterCameraParamsData and recovered ccpStandard govern the view. Existing owned teardown supplies restart. No community/original implementation copied.
+- **STATUS:** PASS — J228. Perspective composed gameplay120.021 seconds,15 kills/three purchases/two grants; two actual death/cleanup/UI restarts and fresh session3 in the same PID over109.024 seconds.45 unchanged DLLs/40 tests/no new errors/crashes. Source lunar definition and original unavailable grant retained. No new human orbit/A acceptance or formal gate advance; I02 rollback retained. J225–J227 failures preserved.
+
+## I03-a — Preserve the queued composed build (conditional T03)
+- **ID:** I03-a
+- **TITLE:** Retain one editor build request across reload and attribute its completion.
+- **CONTEXT:** J227 loses I03's queued delayCall before build entry.
+- **OBSERVATION:** Dispatch succeeds but editor is idle and no terminal result exists.
+- **HYPOTHESIS:** A SessionState request and ready-update dispatch survive reload; matching entry/terminal IDs prevent stale attribution.
+- **TASK:** Persist only this existing lab request, refuse queued/active duplicates, record entry, check terminal ID and detect absent entry.
+- **CONSTRAINTS:** No concurrent editor mutations, general queue/lock/cache redesign, stale APK installation or proprietary tracked material.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing LabBuild and build.py; ignored request/entry/terminal evidence.
+- **TEST COMMAND:** Python compile; existing host safety tests; exact-editor forced I03 Vulkan build and request/terminal/APK verification.
+- **PASS CONDITION:** Changed-source build actually enters/completes and all receipts match the current request before install.
+- **FAILURE EVIDENCE TO CAPTURE:** Dispatch state, request/entry/terminal IDs and first editor error; preserve failed attempt.
+- **STATE/JOURNAL UPDATES REQUIRED:** J227 and I03 exit; no capability advancement from dispatch alone; staged privacy/manual review and Conventional Commit.
+- **DEPENDENCIES:** I03/J227; existing pinned Unity editor orchestration. Generic editor dispatch, no RoR2 subsystem reconstruction.
+- **STATUS:** PASS — J228 changed-source build enters/completes with matching request/entry/terminal identities, zero build errors and accepted Nova execution;40 existing host tests pass.

@@ -12,7 +12,7 @@ public sealed partial class MovementBatchProbe {
  IEnumerator AutomaticSpawnBoundary(CharacterBody body,Result cfg){
   PrepareSpawnStateCatalog(cfg);
   var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");
-  var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
+  var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;var spawnedMaster=body.master;
   bool automaticBody=IsAutomaticBody(),automaticDirection=IsAutomaticDirection(),automaticModel=IsAutomaticModel();
   var direction=body.GetComponent<CharacterDirection>();
   if(automaticDirection)Check(direction&&!direction.modelAnimator,"Direction Start already ran; refuse automatic scheduling claim");
@@ -63,7 +63,7 @@ public sealed partial class MovementBatchProbe {
    }
    if(IsAutomaticSkill())StartAutomaticSkillTiming(body);
    if(IsNovaInput()){
-    var novaRoutine=NovaInputBoundary(body,machine,cfg);while(novaRoutine.MoveNext())yield return novaRoutine.Current;
+    var novaRoutine=NovaInputBoundary(body,machine,cfg);while(novaRoutine.MoveNext())yield return novaRoutine.Current;if(restartRequested){Check(r.playerDefeat.bodyDestroyed&&r.playerDefeat.deathEntered&&!body,"Restart before original death completed");yield break;}
    }else if(automaticDirection){
     var directionRoutine=AutomaticDirectionBoundary(body,machine);while(directionRoutine.MoveNext())yield return directionRoutine.Current;
    }else if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){
@@ -103,10 +103,10 @@ public sealed partial class MovementBatchProbe {
     Check((cfg.integratedWorld?body.healthComponent.health>0&&body.maxHealth>=110&&body.attackSpeed>=1:(cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110))&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness");
    }
   }finally{
-   body.gameObject.SetActive(false);motor.onMotorStart-=observed;input.moveVector=Vector3.zero;
-   if(automaticBody){body.master.onBodyStart-=masterStarted;CharacterBody.onBodyStartGlobal-=bodyStarted;body.onRecalculateStats-=stats;}
+   if(body)body.gameObject.SetActive(false);if(!ReferenceEquals(motor,null))motor.onMotorStart-=observed;if(input)input.moveVector=Vector3.zero;
+   if(automaticBody){if(spawnedMaster)spawnedMaster.onBodyStart-=masterStarted;CharacterBody.onBodyStartGlobal-=bodyStarted;if(!ReferenceEquals(body,null))body.onRecalculateStats-=stats;}
    // Explicit original exit keeps measured buff/material dependencies alive during teardown.
-   if(IsPlayableSpine())foreach(var weapon in new[]{body.skillLocator.primary.stateMachine,body.skillLocator.secondary.stateMachine,body.skillLocator.utility.stateMachine,body.skillLocator.special.stateMachine}.Distinct().Where(x=>x!=machine))Call(weapon,"OnDestroy");Call(machine,"OnDestroy");Physics.gravity=savedGravity;solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);
+   if(body&&IsPlayableSpine())foreach(var weapon in new[]{body.skillLocator.primary.stateMachine,body.skillLocator.secondary.stateMachine,body.skillLocator.utility.stateMachine,body.skillLocator.special.stateMachine}.Distinct().Where(x=>x!=machine))if(weapon)Call(weapon,"OnDestroy");if(machine)Call(machine,"OnDestroy");Physics.gravity=savedGravity;if(solver){solver.CollidableLayers=savedLayers;solver.SetGroundSolvingActivation(savedSolving);}if(restartRequested&&ownedDetachedModel)Destroy(ownedDetachedModel);
   }
   Check(!automaticBody||!CharacterBody.readOnlyInstancesList.Contains(body),"Original automatic body deregistration");
   Check(machine.state==null&&!KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),"Automatic state exit/solver unregistration");

@@ -42,6 +42,13 @@ public sealed partial class MovementBatchProbe {
   for(int i=0;i<2;i++){string key;Check(LegacyResourcesAPI.GetGuid(names[i],out key)&&key==cfg.enemyDirectorTeamKeys[i],"Original team effect legacy identity");rewardLocator.Add(key,new ResourceLocationBase(key,cfg.enemyDirectorTeamAssets[i],typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));}
   // Natural TeamCatalog constructor retains its real limit, effect and sound contracts.
   var player=TeamCatalog.GetTeamDef(TeamIndex.Player);var monster=TeamCatalog.GetTeamDef(TeamIndex.Monster);
+  // The static constructor runs only once. Owned teardown releases and clears its four
+  // original provider leases; a restarted session must acquire those exact assets again.
+  if(r.session>1){
+   var teams=new[]{TeamIndex.Player,TeamIndex.Monster,TeamIndex.Lunar,TeamIndex.Void};
+   Check(teams.All(x=>!TeamCatalog.GetTeamDef(x).levelUpEffect),"Previous session retained team effect ownership");
+   foreach(var team in teams)TeamCatalog.GetTeamDef(team).levelUpEffect=LegacyResourcesAPI.Load<GameObject>(names[team==TeamIndex.Player?0:1]);
+  }
   directorTeamEffects=new[]{player.levelUpEffect,monster.levelUpEffect};
   Check(directorTeamEffects.All(x=>x)&&directorTeamEffects[0].name=="LevelUpEffect"&&directorTeamEffects[1].name=="LevelUpEffectEnemy"&&monster.softCharacterLimit==40,"Original team limit/effect contracts missing");
   yield return null;
