@@ -2270,4 +2270,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **FAILURE EVIDENCE TO CAPTURE:** First current-process error, RNG/notification context, scene entry and actual Moon state, APK/payload receipts and teardown.
 - **STATE/JOURNAL UPDATES REQUIRED:** First actual result and I07 status; failed attempts advance no checkpoint.
 - **DEPENDENCIES:** I07/J269; pinned R2API.Director f539511e and DebugToolkit d1e2f0aa plus exact original Run/notification source.
-- **STATUS:** IN PROGRESS; integrated retry staged.
+- **STATUS:** J270 builds/runs with initialized streams; genuine first-stage death prevents transition acceptance. Continue the complete game with boss-aware ordinary input and ending context.
+
+
+## I07-S07 — Carry the whole game through original ending/results
+
+- **ID / TITLE:** I07-S07 — Integrate complete ending context and Android result persistence.
+- **CONTEXT / OBSERVATION:** J270 genuine death; known original ending requires initialized statistics, GameOverController/report/catalog context. Moon source SceneDef exists but was omitted from registered metadata.
+- **HYPOTHESIS:** Boss-aware replay and complete source ending context allow the assembled route/mission to progress into original report generation.
+- **TASK:** Integrate original statistics/scheduling, genuine server/client ending and original report XML; provide an owned Android presentation template and separate local run ledger with checked reload/backup. Include exact Moon metadata.
+- **CONSTRAINTS:** No fabricated victory, grants, login, NetworkUser, achievements or coins. Stock cutscene/Steam-backed UserProfile remain explicitly unavailable. Keep accepted rollback and original numerical code.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing world/input/prepare interface, authored IntegratedResultsBoundary and source-ending closure selection; ignored whole-game evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Genuine original escape/ending, generated source report/client delivery, exact report XML reload and retained Android run result. Early game-over flag or compilation is insufficient.
+- **FAILURE EVIDENCE TO CAPTURE:** First original stats/catalog/Moon/ending/native error, full current-process log, genuine report identity and result reload, owned teardown.
+- **STATE/JOURNAL UPDATES REQUIRED:** Actual whole-game result; advance no failed checkpoint.
+- **DEPENDENCIES:** I07/J269/J270; exact original report/ending/statistics source; pinned prior-art references above.
+- **STATUS:** Host preparation/import repairs preserved as J271; expanded145.219-second/zero-error Vulkan build,39 payload/45 assembly hashes and40 tests pass. Full Nova run underway; ending/persistence acceptance remains open.

@@ -154,7 +154,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    var message=(MessageBase)Activator.CreateInstance(type,true);msg.ReadMessage(message);
    var master=(GameObject)type.GetField("masterGameObject").GetValue(message);var pickup=(UniquePickup)type.GetField("pickupState").GetValue(message);var quantity=(uint)type.GetField("pickupQuantity").GetValue(message);
    var characterMaster=master?master.GetComponent<CharacterMaster>():null;var definition=PickupCatalog.GetPickupDef(pickup.pickupIndex);var item=ItemCatalog.GetItemDef(definition!=null?definition.itemIndex:ItemIndex.None);
-   var observation=new WorldPickupMessageObservation{at=r.world.simulationSeconds,resolvedMaster=characterMaster,playerMaster=characterMaster&&characterMaster==worldPlayer.master,knownPickup=definition!=null,masterId=characterMaster?characterMaster.netId.Value:0,quantity=quantity,pickupIndex=pickup.pickupIndex.value,item=item?item.name:definition!=null?definition.internalName:"unavailable"};
+   var observation=new WorldPickupMessageObservation{at=r.world.simulationSeconds,resolvedMaster=characterMaster,playerMaster=characterMaster&&worldPlayer&&characterMaster==worldPlayer.master,knownPickup=definition!=null,masterId=characterMaster?characterMaster.netId.Value:0,quantity=quantity,pickupIndex=pickup.pickupIndex.value,item=item?item.name:definition!=null?definition.internalName:"unavailable"};
    if(r.world.pickupMessageObservations.Count==64)r.world.pickupMessageObservations.RemoveAt(0);r.world.pickupMessageObservations.Add(observation);
    // Original notification handling tolerates missing masters and zero effective stacks.
    // Record those packets without claiming a connected player grant.
@@ -280,7 +280,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
   var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;Destroy(gameObject);
  }
- void CleanupIntegratedWorld(){CleanupTeleporterWorld();
+ void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupTeleporterWorld();
   worldPathFollower.Reset();
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}

@@ -171,6 +171,8 @@ def stage_moon(stage, previous, out, spec):
     for row in query:
         parts = row.split('|')
         if len(parts) >= 3 and (export/parts[1]).exists(): roots_to_copy.append(export/parts[1])
+    moon_scene=export/'Assets/RoR2/Base/Scenes/moon2/moon2.asset'
+    roots_to_copy.append(moon_scene)
     pending = roots_to_copy + [index[g] for _, g, _ in REFERENCE.findall(''.join(retained))
                               if g and not g.startswith('0000000000000000')]
     seen, rows, staged = set(), [], {}
@@ -224,4 +226,8 @@ def stage_moon(stage, previous, out, spec):
         row={k:staged[v].lower() for k,v in actor.items() if k not in {'name','bindings'}}
         row['name']=actor['name'];row['bindings']=[dict(path=b['path'],mesh=staged[b['mesh']].lower() if b['mesh'] else '',material=staged[b['material']].lower()) for b in actor['bindings']]
         actor_specs.append(row)
-    return dict(configs=configs,actors=actor_specs,pillar= pillar.lower(),pillarKey=pillar_rows[0][0])
+    moon_scene=export/'Assets/RoR2/Base/Scenes/moon2/moon2.asset'
+    if moon_scene not in staged:raise RuntimeError('Recovered Moon SceneDef missing from source closure')
+    recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[staged[moon_scene]]))
+    write(WORK/'scene-probe-build.json',recipe)
+    return dict(configs=configs,actors=actor_specs,pillar=pillar.lower(),pillarKey=pillar_rows[0][0],sceneDef=staged[moon_scene].lower())

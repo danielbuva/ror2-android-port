@@ -65,7 +65,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','MoonMissionBoundary','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','IntegratedResultsBoundary','MoonMissionBoundary','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=baseline_cfg;cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
@@ -77,9 +77,12 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         moon=stage_moon(stage,a,out,cfg['integratedStages'][-1])
         cfg['objectiveConfigAssets']=list(dict.fromkeys(cfg['objectiveConfigAssets']+moon['configs']))
         cfg['objectiveActors']+=moon['actors']
+        cfg['runSceneDefAssets']=list(dict.fromkeys(cfg['runSceneDefAssets']+[moon['sceneDef']]))
         cfg['objectiveSupportAssets'].append(moon['pillar'])
         cfg['objectiveSupportKeys'].append(moon['pillarKey'])
         cfg['objectiveSupportPaths'].append('Prefabs/PositionIndicators/PillarChargingPositionIndicator')
+        from integrated_results import stage_results
+        cfg.update(stage_results(stage,out,a))
         cfg['moonMission']=True
         cfg['integratedTransitionTarget']=5
         cfg['integratedRuntimeSeconds']=3300
