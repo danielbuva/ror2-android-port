@@ -171,7 +171,11 @@ public sealed partial class MovementBatchProbe {
    if(!battery){bridge.movement=Vector2.zero;SetMoonInputObjective("Wait for source battery state",position);return true;}
    NavigateWorldInput(player,bridge,battery.transform.position,active?Mathf.Max(1,battery.currentRadius*.25f):1,battery.name,elapsed);
    if(active){MoonCombatInput(player,bridge,elapsed);SetMoonInputObjective("Charge original battery and fight",battery.transform.position);}
-   else{AimMoonInteraction(player,bridge,battery.gameObject,elapsed);SetMoonInputObjective("Activate original battery",battery.transform.position);}
+   else{
+    var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
+    if(worldDriver.currentInteractable!=battery.gameObject&&threat!=null&&Vector3.Distance(threat.body.corePosition,player.corePosition)<20){MoonCombatInput(player,bridge,elapsed);bridge.diagnosticUtility=player.skillLocator.utility.CanExecute();r.world.travelDefenseFrames++;r.world.travelDefenseTarget=battery.name;SetMoonInputObjective("Defend while approaching original battery",battery.transform.position);}
+    else{AimMoonInteraction(player,bridge,battery.gameObject,elapsed);SetMoonInputObjective("Activate original battery",battery.transform.position);}
+   }
    return true;
   }
   if(moonEscape.mainStateMachine.state is EscapeSequenceController.EscapeSequenceMainState){
@@ -204,7 +208,7 @@ public sealed partial class MovementBatchProbe {
   if(worldDriver.currentInteractable==target&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
  }
  void MoonCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed){
-  var enemy=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();if(enemy==null)return;
+  var enemy=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();if(enemy==null)return;
   var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
  }
  void CleanupMoonMission(){

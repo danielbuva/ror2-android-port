@@ -2501,3 +2501,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J295 full build:**84.755-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `898a6522164aa4706357819e34de22791b385a83fee00d65d2b70767e874a76f`. Whole Nova route retry running; original local navigation/exit/Abyssal/Sky/Moon/victory acceptance pending. I06/I03 unchanged.
+
+
+**J295 device exit:**319.649 reported gameplay seconds,57 kills and one genuine objective/transport at original clear count1. Wetland ends in genuine StandardLoss while the diagnostic driver focuses on a naturally ejected pickup without return fire; nearby base Beetles deal115.2/144 damage. Original LocalNavigator runs without exceptions and reports obstruction/recovery output, but the second teleporter return is not reached. Original server/client/RunReport/XML/ledger persist:357 fields,11509 dealt/412 taken,332.696 original stopwatch seconds,three acquired item entries/priorRuns8. Full source/world/model/results cleanup passes with zero unexpected current-process errors. Failed assessment remains separate; I06/I03 unchanged, app stopped/Nova asleep. Next correct input-only self-defence during loot/objective travel in the entire composition.
+
+### I07-S16 — Whole-game defence while approaching interactions
+
+- **ID:** I07-S16.
+- **TITLE:** Preserve ordinary self-defence during loot and objective travel.
+- **CONTEXT:** J295 original local navigation executes cleanly, but Wetland pickup-focused input ends in genuine death.
+- **OBSERVATION:** Nearby base Beetles deal115.2/144 damage while a pickup remains targeted; one source transport and original loss/results/cleanup pass.
+- **HYPOTHESIS:** Input-only threat priority before travel prevents the driver's unopposed contact damage without changing source gameplay.
+- **TASK:** Integrate defence across loot/reward/teleporter and Moon battery travel, then build/run the whole route and fix its next real blocker.
+- **CONSTRAINTS:** Inherited privacy/IP/platform/storage/ownership/pin rules; preserve original selector priority, damage/health, progression, physics and physical controls.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld/TeleporterWorld/MoonMission boundaries, narrow defence observations and ignored full candidate/evidence.
+- **TEST COMMAND:** Live `./dev preflight`, `./dev test`, forced full Vulkan build and `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual travel defence and subsequent original interaction/route continue without unexplained runtime failures; Moon/victory require execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Travel/defence target, source threat/input/health, navigation/selector state, next actual runtime exception, ending/results/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J296 build and device exit, concise state/backlog/milestones; no acceptance from compilation/partial execution.
+- **DEPENDENCIES:** J295 whole composition and actual loss; I06/I03 rollbacks retained.
+
+
+**J296 full build:**91.921-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `dee903788a18b2ca38b2f1dd8c0725120fdf8198dd01b542e791aeb8905bddf6`. Complete Nova route retry running; travel defence/original interactions/Moon/victory require actual device outcomes. I06/I03 unchanged.

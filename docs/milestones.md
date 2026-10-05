@@ -270,3 +270,11 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J295 full build:**84.755-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `898a6522164aa4706357819e34de22791b385a83fee00d65d2b70767e874a76f`. Whole Nova route retry running; original local navigation/exit/Abyssal/Sky/Moon/victory acceptance pending. I06/I03 unchanged.
+
+
+**J295 device exit:**319.649 reported gameplay seconds,57 kills and one genuine objective/transport at original clear count1. Wetland ends in genuine StandardLoss while the diagnostic driver focuses on a naturally ejected pickup without return fire; nearby base Beetles deal115.2/144 damage. Original LocalNavigator runs without exceptions and reports obstruction/recovery output, but the second teleporter return is not reached. Original server/client/RunReport/XML/ledger persist:357 fields,11509 dealt/412 taken,332.696 original stopwatch seconds,three acquired item entries/priorRuns8. Full source/world/model/results cleanup passes with zero unexpected current-process errors. Failed assessment remains separate; I06/I03 unchanged, app stopped/Nova asleep. Next correct input-only self-defence during loot/objective travel in the entire composition.
+
+**J296 continuation:** I07 whole-game route retains original local navigation/bounds and adds input-only defence during loot/objective/Moon battery travel. Full Nova build/run required; Moon landing/mission/victory remain unaccepted, I06/I03 unchanged.
+
+
+**J296 full build:**91.921-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `dee903788a18b2ca38b2f1dd8c0725120fdf8198dd01b542e791aeb8905bddf6`. Complete Nova route retry running; travel defence/original interactions/Moon/victory require actual device outcomes. I06/I03 unchanged.

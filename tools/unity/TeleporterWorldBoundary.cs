@@ -290,13 +290,14 @@ public sealed partial class MovementBatchProbe {
   // Charging completion does not remove surviving enemies. Loot/exit replay must
   // retain ordinary combat input when an add can still reach the player.
   if(!worldTeleporter.isIdle&&!worldTeleporter.isCharging){
-   var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
+   var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    if(threat!=null&&Vector3.Distance(threat.body.corePosition,player.corePosition)<35){ObjectiveCombatInput(player,bridge,elapsed,planar);r.world.objective="Clear surviving threats before reward and exit";return true;}
   }
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected){if(objectiveRewardApproachAt<0)objectiveRewardApproachAt=elapsed;else if(elapsed-objectiveRewardApproachAt>=30)r.objective.rewardLeftBehind=true;}
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected&&!r.objective.rewardLeftBehind){
    var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();
    if(!pickup){bridge.movement=Vector2.zero;r.world.objective="Wait for original boss reward";return true;}
+   if(DefendWorldApproach(player,bridge,pickup.gameObject,elapsed))return true;
    NavigateWorldInput(player,bridge,pickup.transform.position,.6f,pickup.name,elapsed);
    var collider=pickup.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<x.gameObject.layer))!=0);
    var pickupAim=(collider?collider.bounds.center:pickup.transform.position)-player.inputBank.aimOrigin;bridge.aim=new Vector2(pickupAim.x,pickupAim.z).normalized;bridge.diagnosticAim=pickupAim.normalized;
@@ -307,8 +308,7 @@ public sealed partial class MovementBatchProbe {
    NavigateWorldInput(player,bridge,objectiveHost.transform.position,1,objectiveHost.name,elapsed);
    // Travelling to an objective must not disable normal self-defence. Interaction
    // wins when the original selector is ready; otherwise clear nearby attackers.
-   var nearby=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-   if(worldDriver.currentInteractable!=objectiveHost&&nearby!=null&&Vector3.Distance(nearby.body.corePosition,player.corePosition)<20){ObjectiveCombatInput(player,bridge,elapsed,planar,false);r.world.objective="Clear nearby threats while approaching teleporter";return true;}
+   if(DefendWorldApproach(player,bridge,objectiveHost,elapsed))return true;
    var aim=objectiveBeacon.bounds.center-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;
    if(worldDriver.currentInteractable==objectiveHost&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
   }else{
@@ -316,6 +316,14 @@ public sealed partial class MovementBatchProbe {
   }
   r.world.objective=worldTeleporter.isIdle?"Activate teleporter":worldTeleporter.isCharging?"Defeat boss and charge teleporter":worldTeleporter.isCharged?"Collect reward and exit":"Prepare next stage";
   return true;
+ }
+ bool DefendWorldApproach(CharacterBody player,NovaInputBridge bridge,GameObject target,float elapsed){
+  // Preserve original selection/interaction priority. Travel resumes after the
+  // nearby source threat is defeated through ordinary skill and movement input.
+  if(worldDriver.currentInteractable==target)return false;
+  var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
+  if(threat==null||Vector3.Distance(threat.body.corePosition,player.corePosition)>=20)return false;
+  ObjectiveCombatInput(player,bridge,elapsed,Vector2.zero,false);r.world.travelDefenseFrames++;r.world.travelDefenseTarget=target.name;r.world.objective="Defend while approaching "+target.name;return true;
  }
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
    var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();

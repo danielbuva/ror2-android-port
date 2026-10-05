@@ -33,7 +33,7 @@ public sealed partial class MovementBatchProbe {
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries;public float navigationStalledSeconds;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
-  public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected;public string combatTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
+  public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
@@ -254,6 +254,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.teleporterLoop&&elapsed-stageEnteredAt>65){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
   bridge.movement=Vector2.zero;
   if(target){
+   if(r.teleporterLoop&&DefendWorldApproach(player,bridge,target,elapsed))return;
    NavigateWorldInput(player,bridge,target.transform.position,target.GetComponent<GenericPickupController>() ? .6f : 1.6f,target.name,elapsed);
    var collider=target.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&!x.isTrigger);var aim=(collider?collider.bounds.center:target.transform.position)-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;
    // The original input producer consumes a 3D ray; use the measured target elevation as well.
