@@ -230,7 +230,8 @@ def stage_moon(stage, previous, out, spec):
     if len(pillar_rows)!=1:raise RuntimeError('Original pillar indicator location changed')
     pillar=staged[export/pillar_rows[0][1]]
     support_paths = ['Prefabs/Projectiles/LunarMissileProjectile',
-                     'Prefabs/TemporaryVisualEffects/CrippleEffect']
+                     'Prefabs/TemporaryVisualEffects/CrippleEffect',
+                     'SpawnCards/HelperPrefab']
     support_rows = []
     for path in support_paths:
         matches = [x for x in typed_rows if len(x)==4 and x[3]==path and x[2]=='UnityEngine.GameObject']

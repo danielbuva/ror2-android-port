@@ -231,3 +231,6 @@ J284 completes five genuine original objectives and reaches active original Moon
 
 
 J287 completes five original objective loops and five actual transports, with original Moon population selection and Phase1. Genuine defeat passes original XML/ledger persistence; actual entry/elite/particle/hidden-message failures prevent acceptance. J288 corrects the full-game contexts and repeats the entire integrated route. No Moon batteries/elevators/phases/escape/victory or formal gate/rollback advance.
+
+
+J288 repeats five genuine objectives but Moon landing guard rejects before fifth transport/mission Start. Exact full file-based stack identifies missing original safe-teleport helper; source trigger layers were overwritten. J289 restores those contexts and adds actual entry observations. No new gate/pointer acceptance; I06/I03 retained.

@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 // Recovered static stage geometry; directors, scene lifecycle and progression remain separate.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
-  public string scene,spawnMarker;public bool loaded,cleaned,groundHit;
+  public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
@@ -36,7 +36,7 @@ public sealed partial class MovementBatchProbe {
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
-   renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
+   if(!moon||!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
    if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
    var materials=renderer.sharedMaterials;
    for(int i=0;i<materials.Length;i++){
@@ -52,7 +52,8 @@ public sealed partial class MovementBatchProbe {
    renderer.sharedMaterials=materials;r.stage.renderers++;
   }
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
-   if(!moon||!collider.GetComponent<EntityLocator>())collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
+   // Mission volumes retain source trigger layers and their original collision rules.
+   if(!moon||(!collider.isTrigger&&!collider.GetComponent<EntityLocator>()))collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
    var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh){r.stage.missingColliderMeshes++;emptyColliders.Add(StageObjectPath(mesh.transform));}}
   }
   r.stage.emptyMeshPaths=emptyMeshes.ToArray();r.stage.emptyColliderPaths=emptyColliders.ToArray();
@@ -65,15 +66,16 @@ public sealed partial class MovementBatchProbe {
   if(moon){var locator=SceneInfo.instance.GetComponent<ChildLocator>();var origin=locator?locator.FindChild("PlayerSpawnOrigin"):null;Check(origin&&origin.gameObject.scene==stageGeometryScene,"Original Moon player spawn origin missing");entryOrigin=origin.position;r.stage.entryOrigin=entryOrigin;}
   foreach(var marker in transforms.Where(x=>!moon&&x.name=="SurvivorPodSpawnPoint"&&x.gameObject.activeInHierarchy)){
    RaycastHit hit;if(!Physics.Raycast(marker.position+Vector3.up*30,Vector3.down,out hit,100,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.9f)continue;
-   r.stage.spawnMarker=marker.name;r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
+   if(hit.collider.gameObject.scene!=stageGeometryScene)continue;r.stage.groundColliderPath=StageObjectPath(hit.collider.transform);r.stage.groundColliderScene=hit.collider.gameObject.scene.name;r.stage.spawnMarker=marker.name;r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
   }
   if(!r.stage.groundHit&&spec!=null){
    var graph=artifactBundle.LoadAsset<RoR2.Navigation.NodeGraph>(spec.groundGraph);Check(graph&&graph.GetNodeCount()>0,"Original next-stage ground graph unavailable");
    var candidates=new List<Vector3>();for(int i=0;i<graph.GetNodeCount();i++){Vector3 point;if(graph.GetNodePosition(new RoR2.Navigation.NodeGraph.NodeIndex(i),out point))candidates.Add(point);}
    foreach(var point in candidates.OrderBy(x=>moon?(x-entryOrigin).sqrMagnitude:x.x*x.x+x.z*x.z)){
     RaycastHit hit;if(!Physics.Raycast(point+Vector3.up*8,Vector3.down,out hit,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.98f)continue;
-    int clear=0;foreach(var offset in new[]{Vector3.right*5,Vector3.left*5,Vector3.forward*6,Vector3.back*3}){RaycastHit nearby;if(Physics.Raycast(hit.point+offset+Vector3.up*8,Vector3.down,out nearby,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&nearby.normal.y>.95f&&Mathf.Abs(nearby.point.y-hit.point.y)<1)clear++;}
-    if(clear<4)continue;r.stage.spawnMarker=moon?"Original PlayerSpawnOrigin / ground graph / measured Android entry":"Original ground graph / measured Android entry";r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
+    if(hit.collider.gameObject.scene!=stageGeometryScene)continue;
+    int clear=0;foreach(var offset in new[]{Vector3.right*5,Vector3.left*5,Vector3.forward*6,Vector3.back*3}){RaycastHit nearby;if(Physics.Raycast(hit.point+offset+Vector3.up*8,Vector3.down,out nearby,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&nearby.collider.gameObject.scene==stageGeometryScene&&nearby.normal.y>.95f&&Mathf.Abs(nearby.point.y-hit.point.y)<1)clear++;}
+    if(clear<4)continue;r.stage.groundColliderPath=StageObjectPath(hit.collider.transform);r.stage.groundColliderScene=hit.collider.gameObject.scene.name;r.stage.spawnMarker=moon?"Original PlayerSpawnOrigin / ground graph / measured Android entry":"Original ground graph / measured Android entry";r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
    }
   }
   Check(r.stage.groundHit,"No measured walkable original stage entry");Save();

@@ -30,10 +30,12 @@ public sealed partial class MovementBatchProbe {
   BindEnemyDefinition(typeof(RoR2Content.Equipment),"AffixLunar",def);return new[]{def};
  }
  GameObject moonLunarMissile,moonCrippleEffect,previousMoonCripple;System.Reflection.FieldInfo moonCrippleSlot;bool ownsMoonCripple;
+ int moonHelperIndex=-1,moonHelperReferences;GameObject moonTeleportHelper;
  void PrepareMoonSupport(Result cfg){
   if(!cfg.moonMission)return;
   int missile=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Projectiles/LunarMissileProjectile"),cripple=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/TemporaryVisualEffects/CrippleEffect");
   Check(missile>=0&&cripple>=0,"Original Lunar support manifest missing");
+  moonHelperIndex=Array.IndexOf(cfg.objectiveSupportPaths,"SpawnCards/HelperPrefab");Check(moonHelperIndex>=0,"Original safe-teleport helper manifest missing");moonTeleportHelper=objectiveSupportSources[moonHelperIndex];Check(moonTeleportHelper&&moonTeleportHelper.name=="DirectorSpawnProbeHelperPrefab"&&moonTeleportHelper.GetComponentsInChildren<Component>(true).All(x=>x is Transform),"Original safe-teleport helper identity changed");moonHelperReferences=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(objectiveSupportLeases[moonHelperIndex]);Check(moonHelperReferences==1,"Unowned safe-teleport helper lease");
   moonLunarMissile=objectiveSupportSources[missile];Check(moonLunarMissile&&moonLunarMissile.GetComponent<RoR2.Projectile.ProjectileController>(),"Original Lunar missile component missing");
   moonCrippleSlot=BarrierSlot().DeclaringType.GetField("crippleEffectPrefab",System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
   Check(moonCrippleSlot!=null&&!ownsMoonCripple,"Original Cripple effect slot missing or already owned");previousMoonCripple=(GameObject)moonCrippleSlot.GetValue(null);
@@ -44,6 +46,10 @@ public sealed partial class MovementBatchProbe {
   moonCrippleEffect=effect;ownsMoonCripple=true;moonCrippleSlot.SetValue(null,effect);Check(ReferenceEquals(moonCrippleSlot.GetValue(null),effect),"Original Cripple effect binding failed");
  }
  void CleanupMoonSupport(){
+  // Original Run/TeleportHelper sync requests retain the shared asset handle.
+  // Source mission objects are inactive before this owned provider lease cleanup.
+  if(moonHelperIndex>=0&&objectiveSupportLeases!=null&&objectiveSupportLeases[moonHelperIndex].IsValid()){int extra=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(objectiveSupportLeases[moonHelperIndex])-moonHelperReferences;Check(extra>=0,"Safe-teleport helper reference baseline changed");for(int i=0;i<extra;i++)UnityEngine.AddressableAssets.Addressables.Release(moonTeleportHelper);}
+  moonHelperIndex=-1;moonTeleportHelper=null;
   if(ownsMoonCripple){Check(ReferenceEquals(moonCrippleSlot.GetValue(null),moonCrippleEffect),"Original Cripple slot ownership changed");moonCrippleSlot.SetValue(null,previousMoonCripple);ownsMoonCripple=false;}
   moonLunarMissile=null;moonCrippleEffect=null;
  }

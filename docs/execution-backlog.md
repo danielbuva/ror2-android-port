@@ -2409,3 +2409,9 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S12 J288 build:**137.101 seconds/zero errors,40 tests,39 payload/45 assembly matching receipts; full Nova route running. Device entry/elite/message/mission assertions still pending.
+
+
+**I07-S12 J288 exit / J289:** Five genuine loops/count5,385 kills/four transports; actual Moon context activates but source MapZone safe-teleport helper is unavailable and entry guard fails. Full teardown passes; no ending persistence or Moon acceptance. Supply original typed HelperPrefab, preserve source trigger layers, and record the exact existing grounding guard conditions in the full game. J289 whole build/route next; no accepted pointer advances.
+
+
+**I07-S12 J289 build:**93.389 seconds/zero errors;40 tests/39 payload/45 assembly matching receipts. Full Nova retry starts with actual entry observations; no new device acceptance.

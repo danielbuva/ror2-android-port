@@ -18,6 +18,12 @@ public sealed partial class MovementBatchProbe {
   public float enteredAt;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
+  public List<StageEntryObservation> entryObservations=new List<StageEntryObservation>();
+ }
+ [Serializable] public class StageEntryObservation {public float at;public Vector3 position,velocity;public bool stable,groundCollider,groundEnabled,motorEnabled,solverEnabled;public string colliderPath,colliderScene;public int colliderLayer;public string[] mapZones;}
+ void ObserveStageEntry(CharacterMotor motor){
+  var solver=motor.Motor;var collider=solver.GroundingStatus.GroundCollider;var point=solver.TransientPosition;
+  r.stageProgress.entryObservations.Add(new StageEntryObservation{at=Time.realtimeSinceStartup,position=point,velocity=motor.velocity,stable=solver.GroundingStatus.IsStableOnGround,groundCollider=collider,groundEnabled=collider&&collider.enabled,motorEnabled=motor.enabled,solverEnabled=solver.enabled,colliderPath=collider?StageObjectPath(collider.transform):"none",colliderScene=collider?collider.gameObject.scene.name:"none",colliderLayer=collider?collider.gameObject.layer:-1,mapZones=stageGeometryScene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).Where(x=>x.gameObject.activeInHierarchy).Select(x=>x.name+"|"+x.triggerType+"|"+x.zoneType+"|layer="+x.gameObject.layer+"|inside="+x.IsPointInsideMapZone(point)).ToArray()});Save();
  }
  AndroidStageTransport worldTransport;GameObject worldTransportHost;Result integratedStageConfig;
  string pendingStage;bool transportingStage;int stagePickupBaseline;float stageEnteredAt;
@@ -74,8 +80,10 @@ public sealed partial class MovementBatchProbe {
   Check(SceneInfo.instance==info&&info.groundNodes.GetNodeCount()>0&&info.airNodes.GetNodeCount()>0,"Recovered next-stage navigation missing");
   // Explicit temporary entry placement; movement afterward is original motor/state/solver.
   solver.SetPosition(r.stage.spawnPosition);solver.CollidableLayers=LayerIndex.world.mask;solver.StableGroundLayers=LayerIndex.world.mask;solver.SetGroundSolvingActivation(true);solver.ForceUnground();solver.enabled=true;Physics.SyncTransforms();
+  report.entryObservations.Clear();ObserveStageEntry(motor);
   yield return new WaitForFixedUpdate();yield return null;
-  float deadline=Time.realtimeSinceStartup+5;while((!solver.GroundingStatus.IsStableOnGround||!solver.GroundingStatus.GroundCollider||solver.GroundingStatus.GroundCollider.gameObject.scene!=stageGeometryScene)&&Time.realtimeSinceStartup<deadline)yield return null;
+  float deadline=Time.realtimeSinceStartup+5,observedAt=Time.realtimeSinceStartup;while((!solver.GroundingStatus.IsStableOnGround||!solver.GroundingStatus.GroundCollider||solver.GroundingStatus.GroundCollider.gameObject.scene!=stageGeometryScene)&&Time.realtimeSinceStartup<deadline){if(Time.realtimeSinceStartup-observedAt>=.25f){ObserveStageEntry(motor);observedAt=Time.realtimeSinceStartup;}yield return null;}
+  ObserveStageEntry(motor);
   Check(solver.GroundingStatus.IsStableOnGround&&solver.GroundingStatus.GroundCollider&&solver.GroundingStatus.GroundCollider.gameObject.scene==stageGeometryScene,"Next-stage entry does not land on recovered geometry");
   if(automaticDirectorHost)Destroy(automaticDirectorHost);yield return null;
   automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
