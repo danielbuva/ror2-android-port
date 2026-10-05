@@ -2300,4 +2300,4 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **FAILURE EVIDENCE TO CAPTURE:** First source exception, decoded report, original death/Moon state, scoped cleanup and current launch logs/capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** Record each full-game exit; retain I06/I03 and advance no pointer on failure.
 - **DEPENDENCIES:** Current integrated candidate and J273 metadata repair.
-- **STATUS:** Imported/compiled candidate;73.138-second/zero-error Vulkan ARM64 build,39 payload/45 assembly hashes and40 tests pass. Full Nova game is running; device acceptance pending.
+- **STATUS:** Imported/compiled candidate;73.138-second/zero-error Vulkan ARM64 build,39 payload/45 assembly hashes and40 tests pass. J274 original StandardLoss/server report/client notification pass; original XML save fails before persistence. Complete teardown passes. Original item-array XML registration compiles/builds in74.955 seconds with zero errors;40 tests pass. Full Nova retry running; app-loop acceptance pending.
