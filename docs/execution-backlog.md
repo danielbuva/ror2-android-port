@@ -2870,3 +2870,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J310 full build:**85.699-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `cc96b593b3da624a2e169f7d668df9693af46e54f269cc2785fe5202d8f41b42`. Actual objective-stall/recovery/jump/Moon traversal and mission/ending remain device-pending. Original physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J310 device exit:**912.248 gameplay seconds,241 kills, three genuine source boss/charge/reward/exit/transports into Abyssal Depths. The fourth boss is defeated/charge1 and original ChargedState.GetInteractability reports Available; nearby surviving adds trigger an authored35m unbounded defence veto before reward/exit, followed by a20m approach redirection. Selected add is world-occluded. No current-process/message errors. Objective-stall observation and31 recovery-input frames execute, but this attempt does not reach Moon; its Moon traversal hypothesis remains unaccepted. Owned interruption/capture/app stop/selector removal/Nova asleep, no source ending/teardown/pointer. Next remove the extra post-charge input gate while retaining defence during normal objective travel. I06/I03 immutable.
+
+### I07-S31 — Source-available exit with travel defence
+
+- **ID:** I07-S31.
+- **TITLE:** Preserve objective travel after source teleporter becomes available.
+- **CONTEXT:** J310 fourth stage boss/charge complete, original exit available, authored defence denies approach.
+- **OBSERVATION:** Occluded nearby add triggers unbounded35m completion veto and20m movement redirection; runtime errors zero.
+- **HYPOTHESIS:** Removing extra veto and firing while preserving navigation permits normal reward/exit.
+- **TASK:** Integrate charged travel defence into complete game, forced build and genuine unattended Nova route.
+- **CONSTRAINTS:** Pre-charge defence, original boss/charge/reward/exit, actors/health/damage/skills/physics/graph/authority/mission unchanged; interaction priority uses measured original range. I06/I03 immutable, no forced progression/checkpoint.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored TeleporterWorldBoundary; ignored full archive/build/device evidence; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Original available teleporter/reward remains reachable under surviving adds; source transition completes, J310 Moon recovery then observed. Complete mission/ending remains separate.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual charge/boss/available/FSM, selected threat/range/LOS, normal target movement/selector/interaction, progression, current errors/capture/first failure/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J311 build/device outcome and J310 Moon acceptance; preserve all failed runs, no incomplete pointer.
+- **DEPENDENCIES:** J310 actual charged-exit blocker and original ChargedState/Interactor contract; retained full run/J310 recovery/camera.
+
+
+**J311 full build:**81.101-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `93c80d7b852d5bf502a90a502558d9848fd818894aa6db57d7474a278f5db490`. Actual available-exit travel/defence and retained J310 Moon objective recovery remain device-pending. Original boss/charge/exit/physics/graph/mission and I06/I03 unchanged; no I07 pointer.

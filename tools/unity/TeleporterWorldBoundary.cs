@@ -287,12 +287,8 @@ public sealed partial class MovementBatchProbe {
   if(!worldTeleporter||!r.objective.ready)return false;
   var delta=objectiveHost.transform.position-player.characterMotor.Motor.TransientPosition;
   var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>1?planar.normalized:Vector2.zero;
-  // Charging completion does not remove surviving enemies. Loot/exit replay must
-  // retain ordinary combat input when an add can still reach the player.
-  if(!worldTeleporter.isIdle&&!worldTeleporter.isCharging){
-   var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-   if(threat!=null&&Vector3.Distance(threat.body.corePosition,player.corePosition)<35){ObjectiveCombatInput(player,bridge,elapsed,planar);r.world.objective="Clear surviving threats before reward and exit";return true;}
-  }
+  // The original charged teleporter owns exit availability. Surviving adds do
+  // not create an extra completion gate in the diagnostic input driver.
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected){if(objectiveRewardApproachAt<0)objectiveRewardApproachAt=elapsed;else if(elapsed-objectiveRewardApproachAt>=30)r.objective.rewardLeftBehind=true;}
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected&&!r.objective.rewardLeftBehind){
    var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();
@@ -323,6 +319,15 @@ public sealed partial class MovementBatchProbe {
   if(worldDriver.currentInteractable==target)return false;
   var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
   if(threat==null||Vector3.Distance(threat.body.corePosition,player.corePosition)>=20)return false;
+  if(worldTeleporter&&worldTeleporter.isCharged){
+   // Defend en route without replacing source objective movement. In-range
+   // interaction takes aim priority, including the original reward selector.
+   if(Vector3.Distance(player.corePosition,target.transform.position)<=player.GetComponent<Interactor>().maxInteractionDistance)return false;
+   bool visible;var aimPoint=WorldCombatAimPoint(threat.body,player.inputBank.aimOrigin,out visible);if(!visible)return false;
+   NavigateWorldInput(player,bridge,target.transform.position,target.GetComponent<GenericPickupController>() ? .6f : 1f,target.name,elapsed);
+   var aim=aimPoint-player.inputBank.aimOrigin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
+   r.world.travelDefenseFrames++;r.world.travelDefenseTarget=target.name;r.world.objective="Defend while moving to "+target.name;return true;
+  }
   ObjectiveCombatInput(player,bridge,elapsed,Vector2.zero,false);r.world.travelDefenseFrames++;r.world.travelDefenseTarget=target.name;r.world.objective="Defend while approaching "+target.name;return true;
  }
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){

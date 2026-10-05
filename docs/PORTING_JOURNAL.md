@@ -2793,3 +2793,17 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J310 full build:**85.699-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `cc96b593b3da624a2e169f7d668df9693af46e54f269cc2785fe5202d8f41b42`. Actual objective-stall/recovery/jump/Moon traversal and mission/ending remain device-pending. Original physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J310 device exit:**912.248 gameplay seconds,241 kills, three genuine source boss/charge/reward/exit/transports into Abyssal Depths. The fourth boss is defeated/charge1 and original ChargedState.GetInteractability reports Available; nearby surviving adds trigger an authored35m unbounded defence veto before reward/exit, followed by a20m approach redirection. Selected add is world-occluded. No current-process/message errors. Objective-stall observation and31 recovery-input frames execute, but this attempt does not reach Moon; its Moon traversal hypothesis remains unaccepted. Owned interruption/capture/app stop/selector removal/Nova asleep, no source ending/teardown/pointer. Next remove the extra post-charge input gate while retaining defence during normal objective travel. I06/I03 immutable.
+
+## J311 — Take source-available exits while retaining travel defence
+
+**Observation / hypothesis:** J310 stalls with original boss members0, charge1 and ChargedState Available. The input driver vetoes reward/exit while any source-bounded add is within35m; an occluded add can keep it there indefinitely. The subsequent approach defence also replaces target movement. Neither restriction belongs to original exit availability. Removing that veto and preserving navigation while firing should permit genuine reward/exit under ordinary combat.
+
+**Integration:** Let original teleporter availability own progression. Keep pre-charge defence unchanged; in charged reward/exit travel, overlay normal skills only for a nearby visible source hurtbox while preserving normal navigation/jump input. In original interaction range, target aim/selector has priority. No enemy removal, forced charge/defeat/exit, reward/stat/physics/graph/authority changes. J310 objective-progress correction, source request observations, physical camera and optional-service boundaries retained. Complete game build/genuine route; no standalone proof or fake checkpoint.
+
+**Prior art / preparation:** Current community-prior-art L6/L7 map, pinned R2Wiki Stage director-versus-gate guidance and DebugToolkit source-semantic observation retained; exact shipped TeleporterInteraction.ChargedState.GetInteractability/UpdateMonstersClear and original hurtbox/Interactor contract inspected. No implementation copied. Ignored candidate work/experiments/scene-runtime/20261005T233618.781625Z preserves full J310 blocker/capture/owned cleanup and new complete stage/recipe. Preflight/zero C# compile errors pass; safety tests/full forced build and unattended Nova route pending. User unavailable; Nova asleep during host work. I06/I03 immutable; no I07 pointer.
+
+
+**J311 full build:**81.101-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `93c80d7b852d5bf502a90a502558d9848fd818894aa6db57d7474a278f5db490`. Actual available-exit travel/defence and retained J310 Moon objective recovery remain device-pending. Original boss/charge/exit/physics/graph/mission and I06/I03 unchanged; no I07 pointer.

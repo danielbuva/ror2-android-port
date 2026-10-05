@@ -394,3 +394,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J310 full build:**85.699-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `cc96b593b3da624a2e169f7d668df9693af46e54f269cc2785fe5202d8f41b42`. Actual objective-stall/recovery/jump/Moon traversal and mission/ending remain device-pending. Original physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J310 device exit:**912.248 gameplay seconds,241 kills, three genuine source boss/charge/reward/exit/transports into Abyssal Depths. The fourth boss is defeated/charge1 and original ChargedState.GetInteractability reports Available; nearby surviving adds trigger an authored35m unbounded defence veto before reward/exit, followed by a20m approach redirection. Selected add is world-occluded. No current-process/message errors. Objective-stall observation and31 recovery-input frames execute, but this attempt does not reach Moon; its Moon traversal hypothesis remains unaccepted. Owned interruption/capture/app stop/selector removal/Nova asleep, no source ending/teardown/pointer. Next remove the extra post-charge input gate while retaining defence during normal objective travel. I06/I03 immutable.
+
+
+**J311 full build:**81.101-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `93c80d7b852d5bf502a90a502558d9848fd818894aa6db57d7474a278f5db490`. Actual available-exit travel/defence and retained J310 Moon objective recovery remain device-pending. Original boss/charge/exit/physics/graph/mission and I06/I03 unchanged; no I07 pointer.
