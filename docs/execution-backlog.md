@@ -2545,3 +2545,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J297 full build:**82.900-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd0cf2bd2a4f5a876d412335ca99d35358fd92c124c70ede16ed18a016be31c3`. Whole Nova route retry running; stalled-travel jump/second exit/later Moon/victory acceptance pending. I06/I03 unchanged.
+
+
+**J297 device interruption:**973.601 reported gameplay seconds/126 kills, first genuine full objective/transport plus Wetland boss defeat and full charge. Pickup travel defence actually executes20 frames; progress-sensitive ordinary jump requests execute276 frames and advance the prior blocked waypoint. The next rising-floor waypoint still stalls with reversed local movement and no enemies. Read-only exact-editor geometry inspection finds the actual source floor at the waypoint with walkable normals and a clear approach; source jump pads are elsewhere. Exact original Walker.Combat ChaseMoveTarget sets allowWalkOffCliff=true and offsets foot target to body reference; adapter incorrectly fixed false. Source local cliff test casts down from current-height prediction and can reject rising terrain. Zero unexpected current-process errors; owned runner interrupted and app/selection stopped/removed, Nova asleep. No source teardown, second exit, ending/persistence or later acceptance. I06/I03 unchanged.
+
+### I07-S18 — Original pursuit configuration through the complete game
+
+- **ID:** I07-S18.
+- **TITLE:** Use source chase navigation instead of a fixed circling guard.
+- **CONTEXT:** J297 recovery jumps advance one Wetland waypoint, but the next rising-floor approach stalls.
+- **OBSERVATION:** Original local output reverses the intended direction, no enemies/runtime errors; host source floor/approach are clear and source jump pads elsewhere. Exact Walker.Combat chase uses allowWalkOffCliff=true.
+- **HYPOTHESIS:** Matching original chase target reference and policy preserves ordinary path traversal without changing physics.
+- **TASK:** Correct the public navigator configuration, retain full route/Moon/results, build/run the complete Nova game and inspect its next real blocker.
+- **CONSTRAINTS:** Inherited safety/privacy/IP/platform/pins; original path/physics/bounds/jump power/input/selector/exit rules unchanged.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld navigation configuration/flag observation and ignored candidate/build/device evidence.
+- **TEST COMMAND:** `./dev preflight`, `./dev test`, forced full Vulkan build, `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual original input/physics reach Wetland exit and continue the full route without unexplained failures; later Moon/victory need execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual chase flag/local direction/ground/path/position, source trigger/selector/exit, current exceptions and original ending/results/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J298 build/device exit, concise state/backlog/milestones; no acceptance from compilation or partial route.
+- **DEPENDENCIES:** Preserved J297 full-world failure/source/geometry inspection; I06/I03 rollbacks unchanged.
+
+
+**J298 full build:**83.200-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `7ab65850a0b7f0521821465162354976be37089fefa4d2012806702499f73145`. Complete Nova route retry running; original chase/second exit/Moon/victory need device execution. I06/I03 unchanged.

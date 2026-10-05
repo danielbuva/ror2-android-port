@@ -284,3 +284,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J297 full build:**82.900-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd0cf2bd2a4f5a876d412335ca99d35358fd92c124c70ede16ed18a016be31c3`. Whole Nova route retry running; stalled-travel jump/second exit/later Moon/victory acceptance pending. I06/I03 unchanged.
+
+
+**J297 device interruption:**973.601 reported gameplay seconds/126 kills, first genuine full objective/transport plus Wetland boss defeat and full charge. Pickup travel defence actually executes20 frames; progress-sensitive ordinary jump requests execute276 frames and advance the prior blocked waypoint. The next rising-floor waypoint still stalls with reversed local movement and no enemies. Read-only exact-editor geometry inspection finds the actual source floor at the waypoint with walkable normals and a clear approach; source jump pads are elsewhere. Exact original Walker.Combat ChaseMoveTarget sets allowWalkOffCliff=true and offsets foot target to body reference; adapter incorrectly fixed false. Source local cliff test casts down from current-height prediction and can reject rising terrain. Zero unexpected current-process errors; owned runner interrupted and app/selection stopped/removed, Nova asleep. No source teardown, second exit, ending/persistence or later acceptance. I06/I03 unchanged.
+
+
+**J298 full build:**83.200-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `7ab65850a0b7f0521821465162354976be37089fefa4d2012806702499f73145`. Complete Nova route retry running; original chase/second exit/Moon/victory need device execution. I06/I03 unchanged.

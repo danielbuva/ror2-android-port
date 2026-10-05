@@ -32,7 +32,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance;public bool navigationRecoveryJump;
-  public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
+  public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
@@ -290,7 +290,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;r.world.navigationPath=new NavigationPathPoint[0];}
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
   if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;}
-  worldLocalNavigator.targetPosition=waypoint;worldLocalNavigator.allowWalkOffCliff=false;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
+  // Match original Walker.Combat ChaseMoveTarget: the graph supplies a foot
+  // target, and pursuit permits traversal rather than using the circling guard.
+  worldLocalNavigator.targetPosition=waypoint+(player.transform.position-position);worldLocalNavigator.allowWalkOffCliff=true;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
+  r.world.navigationAllowWalkOffCliff=worldLocalNavigator.allowWalkOffCliff;
   r.world.navigationLocalMovement=worldLocalNavigator.moveVector;r.world.navigationLocalObstructed=worldLocalNavigator.wasObstructedLastUpdate;r.world.navigationLocalJumpSpeed=worldLocalNavigator.jumpSpeed;
   bridge.movement=movement.magnitude>stopDistance?new Vector2(worldLocalNavigator.moveVector.x,worldLocalNavigator.moveVector.z):Vector2.zero;
   // Walking in a circle is not progress toward the source waypoint. The real
