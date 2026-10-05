@@ -12,7 +12,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker;public bool loaded,cleaned,groundHit;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
-  public Vector3 spawnPosition,groundPosition,groundNormal;
+  public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
  }
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
@@ -61,17 +61,19 @@ public sealed partial class MovementBatchProbe {
   Check((spec!=null||r.stage.terrainTextureMaterials>=2)&&r.stage.terrainTexturesBound,"Original terrain channel textures did not bind to the owned preview material");
   if(moon){Check(SceneManager.SetActiveScene(stageGeometryScene),"Moon active scene context missing");ActivateMoonSource(spec);}
   Physics.SyncTransforms();
-  foreach(var marker in transforms.Where(x=>x.name=="SurvivorPodSpawnPoint"&&x.gameObject.activeInHierarchy)){
+  Vector3 entryOrigin=Vector3.zero;
+  if(moon){var locator=SceneInfo.instance.GetComponent<ChildLocator>();var origin=locator?locator.FindChild("PlayerSpawnOrigin"):null;Check(origin&&origin.gameObject.scene==stageGeometryScene,"Original Moon player spawn origin missing");entryOrigin=origin.position;r.stage.entryOrigin=entryOrigin;}
+  foreach(var marker in transforms.Where(x=>!moon&&x.name=="SurvivorPodSpawnPoint"&&x.gameObject.activeInHierarchy)){
    RaycastHit hit;if(!Physics.Raycast(marker.position+Vector3.up*30,Vector3.down,out hit,100,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.9f)continue;
    r.stage.spawnMarker=marker.name;r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
   }
   if(!r.stage.groundHit&&spec!=null){
    var graph=artifactBundle.LoadAsset<RoR2.Navigation.NodeGraph>(spec.groundGraph);Check(graph&&graph.GetNodeCount()>0,"Original next-stage ground graph unavailable");
    var candidates=new List<Vector3>();for(int i=0;i<graph.GetNodeCount();i++){Vector3 point;if(graph.GetNodePosition(new RoR2.Navigation.NodeGraph.NodeIndex(i),out point))candidates.Add(point);}
-   foreach(var point in candidates.OrderBy(x=>x.x*x.x+x.z*x.z)){
+   foreach(var point in candidates.OrderBy(x=>moon?(x-entryOrigin).sqrMagnitude:x.x*x.x+x.z*x.z)){
     RaycastHit hit;if(!Physics.Raycast(point+Vector3.up*8,Vector3.down,out hit,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.98f)continue;
     int clear=0;foreach(var offset in new[]{Vector3.right*5,Vector3.left*5,Vector3.forward*6,Vector3.back*3}){RaycastHit nearby;if(Physics.Raycast(hit.point+offset+Vector3.up*8,Vector3.down,out nearby,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&nearby.normal.y>.95f&&Mathf.Abs(nearby.point.y-hit.point.y)<1)clear++;}
-    if(clear<4)continue;r.stage.spawnMarker="Original ground graph / measured Android entry";r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
+    if(clear<4)continue;r.stage.spawnMarker=moon?"Original PlayerSpawnOrigin / ground graph / measured Android entry":"Original ground graph / measured Android entry";r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
    }
   }
   Check(r.stage.groundHit,"No measured walkable original stage entry");Save();

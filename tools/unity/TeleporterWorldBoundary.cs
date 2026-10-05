@@ -218,6 +218,8 @@ public sealed partial class MovementBatchProbe {
   typeof(Run).GetField("networkRuleBookComponent",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(run,networkBook);
   var easy=RuleCatalog.FindChoiceDef("Difficulty.Easy");Check(easy!=null,"Original Drizzle rule missing");run.ruleBook.ApplyChoice(easy);Check(run.ruleBook.FindDifficulty()==DifficultyIndex.Easy&&run.selectedDifficulty==DifficultyIndex.Easy,"Original chosen Drizzle difficulty mismatch");
   Check(run.ruleBook.stageOrder==StageOrder.Normal&&!run.ruleBook.keepMoneyBetweenStages,"Original default stage-order/money rules changed");
+  RefreshRewardEquipmentMask(true);
+  if(r.moonCatalog!=null){var lunar=RoR2Content.Equipment.AffixLunar;Check(lunar&&EquipmentCatalog.GetEquipmentDef(lunar.equipmentIndex)==lunar&&!lunar.requiredExpansion&&!run.IsEquipmentExpansionLocked(lunar.equipmentIndex),"Original base Lunar equipment availability failed");}
   Check(run.runRNG!=null&&run.loopRngGenerator!=null&&run.nextStageRng!=null&&run.bossRewardRng!=null,"Original Run random streams absent");r.objective.rules=true;r.objective.ruleCount=RuleCatalog.ruleCount;
  }
  static string objectiveRuleSignature;

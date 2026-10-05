@@ -228,3 +228,6 @@ J280 passes original Moon server scene-object activation/Toggle Awake and source
 
 
 J284 completes five genuine original objectives and reaches active original Moon Phase1/four randomized batteries. Original selected Exploder, Lunar metadata/elite availability and shared mission effect config expose actual missing dependencies. Moon population/mission/victory and fifth-transport acceptance remain open. Full cleanup passes; I06/I03 immutable. Next full build expands that measured original closure without altering eligibility, source weights or simulation.
+
+
+J287 completes five original objective loops and five actual transports, with original Moon population selection and Phase1. Genuine defeat passes original XML/ledger persistence; actual entry/elite/particle/hidden-message failures prevent acceptance. J288 corrects the full-game contexts and repeats the entire integrated route. No Moon batteries/elevators/phases/escape/victory or formal gate/rollback advance.

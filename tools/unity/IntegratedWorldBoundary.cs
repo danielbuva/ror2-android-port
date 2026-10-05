@@ -17,6 +17,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldPickupObservation {public string item,interactability;public Vector3 position,aimTarget;public float aimDistance;public bool selected,collider,interactableLayer;}
  [Serializable] public class WorldPickupMessageObservation {public float at;public bool resolvedMaster,playerMaster,knownPickup;public uint masterId,quantity;public int pickupIndex;public string item;}
+ [Serializable] public class WorldMessageFailure {public float at;public int id;public string side,handler,error;}
  [Serializable] public class WorldReport {
   public NovaThirdPersonView.Report camera;
   public bool lunarDefinition,lunarCurrencyAvailable;
@@ -27,6 +28,7 @@ public sealed partial class MovementBatchProbe {
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
+  public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries;public float navigationStalledSeconds;
  }
@@ -42,6 +44,7 @@ public sealed partial class MovementBatchProbe {
  RoR2.ConVar.IntConVar worldVfxOption;string priorWorldVfx,priorWorldXp;
  AsyncOperationHandle<GameObject> worldCoinLease;bool ownsWorldCoinLease;int worldCoinBaseline,worldBarrelConsumers;bool ownsIntegratedPools;
  Action<Interactor,IInteractable,GameObject> worldInteraction;
+ readonly Dictionary<short,NetworkMessageDelegate> worldClientHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldServerHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldClientObservers=new Dictionary<short,NetworkMessageDelegate>(),worldServerObservers=new Dictionary<short,NetworkMessageDelegate>();
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  Vector3 worldNavigationProgressPosition;float worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;
@@ -173,6 +176,24 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    if(!characterMaster)r.world.unresolvedPickupMessages++;else if(!observation.playerMaster)r.world.otherPickupMessages++;else if(quantity==0)r.world.zeroCountPickupMessages++;
    if(observation.playerMaster&&definition!=null&&quantity>0){r.world.pickupMessages++;r.world.lastPickup=observation.item+" x"+quantity;}Save();
   });
+  ObserveWorldHandlers(false);ObserveWorldHandlers(true);
+ }
+ void ObserveWorldHandlers(bool server){
+  var handlers=server?NetworkServer.handlers:activeBodyClient.handlers;var originals=server?worldServerHandlers:worldClientHandlers;var observers=server?worldServerObservers:worldClientObservers;
+  Check(originals.Count==0&&observers.Count==0,"Unowned integrated handler observation");
+  foreach(var pair in handlers.ToArray()){
+   short id=pair.Key;var original=pair.Value;NetworkMessageDelegate observer=msg=>{
+    try{original(msg);}catch(Exception error){
+     var failure=new WorldMessageFailure{at=r.world.seconds,id=id,side=server?"server":"client",handler=original.Method.DeclaringType.FullName+"."+original.Method.Name,error=error.GetBaseException().ToString()};r.world.messageFailureCount++;if(r.world.messageFailures.Count<16)r.world.messageFailures.Add(failure);Save();Debug.LogError("Integrated message failure "+failure.side+"/"+id+": "+failure.error);throw;
+    }
+   };
+   originals.Add(id,original);observers.Add(id,observer);if(server)NetworkServer.RegisterHandler(id,observer);else activeBodyClient.RegisterHandler(id,observer);
+  }
+ }
+ void RestoreWorldHandlers(bool server){
+  var originals=server?worldServerHandlers:worldClientHandlers;var observers=server?worldServerObservers:worldClientObservers;
+  if((server&&NetworkServer.active)||(!server&&activeBodyClient!=null)){var handlers=server?NetworkServer.handlers:activeBodyClient.handlers;foreach(var pair in originals){NetworkMessageDelegate current;if(handlers.TryGetValue(pair.Key,out current)&&current==observers[pair.Key]){if(server)NetworkServer.RegisterHandler(pair.Key,pair.Value);else activeBodyClient.RegisterHandler(pair.Key,pair.Value);}}}
+  originals.Clear();observers.Clear();
  }
 
  GameObject CreateWorldInteractable(GameObject source,Vector3 candidate,bool chest){
@@ -306,7 +327,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   CleanupChestEjection();
   if(rewardPrefabs!=null){var prefab=rewardPrefabs[0];var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);EffectPool pool;if(pools.TryGetValue(prefab,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(prefab);pool.Kill();}((IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null)).Remove(prefab);}
   if(ownsWorldCoinLease&&worldCoinLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease)-worldCoinBaseline;Check(extra>=0&&extra<=worldBarrelConsumers,"Unattributed integrated barrel coin leases");for(int i=0;i<extra;i++)Addressables.Release(worldCoinLease.Result);Addressables.Release(worldCoinLease);ownsWorldCoinLease=false;}
-  if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);
+  RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);
   if(worldVfxOption!=null)worldVfxOption.AttemptSetString(priorWorldVfx);if(priorWorldXp!=null)SettingsConVars.cvExpAndMoneyEffects.AttemptSetString(priorWorldXp);
   if(ownsWorldLists&&Run.instance){Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();if(worldChestTable)worldChestTable.RegenerateDropTable(Run.instance);Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&(!worldChestTable||worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;}
   if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}

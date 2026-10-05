@@ -202,7 +202,7 @@ def stage_objective(stage, previous, out):
 
 
 def sanitize_optional_content(stage,out):
-    """Remove unavailable native audio/deferred decals from generated Android prefabs.
+    """Adapt optional presentation on generated Android prefabs.
 
     These files are owned ignored copies; script GUID identity is checked against the
     exact preserved Wwise MonoBehaviour assembly, never inferred from a component name.
@@ -215,6 +215,12 @@ def sanitize_optional_content(stage,out):
     # J243: measured MonoScript metadata and actual OnEnable/OnWillRenderObject
     # require unavailable deferred shader programs. Keep gameplay/effect lifetime.
     decal_script='m_Script: {fileID: -1252323107, guid: '+decal_guid+', type: 3}'
+    game_guid=re.search(r'^guid: ([a-f0-9]{32})',(stage/'Plugins/RoR2.dll.meta').read_text(),re.M)[1]
+    if game_guid!='951ce57ad999ac1f040a4dceb5f8b763':raise RuntimeError('RoR2 component identity drift')
+    # J288: exact-editor MonoScript metadata identifies the source OnDisable tail
+    # detacher. Nova cannot reparent its children during source effect-pool return.
+    # Keep particle children parent-owned; omit only their detached tail lifetime.
+    detach_script='m_Script: {fileID: 1080798252, guid: '+game_guid+', type: 3}'
     changes=[];effects=[]
     effect_script='m_Script: {fileID: 511512695, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}'
     alpha_script='m_Script: {fileID: -2051541306, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}'
@@ -225,7 +231,7 @@ def sanitize_optional_content(stage,out):
         if src.suffix not in {'.prefab','.asset'}:continue
         text=src.read_text(errors='replace')
         if not text.startswith('%YAML'):continue
-        before=sha(src);removed=set();native_removed=set();decal_removed=set();empty_renderers=[];silent_projectiles=[];generated=text
+        before=sha(src);removed=set();native_removed=set();decal_removed=set();detach_removed=set();empty_renderers=[];silent_projectiles=[];generated=text
         if src.suffix=='.prefab':
             if effect_script in text:effects.append(str(src.relative_to(WORK/'lab-project')).lower())
             blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)
@@ -234,6 +240,7 @@ def sanitize_optional_content(stage,out):
                 match=re.match(r'--- !u!114 &(-?\d+)',block)
                 if match and re.search(r'm_Script: \{fileID: -?\d+, guid: '+audio_guid+r', type: 3\}',block):native_removed.add(match[1]);removed.add(match[1]);continue
                 if match and decal_script in block:decal_removed.add(match[1]);removed.add(match[1]);continue
+                if match and detach_script in block:detach_removed.add(match[1]);removed.add(match[1]);continue
                 kept.append(block)
             if removed:
                 generated=''.join(kept)
@@ -283,11 +290,11 @@ def sanitize_optional_content(stage,out):
             generated=re.sub(r'^(  (?:impactEffectPrefab|footstepEffectPrefab):).*$',r'\1 {fileID: 0}',generated,flags=re.M)
             generated=re.sub(r'^(  (?:impactSoundString|materialSwitchString):).*$',r'\1',generated,flags=re.M)
         if generated!=text:
-            src.write_text(generated);changes.append(dict(path=str(src.relative_to(WORK/'lab-project')),before_sha256=before,after_sha256=sha(src),removed_native_components=len(native_removed),removed_deferred_decals=len(decal_removed),empty_alpha_renderers=empty_renderers,silent_projectiles=silent_projectiles,silent_surface=surface))
+            src.write_text(generated);changes.append(dict(path=str(src.relative_to(WORK/'lab-project')),before_sha256=before,after_sha256=sha(src),removed_native_components=len(native_removed),removed_deferred_decals=len(decal_removed),removed_particle_tail_detachers=len(detach_removed),empty_alpha_renderers=empty_renderers,silent_projectiles=silent_projectiles,silent_surface=surface))
     recipe=read(WORK/'scene-probe-build.json')
     separate={recipe[k].casefold() for k in ['teleportMaterial','barrierEffect','playerDeathEffect','pickupDroplet','genericPickup','teleporterIndicator','objectiveTMPSettings'] if recipe.get(k)}
     separate.update(x.casefold() for x in recipe.get('enemyRewardAssets',[])+recipe.get('objectiveSupportAssets',[]))
     effects=[x for x in effects if x.casefold() not in separate]
     recipe['prefabAssets']=list({x.casefold():x for x in recipe['prefabAssets']+effects}.values());write(WORK/'scene-probe-build.json',recipe)
-    write(out/'optional-content-transformation.json',dict(changes=changes,effect_roots=effects,scope='Unavailable native audio, deferred decal and optional impact/footstep presentation only; original surface gameplay properties and remaining component identities retained. Exact source input untouched.',prior_art='Pinned R2API.ContentManagement f539511e registers original EffectDefs; original Decalicious metadata and Nova shader failure govern this generated presentation omission. No community or game implementation copied.'))
+    write(out/'optional-content-transformation.json',dict(changes=changes,effect_roots=effects,scope='Unavailable native audio/deferred decals/impact-footstep presentation and detached particle tails omitted; particle children retain parent/pool lifetime. Original surface/gameplay properties and remaining component identities retained. Exact source input untouched.',prior_art='Pinned R2API.ContentManagement/Prefab f539511e catalog and inactive owned-clone lifetime inspected. Exact source metadata and actual Nova shader/pool OnDisable failures govern generated presentation adapters. No community or game implementation copied.'))
     return dict(objectiveEffectAssets=effects)

@@ -2403,3 +2403,9 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 **I07-S12 J286 exit/J287:** Actual integrated configuration omits optional Barrier initialization; Cripple ownership guard rejects its absent snapshot before gameplay. Full cleanup/zero unexpected process errors pass. Own/restore the exact Cripple field and real provider lease independently, then repeat the full composed game. No source gameplay change or new milestone/pointer acceptance.
 
 **I07-S12 J287 full build:**84.092 seconds/zero errors,40 tests, matching39 payload/45 assembly/APK receipts. Launcher refuses an inherited batch receipt before device installation; retain it under the parent evidence and issue a fresh current run. Full-game retry running; no new capability acceptance.
+
+
+**I07-S12 J287 exit / J288:** Five genuine loops and five actual transports reach original Moon population/Phase1; genuine defeat persists through original XML/ledger. Wrong upper-arena entry, missing Run equipment expansion mask, pooled optional particle-tail OnDisable and hidden handler exceptions are measured integrated issues. Correct those contexts/optional presentation and expose actual delegate exceptions, then run the full route. Source battery/elevator/boss/escape/victory remain open; I06/I03 unchanged. Exact command: `./dev prototype --action movement-batch-run` after fresh full forced Vulkan build and matching receipts.
+
+
+**I07-S12 J288 build:**137.101 seconds/zero errors,40 tests,39 payload/45 assembly matching receipts; full Nova route running. Device entry/elite/message/mission assertions still pending.
