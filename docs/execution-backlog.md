@@ -2747,3 +2747,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J305 checkpoint feasibility, user-directed bounded review:** Prefer a small verified restore of genuine stage-entry state over repeated full-route replay. Exact original Run.OnSerialize only carries its declared network values; it omits run/stage RNG and the complete player simulation. Current live reports/ending XML do not provide a server restore. Pinned ProperSave d20c6c8e RunData/RunRngData/PlayerData/Saving/Loading demonstrates pre-stage RNG and additional run/rules/masks/master/inventory/stat/team lifecycle restoration through desktop hooks and NetworkUser loading. It is not an Android IL2CPP drop-in; no source copied or installed. A new equivalent server restore would exceed the requested small bounded effort. Retain the real route, without invented Moon progression, and revisit only with a concrete narrow restoration seam and genuine entry/equivalence validation. The current Nova run remains uninterrupted; no checkpoint capability claimed. Ignored stage-checkpoint-feasibility record retained.
+
+
+**J305 device exit:** Original player death ends the unattended run on Sky Meadow at1867.985 gameplay seconds after four genuine teleporter/exit/transports and440 kills. Two source Queens remain, total health13366.714/16800; charge1 does not skip boss defeat. Ten live actors remain. No current-process errors or message failures. Original Commando death/ragdoll/body destruction, StandardLoss server/client ending, report generation/save/reload and source cleanup pass; persisted Android result retained. This is a combat defeat, not a native crash. The Moon partial-path candidate did not execute on device in this attempt and remains unaccepted. Nova asleep after completion; I06/I03 unchanged, no I07 pointer. Revisit unattended target visibility/approach before replaying the genuine route.
+
+### I07-S26 — Visible combat targets in the complete run
+
+- **ID:** I07-S26.
+- **TITLE:** Unattended combat firing lines and original approach paths.
+- **CONTEXT:** J305 ends through original defeat/results/cleanup after four genuine stage loops.
+- **OBSERVATION:** Sky Meadow two original bosses survive while adds recur; driver does not measure firing lines and puts distant adds before bosses. Current-process errors zero; Moon change remains device-unexecuted.
+- **HYPOTHESIS:** Visible hurtbox priority and source navigation approach improve genuine combat progress without altering simulation.
+- **TASK:** Integrate target visibility/approach and its structured observations in the running whole game; force-build and replay the genuine route on Nova.
+- **CONSTRAINTS:** Input only; preserve original damage/health/RNG/items/rules/directors/physics/authority/progression and physical camera. No forced combat outcome or stage skip; I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored TeleporterWorldBoundary/IntegratedWorldBoundary; ignored stage/config/recipe/build/device evidence; concise state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual visible-target and original approach evidence; genuine combat/stage progress without new errors. Moon path and complete mission/ending remain separate device gates.
+- **FAILURE EVIDENCE TO CAPTURE:** Aim endpoints/visibility/selected identity/distance, approach/grounding/movement, boss/add damage and first real failure, current-process logs/capture, ending/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J306 build/device exit and state/milestones; retain failed attempts and no pointer from incomplete play.
+- **DEPENDENCIES:** J305 original defeat/report/cleanup, exact source/prior-art review, accepted physical camera and I06/I03.
+
+
+**J306 full build:**89.601-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `2a13ed577c2892566d88d63c1e5241be7b9c18bfe9e6e1a8c53951690c29e1c1`. Complete unattended route/visible hurtbox/original combat approach/Moon partial-path/ending acceptance pending. I06/I03 unchanged, no new capability pointer.

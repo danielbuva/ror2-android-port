@@ -329,21 +329,39 @@ public sealed partial class MovementBatchProbe {
    var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
    var actors=living.Where(x=>InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();r.world.combatCandidates=living.Length;r.world.combatBoundsRejected=living.Length-actors.Length;
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-   // The whole-run capture records lethal nearby guard slams while the input
-   // driver aims at other adds. Choose that immediate threat before distant adds.
+   // The unattended route can aim through terrain or continually select distant
+   // adds while the boss survives. Observe actual firing lines before choosing input.
+   var origin=player.inputBank.aimOrigin;
+   var targets=actors.Select(x=>{bool visible;var point=WorldCombatAimPoint(x.body,origin,out visible);return new {actor=x,point=point,visible=visible,distance=Vector3.Distance(point,origin),boss=worldTeleporter&&worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)};}).ToArray();
+   r.world.combatVisibleCandidates=targets.Count(x=>x.visible);r.world.combatOccludedCandidates=targets.Length-r.world.combatVisibleCandidates;
    var guardIndex=BodyCatalog.FindBodyIndex("BeetleGuardBody");
-   var enemy=actors.OrderBy(x=>x.body.bodyIndex==guardIndex&&Vector3.Distance(x.body.corePosition,player.corePosition)<25?0:worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)?2:1).ThenBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-   if(enemy!=null){
+   var target=targets.OrderBy(x=>!x.visible?5:x.actor.body.bodyIndex==guardIndex&&x.distance<25?0:x.distance<16?1:x.boss?2:x.distance<40?3:4).ThenBy(x=>x.distance).FirstOrDefault();
+   if(target!=null){
     var fromThreat=player.characterMotor.Motor.TransientPosition-nearest.body.characterMotor.Motor.TransientPosition;fromThreat.y=0;float distance=fromThreat.magnitude;
     float safeDistance=20;
     Vector2 desired=distance<safeDistance?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
     if(constrainToHoldout&&planar.magnitude>50)desired=planar.normalized;
-    SelectCombatMotion(player,bridge,desired,actors,distance<safeDistance);
-    r.world.combatTarget=enemy.body.name;
+    if(distance>=safeDistance&&(!target.visible||target.distance>32)&&(!constrainToHoldout||planar.magnitude<=50)){
+     NavigateWorldInput(player,bridge,DirectorPhysicsPosition(target.actor.body),16,"Combat: "+target.actor.body.name,elapsed);r.world.combatApproachFrames++;
+    }else SelectCombatMotion(player,bridge,desired,actors,distance<safeDistance);
+    r.world.combatTarget=target.actor.body.name;r.world.combatLineOfSight=target.visible;r.world.combatTargetBoss=target.boss;r.world.combatTargetDistance=target.distance;r.world.combatThreatDistance=distance;r.world.combatAimOrigin=origin;r.world.combatAimTarget=target.point;
     bool evade=distance<16;bridge.diagnosticSprint=evade;bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
-    var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
+    var aim=target.point-origin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=target.visible;bridge.diagnosticSecondary=target.visible&&elapsed%4<.2f;bridge.diagnosticSpecial=target.visible&&elapsed%10<.2f;
    }
+ }
+ Vector3 WorldCombatAimPoint(CharacterBody target,Vector3 origin,out bool visible){
+  var point=target.mainHurtBox?target.mainHurtBox.transform.position:target.corePosition;
+  visible=!Physics.Linecast(origin,point,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
+  float best=visible?(point-origin).sqrMagnitude:float.PositiveInfinity;
+  var group=target.hurtBoxGroup;if(!group)return point;
+  foreach(var box in group.hurtBoxes){
+   if(!box||!box.isBullseye||!box.gameObject.activeInHierarchy)continue;
+   var candidate=box.transform.position;var distance=(candidate-origin).sqrMagnitude;
+   if(distance>=best||Physics.Linecast(origin,candidate,LayerIndex.world.mask,QueryTriggerInteraction.Ignore))continue;
+   point=candidate;best=distance;visible=true;
+  }
+  return point;
  }
  void SelectCombatMotion(CharacterBody player,NovaInputBridge bridge,Vector2 desired,DirectorActor[] threats,bool escape){
   // Input-only terrain selection. Compare ground to ground, including while

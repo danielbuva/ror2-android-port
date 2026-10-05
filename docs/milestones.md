@@ -352,3 +352,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J304/J305 continuation:** J304 reproduces five genuine objectives/transports/385 kills and nearer-floor sampling without overflow, but no Moon battery or mission progress. Original active-collision graph inspection supplies a reachable intermediate approach; J305 integrates that source path into the full composed run with unchanged movement/physics/mission contracts. Full build/device acceptance pending; manual camera pass retained, I06/I03 immutable and no I07/ending pointer.
+
+
+**J305 device exit:** Original player death ends the unattended run on Sky Meadow at1867.985 gameplay seconds after four genuine teleporter/exit/transports and440 kills. Two source Queens remain, total health13366.714/16800; charge1 does not skip boss defeat. Ten live actors remain. No current-process errors or message failures. Original Commando death/ragdoll/body destruction, StandardLoss server/client ending, report generation/save/reload and source cleanup pass; persisted Android result retained. This is a combat defeat, not a native crash. The Moon partial-path candidate did not execute on device in this attempt and remains unaccepted. Nova asleep after completion; I06/I03 unchanged, no I07 pointer. Revisit unattended target visibility/approach before replaying the genuine route.
+
+
+**J306 full build:**89.601-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `2a13ed577c2892566d88d63c1e5241be7b9c18bfe9e6e1a8c53951690c29e1c1`. Complete unattended route/visible hurtbox/original combat approach/Moon partial-path/ending acceptance pending. I06/I03 unchanged, no new capability pointer.
