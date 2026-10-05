@@ -36,6 +36,7 @@ public sealed partial class MovementBatchProbe {
   public bool navigationTerrainFallback,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
  public int navigationTerrainLowerChoices,navigationTerrainRayOverflow;
   public bool navigationPartial;public int navigationPartialCandidates,navigationPartialNode=-1;public float navigationPartialSeconds;public Vector3 navigationPartialDestination;
+  public string navigationHull,navigationJumpHeight;public int navigationGraphNodes,navigationStartNode=-1,navigationNearestNode=-1,navigationApproachBoundsRejected,navigationApproachTooShort,navigationApproachUnreachable;public float navigationMaxSpeed,navigationMaxSlope,navigationGravityY;public Vector3 navigationStartPosition;
   public bool motorGrounded,motorStable,jumpDown,jumpPressed,jumpClaimed;public int motorJumpCount,motorMaxJumpCount;public Vector3 motorVelocity,motorGroundPoint;public string motorGroundCollider,movementState;
   public bool manualTakeover;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
@@ -294,6 +295,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   RaycastHit obstacle;bool needsRoute=Mathf.Abs(delta.y)>2||planar.magnitude>15||Physics.Linecast(position+Vector3.up,destination+Vector3.up,out obstacle,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
   if(graph&&needsRoute){
    if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(destination,worldPathTarget)>2||elapsed-worldPathRequested>8){
+    r.world.navigationHull=player.hullClassification.ToString();r.world.navigationJumpHeight=player.maxJumpHeight.ToString("R",System.Globalization.CultureInfo.InvariantCulture);r.world.navigationMaxSpeed=player.moveSpeed;r.world.navigationMaxSlope=player.characterMotor.Motor.MaxStableSlopeAngle;r.world.navigationGravityY=Physics.gravity.y;r.world.navigationGraphNodes=graph.GetNodeCount();
+    r.world.navigationNearestNode=graph.FindClosestNode(position,player.hullClassification).nodeIndex;var startNode=graph.FindClosestNodeWithRaycast(position,player.hullClassification,100,2);r.world.navigationStartNode=startNode.nodeIndex;Vector3 startPosition;r.world.navigationStartPosition=graph.GetNodePosition(startNode,out startPosition)?startPosition:Vector3.zero;
+    r.world.navigationApproachBoundsRejected=r.world.navigationApproachTooShort=r.world.navigationApproachUnreachable=0;
     using(var path=new RoR2.Path(graph)){
      var task=graph.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest{path=path,startPos=position,endPos=destination,hullClassification=player.hullClassification,maxSlope=player.characterMotor.Motor.MaxStableSlopeAngle,maxJumpHeight=player.maxJumpHeight,maxSpeed=player.moveSpeed});
      Check(task.status==RoR2.Navigation.PathTask.TaskStatus.Complete,"Original stage path did not complete");
@@ -342,14 +346,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var candidates=new List<KeyValuePair<float,RoR2.Navigation.NodeGraph.NodeIndex>>();
   foreach(var index in graph.GetActiveNodesForHullMask((HullMask)(1<<(int)player.hullClassification))){
    Vector3 node;Check(graph.GetNodePosition(index,out node),"Original approach node unavailable");float distance=Vector3.Distance(node,destination);
-   if(distance<currentDistance-8&&InsideSourceStageBounds(node))candidates.Add(new KeyValuePair<float,RoR2.Navigation.NodeGraph.NodeIndex>(distance,index));
+   if(distance>=currentDistance-8)continue;if(!InsideSourceStageBounds(node)){r.world.navigationApproachBoundsRejected++;continue;}candidates.Add(new KeyValuePair<float,RoR2.Navigation.NodeGraph.NodeIndex>(distance,index));
   }
   candidates.Sort((a,b)=>a.Key.CompareTo(b.Key));
   foreach(var candidate in candidates){
    r.world.navigationPartialCandidates++;
    var task=graph.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest{path=path,startPos=position,endPos=candidate.Value,hullClassification=player.hullClassification,maxSlope=player.characterMotor.Motor.MaxStableSlopeAngle,maxJumpHeight=player.maxJumpHeight,maxSpeed=player.moveSpeed});
    Check(task.status==RoR2.Navigation.PathTask.TaskStatus.Complete,"Original approach path did not complete");
-   if(!task.wasReachable||path.waypointsCount<2)continue;
+   if(!task.wasReachable){r.world.navigationApproachUnreachable++;continue;}if(path.waypointsCount<2){r.world.navigationApproachTooShort++;continue;}
    r.world.navigationPartialNode=candidate.Value.nodeIndex;Check(graph.GetNodePosition(candidate.Value,out r.world.navigationPartialDestination),"Original approach destination unavailable");
    r.world.navigationPartialSeconds=Time.realtimeSinceStartup-began;return true;
   }

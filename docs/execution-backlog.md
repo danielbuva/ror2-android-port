@@ -2797,3 +2797,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J307 live route progress:** Corrected full build executes on Nova. At567.5 gameplay seconds, three genuine source boss/charge/reward/exit/transports complete into Abyssal Depths,167 kills. Wetland no longer remains at the J306 approach blocker; visible boss damage and source path movement execute. No current-process errors/message failures. Different real-run RNG/loot prevents attributing all speed differences to the change. Same continuing original run/body/master; physical camera acceptance retained. Full fifth-stage/Moon partial-path/mission/ending/cleanup acceptance remains pending; I06/I03 unchanged, no I07 pointer.
+
+
+**J307 complete route / Moon exit:**1533.244 gameplay seconds,325 kills, five genuine boss/charge/exit/transports and original Moon landing/population. Corrected combat approach passes Wetland/Rallypoint/Sky Meadow; all earlier source loops complete without current-process errors/message failures. Actual Moon partial path executes (observed2787 candidate requests/15 waypoints/about0.040seconds), then no closer candidate succeeds and terrain recovery circles the temple. Four batteries remain inactive. Last90seconds battery distance ranges977.209–1013.416 metres, ending1000.824; no meaningful traversal. Native lunar attack stops, mission/ending/full source teardown remain unaccepted. Matched-point read-only original solver against active collision reaches bridge node1890 with31/32/21 waypoints; raising start origin0/.05/.2/.92 does not change results. Source enter/exit bounds permit the inspected nodes at foot/body heights. These host results expose missing device request/filter evidence, not a justified physics/bounds workaround. Owned interruption preserved, app stopped/selector removed/Nova asleep; I06/I03 unchanged, no I07 pointer.
+
+### I07-S28 — Actual integrated navigation request
+
+- **ID:** I07-S28.
+- **TITLE:** Resolve device/source Moon path contradiction.
+- **CONTEXT:** J307 completes all five source loops; Moon partial paths stop short of the bridge.
+- **OBSERVATION:** Device result conflicts with matched-point original host solver; exact device body/request/filter contract is absent. No runtime errors, no battery completion.
+- **HYPOTHESIS:** Actual hull/jump/slope/gravity/start node or bounds/path rejection explains the contradiction.
+- **TASK:** Add only that request snapshot to the existing composed game; force-build and run the genuine route on Nova.
+- **CONSTRAINTS:** Read-only observations; original graph/physics/stats/authority/bounds/input/combat/mission/platform policy unchanged. No new standalone proof, save framework or fabricated skip; I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored IntegratedWorldBoundary; ignored full archive/build/device comparisons; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Exact current-launch original request/start/filter evidence classifies the first Moon failure; observation does not pass traversal or victory.
+- **FAILURE EVIDENCE TO CAPTURE:** Full runtime inputs/start-node/graph and candidate counts, source movement/grounding/path, current-process logs/capture and live route identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** J308 build/device classification; preserve failed attempts and no incomplete-run pointer.
+- **DEPENDENCIES:** J307 five-stage/Moon report and matched source/bounds comparisons; minimum conditional T08 triggered by actual ambiguity.
+
+
+**J308 full build:**80.103-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `8eaeaa559c25b16da703fe8de1d9381902ab13e272af1715265e49542c54cc88`. Complete unattended route and exact device Moon request/start/filter classification pending; no new traversal or I07 pointer. I06/I03 unchanged.
