@@ -108,6 +108,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var source in objectiveSupportSources.Skip(1).Take(2))foreach(var instance in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&x.name==source.name+"(Clone)"))if(!objectiveSupportInstances.Contains(instance))objectiveSupportInstances.Add(instance);
  }
  void CleanupObjectiveSupport(){
+  CleanupMoonSupport();
   if(objectiveOrbHost)Destroy(objectiveOrbHost);if(ownsObjectiveOrbEffects){OrbEffectSingleton.instance=null;OrbEffectSingleton.orbEffectArray=null;OrbEffectSingleton.numPnts=0;ownsObjectiveOrbEffects=false;}foreach(var instance in objectiveSupportInstances)if(instance)NetworkServer.Destroy(instance);
   ReleaseObjectiveOrbCache();
   if(objectiveSupportLeases!=null)foreach(var lease in objectiveSupportLeases)if(lease.IsValid())Addressables.Release(lease);

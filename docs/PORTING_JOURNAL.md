@@ -2427,3 +2427,12 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 ## J286 — Full Moon build support closure admitted
 
 **Correction / scope:** The existing support-bundle guard now admits the measured seven-file recipe alongside prior four/five-file recipes, retaining owned path/existence checks. Canonical composed staging propagates the Moon catalog and two typed support rows; no new framework or gameplay change. Same pinned prior art and original identities. Full candidate `work/experiments/scene-runtime/20261005T103346.137903Z` reuses the complete J285 source/config/game composition with fresh attempt/mapping/receipts. Preflight/tests/archive/forced Vulkan build and whole Nova route next; no device acceptance, I06/I03 unchanged. Nova asleep.
+
+**J286 build:**157.734-second/zero-error Vulkan ARM64 build; matching request/start/terminal receipts,45 assembly identities,39 payload identities and APK SHA-256 `1f79a8e67245b5d545cf7ea56127607079b85a7aaad7482a94de16d6bfb207d1` verified.40 tests pass. Entire Nova route retry next; no Moon/victory acceptance yet.
+
+
+**J286 device exit:** Full candidate stops before world gameplay at the new Cripple ownership predicate. Required source metadata and typed support loads reach that point; clean teardown and zero unexpected current-process log errors,30.535-second host survival. Actual integrated configuration has no Barrier asset/callback fields, so its optional isolated effect snapshot is never created. Host pinned-assembly reflection verifies the concrete Cripple field exists; this is an adapter ownership dependency, not a source/runtime-field mismatch. Failed device evidence retained, app stopped/Nova asleep, no new capability acceptance.
+
+## J287 — Independent ownership of the integrated Cripple slot
+
+**Correction:** The real source Cripple prefab/typed lease owns only its measured static CharacterBody.AssetReferences field, refusing a pre-existing value and restoring it before the provider lease releases. It no longer requires the absent optional isolated Barrier snapshot. Original body/state/effect behavior remains unchanged; same pinned R2API.Addressables f539511e ownership/lifetime and exact source field. No implementation copied. Full candidate `work/experiments/scene-runtime/20261005T104137.259547Z` retains the complete Exploder/shared Moon/catalog/game composition. Import/compile/preflight/40 tests/archive/forced Vulkan build and full Nova route next. I06/I03 unchanged; no capability acceptance.

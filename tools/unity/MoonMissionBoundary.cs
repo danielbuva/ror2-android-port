@@ -29,17 +29,23 @@ public sealed partial class MovementBatchProbe {
   var def=artifactBundle.LoadAsset<EquipmentDef>(cfg.moonCatalog.equipment[0]);Check(def&&def.name=="EliteLunarEquipment"&&def.passiveBuffDef==RoR2Content.Buffs.AffixLunar,"Original Lunar equipment/passive buff identity differs");
   BindEnemyDefinition(typeof(RoR2Content.Equipment),"AffixLunar",def);return new[]{def};
  }
- GameObject moonLunarMissile;
+ GameObject moonLunarMissile,moonCrippleEffect,previousMoonCripple;System.Reflection.FieldInfo moonCrippleSlot;bool ownsMoonCripple;
  void PrepareMoonSupport(Result cfg){
   if(!cfg.moonMission)return;
   int missile=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Projectiles/LunarMissileProjectile"),cripple=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/TemporaryVisualEffects/CrippleEffect");
   Check(missile>=0&&cripple>=0,"Original Lunar support manifest missing");
   moonLunarMissile=objectiveSupportSources[missile];Check(moonLunarMissile&&moonLunarMissile.GetComponent<RoR2.Projectile.ProjectileController>(),"Original Lunar missile component missing");
-  var slot=BarrierSlot().DeclaringType.GetField("crippleEffectPrefab",System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
-  Check(slot!=null&&priorEffectSlots.ContainsKey(slot)&&slot.GetValue(null)==null,"Unowned original Cripple effect slot");
+  moonCrippleSlot=BarrierSlot().DeclaringType.GetField("crippleEffectPrefab",System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
+  Check(moonCrippleSlot!=null&&!ownsMoonCripple,"Original Cripple effect slot missing or already owned");previousMoonCripple=(GameObject)moonCrippleSlot.GetValue(null);
+  Check(!previousMoonCripple,"Existing original Cripple effect slot; refuse replacement");
   var effect=objectiveSupportSources[cripple];Check(effect&&effect.GetComponent<TemporaryVisualEffect>(),"Original Cripple effect component missing");
-  // Same owned typed provider as other Android assets. Existing effect-slot teardown restores it.
-  slot.SetValue(null,effect);Check(ReferenceEquals(slot.GetValue(null),effect),"Original Cripple effect binding failed");
+  // Integrated gameplay does not initialize the optional isolated Barrier bundle.
+  // Own this one measured slot and its real provider lease independently.
+  moonCrippleEffect=effect;ownsMoonCripple=true;moonCrippleSlot.SetValue(null,effect);Check(ReferenceEquals(moonCrippleSlot.GetValue(null),effect),"Original Cripple effect binding failed");
+ }
+ void CleanupMoonSupport(){
+  if(ownsMoonCripple){Check(ReferenceEquals(moonCrippleSlot.GetValue(null),moonCrippleEffect),"Original Cripple slot ownership changed");moonCrippleSlot.SetValue(null,previousMoonCripple);ownsMoonCripple=false;}
+  moonLunarMissile=null;moonCrippleEffect=null;
  }
  void BindMoonBodySupport(CharacterBody body){
   if(!moonLunarMissile||!body)return;
