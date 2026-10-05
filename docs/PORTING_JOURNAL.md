@@ -2528,3 +2528,15 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J293 full build:**146.005-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `780f90f9ce51329a9f461ff146361646a24af9a7c04e07b488673b30016361df`. Full Nova route retry running; motion/guard targeting/Sky/Moon/victory require actual device outcomes. I06/I03 unchanged.
+
+
+**J293 device exit / hypothesis revision:**782.032 reported gameplay seconds,192 kills/three genuine objectives and transports. Original StandardLoss/server/client/RunReport/XML/ledger persist:357 fields,49892 dealt/1016 taken,795.294 original stopwatch seconds/six acquired item entries/priorRuns7. Full cleanup/zero unexpected current-process errors pass. Ground-to-ground steering and actual Guard selection work through the first three stages, but Abyssal combat input stops immediately: motion/target remain stale from Rallypoint, nearby source Beetles each deal216 damage. Grounded entry is inside one original TriggerExit volume and outside the alternative above-cave volume. The adapter incorrectly requires all exit volumes; exact original Util accepts any. This supersedes terrain-only diagnosis for the Abyssal loss. Sky/Moon/victory remain unexecuted; I06/I03 unchanged, Nova stopped/asleep.
+
+## J294 — Use original alternative-volume bounds in the complete route
+
+**Correction:** Candidate `work/experiments/scene-runtime/20261005T143430.327456Z` retains the whole world/route/Moon/results and J293 motion. Call exact original Util.IsPositionWithinMapBounds instead of the adapter's all-volume imitation; retain enabled source TriggerEnter out-of-bounds exclusion only for diagnostic terrain/target selection. Original MapZone callbacks still own actual kill/teleport effects. Add current combat candidate/rejection counts, original entry-bounds observation and post-grounding assertion. No trigger, collider, health/damage, cooldown, stage count or platform changes.
+
+**Prior art / exit:** Same consulted community combat/diagnostic map; pinned DebugToolkit d1e2f0aa actual master/body queries and R2API.Director f539511e original actor/card/lifecycle contracts. Exact shipped Util/MapZone and actual Abyssal entry outrank any adapter assumption. No community implementation copied or replacement game bounds implementation. Live preflight/40 tests/fresh compile/archive/forced full Vulkan build and complete Nova retry required. I06/I03 remain rollback; no compile-only capability or pointer advance.
+
+
+**J294 full build:**82.371-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `8b0772925ad7477c5667cabd4616d4aeb9fdfb2ecd700fafa021913bef439c5b`. Full Nova route retry running; actual original bounds/Abyssal combat/Sky/Moon/victory outcomes pending. I06/I03 unchanged.

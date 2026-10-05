@@ -318,7 +318,8 @@ public sealed partial class MovementBatchProbe {
   return true;
  }
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
-   var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();
+   var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
+   var actors=living.Where(x=>InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();r.world.combatCandidates=living.Length;r.world.combatBoundsRejected=living.Length-actors.Length;
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    // The whole-run capture records lethal nearby guard slams while the input
    // driver aims at other adds. Choose that immediate threat before distant adds.
@@ -338,7 +339,7 @@ public sealed partial class MovementBatchProbe {
  }
  void SelectCombatMotion(CharacterBody player,NovaInputBridge bridge,Vector2 desired,DirectorActor[] threats,bool escape){
   // Input-only terrain selection. Compare ground to ground, including while
-  // jumping; the old capsule-position comparison rejected all four directions.
+  // jumping; capsule-position comparison can reject otherwise walkable ground.
   var solver=player.characterMotor.Motor;var origin=solver.TransientPosition;RaycastHit floor;
   r.world.combatMotionSamples++;bridge.movement=Vector2.zero;r.world.combatMotion=Vector2.zero;
   if(!Physics.Raycast(origin+Vector3.up*.25f,Vector3.down,out floor,24,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||floor.collider.gameObject.scene!=stageGeometryScene){r.world.combatMotionBlocked++;return;}

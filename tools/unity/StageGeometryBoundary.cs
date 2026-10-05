@@ -103,7 +103,9 @@ public sealed partial class MovementBatchProbe {
  }
  void PauseStageMapZones(){foreach(var zone in stageMapZones)if(zone)zone.gameObject.SetActive(false);if(r.stage!=null)r.stage.mapZonesReady=false;}
  bool InsideSourceStageBounds(Vector3 point){
-  return stageMapZones.Where(x=>x&&x.gameObject.activeInHierarchy&&x.GetComponent<Collider>().enabled&&x.zoneType==MapZone.ZoneType.OutOfBounds).All(x=>x.triggerType==MapZone.TriggerType.TriggerExit?x.IsPointInsideMapZone(point):!x.IsPointInsideMapZone(point));
+  // Original spawn bounds allow alternative exit volumes. Enter volumes remain
+  // unsafe diagnostic destinations/targets; actual callbacks own their effects.
+  return Util.IsPositionWithinMapBounds(point)&&stageMapZones.Where(x=>x&&x.gameObject.activeInHierarchy&&x.GetComponent<Collider>().enabled&&x.zoneType==MapZone.ZoneType.OutOfBounds&&x.triggerType==MapZone.TriggerType.TriggerEnter).All(x=>!x.IsPointInsideMapZone(point));
  }
  void StartStageMapZoneObservations(){
   if(ownsStageMapZoneObservations)return;

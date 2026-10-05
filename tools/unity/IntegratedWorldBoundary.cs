@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries;public float navigationStalledSeconds;
-  public int combatMotionSamples,combatMotionBlocked;public string combatTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
+  public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected;public string combatTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
