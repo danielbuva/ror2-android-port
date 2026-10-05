@@ -185,3 +185,5 @@ Original chest loot chain: `./dev prototype --action nova-chest-ejection-prepare
 
 
 Persistent integration: `./dev prototype --action nova-whole-game-prepare` composes the recovered stage/player/combat/director/local authority/rewards/interactables/loot into one live session. Use the existing preflight, forced Vulkan build and movement-batch runner. See [integration scope and limitations](docs/whole-game-integration.md). This does not bypass the documented stock startup/platform gate.
+
+`./dev prototype --action movement-batch-retry` repeats the selected batch using the current verified APK, preserving the prior attempt and writing fresh evidence under its `verification/` directory. It retains the existing device, storage, build-identity and duration guards.

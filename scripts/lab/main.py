@@ -320,9 +320,9 @@ try:
   elif a.action=='movement-batch-prepare':
    from scene_runtime import movement_batch_prepare
    movement_batch_prepare()
-  elif a.action=='movement-batch-run':
+  elif a.action in ['movement-batch-run','movement-batch-retry']:
    from scene_runtime import movement_batch_run
-   movement_batch_run()
+   movement_batch_run(retry=a.action=='movement-batch-retry')
   elif a.action=='direction-prepare':
    from scene_runtime import direction_prepare
    direction_prepare()
