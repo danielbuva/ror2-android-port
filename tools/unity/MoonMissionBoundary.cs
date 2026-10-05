@@ -9,12 +9,13 @@ using UnityEngine.Networking;
 // Owned Android activation/visual/input boundary around recovered original mission callbacks.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class MoonMissionReport {
-  public bool loaded,authority,cleaned,toggleInitialized;public int batteries,required,charged,encounters,spawnedEncounters,sceneNetworkObjects;
+  public bool loaded,authority,cleaned,toggleInitialized,populationReady;public int batteries,required,charged,encounters,spawnedEncounters,sceneNetworkObjects,monsterCards;
+  public string[] monsterCardNames,unmappedPoolCards;public float[] monsterCardWeights;
   public string state,escapeState,error,scope,inputObjective;public string[] batteryStates,elevatorStates;
   public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
   public float seconds;public List<string> transitions=new List<string>();
  }
- GameObject[] moonRoots;EntityStateMachine moonEncounter;MoonBatteryMissionController moonBatteries;EscapeSequenceController moonEscape;
+ GameObject[] moonRoots;EntityStateMachine moonEncounter;MoonBatteryMissionController moonBatteries;EscapeSequenceController moonEscape;ClassicStageInfo moonStageInfo;DirectorCardCategorySelection priorMoonInteractables;
  void BindMoonActorVisuals(GameObject body,Transform model,ObjectiveActorSpec spec){
   foreach(var binding in spec.bindings){
    var target=body.transform.Find(binding.path);Check(target,"Original Moon visual transform missing: "+spec.name+"/"+binding.path);
@@ -33,7 +34,7 @@ public sealed partial class MovementBatchProbe {
   Check(moonRoots.All(x=>!x.activeSelf),"Moon source root activation was not deferred");
   var info=moonRoots.SelectMany(x=>x.GetComponentsInChildren<SceneInfo>(true)).Single();info.gameObject.SetActive(true);
   Check(SceneInfo.instance==info&&info.groundNodes&&info.airNodes,"Original Moon SceneInfo/graphs missing");
-  BindMoonSourceCards();
+  BindMoonPopulation();BindMoonSourceCards();
   foreach(var root in moonRoots)if(spec.activeRoots.Contains(root.name))root.SetActive(true);
   var sceneObjects=Resources.FindObjectsOfTypeAll<NetworkIdentity>().Where(x=>x.gameObject.hideFlags!=HideFlags.NotEditable&&x.gameObject.hideFlags!=HideFlags.HideAndDontSave&&!x.sceneId.IsEmpty()).ToArray();
   Check(sceneObjects.Length>0&&sceneObjects.All(x=>x.gameObject.scene==stageGeometryScene),"Unowned network scene objects before Moon activation");
@@ -52,6 +53,31 @@ public sealed partial class MovementBatchProbe {
   r.phase="moon-mission-context";Save();
   Check(moonBatteries&&moonEncounter&&moonEscape,"Recovered Moon mission did not activate");
   yield return null;ObserveMoonMission();
+  Check(ClassicStageInfo.instance==moonStageInfo&&moonStageInfo.monsterSelection!=null&&moonStageInfo.monsterSelection.Count>0,"Original Moon stage population did not initialize");
+  var selection=moonStageInfo.monsterSelection;var cards=Enumerable.Range(0,selection.Count).Select(i=>selection.GetChoice(i)).ToArray();
+  r.moon.monsterCards=cards.Length;r.moon.monsterCardNames=cards.Select(x=>x.value.GetSpawnCard().name).ToArray();r.moon.monsterCardWeights=cards.Select(x=>x.weight).ToArray();
+  Check(cards.All(x=>objectiveCards.Contains(x.value.GetSpawnCard() as CharacterSpawnCard)),"Original Moon selected an unsupported population card: "+string.Join(",",r.moon.monsterCardNames));
+  if(moonStageInfo.interactableCategories&&moonStageInfo.interactableCategories!=priorMoonInteractables)objectiveResources.Add(moonStageInfo.interactableCategories);
+  r.moon.populationReady=true;Save();
+ }
+ void BindMoonPopulation(){
+  moonStageInfo=SceneInfo.instance.GetComponent<ClassicStageInfo>();Check(moonStageInfo&&ClassicStageInfo.instance==moonStageInfo,"Original Moon ClassicStageInfo missing");
+  var field=typeof(ClassicStageInfo).GetField("monsterDccsPool",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);Check(field!=null,"Original Moon population field missing");var original=(DccsPool)field.GetValue(moonStageInfo);Check(original&&original.poolCategories!=null,"Original Moon population pool missing");
+  var pool=Instantiate(original);pool.name=original.name;objectiveResources.Add(pool);var decks=new Dictionary<DirectorCardCategorySelection,DirectorCardCategorySelection>();var unmapped=new HashSet<string>();
+  foreach(var category in pool.poolCategories){
+   var entries=(category.alwaysIncluded??new DccsPool.PoolEntry[0]).Concat(category.includedIfConditionsMet??new DccsPool.ConditionalPoolEntry[0]).Concat(category.includedIfNoConditionsMet??new DccsPool.PoolEntry[0]);
+   foreach(var entry in entries){
+    Check(entry.dccs,"Original Moon pool entry is missing its selection");DirectorCardCategorySelection deck;
+    if(!decks.TryGetValue(entry.dccs,out deck)){
+     deck=Instantiate(entry.dccs);deck.name=entry.dccs.name;objectiveResources.Add(deck);decks.Add(entry.dccs,deck);
+     foreach(var group in deck.categories)foreach(var card in group.cards){var source=card.GetSpawnCard() as CharacterSpawnCard;Check(source,"Original Moon population has an unsupported spawn-card type");var owned=objectiveCards.SingleOrDefault(x=>x.name==source.name);if(owned)card.spawnCard=owned;else unmapped.Add(source.name);}
+    }
+    entry.dccs=deck;
+   }
+  }
+  // Pool/category weights and original availability/expansion checks remain intact.
+  // Only known actor contracts bind to owned Android templates; selected unknowns fail.
+  field.SetValue(moonStageInfo,pool);priorMoonInteractables=moonStageInfo.interactableCategories;r.moon.unmappedPoolCards=unmapped.OrderBy(x=>x).ToArray();
  }
  void BindMoonSourceCards(){
   // Source spawn cards keep their cost/scaling/placement/squad contracts; owned templates
@@ -63,9 +89,10 @@ public sealed partial class MovementBatchProbe {
    }
   }
   foreach(var director in moonRoots.SelectMany(x=>x.GetComponentsInChildren<CombatDirector>(true))){
+   director.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
    if(!director.monsterCards)continue;var deck=Instantiate(director.monsterCards);objectiveResources.Add(deck);
    foreach(var category in deck.categories)foreach(var card in category.cards){var source=card.spawnCard as CharacterSpawnCard;if(!source)continue;var owned=objectiveCards.SingleOrDefault(x=>x.name==source.name);Check(owned,"Original Moon director card has no compatible template: "+source.name);card.spawnCard=owned;}
-   director.monsterCards=deck;director.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
+   director.monsterCards=deck;
   }
  }
  void ObserveMoonMission(){
@@ -126,6 +153,6 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupMoonMission(){
   if(moonRoots!=null)foreach(var root in moonRoots)if(root)root.SetActive(false);
-  moonEncounter=null;moonBatteries=null;moonEscape=null;moonRoots=null;if(r.moon!=null)r.moon.cleaned=true;
+  moonEncounter=null;moonBatteries=null;moonEscape=null;moonStageInfo=null;priorMoonInteractables=null;moonRoots=null;if(r.moon!=null)r.moon.cleaned=true;
  }
 }

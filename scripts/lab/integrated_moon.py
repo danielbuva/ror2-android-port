@@ -26,7 +26,7 @@ def stage_moon(stage, previous, out, spec):
                for b in blocks if b.startswith('--- !u!1 ')}
     mission_names = {'SceneInfo', 'MoonMissionController', 'MoonBatteryMissionController',
                      'BrotherMissionController', 'EscapeSequenceController', 'SceneObjectToggleGroup', 'Director'}
-    mission_scripts = {'RoR2.SceneInfo', 'RoR2.MoonMissionController', 'RoR2.MoonBatteryMissionController',
+    mission_scripts = {'RoR2.SceneInfo', 'RoR2.ClassicStageInfo', 'RoR2.MoonMissionController', 'RoR2.MoonBatteryMissionController',
                        'RoR2.SceneObjectToggleGroup', 'RoR2.EscapeSequenceController',
                        'RoR2.AllPlayersTrigger', 'RoR2.OnPlayerEnterEvent', 'RoR2.Navigation.GateStateSetter',
                        'RoR2.MapZone', 'RoR2.JumpVolume'}
@@ -65,7 +65,7 @@ def stage_moon(stage, previous, out, spec):
     missing_scripts={fid for b in retained for fid in re.findall(r'\{fileID: (-?\d+)\}',b)
                      if fid in by_id and by_id[fid].startswith('--- !u!114 ') and fid not in retained_ids}
     if missing_scripts:raise RuntimeError('Moon mission references omitted source scripts: '+str(sorted(missing_scripts)))
-    required = {'RoR2.MoonBatteryMissionController': 1, 'RoR2.ScriptedCombatEncounter': 4,
+    required = {'RoR2.ClassicStageInfo': 1, 'RoR2.MoonBatteryMissionController': 1, 'RoR2.ScriptedCombatEncounter': 4,
                 'RoR2.EscapeSequenceController': 1, 'RoR2.AllPlayersTrigger': 1}
     for type_name, count in required.items():
         if sum(kind(b) == type_name for b in retained) != count:

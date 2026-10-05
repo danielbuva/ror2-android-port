@@ -2350,3 +2350,7 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **FAILURE EVIDENCE TO CAPTURE:** Source pool/card names and weights, actual current-launch first initialization/native/selection/spawn failure, original scene count and cleanup.
 - **STATE/JOURNAL UPDATES REQUIRED:** Record source hashes/clones/selection scope, real full-game result, first failure and rollback; maintain open Moon/victory gates.
 - **DEPENDENCIES:** J280 source activation; J281/J282 ending/application integration; immutable I06/I03.
+
+**I07-S10 build preparation, J283:** Full source stage population context and245 mission behaviors retained;3813-file/297672309-byte source closure includes reuse. Known card bindings use scoped source-named clones with original weights/eligibility; every Moon director is observed. Import/compile/live preflight/40 checks and immutable archive pass. Forced full-game build running; no device or mission acceptance yet. I06/I03 unchanged.
+
+**I07-S10 full build:**179.271-second/zero-error forced Vulkan build;39 payload/45 assembly identities, matching terminal attribution and APK hash verified. Full Nova route running; no new device capability claimed yet.
