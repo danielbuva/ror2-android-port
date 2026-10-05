@@ -301,6 +301,10 @@ public sealed partial class MovementBatchProbe {
   }
   if(worldTeleporter.isIdle||worldTeleporter.isCharged){
    NavigateWorldInput(player,bridge,objectiveHost.transform.position,1,objectiveHost.name,elapsed);
+   // Travelling to an objective must not disable normal self-defence. Interaction
+   // wins when the original selector is ready; otherwise clear nearby attackers.
+   var nearby=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
+   if(worldDriver.currentInteractable!=objectiveHost&&nearby!=null&&Vector3.Distance(nearby.body.corePosition,player.corePosition)<20){ObjectiveCombatInput(player,bridge,elapsed,planar,false);r.world.objective="Clear nearby threats while approaching teleporter";return true;}
    var aim=objectiveBeacon.bounds.center-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;
    if(worldDriver.currentInteractable==objectiveHost&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
   }else{
@@ -309,7 +313,7 @@ public sealed partial class MovementBatchProbe {
   r.world.objective=worldTeleporter.isIdle?"Activate teleporter":worldTeleporter.isCharging?"Defeat boss and charge teleporter":worldTeleporter.isCharged?"Collect reward and exit":"Prepare next stage";
   return true;
  }
- void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar){
+ void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
    var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    // Clear attacking adds first, as in the accepted continuous route.
@@ -318,7 +322,7 @@ public sealed partial class MovementBatchProbe {
     var fromThreat=player.characterMotor.Motor.TransientPosition-nearest.body.characterMotor.Motor.TransientPosition;fromThreat.y=0;float distance=fromThreat.magnitude;
     float safeDistance=20;
     Vector2 desired=distance<safeDistance?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
-    if(planar.magnitude>50)desired=planar.normalized;
+    if(constrainToHoldout&&planar.magnitude>50)desired=planar.normalized;
     // Walkability steers recorded input; it never translates the player or changes collision.
     var origin=player.characterMotor.Motor.TransientPosition;
     var choices=new[]{desired,new Vector2(desired.y,-desired.x),new Vector2(-desired.y,desired.x),-desired};

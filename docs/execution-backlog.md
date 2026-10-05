@@ -2354,3 +2354,24 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 **I07-S10 build preparation, J283:** Full source stage population context and245 mission behaviors retained;3813-file/297672309-byte source closure includes reuse. Known card bindings use scoped source-named clones with original weights/eligibility; every Moon director is observed. Import/compile/live preflight/40 checks and immutable archive pass. Forced full-game build running; no device or mission acceptance yet. I06/I03 unchanged.
 
 **I07-S10 full build:**179.271-second/zero-error forced Vulkan build;39 payload/45 assembly identities, matching terminal attribution and APK hash verified. Full Nova route running; no new device capability claimed yet.
+
+**I07-S10 device exit, J283:** Full first objective/transport and genuine loss/client/XML/ledger/cleanup pass; zero unexpected errors. The player dies during Wetland teleporter approach before Moon, so population/mission/victory remain unaccepted. Preserve evidence; repair the observed driver combat gap, then continue the entire route.
+
+### I07-S11 — Self-defence during objective travel
+
+- **ID:** I07-S11.
+- **TITLE:** Self-defence during objective travel.
+- **CONTEXT / OBSERVATION:** J283 reaches Wetland; idle teleporter approach resets all combat input while eight enemies close in. Kills stay59 until genuine death. Source runtime/results/cleanup pass.
+- **HYPOTHESIS:** Ordinary firing/evasion when a close enemy interrupts travel lets the same composed game reach later mission dependencies.
+- **TASK:** Keep original interaction priority once selected; otherwise use the accepted combat input path within20 units, without the charging-zone steering constraint. Retry the entire five-objective/Moon/ending route.
+- **CONSTRAINTS:** Diagnostic replay only; physical direct-launch controls and original health/damage/difficulty/spawn/charge/progression remain. All common safety/platform/privacy/rollback rules apply.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** TeleporterWorldBoundary.cs, ignored full candidate/config/archive/run evidence.
+- **TEST COMMAND:** preflight;40 host checks; forced Vulkan build; full movement-batch-run.
+- **PASS CONDITION:** Actual travel threat combat/interaction and later whole-game progress occur without new source errors; no forced survival or claimed Moon/victory before execution.
+- **FAILURE EVIDENCE TO CAPTURE:** First current-run error or genuine defeat, approach/combat input and enemy count, actual objectives/transports/mission/ending/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Each full-game exit with truthful gate status; no failed pointer advance.
+- **DEPENDENCIES:** J283 full-game exit, pinned Starstorm2 a9a4badd original input-bank/state delegation, existing accepted combat boundary.
+
+**I07-S11 preparation, J284:** Existing full Moon/application/world candidate retained; scoped approach-combat driver correction imports/compiles. Live preflight,40 tests and immutable archive pass. Forced full-game build next; no device acceptance yet.
+
+**I07-S11 full build:**85.445-second/zero-error Vulkan ARM64 build and matching hashes/receipts pass. Full Nova route retry next; acceptance pending.
