@@ -234,3 +234,6 @@ J287 completes five original objective loops and five actual transports, with or
 
 
 J288 repeats five genuine objectives but Moon landing guard rejects before fifth transport/mission Start. Exact full file-based stack identifies missing original safe-teleport helper; source trigger layers were overwritten. J289 restores those contexts and adds actual entry observations. No new gate/pointer acceptance; I06/I03 retained.
+
+
+J289 repeats five genuine objectives/count5/four transports/386 kills with zero unexpected runtime errors and full cleanup. Moon landing remains unaccepted. J290 replaces direct entry positioning with original TeleportHelper and observes actual queued movement during the whole game, without relaxing grounding or source mission acceptance. I06/I03 remain immutable; no fifth-transport/battery/elevator/Mithrix/escape/victory gate passes yet.

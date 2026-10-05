@@ -44,6 +44,7 @@ public sealed partial class MovementBatchProbe {
  RoR2.ConVar.IntConVar worldVfxOption;string priorWorldVfx,priorWorldXp;
  AsyncOperationHandle<GameObject> worldCoinLease;bool ownsWorldCoinLease;int worldCoinBaseline,worldBarrelConsumers;bool ownsIntegratedPools;
  Action<Interactor,IInteractable,GameObject> worldInteraction;
+ bool ownsWorldTeleportHandler;
  readonly Dictionary<short,NetworkMessageDelegate> worldClientHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldServerHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldClientObservers=new Dictionary<short,NetworkMessageDelegate>(),worldServerObservers=new Dictionary<short,NetworkMessageDelegate>();
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
@@ -154,11 +155,12 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.feedbackCapability+=" Original level-up sound/effect and item-display highlight unavailable; original levels/stats/grants retained.";
  }
  void PrepareWorldMessages(){
-  Check(!activeBodyClient.handlers.ContainsKey(52)&&!activeBodyClient.handlers.ContainsKey(55)&&!activeBodyClient.handlers.ContainsKey(57),"Unowned integrated presentation handlers");
+  Check(!activeBodyClient.handlers.ContainsKey(52)&&!activeBodyClient.handlers.ContainsKey(55)&&!activeBodyClient.handlers.ContainsKey(57)&&!activeBodyClient.handlers.ContainsKey(68)&&!NetworkServer.handlers.ContainsKey(68),"Unowned integrated presentation/teleport handlers");
   worldVfxOption=(RoR2.ConVar.IntConVar)RewardField(typeof(VFXBudget),"mediumPriorityCostThreshold").GetValue(null);priorWorldVfx=worldVfxOption.GetString();worldVfxOption.AttemptSetString(worldVfxOption.defaultValue);
   priorWorldXp=SettingsConVars.cvExpAndMoneyEffects.GetString();SettingsConVars.cvExpAndMoneyEffects.AttemptSetString("0");
   var effects=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(EffectManager).GetMethod("HandleEffectClient",BindingFlags.Static|BindingFlags.NonPublic));
   var xp=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(ExperienceManager).GetMethod("HandleCreateExpEffect",BindingFlags.Static|BindingFlags.NonPublic));
+  var teleport=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(TeleportHelper).GetMethod("HandleTeleport",BindingFlags.Static|BindingFlags.NonPublic));ownsWorldTeleportHandler=true;activeBodyClient.RegisterHandler(68,teleport);NetworkServer.RegisterHandler(68,teleport);
   activeBodyClient.RegisterHandler(52,msg=>{r.world.coinMessages++;effects(msg);});
   activeBodyClient.RegisterHandler(55,msg=>{r.world.xpMessages++;xp(msg);});
   // Decode with the original MessageBase. Do not call the original native-audio UI handler
@@ -327,7 +329,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   CleanupChestEjection();
   if(rewardPrefabs!=null){var prefab=rewardPrefabs[0];var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);EffectPool pool;if(pools.TryGetValue(prefab,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(prefab);pool.Kill();}((IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null)).Remove(prefab);}
   if(ownsWorldCoinLease&&worldCoinLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease)-worldCoinBaseline;Check(extra>=0&&extra<=worldBarrelConsumers,"Unattributed integrated barrel coin leases");for(int i=0;i<extra;i++)Addressables.Release(worldCoinLease.Result);Addressables.Release(worldCoinLease);ownsWorldCoinLease=false;}
-  RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);
+  RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);if(ownsWorldTeleportHandler){if(activeBodyClient!=null)activeBodyClient.UnregisterHandler(68);if(NetworkServer.active)NetworkServer.UnregisterHandler(68);ownsWorldTeleportHandler=false;}
   if(worldVfxOption!=null)worldVfxOption.AttemptSetString(priorWorldVfx);if(priorWorldXp!=null)SettingsConVars.cvExpAndMoneyEffects.AttemptSetString(priorWorldXp);
   if(ownsWorldLists&&Run.instance){Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();if(worldChestTable)worldChestTable.RegenerateDropTable(Run.instance);Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&(!worldChestTable||worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;}
   if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}

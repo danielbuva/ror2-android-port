@@ -2415,3 +2415,9 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S12 J289 build:**93.389 seconds/zero errors;40 tests/39 payload/45 assembly matching receipts. Full Nova retry starts with actual entry observations; no new device acceptance.
+
+
+**I07-S12 J289 exit / J290:** Five genuine objectives/count5,386 kills/four transports; helper/trigger fixes remove the previous runtime exception. Moon landing still fails, with original physics advancing and full cleanup/zero unexpected process errors. Exact source SetPosition leaves queued motor moves; this is not yet a measured dirty target. Full J290 game uses original TeleportHelper entry and owned source message68, records actual queued/body/foot/core state, and retains the grounding guard. Build/run the entire route; no accepted pointer advances.
+
+
+**I07-S12 J290 build:**81.089-second/zero-error Vulkan ARM64 build; matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `4a04e3bb19b2d04032acb99c0ed3bde8f2e0565c2cd66a9325bcf8b41e5e7e44`.40 tests pass. Full Nova route retry running; no new Moon or rollback acceptance.
