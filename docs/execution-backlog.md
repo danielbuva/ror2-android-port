@@ -2401,3 +2401,5 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 **I07-S12 full build, J286:**157.734 seconds/zero errors; matching receipts,45 assembly/39 payload identities and APK hash verified.40 tests pass. Whole Nova retry follows; no new capability acceptance.
 
 **I07-S12 J286 exit/J287:** Actual integrated configuration omits optional Barrier initialization; Cripple ownership guard rejects its absent snapshot before gameplay. Full cleanup/zero unexpected process errors pass. Own/restore the exact Cripple field and real provider lease independently, then repeat the full composed game. No source gameplay change or new milestone/pointer acceptance.
+
+**I07-S12 J287 full build:**84.092 seconds/zero errors,40 tests, matching39 payload/45 assembly/APK receipts. Launcher refuses an inherited batch receipt before device installation; retain it under the parent evidence and issue a fresh current run. Full-game retry running; no new capability acceptance.
