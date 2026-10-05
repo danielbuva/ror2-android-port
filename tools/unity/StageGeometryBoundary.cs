@@ -13,7 +13,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit;
   public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
-  public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
+  public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,worldColliders,nonWorldColliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
  }
@@ -43,7 +43,9 @@ public sealed partial class MovementBatchProbe {
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
-   if(!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
+   // Full Moon retains original physics/interaction/presentation layer roles.
+   // Renderer layer changes also change any collider on that GameObject.
+   if(!moon&&!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
    if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
    var materials=renderer.sharedMaterials;
    for(int i=0;i<materials.Length;i++){
@@ -59,8 +61,10 @@ public sealed partial class MovementBatchProbe {
    renderer.sharedMaterials=materials;r.stage.renderers++;
   }
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
-   // Mission volumes retain source trigger layers and their original collision rules.
-   if(!collider.isTrigger&&(!moon||!collider.GetComponent<EntityLocator>()))collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
+   // A non-trigger ambient/post-process volume is not world geometry. Promoting
+   // Moon's source layer20 sphere ejects the landing body through KCC penetration.
+   if(!moon&&!collider.isTrigger)collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
+   if(collider.gameObject.layer==LayerIndex.world.intVal)r.stage.worldColliders++;else r.stage.nonWorldColliders++;
    var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh){r.stage.missingColliderMeshes++;emptyColliders.Add(StageObjectPath(mesh.transform));}}
   }
   r.stage.emptyMeshPaths=emptyMeshes.ToArray();r.stage.emptyColliderPaths=emptyColliders.ToArray();

@@ -293,3 +293,11 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J298 live integrated progress:** Wetland boss/charge/reward/exit and second actual source transport complete. Same original body/master/inventory reach Rallypoint Delta; current chase flagtrue and zero runtime errors. Prior uphill return blocker is cleared under original physics. Full-route/Moon/ending/cleanup acceptance remains pending; ignored current report and reviewed Rallypoint capture retained. I06/I03 unchanged.
+
+
+**J298 device exit:**1516.3 reported gameplay seconds/412 kills, all five genuine source boss/charge/reward/exit objectives and original count5; four completed transports. Wetland traversal, Abyssal bounds/combat and Sky network MapZones pass in the full route. Actual Moon/catalog identity activates, but grounding fails before fifth transport/mission Start. Full source/world/model/results cleanup and zero unexpected current-process errors pass; no original ending/XML persistence or Moon/victory acceptance. Nova stopped/asleep; I06/I03 unchanged.
+
+**Moon hypothesis revised:** After original teleport, the queued target matches the intended landing exactly; stale queue is rejected. The next sample is displaced below the platform and source MapZones recover six times. Read-only recovered-scene inspection at that point finds a source layer20 non-trigger ambient sphere. Actual Commando capsule penetration yields220.846 metres toward(0.3484,-0.9369,0.0286), projecting to(1181.459,-487.432,1186.782), matching device displacement. Runtime geometry had promoted this post-process collider to World. Original queue/teleport/physics are retained; correct Moon layer ownership rather than weakening the entry guard.
+
+
+**J299 full build:**81.268-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `43f3372608270898de2d8bbba519a11c497dee0db5812e1a5d8bb7d3d30f945d`. Complete Nova route retry running; Moon source layers/landing/mission/victory require device execution. I06/I03 unchanged.
