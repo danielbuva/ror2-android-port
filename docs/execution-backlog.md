@@ -2643,4 +2643,26 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 **J301 full build:**81.401-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `38a55a54f16867bce8b33f1dd3f4d0a08610537a586b53acb0cec03e90311cc0`. Complete Nova route retry running; stalled-travel recovery/Moon/battery/mission/victory require execution. I06/I03 remain immutable rollback.
 
 
-**J301 live return progress:** Wetland boss/natural charge/reward/exit and second actual source transport complete.38 terrain-recovery frames/zero rejected terrain choices observed, followed by resumed source navigation; actual Rallypoint body/master/inventory and current source runtime remain stable. Integrated stalled-return correction has device evidence. Moon/battery/victory/ending/full cleanup acceptance remain pending; no new I07 pointer, I06/I03 immutable. Ignored current source report and reviewed Wetland capture retained.
+**J301 live return progress:** Wetland boss/natural charge/reward/exit and second actual source transport complete.38 terrain-recovery frames/zero blocked terrain searches observed, followed by resumed source navigation; actual Rallypoint body/master/inventory and current source runtime remain stable. Integrated stalled-return correction has device evidence. Moon/battery/victory/ending/full cleanup acceptance remain pending; no new I07 pointer, I06/I03 immutable. Ignored current source report and reviewed Wetland capture retained.
+
+
+**J301 device interruption:**1894.750 reported gameplay seconds/432 kills, all five genuine source objectives/count5 and five actual transports. Wetland terrain recovery clears the prior return; Moon landing/source population pass. Original four batteries remain inactive. Input repeatedly selects nearby higher ground while actual body remains near the entrance bridge; recovery jump requests do not resolve it. Source reachable flag remains false. Current-process errors zero, current Moon capture reviewed. Owned runner interrupted, evidence retained, app stopped/selection removed/Nova asleep. No source teardown, battery completion, ending/persistence or victory acceptance; I06/I03 unchanged.
+
+### I07-S22 — Body-width terrain guidance and live integrated control
+
+- **ID:** I07-S22.
+- **TITLE:** Resolve the Moon bridge approach in the running complete game.
+- **CONTEXT:** J301 passes five source stages/transports, then cannot reach batteries.
+- **OBSERVATION:** Center-line ground choices stay above a stationary body; recovery requests fail, no current runtime error. Two approaches have failed at this boundary.
+- **HYPOTHESIS:** Body-width clearance/rising-ground sampling improves guidance; source motor/state/button observations and physical takeover separate remaining input and physics failures.
+- **TASK:** Integrate the correction/observations/takeover in the complete game, build/run the full route, inspect its next actual blocker and continue.
+- **CONSTRAINTS:** Inherited privacy/IP/platform/storage/pins; original physics/jump/stats/graph/gates/colliders/interactions/progression authoritative, no forced ending; preserve completed live stages during takeover.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld terrain/HUD/source observations; ignored full candidate/build/device evidence.
+- **TEST COMMAND:** `./dev preflight`, `./dev test`, forced Vulkan build, `./dev prototype --action movement-batch-run`; physical takeover only at the actual integrated gate when needed.
+- **PASS CONDITION:** Actual body/input traverses toward original batteries; original mission/boss/escape/ending/results/full cleanup require execution. Takeover needs same live world/master/inventory continuity.
+- **FAILURE EVIDENCE TO CAPTURE:** Ground/state/velocity/jump/button/capsule/terrain observations, current visuals/errors, original mission/ending/results and cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J302 host repair/build/device outcomes, concise state/backlog/milestones, no full-route pointer from partial or interrupted play.
+- **DEPENDENCIES:** Preserved J301 full-route/Moon failure and reviewed capture; I06/I03 immutable rollback.
+
+
+**J302 full build:**81.026-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `52f2275fd793e8ab4d9c4be7e0be1f29db41411ba6725ac8b0f04edd58a09fc3`. Complete Nova route retry running; terrain clearance/live motor/takeover/Moon/mission/victory outcomes pending. I06/I03 unchanged; no new capability pointer.

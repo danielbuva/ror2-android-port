@@ -34,6 +34,8 @@ public sealed partial class MovementBatchProbe {
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public bool navigationTerrainFallback,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
+  public bool motorGrounded,motorStable,jumpDown,jumpPressed,jumpClaimed;public int motorJumpCount,motorMaxJumpCount;public Vector3 motorVelocity,motorGroundPoint;public string motorGroundCollider,movementState;
+  public bool manualTakeover;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
@@ -55,7 +57,7 @@ public sealed partial class MovementBatchProbe {
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
  Vector3 worldTerrainTarget,worldTerrainGoal;float worldTerrainSelectedAt=-100,worldTerrainRecoveryUntil=-100;readonly List<Vector3> worldTerrainRecent=new List<Vector3>();
- NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
+ NovaThirdPersonView worldView;bool restartRequested,worldManualTakeover;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
 Action<TeamIndex> unavailableTeamLevelSound;Action<Run> unavailableAmbientSound;Action<CharacterBody> unavailableLevelEffect;
@@ -234,6 +236,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void ObserveIntegratedWorld(CharacterBody player,float elapsed){
   Call(activeBodyClient,"Update");Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
   ObserveTeleporterWorld();ObserveMoonMission();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
+  var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
+  world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
   if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
@@ -246,6 +250,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  void IntegratedWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   // Explicit automation for integrated validation only; direct app launches use physical controls.
+  bridge.diagnosticInput=!worldManualTakeover;r.world.manualTakeover=worldManualTakeover;
+  if(worldManualTakeover){r.world.diagnosticInput=false;return;}
   r.world.diagnosticInput=true;bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
   if(worldObjective==0){var barrel=worldBarrels.FirstOrDefault(x=>x&&!x.Networkopened);if(barrel)target=barrel.gameObject;else worldObjective=1;}
@@ -333,9 +339,12 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    var direction=Quaternion.AngleAxis(i*22.5f,Vector3.up)*desired;Vector3 prior=position,groundPoint=position;bool valid=true;
    int steps=Mathf.CeilToInt(length/1.5f);
    for(int step=1;step<=steps;step++){
-    var sample=position+direction*(length*step/steps);RaycastHit ground;
+    var sample=position+direction*(length*step/steps);sample.y=prior.y;RaycastHit ground;
     if(!Physics.Raycast(sample+Vector3.up*4,Vector3.down,out ground,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||ground.collider.gameObject.scene!=stageGeometryScene||Vector3.Angle(ground.normal,Vector3.up)>player.characterMotor.Motor.MaxStableSlopeAngle||Mathf.Abs(ground.point.y-prior.y)>player.maxJumpHeight||!InsideSourceStageBounds(ground.point)){valid=false;break;}
-    if(Physics.Linecast(prior+Vector3.up,ground.point+Vector3.up,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)){valid=false;break;}
+    // A clear center ray can still send the actual body into an adjacent wall.
+    // Sweep its measured torso width; original KCC remains the movement solver.
+    var segment=ground.point-prior;RaycastHit clearance;
+    if(segment.sqrMagnitude>.0001f&&Physics.SphereCast(prior+Vector3.up,player.characterMotor.Motor.Capsule.radius*.9f,segment.normalized,out clearance,segment.magnitude,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)){valid=false;break;}
     prior=groundPoint=ground.point;
    }
    if(!valid)continue;
@@ -357,6 +366,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  void DrawIntegratedWorld(){
   var world=r.world;if(world==null||!world.ready)return;
+  if(r.id.EndsWith("-bringup")&&world.health>0&&GUI.Button(new Rect(Screen.width-210,20,190,48),worldManualTakeover?"Resume auto route":"Take control")){
+   var bridge=worldPlayer?worldPlayer.GetComponent<NovaInputBridge>():null;
+   if(bridge){bridge.Neutral();worldManualTakeover=!worldManualTakeover;bridge.diagnosticInput=!worldManualTakeover;world.manualTakeover=worldManualTakeover;world.diagnosticInput=!worldManualTakeover;Save();}
+  }
   var style=new GUIStyle(GUI.skin.label){fontSize=22};var shadow=new GUIStyle(style);shadow.normal.textColor=Color.black;
   string text="Offline gameplay lab — "+(r.stageProgress!=null?r.stageProgress.current:"Titanic Plains")+"\nHP "+Mathf.Max(0,world.health).ToString("F0")+" / "+world.maxHealth.ToString("F0")+"    Lv "+world.level.ToString("F0")+"    $"+world.money+"    "+world.seconds.ToString("F0")+"s\nKills "+world.kills+"    Enemies "+world.liveEnemies+"    Chests "+world.openedChests+" / "+world.chests+"\nSyringe "+world.syringe+" · Glasses "+world.glasses+" · Slug "+world.slug+" · Ukulele "+world.lightning+"\n"+world.lastPickup+"    Crit "+world.crit.ToString("F0")+"% · Regen "+world.regen.ToString("F1")+"\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n"+(string.IsNullOrEmpty(world.target)?"Explore, fight and earn money":"B: "+world.target)+"\nAudio, stock startup and profiles unavailable";
   if(world.lootDomain>4)text+="\nEnergy Drink "+world.drink+" · Steak "+world.steak+" · Move speed "+world.moveSpeed.ToString("F1");
