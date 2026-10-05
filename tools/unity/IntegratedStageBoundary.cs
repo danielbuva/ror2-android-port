@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 // Additive converted-stage transport, with a declared continuous-body entry adapter.
 // No synthetic stage count, reward, kill, authority, ownership or platform identity.
 public sealed partial class MovementBatchProbe {
- [Serializable] public class IntegratedStageSpec {public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
+ [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
   public string current,requested,error,scope;public bool transporting,cleaned;public int transitions,stageClearCount,completedBarrels,completedChests;
   public float enteredAt;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter;
@@ -63,8 +63,10 @@ public sealed partial class MovementBatchProbe {
   if(stageGeometryBundle){stageGeometryBundle.Unload(true);stageGeometryBundle=null;}
   var geometry=LoadStageGeometry(next.bundle,next.previewCallbacks,next);while(geometry.MoveNext())yield return geometry.Current;
   Check(SceneManager.SetActiveScene(stageGeometryScene)&&SceneCatalog.GetSceneDefForCurrentScene().cachedName==next.name,"Actual next scene catalog/name mismatch");
-  enemySceneHost=new GameObject("Owned original next-stage SceneInfo");enemySceneHost.SetActive(false);SceneManager.MoveGameObjectToScene(enemySceneHost,stageGeometryScene);
-  var info=enemySceneHost.AddComponent<SceneInfo>();typeof(SceneInfo).GetField("groundNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.groundGraph));typeof(SceneInfo).GetField("airNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.airGraph));enemySceneHost.SetActive(true);yield return null;
+  SceneInfo info;
+  if(next.moonMission)info=SceneInfo.instance;
+  else{enemySceneHost=new GameObject("Owned original next-stage SceneInfo");enemySceneHost.SetActive(false);SceneManager.MoveGameObjectToScene(enemySceneHost,stageGeometryScene);
+  info=enemySceneHost.AddComponent<SceneInfo>();typeof(SceneInfo).GetField("groundNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.groundGraph));typeof(SceneInfo).GetField("airNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.airGraph));enemySceneHost.SetActive(true);}yield return null;
   Check(SceneInfo.instance==info&&info.groundNodes.GetNodeCount()>0&&info.airNodes.GetNodeCount()>0,"Recovered next-stage navigation missing");
   // Explicit temporary entry placement; movement afterward is original motor/state/solver.
   solver.SetPosition(r.stage.spawnPosition);solver.CollidableLayers=LayerIndex.world.mask;solver.StableGroundLayers=LayerIndex.world.mask;solver.SetGroundSolvingActivation(true);solver.ForceUnground();solver.enabled=true;Physics.SyncTransforms();
@@ -80,7 +82,8 @@ public sealed partial class MovementBatchProbe {
   foreach(var offset in new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)}){var obj=CreateWorldInteractable(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.barrelAsset),origin+offset,false);if(obj)worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
   foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=CreateWorldInteractable(chestSource,origin+offset,true);if(obj)worldChests.Add(obj.GetComponent<ChestBehavior>());}
   Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Recovered next-stage layout lacks walkable interactables");r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;
-  var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;
+  if(next.moonMission){rewardDirector.enabled=false;var mission=PrepareMoonWorld();while(mission.MoveNext())yield return mission.Current;objectiveStageHost=new GameObject("Owned Moon stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");}
+  else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;}
   report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
   Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.completed.Count,"Original run/master/authority/inventory/XP/count continuity failed");
   stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;bridge.enabled=true;r.phase="integrated-world-playing";Save();

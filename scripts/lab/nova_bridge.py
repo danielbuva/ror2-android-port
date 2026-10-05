@@ -51,6 +51,9 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     import shutil
     from build import preflight
     preflight();parent=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(parent/'attempt.json');stage=Path(a['stage'])
+    baseline_cfg=read(stage/'Resources/MovementBatchProbe.json')
+    if not all(baseline_cfg.get(k) for k in ['bodyAsset','masterAsset','displayAssets']):
+        raise RuntimeError('Accepted gameplay configuration missing; restore the archived stage resource, not a build receipt')
     checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_NOVA_INPUT_BRIDGE.json');mapping=dict(checkpoint['mapping'])
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id'] or sha(ROOT/mapping['observation'])!=mapping['observation_sha256']:raise RuntimeError('Accepted input/mapping changed')
     for name,h in checkpoint['original_assemblies'].items():
@@ -62,16 +65,24 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','MoonMissionBoundary','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
+    cfg=baseline_cfg;cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
     if integrated_world:
         from integrated_objective import stage_objective
         cfg.update(stage_objective(stage,a,out))
-        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name) for name in ['foggyswamp','frozenwall','dampcavesimple','skymeadow']]
-        cfg['integratedTransitionTarget']=4
-        cfg['integratedRuntimeSeconds']=1440
+        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name) for name in ['foggyswamp','frozenwall','dampcavesimple','skymeadow','moon2']]
+        from integrated_moon import stage_moon
+        moon=stage_moon(stage,a,out,cfg['integratedStages'][-1])
+        cfg['objectiveConfigAssets']=list(dict.fromkeys(cfg['objectiveConfigAssets']+moon['configs']))
+        cfg['objectiveActors']+=moon['actors']
+        cfg['objectiveSupportAssets'].append(moon['pillar'])
+        cfg['objectiveSupportKeys'].append(moon['pillarKey'])
+        cfg['objectiveSupportPaths'].append('Prefabs/PositionIndicators/PillarChargingPositionIndicator')
+        cfg['moonMission']=True
+        cfg['integratedTransitionTarget']=5
+        cfg['integratedRuntimeSeconds']=2100
     cfg['integratedWorld']=integrated_world;cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection;cfg['originalClientCoin']=client_coin;cfg['originalInputBarrel']=input_barrel;cfg['originalChestDropTable']=chest_drop;cfg['originalChestPurchase']=chest_purchase;cfg['originalPickupDropletLoad']=droplet_load;cfg['originalPickupDropletFlight']=droplet_flight;cfg['originalPickupDropletCollision']=droplet_collision;cfg['originalDefaultPickup']=default_pickup;cfg['originalChestEjection']=chest_ejection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
@@ -129,7 +140,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/third-person camera/skills/teleporter/boss/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTEGRATED_WORLD.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
     if integrated_world:
         from integrated_objective import transform_optional_presentation,sanitize_optional_content
-        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=1620
+        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=2340
         cfg.update(sanitize_optional_content(stage,out))
         transform_optional_presentation(stage,out,a)
         write(stage/'Resources/MovementBatchProbe.json',cfg)
@@ -194,7 +205,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         if kind not in keep and not preview:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
         kept.append((kind,file_id,block))
-    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12}
+    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'moon2':0}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:

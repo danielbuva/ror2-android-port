@@ -2157,3 +2157,53 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** Capture each rejected combined candidate and actual capability; advance a separate rollback only after device acceptance, manual/public staged review and Conventional Commit. Complete route/victory remains unproven.
 - **DEPENDENCIES:** I05/J255, pinned input/toolchain. R2API.Director f539511e catalog/stage seams and Starstorm2 a9a4badd SceneAssetCollection/SlateMines metadata consulted. Current original LunarTeleporter/SceneExitController/SceneDef source governs destination; no original/community implementation copied.
 - **STATUS:** PASS — J256. Four genuine completed objectives and original count4; actual five-stage route, retained continuity and30.035 seconds of Sky Meadow play. Primordial destination moon2 observed; clean current-PID runtime/owned teardown,44 unchanged DLLs plus four presentation changes,40 tests. Separate route checkpoint; I05/I04/I03 retained. Finale remains subsequent.
+
+
+## I07 — Continue the whole game into the original Moon mission
+- **ID:** I07
+- **TITLE:** Fifth original objective and recovered Moon mission composition.
+- **CONTEXT:** I06/J256 accepts four genuine objective/exit loops and the actual five-stage route. Its primordial source reports moon2. I06/I05/I04/I03 remain separate immutable rollbacks.
+- **OBSERVATION:** Original Moon source contains16 randomized batteries requiring4 completions, three elevators, four scripted boss encounters, an arena trigger and a180-second escape controller. Original phase transitions depend on genuine squad defeat; escape callbacks reference original ending definitions.
+- **HYPOTHESIS:** Existing original simulation/catalogs/content conversion/local authority can support the original mission when its complete wiring and actors are composed into the continuing game.
+- **TASK:** Integrate actual moon2 geometry/graphs, measured original mission scripts/trigger wiring, source batteries/elevators/Brother encounter/escape callbacks, original Brother/Hurt/Lunar actors/configurations/default visual bindings and source charging indicator. Complete Sky Meadow naturally and enter the mission with retained run/body/master/inventory. Build/run the whole route as the dependency scanner; repair first real failure, then continue natural batteries, encounters, escape and results.
+- **CONSTRAINTS:** Shared legal/device/privacy/preservation rules. No forced charge, boss deaths, mission completion, game-over success, ownership/authentication/entitlement grants or platform availability. Source-native audio/presentation unavailable; declared activation/material/layout/continuous-body adapters remain explicit. Original installation untouched, generated scene/assets ignored.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing stage/objective converter/bundle recipe and source actor bindings; Moon-specific activation/observation boundary, bounded route run limits and durable state. No replacement global loader/framework/package.
+- **TEST COMMAND:** Existing nova-whole-game-prepare, preflight, forced exact-editor Vulkan build, movement-batch-run and dev test.
+- **PASS CONDITION:** Genuine fifth boss/charge/reward/exit and original count5, actual Moon entry/graphs/landing and run continuity, source mission context/current states recorded, clean current-PID runtime and owned cleanup. This entry checkpoint does not establish battery/boss/escape/victory acceptance; continue those through the same integrated game. Full route victory requires original normal completion and results, never an injected ending.
+- **FAILURE EVIDENCE TO CAPTURE:** Original source/typed catalog/script identity and transformation receipts; request-bound APK/payload hashes, first actual runtime failure, source phase/battery/escape states, playing capture, crash/exit and cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Preserve each rejected combined attempt and first failure; separate accepted checkpoint only after device evidence, manual IP/privacy review, staged public scan and Conventional Commit. Formal stock-startup/profile gate remains J61 blocked.
+- **DEPENDENCIES:** I06/J256. Pinned Starstorm2 a9a4badd SceneAssetCollection/SlateMines identity and R2API.Director f539511e stage/director seams inspected; original MoonBatteryMissionController, BrotherEncounter phases, ScriptedCombatEncounter, AllPlayersTrigger and EscapeSequenceController supply actual contracts. Original MonoScript metadata and typed catalog queried locally; no source implementation copied.
+- **STATUS:** IN PROGRESS. Full Moon content/wiring and six actor templates assembled; J257–J263 repaired with failed evidence retained. J264 whole-game run reaches the second charged/defeated objective but stalls at replay pickup selection. Closest-pickup/collider steering and specific distance/selection observation now built and running; no Moon capability checkpoint.
+
+
+### I07-S01 — Require the actual accepted runtime configuration
+
+- **ID:** I07-S01 (conditional T03 support).
+- **TITLE:** Reject build receipts used as gameplay configuration.
+- **CONTEXT / OBSERVATION:** J261's integrated device run fails before gameplay because attributed recovery used a historically mislabeled build receipt instead of the archived runtime resource.
+- **HYPOTHESIS:** Required body/master/display fields distinguish the accepted runtime configuration before staging mutations.
+- **TASK:** Guard the existing preparation entry and restore/archive the actual stage resource.
+- **CONSTRAINTS:** Common contract; no general receipt/cache/locking redesign or unknown input acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing nova_bridge preparation, ignored snapshots, journal/state.
+- **TEST COMMAND:** ./dev prototype --action nova-whole-game-prepare; exact-editor build and complete integrated device run.
+- **PASS CONDITION:** Missing fields reject before mutations; the repaired actual resource passes body catalog registration on device.
+- **FAILURE EVIDENCE TO CAPTURE:** Runtime resource/build receipt distinction and first source field failure.
+- **STATE/JOURNAL UPDATES REQUIRED:** J261; I07 status remains separate from this support outcome.
+- **DEPENDENCIES:** I07/J261.
+- **STATUS:** DONE. Guard present; repaired device runs pass registration and reach gameplay. No new game milestone from the guard.
+
+### I07-S02 — Classify the actual integrated pickup stall
+
+- **ID:** I07-S02 (conditional T08 support).
+- **TITLE:** Observe pickup distance, collider and original selection.
+- **CONTEXT / OBSERVATION:** J264's second objective reaches genuine boss defeat/natural full charge, but replay selection/grant/exit stalls with two live pickups and no runtime exception.
+- **HYPOTHESIS:** Current replay distance/pivot aiming prevents the original three-unit interaction path from selecting a pickup.
+- **TASK:** Approach the closest eligible pickup more closely, aim at its interaction collider, and record actual distance/layer/availability/selection in the existing whole-game report.
+- **CONSTRAINTS:** Common contract; preserve original range, physics, interaction, grants and progression. No direct inventory/charge/exit injection or global diagnostic framework.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing integrated/objective input replay and world report; ignored full-run evidence.
+- **TEST COMMAND:** ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** The complete game continues through the stalled reward/exit boundary, or a specific observed first failure replaces the ambiguous stall.
+- **FAILURE EVIDENCE TO CAPTURE:** Pickup identity/position/interaction collider/layer/distance/availability/selection, current-PID logs and capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** J264 and follow-up outcome; keep I06 and earlier rollbacks unchanged.
+- **DEPENDENCIES:** I07/J264; pinned DebugToolkit d1e2f0aa pickup observation and original Interactor/InteractionDriver contracts inspected.
+- **STATUS:** IN PROGRESS. Zero-error77.438-second Vulkan ARM64 build and40 tests pass; complete integrated device run underway.

@@ -49,7 +49,7 @@ public static class LabBuild {
     }
     foreach(var nextStage in (cfg.nextStageScenes??new string[0]).Concat(string.IsNullOrEmpty(cfg.nextStageScene)?new string[0]:new[]{cfg.nextStageScene}).Distinct()){
      string name=Path.GetFileNameWithoutExtension(nextStage);
-     if(!nextStage.StartsWith("Assets/LabLoadingScene/StageGeometry/")||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","dampcavesimple","skymeadow"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
+     if(!nextStage.StartsWith("Assets/LabLoadingScene/StageGeometry/")||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","dampcavesimple","skymeadow","moon2"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{nextStage}});
     }
     if(!string.IsNullOrEmpty(cfg.prefab)){
@@ -65,7 +65,7 @@ public static class LabBuild {
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="barrier-effect-lab",assetNames=new[]{cfg.barrierEffect}});
     }
     if(cfg.objectiveSupportAssets!=null&&cfg.objectiveSupportAssets.Length>0){
-     if(cfg.objectiveSupportAssets.Length!=4||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
+     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5)||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="objective-support-lab",assetNames=cfg.objectiveSupportAssets});
     }
     if(!string.IsNullOrEmpty(cfg.objectiveTMPSettings)){

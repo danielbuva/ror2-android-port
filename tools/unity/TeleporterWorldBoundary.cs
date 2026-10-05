@@ -18,7 +18,8 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // Composed original objective. This shell owns content/context, observation and Android view.
 // Original interaction/FSM/director/boss squad/holdout/rewards/exit perform gameplay.
 public sealed partial class MovementBatchProbe {
- [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;}
+ [Serializable] public class ObjectiveVisualBinding {public string path,mesh,material;}
+ [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public ObjectiveVisualBinding[] bindings;}
  [Serializable] public class ObjectiveReport {
   public bool ready,rules,idle,available,selected,authority,charging,charged,bossDefeated,finished,exitBegan,exitFinished,cleaned,rewardCollected;
   public int rewardPickupBaseline,rewardPickupMessages;
@@ -56,7 +57,7 @@ public sealed partial class MovementBatchProbe {
  void FlushObjectiveActors(){
   foreach(var master in pendingObjectiveActors.ToArray()){
    pendingObjectiveActors.Remove(master);if(!master)continue;
-   RecordDirectorActor(master.gameObject,enemyPlayer,objectiveDirectorActors.Contains(master)?"teleporter-director":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
+   RecordDirectorActor(master.gameObject,enemyPlayer,objectiveDirectorActors.Contains(master)?"teleporter-director":master.bodyPrefab.name.StartsWith("Lunar",StringComparison.Ordinal)||master.bodyPrefab.name.StartsWith("Brother",StringComparison.Ordinal)?"moon-encounter":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
    if(master.bodyPrefab.name=="BeetleQueen2Body")r.objective.bossSpawns++;else r.objective.normalSpawns++;
   }
  }
@@ -75,8 +76,8 @@ public sealed partial class MovementBatchProbe {
  IEnumerator PrepareObjectiveSupport(Result cfg){
   Check(!OrbManager.instance,"Unowned original orb manager");
   var bundle=new ResourceLocationBase("objective-support-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","objective-support-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));bundle.Data=new AssetBundleRequestOptions{BundleName="objective-support-lab"};
-  objectiveSupportLeases=new AsyncOperationHandle<GameObject>[4];objectiveSupportSources=new GameObject[4];
-  for(int i=0;i<4;i++){
+  objectiveSupportLeases=new AsyncOperationHandle<GameObject>[cfg.objectiveSupportAssets.Length];objectiveSupportSources=new GameObject[cfg.objectiveSupportAssets.Length];
+  for(int i=0;i<cfg.objectiveSupportAssets.Length;i++){
    string key;Check(LegacyResourcesAPI.GetGuid(cfg.objectiveSupportPaths[i],out key)&&key==cfg.objectiveSupportKeys[i],"Original Queen/exit legacy identity changed");
    objectiveLocator.Add(key,new ResourceLocationBase(key,cfg.objectiveSupportAssets[i],typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));
    objectiveSupportLeases[i]=LegacyResourcesAPI.LoadAsync<GameObject>(cfg.objectiveSupportPaths[i]);yield return objectiveSupportLeases[i];objectiveSupportSources[i]=objectiveSupportLeases[i].Result;
@@ -134,7 +135,8 @@ public sealed partial class MovementBatchProbe {
   if(!cfg.teleporterLoop)return new Type[0];
   var assembly=typeof(TeleporterInteraction).Assembly;
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
-   (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||t.Namespace=="EntityStates.LunarTeleporter")).ToArray();
+   (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||t.Namespace=="EntityStates.LunarTeleporter"||
+    (cfg.moonMission&&((t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
  }
  EntityStateConfiguration[] PrepareObjectiveConfigs(Result cfg){
   PrepareObjectivePresentationSources();
@@ -176,14 +178,17 @@ public sealed partial class MovementBatchProbe {
     if(behaviour.transform!=bodyObject.transform)behaviour.enabled=behaviour is HurtBox||behaviour is HurtBoxGroup||behaviour is HitBox||behaviour is HitBoxGroup||behaviour is RootMotionAccumulator||behaviour is AnimationEvents;
    }
    var sfx=body.GetComponent<SfxLocator>();Check(sfx,"Original objective SfxLocator absent: "+spec.name);foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(sfx,null);
-   var material=Instantiate(artifactBundle.LoadAsset<Material>(spec.material));material.shader=Resources.Load<Shader>("CommandoMaterialPreview");material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",0);objectiveResources.Add(material);
-   var skins=model.GetComponentsInChildren<SkinnedMeshRenderer>(true);Check(skins.Length==1,"Original objective default renderer contract changed: "+spec.name);var mesh=artifactBundle.LoadAsset<Mesh>(spec.mesh);Check(mesh&&mesh.vertexCount>0&&mesh.bindposes.Length==skins[0].bones.Length,"Original objective mesh/bind poses absent: "+spec.name);skins[0].sharedMesh=mesh;
-   foreach(var renderer in model.GetComponentsInChildren<Renderer>(true)){renderer.gameObject.layer=30;renderer.sharedMaterial=material;var skin=renderer as SkinnedMeshRenderer;if(skin)skin.updateWhenOffscreen=true;}
-   var characterModel=model.GetComponent<CharacterModel>();characterModel.visibility=VisibilityLevel.Invisible;
-   for(int i=0;i<characterModel.baseRendererInfos.Length;i++)characterModel.baseRendererInfos[i].defaultMaterial=material;
+   if(spec.bindings!=null&&spec.bindings.Length>0)BindMoonActorVisuals(bodyObject,model,spec);
+   else{
+    var material=Instantiate(artifactBundle.LoadAsset<Material>(spec.material));material.shader=Resources.Load<Shader>("CommandoMaterialPreview");material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",0);objectiveResources.Add(material);
+    var skins=model.GetComponentsInChildren<SkinnedMeshRenderer>(true);Check(skins.Length==1,"Original objective default renderer contract changed: "+spec.name);var mesh=artifactBundle.LoadAsset<Mesh>(spec.mesh);Check(mesh&&mesh.vertexCount>0&&mesh.bindposes.Length==skins[0].bones.Length,"Original objective mesh/bind poses absent: "+spec.name);skins[0].sharedMesh=mesh;
+    foreach(var renderer in model.GetComponentsInChildren<Renderer>(true)){renderer.gameObject.layer=30;renderer.sharedMaterial=material;var skin=renderer as SkinnedMeshRenderer;if(skin)skin.updateWhenOffscreen=true;}
+    var characterModel=model.GetComponent<CharacterModel>();characterModel.visibility=VisibilityLevel.Invisible;
+    for(int i=0;i<characterModel.baseRendererInfos.Length;i++)characterModel.baseRendererInfos[i].defaultMaterial=material;
+   }
    foreach(var provider in bodyObject.GetComponentsInChildren<SurfaceDefProvider>(true)){var surface=Instantiate(provider.surfaceDef);surface.impactEffectPrefab=null;surface.impactSoundString=null;provider.surfaceDef=surface;objectiveResources.Add(surface);}
    var masterObject=Instantiate(artifactBundle.LoadAsset<GameObject>(spec.master),enemyTemplates.transform);masterObject.name=spec.name+"Master";masterObject.GetComponent<Inventory>().enabled=false;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;masterObject.SetActive(true);objectiveTemplates.Add(masterObject);
-   var card=Instantiate(artifactBundle.LoadAsset<CharacterSpawnCard>(spec.card));Check(card&&card.prefab&&card.directorCreditCost>0,"Original objective spawn card absent");card.name=card.name.Replace("(Clone)","");card.prefab=masterObject;objectiveCards.Add(card);
+   var card=Instantiate(artifactBundle.LoadAsset<CharacterSpawnCard>(spec.card));Check(card&&card.prefab&&card.directorCreditCost>=0,"Original objective spawn card absent");card.name=card.name.Replace("(Clone)","");card.prefab=masterObject;objectiveCards.Add(card);
   }
   // The original Queen summons a Guard using its configured source card. Redirect only the
   // generated card's prefab boundary to the owned compatible template; retain source settings.
@@ -281,10 +286,11 @@ public sealed partial class MovementBatchProbe {
   var delta=objectiveHost.transform.position-player.characterMotor.Motor.TransientPosition;
   var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>1?planar.normalized:Vector2.zero;
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected){
-   var pickup=GrantableWorldPickups(player).FirstOrDefault();
+   var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();
    if(!pickup){bridge.movement=Vector2.zero;r.world.objective="Wait for original boss reward";return true;}
-   var pickupDelta=pickup.transform.position-player.characterMotor.Motor.TransientPosition;var pickupPlanar=new Vector2(pickupDelta.x,pickupDelta.z);bridge.movement=pickupPlanar.magnitude>1.6f?pickupPlanar.normalized:Vector2.zero;
-   var pickupAim=pickup.transform.position-player.inputBank.aimOrigin;bridge.aim=new Vector2(pickupAim.x,pickupAim.z).normalized;bridge.diagnosticAim=pickupAim.normalized;
+   var pickupDelta=pickup.transform.position-player.characterMotor.Motor.TransientPosition;var pickupPlanar=new Vector2(pickupDelta.x,pickupDelta.z);bridge.movement=pickupPlanar.magnitude>.6f?pickupPlanar.normalized:Vector2.zero;
+   var collider=pickup.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<x.gameObject.layer))!=0);
+   var pickupAim=(collider?collider.bounds.center:pickup.transform.position)-player.inputBank.aimOrigin;bridge.aim=new Vector2(pickupAim.x,pickupAim.z).normalized;bridge.diagnosticAim=pickupAim.normalized;
    if(worldDriver.currentInteractable==pickup.gameObject&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
    r.world.objective="Collect original boss reward";return true;
   }
@@ -311,7 +317,7 @@ public sealed partial class MovementBatchProbe {
   r.world.objective=worldTeleporter.isIdle?"Activate teleporter":worldTeleporter.isCharging?"Defeat boss and charge teleporter":worldTeleporter.isCharged?"Collect reward and exit":"Prepare next stage";
   return true;
  }
- void CleanupTeleporterWorld(){CleanupStageTransport();
+ void CleanupTeleporterWorld(){CleanupMoonMission();CleanupStageTransport();
   if(objectiveSummon!=null)MasterSummon.onServerMasterSummonGlobal-=objectiveSummon;pendingObjectiveActors.Clear();objectiveAmbientExpected.Clear();objectiveDirectorActors.Clear();
   if(objectiveSubscribed){BossGroup.onBossGroupDefeatedServer-=objectiveDefeated;SceneExitController.onBeginExit-=objectiveBeginExit;SceneExitController.onFinishExit-=objectiveFinishExit;objectiveSubscribed=false;}
   ObserveObjectiveSupport(true);CleanupObjectiveEffects();CleanupObjectiveSupport();if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);

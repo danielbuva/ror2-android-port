@@ -15,6 +15,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // Persistent local gameplay composition. Original simulation, purchases, loot and rewards
 // remain in the preserved assemblies. The shell supplies content/context and unavailable audio UI.
 public sealed partial class MovementBatchProbe {
+ [Serializable] public class WorldPickupObservation {public string item,interactability;public Vector3 position,aimTarget;public float aimDistance;public bool selected,collider,interactableLayer;}
  [Serializable] public class WorldReport {
   public NovaThirdPersonView.Report camera;
   public bool lunarDefinition,lunarCurrencyAvailable;
@@ -23,6 +24,7 @@ public sealed partial class MovementBatchProbe {
   public int lootDomain,syringe,lightning,glasses,slug,secondary,roll,barrage;public uint money;public ulong experience;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
+  public float interactionDistance;public WorldPickupObservation[] pickupObservations;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
@@ -179,10 +181,12 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  void ObserveIntegratedWorld(CharacterBody player,float elapsed){
   Call(activeBodyClient,"Update");Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
-  ObserveTeleporterWorld();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
+  ObserveTeleporterWorld();ObserveMoonMission();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
+  var interactor=player.GetComponent<Interactor>();world.interactionDistance=interactor.maxInteractionDistance;
+  world.pickupObservations=pickups.Select(x=>{var collider=x.GetComponentsInChildren<Collider>(true).FirstOrDefault(c=>c.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<c.gameObject.layer))!=0);var aim=collider?collider.bounds.center:x.transform.position;var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return new WorldPickupObservation{item=def==null?"invalid":def.internalName,interactability=x.GetInteractability(interactor).ToString(),position=x.transform.position,aimTarget=aim,aimDistance=Vector3.Distance(player.inputBank.aimOrigin,aim),selected=worldDriver.currentInteractable==x.gameObject,collider=collider,interactableLayer=collider};}).ToArray();
   foreach(var pickup in pickups){if(!pickup.pickupDisplay)continue;var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pickup.pickupDisplay);if(model)PresentWorldModel(model.transform,false);}
   world.secondary=r.combat.secondaryEntries;world.roll=r.combat.utilityEntries;world.barrage=r.combat.specialEntries;
   world.target=worldDriver.currentInteractable?worldDriver.currentInteractable.name:"";
@@ -193,12 +197,12 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(worldObjective==0){var barrel=worldBarrels.FirstOrDefault(x=>x&&!x.Networkopened);if(barrel)target=barrel.gameObject;else worldObjective=1;}
   if(worldObjective==3&&elapsed-stageEnteredAt<105&&worldChests.Any(x=>x&&!x.NetworkisChestOpened&&player.master.money>=x.GetComponent<PurchaseInteraction>().cost))worldObjective=1;
   if(worldObjective==1){var chest=worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
-  if(worldObjective==2){var pickup=GrantableWorldPickups(player).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline==r.world.openedChests)worldObjective=3;}
+  if(worldObjective==2){var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline==r.world.openedChests)worldObjective=3;}
   r.world.objective=worldObjective==0?"Collect original barrel rewards":worldObjective==1?"Purchase original chest":worldObjective==2?"Collect naturally ejected item":"Survive original director combat";
   if(r.teleporterLoop&&elapsed-stageEnteredAt>65&&r.world.pickupMessages-stagePickupBaseline>=2){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
   bridge.movement=Vector2.zero;
   if(target){
-   var delta=target.transform.position-player.characterMotor.Motor.TransientPosition;var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>1.6f?planar.normalized:Vector2.zero;
+   var delta=target.transform.position-player.characterMotor.Motor.TransientPosition;var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>(target.GetComponent<GenericPickupController>() ? .6f : 1.6f)?planar.normalized:Vector2.zero;
    var collider=target.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&!x.isTrigger);var aim=(collider?collider.bounds.center:target.transform.position)-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;
    // The original input producer consumes a 3D ray; use the measured target elevation as well.
    bridge.diagnosticAim=aim.normalized;

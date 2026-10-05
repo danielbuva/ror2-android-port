@@ -30,7 +30,8 @@ public sealed partial class MovementBatchProbe {
   var previewCallbacks=roots.SelectMany(x=>x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
   r.stage.previewDisableComponents=previewCallbacks.Count(x=>x&&x.GetType()==typeof(DisableOnStart));r.stage.previewsInactive=previewCallbacks.Count(x=>x&&!x.gameObject.activeSelf);
   var previewNames=spec!=null&&spec.previewNames!=null?spec.previewNames:Enumerable.Repeat("EscapePodMesh",previewCount).ToArray();
-  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(r.stage.behaviours==previewCount&&r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&previewCallbacks.Select(x=>x.gameObject.name).OrderBy(x=>x).SequenceEqual(previewNames.OrderBy(x=>x))&&r.stage.activeRoots>0,"Original preview Start or scene behaviour allowlist failed");
+  bool moon=spec!=null&&spec.moonMission;
+  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(moon?r.stage.behaviours==spec.missionComponents&&previewCallbacks.All(x=>x)&&r.stage.activeRoots==0:r.stage.behaviours==previewCount&&r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&previewCallbacks.Select(x=>x.gameObject.name).OrderBy(x=>x).SequenceEqual(previewNames.OrderBy(x=>x))&&r.stage.activeRoots>0,"Original preview Start or scene behaviour allowlist failed");
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
@@ -51,13 +52,14 @@ public sealed partial class MovementBatchProbe {
    renderer.sharedMaterials=materials;r.stage.renderers++;
   }
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
-   collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
+   if(!moon||!collider.GetComponent<EntityLocator>())collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
    var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh){r.stage.missingColliderMeshes++;emptyColliders.Add(StageObjectPath(mesh.transform));}}
   }
   r.stage.emptyMeshPaths=emptyMeshes.ToArray();r.stage.emptyColliderPaths=emptyColliders.ToArray();
   var expectedMeshes=spec==null?new string[0]:spec.emptyMeshPaths??new string[0];var expectedColliders=spec==null?new string[0]:spec.emptyColliderPaths??new string[0];
   Check(r.stage.renderers>100&&r.stage.meshColliders>50&&emptyMeshes.OrderBy(x=>x).SequenceEqual(expectedMeshes.OrderBy(x=>x))&&emptyColliders.OrderBy(x=>x).SequenceEqual(expectedColliders.OrderBy(x=>x)),"Recovered stage mesh/collision closure differs from measured source-empty objects");
   Check((spec!=null||r.stage.terrainTextureMaterials>=2)&&r.stage.terrainTexturesBound,"Original terrain channel textures did not bind to the owned preview material");
+  if(moon){Check(SceneManager.SetActiveScene(stageGeometryScene),"Moon active scene context missing");ActivateMoonSource(spec);}
   Physics.SyncTransforms();
   foreach(var marker in transforms.Where(x=>x.name=="SurvivorPodSpawnPoint"&&x.gameObject.activeInHierarchy)){
    RaycastHit hit;if(!Physics.Raycast(marker.position+Vector3.up*30,Vector3.down,out hit,100,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.9f)continue;
