@@ -19,14 +19,15 @@ public sealed partial class MovementBatchProbe {
   var configs=new[]{config};if(IsPlayableSpine()){types=types.Concat(new[]{typeof(EntityStates.Commando.CommandoWeapon.FirePistol2),typeof(EntityStates.Commando.CommandoWeapon.ReloadPistols)}).ToArray();configs=PrepareSpineConfigs(cfg,config);}
   if(cfg.combatSpine)types=types.Concat(new[]{typeof(EntityStates.Commando.CommandoWeapon.FireFMJ),typeof(EntityStates.Commando.DodgeState),typeof(EntityStates.Commando.CommandoWeapon.FireBarrage)}).ToArray();
   if(cfg.enemySpine){types=types.Concat(EnemyTypes()).Distinct().ToArray();configs=configs.Concat(PrepareEnemyConfigs(cfg)).ToArray();}
+  if(cfg.teleporterLoop){r.objective=new ObjectiveReport{scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. No skipped combat, forced charge, currency or platform success."};types=types.Concat(ObjectiveTypes(cfg)).Distinct().ToArray();configs=configs.Concat(PrepareObjectiveConfigs(cfg)).ToArray();}
   if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset))types=types.Concat(new[]{typeof(EntityStates.Commando.DeathState)}).Distinct().ToArray();
   if(cfg.barrelInteraction)types=types.Concat(new[]{typeof(EntityStates.Barrel.Opening),typeof(EntityStates.Barrel.Opened)}).Distinct().ToArray();
-  ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();BuildStateCatalog(types,configs);if(IsPlayableSpine())ApplySpineExclusions();if(cfg.enemySpine)EnemyExclusions();
+  ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();BuildStateCatalog(types,configs);if(IsPlayableSpine())ApplySpineExclusions();if(cfg.enemySpine)EnemyExclusions();if(cfg.teleporterLoop){StunState.stunVfxPrefab=artifactBundle.LoadAsset<GameObject>(cfg.objectiveStunAsset);Check(StunState.stunVfxPrefab,"Original composed stun presentation missing");}
   foreach(var type in types){var index=EntityStateCatalog.GetStateIndex(type);Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==type&&EntityStateCatalog.InstantiateState(index).GetType()==type,"Original spawn state identity round trip");}
   Check(cfg.sourceSpawnDelay>0&&cfg.sourceSpawnDelay<10&&SpawnTeleporterState.initialDelay==cfg.sourceSpawnDelay,"Original configured spawn delay");
   Check(SpawnTeleporterState.soundString==cfg.sourceSpawnSound,"Original configured spawn sound");
  }
- void CleanupSpawnConfig(){CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
+ void CleanupSpawnConfig(){CleanupObjectiveConfigs();CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
  void ProbeSpawnStates(CharacterBody body,Result cfg){
   PrepareSpawnStateCatalog(cfg);
   if(r.id=="body-state-spawn-state-overlay"){ProbeTeleportOverlay(body,cfg);return;}

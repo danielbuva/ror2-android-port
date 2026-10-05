@@ -21,7 +21,7 @@ public sealed class NovaInputBridge : MonoBehaviour {
  [Serializable] public class Raw {public float[] axes=new float[16];public bool[] buttons=new bool[20];}
  public InputBankTest bank;public Mapping mapping;public string error;
  public NovaThirdPersonView thirdPerson;
- public bool enablePrimary,enableAllSkills,diagnosticInput;public bool diagnosticPrimary,diagnosticSecondary,diagnosticUtility,diagnosticSpecial,diagnosticInteract;public Vector3 diagnosticAim;public Vector2 movement,aim;public int fixedTicks,jumpPresses,aimTicks;
+ public bool enablePrimary,enableAllSkills,diagnosticInput;public bool diagnosticSprint,diagnosticPrimary,diagnosticSecondary,diagnosticUtility,diagnosticSpecial,diagnosticInteract;public Vector3 diagnosticAim;public Vector2 movement,aim;public int fixedTicks,jumpPresses,aimTicks;
  bool focused=true,jumpHeld,jumpLatched;
  public static void RequireNova(){
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -51,11 +51,11 @@ public sealed class NovaInputBridge : MonoBehaviour {
   else if(thirdPerson!=null&&!diagnosticInput){bank.aimDirection=thirdPerson.Aim();aimTicks++;thirdPerson.report.maxAimError=Mathf.Max(thirdPerson.report.maxAimError,Vector3.Angle(bank.aimDirection,thirdPerson.report.direction));}
   else if(aim.sqrMagnitude>0){bank.aimDirection=new Vector3(aim.x,0,aim.y);aimTicks++;}
   bank.jump.PushState(jumpHeld||jumpLatched);if(bank.jump.justPressed)jumpPresses++;jumpLatched=false;
-  var raw=ReadRaw();bank.interact.PushState(diagnosticInput?diagnosticInteract:mapping.enableInteraction&&raw.buttons[mapping.interact]);bool all=mapping.enableSkills||enableAllSkills;
+  bank.sprint.PushState(diagnosticInput&&diagnosticSprint);var raw=ReadRaw();bank.interact.PushState(diagnosticInput?diagnosticInteract:mapping.enableInteraction&&raw.buttons[mapping.interact]);bool all=mapping.enableSkills||enableAllSkills;
   bank.skill1.PushState(diagnosticInput?diagnosticPrimary:(all||enablePrimary)&&raw.buttons[mapping.primary]);bank.skill2.PushState(diagnosticInput?diagnosticSecondary:all&&raw.buttons[mapping.secondary]);bank.skill3.PushState(diagnosticInput?diagnosticUtility:all&&raw.buttons[mapping.utility]);bank.skill4.PushState(diagnosticInput?diagnosticSpecial:all&&raw.buttons[mapping.special]);fixedTicks++;
  }
  public void DiagnosticJump(bool down){jumpLatched|=down&&!jumpHeld;jumpHeld=down;}
- public void Neutral(){movement=aim=Vector2.zero;jumpHeld=jumpLatched=false;if(!bank)return;bank.moveVector=Vector3.zero;bank.SetRawMoveStates(Vector2.zero);bank.jump.PushState(false);bank.skill1.PushState(false);bank.skill2.PushState(false);bank.skill3.PushState(false);bank.skill4.PushState(false);bank.interact.PushState(false);}
+ public void Neutral(){movement=aim=Vector2.zero;jumpHeld=jumpLatched=false;if(!bank)return;bank.moveVector=Vector3.zero;bank.SetRawMoveStates(Vector2.zero);bank.jump.PushState(false);bank.skill1.PushState(false);bank.skill2.PushState(false);bank.skill3.PushState(false);bank.skill4.PushState(false);bank.interact.PushState(false);bank.sprint.PushState(false);}
  void OnApplicationFocus(bool value){focused=value;if(!value)Neutral();}
  void OnApplicationPause(bool value){focused=!value;if(value)Neutral();}
  void OnDisable(){Neutral();}

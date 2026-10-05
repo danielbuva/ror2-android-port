@@ -54,14 +54,22 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_NOVA_INPUT_BRIDGE.json');mapping=dict(checkpoint['mapping'])
     if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id'] or sha(ROOT/mapping['observation'])!=mapping['observation_sha256']:raise RuntimeError('Accepted input/mapping changed')
     for name,h in checkpoint['original_assemblies'].items():
-        if sha(stage/'Plugins'/name)!=h:raise RuntimeError('Original spine assembly drift')
+        if sha(stage/'Plugins'/name)!=a.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Original spine assembly drift')
+        if name in a.get('transformed_assemblies',{}):
+            original=game()/'Risk of Rain 2_Data/Managed'/name
+            if sha(original)!=h:raise RuntimeError('Accepted original input changed')
+            shutil.copy2(original,stage/'Plugins'/name)
     out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
-    for name in ['MovementBatchProbe','IntegratedWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for name in ['MovementBatchProbe','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
+    if integrated_world:
+        from integrated_objective import stage_objective
+        cfg.update(stage_objective(stage,a,out))
+        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name='foggyswamp')]
     cfg['integratedWorld']=integrated_world;cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection;cfg['originalClientCoin']=client_coin;cfg['originalInputBarrel']=input_barrel;cfg['originalChestDropTable']=chest_drop;cfg['originalChestPurchase']=chest_purchase;cfg['originalPickupDropletLoad']=droplet_load;cfg['originalPickupDropletFlight']=droplet_flight;cfg['originalPickupDropletCollision']=droplet_collision;cfg['originalDefaultPickup']=default_pickup;cfg['originalChestEjection']=chest_ejection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
@@ -116,7 +124,13 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     if integrated_world:
         a['integrated_world']=True;a['batch_seconds'][spine+'-bringup']=240
         mapping.update({'interact':1,'enableInteraction':True})
-        write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/skills/enemy/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHEST_EJECTION.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
+        write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/third-person camera/skills/teleporter/boss/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTEGRATED_WORLD.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
+    if integrated_world:
+        from integrated_objective import transform_optional_presentation,sanitize_optional_content
+        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=600
+        cfg.update(sanitize_optional_content(stage,out))
+        transform_optional_presentation(stage,out,a)
+        write(stage/'Resources/MovementBatchProbe.json',cfg)
     write(out/'attempt.json',a)
     mapping['accepted_mapping_attempt']=mapping['attempt'];mapping['attempt']=out.name;write(out/'nova-input-mapping.json',mapping)
     write(WORK/'experiments/scene-runtime/current.json',{'path':str(out.relative_to(ROOT))});print(json.dumps({'attempt':str(out.relative_to(ROOT)),'spine':True}))
@@ -160,12 +174,12 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out,original_name=False):
+def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains"):
     """Recover Titanic Plains static scene/collision; keep original stage scripts out of this lab scope."""
     import shutil
     from scene_closure import REFERENCE
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
-    source=export/'Assets/RoR2/Base/Scenes/golemplains/golemplains.unity'
+    source=export/('Assets/RoR2/Base/Scenes/'+scene_name+'/'+scene_name+'.unity')
     text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
     # Preserve object/transform/mesh/collider/LOD data. Omit gameplay, native sound, particles and baked lighting.
     keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
@@ -178,14 +192,14 @@ def stage_first_stage_geometry(stage,out,original_name=False):
         if kind not in keep and not preview:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
         kept.append((kind,file_id,block))
-    if len(preview_ids)!=23:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
+    if len(preview_ids)!=(23 if scene_name=="golemplains" else 0):raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
         if kind==1:
             block=re.sub(r'^  - component: \{fileID: (-?\d+)\}\n',lambda m:'' if m[1] in removed else m[0],block,flags=re.M)
         updated.append(block)
-    geometry=header+''.join(updated);dest=stage/'StageGeometry'/('golemplains.unity' if original_name else 'golemplains-spine.unity');dest.parent.mkdir(parents=True,exist_ok=True)
-    other=dest.with_name('golemplains-spine.unity' if original_name else 'golemplains.unity')
+    geometry=header+''.join(updated);dest=stage/'StageGeometry'/(scene_name+'.unity' if original_name else scene_name+'-spine.unity');dest.parent.mkdir(parents=True,exist_ok=True)
+    other=dest.with_name(scene_name+'-spine.unity' if original_name else scene_name+'.unity')
     if other.exists():
         if Path(str(other)+'.meta').read_bytes()!=Path(str(source)+'.meta').read_bytes():raise RuntimeError('Refuse to remove an unowned alternate stage scene')
         other.unlink();Path(str(other)+'.meta').unlink()
@@ -211,9 +225,39 @@ def stage_first_stage_geometry(stage,out,original_name=False):
         with src.open('rb') as stream:prefix=stream.read(5)
         if prefix==b'%YAML':pending.extend(g for _,g,_ in REFERENCE.findall(src.read_text()) if g and not g.startswith('0000000000000000'))
         rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'bytes':src.stat().st_size,'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
-    recipe=read(WORK/'scene-probe-build.json');recipe['stageScene']=str(dest.relative_to(WORK/'lab-project'));write(WORK/'scene-probe-build.json',recipe)
-    write(out/'stage-geometry-contract.json',{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids},'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; only measured original DisableOnStart preview callbacks retained, no stage lifecycle/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
-    return {'stageGeometry':True}
+    recipe=read(WORK/'scene-probe-build.json')
+    if scene_name=='golemplains':recipe['stageScene']=str(dest.relative_to(WORK/'lab-project'))
+    else:recipe['nextStageScene']=str(dest.relative_to(WORK/'lab-project'))
+    write(WORK/'scene-probe-build.json',recipe)
+    write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids},'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; only measured original DisableOnStart preview callbacks retained, no stage lifecycle/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
+    if scene_name=='golemplains':return {'stageGeometry':True}
+    graphs={}
+    for kind in ['ground','air']:
+        guid=re.search(r'^  '+kind+r'NodesAsset: \{fileID: -?\d+, guid: ([a-f0-9]{32})',text,re.M)[1]
+        src=index[guid];dst=existing.get(guid,stage/'StageGeometry/Assets'/src.relative_to(export/'Assets'))
+        if not dst.exists():
+            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'))
+        graphs[kind+'Graph']=str(dst.relative_to(WORK/'lab-project')).lower()
+    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+list(graphs.values())));write(WORK/'scene-probe-build.json',recipe)
+    write(out/(scene_name+'-navigation-contract.json'),dict(source_scene_sha256=sha(source),graphs={kind:dict(path=path,sha256=sha(next(p for p in stage.rglob('*.asset') if str(p.relative_to(WORK/'lab-project')).lower()==path))) for kind,path in graphs.items()},scope='Actual source SceneInfo ground/air graph references; Android transport keeps original Run accounting and local authority, continuous-body adapter declared separately.'))
+    source_blocks={fid:(kind,block) for kind,fid,block in kept}
+    def object_path(go_id):
+        go=source_blocks[go_id][1];name=re.search(r'^  m_Name: (.*)$',go,re.M)[1]
+        if name.startswith("'") and name.endswith("'"):name=name[1:-1].replace("''", "'")
+        elif name.startswith('"'):name=json.loads(name)
+        tids=[fid for fid in re.findall(r'component: \{fileID: (-?\d+)\}',go) if fid in source_blocks and source_blocks[fid][0] in {4,224}]
+        if len(tids)!=1:raise RuntimeError('Source empty-mesh transform identity ambiguous')
+        parent=re.search(r'm_Father: \{fileID: (-?\d+)\}',source_blocks[tids[0]][1])[1]
+        if parent=='0':return name
+        parent_go=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',source_blocks[parent][1])[1]
+        return object_path(parent_go)+'/'+name
+    empty=[]
+    for kind,fid,block in kept:
+        if kind in {33,64,137} and re.search(r'^  m_Mesh: \{fileID: 0\}$',block,re.M):
+            go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1]
+            empty.append(dict(component=fid,kind=kind,path=object_path(go_id)))
+    write(out/(scene_name+'-source-empty-meshes.json'),dict(source_scene_sha256=sha(source),components=empty,scope='Exact source-null fields and hierarchy identities; no blanket missing-reference allowance or mesh replacement. Source tree siblings retain populated meshes.'))
+    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
 
 
 def stage_enemy_spine(stage,previous,out):

@@ -584,14 +584,14 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
     if not finished.get('success') or sha(Path(finished['apk']))!=b.get('apk_sha256'):raise RuntimeError('Terminal build does not match selected APK')
     if not b.get('success') or sha(Path(b['apk']))!=b['apk_sha256']:raise RuntimeError('Build not valid')
     for name,h in a['original_assemblies'].items():
-        if sha(Path(a['stage'])/'Plugins'/name)!=h:raise RuntimeError('Original assembly drift')
+        if sha(Path(a['stage'])/'Plugins'/name)!=a.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Original assembly drift')
     attempt_id=out.name
     if retry:
         parent=out;out=parent/'verification'/now();out.mkdir(parents=True)
         write(out/'retry.json',{'parent':str(parent.relative_to(ROOT)),'attempt':attempt_id,'cases':cases,'apk_sha256':b['apk_sha256']})
     probes=cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration'])
     durations={probe:a.get('batch_seconds',{}).get(probe,25) for probe in probes}
-    max_seconds=240 if a.get('integrated_world') else 180
+    max_seconds=600 if a.get('integrated_world') and a.get('teleporter_loop') else 240 if a.get('integrated_world') else 180
     if any(not isinstance(seconds,int) or not 25<=seconds<=max_seconds for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
     if a.get('playable_spine'):
@@ -641,6 +641,10 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                             break
                         seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
                         if last_phase=='integrated-world-playing':
+                            progress=live.get('stageProgress') or {}
+                            stage_mark='stage-'+str(progress.get('transitions',0))
+                            if progress.get('transitions',0)>0 and 5<=seconds-progress.get('enteredAt',seconds)<25 and stage_mark not in captured:
+                                d.collect('screenshot',attempt/('visual-'+stage_mark));captured.add(stage_mark)
                             for mark in [5,25,60,100]:
                                 if seconds>=mark and ('world-'+str(mark)) not in captured:
                                     d.collect('screenshot',attempt/('visual-world-'+str(mark)));captured.add('world-'+str(mark))

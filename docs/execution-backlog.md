@@ -2108,3 +2108,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** J227 and I03 exit; no capability advancement from dispatch alone; staged privacy/manual review and Conventional Commit.
 - **DEPENDENCIES:** I03/J227; existing pinned Unity editor orchestration. Generic editor dispatch, no RoR2 subsystem reconstruction.
 - **STATUS:** PASS — J228 changed-source build enters/completes with matching request/entry/terminal identities, zero build errors and accepted Nova execution;40 existing host tests pass.
+
+## I04 — Compose original teleporter, boss, charging, rewards and exit
+
+- **ID:** I04
+- **TITLE:** Add the original stage objective directly to the persistent composed game.
+- **CONTEXT:** I03/J228 retains camera, combat/loot and same-process restart as rollback. User requests broad whole-loop integration.
+- **OBSERVATION:** Source Teleporter1 includes original boss/bonus directors, BossGroup/CombatSquad, holdout and SceneExit. Queen needs Guard, state configurations, source visuals and real projectile paths. Inactive Run lacks stage-selection rule context. Optional audio/profile presentation lacks its Android services.
+- **HYPOTHESIS:** Original objective callbacks can operate in the composed local-authority world with source content/catalog/rules and explicit Android presentation boundaries.
+- **TASK:** Assemble these dependencies together; build/run the complete candidate on Nova, classify/fix its first failure, then integrate actual stage continuity. Retain genuine boss death, natural charge and earned rewards; do not force completion.
+- **CONSTRAINTS:** Shared contracts, legal/platform boundaries and privacy gate apply. Keep I03 recoverable. No package changes, middleware substitution, fake users/authentication/ownership, skipped combat or accelerated/forced charging. Input-gated optional presentation transformations must be identified separately from unchanged original assemblies.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing composed world/input/catalog/director recipe; authored objective adapter; ignored source closure/configuration/transformation/build/device evidence; existing AssemblyProbe and bundle recipe.
+- **TEST COMMAND:** `./dev prototype --action nova-whole-game-prepare`; editor import/compile; `./dev preflight`; `./dev build --target vulkan --force`; `./dev prototype --action movement-batch-run`; `./dev test`.
+- **PASS CONDITION:** Original teleporter interaction/state transitions, actual source boss spawning/combat/death, natural holdout charge, original rewards and exit execute in the composed Nova game without unexplained errors/crashes; source/candidate hashes and rollback retained. Scene continuity must be evidenced before claiming transition or complete-run progress.
+- **FAILURE EVIDENCE TO CAPTURE:** First prepare/import/build/runtime error, exact source identities and transformed methods, current-PID report/log/crash/capture, terminal build/payload receipts and failed stage.
+- **STATE/JOURNAL UPDATES REQUIRED:** I04 status and concise state, each rejected composed candidate in journal, accepted checkpoint only after actual device acceptance; scope/formal gates remain explicit.
+- **DEPENDENCIES:** I03/J228; original provider/package pins and current accepted legitimate input. R2API.Director f539511e activity/catalog/stage seams and current original APIs consulted; no source implementation copied.
+- **STATUS:** PASS — J252, work/experiments/scene-runtime/20261005T011620.982278Z.237.606 simulation seconds/55 genuine kills/four connected grants; real boss/natural charge/reward/exit/count1,30 seconds of actual Wetland continuation with original inventory/XP/master/authority continuity. Zero current-PID errors/crashes and complete owned cleanup;44 unchanged original DLLs plus four documented presentation-method changes;40 tests. Separate objective checkpoint; I03 unchanged. Stock startup/profile, whole route/victory and new physical objective acceptance remain unproven.

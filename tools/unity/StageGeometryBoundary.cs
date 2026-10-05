@@ -13,27 +13,29 @@ public sealed partial class MovementBatchProbe {
   public string scene,spawnMarker;public bool loaded,cleaned,groundHit;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal;
+  public string[] emptyMeshPaths,emptyColliderPaths;
  }
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
  readonly List<Material> stageGeometryMaterials=new List<Material>();
- IEnumerator PrepareStageGeometry(){
+ IEnumerator PrepareStageGeometry(){var load=LoadStageGeometry("golemplains-spine-lab",23,null);while(load.MoveNext())yield return load.Current;}
+ IEnumerator LoadStageGeometry(string bundleName,int previewCount,IntegratedStageSpec spec){
   r.stage=new StageGeometryReport();r.phase="stage-geometry-load";Save();
-  stageGeometryBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","golemplains-spine-lab"));
+  stageGeometryBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload",bundleName));
   Check(stageGeometryBundle,"Recovered stage geometry bundle missing");var scenes=stageGeometryBundle.GetAllScenePaths();Check(scenes.Length==1,"Expected one recovered stage geometry scene");
   yield return SceneManager.LoadSceneAsync(scenes[0],LoadSceneMode.Additive);stageGeometryScene=SceneManager.GetSceneByPath(scenes[0]);
   r.stage.loaded=stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded;r.stage.scene=stageGeometryScene.name;Check(r.stage.loaded,"Stage geometry did not load");
   yield return null; // Allow original scene preview Start callbacks; no manual deactivation.
-  var roots=stageGeometryScene.GetRootGameObjects();var transforms=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>(true)).ToArray();
+  var roots=stageGeometryScene.GetRootGameObjects();stageStaticRoots=new HashSet<GameObject>(roots);var transforms=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>(true)).ToArray();
   r.stage.objects=transforms.Length;r.stage.behaviours=roots.Sum(x=>x.GetComponentsInChildren<MonoBehaviour>(true).Length);
   var previewCallbacks=roots.SelectMany(x=>x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
   r.stage.previewDisableComponents=previewCallbacks.Count(x=>x&&x.GetType()==typeof(DisableOnStart));r.stage.previewsInactive=previewCallbacks.Count(x=>x&&!x.gameObject.activeSelf&&x.gameObject.name=="EscapePodMesh");
-  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(r.stage.behaviours==23&&r.stage.previewDisableComponents==23&&r.stage.previewsInactive==23&&r.stage.activeRoots>0,"Original escape-pod preview Start or scene behaviour allowlist failed");
+  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(r.stage.behaviours==previewCount&&r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&r.stage.activeRoots>0,"Original escape-pod preview Start or scene behaviour allowlist failed");
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
-  var replacements=new Dictionary<Material,Material>();
+  var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
    renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
-   if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh))r.stage.missingMeshes++;
+   if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
    var materials=renderer.sharedMaterials;
    for(int i=0;i<materials.Length;i++){
     if(!materials[i])continue;Material replacement;
@@ -49,17 +51,29 @@ public sealed partial class MovementBatchProbe {
   }
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
    collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
-   var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh)r.stage.missingColliderMeshes++;}
+   var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh){r.stage.missingColliderMeshes++;emptyColliders.Add(StageObjectPath(mesh.transform));}}
   }
-  Check(r.stage.renderers>100&&r.stage.meshColliders>50&&r.stage.missingMeshes==0&&r.stage.missingColliderMeshes==0,"Recovered stage mesh/collision closure incomplete");
-  Check(r.stage.terrainTextureMaterials>=2&&r.stage.terrainTexturesBound,"Original terrain channel textures did not bind to the owned preview material");
+  r.stage.emptyMeshPaths=emptyMeshes.ToArray();r.stage.emptyColliderPaths=emptyColliders.ToArray();
+  var expectedMeshes=spec==null?new string[0]:spec.emptyMeshPaths??new string[0];var expectedColliders=spec==null?new string[0]:spec.emptyColliderPaths??new string[0];
+  Check(r.stage.renderers>100&&r.stage.meshColliders>50&&emptyMeshes.OrderBy(x=>x).SequenceEqual(expectedMeshes.OrderBy(x=>x))&&emptyColliders.OrderBy(x=>x).SequenceEqual(expectedColliders.OrderBy(x=>x)),"Recovered stage mesh/collision closure differs from measured source-empty objects");
+  Check((spec!=null||r.stage.terrainTextureMaterials>=2)&&r.stage.terrainTexturesBound,"Original terrain channel textures did not bind to the owned preview material");
   Physics.SyncTransforms();
   foreach(var marker in transforms.Where(x=>x.name=="SurvivorPodSpawnPoint"&&x.gameObject.activeInHierarchy)){
    RaycastHit hit;if(!Physics.Raycast(marker.position+Vector3.up*30,Vector3.down,out hit,100,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.9f)continue;
    r.stage.spawnMarker=marker.name;r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
   }
-  Check(r.stage.groundHit,"No original survivor spawn marker has a measured walkable stage collider");Save();
+  if(!r.stage.groundHit&&spec!=null){
+   var graph=artifactBundle.LoadAsset<RoR2.Navigation.NodeGraph>(spec.groundGraph);Check(graph&&graph.GetNodeCount()>0,"Original next-stage ground graph unavailable");
+   var candidates=new List<Vector3>();for(int i=0;i<graph.GetNodeCount();i++){Vector3 point;if(graph.GetNodePosition(new RoR2.Navigation.NodeGraph.NodeIndex(i),out point))candidates.Add(point);}
+   foreach(var point in candidates.OrderBy(x=>x.x*x.x+x.z*x.z)){
+    RaycastHit hit;if(!Physics.Raycast(point+Vector3.up*8,Vector3.down,out hit,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.98f)continue;
+    int clear=0;foreach(var offset in new[]{Vector3.right*5,Vector3.left*5,Vector3.forward*6,Vector3.back*3}){RaycastHit nearby;if(Physics.Raycast(hit.point+offset+Vector3.up*8,Vector3.down,out nearby,18,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&nearby.normal.y>.95f&&Mathf.Abs(nearby.point.y-hit.point.y)<1)clear++;}
+    if(clear<4)continue;r.stage.spawnMarker="Original ground graph / measured Android entry";r.stage.groundHit=true;r.stage.groundPosition=hit.point;r.stage.groundNormal=hit.normal;r.stage.spawnPosition=hit.point+Vector3.up*2.5f;break;
+   }
+  }
+  Check(r.stage.groundHit,"No measured walkable original stage entry");Save();
  }
+ static string StageObjectPath(Transform target){var path=target.name;while(target.parent){target=target.parent;path=target.name+"/"+path;}return path;}
  IEnumerator CleanupStageGeometry(){
   if(stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded)yield return SceneManager.UnloadSceneAsync(stageGeometryScene);
   foreach(var material in stageGeometryMaterials)if(material)Destroy(material);stageGeometryMaterials.Clear();

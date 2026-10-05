@@ -77,11 +77,12 @@ public sealed partial class MovementBatchProbe {
   var body=prefab.GetComponent<CharacterBody>();var portrait=body.portraitIcon;
   Check(portrait&&portrait.name=="texCommandoIcon","Serialized portrait missing");
   r.phase="original-body-catalog-register";Save();
-  ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)(cfg.enemySpine?new[]{prefab,artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset)}:new[]{prefab}));
+  var bodies=cfg.enemySpine?new[]{prefab,artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset)}:new[]{prefab};if(cfg.teleporterLoop)bodies=bodies.Concat(cfg.objectiveActors.Select(x=>artifactBundle.LoadAsset<GameObject>(x.body))).ToArray();
+  ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)bodies);
   deadline=Time.realtimeSinceStartup+3;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;
   yield return null;yield return null;
   Check(LegacyResourcesAPI.ActiveCount==0,"Catalog portrait callback still pending");
-  Check(BodyCatalog.bodyCount==(cfg.enemySpine?2:1)&&body.bodyIndex!=(BodyIndex)(-1),"Original index assignment failed");
+  Check(BodyCatalog.bodyCount==bodies.Length&&body.bodyIndex!=(BodyIndex)(-1),"Original index assignment failed");
   Check(BodyCatalog.FindBodyIndex("CommandoBody")==body.bodyIndex&&BodyCatalog.FindBodyIndex("CommandoBody(Clone)")==body.bodyIndex,"Original name/index lookup failed");
   Check(BodyCatalog.GetBodyPrefab(body.bodyIndex)==prefab,"Original prefab lookup failed");
   Check(body.portraitIcon==portrait,"Missing-key callback replaced serialized portrait");

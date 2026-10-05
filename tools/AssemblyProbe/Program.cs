@@ -7,6 +7,8 @@ if (args.Length > 0 && args[0] == "--rewired-contract") { RewiredContract.Run(ar
 
 if (args.Length > 0 && args[0] == "--audio-guard") { AudioGuard.Run(args.Skip(1).ToArray()); return; }
 
+if (args.Length > 0 && args[0] == "--optional-presentation-guard") { OptionalPresentationGuard.Run(args.Skip(1).ToArray()); return; }
+
 if (args.Length > 0 && args[0] == "--slice") { Slice.Run(args.Skip(1).ToArray()); return; }
 
 // Read-only metadata attribution. Never loads or runs the inspected game assembly.
