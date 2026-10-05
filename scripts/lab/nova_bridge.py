@@ -81,6 +81,11 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         cfg['objectiveSupportAssets'].append(moon['pillar'])
         cfg['objectiveSupportKeys'].append(moon['pillarKey'])
         cfg['objectiveSupportPaths'].append('Prefabs/PositionIndicators/PillarChargingPositionIndicator')
+        cfg['moonCatalog']=moon['catalog']
+        for support in moon['supports']:
+            cfg['objectiveSupportAssets'].append(support['asset'])
+            cfg['objectiveSupportKeys'].append(support['key'])
+            cfg['objectiveSupportPaths'].append(support['path'])
         from integrated_results import stage_results
         cfg.update(stage_results(stage,out,a))
         cfg['moonMission']=True

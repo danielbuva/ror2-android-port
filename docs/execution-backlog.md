@@ -2375,3 +2375,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 **I07-S11 preparation, J284:** Existing full Moon/application/world candidate retained; scoped approach-combat driver correction imports/compiles. Live preflight,40 tests and immutable archive pass. Forced full-game build next; no device acceptance yet.
 
 **I07-S11 full build:**85.445-second/zero-error Vulkan ARM64 build and matching hashes/receipts pass. Full Nova route retry next; acceptance pending.
+
+
+**I07-S10/S11 device exit, J284:** Five genuine objectives and original Moon scene/mission Start pass; the diagnostic approach-combat repair survives the whole route.429 kills/21 pickup notifications. Selected original Exploder is missing its owned actor; shared Moon Phase1 configuration and Lunar metadata also fail in actual logs. Population/mission/victory remain unaccepted; full cleanup passes, I06/I03 unchanged.
+
+### I07-S12 — Complete measured original Moon dependency closure
+
+- **ID:** I07-S12.
+- **TITLE:** Original Exploder, shared Moon mission states and Lunar metadata/support in the full game.
+- **CONTEXT:** J284 reaches original Moon Phase1 after five genuine teleporter loops.
+- **OBSERVATION:** Selected Exploder lacks its owned template; original drop tables have seven unindexed definitions, Lunar elite equipment has no index, and Phase1's omitted shared config leaves its unconditional effect null.
+- **HYPOTHESIS:** Exact original actor/config/catalog/support closure lets the mission run without filtering source population or replacing simulation.
+- **TASK:** Add original Exploder/default animation/visual/state closure, shared Scenes/moon state configs, required metadata before body/catalog use, typed Lunar missile/Cripple support and source-elite-aware spawn observation. Build/run the whole route and fix its first actual blocker.
+- **CONSTRAINTS:** Retain I06/I03; unchanged source weights/availability/unlock/expansion/numerics. Metadata registration grants no items or eligibility. No fabricated platform/ending or unrelated rewrites.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing integrated_moon staging and partial movement/objective/actor/Moon boundaries; ignored converted assets and evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Matching build/assembly/payload receipts; the full Nova route continues the original Moon population/mission without the recorded catalog/availability/effect failures. Capability acceptance requires actual gameplay.
+- **FAILURE EVIDENCE TO CAPTURE:** First named failure and preceding current-process logs, original selected cards/weights, mission/authority, captures, assembly/build/payload attribution and complete cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record each integrated exit and next actual blocker; update milestones without inferring full-run success; privacy review and logical commit.
+- **DEPENDENCIES:** J284 full route evidence; scoped source catalog and Android provider lifetime. Pinned R2API.Items/ContentManagement/Addressables f539511e and exact input inspected; no source implementation copied.
+
+
+**I07-S12 J285/J286:** Complete original Exploder/shared mission/catalog/typed Lunar support closure imports/compiles,40 tests pass. Build rejects the old four/five support count before player build; failure preserved. Guard now also admits the measured seven supports with owned path/existence checks, and canonical staging carries their metadata. Fresh full candidate/build/run next; no device acceptance or pointer advance.

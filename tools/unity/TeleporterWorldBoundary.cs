@@ -83,6 +83,7 @@ public sealed partial class MovementBatchProbe {
    objectiveSupportLeases[i]=LegacyResourcesAPI.LoadAsync<GameObject>(cfg.objectiveSupportPaths[i]);yield return objectiveSupportLeases[i];objectiveSupportSources[i]=objectiveSupportLeases[i].Result;
    Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
   }
+  PrepareMoonSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();
   Check(wardSkin&&wardAnimator&&cfg.objectiveWardVisualAssets.Length==5,"Original ward visual contract missing");
   wardSkin._animatorController=artifactBundle.LoadAsset<RuntimeAnimatorController>(cfg.objectiveWardVisualAssets[0]);wardSkin._avatar=artifactBundle.LoadAsset<Avatar>(cfg.objectiveWardVisualAssets[1]);
@@ -136,7 +137,7 @@ public sealed partial class MovementBatchProbe {
   var assembly=typeof(TeleporterInteraction).Assembly;
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
    (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||t.Namespace=="EntityStates.LunarTeleporter"||
-    (cfg.moonMission&&((t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
+    (cfg.moonMission&&((t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarExploder",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
  }
  EntityStateConfiguration[] PrepareObjectiveConfigs(Result cfg){
   PrepareObjectivePresentationSources();
@@ -195,7 +196,7 @@ public sealed partial class MovementBatchProbe {
   EntityStates.BeetleQueenMonster.SummonEggs.spawnCard=objectiveCards.Single(x=>x.name=="cscBeetleGuard");
   objectiveSummon=report=>{
    if(!report.summonMasterInstance||!objectiveTemplates.Contains(report.masterSummon.masterPrefab))return;
-   var master=report.summonMasterInstance;ownedRewardSummons.Add(master);pendingObjectiveActors.Add(master);
+   var master=report.summonMasterInstance;BindMoonBodySupport(master.GetBody());ownedRewardSummons.Add(master);pendingObjectiveActors.Add(master);
    var summoner=report.masterSummon.summonerBodyObject?report.masterSummon.summonerBodyObject.GetComponent<CharacterBody>():null;
    objectiveAmbientExpected[master]=1+(summoner&&summoner.inventory?summoner.inventory.GetItemCountEffective(RoR2Content.Items.UseAmbientLevel):0);
    // MasterSummon publishes before CombatDirector assigns cost, rewards and squad.

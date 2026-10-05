@@ -8,6 +8,50 @@ using UnityEngine.Networking;
 
 // Owned Android activation/visual/input boundary around recovered original mission callbacks.
 public sealed partial class MovementBatchProbe {
+ ItemDef[] MoonItems(Result cfg){
+  if(!cfg.moonMission)return new ItemDef[0];Check(cfg.moonCatalog!=null,"Original Moon metadata manifest missing");
+  var names=new[]{"VoidMegaCrabItem","MasterCore","MasterBattery","ArtifactKey","PowerCube","PowerPyramid","PowerOrbSphere"};
+  Check(cfg.moonCatalog.items.Length==names.Length,"Original Moon item metadata differs");var defs=new ItemDef[names.Length];
+  for(int i=0;i<defs.Length;i++){
+   defs[i]=artifactBundle.LoadAsset<ItemDef>(cfg.moonCatalog.items[i]);Check(defs[i]&&defs[i].name==names[i],"Original Moon ItemDef missing: "+names[i]);
+   BindEnemyDefinition(i==0?typeof(DLC1Content.Items):i==3?typeof(RoR2Content.Items):typeof(DLC3Content.Items),names[i],defs[i]);
+  }
+  return defs; // Registration supplies indices, never inventory grants or unlocks.
+ }
+ BuffDef[] MoonBuffs(Result cfg){
+  if(!cfg.moonMission)return new BuffDef[0];Check(cfg.moonCatalog!=null&&cfg.moonCatalog.buffs.Length==2,"Original Moon buff metadata differs");
+  var names=new[]{"bdEliteLunar","bdCripple"};var fields=new[]{"AffixLunar","Cripple"};var defs=new BuffDef[2];
+  for(int i=0;i<defs.Length;i++){defs[i]=artifactBundle.LoadAsset<BuffDef>(cfg.moonCatalog.buffs[i]);Check(defs[i]&&defs[i].name==names[i],"Original Moon BuffDef missing: "+names[i]);BindEnemyDefinition(typeof(RoR2Content.Buffs),fields[i],defs[i]);}
+  return defs;
+ }
+ EquipmentDef[] MoonEquipment(Result cfg){
+  if(!cfg.moonMission)return new EquipmentDef[0];Check(cfg.moonCatalog!=null&&cfg.moonCatalog.equipment.Length==1,"Original Lunar equipment metadata differs");
+  var def=artifactBundle.LoadAsset<EquipmentDef>(cfg.moonCatalog.equipment[0]);Check(def&&def.name=="EliteLunarEquipment"&&def.passiveBuffDef==RoR2Content.Buffs.AffixLunar,"Original Lunar equipment/passive buff identity differs");
+  BindEnemyDefinition(typeof(RoR2Content.Equipment),"AffixLunar",def);return new[]{def};
+ }
+ GameObject moonLunarMissile;
+ void PrepareMoonSupport(Result cfg){
+  if(!cfg.moonMission)return;
+  int missile=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Projectiles/LunarMissileProjectile"),cripple=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/TemporaryVisualEffects/CrippleEffect");
+  Check(missile>=0&&cripple>=0,"Original Lunar support manifest missing");
+  moonLunarMissile=objectiveSupportSources[missile];Check(moonLunarMissile&&moonLunarMissile.GetComponent<RoR2.Projectile.ProjectileController>(),"Original Lunar missile component missing");
+  var slot=BarrierSlot().DeclaringType.GetField("crippleEffectPrefab",System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
+  Check(slot!=null&&priorEffectSlots.ContainsKey(slot)&&slot.GetValue(null)==null,"Unowned original Cripple effect slot");
+  var effect=objectiveSupportSources[cripple];Check(effect&&effect.GetComponent<TemporaryVisualEffect>(),"Original Cripple effect component missing");
+  // Same owned typed provider as other Android assets. Existing effect-slot teardown restores it.
+  slot.SetValue(null,effect);Check(ReferenceEquals(slot.GetValue(null),effect),"Original Cripple effect binding failed");
+ }
+ void BindMoonBodySupport(CharacterBody body){
+  if(!moonLunarMissile||!body)return;
+  var field=typeof(CharacterBody).GetField("lunarMissilePrefab",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+  Check(field!=null&&field.GetValue(body)==null,"Unowned original Lunar missile cache");field.SetValue(body,moonLunarMissile);
+ }
+ bool OriginalActorEquipment(CharacterBody body){
+  if(body.inventory.currentEquipmentIndex==EquipmentIndex.None)return true;
+  return IsObjectiveActor(body)&&body.name.StartsWith("Lunar",StringComparison.Ordinal)&&RoR2Content.Equipment.AffixLunar&&
+   body.inventory.currentEquipmentIndex==RoR2Content.Equipment.AffixLunar.equipmentIndex&&
+   EquipmentCatalog.GetEquipmentDef(body.inventory.currentEquipmentIndex)==RoR2Content.Equipment.AffixLunar&&RoR2Content.Elites.Lunar.IsAvailable();
+ }
  [Serializable] public class MoonMissionReport {
   public bool loaded,authority,cleaned,toggleInitialized,populationReady;public int batteries,required,charged,encounters,spawnedEncounters,sceneNetworkObjects,monsterCards;
   public string[] monsterCardNames,unmappedPoolCards;public float[] monsterCardWeights;

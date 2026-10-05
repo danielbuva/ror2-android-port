@@ -99,6 +99,17 @@ def stage_moon(stage, previous, out, spec):
             match = re.search(r'^guid: ([a-f0-9]{32})', meta.read_text(errors='replace'), re.M)
             if match: target[match[1]] = Path(str(meta)[:-5])
     roots_to_copy = list((source.parent).rglob('EntityStates.*.asset'))
+    # Commencement shares mission/state configuration with the original moon folder.
+    roots_to_copy += list((export/'Assets/RoR2/Base/Scenes/moon').rglob('EntityStates.*.asset'))
+    # Referenced drop-table metadata must be cataloged even when it is not loot.
+    item_sources = [export/'Assets/RoR2'/region/'Items'/name/(name+'.asset')
+                    for region, name in [('DLC1','VoidMegaCrabItem'), ('DLC3','MasterCore'),
+                    ('DLC3','MasterBattery'), ('Base','ArtifactKey'), ('DLC3','PowerCube'),
+                    ('DLC3','PowerPyramid'), ('DLC3','PowerOrbSphere')]]
+    buff_sources = [export/'Assets/RoR2/Base/Elites/EliteLunar/bdEliteLunar.asset',
+                    export/'Assets/RoR2/Base/Common/Buffs/Cripple/bdCripple.asset']
+    equipment_sources = [export/'Assets/RoR2/Base/Elites/EliteLunar/EliteLunarEquipment.asset']
+    roots_to_copy += item_sources + buff_sources + equipment_sources
     actor_roots = []
     typed_rows = [x.split('|') for x in (WORK/'moon-address-query.txt').read_text().splitlines()]
     subobject_provenance=[];absent_inherited_renderers=[]
@@ -123,7 +134,7 @@ def stage_moon(stage, previous, out, spec):
             subobject_provenance.append(dict(key=key,subobject=sub,asset=str(src.relative_to(export)),sha256=sha(src)))
         if not src.exists(): raise RuntimeError('Moon typed source missing: '+str(src.relative_to(export)))
         return src
-    for family in ['Brother/Brother', 'Brother/BrotherHurt', 'LunarGolem', 'LunarWisp']:
+    for family in ['Brother/Brother', 'Brother/BrotherHurt', 'LunarGolem', 'LunarWisp', 'LunarExploder']:
         folder = export/'Assets/RoR2/Base/Characters'/family
         name = folder.name
         body = folder/(name+'Body.prefab'); master = folder/(name+'Master.prefab'); card = folder/('csc'+name+'.asset')
@@ -172,7 +183,7 @@ def stage_moon(stage, previous, out, spec):
         roots_to_copy += [v for binding in actor['bindings'] for k,v in binding.items() if isinstance(v,Path)]
         roots_to_copy += list(renderer_materials.values())
         actor_roots.append(actor)
-    for family in ['Brother', 'LunarGolem', 'LunarWisp']:
+    for family in ['Brother', 'LunarGolem', 'LunarWisp', 'LunarExploder']:
         folder = export/'Assets/RoR2/Base/Characters'/family
         roots_to_copy += list(folder.rglob('EntityStates.*.asset'))
     # Deferred body visuals are selected by the original typed catalog query.
@@ -218,8 +229,17 @@ def stage_moon(stage, previous, out, spec):
     pillar_rows = [x for x in typed_rows if len(x)==4 and x[3]=='Prefabs/PositionIndicators/PillarChargingPositionIndicator' and x[2]=='UnityEngine.GameObject']
     if len(pillar_rows)!=1:raise RuntimeError('Original pillar indicator location changed')
     pillar=staged[export/pillar_rows[0][1]]
-    recipe['objectiveSupportAssets']=list(dict.fromkeys(recipe['objectiveSupportAssets']+[pillar]))
-    assets=[x for x in assets if x!=pillar]
+    support_paths = ['Prefabs/Projectiles/LunarMissileProjectile',
+                     'Prefabs/TemporaryVisualEffects/CrippleEffect']
+    support_rows = []
+    for path in support_paths:
+        matches = [x for x in typed_rows if len(x)==4 and x[3]==path and x[2]=='UnityEngine.GameObject']
+        if len(matches)!=1:raise RuntimeError('Original Moon support location differs: '+path)
+        row=matches[0];support_rows.append(dict(path=path,key=row[0],asset=staged[export/row[1]].lower()))
+    supports=[pillar]+[staged[export/x[1]] for x in typed_rows
+                      if len(x)==4 and x[3] in support_paths and x[2]=='UnityEngine.GameObject']
+    recipe['objectiveSupportAssets']=list(dict.fromkeys(recipe['objectiveSupportAssets']+supports))
+    assets=[x for x in assets if x not in supports]
     recipe['prefabAssets'] = list(dict.fromkeys(recipe['prefabAssets']+assets))
     write(WORK/'scene-probe-build.json', recipe)
     configs = [staged[x].lower() for x in roots_to_copy if x.name.startswith('EntityStates.')]
@@ -239,4 +259,7 @@ def stage_moon(stage, previous, out, spec):
     if moon_scene not in staged:raise RuntimeError('Recovered Moon SceneDef missing from source closure')
     recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[staged[moon_scene]]))
     write(WORK/'scene-probe-build.json',recipe)
-    return dict(configs=configs,actors=actor_specs,pillar=pillar.lower(),pillarKey=pillar_rows[0][0],sceneDef=staged[moon_scene].lower())
+    return dict(configs=configs,actors=actor_specs,pillar=pillar.lower(),pillarKey=pillar_rows[0][0],sceneDef=staged[moon_scene].lower(),
+                catalog=dict(items=[staged[x].lower() for x in item_sources],
+                             buffs=[staged[x].lower() for x in buff_sources],
+                             equipment=[staged[x].lower() for x in equipment_sources]),supports=support_rows)
