@@ -2634,3 +2634,6 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J301 full build:**81.401-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `38a55a54f16867bce8b33f1dd3f4d0a08610537a586b53acb0cec03e90311cc0`. Complete Nova route retry running; stalled-travel recovery/Moon/battery/mission/victory require execution. I06/I03 remain immutable rollback.
+
+
+**J301 live return progress:** Wetland boss/natural charge/reward/exit and second actual source transport complete.38 terrain-recovery frames/zero rejected terrain choices observed, followed by resumed source navigation; actual Rallypoint body/master/inventory and current source runtime remain stable. Integrated stalled-return correction has device evidence. Moon/battery/victory/ending/full cleanup acceptance remain pending; no new I07 pointer, I06/I03 immutable. Ignored current source report and reviewed Wetland capture retained.
