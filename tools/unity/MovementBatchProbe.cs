@@ -16,7 +16,12 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  Result r;GameObject host,obstacle,eventHost,artifactHost;bool ownsServer;ArtifactDef[] priorArtifacts;ArtifactDef priorFallArtifact;AssetBundle artifactBundle;RunArtifactManager artifactManager;
  void Check(bool value,string message){r.assertions++;if(!value){if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=message;r.firstFailurePhase=r.phase;try{Save();}catch(Exception){/* Preserve the original predicate when evidence writing also fails. */}}throw new Exception(message);}}
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
- void Save(){File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+r.id+".json"),JsonUtility.ToJson(r,true));}
+ void Save(){
+  var path=System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+r.id+".json");
+  var pending=path+".pending";File.WriteAllText(pending,JsonUtility.ToJson(r,false));
+  // Same-volume rename keeps adb readers on a complete previous or next report.
+  if(File.Exists(path))File.Replace(pending,path,null);else File.Move(pending,path);
+ }
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Init(){if(Resources.Load<TextAsset>("MovementBatchProbe"))new GameObject("Isolated movement batch").AddComponent<MovementBatchProbe>();}
  IEnumerator Start(){
   yield return new WaitForSeconds(8);

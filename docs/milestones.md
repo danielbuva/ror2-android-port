@@ -219,3 +219,6 @@ J275 repeats all five original objective loops with original statistics and four
 
 
 J276 reaches original counter5 and actual loaded Moon geometry after five genuine objective loops; Moon activation fails on16 omitted required source Highlights. Partial-load teardown is incomplete. Full-game retry retains those components; Moon mission/victory/persistence/application acceptance and all rollback pointers remain open.
+
+
+J277 passes actual Moon244-component/mesh/collision/material checks after five genuine objective loops. Original source toggle activation fails before mission initialization; full teardown passes. Next full game supplies original server scene-object lifecycle and expanded earned items. Moon mission/fifth transport/victory/result persistence/application-loop gates and rollback pointers remain unadvanced.

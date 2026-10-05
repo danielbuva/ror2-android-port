@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 // Owned Android activation/visual/input boundary around recovered original mission callbacks.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class MoonMissionReport {
-  public bool loaded,authority,cleaned;public int batteries,required,charged,encounters,spawnedEncounters;
+  public bool loaded,authority,cleaned,toggleInitialized;public int batteries,required,charged,encounters,spawnedEncounters,sceneNetworkObjects;
   public string state,escapeState,error,scope,inputObjective;public string[] batteryStates,elevatorStates;
   public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
   public float seconds;public List<string> transitions=new List<string>();
@@ -28,17 +28,25 @@ public sealed partial class MovementBatchProbe {
  }
  void ActivateMoonSource(IntegratedStageSpec spec){
   r.phase="moon-mission-activate";r.moon=new MoonMissionReport{scope="Recovered original Moon batteries, elevators, scripted boss phases, trigger/escape wiring. Android activation/material/continuous-body boundary; no forced charge, encounter death, completion or platform identity."};Save();
+  try{
   moonRoots=stageGeometryScene.GetRootGameObjects();
   Check(moonRoots.All(x=>!x.activeSelf),"Moon source root activation was not deferred");
   var info=moonRoots.SelectMany(x=>x.GetComponentsInChildren<SceneInfo>(true)).Single();info.gameObject.SetActive(true);
   Check(SceneInfo.instance==info&&info.groundNodes&&info.airNodes,"Original Moon SceneInfo/graphs missing");
   BindMoonSourceCards();
   foreach(var root in moonRoots)if(spec.activeRoots.Contains(root.name))root.SetActive(true);
-  foreach(var identity in moonRoots.SelectMany(x=>x.GetComponentsInChildren<NetworkIdentity>(true)))if(identity.gameObject.activeInHierarchy&&identity.netId.Value==0)NetworkServer.Spawn(identity.gameObject);
-  var toggle=moonRoots.SelectMany(x=>x.GetComponentsInChildren<SceneObjectToggleGroup>(true)).Single();Call(toggle,"ApplyActivations");
+  var sceneObjects=Resources.FindObjectsOfTypeAll<NetworkIdentity>().Where(x=>x.gameObject.hideFlags!=HideFlags.NotEditable&&x.gameObject.hideFlags!=HideFlags.HideAndDontSave&&!x.sceneId.IsEmpty()).ToArray();
+  Check(sceneObjects.Length>0&&sceneObjects.All(x=>x.gameObject.scene==stageGeometryScene),"Unowned network scene objects before Moon activation");
+  // Original server transport activates scene identities before spawning them. This
+  // runs Awake/Generate on the serialized inactive Toggle, without choosing batteries.
+  r.moon.sceneNetworkObjects=sceneObjects.Length;Check(NetworkServer.SpawnObjects(),"Original Moon network scene activation failed");
+  var toggle=moonRoots.SelectMany(x=>x.GetComponentsInChildren<SceneObjectToggleGroup>(true)).Single();
+  var toggleObjects=(GameObject[])typeof(SceneObjectToggleGroup).GetField("allToggleableObjects",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(toggle);
+  r.moon.toggleInitialized=toggleObjects!=null&&toggleObjects.Length==toggle.toggleGroups.Sum(x=>x.objects.Length);Check(r.moon.toggleInitialized,"Original Moon toggle Awake/Generate missing");Call(toggle,"ApplyActivations");
   moonBatteries=MoonBatteryMissionController.instance;moonEscape=moonRoots.SelectMany(x=>x.GetComponentsInChildren<EscapeSequenceController>(true)).Single();moonEncounter=moonRoots.SelectMany(x=>x.GetComponentsInChildren<EntityStateMachine>(true)).Single(x=>x.customName=="MissionController");
   Check(moonBatteries&&moonBatteries.numRequiredBatteries==4&&moonEscape&&moonEncounter,"Original Moon mission context missing");
   r.moon.loaded=true;r.moon.authority=NetworkServer.active&&worldPlayer.hasEffectiveAuthority;ObserveMoonMission();Save();
+  }catch(Exception e){r.moon.error=e.ToString();if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=e.GetBaseException().Message;r.firstFailurePhase=r.phase;}Save();throw;}
  }
  IEnumerator PrepareMoonWorld(){
   r.phase="moon-mission-context";Save();

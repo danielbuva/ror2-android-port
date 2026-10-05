@@ -75,7 +75,7 @@ public sealed partial class MovementBatchProbe {
      if(DirectorBatch()&&fireAge>18.5f){var target=DirectorReturnFireTarget();bridge.diagnosticPrimary=target;if(target){var batchAim=target.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(batchAim.x,batchAim.z).normalized;}}
     }
     if(bringup&&worldView!=null)worldView.DiagnosticDirection(bank.aimDirection);display.Observe(position,bank.aimDirection);
-    if(elapsed>=next){if(r.freePlay&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
+    if(elapsed>=next){if((r.freePlay||cfg.integratedWorld)&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
     if(cfg.teleporterLoop&&r.stageProgress.transitions>=Mathf.Max(1,cfg.integratedTransitionTarget)&&elapsed-r.stageProgress.enteredAt>30&&(!cfg.moonMission||(r.moon!=null&&r.moon.gameOver&&(!cfg.integratedResults||(r.results!=null&&r.results.persisted))))){r.nova.seconds=elapsed;break;}
     r.nova.seconds=elapsed;r.nova.fixedTicks=bridge.fixedTicks;r.nova.jumpPresses=bridge.jumpPresses;r.automaticFrames++;if(Time.frameCount%30==0)Save();
    }

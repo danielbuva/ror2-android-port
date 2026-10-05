@@ -22,8 +22,8 @@ public sealed partial class MovementBatchProbe {
   public bool lunarDefinition,lunarCurrencyAvailable;
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
-  public int lootDomain,syringe,lightning,glasses,slug,secondary,roll,barrage;public uint money;public ulong experience;
-  public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,difficulty,distance;
+  public int lootDomain,syringe,lightning,glasses,slug,hoof,steak,secondary,roll,barrage;public uint money;public ulong experience;
+  public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
@@ -52,6 +52,15 @@ Action<TeamIndex> unavailableTeamLevelSound;Action<Run> unavailableAmbientSound;
 Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
 
 
+ ItemDef[] WorldTierOneLoot(Result cfg){
+  var loot=new List<ItemDef>{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe};
+  // Receipted additions only. Older accepted configurations retain their original pool.
+  if(cfg.teleporterLoop&&cfg.objectiveItemNames!=null){
+   if(cfg.objectiveItemNames.Contains("Hoof"))loot.Add(RoR2Content.Items.Hoof);
+   if(cfg.objectiveItemNames.Contains("FlatHealth"))loot.Add(RoR2Content.Items.FlatHealth);
+  }
+  return loot.ToArray();
+ }
  IEnumerator PrepareIntegratedWorld(CharacterBody player,Result cfg){
   Check(((Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null)).Count==0,"Unowned effect pools before integrated world");ownsIntegratedPools=true;
   r.world=new WorldReport{scope="Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",feedbackCapability="Authored pickup HUD; original native-audio notification handler unavailable."};
@@ -77,7 +86,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(r.world.lunarDefinition&&!Util.LookUpBodyNetworkUser(player),"Original lunar definition or unavailable currency contract changed");r.world.lunarCurrencyAvailable=false;
   Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0,"Unowned integrated loot lists");
   ownsWorldLists=true;
-  foreach(var item in new[]{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe}){
+  foreach(var item in WorldTierOneLoot(cfg)){
    Check(item&&!item.requiredExpansion&&!item.unlockableDef&&item.tier==ItemTier.Tier1&&!Run.instance.IsItemExpansionLocked(item.itemIndex),"Integrated base item unavailable");Run.instance.availableTier1DropList.Add(PickupCatalog.FindPickupIndex(item.itemIndex));
   }
   Run.instance.availableTier2DropList.Add(PickupCatalog.FindPickupIndex(RoR2Content.Items.ChainLightning.itemIndex));
@@ -97,7 +106,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(worldDropletSource&&worldDropletSource.name=="PickupDroplet"&&LegacyResourcesAPI.ActiveCount==0,"Integrated original droplet Init failed");
   worldChestTable=artifactBundle.LoadAsset<BasicPickupDropTable>(cfg.chestDropTableAsset);
   Check(worldChestTable&&worldChestTable.name=="dtChest1"&&worldChestTable.canDropBeReplaced,"Integrated source drop table identity/policy differs");r.world.tableLoadedCount=worldChestTable.GetPickupCount();worldChestTable.RegenerateDropTable(Run.instance);
-  r.world.lootDomain=worldChestTable.GetPickupCount();Check(r.world.lootDomain==4,"Integrated source chest loot domain missing");
+  r.world.lootDomain=worldChestTable.GetPickupCount();Check(r.world.lootDomain==WorldTierOneLoot(cfg).Length+1,"Integrated source chest loot domain missing");
   PrepareWorldMessages();
   worldCoinLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/CoinEmitter");ownsWorldCoinLease=true;yield return worldCoinLease;
   Check(worldCoinLease.Result==rewardPrefabs[0],"Integrated coin source witness differs");worldCoinBaseline=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease);
@@ -193,7 +202,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void ObserveIntegratedWorld(CharacterBody player,float elapsed){
   Call(activeBodyClient,"Update");Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
   ObserveTeleporterWorld();ObserveMoonMission();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
-  world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;
+  world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
+  if(r.objectiveItemNames!=null&&r.objectiveItemNames.Contains("Hoof"))world.hoof=player.inventory.GetItemCountPermanent(RoR2Content.Items.Hoof);
+  if(r.objectiveItemNames!=null&&r.objectiveItemNames.Contains("FlatHealth"))world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
   var interactor=player.GetComponent<Interactor>();world.interactionDistance=interactor.maxInteractionDistance;
@@ -269,9 +280,11 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var world=r.world;if(world==null||!world.ready)return;
   var style=new GUIStyle(GUI.skin.label){fontSize=22};var shadow=new GUIStyle(style);shadow.normal.textColor=Color.black;
   string text="Offline gameplay lab — "+(r.stageProgress!=null?r.stageProgress.current:"Titanic Plains")+"\nHP "+Mathf.Max(0,world.health).ToString("F0")+" / "+world.maxHealth.ToString("F0")+"    Lv "+world.level.ToString("F0")+"    $"+world.money+"    "+world.seconds.ToString("F0")+"s\nKills "+world.kills+"    Enemies "+world.liveEnemies+"    Chests "+world.openedChests+" / "+world.chests+"\nSyringe "+world.syringe+" · Glasses "+world.glasses+" · Slug "+world.slug+" · Ukulele "+world.lightning+"\n"+world.lastPickup+"    Crit "+world.crit.ToString("F0")+"% · Regen "+world.regen.ToString("F1")+"\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n"+(string.IsNullOrEmpty(world.target)?"Explore, fight and earn money":"B: "+world.target)+"\nAudio, stock startup and profiles unavailable";
-  if(r.objective!=null&&r.objective.ready)text+="\nTeleporter "+r.objective.state+" — "+(r.objective.charge*100).ToString("F0")+"% | "+(r.objective.bossDefeated?"Boss defeated":"Boss HP "+r.objective.bossHealth.ToString("F0")+" / "+r.objective.bossMaxHealth.ToString("F0"));
-  if(world.health<=0){text+="\nCommando defeated. Press A to restart a fresh run.";if(GUI.Button(new Rect(20,350,240,48),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(280,350,180,48),"Close session"))Application.Quit();}else if(worldView!=null)worldView.DrawReticle();
-  GUI.Label(new Rect(21,61,1100,290),text,shadow);GUI.Label(new Rect(20,60,1100,290),text,style);
+  if(world.lootDomain>4)text+="\nHoof "+world.hoof+" · Steak "+world.steak+" · Move speed "+world.moveSpeed.ToString("F1");
+  if(r.moon!=null&&r.moon.loaded)text+="\nMoon batteries "+r.moon.charged+" / "+r.moon.required+" · Encounter enemies "+r.moon.livingEncounterMembers+"\n"+world.objective;
+  else if(r.objective!=null&&r.objective.ready)text+="\nTeleporter "+r.objective.state+" — "+(r.objective.charge*100).ToString("F0")+"% | "+(r.objective.bossDefeated?"Boss defeated":"Boss HP "+r.objective.bossHealth.ToString("F0")+" / "+r.objective.bossMaxHealth.ToString("F0"));
+  if(world.health<=0){text+="\nCommando defeated. Press A to restart a fresh run.";if(GUI.Button(new Rect(20,420,240,48),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(280,420,180,48),"Close session"))Application.Quit();}else if(worldView!=null)worldView.DrawReticle();
+  GUI.Label(new Rect(21,61,1100,350),text,shadow);GUI.Label(new Rect(20,60,1100,350),text,style);
  }
  void RequestWorldRestart(){if(r!=null&&r.freePlay&&r.integratedWorld&&r.phase=="commando-defeated"&&r.playerDefeat.bodyDestroyed){restartRequested=true;r.phase="restarting-world";Save();}}
  void ObserveWorldRestartInput(){if(r==null||!r.freePlay||!r.integratedWorld||r.phase!="commando-defeated"||r.nova==null)return;if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump)))RequestWorldRestart();}

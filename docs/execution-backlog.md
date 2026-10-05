@@ -2306,3 +2306,21 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S06/S08 continuation, J276:** Five genuine objectives reach source counter5 and load Moon geometry. Retain16 original required Highlights (244 total) before deferred mission activation; fix already-active persistent scene restoration on partial-load cleanup. Continue the full route, Moon mission and actual ending/persistence. Failed cleanup does not advance any checkpoint.
+
+### I07-S09 — Broader earned items in the continuing run
+
+- **CONTEXT:** Continuing Moon/application composition still uses three white items and one green item.
+- **OBSERVATION:** Original Hoof and FlatHealth definitions are base-game items; unchanged CharacterBody recalculation consumes their inventory stacks for speed and health. ArmorPlate additionally requests a network sound asset and is not part of this chunk.
+- **HYPOTHESIS:** Registering the two exact definitions before inventory/catalog allocation and admitting them to existing original drop lists extends real purchases/grants without a gameplay rewrite.
+- **TASK:** Retain the original chest table and weights; expand its available domain with Hoof/FlatHealth. Record actual acquired stacks, movement speed and health. Show live Moon battery/encounter/input objectives in the same playing HUD.
+- **CONSTRAINTS:** Current common platform/privacy/storage/ownership contract; only receipted original base definitions with no expansion/unlockable requirement; no granted items, synthetic stats or altered drop weights. Older accepted configurations retain their four-item domain. Do not alter an in-flight build/run.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing objective item closure, reward eligibility, original loot lists, world observations and HUD.
+- **TEST COMMAND:** preflight; test; forced Vulkan ARM64 build; full movement-batch-run through ordinary source purchases and item grants.
+- **PASS CONDITION:** Six-choice original chest domain, real acquired item/stack/stat evidence, no new source exception, readable playing HUD and owned teardown. Source inspection/compilation alone do not pass it.
+- **FAILURE EVIDENCE TO CAPTURE:** Original item registration/type/asset error, actual drop domain and grants, stats/authority/ending errors, current-run logs/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate build/run attribution; advance no pointer on failure.
+- **DEPENDENCIES:** Current full-route attempt exit; pinned DebugToolkit d1e2f0aa Items original catalog/drop-list knowledge and exact original definitions/CharacterBody stat source inspected. No implementation copied.
+- **STATUS:**21 source-closure files/323270 bytes staged after J277 exits; imported/compiled/preflight pass. 169.779-second/zero-error ARM64 Vulkan build and40 tests pass. Integrated device acceptance pending.
+
+
+**I07-S06/S08 continuation, J277:** Moon geometry checks pass, then inactive serialized Toggle lacks original server scene-object activation/Awake. Use the original HLAPI SpawnObjects path after complete eligible-object ownership validation; preserve source randomization and capture the actual activation error before cleanup. Full-game retry retains I06/I03. The required diagnostic fix caps only the integrated input sample tail (900; cumulative counts/all actor records retained) and atomically publishes compact JSON, following an observed23 MB mid-write capture failure. This serves the next whole-game run, not a general observability framework.
