@@ -2825,3 +2825,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J308 retry dispatch repair:** Existing movement-batch-run retains its original no-argument call; only the new movement-batch-retry supplies retry=True. All40 safety tests now actually pass, including first-failure preservation and immutable retry attribution. Failed test log retained and earlier premature passing-test statement corrected. Same APK/recipe/Unity stage unchanged; actual immutable retry pending.
+
+
+**J308 immutable retry exit:** Same APK verified, original first defeat remains preserved; fresh evidence at verification/20261005T223128.602430Z. One genuine original boss/reward/exit/transport, then Wetland reaches original charge1 while boss remains. At453.175seconds the original reachable boss path extends94.270 metres from the teleporter, but authored input interrupts approaches beyond50 metres even after charging finishes. This is a concrete input restriction, not a simulation/path solver failure. Current-process errors/message failures zero. Owned interruption at514.981seconds, app stopped/selector removed/Nova asleep; no source ending/teardown or Moon request observation. I06/I03 unchanged, no I07 pointer. Reassess prolonged combat as a post-charge approach restriction; preserve exact request observations for the subsequent Moon pass.
+
+### I07-S29 — Boss approach after full charging
+
+- **ID:** I07-S29.
+- **TITLE:** Release diagnostic holdout constraint after original charge.
+- **CONTEXT:** J308 same-APK retry reaches genuine charge1 but cannot complete a source boss detour.
+- **OBSERVATION:** Original reachable path extends94.270m; own input stops approach beyond50m after charging is already complete. Runtime errors zero.
+- **HYPOTHESIS:** Removing only the obsolete input constraint permits normal detour/combat.
+- **TASK:** Integrate source charge-gated input constraint/observation in the whole game; full build and genuine Nova route.
+- **CONSTRAINTS:** Preserve original charge duration, boss/health/damage/director/reward/exit, path/gates/physics/authority and physical controls; no forced outcome or skip. I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored TeleporterWorldBoundary and one WorldReport flag; ignored complete archive/build/device evidence; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run; same-APK movement-batch-retry only when a genuine defeat prevents the selected observation.
+- **PASS CONDITION:** Actual constraint flag clears only after original charge1, normal detour/combat/exit completes; exact device Moon request remains subsequent required observation.
+- **FAILURE EVIDENCE TO CAPTURE:** Original charge/boss/path radius/constraint flag, movement/grounding/target/LOS/damage, current-process errors/capture and first failure/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J309 build/device outcome, actual request classification, no incomplete-run pointer.
+- **DEPENDENCIES:** J308 immutable retry path/charge blocker; retained camera/request trace/rollback.
+
+
+**J309 full build:**78.655-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `f8243e02c3c7c556b97a8cf22432f2efecafd0dd6cb31e5ba8761abda0a4bc37`. Post-charge source detour and exact Moon request remain device-pending; original boss/charge/exit/physics unchanged. I06/I03 immutable; no I07 pointer.

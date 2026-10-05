@@ -382,3 +382,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J308 retry dispatch repair:** Existing movement-batch-run retains its original no-argument call; only the new movement-batch-retry supplies retry=True. All40 safety tests now actually pass, including first-failure preservation and immutable retry attribution. Failed test log retained and earlier premature passing-test statement corrected. Same APK/recipe/Unity stage unchanged; actual immutable retry pending.
+
+
+**J308 immutable retry exit:** Same APK verified, original first defeat remains preserved; fresh evidence at verification/20261005T223128.602430Z. One genuine original boss/reward/exit/transport, then Wetland reaches original charge1 while boss remains. At453.175seconds the original reachable boss path extends94.270 metres from the teleporter, but authored input interrupts approaches beyond50 metres even after charging finishes. This is a concrete input restriction, not a simulation/path solver failure. Current-process errors/message failures zero. Owned interruption at514.981seconds, app stopped/selector removed/Nova asleep; no source ending/teardown or Moon request observation. I06/I03 unchanged, no I07 pointer. Reassess prolonged combat as a post-charge approach restriction; preserve exact request observations for the subsequent Moon pass.
+
+
+**J309 full build:**78.655-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `f8243e02c3c7c556b97a8cf22432f2efecafd0dd6cb31e5ba8761abda0a4bc37`. Post-charge source detour and exact Moon request remain device-pending; original boss/charge/exit/physics unchanged. I06/I03 immutable; no I07 pointer.

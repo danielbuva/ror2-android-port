@@ -2762,3 +2762,17 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J308 retry dispatch repair:** Existing movement-batch-run retains its original no-argument call; only the new movement-batch-retry supplies retry=True. All40 safety tests now actually pass, including first-failure preservation and immutable retry attribution. Failed test log retained and earlier premature passing-test statement corrected. Same APK/recipe/Unity stage unchanged; actual immutable retry pending.
+
+
+**J308 immutable retry exit:** Same APK verified, original first defeat remains preserved; fresh evidence at verification/20261005T223128.602430Z. One genuine original boss/reward/exit/transport, then Wetland reaches original charge1 while boss remains. At453.175seconds the original reachable boss path extends94.270 metres from the teleporter, but authored input interrupts approaches beyond50 metres even after charging finishes. This is a concrete input restriction, not a simulation/path solver failure. Current-process errors/message failures zero. Owned interruption at514.981seconds, app stopped/selector removed/Nova asleep; no source ending/teardown or Moon request observation. I06/I03 unchanged, no I07 pointer. Reassess prolonged combat as a post-charge approach restriction; preserve exact request observations for the subsequent Moon pass.
+
+## J309 — Normal source boss approach after original charging
+
+**Observation / hypothesis:** The real J308 retry exposes an original94-metre boss path while the diagnostic driver retains a50-metre holdout approach limit at original charge1. Source boss defeat remains required. Releasing only that post-charge input constraint should permit the original detour and combat.
+
+**Integration:** When original TeleporterInteraction.chargeFraction is at least1, stop constraining diagnostic combat movement to the holdout. Keep pre-charge guidance, original path/input, melee defence/aim/skills, full charge duration, boss/director/health/reward/exit/authority and graph/collision unchanged. Observe actual combatHoldoutConstrained flag. Retain J308 exact source-request observations, physical camera, same state-preserving live-body transport and optional-service boundaries. No forced charge/defeat/skip or new standalone proof.
+
+**Prior art / preparation:** Current community-prior-art L6/L7 map, pinned R2Wiki Stage director-versus-terrain guidance and DebugToolkit semantic observations retained; exact original TeleporterInteraction charge-versus-boss gate, NodeGraph/PathFollower and existing driver limit inspected. No implementation copied. Ignored complete candidate work/experiments/scene-runtime/20261005T224043.748240Z preserves both earlier immutable attempts/first CLI test failure and complete new archive/recipe. Preflight/40 tests/zero C# compile errors pass; forced Vulkan build and genuine unattended Nova route pending. User unavailable; no physical readiness request. I06/I03 immutable, no I07 pointer.
+
+
+**J309 full build:**78.655-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `f8243e02c3c7c556b97a8cf22432f2efecafd0dd6cb31e5ba8761abda0a4bc37`. Post-charge source detour and exact Moon request remain device-pending; original boss/charge/exit/physics unchanged. I06/I03 immutable; no I07 pointer.

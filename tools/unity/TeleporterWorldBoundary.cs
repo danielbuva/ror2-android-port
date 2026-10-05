@@ -326,6 +326,9 @@ public sealed partial class MovementBatchProbe {
   ObjectiveCombatInput(player,bridge,elapsed,Vector2.zero,false);r.world.travelDefenseFrames++;r.world.travelDefenseTarget=target.name;r.world.objective="Defend while approaching "+target.name;return true;
  }
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
+   // Once original charging finishes, a source path may leave the holdout to
+   // reach a surviving boss. Boss defeat and exit still require original events.
+   if(worldTeleporter&&worldTeleporter.chargeFraction>=1)constrainToHoldout=false;r.world.combatHoldoutConstrained=constrainToHoldout;
    var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
    var actors=living.Where(x=>InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();r.world.combatCandidates=living.Length;r.world.combatBoundsRejected=living.Length-actors.Length;
    // The unattended route can aim through terrain or continually select distant
