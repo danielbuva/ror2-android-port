@@ -2487,3 +2487,17 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J290 full build:**81.089-second/zero-error Vulkan ARM64 build; matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `4a04e3bb19b2d04032acb99c0ed3bde8f2e0565c2cd66a9325bcf8b41e5e7e44`.40 tests pass. Full Nova route retry running; no new Moon or rollback acceptance.
+
+
+**J290 device exit:**1807.934 reported gameplay seconds, four genuine source boss/natural-charge/exit loops and four completed transports/count4,421 kills. Original teleports land on all four recovered next scenes with continuity; no message68 failures. The fifth boss remains alive at497.4 health when Commando suffers genuine fatal damage at health-18.2. Original StandardLoss/server/client/RunReport/XML round trip and ledger persist:357 fields,204757 dealt/3111 taken,1822.375 original stopwatch seconds/six acquired item entries. Full source/world/model/results cleanup and zero unexpected current-process runtime errors pass. Moon remains unentered; no new rollback or victory acceptance. Nova stopped/asleep.
+
+**Actual whole-game blocker:** Repeated live records show a living base Beetle at approximately y-511, while player and Queen remain near y20. The diagnostic combat selector ranks any non-boss before the boss, so the unreachable Beetle delays boss damage and source health recovery/damage continue normally. Generated first-five stage scenes retain no original MapZone callbacks. This is a measured scene/input integration gap, not a reason to change source damage/health/difficulty or force an actor death.
+
+## J291 — Restore original out-of-bounds behavior throughout the composed route
+
+**Integration:** Candidate `work/experiments/scene-runtime/20261005T132632.713231Z` retains the complete game and original teleport correction. Recover14 exact original MapZone components across Titanic Plains/Wetland/Rallypoint/Abyssal/Sky Meadow(1/5/2/4/2), unchanged shapes/transform/type/layer15/source destinations and original source kill/teleport logic. Their source-enabled colliders defer until the owned runtime/context/entry, and pause during continuous-body scene transport/cleanup. Original counters observe entries/exits/teleports. The validation driver uses the enabled original volume tests when choosing combat targets; out-of-bounds actors are not artificially killed, removed or granted progress. Direct physical input is unchanged.
+
+**Prior art / scope:** Community prior-art stage/authority/diagnostic map reviewed; pinned R2API.Director f539511e original ClassicStageInfo/SceneInfo boundaries and Starstorm2 SlateMines a9a4badd source scene identity inspected with exact input MapZone/TeleportHelper. No implementation copied. Existing original helper/message/authority/provider context retained, no private physics-state writes or platform success. Build/40 tests/whole Nova route required; no compile-only capability or pointer advance. I06/I03 remain rollback; Nova asleep during host work.
+
+
+**J291 full build:**115.678-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `940b384316690846412ca3588c18f203151eb9d651f6f31687bc8e6cba902af2` verified. Full Nova route retry running; source out-of-bounds/Moon/victory acceptance pending.

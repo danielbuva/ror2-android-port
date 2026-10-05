@@ -67,12 +67,12 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
     for name in ['MovementBatchProbe','OfflineApplicationBoundary','IntegratedResultsBoundary','MoonMissionBoundary','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for shader in ['StageTerrainPreview','StageSurfacePreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
-    cfg=baseline_cfg;cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
+    cfg=baseline_cfg;cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock,map_zones=integrated_world));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
     if integrated_world:
         from integrated_objective import stage_objective
         cfg.update(stage_objective(stage,a,out))
-        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name) for name in ['foggyswamp','frozenwall','dampcavesimple','skymeadow','moon2']]
+        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name,map_zones=name!='moon2') for name in ['foggyswamp','frozenwall','dampcavesimple','skymeadow','moon2']]
         from integrated_moon import stage_moon
         moon=stage_moon(stage,a,out,cfg['integratedStages'][-1])
         cfg['objectiveConfigAssets']=list(dict.fromkeys(cfg['objectiveConfigAssets']+moon['configs']))
@@ -195,24 +195,35 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains"):
-    """Recover Titanic Plains static scene/collision; keep original stage scripts out of this lab scope."""
+def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False):
+    """Recover source geometry; integrated runs additionally retain exact MapZone callbacks."""
     import shutil
     from scene_closure import REFERENCE
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     source=export/('Assets/RoR2/Base/Scenes/'+scene_name+'/'+scene_name+'.unity')
     text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
-    # Preserve object/transform/mesh/collider/LOD data. Omit gameplay, native sound, particles and baked lighting.
+    # Preserve geometry/LOD and selected source MapZone callbacks; omit unrelated native/presentation data.
     keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
     # Measured original MonoScript identity: only the source escape-pod preview disable callback.
     preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
+    map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
+    map_blocks=[b for b in blocks if b.startswith('--- !u!114 ') and map_script in b] if map_zones else []
+    expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2}
+    if map_zones and len(map_blocks)!=expected_zones.get(scene_name):raise RuntimeError('Original stage MapZone contract changed; review source')
+    map_owners={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in map_blocks}
+    map_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in map_blocks];deferred_colliders=[]
     for block in blocks:
         match=re.match(r'--- !u!(\d+) &(-?\d+)',block);kind=int(match[1]);file_id=match[2]
         preview=kind==114 and preview_script in block
         if preview:preview_ids.append(file_id)
-        if kind not in keep and not preview:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
+        map_zone=kind==114 and map_zones and map_script in block
+        if kind not in keep and not preview and not map_zone:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
+        if kind in {64,65,135,136} and re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1] in map_owners:
+            if '  m_IsTrigger: 1' not in block or '  m_Enabled: 1' not in block:raise RuntimeError('Original MapZone collider contract differs')
+            block=block.replace('  m_Enabled: 1','  m_Enabled: 0',1);deferred_colliders.append(file_id)
         kept.append((kind,file_id,block))
+    if len(deferred_colliders)!=len(map_ids):raise RuntimeError('Original MapZone collider count differs')
     expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'moon2':0}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
@@ -253,8 +264,8 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         recipe['nextStageScenes']=list(dict.fromkeys(recipe.get('nextStageScenes',[])+[str(dest.relative_to(WORK/'lab-project'))]))
         recipe.pop('nextStageScene',None)
     write(WORK/'scene-probe-build.json',recipe)
-    write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids},'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; only measured original DisableOnStart preview callbacks retained, no stage lifecycle/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
-    if scene_name=='golemplains':return {'stageGeometry':True}
+    write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids,'MapZone':map_ids},'deferred_map_colliders':deferred_colliders,'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
+    if scene_name=='golemplains':return {'stageGeometry':True,'stageMapZoneCount':len(map_ids)}
     graphs={}
     for kind in ['ground','air']:
         guid=re.search(r'^  '+kind+r'NodesAsset: \{fileID: -?\d+, guid: ([a-f0-9]{32})',text,re.M)[1]
@@ -287,7 +298,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
             go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1]
             empty.append(dict(component=fid,kind=kind,path=object_path(go_id)))
     write(out/(scene_name+'-source-empty-meshes.json'),dict(source_scene_sha256=sha(source),components=empty,scope='Exact source-null fields and hierarchy identities; no blanket missing-reference allowance or mesh replacement. Source tree siblings retain populated meshes.'))
-    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),previewNames=preview_names,emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
+    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),previewNames=preview_names,mapZoneCount=len(map_ids),emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
 
 
 def stage_enemy_spine(stage,previous,out):

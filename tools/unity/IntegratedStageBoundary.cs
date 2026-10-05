@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 // Additive converted-stage transport, with a declared continuous-body entry adapter.
 // No synthetic stage count, reward, kill, authority, ownership or platform identity.
 public sealed partial class MovementBatchProbe {
- [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
+ [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks,mapZoneCount;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
   public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests;
   public float enteredAt;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter;
@@ -50,7 +50,7 @@ public sealed partial class MovementBatchProbe {
   report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;report.completed.Add(stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
   transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
   if(rewardDirector)rewardDirector.enabled=false;
-  var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
+  PauseStageMapZones();var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
   // Old actors must release their original navigation agents before replacing source graphs.
   foreach(var actor in directorActors){if(actor.body)NetworkServer.Destroy(actor.body.gameObject);if(actor.master)NetworkServer.Destroy(actor.master.gameObject);if(actor.model)Destroy(actor.model);}
   foreach(var projectile in FindObjectsOfType<RoR2.Projectile.ProjectileController>())NetworkServer.Destroy(projectile.gameObject);
@@ -81,7 +81,7 @@ public sealed partial class MovementBatchProbe {
   // Explicit temporary entry placement; movement afterward is original motor/state/solver.
   report.entryObservations.Clear();ObserveStageEntry(motor,"before-original-teleport");
   TeleportHelper.TeleportGameObject(body.gameObject,r.stage.spawnPosition);solver.CollidableLayers=LayerIndex.world.mask;solver.StableGroundLayers=LayerIndex.world.mask;solver.SetGroundSolvingActivation(true);solver.ForceUnground();solver.enabled=true;Physics.SyncTransforms();
-  ObserveStageEntry(motor,"after-original-teleport");
+  ObserveStageEntry(motor,"after-original-teleport");EnableStageMapZones();
   yield return new WaitForFixedUpdate();yield return null;
   float deadline=Time.realtimeSinceStartup+5,observedAt=Time.realtimeSinceStartup;while((!solver.GroundingStatus.IsStableOnGround||!solver.GroundingStatus.GroundCollider||solver.GroundingStatus.GroundCollider.gameObject.scene!=stageGeometryScene)&&Time.realtimeSinceStartup<deadline){if(Time.realtimeSinceStartup-observedAt>=.25f){ObserveStageEntry(motor);observedAt=Time.realtimeSinceStartup;}yield return null;}
   ObserveStageEntry(motor,"settled-or-failed");
@@ -107,5 +107,5 @@ public sealed partial class MovementBatchProbe {
   foreach(var pool in pools.Values.ToArray())foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
- void CleanupStageTransport(){if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
+ void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }

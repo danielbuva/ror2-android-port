@@ -7,18 +7,20 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Recovered static stage geometry; directors, scene lifecycle and progression remain separate.
+// Recovered geometry and original out-of-bounds volumes; owned Android entry/material boundary.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit;
+  public bool mapZonesReady;public int mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
  }
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
  readonly List<Material> stageGeometryMaterials=new List<Material>();
- IEnumerator PrepareStageGeometry(){var load=LoadStageGeometry("golemplains-spine-lab",23,null);while(load.MoveNext())yield return load.Current;}
- IEnumerator LoadStageGeometry(string bundleName,int previewCount,IntegratedStageSpec spec){
+ MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
+ IEnumerator PrepareStageGeometry(int mapZones=0){var load=LoadStageGeometry("golemplains-spine-lab",23,null,mapZones);while(load.MoveNext())yield return load.Current;}
+ IEnumerator LoadStageGeometry(string bundleName,int previewCount,IntegratedStageSpec spec,int initialMapZones=0){
   r.stage=new StageGeometryReport();r.phase="stage-geometry-load";Save();
   stageGeometryBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload",bundleName));
   Check(stageGeometryBundle,"Recovered stage geometry bundle missing");var scenes=stageGeometryBundle.GetAllScenePaths();Check(scenes.Length==1,"Expected one recovered stage geometry scene");
@@ -28,15 +30,17 @@ public sealed partial class MovementBatchProbe {
   var roots=stageGeometryScene.GetRootGameObjects();stageStaticRoots=new HashSet<GameObject>(roots);var transforms=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>(true)).ToArray();
   r.stage.objects=transforms.Length;r.stage.behaviours=roots.Sum(x=>x.GetComponentsInChildren<MonoBehaviour>(true).Length);
   var previewCallbacks=roots.SelectMany(x=>x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
-  r.stage.previewDisableComponents=previewCallbacks.Count(x=>x&&x.GetType()==typeof(DisableOnStart));r.stage.previewsInactive=previewCallbacks.Count(x=>x&&!x.gameObject.activeSelf);
+  r.stage.previewDisableComponents=previewCallbacks.Count(x=>x&&x.GetType()==typeof(DisableOnStart));r.stage.previewsInactive=previewCallbacks.Count(x=>x&&x is DisableOnStart&&!x.gameObject.activeSelf);
   var previewNames=spec!=null&&spec.previewNames!=null?spec.previewNames:Enumerable.Repeat("EscapePodMesh",previewCount).ToArray();
-  bool moon=spec!=null&&spec.moonMission;
-  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(moon?r.stage.behaviours==spec.missionComponents&&previewCallbacks.All(x=>x)&&r.stage.activeRoots==0:r.stage.behaviours==previewCount&&r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&previewCallbacks.Select(x=>x.gameObject.name).OrderBy(x=>x).SequenceEqual(previewNames.OrderBy(x=>x))&&r.stage.activeRoots>0,"Original preview Start or scene behaviour allowlist failed");
+  bool moon=spec!=null&&spec.moonMission;int expectedMapZones=spec==null?initialMapZones:spec.mapZoneCount;
+  stageMapZones=roots.SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).ToArray();r.stage.mapZoneCount=stageMapZones.Length;
+  StartStageMapZoneObservations();
+  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(moon?r.stage.behaviours==spec.missionComponents&&previewCallbacks.All(x=>x)&&r.stage.activeRoots==0:r.stage.behaviours==previewCount+expectedMapZones&&stageMapZones.Length==expectedMapZones&&previewCallbacks.All(x=>x&&(x is DisableOnStart||x is MapZone))&&r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&previewCallbacks.Where(x=>x is DisableOnStart).Select(x=>x.gameObject.name).OrderBy(x=>x).SequenceEqual(previewNames.OrderBy(x=>x))&&r.stage.activeRoots>0,"Original preview Start or scene behaviour allowlist failed");
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
-   if(!moon||!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
+   if(!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
    if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
    var materials=renderer.sharedMaterials;
    for(int i=0;i<materials.Length;i++){
@@ -53,7 +57,7 @@ public sealed partial class MovementBatchProbe {
   }
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
    // Mission volumes retain source trigger layers and their original collision rules.
-   if(!moon||(!collider.isTrigger&&!collider.GetComponent<EntityLocator>()))collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
+   if(!collider.isTrigger&&(!moon||!collider.GetComponent<EntityLocator>()))collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
    var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh){r.stage.missingColliderMeshes++;emptyColliders.Add(StageObjectPath(mesh.transform));}}
   }
   r.stage.emptyMeshPaths=emptyMeshes.ToArray();r.stage.emptyColliderPaths=emptyColliders.ToArray();
@@ -80,8 +84,26 @@ public sealed partial class MovementBatchProbe {
   }
   Check(r.stage.groundHit,"No measured walkable original stage entry");Save();
  }
+ void EnableStageMapZones(){
+  if(stageMapZones.Length==0)return;
+  if(r.stage.mapZonesReady)return;
+  foreach(var zone in stageMapZones){var collider=zone.GetComponent<Collider>();Check(collider&&collider.isTrigger&&zone.gameObject.layer==15,"Original stage MapZone collider/layer differs");collider.enabled=true;}
+  Physics.SyncTransforms();r.stage.mapZonesReady=true;Save();
+ }
+ void PauseStageMapZones(){foreach(var zone in stageMapZones)if(zone){var collider=zone.GetComponent<Collider>();if(collider)collider.enabled=false;}if(r.stage!=null)r.stage.mapZonesReady=false;}
+ bool InsideSourceStageBounds(Vector3 point){
+  return stageMapZones.Where(x=>x&&x.gameObject.activeInHierarchy&&x.GetComponent<Collider>().enabled&&x.zoneType==MapZone.ZoneType.OutOfBounds).All(x=>x.triggerType==MapZone.TriggerType.TriggerExit?x.IsPointInsideMapZone(point):!x.IsPointInsideMapZone(point));
+ }
+ void StartStageMapZoneObservations(){
+  if(ownsStageMapZoneObservations)return;
+  stageZoneEntered=(body,zone)=>{if(zone&&zone.gameObject.scene==stageGeometryScene){r.stage.mapZoneEntries++;r.stage.lastMapZone=zone.name+"|enter";}};
+  stageZoneLeft=(body,zone)=>{if(zone&&zone.gameObject.scene==stageGeometryScene){r.stage.mapZoneExits++;r.stage.lastMapZone=zone.name+"|exit";}};
+  stageZoneTeleported=body=>{if(r.stage!=null&&r.stage.mapZonesReady)r.stage.mapZoneTeleports++;};
+  MapZone.OnEnterMapZone+=stageZoneEntered;MapZone.OnLeaveMapZone+=stageZoneLeft;MapZone.onBodyTeleportGlobal+=stageZoneTeleported;ownsStageMapZoneObservations=true;
+ }
+ void StopStageMapZoneObservations(){if(!ownsStageMapZoneObservations)return;MapZone.OnEnterMapZone-=stageZoneEntered;MapZone.OnLeaveMapZone-=stageZoneLeft;MapZone.onBodyTeleportGlobal-=stageZoneTeleported;ownsStageMapZoneObservations=false;stageMapZones=new MapZone[0];}
  static string StageObjectPath(Transform target){var path=target.name;while(target.parent){target=target.parent;path=target.name+"/"+path;}return path;}
- IEnumerator CleanupStageGeometry(){
+ IEnumerator CleanupStageGeometry(){PauseStageMapZones();StopStageMapZoneObservations();
   if(stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded)yield return SceneManager.UnloadSceneAsync(stageGeometryScene);
   foreach(var material in stageGeometryMaterials)if(material)Destroy(material);stageGeometryMaterials.Clear();
   if(stageGeometryBundle){stageGeometryBundle.Unload(true);stageGeometryBundle=null;}

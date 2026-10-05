@@ -236,7 +236,7 @@ public sealed partial class MovementBatchProbe {
   // Recover the source indicator through the original provider before TeleporterInteraction.Awake.
   objectiveIndicatorLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/PositionIndicators/TeleporterChargingPositionIndicator");ownsObjectiveIndicator=true;yield return objectiveIndicatorLease;objectiveIndicatorSource=objectiveIndicatorLease.Result;Check(objectiveIndicatorSource,"Original charging indicator source absent");foreach(var text in objectiveIndicatorSource.GetComponentsInChildren<TMPro.TMP_Text>(true))text.enabled=false;objectiveIndicatorReferences=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveIndicatorLease);
   if(!objectiveHoldoutInitialized){StaticCall(typeof(HoldoutZoneController),"Init");objectiveHoldoutInitialized=true;}
-  PrepareStageTransport(cfg);var spawn=SpawnStageObjective(cfg);while(spawn.MoveNext())yield return spawn.Current;
+  PrepareStageTransport(cfg);EnableStageMapZones();var spawn=SpawnStageObjective(cfg);while(spawn.MoveNext())yield return spawn.Current;
  }
  IEnumerator SpawnStageObjective(Result cfg){
   r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."};objectiveState=null;objectiveRewardApproachAt=-1;
@@ -318,7 +318,7 @@ public sealed partial class MovementBatchProbe {
   return true;
  }
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
-   var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
+   var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    // Clear attacking adds first, as in the accepted continuous route.
    var enemy=actors.OrderBy(x=>worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)?1:0).ThenBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();

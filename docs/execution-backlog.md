@@ -2421,3 +2421,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S12 J290 build:**81.089-second/zero-error Vulkan ARM64 build; matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `4a04e3bb19b2d04032acb99c0ed3bde8f2e0565c2cd66a9325bcf8b41e5e7e44`.40 tests pass. Full Nova route retry running; no new Moon or rollback acceptance.
+
+
+**I07-S12 J290 exit:** Four genuine objectives/transports/421 kills; fifth-boss genuine player loss persists through original XML/ledger with full cleanup/zero unexpected errors. Original teleport works at four entries; Moon test remains unexecuted. Unreachable live actor beneath Sky Meadow reveals omitted original stage MapZone callbacks and diagnostic target starvation. No new accepted pointer.
+
+### I07-S13 — Complete stage out-of-bounds simulation in the whole route
+
+- **ID:** I07-S13.
+- **TITLE:** Source out-of-bounds recovery/death and reachable diagnostic combat targets.
+- **CONTEXT:** J290's whole game reaches the fifth objective but loses while an unreachable actor delays the driver.
+- **OBSERVATION:** First-five generated scenes omit source MapZone scripts; a living actor persists hundreds of metres below the stage.
+- **HYPOTHESIS:** Retaining source volumes/callbacks restores normal out-of-bounds lifetime; source-bound target choice prevents diagnostic aim starvation.
+- **TASK:** Restore14 original components/shapes/destinations/layers; defer triggers until runtime/entry context and pause during continuous-body transport. Select validation combat targets with the source volume tests; run the complete game.
+- **CONSTRAINTS:** No forced kill, altered source health/damage/difficulty/charge or platform success. Physical controls unchanged; retain accepted rollbacks/pins.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing nova_bridge stage transformation, stage/transport/objective boundaries and ignored generated scenes/evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Matching receipts and clean actual source callbacks/entry/transport; whole run continues to Moon with ordinary source combat/progression. No unreachable aim starvation, unexplained new errors or incomplete cleanup.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual source volume counts/layers/events, actor positions/health, original teleport queue/ground contacts, first failure/current-process errors, source ending/results and teardown.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record integrated exit and next real blocker; milestone/backlog update; privacy/IP review and Conventional Commit.
+- **DEPENDENCIES:** J290 integrated evidence; original helper/provider/message context; pinned R2API.Director f539511e/Starstorm2 a9a4badd and exact MapZone source inspected, no implementation copied.
+
+
+**I07-S13 J291 build:**115.678-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `940b384316690846412ca3588c18f203151eb9d651f6f31687bc8e6cba902af2` verified. Full Nova route retry running; source out-of-bounds/Moon/victory acceptance pending.

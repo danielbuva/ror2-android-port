@@ -237,3 +237,6 @@ J288 repeats five genuine objectives but Moon landing guard rejects before fifth
 
 
 J289 repeats five genuine objectives/count5/four transports/386 kills with zero unexpected runtime errors and full cleanup. Moon landing remains unaccepted. J290 replaces direct entry positioning with original TeleportHelper and observes actual queued movement during the whole game, without relaxing grounding or source mission acceptance. I06/I03 remain immutable; no fifth-transport/battery/elevator/Mithrix/escape/victory gate passes yet.
+
+
+J290 completes four genuine objectives/transports and421 kills over1807.934 gameplay seconds, then genuine fifth-boss loss. Original loss/XML/ledger/full cleanup and zero unexpected errors pass; Moon remains unentered. J291 restores original out-of-bounds callbacks across the earlier stages and source-bound diagnostic combat selection after observing an unreachable underworld enemy. Full route/mission/victory acceptance remains open; I06/I03 unchanged.
