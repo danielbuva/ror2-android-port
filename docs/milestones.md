@@ -290,3 +290,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J298 full build:**83.200-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `7ab65850a0b7f0521821465162354976be37089fefa4d2012806702499f73145`. Complete Nova route retry running; original chase/second exit/Moon/victory need device execution. I06/I03 unchanged.
+
+
+**J298 live integrated progress:** Wetland boss/charge/reward/exit and second actual source transport complete. Same original body/master/inventory reach Rallypoint Delta; current chase flagtrue and zero runtime errors. Prior uphill return blocker is cleared under original physics. Full-route/Moon/ending/cleanup acceptance remains pending; ignored current report and reviewed Rallypoint capture retained. I06/I03 unchanged.
