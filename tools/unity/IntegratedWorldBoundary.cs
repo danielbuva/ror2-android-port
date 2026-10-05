@@ -278,7 +278,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void RestartWorldAfterCleanup(){
   if(!restartRequested)return;Check(r.success&&r.cleanup&&r.world.cleaned&&r.modelDestroyed&&!Run.instance&&!SceneInfo.instance&&!NetworkServer.active&&!NetworkClient.active,"Defeated world not clean enough to restart");
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
-  var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;Destroy(gameObject);
+  var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupTeleporterWorld();
   worldPathFollower.Reset();

@@ -300,19 +300,18 @@ public sealed partial class MovementBatchProbe {
   }else{
    var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-   var boss=actors.Where(x=>worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)).OrderBy(x=>x.body.healthComponent.combinedHealthFraction).FirstOrDefault();
-   var enemy=nearest;
-   if(boss!=null&&(Vector3.Distance(nearest.body.corePosition,player.corePosition)>12||boss.body.healthComponent.combinedHealthFraction<.15f))enemy=boss;
+   // Clear attacking adds first, as in the accepted continuous route.
+   var enemy=actors.OrderBy(x=>worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)?1:0).ThenBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    if(enemy!=null){
     var fromThreat=player.characterMotor.Motor.TransientPosition-nearest.body.characterMotor.Motor.TransientPosition;fromThreat.y=0;float distance=fromThreat.magnitude;
-    bool lowHealth=player.healthComponent.combinedHealthFraction<.4f;float safeDistance=lowHealth?30:20;
+    float safeDistance=20;
     Vector2 desired=distance<safeDistance?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
     if(planar.magnitude>50)desired=planar.normalized;
     // Walkability steers recorded input; it never translates the player or changes collision.
     var origin=player.characterMotor.Motor.TransientPosition;
     var choices=new[]{desired,new Vector2(desired.y,-desired.x),new Vector2(-desired.y,desired.x),-desired};
     foreach(var choice in choices){RaycastHit ground;var ahead=origin+new Vector3(choice.x,0,choice.y)*4+Vector3.up*5;if(Physics.Raycast(ahead,Vector3.down,out ground,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&ground.normal.y>.75f&&Mathf.Abs(ground.point.y-origin.y)<2){bridge.movement=choice;break;}}
-    bool evade=distance<(lowHealth?24:16);bridge.diagnosticSprint=evade;bridge.DiagnosticJump(elapsed%1.8f<.25f);
+    bool evade=distance<16;bridge.diagnosticSprint=evade;bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
    }

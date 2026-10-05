@@ -33,6 +33,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   using(var process=new AndroidJavaClass("android.os.Process"))r.pid=process.CallStatic<int>("myPid");
 #endif
   r.session=sessionIndex;r.phase="started";Save();
+  var applicationStart=AwaitOfflineRunStart(config);while(applicationStart.MoveNext())yield return applicationStart.Current;
   bool catalogOnly=r.id=="body-catalog-registration";bool catalogFixture=r.id.StartsWith("body-state-spawn-state-")||r.id=="body-state-spawn-loadout-catalog"||r.id=="body-state-spawn-body-start-catalog";
   if(catalogOnly||catalogFixture){
    var routine=RegisterBodyCatalog();
@@ -51,7 +52,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    }
   }
   var selected=RunSelectedProbe(catalogFixture);
-  while(true){bool more=false;object current=null;try{more=selected.MoveNext();if(more)current=selected.Current;}catch(Exception e){r.error=e.ToString();r.success=false;Save();break;}if(!more)break;yield return current;}
+  while(true){bool more=false;object current=null;try{more=selected.MoveNext();if(more)current=selected.Current;}catch(Exception e){r.error=e.ToString();if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=e.GetBaseException().Message;r.firstFailurePhase=r.phase;}r.success=false;Save();break;}if(!more)break;yield return current;}
   if(catalogFixture){
    yield return null; // Let deferred owned clone/root destruction finish before releasing catalog assets.
    var enemyRelease=VerifyEnemyCleanup();while(true){bool more=false;object current=null;try{more=enemyRelease.MoveNext();if(more)current=enemyRelease.Current;}catch(Exception e){r.error+=" Enemy cleanup: "+e;r.success=false;r.cleanup=false;break;}if(!more)break;yield return current;}

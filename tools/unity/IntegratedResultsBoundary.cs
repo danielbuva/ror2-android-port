@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Path=System.IO.Path;
+using Zio;
 using System.Linq;
 using System.Reflection;
 using RoR2;
@@ -19,6 +20,21 @@ public sealed partial class MovementBatchProbe {
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
  [Serializable] sealed class AndroidRunEntry {public string file,ending;public bool win;public float seconds;public int stages;}
+ sealed class UnavailableProfileSaveSystem:SaveSystem {
+  static Exception Unavailable(){return new NotSupportedException("Stock profile operations unavailable in the composed Android run; original RunReport and owned local results are separate.");}
+  protected override void ProcessFileOutputQueue(){throw Unavailable();}
+  protected override void StartSave(UserProfile profile,bool blocking){throw Unavailable();}
+  protected override LoadUserProfileOperationResult LoadUserProfileFromDisk(IFileSystem files,UPath path){throw Unavailable();}
+  public override void InitializeSaveSystem(){throw Unavailable();}
+  public override void LoadInitialData(){throw Unavailable();}
+  public override void LoadUserProfiles(){throw Unavailable();}
+  public override UserProfile LoadPrimaryProfile(){return null;}
+  public override string GetPlatformUsernameOrDefault(string defaultName){return defaultName;}
+  public override UserProfile CreateProfile(IFileSystem files,string name,ulong platformUserID=0){throw Unavailable();}
+  public override void SaveHistory(byte[] data,string name){throw Unavailable();}
+  public override Dictionary<string,byte[]> LoadHistory(){throw Unavailable();}
+ }
+ SaveSystem previousResultsSaveSystem;UnavailableProfileSaveSystem resultsSaveSystem;bool ownsResultsSaveSystem;
  static string resultsStatsSignature;static bool resultsSerializersReady;
  readonly Dictionary<FieldInfo,object> resultsEventContext=new Dictionary<FieldInfo,object>();
  PlayerStatsComponent resultsStats;Action resultsStatsFixed,resultsStatsProcess;GameObject resultsTemplate;GameObject previousGameOverPrefab;
@@ -30,8 +46,9 @@ public sealed partial class MovementBatchProbe {
   if(!cfg.integratedResults)return;
   r.results=new IntegratedResultsReport{scope="Original statistics, genuine Run.BeginGameOver/GameOverController/RunReport and client ending. Owned Android result presentation and run ledger; stock cutscene, Steam profiles, authentication, achievements and lunar awards unavailable."};r.phase="integrated-results-context";Save();
   Check(NetworkServer.active&&activeBodyClient.isConnected&&!GameOverController.instance&&PlayerStatsComponent.instancesList.Count==0,"Unowned results context");
+  previousResultsSaveSystem=PlatformSystems.saveSystem;Check(previousResultsSaveSystem==null,"Existing platform save-system context");resultsSaveSystem=new UnavailableProfileSaveSystem();PlatformSystems.saveSystem=resultsSaveSystem;ownsResultsSaveSystem=true;
   var signature=string.Join("|",Enumerable.Range(0,BodyCatalog.bodyCount).Select(x=>BodyCatalog.GetBodyName((BodyIndex)x)))+"/"+string.Join("|",ItemCatalog.allItemDefs.Select(x=>x.name))+"/"+string.Join("|",clockSceneDefs.Select(x=>x.cachedName));
-  if(resultsStatsSignature==null){StaticCall(typeof(StatDef),"Init");StaticCall(typeof(StatSheet),"Init");resultsStatsSignature=signature;}else Check(resultsStatsSignature==signature,"Restart original statistics catalog changed");
+  if(resultsStatsSignature==null){StaticCall(typeof(StatDef),"Init");StaticCall(typeof(StatSheet),"Init");resultsStatsSignature=signature;}else {Check(resultsStatsSignature==signature,"Restart original statistics catalog changed");resultsSaveSystem.isXmlReady=true;}
   resultsStats=player.master.GetComponent<PlayerStatsComponent>();Check(resultsStats&&resultsStats.currentStats==null&&!resultsStats.gameObject.activeInHierarchy,"Original inactive player statistics scope changed");Call(resultsStats,"Awake");ownsResultsStats=true;
   Check(resultsStats.characterMaster==player.master&&resultsStats.playerCharacterMasterController==directorPlayer&&resultsStats.currentStats!=null&&PlayerStatsComponent.instancesList.Contains(resultsStats)&&!directorPlayer.networkUser,"Original player statistics identity missing");
   foreach(var name in new[]{"onServerDamageDealt","onCharacterDeathGlobal","onServerCharacterExecuted"})RememberResultsEvent(typeof(GlobalEventManager),name);
@@ -62,7 +79,7 @@ public sealed partial class MovementBatchProbe {
   Check(string.IsNullOrEmpty(report.error),"Original integrated statistics failed: "+report.error);
   report.damageDealt=resultsStats.currentStats.GetStatValueULong(StatDef.totalDamageDealt);report.damageTaken=resultsStats.currentStats.GetStatValueULong(StatDef.totalDamageTaken);report.kills=resultsStats.currentStats.GetStatValueULong(StatDef.totalKills);
   if(!report.serverEnding||!report.clientEnding||report.persisted)return;
-  Check(Run.instance.isGameOverServer&&!Run.instance.isRunning&&resultsController&&resultsController.netId.Value!=0&&resultsRunReport!=null&&resultsRunReport.playerInfoCount==1&&resultsRunReport.GetPlayerInfo(0).master==worldPlayer.master,"Original final report/ending accounting incomplete");
+  Check(Run.instance.isGameOverServer&&!Run.instance.isRunning&&resultsController&&resultsController.netId.Value!=0&&resultsRunReport!=null&&resultsRunReport.playerInfoCount==1&&resultsRunReport.GetPlayerInfo(0).master==resultsStats.characterMaster,"Original final report/ending accounting incomplete");
   report.players=resultsRunReport.playerInfoCount;report.items=resultsRunReport.GetPlayerInfo(0).itemAcquisitionOrder.Length;report.seconds=resultsRunReport.runStopwatchValue;report.stageClearCount=Run.instance.stageClearCount;
   var file="run-"+resultsRunReport.runGuid.ToString("N");Check(RunReport.Save(resultsRunReport,file),"Original Android result save failed");var loaded=RunReport.Load(file);
   Check(loaded!=null&&loaded.gameEnding==resultsRunReport.gameEnding&&loaded.seed==resultsRunReport.seed&&loaded.playerInfoCount==report.players&&loaded.GetPlayerInfo(0).bodyIndex==resultsRunReport.GetPlayerInfo(0).bodyIndex&&loaded.GetPlayerInfo(0).itemStacks.SequenceEqual(resultsRunReport.GetPlayerInfo(0).itemStacks)&&Mathf.Abs(loaded.runStopwatchValue-report.seconds)<.01f,"Original result XML round trip differs");
@@ -81,10 +98,13 @@ public sealed partial class MovementBatchProbe {
   var report=r.results;var style=new GUIStyle(GUI.skin.label){fontSize=28,wordWrap=true};
   GUI.Box(new Rect(12,45,880,330),"Offline run result");
   var title=resultsRunReport!=null&&resultsRunReport.gameEnding&&resultsRunReport.gameEnding.isWin?"Victory":"Run ended";
+  if(r.freePlay&&report.persisted){if(r.phase=="commando-defeated"&&GUI.Button(new Rect(32,390,350,60),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(410,390,400,60),r.phase=="commando-defeated"?"Return to menu":"Return to menu (A)"))RequestResultsMenu();}
   GUI.Label(new Rect(32,78,820,260),title+" — "+report.ending+"\nOriginal stages cleared: "+report.stageClearCount+"   Time: "+report.seconds.ToString("F0")+"s\nKills: "+report.kills+"   Damage dealt: "+report.damageDealt.ToString("F0")+"\n"+(report.persisted?"Original report saved on this Android device":"Saving original report…")+"\nStock cutscene and Steam profile integration unavailable",style);
  }
  void CleanupIntegratedResults(){
-  resultsStatsFixed=null;if(!ownsResultsContext)return;
+  resultsStatsFixed=null;
+  if(ownsResultsSaveSystem){Check(ReferenceEquals(PlatformSystems.saveSystem,resultsSaveSystem),"Results save-system boundary ownership changed");PlatformSystems.saveSystem=previousResultsSaveSystem;ownsResultsSaveSystem=false;}
+  if(!ownsResultsContext){if(ownsResultsStats&&resultsStats){Call(resultsStats,"OnDestroy");ownsResultsStats=false;}if(r.results!=null)r.results.cleaned=true;return;}
   Run.onServerGameOver-=resultsServerEvent;Run.onClientGameOverGlobal-=resultsClientEvent;
   if(Run.instance)Run.instance.gameOverPrefab=previousGameOverPrefab;
   if(resultsController)NetworkServer.Destroy(resultsController.gameObject);if(resultsTemplate)Destroy(resultsTemplate);

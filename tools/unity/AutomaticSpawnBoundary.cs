@@ -63,7 +63,7 @@ public sealed partial class MovementBatchProbe {
    }
    if(IsAutomaticSkill())StartAutomaticSkillTiming(body);
    if(IsNovaInput()){
-    var novaRoutine=NovaInputBoundary(body,machine,cfg);while(novaRoutine.MoveNext())yield return novaRoutine.Current;if(restartRequested){Check(r.playerDefeat.bodyDestroyed&&r.playerDefeat.deathEntered&&!body,"Restart before original death completed");yield break;}
+    var novaRoutine=NovaInputBoundary(body,machine,cfg);while(novaRoutine.MoveNext())yield return novaRoutine.Current;if(restartRequested){Check(CompletedResultsReturn()||(r.playerDefeat!=null&&r.playerDefeat.bodyDestroyed&&r.playerDefeat.deathEntered&&!body),"Restart before original death or persisted ending completed");yield break;}
    }else if(automaticDirection){
     var directionRoutine=AutomaticDirectionBoundary(body,machine);while(directionRoutine.MoveNext())yield return directionRoutine.Current;
    }else if(r.id=="body-state-spawn-state-auto-gravity"||IsRecoveredLanding()){

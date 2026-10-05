@@ -2286,4 +2286,18 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **FAILURE EVIDENCE TO CAPTURE:** First original stats/catalog/Moon/ending/native error, full current-process log, genuine report identity and result reload, owned teardown.
 - **STATE/JOURNAL UPDATES REQUIRED:** Actual whole-game result; advance no failed checkpoint.
 - **DEPENDENCIES:** I07/J269/J270; exact original report/ending/statistics source; pinned prior-art references above.
-- **STATUS:** Host preparation/import repairs preserved as J271; expanded145.219-second/zero-error Vulkan build,39 payload/45 assembly hashes and40 tests pass. Full Nova run underway; ending/persistence acceptance remains open.
+- **STATUS:** Host preparation/import repairs preserved as J271; expanded145.219-second/zero-error Vulkan build,39 payload/45 assembly hashes and40 tests pass. J272 device stops at original statistics XML-readiness write through the absent save system; subsequent model cleanup fails. Run-scoped unavailable-profile metadata boundary and first-error capture feed the next whole-game retry; ending/persistence acceptance remains open.
+
+### I07-S08 — Complete composed application loop
+
+- **CONTEXT / OBSERVATION:** J273 statistics execute in gameplay; actual first-stage defeat has clean teardown but no original ending report or app navigation. Boss-priority replay does not improve survival.
+- **HYPOTHESIS:** Accepted add-first input and an owned application flow can retain original simulation/ending accounting without unavailable platform/profile initialization.
+- **TASK:** Assemble Commando/Drizzle start, genuine defeat→original StandardLoss/report, restart, genuine victory results→menu, and the continuing Moon route.
+- **CONSTRAINTS:** Existing shared safety/privacy/platform contract; no forced death/victory/charge or stock-menu/profile claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** OfflineApplicationBoundary, existing Start/input/death/results/teardown orchestration, nova_bridge staging.
+- **TEST COMMAND:** preflight; test; forced Vulkan build; existing full movement-batch-run; manual app launch at capability exit.
+- **PASS CONDITION:** Source ending/client/report persistence and completely cleaned fresh-session start actually run on Nova; full Moon route remains its own required acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** First source exception, decoded report, original death/Moon state, scoped cleanup and current launch logs/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record each full-game exit; retain I06/I03 and advance no pointer on failure.
+- **DEPENDENCIES:** Current integrated candidate and J273 metadata repair.
+- **STATUS:** Imported/compiled candidate;73.138-second/zero-error Vulkan ARM64 build,39 payload/45 assembly hashes and40 tests pass. Full Nova game is running; device acceptance pending.

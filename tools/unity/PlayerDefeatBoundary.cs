@@ -43,6 +43,7 @@ public sealed partial class MovementBatchProbe {
    if(r.playerDefeat.bodyDestroyed&&r.playerDefeat.effectDestroyed)break;yield return null;
   }
   Check(r.playerDefeat.deathEvents==1&&r.playerDefeat.deathEntered&&r.playerDefeat.effects==1&&r.playerDefeat.effectTargetMatched&&r.playerDefeat.effectDestroyed&&r.playerDefeat.bodyDestroyed&&r.playerDefeat.masterRetained&&r.playerDefeat.ragdollBodies>0,"Original player death/ragdoll/effect/natural body lifetime incomplete");
+  if(r.results!=null&&r.results.ready){var ending=Enumerable.Range(0,GameEndingCatalog.endingCount).Select(x=>GameEndingCatalog.GetGameEndingDef((GameEndingIndex)x)).Single(x=>x.cachedName=="StandardLoss");Check(!ending.isWin,"Original defeat ending is a victory");Run.instance.BeginGameOver(ending);float deadline=Time.realtimeSinceStartup+5;while(!r.results.persisted&&Time.realtimeSinceStartup<deadline){Call(activeBodyClient,"Update");ObserveIntegratedResults();yield return null;}Check(r.results.persisted&&r.results.clientEnding,"Original defeat report/client/persistence incomplete");}
   GlobalEventManager.onCharacterDeathGlobal-=ObservePlayerDeathEvent;r.phase="commando-defeated";Save();
   // Restart waits for original death/body lifetime, then uses the full session teardown.
   while(r.freePlay&&!restartRequested){r.playerDefeat.holdSeconds+=Time.unscaledDeltaTime;if(Time.frameCount%30==0)Save();yield return null;}
