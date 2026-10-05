@@ -2330,3 +2330,6 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07 continuation, J279:** Corrected item eligibility and original first spawn target/preload/cost/placement pass. Fix only the legacy observer's wall-time comparison: source director credits accrue on fixedDeltaTime. Record reconstructed wave time and original Run.fixedTime elapsed, retain0.15 tolerance/all cost/credit assertions, and repeat the whole game. No gameplay numerics or source methods change.
+
+
+**I07-S06/S08 continuation, J280:** Five genuine objectives complete. Original Moon server scene-object activation,30 identities, Toggle Awake/Generate/randomized selection and authority now pass before the first mission Start frame. Fix the adapter's redundant same-active-scene returnfalse, retain explicit active/catalog identity assertions, and continue the entire route/mission/ending. Full cleanup and long atomic report capture pass; no rollback advance. I07-S09 also corrects the observed HUD stack read from unpopulated report configuration; original earned inventory/stat behavior remains unchanged.

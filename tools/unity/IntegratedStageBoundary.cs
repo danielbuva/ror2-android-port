@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
-  public string current,requested,error,scope;public bool transporting,cleaned;public int transitions,stageClearCount,completedBarrels,completedChests;
+  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests;
   public float enteredAt;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
@@ -62,7 +62,11 @@ public sealed partial class MovementBatchProbe {
   yield return SceneManager.UnloadSceneAsync(old);foreach(var mat in stageGeometryMaterials)if(mat)Destroy(mat);stageGeometryMaterials.Clear();
   if(stageGeometryBundle){stageGeometryBundle.Unload(true);stageGeometryBundle=null;}
   var geometry=LoadStageGeometry(next.bundle,next.previewCallbacks,next);while(geometry.MoveNext())yield return geometry.Current;
-  Check(SceneManager.SetActiveScene(stageGeometryScene)&&SceneCatalog.GetSceneDefForCurrentScene().cachedName==next.name,"Actual next scene catalog/name mismatch");
+  // Moon activates its original scene objects while loading, after selecting its
+  // scene. Unity returns false when reselecting the scene that is already active.
+  if(SceneManager.GetActiveScene()!=stageGeometryScene)Check(SceneManager.SetActiveScene(stageGeometryScene),"Actual next active scene selection failed");
+  var actualSceneDef=SceneCatalog.GetSceneDefForCurrentScene();report.actualScene=SceneManager.GetActiveScene().name;report.actualSceneDef=actualSceneDef?actualSceneDef.cachedName:"unavailable";report.activeSceneVerified=SceneManager.GetActiveScene()==stageGeometryScene;Save();
+  Check(report.activeSceneVerified&&actualSceneDef&&actualSceneDef.cachedName==next.name,"Actual next scene catalog/name mismatch");
   SceneInfo info;
   if(next.moonMission)info=SceneInfo.instance;
   else{enemySceneHost=new GameObject("Owned original next-stage SceneInfo");enemySceneHost.SetActive(false);SceneManager.MoveGameObjectToScene(enemySceneHost,stageGeometryScene);
