@@ -26,6 +26,7 @@ public sealed partial class MovementBatchProbe {
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
+  public int navigationRecoveries;public float navigationStalledSeconds;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
@@ -41,6 +42,7 @@ public sealed partial class MovementBatchProbe {
  Action<Interactor,IInteractable,GameObject> worldInteraction;
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
+ Vector3 worldNavigationProgressPosition;float worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;
  NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
@@ -202,7 +204,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(worldObjective==1){var chest=worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
   if(worldObjective==2){var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline==r.world.openedChests)worldObjective=3;}
   r.world.objective=worldObjective==0?"Collect original barrel rewards":worldObjective==1?"Purchase original chest":worldObjective==2?"Collect naturally ejected item":"Survive original director combat";
-  if(r.teleporterLoop&&elapsed-stageEnteredAt>65&&r.world.pickupMessages-stagePickupBaseline>=2){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
+  if(r.teleporterLoop&&elapsed-stageEnteredAt>65){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
   bridge.movement=Vector2.zero;
   if(target){
    NavigateWorldInput(player,bridge,target.transform.position,target.GetComponent<GenericPickupController>() ? .6f : 1.6f,target.name,elapsed);
@@ -220,6 +222,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var position=player.characterMotor.Motor.TransientPosition;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);
   var graph=SceneInfo.instance?SceneInfo.instance.groundNodes:null;var waypoint=destination;
   r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
+  if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(destination,worldPathTarget)>2||Vector3.Distance(position,worldNavigationProgressPosition)>1){worldNavigationProgressPosition=position;worldNavigationProgressAt=elapsed;}
   // Replay follows the recovered graph through the normal input boundary. Original
   // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
   RaycastHit obstacle;bool needsRoute=Mathf.Abs(delta.y)>2||planar.magnitude>15||Physics.Linecast(position+Vector3.up,destination+Vector3.up,out obstacle,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
@@ -238,6 +241,16 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;}
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
   bridge.movement=movement.magnitude>stopDistance?movement.normalized:Vector2.zero;
+  r.world.navigationStalledSeconds=elapsed-worldNavigationProgressAt;
+  if(movement.magnitude>Mathf.Max(3,stopDistance)&&r.world.navigationStalledSeconds>3&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
+  if(elapsed<worldNavigationRecoveryUntil){
+   float recovery=3-(worldNavigationRecoveryUntil-elapsed);var forward=movement.normalized;
+   // A graph link is guidance, not proof that the current capsule clears a root/ledge.
+   // Replay tries normal jump/sidestep/back-off input; the original state decides whether
+   // jumping is possible. Never translate the actor or change collision/graph data.
+   bridge.DiagnosticJump(recovery<.25f);
+   bridge.movement=recovery<.4f?forward:recovery<1.5f?new Vector2(forward.y,-forward.x):recovery<2.5f?-forward:new Vector2(-forward.y,forward.x);
+  }
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;

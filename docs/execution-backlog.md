@@ -2238,4 +2238,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **FAILURE EVIDENCE TO CAPTURE:** First actual failure, original source state/charge/encounter members, navigation/input target, ending/escape state, exact build/payload identities, logs/capture/cleanup.
 - **STATE/JOURNAL UPDATES REQUIRED:** I07 first-failure journal and concise state; separate accepted device checkpoint only after evidence.
 - **DEPENDENCIES:** I07/I07-S03, source MoonBatteryMissionController/JumpVolume/AllPlayersTrigger/ScriptedCombatEncounter/EscapeSequenceExtractionZone and ChargedState reviewed; pinned Starstorm2 a9a4badd and R2API.Director f539511e. No source implementation copied.
-- **STATUS:** IN PROGRESS. Both new contracts verified in the exact editor. Full71.312-second/zero-error Vulkan ARM64 build,39 payload hashes and40 host checks pass; complete route/mission device capture underway.
+- **STATUS:** IN PROGRESS. Both new contracts verified in the exact editor. Full71.312-second/zero-error Vulkan ARM64 build,39 payload hashes and40 host checks pass; J268 reaches the second genuine boss/charge and rejects a replay route blocked at root geometry. Normal-input obstacle recovery and removal of the lab-only per-stage pickup activation gate now feed the next complete game.
+
+## I07-S05 — Recover ordinary input at an obstructed graph route
+
+- **ID:** I07-S05.
+- **TITLE:** Jump/sidestep/back-off in the continuing game.
+- **CONTEXT / OBSERVATION:** J268 records an original reachable26-waypoint route, constant actual player position, grounded state/jumpCount0 and movement input at a visually reviewed source root/ledge obstruction. Both genuine boss/charge loops execute; no current-PID error.
+- **HYPOTHESIS:** Normal jump and short alternate steering can clear this local obstruction; a source graph link alone does not guarantee present capsule clearance.
+- **TASK:** Integrate bounded recovery into existing replay when actual position makes no progress; keep the whole five-objective/Moon run. Remove optional looting as a prerequisite for source teleporter activation or full-run victory acceptance.
+- **CONSTRAINTS:** Common contract. Original state handles jump eligibility; original physics/collision/graphs and all genuine combat/progression remain. No actor relocation, forced state/charge/death/grant or changed movement limits. Earlier accepted proofs/rollbacks remain.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing integrated replay and final-run assertions/reports; ignored source/build/device evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Whole running game gets past the actual obstruction and reaches its next source progression boundary. Only genuine successful original ending supports victory; optional loot counts are observations.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual position/input/jump/progress/recovery count/waypoint, source states, current-PID errors, capture/cleanup and exact build hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** First actual result and I07 status; no accepted pointer advance on failure.
+- **DEPENDENCIES:** I07/J268; pinned Starstorm2 a9a4badd original input delegation and original navigation/idle-teleporter source reviewed; no implementation copied.
+- **STATUS:** IN PROGRESS. Exact-editor compile, preflight,40 host checks,75.048-second/zero-error full build and39 payload/45 assembly hashes pass; complete route/mission device capture underway.
