@@ -134,7 +134,7 @@ public sealed partial class MovementBatchProbe {
   if(!cfg.teleporterLoop)return new Type[0];
   var assembly=typeof(TeleporterInteraction).Assembly;
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
-   (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster")).ToArray();
+   (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||t.Namespace=="EntityStates.LunarTeleporter")).ToArray();
  }
  EntityStateConfiguration[] PrepareObjectiveConfigs(Result cfg){
   PrepareObjectivePresentationSources();
@@ -236,7 +236,7 @@ public sealed partial class MovementBatchProbe {
   Check(!Stage.instance,"Unowned stage lifecycle");objectiveStageHost=new GameObject("Owned Android stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();
   typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");Check(Stage.instance==objectiveStage,"Original stage singleton absent");
   var origin=worldPlayer.characterMotor.Motor.TransientPosition;RaycastHit hit;Check(Physics.Raycast(origin+Vector3.forward*10+Vector3.up*20,Vector3.down,out hit,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore),"Objective placement has no source floor");
-  objectiveHost=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.teleporterAsset),worldStaging.transform);objectiveHost.name="Teleporter1";
+  var primordial=SceneCatalog.GetSceneDefForCurrentScene().cachedName=="skymeadow";var objectiveSource=artifactBundle.LoadAsset<GameObject>(primordial?cfg.lunarTeleporterAsset:cfg.teleporterAsset);Check(objectiveSource,"Original stage teleporter source missing");objectiveHost=Instantiate(objectiveSource,worldStaging.transform);objectiveHost.name=objectiveSource.name;
   Check(objectiveHost.GetComponentsInChildren<Component>(true).All(x=>x),"Original teleporter serialized component missing");
   foreach(var behaviour in objectiveHost.GetComponentsInChildren<MonoBehaviour>(true)){
    if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal)){DestroyImmediate(behaviour);continue;}
@@ -269,7 +269,7 @@ public sealed partial class MovementBatchProbe {
   FlushObjectiveActors();ObserveObjectiveSupport();if(!worldTeleporter)return;var report=r.objective;report.frames++;report.state=worldTeleporter.activationState.ToString();if(report.state!=objectiveState){objectiveState=report.state;report.transitions.Add(report.state);Save();}
   report.fsmState=worldTeleporter.mainStateMachine.state==null?"uninitialized":worldTeleporter.mainStateMachine.state.GetType().FullName;report.idle=worldTeleporter.isIdle;report.available=worldTeleporter.GetInteractability(worldPlayer.GetComponent<Interactor>())==Interactability.Available;report.selected=worldDriver.currentInteractable==objectiveHost;report.authority=Util.HasEffectiveAuthority(worldTeleporter.GetComponent<NetworkIdentity>());
   report.charge=worldTeleporter.chargeFraction;report.radius=worldTeleporter.holdoutZoneController.currentRadius;report.charging|=worldTeleporter.isCharging;report.charged|=worldTeleporter.isCharged;report.finished|=worldTeleporter.isInFinalSequence;
-  report.bossMembers=worldTeleporter.bossGroup.combatSquad.memberCount;report.bossHealth=worldTeleporter.bossGroup.totalObservedHealth;report.bossMaxHealth=worldTeleporter.bossGroup.totalMaxObservedMaxHealth;report.credits=worldTeleporter.bossDirector.monsterCredit;report.spent=worldTeleporter.bossDirector.totalCreditsSpent;report.exitState=typeof(SceneExitController).GetField("exitState",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldTeleporter.sceneExitController).ToString();report.nextScene=Run.instance.nextStageScene?Run.instance.nextStageScene.cachedName:"unavailable";
+  report.bossMembers=worldTeleporter.bossGroup.combatSquad.memberCount;report.bossHealth=worldTeleporter.bossGroup.totalObservedHealth;report.bossMaxHealth=worldTeleporter.bossGroup.totalMaxObservedMaxHealth;report.credits=worldTeleporter.bossDirector.monsterCredit;report.spent=worldTeleporter.bossDirector.totalCreditsSpent;report.exitState=typeof(SceneExitController).GetField("exitState",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldTeleporter.sceneExitController).ToString();var destination=worldTeleporter.sceneExitController.useRunNextStageScene?Run.instance.nextStageScene:worldTeleporter.sceneExitController.destinationScene;report.nextScene=destination?destination.cachedName:"unavailable";
   report.bossDeaths=directorActors.Count(x=>x.report.dead&&x.report.origin=="teleporter-director");
   if(report.bossDefeated){report.rewardPickupMessages=r.world.pickupMessages-report.rewardPickupBaseline;report.rewardCollected=report.rewardPickupMessages>0;}
  }

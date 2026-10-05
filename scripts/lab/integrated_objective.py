@@ -35,6 +35,7 @@ def stage_objective(stage, previous, out):
     runtime = {row['key']: export/row['internalId'] for row in query['locations']
                if (export/row['internalId']).exists()}
     roots = {'teleporterAsset': export/'Assets/RoR2/Base/Interactables/Teleporters/Teleporter1/Teleporter1.prefab',
+             'lunarTeleporterAsset': export/'Assets/RoR2/Base/Interactables/Teleporters/LunarTeleporter/LunarTeleporter Variant.prefab',
              'objectiveTMPSettingsAsset': export/'Assets/TextMesh Pro/FormerResources/TMP Settings.asset',
              'objectiveStunAsset': export/'Assets/RoR2/Base/Common/VFX/Stuns/StunVfx.prefab',
              'teleporterIndicatorAsset': export/'Assets/RoR2/Base/Interactables/Teleporters/TeleporterChargingPositionIndicator.prefab'}
@@ -111,6 +112,10 @@ def stage_objective(stage, previous, out):
             raise RuntimeError('Objective item definition ambiguous: '+name)
         roots['item'+name] = candidates[0]
     artifact_keys=[]
+    for config in sorted(roots['lunarTeleporterAsset'].parent.glob('EntityStates.LunarTeleporter.*.asset')):
+        key='config'+str(len(configs));roots[key]=config;configs.append(key)
+    if not any(roots[k].name=='EntityStates.LunarTeleporter.IdleToActive.asset' for k in configs):
+        raise RuntimeError('Original primordial teleporter configuration missing')
     for src in sorted(set((export/'Assets/RoR2').glob('**/Artifacts/**/*.asset'))):
         if 'm_Script: {fileID: 1032072274, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}' not in src.read_text(errors='replace'): continue
         key='artifact'+str(len(artifact_keys));roots[key]=src;artifact_keys.append(key)
@@ -144,7 +149,7 @@ def stage_objective(stage, previous, out):
         rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'bytes':src.stat().st_size,'reused':guid in existing})
         if src.read_bytes()[:5]!=b'%YAML': continue
         original=src.read_text(); generated=original
-        if src in [roots[x+k] for x in actors for k in ['Body','Master']]+[roots['teleporterAsset']]:
+        if src in [roots[x+k] for x in actors for k in ['Body','Master']]+[roots['teleporterAsset'],roots['lunarTeleporterAsset']]:
             root_id=re.search(r'^--- !u!1 &(-?\d+)',original,re.M)[1]
             generated=re.sub(r'(^--- !u!1 &'+root_id+r'\n.*?)(?=^--- !u!|\Z)',lambda m:re.sub(r'  m_IsActive: [01]','  m_IsActive: 0',m[0]),generated,flags=re.M|re.S)
         if guid in existing: generated=dst.read_text()
@@ -172,7 +177,7 @@ def stage_objective(stage, previous, out):
     write(WORK/'scene-probe-build.json',recipe)
     actor_specs=[dict(name=x,**{k[0].lower()+k[1:]:paths[x+k] for k in ['Body','Master','Card','Avatar','Controller','Material','Mesh']}) for x in actors]
     write(out/'objective-content.json',{'roots':paths,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'ui_remaps':ui_edits,'query_sha256':sha(query_path),'catalog_sha256':sha(export/'Assets/StreamingAssets/aa/catalog.json'),'deferred_unrequested':unrequested,'prior_art':'R2API.Director f539511e separates director activity, catalog readiness and source DCCS selection; current original TeleporterInteraction/BossGroup/HoldoutZoneController/Queen states govern composition. No source implementation copied.'})
-    return dict(objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
+    return dict(objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 
 def sanitize_optional_content(stage,out):

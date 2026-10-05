@@ -69,9 +69,9 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     if integrated_world:
         from integrated_objective import stage_objective
         cfg.update(stage_objective(stage,a,out))
-        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name) for name in ['foggyswamp','frozenwall']]
-        cfg['integratedTransitionTarget']=2
-        cfg['integratedRuntimeSeconds']=720
+        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name) for name in ['foggyswamp','frozenwall','dampcavesimple','skymeadow']]
+        cfg['integratedTransitionTarget']=4
+        cfg['integratedRuntimeSeconds']=1440
     cfg['integratedWorld']=integrated_world;cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection;cfg['originalClientCoin']=client_coin;cfg['originalInputBarrel']=input_barrel;cfg['originalChestDropTable']=chest_drop;cfg['originalChestPurchase']=chest_purchase;cfg['originalPickupDropletLoad']=droplet_load;cfg['originalPickupDropletFlight']=droplet_flight;cfg['originalPickupDropletCollision']=droplet_collision;cfg['originalDefaultPickup']=default_pickup;cfg['originalChestEjection']=chest_ejection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
@@ -129,7 +129,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/third-person camera/skills/teleporter/boss/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTEGRATED_WORLD.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
     if integrated_world:
         from integrated_objective import transform_optional_presentation,sanitize_optional_content
-        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=900
+        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=1620
         cfg.update(sanitize_optional_content(stage,out))
         transform_optional_presentation(stage,out,a)
         write(stage/'Resources/MovementBatchProbe.json',cfg)
@@ -194,7 +194,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         if kind not in keep and not preview:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
         kept.append((kind,file_id,block))
-    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23}
+    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
@@ -246,6 +246,12 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+list(graphs.values())));write(WORK/'scene-probe-build.json',recipe)
     write(out/(scene_name+'-navigation-contract.json'),dict(source_scene_sha256=sha(source),graphs={kind:dict(path=path,sha256=sha(next(p for p in stage.rglob('*.asset') if str(p.relative_to(WORK/'lab-project')).lower()==path))) for kind,path in graphs.items()},scope='Actual source SceneInfo ground/air graph references; Android transport keeps original Run accounting and local authority, continuous-body adapter declared separately.'))
     source_blocks={fid:(kind,block) for kind,fid,block in kept}
+    preview_names=[]
+    for fid in preview_ids:
+        go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',source_blocks[fid][1])[1]
+        preview_names.append(re.search(r'^  m_Name: (.*)$',source_blocks[go_id][1],re.M)[1])
+    expected_names=['HELPER LIGHT'] if scene_name=='dampcavesimple' else ['EscapePodMesh']*len(preview_ids)
+    if sorted(preview_names)!=sorted(expected_names):raise RuntimeError('Original preview object names changed; review source')
     def object_path(go_id):
         go=source_blocks[go_id][1];name=re.search(r'^  m_Name: (.*)$',go,re.M)[1]
         if name.startswith("'") and name.endswith("'"):name=name[1:-1].replace("''", "'")
@@ -262,7 +268,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
             go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1]
             empty.append(dict(component=fid,kind=kind,path=object_path(go_id)))
     write(out/(scene_name+'-source-empty-meshes.json'),dict(source_scene_sha256=sha(source),components=empty,scope='Exact source-null fields and hierarchy identities; no blanket missing-reference allowance or mesh replacement. Source tree siblings retain populated meshes.'))
-    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
+    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),previewNames=preview_names,emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
 
 
 def stage_enemy_spine(stage,previous,out):

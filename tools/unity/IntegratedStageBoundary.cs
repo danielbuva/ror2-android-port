@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 // Additive converted-stage transport, with a declared continuous-body entry adapter.
 // No synthetic stage count, reward, kill, authority, ownership or platform identity.
 public sealed partial class MovementBatchProbe {
- [Serializable] public class IntegratedStageSpec {public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks;public string[] emptyMeshPaths,emptyColliderPaths;}
+ [Serializable] public class IntegratedStageSpec {public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
   public string current,requested,error,scope;public bool transporting,cleaned;public int transitions,stageClearCount,completedBarrels,completedChests;
   public float enteredAt;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter;
