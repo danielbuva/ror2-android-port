@@ -262,3 +262,11 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J294 full build:**82.371-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `8b0772925ad7477c5667cabd4616d4aeb9fdfb2ecd700fafa021913bef439c5b`. Full Nova route retry running; actual original bounds/Abyssal combat/Sky/Moon/victory outcomes pending. I06/I03 unchanged.
+
+
+**J294 device interruption:**1162.040 reported gameplay seconds/127 kills, one complete source boss/natural-charge/exit/transport. Wetland's second boss and natural charge finish, but return navigation remains blocked below the teleporter: original graph reports reachable/three nodes, repeated recovery, source exit Idle/unselected. No unexpected current-process exception detected before interruption. Owned host runner interrupted; final report/captures retained, app force-stopped/selection removed/Nova asleep. No source teardown, second exit, ending/persistence, Abyssal or later acceptance. I06/I03 unchanged.
+
+**J295 complete-game continuation:** Original AI navigation foot reference and LocalNavigator output replace straight waypoint steering/timed recovery. Full world/route/Moon/results remain composed; fresh build/device outcomes required, no later gate or pointer advance.
+
+
+**J295 full build:**84.755-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `898a6522164aa4706357819e34de22791b385a83fee00d65d2b70767e874a76f`. Whole Nova route retry running; original local navigation/exit/Abyssal/Sky/Moon/victory acceptance pending. I06/I03 unchanged.

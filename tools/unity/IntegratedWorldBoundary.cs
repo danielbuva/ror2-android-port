@@ -18,6 +18,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldPickupObservation {public string item,interactability;public Vector3 position,aimTarget;public float aimDistance;public bool selected,collider,interactableLayer;}
  [Serializable] public class WorldPickupMessageObservation {public float at;public bool resolvedMaster,playerMaster,knownPickup;public uint masterId,quantity;public int pickupIndex;public string item;}
  [Serializable] public class WorldMessageFailure {public float at;public int id;public string side,handler,error;}
+ [Serializable] public class NavigationPathPoint {public Vector3 position;public float minimumJumpHeight;}
  [Serializable] public class WorldReport {
   public NovaThirdPersonView.Report camera;
   public bool lunarDefinition,lunarCurrencyAvailable;
@@ -31,6 +32,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries;public float navigationStalledSeconds;
+  public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected;public string combatTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
@@ -49,6 +51,7 @@ public sealed partial class MovementBatchProbe {
  readonly Dictionary<short,NetworkMessageDelegate> worldClientHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldServerHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldClientObservers=new Dictionary<short,NetworkMessageDelegate>(),worldServerObservers=new Dictionary<short,NetworkMessageDelegate>();
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
+ LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressPosition;float worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;
  NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
@@ -264,7 +267,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   }
  }
  void NavigateWorldInput(CharacterBody player,NovaInputBridge bridge,Vector3 destination,float stopDistance,string target,float elapsed){
-  var position=player.characterMotor.Motor.TransientPosition;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);
+  // Match the exact shipped BaseAI navigation reference for this pinned input.
+  var position=player.temporaryPathfindingFootpositionDoNotUseWillBePatchedOut;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);r.world.navigationReference=position;
   var graph=SceneInfo.instance?SceneInfo.instance.groundNodes:null;var waypoint=destination;
   r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
   if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(destination,worldPathTarget)>2||Vector3.Distance(position,worldNavigationProgressPosition)>1){worldNavigationProgressPosition=position;worldNavigationProgressAt=elapsed;}
@@ -277,25 +281,21 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
      var task=graph.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest{path=path,startPos=position,endPos=destination,hullClassification=player.hullClassification,maxSlope=player.characterMotor.Motor.MaxStableSlopeAngle,maxJumpHeight=player.maxJumpHeight,maxSpeed=player.moveSpeed});
      Check(task.status==RoR2.Navigation.PathTask.TaskStatus.Complete,"Original stage path did not complete");
      r.world.navigationReachable=task.wasReachable;r.world.navigationWaypoints=path.waypointsCount;worldPathFollower.SetPath(path);
+     var observed=new List<NavigationPathPoint>();for(int i=0;i<path.waypointsCount;i++){Vector3 node;Check(graph.GetNodePosition(path[i].nodeIndex,out node),"Original path node position unavailable");observed.Add(new NavigationPathPoint{position=node,minimumJumpHeight=path[i].minJumpHeight});}r.world.navigationPath=observed.ToArray();
     }
     worldPathTarget=destination;worldPathRequested=elapsed;
    }
    worldPathFollower.UpdatePosition(position);var next=worldPathFollower.GetNextPosition();if(next.HasValue)waypoint=next.Value;
    r.world.navigationJump=worldPathFollower.nextWaypointNeedsJump;
-   bridge.DiagnosticJump(r.world.navigationJump&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f);
-  }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;}
+  }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;r.world.navigationPath=new NavigationPathPoint[0];}
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
-  bridge.movement=movement.magnitude>stopDistance?movement.normalized:Vector2.zero;
+  if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;}
+  worldLocalNavigator.targetPosition=waypoint;worldLocalNavigator.allowWalkOffCliff=false;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
+  r.world.navigationLocalMovement=worldLocalNavigator.moveVector;r.world.navigationLocalObstructed=worldLocalNavigator.wasObstructedLastUpdate;r.world.navigationLocalJumpSpeed=worldLocalNavigator.jumpSpeed;
+  bridge.movement=movement.magnitude>stopDistance?new Vector2(worldLocalNavigator.moveVector.x,worldLocalNavigator.moveVector.z):Vector2.zero;
+  bridge.DiagnosticJump((r.world.navigationJump||worldLocalNavigator.jumpSpeed>0)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f);
   r.world.navigationStalledSeconds=elapsed-worldNavigationProgressAt;
   if(movement.magnitude>Mathf.Max(3,stopDistance)&&r.world.navigationStalledSeconds>3&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
-  if(elapsed<worldNavigationRecoveryUntil){
-   float recovery=3-(worldNavigationRecoveryUntil-elapsed);var forward=movement.normalized;
-   // A graph link is guidance, not proof that the current capsule clears a root/ledge.
-   // Replay tries normal jump/sidestep/back-off input; the original state decides whether
-   // jumping is possible. Never translate the actor or change collision/graph data.
-   bridge.DiagnosticJump(recovery<.25f);
-   bridge.movement=recovery<.4f?forward:recovery<1.5f?new Vector2(forward.y,-forward.x):recovery<2.5f?-forward:new Vector2(-forward.y,forward.x);
-  }
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;
@@ -321,7 +321,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupTeleporterWorld();
-  worldPathFollower.Reset();
+  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}
   if(worldInteraction!=null)GlobalEventManager.OnInteractionsGlobal-=worldInteraction;if(worldDriver)worldDriver.enabled=false;

@@ -2479,3 +2479,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J294 full build:**82.371-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `8b0772925ad7477c5667cabd4616d4aeb9fdfb2ecd700fafa021913bef439c5b`. Full Nova route retry running; actual original bounds/Abyssal combat/Sky/Moon/victory outcomes pending. I06/I03 unchanged.
+
+
+**J294 device interruption:**1162.040 reported gameplay seconds/127 kills, one complete source boss/natural-charge/exit/transport. Wetland's second boss and natural charge finish, but return navigation remains blocked below the teleporter: original graph reports reachable/three nodes, repeated recovery, source exit Idle/unselected. No unexpected current-process exception detected before interruption. Owned host runner interrupted; final report/captures retained, app force-stopped/selection removed/Nova asleep. No source teardown, second exit, ending/persistence, Abyssal or later acceptance. I06/I03 unchanged.
+
+### I07-S15 — Original local navigation in the complete offline route
+
+- **ID:** I07-S15.
+- **TITLE:** Reach original interaction and mission targets using original navigation output.
+- **CONTEXT:** J294 completes first transport and defeats/charges Wetland, then stalls below its teleporter.
+- **OBSERVATION:** Reachable three-node graph; repeated recovery, nonzero input but little velocity, no active enemy or runtime exception; source exit remains Idle/unselected.
+- **HYPOTHESIS:** Exact AI foot-reference and original local avoidance/frustration satisfy the physical navigation contract omitted by straight waypoint input.
+- **TASK:** Integrate original LocalNavigator input production into the full world, retain source limits, build/run the entire route and inspect its next actual blocker.
+- **CONSTRAINTS:** Inherited pin/IP/privacy/legal/storage/ownership boundaries; no source movement/velocity/graph/collider edits, forced interaction/progression or physical mapping change.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld/IntegratedStage boundaries, specific navigation observations and ignored full-game candidate/receipts.
+- **TEST COMMAND:** Live `./dev preflight`, `./dev test`, forced full Vulkan build and `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual ordinary-input travel/selection/original exits continue across recovered terrain without unexplained runtime errors; original bounds/ground/continuity and full teardown agree. Later Moon/victory need execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Source foot reference/path nodes/minimum jumps/local avoidance/frustration, actual input/position/velocity/ground, interaction/exit/mission state and current exceptions.
+- **STATE/JOURNAL UPDATES REQUIRED:** J295 build/device exit and next first failure; concise state/backlog/milestones; I06/I03 remain rollback until new capability acceptance.
+- **DEPENDENCIES:** Preserved J294 full route and interrupted navigation evidence.
+
+
+**J295 full build:**84.755-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `898a6522164aa4706357819e34de22791b385a83fee00d65d2b70767e874a76f`. Whole Nova route retry running; original local navigation/exit/Abyssal/Sky/Moon/victory acceptance pending. I06/I03 unchanged.

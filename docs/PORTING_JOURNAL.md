@@ -2540,3 +2540,15 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J294 full build:**82.371-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `8b0772925ad7477c5667cabd4616d4aeb9fdfb2ecd700fafa021913bef439c5b`. Full Nova route retry running; actual original bounds/Abyssal combat/Sky/Moon/victory outcomes pending. I06/I03 unchanged.
+
+
+**J294 device interruption:**1162.040 reported gameplay seconds/127 kills, one complete source boss/natural-charge/exit/transport. Wetland's second boss and natural charge finish, but return navigation remains blocked below the teleporter: original graph reports reachable/three nodes, repeated recovery, source exit Idle/unselected. No unexpected current-process exception detected before interruption. Owned host runner interrupted; final report/captures retained, app force-stopped/selection removed/Nova asleep. No source teardown, second exit, ending/persistence, Abyssal or later acceptance. I06/I03 unchanged.
+
+## J295 — Original local navigation through the integrated game
+
+**Observation / integration:** Full candidate `work/experiments/scene-runtime/20261005T150427.823527Z` retains J294 bounds and every route/Moon/result system. Original BaseAI supplies CharacterBody.temporaryPathfindingFootpositionDoNotUseWillBePatchedOut; the prior adapter supplied KCC capsule center and steered straight at graph waypoints with timed sidestep/back-off. Use the exact shipped reference for original path requests/following and original LocalNavigator for obstacle/cliff avoidance/frustration. Its movement and positive jump request feed the existing input bank, retaining original jump power/physics/state/interaction limits; no private velocity, body translation, forced teleport, kill, charge or progression. Original waypoint positions/minimum jump heights and local motion/obstruction/jump/reference are recorded. Owned navigator binding resets after transport and at cleanup.
+
+**Prior art / scientific exit:** Community stage/navigation/diagnostic map consulted; pinned R2Wiki Stage node/ground/hull/gate guidance, R2API.Director f539511e exact stage/nodegraph identity and DebugToolkit d1e2f0aa body queries inspected. Exact shipped BaseAI/LocalNavigator/BaseAIState and the live blocked graph remain authoritative. No community or game implementation copied, source graphs/colliders/pins/physical input unchanged. Fresh compile/live preflight/40 tests/archive/forced full Vulkan build and full Nova route required. No capability pointer advance. Parent interruption/receipts remain separate; ignored fork helper now avoids inheriting stale assessment files as current results.
+
+
+**J295 full build:**84.755-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `898a6522164aa4706357819e34de22791b385a83fee00d65d2b70767e874a76f`. Whole Nova route retry running; original local navigation/exit/Abyssal/Sky/Moon/victory acceptance pending. I06/I03 unchanged.
