@@ -340,3 +340,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J303 host dispatch correction:** The existing3600-second full-route host cap rejects the new4740-second bound before device construction; preserved rejection evidence. Raise only the composed teleporter-route cap to finite5400 seconds so physical Moon navigation fits after automatic travel. Shorter probe caps remain unchanged;40 safety tests pass again, existing APK/build identities unchanged. Full device acceptance pending.
+
+
+**J303 physical camera acceptance:** In the running complete first stage, the user confirms right-stick camera turns freely in all directions and retains the chosen angle after release.172 nonzero physical look frames and changed yaw/pitch corroborate input. Same process and actual nonzero source body/master identities survive takeover/resume; zero current-process errors. Camera correction has real-device evidence. Full five-stage route/Moon flight/attack/mission/ending acceptance remains pending; no I07 pointer, I06/I03 immutable.
