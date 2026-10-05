@@ -87,7 +87,7 @@ public sealed partial class MovementBatchProbe {
   ObserveStageEntry(motor,"settled-or-failed");
   Check(solver.GroundingStatus.IsStableOnGround&&solver.GroundingStatus.GroundCollider&&solver.GroundingStatus.GroundCollider.gameObject.scene==stageGeometryScene,"Next-stage entry does not land on recovered geometry");
   Check(Util.IsPositionWithinMapBounds(solver.TransientPosition),"Original source bounds reject grounded next-stage entry");
-  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;
+  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=-100;
   if(automaticDirectorHost)Destroy(automaticDirectorHost);yield return null;
   automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
   automaticDirectorHost.AddComponent<DirectorCore>();rewardDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);

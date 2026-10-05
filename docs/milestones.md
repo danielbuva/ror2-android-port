@@ -304,3 +304,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J299 live Moon progress:** All five genuine source objectives/count5 and five actual transports complete. Original teleport target settles on recovered Moon geometry at the intended landing; source bounds pass, queued move resolves, no map-zone recovery teleport.1548 world/49 non-world non-trigger colliders retain original Moon roles. Original population initializes with no unexpected current-process errors; battery travel runs. Mission completion/victory/ending/full cleanup acceptance remain pending; I06/I03 unchanged. Ignored current report and Moon capture preserved.
+
+
+**J299 device interruption:**1997.889 reported gameplay seconds/411 kills, all five genuine source objectives/count5 and five transports. Actual original Moon landing, bounds, queued-move resolution and population initialization pass; four source batteries remain inactive. Human path to the selected Soul battery is unreachable/zero waypoints and direct fallback repeatedly enters terrain. Original Arena gate setter is present; no unexplained current-process runtime errors. Owned runner intentionally interrupted; reports/captures retained, app stopped/selection removed/Nova asleep. No source teardown, ending/persistence, battery completion or victory acceptance. I06/I03 unchanged.
+
+
+**J300 full build:**87.073-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `656970c2f8ab81d38e773cd5c25fc18535b3a7e85c11253f456b9237d91f35fc`. Entire Nova route retry running; ordinary sprint/terrain traversal/battery/mission/victory need device execution. I06/I03 immutable; no partial capability pointer.

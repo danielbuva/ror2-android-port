@@ -33,6 +33,7 @@ public sealed partial class MovementBatchProbe {
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
+  public bool navigationTerrainFallback,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
@@ -53,6 +54,7 @@ public sealed partial class MovementBatchProbe {
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
+ Vector3 worldTerrainTarget;float worldTerrainSelectedAt=-100;readonly List<Vector3> worldTerrainRecent=new List<Vector3>();
  NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
@@ -271,6 +273,11 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // Match the exact shipped BaseAI navigation reference for this pinned input.
   var position=player.temporaryPathfindingFootpositionDoNotUseWillBePatchedOut;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);r.world.navigationReference=position;
   var graph=SceneInfo.instance?SceneInfo.instance.groundNodes:null;var waypoint=destination;
+  bool moon=r.moon!=null&&r.moon.loaded;
+  // Players may sprint while travelling. Let original input/stat callbacks supply
+  // the actual speed used by the next source path request, including earned items.
+  if(moon)bridge.diagnosticSprint=planar.magnitude>8;
+  r.world.navigationSprint=moon&&bridge.diagnosticSprint;r.world.navigationTerrainFallback=false;
   r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
   // Replay follows the recovered graph through the normal input boundary. Original
   // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
@@ -288,6 +295,13 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    worldPathFollower.UpdatePosition(position);var next=worldPathFollower.GetNextPosition();if(next.HasValue)waypoint=next.Value;
    r.world.navigationJump=worldPathFollower.nextWaypointNeedsJump;
   }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;r.world.navigationPath=new NavigationPathPoint[0];}
+  if(moon&&needsRoute&&!r.world.navigationReachable){
+   // The source monster graph has disconnected Moon battery regions. Its failure
+   // is retained; ground lookahead supplies only a player's ordinary stick input.
+   // Do not open gates, edit links, invent extra jumps or move the body directly.
+   waypoint=MoonTerrainTravelWaypoint(player,position,destination,elapsed);
+   r.world.navigationTerrainFallback=true;r.world.navigationTerrainFrames++;r.world.navigationTerrainTarget=waypoint;
+  }
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
   if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;}
   // Match original Walker.Combat ChaseMoveTarget: the graph supplies a foot
@@ -305,6 +319,33 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.navigationProgressDistance=worldNavigationProgressDistance;r.world.navigationRecoveryJump=remaining>Mathf.Max(1,stopDistance)&&r.world.navigationStalledSeconds>3;
   bool jump=(r.world.navigationJump||worldLocalNavigator.jumpSpeed>0||r.world.navigationRecoveryJump)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f;bridge.DiagnosticJump(jump);if(jump&&r.world.navigationRecoveryJump)r.world.navigationRecoveryJumpFrames++;
   if(r.world.navigationRecoveryJump&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
+ }
+ Vector3 MoonTerrainTravelWaypoint(CharacterBody player,Vector3 position,Vector3 destination,float elapsed){
+  if(elapsed-worldTerrainSelectedAt<1&&Vector3.Distance(position,worldTerrainTarget)>1)return worldTerrainTarget;
+  if(worldNavigationBody!=player||Vector3.Distance(destination,worldNavigationProgressDestination)>2)worldTerrainRecent.Clear();
+  worldTerrainSelectedAt=elapsed;var desired=destination-position;desired.y=0;desired.Normalize();
+  float best=float.NegativeInfinity;Vector3 selected=position;
+  // Reuse the full game's ground-to-ground avoidance contract. Short candidates
+  // handle local obstacles; longer ones keep the driver on recovered bridges.
+  for(int i=0;i<16;i++)foreach(float length in new[]{4f,8f,16f}){
+   var direction=Quaternion.AngleAxis(i*22.5f,Vector3.up)*desired;Vector3 prior=position,groundPoint=position;bool valid=true;
+   int steps=Mathf.CeilToInt(length/1.5f);
+   for(int step=1;step<=steps;step++){
+    var sample=position+direction*(length*step/steps);RaycastHit ground;
+    if(!Physics.Raycast(sample+Vector3.up*4,Vector3.down,out ground,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||ground.collider.gameObject.scene!=stageGeometryScene||Vector3.Angle(ground.normal,Vector3.up)>player.characterMotor.Motor.MaxStableSlopeAngle||Mathf.Abs(ground.point.y-prior.y)>player.maxJumpHeight||!InsideSourceStageBounds(ground.point)){valid=false;break;}
+    if(Physics.Linecast(prior+Vector3.up,ground.point+Vector3.up,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)){valid=false;break;}
+    prior=groundPoint=ground.point;
+   }
+   if(!valid)continue;
+   float score=Vector3.Distance(position,destination)-Vector3.Distance(groundPoint,destination);
+   // A blocked slope may require moving sideways or away. Recent ground samples
+   // penalize repeating the same circle without changing any simulation values.
+   foreach(var recent in worldTerrainRecent)score-=Mathf.Max(0,8-Vector3.Distance(recent,groundPoint));
+   if(score<=best)continue;best=score;selected=groundPoint;
+  }
+  if(selected==position){r.world.navigationTerrainBlocked++;return destination;}
+  worldTerrainTarget=selected;if(worldTerrainRecent.Count==0||Vector3.Distance(position,worldTerrainRecent[worldTerrainRecent.Count-1])>3){worldTerrainRecent.Add(position);if(worldTerrainRecent.Count>40)worldTerrainRecent.RemoveAt(0);}
+  return selected;
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;
@@ -330,7 +371,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupTeleporterWorld();
-  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;
+  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}
   if(worldInteraction!=null)GlobalEventManager.OnInteractionsGlobal-=worldInteraction;if(worldDriver)worldDriver.enabled=false;

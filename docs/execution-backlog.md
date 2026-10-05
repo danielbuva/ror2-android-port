@@ -2597,3 +2597,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J299 live Moon progress:** All five genuine source objectives/count5 and five actual transports complete. Original teleport target settles on recovered Moon geometry at the intended landing; source bounds pass, queued move resolves, no map-zone recovery teleport.1548 world/49 non-world non-trigger colliders retain original Moon roles. Original population initializes with no unexpected current-process errors; battery travel runs. Mission completion/victory/ending/full cleanup acceptance remain pending; I06/I03 unchanged. Ignored current report and Moon capture preserved.
+
+
+**J299 device interruption:**1997.889 reported gameplay seconds/411 kills, all five genuine source objectives/count5 and five transports. Actual original Moon landing, bounds, queued-move resolution and population initialization pass; four source batteries remain inactive. Human path to the selected Soul battery is unreachable/zero waypoints and direct fallback repeatedly enters terrain. Original Arena gate setter is present; no unexplained current-process runtime errors. Owned runner intentionally interrupted; reports/captures retained, app stopped/selection removed/Nova asleep. No source teardown, ending/persistence, battery completion or victory acceptance. I06/I03 unchanged.
+
+### I07-S20 — Guide player travel where the Moon monster graph is incomplete
+
+- **ID:** I07-S20.
+- **TITLE:** Normal sprint and terrain steering in the complete Moon route.
+- **CONTEXT:** J299 reaches actual Moon but cannot navigate to inactive batteries.
+- **OBSERVATION:** Valid source endpoints; incomplete Human topology/path and direct travel repeatedly blocked by terrain. Original Arena gate setter exists; no runtime exception.
+- **HYPOTHESIS:** Player input using ordinary sprint and recovered terrain can traverse beyond the incomplete monster route without changing source simulation.
+- **TASK:** Integrate input-only terrain lookahead in the complete game, build/run Nova and fix its next real blocker.
+- **CONSTRAINTS:** Inherited safety/privacy/IP/platform/pins; one original jump, source physics/stats/colliders/graphs/gates/mission/physical mapping preserved; no fabricated completion.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld travel/observations and stage reset; ignored candidate/source analysis/build/device evidence.
+- **TEST COMMAND:** `./dev preflight`, `./dev test`, forced Vulkan build, `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual battery approach/interaction/mission advances through original input and physics without unexplained failure; victory/ending/full cleanup require execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Source reachable flag, speed/terrain choices/position/ground, selector/battery state, first current exception and actual ending/results/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J300 build/device exit, concise state/backlog/milestones; no pointer from partial or interrupted route.
+- **DEPENDENCIES:** Preserved J299 full-route failure, source topology/terrain/jump analysis; I06/I03 immutable rollback.
+
+
+**J300 full build:**87.073-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `656970c2f8ab81d38e773cd5c25fc18535b3a7e85c11253f456b9237d91f35fc`. Entire Nova route retry running; ordinary sprint/terrain traversal/battery/mission/victory need device execution. I06/I03 immutable; no partial capability pointer.
