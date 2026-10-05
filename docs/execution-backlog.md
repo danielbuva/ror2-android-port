@@ -2327,3 +2327,6 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S09 correction, J278:** Original Hoof has a real unlockable; eligibility guard rejects it before gameplay. Keep it locked and replace this candidate with original SprintBonus (Energy Drink), which has null expansion/unlockable, alongside FlatHealth. Full device cleanup passes. Source eligibility checks remain mandatory and now name the rejected item. Repeat the full game; no accepted pointer advances.
+
+
+**I07 continuation, J279:** Corrected item eligibility and original first spawn target/preload/cost/placement pass. Fix only the legacy observer's wall-time comparison: source director credits accrue on fixedDeltaTime. Record reconstructed wave time and original Run.fixedTime elapsed, retain0.15 tolerance/all cost/credit assertions, and repeat the whole game. No gameplay numerics or source methods change.

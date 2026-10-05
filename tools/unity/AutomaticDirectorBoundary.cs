@@ -15,7 +15,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class DirectorReport {
   public bool automatic,sourceSettings,playerRegistered,originalTarget,preloaded,creditConserved,placement,stopped,cleaned,navigationNext,navigationReachable;public int navigationTicks,navigationAgents,navigationAgentPeak;public float navigationTime,navigationPathUpdate;public string navigationError;
-  public int participatingPlayers,livingPlayers,creditSteps,monsterLimit,masterIndex,selectedCardWeight;public float seconds,creditPeak,creditAfter,spent,spawnDistance,minDistance,maxDistance;public Vector3 position;
+  public int participatingPlayers,livingPlayers,creditSteps,monsterLimit,masterIndex,selectedCardWeight;public float seconds,fixedSeconds,scheduledCreditSeconds,creditPeak,creditAfter,spent,spawnDistance,minDistance,maxDistance;public Vector3 position;
   public string scope;
   public int spawnLimit,livePeak;public float stoppedAt,totalSpent,totalCreditAfter;public bool batchCreditConserved;
   public List<DirectorActorReport> actors=new List<DirectorActorReport>();
@@ -23,7 +23,7 @@ public sealed partial class MovementBatchProbe {
  GameObject automaticDirectorHost;DirectorCardCategorySelection automaticDeck;PlayerCharacterMasterController directorPlayer;
  bool directorPlayerRegistered;GameObject[] directorTeamEffects;object priorDirectorEliteTiers;
  readonly Dictionary<FieldInfo,object> directorMasterFields=new Dictionary<FieldInfo,object>();IDictionary directorMasterMap;
- float automaticDirectorBegan;
+ float automaticDirectorBegan,automaticDirectorFixedBegan;
  Action ownedNavigationTick;BroadNavigationSystem navigationSystem;
  void StartOriginalNavigation(){
   Check(!RoR2Application.instance||!RoR2Application.instance.isActiveAndEnabled,"Original application already schedules navigation");navigationSystem=RoR2.CharacterAI.BaseAI.nodeGraphNavigationSystem;
@@ -73,7 +73,7 @@ public sealed partial class MovementBatchProbe {
    // Original charging disables CombatDirectors attached to DirectorCore, not descendants.
    var core=rewardDirectorHost.GetComponent<DirectorCore>();Check(core&&DirectorCore.instance==core,"Owned original director core missing");core.enabled=false;automaticDirectorHost.AddComponent<DirectorCore>();
   }
-  StartOriginalNavigation();automaticDirectorBegan=Time.realtimeSinceStartup;automaticDirectorHost.SetActive(true);Check(CombatDirector.instancesList.Contains(rewardDirector),"Original natural director registration missing");float previous=0;
+  StartOriginalNavigation();automaticDirectorBegan=Time.realtimeSinceStartup;automaticDirectorFixedBegan=Run.instance.fixedTime;automaticDirectorHost.SetActive(true);Check(CombatDirector.instancesList.Contains(rewardDirector),"Original natural director registration missing");float previous=0;
   try{
    while(!enemyBody&&Time.realtimeSinceStartup-automaticDirectorBegan<55){yield return new WaitForEndOfFrame();r.director.seconds=Time.realtimeSinceStartup-automaticDirectorBegan;var credit=rewardDirector.monsterCredit;if(credit>previous)r.director.creditSteps++;previous=credit;r.director.creditPeak=Mathf.Max(r.director.creditPeak,credit);r.director.originalTarget|=rewardDirector.currentSpawnTarget==player.gameObject;if(Time.frameCount%30==0)Save();}
   }finally{CaptureRewardSummons(template.GetComponent<CharacterMaster>().bodyPrefab,template);}
@@ -81,7 +81,10 @@ public sealed partial class MovementBatchProbe {
   r.director.creditAfter=rewardDirector.monsterCredit;r.director.spent=rewardDirector.totalCreditsSpent;r.director.preloaded=NetworkPreloadManager.previouslyRequestedMasters.Count==1&&NetworkPreloadManager.previouslyRequestedMasters[0].Equals(index);
   // Original participant/body getters count the real registered master, without a NetworkUser.
   var waves=(Array)typeof(CombatDirector).GetField("moneyWaves",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(rewardDirector);var wave=waves.GetValue(0);var wt=wave.GetType();float timer=(float)wt.GetField("timer").GetValue(wave),fraction=(float)wt.GetField("accumulatedAward",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(wave);
-  float rate=rewardDirector.creditMultiplier*(1+.4f*Run.instance.compensatedDifficultyCoefficient)*(.5f+.5f*Run.instance.participatingPlayerCount);float earned=r.director.creditAfter+r.director.spent+fraction,scheduled=earned/rate+timer;r.director.creditConserved=r.director.spent==8&&r.director.creditAfter>=0&&r.director.creditSteps>=7&&Mathf.Abs(scheduled-r.director.seconds)<.15f;
+  float rate=rewardDirector.creditMultiplier*(1+.4f*Run.instance.compensatedDifficultyCoefficient)*(.5f+.5f*Run.instance.participatingPlayerCount);float earned=r.director.creditAfter+r.director.spent+fraction,scheduled=earned/rate+timer;
+  // Original money waves consume fixedDeltaTime, including catch-up ticks. Their
+  // conservation clock must be original simulation time, not device wall time.
+  r.director.fixedSeconds=Run.instance.fixedTime-automaticDirectorFixedBegan;r.director.scheduledCreditSeconds=scheduled;r.director.creditConserved=r.director.spent==8&&r.director.creditAfter>=0&&r.director.creditSteps>=7&&Mathf.Abs(scheduled-r.director.fixedSeconds)<.15f;
   DirectorCore.GetMonsterSpawnDistance(card.spawnDistance,out r.director.minDistance,out r.director.maxDistance);r.director.placement=r.director.spawnDistance>=r.director.minDistance-.1f&&r.director.spawnDistance<=r.director.maxDistance+.1f;
   Check(r.director.originalTarget&&r.director.preloaded&&r.director.creditConserved&&r.director.placement&&(cfg.integratedWorld||limit==3?rewardDirector.enabled:!rewardDirector.enabled),"Original targeting/preload/credit/placement assertions failed");Save();
  }

@@ -2345,3 +2345,14 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 **Next / scope:** `work/experiments/scene-runtime/20261005T074620.820263Z` retains the Moon scene-network/first-error repair and repeats the full game with the corrected six-choice pool. Same pinned DebugToolkit/R2API prior art and exact original ItemDef/CharacterBody source; no implementation copied. I06/I03 unchanged; no Moon/persistence/application milestone advances.
 
 **J278 correction build:**132.211 seconds/zero errors,40 tests,39 payload/45 assembly identities and APK SHA-256 `acb17b083eaf34e89794ee8cd18d05a3e490dcc5d1953fc0bae9a959830ed197` verified against matching request/start/terminal receipts. Full Nova retry running; no new capability acceptance.
+
+
+## J279 — Fixed-step director accounting compared with wall time
+
+**Observation:** Full candidate `work/experiments/scene-runtime/20261005T074620.820263Z` builds in132.211 seconds/zero errors with40 tests. Corrected original item eligibility passes. The first original director spawn then fails its legacy conservation predicate before integrated gameplay: actual source cost8, remaining credit0, eight awards, target/preload/placement all true, valid original gold3/XP1/ambient item1 and unique master/body. Full teardown passes; no gameplay/mission capability advances. Nova asleep.
+
+**First failure / hypothesis:** The predicate compares source reconstructed money-wave time to8.140792 wall-clock seconds. Exact original CombatDirector.FixedUpdate supplies fixedDeltaTime to each wave, so catch-up simulation ticks need not match wall time. Original navigation already observed419 fixed callbacks. Next observer records reconstructed wave time and elapsed original Run.fixedTime, preserving the existing0.15-second tolerance, cost8, nonnegative remaining credit and at least seven awards. No source credit/rate/timing or spawn setting is changed. This replaces the observer's wrong time basis instead of weakening gameplay accounting.
+
+**Prior art / next:** Pinned R2API.Director f539511e fixed director seam and exact original CombatDirector/DirectorMoneyWave implementation inspected; no code copied. Full candidate `work/experiments/scene-runtime/20261005T075851.721901Z` repeats the corrected item pool and Moon scene lifecycle. Preserve I06/I03; mission/victory/persistence/application acceptance remains open.
+
+**J279 repair build:**79.190-second/zero-error Vulkan ARM64 build; matching request/start/terminal receipts,45 assembly identities,39 payload identities and APK SHA-256 `b77c66fe39e3c3afeb664c7a0b0f1fa7b55d955649ecaa6535b83e7844402687` verified.40 tests pass. Full Nova route retry running; the new fixed-time fields are observations, not gameplay changes or device acceptance.
