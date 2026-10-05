@@ -25,6 +25,7 @@ public sealed partial class MovementBatchProbe {
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
+  public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
@@ -39,6 +40,7 @@ public sealed partial class MovementBatchProbe {
  AsyncOperationHandle<GameObject> worldCoinLease;bool ownsWorldCoinLease;int worldCoinBaseline,worldBarrelConsumers;bool ownsIntegratedPools;
  Action<Interactor,IInteractable,GameObject> worldInteraction;
  int worldObjective;float worldLastPress=-1;
+ RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
@@ -194,6 +196,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void IntegratedWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   // Explicit automation for integrated validation only; direct app launches use physical controls.
   r.world.diagnosticInput=true;bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
+  if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
   if(worldObjective==0){var barrel=worldBarrels.FirstOrDefault(x=>x&&!x.Networkopened);if(barrel)target=barrel.gameObject;else worldObjective=1;}
   if(worldObjective==3&&elapsed-stageEnteredAt<105&&worldChests.Any(x=>x&&!x.NetworkisChestOpened&&player.master.money>=x.GetComponent<PurchaseInteraction>().cost))worldObjective=1;
   if(worldObjective==1){var chest=worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
@@ -202,7 +205,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.teleporterLoop&&elapsed-stageEnteredAt>65&&r.world.pickupMessages-stagePickupBaseline>=2){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
   bridge.movement=Vector2.zero;
   if(target){
-   var delta=target.transform.position-player.characterMotor.Motor.TransientPosition;var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>(target.GetComponent<GenericPickupController>() ? .6f : 1.6f)?planar.normalized:Vector2.zero;
+   NavigateWorldInput(player,bridge,target.transform.position,target.GetComponent<GenericPickupController>() ? .6f : 1.6f,target.name,elapsed);
    var collider=target.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&!x.isTrigger);var aim=(collider?collider.bounds.center:target.transform.position)-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;
    // The original input producer consumes a 3D ray; use the measured target elevation as well.
    bridge.diagnosticAim=aim.normalized;
@@ -212,6 +215,29 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    if(enemy!=null){var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%12<.2f;bridge.diagnosticSpecial=elapsed%20<.2f;bridge.diagnosticUtility=elapsed%16<.2f;}
    bridge.DiagnosticJump(elapsed%18<.2f);
   }
+ }
+ void NavigateWorldInput(CharacterBody player,NovaInputBridge bridge,Vector3 destination,float stopDistance,string target,float elapsed){
+  var position=player.characterMotor.Motor.TransientPosition;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);
+  var graph=SceneInfo.instance?SceneInfo.instance.groundNodes:null;var waypoint=destination;
+  r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
+  // Replay follows the recovered graph through the normal input boundary. Original
+  // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
+  RaycastHit obstacle;bool needsRoute=Mathf.Abs(delta.y)>2||planar.magnitude>15||Physics.Linecast(position+Vector3.up,destination+Vector3.up,out obstacle,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
+  if(graph&&needsRoute){
+   if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(destination,worldPathTarget)>2||elapsed-worldPathRequested>8){
+    using(var path=new RoR2.Path(graph)){
+     var task=graph.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest{path=path,startPos=position,endPos=destination,hullClassification=player.hullClassification,maxSlope=player.characterMotor.Motor.MaxStableSlopeAngle,maxJumpHeight=player.maxJumpHeight,maxSpeed=player.moveSpeed});
+     Check(task.status==RoR2.Navigation.PathTask.TaskStatus.Complete,"Original stage path did not complete");
+     r.world.navigationReachable=task.wasReachable;r.world.navigationWaypoints=path.waypointsCount;worldPathFollower.SetPath(path);
+    }
+    worldPathTarget=destination;worldPathRequested=elapsed;
+   }
+   worldPathFollower.UpdatePosition(position);var next=worldPathFollower.GetNextPosition();if(next.HasValue)waypoint=next.Value;
+   r.world.navigationJump=worldPathFollower.nextWaypointNeedsJump;
+   bridge.DiagnosticJump(r.world.navigationJump&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f);
+  }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;}
+  r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
+  bridge.movement=movement.magnitude>stopDistance?movement.normalized:Vector2.zero;
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;
@@ -235,6 +261,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupTeleporterWorld();
+  worldPathFollower.Reset();
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}
   if(worldInteraction!=null)GlobalEventManager.OnInteractionsGlobal-=worldInteraction;if(worldDriver)worldDriver.enabled=false;

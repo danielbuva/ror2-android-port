@@ -10,7 +10,8 @@ using UnityEngine.Networking;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class MoonMissionReport {
   public bool loaded,authority,cleaned;public int batteries,required,charged,encounters,spawnedEncounters;
-  public string state,escapeState,error,scope;public string[] batteryStates,elevatorStates;
+  public string state,escapeState,error,scope,inputObjective;public string[] batteryStates,elevatorStates;
+  public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
   public float seconds;public List<string> transitions=new List<string>();
  }
  GameObject[] moonRoots;EntityStateMachine moonEncounter;MoonBatteryMissionController moonBatteries;EscapeSequenceController moonEscape;
@@ -67,6 +68,53 @@ public sealed partial class MovementBatchProbe {
   report.batteryStates=batteries.Select(x=>x.name+"|"+x.GetComponent<EntityStateMachine>().state+"|"+x.charge.ToString("F3")).ToArray();
   report.elevatorStates=moonRoots.SelectMany(x=>x.GetComponentsInChildren<EntityStateMachine>(true)).Where(x=>x.gameObject.name=="MoonElevator").Select(x=>x.state==null?"uninitialized":x.state.GetType().FullName).ToArray();
   var encounters=moonRoots.SelectMany(x=>x.GetComponentsInChildren<ScriptedCombatEncounter>(true)).ToArray();report.encounters=encounters.Length;report.spawnedEncounters=encounters.Count(x=>x.hasSpawnedServer);report.escapeState=moonEscape.mainStateMachine.state==null?"uninitialized":moonEscape.mainStateMachine.state.GetType().FullName;
+  report.livingEncounterMembers=encounters.Where(x=>x.combatSquad).Sum(x=>x.combatSquad.memberCount);report.extractionZones=UnityEngine.Object.FindObjectsOfType<EscapeSequenceExtractionZone>().Length;report.gameOver=Run.instance&&Run.instance.isGameOverServer;
+ }
+ bool MoonWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
+  Check(moonBatteries&&moonEncounter&&moonEscape,"Original Moon input context missing");
+  var position=player.characterMotor.Motor.TransientPosition;var interactor=player.GetComponent<Interactor>();
+  if(moonBatteries.numChargedBatteries<moonBatteries.numRequiredBatteries){
+   var zones=moonRoots.SelectMany(x=>x.GetComponentsInChildren<HoldoutZoneController>(true)).Where(x=>x.gameObject.activeInHierarchy&&x.GetComponent<PurchaseInteraction>()).ToArray();
+   var active=zones.FirstOrDefault(x=>x.enabled&&x.charge<1&&x.GetComponent<EntityStateMachine>().state is EntityStates.Missions.Moon.MoonBatteryActive);
+   var battery=active?active:zones.Where(x=>x.GetComponent<PurchaseInteraction>().GetInteractability(interactor)==Interactability.Available).OrderBy(x=>Vector3.Distance(x.transform.position,position)).FirstOrDefault();
+   if(!battery){bridge.movement=Vector2.zero;SetMoonInputObjective("Wait for source battery state",position);return true;}
+   NavigateWorldInput(player,bridge,battery.transform.position,active?Mathf.Max(1,battery.currentRadius*.25f):1,battery.name,elapsed);
+   if(active){MoonCombatInput(player,bridge,elapsed);SetMoonInputObjective("Charge original battery and fight",battery.transform.position);}
+   else{AimMoonInteraction(player,bridge,battery.gameObject,elapsed);SetMoonInputObjective("Activate original battery",battery.transform.position);}
+   return true;
+  }
+  if(moonEscape.mainStateMachine.state is EscapeSequenceController.EscapeSequenceMainState){
+   var extraction=UnityEngine.Object.FindObjectsOfType<EscapeSequenceExtractionZone>().OrderBy(x=>Vector3.Distance(x.transform.position,position)).FirstOrDefault();
+   if(extraction){NavigateWorldInput(player,bridge,extraction.transform.position,Mathf.Max(1,extraction.radius*.25f),extraction.name,elapsed);SetMoonInputObjective("Reach original extraction zone",extraction.transform.position);}
+   else{bridge.movement=Vector2.zero;SetMoonInputObjective("Wait for source extraction activation",position);}
+   MoonCombatInput(player,bridge,elapsed);return true;
+  }
+  var arena=moonRoots.SelectMany(x=>x.GetComponentsInChildren<AllPlayersTrigger>(true)).Single();var arenaCollider=arena.GetComponent<Collider>();Check(arenaCollider,"Original arena trigger collider missing");
+  bool belowArena=position.y<arenaCollider.bounds.min.y-20;
+  if(belowArena){
+   var volume=moonRoots.SelectMany(x=>x.GetComponentsInChildren<JumpVolume>(true)).Where(x=>x.gameObject.activeInHierarchy&&x.enabled).OrderBy(x=>Vector3.Distance(x.transform.position,position)).FirstOrDefault();
+   Check(volume,"Original charged elevator jump volume missing");var collider=volume.GetComponent<Collider>();Check(collider&&collider.enabled,"Original elevator trigger collider missing");
+   NavigateWorldInput(player,bridge,collider.bounds.center,.3f,volume.name,elapsed);SetMoonInputObjective("Enter original elevator launch volume",collider.bounds.center);MoonCombatInput(player,bridge,elapsed);return true;
+  }
+  var enemies=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
+  if(enemies.Length>0){
+   var nearest=enemies.OrderBy(x=>Vector3.Distance(x.body.corePosition,position)).First();var away=position-DirectorPhysicsPosition(nearest.body);away.y=0;var distance=away.magnitude;
+   bridge.movement=distance<20?new Vector2(away.x,away.z).normalized:distance>35?-new Vector2(away.x,away.z).normalized:new Vector2(away.z,-away.x).normalized;
+   bridge.diagnosticSprint=distance<16;bridge.diagnosticUtility=distance<16&&player.skillLocator.utility.CanExecute();bridge.DiagnosticJump(elapsed%1.8f<.25f);MoonCombatInput(player,bridge,elapsed);SetMoonInputObjective("Fight original scripted encounter",nearest.body.corePosition);
+  }else{
+   NavigateWorldInput(player,bridge,arenaCollider.bounds.center,1,arena.name,elapsed);SetMoonInputObjective("Enter original arena trigger / wait for next phase",arenaCollider.bounds.center);
+  }
+  return true;
+ }
+ void SetMoonInputObjective(string objective,Vector3 destination){r.world.objective=objective;r.moon.inputObjective=objective;r.moon.inputDestination=destination;}
+ void AimMoonInteraction(CharacterBody player,NovaInputBridge bridge,GameObject target,float elapsed){
+  var collider=target.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&x.GetComponent<EntityLocator>()&&x.GetComponent<EntityLocator>().entity==target);
+  var aim=(collider?collider.bounds.center:target.transform.position)-player.inputBank.aimOrigin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;
+  if(worldDriver.currentInteractable==target&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
+ }
+ void MoonCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed){
+  var enemy=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();if(enemy==null)return;
+  var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
  }
  void CleanupMoonMission(){
   if(moonRoots!=null)foreach(var root in moonRoots)if(root)root.SetActive(false);

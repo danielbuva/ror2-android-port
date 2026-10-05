@@ -2169,11 +2169,11 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **CONSTRAINTS:** Shared legal/device/privacy/preservation rules. No forced charge, boss deaths, mission completion, game-over success, ownership/authentication/entitlement grants or platform availability. Source-native audio/presentation unavailable; declared activation/material/layout/continuous-body adapters remain explicit. Original installation untouched, generated scene/assets ignored.
 - **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing stage/objective converter/bundle recipe and source actor bindings; Moon-specific activation/observation boundary, bounded route run limits and durable state. No replacement global loader/framework/package.
 - **TEST COMMAND:** Existing nova-whole-game-prepare, preflight, forced exact-editor Vulkan build, movement-batch-run and dev test.
-- **PASS CONDITION:** Genuine fifth boss/charge/reward/exit and original count5, actual Moon entry/graphs/landing and run continuity, source mission context/current states recorded, clean current-PID runtime and owned cleanup. This entry checkpoint does not establish battery/boss/escape/victory acceptance; continue those through the same integrated game. Full route victory requires original normal completion and results, never an injected ending.
+- **PASS CONDITION:** Genuine fifth boss/natural-charge/original-exit and original count5, with optional loot outcome recorded separately, actual Moon entry/graphs/landing and run continuity, source mission context/current states recorded, clean current-PID runtime and owned cleanup. This entry checkpoint does not establish battery/boss/escape/victory acceptance; continue those through the same integrated game. Full route victory requires original normal completion and results, never an injected ending.
 - **FAILURE EVIDENCE TO CAPTURE:** Original source/typed catalog/script identity and transformation receipts; request-bound APK/payload hashes, first actual runtime failure, source phase/battery/escape states, playing capture, crash/exit and cleanup.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve each rejected combined attempt and first failure; separate accepted checkpoint only after device evidence, manual IP/privacy review, staged public scan and Conventional Commit. Formal stock-startup/profile gate remains J61 blocked.
 - **DEPENDENCIES:** I06/J256. Pinned Starstorm2 a9a4badd SceneAssetCollection/SlateMines identity and R2API.Director f539511e stage/director seams inspected; original MoonBatteryMissionController, BrotherEncounter phases, ScriptedCombatEncounter, AllPlayersTrigger and EscapeSequenceController supply actual contracts. Original MonoScript metadata and typed catalog queried locally; no source implementation copied.
-- **STATUS:** IN PROGRESS. Full Moon content/wiring and six actor templates assembled; J257–J263 repaired with failed evidence retained. J264 whole-game run reaches the second charged/defeated objective but stalls at replay pickup selection. Closest-pickup/collider steering and specific distance/selection observation now built and running; no Moon capability checkpoint.
+- **STATUS:** IN PROGRESS. Full Moon content/wiring and six actor templates assembled; J257–J263 repaired with failed evidence retained. J264 whole-game run reaches the second charged/defeated objective but stalls at replay pickup selection. J265 identifies upper-floor loot; J266 genuine death rejects the following route run. Complete Moon input loop is staged, and J267 restores original optional-loot exit semantics. Full-game capture continues beyond Moon entry; no Moon capability checkpoint.
 
 
 ### I07-S01 — Require the actual accepted runtime configuration
@@ -2206,4 +2206,36 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **FAILURE EVIDENCE TO CAPTURE:** Pickup identity/position/interaction collider/layer/distance/availability/selection, current-PID logs and capture.
 - **STATE/JOURNAL UPDATES REQUIRED:** J264 and follow-up outcome; keep I06 and earlier rollbacks unchanged.
 - **DEPENDENCIES:** I07/J264; pinned DebugToolkit d1e2f0aa pickup observation and original Interactor/InteractionDriver contracts inspected.
-- **STATUS:** IN PROGRESS. Zero-error77.438-second Vulkan ARM64 build and40 tests pass; complete integrated device run underway.
+- **STATUS:** COMPLETE, discriminating failure J265. Actual available reward collider is16.236 units away on the upper floor; closer horizontal approach alone is insufficient. No capability advance.
+
+## I07-S03 — Route the continuing game through recovered navigation
+
+- **ID:** I07-S03.
+- **TITLE:** Original graph path to normal movement/jump input.
+- **CONTEXT / OBSERVATION:** J265 finds original Wetland reward on an upper floor; direct horizontal replay cannot reach it.
+- **HYPOTHESIS:** Recovered original ground graph and original PathFollower can route the existing replay to another floor.
+- **TASK:** Integrate original path queries and waypoint following into the continuing game for obstructed/distant interactables and objectives; build/run the full route toward Moon.
+- **CONSTRAINTS:** Common contract; unchanged original item position, range, grant, graph gates, body hull/slope/jump/speed, physics and natural progression. Feed normal input, never pose writes.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing integrated world/objective replay, existing structured world report; ignored stage/build/run.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Full continuing game gets past the actual reward/exit and reaches its next original progression boundary. Unreachable-path observations classify failures, not acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Graph reachability/waypoints/destination/jump, actual player/pickup positions, current-PID errors/capture and source identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** First actual result; preserve I06/I05/I04/I03 checkpoints.
+- **DEPENDENCIES:** I07/J265; pinned Starstorm2 a9a4badd BorgMain inputBank/GenericCharacterMain delegation and exact original BroadNavigationSystem/NodeGraph/PathFollower API inspected; no implementation copied.
+- **STATUS:** IN PROGRESS. J266 full-route run ends in original first-stage death before upper-floor navigation acceptance. Combat fallback is separated; J267 also removes the laboratory optional-loot exit overconstraint. Next full game includes Moon mission input and ending capture.
+
+## I07-S04 — Continue original Moon mission input in the whole game
+
+- **ID:** I07-S04.
+- **TITLE:** Batteries, elevators, scripted arena combat and extraction in one continuing run.
+- **CONTEXT / OBSERVATION:** Source mission wiring/actors are assembled; ending the earlier capture after30 seconds of Moon entry could not exercise its gameplay. Original charged teleporter does not require pickup collection.
+- **HYPOTHESIS:** Existing original interaction/movement/holdout/director/mission callbacks can execute the complete source mission when replay navigates its actual targets.
+- **TASK:** Feed the established input bridge toward available source batteries, hold their actual charge zones while fighting, enter active original JumpVolumes/AllPlayersTrigger, fight actual encounter members and navigate to active extraction. Continue beyond entry until original escape/ending or the first actual failure. Restore source optional-loot exit semantics; record missed loot instead of blocking progression on a lab-only condition.
+- **CONSTRAINTS:** Common contract. Never set charge, kills, phases, pose, ending, ownership or account identity. Physical controls share the same original input boundary. Existing accepted rollbacks are immutable. Ending boolean alone does not establish valid results/profile persistence.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing Moon/world input and reports, objective transport assertions, full-run timeout configuration; ignored immutable builds/device evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual whole-game execution reaches/completes source mission phases, with each outcome attributed. Full victory additionally requires original successful ending/results and persistence, not mere compilation or entry.
+- **FAILURE EVIDENCE TO CAPTURE:** First actual failure, original source state/charge/encounter members, navigation/input target, ending/escape state, exact build/payload identities, logs/capture/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** I07 first-failure journal and concise state; separate accepted device checkpoint only after evidence.
+- **DEPENDENCIES:** I07/I07-S03, source MoonBatteryMissionController/JumpVolume/AllPlayersTrigger/ScriptedCombatEncounter/EscapeSequenceExtractionZone and ChargedState reviewed; pinned Starstorm2 a9a4badd and R2API.Director f539511e. No source implementation copied.
+- **STATUS:** IN PROGRESS. Both new contracts verified in the exact editor. Full71.312-second/zero-error Vulkan ARM64 build,39 payload hashes and40 host checks pass; complete route/mission device capture underway.

@@ -21,7 +21,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class ObjectiveVisualBinding {public string path,mesh,material;}
  [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public ObjectiveVisualBinding[] bindings;}
  [Serializable] public class ObjectiveReport {
-  public bool ready,rules,idle,available,selected,authority,charging,charged,bossDefeated,finished,exitBegan,exitFinished,cleaned,rewardCollected;
+  public bool ready,rules,idle,available,selected,authority,charging,charged,bossDefeated,finished,exitBegan,exitFinished,cleaned,rewardCollected,rewardLeftBehind;
   public int rewardPickupBaseline,rewardPickupMessages;
   public string[] rewardTables;
   public int silentSourceComponents,frames,bossSpawns,bossDeaths,bossMembers,normalSpawns,ruleCount,unusedParticleMaterialSlots,previewMaterialSlots;
@@ -39,7 +39,7 @@ public sealed partial class MovementBatchProbe {
  GameObject objectiveIndicatorSource;AsyncOperationHandle<GameObject> objectiveIndicatorLease;int objectiveIndicatorReferences,objectiveIndicatorConsumers;bool ownsObjectiveIndicator;DirectorCardCategorySelection objectiveBossDeck;
  Action<MasterSummon.MasterSummonReport> objectiveSummon;Action<BossGroup> objectiveDefeated;
  Action<SceneExitController> objectiveBeginExit,objectiveFinishExit;
- string objectiveState;bool objectiveSubscribed;
+ string objectiveState;bool objectiveSubscribed;float objectiveRewardApproachAt=-1;
  GameObject[] objectiveEffectSources;
  EffectDef[] ObjectiveEffects(Result cfg){
   objectiveEffectSources=cfg.objectiveEffectAssets.Select(x=>artifactBundle.LoadAsset<GameObject>(x)).Distinct().ToArray();
@@ -237,7 +237,7 @@ public sealed partial class MovementBatchProbe {
   PrepareStageTransport(cfg);var spawn=SpawnStageObjective(cfg);while(spawn.MoveNext())yield return spawn.Current;
  }
  IEnumerator SpawnStageObjective(Result cfg){
-  r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. No skipped combat, forced charge, currency or platform success."};objectiveState=null;
+  r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."};objectiveState=null;objectiveRewardApproachAt=-1;
   Check(!Stage.instance,"Unowned stage lifecycle");objectiveStageHost=new GameObject("Owned Android stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();
   typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");Check(Stage.instance==objectiveStage,"Original stage singleton absent");
   var origin=worldPlayer.characterMotor.Motor.TransientPosition;RaycastHit hit;Check(Physics.Raycast(origin+Vector3.forward*10+Vector3.up*20,Vector3.down,out hit,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore),"Objective placement has no source floor");
@@ -285,16 +285,18 @@ public sealed partial class MovementBatchProbe {
   if(!worldTeleporter||!r.objective.ready)return false;
   var delta=objectiveHost.transform.position-player.characterMotor.Motor.TransientPosition;
   var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>1?planar.normalized:Vector2.zero;
-  if(worldTeleporter.isCharged&&!r.objective.rewardCollected){
+  if(worldTeleporter.isCharged&&!r.objective.rewardCollected){if(objectiveRewardApproachAt<0)objectiveRewardApproachAt=elapsed;else if(elapsed-objectiveRewardApproachAt>=30)r.objective.rewardLeftBehind=true;}
+  if(worldTeleporter.isCharged&&!r.objective.rewardCollected&&!r.objective.rewardLeftBehind){
    var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();
    if(!pickup){bridge.movement=Vector2.zero;r.world.objective="Wait for original boss reward";return true;}
-   var pickupDelta=pickup.transform.position-player.characterMotor.Motor.TransientPosition;var pickupPlanar=new Vector2(pickupDelta.x,pickupDelta.z);bridge.movement=pickupPlanar.magnitude>.6f?pickupPlanar.normalized:Vector2.zero;
+   NavigateWorldInput(player,bridge,pickup.transform.position,.6f,pickup.name,elapsed);
    var collider=pickup.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<x.gameObject.layer))!=0);
    var pickupAim=(collider?collider.bounds.center:pickup.transform.position)-player.inputBank.aimOrigin;bridge.aim=new Vector2(pickupAim.x,pickupAim.z).normalized;bridge.diagnosticAim=pickupAim.normalized;
    if(worldDriver.currentInteractable==pickup.gameObject&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
    r.world.objective="Collect original boss reward";return true;
   }
   if(worldTeleporter.isIdle||worldTeleporter.isCharged){
+   NavigateWorldInput(player,bridge,objectiveHost.transform.position,1,objectiveHost.name,elapsed);
    var aim=objectiveBeacon.bounds.center-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;
    if(worldDriver.currentInteractable==objectiveHost&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
   }else{

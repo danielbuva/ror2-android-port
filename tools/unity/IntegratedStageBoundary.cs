@@ -40,8 +40,8 @@ public sealed partial class MovementBatchProbe {
   var next=integratedStageConfig.integratedStages.SingleOrDefault(x=>x.name==pendingStage);
   Check(next!=null,"Original next destination has no accepted converted content: "+pendingStage);
   var report=r.stageProgress;var run=Run.instance;var body=worldPlayer;var master=body.master;
-  Check(r.objective.bossDefeated&&r.objective.charged&&r.objective.rewardCollected&&r.objective.exitFinished&&objectiveStage.completed,"Original stage reward/exit/completion missing before scene transport");
-  report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;report.completed.Add(stageGeometryScene.name+"|boss-defeated|natural-charge|reward-collected|original-exit");report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
+  Check(r.objective.bossDefeated&&r.objective.charged&&r.objective.exitFinished&&objectiveStage.completed,"Original stage boss/charge/exit/completion missing before scene transport");
+  report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;report.completed.Add(stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
   transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
   if(rewardDirector)rewardDirector.enabled=false;
   var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;

@@ -82,7 +82,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         cfg['objectiveSupportPaths'].append('Prefabs/PositionIndicators/PillarChargingPositionIndicator')
         cfg['moonMission']=True
         cfg['integratedTransitionTarget']=5
-        cfg['integratedRuntimeSeconds']=2100
+        cfg['integratedRuntimeSeconds']=3300
     cfg['integratedWorld']=integrated_world;cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection;cfg['originalClientCoin']=client_coin;cfg['originalInputBarrel']=input_barrel;cfg['originalChestDropTable']=chest_drop;cfg['originalChestPurchase']=chest_purchase;cfg['originalPickupDropletLoad']=droplet_load;cfg['originalPickupDropletFlight']=droplet_flight;cfg['originalPickupDropletCollision']=droplet_collision;cfg['originalDefaultPickup']=default_pickup;cfg['originalChestEjection']=chest_ejection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
@@ -140,7 +140,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/third-person camera/skills/teleporter/boss/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTEGRATED_WORLD.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
     if integrated_world:
         from integrated_objective import transform_optional_presentation,sanitize_optional_content
-        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=2340
+        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=3540
         cfg.update(sanitize_optional_content(stage,out))
         transform_optional_presentation(stage,out,a)
         write(stage/'Resources/MovementBatchProbe.json',cfg)

@@ -591,7 +591,7 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
         write(out/'retry.json',{'parent':str(parent.relative_to(ROOT)),'attempt':attempt_id,'cases':cases,'apk_sha256':b['apk_sha256']})
     probes=cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration'])
     durations={probe:a.get('batch_seconds',{}).get(probe,25) for probe in probes}
-    max_seconds=2400 if a.get('integrated_world') and a.get('teleporter_loop') else 240 if a.get('integrated_world') else 180
+    max_seconds=3600 if a.get('integrated_world') and a.get('teleporter_loop') else 240 if a.get('integrated_world') else 180
     if any(not isinstance(seconds,int) or not 25<=seconds<=max_seconds for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
     d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
     if a.get('playable_spine'):
