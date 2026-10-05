@@ -2850,3 +2850,23 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J309 device exit / J308 ambiguity resolved:**1202.661 gameplay seconds,341 kills, five genuine source boss/charge/reward/exit/transports and original Moon landing/population. Pre-charge constraint true and post-charge false measured; this RNG route does not reproduce the94m unfinished-boss detour. Moon actual request: Human, jump3.75, speed11.90000057, slope70, gravity−30,3960nodes, start1850;2782 nearer candidates rejected by original ComputePath, zero bounds/too-short rejections. Earlier editor comparisons omitted their actual−9.81 gravity. Matched request at−30 reproduces the source rejection to nodes1876/1890, whereas−9.81 reaches31/32waypoints. This corrects the prior assumed device/editor equivalence; no AOT defect or physics workaround is supported. Runtime/message errors zero, four batteries inactive. Capture reviewed; owned interruption/app stop/selector removal/Nova asleep, no source ending/teardown or I07 pointer. Preserve exact request and gravity comparison; next inspect the actual player-ground corridor at the original graph jump boundary. I06/I03 immutable.
+
+
+### I07-S30 — Objective progress across terrain replanning
+
+- **ID:** I07-S30.
+- **TITLE:** Recover objective stalls hidden by changing local waypoints.
+- **CONTEXT:** J309 full genuine run reaches Moon; exact source request now classified.
+- **OBSERVATION:** Actual−30 source graph rejects raised-pillar route;4007 fallback frames/zero recovery jumps, repeated waypoint resets hide battery stall.
+- **HYPOTHESIS:** Independent objective progress activates normal grounded recovery input at the physical obstruction.
+- **TASK:** Integrate objective-progress tracking in the whole game and replay the genuine route; inspect actual recovery, grounding and first Moon failure.
+- **CONSTRAINTS:** Original physics/jump/graph/gates/geometry/authority/mission/skills unchanged; no fabricated battery/ending/skip/restore; I06/I03 immutable. Keep16m avoidance horizon and source partial requests.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored IntegratedWorldBoundary; ignored complete archive/build/current-request/capture evidence; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual objective stall survives local replan, existing grounded jump input executes with original limits, meaningful genuine Moon approach progress; no claim of mission victory from observation alone.
+- **FAILURE EVIDENCE TO CAPTURE:** Objective versus waypoint times/distances, actual input/jump/motor/grounding, source path/filter/gravity, battery states, current-process errors/capture and first failure/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J310 actual build/device outcome; preserve failed attempts, no incomplete-run pointer.
+- **DEPENDENCIES:** J309 exact Moon request/gravity classification and source pillar/ground audit; accepted camera/full route/J309 input boundary.
+
+
+**J310 full build:**85.699-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `cc96b593b3da624a2e169f7d668df9693af46e54f269cc2785fe5202d8f41b42`. Actual objective-stall/recovery/jump/Moon traversal and mission/ending remain device-pending. Original physics/graph/mission and I06/I03 unchanged; no I07 pointer.

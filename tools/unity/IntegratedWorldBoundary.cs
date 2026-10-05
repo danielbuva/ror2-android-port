@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
-  public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance;public bool navigationRecoveryJump;
+  public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public bool navigationTerrainFallback,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
  public int navigationTerrainLowerChoices,navigationTerrainRayOverflow;
@@ -60,6 +60,7 @@ public sealed partial class MovementBatchProbe {
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
+ Vector3 worldNavigationObjective;float worldNavigationObjectiveDistance,worldNavigationObjectiveProgressAt;bool worldNavigationHasObjectiveProgress;
  Vector3 worldTerrainTarget,worldTerrainGoal;float worldTerrainSelectedAt=-100,worldTerrainRecoveryUntil=-100;readonly List<Vector3> worldTerrainRecent=new List<Vector3>();
  readonly RaycastHit[] worldTerrainHits=new RaycastHit[64];
  NovaThirdPersonView worldView;bool restartRequested,worldManualTakeover;public int sessionIndex=1;
@@ -324,7 +325,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    r.world.navigationTerrainFallback=true;r.world.navigationTerrainFrames++;r.world.navigationTerrainTarget=waypoint;
   }
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
-  if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;}
+  if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;worldNavigationHasObjectiveProgress=false;}
   // Match original Walker.Combat ChaseMoveTarget: the graph supplies a foot
   // target, and pursuit permits traversal rather than using the circling guard.
   worldLocalNavigator.targetPosition=waypoint+(player.transform.position-position);worldLocalNavigator.allowWalkOffCliff=true;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
@@ -337,7 +338,12 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var remaining=Vector3.Distance(position,waypoint);
   if(!worldNavigationHasProgress||Vector3.Distance(waypoint,worldNavigationProgressWaypoint)>.5f||Vector3.Distance(destination,worldNavigationProgressDestination)>2||remaining<worldNavigationProgressDistance-.5f){worldNavigationHasProgress=true;worldNavigationProgressWaypoint=waypoint;worldNavigationProgressDestination=destination;worldNavigationProgressDistance=remaining;worldNavigationProgressAt=elapsed;}
   r.world.navigationStalledSeconds=elapsed-worldNavigationProgressAt;
-  r.world.navigationProgressDistance=worldNavigationProgressDistance;r.world.navigationRecoveryJump=remaining>Mathf.Max(1,stopDistance)&&r.world.navigationStalledSeconds>3;
+  // Terrain replanning changes the local waypoint even while circling the same
+  // obstacle. Track the actual objective separately so it cannot hide that stall.
+  float objectiveDistance=Vector3.Distance(position,destination);
+  if(!worldNavigationHasObjectiveProgress||Vector3.Distance(destination,worldNavigationObjective)>2||objectiveDistance<worldNavigationObjectiveDistance-.5f){worldNavigationHasObjectiveProgress=true;worldNavigationObjective=destination;worldNavigationObjectiveDistance=objectiveDistance;worldNavigationObjectiveProgressAt=elapsed;}
+  r.world.navigationObjectiveStalledSeconds=elapsed-worldNavigationObjectiveProgressAt;r.world.navigationObjectiveProgressDistance=worldNavigationObjectiveDistance;
+  r.world.navigationProgressDistance=worldNavigationProgressDistance;r.world.navigationRecoveryJump=remaining>Mathf.Max(1,stopDistance)&&(r.world.navigationStalledSeconds>3||(r.world.navigationTerrainFallback&&r.world.navigationObjectiveStalledSeconds>3));
   bool jump=(r.world.navigationJump||worldLocalNavigator.jumpSpeed>0||r.world.navigationRecoveryJump)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f;bridge.DiagnosticJump(jump);if(jump&&r.world.navigationRecoveryJump)r.world.navigationRecoveryJumpFrames++;
   if(r.world.navigationRecoveryJump&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
  }
