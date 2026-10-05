@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
-  public int navigationRecoveries;public float navigationStalledSeconds;
+  public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
@@ -52,7 +52,7 @@ public sealed partial class MovementBatchProbe {
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
- Vector3 worldNavigationProgressPosition;float worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;
+ Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
  NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
@@ -272,7 +272,6 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var position=player.temporaryPathfindingFootpositionDoNotUseWillBePatchedOut;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);r.world.navigationReference=position;
   var graph=SceneInfo.instance?SceneInfo.instance.groundNodes:null;var waypoint=destination;
   r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
-  if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(destination,worldPathTarget)>2||Vector3.Distance(position,worldNavigationProgressPosition)>1){worldNavigationProgressPosition=position;worldNavigationProgressAt=elapsed;}
   // Replay follows the recovered graph through the normal input boundary. Original
   // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
   RaycastHit obstacle;bool needsRoute=Mathf.Abs(delta.y)>2||planar.magnitude>15||Physics.Linecast(position+Vector3.up,destination+Vector3.up,out obstacle,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
@@ -290,13 +289,19 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    r.world.navigationJump=worldPathFollower.nextWaypointNeedsJump;
   }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;r.world.navigationPath=new NavigationPathPoint[0];}
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
-  if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;}
+  if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;}
   worldLocalNavigator.targetPosition=waypoint;worldLocalNavigator.allowWalkOffCliff=false;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
   r.world.navigationLocalMovement=worldLocalNavigator.moveVector;r.world.navigationLocalObstructed=worldLocalNavigator.wasObstructedLastUpdate;r.world.navigationLocalJumpSpeed=worldLocalNavigator.jumpSpeed;
   bridge.movement=movement.magnitude>stopDistance?new Vector2(worldLocalNavigator.moveVector.x,worldLocalNavigator.moveVector.z):Vector2.zero;
-  bridge.DiagnosticJump((r.world.navigationJump||worldLocalNavigator.jumpSpeed>0)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f);
+  // Walking in a circle is not progress toward the source waypoint. The real
+  // Wetland return capture does this at full speed, so source frustration stays
+  // zero. Recovery requests a normal player jump; source physics owns the result.
+  var remaining=Vector3.Distance(position,waypoint);
+  if(!worldNavigationHasProgress||Vector3.Distance(waypoint,worldNavigationProgressWaypoint)>.5f||Vector3.Distance(destination,worldNavigationProgressDestination)>2||remaining<worldNavigationProgressDistance-.5f){worldNavigationHasProgress=true;worldNavigationProgressWaypoint=waypoint;worldNavigationProgressDestination=destination;worldNavigationProgressDistance=remaining;worldNavigationProgressAt=elapsed;}
   r.world.navigationStalledSeconds=elapsed-worldNavigationProgressAt;
-  if(movement.magnitude>Mathf.Max(3,stopDistance)&&r.world.navigationStalledSeconds>3&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
+  r.world.navigationProgressDistance=worldNavigationProgressDistance;r.world.navigationRecoveryJump=remaining>Mathf.Max(1,stopDistance)&&r.world.navigationStalledSeconds>3;
+  bool jump=(r.world.navigationJump||worldLocalNavigator.jumpSpeed>0||r.world.navigationRecoveryJump)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f;bridge.DiagnosticJump(jump);if(jump&&r.world.navigationRecoveryJump)r.world.navigationRecoveryJumpFrames++;
+  if(r.world.navigationRecoveryJump&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;

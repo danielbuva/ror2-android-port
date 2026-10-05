@@ -2564,3 +2564,15 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J296 full build:**91.921-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `dee903788a18b2ca38b2f1dd8c0725120fdf8198dd01b542e791aeb8905bddf6`. Complete Nova route retry running; travel defence/original interactions/Moon/victory require actual device outcomes. I06/I03 unchanged.
+
+
+**J296 device interruption:**871.543 reported gameplay seconds/123 kills, first genuine source boss/charge/exit/transport plus Wetland boss defeat and natural full charge. Original graph/local navigation reaches the lower return area but circles the same waypoint near(31.80,-143.95,14.78) with no enemies and exit Idle/unselected. Movement-based progress continually resets; source local frustration/jumpSpeed remain zero despite no net waypoint progress. Reviewed capture and source PathFollower/LocalNavigator distinguish the input-driver omission; no unexplained current-process error. Current travel-defence counter remains zero, so this run does not independently establish that branch. Owned runner interrupted, report/captures retained, app stopped/selection removed/Nova asleep. No source teardown, second exit, ending/persistence or later gate acceptance; I06/I03 unchanged.
+
+## J297 — Progress-sensitive normal jump input in the full world
+
+**Integration / evidence:** Full candidate `work/experiments/scene-runtime/20261005T155239.955875Z` retains all route/Moon/results and J296 defence. Track improvement in actual distance to the current original waypoint instead of any one-metre displacement. A stable waypoint/target with no meaningful approach for three seconds requests a normal player jump and refreshes the original path periodically. Original local movement/obstacle output, graph jump flags, jump power, physics/colliders and selector still own travel. Specific stalled distance/recovery jump-frame observations distinguish use. No translation, velocity override, graph skip, forced interaction or progress.
+
+**Prior art / hypothesis:** Pinned R2Wiki Stage ground/node/hull/jump-volume/gate guidance and prior-art navigation map consulted alongside shipped PathFollower pass-distance/height checks and LocalNavigator frustration. Source frustration clears when walking sufficiently fast in its chosen avoidance direction; the actual return capture circles at speed and never jumps. A player can request a jump at this input boundary without changing those source contracts. No game/community implementation copied. Fresh compile/live preflight/40 tests/archive/forced whole Vulkan build and complete Nova route next. First failure remains the scanner; no isolated fixture or pointer advance. I06/I03 unchanged.
+
+
+**J297 full build:**82.900-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd0cf2bd2a4f5a876d412335ca99d35358fd92c124c70ede16ed18a016be31c3`. Whole Nova route retry running; stalled-travel jump/second exit/later Moon/victory acceptance pending. I06/I03 unchanged.
