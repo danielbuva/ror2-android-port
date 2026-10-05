@@ -2622,3 +2622,15 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J300 full build:**87.073-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `656970c2f8ab81d38e773cd5c25fc18535b3a7e85c11253f456b9237d91f35fc`. Entire Nova route retry running; ordinary sprint/terrain traversal/battery/mission/victory need device execution. I06/I03 immutable; no partial capability pointer.
+
+
+**J300 device interruption:**870.776 reported gameplay seconds/137 kills/one genuine source transport. First objective and Wetland boss/natural charge complete; source return path is reachable but the player remains below a waypoint about six metres higher for over90 seconds. No unexplained current-process runtime errors. Moon terrain candidate is unexecuted. Owned runner interrupted, captures retained, app stopped/selection removed/Nova asleep; no source teardown, second exit, ending/persistence or later acceptance. I06/I03 remain immutable.
+
+## J301 — Terrain recovery throughout the composed game
+
+**Observation / integration:** Full candidate `work/experiments/scene-runtime/20261005T180617.440973Z` retains every game/route/Moon/results system. J300 exposes a new integrated return approach where source graph reachability does not translate into input progress. Invoke existing terrain steering when the original waypoint/destination stay unchanged without progress for three seconds, or when a needed graph route is unreachable. Preserve a short recovery window so steering can make a bypass, then resume the original route. Ground guidance targets the original next waypoint, retaining graph intent; ordinary sprint accompanies recovery. Reset owned terrain goal/history/window on transport/cleanup; keep actual source graph result and physics/stats/one-jump/selector/mission authoritative.
+
+**Prior art / exit:** Same consulted stage/navigation map and pinned R2Wiki Stage player-vs-monster navigation/hull/gate/jump contracts and R2API.Director f539511e source context APIs; exact shipped LocalNavigator/NodeGraph/CharacterBody and actual device failure remain authoritative. No copied implementations, changed source graphs/gates/physics or fabricated outcome. Live preflight/40 tests/zero-error compile pass; archived stage/forced full Vulkan build/complete Nova retry required. I06/I03 rollback unchanged; no acceptance from host compilation.
+
+
+**J301 full build:**81.401-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `38a55a54f16867bce8b33f1dd3f4d0a08610537a586b53acb0cec03e90311cc0`. Complete Nova route retry running; stalled-travel recovery/Moon/battery/mission/victory require execution. I06/I03 remain immutable rollback.

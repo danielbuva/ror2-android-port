@@ -54,7 +54,7 @@ public sealed partial class MovementBatchProbe {
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
- Vector3 worldTerrainTarget;float worldTerrainSelectedAt=-100;readonly List<Vector3> worldTerrainRecent=new List<Vector3>();
+ Vector3 worldTerrainTarget,worldTerrainGoal;float worldTerrainSelectedAt=-100,worldTerrainRecoveryUntil=-100;readonly List<Vector3> worldTerrainRecent=new List<Vector3>();
  NovaThirdPersonView worldView;bool restartRequested;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
@@ -276,8 +276,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   bool moon=r.moon!=null&&r.moon.loaded;
   // Players may sprint while travelling. Let original input/stat callbacks supply
   // the actual speed used by the next source path request, including earned items.
-  if(moon)bridge.diagnosticSprint=planar.magnitude>8;
-  r.world.navigationSprint=moon&&bridge.diagnosticSprint;r.world.navigationTerrainFallback=false;
+  if(moon||elapsed<worldTerrainRecoveryUntil)bridge.diagnosticSprint=planar.magnitude>8;
+  r.world.navigationSprint=bridge.diagnosticSprint;r.world.navigationTerrainFallback=false;
   r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
   // Replay follows the recovered graph through the normal input boundary. Original
   // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
@@ -295,11 +295,13 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    worldPathFollower.UpdatePosition(position);var next=worldPathFollower.GetNextPosition();if(next.HasValue)waypoint=next.Value;
    r.world.navigationJump=worldPathFollower.nextWaypointNeedsJump;
   }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationWaypoints=0;r.world.navigationPath=new NavigationPathPoint[0];}
-  if(moon&&needsRoute&&!r.world.navigationReachable){
-   // The source monster graph has disconnected Moon battery regions. Its failure
-   // is retained; ground lookahead supplies only a player's ordinary stick input.
+  bool stalled=worldNavigationHasProgress&&elapsed-worldNavigationProgressAt>3&&Vector3.Distance(waypoint,worldNavigationProgressWaypoint)<.5f&&Vector3.Distance(destination,worldNavigationProgressDestination)<2;
+  if(needsRoute&&((graph&&!r.world.navigationReachable)||stalled))worldTerrainRecoveryUntil=elapsed+4;
+  if(needsRoute&&elapsed<worldTerrainRecoveryUntil){
+   // The source graph can be disconnected or reach a waypoint the current
+   // approach cannot traverse. Retain its result; steer normal input over ground.
    // Do not open gates, edit links, invent extra jumps or move the body directly.
-   waypoint=MoonTerrainTravelWaypoint(player,position,destination,elapsed);
+   waypoint=TerrainTravelWaypoint(player,position,waypoint,elapsed);
    r.world.navigationTerrainFallback=true;r.world.navigationTerrainFrames++;r.world.navigationTerrainTarget=waypoint;
   }
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
@@ -320,9 +322,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   bool jump=(r.world.navigationJump||worldLocalNavigator.jumpSpeed>0||r.world.navigationRecoveryJump)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f;bridge.DiagnosticJump(jump);if(jump&&r.world.navigationRecoveryJump)r.world.navigationRecoveryJumpFrames++;
   if(r.world.navigationRecoveryJump&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
  }
- Vector3 MoonTerrainTravelWaypoint(CharacterBody player,Vector3 position,Vector3 destination,float elapsed){
+ Vector3 TerrainTravelWaypoint(CharacterBody player,Vector3 position,Vector3 destination,float elapsed){
+  if(worldNavigationBody!=player||Vector3.Distance(destination,worldTerrainGoal)>2){worldTerrainRecent.Clear();worldTerrainSelectedAt=-100;worldTerrainGoal=destination;}
   if(elapsed-worldTerrainSelectedAt<1&&Vector3.Distance(position,worldTerrainTarget)>1)return worldTerrainTarget;
-  if(worldNavigationBody!=player||Vector3.Distance(destination,worldNavigationProgressDestination)>2)worldTerrainRecent.Clear();
   worldTerrainSelectedAt=elapsed;var desired=destination-position;desired.y=0;desired.Normalize();
   float best=float.NegativeInfinity;Vector3 selected=position;
   // Reuse the full game's ground-to-ground avoidance contract. Short candidates
@@ -371,7 +373,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupTeleporterWorld();
-  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=-100;
+  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}
   if(worldInteraction!=null)GlobalEventManager.OnInteractionsGlobal-=worldInteraction;if(worldDriver)worldDriver.enabled=false;

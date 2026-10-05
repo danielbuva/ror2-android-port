@@ -2619,3 +2619,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J300 full build:**87.073-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `656970c2f8ab81d38e773cd5c25fc18535b3a7e85c11253f456b9237d91f35fc`. Entire Nova route retry running; ordinary sprint/terrain traversal/battery/mission/victory need device execution. I06/I03 immutable; no partial capability pointer.
+
+
+**J300 device interruption:**870.776 reported gameplay seconds/137 kills/one genuine source transport. First objective and Wetland boss/natural charge complete; source return path is reachable but the player remains below a waypoint about six metres higher for over90 seconds. No unexplained current-process runtime errors. Moon terrain candidate is unexecuted. Owned runner interrupted, captures retained, app stopped/selection removed/Nova asleep; no source teardown, second exit, ending/persistence or later acceptance. I06/I03 remain immutable.
+
+### I07-S21 — Recover stalled travel throughout the composed route
+
+- **ID:** I07-S21.
+- **TITLE:** Apply ground steering to a stalled original waypoint.
+- **CONTEXT:** J300 full route ends at a different Wetland return approach before Moon.
+- **OBSERVATION:** Source path reachable; original ordinary input remains below a higher waypoint for over90 seconds, no runtime error.
+- **HYPOTHESIS:** Ground steering can find an alternate approach while original physics and graph intent remain authoritative.
+- **TASK:** Extend existing input guidance to stalled travel, rebuild/run the entire route and classify its next real blocker.
+- **CONSTRAINTS:** Inherited privacy/IP/platform/storage/pins; preserve source graph/gates/colliders/stats/jump/interaction/progression and physical mapping.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld terrain trigger/goal/window and stage/cleanup reset, ignored full-game evidence.
+- **TEST COMMAND:** `./dev preflight`, `./dev test`, forced Vulkan build, `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Real input/physics traverse the blocked return and continue toward batteries/mission; victory/results/full cleanup need execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Source waypoint/ground/position/reachability, terrain target/window/counts, selector/exit, first current error and original ending/results/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J301 build/device exit and concise state/backlog/milestones; no pointer advance from partial route.
+- **DEPENDENCIES:** J300 full-route failure plus retained J299 original Moon landing; I06/I03 immutable rollback.
+
+
+**J301 full build:**81.401-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `38a55a54f16867bce8b33f1dd3f4d0a08610537a586b53acb0cec03e90311cc0`. Complete Nova route retry running; stalled-travel recovery/Moon/battery/mission/victory require execution. I06/I03 remain immutable rollback.
