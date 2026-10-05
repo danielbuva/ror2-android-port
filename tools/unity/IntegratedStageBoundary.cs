@@ -35,7 +35,7 @@ public sealed partial class MovementBatchProbe {
   try{Call(objectiveStage,"Update");}catch(Exception e){r.stageProgress.error=e.ToString();Save();}
  }
  int IntegratedInventoryCount(){return ItemCatalog.allItemDefs.Sum(x=>worldPlayer.inventory.GetItemCountPermanent(x.itemIndex));}
- IEnumerator TransportIntegratedStage(NovaInputBridge bridge){
+ IEnumerator TransportIntegratedStage(NovaInputBridge bridge,float simulationBegan){
   if(string.IsNullOrEmpty(pendingStage))yield break;
   var next=integratedStageConfig.integratedStages.SingleOrDefault(x=>x.name==pendingStage);
   Check(next!=null,"Original next destination has no accepted converted content: "+pendingStage);
@@ -75,7 +75,7 @@ public sealed partial class MovementBatchProbe {
   automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
   automaticDirectorHost.AddComponent<DirectorCore>();rewardDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);
   Check(DirectorCore.instance&&rewardDirector.enabled&&CombatDirector.instancesList.Contains(rewardDirector),"Next-stage original director missing");
-  worldObjective=0;stagePickupBaseline=r.world.pickupMessages;stageEnteredAt=r.nova.seconds;worldLastPress=-1;
+  worldObjective=0;stagePickupBaseline=r.world.pickupMessages;worldLastPress=-1;
   var origin=solver.TransientPosition;var chestSource=artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);
   foreach(var offset in new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)}){var obj=CreateWorldInteractable(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.barrelAsset),origin+offset,false);if(obj)worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
   foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=CreateWorldInteractable(chestSource,origin+offset,true);if(obj)worldChests.Add(obj.GetComponent<ChestBehavior>());}
@@ -83,7 +83,7 @@ public sealed partial class MovementBatchProbe {
   var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;
   report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
   Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.completed.Count,"Original run/master/authority/inventory/XP/count continuity failed");
-  report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;bridge.enabled=true;r.phase="integrated-world-playing";Save();
+  stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;bridge.enabled=true;r.phase="integrated-world-playing";Save();
  }
  void ReturnIntegratedStageEffects(){
   Check(ownsIntegratedPools,"Stage effect pools have no integrated ownership baseline");

@@ -69,7 +69,9 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     if integrated_world:
         from integrated_objective import stage_objective
         cfg.update(stage_objective(stage,a,out))
-        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name='foggyswamp')]
+        cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name) for name in ['foggyswamp','frozenwall']]
+        cfg['integratedTransitionTarget']=2
+        cfg['integratedRuntimeSeconds']=720
     cfg['integratedWorld']=integrated_world;cfg['barrelInteraction']=barrel;cfg['originalItemPickup']=pickup;cfg['originalMoneyCost']=money;cfg['originalActiveClient']=client;cfg['originalInteractionSelection']=selection;cfg['originalClientCoin']=client_coin;cfg['originalInputBarrel']=input_barrel;cfg['originalChestDropTable']=chest_drop;cfg['originalChestPurchase']=chest_purchase;cfg['originalPickupDropletLoad']=droplet_load;cfg['originalPickupDropletFlight']=droplet_flight;cfg['originalPickupDropletCollision']=droplet_collision;cfg['originalDefaultPickup']=default_pickup;cfg['originalChestEjection']=chest_ejection
     if barrel:
         if not run_clock or not director_batch:raise RuntimeError('Barrel probe requires accepted clock and three-actor context')
@@ -127,7 +129,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
         write(out/'whole-game-contract.json',{'scope':'Persistent composed stage/player/third-person camera/skills/teleporter/boss/director/rewards/barrels/chests/droplets/pickups/local-client/authority/HUD. Source unlocked four-item loot domain, owned placement/materials and silent pickup message adapter. No stock startup/menu/profile/stage transition/victory claim.', 'prior_art':'Pinned R2API.Director f539511e original SceneCatalog/director activity, R2API.ContentManagement EffectDef registration and DebugToolkit d1e2f0aa Run drop lists/original pickup factories; exact current original APIs and prior Nova evidence govern integration. No source implementations copied.','rollback':read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTEGRATED_WORLD.json'),'loot_items':['Syringe','CritGlasses','HealWhileSafe','ChainLightning'],'interaction_binding':'Measured Nova Unity button1 = physical B from accepted full capture; original inputBank.interact boundary.'})
     if integrated_world:
         from integrated_objective import transform_optional_presentation,sanitize_optional_content
-        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=600
+        a['teleporter_loop']=True;a['batch_seconds'][spine+'-bringup']=900
         cfg.update(sanitize_optional_content(stage,out))
         transform_optional_presentation(stage,out,a)
         write(stage/'Resources/MovementBatchProbe.json',cfg)
@@ -192,7 +194,8 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         if kind not in keep and not preview:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
         kept.append((kind,file_id,block))
-    if len(preview_ids)!=(23 if scene_name=="golemplains" else 0):raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
+    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23}
+    if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
         if kind==1:
@@ -227,7 +230,9 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'bytes':src.stat().st_size,'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
     recipe=read(WORK/'scene-probe-build.json')
     if scene_name=='golemplains':recipe['stageScene']=str(dest.relative_to(WORK/'lab-project'))
-    else:recipe['nextStageScene']=str(dest.relative_to(WORK/'lab-project'))
+    else:
+        recipe['nextStageScenes']=list(dict.fromkeys(recipe.get('nextStageScenes',[])+[str(dest.relative_to(WORK/'lab-project'))]))
+        recipe.pop('nextStageScene',None)
     write(WORK/'scene-probe-build.json',recipe)
     write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids},'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Whole recovered static geometry/LOD/collision and original survivor spawn markers; only measured original DisableOnStart preview callbacks retained, no stage lifecycle/director/progression/lighting parity. Runtime owned materials replace dummy shaders.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
     if scene_name=='golemplains':return {'stageGeometry':True}
