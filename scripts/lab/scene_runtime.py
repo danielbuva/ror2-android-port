@@ -605,7 +605,7 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
             if probe=='body-state-ground-visual':
                 d.sh('rm','-f',runtime+'/recovered-motion-before.png',runtime+'/recovered-motion-after.png')
             d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
-            launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic();last_phase=None;captured=set()
+            launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic();last_phase=None;captured=set();terminal_error_at=None
             while time.monotonic()-start<durations[probe]:
                 if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Probe process died')
                 if interactive:
@@ -614,6 +614,11 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                     except ValueError:live=None
                     if live and live.get('attempt')==attempt_id and str(live.get('pid'))==pid:
                         write(attempt/'live-probe.json',live)
+                        # A caught terminal failure is already decisive. Allow the
+                        # existing asynchronous cleanup to finish, then capture it.
+                        if live.get('error'):
+                            if terminal_error_at is None:terminal_error_at=time.monotonic()
+                            if time.monotonic()-terminal_error_at>=15:break
                         if live.get('phase')!=last_phase:
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
                         if last_phase=='integrated-world-playing' and 'world' not in captured:

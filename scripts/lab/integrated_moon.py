@@ -42,6 +42,15 @@ def stage_moon(stage, previous, out, spec):
         context = name in mission_names or name.startswith(('MoonBattery', 'MoonElevator', 'BrotherEncounter')) or name == 'mdlMoonBattery' or name == 'mdlMoonElevator'
         if kind(block) in mission_scripts or (context and kind(block) in contextual_scripts): retained.append(block)
     owners = {re.search(r'm_GameObject: \{fileID: (-?\d+)\}', b)[1] for b in retained}
+    # PurchaseInteraction requires Highlight. Omitting its serialized dependency
+    # makes Unity insert an unreceipted component while importing the scene.
+    purchase_owners = {re.search(r'm_GameObject: \{fileID: (-?\d+)\}', b)[1]
+                       for b in retained if kind(b) == 'RoR2.PurchaseInteraction'}
+    highlights = [b for b in blocks if b.startswith('--- !u!114 ') and kind(b) == 'RoR2.Highlight'
+                  and re.search(r'm_GameObject: \{fileID: (-?\d+)\}', b)[1] in purchase_owners]
+    if len(highlights) != len(purchase_owners):
+        raise RuntimeError('Original Moon purchase Highlight contract differs')
+    retained += highlights
     retained += [b for b in blocks if b.startswith('--- !u!114 ') and kind(b)=='RoR2.EntityLocator'
                  and re.search(r'entity: \{fileID: (-?\d+)\}', b)
                  and re.search(r'entity: \{fileID: (-?\d+)\}', b)[1] in owners]

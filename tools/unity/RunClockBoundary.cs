@@ -49,7 +49,7 @@ public sealed partial class MovementBatchProbe {
  void CleanupRunClock(){
   if(!ownsRunSceneCatalog)return;if(clockRun&&string.IsNullOrEmpty(r.runClock.error))ObserveOriginalRunClock();ownedRunFixed=null;ownedRunFrame=null;
   SceneManager.activeSceneChanged-=(UnityEngine.Events.UnityAction<Scene,Scene>)Delegate.CreateDelegate(typeof(UnityEngine.Events.UnityAction<Scene,Scene>),typeof(SceneCatalog).GetMethod("OnActiveSceneChanged",BindingFlags.NonPublic|BindingFlags.Static));
-  if(priorClockScene.IsValid()&&priorClockScene.isLoaded)Check(SceneManager.SetActiveScene(priorClockScene),"Prior active scene restoration failed");
+  if(priorClockScene.IsValid()&&priorClockScene.isLoaded&&SceneManager.GetActiveScene()!=priorClockScene)Check(SceneManager.SetActiveScene(priorClockScene),"Prior active scene restoration failed");
   if(clockSceneDefs!=null)foreach(var def in clockSceneDefs)if(def)def.sceneDefIndex=SceneIndex.Invalid;ContentManager._sceneDefs=priorContentScenes;clockSceneMap.Clear();foreach(var entry in clockSceneFields)entry.Key.SetValue(null,entry.Value);SceneCatalog.availability=priorSceneAvailability;
   if(clockFixedStamp!=null){clockFixedStamp.SetValue(null,priorClockFixedStamp);clockFrameStamp.SetValue(null,priorClockFrameStamp);}r.runClock.cleaned=SceneManager.GetActiveScene()==priorClockScene&&SceneCatalog.sceneDefCount==0&&SceneCatalog.allStageSceneDefs.Length==0&&!SceneCatalog.mostRecentSceneDef&&clockSceneMap.Count==0&&ContentManager._sceneDefs==priorContentScenes;Check(r.runClock.cleaned,"Original scene/clock scope restoration incomplete");ownsRunSceneCatalog=false;Save();
  }

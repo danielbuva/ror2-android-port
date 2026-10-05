@@ -216,3 +216,6 @@ I06/J256 accepts four complete original objective loops and the actual Titanic P
 I07 application/results integration is in progress. J273 runs original318-field statistics during actual gameplay with clean teardown. J274 actual defeat produces original StandardLoss, one-player report and client game-over; XML save fails, so persistence/menu/restart acceptance remains open. The current full-game candidate supplies original item-array XML registration and continues all objective loops/Moon. No stock startup/profile, Moon victory, full-run or new checkpoint acceptance is implied.
 
 J275 repeats all five original objective loops with original statistics and four actual transports. The repaired RNG reaches original loop-event reset, which lacks a serialized ClassicRun array. Full teardown passes; Moon/ending/persistence/application gates and accepted pointers remain open. The next full game recovers that source setting and continues the same route.
+
+
+J276 reaches original counter5 and actual loaded Moon geometry after five genuine objective loops; Moon activation fails on16 omitted required source Highlights. Partial-load teardown is incomplete. Full-game retry retains those components; Moon mission/victory/persistence/application acceptance and all rollback pointers remain open.
