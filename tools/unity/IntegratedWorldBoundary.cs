@@ -34,6 +34,7 @@ public sealed partial class MovementBatchProbe {
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public bool navigationTerrainFallback,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
+  public int navigationTerrainLowerChoices,navigationTerrainRayOverflow;
   public bool motorGrounded,motorStable,jumpDown,jumpPressed,jumpClaimed;public int motorJumpCount,motorMaxJumpCount;public Vector3 motorVelocity,motorGroundPoint;public string motorGroundCollider,movementState;
   public bool manualTakeover;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
@@ -57,6 +58,7 @@ public sealed partial class MovementBatchProbe {
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
  Vector3 worldTerrainTarget,worldTerrainGoal;float worldTerrainSelectedAt=-100,worldTerrainRecoveryUntil=-100;readonly List<Vector3> worldTerrainRecent=new List<Vector3>();
+ readonly RaycastHit[] worldTerrainHits=new RaycastHit[64];
  NovaThirdPersonView worldView;bool restartRequested,worldManualTakeover;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
@@ -339,8 +341,17 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    var direction=Quaternion.AngleAxis(i*22.5f,Vector3.up)*desired;Vector3 prior=position,groundPoint=position;bool valid=true;
    int steps=Mathf.CeilToInt(length/1.5f);
    for(int step=1;step<=steps;step++){
-    var sample=position+direction*(length*step/steps);sample.y=prior.y;RaycastHit ground;
-    if(!Physics.Raycast(sample+Vector3.up*4,Vector3.down,out ground,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||ground.collider.gameObject.scene!=stageGeometryScene||Vector3.Angle(ground.normal,Vector3.up)>player.characterMotor.Motor.MaxStableSlopeAngle||Mathf.Abs(ground.point.y-prior.y)>player.maxJumpHeight||!InsideSourceStageBounds(ground.point)){valid=false;break;}
+    var sample=position+direction*(length*step/steps);sample.y=prior.y;RaycastHit ground=default(RaycastHit);
+    int hits=Physics.RaycastNonAlloc(sample+Vector3.up*4,Vector3.down,worldTerrainHits,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
+    if(hits==worldTerrainHits.Length){r.world.navigationTerrainRayOverflow++;valid=false;break;}
+    // Overlapping floors must not turn a ceiling into the walking surface.
+    float nearest=float.PositiveInfinity,highest=float.NegativeInfinity;
+    for(int hitIndex=0;hitIndex<hits;hitIndex++){
+     var hit=worldTerrainHits[hitIndex];float change=Mathf.Abs(hit.point.y-prior.y);
+     if(hit.collider.gameObject.scene!=stageGeometryScene||Vector3.Angle(hit.normal,Vector3.up)>player.characterMotor.Motor.MaxStableSlopeAngle||change>player.maxJumpHeight||!InsideSourceStageBounds(hit.point))continue;
+     highest=Mathf.Max(highest,hit.point.y);if(change<nearest){nearest=change;ground=hit;}
+    }
+    if(!ground.collider){valid=false;break;}if(highest-ground.point.y>.1f)r.world.navigationTerrainLowerChoices++;
     // A clear center ray can still send the actual body into an adjacent wall.
     // Sweep its measured torso width; original KCC remains the movement solver.
     var segment=ground.point-prior;RaycastHit clearance;

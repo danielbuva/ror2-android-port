@@ -2700,3 +2700,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J303 physical camera acceptance:** In the running complete first stage, the user confirms right-stick camera turns freely in all directions and retains the chosen angle after release.172 nonzero physical look frames and changed yaw/pitch corroborate input. Same process and actual nonzero source body/master identities survive takeover/resume; zero current-process errors. Camera correction has real-device evidence. Full five-stage route/Moon flight/attack/mission/ending acceptance remains pending; no I07 pointer, I06/I03 immutable.
+
+
+**J303 unattended exit:** Five genuine objectives/transports and383 kills complete; original Moon landing/population pass. Automatic guidance circles the temple floor for several minutes; current original main state, grounding and health remain stable, zero current-process errors. No original lunar actor attack executes in this observed Moon interval, so the new native-stop guards have no device execution acceptance yet. Physical camera acceptance remains valid. Read-only source walk/fall/capsule-jump analyses do not establish a complete route; a paired3416-ray inspection identifies519 locations where highest/nearest valid ground differ at the same height/window. Original elevator jump volumes are inactive until charging. Scene inspection emits dangling LOD references to intentionally omitted ParticleSystemRenderer components (class199), not C# compilation failures; source/destination IDs and observed logs retained locally. Owned runner interrupted at1710.314 seconds, app stopped/selector removed/Nova asleep; no ending/persistence/full source cleanup or new I07 pointer. I06/I03 immutable.
+
+### I07-S24 — Nearest valid floor in full-world navigation
+
+- **ID:** I07-S24.
+- **TITLE:** Avoid selecting overlapping higher geometry as the walking floor.
+- **CONTEXT:** J303 full five-stage route passes and physical camera works; unattended Moon navigation circles the temple.
+- **OBSERVATION:** Paired3416 source rays have519 highest-versus-nearest differences; bounded ordinary movement searches do not prove a full route.
+- **HYPOTHESIS:** Nearest valid foot-height selection improves the existing terrain guide without changing simulation.
+- **TASK:** Integrate nearest-height ground selection and bounded-hit observations, build/run complete route, classify the next real Moon failure and continue unattended.
+- **CONSTRAINTS:** Inherited public/IP/input/platform/storage/pins; original physics/geometry/stats/authority/interactions/progression unchanged; no forced scene or mission completion.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld terrain sampler/report; ignored complete candidate/build/device evidence.
+- **TEST COMMAND:** `./dev preflight`, `./dev test`, forced Vulkan build, `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Actual source body progresses across the Moon approach with correct ground selection and no hit overflow/unknown error; original mission/ending/results/full cleanup need execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Nearest/lower selections, source floor/capsule/state/position and interaction target, overflow, actual lunar actors/native errors and ending/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J304 build/device exit, concise state/milestones; no new I07 pointer from partial or interrupted travel.
+- **DEPENDENCIES:** J303 full route and physical camera evidence, paired source-height inspection; I06/I03 immutable.
+
+
+**J304 full build:**79.831-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `759a7a11564d36658e1d2b2154ffafc4f11dfcae55698b082d11a96f21b0a300`. Complete unattended route/nearest-floor/Moon/ending acceptance pending; I06/I03 unchanged, no new capability pointer.
