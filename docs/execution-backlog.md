@@ -2694,3 +2694,6 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J303 full build:**85.741-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `dfe88cffd56bf6a2ab644ed331068c5b9d97469a359a4a62e44c4732cdb82884`. Full Nova route/physical camera/original Moon flight and attack exits remain pending device execution; I06/I03 unchanged, no new capability pointer.
+
+
+**J303 host dispatch correction:** The existing3600-second full-route host cap rejects the new4740-second bound before device construction; preserved rejection evidence. Raise only the composed teleporter-route cap to finite5400 seconds so physical Moon navigation fits after automatic travel. Shorter probe caps remain unchanged;40 safety tests pass again, existing APK/build identities unchanged. Full device acceptance pending.
