@@ -2672,3 +2672,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J302 live Moon / physical comparison pending:** All five genuine original objective/exit/transport loops pass again;429 kills, original Moon landing/population and four inactive batteries. Torso clearance moves beyond the previous wall contact, but input guidance then circles the bridge without reaching the first battery. Live original GenericCharacterMain/stable grounding/jump count0 and normal velocity distinguish navigation from a broken motor or missing state. Zero unexpected current-process errors. Physical takeover is active in the same live body/master/run; readiness requested for whole-Moon traversal. Nova display verified asleep while waiting, app process retained. No battery/Mithrix/escape/victory/ending/full cleanup acceptance; I06/I03 immutable, no new pointer. Ignored current reports/capture/pending-input record retained.
+
+
+**J302 physical exit:** User confirms character movement during takeover but reports camera snapping to one direction. Live camera records879 nonzero physical look frames; replay still invokes DiagnosticDirection unconditionally after physical input, overwriting its orbit. Preserved same-process physical report/capture at2348.158 gameplay seconds,429 kills/five genuine objectives/transports. Current-process logs after physical travel additionally expose missing original EntityStates.FlyState registration and repeated AkSoundEngine StopPlayingID exceptions in LunarWisp.ChargeLunarGuns.OnExit; the earlier zero-error observation predates these failures. Four batteries remain inactive; no ending/persistence/full source teardown or new capability pointer. Owned runner interrupted, app stopped/selection removed/Nova asleep; I06/I03 immutable. Revisit after camera ownership, measured flight-state registration and silent native-stop correction.
+
+### I07-S23 — Physical camera ownership and lunar silent exits
+
+- **ID:** I07-S23.
+- **TITLE:** Keep manual camera control and unblock actual Moon enemy transitions.
+- **CONTEXT:** J302 passes five stages/transports; physical comparison exposes replay camera override and original lunar dependencies.
+- **OBSERVATION:** User movement works/camera snaps;879 physical look frames, missing FlyState and repeated charge-exit native sound-stop exceptions.
+- **HYPOTHESIS:** Correct input-mode ownership and measured catalog/silent-call contracts let the complete world continue naturally.
+- **TASK:** Integrate camera guard, original FlyState identity and narrowly conditional lunar sound stops; build/run complete route, inspect next real failure, then physical Moon traversal.
+- **CONSTRAINTS:** Inherited input/IP/privacy/storage/platform/pins; original simulation, attack/exit/cleanup/progression authoritative; no fabricated audio/native/ownership success; I06/I03 unchanged.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** NovaInputBoundary, TeleporterWorldBoundary, existing OptionalPresentationGuard and ignored full candidate/build/runtime evidence.
+- **TEST COMMAND:** `./dev preflight`, `./dev test`, forced Vulkan build, `./dev prototype --action movement-batch-run`; same-world physical takeover when ready.
+- **PASS CONDITION:** Physical camera retains right-stick orientation, original Moon flight/attack transitions run without unavailable native audio calls; original batteries/boss/escape/ending/persistence require execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual camera orbit/raw input/current source state and missing indexes; current-process native/managed failures, Moon progress and original cleanup/ending.
+- **STATE/JOURNAL UPDATES REQUIRED:** J303 build/device/physical exit, concise state/milestones; no partial capability pointer.
+- **DEPENDENCIES:** Preserved J302 physical report/errors, exact source/catalog and optional presentation contracts; immutable I06/I03.
+
+
+**J303 full build:**85.741-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `dfe88cffd56bf6a2ab644ed331068c5b9d97469a359a4a62e44c4732cdb82884`. Full Nova route/physical camera/original Moon flight and attack exits remain pending device execution; I06/I03 unchanged, no new capability pointer.

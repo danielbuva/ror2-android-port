@@ -47,17 +47,29 @@ static class OptionalPresentationGuard {
   var pings=instructions.Single(i=>i.Operand is FieldReference field&&field.Name=="currentPings");
   if(pings.Previous.OpCode!=OpCodes.Ldarg_0)throw new Exception("Original ping presentation branch changed");
   il=fixedUpdate.Body.GetILProcessor();il.InsertBefore(userThis,il.Create(OpCodes.Ldarg_0));il.InsertBefore(userThis,il.Create(OpCodes.Ldfld,user));il.InsertBefore(userThis,il.Create(OpCodes.Brfalse,pings.Previous));
+  // Silent PlaySound returns ID0. Retain state exit/cleanup while omitting native
+  // stop calls when the same explicit no-audio boundary is active.
+  var lunarStops=new[]{("EntityStates.LunarWisp.ChargeLunarGuns",1),("EntityStates.LunarWisp.FireLunarGuns",2),("EntityStates.LunarWisp.SeekingBomb",1),("EntityStates.LunarGolem.ChargeTwinShot",1)};
+  var lunarMethods=new List<MethodDefinition>();
+  foreach(var (typeName,count) in lunarStops){
+   var exit=assembly.MainModule.Types.Single(t=>t.FullName==typeName).Methods.Single(m=>m.Name=="OnExit");
+   var calls=exit.Body.Instructions.Where(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="StopPlayingID"&&mr.ReturnType.FullName=="System.Void"&&mr.Parameters.Count==1&&mr.Parameters[0].ParameterType.FullName=="System.UInt32").ToArray();
+   if(calls.Length!=count||calls.Any(i=>i.Previous.OpCode!=OpCodes.Ldfld||i.Previous.Operand is not FieldReference f||f.FieldType.FullName!="System.UInt32"||f.DeclaringType.FullName!=typeName||i.Next==null))throw new Exception("Original lunar optional sound-stop contract changed: "+typeName);
+   il=exit.Body.GetILProcessor();
+   foreach(var stop in calls){var afterStop=stop.Next;il.InsertBefore(stop,il.Create(OpCodes.Call,audio));il.InsertBefore(stop,il.Create(OpCodes.Brfalse,stop));il.InsertBefore(stop,il.Create(OpCodes.Pop));il.InsertBefore(stop,il.Create(OpCodes.Br,afterStop));}
+   lunarMethods.Add(exit);
+  }
   // Insertion can move targets beyond the signed-byte range; keep branch semantics exactly.
-  foreach(var m in new[]{sound,landing,fixedUpdate})foreach(var instruction in m.Body.Instructions) {
+  foreach(var m in new[]{sound,landing,fixedUpdate}.Concat(lunarMethods))foreach(var instruction in m.Body.Instructions) {
    if(instruction.OpCode==OpCodes.Br_S)instruction.OpCode=OpCodes.Br;
    else if(instruction.OpCode==OpCodes.Brfalse_S)instruction.OpCode=OpCodes.Brfalse;
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName};
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName}.Concat(lunarMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged). Original gameplay, original sound body otherwise, ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar native sound-stop calls bypassed only when audio unavailable, retaining original state exit/cleanup. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
  }
 }
