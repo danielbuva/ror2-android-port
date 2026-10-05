@@ -301,3 +301,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J299 full build:**81.268-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `43f3372608270898de2d8bbba519a11c497dee0db5812e1a5d8bb7d3d30f945d`. Complete Nova route retry running; Moon source layers/landing/mission/victory require device execution. I06/I03 unchanged.
+
+
+**J299 live Moon progress:** All five genuine source objectives/count5 and five actual transports complete. Original teleport target settles on recovered Moon geometry at the intended landing; source bounds pass, queued move resolves, no map-zone recovery teleport.1548 world/49 non-world non-trigger colliders retain original Moon roles. Original population initializes with no unexpected current-process errors; battery travel runs. Mission completion/victory/ending/full cleanup acceptance remain pending; I06/I03 unchanged. Ignored current report and Moon capture preserved.
