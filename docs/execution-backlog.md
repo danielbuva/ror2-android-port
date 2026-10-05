@@ -2892,3 +2892,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J311 full build:**81.101-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `93c80d7b852d5bf502a90a502558d9848fd818894aa6db57d7474a278f5db490`. Actual available-exit travel/defence and retained J310 Moon objective recovery remain device-pending. Original boss/charge/exit/physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J311 first device exit:** Original first-stage boss/charge/reward/exit completes without the extra nearby-add veto;49 kills/184.3 last gameplay seconds. The next scene loads and original TeleportHelper/grounding/catalog checks pass, then strict continuity fails: Player XP112→113, inventory3→3 and money4→4. Full source cleanup succeeds; current-process/message errors zero, no Moon execution or capability pointer. Exact shipped ExperienceManager queues earned XP for0.5–2seconds and pays it in normal FixedUpdate, so the earlier quiet-combat snapshot omitted a legitimate pending award. Preserve the failed attempt/receipt/capture and stop/sleep Nova. Next observe and naturally settle that queue before the strict XP transport baseline; do not change XP values or relax equality. I06/I03 immutable.
+
+### I07-S32 — Original queued XP and strict scene continuity
+
+- **ID:** I07-S32.
+- **TITLE:** Naturally settle earned XP before exact transport baseline.
+- **CONTEXT:** J311 genuine available exit succeeds, then continuity rejects a delayed original XP award.
+- **OBSERVATION:** XP112→113, items3→3/money4→4; source timed queue pays0.5–2seconds later.
+- **HYPOTHESIS:** Bounded normal queue settlement retains exact earned XP and transport equality.
+- **TASK:** Record original Player queued sum/count; wait original callbacks, assert conservation and unchanged post-settlement transport baseline; full integrated build/route.
+- **CONSTRAINTS:** No forced XP, queue clearing, equality relaxation or time/stat/authority/mission changes. Full original run/master/body/inventory/money/count checks and I06/I03 retained.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored IntegratedStageBoundary; ignored complete archive/build/device queue/continuity records; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual original queue settles within original maxOrbTravelTime+1sec, exact realized-plus-queued accounting holds and genuine scene transport completes; then continue full Moon route.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual realized/queued Player XP/count/time before/after, manager ownership, all identity/authority/inventory/money/count values, source exit/catalog/grounding, first failure/current errors/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J312 build/device outcome, preserve J311 failure, no incomplete capability pointer.
+- **DEPENDENCIES:** J311 real exit/XP delta and exact original timed-award contract; existing preserved queue observer and full transport.
+
+
+**J312 full build:**88.666-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd5fe8148a2557d83b9a719d855de3756399d3243539a24b71e461dbcb90feb6`. Actual original timed-XP settlement/conservation/strict transport and retained Moon recovery remain device-pending. Original earned XP/queue/physics/graph/mission and I06/I03 unchanged; no I07 pointer.
