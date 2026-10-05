@@ -18,7 +18,28 @@ def transform_optional_presentation(stage, out, attempt):
     attempt['transformed_assemblies']={'RoR2.dll':report['output_sha256']}
 
 
+def stage_classic_run_settings(out):
+    """Recover the serialized loop-reset contract omitted by an AddComponent Run."""
+    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    source=export/'Assets/RoR2/Base/GameModes/ClassicRun/ClassicRun.prefab'
+    lines=source.read_text().splitlines()
+    indices=[i for i,line in enumerate(lines) if line.startswith('  EventFlagsToResetOnLoop:')]
+    if len(indices)!=1:raise RuntimeError('Original ClassicRun loop-reset field is missing or ambiguous')
+    index=indices[0];header=lines[index];flags=[]
+    if header=='  EventFlagsToResetOnLoop:':
+        for line in lines[index+1:]:
+            if not line.startswith('  - '):break
+            value=line[4:]
+            if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*',value):raise RuntimeError('Unparsed original loop-reset flag; review input')
+            flags.append(value)
+        if not flags:raise RuntimeError('Original loop-reset list has no entries; review input')
+    elif header!='  EventFlagsToResetOnLoop: []':raise RuntimeError('Unparsed original loop-reset list; review input')
+    write(out/'classic-run-settings.json',{'source':str(source.relative_to(export)),'source_sha256':sha(source),'event_flags':flags,'scope':'Original serialized event reset names on the composed Run; no event injected or gameplay reset skipped.'})
+    return {'runEventFlagsToResetOnLoop':flags}
+
+
 def stage_objective(stage, previous, out):
+    run_settings=stage_classic_run_settings(out)
     from scene_closure import REFERENCE
     export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     checkpoint = read(WORK/'checkpoints/LAST_KNOWN_GOOD_INTEGRATED_WORLD.json')
@@ -177,7 +198,7 @@ def stage_objective(stage, previous, out):
     write(WORK/'scene-probe-build.json',recipe)
     actor_specs=[dict(name=x,**{k[0].lower()+k[1:]:paths[x+k] for k in ['Body','Master','Card','Avatar','Controller','Material','Mesh']}) for x in actors]
     write(out/'objective-content.json',{'roots':paths,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'ui_remaps':ui_edits,'query_sha256':sha(query_path),'catalog_sha256':sha(export/'Assets/StreamingAssets/aa/catalog.json'),'deferred_unrequested':unrequested,'prior_art':'R2API.Director f539511e separates director activity, catalog readiness and source DCCS selection; current original TeleporterInteraction/BossGroup/HoldoutZoneController/Queen states govern composition. No source implementation copied.'})
-    return dict(objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
+    return dict(run_settings,objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 
 def sanitize_optional_content(stage,out):

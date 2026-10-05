@@ -32,7 +32,7 @@ public sealed partial class MovementBatchProbe {
  }
  void TickOriginalStage(){
   if(r==null||!r.teleporterLoop||!objectiveStage||transportingStage||r.stageProgress==null||!string.IsNullOrEmpty(r.stageProgress.error))return;
-  try{Call(objectiveStage,"Update");}catch(Exception e){r.stageProgress.error=e.ToString();Save();}
+  try{Call(objectiveStage,"Update");}catch(Exception e){r.stageProgress.error=e.ToString();if(Run.instance)r.stageProgress.stageClearCount=Run.instance.stageClearCount;Save();}
  }
  int IntegratedInventoryCount(){return ItemCatalog.allItemDefs.Sum(x=>worldPlayer.inventory.GetItemCountPermanent(x.itemIndex));}
  IEnumerator TransportIntegratedStage(NovaInputBridge bridge,float simulationBegan){

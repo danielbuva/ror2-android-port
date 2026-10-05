@@ -283,6 +283,12 @@ public sealed partial class MovementBatchProbe {
   if(!worldTeleporter||!r.objective.ready)return false;
   var delta=objectiveHost.transform.position-player.characterMotor.Motor.TransientPosition;
   var planar=new Vector2(delta.x,delta.z);bridge.movement=planar.magnitude>1?planar.normalized:Vector2.zero;
+  // Charging completion does not remove surviving enemies. Loot/exit replay must
+  // retain ordinary combat input when an add can still reach the player.
+  if(!worldTeleporter.isIdle&&!worldTeleporter.isCharging){
+   var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
+   if(threat!=null&&Vector3.Distance(threat.body.corePosition,player.corePosition)<35){ObjectiveCombatInput(player,bridge,elapsed,planar);r.world.objective="Clear surviving threats before reward and exit";return true;}
+  }
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected){if(objectiveRewardApproachAt<0)objectiveRewardApproachAt=elapsed;else if(elapsed-objectiveRewardApproachAt>=30)r.objective.rewardLeftBehind=true;}
   if(worldTeleporter.isCharged&&!r.objective.rewardCollected&&!r.objective.rewardLeftBehind){
    var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();
@@ -298,6 +304,12 @@ public sealed partial class MovementBatchProbe {
    var aim=objectiveBeacon.bounds.center-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;
    if(worldDriver.currentInteractable==objectiveHost&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
   }else{
+   ObjectiveCombatInput(player,bridge,elapsed,planar);
+  }
+  r.world.objective=worldTeleporter.isIdle?"Activate teleporter":worldTeleporter.isCharging?"Defeat boss and charge teleporter":worldTeleporter.isCharged?"Collect reward and exit":"Prepare next stage";
+  return true;
+ }
+ void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar){
    var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    // Clear attacking adds first, as in the accepted continuous route.
@@ -315,9 +327,6 @@ public sealed partial class MovementBatchProbe {
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
    }
-  }
-  r.world.objective=worldTeleporter.isIdle?"Activate teleporter":worldTeleporter.isCharging?"Defeat boss and charge teleporter":worldTeleporter.isCharged?"Collect reward and exit":"Prepare next stage";
-  return true;
  }
  void CleanupTeleporterWorld(){CleanupMoonMission();CleanupStageTransport();
   if(objectiveSummon!=null)MasterSummon.onServerMasterSummonGlobal-=objectiveSummon;pendingObjectiveActors.Clear();objectiveAmbientExpected.Clear();objectiveDirectorActors.Clear();
