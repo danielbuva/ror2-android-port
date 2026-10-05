@@ -126,7 +126,7 @@ def stage_objective(stage, previous, out):
         for config in folder.rglob('EntityStates.*.asset'):
             key = 'config'+str(len(configs)); roots[key]=config; configs.append(key)
         actors.append(prefix)
-    item_names = ['WardOnLevel', 'FocusConvergence', 'TPHealingNova', 'BeetleGland', 'Ghost', 'Knurl', 'Hoof', 'FlatHealth']
+    item_names = ['WardOnLevel', 'FocusConvergence', 'TPHealingNova', 'BeetleGland', 'Ghost', 'Knurl', 'SprintBonus', 'FlatHealth']
     for name in item_names:
         candidates = list((export/'Assets/RoR2').rglob(name+'.asset'))
         if len(candidates)!=1:

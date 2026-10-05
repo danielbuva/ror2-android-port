@@ -2310,9 +2310,9 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 ### I07-S09 — Broader earned items in the continuing run
 
 - **CONTEXT:** Continuing Moon/application composition still uses three white items and one green item.
-- **OBSERVATION:** Original Hoof and FlatHealth definitions are base-game items; unchanged CharacterBody recalculation consumes their inventory stacks for speed and health. ArmorPlate additionally requests a network sound asset and is not part of this chunk.
+- **OBSERVATION:** Original SprintBonus and FlatHealth definitions are base-game items; unchanged CharacterBody recalculation consumes their inventory stacks for speed and health. ArmorPlate additionally requests a network sound asset and is not part of this chunk.
 - **HYPOTHESIS:** Registering the two exact definitions before inventory/catalog allocation and admitting them to existing original drop lists extends real purchases/grants without a gameplay rewrite.
-- **TASK:** Retain the original chest table and weights; expand its available domain with Hoof/FlatHealth. Record actual acquired stacks, movement speed and health. Show live Moon battery/encounter/input objectives in the same playing HUD.
+- **TASK:** Retain the original chest table and weights; expand its available domain with SprintBonus/FlatHealth. Record actual acquired stacks, movement speed and health. Show live Moon battery/encounter/input objectives in the same playing HUD.
 - **CONSTRAINTS:** Current common platform/privacy/storage/ownership contract; only receipted original base definitions with no expansion/unlockable requirement; no granted items, synthetic stats or altered drop weights. Older accepted configurations retain their four-item domain. Do not alter an in-flight build/run.
 - **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing objective item closure, reward eligibility, original loot lists, world observations and HUD.
 - **TEST COMMAND:** preflight; test; forced Vulkan ARM64 build; full movement-batch-run through ordinary source purchases and item grants.
@@ -2324,3 +2324,6 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S06/S08 continuation, J277:** Moon geometry checks pass, then inactive serialized Toggle lacks original server scene-object activation/Awake. Use the original HLAPI SpawnObjects path after complete eligible-object ownership validation; preserve source randomization and capture the actual activation error before cleanup. Full-game retry retains I06/I03. The required diagnostic fix caps only the integrated input sample tail (900; cumulative counts/all actor records retained) and atomically publishes compact JSON, following an observed23 MB mid-write capture failure. This serves the next whole-game run, not a general observability framework.
+
+
+**I07-S09 correction, J278:** Original Hoof has a real unlockable; eligibility guard rejects it before gameplay. Keep it locked and replace this candidate with original SprintBonus (Energy Drink), which has null expansion/unlockable, alongside FlatHealth. Full device cleanup passes. Source eligibility checks remain mandatory and now name the rejected item. Repeat the full game; no accepted pointer advances.

@@ -22,7 +22,7 @@ public sealed partial class MovementBatchProbe {
   public bool lunarDefinition,lunarCurrencyAvailable;
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
-  public int lootDomain,syringe,lightning,glasses,slug,hoof,steak,secondary,roll,barrage;public uint money;public ulong experience;
+  public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
@@ -56,7 +56,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var loot=new List<ItemDef>{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe};
   // Receipted additions only. Older accepted configurations retain their original pool.
   if(cfg.teleporterLoop&&cfg.objectiveItemNames!=null){
-   if(cfg.objectiveItemNames.Contains("Hoof"))loot.Add(RoR2Content.Items.Hoof);
+   if(cfg.objectiveItemNames.Contains("SprintBonus"))loot.Add(RoR2Content.Items.SprintBonus);
    if(cfg.objectiveItemNames.Contains("FlatHealth"))loot.Add(RoR2Content.Items.FlatHealth);
   }
   return loot.ToArray();
@@ -203,7 +203,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Call(activeBodyClient,"Update");Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
   ObserveTeleporterWorld();ObserveMoonMission();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
-  if(r.objectiveItemNames!=null&&r.objectiveItemNames.Contains("Hoof"))world.hoof=player.inventory.GetItemCountPermanent(RoR2Content.Items.Hoof);
+  if(r.objectiveItemNames!=null&&r.objectiveItemNames.Contains("SprintBonus"))world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);
   if(r.objectiveItemNames!=null&&r.objectiveItemNames.Contains("FlatHealth"))world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
@@ -280,7 +280,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var world=r.world;if(world==null||!world.ready)return;
   var style=new GUIStyle(GUI.skin.label){fontSize=22};var shadow=new GUIStyle(style);shadow.normal.textColor=Color.black;
   string text="Offline gameplay lab — "+(r.stageProgress!=null?r.stageProgress.current:"Titanic Plains")+"\nHP "+Mathf.Max(0,world.health).ToString("F0")+" / "+world.maxHealth.ToString("F0")+"    Lv "+world.level.ToString("F0")+"    $"+world.money+"    "+world.seconds.ToString("F0")+"s\nKills "+world.kills+"    Enemies "+world.liveEnemies+"    Chests "+world.openedChests+" / "+world.chests+"\nSyringe "+world.syringe+" · Glasses "+world.glasses+" · Slug "+world.slug+" · Ukulele "+world.lightning+"\n"+world.lastPickup+"    Crit "+world.crit.ToString("F0")+"% · Regen "+world.regen.ToString("F1")+"\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n"+(string.IsNullOrEmpty(world.target)?"Explore, fight and earn money":"B: "+world.target)+"\nAudio, stock startup and profiles unavailable";
-  if(world.lootDomain>4)text+="\nHoof "+world.hoof+" · Steak "+world.steak+" · Move speed "+world.moveSpeed.ToString("F1");
+  if(world.lootDomain>4)text+="\nEnergy Drink "+world.drink+" · Steak "+world.steak+" · Move speed "+world.moveSpeed.ToString("F1");
   if(r.moon!=null&&r.moon.loaded)text+="\nMoon batteries "+r.moon.charged+" / "+r.moon.required+" · Encounter enemies "+r.moon.livingEncounterMembers+"\n"+world.objective;
   else if(r.objective!=null&&r.objective.ready)text+="\nTeleporter "+r.objective.state+" — "+(r.objective.charge*100).ToString("F0")+"% | "+(r.objective.bossDefeated?"Boss defeated":"Boss HP "+r.objective.bossHealth.ToString("F0")+" / "+r.objective.bossMaxHealth.ToString("F0"));
   if(world.health<=0){text+="\nCommando defeated. Press A to restart a fresh run.";if(GUI.Button(new Rect(20,420,240,48),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(280,420,180,48),"Close session"))Application.Quit();}else if(worldView!=null)worldView.DrawReticle();

@@ -2334,3 +2334,14 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 **Exit:** Immutable reports/full logs/captures/paused-report evidence remain under the ignored attempt. I06/I03 pointers do not advance. Next candidate `work/experiments/scene-runtime/20261005T073736.740313Z` continues the same full-game route;39 payload identities and45 assembly identities remain required. Original result XML repair/application return/restart still need actual ending execution.
 
 **J277 repair build:**169.779-second/zero-error Vulkan ARM64 build; matching terminal receipts,45 assembly identities,39 payload identities and APK SHA-256 `f6f34ee8d65d1842643c5901804ceb6f2fffa99bae6ae935b1116d701e8d2b9f` verified.40 host tests pass. Full Nova retry underway; no additional device capability acceptance.
+
+
+## J278 — Original item eligibility rejects locked Hoof
+
+**Observation / failure:** Integrated Nova attempt `work/experiments/scene-runtime/20261005T073736.740313Z` reaches the original item-eligibility guard before gameplay. Hoof's exact source ItemDef has a real unlockable reference. FlatHealth has none. The expanded pool is rejected; no item grant or gameplay progression occurs. Full owned teardown passes and the terminal runner captures/stops promptly; Nova asleep. Compact atomic report creation/replacement executes on this short device attempt, but long-run tail/capture acceptance remains pending. Moon activation is not reached.
+
+**Correction:** Keep Hoof locked; never clear its unlockable or create profile-unlock success. Select original SprintBonus (Energy Drink) alongside FlatHealth (Bison Steak), both measured Tier1 definitions with null expansion and unlockable references. Original CharacterBody recalculation consumes SprintBonus for sprint speed and FlatHealth for health. Record real stacks/stats, retain source chest weights/purchases, and name any rejected item in its failure message. New source closure adds8 files/118334 bytes. Prior authored claim of an eligible Hoof addition was premature; this guard and exact-source review correct it.
+
+**Next / scope:** `work/experiments/scene-runtime/20261005T074620.820263Z` retains the Moon scene-network/first-error repair and repeats the full game with the corrected six-choice pool. Same pinned DebugToolkit/R2API prior art and exact original ItemDef/CharacterBody source; no implementation copied. I06/I03 unchanged; no Moon/persistence/application milestone advances.
+
+**J278 correction build:**132.211 seconds/zero errors,40 tests,39 payload/45 assembly identities and APK SHA-256 `acb17b083eaf34e89794ee8cd18d05a3e490dcc5d1953fc0bae9a959830ed197` verified against matching request/start/terminal receipts. Full Nova retry running; no new capability acceptance.
