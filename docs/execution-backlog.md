@@ -2255,3 +2255,19 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 - **STATE/JOURNAL UPDATES REQUIRED:** First actual result and I07 status; no accepted pointer advance on failure.
 - **DEPENDENCIES:** I07/J268; pinned Starstorm2 a9a4badd original input delegation and original navigation/idle-teleporter source reviewed; no implementation copied.
 - **STATUS:** IN PROGRESS. Exact-editor compile, preflight,40 host checks,75.048-second/zero-error full build and39 payload/45 assembly hashes pass; complete route/mission device capture underway.
+
+
+## I07-S06 — Complete original Run streams and notification context
+
+- **ID / TITLE:** I07-S06 — Remove measured full-route context gaps.
+- **CONTEXT / OBSERVATION:** J269 completes fifth original objective; AdvanceStage fails at GenerateLoopRNG. Earlier observer assertion rejects a source-permitted notification shape without decoded details.
+- **HYPOTHESIS:** Exact original deterministic streams and tolerant notification observation unblock the same continuing game.
+- **TASK:** Restore original RNG initialization/order, retain seed140 and stage-choice sequences, restore owned context on teardown; record decoded notifications and count positive resolved player messages only. Build/run the complete route and Moon mission.
+- **CONSTRAINTS:** No game DLL/input/package change, forced progression, grants or authentication. Accepted persistent/route pointers stay immutable until acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** EnemyRewardBoundary, TeleporterWorldBoundary, IntegratedWorldBoundary; ignored attributed build/run.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Fifth original AdvanceStage reaches actual Moon; decoded notification evidence explains non-counted packets; no new unexplained failure. Full I07 victory remains separate.
+- **FAILURE EVIDENCE TO CAPTURE:** First current-process error, RNG/notification context, scene entry and actual Moon state, APK/payload receipts and teardown.
+- **STATE/JOURNAL UPDATES REQUIRED:** First actual result and I07 status; failed attempts advance no checkpoint.
+- **DEPENDENCIES:** I07/J269; pinned R2API.Director f539511e and DebugToolkit d1e2f0aa plus exact original Run/notification source.
+- **STATUS:** IN PROGRESS; integrated retry staged.

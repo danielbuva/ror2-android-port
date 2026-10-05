@@ -16,6 +16,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // remain in the preserved assemblies. The shell supplies content/context and unavailable audio UI.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldPickupObservation {public string item,interactability;public Vector3 position,aimTarget;public float aimDistance;public bool selected,collider,interactableLayer;}
+ [Serializable] public class WorldPickupMessageObservation {public float at;public bool resolvedMaster,playerMaster,knownPickup;public uint masterId,quantity;public int pickupIndex;public string item;}
  [Serializable] public class WorldReport {
   public NovaThirdPersonView.Report camera;
   public bool lunarDefinition,lunarCurrencyAvailable;
@@ -25,6 +26,7 @@ public sealed partial class MovementBatchProbe {
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
+  public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries;public float navigationStalledSeconds;
  }
@@ -151,8 +153,13 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   activeBodyClient.RegisterHandler(57,msg=>{
    var message=(MessageBase)Activator.CreateInstance(type,true);msg.ReadMessage(message);
    var master=(GameObject)type.GetField("masterGameObject").GetValue(message);var pickup=(UniquePickup)type.GetField("pickupState").GetValue(message);var quantity=(uint)type.GetField("pickupQuantity").GetValue(message);
-   Check(master==worldPlayer.master.gameObject&&quantity>0&&PickupCatalog.GetPickupDef(pickup.pickupIndex)!=null,"Integrated pickup message identity/quantity invalid");
-   r.world.pickupMessages++;var definition=PickupCatalog.GetPickupDef(pickup.pickupIndex);var item=ItemCatalog.GetItemDef(definition.itemIndex);r.world.lastPickup=(item?item.name:definition.internalName)+" x"+quantity;Save();
+   var characterMaster=master?master.GetComponent<CharacterMaster>():null;var definition=PickupCatalog.GetPickupDef(pickup.pickupIndex);var item=ItemCatalog.GetItemDef(definition!=null?definition.itemIndex:ItemIndex.None);
+   var observation=new WorldPickupMessageObservation{at=r.world.simulationSeconds,resolvedMaster=characterMaster,playerMaster=characterMaster&&characterMaster==worldPlayer.master,knownPickup=definition!=null,masterId=characterMaster?characterMaster.netId.Value:0,quantity=quantity,pickupIndex=pickup.pickupIndex.value,item=item?item.name:definition!=null?definition.internalName:"unavailable"};
+   if(r.world.pickupMessageObservations.Count==64)r.world.pickupMessageObservations.RemoveAt(0);r.world.pickupMessageObservations.Add(observation);
+   // Original notification handling tolerates missing masters and zero effective stacks.
+   // Record those packets without claiming a connected player grant.
+   if(!characterMaster)r.world.unresolvedPickupMessages++;else if(!observation.playerMaster)r.world.otherPickupMessages++;else if(quantity==0)r.world.zeroCountPickupMessages++;
+   if(observation.playerMaster&&definition!=null&&quantity>0){r.world.pickupMessages++;r.world.lastPickup=observation.item+" x"+quantity;}Save();
   });
  }
 

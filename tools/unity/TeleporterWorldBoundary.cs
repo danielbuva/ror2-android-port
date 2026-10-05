@@ -216,9 +216,7 @@ public sealed partial class MovementBatchProbe {
   typeof(Run).GetField("networkRuleBookComponent",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(run,networkBook);
   var easy=RuleCatalog.FindChoiceDef("Difficulty.Easy");Check(easy!=null,"Original Drizzle rule missing");run.ruleBook.ApplyChoice(easy);Check(run.ruleBook.FindDifficulty()==DifficultyIndex.Easy&&run.selectedDifficulty==DifficultyIndex.Easy,"Original chosen Drizzle difficulty mismatch");
   Check(run.ruleBook.stageOrder==StageOrder.Normal&&!run.ruleBook.keepMoneyBetweenStages,"Original default stage-order/money rules changed");
-  // This is the original RNG stream initialization, separate from platform-dependent Start.
-  if(run.nextStageRng==null){var rng=new Xoroshiro128Plus(140);run.nextStageRng=new Xoroshiro128Plus(rng.nextUlong);}
-  Check(run.bossRewardRng!=null,"Original GenerateStageRNG boss-reward stream absent");r.objective.rules=true;r.objective.ruleCount=RuleCatalog.ruleCount;
+  Check(run.runRNG!=null&&run.loopRngGenerator!=null&&run.nextStageRng!=null&&run.bossRewardRng!=null,"Original Run random streams absent");r.objective.rules=true;r.objective.ruleCount=RuleCatalog.ruleCount;
  }
  static string objectiveRuleSignature;
  IEnumerator PrepareTeleporterWorld(Result cfg){
