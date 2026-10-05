@@ -2794,3 +2794,6 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J307 corrected full build:**76.799-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `7ecb3ab672654e4a7a42e40a592f2d34f07e80f293b40b9e95a7ee7203ba8422`. Corrected waypoint tolerance is archived separately from the pre-device rejected parent. Complete unattended route/boss approach/Moon partial-path/mission/ending acceptance pending. I06/I03 unchanged; no new capability pointer.
+
+
+**J307 live route progress:** Corrected full build executes on Nova. At567.5 gameplay seconds, three genuine source boss/charge/reward/exit/transports complete into Abyssal Depths,167 kills. Wetland no longer remains at the J306 approach blocker; visible boss damage and source path movement execute. No current-process errors/message failures. Different real-run RNG/loot prevents attributing all speed differences to the change. Same continuing original run/body/master; physical camera acceptance retained. Full fifth-stage/Moon partial-path/mission/ending/cleanup acceptance remains pending; I06/I03 unchanged, no I07 pointer.
