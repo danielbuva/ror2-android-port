@@ -2449,3 +2449,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J292 full build:**119.123-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `a4dc21bf35326158ba097d33733262c936491f02338607492527a0a0e65cea16`. Full Nova route retry running; original bounds/scene activation/Moon/victory acceptance pending. I06/I03 remain immutable.
+
+
+**J292 device exit:**834.471 reported gameplay seconds, three genuine boss/natural-charge/exit loops and three completed recovered transports/count3,207 kills. Original source-enabled bounds and original active distinctions pass through Abyssal; Rallypoint water remains inactive. Genuine fatal combat health-36.56; no source MapZone exit/teleport at death and actual player near recovered ground. Original StandardLoss/server/client/RunReport/XML/ledger persist:357 fields,53711 dealt/1309 taken,847.204 original stopwatch seconds/five acquired item entries/priorRuns6. Full source/world/model/results cleanup and zero unexpected current-process runtime errors pass. Sky scene identities/Moon/victory unexecuted; I06/I03 remain unchanged, Nova stopped/asleep.
+
+### I07-S14 — Keep the integrated validation player moving through real combat
+
+- **ID:** I07-S14.
+- **TITLE:** Source-grounded diagnostic combat navigation in the complete offline route.
+- **CONTEXT:** J292 restores stage bounds and three source transports; actual Abyssal combat kills Commando before fourth completion.
+- **OBSERVATION:**327/332 last40-second samples have zero input; two source guards each deal190.08 damage; no source bounds teleport or runtime exception.
+- **HYPOTHESIS:** Ground-to-ground walkability and waiting-phase evasion avoid the driver's stationary combat while retaining original gameplay.
+- **TASK:** Keep the whole composition, correct input-only terrain selection/nearby guard targeting, build/run the full Nova route and classify the next real failure.
+- **CONSTRAINTS:** Inherited privacy/IP/platform/storage/ownership/pin rules; no health/damage/cooldown/progression writes, forced kill or physical input changes.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedWorld/TeleporterWorld partial boundaries, small current motion observations and ignored candidate/config/evidence.
+- **TEST COMMAND:** Fresh `./dev preflight`, `./dev test`, forced Vulkan build and `./dev prototype --action movement-batch-run`.
+- **PASS CONDITION:** Matching build/assembly/payload receipts; actual driver moves with safe source ground while source combat/route continue without unexplained errors. Moon/victory need actual execution.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual current ground/destination/blocked input, actor damage/position/state, original results/cleanup, full exceptions and next original first failure.
+- **STATE/JOURNAL UPDATES REQUIRED:** J293 build/device outcome, concise state and milestone/backlog; accepted pointers advance only at capability acceptance.
+- **DEPENDENCIES:** J292 full-world archive; I06/I03 rollback unchanged.
+
+
+**J293 full build:**146.005-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `780f90f9ce51329a9f461ff146361646a24af9a7c04e07b488673b30016361df`. Full Nova route retry running; motion/guard targeting/Sky/Moon/victory require actual device outcomes. I06/I03 unchanged.

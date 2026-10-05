@@ -31,6 +31,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries;public float navigationStalledSeconds;
+  public int combatMotionSamples,combatMotionBlocked;public string combatTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
@@ -256,6 +257,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    bridge.diagnosticAim=aim.normalized;
    if(worldDriver.currentInteractable==target&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
   }else{
+   if(r.teleporterLoop){ObjectiveCombatInput(player,bridge,elapsed,Vector2.zero,false);return;}
    bridge.diagnosticAim=Vector3.zero;var enemy=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    if(enemy!=null){var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%12<.2f;bridge.diagnosticSpecial=elapsed%20<.2f;bridge.diagnosticUtility=elapsed%16<.2f;}
    bridge.DiagnosticJump(elapsed%18<.2f);

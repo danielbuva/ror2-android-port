@@ -320,21 +320,41 @@ public sealed partial class MovementBatchProbe {
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
    var actors=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();
    var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-   // Clear attacking adds first, as in the accepted continuous route.
-   var enemy=actors.OrderBy(x=>worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)?1:0).ThenBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
+   // The whole-run capture records lethal nearby guard slams while the input
+   // driver aims at other adds. Choose that immediate threat before distant adds.
+   var guardIndex=BodyCatalog.FindBodyIndex("BeetleGuardBody");
+   var enemy=actors.OrderBy(x=>x.body.bodyIndex==guardIndex&&Vector3.Distance(x.body.corePosition,player.corePosition)<25?0:worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)?2:1).ThenBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    if(enemy!=null){
     var fromThreat=player.characterMotor.Motor.TransientPosition-nearest.body.characterMotor.Motor.TransientPosition;fromThreat.y=0;float distance=fromThreat.magnitude;
     float safeDistance=20;
     Vector2 desired=distance<safeDistance?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
     if(constrainToHoldout&&planar.magnitude>50)desired=planar.normalized;
-    // Walkability steers recorded input; it never translates the player or changes collision.
-    var origin=player.characterMotor.Motor.TransientPosition;
-    var choices=new[]{desired,new Vector2(desired.y,-desired.x),new Vector2(-desired.y,desired.x),-desired};
-    foreach(var choice in choices){RaycastHit ground;var ahead=origin+new Vector3(choice.x,0,choice.y)*4+Vector3.up*5;if(Physics.Raycast(ahead,Vector3.down,out ground,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&ground.normal.y>.75f&&Mathf.Abs(ground.point.y-origin.y)<2){bridge.movement=choice;break;}}
+    SelectCombatMotion(player,bridge,desired,actors,distance<safeDistance);
+    r.world.combatTarget=enemy.body.name;
     bool evade=distance<16;bridge.diagnosticSprint=evade;bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
    }
+ }
+ void SelectCombatMotion(CharacterBody player,NovaInputBridge bridge,Vector2 desired,DirectorActor[] threats,bool escape){
+  // Input-only terrain selection. Compare ground to ground, including while
+  // jumping; the old capsule-position comparison rejected all four directions.
+  var solver=player.characterMotor.Motor;var origin=solver.TransientPosition;RaycastHit floor;
+  r.world.combatMotionSamples++;bridge.movement=Vector2.zero;r.world.combatMotion=Vector2.zero;
+  if(!Physics.Raycast(origin+Vector3.up*.25f,Vector3.down,out floor,24,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||floor.collider.gameObject.scene!=stageGeometryScene){r.world.combatMotionBlocked++;return;}
+  var baseline=solver.GroundingStatus.IsStableOnGround?solver.GroundingStatus.GroundPoint:floor.point;r.world.combatGround=baseline;
+  if(desired.sqrMagnitude<.01f)desired=Vector2.right;desired.Normalize();var perpendicular=new Vector2(desired.y,-desired.x);
+  var choices=new[]{desired,(desired+perpendicular).normalized,perpendicular,(-desired+perpendicular).normalized,-desired,(-desired-perpendicular).normalized,-perpendicular,(desired-perpendicular).normalized};
+  float best=float.NegativeInfinity;
+  foreach(var choice in choices)foreach(float length in new[]{2f,4f}){
+   RaycastHit ground;var ahead=baseline+new Vector3(choice.x,0,choice.y)*length;
+   if(!Physics.Raycast(ahead+Vector3.up*4,Vector3.down,out ground,9,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||ground.collider.gameObject.scene!=stageGeometryScene||ground.normal.y<=.75f||Mathf.Abs(ground.point.y-baseline.y)>=2||!InsideSourceStageBounds(ground.point))continue;
+   if(Physics.Linecast(baseline+Vector3.up,ground.point+Vector3.up,LayerIndex.world.mask,QueryTriggerInteraction.Ignore))continue;
+   float score=Vector2.Dot(choice,desired)*4;
+   if(escape)score+=threats.Min(x=>Vector3.Distance(ground.point,DirectorPhysicsPosition(x.body)));
+   if(score<=best)continue;best=score;bridge.movement=choice;r.world.combatDestination=ground.point;
+  }
+  r.world.combatMotion=bridge.movement;if(bridge.movement==Vector2.zero)r.world.combatMotionBlocked++;
  }
  void CleanupTeleporterWorld(){CleanupMoonMission();CleanupStageTransport();
   if(objectiveSummon!=null)MasterSummon.onServerMasterSummonGlobal-=objectiveSummon;pendingObjectiveActors.Clear();objectiveAmbientExpected.Clear();objectiveDirectorActors.Clear();

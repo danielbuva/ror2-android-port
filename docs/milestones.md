@@ -246,3 +246,11 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J292 full build:**119.123-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `a4dc21bf35326158ba097d33733262c936491f02338607492527a0a0e65cea16`. Full Nova route retry running; original bounds/scene activation/Moon/victory acceptance pending. I06/I03 remain immutable.
+
+
+**J292 device exit:**834.471 reported gameplay seconds, three genuine boss/natural-charge/exit loops and three completed recovered transports/count3,207 kills. Original source-enabled bounds and original active distinctions pass through Abyssal; Rallypoint water remains inactive. Genuine fatal combat health-36.56; no source MapZone exit/teleport at death and actual player near recovered ground. Original StandardLoss/server/client/RunReport/XML/ledger persist:357 fields,53711 dealt/1309 taken,847.204 original stopwatch seconds/five acquired item entries/priorRuns6. Full source/world/model/results cleanup and zero unexpected current-process runtime errors pass. Sky scene identities/Moon/victory unexecuted; I06/I03 remain unchanged, Nova stopped/asleep.
+
+**J293 whole-game continuation:** Ground-to-ground diagnostic combat motion and waiting-phase evasion replace the measured stationary driver; nearby fatal guards are prioritized through original body identity. Full route build/device retry pending, no source numerical/physical input changes or Moon/victory acceptance.
+
+
+**J293 full build:**146.005-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `780f90f9ce51329a9f461ff146361646a24af9a7c04e07b488673b30016361df`. Full Nova route retry running; motion/guard targeting/Sky/Moon/victory require actual device outcomes. I06/I03 unchanged.
