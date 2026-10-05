@@ -325,3 +325,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J302 full build:**81.026-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `52f2275fd793e8ab4d9c4be7e0be1f29db41411ba6725ac8b0f04edd58a09fc3`. Complete Nova route retry running; terrain clearance/live motor/takeover/Moon/mission/victory outcomes pending. I06/I03 unchanged; no new capability pointer.
+
+
+**J302 live takeover UI:** During the complete Wetland run, actual Nova taps switch to physical mode and back to automation. Current original body/master IDs and transport count stay unchanged; input neutralization and reported mode changes pass. Local before/active/resumed source records and active-button capture retained. This verifies mode switching/continuity, not human physical operation during takeover. Full route/terrain/Moon/mission/victory acceptance remain pending; I06/I03 unchanged.
