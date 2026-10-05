@@ -2769,3 +2769,28 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J306 full build:**89.601-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `2a13ed577c2892566d88d63c1e5241be7b9c18bfe9e6e1a8c53951690c29e1c1`. Complete unattended route/visible hurtbox/original combat approach/Moon partial-path/ending acceptance pending. I06/I03 unchanged, no new capability pointer.
+
+
+**J306 device exit:**758.388 gameplay seconds,133 kills, one genuine teleporter reward/exit/transport. Actual visible boss targeting and original damage pass on device; Wetland Queen reaches89.589 health, then source level growth increases max health to3360. The last several minutes leave655.471 health unchanged. With only two live enemies, the driver selects an occluded Beetle rather than the unfinished Queen; source full path is reachable but target changes redirect it. Capture shows normal original character and recovered geometry; current-process errors/message failures zero. Source review additionally identifies flattened evasion distance and periodic combat jump overwriting approach requests; those are candidate corrections, not proven causes of every failed movement. Owned runner interrupted, app stopped/selector removed/Nova asleep; source teardown/ending did not run. Moon partial-path candidate remains device-unexecuted. I06/I03 immutable, no I07 pointer.
+
+### I07-S27 — Keep original boss approach coherent
+
+- **ID:** I07-S27.
+- **TITLE:** Boss approach priority and full threat height.
+- **CONTEXT:** J306 visible aiming passes, then stalls in the full Wetland encounter.
+- **OBSERVATION:** Two living actors; occluded add chosen instead of unfinished Queen. Source path reachable; repeated redirection. Source input discards height for evasion and overwrites path jumps.
+- **HYPOTHESIS:** Retain objective approach over occluded adds, restrict defence interruption to visible/contact threats and preserve source navigation jumps.
+- **TASK:** Correct these related input decisions in the complete game; force-build and replay the genuine route on Nova.
+- **CONSTRAINTS:** Input-only; original damage/health/RNG/rules/directors/loot/authority/collision/progression and physical input/camera unchanged. No forced boss defeat/charge/skip/save invention; I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored TeleporterWorldBoundary, ignored full stage/config/build/device evidence and state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Device approach retains boss target and completes original combat/exit; inspect full route, then Moon partial path and mission/ending separately.
+- **FAILURE EVIDENCE TO CAPTURE:** Actual target/LOS/endpoints, source path/jump/ground/3D range/motor progress, original damage/health/progression, current-process errors/capture and cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J307 build/device exit; preserve failed candidates, no incomplete-run pointer.
+- **DEPENDENCIES:** J306 exact two-actor stall/capture and source review; accepted camera/I06/I03.
+
+
+**J307 pre-device caller correction:** Review finds the J306 combat approach call supplies stopDistance16, which NavigateWorldInput applies to every waypoint. Exact original PathFollower uses2-metre passage/height tolerance, so a16-metre movement stop can halt before the source follower advances. Correct only this call to1 metre; visible near-combat range logic still owns target approach/retreat. Preserve the first J307 archive/build (85.054seconds, zero errors, APK `8d65eab233f6a075847da5fec2316f76a4be33c64e5c3ccd09266056b4b5d7e8`) as rejected in host review, never installed. Corrected complete candidate work/experiments/scene-runtime/20261005T214936.976727Z retains a separate archive/parent record and refreshed compile/preflight;40 unchanged host safety tests remain passing. Full corrected build/device route pending. No stage edits occurred during the preceding outstanding build; no capability pointer advances.
+
+
+**J307 corrected full build:**76.799-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `7ecb3ab672654e4a7a42e40a592f2d34f07e80f293b40b9e95a7ee7203ba8422`. Corrected waypoint tolerance is archived separately from the pre-device rejected parent. Complete unattended route/boss approach/Moon partial-path/mission/ending acceptance pending. I06/I03 unchanged; no new capability pointer.

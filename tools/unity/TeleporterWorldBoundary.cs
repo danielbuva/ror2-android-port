@@ -328,24 +328,28 @@ public sealed partial class MovementBatchProbe {
  void ObjectiveCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed,Vector2 planar,bool constrainToHoldout=true){
    var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
    var actors=living.Where(x=>InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();r.world.combatCandidates=living.Length;r.world.combatBoundsRejected=living.Length-actors.Length;
-   var nearest=actors.OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
    // The unattended route can aim through terrain or continually select distant
    // adds while the boss survives. Observe actual firing lines before choosing input.
    var origin=player.inputBank.aimOrigin;
    var targets=actors.Select(x=>{bool visible;var point=WorldCombatAimPoint(x.body,origin,out visible);return new {actor=x,point=point,visible=visible,distance=Vector3.Distance(point,origin),boss=worldTeleporter&&worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master)};}).ToArray();
    r.world.combatVisibleCandidates=targets.Count(x=>x.visible);r.world.combatOccludedCandidates=targets.Length-r.world.combatVisibleCandidates;
    var guardIndex=BodyCatalog.FindBodyIndex("BeetleGuardBody");
-   var target=targets.OrderBy(x=>!x.visible?5:x.actor.body.bodyIndex==guardIndex&&x.distance<25?0:x.distance<16?1:x.boss?2:x.distance<40?3:4).ThenBy(x=>x.distance).FirstOrDefault();
+   var target=targets.OrderBy(x=>!x.visible?(x.boss?5:6):x.actor.body.bodyIndex==guardIndex&&x.distance<25?0:x.distance<16?1:x.boss?2:x.distance<40?3:4).ThenBy(x=>x.distance).FirstOrDefault();
    if(target!=null){
-    var fromThreat=player.characterMotor.Motor.TransientPosition-nearest.body.characterMotor.Motor.TransientPosition;fromThreat.y=0;float distance=fromThreat.magnitude;
+    // A distant occluded add must not interrupt a source-reachable boss approach.
+    // Near contact remains a threat even without a clear firing line.
+    var nearest=targets.Where(x=>x.visible||x.distance<8).OrderBy(x=>x.distance).FirstOrDefault();
+    var fromThreat=player.characterMotor.Motor.TransientPosition-DirectorPhysicsPosition(nearest!=null?nearest.actor.body:target.actor.body);float distance=fromThreat.magnitude;fromThreat.y=0;
     float safeDistance=20;
-    Vector2 desired=distance<safeDistance?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
+    bool escape=nearest!=null&&distance<safeDistance;
+    Vector2 desired=escape?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
     if(constrainToHoldout&&planar.magnitude>50)desired=planar.normalized;
-    if(distance>=safeDistance&&(!target.visible||target.distance>32)&&(!constrainToHoldout||planar.magnitude<=50)){
-     NavigateWorldInput(player,bridge,DirectorPhysicsPosition(target.actor.body),16,"Combat: "+target.actor.body.name,elapsed);r.world.combatApproachFrames++;
-    }else SelectCombatMotion(player,bridge,desired,actors,distance<safeDistance);
+    bool approach=!escape&&(!target.visible||target.distance>32)&&(!constrainToHoldout||planar.magnitude<=50);
+    if(approach){
+     NavigateWorldInput(player,bridge,DirectorPhysicsPosition(target.actor.body),1,"Combat: "+target.actor.body.name,elapsed);r.world.combatApproachFrames++;
+    }else SelectCombatMotion(player,bridge,desired,actors,escape);
     r.world.combatTarget=target.actor.body.name;r.world.combatLineOfSight=target.visible;r.world.combatTargetBoss=target.boss;r.world.combatTargetDistance=target.distance;r.world.combatThreatDistance=distance;r.world.combatAimOrigin=origin;r.world.combatAimTarget=target.point;
-    bool evade=distance<16;bridge.diagnosticSprint=evade;bridge.DiagnosticJump(elapsed%1.8f<.25f);
+    bool evade=nearest!=null&&distance<16;bridge.diagnosticSprint=evade;if(!approach)bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=target.point-origin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=target.visible;bridge.diagnosticSecondary=target.visible&&elapsed%4<.2f;bridge.diagnosticSpecial=target.visible&&elapsed%10<.2f;
    }
