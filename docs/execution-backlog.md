@@ -2722,3 +2722,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J304 full build:**79.831-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `759a7a11564d36658e1d2b2154ffafc4f11dfcae55698b082d11a96f21b0a300`. Complete unattended route/nearest-floor/Moon/ending acceptance pending; I06/I03 unchanged, no new capability pointer.
+
+
+**J304 unattended exit:**1465.499 gameplay seconds,385 kills and five genuine objectives/transports; original Moon landing/population pass. Nearest-height selection executes2841 times, overflow0, but the last-minute battery distance remains991.616→989.491 metres (closest977.421), with four batteries inactive. Current-process errors zero; capture shows original character and temple geometry. No original lunar attack executes in this interval, so native-stop execution remains unproven. Read-only original ComputePath against active recovered collision finds a21-waypoint reachable bridge approach using the recorded original sprint11.9/jump3.75; full paths to all16 serialized battery candidates fail from the tested entrance points. These host observations do not prove device traversal. Current report/capture/errors and attempted analysis remain ignored locally. Owned runner interrupted, app stopped/selector removed/Nova asleep; no mission/ending/persistence/full source cleanup or I07 pointer. I06/I03 immutable. Revisit with partial original path guidance before terrain fallback.
+
+### I07-S25 — Follow reachable original Moon approaches
+
+- **ID:** I07-S25.
+- **TITLE:** Original partial path guidance inside the complete run.
+- **CONTEXT:** J304 completes five stages but greedy Moon steering circles the temple.
+- **OBSERVATION:** Actual nearer-floor choices2841/overflow0; four batteries inactive, zero current-process errors. Original solver finds a closer reachable bridge node with unchanged recorded limits.
+- **HYPOTHESIS:** Retaining the source-reachable path portion enables ordinary traversal before local terrain steering takes over.
+- **TASK:** Integrate source approach selection into automatic Moon travel; force-build and execute the complete composed route on Nova.
+- **CONSTRAINTS:** Normal original movement/input only; no source graph, physics/stats, mission/progression or platform identity edits. Accepted camera and I06/I03 immutable; user input unnecessary.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored IntegratedWorldBoundary, ignored full stage/config/recipe/archive/build/device evidence, state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual source partial path guides the continuing original body beyond the temple; complete mission/ending remains a distinct device gate. Inspect candidate count/query time, original movement, current-process errors and first blocker.
+- **FAILURE EVIDENCE TO CAPTURE:** Full report, partial path/node/waypoints/timing, body/master/authority/grounding, current-process errors and screenshot; no pointer from interrupted travel.
+- **STATE/JOURNAL UPDATES REQUIRED:** J305 build/device exit, concise state/milestones; preserve all failed evidence.
+- **DEPENDENCIES:** J304 complete route and paired ground observations, active-collision original graph comparison; I06/I03 immutable.
+
+
+**J305 full build:**111.655-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `39eb9224a2c21d19fc6de17a112a866440f25fc9323357bdfd8f873d4ebc3bf0`. Complete unattended route/original partial-path/Moon/ending acceptance pending; I06/I03 unchanged, no new capability pointer.
