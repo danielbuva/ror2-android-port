@@ -2501,3 +2501,18 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J291 full build:**115.678-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `940b384316690846412ca3588c18f203151eb9d651f6f31687bc8e6cba902af2` verified. Full Nova route retry running; source out-of-bounds/Moon/victory acceptance pending.
+
+
+**J291 first device failure:** Full integrated setup times out before the first original scheduled enemy. Actual file-based stack is MasterSummon → CharacterMaster.Respawn → Run.FindSafeTeleportPositionSimplified → original helper SpawnCard.Instantiate(null). The original Util map-bounds query sees newly registered MapZones whose deliberately disabled colliders have empty bounds. Repeated original director retries emit runtime exceptions; this is not a clean device pass. No world/Moon/progression or result persistence occurs. Full owned cleanup passes; raw failed evidence remains at `work/experiments/scene-runtime/20261005T132632.713231Z`, Nova stopped/asleep, I06/I03 unchanged.
+
+## J292 — Preserve original bounds and scene activation in the whole game
+
+**Correction:** Candidate `work/experiments/scene-runtime/20261005T134005.166868Z` defers the source MapZone owner objects, so original OnEnable/InstanceTracker registration starts only after context/entry. Source colliders remain enabled with original geometry. Each owner has no children; source active flags are explicitly inventoried/restored. Rallypoint's source-inactive water zone remains inactive. Sky Meadow's two source-inactive network volumes retain their actual NetworkIdentity and TeamFilter; the original owned server SpawnObjects path activates them after entry. No invented scene IDs, forced kills, health/damage/charge/progression or platform status. Source volume tests continue to govern diagnostic target choice; physical mapping unchanged.
+
+**Prior art / next:** Same pinned R2API.Director/Networking f539511e source stage and explicit original server/identity boundaries, Starstorm2 a9a4badd scene identity and exact MapZone/Util/CharacterMaster/HLAPI source inspected. No implementation copied. Fresh import/compile/preflight/40 tests/archive/forced Vulkan build and complete Nova route required; no compile-only capability. I06/I03 immutable; Nova asleep during host work.
+
+
+**J292 host preparation repair:** Before build/device, static geometry's managed-dependency guard rejects the source scene NetworkIdentity's existing HLAPI reference. Failed generated Sky scene/config/stager/error receipt retained separately. Admit only that exact existing Plugins path/GUID with byte identity against the legitimate original HLAPI DLL; RoR2 handling and all45 pins stay unchanged. No replacement DLL or new middleware. Source-owner inspection also confirms no children, source-inactive Rallypoint water and Sky network volumes; generated activation restores those original distinctions.
+
+
+**J292 full build:**119.123-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `a4dc21bf35326158ba097d33733262c936491f02338607492527a0a0e65cea16`. Full Nova route retry running; original bounds/scene activation/Moon/victory acceptance pending. I06/I03 remain immutable.

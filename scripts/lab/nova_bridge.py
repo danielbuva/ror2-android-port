@@ -211,17 +211,39 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2}
     if map_zones and len(map_blocks)!=expected_zones.get(scene_name):raise RuntimeError('Original stage MapZone contract changed; review source')
     map_owners={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in map_blocks}
+    by_id={re.match(r'--- !u!\d+ &(-?\d+)',b)[1]:b for b in blocks}
+    map_active=[]
+    def source_name(block):
+        value=re.search(r'^  m_Name: (.*)$',block,re.M)[1]
+        if value.startswith("'") and value.endswith("'"):return value[1:-1].replace("''", "'")
+        return json.loads(value) if value.startswith('"') else value
+    for owner in map_owners:
+        if '  m_IsActive: 1' in by_id[owner]:map_active.append(source_name(by_id[owner]))
+        transform=next(b for b in blocks if b.startswith('--- !u!4 ') and re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1]==owner)
+        if '  m_Children: []' not in transform:raise RuntimeError('MapZone owner has unreviewed children')
+    map_active.sort()
+    map_network_script="m_Script: {fileID: 372142912, guid: d382a022563c7517aadbc92ca1060016"
+    identities={tuple(row.split('|')[:2]):row.split('|')[2] for row in (WORK/'moon-script-identities.txt').read_text().splitlines()} if map_owners else {}
+    map_team_id=next((identity for identity,name in identities.items() if name=='RoR2.TeamFilter'),None)
+    map_extra=[]
+    map_network_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in blocks if b.startswith('--- !u!114 ') and map_network_script in b and re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] in map_owners]
+    if map_network_ids and map_team_id is None:raise RuntimeError('Original MapZone TeamFilter identity missing')
+    if map_network_ids and (scene_name!='skymeadow' or len(map_network_ids)!=2):raise RuntimeError('Original MapZone network scope changed')
     map_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in map_blocks];deferred_colliders=[]
     for block in blocks:
         match=re.match(r'--- !u!(\d+) &(-?\d+)',block);kind=int(match[1]);file_id=match[2]
         preview=kind==114 and preview_script in block
         if preview:preview_ids.append(file_id)
+        owner=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)
+        script=re.search(r'm_Script: \{fileID: (-?\d+), guid: ([a-f0-9]+)',block)
+        map_context=kind==114 and owner and owner[1] in map_owners and script and (map_network_script in block or script.groups()==map_team_id)
+        if map_context:map_extra.append(file_id)
         map_zone=kind==114 and map_zones and map_script in block
-        if kind not in keep and not preview and not map_zone:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
+        if kind not in keep and not preview and not map_zone and not map_context:removed.add(file_id);counts[str(kind)]=counts.get(str(kind),0)+1;continue
         if kind in {4,224} and re.search(r'm_Father: \{fileID: 0\}',block):root_objects.add(re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1])
         if kind in {64,65,135,136} and re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1] in map_owners:
             if '  m_IsTrigger: 1' not in block or '  m_Enabled: 1' not in block:raise RuntimeError('Original MapZone collider contract differs')
-            block=block.replace('  m_Enabled: 1','  m_Enabled: 0',1);deferred_colliders.append(file_id)
+            deferred_colliders.append(file_id)
         kept.append((kind,file_id,block))
     if len(deferred_colliders)!=len(map_ids):raise RuntimeError('Original MapZone collider count differs')
     expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'moon2':0}
@@ -229,6 +251,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     updated=[]
     for kind,file_id,block in kept:
         if kind==1:
+            if file_id in map_owners:block=block.replace('  m_IsActive: 1','  m_IsActive: 0',1)
             block=re.sub(r'^  - component: \{fileID: (-?\d+)\}\n',lambda m:'' if m[1] in removed else m[0],block,flags=re.M)
         updated.append(block)
     geometry=header+''.join(updated);dest=stage/'StageGeometry'/(scene_name+'.unity' if original_name else scene_name+'-spine.unity');dest.parent.mkdir(parents=True,exist_ok=True)
@@ -251,6 +274,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         src=index[guid]
         if src.suffix=='.dll':
             if src.name=='RoR2.dll' and guid in existing and existing[guid]==stage/'Plugins/RoR2.dll':continue
+            if src.name=='com.unity.multiplayer-hlapi.Runtime.dll' and guid in existing and existing[guid]==stage/'Plugins'/src.name and sha(existing[guid])==sha(game()/'Risk of Rain 2_Data/Managed'/src.name):continue
             raise RuntimeError('Unexpected managed dependency in static geometry '+src.name)
         dst=existing.get(guid,stage/'StageGeometry/Assets'/src.relative_to(export/'Assets'))
         if guid not in existing:
@@ -264,8 +288,8 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         recipe['nextStageScenes']=list(dict.fromkeys(recipe.get('nextStageScenes',[])+[str(dest.relative_to(WORK/'lab-project'))]))
         recipe.pop('nextStageScene',None)
     write(WORK/'scene-probe-build.json',recipe)
-    write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids,'MapZone':map_ids},'deferred_map_colliders':deferred_colliders,'roots':len(root_objects),'source_active_flags_preserved':True,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
-    if scene_name=='golemplains':return {'stageGeometry':True,'stageMapZoneCount':len(map_ids)}
+    write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids,'MapZone':map_ids,'MapZoneContext':map_extra},'deferred_map_objects':sorted(map_owners),'source_active_map_names':map_active,'map_network_objects':map_network_ids,'roots':len(root_objects),'source_active_flags_preserved':not map_owners,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
+    if scene_name=='golemplains':return {'stageGeometry':True,'stageMapZoneCount':len(map_ids),'stageMapZoneActiveNames':map_active}
     graphs={}
     for kind in ['ground','air']:
         guid=re.search(r'^  '+kind+r'NodesAsset: \{fileID: -?\d+, guid: ([a-f0-9]{32})',text,re.M)[1]
@@ -298,7 +322,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
             go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1]
             empty.append(dict(component=fid,kind=kind,path=object_path(go_id)))
     write(out/(scene_name+'-source-empty-meshes.json'),dict(source_scene_sha256=sha(source),components=empty,scope='Exact source-null fields and hierarchy identities; no blanket missing-reference allowance or mesh replacement. Source tree siblings retain populated meshes.'))
-    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),previewNames=preview_names,mapZoneCount=len(map_ids),emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
+    return dict(name=scene_name,bundle=scene_name+'-spine-lab',scene=str(dest.relative_to(WORK/'lab-project')).lower(),previewCallbacks=len(preview_ids),previewNames=preview_names,mapZoneCount=len(map_ids),mapZoneActiveNames=map_active,mapZoneNetworkObjects=len(map_network_ids),emptyMeshPaths=[x['path'] for x in empty if x['kind'] in {33,137}],emptyColliderPaths=[x['path'] for x in empty if x['kind']==64],**graphs)
 
 
 def stage_enemy_spine(stage,previous,out):

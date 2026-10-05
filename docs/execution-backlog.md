@@ -2443,3 +2443,9 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S13 J291 build:**115.678-second/zero-error Vulkan ARM64 build;40 tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `940b384316690846412ca3588c18f203151eb9d651f6f31687bc8e6cba902af2` verified. Full Nova route retry running; source out-of-bounds/Moon/victory acceptance pending.
+
+
+**I07-S13 J291 exit / J292:** Original enemy respawn fails before gameplay because registered MapZones have disabled colliders/empty bounds and request the unavailable early helper. Full stack/repeated exceptions/failed candidate retained; full cleanup passes. Defer source owner objects instead of colliders; restore only original active volumes, and retain Sky Meadow's two exact scene NetworkIdentity/TeamFilter pairs for original server activation. Build/run the whole game; no source numerical changes, accepted pointer or victory advance.
+
+
+**J292 full build:**119.123-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `a4dc21bf35326158ba097d33733262c936491f02338607492527a0a0e65cea16`. Full Nova route retry running; original bounds/scene activation/Moon/victory acceptance pending. I06/I03 remain immutable.

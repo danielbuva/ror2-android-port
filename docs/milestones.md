@@ -240,3 +240,9 @@ J289 repeats five genuine objectives/count5/four transports/386 kills with zero 
 
 
 J290 completes four genuine objectives/transports and421 kills over1807.934 gameplay seconds, then genuine fifth-boss loss. Original loss/XML/ledger/full cleanup and zero unexpected errors pass; Moon remains unentered. J291 restores original out-of-bounds callbacks across the earlier stages and source-bound diagnostic combat selection after observing an unreachable underworld enemy. Full route/mission/victory acceptance remains open; I06/I03 unchanged.
+
+
+J291 fails before original enemy creation: registered volumes with disabled colliders make all spawn points appear out of bounds. Full cleanup passes; no gameplay acceptance. J292 preserves collider geometry/enabled state, defers source volume objects and honors original source active/network-scene activation. Full Nova route remains required; I06/I03 retained.
+
+
+**J292 full build:**119.123-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities and APK SHA-256 `a4dc21bf35326158ba097d33733262c936491f02338607492527a0a0e65cea16`. Full Nova route retry running; original bounds/scene activation/Moon/victory acceptance pending. I06/I03 remain immutable.
