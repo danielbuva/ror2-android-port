@@ -2333,3 +2333,20 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **I07-S06/S08 continuation, J280:** Five genuine objectives complete. Original Moon server scene-object activation,30 identities, Toggle Awake/Generate/randomized selection and authority now pass before the first mission Start frame. Fix the adapter's redundant same-active-scene returnfalse, retain explicit active/catalog identity assertions, and continue the entire route/mission/ending. Full cleanup and long atomic report capture pass; no rollback advance. I07-S09 also corrects the observed HUD stack read from unpopulated report configuration; original earned inventory/stat behavior remains unchanged.
+
+
+**I07-S07/S08 partial acceptance, J281/J282:** Original genuine loss/client/report/XML round trip and owned Android ledger now pass. Same integrated APK's actual GUI start, natural death, clean restart, return to menu and new run pass in three same-process sessions with prior results retained. No scripted gameplay input/forced death/stock profile or new physical-controller acceptance. MainEnding/Moon/full victory remain open; I06/I03 unchanged.
+
+### I07-S10 — Original Moon natural-population context
+
+- **CONTEXT:** Complete Moon/application composition is retained; stock platform startup stays unavailable.
+- **OBSERVATION:** Retained Moon scene omits original ClassicStageInfo. Original CombatDirector uses its monsterSelection when its serialized deck is absent; most source Moon directors, including battery directors, use that fallback.
+- **HYPOTHESIS:** Retaining the exact component/pool closure and original Start/RebuildCards supports actual source-weighted Moon population with the already composed Lunar actors.
+- **TASK:** Retain original serialized ClassicStageInfo and DCCS dependencies; scope clones only to bind known original spawn cards to the existing Android actor templates. Preserve category weights/availability/expansion conditions, source randomization, original credit/timing/placement. Observe actual selected cards and native spawns in the continuing full game.
+- **CONSTRAINTS:** Common contract; no forced selections/spawns/charge/kill/victory, unknown selected cards stop with a named failure; no middleware or platform capability claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing ignored Moon conversion/receipt; integrated_moon.py; MoonMissionBoundary.cs.
+- **TEST COMMAND:** ./dev preflight; ./dev test; forced Vulkan build; existing movement-batch-run whole-game lifecycle.
+- **PASS CONDITION:** Original ClassicStageInfo generates nonempty eligible selection, mapped source actors spawn under original directors, full mission continues with truthful evidence. Compilation alone is insufficient.
+- **FAILURE EVIDENCE TO CAPTURE:** Source pool/card names and weights, actual current-launch first initialization/native/selection/spawn failure, original scene count and cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record source hashes/clones/selection scope, real full-game result, first failure and rollback; maintain open Moon/victory gates.
+- **DEPENDENCIES:** J280 source activation; J281/J282 ending/application integration; immutable I06/I03.

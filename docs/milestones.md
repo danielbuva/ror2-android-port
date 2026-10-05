@@ -222,3 +222,6 @@ J276 reaches original counter5 and actual loaded Moon geometry after five genuin
 
 
 J277 passes actual Moon244-component/mesh/collision/material checks after five genuine objective loops. Original source toggle activation fails before mission initialization; full teardown passes. Next full game supplies original server scene-object lifecycle and expanded earned items. Moon mission/fifth transport/victory/result persistence/application-loop gates and rollback pointers remain unadvanced.
+
+
+J280 passes original Moon server scene-object activation/Toggle Awake and source randomized four-battery selection after five genuine objectives; redundant same-scene selection rejects transport before mission Start. The adapter is corrected. J281 whole-game retry suffers genuine Wetland defeat while original StandardLoss/client/XML save-reload and owned Android ledger pass. J282 same integrated APK passes actual GUI start→natural loss→clean fresh restart→natural loss→menu→fresh run across three sessions, preserved prior results/fresh inventory/clock/authority and zero unexpected process errors. Source loss persistence and authored Android application flow are accepted; MainEnding/Moon/fifth transport/victory, new physical-button/long fresh-session acceptance and formal stock-startup/full-run gates remain open. I06/I03 rollback pointers stay immutable.
