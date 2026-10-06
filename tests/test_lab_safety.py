@@ -7,8 +7,11 @@ from common import write
 class SafetyTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.patcher=patch.object(device,'WORK',self.root);self.patcher.start()
+  # These ABI/storage fixtures are ZIP containers, not Android manifests.
+  # APK identity rejection is exercised separately with explicit metadata.
+  self.identity_patcher=patch.object(device,'validate_apk_identity');self.identity_patcher.start()
   self.d=object.__new__(device.Device);self.d.serial='authorized-test';self.d.base=['must-not-execute-adb']
- def tearDown(self):self.patcher.stop();self.temp.cleanup()
+ def tearDown(self):self.identity_patcher.stop();self.patcher.stop();self.temp.cleanup()
  def apk(self,abi='arm64-v8a'):
   p=self.root/'test.apk'
   with zipfile.ZipFile(p,'w') as z:z.writestr('lib/'+abi+'/libtest.so',b'not executable')
@@ -61,6 +64,21 @@ class SafetyTests(unittest.TestCase):
   with patch.object(device,'config',return_value={'sleep_display_when_idle':True}):
    with self.assertRaisesRegex(RuntimeError,'authorized only for Nova'):self.d.display(False)
   self.assertEqual(calls,[('getprop','ro.product.model')])
+ def test_authorized_update_replaces_same_package_and_counts_dispatches(self):
+  calls=[];installed=[False];self.d.exists=lambda:installed[0]
+  self.d.storage=lambda:{'mode':'internal','uuid':None,'internal':{'free_bytes':10**12},'adopted':None}
+  self.d.sh=lambda *args,**kwargs:'package:/data/app/test/base.apk' if args==('pm','path',device.PACKAGE) else ''
+  def command(*args,**kwargs):calls.append(args);installed[0]=True;return 'Success'
+  self.d.cmd=command
+  with patch.object(device,'config',return_value={}):
+   apk=self.apk();first=self.d.install(apk)
+   with zipfile.ZipFile(apk,'w') as z:z.writestr('lib/arm64-v8a/libtest.so',b'updated')
+   second=self.d.install(apk)
+  self.assertEqual(first['package'],second['package']);self.assertNotEqual(first['apk_sha256'],second['apk_sha256'])
+  self.assertEqual(len(calls),2)
+  for call in calls:self.assertEqual(call[:4],('install','-r','--force-uuid','internal'))
+  counter=json.loads(next((self.root/'device-install-limits').glob('*.json')).read_text())
+  self.assertEqual(counter['dispatched'],2)
  def test_display_opt_out_never_queries_device(self):
   self.d.sh=lambda *args,**kwargs:self.fail('Unrequested display operation')
   with patch.object(device,'config',return_value={}):self.assertFalse(self.d.display(False))

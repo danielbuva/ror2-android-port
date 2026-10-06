@@ -2,6 +2,12 @@ from common import *
 import time,re,shlex,zipfile
 PACKAGE='dev.ror2lab.arm64'
 ADB='/opt/homebrew/bin/adb'
+def validate_apk_identity(apk):
+ aapt=Path('/Applications/Unity/Hub/Editor/2021.3.33f1/PlaybackEngines/AndroidPlayer/SDK/build-tools/30.0.2/aapt')
+ metadata=run([aapt,'dump','badging',apk]).stdout.decode(errors='replace')
+ package=re.search(r"^package: name='([^']+)'",metadata,re.M)
+ if not package or package[1]!=PACKAGE:
+  raise RuntimeError('APK must update the single owned lab package; refusing another app identity')
 class Device:
  display_awakened=False
  def __init__(self):
@@ -41,12 +47,13 @@ class Device:
   result={'serial':self.serial,'mode':mode,'uuid':uuid,'internal':df('/data'),'adopted':df('/mnt/expand/'+uuid) if uuid else None,'shared':df('/sdcard'),'install_location':self.sh('pm','get-install-location')}
   write(WORK/'device/storage.json',result);return result
  def install(self,apk):
+  apk=Path(apk);validate_apk_identity(apk)
   if self.exists():self.owned()
-  storage=self.storage();apk=Path(apk)
+  storage=self.storage()
   limit=config().get('apk_install_limit');counter=WORK/'device-install-limits'/(digest(self.serial)+'.json')
+  used=read(counter).get('dispatched',0) if counter.exists() else 0
   if limit is not None:
    if not isinstance(limit,int) or isinstance(limit,bool) or limit<1:raise RuntimeError('Invalid APK installation limit')
-   used=read(counter).get('dispatched',0) if counter.exists() else 0
    if used>=limit:
     if self.exists():
      prior=self.owned()
@@ -59,7 +66,7 @@ class Device:
   if storage['internal']['free_bytes']<reserve+estimate:raise RuntimeError('Insufficient internal installation scratch headroom; do not move/remove games')
   volume=storage['internal'] if storage.get('mode')=='internal' else storage['adopted']
   if volume['free_bytes']<estimate+reserve:raise RuntimeError('Insufficient selected storage headroom')
-  if limit is not None:write(counter,{'serial':self.serial,'dispatched':used+1,'apk_sha256':sha(apk),'status':'dispatched; verify installation receipt'})
+  write(counter,{'serial':self.serial,'dispatched':used+1,'apk_sha256':sha(apk),'status':'dispatched; verify installation receipt'})
   t=time.monotonic();output=self.cmd('install','-r','--force-uuid',storage['uuid'] or 'internal',str(apk),timeout=240)
   r={'serial':self.serial,'package':PACKAGE,'apk':str(apk),'apk_sha256':sha(apk),'package_path':self.sh('pm','path',PACKAGE),'details':self.sh('dumpsys','package',PACKAGE),'seconds':time.monotonic()-t,'install_output':output,'storage':storage}
   write(WORK/'device/installed.json',r)
