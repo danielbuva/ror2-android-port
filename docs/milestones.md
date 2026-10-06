@@ -412,3 +412,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J313 full build:**92.996-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `9fd7ab7b009fd52c651040725776fb0660261603731ba1538c8b19fdc1690dc8`. Actual corrected instance queue observation/original settlement/conservation/strict transport and Moon recovery remain device-pending. I06/I03 unchanged; no I07 pointer.
+
+
+**J313 live first transport:** Original boss/charge/reward/exit completes into Wetland Aspect while preserving same run/master/body/authority/inventory/money/count. Actual timed queue reports realized XP111 plus2 pending Player awards; original FixedUpdate settles to113 in0.224seconds, and strict post-transport XP remains113. This directly exercises corrected instance lookup and exact conservation without awarding/clearing/replacing XP. No runtime/message failure. Same original run continues; full later stages/Moon recovery/mission/ending remain pending, I06/I03 immutable, no I07 pointer.
