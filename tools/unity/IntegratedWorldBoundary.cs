@@ -33,7 +33,7 @@ public sealed partial class MovementBatchProbe {
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
-  public bool navigationTerrainFallback,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
+  public bool navigationTerrainFallback,navigationTerrainNoCandidate,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
  public int navigationTerrainLowerChoices,navigationTerrainRayOverflow;
   public bool navigationPartial;public int navigationPartialCandidates,navigationPartialNode=-1;public float navigationPartialSeconds;public Vector3 navigationPartialDestination;
   public string navigationHull,navigationJumpHeight;public int navigationGraphNodes,navigationStartNode=-1,navigationNearestNode=-1,navigationApproachBoundsRejected,navigationApproachTooShort,navigationApproachUnreachable;public float navigationMaxSpeed,navigationMaxSlope,navigationGravityY;public Vector3 navigationStartPosition;
@@ -289,7 +289,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // Players may sprint while travelling. Let original input/stat callbacks supply
   // the actual speed used by the next source path request, including earned items.
   if(moon||elapsed<worldTerrainRecoveryUntil)bridge.diagnosticSprint=planar.magnitude>8;
-  r.world.navigationSprint=bridge.diagnosticSprint;r.world.navigationTerrainFallback=false;
+  r.world.navigationSprint=bridge.diagnosticSprint;r.world.navigationTerrainFallback=false;r.world.navigationTerrainNoCandidate=false;
   r.world.navigationTarget=target;r.world.navigationDestination=destination;r.world.navigationJump=false;
   // Replay follows the recovered graph through the normal input boundary. Original
   // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
@@ -326,9 +326,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   }
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
   if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;worldNavigationHasObjectiveProgress=false;}
-  // Match original Walker.Combat ChaseMoveTarget: the graph supplies a foot
-  // target, and pursuit permits traversal rather than using the circling guard.
-  worldLocalNavigator.targetPosition=waypoint+(player.transform.position-position);worldLocalNavigator.allowWalkOffCliff=true;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
+  // Original graph traversal can include jumps. Terrain fallback has no such
+  // link contract: retain the source cliff guard for its local steering too.
+  worldLocalNavigator.targetPosition=waypoint+(player.transform.position-position);worldLocalNavigator.allowWalkOffCliff=!r.world.navigationTerrainFallback;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
   r.world.navigationAllowWalkOffCliff=worldLocalNavigator.allowWalkOffCliff;
   r.world.navigationLocalMovement=worldLocalNavigator.moveVector;r.world.navigationLocalObstructed=worldLocalNavigator.wasObstructedLastUpdate;r.world.navigationLocalJumpSpeed=worldLocalNavigator.jumpSpeed;
   bridge.movement=movement.magnitude>stopDistance?new Vector2(worldLocalNavigator.moveVector.x,worldLocalNavigator.moveVector.z):Vector2.zero;
@@ -366,6 +366,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.navigationPartialSeconds=Time.realtimeSinceStartup-began;path.Clear();return false;
  }
  Vector3 TerrainTravelWaypoint(CharacterBody player,Vector3 position,Vector3 destination,float elapsed){
+  r.world.navigationTerrainNoCandidate=false;
   if(worldNavigationBody!=player||Vector3.Distance(destination,worldTerrainGoal)>2){worldTerrainRecent.Clear();worldTerrainSelectedAt=-100;worldTerrainGoal=destination;}
   if(elapsed-worldTerrainSelectedAt<1&&Vector3.Distance(position,worldTerrainTarget)>1)return worldTerrainTarget;
   worldTerrainSelectedAt=elapsed;var desired=destination-position;desired.y=0;desired.Normalize();
@@ -400,7 +401,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    foreach(var recent in worldTerrainRecent)score-=Mathf.Max(0,8-Vector3.Distance(recent,groundPoint));
    if(score<=best)continue;best=score;selected=groundPoint;
   }
-  if(selected==position){r.world.navigationTerrainBlocked++;return destination;}
+  // Rejection must not bypass the ground/torso/bounds checks by steering toward
+  // an unchecked distant goal. Neutral input lets original physics settle.
+  if(selected==position){r.world.navigationTerrainBlocked++;r.world.navigationTerrainNoCandidate=true;worldTerrainTarget=position;return position;}
   worldTerrainTarget=selected;if(worldTerrainRecent.Count==0||Vector3.Distance(position,worldTerrainRecent[worldTerrainRecent.Count-1])>3){worldTerrainRecent.Add(position);if(worldTerrainRecent.Count>40)worldTerrainRecent.RemoveAt(0);}
   return selected;
  }

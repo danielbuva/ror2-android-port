@@ -2945,3 +2945,23 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J313 device exit:** Five genuine original boss/charge/reward/exit/transports reach the Moon;324 kills at1418.402 gameplay seconds. Corrected queue lookup conserves actual earned XP111+2→113 through normal callbacks and strict transport. Objective-stall recovery now passes the temple and reaches original BridgeRamp ground; battery-distance best234.446m. Far-side approach then repeatedly falls: last90seconds distance233.779–499.916m and height−548.537..−181.550m,247 recovery-input frames and38 no-ground-candidate events. The authored terrain fallback returns the unchecked distant objective when all floor/torso/bounds candidates fail, while local navigation permits walking off cliffs. Four batteries remain inactive; no current-process runtime/message errors. Capture/first failure preserved; owned interruption, app stopped/selector removed/Nova asleep. Original ending and full source cleanup did not execute; no I07 pointer. Fix that input fallback before another genuine route; physics/mission/graph and I06/I03 remain unchanged.
+
+
+### I07-S34 — Safe terrain rejection in the composed route
+
+- **ID:** I07-S34.
+- **TITLE:** Prevent unchecked distant-goal fallback and retain original cliff protection.
+- **CONTEXT:** J313 five genuine exits and Moon bridge progress expose repeated far-side falls.
+- **OBSERVATION:**38 no-candidate terrain events still return the objective; source local cliff guard disabled.
+- **HYPOTHESIS:** Neutral rejected input and source cliff protection prevent unchecked departures while preserving valid traversal.
+- **TASK:** Correct fallback input, build the complete game and replay the real route on Nova.
+- **CONSTRAINTS:** Original physics/stats/graph/collision/gates, mission/battery/authority, camera and XP conservation unchanged; no skip/checkpoint framework. I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored IntegratedWorldBoundary; ignored complete stage/build/input and device evidence; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Integrated route remains coherent; actual fallback records neutral rejection/source cliff protection and advances safely beyond the bridge without changing source movement or objective requirements. Mission/ending remain separate actual outcomes.
+- **FAILURE EVIDENCE TO CAPTURE:** First actual route failure, foot/body position, grounding/floor/waypoint/graph, rejected candidate/cliff flag, original input/jump/velocity, runtime/message errors and source versus owned cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J314 actual build/device outcomes; preserve J313 failed traversal and all rollbacks; no incomplete I07 pointer.
+- **DEPENDENCIES:** J313 far-bridge capture and source-ground-input contract; pinned prior art and original LocalNavigator; existing full-game route/build/install safeguards.
+
+
+**J314 full build:**86.094-second/zero-error Vulkan ARM64 build;40 safety tests, complete14397-file archive, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `11aa98a8dd955bf536e89b33f5f730ceea47634bfe47a354d64c34952ade0fe3`. Actual cliff-safe fallback/bridge/battery traversal remains device-pending. Original run/mission/physics/graph and I06/I03 unchanged; no I07 pointer.

@@ -421,3 +421,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J313 device exit:** Five genuine original boss/charge/reward/exit/transports reach the Moon;324 kills at1418.402 gameplay seconds. Corrected queue lookup conserves actual earned XP111+2→113 through normal callbacks and strict transport. Objective-stall recovery now passes the temple and reaches original BridgeRamp ground; battery-distance best234.446m. Far-side approach then repeatedly falls: last90seconds distance233.779–499.916m and height−548.537..−181.550m,247 recovery-input frames and38 no-ground-candidate events. The authored terrain fallback returns the unchecked distant objective when all floor/torso/bounds candidates fail, while local navigation permits walking off cliffs. Four batteries remain inactive; no current-process runtime/message errors. Capture/first failure preserved; owned interruption, app stopped/selector removed/Nova asleep. Original ending and full source cleanup did not execute; no I07 pointer. Fix that input fallback before another genuine route; physics/mission/graph and I06/I03 remain unchanged.
+
+
+**J314 pending:** Full integrated route corrects rejected terrain to neutral input and enables original cliff avoidance during terrain fallback. J313 bridge/temple progress retained; actual far-side traversal/batteries/mission/ending await device execution. No physics/gate/skip changes or I07 pointer. I06/I03 immutable.
+
+
+**J314 full build:**86.094-second/zero-error Vulkan ARM64 build;40 safety tests, complete14397-file archive, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `11aa98a8dd955bf536e89b33f5f730ceea47634bfe47a354d64c34952ade0fe3`. Actual cliff-safe fallback/bridge/battery traversal remains device-pending. Original run/mission/physics/graph and I06/I03 unchanged; no I07 pointer.
