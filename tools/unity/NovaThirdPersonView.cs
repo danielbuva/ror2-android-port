@@ -12,6 +12,7 @@ public sealed class NovaThirdPersonView {
   public Vector3 position,direction,move;public float fov;
  }
  public readonly Report report=new Report();
+ public Vector3 ProjectWorldPoint(Vector3 point){return camera.WorldToScreenPoint(point);}
  readonly Camera camera;readonly CharacterBody body;readonly CameraTargetParams target;
  readonly RaycastHit[] hits=new RaycastHit[64];float yaw,pitch=15;
  public NovaThirdPersonView(Camera camera,CharacterBody body){

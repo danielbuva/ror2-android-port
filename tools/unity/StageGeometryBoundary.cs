@@ -42,19 +42,22 @@ public sealed partial class MovementBatchProbe {
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
+  var beamReplacements=new Dictionary<Material,Material>();
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
    // Full Moon retains original physics/interaction/presentation layer roles.
    // Renderer layer changes also change any collider on that GameObject.
    if(!moon&&!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
    if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
    var materials=renderer.sharedMaterials;
+   bool pillarBeam=moon&&IsMoonPillarBeam(renderer);var materialCache=pillarBeam?beamReplacements:replacements;
    for(int i=0;i<materials.Length;i++){
     if(!materials[i])continue;Material replacement;
-    if(!replacements.TryGetValue(materials[i],out replacement)){
+    if(!materialCache.TryGetValue(materials[i],out replacement)){
      bool terrain=materials[i].shader.name.IndexOf("Triplanar",StringComparison.OrdinalIgnoreCase)>=0;
-     replacement=new Material(materials[i]);replacement.shader=terrain?terrainShader:surfaceShader;replacement.shaderKeywords=new string[0];
+     replacement=new Material(materials[i]);replacement.shader=pillarBeam?Resources.Load<Shader>("MoonPillarBeamPreview"):terrain?terrainShader:surfaceShader;replacement.shaderKeywords=new string[0];
+     if(pillarBeam)Check(replacement.shader&&replacement.shader.isSupported,"Android pillar beam shader unavailable");
      if(terrain){r.stage.terrainMaterials++;if(materials[i].name.StartsWith("matGPTerrain",StringComparison.Ordinal)){r.stage.terrainTextureMaterials++;r.stage.terrainTexturesBound&=replacement.GetTexture("_RedChannelTopTex")&&replacement.GetTexture("_RedChannelSideTex")&&replacement.GetTexture("_GreenChannelTex")&&replacement.GetTexture("_BlueChannelTex");}}else r.stage.surfaceMaterials++;
-     replacements.Add(materials[i],replacement);stageGeometryMaterials.Add(replacement);
+     materialCache.Add(materials[i],replacement);stageGeometryMaterials.Add(replacement);
     }
     materials[i]=replacement;
    }

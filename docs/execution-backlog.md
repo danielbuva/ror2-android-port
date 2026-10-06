@@ -3043,3 +3043,23 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J318 full build:**46 host safety/evidence tests and zero C# errors; full83.456-second/zero-error Vulkan ARM64 build,39 payload/45 assembly identities retained. APK SHA-256 `9c8cc320ebe7057cf86d3c71032544f2fd80a6d23f18f983a31f5f6e64feb670`. Existing J317 live manual run remains installed; no device jump/restore claim. User explicitly requested to finish it. High-jump APK is prepared for subsequent assisted iteration, not installed. No normal acceptance or I07 pointer.
+
+
+## I07-J319 — Moon wayfinding and elevator restoration
+- **ID:** I07-J319
+- **TITLE:** Restore original pillar beams and Moon gravity; continue the complete integrated mission
+- **STATUS:** SOURCE/EDITOR/HOST/FULL BUILD PASS; integrated device run underway
+- **CONTEXT:** J317 genuine five-exit assisted route and physical four-pillar completion; user remains in manual control.
+- **OBSERVATION:** Two original elevator launches peak below arena; original SetGravity−20 was stripped, active game remains−30. Beam transforms also lack native particles/renderers, preventing wayfinding.
+- **HYPOTHESIS:** Restoring original Moon gravity enables original elevator flight; restored source beams plus read-only markers make selected unfinished pillars visible.
+- **TASK:** Integrate native scene restorations, Android beam shader/labels and exact gravity/launch observations, build full game, then run with jump assist off for elevator acceptance. Use high jump later only for mission iterations that explicitly exclude traversal/transport.
+- **CONSTRAINTS:** Preserve original scene selection/state/charge/launch/physics/layers; no player translation, invented items or source assembly changes. Keep user's current run live until finished. Android visual shader is a replacement, not recovered shader parity. All active/ever-used cheats retain exclusions.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Moon scene transformation, existing stage material adapter, Moon mission/read-only presentation, camera projection, regeneration copier and docs; ignored scene/components/receipts/captures.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; existing movement-batch run/retry and configured Nova capture after current manual attempt finishes.
+- **PASS CONDITION:** Full build attributed; actual Android original Moon gravity−20, visible selected inactive beams and current marker states, four source battery completions unlock Ready elevators, original unboosted jump volume reaches arena with no new first failure. Boss/escape/ending then remain the next integrated variables.
+- **FAILURE EVIDENCE TO CAPTURE:** Native scene/source identities and counts, shader/build errors; current-launch beam/marker/charge/gravity/trajectory/physical motion/capture and original mission failures; preserve J317 four-pillar/failed-launch attempt.
+- **STATE/JOURNAL UPDATES REQUIRED:** Build/device/first-failure status and active cheats; keep I06/I03 immutable; no normal gate from assisted route.
+- **DEPENDENCIES:** J317 four-pillar/second-elevator evidence; J318 independent default-off jump toggle; user completes current attempt before replacement.
+
+
+**J319 full build / previous-run exit:** Full125.301-second/zero-error Vulkan ARM64 build,46 host tests, complete14435-file source/settings/CLI archive and39 payload/45 assembly identities retained. APK SHA-256 `668a937cdbd5562206a81a0adf2648e7f350a515bcbde1311bd74ca3c7b1d31d`. User authorizes next run; preserve J317 four source completions/three Ready elevators/two low launch traces/capture, then owned interruption/app stop/selector removal/Nova sleep. Full source cleanup did not execute and no normal gate advances. Actual prior debug history shows user enabled movement x2 through developer panel at901.208seconds; observed speed14 at exit. Earlier movement-off descriptions apply to automatic route/Moon entry, but J318's description of the later live manual settings was stale. Four-pillar manual evidence therefore also excludes normal movement/navigation. New J319 launch requests invincibility/high damage/fast charge, movement/jump off; new beam/gravity/elevator runtime acceptance remains pending. I06/I03 unchanged; no I07 pointer.

@@ -68,6 +68,8 @@ public sealed partial class MovementBatchProbe {
   public bool loaded,authority,cleaned,toggleInitialized,populationReady;public int batteries,required,charged,encounters,spawnedEncounters,sceneNetworkObjects,monsterCards;
   public string[] monsterCardNames,unmappedPoolCards;public float[] monsterCardWeights;
   public string state,escapeState,error,scope,inputObjective;public string[] batteryStates,elevatorStates;
+  public int restoredBeamRenderers,activeBeamRenderers,liveBeamParticles;public MoonPillarMarker[] pillarMarkers;
+  public float observedGravityY;public MoonElevatorLaunch[] elevatorLaunches;
   public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
   public float seconds;public List<string> transitions=new List<string>();
  }
@@ -158,6 +160,7 @@ public sealed partial class MovementBatchProbe {
   var batteries=moonRoots.SelectMany(x=>x.GetComponentsInChildren<HoldoutZoneController>(true)).Where(x=>x.gameObject.activeInHierarchy&&x.GetComponent<PurchaseInteraction>()).ToArray();report.batteries=batteries.Length;
   report.batteryStates=batteries.Select(x=>x.name+"|"+x.GetComponent<EntityStateMachine>().state+"|"+x.charge.ToString("F3")).ToArray();
   report.elevatorStates=moonRoots.SelectMany(x=>x.GetComponentsInChildren<EntityStateMachine>(true)).Where(x=>x.gameObject.name=="MoonElevator").Select(x=>x.state==null?"uninitialized":x.state.GetType().FullName).ToArray();
+  ObserveMoonPillarMarkers(batteries);
   var encounters=moonRoots.SelectMany(x=>x.GetComponentsInChildren<ScriptedCombatEncounter>(true)).ToArray();report.encounters=encounters.Length;report.spawnedEncounters=encounters.Count(x=>x.hasSpawnedServer);report.escapeState=moonEscape.mainStateMachine.state==null?"uninitialized":moonEscape.mainStateMachine.state.GetType().FullName;
   report.livingEncounterMembers=encounters.Where(x=>x.combatSquad).Sum(x=>x.combatSquad.memberCount);report.extractionZones=UnityEngine.Object.FindObjectsOfType<EscapeSequenceExtractionZone>().Length;report.gameOver=Run.instance&&Run.instance.isGameOverServer;
  }
