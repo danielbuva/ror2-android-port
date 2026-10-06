@@ -12,6 +12,8 @@ CORE_LOOT_SUPPORT = [
      'Prefabs/Effects/ShieldBreakEffect', 'Assets/RoR2/Base/Common/VFX/Shield/ShieldBreakEffect.prefab'),
     ('BucklerDefense', '0aae571b83fa44d439f4d001da4d48cd',
      'Prefabs/TemporaryVisualEffects/BucklerDefense', 'Assets/RoR2/Base/Items/SprintArmor/BucklerDefense.prefab'),
+    ('FeatherEffect', 'fbd57658e8620d04faae82049b9cd599',
+     'Prefabs/Effects/FeatherEffect', 'Assets/RoR2/Base/Items/Feather/FeatherEffect.prefab'),
 ]
 WORLD_COMMERCE = {
     'ShrineChance': 'Assets/RoR2/Base/Interactables/Shrines/ShrineChance/ShrineChance.prefab',
@@ -53,7 +55,7 @@ def stage_classic_run_settings(out):
     return {'runEventFlagsToResetOnLoop':flags}
 
 
-def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=False):
+def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=False, broader_ui=False):
     run_settings=stage_classic_run_settings(out)
     from scene_closure import REFERENCE
     export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -75,6 +77,13 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
              'objectiveTMPSettingsAsset': export/'Assets/TextMesh Pro/FormerResources/TMP Settings.asset',
              'objectiveStunAsset': export/'Assets/RoR2/Base/Common/VFX/Stuns/StunVfx.prefab',
              'teleporterIndicatorAsset': export/'Assets/RoR2/Base/Interactables/Teleporters/TeleporterChargingPositionIndicator.prefab'}
+    ui_roots = {}
+    if broader_ui:
+        ui_roots = {'hudSource': 'Assets/RoR2/Base/UI/HUD/HUDSimple.prefab',
+                    'menuSource': 'Assets/RoR2/Base/UI/TitleMenu.prefab',
+                    'itemIconSource': 'Assets/RoR2/Base/UI/ItemIcon.prefab',
+                    'crosshairSource': 'Assets/RoR2/Base/UI/Crosshair/StandardCrosshair.prefab'}
+        roots.update({key: export/path for key,path in ui_roots.items()})
     support_names=['BeetleWardOrbEffect','BeetleWard','TeleportOutController','ChainLightningOrbEffect']
     support_paths=['Prefabs/Effects/OrbEffects/BeetleWardOrbEffect','Prefabs/NetworkedObjects/BeetleWard','Prefabs/NetworkedObjects/TeleportOutController','Prefabs/Effects/OrbEffects/LightningOrbEffect']
     support_keys=['89ddb892b8343654ab59d9176e270d49','de83659161b919844b1309bc9aaa3c71','fc6479a19530c3f449ef8056667582b2','32d422991ab4bd1479b80aed53b2bfdb']
@@ -186,6 +195,13 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
         raise RuntimeError('Original objective artifact catalog incomplete')
     pending=list(roots.values()); seen=set(); rows=[]; paths={}; unrequested=[]
     remaps={x['from']:x['to'] for x in previous.get('ui_remaps',[])}
+    if broader_ui:
+        ui_contract=read(WORK/'config/hud-ui-remaps.json')
+        if ui_contract['input_id']!=read(WORK/'config/accepted-input.json')['input_id'] or ui_contract['source_UI_sha256']!=sha(export/'Assets/Plugins/UnityEngine.UI.dll'):
+            raise RuntimeError('HUD UI script input changed; remeasure canonical identities')
+        for row in ui_contract['rows']:
+            remaps[row['from']]=row['to']
+        write(out/'hud-ui-remaps.json',ui_contract)
     # J233: the original teleporter's GridLayoutGroup adds one UI type beyond the
     # accepted loading/pickup subset. Use the pinned package's serialized identity.
     grid_meta=WORK/'lab-project/Library/PackageCache/com.unity.ugui@1.0.0/Runtime/UI/Core/Layout/GridLayoutGroup.cs.meta'
@@ -212,7 +228,7 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
         rows.append({'source':str(src.relative_to(export)),'source_sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'bytes':src.stat().st_size,'reused':guid in existing})
         if src.read_bytes()[:5]!=b'%YAML': continue
         original=src.read_text(); generated=original
-        if src in [roots[x+k] for x in actors for k in ['Body','Master']]+[roots['teleporterAsset'],roots['lunarTeleporterAsset']]:
+        if src in [roots[x+k] for x in actors for k in ['Body','Master']]+[roots['teleporterAsset'],roots['lunarTeleporterAsset']]+[roots[k] for k in ui_roots]:
             root_id=re.search(r'^--- !u!1 &(-?\d+)',original,re.M)[1]
             generated=re.sub(r'(^--- !u!1 &'+root_id+r'\n.*?)(?=^--- !u!|\Z)',lambda m:re.sub(r'  m_IsActive: [01]','  m_IsActive: 0',m[0]),generated,flags=re.M|re.S)
         if guid in existing: generated=dst.read_text()
@@ -244,6 +260,7 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
     write(WORK/'scene-probe-build.json',recipe)
     actor_specs=[dict(name=x,**{k[0].lower()+k[1:]:paths[x+k] for k in ['Body','Master','Card','Avatar','Controller','Material','Mesh']}) for x in actors]
     write(out/'objective-content.json',{'roots':paths,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'ui_remaps':ui_edits,'query_sha256':sha(query_path),'catalog_sha256':sha(export/'Assets/StreamingAssets/aa/catalog.json'),'deferred_unrequested':unrequested,'prior_art':'R2API.Director f539511e separates director activity, catalog readiness and source DCCS selection; current original TeleporterInteraction/BossGroup/HoldoutZoneController/Queen states govern composition. No source implementation copied.'})
+    if broader_ui:write(out/'hud-source-roots.json',{key:paths[key] for key in ui_roots})
     return dict(run_settings,worldCommerceAssets=[paths['commerce'+name] for name in WORLD_COMMERCE] if broader_commerce else [],worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 

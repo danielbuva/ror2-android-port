@@ -27,6 +27,7 @@ public sealed partial class MovementBatchProbe {
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
   public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
   public int lootTier1,lootTier2,lootTier3;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
+  public int featherJumps,featherEffectLoads;public bool featherEffectCleaned;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
@@ -77,6 +78,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  readonly List<GameObject> worldLootTemporaryEffects=new List<GameObject>();
  readonly Dictionary<Renderer,Material[]> worldLootSourceMaterials=new Dictionary<Renderer,Material[]>();
  readonly Dictionary<GameObject,int> worldLootSourceLayers=new Dictionary<GameObject,int>();
+ int worldFeatherEffectIndex=-1,worldFeatherReferenceBaseline;CharacterBody.JumpDelegate worldFeatherJumped;
 
 
  ItemDef[] WorldTierOneLoot(Result cfg){
@@ -96,18 +98,26 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  GameObject[] PrepareWorldLootSupport(Result cfg){
   if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldLootSupportPaths.Length==2,"Core loot support contract length changed");
+  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3,"Core loot support contract length changed");
   r.phase="integrated-core-loot-support";Save();var effects=new List<GameObject>();
   foreach(var path in cfg.worldLootSupportPaths){
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Core loot provider location absent: "+path);var source=objectiveSupportSources[index];
-   bool shield=path=="Prefabs/Effects/ShieldBreakEffect";Check(shield||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
-   Check(source&&source.name==(shield?"ShieldBreakEffect":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
-   var type=(shield?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
-   var field=type.GetField(shield?"shieldBreakEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
-   Check(field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Unowned core loot effect slot: "+path);
-   worldLootEffectSlots.Add(field,(GameObject)field.GetValue(null));field.SetValue(null,source);
-   Check((GameObject)field.GetValue(null)==source,"Core loot source binding failed: "+path);
-   if(shield){Check(source.GetComponent<EffectComponent>(),"Original shield-break EffectComponent missing");effects.Add(source);}else Check(source.GetComponent<TemporaryVisualEffect>()&&source.GetComponent<TemporaryVisualEffect>().visualTransform,"Original BucklerDefense linkage missing");
+   bool shield=path=="Prefabs/Effects/ShieldBreakEffect",feather=path=="Prefabs/Effects/FeatherEffect";Check(shield||feather||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
+   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
+   if(feather){
+    // Original ProcessJump loads this provider asset on each bonus jump.
+    // Observe those real calls and release their owned leases on teardown.
+    Check(worldPlayer&&r.world!=null&&worldFeatherEffectIndex<0,"Unowned Feather effect observation");worldFeatherEffectIndex=index;
+    worldFeatherReferenceBaseline=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]);
+    worldFeatherJumped=()=>{if(worldPlayer.characterMotor.jumpCount>worldPlayer.baseJumpCount)r.world.featherJumps++;};worldPlayer.onJump+=worldFeatherJumped;
+   }else{
+    var type=(shield?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
+    var field=type.GetField(shield?"shieldBreakEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+    Check(field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Unowned core loot effect slot: "+path);
+    worldLootEffectSlots.Add(field,(GameObject)field.GetValue(null));field.SetValue(null,source);
+    Check((GameObject)field.GetValue(null)==source,"Core loot source binding failed: "+path);
+   }
+   if(shield||feather){Check(source.GetComponent<EffectComponent>(),"Original core loot EffectComponent missing: "+path);effects.Add(source);}else Check(source.GetComponent<TemporaryVisualEffect>()&&source.GetComponent<TemporaryVisualEffect>().visualTransform,"Original BucklerDefense linkage missing");
    foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){
     Check(!renderer.GetComponent<Collider>(),"Core loot renderer shares a collider; preserve its layer before adapting visibility");
     worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;
@@ -117,11 +127,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   return effects.ToArray();
  }
  void ObserveWorldLootSupport(CharacterBody body){
+  if(worldFeatherEffectIndex>=0){r.world.featherEffectLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[worldFeatherEffectIndex])-worldFeatherReferenceBaseline;Check(r.world.featherEffectLoads==r.world.featherJumps,"Original Feather loads differ from observed bonus jumps");}
   if(worldLootEffectSlots.Count==0)return;var field=typeof(CharacterBody).GetField("bucklerShieldTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic);
   var effect=(TemporaryVisualEffect)field.GetValue(body);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);
  }
  void CleanupWorldLootSupport(){
   if(worldPlayer)ObserveWorldLootSupport(worldPlayer);
+  if(worldFeatherJumped!=null){if(worldPlayer)worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
+  if(worldFeatherEffectIndex>=0){for(int i=0;i<r.world.featherEffectLoads;i++)Addressables.Release(objectiveSupportSources[worldFeatherEffectIndex]);worldFeatherEffectIndex=-1;r.world.featherEffectCleaned=true;}
   foreach(var effect in worldLootTemporaryEffects)if(effect)Destroy(effect);
   foreach(var pair in worldLootEffectSlots)pair.Key.SetValue(null,pair.Value);worldLootEffectSlots.Clear();
   foreach(var pair in worldLootSourceMaterials)if(pair.Key)pair.Key.sharedMaterials=pair.Value;worldLootSourceMaterials.Clear();

@@ -3466,3 +3466,120 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **DEPENDENCIES:** J342 real lifecycle measurement failure, J339 coherent archived parent, exact Unity2021.3 OnApplicationPause contract and pinned DebugToolkit native stopwatch observation.
 
 **Minimum T08 support:** This change enables attribution of the next integrated game's post-resume frame measurements and prevents classifying screen-off time as a GPU stall. Reuse the current camera report, adding pause/resume counts and active time; no new framework or command. Rollback restores the prior authored observer and its archived J339 candidate. Genuine active hitches remain visible; device verification still awaits the existing update clarification.
+
+
+## I09-J344 — Update the single app and run the composed game
+
+- **ID:** I09-J344
+- **TITLE:** Execute J343 graphics/content/recovery/observer changes through one in-place Android update
+- **CONTEXT:** The user clarifies that repeated updates are permitted, while duplicate or numbered lab apps are forbidden. The coherent J343 candidate is built and archived; J324/J334 is the installed rollback.
+- **OBSERVATION:** Device testing of J335/J336/J337/J339/J343 was pending solely on the installation interpretation; the installed world still has measured opaque-card/sky and recovery defects.
+- **HYPOTHESIS:** The same-package update preserves Android data and enables the composed rendering, earned loot, commerce, recovery and corrected frame observer to run together.
+- **TASK:** Require exact lab APK identity, preserve old APK/payload/results, replace the existing app, sync verified content and run the integrated pre-Moon world. Inspect first runtime/visual/content failure; then iterate the composed game. Test actual Android recovery and pause-aware measurements where the live run allows.
+- **CONSTRAINTS:** One fixed owned package only; no numbered app variants, unrelated data removal, original installation/profile mutation, fabricated platform success or unattended Moon progression. Graphics remain source-informed approximations until matching PC comparison. Sleep OLED when idle; preserve failed attempts/rollbacks.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing device install identity/dispatch guard and meaningful safety tests; local authorization/selection/install/sync/runtime records, authored state/journal/backlog/milestone/risk/visual summaries; only measured game fixes if a real failure occurs.
+- **TEST COMMAND:** ./dev doctor; ./dev test; ./dev preflight; existing same-package install/sync/run/capture commands with receipted J343 APK and payload; actual-PID native gameplay/commerce/loot/cleanup/error and result/hash/power checks.
+- **PASS CONDITION:** Update scope PASS: same app/package inventory and all four original result hashes retained;52 safety tests and preflight pass. Gameplay FAIL before startup: stale attempt-bound Nova mapping, followed by J345 shared-effect ownership failure. No new gameplay, device-rendering, recovery or normal/visual gate acceptance; app stopped/OLED asleep and J324/J334 rollback intact.
+- **FAILURE EVIDENCE TO CAPTURE:** Package/ABI rejection, update/data retention, first current-PID native exception/crash, shop/shrine/item/reference identities, source rendering states/captures, backup/pending/XML hashes, pause/frame report and full lifecycle cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record clarified one-package update authorization, actual J344 outcomes and first failure; advance only passing scoped observations, preserve J343/J324/J334/J323/I06/I03 and normal/finale gates.
+- **DEPENDENCIES:** User's explicit in-place-update clarification, J343 archived complete candidate, existing installed ownership/storage/launch/sync safeguards; pinned community graphics/director/items/profile map and current legitimate source.
+
+
+## I09-J345 — Rebind accepted input and classify the first game failure
+
+- **ID:** I09-J345
+- **TITLE:** Restore measured mapping for the updated build and scan integrated startup
+- **CONTEXT:** J344 successfully updates the single app but leaves the previous attempt-bound mapping on device.
+- **OBSERVATION:** Native simulation rejects the stale mapping before new content setup; saved accepted bindings and physical observation hash remain valid.
+- **HYPOTHESIS:** Rebinding only the attempt identifier enables the actual composed startup without needing a new physical mapping test.
+- **TASK:** Verify the accepted input/mapping/provenance hash, retain prior device mapping, bind it to the exact installed J343 attempt and run the full integrated game; preserve the first real dependency failure.
+- **CONSTRAINTS:** No new APK installation, changed axes/buttons/signs, invented physical observation, original assembly/content mutation, Moon or parity/gate claim. Keep owned result files and sleep OLED on exit.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored existing mapping/selection/run/log/capture records and authored evidence summaries only.
+- **TEST COMMAND:** Existing owned mapping push, sync/launch and actual-PID integrated report/log/capture/ownership/power checks.
+- **PASS CONDITION:** Discriminating exit: accepted mapping/provenance unchanged and current build accepted; gameplay FAIL at Original composed effect catalog roots missing in enemy-reward-provider. Exact recipe shows one required ShrineUseEffect root belongs to support bundle. Secondary cleanup null-key failure/six PID errors preserved; app stopped/OLED asleep, no capability checkpoint advance.
+- **FAILURE EVIDENCE TO CAPTURE:** Original mapping error, old/new bindings/hash, firstFailure/phase, source effect ownership/recipe, secondary cleanup stack and full actual-PID logs/capture.
+- **STATE/JOURNAL UPDATES REQUIRED:** Keep J344 mapping prerequisite distinct from J345 native content/cleanup failure. Record J346 next integrated repair without claiming new device rendering/content acceptance.
+- **DEPENDENCIES:** J344 updated same package, accepted J324 mapping and immutable physical input checkpoint; J343 content/build receipt and current original effect contracts.
+
+## I09-J346 — Retain shared effects during integrated startup
+
+- **ID:** I09-J346
+- **TITLE:** Register provider-owned shrine effects after their actual bundle loads
+- **CONTEXT:** The composed game fails because J337's single-owner bundle repair moves ShrineUseEffect, while early catalog setup still requests it from character content.
+- **OBSERVATION:** Of74 required effect paths, exactly one is absent from the character recipe and present in the support provider; failed partial cleanup then looks up a null dictionary key.
+- **HYPOTHESIS:** Defer only explicitly provider-owned roots until support loading, assert their actual catalog identities, and skip absent sources in partial pool cleanup without removing any required effect.
+- **TASK:** Fix the measured ownership handoff in existing catalog composition; record character/deferred/registered paths. Build the full J343 game, update the same app, rebind accepted mapping and run broad content/gameplay/lifecycle integration.
+- **CONSTRAINTS:** All74 source effects retained; no silent filtering of unknown/missing roots, duplicated bundle ownership, original DLL/scene/gameplay formula changes, legal/platform bypass, new app identity or unattended Moon. Source-informed graphics remain approximate.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing TeleporterWorldBoundary/EnemyRewardBoundary catalog/cleanup/report fields, ignored build/update/run evidence and authored state/journal/backlog/milestone/risk/visual summaries.
+- **TEST COMMAND:** Existing serialized editor refresh/console; ./dev test; ./dev preflight; forced Vulkan ARM64 build; matching terminal/assembly/scene hashes; same-package update/sync/current mapping/launch and actual-PID full composed game observations.
+- **PASS CONDITION:** Discriminating exit: full90.617-second/zero-error build and same-package update retain data/scene/45 assembly identities. Device registers the one shared root and initializes the16-item8/5/3 loot domain; next FAIL is original chance shrine table/effect absent at integrated-world-commerce. No PID errors, app stopped/OLED asleep. Cyclic bundle manifests and exact original prefab show its normal effect is in shared support; J347 repairs deserialization order. No whole gameplay or appearance gate advances.
+- **FAILURE EVIDENCE TO CAPTURE:** J345 first/secondary failures, effect source/provider/index observations, request/start/terminal/APK/payload hashes, original assembly/scene hashes, current-PID runtime/errors/captures, owned result retention, cleanup and OLED state.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record actual build/device exit and first next blocker, retain failed J344/J345 and all J343/J324/J334/J323/I06/I03 rollbacks. Advance only passing scoped observations.
+- **DEPENDENCIES:** J345 measured ownership failure, J343 coherent complete candidate and user-authorized same-package updates; pinned R2API.ContentManagement AddEffect component/catalog distinction and exact current native EffectCatalog/provider behavior.
+
+
+## I09-J347 — Load cyclic content containers before prefab deserialization
+
+- **ID:** I09-J347
+- **TITLE:** Preserve original shrine references through the existing shared bundle provider
+- **CONTEXT:** J346 fixes effect-catalog ownership but reveals a missing original chance-shrine reference during actual composed startup.
+- **OBSERVATION:** Both generated manifests name the other bundle as a dependency. The exact original/imported prefab has dtShrineChance and a normal ShrineUseEffect reference, but character assets deserialize before the support container is loaded.
+- **HYPOTHESIS:** Opening both existing containers before loading any character assets preserves cross-bundle references; subsequent provider leases can reuse the same resource operation and normal cleanup can release the preload.
+- **TASK:** After opening the character container, preload shared support with the existing AssetBundleProvider; reuse the exact location for later support assets, hold its lease until character cleanup and record actual preload. Split the existing chance assertions to identify table versus effect. Build/update the full game and iterate its first real device failure.
+- **CONSTRAINTS:** No custom provider/framework, copied original implementation, guessed reference assignment, removed shrine/effect, original game/DLL/scene/formula mutation, extra app identity, platform bypass or unattended Moon. Keep failed candidates and PC appearance authority.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing BodyCatalogBoundary/TeleporterWorldBoundary provider lifetime, EnemyRewardBoundary observation and WorldCommerceBoundary first-failure assertions; ignored manifests/source-contract/build/update/runtime records and authored summaries.
+- **TEST COMMAND:** Serialized editor refresh/console;52 safety tests/preflight; forced Vulkan ARM64 build; terminal/hash/source archive; same-package update/data retention/current mapping/sync/launch; integrated original content/gameplay/lifecycle/error/cleanup/capture checks.
+- **PASS CONDITION:** Discriminating exit completed: native shrine references,74 effects, broader loot/shops/shrines, four original exits and owned cleanup execute. Overall runtime-error acceptance FAILS at13 null Feather-effect events/130 actual-PID error lines; rendering also exposes an opaque teleporter surface. All assistance off,891.238seconds/257kills/22pickup messages. Preserve the failed candidate and do not advance a capability pointer. J349/J350 repair and extend the whole game.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact cyclic manifests and source normal-effect/drop-table identities, J346 firstFailure, preload/provider/cache/lease outcome, split shrine failure, current-PID exceptions/crashes and effects/shops/items/stages/cleanup/captures, original result hashes and OLED state.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate J346 passed registration/setup from failed shrine initialization; record J347 actual build/update/game exit and first next failure. Preserve J343/J346/J324/J334/J323/I06/I03 and all normal/finale gates.
+- **DEPENDENCIES:** J346 actual Android failure, exact original/imported ShrineChanceBehavior/reference data, generated cyclic bundle graph; pinned community Addressables/provider distinctions and Unity2021.3 dependency contract.
+
+
+## I09-J348 — Recover and resave genuine Android run results
+
+- **ID:** I09-J348
+- **TITLE:** Verify the installed recovery policy through the original loss/report loop
+- **CONTEXT:** J338 exposed a valid-backup recovery defect; J339 repaired the owned ledger on host and J347 now runs that code in the integrated APK.
+- **OBSERVATION:** Two genuine unassisted loss XML reports and their primary/backup generations remain on the device across in-place updates. The old recovery validation polluted firstFailure and risked replacing the valid backup.
+- **HYPOTHESIS:** The installed repair ignores a partial pending write, validates/restores the original backup and retains a valid backup during the next genuine native loss save.
+- **TASK:** Preserve exact owned Android results, test interrupted pending and invalid-primary recovery, let original enemies cause a real loss, then cold-reload that save and restore the exact original generations.
+- **CONSTRAINTS:** No generated victory, forced death, stock/Steam profile change, platform success or new installation. All debug options off, Moon paused, failed evidence and genuine test loss retained privately. Sleep OLED when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing owned selection/menu/ledger/report flow and ignored private recovery/capture/backup records; authored state/journal/backlog summaries only.
+- **TEST COMMAND:** Existing owned launch/menu/capture and actual-PID diagnostics; XML/primary/backup hashes, original StandardLoss report, valid recovery generation and cold reload assertions.
+- **PASS CONDITION:** Pending write leaves committed files unchanged; original backup restores without firstFailure/runtime errors; genuine original loss saves with a valid backup; both repaired and restored generations cold-reload. PASS: all requested recovery/resave/cold-reload assertions observed on the same APK with all assistance off; exact four original file hashes restored, no current-PID errors or installation, OLED asleep. Scoped owned ledger acceptance only; stock profiles and normal victory remain open.
+- **FAILURE EVIDENCE TO CAPTURE:** Current-PID validation/error/crash, rejected primary, before/recovered/resaved ledger and original XML, native ending/death event, cold reload and exact restoration.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate owned result-ledger acceptance from unavailable stock startup/profile integration and normal full-run acceptance; preserve all Moon/normal/visual pointers.
+- **DEPENDENCIES:** J347 completed integrated route, installed J339 policy, J338 genuine report generations and existing local ownership; pinned R2API/DebugToolkit result/state observation and exact original RunReport/ending lifecycle.
+
+## I09-J349 — Preserve the consumed intersection-shader blend contract
+
+- **ID:** I09-J349
+- **TITLE:** Remove measured opaque teleporter-boundary rendering in the integrated game
+- **CONTEXT:** J347 executes the pending source skies/native particle routes but its actual combat capture still hides the stage behind an opaque red surface.
+- **OBSERVATION:** Original teleporter range/tutorial materials use Cloud Intersection Remap. The exact native shader pass consumes _SrcBlendFloat/_DstBlendFloat; exported materials also retain obsolete _SrcBlend=1/_DstBlend=0. The Android cloud approximation incorrectly consumes those obsolete values.
+- **HYPOTHESIS:** Copying the actual source-consumed blend properties into the owned replacement restores additive composition without changing the original material or simulation.
+- **TASK:** Correct only the existing owned material binding, check every imported intersection material, force-build the same complete game and review teleporter-combat/stage captures on Nova. Continue the integrated route; classify remaining visible failures truthfully.
+- **CONSTRAINTS:** No original asset/particle-module/DLL/scene/gameplay change, new aesthetic, PC-parity claim or Moon progression. Shader response/depth/rim/triplanar behavior remain approximations. Preserve J347/J323/I06/I03 and original result files; same app update only, idle OLED sleep.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing AndroidMaterialPresentation binding and authored visual/state/journal summaries; ignored exact native shader/material ownership report, contract, source/build/update/run/captures.
+- **TEST COMMAND:** Exact-editor source/copy contracts, existing doctor/test/preflight and forced Vulkan build/update/sync/run/capture; actual-PID gameplay/cleanup, source scene/DLL/results/hash and visual review.
+- **PASS CONDITION:** Host: all38 source intersection materials/76 consumed-blend assertions pass. Device: expected additive boundary is readable in the running integrated game with no new errors, four original exits and owned cleanup. Device/build exit pending; matching PC comparison still required for appearance parity.
+- **FAILURE EVIDENCE TO CAPTURE:** Original opaque capture, exact native pass/property/material/renderer ownership, stale versus consumed blend values, first build/runtime/visual failure and attributable Android captures.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record actual rendering outcome separately from gameplay; preserve unresolved graphics gaps and debug-state disclosure. Advance no visual-parity/normal/finale gate from compilation or host contracts.
+- **DEPENDENCIES:** J347 actual visual failure, current community graphics map and pinned EditorKit HopooCloudRemapGUI property-identity clue; exact legitimate native shader states outrank community assumptions.
+
+
+## I09-J350 — Compose broad source HUD/menu with independent integrated fixes
+
+- **ID:** I09-J350
+- **TITLE:** Restore a broad first-pass original HUD/menu in one larger candidate
+- **CONTEXT:** User requests larger host-validated independent bundles and one combined accelerated multi-stage run, with HUD/menu as the largest untouched presentation chunk.
+- **OBSERVATION:** J347 completes the broader commerce/loot route but exposes a missing original Feather effect and opaque intersection material. J348 verifies Android ledger recovery. Current game UI remains a diagnostic overlay. Four original UI roots/reference closure are now staged, but bindings and generated presentation variants are absent.
+- **HYPOTHESIS:** Preserving the original authored layout, fonts, sprites and icons while supplying owned read-only game-state/menu bindings can restore broad presentation without invoking unavailable stock platform/input controllers or altering simulation. Independent effect/blend fixes can join the same candidate without changing that UI lifecycle.
+- **TASK:** Generate inactive-source HUD/menu presentation variants; keep original visual hierarchy and safe text components, isolate unavailable stock controllers, bind actual health/shield/barrier/XP/money/skills/items/objective/boss/run data and existing truthful offline start/results flow. Supply compatible owned font/material presentation where exported shaders are unusable. Join Feather provider/lease observation and source-consumed blend fixes, then build the complete candidate and iterate its first real device failure.
+- **CONSTRAINTS:** User-paused preparation checkpoint: no further implementation/build/run until resumed. No copied original implementation, source asset/DLL/profile changes, fake ownership/service success, new app identity, invented visual-parity claim or unattended Moon. Preserve rollbacks and exact original result files. Label rendering/UI approximations and disclose each cheat. Separate areas may accumulate after host checks; avoid invasive concurrent runtime-lifecycle changes. No subagents.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing integrated staging/config/provider/presentation; small owned HUD/menu binding and editor variant-generation sources when resumed; ignored recovered UI closure/fonts/prefabs/materials/contracts/build/run evidence; authored state/journal/milestone/risk/visual summaries.
+- **TEST COMMAND:** Serialized pinned-editor import/console and source-reference/font/component/binding checks; existing52 safety tests/doctor/preflight; forced complete Vulkan ARM64 build with matching terminal/provenance hashes; guarded same-package update/data retention/sync and one integrated accelerated multi-stage capture with actual-PID error/cleanup checks.
+- **PASS CONDITION:** Preparation only: four roots,1,621-file/184.405MiB source closure,43 canonical UGUI mappings and five observed identity baselines recorded;45 accepted assembly and six scene hashes unchanged. Exact-editor Feather code compiles;38material/76 consumed-blend assertions pass. UI missing-script/reference/font/state contracts, variants/runtime implementation, APK and combined device run are still pending. Final acceptance requires coherent readable source-informed HUD/menu, real loot/commerce/state/transition continuity, no unexplained errors and full owned cleanup across the combined run. No normal-victory or PC-parity claim follows.
+- **FAILURE EVIDENCE TO CAPTURE:** Initial missing run-metadata prerequisite and read-only helper serialization failure are retained. Preserve source/UGUI/font/version identities, missing component/reference findings, first build/runtime/visual failure, real bonus-jump/provider leases, widget values versus native state, assisted-run settings, snapshots/cleanup/result hashes and OLED state.
+- **STATE/JOURNAL UPDATES REQUIRED:** Resume from J350 preparation, not a plan rewrite or widget micro-probe queue. Keep J347 failed/error-qualified route and J348 scoped ledger pass distinct; update only actual exit gates. Commit authored changes after public privacy/IP review. No accepted gameplay/visual/finale pointer advances at pause.
+- **DEPENDENCIES:** J347 integrated world and measured first errors; J348 genuine result recovery; J349 consumed-blend/source Feather contracts. Community prior-art UI map and pinned R2API SkillIcon cooldown/application and HealthBar source/binding observations, DebugToolkit HUD target-body observation; exact original current UI/component behavior and source assets remain authoritative. No community implementation copied.

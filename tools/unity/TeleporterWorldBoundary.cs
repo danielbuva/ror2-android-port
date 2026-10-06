@@ -41,14 +41,28 @@ public sealed partial class MovementBatchProbe {
  Action<SceneExitController> objectiveBeginExit,objectiveFinishExit;
  string objectiveState;bool objectiveSubscribed;float objectiveRewardApproachAt=-1;
  GameObject[] objectiveEffectSources;
+ string[] deferredObjectiveEffectPaths;
+ ResourceLocationBase objectiveBundleLocation;AsyncOperationHandle<IAssetBundleResource> objectiveBundlePreload;bool ownsObjectiveBundlePreload;
+ IEnumerator PreloadObjectiveBundle(){
+  Check(!ownsObjectiveBundlePreload,"Unowned objective bundle preload");
+  var providers=Addressables.ResourceManager.ResourceProviders;if(!providers.Any(x=>x is AssetBundleProvider))providers.Add(new AssetBundleProvider());
+  objectiveBundleLocation=new ResourceLocationBase("objective-support-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","objective-support-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));objectiveBundleLocation.Data=new AssetBundleRequestOptions{BundleName="objective-support-lab"};
+  objectiveBundlePreload=Addressables.ResourceManager.ProvideResource<IAssetBundleResource>(objectiveBundleLocation);ownsObjectiveBundlePreload=true;yield return objectiveBundlePreload;
+  Check(objectiveBundlePreload.Status==AsyncOperationStatus.Succeeded&&objectiveBundlePreload.Result!=null&&objectiveBundlePreload.Result.GetAssetBundle(),"Original shared-support bundle container failed before prefab deserialization");
+ }
+ void ReleaseObjectiveBundlePreload(){if(ownsObjectiveBundlePreload){if(objectiveBundlePreload.IsValid())Addressables.Release(objectiveBundlePreload);ownsObjectiveBundlePreload=false;objectiveBundleLocation=null;}}
  EffectDef[] ObjectiveEffects(Result cfg){
-  objectiveEffectSources=cfg.objectiveEffectAssets.Select(x=>artifactBundle.LoadAsset<GameObject>(x)).Distinct().ToArray();
-  Check(objectiveEffectSources.All(x=>x&&x.GetComponent<EffectComponent>()),"Original composed effect catalog roots missing");
+  var shared=new HashSet<string>(cfg.objectiveSupportAssets??new string[0]);
+  deferredObjectiveEffectPaths=cfg.objectiveEffectAssets.Where(shared.Contains).Distinct().ToArray();
+  var characterPaths=cfg.objectiveEffectAssets.Where(x=>!shared.Contains(x)).Distinct().ToArray();
+  objectiveEffectSources=characterPaths.Select(x=>artifactBundle.LoadAsset<GameObject>(x)).ToArray();
+  r.rewards.characterEffects=characterPaths;r.rewards.deferredEffects=deferredObjectiveEffectPaths;r.rewards.supportBundlePreloaded=ownsObjectiveBundlePreload;Save();
+  for(int i=0;i<objectiveEffectSources.Length;i++)Check(objectiveEffectSources[i]&&objectiveEffectSources[i].GetComponent<EffectComponent>(),"Original character-bundle effect missing: "+characterPaths[i]);
   foreach(var source in objectiveEffectSources)source.GetComponent<EffectComponent>().soundName=null;return objectiveEffectSources.Select(x=>new EffectDef(x)).ToArray();
  }
  void CleanupObjectiveEffects(){
   if(objectiveEffectSources==null)return;var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);var cache=(IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
-  foreach(var source in objectiveEffectSources){EffectPool pool;if(pools.TryGetValue(source,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(source);pool.Kill();}cache.Remove(source);}
+  foreach(var source in objectiveEffectSources.Where(x=>x)){EffectPool pool;if(pools.TryGetValue(source,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(source);pool.Kill();}cache.Remove(source);}
  }
  readonly List<CharacterMaster> pendingObjectiveActors=new List<CharacterMaster>();
  readonly Dictionary<CharacterMaster,int> objectiveAmbientExpected=new Dictionary<CharacterMaster,int>();
@@ -75,7 +89,7 @@ public sealed partial class MovementBatchProbe {
  }
  IEnumerator PrepareObjectiveSupport(Result cfg){
   Check(!OrbManager.instance,"Unowned original orb manager");
-  var bundle=new ResourceLocationBase("objective-support-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","objective-support-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));bundle.Data=new AssetBundleRequestOptions{BundleName="objective-support-lab"};
+  Check(ownsObjectiveBundlePreload&&objectiveBundleLocation!=null,"Shared-support bundle must be loaded before character assets");var bundle=objectiveBundleLocation;
   objectiveSupportLeases=new AsyncOperationHandle<GameObject>[cfg.objectiveSupportAssets.Length];objectiveSupportSources=new GameObject[cfg.objectiveSupportAssets.Length];
   for(int i=0;i<cfg.objectiveSupportAssets.Length;i++){
    string key;Check(LegacyResourcesAPI.GetGuid(cfg.objectiveSupportPaths[i],out key)&&key==cfg.objectiveSupportKeys[i],"Original Queen/exit legacy identity changed");
@@ -101,6 +115,8 @@ public sealed partial class MovementBatchProbe {
   foreach(var locator in ward.GetComponentsInChildren<SfxLocator>(true))foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(locator,null);
   var supportEffects=new[]{objectiveSupportSources[0],objectiveSupportSources[3]}.Concat(moonTransferEffect?new[]{moonTransferEffect}:new GameObject[0]).Concat(coreLootEffects).Concat(commerceEffect?new[]{commerceEffect}:new GameObject[0]).ToArray();foreach(var source in supportEffects)source.GetComponent<EffectComponent>().soundName=null;objectiveEffectSources=objectiveEffectSources.Concat(supportEffects).Distinct().ToArray();
   var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);EffectCatalog.SetEntries(entries.Concat(supportEffects.Select(x=>new EffectDef(x))).GroupBy(x=>x.prefab).Select(x=>x.First()).ToArray());
+  foreach(var path in deferredObjectiveEffectPaths){int index=Array.IndexOf(cfg.objectiveSupportAssets,path);Check(index>=0&&supportEffects.Contains(objectiveSupportSources[index])&&EffectCatalog.FindEffectIndexFromPrefab(objectiveSupportSources[index])!=EffectIndex.Invalid,"Deferred original support effect was not registered: "+path);}
+  r.rewards.registeredDeferredEffects=deferredObjectiveEffectPaths;Save();
   Check(!OrbEffectSingleton.instance&&OrbEffectSingleton.numPnts==0,"Unowned original orb visual context");
   objectiveOrbHost=new GameObject("Owned original Queen orb manager");objectiveOrbHost.AddComponent<OrbManager>();objectiveOrbHost.AddComponent<OrbEffectSingleton>();ownsObjectiveOrbEffects=true;Check(OrbManager.instance&&OrbEffectSingleton.instance,"Original Queen orb context missing");
  }

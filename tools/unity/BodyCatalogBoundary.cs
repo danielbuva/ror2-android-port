@@ -73,6 +73,7 @@ public sealed partial class MovementBatchProbe {
   Check(LegacyResourcesAPI.ActiveCount==0,"Missing request callback not drained");
   var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   artifactBundle=AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Body bundle missing");
+  if(cfg.teleporterLoop){var preload=PreloadObjectiveBundle();while(preload.MoveNext())yield return preload.Current;}
   var prefab=artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset);Check(prefab&&!prefab.activeSelf&&prefab.name=="CommandoBody","Unexpected body prefab");
   var body=prefab.GetComponent<CharacterBody>();var portrait=body.portraitIcon;
   Check(portrait&&portrait.name=="texCommandoIcon","Serialized portrait missing");
@@ -94,5 +95,6 @@ public sealed partial class MovementBatchProbe {
   CleanupLoadoutTables();
   if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
+  ReleaseObjectiveBundlePreload();
  }
 }

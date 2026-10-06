@@ -55,6 +55,10 @@ public static class AndroidMaterialPresentation {
    if(snow)report.snow++;if(foliage)report.foliage++;
   }
   if(cloud){
+   // Intersection shaders consume these names. The material can also retain
+   // obsolete standard-shader blend values that must not override them.
+   if(source.HasProperty("_SrcBlendFloat"))copy.SetFloat("_SrcBlend",source.GetFloat("_SrcBlendFloat"));
+   if(source.HasProperty("_DstBlendFloat"))copy.SetFloat("_DstBlend",source.GetFloat("_DstBlendFloat"));
    copy.SetFloat("_AndroidRemapEnabled",source.HasProperty("_RemapTex")&&source.GetTexture("_RemapTex")?1:0);
    copy.SetFloat("_AndroidCloud1Enabled",source.HasProperty("_Cloud1Tex")&&source.GetTexture("_Cloud1Tex")?1:0);
    copy.SetFloat("_AndroidCloud2Enabled",source.HasProperty("_Cloud2Tex")&&source.GetTexture("_Cloud2Tex")?1:0);

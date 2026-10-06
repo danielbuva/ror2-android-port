@@ -14,6 +14,8 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // Owned configuration/observation around original director, summon and reward callbacks.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class RewardReport {
+  public string[] characterEffects,deferredEffects,registeredDeferredEffects;
+  public bool supportBundlePreloaded;
   public bool assetsReady,directedSpawn,spawnContract,queuedExperience,delivered,cleaned,equipmentMaskReady;public int equipmentDefinitions,expansionLockedEquipment;public int playerTeamBefore,playerTeamAfter;public bool inactiveFixtureRemoved;public int summonEvents,spawnEvents,creditCost,spawnValue,pendingPeak,ambientItems,boostHpItems,boostDamageItems;public uint goldExpected,experienceExpected,moneyBefore,moneyAfter,teamLevel;public ulong experienceBefore,experienceAfter;public float spawnLevelBeforeStart,spawnLevelAfterStart;public int acquisitionCount,equipmentIndex;public float bodyCost,compensatedDifficulty,deathAt,experienceAt,goldEvents;public string scope;
  }
  const string RewardBundle="enemy-reward-lab";
