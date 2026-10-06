@@ -3262,7 +3262,23 @@ Original arena trigger and four scripted encounter spawns progress PreEncounterâ
 - **CONSTRAINTS:** No new gameplay callbacks, invented activation, particles or brightness; preserve native modules, including two Sky Meadow collision modules, two Plains trigger modules and local subemitters. Source review finds no external emitter/light prefab references. Moon/assemblies/APK unchanged; shaders approximate.
 - **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing presentation scene closure; ignored module/renderer/import/source/payload/capture records.
 - **TEST COMMAND:** stage-presentation-payload; same-APK movement-batch-retry with independent debug options; capture current stage/performance.
-- **PASS CONDITION:** Pending native import/build and complete four-transition device window with clear effect/capture/error attribution. No source shader/PC parity acceptance from component count.
+- **PASS CONDITION:** Host import/build35.338seconds/zero errors and439.071-second device window/four transports/70kills/zero errors/cleanup pass. Exact environmental effect appearance and PC parity remain unaccepted; source module/import identities retained.
 - **FAILURE EVIDENCE TO CAPTURE:** Native references, actual shape/material/dependency failures, active/playing particle counts, current-process errors, effect readability and frame/memory samples.
 - **STATE/JOURNAL UPDATES REQUIRED:** J331 first failure/exit and graphical limits; preserve J330 full rollback and all Moon/normal pointers.
 - **DEPENDENCIES:** I08-J330 terminal; pinned EditorKit blend knowledge and original source/native settings.
+
+## I08-J332 â€” Original baked reflection texture repair
+
+- **ID:** I08-J332
+- **TITLE:** Original baked reflection texture repair
+- **CONTEXT:** J330 retains valid lighting data and nine native probes, but exported baked textures are unbound.
+- **OBSERVATION:** Original PC native probes contain m_BakedTexture pointers omitted by export; default reflection cubemap is not always the probe's texture.
+- **HYPOTHESIS:** Exact native external/container mapping can restore those authored Cubemaps through a small explicit Android scene-data adapter.
+- **TASK:** Complete source mapping, restore only measured texture bindings in owned scenes with explicit mode adaptation if required, verify imported assignments, then run the integrated world.
+- **CONSTRAINTS:** No guessed texture/lighting, new bake, broad serialization framework, source-install write, APK replacement or PC parity claim; preserve source parameters/identity and previous full payload.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing native scene transformation or a narrow helper; ignored source mapping/contract/scene/payload/device records.
+- **TEST COMMAND:** Existing native/source inspection; stage-presentation-payload; same-APK movement-batch-retry after imported assignments verify.
+- **PASS CONDITION:** Preparation only: all nine mappings uniquely verified via original source/container and exact float32 owner-position match. Repair/build/device acceptance pending.
+- **FAILURE EVIDENCE TO CAPTURE:** Original pointer/external/container/export hashes, ambiguous match and first two failed host scripts/logs, import/binding/type mismatch and first runtime/appearance error.
+- **STATE/JOURNAL UPDATES REQUIRED:** J332 preparation and actual repair/build/device exit separately; retain observed-only scope and J323/I06/I03.
+- **DEPENDENCIES:** I08-J330/J331 terminal; existing pinned UnityPy/export input and current graphics prior art.
