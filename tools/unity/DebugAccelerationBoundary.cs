@@ -24,12 +24,15 @@ public sealed partial class MovementBatchProbe {
   public float lastOriginalChargeRate,lastAssistedChargeRate;public int positiveChargeCallbacks,unchangedNonpositiveChargeCallbacks,chargeZones;
   public List<DebugToggleEvent> events=new List<DebugToggleEvent>();
  }
- CharacterBody debugBody;bool debugPriorGodMode,debugPanel;float debugNextZoneScan;
+ CharacterBody debugBody;bool debugPriorGodMode,debugPanel,ownsDebugAcceleration;float debugNextZoneScan;
  readonly HashSet<HoldoutZoneController> debugChargeZones=new HashSet<HoldoutZoneController>();
  void PrepareDebugAcceleration(CharacterBody body){
-  Check(debugBody==null&&r.debugAcceleration==null,"Debug acceleration owner already exists");
+  // Unity can create an empty inline report while reading the launch selection.
+  // Serialized presence is not ownership of live body fields or callbacks.
+  Check(!debugBody&&!ownsDebugAcceleration,"Debug acceleration owner already exists");
   debugBody=body;debugPriorGodMode=body.healthComponent.godMode;
   r.debugAcceleration=new DebugAccelerationReport{purpose=r.debugOptions==null||string.IsNullOrWhiteSpace(r.debugOptions.purpose)?"Interactive developer controls":r.debugOptions.purpose,originalBaseDamage=body.baseDamage,originalLevelDamage=body.levelDamage,originalBaseMoveSpeed=body.baseMoveSpeed,originalLevelMoveSpeed=body.levelMoveSpeed};
+  ownsDebugAcceleration=true;
   ApplyDebugAcceleration(r.debugOptions??new DebugAccelerationOptions(),"launch selection");
  }
  void DebugToggle(string name,bool enabled,string source){
@@ -49,7 +52,9 @@ public sealed partial class MovementBatchProbe {
   if(active.fastCharge!=next.fastCharge){DebugToggle("fastCharge",next.fastCharge,source);if(!next.fastCharge)RemoveDebugChargeCallbacks();debugNextZoneScan=0;}
   report.active=new DebugAccelerationOptions{invincibility=next.invincibility,highDamage=next.highDamage,fastCharge=next.fastCharge,movementBoost=next.movementBoost,purpose=report.purpose};
   if(stats)debugBody.RecalculateStats();
-  report.appliedBaseDamage=debugBody.baseDamage;report.appliedLevelDamage=debugBody.levelDamage;report.appliedBaseMoveSpeed=debugBody.baseMoveSpeed;report.appliedLevelMoveSpeed=debugBody.levelMoveSpeed;Save();
+  report.appliedBaseDamage=debugBody.baseDamage;report.appliedLevelDamage=debugBody.levelDamage;report.appliedBaseMoveSpeed=debugBody.baseMoveSpeed;report.appliedLevelMoveSpeed=debugBody.levelMoveSpeed;
+  report.observedDamage=debugBody.damage;report.observedMoveSpeed=debugBody.moveSpeed;report.godModeObserved=debugBody.healthComponent.godMode;
+  Save();
  }
  void TickDebugAcceleration(){
   if(!debugBody||r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
@@ -99,10 +104,10 @@ public sealed partial class MovementBatchProbe {
  }
  string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal");}
  void CleanupDebugAcceleration(){
-  if(r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
+  if(!ownsDebugAcceleration||r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
   RemoveDebugChargeCallbacks();
   if(debugBody){ApplyDebugAcceleration(new DebugAccelerationOptions(),"owned cleanup");Check(debugBody.healthComponent.godMode==debugPriorGodMode&&debugBody.baseDamage==r.debugAcceleration.originalBaseDamage&&debugBody.levelDamage==r.debugAcceleration.originalLevelDamage&&debugBody.baseMoveSpeed==r.debugAcceleration.originalBaseMoveSpeed&&debugBody.levelMoveSpeed==r.debugAcceleration.originalLevelMoveSpeed,"Debug acceleration restore failed");}
   else{var a=r.debugAcceleration.active;if(a.invincibility)DebugToggle("invincibility",false,"owner destroyed");if(a.highDamage)DebugToggle("highDamage",false,"owner destroyed");if(a.fastCharge)DebugToggle("fastCharge",false,"owner destroyed");if(a.movementBoost)DebugToggle("movementBoost",false,"owner destroyed");r.debugAcceleration.active=new DebugAccelerationOptions{purpose=r.debugAcceleration.purpose};r.debugAcceleration.ownerDestroyed=true;}
-  debugBody=null;r.debugAcceleration.restored=true;Save();
+  debugBody=null;ownsDebugAcceleration=false;r.debugAcceleration.restored=true;Save();
  }
 }

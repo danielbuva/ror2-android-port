@@ -448,3 +448,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J316 full build:** Full Vulkan ARM64 build passes in101.824seconds,zero errors,39 payload/45 assembly identities unchanged,complete14399-file archive; APK `48ec2c166415c97f7da07461693972c47191cbb2e271e95d35754eeda85ded8b`.45 safety/evidence tests and staged privacy scan pass. Actual device controls/restoration/assisted Moon route remain pending; no normal acceptance or I07 pointer.
+
+
+**J316 device first failure:** Before gameplay, ownership guard rejects the empty inline debug report created by Unity JsonUtility. No effects applied/no stage progress; original source/world cleanup true,0 runtime errors, Nova asleep. Requested effects not observed: host receipt rejects normal eligibility and remains failed/unclassified. Exact-editor read-only FromJson confirms reportPresent=true/version1 despite omitted report. Evidence retained under `work/experiments/scene-runtime/20261006T014359.372445Z`. J317 replaces serialized-presence ownership with a live private ownership bit and preserves first runtime error when secondary acceptance checks fail. No original assembly/platform/gameplay change.
+
+
+**J317 full build:** Live debug ownership guard passes45 safety/evidence tests and zero C# errors; full84.917second/zero-error Vulkan ARM64 build,39 payload/45 assembly identities unchanged,14399-file archive. APK `4fa70a01e2396fdb1f2c1ee2aa91707eb7f884dbedf02e196b4a13914e8e686d`. Device toggle/restoration and assisted route pending; no normal acceptance/I07 pointer.

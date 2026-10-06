@@ -665,7 +665,10 @@ def movement_batch_run(cases=None, retry=False, interactive=False, debug_options
             report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)
             result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==attempt_id and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
             result.update(acceptance_labels(report,options))
-        except Exception as e:result['error']=str(e)
+        except Exception as e:
+            result['success']=False
+            if result.get('error'):result['secondary_error']=str(e)
+            else:result['error']=str(e)
         finally:
             if not (attempt/'probe.json').exists():
                 try:write(attempt/'interrupted-probe.json',json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json')))
