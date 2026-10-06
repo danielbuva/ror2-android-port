@@ -3413,3 +3413,21 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** First game/native/authority/objective error or genuine loss; assistance history, source duration/FSM/boss/reward/exit and transition state; actual stage/object visual context and old result hashes.
 - **STATE/JOURNAL UPDATES REQUIRED:** J340 actual scoped outcome/visual failure and unassisted-stage pointer; no normal-victory/Moon/formal/visual advancement.
 - **DEPENDENCIES:** Installed J324/J334; current original director/teleporter/Run/authority contracts and pinned R2API.Director observation knowledge.
+
+## I09-J341 — Unassisted pre-Moon route and cleanup
+
+- **ID:** I09-J341
+- **TITLE:** Complete four original objective loops and teardown with all assistance off
+- **CONTEXT:** J340 completes one genuine unassisted stage; J339's composed APK awaits the existing update clarification. Moon remains paused.
+- **OBSERVATION:** Recent full presentation routes use invincibility/damage/charge assistance; J340 ends after its first transport without a full teardown.
+- **HYPOTHESIS:** The installed integrated world can complete the four pre-Moon exits with ordinary diagnostic actions and expose longer-session failures.
+- **TASK:** Run the same owned APK/payload through Titanic Plains, Wetland, Rallypoint Delta and Abyssal Depths to Sky Meadow; verify objective completion, authority/inventory continuity, frame/memory observations and full cleanup. Sample readable CPU/GPU thermal zones during the same run.
+- **CONSTRAINTS:** All five debug toggles off; no forced damage/items/charge/progression, new APK, Moon navigation, physical-input claim, stock-profile/full-victory or PC-parity acceptance. Preserve existing result files and rollbacks; sleep OLED after testing. Thermal observations are read-only driver reports, without calibration or throttling claims.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing scripts/lab/device.py read-only capture, ignored route/capture/thermal observations and scoped checkpoint; authored state/journal/backlog/milestone/risk summaries.
+- **TEST COMMAND:** Existing preflight; same owned APK launch/sync with explicit unassisted selector; original objective/transition/full-cleanup assertions, current-PID diagnostics, result hashes, install count and idle power verification.
+- **PASS CONDITION:** Scoped PASS —764.01gameplay seconds/244 kills/20 pickup messages, four source boss/normal90-second-charge/reward/exit loops/count4/Sky entry, final-entry inventory16/XP1078/wallet12 continuity and full owned cleanup, zero runtime errors. All debug off; results/21 runtime bundles unchanged, one installation count retained and OLED asleep.49 tests pass; raw thermal rows verify67 readable zones/26 CPU-GPU nodes. No formal/full-run/visual gate.
+- **FAILURE EVIDENCE TO CAPTURE:** First native/game/authority/objective failure or natural loss; source state, debug history, scene/transition continuity, actual-PID logs/crash/captures, memory/frame/sensor observations and original result hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record actual J341 exit, limited composition/diagnostic input, first visual failure and scoped pre-Moon pointer only. Preserve J339/J323/I06/I03 and normal-victory checkpoints.
+- **DEPENDENCIES:** Installed J324/J334, J340 and the same original Run/director/teleporter contracts informed by pinned R2API.Director; Linux thermal sysfs ABI for sensor units.
+
+**Minimum T08 support:** J341 needs CPU/GPU observations unavailable from thermalservice. Existing perf/all capture now saves read-only kernel zone/type/raw-temperature rows. Corrected empty sensor returns cannot concatenate rows; real capture checks67 valid rows/26 CPU-GPU types. Command is the existing capture path; rollback removes only the additional snapshot block, with no device-policy or game changes. Raw values and non-temperature sentinel zones are not aggregated as calibrated temperatures. Preserve the first malformed snapshot and finalizer assumptions (absent previous selector, host-file versus runtime-bundle count) as host-helper failures; no gameplay rerun or concealed game failure.

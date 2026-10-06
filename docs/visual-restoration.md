@@ -34,6 +34,8 @@ The composed J335 host candidate includes the J333 sky/billboard path and J334 f
 
 J340 unassisted first-stage boss-entry capture also exposes large opaque black effect cards in golemplains. This broadens the observed failure beyond Frozen scenery; exact source effect ownership is still unisolated. The native Unity particle/custom-family correction remains in the composed J339 host candidate awaiting Android execution. Original PC appearance and matching capture comparison remain the acceptance authority.
 
+J341 repeats the same installed presentation through four unassisted original objective loops with zero runtime errors and full cleanup. Reviewed Frozen and Sky captures still show opaque effect cards and a diagnostic sky. These are actual failures, not acceptable substitutes for the PC appearance. J339's source sky/native-particle/custom-family changes have not run on Android, so this route does not validate them. Preserve these stage/object contexts for the next candidate and matching PC comparison; no new aesthetic or visual-parity claim.
+
 ## Comparison and remaining gaps
 
 No matching local PC screenshots were found. A usable original PC capture environment is currently unavailable; no licensing or authentication workaround was attempted. Matching PC captures remain necessary for acceptance. Source-data restoration and Android screenshots alone cannot demonstrate parity.

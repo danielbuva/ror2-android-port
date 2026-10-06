@@ -125,6 +125,11 @@ class Device:
    (out/'screenshot.png').write_bytes(data)
   if kind in ['all','perf']:
    for name,args in {'memory':['dumpsys','meminfo',PACKAGE],'gfxinfo':['dumpsys','gfxinfo',PACKAGE],'thermal':['dumpsys','thermalservice'],'cpu':['dumpsys','cpuinfo']}.items():(out/(name+'.txt')).write_text(self.sh(*args,check=False))
+   # Some Android builds omit HAL temperatures but expose read-only kernel zones.
+   # Preserve raw values/types; calibration, sentinel filtering and throttling are
+   # separate observations. The Linux temperature ABI uses millidegree Celsius.
+   zones='for z in /sys/class/thermal/thermal_zone*; do [ -r "$z/type" ] && [ -r "$z/temp" ] || continue; t=$(cat "$z/type" 2>/dev/null); v=$(cat "$z/temp" 2>/dev/null); [ -n "$t" ] && [ -n "$v" ] || continue; printf "%s\\t%s\\t%s\\n" "${z##*/}" "$t" "$v"; done'
+   (out/'thermal-zones.txt').write_text(self.sh('sh','-c',zones,check=False))
    if (WORK/'device/runtime.json').exists():
     path=read(WORK/'device/runtime.json')['persistentDataPath']
     for name in ['snapshot.json','exceptions.jsonl']:
