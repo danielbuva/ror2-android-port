@@ -66,7 +66,8 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     write(out/'rollback.json',{'physical':read(WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_SPINE_PHYSICAL.json').exists() else checkpoint,'combat':read(WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json') if (WORK/'checkpoints/LAST_KNOWN_GOOD_COMBAT_SCRIPTED.json').exists() else None,'primary':read(WORK/'checkpoints/LAST_KNOWN_GOOD_PRIMARY_ACTIVATION.json'),'before':str(parent.relative_to(ROOT)),'build':read(WORK/'config/current-build.json')})
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
     for name in ['MovementBatchProbe','DebugAccelerationBoundary','OfflineApplicationBoundary','IntegratedResultsBoundary','MoonMissionBoundary','MoonEscapeBoundary','MoonPillarPresentation','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
-    for shader in ['StageTerrainPreview','StageSurfacePreview','MoonPillarBeamPreview','MoonPillarBeaconPreview']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
+    for name in ['AndroidMaterialPresentation','AndroidPresentationCamera']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
+    for shader in ['StageTerrainPreview','StageSurfacePreview','MoonPillarBeamPreview','MoonPillarBeaconPreview','AndroidSurfacePresentation','AndroidTerrainPresentation','AndroidParticlePresentation','AndroidWaterPresentation','AndroidColorGrade']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=baseline_cfg;cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock,map_zones=integrated_world));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
     if integrated_world:
@@ -195,7 +196,7 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False):
+def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False):
     """Recover source geometry; integrated runs additionally retain exact MapZone callbacks."""
     import shutil
     from scene_closure import REFERENCE
@@ -204,6 +205,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
     # Preserve geometry/LOD and selected source MapZone callbacks; omit unrelated native/presentation data.
     keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
+    if presentation:keep.update({104,108}) # Exact source RenderSettings and Light components only.
     # Measured original MonoScript identity: only the source escape-pod preview disable callback.
     preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
@@ -289,6 +291,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         recipe.pop('nextStageScene',None)
     write(WORK/'scene-probe-build.json',recipe)
     write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids,'MapZone':map_ids,'MapZoneContext':map_extra},'deferred_map_objects':sorted(map_owners),'source_active_map_names':map_active,'map_network_objects':map_network_ids,'roots':len(root_objects),'source_active_flags_preserved':not map_owners,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
+    if presentation:write(out/(scene_name+'-source-presentation.json'),{'source_sha256':sha(source),'generated_sha256':sha(dest),'render_settings':[block for kind,_,block in kept if kind==104],'lights':[block for kind,_,block in kept if kind==108],'scope':'Exact original scene fog, ambient, sun/sky references and light components; no added gameplay callbacks. Android shader/camera/postprocessing parity unverified.'})
     if scene_name=='golemplains':return {'stageGeometry':True,'stageMapZoneCount':len(map_ids),'stageMapZoneActiveNames':map_active}
     graphs={}
     for kind in ['ground','air']:

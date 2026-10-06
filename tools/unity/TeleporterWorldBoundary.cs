@@ -182,7 +182,7 @@ public sealed partial class MovementBatchProbe {
    var sfx=body.GetComponent<SfxLocator>();Check(sfx,"Original objective SfxLocator absent: "+spec.name);foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(sfx,null);
    if(spec.bindings!=null&&spec.bindings.Length>0)BindMoonActorVisuals(bodyObject,model,spec);
    else{
-    var material=Instantiate(artifactBundle.LoadAsset<Material>(spec.material));material.shader=Resources.Load<Shader>("CommandoMaterialPreview");material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",0);objectiveResources.Add(material);
+    var material=Instantiate(artifactBundle.LoadAsset<Material>(spec.material));material.shader=Resources.Load<Shader>("CommandoMaterialPreview");material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",0);AndroidMaterialPresentation.Apply(artifactBundle.LoadAsset<Material>(spec.material),material);objectiveResources.Add(material);
     var skins=model.GetComponentsInChildren<SkinnedMeshRenderer>(true);Check(skins.Length==1,"Original objective default renderer contract changed: "+spec.name);var mesh=artifactBundle.LoadAsset<Mesh>(spec.mesh);Check(mesh&&mesh.vertexCount>0&&mesh.bindposes.Length==skins[0].bones.Length,"Original objective mesh/bind poses absent: "+spec.name);skins[0].sharedMesh=mesh;
     foreach(var renderer in model.GetComponentsInChildren<Renderer>(true)){renderer.gameObject.layer=30;renderer.sharedMaterial=material;var skin=renderer as SkinnedMeshRenderer;if(skin)skin.updateWhenOffscreen=true;}
     var characterModel=model.GetComponent<CharacterModel>();characterModel.visibility=VisibilityLevel.Invisible;

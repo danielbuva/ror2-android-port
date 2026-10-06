@@ -8,6 +8,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
  public GameObject root;public Camera camera;Material material,floorMaterial;Texture2D grid;
  Transform copy,source;LineRenderer aim;bool actualModel;
  public NovaThirdPersonView thirdPerson;
+ public AndroidPresentationCamera presentationCamera;
  static Transform Copy(Transform s,Transform parent,Dictionary<Transform,Transform> map){var t=new GameObject(s.name).transform;t.gameObject.layer=30;t.SetParent(parent,false);t.localPosition=s.localPosition;t.localRotation=s.localRotation;t.localScale=s.localScale;map[s]=t;foreach(Transform child in s)Copy(child,t,map);return t;}
  public NovaDiagnosticDisplay(Transform model,AssetBundle bundle,string[] assets,GameObject floor,bool actual=false){
   actualModel=actual;
@@ -21,6 +22,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   var shader=Resources.Load<Shader>("CommandoMaterialPreview");var simple=Resources.Load<Shader>("CommandoPreview");
   if(assets==null||assets.Length!=6||!shader||!shader.isSupported||!simple)throw new Exception("Nova display contract unavailable");
   material=new Material(bundle.LoadAsset<Material>(assets[5]));material.shader=shader;material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",1);
+  AndroidMaterialPresentation.Apply(bundle.LoadAsset<Material>(assets[5]),material);
   var renderers=model.GetComponentsInChildren<Renderer>(true);
   foreach(var path in assets.Skip(2).Take(3)){
    var mesh=bundle.LoadAsset<Mesh>(path);if(!mesh)throw new Exception("Recovered display mesh missing");var src=renderers.Single(x=>x.name==mesh.name);var target=actual?src.transform:map[src.transform];Renderer renderer;
@@ -37,6 +39,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   floorMaterial=new Material(simple);floorMaterial.mainTexture=grid;floorMaterial.mainTextureScale=Vector2.one*50;if(floor)floor.GetComponent<Renderer>().sharedMaterial=floorMaterial;
   camera=new GameObject("Nova diagnostic camera").AddComponent<Camera>();camera.transform.SetParent(root.transform,false);camera.depth=100;camera.cullingMask=1<<30;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=new Color(.04f,.05f,.07f);camera.orthographic=true;camera.orthographicSize=8;camera.nearClipPlane=.01f;camera.farClipPlane=200;
   var light=new GameObject("Nova diagnostic light").AddComponent<Light>();light.transform.SetParent(root.transform,false);light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(45,-30,0);
+  presentationCamera=camera.gameObject.AddComponent<AndroidPresentationCamera>();presentationCamera.fallbackLight=light;
   aim=new GameObject("Input aim indicator").AddComponent<LineRenderer>();aim.transform.SetParent(root.transform,false);aim.gameObject.layer=30;aim.sharedMaterial=floorMaterial;aim.positionCount=2;aim.startWidth=aim.endWidth=.1f;
  }
  public void ConfigureThirdPerson(RoR2.CharacterBody body){thirdPerson=new NovaThirdPersonView(camera,body);aim.enabled=false;}

@@ -233,6 +233,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
     if(!original&&optionalObjectiveSlots&&renderer is ParticleSystemRenderer){r.objective.unusedParticleMaterialSlots++;return null;}
     Check(original||optionalObjectiveSlots,"Integrated source material absent");
     var material=original?new Material(original):new Material(shader);material.shader=shader;
+    if(original)AndroidMaterialPresentation.Apply(original,material);
     if(!original){r.objective.previewMaterialSlots++;material.SetColor("_Color",new Color(.3f,.65f,.9f,1));}
     worldMaterials.Add(material);return material;
    }).ToArray();
@@ -418,6 +419,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var world=r.world;if(world==null||!world.ready)return;
   DrawDebugAcceleration();
   DrawMoonPillarMarkers();
+  if(r.enhancedPresentation&&GUI.Button(new Rect(Screen.width-270,555,250,42),AndroidMaterialPresentation.report.enabled?"Graphics: approximation":"Graphics: legacy preview"))AndroidMaterialPresentation.SetEnabled(!AndroidMaterialPresentation.report.enabled);
   if(r.id.EndsWith("-bringup")&&world.health>0&&GUI.Button(new Rect(Screen.width-210,20,190,48),worldManualTakeover?"Resume auto route":"Take control")){
    var bridge=worldPlayer?worldPlayer.GetComponent<NovaInputBridge>():null;
    if(bridge){bridge.Neutral();worldManualTakeover=!worldManualTakeover;bridge.diagnosticInput=!worldManualTakeover;world.manualTakeover=worldManualTakeover;world.diagnosticInput=!worldManualTakeover;Save();}

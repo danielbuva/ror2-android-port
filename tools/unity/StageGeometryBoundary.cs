@@ -55,6 +55,7 @@ public sealed partial class MovementBatchProbe {
     if(!materialCache.TryGetValue(materials[i],out replacement)){
      bool terrain=materials[i].shader.name.IndexOf("Triplanar",StringComparison.OrdinalIgnoreCase)>=0;
      replacement=new Material(materials[i]);replacement.shader=pillarBeam?Resources.Load<Shader>("MoonPillarBeamPreview"):terrain?terrainShader:surfaceShader;replacement.shaderKeywords=new string[0];
+     if(!pillarBeam)AndroidMaterialPresentation.Apply(materials[i],replacement);
      if(pillarBeam)Check(replacement.shader&&replacement.shader.isSupported,"Android pillar beam shader unavailable");
      if(terrain){r.stage.terrainMaterials++;if(materials[i].name.StartsWith("matGPTerrain",StringComparison.Ordinal)){r.stage.terrainTextureMaterials++;r.stage.terrainTexturesBound&=replacement.GetTexture("_RedChannelTopTex")&&replacement.GetTexture("_RedChannelSideTex")&&replacement.GetTexture("_GreenChannelTex")&&replacement.GetTexture("_BlueChannelTex");}}else r.stage.surfaceMaterials++;
      materialCache.Add(materials[i],replacement);stageGeometryMaterials.Add(replacement);

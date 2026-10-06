@@ -3126,3 +3126,77 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 **Bounded navigation assistance:** User is away and authorizes6x jump or another route, with a stop if navigation needs manual input. Two separately recorded GUI toggle windows at660.953–663.666 and735.783–746.881seconds raise original computed power15→90 and restore15. The longer window confirms actual original path-request maxJumpHeight202.5, but zero reachable waypoints, terrain fallback has no candidate and requests no jump. Character position does not change; this proves the toggle/replanning outcome, not high-jump traversal or that6x cannot clear the cliff. Invincibility/damage x1000/charge x8 stay enabled, movement x2 never enabled; all observations exclude normal-game acceptance. No speculative navigation framework added.
 
 **Handoff / rollback:** Preserve current report, navigation history, captures, current-process logs, exact APK/hash/payload receipts and complete source archive under `work/experiments/scene-runtime/20261006T034153.546343Z`. Stop the attributed route/observer and owned app, remove only its selector, verify Nova asleep; installed APK/payload/Android results retained. Source cleanup did not execute during this intentional interruption; no false restoration claim. I06/I03 and all accepted pointers remain unchanged. Pause at the user's conditional request, pending manual navigation. On return, use the already built candidate via `./dev prototype --action movement-batch-retry --debug-options work/config/moon-debug-options.json`, preserving this attempt and creating a fresh verification directory; follow the genuine route and hand over physical control for the Moon terrain. No normal/I07 gate advances.
+
+
+## I08-J324 — Independent material families and base-stage stability
+
+- **ID:** I08-J324
+- **TITLE:** Independent material families and base-stage stability
+- **CONTEXT:** User switches to explicitly authorized internal-only Nova, one APK, Moon paused. J323/I06/I03 retained.
+- **OBSERVATION:** Legacy preview omits normal/emission/terrain/particle response; existing adopted-only placement rejects the new device.
+- **HYPOTHESIS:** Owned material approximations and bounded five-stage window can exercise broad rendering/transition stability without Moon or user presence.
+- **TASK:** Add only required internal placement/one-dispatch guard and five material-family shaders; run four genuine source transports.
+- **CONSTRAINTS:** No original assets/source in Git, no original install change, no platform success, one device APK, idle OLED asleep, no Moon or normal assisted acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Device guards/example/docs/tests; owned renderer/camera/batch helpers and regeneration; ignored scene/build/run evidence.
+- **TEST COMMAND:** ./dev doctor; ./dev preflight; ./dev test; forced Vulkan build; movement-batch-run with independent debug options.
+- **PASS CONDITION:** Completed855.56-second window/four genuine transports/158kills/zero current-process errors, cleanup and internal backing;49 host tests. Does not pass parity or normal gameplay.
+- **FAILURE EVIDENCE TO CAPTURE:** Preserve source/build/APK hashes, each stage capture, process errors/placement/memory/frame/thermal and debug history, first failed helper/toggle.
+- **STATE/JOURNAL UPDATES REQUIRED:** J324 journal/state/milestone graphics/stability scope; archive installed APK and old Moon/device receipts, no normal/I07 pointer.
+- **DEPENDENCIES:** Current integrated world and explicit new-device authorization.
+
+
+## I08-J325 — Source-guided effect correction through shader payload
+
+- **ID:** I08-J325
+- **TITLE:** Source-guided effect correction through shader payload
+- **CONTEXT:** Same installed J324 APK; original PC appearance is authority.
+- **OBSERVATION:** Overbroad additive teleporter effect and invented grading are visible in reviewed legacy/approximation toggles.
+- **HYPOTHESIS:** Original alpha/Fresnel parameters and neutral camera grade remove these unsupported aesthetic choices.
+- **TASK:** Mask One-blend RGB with alpha, source rim/projection/snow controls; identity grade; build only fixed five-shader bundle, retry same APK.
+- **CONSTRAINTS:** Preserve source activation/physics/assemblies/Moon; no PC parity claim; independent receipts, changed-file sync and one APK guard.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Five authored shaders; thin presentation action/editor dispatch; ignored payload variant/verification.
+- **TEST COMMAND:** ./dev prototype --action presentation-payload; ./dev prototype --action movement-batch-retry --debug-options work/config/independent-debug-options.json.
+- **PASS CONDITION:** Completed408.53-second/four-transition/63kill window, zero errors, restored debug/owned state, reviewed corrected rim. Matching PC parity remains open.
+- **FAILURE EVIDENCE TO CAPTURE:** Bundle request/start/terminal and hashes, APK reuse, visual first mismatch and current-process crashes/errors.
+- **STATE/JOURNAL UPDATES REQUIRED:** J325 and visual-restoration notes; bound assisted evidence and retain previous payload.
+- **DEPENDENCIES:** I08-J324; source material blend metadata, pinned community graphics knowledge.
+
+
+## I08-J326 — Original base-stage atmosphere and native lights
+
+- **ID:** I08-J326
+- **TITLE:** Original base-stage atmosphere and native lights
+- **CONTEXT:** Broad integrated graphics continues on the one installed APK.
+- **OBSERVATION:** Geometry conversion stripped native RenderSettings/light classes.
+- **HYPOTHESIS:** Restoring exact original fog/ambient/sky/sun/light blocks can remove that reconstruction omission without new gameplay callbacks.
+- **TASK:** Keep native104/108 and source closure in five base scenes; rebuild those existing bundles/manifests, run four genuine transports.
+- **CONSTRAINTS:** Moon/assemblies/authority/physics callbacks unchanged; no invented scene settings, sky or PC parity; immutable previous sources/payload, idle OLED asleep.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing scene transformation; minimum stage-presentation bundle action; ignored native contracts/scene backups/receipts/captures.
+- **TEST COMMAND:** ./dev prototype --action stage-presentation-payload; same-APK movement-batch-retry with independent debug options.
+- **PASS CONDITION:** Completed host build38.84seconds/zero errors and same-APK508.13-second window/four transports/76kills/zero errors; captures reviewed, cleanup/sleep pass. Preserved source settings and derivative payload identities; no PC parity.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact native settings, imported references, each scene capture, first runtime failure and perf/memory deltas; capture helper relative-path rejection retained.
+- **STATE/JOURNAL UPDATES REQUIRED:** Append J326 terminal outcome, concise state and graphics/stability scope; no parity/normal/Moon pointer.
+- **DEPENDENCIES:** I08-J325; existing source scene closure and exact accepted input.
+
+
+## I08-J327 — Recovered cubemap camera and source appearance observations
+
+- **ID:** I08-J327
+- **TITLE:** Recovered cubemap camera and source appearance observations
+- **CONTEXT:** Installed J324 camera still clears sky to solid color; one APK dispatch consumed.
+- **OBSERVATION:** Four exact source sky materials use built-in Skybox/Cubemap; one stage sky reference resolves to terrain.
+- **HYPOTHESIS:** Source cubemap clear and removal of diagnostic directional light where source lights exist enable authored atmosphere without an invented sky.
+- **TASK:** Prepare camera change/actual scene fog-light samples and approximation label; compile and build a reviewable host APK; clarify same-package replacement before installing.
+- **CONSTRAINTS:** No inferred cubemap for dampcavesimple, no source grading/shader parity claim, no new license/platform access or Moon progression; preserve installed APK/payload.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Owned presentation camera/display/UI; ignored prebuild archive, compiler/sky query, full Vulkan candidate receipts.
+- **TEST COMMAND:** Exact-editor refresh/console query; ./dev preflight; forced Vulkan build. Device retry only after replacement authorization.
+- **PASS CONDITION:** Exact-editor preparation and full82.927-second/zero-error Vulkan build pass;14,478-file archive/41 payload/45 assembly identities verified. Host APK ready, replacement authorization/device sky acceptance pending.
+- **FAILURE EVIDENCE TO CAPTURE:** Native sky shader support/texture/material identity and camera fields, full request/start/terminal/APK hash, first device sky/light/perf failure.
+- **STATE/JOURNAL UPDATES REQUIRED:** J327 build/install outcomes and visual limits; state next action explicitly distinguishes installed code from host candidate.
+- **DEPENDENCIES:** I08-J326 terminal; explicit user one-APK limit clarification for replacement.
+
+
+**I08-J326 exit:**508.133gameplay/529.572host seconds,4 transports/76kills, zero actual-PID runtime/message failures, full cleanup/sleep. Mean33.517ms/0.80%>50ms, allocation141.99→225.44MiB across stages; no CPU/GPU thermal or leak claim. Matching PC parity and source cubemap camera remain open. Invincibility/high damage/fast charge on, movement/jump boost off; restored. Scoped observed presentation pointer only, I06/I03/J323 unchanged.
+
+
+**I08-J327 build exit:** Host-only APK `464ab5dd2c22c1b2f6e3896338d81d7bb3f819dd68d0387f8384216b1d45712a`, source/full terminal receipts preserved. One-APK clarification pending; installed J324 hash unchanged, OLED asleep. No PC parity or device sky/camera acceptance from compilation.

@@ -8,13 +8,18 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
- [Serializable] class Request {public string request_id,api;}
+ [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation;}
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
  [InitializeOnLoadMethod] static void ResumeQueuedBuild(){if(!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,""))){EditorApplication.update-=DispatchBuild;EditorApplication.update+=DispatchBuild;}}
  [MenuItem("Porting Lab/Build ARM64")]
  public static void QueueBuild(){
-  if(BuildPipeline.isBuildingPlayer||!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,"")))throw new InvalidOperationException("A lab build is already active or queued");
-  var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));var request=File.ReadAllText(Path.Combine(root,"build-request.json"));
+  Enqueue("build-request.json");
+ }
+ [MenuItem("Porting Lab/Build Android Presentation Payload")]
+ public static void QueuePresentation(){Enqueue("presentation-build-request.json");}
+ static void Enqueue(string filename){
+  if(BuildPipeline.isBuildingPlayer||!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,""))||!string.IsNullOrEmpty(SessionState.GetString(RunningBuild,"")))throw new InvalidOperationException("A lab build is already active or queued");
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));var request=File.ReadAllText(Path.Combine(root,filename));
   if(string.IsNullOrEmpty(JsonUtility.FromJson<Request>(request).request_id))throw new InvalidOperationException("Missing lab build request identity");
   SessionState.SetString(PendingBuild,request);ResumeQueuedBuild();
  }
@@ -22,8 +27,33 @@ public static class LabBuild {
   if(EditorApplication.isCompiling||EditorApplication.isUpdating||BuildPipeline.isBuildingPlayer)return;
   var request=SessionState.GetString(PendingBuild,"");EditorApplication.update-=DispatchBuild;if(string.IsNullOrEmpty(request))return;
   SessionState.SetString(PendingBuild,"");SessionState.SetString(RunningBuild,JsonUtility.FromJson<Request>(request).request_id);
-  var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));Directory.CreateDirectory(Path.Combine(root,"lab-build"));File.WriteAllText(Path.Combine(root,"lab-build/started.json"),request);
-  Build();
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));var cfg=JsonUtility.FromJson<Request>(request);
+  if(cfg.presentationOnly){BuildPresentation(root,cfg);return;}
+  Directory.CreateDirectory(Path.Combine(root,"lab-build"));File.WriteAllText(Path.Combine(root,"lab-build/started.json"),request);Build();
+ }
+ static void BuildPresentation(string root,Request cfg){
+  var result=new Result{request_id=cfg.request_id};var start=DateTime.UtcNow;
+  try{
+   string output=Path.GetFullPath(cfg.output),allowed=Path.Combine(root,"experiments/android-presentation")+Path.DirectorySeparatorChar;
+   if(!output.StartsWith(allowed,StringComparison.Ordinal)||cfg.api!="vulkan")throw new Exception("Unexpected Android presentation output/target");
+   Directory.CreateDirectory(output);File.WriteAllText(Path.Combine(output,"started.json"),JsonUtility.ToJson(cfg,true));
+   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   if(!assets.All(File.Exists))throw new Exception("Presentation shader input missing");
+   var builds=new System.Collections.Generic.List<AssetBundleBuild>();
+   if(cfg.stagePresentation){
+    var sceneCfg=JsonUtility.FromJson<SceneProbeConfig>(File.ReadAllText(Path.Combine(root,"scene-probe-build.json")));
+    var paths=new[]{sceneCfg.stageScene}.Concat(sceneCfg.nextStageScenes??new string[0]).ToArray();
+    foreach(var name in new[]{"golemplains","foggyswamp","frozenwall","dampcavesimple","skymeadow"}){
+     var path=paths.Single(x=>Path.GetFileNameWithoutExtension(x)==name);
+     if(!path.StartsWith("Assets/LabLoadingScene/StageGeometry/",StringComparison.Ordinal)||!File.Exists(path))throw new Exception("Unexpected stage presentation path");
+     builds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{path}});
+    }
+   }else builds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=assets});
+   if(!BuildPipeline.BuildAssetBundles(output,builds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android))throw new Exception("Android presentation bundle build failed");
+   foreach(var path in assets){var shader=AssetDatabase.LoadAssetAtPath<Shader>(path);if(ShaderUtil.GetShaderMessages(shader).Any(x=>x.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error))throw new Exception("Presentation shader compile error: "+path);}
+   result.success=true;result.result="Android presentation bundle built; device rendering unverified";
+  }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
+  result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(root,"presentation-build-result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");
  }
  public static void Build(){
   string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};
@@ -38,6 +68,8 @@ public static class LabBuild {
    PlayerSettings.enableFrameTimingStats=true;
    Directory.CreateDirectory(Path.Combine(root,"generated-android-data"));
    var bundleBuilds=new System.Collections.Generic.List<AssetBundleBuild>();
+   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   if(presentationShaders.All(File.Exists))bundleBuilds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=presentationShaders});
    string sceneProbeConfig=Path.Combine(root,"scene-probe-build.json");
    if(File.Exists(sceneProbeConfig)){
     var cfg=JsonUtility.FromJson<SceneProbeConfig>(File.ReadAllText(sceneProbeConfig));

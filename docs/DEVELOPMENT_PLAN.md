@@ -4,6 +4,10 @@
 
 Approved direction: Architecture C in ADR-001: exact-editor Android IL2CPP player, selective managed preservation, locally converted content and explicit platform adapters. Controlled C#9 reconstruction is the bounded fallback. This roadmap is the canonical execution policy; current results belong in PORTING_STATE.md and milestones.md.
 
+**Current independent-work direction (2026-10-06):** Keep J323 Moon/finale replay and I06/I03 rollbacks intact. Moon progression waits for manual input. On the separately authorized internal-only Nova, integrate broad visual restoration, content, lawful offline application/profile flow, stability/performance, controller support and feasible audio work without requiring user presence. The local one-APK dispatch allowance permits the already installed candidate; subsequent APK replacement requires clarification. Independent payload iteration can reuse that owned APK. Sleep the OLED whenever the device is idle.
+
+**Visual authority:** Reproduce the original PC build's authored appearance, including lighting, color, fog, outlines, material response, particles and gameplay readability. Prefer matching PC captures of the same stage/object/character and measured original scene/material data. A brighter or more polished Android image is not evidence of fidelity. Mark replacements as approximations, record unsupported features and keep parity open until comparative evidence supports it. Do not invent grading, atmosphere or lighting to hide missing source behavior. See [visual restoration](visual-restoration.md) for current comparisons and limits.
+
 ## Immediate execution
 
 T01 → T02 → T05 → T06 → T07. T03/T04/T08/T10 are conditional support, not wholesale prerequisites. T01 is non-negotiable: `./dev doctor`, `./dev preflight`, `./dev test`, `./dev smoke --target vulkan`. Stop at the first failed prerequisite. Unknown input requires inventory/diff review and explicit local acceptance. Do not repeat unchanged failed Rewired builds or reconstructed Play Mode.
@@ -70,4 +74,4 @@ Replan at L3, L4, L5.5, L6, L7 and L8. Authentication, licensing, OS permission,
 
 ## Postponed
 
-Full audio/graphics parity, additional survivors/DLC/routes, existing Steam-profile import/cloud, remote multiplayer/platform services, broad devices, 60 FPS, end-user storage import, release packaging/signing/distribution. Investigate earlier only when a measured dependency requires it. See risk-register.md for early detection/fallbacks.
+Moon/finale acceptance resumes when manual input is available; final normal full-route verification remains required. Additional survivors/DLC/routes, existing Steam-profile import/cloud, remote multiplayer/platform services, 60 FPS, end-user storage import and release packaging/signing/distribution remain later gates. The latest independent-work direction brings visual parity, broader base content, offline application flow, controller breadth and performance measurement forward; real audio still requires authorized compatible access. See risk-register.md for early detection/fallbacks.
