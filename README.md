@@ -8,6 +8,8 @@ Start with [PORTING_STATE.md](PORTING_STATE.md), [ADR-001](docs/ADR-001-port-arc
 
 The prepared environment already contains the exact Unity/Android toolchain and inspection tools. `./scripts/lab-setup.sh` restores the pinned Python laboratory dependencies if needed. Copy environment/lab-config.example.json to ignored work/config/local.json and supply the legitimate installation path and explicitly authorized device serial. Never copy the original installation into tracked directories.
 
+Storage defaults to `"storage_mode": "adopted"`. An explicitly authorized internal-only device can use `"storage_mode": "internal"`; live checks reject an unexpected adopted volume and verify installation under internal app storage. Preserve the previous device's local configuration and ownership receipts before switching devices. Optional `"apk_install_limit": 1` counts installation dispatches for the selected device, including unknown outcomes. After that dispatch, only the identical receipted APK may be reused; replacing or uninstalling it does not reset the limit.
+
 `./dev inspect --full` creates a reviewed input identity. Initial/updated inputs must be reviewed before recording that ID in work/config/accepted-input.json. The current workstation already has this configuration and accepted baseline. No Steam authentication is needed to inspect the supplied installation.
 
 ## Command interface
@@ -37,7 +39,7 @@ The prepared environment already contains the exact Unity/Android toolchain and 
 | `./dev editor --target lab --action inspect` | Guarded MCP project/hierarchy/console inspection. |
 | `./dev preflight` | Input acceptance/drift, tracked-file policy, toolchain pin, host/device storage checks. |
 | `./dev build --target gles` | Instrumented IL2CPP ARM64 build through MCP; content-addressed APK receipt. Vulkan also supported. Editor must be connected. |
-| `./dev install` | Install current build on live adopted volume; reject foreign pre-existing package; record placement. |
+| `./dev install` | Install current build on configured, live-checked storage; reject foreign pre-existing package; record placement. |
 | `./dev run` | Launch lab, wait for checkpoint, collect runtime path/snapshot. |
 | `./dev sync-data` | Hash-verified changed payload sync into the runtime-reported path. Run once before initial sync. |
 | `./dev diagnostics --subtree NAME --fields` | Change runtime snapshot scope without rebuilding; `--disable` stops periodic snapshots. |

@@ -25,3 +25,9 @@ A durable end-user content library would require a separately selected storage l
 Evidence: `work/runs/20260913T011048.134293Z-7630bdfebf6b/result.json`, `snapshot.json`, `private-path.txt`; initial storage controls in `environment/device-profile.json` and bootstrap smoke results. Query `./dev storage` for current numbers rather than reusing historical free space.
 
 Update/sync evidence: `work/experiments/storage-lifecycle/result.json`. The disposable test package was removed afterward. Clear-data and durable external-library behavior remain untested.
+
+## Explicit internal-only authorization
+
+J324 selects a newly authorized Nova with no adopted volume. Its private configuration uses `storage_mode: internal`; installation requests the Android `internal` target and verifies internal app placement. Each install/sync still measures live capacity. The default adopted policy and all unrelated-data protections remain in force for other configurations. Previous device configuration and ownership receipts are preserved locally before switching; no identifiers are published.
+
+The user's one-APK limit is recorded in ignored configuration. A per-device local counter consumes authorization before dispatch, including an unknown or failed outcome. Once consumed, the identical owned APK can be reused without dispatching installation; a changed APK or an uninstall followed by reinstall is rejected. Three focused safety tests cover storage-mode drift, default adopted refusal and installation-limit reuse/replacement/reset behavior. With the existing suite, 49 tests pass. Doctor/preflight and actual internal placement pass on the selected device. Shader-only iterations use separately attributed payloads and do not replace the installed APK.

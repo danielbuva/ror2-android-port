@@ -30,26 +30,41 @@ class Device:
   if r['serial']!=self.serial or r['package']!=PACKAGE or self.sh('pm','path',PACKAGE)!=r['package_path']:raise RuntimeError('Package placement/ownership changed; inspect before modifying')
   return r
  def storage(self):
+  mode=config().get('storage_mode','adopted')
+  if mode not in ['adopted','internal']:raise RuntimeError('Unknown explicitly configured storage mode')
   lines=[x.split() for x in self.sh('sm','list-volumes','all').splitlines() if x.startswith('private:') and ' mounted ' in x]
-  if len(lines)!=1 or not re.fullmatch('[a-fA-F0-9-]+',lines[0][2]):raise RuntimeError('Expected exactly one mounted adopted private volume')
-  uuid=lines[0][2]
+  if mode=='adopted' and (len(lines)!=1 or not re.fullmatch('[a-fA-F0-9-]+',lines[0][2])):raise RuntimeError('Expected exactly one mounted adopted private volume')
+  if mode=='internal' and lines:raise RuntimeError('Internal-only device now has adopted storage; review device configuration')
+  uuid=lines[0][2] if mode=='adopted' else None
   def df(path):
    text=self.sh('df','-k',path);parts=text.splitlines()[-1].split();return {'path':path,'total_bytes':int(parts[1])*1024,'free_bytes':int(parts[3])*1024,'raw':text}
-  result={'serial':self.serial,'uuid':uuid,'internal':df('/data'),'adopted':df('/mnt/expand/'+uuid),'shared':df('/sdcard'),'install_location':self.sh('pm','get-install-location')}
+  result={'serial':self.serial,'mode':mode,'uuid':uuid,'internal':df('/data'),'adopted':df('/mnt/expand/'+uuid) if uuid else None,'shared':df('/sdcard'),'install_location':self.sh('pm','get-install-location')}
   write(WORK/'device/storage.json',result);return result
  def install(self,apk):
   if self.exists():self.owned()
   storage=self.storage();apk=Path(apk)
+  limit=config().get('apk_install_limit');counter=WORK/'device-install-limits'/(digest(self.serial)+'.json')
+  if limit is not None:
+   if not isinstance(limit,int) or isinstance(limit,bool) or limit<1:raise RuntimeError('Invalid APK installation limit')
+   used=read(counter).get('dispatched',0) if counter.exists() else 0
+   if used>=limit:
+    if self.exists():
+     prior=self.owned()
+     if prior['apk_sha256']==sha(apk):return dict(prior,reused=True,install_output='Existing receipted identical APK reused; no installation dispatched')
+    raise RuntimeError('Authorized APK installation limit exhausted; retain current APK')
   with zipfile.ZipFile(apk) as z:
    abis={n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')};native=sum(i.file_size for i in z.infolist() if i.filename.startswith('lib/'))
   if abis!={'arm64-v8a'}:raise RuntimeError('APK must contain only arm64-v8a; found '+str(abis))
   reserve=config().get('internal_reserve_mib',1024)*1024**2;estimate=apk.stat().st_size*3+native
   if storage['internal']['free_bytes']<reserve+estimate:raise RuntimeError('Insufficient internal installation scratch headroom; do not move/remove games')
-  if storage['adopted']['free_bytes']<estimate+reserve:raise RuntimeError('Insufficient adopted storage headroom')
-  t=time.monotonic();output=self.cmd('install','-r','--force-uuid',storage['uuid'],str(apk),timeout=240)
+  volume=storage['internal'] if storage.get('mode')=='internal' else storage['adopted']
+  if volume['free_bytes']<estimate+reserve:raise RuntimeError('Insufficient selected storage headroom')
+  if limit is not None:write(counter,{'serial':self.serial,'dispatched':used+1,'apk_sha256':sha(apk),'status':'dispatched; verify installation receipt'})
+  t=time.monotonic();output=self.cmd('install','-r','--force-uuid',storage['uuid'] or 'internal',str(apk),timeout=240)
   r={'serial':self.serial,'package':PACKAGE,'apk':str(apk),'apk_sha256':sha(apk),'package_path':self.sh('pm','path',PACKAGE),'details':self.sh('dumpsys','package',PACKAGE),'seconds':time.monotonic()-t,'install_output':output,'storage':storage}
   write(WORK/'device/installed.json',r)
-  if '/mnt/expand/'+storage['uuid']+'/' not in r['package_path']:raise RuntimeError('Placement verification failed; lab receipt saved, inspect before next action')
+  expected='/data/app/' if storage.get('mode')=='internal' else '/mnt/expand/'+storage['uuid']+'/'
+  if expected not in r['package_path']:raise RuntimeError('Placement verification failed; lab receipt saved, inspect before next action')
   return r
  def launch(self):
   self.owned();self.display(True);self.sh('am','force-stop',PACKAGE);start=self.sh('date','+%s.%N')
@@ -87,7 +102,8 @@ class Device:
    existing=self.sh('sha256sum',remote,check=False).split()
    changed=not existing or existing[0]!=h
    if changed:
-    if storage['adopted']['free_bytes']<p.stat().st_size*2+1024**3:raise RuntimeError('Payload exceeds adopted free space')
+    volume=storage['internal'] if storage.get('mode')=='internal' else storage['adopted']
+    if volume['free_bytes']<p.stat().st_size*2+1024**3:raise RuntimeError('Payload exceeds selected free space')
     self.cmd('push',str(p),remote+'.partial',timeout=300)
     got=self.sh('sha256sum',remote+'.partial').split()[0]
     if got!=h:raise RuntimeError('Transferred payload hash mismatch')

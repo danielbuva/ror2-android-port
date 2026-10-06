@@ -33,6 +33,28 @@ class SafetyTests(unittest.TestCase):
  def test_reset_absent_package_does_not_call_adb_uninstall(self):
   self.d.exists=lambda:False
   self.assertFalse(self.d.reset()['removed'])
+ def test_internal_storage_requires_explicit_mode_and_no_adopted_volume(self):
+  self.d.sh=lambda *args,**kwargs:'private:disk mounted '+('a'*8+'-'+('b'*4+'-')*3+'c'*12)
+  with patch.object(device,'config',return_value={'storage_mode':'internal'}):
+   with self.assertRaisesRegex(RuntimeError,'now has adopted'):self.d.storage()
+ def test_default_adopted_mode_rejects_missing_volume(self):
+  self.d.sh=lambda *args,**kwargs:''
+  with patch.object(device,'config',return_value={}):
+   with self.assertRaisesRegex(RuntimeError,'mounted adopted'):self.d.storage()
+ def test_one_apk_limit_reuses_identical_owned_install_and_rejects_replacement(self):
+  calls=[];installed=[False];self.d.exists=lambda:installed[0]
+  self.d.storage=lambda:{'mode':'internal','uuid':None,'internal':{'free_bytes':10**12},'adopted':None}
+  self.d.sh=lambda *args,**kwargs:'package:/data/app/test/base.apk' if args==('pm','path',device.PACKAGE) else ''
+  def command(*args,**kwargs):calls.append(args);installed[0]=True;return 'Success'
+  self.d.cmd=command
+  with patch.object(device,'config',return_value={'apk_install_limit':1}):
+   apk=self.apk();self.d.install(apk);self.assertTrue(self.d.install(apk)['reused'])
+   self.assertEqual(calls[0][:4],('install','-r','--force-uuid','internal'));self.assertEqual(len(calls),1)
+   with zipfile.ZipFile(apk,'w') as z:z.writestr('lib/arm64-v8a/libtest.so',b'changed')
+   with self.assertRaisesRegex(RuntimeError,'limit exhausted'):self.d.install(apk)
+   installed[0]=False
+   with self.assertRaisesRegex(RuntimeError,'limit exhausted'):self.d.install(apk)
+   self.assertEqual(len(calls),1)
  def test_display_control_refuses_non_nova_before_sending_key(self):
   calls=[]
   self.d.sh=lambda *args,**kwargs:(calls.append(args) or 'different-model')

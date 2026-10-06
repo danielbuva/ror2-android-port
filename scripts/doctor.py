@@ -37,7 +37,9 @@ if target:
     base=[os.environ['ADB'],'-s',target,'shell']
     ok,abi=run(base+['getprop ro.product.cpu.abilist']);check('Target ARM64',ok and 'arm64-v8a' in abi,abi)
     ok,vols=run(base+['sm list-volumes all']); private=[l.split() for l in vols.splitlines() if l.startswith('private:') and ' mounted ' in l]
-    check('Adopted storage mounted',ok and private,vols)
+    mode=config.get('storage_mode','adopted')
+    check('Configured storage mode',mode in ['adopted','internal'],mode)
+    check('Configured storage backing',ok and (not private if mode=='internal' else bool(private)), 'Internal-only device' if mode=='internal' else vols)
     for v in private:
         ok,out=run(base+['df -k /mnt/expand/'+v[2]])
         try: free=int(out.splitlines()[-1].split()[3]);check('Adopted free space',ok and free>1024*1024,f'{free/1024/1024:.1f} GiB free (minimum check: 1 GiB)')
