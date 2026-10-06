@@ -37,7 +37,7 @@ public static class LabBuild {
    string output=Path.GetFullPath(cfg.output),allowed=Path.Combine(root,"experiments/android-presentation")+Path.DirectorySeparatorChar;
    if(!output.StartsWith(allowed,StringComparison.Ordinal)||cfg.api!="vulkan")throw new Exception("Unexpected Android presentation output/target");
    Directory.CreateDirectory(output);File.WriteAllText(Path.Combine(output,"started.json"),JsonUtility.ToJson(cfg,true));
-   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
    if(!assets.All(File.Exists))throw new Exception("Presentation shader input missing");
    var builds=new System.Collections.Generic.List<AssetBundleBuild>();
    if(cfg.stagePresentation){
@@ -68,7 +68,7 @@ public static class LabBuild {
    PlayerSettings.enableFrameTimingStats=true;
    Directory.CreateDirectory(Path.Combine(root,"generated-android-data"));
    var bundleBuilds=new System.Collections.Generic.List<AssetBundleBuild>();
-   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
    if(presentationShaders.All(File.Exists))bundleBuilds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=presentationShaders});
    string sceneProbeConfig=Path.Combine(root,"scene-probe-build.json");
    if(File.Exists(sceneProbeConfig)){

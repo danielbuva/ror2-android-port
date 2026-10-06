@@ -5,7 +5,7 @@ using UnityEngine;
 
 // Owned Android rendering approximations. Original assets and simulation stay intact.
 public static class AndroidMaterialPresentation {
- [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,water,snow,foliage,normalMaps,emissionMaps;public string shaderSource,error,scope="Android authored lighting/normal/emission/snow/particle approximations; no original shader parity";}
+ [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Android authored lighting/normal/emission/snow/particle/billboard approximations; no original shader parity";}
  sealed class Binding {public Material material;public Shader enhanced,fallback;}
  static readonly List<Binding> bindings=new List<Binding>();
  public static Report report=new Report();
@@ -20,8 +20,17 @@ public static class AndroidMaterialPresentation {
   bool water=name.IndexOf("Water",StringComparison.OrdinalIgnoreCase)>=0;
   bool snow=name.IndexOf("Snow",StringComparison.OrdinalIgnoreCase)>=0;
   bool foliage=name.IndexOf("Speedtree",StringComparison.OrdinalIgnoreCase)>=0;
-  var shader=LoadShader(terrain?"AndroidTerrainPresentation":cloud?"AndroidParticlePresentation":water?"AndroidWaterPresentation":"AndroidSurfacePresentation");
+  bool billboard=name=="Nature/SpeedTree Billboard";
+  var shader=LoadShader(billboard?"AndroidBillboardPresentation":terrain?"AndroidTerrainPresentation":cloud?"AndroidParticlePresentation":water?"AndroidWaterPresentation":"AndroidSurfacePresentation");
   if(!shader||!shader.isSupported){report.error="Android material family unavailable: "+name;return;}
+  if(billboard){
+   // BillboardAsset vertices are atlas-space. Keep the dedicated geometry path
+   // for both toggle settings rather than substituting the ordinary mesh shader.
+   copy.shader=shader;var keys=new List<string>();
+   foreach(var key in source.shaderKeywords)if(key=="EFFECT_BUMP"||key=="EFFECT_HUE_VARIATION"||key=="BILLBOARD_FACE_CAMERA_POS")keys.Add(key);
+   copy.shaderKeywords=keys.ToArray();report.billboards++;
+   bindings.Add(new Binding{material=copy,enhanced=shader,fallback=shader});return;
+  }
   var fallback=copy.shader;copy.shader=shader;copy.shaderKeywords=new string[0];
   copy.SetFloat("_AndroidNormalEnabled",source.HasProperty("_NormalTex")&&source.GetTexture("_NormalTex")?1:0);
   if(source.HasProperty("_NormalTex")&&source.GetTexture("_NormalTex"))report.normalMaps++;

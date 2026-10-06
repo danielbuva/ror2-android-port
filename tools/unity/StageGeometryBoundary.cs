@@ -13,12 +13,13 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit;
   public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
-  public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,meshColliders,colliders,worldColliders,nonWorldColliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
+  public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,billboards,missingBillboardAssets,emptyLODRendererSlots,meshColliders,colliders,worldColliders,nonWorldColliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
  }
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
  readonly List<Material> stageGeometryMaterials=new List<Material>();
+ readonly List<BillboardAsset> stageGeometryBillboards=new List<BillboardAsset>();
  bool stageMoonVolumes;int stageZoneNetworkObjects;string[] stageZoneActiveNames;
  MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
  IEnumerator PrepareStageGeometry(int mapZones=0,string[] activeNames=null){var load=LoadStageGeometry("golemplains-spine-lab",23,null,mapZones,activeNames);while(load.MoveNext())yield return load.Current;}
@@ -42,13 +43,18 @@ public sealed partial class MovementBatchProbe {
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
+  var billboardCopies=new Dictionary<BillboardAsset,BillboardAsset>();
   var beamReplacements=new Dictionary<Material,Material>();
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
    // Full Moon retains original physics/interaction/presentation layer roles.
    // Renderer layer changes also change any collider on that GameObject.
    if(!moon&&!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
    if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
-   var materials=renderer.sharedMaterials;
+   var billboard=renderer as BillboardRenderer;
+   if(billboard){r.stage.billboards++;if(!billboard.billboard)r.stage.missingBillboardAssets++;Check(billboard.billboard&&billboard.billboard.material,"Original billboard asset/material missing");}
+   // Native BillboardRenderer's source material is on BillboardAsset, while
+   // its serialized renderer slot is null. Never mutate the shared source asset.
+   var materials=billboard?new[]{billboard.billboard.material}:renderer.sharedMaterials;
    bool pillarBeam=moon&&IsMoonPillarBeam(renderer);var materialCache=pillarBeam?beamReplacements:replacements;
    for(int i=0;i<materials.Length;i++){
     if(!materials[i])continue;Material replacement;
@@ -62,8 +68,16 @@ public sealed partial class MovementBatchProbe {
     }
     materials[i]=replacement;
    }
-   renderer.sharedMaterials=materials;r.stage.renderers++;
+   if(billboard){BillboardAsset owned;
+    if(!billboardCopies.TryGetValue(billboard.billboard,out owned)){owned=Instantiate(billboard.billboard);owned.material=materials[0];billboardCopies.Add(billboard.billboard,owned);stageGeometryBillboards.Add(owned);}
+    billboard.billboard=owned;
+   }else renderer.sharedMaterials=materials;
+   r.stage.renderers++;
   }
+  r.stage.emptyLODRendererSlots=roots.SelectMany(x=>x.GetComponentsInChildren<LODGroup>(true)).Sum(x=>x.GetLODs().Sum(lod=>lod.renderers.Count(renderer=>!renderer)));
+  // Original Frozen/Sky scenes contain explicit empty LOD slots. Conversion
+  // separately verifies that every nonempty native renderer reference survives.
+  if(r.stage.billboards>0)Check(r.stage.missingBillboardAssets==0,"Recovered billboard asset missing");
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
    // A non-trigger ambient/post-process volume is not world geometry. Promoting
    // Moon's source layer20 sphere ejects the landing body through KCC penetration.
@@ -126,6 +140,7 @@ public sealed partial class MovementBatchProbe {
  static string StageObjectPath(Transform target){var path=target.name;while(target.parent){target=target.parent;path=target.name+"/"+path;}return path;}
  IEnumerator CleanupStageGeometry(){PauseStageMapZones();StopStageMapZoneObservations();
   if(stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded)yield return SceneManager.UnloadSceneAsync(stageGeometryScene);
+  foreach(var billboard in stageGeometryBillboards)if(billboard)Destroy(billboard);stageGeometryBillboards.Clear();
   foreach(var material in stageGeometryMaterials)if(material)Destroy(material);stageGeometryMaterials.Clear();
   if(stageGeometryBundle){stageGeometryBundle.Unload(true);stageGeometryBundle=null;}
   if(r.stage!=null){r.stage.cleaned=!stageGeometryScene.isLoaded;Check(r.stage.cleaned,"Owned stage geometry cleanup incomplete");Save();}

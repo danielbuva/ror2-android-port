@@ -67,7 +67,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     shutil.copy2(ROOT/checkpoint['evidence']/'original-motor-order.json',out/'original-motor-order.json')
     for name in ['MovementBatchProbe','DebugAccelerationBoundary','OfflineApplicationBoundary','IntegratedResultsBoundary','MoonMissionBoundary','MoonEscapeBoundary','MoonPillarPresentation','IntegratedWorldBoundary','IntegratedStageBoundary','AndroidStageTransport','TeleporterWorldBoundary','PrimaryFireBoundary','CombatSpineBoundary','SilentProjectileBoundary','StageGeometryBoundary','EnemySpineBoundary','EnemyRewardBoundary','AutomaticDirectorBoundary','DirectorActorBoundary','RunClockBoundary','BarrelInteractionBoundary','ActiveClientBoundary','InteractionSelectionBoundary','ClientCoinBoundary','InputBarrelBoundary','ChestDropTableBoundary','ChestPurchaseBoundary','ChestEjectionBoundary','PickupDropletLoadBoundary','PickupDropletFlightBoundary','PickupDropletCollisionBoundary','GenericPickupBoundary','MoneyCostBoundary','ItemPickupBoundary','PlayerDefeatBoundary','BodyCatalogBoundary','SpawnStateBoundary','AutomaticSpawnBoundary','AutomaticModelBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','NovaThirdPersonView']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
     for name in ['AndroidMaterialPresentation','AndroidPresentationCamera']:shutil.copy2(ROOT/'tools/unity'/(name+'.cs'),stage/(name+'.cs'))
-    for shader in ['StageTerrainPreview','StageSurfacePreview','MoonPillarBeamPreview','MoonPillarBeaconPreview','AndroidSurfacePresentation','AndroidTerrainPresentation','AndroidParticlePresentation','AndroidWaterPresentation','AndroidColorGrade']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
+    for shader in ['StageTerrainPreview','StageSurfacePreview','MoonPillarBeamPreview','MoonPillarBeaconPreview','AndroidSurfacePresentation','AndroidTerrainPresentation','AndroidParticlePresentation','AndroidWaterPresentation','AndroidColorGrade','AndroidBillboardPresentation']:shutil.copy2(ROOT/'tools/unity'/(shader+'.shader'),stage/'Resources'/(shader+'.shader'))
     cfg=baseline_cfg;cfg.update(stage_combat_configs(stage,a,out));cfg.update(stage_first_stage_geometry(stage,out,original_name=run_clock,map_zones=integrated_world));cfg.update(stage_enemy_spine(stage,a,out));cfg.update({'attempt':out.name,'combatSpine':True,'launchPlayableSlice':True,'originalRunClock':run_clock})
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
     if integrated_world:
@@ -196,7 +196,7 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False,reflection_bindings=None):
+def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False,reflection_bindings=None,billboards=False):
     """Recover source geometry; integrated runs additionally retain exact MapZone callbacks."""
     import shutil
     from scene_closure import REFERENCE
@@ -206,6 +206,9 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     # Preserve geometry/LOD and selected source MapZone callbacks; omit unrelated native/presentation data.
     keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
     if presentation:keep.update({104,108,157,198,199,215}) # Source atmosphere, lighting and native environment particles.
+    if billboards:
+        if not presentation:raise RuntimeError('Native billboard restoration requires the presentation scene contract')
+        keep.add(227) # Requires the dedicated billboard material path in a new APK.
     # Measured original MonoScript identity: only the source escape-pod preview disable callback.
     preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
@@ -248,6 +251,11 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
             deferred_colliders.append(file_id)
         kept.append((kind,file_id,block))
     if len(deferred_colliders)!=len(map_ids):raise RuntimeError('Original MapZone collider count differs')
+    if billboards:
+        kept_ids={file_id for _,file_id,_ in kept}
+        lod_refs=[ref for kind,_,block in kept if kind==205 for ref in re.findall(r'renderer: \{fileID: (-?\d+)\}',block)]
+        if any(ref!='0' and ref not in kept_ids for ref in lod_refs):raise RuntimeError('Nonempty source LOD renderer reference would be lost')
+        write(out/(scene_name+'-billboard-LOD-contract.json'),{'native_billboards':sum(kind==227 for kind,_,_ in kept),'source_explicit_empty_LOD_slots':lod_refs.count('0'),'all_nonempty_source_LOD_renderers_retained':True,'no_guessed_renderers':True})
     expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'moon2':0}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]

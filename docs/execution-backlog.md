@@ -3282,3 +3282,19 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** Original pointer/external/container/export hashes, ambiguous match and first two failed host scripts/logs, import/binding/type mismatch and first runtime/appearance error.
 - **STATE/JOURNAL UPDATES REQUIRED:** J332 preparation and actual repair/build/device exit separately; retain observed-only scope and J323/I06/I03.
 - **DEPENDENCIES:** I08-J330/J331 terminal; existing pinned UnityPy/export input and current graphics prior art.
+
+## I08-J333 — Original distant foliage and billboard LOD restoration
+
+- **ID:** I08-J333
+- **TITLE:** Original distant foliage and billboard LOD restoration
+- **CONTEXT:** Five integrated base-stage scenes retain source LODGroups but omit native BillboardRenderer class227.
+- **OBSERVATION:** Source scenes contain85/203/50/20/552 billboard renderers and793 LOD references to them. Eleven exact original billboard assets/materials retain atlas geometry, dimensions, texture slices and source properties; their SpeedTree Billboard shader exports are dummies.
+- **HYPOTHESIS:** Retaining native components/assets and using the exact editor's billboard atlas/vertex path in an explicitly approximate material family can restore the missing distant foliage without altering gameplay.
+- **TASK:** Prepare the five-stage native billboard closure and dedicated material selection in a coherent host APK alongside J327 sky and J332 lighting/reflections; verify asset/LOD/material contracts, build, then await the existing one-APK replacement clarification before device execution.
+- **CONSTRAINTS:** Installed J324 APK/J332 payload and Moon candidate untouched; no guessed atlas or terrain, copied proprietary/community shader implementation, new wind animation, invented grade or PC parity claim. Native vertex/atlas support does not reproduce RoR2's lighting ramp.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing scene transformation/material selector/stage observation, one authored wrapper of bundled Unity includes, existing shader bundle recipe; ignored candidate/source/import/build receipts.
+- **TEST COMMAND:** Existing exact-input source inspection, preflight, forced Vulkan host build and read-only editor contract review; same owned package device run only if replacement is authorized.
+- **PASS CONDITION:** HOST PASS — all910 native renderers/eleven exact assets and793 billboard LOD references import; nonempty references retained and original explicit empty slots preserved. Dedicated owned shader/atlas/material/geometry contracts verify. Final91.012-second/zero-error Vulkan ARM64 build, matching request/start/terminal,41 payload and45 assembly identities;49 tests pass. Device rendering and matching PC appearance remain pending, no installation.
+- **FAILURE EVIDENCE TO CAPTURE:** Source GUID/container/material/LOD mismatch, missing shader/atlas input, first compiler/AOT/runtime error and visually incorrect distant silhouettes; preserve failed helper logs.
+- **STATE/JOURNAL UPDATES REQUIRED:** J333 preparation/build versus eventual device/PC outcomes separately; preserve J332 observed-only rollback and J323/I06/I03.
+- **DEPENDENCIES:** J332 terminal; pinned scene/graphics prior art, exact-editor native billboard contracts; pending APK clarification for device.
