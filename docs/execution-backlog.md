@@ -3362,3 +3362,20 @@ Original arena trigger and four scripted encounter spawns progress PreEncounterâ
 - **FAILURE EVIDENCE TO CAPTURE:** First unresolved reference/import/compiler/bundle/AOT failure; actual-PID native factory/purchase/message/lease/cleanup errors when executable; source identity/cost, exact original paid context, health/money/item state, terminal availability and assistance history.
 - **STATE/JOURNAL UPDATES REQUIRED:** J337 source versus device scope, first failures and rollback provenance; no observed/normal/Moon gate advance from host build.
 - **DEPENDENCIES:** J336 full candidate/J334 installed selection; pinned R2API.Director interactable family/version clues and DebugToolkit original factories; exact original source contracts. T04 support is limited to correcting the measured duplicate explicit bundle owner.
+
+
+## I09-J338 â€” Natural loss, restart and cold Android results
+
+- **ID:** I09-J338
+- **TITLE:** Exercise complete unassisted loss/restart/menu/local-result flow without another APK
+- **CONTEXT:** J337 is host-only; the installed J324/J334 game already supports local application and original result paths. Moon remains paused.
+- **OBSERVATION:** Prior stage windows use assistance and do not validate natural death. Local ledger validates primary then reads backup, with pending writes and native File.Replace.
+- **HYPOTHESIS:** The same installed game can complete natural losses, fresh restart and cold owned result reload; real interrupted/damaged data can expose the first persistence flaw.
+- **TASK:** Back up owned results, run two ordinary neutral-input enemy losses, restart/return menu, cold-load valid/partial-pending/invalid-primary generations and restore original data.
+- **CONSTRAINTS:** One APK installation limit; no synthetic damage/ending/grants/debug acceleration, Steam profile/service success, Moon progression or source appearance claims. Inject faults only into backed-up owned Android ledger files; preserve all XML and failing attempts.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored owned launch/result/evidence and file-generation records; state/journal/backlog/milestones summaries only.
+- **TEST COMMAND:** Preflight; same-owned-APK launch/sync/capture with no install dispatch; exact current-PID observations, original death/report/cleanup, file hashes, cold reload and idle display check.
+- **PASS CONDITION:** Scoped PASS: two natural StandardLoss reports, restart/menu/full completed-session cleanup, valid cold primary with two reports and ignored partial pending, zero actual-PID errors, original data/hash restoration and idle OLED sleep. Robust invalid-primary recovery FAIL: backup loads but diagnostics and later-save policy need J339 repair. No stock-profile or normal-victory acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Real PID/phase/debug history, death/report/context/cleanup errors; primary/backup/pending/XML hashes and original versus injected generations; stale-PID and touch evidence separately.
+- **STATE/JOURNAL UPDATES REQUIRED:** J338 scoped device successes and first failed recovery policy; private result-only observation pointer, no normal/visual/Moon advance.
+- **DEPENDENCIES:** Installed J324/J334 owned combination; native RunReport/statistics, current Android ledger and pinned ProperSave filesystem policy boundary.
