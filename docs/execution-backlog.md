@@ -3431,3 +3431,38 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **DEPENDENCIES:** Installed J324/J334, J340 and the same original Run/director/teleporter contracts informed by pinned R2API.Director; Linux thermal sysfs ABI for sensor units.
 
 **Minimum T08 support:** J341 needs CPU/GPU observations unavailable from thermalservice. Existing perf/all capture now saves read-only kernel zone/type/raw-temperature rows. Corrected empty sensor returns cannot concatenate rows; real capture checks67 valid rows/26 CPU-GPU types. Command is the existing capture path; rollback removes only the additional snapshot block, with no device-policy or game changes. Raw values and non-temperature sentinel zones are not aggregated as calibrated temperatures. Preserve the first malformed snapshot and finalizer assumptions (absent previous selector, host-file versus runtime-bundle count) as host-helper failures; no gameplay rerun or concealed game failure.
+
+## I09-J342 — Android lifecycle in the composed route
+
+- **ID:** I09-J342
+- **TITLE:** Resume the same original combat and holdout after Android background/screen-off
+- **CONTEXT:** J341 establishes an unassisted four-stage route, but Android activity suspension during that route remains untested. J339 update authorization is pending.
+- **OBSERVATION:** Gameplay/native authority and original Run callbacks are composed under Unity's player lifecycle; an uninterrupted route does not prove same-process resume or paused-clock behavior.
+- **HYPOTHESIS:** Android background and screen-off pause the live simulation, then resume its original body/master/authority and charge without a catch-up jump.
+- **TASK:** Suspend once during combat and once during normal charge, resume the same activity/process, then complete the four original pre-Moon exits and cleanup. Preserve the first actual failure.
+- **CONSTRAINTS:** Same installed APK/payload, no new installation, manual input, Moon, forced progression, clock mutation, debug assistance or stock-profile/normal-victory/PC-parity claim. Preserve genuine results and all rollbacks; sleep OLED at exit.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored same-run lifecycle/clock/objective/authority observations and captures; authored state/journal/backlog/milestone summaries only. Existing launcher/capture interface suffices.
+- **TEST COMMAND:** Doctor/preflight; same owned APK launch with all debug off; Android Home/screen-off,15-second hold, activity resume without force-stop; current-PID original-clock/charge/identity assertions, four-stage exit/full cleanup, errors/result hashes/install-count/power checks.
+- **PASS CONDITION:** Scoped device PASS:18.48/18.51-second combat/charge suspension windows retain process/master/body/authority and frozen reports; original Run advances1.96/2.00seconds after resume, charge delta0/0.02228. Four source90-second-charge/exit loops reach Sky Meadow,828.10wall seconds/244 kills/20 pickup messages/full cleanup/zero runtime errors; results/21 bundles unchanged, no install and OLED asleep. Owned observer max18905.23ms includes pause time and fails performance attribution; preserve it for J343, with no retrospective correction or formal/normal/visual gate advance.
+- **FAILURE EVIDENCE TO CAPTURE:** First loss of process/authority/identity, pause/resume timing, frozen/current report bytes, native Run stopwatch and charge differences, source lifecycle errors/crashes, saved results and restoration.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record actual lifecycle and integrated-route exit independently of J339. Retain explicit diagnostic-input/limited-world scope and all formal/Moon/normal/visual exclusions.
+- **DEPENDENCIES:** J341 installed J324/J334 route; pinned R2API.Director/DebugToolkit state observations, exact original Run.Update/FixedUpdate/stopwatch contracts and Unity2021.3 Android pause/resume lifecycle.
+
+
+## I09-J343 — Exclude measured Android suspension from frame observations
+
+- **ID:** I09-J343
+- **TITLE:** Repair pause-contaminated frame measurements in the coherent game candidate
+- **CONTEXT:** J342 resumes the original game successfully but records background intervals as long rendered frames; J339 already composes the pending rendering/content/recovery update.
+- **OBSERVATION:** After two screen-off windows, the installed owned observer reports max18905.23ms; this is suspended time, not evidence of an active rendering stall.
+- **HYPOTHESIS:** Explicit Unity pause transitions can exclude exactly the resumed interval while preserving real active-frame hitches and distinguishing active from wall time.
+- **TASK:** Change only the existing owned camera observer; verify initial/duplicate callbacks, paused frames, one exclusion per resume and retained active hitches. Compose the same J339 game, force-build and archive, then restore installed selection.
+- **CONSTRAINTS:** No clock/gameplay/rendering/input/DLL mutation, generic hitch clamp, retrospective metric adjustment, APK install or device-performance/PC-parity/normal-victory claim. Keep all candidate/installed/Moon rollbacks and idle OLED sleep.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing AndroidPresentationCamera observer and authored state/journal/backlog/milestone/risk summaries; ignored exact-editor fixture, build and full candidate archive only.
+- **TEST COMMAND:** Existing editor refresh; exact-editor actual observer fixture; ./dev test; ./dev preflight; ./dev build --target vulkan --force; terminal/hash/archive/rollback/ownership/power checks. Device lifecycle replay uses existing commands only after update authorization.
+- **PASS CONDITION:** Host PASS: initial/duplicate callbacks and two pauses exclude exactly two resumed intervals; five active samples include both220/9000ms hitches.49 tests/doctor/preflight, zero editor errors and full185.048-second/zero-error ARM64 build pass.41 host payload files/45 accepted assembly identities/six scene hashes retained; complete candidate archived and installed J324/J334 restored, counter1/OLED asleep. Corrected Android metrics and inherited recovery/content/visual outcomes remain open.
+- **FAILURE EVIDENCE TO CAPTURE:** J342 raw observer failure, actual callback fixture/result, first compile/build/runtime failure, request/start/terminal, source/APK/payload/assembly/scene hashes, rollback and actual device metrics after permitted update.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate J342 game-lifecycle success from its observer failure and J343 host-only correction. Advance only the scoped lifecycle observation; preserve observed presentation/results/unassisted-route and all formal/Moon/normal pointers.
+- **DEPENDENCIES:** J342 real lifecycle measurement failure, J339 coherent archived parent, exact Unity2021.3 OnApplicationPause contract and pinned DebugToolkit native stopwatch observation.
+
+**Minimum T08 support:** This change enables attribution of the next integrated game's post-resume frame measurements and prevents classifying screen-off time as a GPU stall. Reuse the current camera report, adding pause/resume counts and active time; no new framework or command. Rollback restores the prior authored observer and its archived J339 candidate. Genuine active hitches remain visible; device verification still awaits the existing update clarification.
