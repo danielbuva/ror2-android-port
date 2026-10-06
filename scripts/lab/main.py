@@ -4,7 +4,9 @@ p=argparse.ArgumentParser(description='Local RoR2 porting laboratory; generated 
 p.add_argument('command',choices=['diagnostics','test','doctor','inspect','decompile','export-project','preflight','build','install','sync-data','run','logs','crash','screenshot','reset','smoke','storage','perf','graphics','editor','prototype'])
 p.add_argument('--full',action='store_true');p.add_argument('--force',action='store_true');p.add_argument('--json',action='store_true');p.add_argument('--assembly');p.add_argument('--target',default='lab');p.add_argument('--action',default='inspect')
 p.add_argument('--subtree',default='');p.add_argument('--fields',action='store_true');p.add_argument('--disable',action='store_true')
+p.add_argument('--debug-options',help='Ignored local JSON for one integrated run; all acceleration defaults off')
 a=p.parse_args()
+if a.debug_options and (a.command!='prototype' or a.action not in ['movement-batch-run','movement-batch-retry']):p.error('--debug-options requires movement-batch-run or movement-batch-retry')
 try:
  if a.command=='test':sys.exit(subprocess.call([sys.executable,'-m','unittest','discover','-s',str(ROOT/'tests'),'-v']))
  elif a.command=='doctor':
@@ -322,10 +324,10 @@ try:
    movement_batch_prepare()
   elif a.action=='movement-batch-run':
    from scene_runtime import movement_batch_run
-   movement_batch_run()
+   movement_batch_run(debug_options=a.debug_options) if a.debug_options else movement_batch_run()
   elif a.action=='movement-batch-retry':
    from scene_runtime import movement_batch_run
-   movement_batch_run(retry=True)
+   movement_batch_run(retry=True,debug_options=a.debug_options) if a.debug_options else movement_batch_run(retry=True)
   elif a.action=='direction-prepare':
    from scene_runtime import direction_prepare
    direction_prepare()

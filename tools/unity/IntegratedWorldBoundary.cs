@@ -416,6 +416,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  void DrawIntegratedWorld(){
   var world=r.world;if(world==null||!world.ready)return;
+  DrawDebugAcceleration();
   if(r.id.EndsWith("-bringup")&&world.health>0&&GUI.Button(new Rect(Screen.width-210,20,190,48),worldManualTakeover?"Resume auto route":"Take control")){
    var bridge=worldPlayer?worldPlayer.GetComponent<NovaInputBridge>():null;
    if(bridge){bridge.Neutral();worldManualTakeover=!worldManualTakeover;bridge.diagnosticInput=!worldManualTakeover;world.manualTakeover=worldManualTakeover;world.diagnosticInput=!worldManualTakeover;Save();}

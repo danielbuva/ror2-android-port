@@ -572,11 +572,14 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
     write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
     print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
 
-def movement_batch_run(cases=None, retry=False, interactive=False):
+def movement_batch_run(cases=None, retry=False, interactive=False, debug_options=None):
     from build import preflight
     from device import Device,PACKAGE
     import time
     preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');b=read(WORK/'config/current-build.json');interactive=interactive or bool(a.get('playable_spine'))
+    from debug_acceleration import load_options, acceptance_labels
+    options=load_options(debug_options) if debug_options else None
+    if options is not None and not a.get('integrated_world'):raise RuntimeError('Debug acceleration requires the composed integrated world')
     if not a.get('movement_batch') or ((out/'batch-result.json').exists() and not retry):raise RuntimeError('Not a fresh batch')
     terminal=WORK/'lab-build/result.json'
     if not terminal.exists() or terminal.stat().st_mtime_ns<(out/'attempt.json').stat().st_mtime_ns:raise RuntimeError('No completed forced build for this batch; wait for build completion')
@@ -600,6 +603,7 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
         d.cmd('push',str((ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'])/'nova-input-mapping.json'),runtime+'/nova-input-mapping.json')
     for probe in probes:
         attempt=out/probe;attempt.mkdir();selection={'attempt':attempt_id,'id':probe};write(attempt/'selection.json',selection)
+        if options is not None:selection['debugOptions']=options;write(attempt/'selection.json',selection)
         result={'success':False,'probe':probe};pid=None
         try:
             if probe=='body-state-ground-visual':
@@ -660,11 +664,19 @@ def movement_batch_run(cases=None, retry=False, interactive=False):
                 time.sleep(1)
             report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)
             result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==attempt_id and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
+            result.update(acceptance_labels(report,options))
         except Exception as e:result['error']=str(e)
         finally:
             if not (attempt/'probe.json').exists():
                 try:write(attempt/'interrupted-probe.json',json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json')))
                 except Exception as e:result['report_recovery_error']=str(e)
+            if 'normal_game_acceptance_eligible' not in result:
+                result.update(run_kind='unclassified',normal_game_acceptance_eligible=False)
+                for name in ['probe.json','interrupted-probe.json']:
+                    if (attempt/name).exists():
+                        try:result.update(acceptance_labels(read(attempt/name),options))
+                        except Exception as e:result['debug_acceptance_error']=str(e);result['success']=False
+                        break
             try:d.collect('all',attempt/'device')
             except Exception as e:result['capture_error']=str(e);result['success']=False
             log=attempt/'device/unity.log'

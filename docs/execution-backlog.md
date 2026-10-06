@@ -2994,3 +2994,23 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J315 device exit:** Unassisted genuine route ends in original Sky Meadow defeat at937.980seconds,4 exits/298 kills, after teleporter charge reaches1.0. Zero current-process errors/message failures; original StandardLoss generation/client report/XML reload/Android ledger persistence and full source/world cleanup pass. Nova verified asleep. Moon not reached, so visible lunar targeting and safe far-side traversal remain unaccepted; no I07 pointer. Evidence: `work/experiments/scene-runtime/20261006T011711.825389Z/device-exit-assessment.json`. I06/J256 and I03/J228 immutable. Next user-authorized iteration adds a small default-off, toggleable debug acceleration layer; assisted evidence never establishes normal combat/death/holdout/movement/full-run acceptance.
+
+
+### I07-S36 — Isolated, toggleable debug acceleration for integrated iterations
+
+- **ID:** I07-S36.
+- **TITLE:** Shorten Moon/ending integration without claiming normal gameplay acceptance.
+- **CONTEXT:** J315 unassisted route ends in Sky Meadow before Moon; user explicitly authorizes acceleration for subsequent runs.
+- **OBSERVATION:** Original HealthComponent godMode, CharacterBody base/level stats and HoldoutZoneController.calcChargeRate provide small scoped boundaries. Pinned DebugToolkit god and charge_zone document player/holdout state relationships; direct charge mutation is unsuitable here.
+- **HYPOTHESIS:** Independent reversible controls can accelerate genuine route progression while preserving attacks, occupancy, boss/mission gates and truthful evidence.
+- **TASK:** Default-off panel/F1–F4 plus explicit per-launch CLI options; sticky assisted history, current effects and restoration; label results/ledger/receipts and fail closed on missing or contradictory debug evidence. Run integrated Android build with selected acceleration.
+- **CONSTRAINTS:** All common boundaries; no assembly patch, direct kill, synthetic charge completion, state skip, route checkpoint framework, normal gate/pointer advancement from assisted evidence. Movement boost off for Moon navigation; combat/death/holdout acceptance excluded when affected.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Small authored debug boundary, existing Unity lab lifecycle/HUD/results, existing batch CLI and evidence tests, documentation; generated files ignored.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run --debug-options work/config/moon-debug-options.json.
+- **PASS CONDITION:** Device executes selected controls, reversible toggles/callback removal observed, original progress continues; ever-assisted remains after controls off; labels and local result persistence agree. This is developer-control/integration acceptance only.
+- **FAILURE EVIDENCE TO CAPTURE:** First host/build/runtime error, requested/current/history effects, source/derived stats, charge rates, restoration, matching APK/payload, actual mission state and result/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J316 actual device outcome and next first blocker, label assisted/unassisted explicitly; preserve J315 defeat and I06/I03.
+- **DEPENDENCIES:** J315 iteration finished; existing integrated APK lifecycle and original APIs.
+
+
+**J316 full build:** Full Vulkan ARM64 build passes in101.824seconds,zero errors,39 payload/45 assembly identities unchanged,complete14399-file archive; APK `48ec2c166415c97f7da07461693972c47191cbb2e271e95d35754eeda85ded8b`.45 safety/evidence tests and staged privacy scan pass. Actual device controls/restoration/assisted Moon route remain pending; no normal acceptance or I07 pointer.

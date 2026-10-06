@@ -35,7 +35,7 @@ public sealed partial class MovementBatchProbe {
   ownedRunFixed=(Action)Delegate.CreateDelegate(typeof(Action),clockRun,typeof(Run).GetMethod("FixedUpdate",BindingFlags.NonPublic|BindingFlags.Instance));ownedRunFrame=(Action)Delegate.CreateDelegate(typeof(Action),clockRun,typeof(Run).GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));r.runClock.originalCallbacks=true;
  }
  void TickOriginalRunClock(){if(ownedRunFixed==null)return;try{ownedRunFixed();r.runClock.fixedTicks++;}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
- void Update(){ObserveOfflineApplicationInput();ObserveWorldRestartInput();TickOriginalStage();if(ownedRunFrame==null)return;try{ownedRunFrame();r.runClock.frameTicks++;}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
+ void Update(){TickDebugAcceleration();ObserveOfflineApplicationInput();ObserveWorldRestartInput();TickOriginalStage();if(ownedRunFrame==null)return;try{ownedRunFrame();r.runClock.frameTicks++;}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
  void ObserveOriginalRunClock(){
   if(r.runClock==null||!clockRun)return;Check(string.IsNullOrEmpty(r.runClock.error),"Original Run clock callback failed: "+r.runClock.error);var report=r.runClock;
   report.fixedTime=clockRun.fixedTime;report.frameTime=clockRun.time;report.stampTime=Run.FixedTimeStamp.now.t;report.stopwatch=clockRun.GetRunStopwatch();report.paused=clockRun.NetworkrunStopwatch.isPaused;report.difficulty=clockRun.difficultyCoefficient;report.compensatedDifficulty=clockRun.compensatedDifficultyCoefficient;report.ambient=clockRun.ambientLevel;

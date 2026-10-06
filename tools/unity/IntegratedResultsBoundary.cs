@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
   public float seconds;public double damageDealt,damageTaken;public ulong kills;
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
- [Serializable] sealed class AndroidRunEntry {public string file,ending;public bool win;public float seconds;public int stages;}
+ [Serializable] sealed class AndroidRunEntry {public string file,ending;public bool win,debugAssisted;public string debugEvidence;public float seconds;public int stages;}
  sealed class UnavailableProfileSaveSystem:SaveSystem {
   static Exception Unavailable(){return new NotSupportedException("Stock profile operations unavailable in the composed Android run; original RunReport and owned local results are separate.");}
   protected override void ProcessFileOutputQueue(){throw Unavailable();}
@@ -93,7 +93,9 @@ public sealed partial class MovementBatchProbe {
   var file="run-"+resultsRunReport.runGuid.ToString("N");RunReport.ToXml(new System.Xml.Linq.XElement("RunReport"),resultsRunReport);Check(RunReport.Save(resultsRunReport,file),"Original Android result save failed");var loaded=RunReport.Load(file);
   Check(loaded!=null&&loaded.gameEnding==resultsRunReport.gameEnding&&loaded.seed==resultsRunReport.seed&&loaded.playerInfoCount==report.players&&loaded.GetPlayerInfo(0).bodyIndex==resultsRunReport.GetPlayerInfo(0).bodyIndex&&loaded.GetPlayerInfo(0).itemStacks.SequenceEqual(resultsRunReport.GetPlayerInfo(0).itemStacks)&&loaded.GetPlayerInfo(0).statSheet.GetStatValueULong(StatDef.totalKills)==resultsRunReport.GetPlayerInfo(0).statSheet.GetStatValueULong(StatDef.totalKills)&&loaded.GetPlayerInfo(0).statSheet.GetStatValueULong(StatDef.totalDamageDealt)==resultsRunReport.GetPlayerInfo(0).statSheet.GetStatValueULong(StatDef.totalDamageDealt)&&loaded.GetPlayerInfo(0).statSheet.GetStatValueULong(StatDef.totalDamageTaken)==resultsRunReport.GetPlayerInfo(0).statSheet.GetStatValueULong(StatDef.totalDamageTaken)&&Mathf.Abs(loaded.runStopwatchValue-report.seconds)<.01f,"Original result XML round trip differs");
   report.reportFile=file+".xml";report.reportReloaded=true;
-  if(!resultsLedger.runs.Any(x=>x.file==report.reportFile)){resultsLedger.runs.Add(new AndroidRunEntry{file=report.reportFile,ending=report.ending,win=resultsRunReport.gameEnding.isWin,seconds=report.seconds,stages=report.stageClearCount});SaveAndroidRunLedger();}
+  bool assisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted;string debugEvidence=assisted?file+".debug.json":null;
+  if(assisted)File.WriteAllText(Path.Combine(resultsDirectory,debugEvidence),JsonUtility.ToJson(r.debugAcceleration,true));
+  if(!resultsLedger.runs.Any(x=>x.file==report.reportFile)){resultsLedger.runs.Add(new AndroidRunEntry{file=report.reportFile,ending=report.ending,win=resultsRunReport.gameEnding.isWin,seconds=report.seconds,stages=report.stageClearCount,debugAssisted=assisted,debugEvidence=debugEvidence});SaveAndroidRunLedger();}
   report.persisted=true;Save();
  }
  void LoadAndroidRunLedger(){
@@ -101,12 +103,13 @@ public sealed partial class MovementBatchProbe {
   if(!File.Exists(path))return;
   try{resultsLedger=ReadAndroidRunLedger(path);}catch{var backup=path+".backup";Check(File.Exists(backup),"Android run ledger damaged without a backup; preserve files");resultsLedger=ReadAndroidRunLedger(backup);}
  }
- AndroidRunLedger ReadAndroidRunLedger(string path){var value=JsonUtility.FromJson<AndroidRunLedger>(File.ReadAllText(path));Check(value!=null&&value.version==1&&value.runs!=null,"Android run ledger schema invalid");foreach(var entry in value.runs)Check(entry!=null&&entry.file==Path.GetFileName(entry.file)&&entry.file.StartsWith("run-")&&entry.file.EndsWith(".xml")&&File.Exists(Path.Combine(resultsDirectory,entry.file)),"Android run ledger references a missing result");return value;}
+ AndroidRunLedger ReadAndroidRunLedger(string path){var value=JsonUtility.FromJson<AndroidRunLedger>(File.ReadAllText(path));Check(value!=null&&value.version==1&&value.runs!=null,"Android run ledger schema invalid");foreach(var entry in value.runs)Check(entry!=null&&entry.file==Path.GetFileName(entry.file)&&entry.file.StartsWith("run-")&&entry.file.EndsWith(".xml")&&File.Exists(Path.Combine(resultsDirectory,entry.file)),"Android run ledger references a missing result");foreach(var entry in value.runs)if(entry.debugAssisted){Check(entry.debugEvidence==Path.ChangeExtension(entry.file,".debug.json")&&File.Exists(Path.Combine(resultsDirectory,entry.debugEvidence)),"Assisted result lacks its owned debug evidence");var debug=JsonUtility.FromJson<DebugAccelerationReport>(File.ReadAllText(Path.Combine(resultsDirectory,entry.debugEvidence)));Check(debug!=null&&debug.version==1&&debug.everAssisted&&!debug.normalGameAcceptanceEligible,"Assisted ledger evidence claims normal acceptance");}return value;}
  void SaveAndroidRunLedger(){var path=Path.Combine(resultsDirectory,"profile.json");var pending=path+".pending";File.WriteAllText(pending,JsonUtility.ToJson(resultsLedger,true));ReadAndroidRunLedger(pending);if(File.Exists(path))File.Replace(pending,path,path+".backup");else File.Move(pending,path);var saved=ReadAndroidRunLedger(path);Check(saved.runs.Count==resultsLedger.runs.Count,"Android run ledger write did not persist");}
  void DrawIntegratedResults(){
   var report=r.results;var style=new GUIStyle(GUI.skin.label){fontSize=28,wordWrap=true};
   GUI.Box(new Rect(12,45,880,330),"Offline run result");
   var title=resultsRunReport!=null&&resultsRunReport.gameEnding&&resultsRunReport.gameEnding.isWin?"Victory":"Run ended";
+  if(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted)title="DEBUG ASSISTED — "+title+" (no normal-game acceptance)";
   if(r.freePlay&&report.persisted){if(r.phase=="commando-defeated"&&GUI.Button(new Rect(32,390,350,60),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(410,390,400,60),r.phase=="commando-defeated"?"Return to menu":"Return to menu (A)"))RequestResultsMenu();}
   GUI.Label(new Rect(32,78,820,260),title+" — "+report.ending+"\nOriginal stages cleared: "+report.stageClearCount+"   Time: "+report.seconds.ToString("F0")+"s\nKills: "+report.kills+"   Damage dealt: "+report.damageDealt.ToString("F0")+"\n"+(report.persisted?"Original report saved on this Android device":"Saving original report…")+"\nStock cutscene and Steam profile integration unavailable",style);
  }
