@@ -3278,7 +3278,7 @@ Original arena trigger and four scripted encounter spawns progress PreEncounterâ
 - **CONSTRAINTS:** No guessed texture/lighting, new bake, broad serialization framework, source-install write, APK replacement or PC parity claim; preserve source parameters/identity and previous full payload.
 - **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing native scene transformation or a narrow helper; ignored source mapping/contract/scene/payload/device records.
 - **TEST COMMAND:** Existing native/source inspection; stage-presentation-payload; same-APK movement-batch-retry after imported assignments verify.
-- **PASS CONDITION:** Preparation only: all nine mappings uniquely verified via original source/container and exact float32 owner-position match. Repair/build/device acceptance pending.
+- **PASS CONDITION:** All nine mappings/imported original Custom Cubemap bindings verify;37.126-second/zero-error stage build and49 host tests pass. Same-APK410.116gameplay/432.351host seconds, four transports/68kills, zero actual-PID runtime/message errors and cleanup/sleep pass. Reflection appearance/PC parity remain unaccepted.
 - **FAILURE EVIDENCE TO CAPTURE:** Original pointer/external/container/export hashes, ambiguous match and first two failed host scripts/logs, import/binding/type mismatch and first runtime/appearance error.
 - **STATE/JOURNAL UPDATES REQUIRED:** J332 preparation and actual repair/build/device exit separately; retain observed-only scope and J323/I06/I03.
 - **DEPENDENCIES:** I08-J330/J331 terminal; existing pinned UnityPy/export input and current graphics prior art.

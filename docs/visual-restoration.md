@@ -1,6 +1,6 @@
 # Original PC appearance on Android
 
-The legitimate PC build is the visual authority. Matching PC captures, source scene settings and source material parameters govern restoration. Android replacements remain explicitly approximate. None of J324–J331 establishes shader or whole-scene parity.
+The legitimate PC build is the visual authority. Matching PC captures, source scene settings and source material parameters govern restoration. Android replacements remain explicitly approximate. None of J324–J332 establishes shader or whole-scene parity.
 
 ## Current restoration
 
@@ -14,7 +14,11 @@ J328 adds native attenuated point/spot/directional light response, additional li
 
 Four recovered stage sky materials use Unity's built-in cubemap shader. The prepared camera change retains their cubemap, tint, exposure and rotation and suppresses the diagnostic directional light when source directional lighting exists. The dampcavesimple sky reference resolves to a terrain material; this is an unresolved source/export discrepancy, not a reason to invent a sky. J327 compiles/builds this camera change in a host-only Vulkan APK with zero errors; it is not present in the sole installed J324 APK until an authorized update.
 
-J330 retains five native lighting-data references and nine reflection components. The imported data is valid, but baked probe textures are unbound; the same-APK412.20-second/four-transition window passes with zero new errors. Original PC bundle inspection identifies an omitted baked-texture reference. Neither valid assets nor component counts establish restored reflections. Source lightmap/light-probe arrays are empty; no replacement baking is justified.\n\nJ331 restores347 native environment particle-system/renderer pairs with original modules, owner links and active flags. The same-APK439.07-second/four-transition window passes without new errors. Captures and counts do not establish every effect's appearance: cloud/opaque/soft-particle/distortion contracts and source controlling callbacks remain incomplete. J332 preparation maps all nine original probe textures exactly, but texture repair/build/device acceptance remains pending.
+J330 retains five native lighting-data references and nine reflection components. The imported data is valid, but that attempt leaves baked probe textures unbound; its same-APK412.20-second/four-transition window passes with zero new errors. Original PC bundle inspection identifies an omitted baked-texture reference. Source lightmap/light-probe arrays are empty; no replacement baking is justified.
+
+J331 restores347 native environment particle-system/renderer pairs with original modules, owner links and active flags. The same-APK439.07-second/four-transition window passes without new errors. Captures and counts do not establish every effect's appearance: cloud/opaque/soft-particle/distortion contracts and source controlling callbacks remain incomplete.
+
+J332 restores all nine exact original probe Cubemaps through a Baked-to-Custom scene adapter because the export omits the native baked-texture pointer. Native external/container identities and exact float32 owner positions determine the mapping; original128/512 resolutions and other probe settings remain. Imported probes expose the matching original textures. A same-APK410.12-second/four-transition window passes without new errors and with cleanup. Reviewed Swamp/Frozen captures do not isolate reflection response. These bindings are a data repair; replacement shaders still lack the complete source reflection contract, and no reflection appearance or PC parity is accepted.
 
 ## Comparison and remaining gaps
 

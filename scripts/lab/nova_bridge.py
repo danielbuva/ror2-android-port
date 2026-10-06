@@ -196,7 +196,7 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False):
+def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False,reflection_bindings=None):
     """Recover source geometry; integrated runs additionally retain exact MapZone callbacks."""
     import shutil
     from scene_closure import REFERENCE
@@ -252,11 +252,21 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
+        if kind==215 and reflection_bindings is not None:
+            binding=next((x for x in reflection_bindings if x['probe_file_id']==file_id),None)
+            if not presentation or not binding or binding['source_mode']!=0 or binding['source_custom_texture']['m_PathID']!=0:raise RuntimeError('Unmeasured source reflection binding')
+            if '  m_Mode: 0\n' not in block or '  m_CustomBakedTexture: {fileID: 0}\n' not in block:raise RuntimeError('Original baked reflection fields changed')
+            # Custom mode serves the exact source bake omitted by export; do not
+            # generate a replacement bake or alter placement/intensity/bounds.
+            block=block.replace('  m_Mode: 0\n','  m_Mode: 2\n',1).replace('  m_CustomBakedTexture: {fileID: 0}\n','  m_CustomBakedTexture: {fileID: 8900000, guid: '+binding['cube_guid']+', type: 3}\n',1)
         if kind==1:
             if file_id in map_owners:block=block.replace('  m_IsActive: 1','  m_IsActive: 0',1)
             block=re.sub(r'^  - component: \{fileID: (-?\d+)\}\n',lambda m:'' if m[1] in removed else m[0],block,flags=re.M)
         updated.append(block)
     geometry=header+''.join(updated);dest=stage/'StageGeometry'/(scene_name+'.unity' if original_name else scene_name+'-spine.unity');dest.parent.mkdir(parents=True,exist_ok=True)
+    if reflection_bindings is not None:
+        if len(reflection_bindings)!=sum(kind==215 for kind,_,_ in kept):raise RuntimeError('Native reflection mapping count differs')
+        write(out/(scene_name+'-reflection-binding-adapters.json'),{'source_mode':'Baked','android_mode':'Custom','same_original_cubemaps':True,'no_new_bake':True,'bindings':reflection_bindings,'scope':'Serve original native baked textures omitted by export; all other probe parameters unchanged. Appearance parity unverified.'})
     other=dest.with_name(scene_name+'-spine.unity' if original_name else scene_name+'.unity')
     if other.exists():
         if Path(str(other)+'.meta').read_bytes()!=Path(str(source)+'.meta').read_bytes():raise RuntimeError('Refuse to remove an unowned alternate stage scene')

@@ -20,12 +20,18 @@ def build_payload(stages=False):
  bundles=['android-presentation-lab']
  if stages:
   from nova_bridge import stage_first_stage_geometry
+  from source_reflections import mappings
+  export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+  reflections=mappings(export);write(out/'source-reflection-mapping.json',reflections)
   root=WORK/'lab-project/Assets/LabLoadingScene';previous=out/'previous-scenes';previous.mkdir();bundles=[]
   for name in ['golemplains','foggyswamp','frozenwall','dampcavesimple','skymeadow']:
    scene=root/'StageGeometry'/(name+'.unity');shutil.copy2(scene,previous/scene.name)
-   stage_first_stage_geometry(root,out,original_name=True,scene_name=name,map_zones=True,presentation=True);bundles.append(name+'-spine-lab')
+   bindings=next(row['probes'] for row in reflections['rows'] if row['stage']==name)
+   stage_first_stage_geometry(root,out,original_name=True,scene_name=name,map_zones=True,presentation=True,reflection_bindings=bindings);bundles.append(name+'-spine-lab')
  shutil.copy2(ROOT/'android/Assets/Editor/LabBuild.cs',WORK/'lab-project/Assets/Editor/LabBuild.cs')
- write(out/'base-build.json',base);write(out/'recipe.json',{'source_sha256':{p.name:sha(p) for p in sources.iterdir()},'apk_sha256':base['apk_sha256'],'scope':'Five original base-stage RenderSettings/light restorations' if stages else 'Five authored presentation shaders only','no_APK_installation':True,'gameplay_callbacks_unchanged':True})
+ transforms=out/'authored-transformations';transforms.mkdir()
+ for name in (['nova_bridge.py','source_reflections.py','presentation.py'] if stages else ['presentation.py']):shutil.copy2(ROOT/'scripts/lab'/name,transforms/name)
+ write(out/'base-build.json',base);write(out/'recipe.json',{'source_sha256':{p.name:sha(p) for p in sources.iterdir()},'transformation_sha256':{p.name:sha(p) for p in transforms.iterdir()},'apk_sha256':base['apk_sha256'],'scope':'Original base-stage atmosphere/lighting/environment particles and exact probe texture bindings' if stages else 'Five authored presentation shaders only','no_APK_installation':True,'gameplay_callbacks_unchanged':True})
  terminal=WORK/'presentation-build-result.json'
  if terminal.exists():terminal.rename(terminal.with_name('previous-presentation-'+now()+'.json'))
  request={'request_id':out.name,'api':'vulkan','presentationOnly':True,'stagePresentation':stages,'output':str(out/'bundle')};write(WORK/'presentation-build-request.json',request)
