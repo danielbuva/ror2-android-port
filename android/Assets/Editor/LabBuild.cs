@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
- [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation;}
+ [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation;public string[] reflectionTextureGuids;}
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
  [InitializeOnLoadMethod] static void ResumeQueuedBuild(){if(!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,""))){EditorApplication.update-=DispatchBuild;EditorApplication.update+=DispatchBuild;}}
  [MenuItem("Porting Lab/Build ARM64")]
@@ -41,6 +41,7 @@ public static class LabBuild {
    if(!assets.All(File.Exists))throw new Exception("Presentation shader input missing");
    var builds=new System.Collections.Generic.List<AssetBundleBuild>();
    if(cfg.stagePresentation){
+    PreserveReflectionRange(output,cfg.reflectionTextureGuids);
     var sceneCfg=JsonUtility.FromJson<SceneProbeConfig>(File.ReadAllText(Path.Combine(root,"scene-probe-build.json")));
     var paths=new[]{sceneCfg.stageScene}.Concat(sceneCfg.nextStageScenes??new string[0]).ToArray();
     foreach(var name in new[]{"golemplains","foggyswamp","frozenwall","dampcavesimple","skymeadow"}){
@@ -54,6 +55,24 @@ public static class LabBuild {
    result.success=true;result.result="Android presentation bundle built; device rendering unverified";
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(root,"presentation-build-result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");
+ }
+ [Serializable] class ReflectionImport {public string guid,path,before,after;public int size,mips;public bool readable,sRGB;}
+ [Serializable] class ReflectionImports {public ReflectionImport[] textures;}
+ static void PreserveReflectionRange(string output,string[] guids){
+  if(guids==null||guids.Length==0||guids.Distinct().Count()!=guids.Length)throw new Exception("Missing or duplicate exact reflection texture identities");
+  var rows=new System.Collections.Generic.List<ReflectionImport>();
+  foreach(var guid in guids){
+   var path=AssetDatabase.GUIDToAssetPath(guid);
+   if(!path.StartsWith("Assets/LabLoadingScene/",StringComparison.Ordinal)||!path.EndsWith(".exr",StringComparison.OrdinalIgnoreCase))throw new Exception("Reflection texture outside generated lab assets");
+   var importer=AssetImporter.GetAtPath(path) as TextureImporter;var before=AssetDatabase.LoadAssetAtPath<Cubemap>(path);
+   if(importer==null||before==null||importer.textureShape!=TextureImporterShape.TextureCube||importer.sRGBTexture)throw new Exception("Unexpected source reflection importer");
+   var row=new ReflectionImport{guid=guid,path=path,before=before.format.ToString(),size=before.width,mips=before.mipmapCount,readable=importer.isReadable,sRGB=importer.sRGBTexture};
+   var platform=importer.GetPlatformTextureSettings("Android");platform.overridden=true;platform.format=TextureImporterFormat.RGBAHalf;importer.SetPlatformTextureSettings(platform);importer.SaveAndReimport();
+   var after=AssetDatabase.LoadAssetAtPath<Cubemap>(path);row.after=after.format.ToString();
+   if(after.format!=TextureFormat.RGBAHalf||after.width!=row.size||after.mipmapCount!=row.mips||importer.isReadable!=row.readable||importer.sRGBTexture!=row.sRGB)throw new Exception("Reflection range repair changed source shape/readability/color space");
+   rows.Add(row);
+  }
+  File.WriteAllText(Path.Combine(output,"reflection-imports.json"),JsonUtility.ToJson(new ReflectionImports{textures=rows.ToArray()},true));
  }
  public static void Build(){
   string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};

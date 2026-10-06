@@ -17,7 +17,9 @@ def build_payload(stages=False):
  stage=WORK/'lab-project/Assets/LabLoadingScene/Resources'
  for name in NAMES:
   source=ROOT/'tools/unity'/(name+'.shader');shutil.copy2(source,sources/source.name);shutil.copy2(source,stage/source.name)
+ include=ROOT/'tools/unity/AndroidRecoveredReflections.cginc';shutil.copy2(include,sources/include.name);shutil.copy2(include,stage/include.name)
  bundles=['android-presentation-lab']
+ reflection_guids=[]
  if stages:
   from nova_bridge import stage_first_stage_geometry
   from source_reflections import mappings
@@ -28,13 +30,23 @@ def build_payload(stages=False):
    scene=root/'StageGeometry'/(name+'.unity');shutil.copy2(scene,previous/scene.name)
    bindings=next(row['probes'] for row in reflections['rows'] if row['stage']==name)
    stage_first_stage_geometry(root,out,original_name=True,scene_name=name,map_zones=True,presentation=True,reflection_bindings=bindings);bundles.append(name+'-spine-lab')
+  reflection_guids=sorted({p['cube_guid'] for row in reflections['rows'] for p in row['probes']})
+  metas=out/'previous-reflection-metas';metas.mkdir();imports=[]
+  for guid in reflection_guids:
+   matches=[p for p in root.rglob('*.meta') if '\nguid: '+guid+'\n' in p.read_text()]
+   if len(matches)!=1:raise RuntimeError('Reflection import identity ambiguous')
+   meta=matches[0];texture=Path(str(meta)[:-5]);binding=next(p for row in reflections['rows'] for p in row['probes'] if p['cube_guid']==guid)
+   if texture.suffix!='.exr' or sha(texture)!=binding['exported_cube_sha256']:raise RuntimeError('Staged reflection texture differs from exact source')
+   shutil.copy2(meta,metas/(guid+'.meta'));imports.append({'guid':guid,'path':str(texture.relative_to(WORK/'lab-project')),'source_sha256':sha(texture),'before_meta_sha256':sha(meta)})
+  write(out/'reflection-import-contract.json',{'textures':imports,'format':'RGBAHalf','source_precision_or_convolution_parity':False,'reason':'Measured default Android import loses exported low-light signal even after native HDR decode'})
  shutil.copy2(ROOT/'android/Assets/Editor/LabBuild.cs',WORK/'lab-project/Assets/Editor/LabBuild.cs')
  transforms=out/'authored-transformations';transforms.mkdir()
  for name in (['nova_bridge.py','source_reflections.py','presentation.py'] if stages else ['presentation.py']):shutil.copy2(ROOT/'scripts/lab'/name,transforms/name)
- write(out/'base-build.json',base);write(out/'recipe.json',{'source_sha256':{p.name:sha(p) for p in sources.iterdir()},'transformation_sha256':{p.name:sha(p) for p in transforms.iterdir()},'apk_sha256':base['apk_sha256'],'scope':'Original base-stage atmosphere/lighting/environment particles and exact probe texture bindings' if stages else 'Five authored presentation shaders only','no_APK_installation':True,'gameplay_callbacks_unchanged':True})
+ shutil.copy2(ROOT/'android/Assets/Editor/LabBuild.cs',transforms/'LabBuild.cs')
+ write(out/'base-build.json',base);write(out/'recipe.json',{'source_sha256':{p.name:sha(p) for p in sources.iterdir()},'transformation_sha256':{p.name:sha(p) for p in transforms.iterdir()},'apk_sha256':base['apk_sha256'],'scope':'Original base-stage atmosphere/lighting/environment particles and exact floating-point probe texture bindings' if stages else 'Authored presentation shaders and reflection include only','no_APK_installation':True,'gameplay_callbacks_unchanged':True})
  terminal=WORK/'presentation-build-result.json'
  if terminal.exists():terminal.rename(terminal.with_name('previous-presentation-'+now()+'.json'))
- request={'request_id':out.name,'api':'vulkan','presentationOnly':True,'stagePresentation':stages,'output':str(out/'bundle')};write(WORK/'presentation-build-request.json',request)
+ request={'request_id':out.name,'api':'vulkan','presentationOnly':True,'stagePresentation':stages,'output':str(out/'bundle'),'reflectionTextureGuids':reflection_guids};write(WORK/'presentation-build-request.json',request)
  print(editor('lab','refresh'),flush=True);print(editor('lab','presentation-payload'),flush=True)
  deadline=time.monotonic()+300
  while time.monotonic()<deadline:

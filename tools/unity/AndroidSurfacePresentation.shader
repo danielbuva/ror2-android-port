@@ -13,12 +13,13 @@ Shader "Porting Lab/Android Surface Presentation" {
    #include "UnityCG.cginc"
    #include "Lighting.cginc"
    #include "AutoLight.cginc"
+   #include "AndroidRecoveredReflections.cginc"
    sampler2D _MainTex,_NormalTex,_EmTex,_SnowTex;float4 _MainTex_ST,_NormalTex_ST,_EmTex_ST,_SnowTex_ST,_Color,_TintColor,_EmColor,_SnowColor;
    float _NormalStrength,_AndroidNormalEnabled,_EmPower,_EmissionEnabled,_SpecularStrength,_SpecularExponent,_Smoothness,_EnableCutout,_Cutoff,_SnowBias,_AndroidSnowEnabled,_Fade,_SnowOn,_TriplanarOn,_TriplanarTextureFactor;
    struct appdata{float4 vertex:POSITION;float3 normal:NORMAL;float4 tangent:TANGENT;float2 uv:TEXCOORD0;};
    struct v2f{float4 pos:SV_POSITION;float3 world:TEXCOORD0;float3 normal:TEXCOORD1;float3 tangent:TEXCOORD2;float3 bitangent:TEXCOORD3;float2 uv:TEXCOORD4;UNITY_FOG_COORDS(5) UNITY_LIGHTING_COORDS(6,7)};
    v2f vert(appdata v){v2f o;o.pos=UnityObjectToClipPos(v.vertex);o.world=mul(unity_ObjectToWorld,v.vertex).xyz;o.normal=UnityObjectToWorldNormal(v.normal);o.tangent=UnityObjectToWorldDir(v.tangent.xyz);o.bitangent=cross(o.normal,o.tangent)*v.tangent.w*unity_WorldTransformParams.w;o.uv=v.uv;UNITY_TRANSFER_FOG(o,o.pos);UNITY_TRANSFER_LIGHTING(o,v.uv);return o;}
-   fixed4 shade(v2f i,bool additional){
+   half4 shade(v2f i,bool additional){
     fixed4 tex=tex2D(_MainTex,i.uv*_MainTex_ST.xy+_MainTex_ST.zw);
     if(_TriplanarOn>.5){float3 w=pow(abs(normalize(i.normal)),4);w/=max(dot(w,float3(1,1,1)),.0001);float3 p=i.world*max(.001,_TriplanarTextureFactor);tex=tex2D(_MainTex,p.zy*_MainTex_ST.xy+_MainTex_ST.zw)*w.x+tex2D(_MainTex,p.xz*_MainTex_ST.xy+_MainTex_ST.zw)*w.y+tex2D(_MainTex,p.xy*_MainTex_ST.xy+_MainTex_ST.zw)*w.z;}
     if(_EnableCutout>.5)clip(tex.a-_Cutoff);clip(_Fade-.001);
@@ -27,23 +28,25 @@ Shader "Porting Lab/Android Surface Presentation" {
     albedo=lerp(albedo,tex2D(_SnowTex,i.world.xz*_SnowTex_ST.xy+_SnowTex_ST.zw).rgb*_SnowColor.rgb,snow);
     float3 light=normalize(UnityWorldSpaceLightDir(i.world)),view=normalize(_WorldSpaceCameraPos-i.world);float lambert=saturate(dot(n,light));
     UNITY_LIGHT_ATTENUATION(attenuation,i,i.world);
-    float spec=pow(saturate(dot(n,normalize(light+view))),max(2,_SpecularExponent*(1+_Smoothness*32)))*min(_SpecularStrength,2);
-    fixed4 color=fixed4(_LightColor0.rgb*(albedo*lambert+spec)*attenuation,1);
+    float spec=RecoveredDirectSpecular(n,light,view,_SpecularExponent,_SpecularStrength);
+    half4 color=half4(_LightColor0.rgb*(albedo*lambert+spec)*attenuation,1);
     if(additional){UNITY_APPLY_FOG_COLOR(i.fogCoord,color,fixed4(0,0,0,0));}
-    else{color.rgb+=albedo*max(ShadeSH9(float4(n,1)),0)+tex2D(_EmTex,i.uv*_EmTex_ST.xy+_EmTex_ST.zw).rgb*_EmColor.rgb*_EmPower*_EmissionEnabled;UNITY_APPLY_FOG(i.fogCoord,color);}
+    else{color.rgb+=albedo*max(ShadeSH9(float4(n,1)),0)+RecoveredReflection(i.world,n,view,_Smoothness,_SpecularStrength)+tex2D(_EmTex,i.uv*_EmTex_ST.xy+_EmTex_ST.zw).rgb*_EmColor.rgb*_EmPower*_EmissionEnabled;UNITY_APPLY_FOG(i.fogCoord,color);}
     return color;
    }
-   fixed4 frag(v2f i):SV_Target{return shade(i,false);}
-   fixed4 fragAdd(v2f i):SV_Target{return shade(i,true);}
+   half4 frag(v2f i):SV_Target{return shade(i,false);}
+   half4 fragAdd(v2f i):SV_Target{return shade(i,true);}
  ENDCG
  SubShader {Tags{"RenderType"="Opaque"} Cull [_Cull]
   Pass {Tags{"LightMode"="ForwardBase"} CGPROGRAM
+   #pragma target 3.0
    #pragma vertex vert
    #pragma fragment frag
    #pragma multi_compile_fwdbase
    #pragma multi_compile_fog
   ENDCG}
   Pass {Tags{"LightMode"="ForwardAdd"} Blend One One ZWrite Off CGPROGRAM
+   #pragma target 3.0
    #pragma vertex vert
    #pragma fragment fragAdd
    #pragma multi_compile_fwdadd_fullshadows

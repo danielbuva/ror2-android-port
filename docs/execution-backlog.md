@@ -3298,3 +3298,19 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** Source GUID/container/material/LOD mismatch, missing shader/atlas input, first compiler/AOT/runtime error and visually incorrect distant silhouettes; preserve failed helper logs.
 - **STATE/JOURNAL UPDATES REQUIRED:** J333 preparation/build versus eventual device/PC outcomes separately; preserve J332 observed-only rollback and J323/I06/I03.
 - **DEPENDENCIES:** J332 terminal; pinned scene/graphics prior art, exact-editor native billboard contracts; pending APK clarification for device.
+
+## I08-J334 — Source reflection range and material response
+
+- **ID:** I08-J334
+- **TITLE:** Source reflection range and material response
+- **CONTEXT:** The same installed J324 APK can accept shader and scene payload updates; J333 remains an immutable host candidate awaiting update clarification.
+- **OBSERVATION:** Nine original BC6H reflection textures import as ETC RGB on Android. Terrain omits measured per-channel specular inputs; current surface/terrain shaders do not sample the retained probes. Texture format alone does not establish whether source brightness was lost.
+- **HYPOTHESIS:** Measuring exact exported HDR inputs first can justify a narrow format repair; native Unity reflection sampling and source material inputs can address missing response while remaining explicitly approximate.
+- **TASK:** Measure owned temporary imports and preserve source/import contracts. Repair only demonstrated format loss, then integrate source-driven material response into the existing composed world and inspect the first real device failure.
+- **CONSTRAINTS:** No additional APK installation, source-install/export edits, invented lighting ramp, original shader or PC parity claim. Preserve J332/J333 and all Moon/normal rollbacks. Original PC appearance remains the authority; matching captures are still unavailable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing source reflection/presentation payload tooling, authored surface/terrain shaders and bundled-Unity include calls; ignored texture measurements/import receipts/payload/device captures.
+- **TEST COMMAND:** Exact-editor owned-copy range/format checks; preflight; shader/stage presentation payload builds; same-APK integrated stage window with recorded debug options.
+- **PASS CONDITION:** Integration PASS — nine exact source-preserving RGBAHalf imports,225 material input checks,49 tests; shader/stage builds7.065/42.478seconds with zero errors. Same-APK427.648gameplay/450.230host seconds, four genuine transports/64kills, zero actual-PID runtime/message errors and cleanup/sleep. Reflection/PC appearance and normal gameplay remain unaccepted; opaque particle cards are a recorded visual failure.
+- **FAILURE EVIDENCE TO CAPTURE:** First query/helper failure, HDR decoding/range/format difference, shader errors, actual-PID runtime errors, captures, memory/frame/debug history.
+- **STATE/JOURNAL UPDATES REQUIRED:** J334 measurements, first failure, justified repair and actual device outcome; observed-only pointer advances only after accepted integration.
+- **DEPENDENCIES:** I08-J332 terminal; pinned R2Wiki terrain material semantics and ImportExtensions custom deferred/reflection clues; exact SDK contracts.
