@@ -2971,3 +2971,23 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J314 immutable retry exit:** Same APK, separate verification/20261006T005020.484244Z. Five genuine exits and318 kills reach Moon; retained objective recovery passes temple. Source cliff guard observed during terrain fallback, then original partial path crosses bridge. Original player death at1109.993seconds/321 kills before the far-side lip; four batteries inactive. No runtime/message errors; StandardLoss persistence, natural body destruction and full source/world cleanup pass, Nova asleep. One source actor at physical contact contributes543.4damage; final actual aim points toward the distant battery. Existing Moon helper defends only when nearest core is within20m, and aims at core without visibility selection; first-stage helper already selects visible hurtboxes and uses physical contact for movement. Read-only exact source bounds permit the recorded contact positions, so no bounds workaround is justified. Original core-versus-physics discrepancy remains unmeasured. Next integrate that existing targeting/defence into Moon travel and observe actual positions; no actor/stat/attack nerf. Far-side guard hypothesis remains unaccepted because this attempt dies earlier. No I07 pointer, I06/I03 immutable.
+
+
+### I07-S35 — Moon travel with visible combat and physical contact defence
+
+- **ID:** I07-S35.
+- **TITLE:** Reuse accepted targeting/checked combat movement in the full Moon route.
+- **CONTEXT:** J314 five genuine exits and bridge traversal end in original player death.
+- **OBSERVATION:** Contact actor543.4damage; final actual aim is battery. Moon helper uses nearest core/20m without visible-hurtbox selection. Bounds allow contact; actual core mismatch remains unmeasured.
+- **HYPOTHESIS:** Visible targeting during travel plus checked physical-contact defence preserves both route progress and original combat survival.
+- **TASK:** Integrate existing helpers into Moon input, record target core/physics/aim positions, rebuild full game and replay genuine route.
+- **CONSTRAINTS:** Original combat damage/HP/director weights, abilities, mission/batteries/encounter, physics/graph/gates/bounds, camera and exact XP/transport unchanged; no direct damage/removal/skip or checkpoint side project. I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored MoonMissionBoundary and WorldReport; ignored archive/input contract/build/device records; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual visible original targets receive ordinary ability attacks during Moon travel; physical contact evokes checked movement, genuine battery approach continues without changing source gameplay. Full mission/victory remains separate actual acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Visibility/aim/target core/physics/contact distance, source actor damage/health/state, grounding/navigation/ability state, battery/encounter, first runtime/message failure and source versus owned cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J315 actual build/device outcomes; preserve J314 losses and unaccepted far-side hypothesis; no incomplete pointer.
+- **DEPENDENCIES:** J314 exact bridge loss/capture and permitted source bounds; accepted visible-hurtbox and checked-combat helpers, original ability/physics contract and whole-game route.
+
+
+**J315 full build:**86.047-second/zero-error Vulkan ARM64 build;40 safety tests, complete14397-file archive, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `a5abbfffa983c4bb50702c540028ef1ed48c666a8c5978cec0d32e033ed1dd82`. Actual lunar visible targeting/contact defence/traversal/battery/ending remain device-pending. Original attacks/stats/director/mission/physics and I06/I03 unchanged; no I07 pointer.

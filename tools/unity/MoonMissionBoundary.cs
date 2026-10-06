@@ -172,8 +172,11 @@ public sealed partial class MovementBatchProbe {
    NavigateWorldInput(player,bridge,battery.transform.position,active?Mathf.Max(1,battery.currentRadius*.25f):1,battery.name,elapsed);
    if(active){MoonCombatInput(player,bridge,elapsed);SetMoonInputObjective("Charge original battery and fight",battery.transform.position);}
    else{
-    var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
-    if(worldDriver.currentInteractable!=battery.gameObject&&threat!=null&&Vector3.Distance(threat.body.corePosition,player.corePosition)<20){MoonCombatInput(player,bridge,elapsed);bridge.diagnosticUtility=player.skillLocator.utility.CanExecute();r.world.travelDefenseFrames++;r.world.travelDefenseTarget=battery.name;SetMoonInputObjective("Defend while approaching original battery",battery.transform.position);}
+    // Keep genuine interaction aim in its source range. During travel, use the
+    // established visible-hurtbox targeting rather than aiming at a distant goal
+    // while a contact attacker follows the player down the bridge.
+    bool canInteract=worldDriver.currentInteractable==battery.gameObject&&Vector3.Distance(position,battery.transform.position)<=interactor.maxInteractionDistance;
+    if(!canInteract&&MoonCombatInput(player,bridge,elapsed)){r.world.travelDefenseFrames++;r.world.travelDefenseTarget=battery.name;SetMoonInputObjective("Defend while approaching original battery",battery.transform.position);}
     else{AimMoonInteraction(player,bridge,battery.gameObject,elapsed);SetMoonInputObjective("Activate original battery",battery.transform.position);}
    }
    return true;
@@ -207,9 +210,21 @@ public sealed partial class MovementBatchProbe {
   var aim=(collider?collider.bounds.center:target.transform.position)-player.inputBank.aimOrigin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;
   if(worldDriver.currentInteractable==target&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
  }
- void MoonCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed){
-  var enemy=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();if(enemy==null)return;
-  var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;
+ bool MoonCombatInput(CharacterBody player,NovaInputBridge bridge,float elapsed){
+  var position=player.characterMotor.Motor.TransientPosition;var origin=player.inputBank.aimOrigin;
+  var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();var actors=living.Where(x=>InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();
+  var targets=actors.Select(x=>{bool visible;var point=WorldCombatAimPoint(x.body,origin,out visible);return new{actor=x,point,visible,distance=Vector3.Distance(point,origin)};}).ToArray();
+  r.world.combatCandidates=living.Length;r.world.combatBoundsRejected=living.Length-actors.Length;r.world.combatVisibleCandidates=targets.Count(x=>x.visible);r.world.combatOccludedCandidates=targets.Length-r.world.combatVisibleCandidates;
+  var target=targets.OrderBy(x=>!x.visible).ThenBy(x=>x.distance).FirstOrDefault();r.world.combatLineOfSight=target!=null&&target.visible;r.world.combatTarget=target!=null?target.actor.body.name:"";
+  if(target==null)return false;
+  r.world.combatTargetDistance=target.distance;r.world.combatAimOrigin=origin;r.world.combatAimTarget=target.point;r.world.combatTargetPhysicsPosition=DirectorPhysicsPosition(target.actor.body);r.world.combatTargetCorePosition=target.actor.body.corePosition;
+  var nearest=actors.OrderBy(x=>Vector3.Distance(position,DirectorPhysicsPosition(x.body))).First();var away=position-DirectorPhysicsPosition(nearest.body);float distance=away.magnitude;away.y=0;r.world.combatThreatDistance=distance;
+  if(distance<16&&player.characterMotor.isGrounded){
+   SelectCombatMotion(player,bridge,new Vector2(away.x,away.z).normalized,actors,true);bridge.diagnosticSprint=true;
+   if(bridge.movement.sqrMagnitude>.01f){bridge.DiagnosticJump(elapsed%1.8f<.25f);bridge.diagnosticUtility=player.skillLocator.utility.CanExecute();}
+  }
+  if(!target.visible)return false;
+  var aim=target.point-origin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;return true;
  }
  void CleanupMoonMission(){
   if(moonRoots!=null)foreach(var root in moonRoots)if(root)root.SetActive(false);

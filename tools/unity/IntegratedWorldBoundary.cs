@@ -41,6 +41,7 @@ public sealed partial class MovementBatchProbe {
   public bool manualTakeover;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
   public int combatVisibleCandidates,combatOccludedCandidates,combatApproachFrames;public bool combatLineOfSight,combatTargetBoss,combatHoldoutConstrained;public float combatTargetDistance,combatThreatDistance;public Vector3 combatAimOrigin,combatAimTarget;
+  public Vector3 combatTargetPhysicsPosition,combatTargetCorePosition;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
  readonly List<Transform> worldModels=new List<Transform>();
