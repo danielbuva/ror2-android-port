@@ -2991,3 +2991,6 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J315 full build:**86.047-second/zero-error Vulkan ARM64 build;40 safety tests, complete14397-file archive, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `a5abbfffa983c4bb50702c540028ef1ed48c666a8c5978cec0d32e033ed1dd82`. Actual lunar visible targeting/contact defence/traversal/battery/ending remain device-pending. Original attacks/stats/director/mission/physics and I06/I03 unchanged; no I07 pointer.
+
+
+**J315 device exit:** Unassisted genuine route ends in original Sky Meadow defeat at937.980seconds,4 exits/298 kills, after teleporter charge reaches1.0. Zero current-process errors/message failures; original StandardLoss generation/client report/XML reload/Android ledger persistence and full source/world cleanup pass. Nova verified asleep. Moon not reached, so visible lunar targeting and safe far-side traversal remain unaccepted; no I07 pointer. Evidence: `work/experiments/scene-runtime/20261006T011711.825389Z/device-exit-assessment.json`. I06/J256 and I03/J228 immutable. Next user-authorized iteration adds a small default-off, toggleable debug acceleration layer; assisted evidence never establishes normal combat/death/holdout/movement/full-run acceptance.
