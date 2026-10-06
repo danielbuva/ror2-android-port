@@ -1,6 +1,6 @@
 # Original PC appearance on Android
 
-The legitimate PC build is the visual authority. Matching PC captures, source scene settings and source material parameters govern restoration. Android replacements remain explicitly approximate. None of J324–J326 establishes shader or whole-scene parity.
+The legitimate PC build is the visual authority. Matching PC captures, source scene settings and source material parameters govern restoration. Android replacements remain explicitly approximate. None of J324–J328 establishes shader or whole-scene parity.
 
 ## Current restoration
 
@@ -10,16 +10,21 @@ J324's enhanced/legacy/enhanced same-view toggle captures show material detail c
 
 J326 restores the five base scenes' original RenderSettings and native lights that geometry reduction discarded. Source fog enable/mode/color/range, ambient values, sun/sky references, light transforms/intensities and active flags are preserved. Counts are 12/10/61/110/32 source lights across golemplains/foggyswamp/frozenwall/dampcavesimple/skymeadow. Gameplay callbacks and Moon scene content are unchanged. The same-APK device window passes508.13seconds/four genuine transports/zero errors and cleanup; reviewed captures remain approximate, with sky camera still pending. See the journal for attribution and performance limits.
 
+J328 adds native attenuated point/spot/directional light response, additional light passes and shadow casting/receiving to surfaces/terrain, without an invented ambient floor. The same installed APK passes437.77seconds/four transports/zero errors with cleanup; reviewed chests/barrels cast visible shadows. Water now preserves original wave/reflection maps, colors, speeds and switches, verified on host. Its normal/depth/reflection composition remains approximate, and no clear water capture supports appearance acceptance.
+
 Four recovered stage sky materials use Unity's built-in cubemap shader. The prepared camera change retains their cubemap, tint, exposure and rotation and suppresses the diagnostic directional light when source directional lighting exists. The dampcavesimple sky reference resolves to a terrain material; this is an unresolved source/export discrepancy, not a reason to invent a sky. J327 compiles/builds this camera change in a host-only Vulkan APK with zero errors; it is not present in the sole installed J324 APK until an authorized update.
 
 ## Comparison and remaining gaps
 
 No matching local PC screenshots were found. A usable original PC capture environment is currently unavailable; no licensing or authentication workaround was attempted. Matching PC captures remain necessary for acceptance. Source-data restoration and Android screenshots alone cannot demonstrate parity.
 
-The installed APK still clears the sky to a diagnostic solid color. Exact cloud/soft-particle/distortion behavior, water reflection/refraction, baked lighting/probes, shadows, stylized outlines and stock postprocessing remain unresolved. Some material families share a fallback despite different original rendering contracts. Do not call these restored or substitute an invented look.
+The installed APK still clears the sky to a diagnostic solid color. Exact cloud/soft-particle/distortion behavior, water reflection/refraction, baked lighting/probes, original shadow behavior, stylized outlines and stock postprocessing remain unresolved. Some material families share a fallback despite different original rendering contracts. Do not call these restored or substitute an invented look.
 
 For each visual change retain source identities/parameters, shader and APK/payload hashes, stage/object/view context and private Android/PC captures where available. Identify the comparison as source-data, legacy/approximation, or matching PC. Compare silhouettes, surface response, fog/color, effect shape/opacity and hazard/objective readability separately. Only matching PC evidence may support an appearance-parity claim.
 
 ## Prior art and provenance
 
 Consulted the pinned R2Wiki HG Triplanar Terrain Blend guide for RGB/top/side/vertex-color/signed-bias and normal/specular contracts, EditorKit HopooCloudRemapGUI for original blend-property metadata, and Starstorm2 SlateMines/R2API.Director for scene identity/lifecycle distinctions. See [community source map](community-prior-art.md) and its pinned source index. These describe contracts; they do not supply the original shader programs. No community, game or shader implementation was copied into the public source. Recovered assets and raw comparisons remain ignored locally.
+
+
+J329 inspects pinned AssetRipper shader exporters: [simple source export](https://github.com/AssetRipper/AssetRipper/blob/813fed1597bac674def7256ce633a227e7b27497/Source/AssetRipper.Export.UnityProjects/Shaders/SimpleShaderExporter.cs) needs usable script source; [serialized YAML export](https://github.com/AssetRipper/AssetRipper/blob/813fed1597bac674def7256ce633a227e7b27497/Source/AssetRipper.Export.UnityProjects/Shaders/YamlShaderExporter.cs) is not a demonstrated usable editor shader. Standalone program converters require further Unity pass/keyword/resource integration. No direct Android pipeline or runtime result is established by this bounded review; keep any future one-program trial separate from appearance acceptance.

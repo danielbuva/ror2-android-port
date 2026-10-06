@@ -3200,3 +3200,36 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 
 
 **I08-J327 build exit:** Host-only APK `464ab5dd2c22c1b2f6e3896338d81d7bb3f819dd68d0387f8384216b1d45712a`, source/full terminal receipts preserved. One-APK clarification pending; installed J324 hash unchanged, OLED asleep. No PC parity or device sky/camera acceptance from compilation.
+
+
+## I08-J328 — Native stage lighting and source water inputs
+
+- **ID:** I08-J328
+- **TITLE:** Native stage lighting and source water inputs
+- **CONTEXT:** Original scene atmosphere retained, same J324 APK remains installed.
+- **OBSERVATION:** Replacement surfaces lacked native point/spot attenuation, additional passes and shadows; water used unsupported invented values.
+- **HYPOTHESIS:** Native Unity lighting contracts plus original material inputs remove those omissions without replacing APK/gameplay.
+- **TASK:** Add native surface/terrain lighting/shadow passes, remove ambient floor, retain original water inputs; rebuild fixed shader bundle and run integrated base-stage window.
+- **CONSTRAINTS:** One installation dispatch consumed; same APK only. No source-shader/PC parity, normal gameplay or Moon claim. Preserve original assemblies, previous payloads and J327 host candidate.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Three authored shaders, ignored material queries/receipts/captures, concise state/journal/visual notes.
+- **TEST COMMAND:** ./dev doctor; ./dev test; ./dev prototype --action presentation-payload; movement-batch-retry with independent debug options.
+- **PASS CONDITION:**49 tests; final shader build4.631seconds/zero errors; same-APK437.770-second window/four transports/68kills/zero errors/cleanup. Chest/barrel shadows reviewed; source water inputs host-verified, water appearance unaccepted.
+- **FAILURE EVIDENCE TO CAPTURE:** Shader import/pass/parameter evidence, request/start/terminal/hash, actual PID errors and capture context, frame/memory/debug history.
+- **STATE/JOURNAL UPDATES REQUIRED:** J328, graphics/stability scope and observed-only presentation pointer; no normal/I07 advance.
+- **DEPENDENCIES:** I08-J326; pinned graphics contracts and exact-editor native lighting definitions.
+
+## I08-J329 — Compiled source-shader conversion prior art
+
+- **ID:** I08-J329
+- **TITLE:** Compiled source-shader conversion prior art
+- **CONTEXT:** Source shader bundles use Windows programs; current replacements approximate behavior.
+- **OBSERVATION:** Dummy exports provide no shader implementation; program conversion may omit Unity integration.
+- **HYPOTHESIS:** Existing primary-source exporters/converters can delimit a future discriminating trial.
+- **TASK:** Inspect pinned AssetRipper exporter/source paths and official shader converter interfaces; record applicable route or missing contracts without installing a framework.
+- **CONSTRAINTS:** Read-only ignored source checkout, no original-install change, no copied proprietary/third-party implementation or inferred Android capability.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored sparse reference checkout; authored prior-art/journal/visual-restoration notes.
+- **TEST COMMAND:** Read-only pinned exporter/interface inspection; no runtime/build claim.
+- **PASS CONDITION:** Bounded review completed: no direct usable Unity Android route found in inspected exporters; Unity pass/keyword/resource integration remains required. Research exit, not graphics parity.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact pin/files/interface boundaries and source-format mismatch; preserve future failed converter trial separately.
+- **STATE/JOURNAL UPDATES REQUIRED:** J329 decision and source citations; retain dummy-source warning and PC parity gap.
+- **DEPENDENCIES:** Existing community graphics map and original shader platform inventory.
