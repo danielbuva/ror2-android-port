@@ -415,3 +415,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J313 live first transport:** Original boss/charge/reward/exit completes into Wetland Aspect while preserving same run/master/body/authority/inventory/money/count. Actual timed queue reports realized XP111 plus2 pending Player awards; original FixedUpdate settles to113 in0.224seconds, and strict post-transport XP remains113. This directly exercises corrected instance lookup and exact conservation without awarding/clearing/replacing XP. No runtime/message failure. Same original run continues; full later stages/Moon recovery/mission/ending remain pending, I06/I03 immutable, no I07 pointer.
+
+
+**J313 live Moon recovery:** Five genuine source boss/charge/reward/exit/transports and309 kills reach original Moon population; all strict transport checks pass. Retained J310 objective stall survives terrain waypoint changes and normal grounded jump input executes. At1067.5seconds, actual body reaches bridge approach nearx479/z618 instead of the prior temple circle nearx700; original maxJumpHeight3.75/jumpCount1/unchanged gravity, battery-distance best721.6m. Current-process/message errors zero. Meaningful bridge approach progress is accepted as a live observation, not full battery/traversal/mission/victory/ending. Same genuine run continues; I06/I03 immutable, no I07 pointer.
