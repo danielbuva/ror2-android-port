@@ -43,7 +43,7 @@ public sealed partial class MovementBatchProbe {
  int IntegratedInventoryCount(){return ItemCatalog.allItemDefs.Sum(x=>worldPlayer.inventory.GetItemCountPermanent(x.itemIndex));}
  ulong PendingStagePlayerExperience(out int count){
   Check(rewardExperience&&ExperienceManager.instance==rewardExperience,"Original XP manager ownership changed before transport");
-  var pending=(IList)RewardField(typeof(ExperienceManager),"pendingAwards").GetValue(rewardExperience);ulong amount=0;count=0;
+  var field=typeof(ExperienceManager).GetField("pendingAwards",BindingFlags.NonPublic|BindingFlags.Instance);Check(field!=null,"Original timed XP queue field unavailable");var pending=(IList)field.GetValue(rewardExperience);Check(pending!=null,"Original timed XP queue unavailable");ulong amount=0;count=0;
   foreach(var award in pending){var type=award.GetType();var recipient=type.GetField("recipient",BindingFlags.Public|BindingFlags.Instance);var value=type.GetField("awardAmount",BindingFlags.Public|BindingFlags.Instance);Check(recipient!=null&&value!=null,"Original timed XP award contract changed");if((TeamIndex)recipient.GetValue(award)!=TeamIndex.Player)continue;amount=checked(amount+(ulong)value.GetValue(award));count++;}
   return amount;
  }
@@ -68,7 +68,7 @@ public sealed partial class MovementBatchProbe {
   Check(!SceneInfo.instance&&!Stage.instance&&!TeleporterInteraction.instance&&NavigationAgentCount()==0,"Old original scene context survived transition");
   // Earned XP can still be in the original timed queue after the exit. Let its
   // normal FixedUpdate settle it before taking the strict transport baseline.
-  report.experienceAtExit=TeamManager.instance.GetTeamExperience(TeamIndex.Player);int pendingCount;report.pendingExperienceAtExit=PendingStagePlayerExperience(out pendingCount);report.pendingExperienceAwardsAtExit=pendingCount;
+  r.phase="integrated-stage-xp-settlement";report.experienceAtExit=TeamManager.instance.GetTeamExperience(TeamIndex.Player);int pendingCount;report.pendingExperienceAtExit=PendingStagePlayerExperience(out pendingCount);report.pendingExperienceAwardsAtExit=pendingCount;
   float settlementBegan=Time.realtimeSinceStartup,settlementDeadline=settlementBegan+ExperienceManager.maxOrbTravelTime+1;
   while(pendingCount>0&&Time.realtimeSinceStartup<settlementDeadline){yield return null;PendingStagePlayerExperience(out pendingCount);}
   report.experienceSettlementSeconds=Time.realtimeSinceStartup-settlementBegan;Check(pendingCount==0,"Original queued XP did not settle before transport");

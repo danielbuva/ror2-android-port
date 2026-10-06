@@ -2914,3 +2914,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 
 
 **J312 full build:**88.666-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd5fe8148a2557d83b9a719d855de3756399d3243539a24b71e461dbcb90feb6`. Actual original timed-XP settlement/conservation/strict transport and retained Moon recovery remain device-pending. Original earned XP/queue/physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J312 first device exit:** Original first-stage boss/charge/reward/exit completes;51 kills/211.6 last gameplay seconds. Before new-scene load, PendingStagePlayerExperience throws a null reference. Authored RewardField searches NonPublic|Static but pendingAwards is NonPublic|Instance; the failure belongs to the new observer, not original gameplay or settlement. Realized XP117, no queued amount yet observed. Full source cleanup passes; no message errors, no Moon execution or capability pointer. Preserve failed source/build/runtime/cleanup; Nova asleep. Explicit instance lookup and pre-read contract/phase checks are the next correction; original queue/values/conservation/equality remain unchanged.
+
+### I07-S33 — Validated instance XP queue observation
+
+- **ID:** I07-S33.
+- **TITLE:** Correct static-versus-instance lookup before integrated XP settlement.
+- **CONTEXT:** J312 original exit succeeds; new observer fails before next scene.
+- **OBSERVATION:** RewardField only searches static fields; source pendingAwards is private instance. Exact editor reflection confirms all required fields.
+- **HYPOTHESIS:** Explicit checked instance lookup allows original queue settlement/conservation to execute.
+- **TASK:** Repair observer/phase attribution in full game, rebuild and replay real route.
+- **CONSTRAINTS:** Queue/rewards/callbacks/bound/exact equality and original run/master/body/authority/mission unchanged; no force/grant/skip, I06/I03 immutable.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored IntegratedStageBoundary; ignored full archive/build/device reflection/settlement/failure records; state/journal/milestones.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run.
+- **PASS CONDITION:** Actual device instance/award fields resolve; original bounded settlement/conservation and strict transition checks pass, then continue whole Moon route.
+- **FAILURE EVIDENCE TO CAPTURE:** Exact queue/type/field/owner failure, realized/queued XP/count/time/identity and continuity before/after, actual phase/runtime errors/source cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** J313 actual build/device outcomes; preserve J312 failure, no incomplete pointer.
+- **DEPENDENCIES:** J312 exact first observer failure, original field/source/linker and verified read-only reflection; J311 full-game route.
+
+
+**J313 full build:**92.996-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `9fd7ab7b009fd52c651040725776fb0660261603731ba1538c8b19fdc1690dc8`. Actual corrected instance queue observation/original settlement/conservation/strict transport and Moon recovery remain device-pending. I06/I03 unchanged; no I07 pointer.

@@ -406,3 +406,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J312 full build:**88.666-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd5fe8148a2557d83b9a719d855de3756399d3243539a24b71e461dbcb90feb6`. Actual original timed-XP settlement/conservation/strict transport and retained Moon recovery remain device-pending. Original earned XP/queue/physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J312 first device exit:** Original first-stage boss/charge/reward/exit completes;51 kills/211.6 last gameplay seconds. Before new-scene load, PendingStagePlayerExperience throws a null reference. Authored RewardField searches NonPublic|Static but pendingAwards is NonPublic|Instance; the failure belongs to the new observer, not original gameplay or settlement. Realized XP117, no queued amount yet observed. Full source cleanup passes; no message errors, no Moon execution or capability pointer. Preserve failed source/build/runtime/cleanup; Nova asleep. Explicit instance lookup and pre-read contract/phase checks are the next correction; original queue/values/conservation/equality remain unchanged.
+
+
+**J313 full build:**92.996-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `9fd7ab7b009fd52c651040725776fb0660261603731ba1538c8b19fdc1690dc8`. Actual corrected instance queue observation/original settlement/conservation/strict transport and Moon recovery remain device-pending. I06/I03 unchanged; no I07 pointer.

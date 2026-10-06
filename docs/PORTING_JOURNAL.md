@@ -2821,3 +2821,17 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J312 full build:**88.666-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `fd5fe8148a2557d83b9a719d855de3756399d3243539a24b71e461dbcb90feb6`. Actual original timed-XP settlement/conservation/strict transport and retained Moon recovery remain device-pending. Original earned XP/queue/physics/graph/mission and I06/I03 unchanged; no I07 pointer.
+
+
+**J312 first device exit:** Original first-stage boss/charge/reward/exit completes;51 kills/211.6 last gameplay seconds. Before new-scene load, PendingStagePlayerExperience throws a null reference. Authored RewardField searches NonPublic|Static but pendingAwards is NonPublic|Instance; the failure belongs to the new observer, not original gameplay or settlement. Realized XP117, no queued amount yet observed. Full source cleanup passes; no message errors, no Moon execution or capability pointer. Preserve failed source/build/runtime/cleanup; Nova asleep. Explicit instance lookup and pre-read contract/phase checks are the next correction; original queue/values/conservation/equality remain unchanged.
+
+## J313 — Correct instance-field lookup in integrated XP observer
+
+**Observation / hypothesis:** J312 reaches the original first exit but the new helper uses a static-field lookup for an instance queue. Exact source and read-only reflection identify the mismatch. Correcting the lookup should allow the existing bounded original settlement and strict transport accounting to execute.
+
+**Integration:** Use validated NonPublic|Instance pendingAwards lookup; validate nonnull queue and original public award recipient/amount fields. Record actual XP-settlement phase before reading. Keep original manager, earned rewards, timed callbacks, bound, exact conservation and all post-settlement identity/XP/inventory/money/count checks. All accepted full-game input/camera/physics/graph/mission/platform boundaries retained; no force/grant/queue clearing or new standalone experiment.
+
+**Prior art / preparation:** J312 current prior-art/reward-map and pinned DebugToolkit observation seam retained; no experience-denial hook used. Exact legitimate original timed-award fields and already accepted reward observer's instance lookup inspected. Editor reflection verifies instance queue true/static false/award type and two public fields true; original RoR2 linker preserves all fields. No implementation copied. Ignored complete candidate work/experiments/scene-runtime/20261005T235600.710970Z preserves J312 failed attempt and explicit repair/contract. Preflight/zero C# errors pass; safety tests/forced build/full unattended route pending. User unavailable; Nova asleep during host work. I06/I03 immutable; no I07 pointer.
+
+
+**J313 full build:**92.996-second/zero-error Vulkan ARM64 build;40 safety tests, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `9fd7ab7b009fd52c651040725776fb0660261603731ba1538c8b19fdc1690dc8`. Actual corrected instance queue observation/original settlement/conservation/strict transport and Moon recovery remain device-pending. I06/I03 unchanged; no I07 pointer.
