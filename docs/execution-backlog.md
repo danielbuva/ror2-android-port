@@ -3233,3 +3233,36 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** Exact pin/files/interface boundaries and source-format mismatch; preserve future failed converter trial separately.
 - **STATE/JOURNAL UPDATES REQUIRED:** J329 decision and source citations; retain dummy-source warning and PC parity gap.
 - **DEPENDENCIES:** Existing community graphics map and original shader platform inventory.
+
+
+## I08-J330 — Original lighting data and reflection component closure
+
+- **ID:** I08-J330
+- **TITLE:** Original lighting data and reflection component closure
+- **CONTEXT:** Same installed J324 APK and original PC appearance authority.
+- **OBSERVATION:** Converted geometry omits native lighting-data references and reflection components.
+- **HYPOTHESIS:** Their exact retained closure can integrate without gameplay changes or speculative baking.
+- **TASK:** Preserve classes157/215, validate same-scene back-reference without traversing discarded gameplay, build five stage bundles, run composed base-stage loop.
+- **CONSTRAINTS:** No new callbacks/assembly/APK/MonoBehaviour/Moon changes; empty source lightmaps/probes remain empty; no reflection/PC parity claim from asset presence.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing scene transformation and ignored source/import/payload/device records.
+- **TEST COMMAND:** ./dev preflight; ./dev test; stage-presentation-payload; same-APK movement-batch-retry with independent debug options.
+- **PASS CONDITION:**49 tests;32.188-second/zero-error bundle build; five valid imported LightingData references/nine reflection components;412.196-second device window/four transports/65kills/zero errors/cleanup. Reflection textures remain unbound.
+- **FAILURE EVIDENCE TO CAPTURE:** Native/source hashes and cycles, imported validity/textures, existing Billboard LOD pointers, actual-PID errors and capture/frame/memory/debug history.
+- **STATE/JOURNAL UPDATES REQUIRED:** J330 and observed-only pointer; distinguish native retention from appearance; retain J327/J323/I06/I03.
+- **DEPENDENCIES:** I08-J326/J328; current input/pinned graphics prior art and existing closure.
+
+## I08-J331 — Native environment particles across the integrated base stages
+
+- **ID:** I08-J331
+- **TITLE:** Native environment particles across the integrated base stages
+- **CONTEXT:** Large visual-restoration chunk through the installed APK's separate scene payloads.
+- **OBSERVATION:**52/15/59/101/120 original particle-system/renderer pairs were stripped from five base scenes.
+- **HYPOTHESIS:** Restoring original native modules/owner links/active flags can recover environmental effects while existing Android material binding handles their rendering.
+- **TASK:** Retain native198/199 and measured texture/mesh/subemitter dependencies; build five scene bundles and run the same integrated stage window, fix the first actual failure.
+- **CONSTRAINTS:** No new gameplay callbacks, invented activation, particles or brightness; preserve native modules, including two Sky Meadow collision modules, two Plains trigger modules and local subemitters. Source review finds no external emitter/light prefab references. Moon/assemblies/APK unchanged; shaders approximate.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing presentation scene closure; ignored module/renderer/import/source/payload/capture records.
+- **TEST COMMAND:** stage-presentation-payload; same-APK movement-batch-retry with independent debug options; capture current stage/performance.
+- **PASS CONDITION:** Pending native import/build and complete four-transition device window with clear effect/capture/error attribution. No source shader/PC parity acceptance from component count.
+- **FAILURE EVIDENCE TO CAPTURE:** Native references, actual shape/material/dependency failures, active/playing particle counts, current-process errors, effect readability and frame/memory samples.
+- **STATE/JOURNAL UPDATES REQUIRED:** J331 first failure/exit and graphical limits; preserve J330 full rollback and all Moon/normal pointers.
+- **DEPENDENCIES:** I08-J330 terminal; pinned EditorKit blend knowledge and original source/native settings.

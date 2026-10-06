@@ -205,7 +205,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
     # Preserve geometry/LOD and selected source MapZone callbacks; omit unrelated native/presentation data.
     keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
-    if presentation:keep.update({104,108}) # Exact source RenderSettings and Light components only.
+    if presentation:keep.update({104,108,157,215}) # Source atmosphere, lights, lighting data and reflection probes.
     # Measured original MonoScript identity: only the source escape-pod preview disable callback.
     preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
@@ -262,6 +262,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         if Path(str(other)+'.meta').read_bytes()!=Path(str(source)+'.meta').read_bytes():raise RuntimeError('Refuse to remove an unowned alternate stage scene')
         other.unlink();Path(str(other)+'.meta').unlink()
     dest.write_text(geometry);shutil.copy2(Path(str(source)+'.meta'),Path(str(dest)+'.meta'))
+    scene_guid=re.search(r'^guid: ([a-f0-9]{32})',Path(str(source)+'.meta').read_text(),re.M)[1]
     index={};existing={}
     for base,target in [(export/'Assets',index),(stage,existing)]:
         for meta in base.rglob('*.meta'):
@@ -274,6 +275,11 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         seen.add(guid)
         if guid not in index:raise RuntimeError('Unresolved static stage dependency '+guid)
         src=index[guid]
+        if presentation and guid==scene_guid:
+            # LightingData points back to this scene. Traverse the reduced scene already
+            # queued above, never the discarded source gameplay dependency graph.
+            if src!=source or existing.get(guid)!=dest:raise RuntimeError('Lighting data scene identity differs from converted scene')
+            continue
         if src.suffix=='.dll':
             if src.name=='RoR2.dll' and guid in existing and existing[guid]==stage/'Plugins/RoR2.dll':continue
             if src.name=='com.unity.multiplayer-hlapi.Runtime.dll' and guid in existing and existing[guid]==stage/'Plugins'/src.name and sha(existing[guid])==sha(game()/'Risk of Rain 2_Data/Managed'/src.name):continue
@@ -291,7 +297,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         recipe.pop('nextStageScene',None)
     write(WORK/'scene-probe-build.json',recipe)
     write(out/('stage-geometry-contract.json' if scene_name=='golemplains' else scene_name+'-geometry-contract.json'),{'source':str(source.relative_to(export)),'source_sha256':sha(source),'generated_sha256':sha(dest),'removed_classes':counts,'kept_classes':sorted(keep|{114}),'retained_components':{'DisableOnStart':preview_ids,'MapZone':map_ids,'MapZoneContext':map_extra},'deferred_map_objects':sorted(map_owners),'source_active_map_names':map_active,'map_network_objects':map_network_ids,'roots':len(root_objects),'source_active_flags_preserved':not map_owners,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'scope':'Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.','prior_art':'Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.'})
-    if presentation:write(out/(scene_name+'-source-presentation.json'),{'source_sha256':sha(source),'generated_sha256':sha(dest),'render_settings':[block for kind,_,block in kept if kind==104],'lights':[block for kind,_,block in kept if kind==108],'scope':'Exact original scene fog, ambient, sun/sky references and light components; no added gameplay callbacks. Android shader/camera/postprocessing parity unverified.'})
+    if presentation:write(out/(scene_name+'-source-presentation.json'),{'source_sha256':sha(source),'generated_sha256':sha(dest),'render_settings':[block for kind,_,block in kept if kind==104],'lights':[block for kind,_,block in kept if kind==108],'lighting_data':[block for kind,_,block in kept if kind==157],'reflection_probes':[block for kind,_,block in kept if kind==215],'scene_guid':scene_guid,'scope':'Exact original atmosphere, lights, lighting data/probe references and reflection components; no added gameplay callbacks or new bake. Android shader/camera/postprocessing parity unverified.'})
     if scene_name=='golemplains':return {'stageGeometry':True,'stageMapZoneCount':len(map_ids),'stageMapZoneActiveNames':map_active}
     graphs={}
     for kind in ['ground','air']:
