@@ -2889,3 +2889,6 @@ After accepted collision cleanup, original CreatePickup receives actual allowed 
 
 
 **J317 full build:** Live debug ownership guard passes45 safety/evidence tests and zero C# errors; full84.917second/zero-error Vulkan ARM64 build,39 payload/45 assembly identities unchanged,14399-file archive. APK `4fa70a01e2396fdb1f2c1ee2aa91707eb7f884dbedf02e196b4a13914e8e686d`. Device toggle/restoration and assisted route pending; no normal acceptance/I07 pointer.
+
+
+**J317 device progress:** Current composed Android run executes requested invincibility/high damage/fast charge; original base damage12→12000, original movement7 unchanged, godMode observed true. Visually reviewed developer panel agrees with actual report. GUI clear restores original base/level damage, godMode false and charge callback count0; re-enable works, sticky ever-assisted/normal-eligibility false retained. Actual positive original charge rate0.011111111→0.088888891 over335 callbacks (x8). First source exit completes;0 current-process/message errors. Movement boost never enabled, optional device toggle remains pending. Assisted Moon route continues; this is developer-controls/integration evidence, no normal gameplay/full-route acceptance or I07 pointer. Evidence `work/experiments/scene-runtime/20261006T015220.202440Z/debug-toggle-device-assessment.json`.
