@@ -457,3 +457,9 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J317 device progress:** Current composed Android run executes requested invincibility/high damage/fast charge; original base damage12→12000, original movement7 unchanged, godMode observed true. Visually reviewed developer panel agrees with actual report. GUI clear restores original base/level damage, godMode false and charge callback count0; re-enable works, sticky ever-assisted/normal-eligibility false retained. Actual positive original charge rate0.011111111→0.088888891 over335 callbacks (x8). First source exit completes;0 current-process/message errors. Movement boost never enabled, optional device toggle remains pending. Assisted Moon route continues; this is developer-controls/integration evidence, no normal gameplay/full-route acceptance or I07 pointer. Evidence `work/experiments/scene-runtime/20261006T015220.202440Z/debug-toggle-device-assessment.json`.
+
+
+J317 manual Moon continuation / J318: same assisted five-exit run remains under user control. BloodArena traversal and two original charged batteries observed by1576.2seconds, zero new errors. This is assisted mission progress, not normal traversal/holdout/full-route acceptance. J318 prepares a separate default-off jump-power x6 toggle while user finishes J317; no installed jump assist, new device claim or I07 pointer. Four-battery elevator/launch volume and ending remain pending; I06/I03 retained.
+
+
+**J318 full build:**46 host safety/evidence tests and zero C# errors; full83.456-second/zero-error Vulkan ARM64 build,39 payload/45 assembly identities retained. APK SHA-256 `9c8cc320ebe7057cf86d3c71032544f2fd80a6d23f18f983a31f5f6e64feb670`. Existing J317 live manual run remains installed; no device jump/restore claim. User explicitly requested to finish it. High-jump APK is prepared for subsequent assisted iteration, not installed. No normal acceptance or I07 pointer.

@@ -17,6 +17,19 @@ class DebugAccelerationEvidenceTests(unittest.TestCase):
     def test_requested_acceleration_cannot_pass_on_an_older_apk(self):
         with self.assertRaisesRegex(RuntimeError, 'APK did not report'):
             acceptance_labels({}, {'highDamage': True, 'purpose': 'Moon integration'})
+        old_report = {'debugAcceleration': {'version': 1, 'active': {}, 'events': [],
+                      'everAssisted': False, 'normalGameAcceptanceEligible': True}}
+        with self.assertRaisesRegex(RuntimeError, 'not observed'):
+            acceptance_labels(old_report, {'jumpBoost': True, 'purpose': 'Moon objectives'})
+
+    def test_jump_assistance_stays_excluded_after_disable(self):
+        report = {'debugAcceleration': {'version': 1, 'active': {}, 'everAssisted': True,
+                  'normalGameAcceptanceEligible': False, 'events': [
+                      {'toggle': 'jumpBoost', 'enabled': True},
+                      {'toggle': 'jumpBoost', 'enabled': False}]}}
+        self.assertFalse(validate_options({})['jumpBoost'])
+        self.assertEqual(acceptance_labels(report)['excluded_acceptance'],
+                         ['full-normal-run', 'movement', 'navigation'])
 
     def test_disabling_all_controls_does_not_erase_assisted_history(self):
         report = {'debugAcceleration': {'version': 1, 'active': {}, 'everAssisted': True,
@@ -45,6 +58,6 @@ class DebugAccelerationEvidenceTests(unittest.TestCase):
         debug = report['debugAcceleration']
         debug.update(everAssisted=True, normalGameAcceptanceEligible=False,
                      events=[{'toggle': key, 'enabled': True} for key in
-                             ['invincibility', 'highDamage', 'fastCharge', 'movementBoost']])
+                             ['invincibility', 'highDamage', 'fastCharge', 'movementBoost', 'jumpBoost']])
         self.assertEqual(acceptance_labels(report)['excluded_acceptance'],
                          ['death', 'full-normal-run', 'holdout', 'movement', 'navigation', 'normal-combat'])

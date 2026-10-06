@@ -7,7 +7,7 @@ using UnityEngine;
 // remove enemies: original attacks, holdout occupancy and ending code still run.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class DebugAccelerationOptions {
-  public bool invincibility,highDamage,fastCharge,movementBoost;
+  public bool invincibility,highDamage,fastCharge,movementBoost,jumpBoost;
   public string purpose;
  }
  [Serializable] public class DebugToggleEvent {
@@ -17,10 +17,11 @@ public sealed partial class MovementBatchProbe {
   public int version=1;public bool everAssisted,normalGameAcceptanceEligible=true,restored,ownerDestroyed;
   public DebugAccelerationOptions active=new DebugAccelerationOptions();
   public string purpose,error;
-  public float damageMultiplier=1000,chargeRateMultiplier=8,movementMultiplier=2;
+  public float damageMultiplier=1000,chargeRateMultiplier=8,movementMultiplier=2,jumpMultiplier=6;
   public float originalBaseDamage,originalLevelDamage,originalBaseMoveSpeed,originalLevelMoveSpeed;
   public float appliedBaseDamage,appliedLevelDamage,appliedBaseMoveSpeed,appliedLevelMoveSpeed;
   public float observedDamage,observedMoveSpeed;public bool godModeObserved;
+  public float originalBaseJumpPower,originalLevelJumpPower,appliedBaseJumpPower,appliedLevelJumpPower,observedJumpPower;public int observedMaxJumpCount;
   public float lastOriginalChargeRate,lastAssistedChargeRate;public int positiveChargeCallbacks,unchangedNonpositiveChargeCallbacks,chargeZones;
   public List<DebugToggleEvent> events=new List<DebugToggleEvent>();
  }
@@ -33,6 +34,7 @@ public sealed partial class MovementBatchProbe {
   debugBody=body;debugPriorGodMode=body.healthComponent.godMode;
   r.debugAcceleration=new DebugAccelerationReport{purpose=r.debugOptions==null||string.IsNullOrWhiteSpace(r.debugOptions.purpose)?"Interactive developer controls":r.debugOptions.purpose,originalBaseDamage=body.baseDamage,originalLevelDamage=body.levelDamage,originalBaseMoveSpeed=body.baseMoveSpeed,originalLevelMoveSpeed=body.levelMoveSpeed};
   ownsDebugAcceleration=true;
+  r.debugAcceleration.originalBaseJumpPower=body.baseJumpPower;r.debugAcceleration.originalLevelJumpPower=body.levelJumpPower;
   ApplyDebugAcceleration(r.debugOptions??new DebugAccelerationOptions(),"launch selection");
  }
  void DebugToggle(string name,bool enabled,string source){
@@ -42,30 +44,38 @@ public sealed partial class MovementBatchProbe {
  void ApplyDebugAcceleration(DebugAccelerationOptions next,string source){
   var report=r.debugAcceleration;var active=report.active;
   if(active.invincibility!=next.invincibility){debugBody.healthComponent.godMode=next.invincibility||debugPriorGodMode;DebugToggle("invincibility",next.invincibility,source);}
-  bool stats=active.highDamage!=next.highDamage||active.movementBoost!=next.movementBoost;
+  bool stats=active.highDamage!=next.highDamage||active.movementBoost!=next.movementBoost||active.jumpBoost!=next.jumpBoost;
   if(active.highDamage!=next.highDamage){
    debugBody.baseDamage=report.originalBaseDamage*(next.highDamage?report.damageMultiplier:1);debugBody.levelDamage=report.originalLevelDamage*(next.highDamage?report.damageMultiplier:1);DebugToggle("highDamage",next.highDamage,source);
   }
   if(active.movementBoost!=next.movementBoost){
    debugBody.baseMoveSpeed=report.originalBaseMoveSpeed*(next.movementBoost?report.movementMultiplier:1);debugBody.levelMoveSpeed=report.originalLevelMoveSpeed*(next.movementBoost?report.movementMultiplier:1);DebugToggle("movementBoost",next.movementBoost,source);
   }
+  if(active.jumpBoost!=next.jumpBoost){
+   // Keep the original single-jump consumer, collision, gravity and landing code.
+   // No item grants, unlocks, jump-count edits or direct velocity/position writes.
+   debugBody.baseJumpPower=report.originalBaseJumpPower*(next.jumpBoost?report.jumpMultiplier:1);debugBody.levelJumpPower=report.originalLevelJumpPower*(next.jumpBoost?report.jumpMultiplier:1);DebugToggle("jumpBoost",next.jumpBoost,source);
+  }
   if(active.fastCharge!=next.fastCharge){DebugToggle("fastCharge",next.fastCharge,source);if(!next.fastCharge)RemoveDebugChargeCallbacks();debugNextZoneScan=0;}
-  report.active=new DebugAccelerationOptions{invincibility=next.invincibility,highDamage=next.highDamage,fastCharge=next.fastCharge,movementBoost=next.movementBoost,purpose=report.purpose};
+  report.active=new DebugAccelerationOptions{invincibility=next.invincibility,highDamage=next.highDamage,fastCharge=next.fastCharge,movementBoost=next.movementBoost,jumpBoost=next.jumpBoost,purpose=report.purpose};
   if(stats)debugBody.RecalculateStats();
   report.appliedBaseDamage=debugBody.baseDamage;report.appliedLevelDamage=debugBody.levelDamage;report.appliedBaseMoveSpeed=debugBody.baseMoveSpeed;report.appliedLevelMoveSpeed=debugBody.levelMoveSpeed;
   report.observedDamage=debugBody.damage;report.observedMoveSpeed=debugBody.moveSpeed;report.godModeObserved=debugBody.healthComponent.godMode;
+  report.appliedBaseJumpPower=debugBody.baseJumpPower;report.appliedLevelJumpPower=debugBody.levelJumpPower;report.observedJumpPower=debugBody.jumpPower;report.observedMaxJumpCount=debugBody.maxJumpCount;
   Save();
  }
  void TickDebugAcceleration(){
   if(!debugBody||r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
   try{
    r.debugAcceleration.observedDamage=debugBody.damage;r.debugAcceleration.observedMoveSpeed=debugBody.moveSpeed;r.debugAcceleration.godModeObserved=debugBody.healthComponent.godMode;
+   r.debugAcceleration.observedJumpPower=debugBody.jumpPower;r.debugAcceleration.observedMaxJumpCount=debugBody.maxJumpCount;
    if(r.results!=null&&r.results.reportGenerated)return;
    var a=r.debugAcceleration.active;
    if(UnityEngine.Input.GetKeyDown(KeyCode.F1))SetDebugToggle(0,!a.invincibility,"F1");
    if(UnityEngine.Input.GetKeyDown(KeyCode.F2))SetDebugToggle(1,!a.highDamage,"F2");
    if(UnityEngine.Input.GetKeyDown(KeyCode.F3))SetDebugToggle(2,!a.fastCharge,"F3");
    if(UnityEngine.Input.GetKeyDown(KeyCode.F4))SetDebugToggle(3,!a.movementBoost,"F4");
+   if(UnityEngine.Input.GetKeyDown(KeyCode.F5))SetDebugToggle(4,!a.jumpBoost,"F5");
    if(r.debugAcceleration.active.fastCharge&&Time.realtimeSinceStartup>=debugNextZoneScan){
     debugNextZoneScan=Time.realtimeSinceStartup+.5f;
     debugChargeZones.RemoveWhere(x=>!x);
@@ -84,8 +94,9 @@ public sealed partial class MovementBatchProbe {
  }
  void RemoveDebugChargeCallbacks(){foreach(var zone in debugChargeZones)if(zone)zone.calcChargeRate-=AccelerateDebugCharge;debugChargeZones.Clear();if(r!=null&&r.debugAcceleration!=null)r.debugAcceleration.chargeZones=0;}
  void SetDebugToggle(int index,bool enabled,string source){
-  var a=r.debugAcceleration.active;var next=new DebugAccelerationOptions{invincibility=a.invincibility,highDamage=a.highDamage,fastCharge=a.fastCharge,movementBoost=a.movementBoost};
+  var a=r.debugAcceleration.active;var next=new DebugAccelerationOptions{invincibility=a.invincibility,highDamage=a.highDamage,fastCharge=a.fastCharge,movementBoost=a.movementBoost,jumpBoost=a.jumpBoost};
   if(index==0)next.invincibility=enabled;if(index==1)next.highDamage=enabled;if(index==2)next.fastCharge=enabled;if(index==3)next.movementBoost=enabled;
+  if(index==4)next.jumpBoost=enabled;
   ApplyDebugAcceleration(next,source);
  }
  void DrawDebugAcceleration(){
@@ -100,14 +111,15 @@ public sealed partial class MovementBatchProbe {
   if(GUI.Button(new Rect(x,295,250,44),"F2 Damage x1000: "+a.highDamage))SetDebugToggle(1,!a.highDamage,"developer panel");
   if(GUI.Button(new Rect(x,345,250,44),"F3 Charge x8: "+a.fastCharge))SetDebugToggle(2,!a.fastCharge,"developer panel");
   if(GUI.Button(new Rect(x,395,250,44),"F4 Movement x2: "+a.movementBoost))SetDebugToggle(3,!a.movementBoost,"developer panel");
-  if(GUI.Button(new Rect(x,445,250,44),"Disable all (run stays assisted)"))ApplyDebugAcceleration(new DebugAccelerationOptions(),"developer panel clear");
+  if(GUI.Button(new Rect(x,445,250,44),"F5 Jump power x6: "+a.jumpBoost))SetDebugToggle(4,!a.jumpBoost,"developer panel");
+  if(GUI.Button(new Rect(x,495,250,44),"Disable all (run stays assisted)"))ApplyDebugAcceleration(new DebugAccelerationOptions(),"developer panel clear");
  }
- string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal");}
+ string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal")+"\nJump "+(a.jumpBoost?"x6":"normal");}
  void CleanupDebugAcceleration(){
   if(!ownsDebugAcceleration||r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
   RemoveDebugChargeCallbacks();
-  if(debugBody){ApplyDebugAcceleration(new DebugAccelerationOptions(),"owned cleanup");Check(debugBody.healthComponent.godMode==debugPriorGodMode&&debugBody.baseDamage==r.debugAcceleration.originalBaseDamage&&debugBody.levelDamage==r.debugAcceleration.originalLevelDamage&&debugBody.baseMoveSpeed==r.debugAcceleration.originalBaseMoveSpeed&&debugBody.levelMoveSpeed==r.debugAcceleration.originalLevelMoveSpeed,"Debug acceleration restore failed");}
-  else{var a=r.debugAcceleration.active;if(a.invincibility)DebugToggle("invincibility",false,"owner destroyed");if(a.highDamage)DebugToggle("highDamage",false,"owner destroyed");if(a.fastCharge)DebugToggle("fastCharge",false,"owner destroyed");if(a.movementBoost)DebugToggle("movementBoost",false,"owner destroyed");r.debugAcceleration.active=new DebugAccelerationOptions{purpose=r.debugAcceleration.purpose};r.debugAcceleration.ownerDestroyed=true;}
+  if(debugBody){ApplyDebugAcceleration(new DebugAccelerationOptions(),"owned cleanup");Check(debugBody.healthComponent.godMode==debugPriorGodMode&&debugBody.baseDamage==r.debugAcceleration.originalBaseDamage&&debugBody.levelDamage==r.debugAcceleration.originalLevelDamage&&debugBody.baseMoveSpeed==r.debugAcceleration.originalBaseMoveSpeed&&debugBody.levelMoveSpeed==r.debugAcceleration.originalLevelMoveSpeed&&debugBody.baseJumpPower==r.debugAcceleration.originalBaseJumpPower&&debugBody.levelJumpPower==r.debugAcceleration.originalLevelJumpPower,"Debug acceleration restore failed");}
+  else{var a=r.debugAcceleration.active;if(a.invincibility)DebugToggle("invincibility",false,"owner destroyed");if(a.highDamage)DebugToggle("highDamage",false,"owner destroyed");if(a.fastCharge)DebugToggle("fastCharge",false,"owner destroyed");if(a.movementBoost)DebugToggle("movementBoost",false,"owner destroyed");if(a.jumpBoost)DebugToggle("jumpBoost",false,"owner destroyed");r.debugAcceleration.active=new DebugAccelerationOptions{purpose=r.debugAcceleration.purpose};r.debugAcceleration.ownerDestroyed=true;}
   debugBody=null;ownsDebugAcceleration=false;r.debugAcceleration.restored=true;Save();
  }
 }

@@ -1,12 +1,13 @@
 """Explicit per-launch debug options and fail-closed normal acceptance labels."""
 from common import WORK, read
 
-TOGGLES = ('invincibility', 'highDamage', 'fastCharge', 'movementBoost')
+TOGGLES = ('invincibility', 'highDamage', 'fastCharge', 'movementBoost', 'jumpBoost')
 EXCLUDED = {
     'invincibility': ('normal-combat', 'death'),
     'highDamage': ('normal-combat',),
     'fastCharge': ('holdout',),
     'movementBoost': ('movement', 'navigation'),
+    'jumpBoost': ('movement', 'navigation'),
 }
 
 def validate_options(value):
