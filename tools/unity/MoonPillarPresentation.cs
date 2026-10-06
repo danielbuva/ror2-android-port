@@ -44,9 +44,12 @@ public sealed partial class MovementBatchProbe {
   foreach(var beam in beams.Where(x=>x.enabled&&x.gameObject.activeInHierarchy)){
    LineRenderer beacon;
    if(!moonPillarBeacons.TryGetValue(beam,out beacon)){
-    var height=beam.GetComponent<ParticleSystem>().sizeOverLifetime.y.constantMax;
-    Check(height>0,"Original Moon beam height unavailable");
-    if(!moonBeaconMaterial){var shader=Resources.Load<Shader>("MoonPillarBeaconPreview");Check(shader&&shader.isSupported,"Android pillar beacon shader unavailable");moonBeaconMaterial=new Material(shader);}
+    // These source modules use Curve mode: constantMax is zero while the
+    // evaluated curve is300. Evaluate the original module without editing it.
+    var curve=beam.GetComponent<ParticleSystem>().sizeOverLifetime.y;
+    var height=Mathf.Max(curve.Evaluate(0,1),curve.Evaluate(.5f,1),curve.Evaluate(1,1));
+    if(height<=0){r.moon.beaconPresentationError="Original Moon beam curve height unavailable";continue;}
+    if(!moonBeaconMaterial){var shader=Resources.Load<Shader>("MoonPillarBeaconPreview");if(!shader||!shader.isSupported){r.moon.beaconPresentationError="Android pillar beacon shader unavailable";continue;}moonBeaconMaterial=new Material(shader);}
     var display=new GameObject("Android pillar beacon");display.transform.SetParent(beam.transform,false);
     beacon=display.AddComponent<LineRenderer>();beacon.useWorldSpace=true;beacon.alignment=LineAlignment.View;beacon.positionCount=2;
     beacon.startWidth=4;beacon.endWidth=2;beacon.startColor=new Color(.35f,.75f,1,.9f);beacon.endColor=new Color(.35f,.75f,1,.1f);

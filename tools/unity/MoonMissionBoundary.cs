@@ -76,7 +76,7 @@ public sealed partial class MovementBatchProbe {
   public string[] monsterCardNames,unmappedPoolCards;public float[] monsterCardWeights;
   public string state,escapeState,error,scope,inputObjective;public string[] batteryStates,elevatorStates;
   public int restoredBeamRenderers,activeBeamRenderers,liveBeamParticles;public MoonPillarMarker[] pillarMarkers;
-  public int androidBeaconRenderers,activeAndroidBeacons;public bool farPillarVisibility;
+  public int androidBeaconRenderers,activeAndroidBeacons;public bool farPillarVisibility;public string beaconPresentationError;
   public float observedGravityY;public MoonElevatorLaunch[] elevatorLaunches;
   public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
   public bool originalTimersScheduled,timersStopped,itemStealerObserved,dropshipHoldoutActive;public int fixedTimerTicks,pendingFixedTimers,cancelledOwnedTimers,liveItemStealers;
