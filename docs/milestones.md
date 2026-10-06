@@ -20,6 +20,8 @@ Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evi
 
 Replan at L3, L4, L5.5, L6, L7, L8. No gate advances from a stripped empty build or synthetic completion. Latest independent-work direction brings visual parity, base-content breadth, Android application flow, controllers and stability forward while Moon waits for manual input. Audio needs lawful access; T30/60 FPS, distribution and remote services remain later.
 
+Independent I09/J336 broadens the composed chest domain from six to16 original eligible items, with8/5/3 source tiers and unchanged weights. Host contracts and full177.696-second/zero-error ARM64 build pass; actual earned acquisition, native mechanics, restart/cleanup and item/effect appearance await the existing APK-update clarification. Includes J335 rendering, which remains a source-informed approximation without matching PC acceptance. No formal gameplay, Moon or normal-run gate advances; installed J324/J334 and observed pointer are preserved.
+
 ## Evidence
 
 T01: work/runs/20260913T020341.114229Z-46130c90d7a1, visible Vulkan geometry, utility marker, ARM64 IL2CPP, adopted placement and cleanup. Doctor/preflight and six host tests passed. LAST_KNOWN_GOOD_RUNTIME under work/checkpoints binds baseline APK and payload; no scene/simulation/playable/run pointer exists yet.

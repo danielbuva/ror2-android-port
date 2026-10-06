@@ -17,6 +17,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldPickupObservation {public string item,interactability;public Vector3 position,aimTarget;public float aimDistance;public bool selected,collider,interactableLayer;}
  [Serializable] public class WorldPickupMessageObservation {public float at;public bool resolvedMaster,playerMaster,knownPickup;public uint masterId,quantity;public int pickupIndex;public string item;}
+ [Serializable] public class WorldItemObservation {public string item,tier;public int count;}
  [Serializable] public class WorldMessageFailure {public float at;public int id;public string side,handler,error;}
  [Serializable] public class NavigationPathPoint {public Vector3 position;public float minimumJumpHeight;}
  [Serializable] public class WorldReport {
@@ -25,6 +26,7 @@ public sealed partial class MovementBatchProbe {
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
   public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
+  public int lootTier1,lootTier2,lootTier3;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
@@ -69,16 +71,61 @@ public sealed partial class MovementBatchProbe {
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
 Action<TeamIndex> unavailableTeamLevelSound;Action<Run> unavailableAmbientSound;Action<CharacterBody> unavailableLevelEffect;
 Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
+ ItemDef[] worldLootDefinitions;
+ ItemMask worldAvailableItems,previousWorldAvailableItems;EquipmentMask worldAvailableEquipment,previousWorldAvailableEquipment;
+ readonly Dictionary<FieldInfo,GameObject> worldLootEffectSlots=new Dictionary<FieldInfo,GameObject>();
+ readonly List<GameObject> worldLootTemporaryEffects=new List<GameObject>();
+ readonly Dictionary<Renderer,Material[]> worldLootSourceMaterials=new Dictionary<Renderer,Material[]>();
+ readonly Dictionary<GameObject,int> worldLootSourceLayers=new Dictionary<GameObject,int>();
 
 
  ItemDef[] WorldTierOneLoot(Result cfg){
+  return WorldLoot(cfg).Where(x=>x.tier==ItemTier.Tier1).ToArray();
+ }
+ ItemDef[] WorldLoot(Result cfg){
   var loot=new List<ItemDef>{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe};
   // Receipted additions only. Older accepted configurations retain their original pool.
   if(cfg.teleporterLoop&&cfg.objectiveItemNames!=null){
    if(cfg.objectiveItemNames.Contains("SprintBonus"))loot.Add(RoR2Content.Items.SprintBonus);
    if(cfg.objectiveItemNames.Contains("FlatHealth"))loot.Add(RoR2Content.Items.FlatHealth);
   }
+  loot.Add(RoR2Content.Items.ChainLightning);
+  if(cfg.worldAdditionalLootItems!=null)foreach(var name in cfg.worldAdditionalLootItems){var def=ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(name));Check(def&&def.name==name&&!def.requiredExpansion&&!def.unlockableDef&&!def.hidden,"Core loot identity/requirement unavailable: "+name);loot.Add(def);}
+  Check(loot.All(x=>x)&&loot.Distinct().Count()==loot.Count,"Duplicate or absent composed loot definition");
   return loot.ToArray();
+ }
+ GameObject[] PrepareWorldLootSupport(Result cfg){
+  if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
+  Check(cfg.worldLootSupportPaths.Length==2,"Core loot support contract length changed");
+  r.phase="integrated-core-loot-support";Save();var effects=new List<GameObject>();
+  foreach(var path in cfg.worldLootSupportPaths){
+   int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Core loot provider location absent: "+path);var source=objectiveSupportSources[index];
+   bool shield=path=="Prefabs/Effects/ShieldBreakEffect";Check(shield||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
+   Check(source&&source.name==(shield?"ShieldBreakEffect":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
+   var type=(shield?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
+   var field=type.GetField(shield?"shieldBreakEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+   Check(field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Unowned core loot effect slot: "+path);
+   worldLootEffectSlots.Add(field,(GameObject)field.GetValue(null));field.SetValue(null,source);
+   Check((GameObject)field.GetValue(null)==source,"Core loot source binding failed: "+path);
+   if(shield){Check(source.GetComponent<EffectComponent>(),"Original shield-break EffectComponent missing");effects.Add(source);}else Check(source.GetComponent<TemporaryVisualEffect>()&&source.GetComponent<TemporaryVisualEffect>().visualTransform,"Original BucklerDefense linkage missing");
+   foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){
+    Check(!renderer.GetComponent<Collider>(),"Core loot renderer shares a collider; preserve its layer before adapting visibility");
+    worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;
+    renderer.sharedMaterials=renderer.sharedMaterials.Select(original=>{if(!original)return null;var copy=new Material(original);copy.shader=Resources.Load<Shader>("StageSurfacePreview");copy.shaderKeywords=new string[0];AndroidMaterialPresentation.Apply(original,copy);worldMaterials.Add(copy);return copy;}).ToArray();renderer.gameObject.layer=30;
+   }
+  }
+  return effects.ToArray();
+ }
+ void ObserveWorldLootSupport(CharacterBody body){
+  if(worldLootEffectSlots.Count==0)return;var field=typeof(CharacterBody).GetField("bucklerShieldTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic);
+  var effect=(TemporaryVisualEffect)field.GetValue(body);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);
+ }
+ void CleanupWorldLootSupport(){
+  if(worldPlayer)ObserveWorldLootSupport(worldPlayer);
+  foreach(var effect in worldLootTemporaryEffects)if(effect)Destroy(effect);
+  foreach(var pair in worldLootEffectSlots)pair.Key.SetValue(null,pair.Value);worldLootEffectSlots.Clear();
+  foreach(var pair in worldLootSourceMaterials)if(pair.Key)pair.Key.sharedMaterials=pair.Value;worldLootSourceMaterials.Clear();
+  foreach(var pair in worldLootSourceLayers)if(pair.Key)pair.Key.layer=pair.Value;worldLootSourceLayers.Clear();
  }
  IEnumerator PrepareIntegratedWorld(CharacterBody player,Result cfg){
   Check(((Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null)).Count==0,"Unowned effect pools before integrated world");ownsIntegratedPools=true;
@@ -106,12 +153,22 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(cfg.moonMission)Check(PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex))==moonEquipmentPickups[0],"Original Lunar equipment pickup metadata missing");
   r.world.lunarDefinition=MiscPickupCatalog.GetMiscDef(worldLunarCoin.miscPickupIndex)==worldLunarCoin&&PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex)==lunarPickup.pickupIndex&&lunarPickup.attemptGrant.Method.DeclaringType==typeof(LunarCoinDef);
   Check(r.world.lunarDefinition&&!Util.LookUpBodyNetworkUser(player),"Original lunar definition or unavailable currency contract changed");r.world.lunarCurrencyAvailable=false;
-  Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0,"Unowned integrated loot lists");
+  Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&Run.instance.availableTier3DropList.Count==0,"Unowned integrated loot lists");
   ownsWorldLists=true;
-  foreach(var item in WorldTierOneLoot(cfg)){
-   Check(item&&!item.requiredExpansion&&!item.unlockableDef&&item.tier==ItemTier.Tier1&&!Run.instance.IsItemExpansionLocked(item.itemIndex),"Integrated base item unavailable");Run.instance.availableTier1DropList.Add(PickupCatalog.FindPickupIndex(item.itemIndex));
+  worldLootDefinitions=WorldLoot(cfg);
+  r.world.itemStacks=worldLootDefinitions.Select(x=>new WorldItemObservation{item=x.name,tier=x.tier.ToString()}).ToArray();
+  foreach(var item in worldLootDefinitions)Check(!Run.instance.IsItemExpansionLocked(item.itemIndex)&&!item.requiredExpansion&&!item.unlockableDef&&!item.hidden&&item.DoesNotContainTag(ItemTag.IgnoreForDropList)&&item.DoesNotContainTag(ItemTag.WorldUnique),"Integrated base item unavailable: "+item.name);
+  if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Length>0){
+   previousWorldAvailableItems=Run.instance.availableItems;previousWorldAvailableEquipment=Run.instance.availableEquipment;
+   worldAvailableItems=ItemMask.Rent();worldAvailableEquipment=EquipmentMask.Rent();Run.instance.availableItems=worldAvailableItems;Run.instance.availableEquipment=worldAvailableEquipment;
+   foreach(var item in worldLootDefinitions)worldAvailableItems.Add(item.itemIndex);
+   if(cfg.teleporterLoop)worldAvailableItems.Add(RoR2Content.Items.Knurl.itemIndex);
+   Run.instance.BuildDropTable();
+  }else{
+   foreach(var item in worldLootDefinitions)if(item.tier==ItemTier.Tier1)Run.instance.availableTier1DropList.Add(PickupCatalog.FindPickupIndex(item.itemIndex));else if(item.tier==ItemTier.Tier2)Run.instance.availableTier2DropList.Add(PickupCatalog.FindPickupIndex(item.itemIndex));
   }
-  Run.instance.availableTier2DropList.Add(PickupCatalog.FindPickupIndex(RoR2Content.Items.ChainLightning.itemIndex));
+  r.world.lootTier1=Run.instance.availableTier1DropList.Count;r.world.lootTier2=Run.instance.availableTier2DropList.Count;r.world.lootTier3=Run.instance.availableTier3DropList.Count;
+  Check(r.world.lootTier1+r.world.lootTier2+r.world.lootTier3==worldLootDefinitions.Length,"Original composed drop lists differ from eligible item domain");
   moneyCatalogField=typeof(CostTypeCatalog).GetField("costTypeDefs",flags);priorMoneyCatalog=moneyCatalogField.GetValue(null);
   Check(priorMoneyCatalog==null&&!ownsMoneyCatalog,"Unowned integrated cost catalog");ownsMoneyCatalog=true;StaticCall(typeof(CostTypeCatalog),"Init");
   var generic=PrepareOriginalDefaultPickup(cfg);while(generic.MoveNext())yield return generic.Current;
@@ -128,7 +185,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(worldDropletSource&&worldDropletSource.name=="PickupDroplet"&&LegacyResourcesAPI.ActiveCount==0,"Integrated original droplet Init failed");
   worldChestTable=artifactBundle.LoadAsset<BasicPickupDropTable>(cfg.chestDropTableAsset);
   Check(worldChestTable&&worldChestTable.name=="dtChest1"&&worldChestTable.canDropBeReplaced,"Integrated source drop table identity/policy differs");r.world.tableLoadedCount=worldChestTable.GetPickupCount();worldChestTable.RegenerateDropTable(Run.instance);
-  r.world.lootDomain=worldChestTable.GetPickupCount();Check(r.world.lootDomain==WorldTierOneLoot(cfg).Length+1,"Integrated source chest loot domain missing");
+  r.world.lootDomain=worldChestTable.GetPickupCount();Check(r.world.lootDomain==worldLootDefinitions.Length,"Integrated source chest loot domain missing");
   PrepareWorldMessages();
   worldCoinLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/Effects/CoinEmitter");ownsWorldCoinLease=true;yield return worldCoinLease;
   Check(worldCoinLease.Result==rewardPrefabs[0],"Integrated coin source witness differs");worldCoinBaseline=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease);
@@ -247,6 +304,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
+  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);
   if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
@@ -412,7 +470,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  IEnumerator VerifyIntegratedWorldCleanup(){
   if(r.world==null)yield break;yield return null;yield return null;
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
-  r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc;
+  r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldAvailableItems==null&&worldAvailableEquipment==null;
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();
  }
  void DrawIntegratedWorld(){
@@ -427,6 +485,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var style=new GUIStyle(GUI.skin.label){fontSize=22};var shadow=new GUIStyle(style);shadow.normal.textColor=Color.black;
   string text="Offline gameplay lab — "+(r.stageProgress!=null?r.stageProgress.current:"Titanic Plains")+"\nHP "+Mathf.Max(0,world.health).ToString("F0")+" / "+world.maxHealth.ToString("F0")+"    Lv "+world.level.ToString("F0")+"    $"+world.money+"    "+world.seconds.ToString("F0")+"s\nKills "+world.kills+"    Enemies "+world.liveEnemies+"    Chests "+world.openedChests+" / "+world.chests+"\nSyringe "+world.syringe+" · Glasses "+world.glasses+" · Slug "+world.slug+" · Ukulele "+world.lightning+"\n"+world.lastPickup+"    Crit "+world.crit.ToString("F0")+"% · Regen "+world.regen.ToString("F1")+"\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n"+(string.IsNullOrEmpty(world.target)?"Explore, fight and earn money":"B: "+world.target)+"\nAudio, stock startup and profiles unavailable";
   if(world.lootDomain>4)text+="\nEnergy Drink "+world.drink+" · Steak "+world.steak+" · Move speed "+world.moveSpeed.ToString("F1");
+  if(world.lootTier3>0)text+="\nShield "+world.shield.ToString("F0")+" / "+world.maxShield.ToString("F0")+" · Jumps "+world.motorMaxJumpCount;
   if(r.moon!=null&&r.moon.loaded)text+="\nMoon batteries "+r.moon.charged+" / "+r.moon.required+" · Encounter enemies "+r.moon.livingEncounterMembers+"\n"+world.objective;
   else if(r.objective!=null&&r.objective.ready)text+="\nTeleporter "+r.objective.state+" — "+(r.objective.charge*100).ToString("F0")+"% | "+(r.objective.bossDefeated?"Boss defeated":"Boss HP "+r.objective.bossHealth.ToString("F0")+" / "+r.objective.bossMaxHealth.ToString("F0"));
   if(world.health<=0){text+="\nCommando defeated. Press A to restart a fresh run.";if(GUI.Button(new Rect(20,420,240,48),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(280,420,180,48),"Close session"))Application.Quit();}else if(worldView!=null)worldView.DrawReticle();
@@ -452,7 +511,11 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(ownsWorldCoinLease&&worldCoinLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease)-worldCoinBaseline;Check(extra>=0&&extra<=worldBarrelConsumers,"Unattributed integrated barrel coin leases");for(int i=0;i<extra;i++)Addressables.Release(worldCoinLease.Result);Addressables.Release(worldCoinLease);ownsWorldCoinLease=false;}
   RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);if(ownsWorldTeleportHandler){if(activeBodyClient!=null)activeBodyClient.UnregisterHandler(68);if(NetworkServer.active)NetworkServer.UnregisterHandler(68);ownsWorldTeleportHandler=false;}
   if(worldVfxOption!=null)worldVfxOption.AttemptSetString(priorWorldVfx);if(priorWorldXp!=null)SettingsConVars.cvExpAndMoneyEffects.AttemptSetString(priorWorldXp);
-  if(ownsWorldLists&&Run.instance){Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();if(worldChestTable)worldChestTable.RegenerateDropTable(Run.instance);Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&(!worldChestTable||worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;}
+  if(ownsWorldLists&&Run.instance){
+   if(worldAvailableItems!=null){worldAvailableItems.Clear();worldAvailableEquipment.Clear();Run.instance.BuildDropTable();Run.instance.availableItems=previousWorldAvailableItems;Run.instance.availableEquipment=previousWorldAvailableEquipment;ItemMask.Return(worldAvailableItems);EquipmentMask.Return(worldAvailableEquipment);worldAvailableItems=null;worldAvailableEquipment=null;}
+   else{Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();Run.instance.availableTier3DropList.Clear();}
+   if(worldChestTable)worldChestTable.RegenerateDropTable(Run.instance);Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&Run.instance.availableTier3DropList.Count==0&&(!worldChestTable||worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;
+  }
   if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}
   if(worldDropletField!=null)worldDropletField.SetValue(null,priorWorldDroplet);if(ownsWorldDroplet&&worldDropletSource){Addressables.Release(worldDropletSource);ownsWorldDroplet=false;}if(worldDropletLocator!=null){Addressables.RemoveResourceLocator(worldDropletLocator);worldDropletLocator=null;}
   foreach(var material in worldMaterials)if(material)Destroy(material);

@@ -73,7 +73,7 @@ def prepare_spine(director_batch=False,run_clock=False,barrel=False,pickup=False
     if run_clock:cfg.update(stage_run_scene_metadata(stage,out))
     if integrated_world:
         from integrated_objective import stage_objective
-        cfg.update(stage_objective(stage,a,out))
+        cfg.update(stage_objective(stage,a,out,broader_loot=True))
         cfg['integratedStages']=[stage_first_stage_geometry(stage,out,original_name=True,scene_name=name,map_zones=name!='moon2') for name in ['foggyswamp','frozenwall','dampcavesimple','skymeadow','moon2']]
         from integrated_moon import stage_moon
         moon=stage_moon(stage,a,out,cfg['integratedStages'][-1])

@@ -4,6 +4,15 @@ import re
 import shutil
 import hashlib
 
+CORE_LOOT = ['PersonalShield', 'NearbyDamageBonus', 'StunChanceOnHit', 'Feather', 'Seed',
+             'SprintOutOfCombat', 'SprintArmor', 'AlienHead',
+             'UtilitySkillMagazine', 'BarrierOnOverHeal']
+CORE_LOOT_SUPPORT = [
+    ('ShieldBreakEffect', '418e4945609754b41b41aafde8edfb87',
+     'Prefabs/Effects/ShieldBreakEffect', 'Assets/RoR2/Base/Common/VFX/Shield/ShieldBreakEffect.prefab'),
+    ('BucklerDefense', '0aae571b83fa44d439f4d001da4d48cd',
+     'Prefabs/TemporaryVisualEffects/BucklerDefense', 'Assets/RoR2/Base/Items/SprintArmor/BucklerDefense.prefab'),
+]
 
 def transform_optional_presentation(stage, out, attempt):
     from boundaries import probe_tool
@@ -38,7 +47,7 @@ def stage_classic_run_settings(out):
     return {'runEventFlagsToResetOnLoop':flags}
 
 
-def stage_objective(stage, previous, out):
+def stage_objective(stage, previous, out, broader_loot=False):
     run_settings=stage_classic_run_settings(out)
     from scene_closure import REFERENCE
     export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -71,6 +80,19 @@ def stage_objective(stage, previous, out):
         src=export/rows[0][1]
         if src.name!=name+'.prefab':raise RuntimeError('Original support source identity changed')
         root='support'+name;roots[root]=src;support_roots.append(root)
+    if broader_loot:
+        contract=read(WORK/'config/core-loot-support.json')
+        if contract['input_id']!=read(WORK/'config/accepted-input.json')['input_id'] or contract['catalog_sha256']!=sha(export/'Assets/StreamingAssets/aa/catalog.json'):
+            raise RuntimeError('Core loot typed catalog input changed; remeasure before staging')
+        for name,key,path,internal in CORE_LOOT_SUPPORT:
+            src=export/internal
+            meta=Path(str(src)+'.meta')
+            matches=[row for row in contract['locations'] if row['path']==path and row['key']==key and row['internalId']==internal and row['type']=='UnityEngine.GameObject']
+            if len(matches)!=1 or sha(src)!=matches[0]['source_sha256'] or sha(meta)!=matches[0]['source_meta_sha256'] or re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]!=matches[0]['export_guid']:
+                raise RuntimeError('Original core loot support identity changed: '+name)
+            roots['support'+name]=src;support_roots.append('support'+name)
+            support_keys.append(key);support_paths.append(path)
+        write(out/'core-loot-support-source.json',contract)
     roots['objectiveWardBuffAsset']=export/'Assets/RoR2/Base/Characters/BeetleGroup/bdBeetleJuice.asset'
     roots['objectiveWardConfig']=export/'Assets/RoR2/Base/Characters/BeetleGroup/BeetleWard/EntityStates.BeetleQueenMonster.BeetleWardDeath.asset'
     ward_rows=[x.split('|') for x in (WORK/'ward-catalog-query.txt').read_text().splitlines()]
@@ -127,11 +149,16 @@ def stage_objective(stage, previous, out):
             key = 'config'+str(len(configs)); roots[key]=config; configs.append(key)
         actors.append(prefix)
     item_names = ['WardOnLevel', 'FocusConvergence', 'TPHealingNova', 'BeetleGland', 'Ghost', 'Knurl', 'SprintBonus', 'FlatHealth']
+    if broader_loot:item_names+=CORE_LOOT
     for name in item_names:
-        candidates = list((export/'Assets/RoR2').rglob(name+'.asset'))
+        candidates = [export/'Assets/RoR2/Base/Items'/name/(name+'.asset')] if broader_loot and name in CORE_LOOT else list((export/'Assets/RoR2').rglob(name+'.asset'))
         if len(candidates)!=1:
             raise RuntimeError('Objective item definition ambiguous: '+name)
         roots['item'+name] = candidates[0]
+        if broader_loot and name in CORE_LOOT:
+            text=candidates[0].read_text()
+            if not all(re.search(r'^  '+field+r': \{fileID: 0\}',text,re.M) for field in ['unlockableDef','requiredExpansion']):
+                raise RuntimeError('Core loot must retain unlocked base-game requirements: '+name)
     artifact_keys=[]
     for config in sorted(roots['lunarTeleporterAsset'].parent.glob('EntityStates.LunarTeleporter.*.asset')):
         key='config'+str(len(configs));roots[key]=config;configs.append(key)
@@ -198,7 +225,7 @@ def stage_objective(stage, previous, out):
     write(WORK/'scene-probe-build.json',recipe)
     actor_specs=[dict(name=x,**{k[0].lower()+k[1:]:paths[x+k] for k in ['Body','Master','Card','Avatar','Controller','Material','Mesh']}) for x in actors]
     write(out/'objective-content.json',{'roots':paths,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'ui_remaps':ui_edits,'query_sha256':sha(query_path),'catalog_sha256':sha(export/'Assets/StreamingAssets/aa/catalog.json'),'deferred_unrequested':unrequested,'prior_art':'R2API.Director f539511e separates director activity, catalog readiness and source DCCS selection; current original TeleporterInteraction/BossGroup/HoldoutZoneController/Queen states govern composition. No source implementation copied.'})
-    return dict(run_settings,objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
+    return dict(run_settings,worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 
 def sanitize_optional_content(stage,out):
