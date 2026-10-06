@@ -3396,3 +3396,20 @@ Original arena trigger and four scripted encounter spawns progress PreEncounterâ
 - **FAILURE EVIDENCE TO CAPTURE:** First file/validation/rename/build error; rejected/primary/backup/pending/XML bytes/hashes, restoration, recovery fields, APK/payload/assembly identities and actual-PID device outcome when permitted.
 - **STATE/JOURNAL UPDATES REQUIRED:** J339 host versus device outcomes and inherited J337 content; retain J338's scoped results pointer and all observed/Moon/normal rollbacks.
 - **DEPENDENCIES:** J338 real persistence failure/genuine reports, J337 composed host base; current owned ledger and pinned ProperSave policy boundary.
+
+
+## I09-J340 â€” Unassisted original first-stage loop
+
+- **ID:** I09-J340
+- **TITLE:** Exercise original combat, earned loot, boss, normal charge and exit without another APK
+- **CONTEXT:** J339 is a host candidate; J338 validates natural loss/restart/results. Moon remains paused and the one installed J324/J334 world is available.
+- **OBSERVATION:** Previous recent route/presentation windows use invincibility/damage/charge assistance, excluding normal combat and holdout acceptance.
+- **HYPOTHESIS:** Ordinary diagnostic inputs can complete one native objective/transition with all assistance off and expose visual/runtime dependencies.
+- **TASK:** Run the composed first stage unassisted, capture original boss/holdout/reward/exit and authority/inventory/XP continuity into a ten-second Wetland window; preserve the first failure.
+- **CONSTRAINTS:** No APK install, synthetic damage/items/charge/progression, Moon work, physical-input/stock-platform/normal-victory claim or graphics parity. Keep original Android results and all known-good snapshots intact; sleep OLED after stop.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored existing-APK launch/observations/captures and scoped checkpoint; state/journal/backlog/milestone/visual summary only.
+- **TEST COMMAND:** Preflight; same-owned-APK launch/sync with all debug options false; actual-PID original objective/stage observations/logs/captures/hash and idle power checks.
+- **PASS CONDITION:** Scoped PASS: original2100-HP boss death/source90-second charge/reward/exit, original count1/Wetland entry,208.69seconds/50 kills, authority/inventory3/XP114 continuity, zero runtime errors and no installation. Boss opaque effect cards remain a visual failure; cold stop does not establish full harness teardown.
+- **FAILURE EVIDENCE TO CAPTURE:** First game/native/authority/objective error or genuine loss; assistance history, source duration/FSM/boss/reward/exit and transition state; actual stage/object visual context and old result hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** J340 actual scoped outcome/visual failure and unassisted-stage pointer; no normal-victory/Moon/formal/visual advancement.
+- **DEPENDENCIES:** Installed J324/J334; current original director/teleporter/Run/authority contracts and pinned R2API.Director observation knowledge.

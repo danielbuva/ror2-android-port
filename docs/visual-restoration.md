@@ -32,6 +32,8 @@ Two custom families now have separate authored approximations based on the origi
 
 The composed J335 host candidate includes the J333 sky/billboard path and J334 floating-point reflection inputs. Across five stages,347 particle renderers retain141 opaque-cloud and29 distortion material slots. All177 empty secondary/trail slots are source data; no primary slot is empty. Native Unity families and these two custom approximations must be reviewed on the Nova and compared with matching PC effects before accepting appearance. Build outcomes and rollback attribution are recorded in the journal; no additional installation is authorized yet.
 
+J340 unassisted first-stage boss-entry capture also exposes large opaque black effect cards in golemplains. This broadens the observed failure beyond Frozen scenery; exact source effect ownership is still unisolated. The native Unity particle/custom-family correction remains in the composed J339 host candidate awaiting Android execution. Original PC appearance and matching capture comparison remain the acceptance authority.
+
 ## Comparison and remaining gaps
 
 No matching local PC screenshots were found. A usable original PC capture environment is currently unavailable; no licensing or authentication workaround was attempted. Matching PC captures remain necessary for acceptance. Source-data restoration and Android screenshots alone cannot demonstrate parity.

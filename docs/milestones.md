@@ -20,6 +20,8 @@ Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evi
 
 Replan at L3, L4, L5.5, L6, L7, L8. No gate advances from a stripped empty build or synthetic completion. Latest independent-work direction brings visual parity, base-content breadth, Android application flow, controllers and stability forward while Moon waits for manual input. Audio needs lawful access; T30/60 FPS, distribution and remote services remain later.
 
+Independent I09/J340 observes one original first-stage boss/normal90-second charge/reward/exit and Wetland entry with all debug toggles off,50 kills/208.69seconds/zero runtime errors on the sole installed APK. Limited composition and diagnostic inputs remain; opaque boss effect cards block appearance acceptance. Cold stop is not full teardown; no formal/normal-victory/Moon/visual gate advance.
+
 Independent I09/J339 repairs the measured owned-ledger recovery policy over the complete J337/J336/J335 host candidate. Actual-report file replay and182.556-second/zero-error Vulkan ARM64 build pass,49 safety tests; Android recovery/new content/presentation await the existing update clarification. Installed/result/presentation/Moon/normal rollbacks remain intact.
 
 Independent I09/J338 verifies two all-debug-off original enemy losses, genuine XML reports, full composed restart/menu cleanup and cold Android-only ledger reload on the installed APK. Partial pending writes preserve committed files. Robust corrupt-primary recovery fails its policy gate; original data restored, no extra APK installation or normal-victory/stock-profile/visual acceptance.
