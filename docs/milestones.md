@@ -427,3 +427,6 @@ J291 fails before original enemy creation: registered volumes with disabled coll
 
 
 **J314 full build:**86.094-second/zero-error Vulkan ARM64 build;40 safety tests, complete14397-file archive, matching request/start/terminal receipts,39 payload/45 assembly identities, APK SHA-256 `11aa98a8dd955bf536e89b33f5f730ceea47634bfe47a354d64c34952ade0fe3`. Actual cliff-safe fallback/bridge/battery traversal remains device-pending. Original run/mission/physics/graph and I06/I03 unchanged; no I07 pointer.
+
+
+**J314 first device exit:** Four genuine original boss/charge/reward/exit/transports and323 kills; normal player death in Sky Meadow at946.008 gameplay seconds. No current-process runtime/message errors. Original StandardLoss server/client report generates and persists to the retained Android ledger; original body destruction and full source/world cleanup pass. No Moon execution, so bridge hypothesis remains unaccepted.13 terrain rejections recorded; at defeat fallback is inactive/body grounded, which does not implicate the changed branch. Failed run/report/capture preserved and Nova verified asleep. Retry this exact verified APK with immutable evidence and a new genuine run; no rebuild, forced seed/stats or capability pointer. I06/I03 immutable.
