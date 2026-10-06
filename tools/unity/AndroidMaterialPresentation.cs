@@ -5,7 +5,7 @@ using UnityEngine;
 
 // Owned Android rendering approximations. Original assets and simulation stay intact.
 public static class AndroidMaterialPresentation {
- [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Android authored lighting/normal/emission/snow/particle/billboard approximations; no original shader parity";}
+ [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; custom lighting/cloud/distortion/billboard approximations, no original shader parity; opaque cloud extrusion/cloud-normal response unverified";}
  sealed class Binding {public Material material;public Shader enhanced,fallback;}
  static readonly List<Binding> bindings=new List<Binding>();
  public static Report report=new Report();
@@ -16,12 +16,19 @@ public static class AndroidMaterialPresentation {
  public static void Apply(Material source,Material copy){
   if(!source||!copy)return;
   string name=source.shader.name;bool terrain=name.IndexOf("Triplanar",StringComparison.OrdinalIgnoreCase)>=0;
+  bool nativeParticle=name=="Mobile/Particles/Alpha Blended"||name=="Particles/Standard Unlit"||name=="Legacy Shaders/Particles/Additive"||name=="Legacy Shaders/Particles/Additive (Soft)";
+  if(nativeParticle){
+   copy.shader=source.shader;copy.shaderKeywords=source.shaderKeywords;copy.renderQueue=source.renderQueue;
+   if(!copy.shader.isSupported)report.error="Original Unity particle shader unavailable: "+name;
+   bindings.Add(new Binding{material=copy,enhanced=source.shader,fallback=source.shader});report.nativeParticles++;return;
+  }
   bool cloud=name.IndexOf("Cloud",StringComparison.OrdinalIgnoreCase)>=0;
+  bool opaqueCloud=name=="Hopoo Games/FX/Opaque Cloud Remap",distortion=name=="Hopoo Games/FX/Distortion";
   bool water=name.IndexOf("Water",StringComparison.OrdinalIgnoreCase)>=0;
   bool snow=name.IndexOf("Snow",StringComparison.OrdinalIgnoreCase)>=0;
   bool foliage=name.IndexOf("Speedtree",StringComparison.OrdinalIgnoreCase)>=0;
   bool billboard=name=="Nature/SpeedTree Billboard";
-  var shader=LoadShader(billboard?"AndroidBillboardPresentation":terrain?"AndroidTerrainPresentation":cloud?"AndroidParticlePresentation":water?"AndroidWaterPresentation":"AndroidSurfacePresentation");
+  var shader=LoadShader(billboard?"AndroidBillboardPresentation":terrain?"AndroidTerrainPresentation":opaqueCloud?"AndroidOpaqueParticlePresentation":distortion?"AndroidDistortionPresentation":cloud?"AndroidParticlePresentation":water?"AndroidWaterPresentation":"AndroidSurfacePresentation");
   if(!shader||!shader.isSupported){report.error="Android material family unavailable: "+name;return;}
   if(billboard){
    // BillboardAsset vertices are atlas-space. Keep the dedicated geometry path
@@ -32,6 +39,13 @@ public static class AndroidMaterialPresentation {
    bindings.Add(new Binding{material=copy,enhanced=shader,fallback=shader});return;
   }
   var fallback=copy.shader;copy.shader=shader;copy.shaderKeywords=new string[0];
+  if(distortion){
+   copy.SetFloat("_AndroidMaskEnabled",source.HasProperty("_MaskTex")&&source.GetTexture("_MaskTex")?1:0);
+   // These measured materials use either the exported default or explicit4000.
+   // Repair the missing native Transparent+2000 default, preserve explicit queues.
+   copy.renderQueue=source.renderQueue==source.shader.renderQueue?5000:source.renderQueue;
+   report.distortion++;bindings.Add(new Binding{material=copy,enhanced=shader,fallback=fallback});if(!report.enabled)copy.shader=fallback;return;
+  }
   copy.SetFloat("_AndroidNormalEnabled",source.HasProperty("_NormalTex")&&source.GetTexture("_NormalTex")?1:0);
   if(source.HasProperty("_NormalTex")&&source.GetTexture("_NormalTex"))report.normalMaps++;
   if(source.HasProperty("_EmTex")&&source.GetTexture("_EmTex"))report.emissionMaps++;
@@ -44,7 +58,8 @@ public static class AndroidMaterialPresentation {
    copy.SetFloat("_AndroidRemapEnabled",source.HasProperty("_RemapTex")&&source.GetTexture("_RemapTex")?1:0);
    copy.SetFloat("_AndroidCloud1Enabled",source.HasProperty("_Cloud1Tex")&&source.GetTexture("_Cloud1Tex")?1:0);
    copy.SetFloat("_AndroidCloud2Enabled",source.HasProperty("_Cloud2Tex")&&source.GetTexture("_Cloud2Tex")?1:0);
-   copy.renderQueue=3000;report.particles++;
+    copy.renderQueue=opaqueCloud?(source.renderQueue==source.shader.renderQueue?2450:source.renderQueue):3000;
+    if(opaqueCloud)report.opaqueClouds++;else report.particles++;
   }else if(water){
    if(source.HasProperty("_BumpMap")&&source.GetTexture("_BumpMap")){copy.SetTexture("_NormalTex",source.GetTexture("_BumpMap"));copy.SetTextureScale("_NormalTex",source.GetTextureScale("_BumpMap"));}
    copy.renderQueue=3000;report.water++;

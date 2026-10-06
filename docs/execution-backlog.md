@@ -3314,3 +3314,19 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** First query/helper failure, HDR decoding/range/format difference, shader errors, actual-PID runtime errors, captures, memory/frame/debug history.
 - **STATE/JOURNAL UPDATES REQUIRED:** J334 measurements, first failure, justified repair and actual device outcome; observed-only pointer advances only after accepted integration.
 - **DEPENDENCIES:** I08-J332 terminal; pinned R2Wiki terrain material semantics and ImportExtensions custom deferred/reflection clues; exact SDK contracts.
+
+## I08-J335 — Original particle families in the composed candidate
+
+- **ID:** I08-J335
+- **TITLE:** Original particle families in the composed candidate
+- **CONTEXT:** J334 exposes opaque square cards; the installed selector routes non-Cloud particle families as surfaces and ignores the opaque cloud cutoff/state.
+- **OBSERVATION:** Eight imported materials use four exact Unity builtin particle families. Across five stages,347 renderers expose141 opaque-cloud and29 distortion bindings;177 empty secondary/trail slots are original, with zero empty primary slots. Original opaque shader specifies alpha test2450, One/Zero, depth write and a shadow pass; distortion specifies a named grab, depth-write off and default queue5000. Exported defaults lose these states.
+- **HYPOTHESIS:** Preserve builtin shaders and measured render contracts, with explicit bounded custom-family approximations, to remove routing failures without inventing another aesthetic.
+- **TASK:** Retain the four native families; implement source cutoff/depth/shadows for opaque clouds and source-texture screen distortion/fades; assemble with J333 skies/billboards and J334 reflection data into one host candidate. Fix the first compiler/import failure; device verification awaits the existing APK clarification.
+- **CONSTRAINTS:** No new install dispatch, original shader/IP copying, guessed colors, particle modules or gameplay changes. Custom lighting/cloud/extrusion/distortion formula and PC appearance remain approximate/unaccepted. Preserve installed J324/J334 and immutable J333/J323/normal rollbacks.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing material selector/camera, two authored shader wrappers and their existing bundle recipe; ignored original shader states/material contracts/source/payload/build archive.
+- **TEST COMMAND:** Exact-editor source/copy/shader contract checks; preflight; forced Vulkan ARM64 host build;49 safety tests. Integrated Nova window only after APK replacement authorization.
+- **PASS CONDITION:** Host candidate PASS —52 materials/709 supported-property checks, exact native families and source2450/5000/default-vs-explicit queue contracts; final Vulkan ARM64 build84.288seconds/zero errors,41 payload files/all45 accepted assembly identities,910 billboards/347 particle renderers/nine RGBAHalf probes.49 tests/doctor/preflight pass; complete candidate archived and installed J324/J334 selection restored with OLED asleep. No device or PC appearance claim from compilation; update clarification pending.
+- **FAILURE EVIDENCE TO CAPTURE:** Initial trail-slot assertion, source/native default queue mismatch, unsupported shader/first compiler/build failure, later actual-PID errors and particle-card captures.
+- **STATE/JOURNAL UPDATES REQUIRED:** J335 source decisions, host versus device outcomes and actual remaining gaps; no observed or normal pointer advance from host build.
+- **DEPENDENCIES:** J334 device terminal; pinned EditorKit shader-registration/blend metadata, exact original shader forms and bundled Unity API; pending update clarification.

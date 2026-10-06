@@ -1,6 +1,6 @@
 # Original PC appearance on Android
 
-The legitimate PC build is the visual authority. Matching PC captures, source scene settings and source material parameters govern restoration. Android replacements remain explicitly approximate. None of J324–J334 establishes shader or whole-scene parity.
+The legitimate PC build is the visual authority. Matching PC captures, source scene settings and source material parameters govern restoration. Android replacements remain explicitly approximate. None of J324–J335 establishes shader or whole-scene parity.
 
 ## Current restoration
 
@@ -25,6 +25,12 @@ J333 prepares910 original distant-foliage billboards across the same stages in a
 J334 measures the exact nine exported reflection inputs against their automatic Android imports. Even after native HDR decoding, ETC RGB imports retain only0.25–39.79percent of the floating-point imports' mean RGB signal. The selected generated textures now use RGBAHalf at unchanged128/512 sizes, mip counts, readability and linear settings. This preserves measured exported low-light detail; maxima in those exports do not exceed one, so original BC6H HDR precision and filtered mip preservation are still unresolved. No source texture is edited or rebaked.
 
 Surface/terrain now call the exact bundled Unity probe sampling/decoding/roughness path. Terrain retains source per-channel strength/exponent/smoothness, with225 copied-input assertions across25 imported materials. Temporary direct lighting removes the prior invented smoothness exponent multiplier and strength cap. This does not restore RoR2's lighting ramp, original deferred reflection composition, filtered mip convolution or postprocessing. Early Android captures render successfully but do not establish that specular intensity/shape matches PC. Same-APK integration passes427.65seconds/four transports/64kills/zero runtime errors with cleanup. Frozen captures expose opaque square particle cards; eight original supported Unity builtin particle materials are misclassified by the installed selector. Correcting that C# routing requires the pending APK update clarification; exact effect ownership and PC appearance remain unaccepted.
+
+J335 retains the exact Unity builtin shaders for eight imported particle materials across four families: Mobile Alpha Blended, Standard Unlit and Legacy Additive/Soft Additive. Owned copies retain source shader, keywords, queue and supported inputs, including the source's disabled camera-fade infinity value. Both presentation-toggle states retain the native shader. This is a host contract; Android stripping, effect appearance and ownership of the Frozen cards still need device evidence.
+
+Two custom families now have separate authored approximations based on the original serialized shader states. Opaque Cloud Remap retains alpha-test queue2450, One/Zero blending, depth write, source cutoff and a shadow pass. Distortion retains the original named framebuffer grab, depth-write off, default queue5000 and explicit4000 overrides, source bump/mask inputs and fade switches; the owned camera requests depth. Source input checks cover52 materials/709 supported properties, with unchanged source assets. Cloud lighting/ramp, cloud normals/extrusion and exact distortion magnitude/distance response remain unrecovered. The native framebuffer-grab contract may carry an Android frame cost; it is not performance-accepted. No invented color grading or source particle-module changes.
+
+The composed J335 host candidate includes the J333 sky/billboard path and J334 floating-point reflection inputs. Across five stages,347 particle renderers retain141 opaque-cloud and29 distortion material slots. All177 empty secondary/trail slots are source data; no primary slot is empty. Native Unity families and these two custom approximations must be reviewed on the Nova and compared with matching PC effects before accepting appearance. Build outcomes and rollback attribution are recorded in the journal; no additional installation is authorized yet.
 
 ## Comparison and remaining gaps
 

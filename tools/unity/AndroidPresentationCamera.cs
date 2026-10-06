@@ -10,7 +10,7 @@ public sealed class AndroidPresentationCamera:MonoBehaviour {
  [Serializable] public class Report {public int frames,colorPasses,over33ms,over50ms;public float meanMs,maxMs;public bool sourceCubemap,sourceSun;public string skybox,sun,skyboxStatus,error;public List<Sample> samples=new List<Sample>();}
  public Light fallbackLight;
  public readonly Report report=new Report();Material grade;Camera view;double sum;float next,began;int lightingScene=-1;bool sourceDirectional;
- void Awake(){view=GetComponent<Camera>();began=Time.realtimeSinceStartup;var shader=AndroidMaterialPresentation.LoadShader("AndroidColorGrade");if(shader&&shader.isSupported)grade=new Material(shader);else report.error="Android camera presentation pass unavailable";}
+ void Awake(){view=GetComponent<Camera>();view.depthTextureMode|=DepthTextureMode.Depth;began=Time.realtimeSinceStartup;var shader=AndroidMaterialPresentation.LoadShader("AndroidColorGrade");if(shader&&shader.isSupported)grade=new Material(shader);else report.error="Android camera presentation pass unavailable";}
  void LateUpdate(){
   // Four measured base-stage skies use Unity's original built-in cubemap shader.
   // Preserve their recovered cubemap, tint, exposure and rotation unchanged.
