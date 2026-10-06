@@ -3087,3 +3087,25 @@ Current priority: integrated first-failure bring-up, one fresh run per ordinary 
 **J319 physical mission/elevator/boss outcome:** User completes all four selected source batteries; all three original elevators Ready. At1209.782 gameplay seconds actual original unboosted elevator flight grounds Commando at y497.666 on the high arena, actual source Moon gravity−20, source launch fields unchanged. Capture visually confirms arena arrival. User debug history includes temporary high jump1027.573→1064.049 and movement1141.968→1189.427, both off before grounded elevator approach/launch; current fields return to power15/speed7. Invincibility/high damage/fast charge remain on. This establishes the restored elevator integration under those conditions, not normal traversal/combat/holdout/full-route acceptance.
 
 Original arena trigger and four scripted encounter spawns progress PreEncounter→Phase1→Phase2→Phase3→Phase4→EncounterFinished; zero living members. Human reports final boss flies away in last animation. Actual final TrueDeath body position leaves arena to abouty582/x−342, so body motion is real; camera cause is not established. Current-process raw log reveals first mandatory failure: SpellBaseState.InitItemStealer instantiates null original Prefabs/NetworkedObjects/ItemStealController. Original escape remains Idle. Source audit finds stripped Phase4 CompletionEvents OnDisableEvent→DelayedEvent.CallDelayed10→BeginEscapeSequence/parent activation, and most source dropship holdout/state/trigger logic absent. Preserve failed encounter/runtime/capture and exact source audit; next repair original content and full escape lifecycle without forced progress. Native source CombatSquad also logs its member-zero fallback; do not discard those messages as a passed no-error run. J319 read-only marker incorrectly labels MoonBatteryDisabled as Ready; J320 now names that source state explicitly. I06/I03 immutable, no I07 pointer.
+
+
+## I07-J321 — Original final phase → escape → dropship → ending
+- **ID:** I07-J321
+- **TITLE:** Restore the source lifecycle missing from the composed Moon.
+- **CONTEXT:** J319 original elevator and encounter observations retained; user authorizes stop/sleep/update and is away.
+- **OBSERVATION:** Missing item-stealer prefab throws; omitted Phase4/DelayedEvent and dropship logic leave escape Idle. Final-body motion unexplained.
+- **HYPOTHESIS:** Original content/callback/timer contracts permit coherent source escape and ending.
+- **TASK:** Integrate the whole final phase/escape/dropship loop, include J320 beacons, full build/run real route and fix first device blocker.
+- **CONSTRAINTS:** Original source/read-only input, exact pins, explicit silent platform boundary; no forced mission or normal acceptance from assisted route. Preserve I06/I03/J319; Nova asleep when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Moon restoration/regeneration and existing provider, timer/input/observation boundary, exact no-audio transformation; ignored stage/archive/build/device evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; ./dev prototype --action movement-batch-run --debug-options work/config/moon-debug-options.json.
+- **PASS CONDITION:** Actual original item-steal states, source encounter completion/delayed escape/dropship holdout/ending and saved original result; visual beacons separately reviewed.
+- **FAILURE EVIDENCE TO CAPTURE:** Current-PID exceptions/native/AOT errors, source states/charge/countdown/trigger data, actual boss motion, captures and build/content identities.
+- **STATE/JOURNAL UPDATES REQUIRED:** Exact build/device/cleanup outcome, debug history, first failure/revisit condition; no partial/assisted full-route gate.
+- **DEPENDENCIES:** J319 classified failure and explicit user stop; prior-art and exact source audit. Preparation passes46 tests/scene schema/compile; full build/device pending.
+
+
+**J321 first build failure / J322 retry:** The terminal build rejects the new ten-asset support manifest at its existing count guard before bundle/AOT work (0.360seconds). No new APK or device attempt; preserve failed dispatch/request/start/terminal and full source archive separately. Extend only the measured ten-asset allowance, retaining generated-path/existence safeguards. Fork a fresh build attempt and archive it; full forced Vulkan retry pending. Existing preparation/assembly/schema outcomes remain scoped, no capability gate advances.
+
+
+**J322 full build:** Forced Vulkan ARM64 IL2CPP build completes165.095seconds with zero errors. Request/start/terminal and actual APK hash match;39 payload hashes/45 assembly identities verify. APK SHA-256 `80f5fe289928c9c1079251ee5206362b09bf2400934a396cd74adc9165e3a81f`. New original final-phase support assets/source callbacks and J320 beacon presentation are compiled, not yet device-accepted. Launch the complete genuine route with invincibility/high damage/fast charge; movement/jump initially off. User away; automatic traversal assistance, if used, remains separately disclosed and excludes normal-run acceptance.

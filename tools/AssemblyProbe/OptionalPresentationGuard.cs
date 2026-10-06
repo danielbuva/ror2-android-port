@@ -59,17 +59,25 @@ static class OptionalPresentationGuard {
    foreach(var stop in calls){var afterStop=stop.Next;il.InsertBefore(stop,il.Create(OpCodes.Call,audio));il.InsertBefore(stop,il.Create(OpCodes.Brfalse,stop));il.InsertBefore(stop,il.Create(OpCodes.Pop));il.InsertBefore(stop,il.Create(OpCodes.Br,afterStop));}
    lunarMethods.Add(exit);
   }
+  var countdown=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.EscapeSequenceController").Methods.Single(m=>m.Name=="SetCountdownTime");
+  var rtpcCalls=countdown.Body.Instructions.Where(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="SetRTPCValue").ToArray();
+  if(rtpcCalls.Length!=1||rtpcCalls[0].Operand is not MethodReference rtpc||rtpc.ReturnType.Name!="AKRESULT"||rtpc.Parameters.Count!=2||rtpc.Parameters[0].ParameterType.FullName!="System.String"||rtpc.Parameters[1].ParameterType.FullName!="System.Single"||rtpcCalls[0].Next.OpCode!=OpCodes.Pop)throw new Exception("Original escape countdown audio contract changed");
+  // Preserve original HUD countdown and argument calculations. No fabricated
+  // audio success code: discard the two arguments only on the no-audio path.
+  il=countdown.Body.GetILProcessor();var rtpcCall=rtpcCalls[0];var afterRtpc=rtpcCall.Next.Next;
+  il.InsertBefore(rtpcCall,il.Create(OpCodes.Call,audio));il.InsertBefore(rtpcCall,il.Create(OpCodes.Brfalse,rtpcCall));
+  il.InsertBefore(rtpcCall,il.Create(OpCodes.Pop));il.InsertBefore(rtpcCall,il.Create(OpCodes.Pop));il.InsertBefore(rtpcCall,il.Create(OpCodes.Br,afterRtpc));
   // Insertion can move targets beyond the signed-byte range; keep branch semantics exactly.
-  foreach(var m in new[]{sound,landing,fixedUpdate}.Concat(lunarMethods))foreach(var instruction in m.Body.Instructions) {
+  foreach(var m in new[]{sound,landing,fixedUpdate,countdown}.Concat(lunarMethods))foreach(var instruction in m.Body.Instructions) {
    if(instruction.OpCode==OpCodes.Br_S)instruction.OpCode=OpCodes.Br;
    else if(instruction.OpCode==OpCodes.Brfalse_S)instruction.OpCode=OpCodes.Brfalse;
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName}.Concat(lunarMethods.Select(m=>m.FullName)).ToArray();
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName}.Concat(lunarMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar native sound-stop calls bypassed only when audio unavailable, retaining original state exit/cleanup. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar native sound-stop calls and one escape countdown RTPC call bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
  }
 }

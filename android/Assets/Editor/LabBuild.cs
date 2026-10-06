@@ -65,7 +65,7 @@ public static class LabBuild {
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="barrier-effect-lab",assetNames=new[]{cfg.barrierEffect}});
     }
     if(cfg.objectiveSupportAssets!=null&&cfg.objectiveSupportAssets.Length>0){
-     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5&&cfg.objectiveSupportAssets.Length!=7&&cfg.objectiveSupportAssets.Length!=8)||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
+     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5&&cfg.objectiveSupportAssets.Length!=7&&cfg.objectiveSupportAssets.Length!=8&&cfg.objectiveSupportAssets.Length!=10)||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="objective-support-lab",assetNames=cfg.objectiveSupportAssets});
     }
     if(!string.IsNullOrEmpty(cfg.objectiveTMPSettings)){

@@ -14,11 +14,14 @@ public sealed partial class MovementBatchProbe {
   public int ambientItems,expectedAmbientItems,equipmentIndex;public float cost,sourceCost;public string origin,aiState,bodyState;public uint masterId,bodyId,gold,experience;public float spawnedAt,spawnDistance,levelBeforeStart,levelAfterStart,health,pathBeforeDamage,maxFallBeforeDamage,damageReceived,damageToPlayer,deathAt;
   public bool started,linked,authority,target,route,reachable,dead,bodyDestroyed,masterDestroyed,corpse,cleaned;public int groundedBeforeDamage,damageEvents,deathEvents;public Vector3 spawnPosition,position;
   public int motorStarts;public float maxPhysicsStepBeforeDamage,maxRenderGap,maxSettledRenderGap;public List<DirectorPoseSample> initialPoses=new List<DirectorPoseSample>();
+  public Vector3 lastDamageForce;public List<MoonActorMotionSample> moonMotion=new List<MoonActorMotionSample>();
  }
+ [Serializable] public class MoonActorMotionSample {public string state;public float seconds,stateAge,health,mass;public bool grounded,dead;public Vector3 physics,render,model,velocity,moveDirection,rootMotion,accumulatedRootMotion,animationDelta,damageForce;}
  [Serializable] public class DirectorPoseSample {public float seconds;public Vector3 render,physics;public int motorStarts;}
  sealed class DirectorActor {
   public CharacterMaster master;public CharacterBody body;public BaseAI ai;public GameObject model;public Vector3 previous;public DirectorActorReport report;
   public Action<CharacterBody> motorStarted;
+  public float nextMoonMotion;public string previousMoonState;
  }
  readonly List<DirectorActor> directorActors=new List<DirectorActor>();
  Vector3 DirectorPhysicsPosition(CharacterBody body){return body.characterMotor?body.characterMotor.Motor.TransientPosition:body.transform.position;}
@@ -45,6 +48,12 @@ public sealed partial class MovementBatchProbe {
     var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");row.bodyState=machine&&machine.state!=null?machine.state.GetType().FullName:"uninitialized";row.health=body.healthComponent.health;row.dead|=!body.healthComponent.alive;if(!row.dead)live++;
     // Interpolated render transforms are not the original solver's simulation position.
     row.position=DirectorPhysicsPosition(body);float age=Time.realtimeSinceStartup-automaticDirectorBegan-row.spawnedAt,gap=Vector3.Distance(body.transform.position,row.position);row.maxRenderGap=Mathf.Max(row.maxRenderGap,gap);
+    if(row.origin=="moon-encounter"&&(actor.previousMoonState!=row.bodyState||Time.realtimeSinceStartup>=actor.nextMoonMotion)){
+     var motor=body.characterMotor;var animator=actor.model?actor.model.GetComponent<Animator>():null;var accumulator=actor.model?actor.model.GetComponent<RootMotionAccumulator>():null;
+     row.moonMotion.Add(new MoonActorMotionSample{state=row.bodyState,seconds=Time.realtimeSinceStartup-automaticDirectorBegan,stateAge=machine&&machine.state!=null?Convert.ToSingle(typeof(EntityState).GetProperty("fixedAge",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic).GetValue(machine.state)):0,health=row.health,dead=row.dead,physics=row.position,render=body.transform.position,model=actor.model?actor.model.transform.position:body.transform.position,velocity=motor?motor.velocity:Vector3.zero,moveDirection=motor?motor.moveDirection:Vector3.zero,rootMotion=motor?motor.rootMotion:Vector3.zero,mass=motor?motor.mass:0,grounded=motor&&motor.isGrounded,accumulatedRootMotion=accumulator?accumulator.accumulatedRootMotion:Vector3.zero,animationDelta=animator?animator.deltaPosition:Vector3.zero,damageForce=row.lastDamageForce});
+     actor.previousMoonState=row.bodyState;actor.nextMoonMotion=Time.realtimeSinceStartup+(row.dead?.1f:1);
+     if(row.moonMotion.Count>160)row.moonMotion.RemoveAt(0);
+    }
     if(row.initialPoses.Count<18)row.initialPoses.Add(new DirectorPoseSample{seconds=age,render=body.transform.position,physics=row.position,motorStarts=row.motorStarts});
     var delta=row.position-actor.previous;delta.y=0;
     if(row.damageEvents==0){row.maxPhysicsStepBeforeDamage=Mathf.Max(row.maxPhysicsStepBeforeDamage,delta.magnitude);row.pathBeforeDamage+=delta.magnitude;row.maxFallBeforeDamage=Mathf.Max(row.maxFallBeforeDamage,row.spawnPosition.y-row.position.y);if(body.characterMotor&&body.characterMotor.isGrounded)row.groundedBeforeDamage++;if(age>.25f)row.maxSettledRenderGap=Mathf.Max(row.maxSettledRenderGap,gap);}actor.previous=row.position;
@@ -55,7 +64,7 @@ public sealed partial class MovementBatchProbe {
   r.director.livePeak=Math.Max(r.director.livePeak,live);
  }
  void ObserveDirectorDamage(DamageReport damage){
-  foreach(var actor in directorActors){var row=actor.report;if(damage.victimBody==actor.body){row.damageEvents++;row.damageReceived+=damage.damageDealt;}if(damage.attackerBody==actor.body&&damage.victimBody==enemyPlayer)row.damageToPlayer+=damage.damageDealt;}
+  foreach(var actor in directorActors){var row=actor.report;if(damage.victimBody==actor.body){row.damageEvents++;row.damageReceived+=damage.damageDealt;row.lastDamageForce=damage.damageInfo.force;}if(damage.attackerBody==actor.body&&damage.victimBody==enemyPlayer)row.damageToPlayer+=damage.damageDealt;}
  }
  void ObserveDirectorDeath(DamageReport damage){foreach(var actor in directorActors)if(damage.victimBody==actor.body){actor.report.deathEvents++;actor.report.dead=true;actor.report.deathAt=Time.realtimeSinceStartup;}}
  bool DirectorBatch(){return r.director!=null&&r.director.spawnLimit==3;}

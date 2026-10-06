@@ -93,6 +93,12 @@ def stage_moon(stage, previous, out, spec):
             return match[0].replace('  m_IsActive: 1', '  m_IsActive: 0')
         generated = re.sub(pattern, defer, generated, flags=re.M|re.S)
     dest.write_text(generated)
+    from moon_scene import restore_pillar_beams, restore_moon_gravity, restore_moon_escape
+    write(out/'original-moon-beam-restoration.json', restore_pillar_beams(source, dest))
+    write(out/'original-moon-gravity-restoration.json',
+          restore_moon_gravity(source, dest, WORK/'moon-script-identities.txt'))
+    escape = restore_moon_escape(source, dest, WORK/'moon-script-identities.txt')
+    write(out/'original-moon-escape-restoration.json', escape)
     index, existing = {}, {}
     for base, target in [(export/'Assets', index), (stage, existing)]:
         for meta in base.rglob('*.meta'):
@@ -195,6 +201,7 @@ def stage_moon(stage, previous, out, spec):
     roots_to_copy.append(moon_scene)
     pending = roots_to_copy + [index[g] for _, g, _ in REFERENCE.findall(''.join(retained))
                               if g and not g.startswith('0000000000000000')]
+    pending += [index[g] for g in escape['external_guids'] if not g.startswith('0000000000000000')]
     seen, rows, staged = set(), [], {}
     remaps = {x['from']: x['to'] for x in previous.get('ui_remaps', [])}
     while pending:
@@ -231,7 +238,9 @@ def stage_moon(stage, previous, out, spec):
     pillar=staged[export/pillar_rows[0][1]]
     support_paths = ['Prefabs/Projectiles/LunarMissileProjectile',
                      'Prefabs/TemporaryVisualEffects/CrippleEffect',
-                     'SpawnCards/HelperPrefab']
+                     'SpawnCards/HelperPrefab',
+                     'Prefabs/NetworkedObjects/ItemStealController',
+                     'Prefabs/Effects/OrbEffects/ItemTransferOrbEffect']
     support_rows = []
     for path in support_paths:
         matches = [x for x in typed_rows if len(x)==4 and x[3]==path and x[2]=='UnityEngine.GameObject']
@@ -244,7 +253,8 @@ def stage_moon(stage, previous, out, spec):
     recipe['prefabAssets'] = list(dict.fromkeys(recipe['prefabAssets']+assets))
     write(WORK/'scene-probe-build.json', recipe)
     configs = [staged[x].lower() for x in roots_to_copy if x.name.startswith('EntityStates.')]
-    spec.update(moonMission=True, activeRoots=active_roots, missionComponents=sum(b.startswith('--- !u!114 ') for b in retained))
+    spec.update(moonMission=True, activeRoots=active_roots,
+                missionComponents=len(re.findall(r'^--- !u!114 ', dest.read_text(), re.M)))
     write(out/'moon-mission-contract.json', dict(source_sha256=sha(source), generated_sha256=sha(dest),
         components=[dict(id=re.match(r'--- !u!\d+ &(-?\d+)', b)[1], type=kind(b)) for b in retained],
         closure=rows, bytes=sum(x['bytes'] for x in rows), deferred_active_roots=active_roots,

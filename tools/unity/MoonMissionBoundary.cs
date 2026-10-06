@@ -31,12 +31,17 @@ public sealed partial class MovementBatchProbe {
  }
  GameObject moonLunarMissile,moonCrippleEffect,previousMoonCripple;System.Reflection.FieldInfo moonCrippleSlot;bool ownsMoonCripple;
  int moonHelperIndex=-1,moonHelperReferences;GameObject moonTeleportHelper;
+ int moonStealerIndex=-1,moonStealerReferences;GameObject moonStealerSource,moonTransferEffect,priorMoonTransferEffect;System.Reflection.FieldInfo moonTransferSlot;
  void PrepareMoonSupport(Result cfg){
   if(!cfg.moonMission)return;
   int missile=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Projectiles/LunarMissileProjectile"),cripple=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/TemporaryVisualEffects/CrippleEffect");
   Check(missile>=0&&cripple>=0,"Original Lunar support manifest missing");
   moonHelperIndex=Array.IndexOf(cfg.objectiveSupportPaths,"SpawnCards/HelperPrefab");Check(moonHelperIndex>=0,"Original safe-teleport helper manifest missing");moonTeleportHelper=objectiveSupportSources[moonHelperIndex];Check(moonTeleportHelper&&moonTeleportHelper.name=="DirectorSpawnProbeHelperPrefab"&&moonTeleportHelper.GetComponentsInChildren<Component>(true).All(x=>x is Transform),"Original safe-teleport helper identity changed");moonHelperReferences=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(objectiveSupportLeases[moonHelperIndex]);Check(moonHelperReferences==1,"Unowned safe-teleport helper lease");
   moonLunarMissile=objectiveSupportSources[missile];Check(moonLunarMissile&&moonLunarMissile.GetComponent<RoR2.Projectile.ProjectileController>(),"Original Lunar missile component missing");
+  moonStealerIndex=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/NetworkedObjects/ItemStealController");Check(moonStealerIndex>=0,"Original final-phase item stealer manifest missing");moonStealerSource=objectiveSupportSources[moonStealerIndex];Check(moonStealerSource&&moonStealerSource.GetComponent<ItemStealController>()&&moonStealerSource.GetComponent<NetworkedBodyAttachment>()&&moonStealerSource.GetComponent<NetworkIdentity>(),"Original item stealer component contract missing");
+  moonStealerReferences=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(objectiveSupportLeases[moonStealerIndex]);Check(moonStealerReferences==1,"Unowned item stealer provider lease");
+  int transfer=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Effects/OrbEffects/ItemTransferOrbEffect");Check(transfer>=0,"Original item-transfer effect manifest missing");moonTransferEffect=objectiveSupportSources[transfer];Check(moonTransferEffect&&moonTransferEffect.GetComponent<EffectComponent>(),"Original item-transfer effect component missing");
+  moonTransferSlot=typeof(RoR2.Orbs.ItemTransferOrb).GetField("orbEffectPrefab",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);Check(moonTransferSlot!=null,"Original item-transfer effect slot missing");priorMoonTransferEffect=(GameObject)moonTransferSlot.GetValue(null);Check(!priorMoonTransferEffect,"Existing item-transfer effect binding");moonTransferSlot.SetValue(null,moonTransferEffect);
   moonCrippleSlot=BarrierSlot().DeclaringType.GetField("crippleEffectPrefab",System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
   Check(moonCrippleSlot!=null&&!ownsMoonCripple,"Original Cripple effect slot missing or already owned");previousMoonCripple=(GameObject)moonCrippleSlot.GetValue(null);
   Check(!previousMoonCripple,"Existing original Cripple effect slot; refuse replacement");
@@ -46,6 +51,8 @@ public sealed partial class MovementBatchProbe {
   moonCrippleEffect=effect;ownsMoonCripple=true;moonCrippleSlot.SetValue(null,effect);Check(ReferenceEquals(moonCrippleSlot.GetValue(null),effect),"Original Cripple effect binding failed");
  }
  void CleanupMoonSupport(){
+  if(moonTransferSlot!=null){Check(ReferenceEquals(moonTransferSlot.GetValue(null),moonTransferEffect),"Original item-transfer effect ownership changed");moonTransferSlot.SetValue(null,priorMoonTransferEffect);moonTransferSlot=null;moonTransferEffect=null;}
+  if(moonStealerIndex>=0&&objectiveSupportLeases!=null&&objectiveSupportLeases[moonStealerIndex].IsValid()){int extra=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(objectiveSupportLeases[moonStealerIndex])-moonStealerReferences;Check(extra>=0,"Item stealer reference baseline changed");for(int i=0;i<extra;i++)UnityEngine.AddressableAssets.Addressables.Release(moonStealerSource);}moonStealerIndex=-1;moonStealerSource=null;
   // Original Run/TeleportHelper sync requests retain the shared asset handle.
   // Source mission objects are inactive before this owned provider lease cleanup.
   if(moonHelperIndex>=0&&objectiveSupportLeases!=null&&objectiveSupportLeases[moonHelperIndex].IsValid()){int extra=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(objectiveSupportLeases[moonHelperIndex])-moonHelperReferences;Check(extra>=0,"Safe-teleport helper reference baseline changed");for(int i=0;i<extra;i++)UnityEngine.AddressableAssets.Addressables.Release(moonTeleportHelper);}
@@ -72,6 +79,8 @@ public sealed partial class MovementBatchProbe {
   public int androidBeaconRenderers,activeAndroidBeacons;public bool farPillarVisibility;
   public float observedGravityY;public MoonElevatorLaunch[] elevatorLaunches;
   public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
+  public bool originalTimersScheduled,timersStopped,itemStealerObserved,dropshipHoldoutActive;public int fixedTimerTicks,pendingFixedTimers,cancelledOwnedTimers,liveItemStealers;
+  public string[] dropshipStates;public float dropshipCharge,escapeSecondsRemaining;public Vector3 dropshipPosition;
   public float seconds;public List<string> transitions=new List<string>();
  }
  GameObject[] moonRoots;EntityStateMachine moonEncounter;MoonBatteryMissionController moonBatteries;EscapeSequenceController moonEscape;ClassicStageInfo moonStageInfo;DirectorCardCategorySelection priorMoonInteractables;
@@ -90,6 +99,7 @@ public sealed partial class MovementBatchProbe {
   r.phase="moon-mission-activate";r.moon=new MoonMissionReport{scope="Recovered original Moon batteries, elevators, scripted boss phases, trigger/escape wiring. Android activation/material/continuous-body boundary; no forced charge, encounter death, completion or platform identity."};Save();
   try{
   moonRoots=stageGeometryScene.GetRootGameObjects();
+  PrepareMoonTimers();
   Check(moonRoots.All(x=>!x.activeSelf),"Moon source root activation was not deferred");
   var info=moonRoots.SelectMany(x=>x.GetComponentsInChildren<SceneInfo>(true)).Single();info.gameObject.SetActive(true);
   Check(SceneInfo.instance==info&&info.groundNodes&&info.airNodes,"Original Moon SceneInfo/graphs missing");
@@ -164,6 +174,7 @@ public sealed partial class MovementBatchProbe {
   ObserveMoonPillarMarkers(batteries);
   var encounters=moonRoots.SelectMany(x=>x.GetComponentsInChildren<ScriptedCombatEncounter>(true)).ToArray();report.encounters=encounters.Length;report.spawnedEncounters=encounters.Count(x=>x.hasSpawnedServer);report.escapeState=moonEscape.mainStateMachine.state==null?"uninitialized":moonEscape.mainStateMachine.state.GetType().FullName;
   report.livingEncounterMembers=encounters.Where(x=>x.combatSquad).Sum(x=>x.combatSquad.memberCount);report.extractionZones=UnityEngine.Object.FindObjectsOfType<EscapeSequenceExtractionZone>().Length;report.gameOver=Run.instance&&Run.instance.isGameOverServer;
+  ObserveMoonEscape();
  }
  bool MoonWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   Check(moonBatteries&&moonEncounter&&moonEscape,"Original Moon input context missing");
@@ -186,9 +197,13 @@ public sealed partial class MovementBatchProbe {
    return true;
   }
   if(moonEscape.mainStateMachine.state is EscapeSequenceController.EscapeSequenceMainState){
-   var extraction=UnityEngine.Object.FindObjectsOfType<EscapeSequenceExtractionZone>().OrderBy(x=>Vector3.Distance(x.transform.position,position)).FirstOrDefault();
-   if(extraction){NavigateWorldInput(player,bridge,extraction.transform.position,Mathf.Max(1,extraction.radius*.25f),extraction.name,elapsed);SetMoonInputObjective("Reach original extraction zone",extraction.transform.position);}
-   else{bridge.movement=Vector2.zero;SetMoonInputObjective("Wait for source extraction activation",position);}
+   // Commencement uses its dropship states, not the older extraction-zone type.
+   // Travel through original arena exit MapZones, then enter the actual holdout.
+   var ship=moonRoots.Single(x=>x.name=="Moon2DropshipZone");var holdout=ship.GetComponentInChildren<HoldoutZoneController>(true);
+   var exit=moonRoots.SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).Where(x=>x.isActiveAndEnabled&&x.gameObject.name.StartsWith("MoonExitArenaOrb",StringComparison.Ordinal)).OrderBy(x=>Vector3.Distance(x.transform.position,position)).FirstOrDefault();
+   if(position.y>r.moon.dropshipPosition.y+100&&exit){var collider=exit.GetComponent<Collider>();var target=collider?collider.bounds.center:exit.transform.position;NavigateWorldInput(player,bridge,target,.5f,exit.name,elapsed);SetMoonInputObjective("Enter original arena escape orb",target);}
+   else if(holdout){NavigateWorldInput(player,bridge,holdout.transform.position,holdout.isActiveAndEnabled?Mathf.Max(1,holdout.currentRadius*.2f):1,ship.name,elapsed);SetMoonInputObjective(holdout.isActiveAndEnabled?"Charge original dropship":"Reach original dropship trigger",holdout.transform.position);}
+   else{bridge.movement=Vector2.zero;SetMoonInputObjective("Wait for source dropship activation",position);}
    MoonCombatInput(player,bridge,elapsed);return true;
   }
   var arena=moonRoots.SelectMany(x=>x.GetComponentsInChildren<AllPlayersTrigger>(true)).Single();var arenaCollider=arena.GetComponent<Collider>();Check(arenaCollider,"Original arena trigger collider missing");
@@ -231,8 +246,10 @@ public sealed partial class MovementBatchProbe {
   var aim=target.point-origin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;return true;
  }
  void CleanupMoonMission(){
+  StopMoonTimers();
   CleanupMoonPillarPresentation();
   if(moonRoots!=null)foreach(var root in moonRoots)if(root)root.SetActive(false);
+  CleanupMoonTimers();
   moonEncounter=null;moonBatteries=null;moonEscape=null;moonStageInfo=null;priorMoonInteractables=null;moonRoots=null;if(r.moon!=null)r.moon.cleaned=true;
  }
 }

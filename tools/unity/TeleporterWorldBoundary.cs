@@ -97,7 +97,7 @@ public sealed partial class MovementBatchProbe {
    if(behaviour.transform!=ward.transform)behaviour.enabled=behaviour is HurtBox||behaviour is HurtBoxGroup||behaviour is HitBox||behaviour is HitBoxGroup||behaviour is RootMotionAccumulator||behaviour is AnimationEvents;
   }
   foreach(var locator in ward.GetComponentsInChildren<SfxLocator>(true))foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(locator,null);
-  var supportEffects=new[]{objectiveSupportSources[0],objectiveSupportSources[3]};foreach(var source in supportEffects)source.GetComponent<EffectComponent>().soundName=null;objectiveEffectSources=objectiveEffectSources.Concat(supportEffects).Distinct().ToArray();
+  var supportEffects=new[]{objectiveSupportSources[0],objectiveSupportSources[3]}.Concat(moonTransferEffect?new[]{moonTransferEffect}:new GameObject[0]).ToArray();foreach(var source in supportEffects)source.GetComponent<EffectComponent>().soundName=null;objectiveEffectSources=objectiveEffectSources.Concat(supportEffects).Distinct().ToArray();
   var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);EffectCatalog.SetEntries(entries.Concat(supportEffects.Select(x=>new EffectDef(x))).GroupBy(x=>x.prefab).Select(x=>x.First()).ToArray());
   Check(!OrbEffectSingleton.instance&&OrbEffectSingleton.numPnts==0,"Unowned original orb visual context");
   objectiveOrbHost=new GameObject("Owned original Queen orb manager");objectiveOrbHost.AddComponent<OrbManager>();objectiveOrbHost.AddComponent<OrbEffectSingleton>();ownsObjectiveOrbEffects=true;Check(OrbManager.instance&&OrbEffectSingleton.instance,"Original Queen orb context missing");
