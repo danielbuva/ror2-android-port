@@ -69,6 +69,7 @@ public sealed partial class MovementBatchProbe {
   public string[] monsterCardNames,unmappedPoolCards;public float[] monsterCardWeights;
   public string state,escapeState,error,scope,inputObjective;public string[] batteryStates,elevatorStates;
   public int restoredBeamRenderers,activeBeamRenderers,liveBeamParticles;public MoonPillarMarker[] pillarMarkers;
+  public int androidBeaconRenderers,activeAndroidBeacons;public bool farPillarVisibility;
   public float observedGravityY;public MoonElevatorLaunch[] elevatorLaunches;
   public Vector3 inputDestination;public int livingEncounterMembers,extractionZones;public bool gameOver;
   public float seconds;public List<string> transitions=new List<string>();
@@ -230,6 +231,7 @@ public sealed partial class MovementBatchProbe {
   var aim=target.point-origin;bridge.diagnosticAim=aim.normalized;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%4<.2f;bridge.diagnosticSpecial=elapsed%10<.2f;return true;
  }
  void CleanupMoonMission(){
+  CleanupMoonPillarPresentation();
   if(moonRoots!=null)foreach(var root in moonRoots)if(root)root.SetActive(false);
   moonEncounter=null;moonBatteries=null;moonEscape=null;moonStageInfo=null;priorMoonInteractables=null;moonRoots=null;if(r.moon!=null)r.moon.cleaned=true;
  }

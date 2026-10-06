@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using RoR2;
 using UnityEngine;
@@ -12,6 +13,8 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class MoonElevatorLaunch {
   public bool active;public Vector3 position,velocity,target,predictedArrival;public float flightTime,targetError;
  }
+ readonly Dictionary<ParticleSystemRenderer,LineRenderer> moonPillarBeacons=new Dictionary<ParticleSystemRenderer,LineRenderer>();
+ Material moonBeaconMaterial;bool moonFarVisibility;
  static bool IsMoonPillarBeam(Renderer renderer){
   if(!(renderer is ParticleSystemRenderer)||!renderer.name.StartsWith("Beam")||!renderer.transform.parent)return false;
   var parent=renderer.transform.parent.name;return parent=="InactiveFX"||parent=="ChargingFX"||parent=="ChargedFX";
@@ -20,12 +23,13 @@ public sealed partial class MovementBatchProbe {
   r.moon.pillarMarkers=batteries.Select(z=>{
    var state=z.GetComponent<EntityStateMachine>().state;
    return new MoonPillarMarker{name=z.name.Replace("MoonBattery",""),position=z.transform.position,charge=z.charge,
-    state=state is EntityStates.Missions.Moon.MoonBatteryComplete?"Complete":state is EntityStates.Missions.Moon.MoonBatteryActive?"Charging":"Ready",
+    state=state is EntityStates.Missions.Moon.MoonBatteryComplete?"Complete":state is EntityStates.Missions.Moon.MoonBatteryActive?"Charging":state is EntityStates.Missions.Moon.MoonBatteryInactive?"Ready":state is EntityStates.Missions.Moon.MoonBatteryDisabled?"Disabled":state==null?"Uninitialized":state.GetType().Name,
     complete=state is EntityStates.Missions.Moon.MoonBatteryComplete,distance=worldPlayer?Vector3.Distance(worldPlayer.transform.position,z.transform.position):0};
   }).ToArray();
   var beams=moonRoots.SelectMany(x=>x.GetComponentsInChildren<ParticleSystemRenderer>(true)).Where(x=>IsMoonPillarBeam(x)).ToArray();
   r.moon.restoredBeamRenderers=beams.Length;r.moon.activeBeamRenderers=beams.Count(x=>x.enabled&&x.gameObject.activeInHierarchy);
   r.moon.liveBeamParticles=beams.Where(x=>x.gameObject.activeInHierarchy).Sum(x=>x.GetComponent<ParticleSystem>().particleCount);
+  ObserveMoonBeacons(beams);
   r.moon.observedGravityY=Physics.gravity.y;
   r.moon.elevatorLaunches=moonRoots.SelectMany(x=>x.GetComponentsInChildren<JumpVolume>(true)).Select(x=>{
    var predicted=x.transform.position+x.jumpVelocity*x.time+Physics.gravity*(.5f*x.time*x.time);
@@ -33,10 +37,37 @@ public sealed partial class MovementBatchProbe {
    return new MoonElevatorLaunch{active=x.enabled&&x.gameObject.activeInHierarchy,position=x.transform.position,velocity=x.jumpVelocity,target=target,predictedArrival=predicted,flightTime=x.time,targetError=Vector3.Distance(predicted,target)};
   }).ToArray();
  }
+ void ObserveMoonBeacons(ParticleSystemRenderer[] beams){
+  if(worldView!=null&&!moonFarVisibility){worldView.MoonVisibility(true);moonFarVisibility=true;}
+  // Original particle modules/FX remain intact. This owned visual fallback is
+  // anchored to their actual positions and inherits their source activation.
+  foreach(var beam in beams.Where(x=>x.enabled&&x.gameObject.activeInHierarchy)){
+   LineRenderer beacon;
+   if(!moonPillarBeacons.TryGetValue(beam,out beacon)){
+    var height=beam.GetComponent<ParticleSystem>().sizeOverLifetime.y.constantMax;
+    Check(height>0,"Original Moon beam height unavailable");
+    if(!moonBeaconMaterial){var shader=Resources.Load<Shader>("MoonPillarBeaconPreview");Check(shader&&shader.isSupported,"Android pillar beacon shader unavailable");moonBeaconMaterial=new Material(shader);}
+    var display=new GameObject("Android pillar beacon");display.transform.SetParent(beam.transform,false);
+    beacon=display.AddComponent<LineRenderer>();beacon.useWorldSpace=true;beacon.alignment=LineAlignment.View;beacon.positionCount=2;
+    beacon.startWidth=4;beacon.endWidth=2;beacon.startColor=new Color(.35f,.75f,1,.9f);beacon.endColor=new Color(.35f,.75f,1,.1f);
+    beacon.sharedMaterial=moonBeaconMaterial;beacon.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;beacon.receiveShadows=false;
+    beacon.SetPositions(new[]{beam.transform.position,beam.transform.position+Vector3.up*height});moonPillarBeacons.Add(beam,beacon);
+   }
+   beacon.enabled=beam.enabled;
+  }
+  foreach(var pair in moonPillarBeacons)if(pair.Key&&pair.Value)pair.Value.enabled=pair.Key.enabled&&pair.Key.gameObject.activeInHierarchy;
+  r.moon.androidBeaconRenderers=moonPillarBeacons.Count;r.moon.activeAndroidBeacons=moonPillarBeacons.Values.Count(x=>x&&x.enabled&&x.gameObject.activeInHierarchy);
+  r.moon.farPillarVisibility=moonFarVisibility;
+ }
+ void CleanupMoonPillarPresentation(){
+  foreach(var beacon in moonPillarBeacons.Values)if(beacon)Destroy(beacon.gameObject);moonPillarBeacons.Clear();
+  if(moonBeaconMaterial)Destroy(moonBeaconMaterial);moonBeaconMaterial=null;
+  if(moonFarVisibility&&worldView!=null)worldView.MoonVisibility(false);moonFarVisibility=false;
+ }
  void DrawMoonPillarMarkers(){
   if(r.moon==null||!r.moon.loaded||r.moon.cleaned||r.moon.pillarMarkers==null||worldView==null||!worldPlayer)return;
   var style=new GUIStyle(GUI.skin.label){fontSize=18,alignment=TextAnchor.MiddleCenter};
-  int index=0;
+  int index=0;var occupied=new List<Rect>();
   foreach(var marker in r.moon.pillarMarkers){
    index++;var projected=worldView.ProjectWorldPoint(marker.position+Vector3.up*10);
    var direction=new Vector2(projected.x-Screen.width*.5f,Screen.height*.5f-projected.y);
@@ -44,8 +75,11 @@ public sealed partial class MovementBatchProbe {
    bool edge=projected.z<=0||Mathf.Abs(direction.x)>Screen.width*.5f-115||Mathf.Abs(direction.y)>Screen.height*.5f-50;
    if(edge){if(direction.sqrMagnitude<.01f)direction=Vector2.up;float extentX=Screen.width*.5f-115,extentY=Screen.height*.5f-50;direction*=Mathf.Min(extentX/Mathf.Max(.01f,Mathf.Abs(direction.x)),extentY/Mathf.Max(.01f,Mathf.Abs(direction.y)));}
    var rect=new Rect(Screen.width*.5f+direction.x-105,Screen.height*.5f+direction.y-24,210,48);
+   var anchor=rect;for(int shift=0;shift<r.moon.pillarMarkers.Length*2&&occupied.Any(x=>x.Overlaps(rect));shift++){
+    int row=shift/2+1;rect.y=Mathf.Clamp(anchor.y+(shift%2==0?row:-row)*52,50,Screen.height-60);
+   }occupied.Add(rect);
    string arrow=edge?(Mathf.Abs(direction.x)>Mathf.Abs(direction.y)?direction.x>0?"> ":"< ":direction.y>0?"v ":"^ "):"";
-   GUI.Box(rect,GUIContent.none);style.normal.textColor=marker.complete?Color.green:marker.state=="Charging"?Color.yellow:Color.white;
+   GUI.Box(rect,GUIContent.none);style.normal.textColor=marker.complete?Color.green:marker.state=="Charging"?Color.yellow:marker.state=="Disabled"?Color.gray:Color.white;
    string status=marker.state=="Charging"?"Charging "+(marker.charge*100).ToString("F0")+"%":marker.state;
    GUI.Label(rect,arrow+index+" "+marker.name+" · "+marker.distance.ToString("F0")+"m\n"+status,style);
   }

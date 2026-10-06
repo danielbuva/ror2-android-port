@@ -13,6 +13,7 @@ public sealed class NovaThirdPersonView {
  }
  public readonly Report report=new Report();
  public Vector3 ProjectWorldPoint(Vector3 point){return camera.WorldToScreenPoint(point);}
+ public void MoonVisibility(bool active){camera.farClipPlane=active?3000:600;}
  readonly Camera camera;readonly CharacterBody body;readonly CameraTargetParams target;
  readonly RaycastHit[] hits=new RaycastHit[64];float yaw,pitch=15;
  public NovaThirdPersonView(Camera camera,CharacterBody body){
