@@ -15,7 +15,7 @@ using UnityEngine.Networking;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedResultsReport {
   public bool ready,statsRegistered,serverEnding,clientEnding,reportGenerated,reportReloaded,persisted,cleaned;
-  public string scope,error,ending,reportFile;public int players,items,stageClearCount,statFields,priorRuns;
+  public string scope,error,ending,reportFile,ledgerRecovery,ledgerRecoveryError,ledgerRejectedPrimary;public int players,items,stageClearCount,statFields,priorRuns;
   public float seconds;public double damageDealt,damageTaken;public ulong kills;
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
@@ -99,11 +99,19 @@ public sealed partial class MovementBatchProbe {
   report.persisted=true;Save();
  }
  void LoadAndroidRunLedger(){
-  var path=Path.Combine(resultsDirectory,"profile.json");resultsLedger=new AndroidRunLedger();
-  if(!File.Exists(path))return;
-  try{resultsLedger=ReadAndroidRunLedger(path);}catch{var backup=path+".backup";Check(File.Exists(backup),"Android run ledger damaged without a backup; preserve files");resultsLedger=ReadAndroidRunLedger(backup);}
+  var path=Path.Combine(resultsDirectory,"profile.json");var backup=path+".backup";resultsLedger=new AndroidRunLedger();
+  bool hasPrimary=File.Exists(path);
+  if(hasPrimary){try{resultsLedger=ReadAndroidRunLedger(path);return;}catch(Exception error){r.results.ledgerRecoveryError=error.GetType().Name;}}
+  else if(!File.Exists(backup))return;
+  // Validate before moving any generation. Retain the rejected primary and the
+  // valid backup; a later save must never replace that backup with corrupt data.
+  var recovered=ReadAndroidRunLedger(backup);var pending=path+".pending";
+  File.WriteAllText(pending,JsonUtility.ToJson(recovered,true));ReadAndroidRunLedger(pending);
+  if(hasPrimary){var rejected=path+".rejected-"+Guid.NewGuid().ToString("N");File.Move(path,rejected);r.results.ledgerRejectedPrimary=Path.GetFileName(rejected);}
+  File.Move(pending,path);resultsLedger=ReadAndroidRunLedger(path);r.results.ledgerRecovery="validated-backup";
  }
- AndroidRunLedger ReadAndroidRunLedger(string path){var value=JsonUtility.FromJson<AndroidRunLedger>(File.ReadAllText(path));Check(value!=null&&value.version==1&&value.runs!=null,"Android run ledger schema invalid");foreach(var entry in value.runs)Check(entry!=null&&entry.file==Path.GetFileName(entry.file)&&entry.file.StartsWith("run-")&&entry.file.EndsWith(".xml")&&File.Exists(Path.Combine(resultsDirectory,entry.file)),"Android run ledger references a missing result");foreach(var entry in value.runs)if(entry.debugAssisted){Check(entry.debugEvidence==Path.ChangeExtension(entry.file,".debug.json")&&File.Exists(Path.Combine(resultsDirectory,entry.debugEvidence)),"Assisted result lacks its owned debug evidence");var debug=JsonUtility.FromJson<DebugAccelerationReport>(File.ReadAllText(Path.Combine(resultsDirectory,entry.debugEvidence)));Check(debug!=null&&debug.version==1&&debug.everAssisted&&!debug.normalGameAcceptanceEligible,"Assisted ledger evidence claims normal acceptance");}return value;}
+ static void ValidateAndroidRunLedger(bool valid,string message){if(!valid)throw new InvalidDataException(message);}
+ AndroidRunLedger ReadAndroidRunLedger(string path){var value=JsonUtility.FromJson<AndroidRunLedger>(File.ReadAllText(path));ValidateAndroidRunLedger(value!=null&&value.version==1&&value.runs!=null,"Android run ledger schema invalid");foreach(var entry in value.runs)ValidateAndroidRunLedger(entry!=null&&entry.file==Path.GetFileName(entry.file)&&entry.file.StartsWith("run-")&&entry.file.EndsWith(".xml")&&File.Exists(Path.Combine(resultsDirectory,entry.file)),"Android run ledger references a missing result");foreach(var entry in value.runs)if(entry.debugAssisted){ValidateAndroidRunLedger(entry.debugEvidence==Path.ChangeExtension(entry.file,".debug.json")&&File.Exists(Path.Combine(resultsDirectory,entry.debugEvidence)),"Assisted result lacks its owned debug evidence");var debug=JsonUtility.FromJson<DebugAccelerationReport>(File.ReadAllText(Path.Combine(resultsDirectory,entry.debugEvidence)));ValidateAndroidRunLedger(debug!=null&&debug.version==1&&debug.everAssisted&&!debug.normalGameAcceptanceEligible,"Assisted ledger evidence claims normal acceptance");}return value;}
  void SaveAndroidRunLedger(){var path=Path.Combine(resultsDirectory,"profile.json");var pending=path+".pending";File.WriteAllText(pending,JsonUtility.ToJson(resultsLedger,true));ReadAndroidRunLedger(pending);if(File.Exists(path))File.Replace(pending,path,path+".backup");else File.Move(pending,path);var saved=ReadAndroidRunLedger(path);Check(saved.runs.Count==resultsLedger.runs.Count,"Android run ledger write did not persist");}
  void DrawIntegratedResults(){
   var report=r.results;var style=new GUIStyle(GUI.skin.label){fontSize=28,wordWrap=true};

@@ -3379,3 +3379,20 @@ Original arena trigger and four scripted encounter spawns progress PreEncounterâ
 - **FAILURE EVIDENCE TO CAPTURE:** Real PID/phase/debug history, death/report/context/cleanup errors; primary/backup/pending/XML hashes and original versus injected generations; stale-PID and touch evidence separately.
 - **STATE/JOURNAL UPDATES REQUIRED:** J338 scoped device successes and first failed recovery policy; private result-only observation pointer, no normal/visual/Moon advance.
 - **DEPENDENCIES:** Installed J324/J334 owned combination; native RunReport/statistics, current Android ledger and pinned ProperSave filesystem policy boundary.
+
+
+## I09-J339 â€” Safe recovery of the Android run ledger
+
+- **ID:** I09-J339
+- **TITLE:** Retain rejected data and valid backup before later result saves
+- **CONTEXT:** J338 proves natural loss/restart/menu/cold valid results but rejects robust damaged-primary recovery; J337 is the coherent host gameplay/graphics candidate.
+- **OBSERVATION:** Loaded backup leaves invalid primary in place, so later File.Replace can overwrite the valid backup with it; caught validation also marks terminal firstFailure.
+- **HYPOTHESIS:** A validated recovered primary committed before later saves preserves usable generations without changing original report logic or stock profiles.
+- **TASK:** Add only the measured recovery sequence and structured classification to the owned ledger; retain rejected bytes, validate before mutation, handle missing primary and reject both invalid. Compose and build over J337.
+- **CONSTRAINTS:** Never change native report/statistics, Steam profiles, entitlement/identity, source assets, debug labels or Moon state. Do not accept pending data as committed. Original generations/failed evidence stay preserved; no additional APK installation pending clarification.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing IntegratedResultsBoundary owned ledger/report, ignored actual-report fixture replay/candidate/build archives and state summaries.
+- **TEST COMMAND:** Exact-editor replay of genuine J338 file generations including next save/interruption/both-invalid; doctor/preflight,49 tests and forced Vulkan ARM64 build. Later device replay only after APK update authorization.
+- **PASS CONDITION:** Host candidate PASS: all replayed file contracts,49 tests/doctor/preflight, zero editor errors and composed Vulkan ARM64 build182.556seconds/zero errors.41 payload files/all45 accepted assembly identities/all six scene hashes retained, complete candidate archived and installed J324/J334 restored/verified with OLED asleep. Device fault-recovery acceptance remains open; no stock-profile, normal victory or visual parity claim.
+- **FAILURE EVIDENCE TO CAPTURE:** First file/validation/rename/build error; rejected/primary/backup/pending/XML bytes/hashes, restoration, recovery fields, APK/payload/assembly identities and actual-PID device outcome when permitted.
+- **STATE/JOURNAL UPDATES REQUIRED:** J339 host versus device outcomes and inherited J337 content; retain J338's scoped results pointer and all observed/Moon/normal rollbacks.
+- **DEPENDENCIES:** J338 real persistence failure/genuine reports, J337 composed host base; current owned ledger and pinned ProperSave policy boundary.
