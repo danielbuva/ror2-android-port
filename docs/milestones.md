@@ -20,6 +20,8 @@ Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evi
 
 Replan at L3, L4, L5.5, L6, L7, L8. No gate advances from a stripped empty build or synthetic completion. Latest independent-work direction brings visual parity, base-content breadth, Android application flow, controllers and stability forward while Moon waits for manual input. Audio needs lawful access; T30/60 FPS, distribution and remote services remain later.
 
+Independent I09/J337 composes original common/green multishops and chance/blood shrines over J336/J335. Exact source prefab/callback/cost contracts and full185.686-second/zero-error Vulkan ARM64 host build pass; native purchase/selection/health-gold/refresh/ejection and transition/restart/cleanup require device evidence. Invincibility invalidates blood-risk acceptance; stock chat/presentation and SceneDirector placement remain unavailable. Existing update clarification pending, installed/observed/Moon/normal pointers unchanged.
+
 Independent I09/J336 broadens the composed chest domain from six to16 original eligible items, with8/5/3 source tiers and unchanged weights. Host contracts and full177.696-second/zero-error ARM64 build pass; actual earned acquisition, native mechanics, restart/cleanup and item/effect appearance await the existing APK-update clarification. Includes J335 rendering, which remains a source-informed approximation without matching PC acceptance. No formal gameplay, Moon or normal-run gate advances; installed J324/J334 and observed pointer are preserved.
 
 ## Evidence

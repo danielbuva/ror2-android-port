@@ -209,6 +209,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.interactionReady=worldDriver.enabled&&ReferenceEquals(DriverField(worldDriver,"inputBank"),player.inputBank);
   r.world.start=origin;r.world.ready=r.world.authority&&r.world.lootReady&&r.world.interactionReady&&rewardDirector.enabled;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
+  PrepareWorldCommerce(cfg,origin);
   Check(r.world.ready,"Integrated session setup incomplete");r.phase="integrated-world-playing";Save();
  }
 
@@ -312,7 +313,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   world.pickupObservations=pickups.Select(x=>{var collider=x.GetComponentsInChildren<Collider>(true).FirstOrDefault(c=>c.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<c.gameObject.layer))!=0);var aim=collider?collider.bounds.center:x.transform.position;var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return new WorldPickupObservation{item=def==null?"invalid":def.internalName,interactability=x.GetInteractability(interactor).ToString(),position=x.transform.position,aimTarget=aim,aimDistance=Vector3.Distance(player.inputBank.aimOrigin,aim),selected=worldDriver.currentInteractable==x.gameObject,collider=collider,interactableLayer=collider};}).ToArray();
   foreach(var pickup in pickups){if(!pickup.pickupDisplay)continue;var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pickup.pickupDisplay);if(model)PresentWorldModel(model.transform,false);}
   world.secondary=r.combat.secondaryEntries;world.roll=r.combat.utilityEntries;world.barrage=r.combat.specialEntries;
-  world.target=worldDriver.currentInteractable?worldDriver.currentInteractable.name:"";
+  world.target=worldDriver.currentInteractable?worldDriver.currentInteractable.name:"";ObserveWorldCommerce();
  }
  void IntegratedWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   // Explicit automation for integrated validation only; direct app launches use physical controls.
@@ -323,7 +324,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(worldObjective==0){var barrel=worldBarrels.FirstOrDefault(x=>x&&!x.Networkopened);if(barrel)target=barrel.gameObject;else worldObjective=1;}
   if(worldObjective==3&&elapsed-stageEnteredAt<105&&worldChests.Any(x=>x&&!x.NetworkisChestOpened&&player.master.money>=x.GetComponent<PurchaseInteraction>().cost))worldObjective=1;
   if(worldObjective==1){var chest=worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
-  if(worldObjective==2){var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline==r.world.openedChests)worldObjective=3;}
+  if(worldObjective>0&&GrantableWorldPickups(player).Any())worldObjective=2;
+  if(worldObjective==2){var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline>=r.world.openedChests)worldObjective=3;}
+  if(worldObjective==3&&elapsed-stageEnteredAt<65){var commerce=AffordableWorldCommerce();if(commerce)target=commerce;}
   r.world.objective=worldObjective==0?"Collect original barrel rewards":worldObjective==1?"Purchase original chest":worldObjective==2?"Collect naturally ejected item":"Survive original director combat";
   if(r.teleporterLoop&&elapsed-stageEnteredAt>65){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
   bridge.movement=Vector2.zero;
@@ -471,6 +474,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.world==null)yield break;yield return null;yield return null;
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
   r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldAvailableItems==null&&worldAvailableEquipment==null;
+  if(r.commerce!=null){r.commerce.cleaned=commerceOwned.All(x=>!x)&&commerceListeners.Count==0&&commercePurchases.Count==0&&!ownsCommerceMessages&&commerceEffectIndex<0;r.world.cleaned&=r.commerce.cleaned;}
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();
  }
  void DrawIntegratedWorld(){
@@ -498,7 +502,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
   var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
- void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupTeleporterWorld();
+ void CleanupIntegratedWorld(){CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupTeleporterWorld();
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}

@@ -1,0 +1,86 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using RoR2;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Networking;
+using UnityEngine.AddressableAssets;
+
+// Original purchase/selection/shrine code; owned layout, presentation and observations.
+public sealed partial class MovementBatchProbe {
+ [Serializable] public class CommerceObservation {public string source,item,costType;public uint netId;public int cost,purchases;public bool available,hidden,purchased;}
+ [Serializable] public class CommercePurchase {public float at,healthAfter,shieldAfter;public string source,costType;public int cost;public uint moneyAfter;public bool debugAssisted;}
+ [Serializable] public class CommerceReport {public string scope,lastMessage;public int shops,chanceShrines,bloodShrines,messages;public bool cleaned;public CommerceObservation[] objects;public List<CommercePurchase> purchases=new List<CommercePurchase>();}
+ readonly List<PurchaseInteraction> commercePurchases=new List<PurchaseInteraction>();
+ readonly List<MultiShopController> commerceShops=new List<MultiShopController>();
+ readonly List<GameObject> commerceOwned=new List<GameObject>();
+ readonly List<GameObject> commerceTemplates=new List<GameObject>();
+ readonly Dictionary<PurchaseInteraction,UnityAction<CostTypeDef.PayCostContext,CostTypeDef.PayCostResults>> commerceListeners=new Dictionary<PurchaseInteraction,UnityAction<CostTypeDef.PayCostContext,CostTypeDef.PayCostResults>>();
+ readonly Dictionary<PurchaseInteraction,int> commercePurchaseCounts=new Dictionary<PurchaseInteraction,int>();
+ int commerceEffectIndex=-1,commerceEffectBaseline,commerceBloodEffectLoads;bool ownsCommerceMessages;
+ GameObject PrepareCommerceSupport(Result cfg){
+  if(cfg.worldCommerceAssets==null||cfg.worldCommerceAssets.Length==0)return null;
+  commerceEffectIndex=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Effects/ShrineUseEffect");Check(commerceEffectIndex>=0,"Original shrine effect provider absent");
+  var effect=objectiveSupportSources[commerceEffectIndex];Check(effect&&effect.GetComponent<EffectComponent>(),"Original shrine effect component missing");
+  commerceEffectBaseline=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[commerceEffectIndex]);
+  Check(commerceEffectBaseline>0,"Original shrine effect lease absent");
+  foreach(var renderer in effect.GetComponentsInChildren<Renderer>(true)){worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}PresentCommerceModel(effect.transform);return effect;
+ }
+ void PresentCommerceModel(Transform root){
+  foreach(var renderer in root.GetComponentsInChildren<Renderer>(true)){
+   if(!worldPresented.Add(renderer.GetInstanceID()))continue;
+   // Native terminal clones inherit the owned template materials. Reusing those
+   // copies preserves the first source-driven shader selection and its bindings.
+   renderer.sharedMaterials=renderer.sharedMaterials.Select(source=>{if(!source)return null;if(worldMaterials.Contains(source))return source;var copy=new Material(source);copy.shader=Resources.Load<Shader>("StageSurfacePreview");copy.shaderKeywords=new string[0];AndroidMaterialPresentation.Apply(source,copy);worldMaterials.Add(copy);return copy;}).ToArray();
+   if(!renderer.GetComponent<Collider>())renderer.gameObject.layer=30;
+  }
+ }
+ void ConfigureCommerceObject(GameObject obj){
+  var allowed=new[]{typeof(NetworkIdentity),typeof(MultiShopController),typeof(ShopTerminalBehavior),typeof(PurchaseInteraction),typeof(ShrineChanceBehavior),typeof(ShrineBloodBehavior),typeof(PickupDisplay),typeof(ModelLocator),typeof(EntityLocator),typeof(ChildLocator),typeof(PingInfoProvider),typeof(AnimationEvents),typeof(SpecialObjectAttributes)};
+  foreach(var behaviour in obj.GetComponentsInChildren<MonoBehaviour>(true))behaviour.enabled=allowed.Contains(behaviour.GetType());
+  foreach(var animator in obj.GetComponentsInChildren<Animator>(true)){animator.enabled=true;animator.cullingMode=AnimatorCullingMode.AlwaysAnimate;}
+  PresentCommerceModel(obj.transform);
+ }
+ void WatchCommercePurchase(PurchaseInteraction purchase){
+  Check(purchase&&!commerceListeners.ContainsKey(purchase),"Duplicate or missing original commerce purchase component");commercePurchases.Add(purchase);commercePurchaseCounts[purchase]=0;
+  UnityAction<CostTypeDef.PayCostContext,CostTypeDef.PayCostResults> listener=(context,result)=>{
+   commercePurchaseCounts[purchase]++;if(purchase.GetComponent<ShrineBloodBehavior>())commerceBloodEffectLoads++;
+   Check(context.activatorBody==worldPlayer&&context.purchaseInteraction==purchase,"Original commerce purchase context changed");r.commerce.purchases.Add(new CommercePurchase{at=r.world.seconds,source=purchase.name,cost=context.cost,costType=purchase.costType.ToString(),moneyAfter=worldPlayer.master.money,healthAfter=worldPlayer.healthComponent.health,shieldAfter=worldPlayer.healthComponent.shield,debugAssisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted});Save();
+  };commerceListeners.Add(purchase,listener);purchase.onDetailedPurchaseServer.AddListener(listener);
+ }
+ void PrepareWorldCommerce(Result cfg,Vector3 origin){
+  if(cfg.worldCommerceAssets==null||cfg.worldCommerceAssets.Length==0)return;
+  Check(cfg.worldCommerceAssets.Length==4&&commerceEffectIndex>=0,"Original world commerce contract incomplete");r.phase="integrated-world-commerce";Save();
+  if(r.commerce==null){r.commerce=new CommerceReport{scope="Original multishop terminal generation/choice/closure, chance shrine RNG/failure/refresh/drops and blood shrine health cost/gold/refresh. Authored near-entry layout/material adapter; no original SceneDirector placement, equipment, platform text-chat or normal health-cost acceptance under invincibility."};
+   Check(!activeBodyClient.handlers.ContainsKey(59),"Unowned platform chat handler");ownsCommerceMessages=true;
+   activeBodyClient.RegisterHandler(59,message=>{var native=ChatMessageBase.Instantiate(message.reader.ReadByte());Check(native!=null,"Original local gameplay message type missing");native.Deserialize(message.reader);r.commerce.messages++;var subject=native as Chat.SubjectFormatChatMessage;var simple=native as Chat.SimpleChatMessage;r.commerce.lastMessage=subject!=null?subject.baseToken:(simple!=null?simple.baseToken:native.GetType().Name);});
+  }
+  var offsets=new[]{new Vector3(8,0,0),new Vector3(-8,0,0),new Vector3(0,0,9),new Vector3(0,0,-9),new Vector3(8,0,8),new Vector3(-8,0,8),new Vector3(8,0,-8),new Vector3(-8,0,-8)};int start=0;
+  foreach(var path in cfg.worldCommerceAssets){
+   var source=artifactBundle.LoadAsset<GameObject>(path);Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original commerce source references missing: "+path);RaycastHit ground=default(RaycastHit);bool found=false;
+   for(int i=0;i<offsets.Length;i++){var candidate=origin+offsets[(start+i)%offsets.Length];if(Physics.Raycast(candidate+Vector3.up*20,Vector3.down,out ground,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&ground.collider.gameObject.scene==stageGeometryScene&&ground.normal.y>.9f&&Mathf.Abs(ground.point.y-origin.y)<2&&InsideSourceStageBounds(ground.point)){found=true;start=(start+i+1)%offsets.Length;break;}}
+   if(!found)continue;var obj=Instantiate(source,worldStaging.transform);obj.name=source.name;worldObjects.Add(obj);commerceOwned.Add(obj);ConfigureCommerceObject(obj);obj.transform.position=ground.point+Vector3.up*.4f;
+   var shop=obj.GetComponent<MultiShopController>();if(shop){Check(!shop.doEquipmentInstead&&!shop.isTripleDroneVendor&&shop.terminalPositions.Length==3,"Original item-only multishop contract differs");var template=Instantiate(shop.terminalPrefab,worldStaging.transform);commerceTemplates.Add(template);commerceOwned.Add(template);ConfigureCommerceObject(template);var terminal=template.GetComponent<ShopTerminalBehavior>();Check(terminal&&terminal.selfGeneratePickup&&terminal.dropTable is BasicPickupDropTable,"Original self-generating item terminal contract differs");terminal.dropTable=ObjectiveDropTable(terminal.dropTable);((BasicPickupDropTable)terminal.dropTable).RegenerateDropTable(Run.instance);Check(terminal.dropTable.GetPickupCount()>0,"Original terminal selector empty");shop.terminalPrefab=template;}
+   var chance=obj.GetComponent<ShrineChanceBehavior>();if(chance){Check(chance.dropTable&&chance.effectPrefabShrineRewardNormal,"Original chance shrine table/effect absent");chance.dropTable=ObjectiveDropTable(chance.dropTable);var table=chance.dropTable as BasicPickupDropTable;Check(table,"Original chance shrine table type changed");table.RegenerateDropTable(Run.instance);Check(table.GetPickupCount()>0,"Original chance shrine source selector empty");}
+   obj.transform.SetParent(null,true);obj.SetActive(true);NetworkServer.Spawn(obj);
+   if(shop){commerceShops.Add(shop);foreach(var terminal in shop.terminalGameObjectsList){Check(terminal&&terminal.GetComponent<ShopTerminalBehavior>()&&terminal.GetComponent<NetworkIdentity>().netId.Value!=0,"Original multishop terminal factory/network identity failed");commerceOwned.Add(terminal);worldObjects.Add(terminal);PresentCommerceModel(terminal.transform);WatchCommercePurchase(terminal.GetComponent<PurchaseInteraction>());}r.commerce.shops++;}
+   else{WatchCommercePurchase(obj.GetComponent<PurchaseInteraction>());if(chance)r.commerce.chanceShrines++;else{Check(obj.GetComponent<ShrineBloodBehavior>(),"Unknown original shrine");r.commerce.bloodShrines++;}}
+  }
+ }
+ void ObserveWorldCommerce(){
+  if(r.commerce==null)return;
+  foreach(var purchase in commercePurchases){if(!purchase)continue;var terminal=purchase.GetComponent<ShopTerminalBehavior>();if(terminal&&terminal.pickupDisplay){var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(terminal.pickupDisplay);if(model)PresentCommerceModel(model.transform);}}
+  if(Time.frameCount%30!=0)return;
+  r.commerce.objects=commercePurchases.Where(x=>x).Select(x=>{var terminal=x.GetComponent<ShopTerminalBehavior>();var pickup=terminal?PickupCatalog.GetPickupDef(terminal.Networkpickup.pickupIndex):null;return new CommerceObservation{source=x.name,netId=x.netId.Value,cost=x.cost,costType=x.costType.ToString(),available=x.available,purchases=commercePurchaseCounts[x],item=pickup==null?null:pickup.internalName,hidden=terminal&&terminal.Networkhidden,purchased=terminal&&terminal.NetworkhasBeenPurchased};}).ToArray();
+ }
+ GameObject AffordableWorldCommerce(){return commercePurchases.FirstOrDefault(x=>x&&x.available&&x.costType==CostTypeIndex.Money&&commercePurchaseCounts[x]==0&&worldPlayer.master.money>=x.cost)?.gameObject;}
+ void CleanupWorldCommerce(bool final=false){
+  foreach(var pair in commerceListeners)if(pair.Key)pair.Key.onDetailedPurchaseServer.RemoveListener(pair.Value);commerceListeners.Clear();commercePurchases.Clear();commercePurchaseCounts.Clear();commerceShops.Clear();
+  foreach(var template in commerceTemplates)if(template)Destroy(template);commerceTemplates.Clear();
+  if(!final)return;
+  if(ownsCommerceMessages&&activeBodyClient!=null){activeBodyClient.UnregisterHandler(59);ownsCommerceMessages=false;}
+  if(commerceEffectIndex>=0){var lease=objectiveSupportLeases[commerceEffectIndex];int extra=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(lease)-commerceEffectBaseline;Check(extra==commerceBloodEffectLoads,"Unattributed original blood-shrine effect loads");for(int i=0;i<extra;i++)Addressables.Release(lease.Result);commerceEffectIndex=-1;}
+ }
+}

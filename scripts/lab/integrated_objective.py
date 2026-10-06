@@ -13,6 +13,12 @@ CORE_LOOT_SUPPORT = [
     ('BucklerDefense', '0aae571b83fa44d439f4d001da4d48cd',
      'Prefabs/TemporaryVisualEffects/BucklerDefense', 'Assets/RoR2/Base/Items/SprintArmor/BucklerDefense.prefab'),
 ]
+WORLD_COMMERCE = {
+    'ShrineChance': 'Assets/RoR2/Base/Interactables/Shrines/ShrineChance/ShrineChance.prefab',
+    'ShrineBlood': 'Assets/RoR2/Base/Interactables/Shrines/ShrineBlood/ShrineBlood.prefab',
+    'TripleShop': 'Assets/RoR2/Base/Interactables/TripleShop/TripleShop.prefab',
+    'TripleShopLarge': 'Assets/RoR2/Base/Interactables/TripleShopLarge/TripleShopLarge.prefab',
+}
 
 def transform_optional_presentation(stage, out, attempt):
     from boundaries import probe_tool
@@ -47,7 +53,7 @@ def stage_classic_run_settings(out):
     return {'runEventFlagsToResetOnLoop':flags}
 
 
-def stage_objective(stage, previous, out, broader_loot=False):
+def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=False):
     run_settings=stage_classic_run_settings(out)
     from scene_closure import REFERENCE
     export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
@@ -93,6 +99,15 @@ def stage_objective(stage, previous, out, broader_loot=False):
             roots['support'+name]=src;support_roots.append('support'+name)
             support_keys.append(key);support_paths.append(path)
         write(out/'core-loot-support-source.json',contract)
+    if broader_commerce:
+        contract=read(WORK/'config/world-commerce-support.json');row=contract['location']
+        path='Prefabs/Effects/ShrineUseEffect';key='0fa235b9d7e778f4ba2cd8f2437f72d9'
+        internal='Assets/RoR2/Base/Common/VFX/ShrineUseEffect.prefab';src=export/internal;meta=Path(str(src)+'.meta')
+        if contract['input_id']!=read(WORK/'config/accepted-input.json')['input_id'] or contract['catalog_sha256']!=sha(export/'Assets/StreamingAssets/aa/catalog.json') or row['path']!=path or row['key']!=key or row['internalId']!=internal or row['type']!='UnityEngine.GameObject' or sha(src)!=row['source_sha256'] or sha(meta)!=row['source_meta_sha256'] or re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]!=row['export_guid']:
+            raise RuntimeError('Original shrine effect typed contract changed; remeasure before staging')
+        roots['supportShrineUseEffect']=src;support_roots.append('supportShrineUseEffect');support_keys.append(key);support_paths.append(path)
+        for name,source in WORLD_COMMERCE.items():roots['commerce'+name]=export/source
+        write(out/'world-commerce-support-source.json',contract)
     roots['objectiveWardBuffAsset']=export/'Assets/RoR2/Base/Characters/BeetleGroup/bdBeetleJuice.asset'
     roots['objectiveWardConfig']=export/'Assets/RoR2/Base/Characters/BeetleGroup/BeetleWard/EntityStates.BeetleQueenMonster.BeetleWardDeath.asset'
     ward_rows=[x.split('|') for x in (WORK/'ward-catalog-query.txt').read_text().splitlines()]
@@ -216,6 +231,10 @@ def stage_objective(stage, previous, out, broader_loot=False):
     recipe=read(WORK/'scene-probe-build.json')
     recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[v for k,v in paths.items() if k not in set(support_roots)|{'teleporterIndicatorAsset','objectiveTMPSettingsAsset'}]))
     recipe['objectiveSupportAssets']=[next(x['staged'] for x in rows if x['source']==str(roots[k].relative_to(export))) for k in support_roots]
+    # A newly separated support root may already be explicit in the inherited character recipe.
+    # Keep one bundle owner; serialized references still point to that original asset.
+    support_assets={path.casefold() for path in recipe['objectiveSupportAssets']}
+    recipe['prefabAssets']=[path for path in recipe['prefabAssets'] if path.casefold() not in support_assets]
     recipe['objectiveTMPSettings']=next(x['staged'] for x in rows if x['source']==str(roots['objectiveTMPSettingsAsset'].relative_to(export)))
     recipe['teleporterIndicator']=next(x['staged'] for x in rows if x['source']==str(roots['teleporterIndicatorAsset'].relative_to(export)))
     metadata=read(out/'run-metadata-closure.json')
@@ -225,7 +244,7 @@ def stage_objective(stage, previous, out, broader_loot=False):
     write(WORK/'scene-probe-build.json',recipe)
     actor_specs=[dict(name=x,**{k[0].lower()+k[1:]:paths[x+k] for k in ['Body','Master','Card','Avatar','Controller','Material','Mesh']}) for x in actors]
     write(out/'objective-content.json',{'roots':paths,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'ui_remaps':ui_edits,'query_sha256':sha(query_path),'catalog_sha256':sha(export/'Assets/StreamingAssets/aa/catalog.json'),'deferred_unrequested':unrequested,'prior_art':'R2API.Director f539511e separates director activity, catalog readiness and source DCCS selection; current original TeleporterInteraction/BossGroup/HoldoutZoneController/Queen states govern composition. No source implementation copied.'})
-    return dict(run_settings,worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
+    return dict(run_settings,worldCommerceAssets=[paths['commerce'+name] for name in WORLD_COMMERCE] if broader_commerce else [],worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 
 def sanitize_optional_content(stage,out):
