@@ -90,8 +90,8 @@ public sealed partial class MovementBatchProbe {
  void FlushObjectiveActors(){
   foreach(var master in pendingObjectiveActors.ToArray()){
    pendingObjectiveActors.Remove(master);if(!master)continue;
-   RecordDirectorActor(master.gameObject,enemyPlayer,objectiveDirectorActors.Contains(master)?"teleporter-director":master.bodyPrefab.name.StartsWith("Lunar",StringComparison.Ordinal)||master.bodyPrefab.name.StartsWith("Brother",StringComparison.Ordinal)?"moon-encounter":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
-   if(master.bodyPrefab.name=="BeetleQueen2Body")r.objective.bossSpawns++;else r.objective.normalSpawns++;
+   RecordDirectorActor(master.gameObject,enemyPlayer,stageCombatActors.Contains(master)?"stage-director":objectiveDirectorActors.Contains(master)?"teleporter-director":master.bodyPrefab.name.StartsWith("Lunar",StringComparison.Ordinal)||master.bodyPrefab.name.StartsWith("Brother",StringComparison.Ordinal)?"moon-encounter":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
+   if(master.bodyPrefab.name=="BeetleQueen2Body"&&!stageCombatActors.Contains(master))r.objective.bossSpawns++;else r.objective.normalSpawns++;
   }
  }
  void PrepareObjectivePresentationSources(){
@@ -176,7 +176,8 @@ public sealed partial class MovementBatchProbe {
   if(!cfg.teleporterLoop)return new Type[0];
   var assembly=typeof(TeleporterInteraction).Assembly;
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
-   (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||t.Namespace=="EntityStates.LunarTeleporter"||
+   (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||
+    (cfg.stageCombatDecks!=null&&cfg.stageCombatDecks.Length>0&&new[]{"EntityStates.GolemMonster","EntityStates.LemurianMonster","EntityStates.Wisp1Monster"}.Any(ns=>(t.Namespace??"").StartsWith(ns,StringComparison.Ordinal)))||t.Namespace=="EntityStates.LunarTeleporter"||
     (cfg.moonMission&&(t==typeof(FlyState)||(t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarExploder",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
  }
  EntityStateConfiguration[] PrepareObjectiveConfigs(Result cfg){
@@ -298,7 +299,7 @@ public sealed partial class MovementBatchProbe {
   objectiveBossDeck=Instantiate(automaticDeck);var queen=objectiveCards.Single(x=>x.name=="cscBeetleQueen");var category=objectiveBossDeck.categories[0];var bossCard=category.cards[0];bossCard.spawnCard=queen;bossCard.selectionWeight=1;category.name="Champions";category.selectionWeight=2;category.cards=new[]{bossCard};objectiveBossDeck.categories=new[]{category};
   worldTeleporter.bossDirector.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
   worldTeleporter.bossDirector.monsterCards=objectiveBossDeck;worldTeleporter.bonusDirector.monsterCards=automaticDeck;
-  worldTeleporter.bonusDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);RecordDirectorActor(obj,worldPlayer);});
+  worldTeleporter.bonusDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer);else RecordDirectorActor(obj,worldPlayer);});
   var model=objectiveHost.GetComponent<ModelLocator>().modelTransform;worldModels.Add(model);PresentWorldModel(model,false,true);
   objectiveBeacon=objectiveHost.GetComponentsInChildren<Collider>(true).Single(x=>x.GetComponent<EntityLocator>()&&x.GetComponent<EntityLocator>().entity==objectiveHost);Check(objectiveBeacon.gameObject.layer==LayerIndex.defaultLayer.intVal,"Original teleporter interaction layer changed");
   if(!objectiveSubscribed)objectiveDefeated=group=>{if(worldTeleporter&&group==worldTeleporter.bossGroup){r.objective.bossDefeated=true;r.objective.rewardPickupBaseline=r.world.pickupMessages;Save();}};

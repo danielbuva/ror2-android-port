@@ -18,7 +18,7 @@ public sealed partial class MovementBatchProbe {
   public int participatingPlayers,livingPlayers,creditSteps,monsterLimit,masterIndex,selectedCardWeight;public float seconds,fixedSeconds,scheduledCreditSeconds,creditPeak,creditAfter,spent,spawnDistance,minDistance,maxDistance;public Vector3 position;
   public string scope;
   public int spawnLimit,livePeak;public float stoppedAt,totalSpent,totalCreditAfter;public bool batchCreditConserved;
-  public List<DirectorActorReport> actors=new List<DirectorActorReport>();
+  public List<DirectorActorReport> actors=new List<DirectorActorReport>();public List<StageCombatDeckReport> stageDecks=new List<StageCombatDeckReport>();
  }
  GameObject automaticDirectorHost;DirectorCardCategorySelection automaticDeck;PlayerCharacterMasterController directorPlayer;
  bool directorPlayerRegistered;GameObject[] directorTeamEffects;object priorDirectorEliteTiers;
@@ -68,7 +68,7 @@ public sealed partial class MovementBatchProbe {
   var card=automaticDeck.categories[0].cards[0];Check(card.spawnCard.name==rewardCard.name&&card.selectionWeight==2&&card.spawnDistance==DirectorCore.MonsterSpawnDistance.Standard&&!card.preventOverhead&&card.minimumStageCompletions==0&&!card.requiredUnlockableDef&&!card.forbiddenUnlockableDef&&string.IsNullOrEmpty(card.requiredUnlockable)&&string.IsNullOrEmpty(card.forbiddenUnlockable),"Source Beetle card metadata changed");card.spawnCard=rewardCard;r.director.selectedCardWeight=card.selectionWeight;Check(card.IsAvailable(),"Original base card availability failed");
   automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.enemyDirectorAsset));Check(automaticDirectorHost&&!automaticDirectorHost.activeSelf,"Source director root isolation missing");rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();Check(rewardDirector&&rewardDirector.enabled&&automaticDirectorHost.GetComponents<MonoBehaviour>().Length==1,"Source fast director component scope changed");
   r.director.sourceSettings=rewardDirector.monsterCredit==0&&rewardDirector.creditMultiplier==.75f&&rewardDirector.moneyWaveIntervals.Length==1&&rewardDirector.moneyWaveIntervals[0].min==1&&rewardDirector.moneyWaveIntervals[0].max==1&&rewardDirector.minRerollSpawnInterval==4.5f&&rewardDirector.maxRerollSpawnInterval==9&&rewardDirector.targetPlayers&&!rewardDirector.ignoreTeamSizeLimit&&rewardDirector.maximumNumberToSpawnBeforeSkipping==6&&rewardDirector.spawnDistanceMultiplier==1&&rewardDirector.minSpawnRange==0&&!rewardDirector.shouldSpawnOneWave;
-  Check(r.director.sourceSettings,"Original fast director settings changed");rewardDirector.monsterCards=automaticDeck;rewardDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);RecordDirectorActor(obj,player);if(r.director.actors.Count==1){r.director.position=enemyBody.transform.position;r.director.spawnDistance=Vector3.Distance(player.transform.position,enemyBody.transform.position);r.director.originalTarget=rewardDirector.currentSpawnTarget==player.gameObject;}if(r.director.actors.Count==limit){rewardDirector.enabled=false;r.director.stopped=true;r.director.stoppedAt=Time.realtimeSinceStartup-automaticDirectorBegan;}});
+  Check(r.director.sourceSettings,"Original fast director settings changed");rewardDirector.monsterCards=automaticDeck;rewardDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,player);else RecordDirectorActor(obj,player);if(r.rewards.spawnEvents==1){r.director.position=enemyBody.transform.position;r.director.spawnDistance=Vector3.Distance(player.transform.position,enemyBody.transform.position);r.director.originalTarget=rewardDirector.currentSpawnTarget==player.gameObject;}if(r.director.actors.Count==limit){rewardDirector.enabled=false;r.director.stopped=true;r.director.stoppedAt=Time.realtimeSinceStartup-automaticDirectorBegan;}});
   if(cfg.teleporterLoop){
    // Original charging disables CombatDirectors attached to DirectorCore, not descendants.
    var core=rewardDirectorHost.GetComponent<DirectorCore>();Check(core&&DirectorCore.instance==core,"Owned original director core missing");core.enabled=false;automaticDirectorHost.AddComponent<DirectorCore>();
@@ -89,7 +89,7 @@ public sealed partial class MovementBatchProbe {
   Check(r.director.originalTarget&&r.director.preloaded&&r.director.creditConserved&&r.director.placement&&(cfg.integratedWorld||limit==3?rewardDirector.enabled:!rewardDirector.enabled),"Original targeting/preload/credit/placement assertions failed");Save();
  }
  void CleanupAutomaticDirector(){
-  ownedNavigationTick=null;
+  CleanupStageCombatDecks();ownedNavigationTick=null;
   if(directorPlayerRegistered&&directorPlayer){Call(directorPlayer,"OnDisable");directorPlayerRegistered=false;}
   if(automaticDirectorHost)Destroy(automaticDirectorHost);if(automaticDeck)Destroy(automaticDeck);
   if(directorMasterMap!=null){directorMasterMap.Clear();foreach(var entry in directorMasterFields)entry.Key.SetValue(null,entry.Value);directorMasterFields.Clear();NetworkPreloadManager.previouslyRequestedMasters.Clear();NetworkPreloadManager.requestMasterList.Clear();RewardField(typeof(CombatDirector),"eliteTiers").SetValue(null,priorDirectorEliteTiers);}
