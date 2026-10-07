@@ -1,6 +1,14 @@
 from common import *
 import shutil,time,zipfile
 
+def validate_runtime_support(project, recipe):
+ config_path=project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'
+ if not config_path.exists():return
+ required=read(config_path).get('objectiveSupportAssets',[])
+ supplied={path.casefold() for path in recipe.get('objectiveSupportAssets',[])}
+ missing=[path for path in required if path.casefold() not in supplied]
+ if missing:raise RuntimeError('Runtime objective support omitted from build recipe: '+', '.join(missing))
+
 def preflight():
  cfg=config();base=game();inv=read(WORK/'inventory/files.json');current={str(p.relative_to(base)):(p.stat().st_size,p.stat().st_mtime_ns) for p in base.rglob('*') if p.is_file()};prior={x['path']:(x['size'],x['mtime_ns']) for x in inv['files']}
  if current!=prior:raise RuntimeError('Input changed: run ./dev inspect, review input-diff and explicitly adopt a new baseline')
@@ -33,6 +41,8 @@ def build(api='gles',force=False):
  if api=='lab':api='gles'
  preflight()
  project=WORK/'lab-project'
+ recipe=WORK/'scene-probe-build.json'
+ if recipe.exists():validate_runtime_support(project,read(recipe))
  # Copy changed tool-owned sources only. Never reset project settings during an incremental build.
  shutil.copytree(ROOT/'android/Assets',project/'Assets',dirs_exist_ok=True)
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}

@@ -101,11 +101,11 @@ public sealed partial class MovementBatchProbe {
  }
  void DrawDebugAcceleration(){
   if(r.debugAcceleration==null||r.debugAcceleration.restored||!debugBody||!debugBody.healthComponent.alive)return;
-  var report=r.debugAcceleration;float x=Screen.width-270;
+  var report=r.debugAcceleration;float x=recoveredHud?20:Screen.width-270;
   var style=new GUIStyle(GUI.skin.label){fontSize=18,wordWrap=true};style.normal.textColor=report.everAssisted?Color.yellow:Color.white;
-  GUI.Label(new Rect(x,140,260,100),report.everAssisted?"DEBUG ASSISTED RUN\nNo normal-game acceptance":"Debug acceleration: OFF",style);
-  if(GUI.Button(new Rect(x,82,250,46),debugPanel?"Hide developer controls":"Developer controls"))debugPanel=!debugPanel;
-  if(!debugPanel){if(report.everAssisted)GUI.Label(new Rect(x,240,260,110),DebugAccelerationLabel(),style);return;}
+  if(!recoveredHud||debugPanel)GUI.Label(new Rect(x,140,260,100),report.everAssisted?"DEBUG ASSISTED RUN\nNo normal-game acceptance":"Debug acceleration: OFF",style);
+  if(GUI.Button(new Rect(x,recoveredHud?Screen.height-250:82,250,46),debugPanel?"Hide developer controls":"Developer controls"))debugPanel=!debugPanel;
+  if(!debugPanel){if(report.everAssisted){if(recoveredHud){style.fontSize=14;GUI.Label(new Rect(Screen.width*.30f,Screen.height-84,Screen.width*.45f,54),"DEBUG ASSISTED · "+DebugAccelerationLabel(),style);}else GUI.Label(new Rect(x,240,260,110),DebugAccelerationLabel(),style);}return;}
   var a=report.active;
   if(GUI.Button(new Rect(x,245,250,44),"F1 Invincibility: "+a.invincibility))SetDebugToggle(0,!a.invincibility,"developer panel");
   if(GUI.Button(new Rect(x,295,250,44),"F2 Damage x1000: "+a.highDamage))SetDebugToggle(1,!a.highDamage,"developer panel");

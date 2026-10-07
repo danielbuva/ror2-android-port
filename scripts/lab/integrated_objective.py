@@ -22,6 +22,14 @@ WORLD_COMMERCE = {
     'TripleShopLarge': 'Assets/RoR2/Base/Interactables/TripleShopLarge/TripleShopLarge.prefab',
 }
 
+def retain_support_roots(recipe, additions):
+    """Extend a composed closure without discarding inherited runtime providers."""
+    recipe = dict(recipe)
+    assets = {path.casefold(): path for path in recipe.get('objectiveSupportAssets', []) + additions}
+    recipe['objectiveSupportAssets'] = list(assets.values())
+    recipe['prefabAssets'] = [path for path in recipe['prefabAssets'] if path.casefold() not in assets]
+    return recipe
+
 def transform_optional_presentation(stage, out, attempt):
     from boundaries import probe_tool
     original=stage/'Plugins/RoR2.dll'
@@ -80,6 +88,7 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
     ui_roots = {}
     if broader_ui:
         ui_roots = {'hudSource': 'Assets/RoR2/Base/UI/HUD/HUDSimple.prefab',
+                    'runInfoSource': 'Assets/RoR2/Base/GameModes/ClassicRun/ClassicRunInfoHudPanel.prefab',
                     'menuSource': 'Assets/RoR2/Base/UI/TitleMenu.prefab',
                     'itemIconSource': 'Assets/RoR2/Base/UI/ItemIcon.prefab',
                     'crosshairSource': 'Assets/RoR2/Base/UI/Crosshair/StandardCrosshair.prefab'}
@@ -246,11 +255,10 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
             unrequested.append({'source':str(src.relative_to(export)),'key':key})
     recipe=read(WORK/'scene-probe-build.json')
     recipe['prefabAssets']=list(dict.fromkeys(recipe['prefabAssets']+[v for k,v in paths.items() if k not in set(support_roots)|{'teleporterIndicatorAsset','objectiveTMPSettingsAsset'}]))
-    recipe['objectiveSupportAssets']=[next(x['staged'] for x in rows if x['source']==str(roots[k].relative_to(export))) for k in support_roots]
-    # A newly separated support root may already be explicit in the inherited character recipe.
-    # Keep one bundle owner; serialized references still point to that original asset.
-    support_assets={path.casefold() for path in recipe['objectiveSupportAssets']}
-    recipe['prefabAssets']=[path for path in recipe['prefabAssets'] if path.casefold() not in support_assets]
+    additions=[next(x['staged'] for x in rows if x['source']==str(roots[k].relative_to(export))) for k in support_roots]
+    # Keep inherited Moon/other providers even when this extension adds only UI/loot.
+    # Each explicit support asset retains one bundle owner.
+    recipe=retain_support_roots(recipe,additions)
     recipe['objectiveTMPSettings']=next(x['staged'] for x in rows if x['source']==str(roots['objectiveTMPSettingsAsset'].relative_to(export)))
     recipe['teleporterIndicator']=next(x['staged'] for x in rows if x['source']==str(roots['teleporterIndicatorAsset'].relative_to(export)))
     metadata=read(out/'run-metadata-closure.json')

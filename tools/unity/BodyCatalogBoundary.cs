@@ -95,6 +95,6 @@ public sealed partial class MovementBatchProbe {
   CleanupLoadoutTables();
   if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
-  ReleaseObjectiveBundlePreload();
+  ReleaseObjectiveBundlePreload();CleanupRecoveredText();
  }
 }
