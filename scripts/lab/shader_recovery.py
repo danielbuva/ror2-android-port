@@ -51,8 +51,11 @@ def recover(target='lab'):
     specs = {
         'lab':(-15541403510422607,'Hopoo Games/FX/Cloud Intersection Remap','FORWARD',['DIRECTIONAL','LIGHTPROBE_SH','TRIPLANAR'],64),
         'standard':(-197252232775272061,'Hopoo Games/Deferred/Standard','DEFERRED',['DITHER','LIGHTPROBE_SH','LIMBREMOVAL'],3024),
+        'deferred':(5,'Hidden/Internal-DeferredShading','',['DIRECTIONAL','UNITY_HDR_ON'],54),
+        'deferred-shadow':(5,'Hidden/Internal-DeferredShading','',['POINT','SHADOWS_CUBE','UNITY_HDR_ON'],54),
+        'standard-hdr':(-197252232775272061,'Hopoo Games/Deferred/Standard','DEFERRED',['DITHER','LIGHTPROBE_SH','LIMBREMOVAL','UNITY_HDR_ON'],3024),
     }
-    if target not in specs: raise RuntimeError('Shader recovery target must be lab or standard')
+    if target not in specs: raise RuntimeError('Unknown fixed shader recovery target')
     identity,shader_name,pass_name,keywords,expected_programs = specs[target]
     out = WORK/'experiments/shader-recovery'/now(); out.mkdir(parents=True)
     receipt = {'success':False, 'read_only':True, 'semantic_equivalence_proven':False,
@@ -85,7 +88,7 @@ def recover(target='lab'):
             receipt['commands'].append({'label':label,'args':[str(x) for x in args],'exit_code':p.returncode})
             if p.returncode and not allow_failure: raise RuntimeError('Shader recovery failed at '+label+'; private evidence retained')
             return p
-        relative = 'Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_31e119f89c9f8d77f8f8199c00774974.bundle'
+        relative = 'Risk of Rain 2_Data/globalgamemanagers.assets' if target.startswith('deferred') else 'Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_31e119f89c9f8d77f8f8199c00774974.bundle'
         source = game()/relative; source_hash = sha(source)
         expected = next(x['sha256'] for x in read(WORK/'inventory/files.json')['files'] if x['path']==relative)
         if source_hash != expected: raise RuntimeError('Shader input drift; review and explicitly accept before recovery')
@@ -121,7 +124,7 @@ def recover(target='lab'):
         receipt['segment_rebasing_record_bytes_unchanged'] = True
         dll = tools['unity']/'Shader Decompiler/bin/Release/net10.0/Shader Decompiler.dll'
         receipt['unity_tool_binary_sha256'] = sha(dll)
-        options = ['--no-surface-shaders']+(['--no-fuse-temps'] if target=='standard' else [])
+        options = ['--no-surface-shaders']+(['--no-fuse-temps'] if target.startswith('standard') else [])
         named = command('unity-decompile',['dotnet',dll,out/'unity-stage0','--out-root',out/'unity-recovered']+options)
         functions = sum('Stage 2: collected ' in line for line in named.stdout.decode(errors='replace').splitlines())
         if functions!=expected_programs: raise RuntimeError('Unity decompiler did not retain all native executable functions')
@@ -144,7 +147,10 @@ def recover(target='lab'):
             i = selected_program['unity_subprogram']; f = out/f'unity-{i}.dxbc'; exe = tools['d3dasm']/'target/release/d3dasm'
             for fmt in ['hlsl','d3dasm']:
                 command(f'd3dasm-{i}-{fmt}',[exe,f,'--emit',fmt,'--output',out/f'unity-{i}.{fmt}'])
-            if 'not decompiled' in (out/f'unity-{i}.hlsl').read_text(): raise RuntimeError('d3dasm rejected executable instructions')
+            hlsl_available='not decompiled' not in (out/f'unity-{i}.hlsl').read_text()
+            selected_program['d3dasm_hlsl_available']=hlsl_available
+            if not hlsl_available:
+                receipt.setdefault('validation_failures',[]).append({'program':i,'evidence':f'unity-{i}.hlsl','reason':'d3dasm HLSL emission rejects a native instruction; other tools still run'})
             rebuilt = out/f'unity-{i}.roundtrip.dxbc'
             command(f'd3dasm-{i}-assemble',[exe,out/f'unity-{i}.d3dasm','--assemble','--output',rebuilt])
             if sha(rebuilt)!=sha(f): raise RuntimeError('d3dasm roundtrip changed original bytecode')

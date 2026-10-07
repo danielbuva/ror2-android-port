@@ -1,4 +1,4 @@
-"""Bind locally recovered intersection programs; never publish generated math."""
+"""Bind locally recovered shader programs; never publish generated math."""
 from common import *
 import base64, re
 import UnityPy
@@ -14,8 +14,8 @@ def properties(tree):
             label = 'Color' if kind==0 else 'Vector'; value = '('+','.join(map(str,values))+')'
         elif kind in [2,3]:
             label = 'Float' if kind==2 else f'Range({values[1]},{values[2]})'; value = str(values[0])
-        elif kind==4 and p['m_DefTexture']['m_TexDim']==2:
-            label = '2D'; value = json.dumps(p['m_DefTexture']['m_DefaultName'])+' {}'
+        elif kind==4 and p['m_DefTexture']['m_TexDim'] in [1,2,4]:
+            label = {1:'any',2:'2D',4:'Cube'}[p['m_DefTexture']['m_TexDim']]; value = json.dumps(p['m_DefTexture']['m_DefaultName'])+' {}'
         else: raise RuntimeError('Unmeasured recovered property type')
         lines.append(f'{p["m_Name"]} ({json.dumps(p["m_Description"])}, {label}) = {value}')
     return '\n'.join(lines)
@@ -23,13 +23,16 @@ def properties(tree):
 
 def bind_hlsl(source, layout, entry):
     """Change resources/constants only; keep executable expressions unchanged."""
-    signature = re.search(r'void main\(([^\n]+)\)',source)
+    signature = re.search(r'void main\((.*?)\)\s*(?=\{)',source,re.S)
     if not signature: raise RuntimeError('Unexpected recovered entry signature')
     parameters = []
-    for item in signature[1].split(', '):
-        match = re.fullmatch(r'(out precise )?float4 (\w+) : (\w+)',item)
-        if not match: raise RuntimeError('Unmeasured shader I/O shape')
-        parameters.append({'out':bool(match[1]),'name':match[2],'semantic':match[3]})
+    for item in re.split(r'\s*,\s*',signature[1].strip()):
+        match = re.fullmatch(r'(out (?:precise )?)?float([1-4]) (\w+) : (\w+)',item.strip())
+        if not match:
+            face=re.fullmatch(r'uint (\w+) : SV_IsFrontFace0',item.strip())
+            if not face:raise RuntimeError('Unmeasured shader I/O shape')
+            parameters.append({'out':False,'name':face[1],'semantic':'SV_IsFrontFace0','columns':1,'type':'uint'});continue
+        parameters.append({'out':bool(match[1]),'name':match[3],'semantic':match[4],'columns':int(match[2])})
     body = source[source.index('{',signature.end()):]
     buffers = {b['slot']:b for b in layout['buffers']}; used = []; declarations = {}
     def constant(match):
@@ -39,8 +42,9 @@ def bind_hlsl(source, layout, entry):
         for lane in range(4):
             offset = start+lane*4; candidates = []
             for v in variables:
-                size = 64 if v['matrix'] else v['columns']*4
-                if v['array_size'] or v['type']!=0: raise RuntimeError('Unmeasured array/integer constant binding')
+                stride=64 if v['matrix'] else 16
+                size=stride*v['array_size'] if v['array_size'] else 64 if v['matrix'] else v['columns']*4
+                if v['type'] not in [0,1]: raise RuntimeError('Unmeasured constant type binding')
                 if v['offset']<=offset<v['offset']+size: candidates.append(v)
             if len(candidates)>1: raise RuntimeError('Overlapping native constants')
             if not candidates:
@@ -48,30 +52,55 @@ def bind_hlsl(source, layout, entry):
                 suffix = body[match.end():]; swizzle = re.match(r'\.([xyzw]+)',suffix)
                 if not swizzle or 'xyzw'[lane] in swizzle[1]: raise RuntimeError('Used native constant lane has no measured binding')
                 lanes.append('0.0');continue
-            v=candidates[0]; delta=offset-v['offset']; name=v['name']
-            if v['matrix']: expression=f'transpose({name})[{delta//16}].'+ 'xyzw'[(delta%16)//4]
-            else: expression=name+('.'+'xyzw'[delta//4] if v['columns']>1 else '')
+            v=candidates[0]; delta=offset-v['offset']; name=v['name'];reference=name
+            if v['array_size']:
+                stride=64 if v['matrix'] else 16;reference+='['+str(delta//stride)+']';delta%=stride
+                if not v['matrix'] and delta>=v['columns']*4:raise RuntimeError('Consumed native array padding needs measurement')
+            if v['matrix']:
+                if v['type']!=0 or v['rows']!=4 or v['columns']!=4:raise RuntimeError('Unmeasured matrix binding')
+                expression=f'transpose({reference})[{delta//16}].'+ 'xyzw'[(delta%16)//4]
+            else: expression=reference+('.'+'xyzw'[delta//4] if v['columns']>1 else '')
+            # d3dasm models all CB registers as float4; native integer lanes
+            # contain integer bits, not a numeric float conversion.
+            if v['type']==1:expression='asfloat('+expression+')'
             lanes.append(expression)
-            if not name.startswith('unity_') and name not in ['_Time','_WorldSpaceCameraPos','_ProjectionParams','_ZBufferParams']:
-                declarations[name]='float'+(str(v['columns']) if v['columns']>1 else '')
+            if (not name.startswith('unity_') or name in ['unity_LightmapFade','unity_WorldToLight']) and name not in ['_Time','_WorldSpaceCameraPos','_ProjectionParams','_ZBufferParams','_ScreenParams','_LightShadowData','_LightProjectionParams','_WorldSpaceLightPos0']:
+                if v['array_size']:raise RuntimeError('Non-builtin array declarations need a separate measured contract')
+                declarations[name]='float4x4' if v['matrix'] else ('int' if v['type']==1 else 'float')+(str(v['columns']) if v['columns']>1 else '')
         used.append({'slot':slot,'register':index,'lanes':lanes})
         return '(float4('+','.join(lanes)+'))'
     body = re.sub(r'cb(\d+)\[(\d+)\]',constant,body)
     if re.search(r'\bcb\d+\b',body): raise RuntimeError('Unbound dynamic native constant access')
     textures=[]
     for t in layout['textures']:
-        if t['dimension']!=2 or t.get('multisampled'): raise RuntimeError('Unmeasured native texture dimension')
         texture=f't{t["slot"]}'; sampler=f's{t["sampler"]}'; name=t['name']
+        declaration=re.search(r'\b(Texture2D|TextureCube)<float4> '+texture+r' : register\(t'+str(t['slot'])+r'\);',source)
+        if not declaration:raise RuntimeError('Unmeasured native texture declaration')
+        dimension=2 if declaration[1]=='Texture2D' else 4
+        if t['dimension'] not in [None,dimension] or t.get('multisampled'): raise RuntimeError('Native texture dimension disagreement')
+        t['dimension']=dimension;t['dxbc_declaration']=declaration[0]
         body=re.sub(r'\b'+texture+r'\b',name,body)
-        body=re.sub(r'\b'+sampler+r'\b','sampler'+name,body)
+        body=re.sub(r'\b'+sampler+r'(?:_s)?\b','sampler'+name,body)
+        sampler_declaration=re.search(r'\b(SamplerState|SamplerComparisonState) '+sampler+r'(?:_s)? : register\(s'+str(t['sampler'])+r'\);',source)
+        if not sampler_declaration:raise RuntimeError('Unmeasured native sampler declaration')
+        t['sampler_type']=sampler_declaration[1]
+        if dimension==4 and t['sampler_type']=='SamplerComparisonState' and name+'.SampleCmpLevelZero(' in body:
+            # The exact editor's HLSLSupport.cginc uses implicit comparison
+            # sampling for GL/Vulkan cube shadows: explicit LOD is unsupported.
+            # This is resource lowering, with the native comparison/math intact.
+            body=body.replace(name+'.SampleCmpLevelZero(', 'AndroidNativeCubeShadow('+name+',')
+            t['platform_lowering']='Unity2021.3 HLSLSupport cube comparison API: SampleCmp on GL/Vulkan; LevelZero on D3D/Metal'
         textures.append(name)
     if re.search(r'\b[ts]\d+\b',body): raise RuntimeError('Unbound native texture/sampler')
     # DXBC signatures can expose float4 registers while writing only consumed
     # lanes. Unity's source compiler requires all out lanes initialized. These
     # defaults precede every original write; original written lanes are intact.
-    body='{\n'+''.join(p['name']+'=float4(0,0,0,0);\n' for p in parameters if p['out'])+body[1:]
+    body='{\n'+''.join(p['name']+'=float'+str(p['columns'])+'('+','.join('0' for _ in range(p['columns']))+');\n' for p in parameters if p['out'])+body[1:]
     signature_text=signature[0].replace('void main(','void '+entry+'(')
-    return signature_text+'\n'+body,parameters,declarations,textures,used
+    macros='\n'.join(re.findall(r'^#define [^\n]+',source[:signature.start()],re.M))
+    if 'AndroidNativeCubeShadow(' in body:
+        macros+='\n#ifndef AndroidNativeCubeShadow\n#if defined(SHADER_API_VULKAN) || defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES3)\n#define AndroidNativeCubeShadow(tex,samp,coord,depth) tex.SampleCmp(samp,coord,depth)\n#else\n#define AndroidNativeCubeShadow(tex,samp,coord,depth) tex.SampleCmpLevelZero(samp,coord,depth)\n#endif\n#endif\n'
+    return macros+'\n'+signature_text+'\n'+body,parameters,declarations,textures,used
 
 
 def generate():

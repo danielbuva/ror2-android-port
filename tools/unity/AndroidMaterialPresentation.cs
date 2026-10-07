@@ -5,17 +5,19 @@ using UnityEngine;
 
 // Owned Android rendering approximations. Original assets and simulation stay intact.
 public static class AndroidMaterialPresentation {
- [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,intersection,intersectionKeywordBindings,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; source intersection keywords bound; custom families remain approximate unless a separate recovered-program receipt supplies them; no original shader parity";}
+ [Serializable] public class Report {public AndroidNativeDeferredPresentation.Report nativeDeferred;public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,intersection,intersectionKeywordBindings,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; source intersection keywords bound; custom families remain approximate unless a separate recovered-program receipt supplies them; no original shader parity";}
  sealed class Binding {public Material material;public Shader enhanced,fallback;}
  static readonly List<Binding> bindings=new List<Binding>();
  public static Report report=new Report();
  static AssetBundle shaders;
- public static void Begin(bool enabled){Finish();report=new Report{enabled=enabled,shaderSource="APK"};var path=Path.Combine(Application.persistentDataPath,"payload/android-presentation-lab");if(File.Exists(path)){shaders=AssetBundle.LoadFromFile(path);if(shaders)report.shaderSource="payload";else report.error="Android presentation payload failed to load";}}
+ public static void Begin(bool enabled){Finish();report=new Report{enabled=enabled,shaderSource="APK"};var path=Path.Combine(Application.persistentDataPath,"payload/android-presentation-lab");if(File.Exists(path)){shaders=AssetBundle.LoadFromFile(path);if(shaders)report.shaderSource="payload";else report.error="Android presentation payload failed to load";}AndroidNativeDeferredPresentation.Begin();report.nativeDeferred=AndroidNativeDeferredPresentation.report;if(!string.IsNullOrEmpty(report.nativeDeferred.error))report.error=report.nativeDeferred.error;}
+ public static T LoadResource<T>(string name,string extension) where T:UnityEngine.Object{return shaders?shaders.LoadAsset<T>("Assets/LabLoadingScene/Resources/"+name+"."+extension):Resources.Load<T>(name);}
  public static Shader LoadShader(string name){return shaders?shaders.LoadAsset<Shader>("Assets/LabLoadingScene/Resources/"+name+".shader"):Resources.Load<Shader>(name);}
  public static void SetEnabled(bool enabled){report.enabled=enabled;foreach(var b in bindings)if(b.material)b.material.shader=enabled?b.enhanced:b.fallback;}
  public static void Apply(Material source,Material copy){
   if(!source||!copy)return;
   string name=source.shader.name;bool terrain=name.IndexOf("Triplanar",StringComparison.OrdinalIgnoreCase)>=0;
+  if(AndroidNativeDeferredPresentation.Apply(source,copy)){var nativeFallback=LoadShader("AndroidSurfacePresentation");bindings.Add(new Binding{material=copy,enhanced=copy.shader,fallback=nativeFallback});if(!report.enabled)copy.shader=nativeFallback;report.surfaces++;return;}
   bool nativeParticle=name=="Mobile/Particles/Alpha Blended"||name=="Particles/Standard Unlit"||name=="Legacy Shaders/Particles/Additive"||name=="Legacy Shaders/Particles/Additive (Soft)";
   if(nativeParticle){
    copy.shader=source.shader;copy.shaderKeywords=source.shaderKeywords;copy.renderQueue=source.renderQueue;
@@ -79,5 +81,5 @@ public static class AndroidMaterialPresentation {
   }else if(terrain)report.terrain++;else report.surfaces++;
   bindings.Add(new Binding{material=copy,enhanced=shader,fallback=fallback});if(!report.enabled)copy.shader=fallback;
  }
- public static void Finish(){bindings.Clear();if(shaders){shaders.Unload(false);shaders=null;}}
+ public static void Finish(){AndroidNativeDeferredPresentation.Finish();bindings.Clear();if(shaders){shaders.Unload(false);shaders=null;}}
 }

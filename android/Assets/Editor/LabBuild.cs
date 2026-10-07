@@ -10,6 +10,18 @@ public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
  [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation;public string[] reflectionTextureGuids;}
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
+ [Serializable] class NativeVariant {public string resource;}
+ [Serializable] class NativeManifest {public NativeVariant[] variants;}
+ static string[] NativePresentationInputs(){
+  const string prefix="Assets/LabLoadingScene/Resources/";string manifestPath=prefix+"AndroidNativeStandardVariants.json";
+  if(!File.Exists(manifestPath))return new string[0];
+  var manifest=JsonUtility.FromJson<NativeManifest>(File.ReadAllText(manifestPath));
+  if(manifest==null||manifest.variants==null||manifest.variants.Length==0||manifest.variants.Length>128)throw new Exception("Native shader closure invalid");
+  var names=manifest.variants.Select(x=>x.resource).ToArray();
+  if(names.Any(x=>string.IsNullOrEmpty(x)||!System.Text.RegularExpressions.Regex.IsMatch(x,"^AndroidNativeStandard[0-9]+$"))||names.Distinct().Count()!=names.Length)throw new Exception("Native shader resource identities invalid");
+  var paths=names.Select(x=>prefix+x+".shader").Concat(new[]{manifestPath,prefix+"AndroidNativeDeferredLighting.shader",prefix+"AndroidNativeWarpRamp.png",prefix+"AndroidNativeEliteRamp.png"}).ToArray();
+  if(!paths.All(File.Exists))throw new Exception("Native shader closure missing an input");return paths;
+ }
  [InitializeOnLoadMethod] static void ResumeQueuedBuild(){if(!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,""))){EditorApplication.update-=DispatchBuild;EditorApplication.update+=DispatchBuild;}}
  [MenuItem("Porting Lab/Build ARM64")]
  public static void QueueBuild(){
@@ -37,7 +49,7 @@ public static class LabBuild {
    string output=Path.GetFullPath(cfg.output),allowed=Path.Combine(root,"experiments/android-presentation")+Path.DirectorySeparatorChar;
    if(!output.StartsWith(allowed,StringComparison.Ordinal)||cfg.api!="vulkan")throw new Exception("Unexpected Android presentation output/target");
    Directory.CreateDirectory(output);File.WriteAllText(Path.Combine(output,"started.json"),JsonUtility.ToJson(cfg,true));
-   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation","AndroidIntersectionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation","AndroidIntersectionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").Concat(NativePresentationInputs()).ToArray();
    if(!assets.All(File.Exists))throw new Exception("Presentation shader input missing");
    var builds=new System.Collections.Generic.List<AssetBundleBuild>();
    if(cfg.stagePresentation){
@@ -51,7 +63,7 @@ public static class LabBuild {
     }
    }else builds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=assets});
    if(!BuildPipeline.BuildAssetBundles(output,builds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android))throw new Exception("Android presentation bundle build failed");
-   foreach(var path in assets){var shader=AssetDatabase.LoadAssetAtPath<Shader>(path);if(ShaderUtil.GetShaderMessages(shader).Any(x=>x.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error))throw new Exception("Presentation shader compile error: "+path);}
+   foreach(var path in assets.Where(x=>x.EndsWith(".shader",StringComparison.Ordinal))){var shader=AssetDatabase.LoadAssetAtPath<Shader>(path);if(ShaderUtil.GetShaderMessages(shader).Any(x=>x.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error))throw new Exception("Presentation shader compile error: "+path);}
    result.success=true;result.result="Android presentation bundle built; device rendering unverified";
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(root,"presentation-build-result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");
@@ -87,7 +99,7 @@ public static class LabBuild {
    PlayerSettings.enableFrameTimingStats=true;
    Directory.CreateDirectory(Path.Combine(root,"generated-android-data"));
    var bundleBuilds=new System.Collections.Generic.List<AssetBundleBuild>();
-   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation","AndroidIntersectionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation","AndroidIntersectionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").Concat(NativePresentationInputs()).ToArray();
    if(presentationShaders.All(File.Exists))bundleBuilds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=presentationShaders});
    string sceneProbeConfig=Path.Combine(root,"scene-probe-build.json");
    if(File.Exists(sceneProbeConfig)){
@@ -153,6 +165,7 @@ public static class LabBuild {
    if(mesh==null)throw new Exception("Recovered mesh missing; prototype preparation required");
    bundleBuilds.Add(new AssetBundleBuild{assetBundleName="labgeometry",assetNames=new[]{"Assets/Recovered/geometry.obj"}});
    if(!BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),bundleBuilds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android))throw new Exception("Requested bundle build failed");
+   foreach(var path in presentationShaders.Where(x=>x.EndsWith(".shader",StringComparison.Ordinal))){var shader=AssetDatabase.LoadAssetAtPath<Shader>(path);var messages=ShaderUtil.GetShaderMessages(shader).Where(x=>x.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error).ToArray();if(messages.Length>0){result.errors=messages.Length;throw new Exception("Android shader compile errors: "+path+"; "+messages[0].message);}}
    var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
    var camera=new GameObject("Lab Camera").AddComponent<Camera>();camera.tag="MainCamera";camera.backgroundColor=new Color(.04f,.06f,.09f);camera.clearFlags=CameraClearFlags.SolidColor;camera.gameObject.AddComponent<LabDiagnostics>();
    var light=new GameObject("Lab Light").AddComponent<Light>();light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(35,40,0);
@@ -160,7 +173,7 @@ public static class LabBuild {
    EditorSceneManager.SaveScene(scene,"Assets/Lab.unity");EditorUserBuildSettings.buildAppBundle=false;
    result.apk=Path.Combine(outDir,"lab-"+api+".apk");result.backend="IL2CPP ARM64 "+api;
    var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=BuildOptions.Development});
-   result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded;
+   result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded&&result.errors==0;
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }

@@ -1,0 +1,151 @@
+"""Private Standard/lighting candidate from measured shipped programs and layouts."""
+from common import *
+from shader_segments import read_segments,selected_layout
+from shader_source import bind_hlsl,properties
+from shader_recovery import PINS
+import base64,re,shutil,UnityPy
+
+FEATURES=['PRINT_CUTOFF','SPLATMAP','FORCE_SPEC','DITHER','CUTOUT','USE_VERTEX_COLORS','FRESNEL_EMISSION','USE_VERTEX_COLORS_FOR_FRESNEL_EMISSION_AND_FLOWMAP','FLOWMAP','LIMBREMOVAL']
+
+
+def load_analysis(path,identity,shader):
+    path=(ROOT/path).resolve()
+    if WORK.resolve() not in path.parents:raise RuntimeError('Recovery evidence must be private')
+    receipt=read(path/'receipt.json')
+    if not receipt.get('analysis_complete') or receipt['shader']!=shader:raise RuntimeError('Incomplete or wrong native shader analysis')
+    for p in receipt['programs']:
+        if not p.get('dxbc_roundtrip_identical'):raise RuntimeError('Native program roundtrip missing')
+    inventory=read(WORK/'inventory/files.json')
+    if read(WORK/'config/accepted-input.json')['input_id']!=inventory['input_id']:raise RuntimeError('Shader input not accepted')
+    source=game()/receipt['source_bundle'];expected=next(x['sha256'] for x in inventory['files'] if x['path']==receipt['source_bundle'])
+    if sha(source)!=expected or receipt['source_sha256']!=expected:raise RuntimeError('Shader source drift')
+    objects=[x for x in UnityPy.load(str(source)).objects if x.type.name=='Shader' and x.path_id==identity]
+    if len(objects)!=1:raise RuntimeError('Native shader identity ambiguous')
+    tree=objects[0].read_typetree();tree['compressedBlob']=base64.b64encode(bytes(tree['compressedBlob'])).decode()
+    if json.loads(json.dumps(tree))!=read(path/'original-tree-base64.json'):raise RuntimeError('Native shader tree drift')
+    raw,records,programs=read_segments(tree,base64.b64decode(tree['compressedBlob']))
+    return tree,raw,records,programs,receipt
+
+
+def render_state(state):
+    def value(field,names):
+        v=state[field]
+        if v['name'] not in ['', '<noninit>']:return '['+v['name']+']'
+        n=int(v['val'])
+        if n not in names:raise RuntimeError('Unclassified native render state: '+field)
+        return names[n]
+    compare={0:'Disabled',1:'Never',2:'Less',3:'Equal',4:'LEqual',5:'Greater',6:'NotEqual',7:'GEqual',8:'Always'}
+    blend={0:'Zero',1:'One',2:'DstColor',3:'SrcColor',4:'OneMinusDstColor',5:'SrcAlpha',6:'OneMinusSrcColor',7:'DstAlpha',8:'OneMinusDstAlpha',9:'SrcAlphaSaturate',10:'OneMinusSrcAlpha'}
+    if state['offsetFactor']['val']!=0 or state['offsetUnits']['val']!=0 or state['rtSeparateBlend']:
+        raise RuntimeError('Native separate blending or polygon offset requires measurement')
+    b=state['rtBlend0']
+    if b['blendOp']['val']!=0 or b['blendOpAlpha']['val']!=0 or b['colMask']['val']!=15:raise RuntimeError('Unmeasured native blend operation or color mask')
+    def bv(k):
+        v=b[k];return '['+v['name']+']' if v['name'] not in ['', '<noninit>'] else blend[int(v['val'])]
+    for k in ['srcBlend','destBlend']:
+        if b[k]!=b[k+'Alpha']:raise RuntimeError('Separate native alpha blend requires measurement')
+    text='Cull '+value('culling',{0:'Off',1:'Front',2:'Back'})+' ZWrite '+value('zWrite',{0:'Off',1:'On'})+' ZTest '+value('zTest',compare)+' Blend '+bv('srcBlend')+' '+bv('destBlend')+'\n'
+    if state['stencilOpFront']!=state['stencilOpBack']:raise RuntimeError('Separate native stencil faces require measurement')
+    op=state['stencilOpFront']
+    if any(op[k]['val']!=0 for k in ['fail','pass','zFail']):raise RuntimeError('Non-keep native stencil operation requires measurement')
+    text+='Stencil {Ref '+value('stencilRef',{i:str(i) for i in range(256)})+' ReadMask '+value('stencilReadMask',{i:str(i) for i in range(256)})+' WriteMask '+value('stencilWriteMask',{i:str(i) for i in range(256)})+' Comp '+compare[int(op['comp']['val'])]+' Pass Keep Fail Keep ZFail Keep}\n'
+    return text
+
+
+def structure(name,semantics):
+    return 'struct '+name+' {\n'+'\n'.join('float4 '+s+' : '+s+';' for s in sorted(semantics))+'\n};'
+
+
+def call(index,params,inputs='i',outputs='o'):
+    def argument(p):
+        if p['semantic']=='SV_IsFrontFace0':return '(face?1u:0u)'
+        result=(outputs if p['out'] else inputs)+'.'+p['semantic']
+        return result+('.'+'xyzw'[:p['columns']] if p['columns']<4 else '')
+    return 'native_'+str(index)+'('+','.join(argument(p) for p in params)+');'
+
+
+def generate():
+    selection=read(WORK/'config/shader-deferred-analysis.json')
+    out=WORK/'experiments/deferred-bindings'/now();out.mkdir(parents=True);sources=out/'sources';sources.mkdir()
+    write(WORK/'deferred-bindings-current.json',{'path':str(out.relative_to(ROOT))})
+    result={'success':False,'semantic_equivalence_proven':False,'PC_draw_validation_performed':False,'selection':selection,'programs':[]}
+    try:
+        standard=load_analysis(selection['standard'],-197252232775272061,'Hopoo Games/Deferred/Standard')
+        lighting=load_analysis(selection['lighting'],5,'Hidden/Internal-DeferredShading')
+        for key in ['d3dasm','hlsl']:
+            path,pin=PINS[key];tool=WORK/path
+            if run(['git','-C',tool,'rev-parse','HEAD']).stdout.decode().strip()!=pin or run(['git','-C',tool,'diff','HEAD','--']).stdout:raise RuntimeError('Recovery tool pin drift')
+        exe=WORK/PINS['d3dasm'][0]/'target/release/d3dasm'
+        if sha(exe)!=standard[4]['tool_binary_hashes'][str(exe.relative_to(WORK))]:raise RuntimeError('Native decompiler binary drift')
+        material_file=ROOT/selection['material_inventory'];material_file=material_file.resolve()
+        if WORK.resolve() not in material_file.parents or sha(material_file)!=selection['material_inventory_sha256']:raise RuntimeError('Measured material inventory drift')
+        rows=[x.split('|') for x in material_file.read_text().splitlines() if '|Hopoo Games/Deferred/Standard|' in x]
+        feature_sets=sorted({tuple(sorted(set(x[2].split(','))&set(FEATURES))) for x in rows})
+        if not rows or len(feature_sets)>128:raise RuntimeError('Unexpected native material closure')
+        cache={}
+        def bound(context,index):
+            tree,raw,records,programs,_=context;key=(tree['m_ParsedForm']['m_Name'],index)
+            if key in cache:return cache[key]
+            prefix='standard' if context is standard else 'lighting';stem=prefix+'-'+str(index);f=out/(stem+'.dxbc');f.write_bytes(programs[index]);hlsl=out/(stem+'.hlsl');asm=out/(stem+'.d3dasm');rebuilt=out/(stem+'.roundtrip.dxbc')
+            run([exe,f,'--emit','hlsl','--output',hlsl]);run([exe,f,'--emit','d3dasm','--output',asm]);run([exe,asm,'--assemble','--output',rebuilt])
+            if sha(f)!=sha(rebuilt):raise RuntimeError('Native roundtrip changed')
+            origin='d3dasm'
+            if 'not decompiled' in hlsl.read_text():
+                fallback=out/(stem+'-independent');fallback.mkdir();tool=WORK/PINS['hlsl'][0]/'RenderDoc_DXBC2HLSL_shader_view_files/v2'
+                for name in ['cmd_Decompiler.exe','d3dcompiler_46.dll']:shutil.copy2(tool/name,fallback/name)
+                shutil.copy2(f,fallback/f.name);env=os.environ.copy();env['CX_BOTTLE_PATH']=str(WORK/'toolchains/crossover-bottles')
+                wine=Path('/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine')
+                p=run([wine,'--bottle','shader-recovery','--no-gui','--workdir',fallback,fallback/'cmd_Decompiler.exe','-D','-V',fallback/f.name],env=env,check=False,timeout=120)
+                (fallback/'validation.stdout').write_bytes(p.stdout);(fallback/'validation.stderr').write_bytes(p.stderr)
+                if p.returncode or b'Decompiler validation pass succeeded' not in p.stdout+p.stderr:raise RuntimeError('Independent shadow-program HLSL validation failed: '+stem)
+                hlsl=fallback/(stem+'.hlsl');origin='HLSLDecompiler validated fallback; d3dasm sample-c instruction counterexample preserved'
+            layout=selected_layout(tree,raw,records[index]);write(out/(stem+'-layout.json'),layout)
+            function,params,declarations,_,reads=bind_hlsl(hlsl.read_text(),layout,'native_'+str(index))
+            data=(function,params,declarations,layout['textures']);cache[key]=data
+            result['programs'].append({'shader':prefix,'index':index,'dxbc_sha256':sha(f),'hlsl_sha256':sha(hlsl),'layout':layout,'constant_bindings':reads,'origin':origin,'native_roundtrip_identical':True,'keywords':records[index]['keywords']})
+            return data
+        def block(context,pairs,entry_directives=''):
+            inputs=set();varyings={'SV_POSITION0'};targets=set();definitions=[];declarations={};textures={};entry=[]
+            for condition,vi,fi in pairs:
+                v=bound(context,vi);f=bound(context,fi)
+                inputs.update(p['semantic'] for p in v[1] if not p['out']);varyings.update(p['semantic'] for p in v[1] if p['out']);targets.update(p['semantic'] for p in f[1] if p['out'])
+                if any(p['semantic'] not in varyings and p['semantic']!='SV_IsFrontFace0' for p in f[1] if not p['out']):raise RuntimeError('Native vertex/pixel signature mismatch')
+                declaration=dict(v[2]);declaration.update(f[2]);tex={x['name']:x for x in v[3]+f[3]}
+                prefix='#if '+condition+'\n' if condition else ''
+                declarations.update(declaration);textures.update(tex)
+                source=prefix+'\n'.join(kind+' '+name+';' for name,kind in sorted(declaration.items()))+'\n'+'\n'.join(('Texture2D' if t['dimension']==2 else 'TextureCube')+'<float4> '+t['name']+'; '+t['sampler_type']+' sampler'+t['name']+';' for t in tex.values())+'\n'+v[0]+'\n'+f[0]+'\n'
+                source+='Varyings vert(AppData i) {Varyings o=(Varyings)0;'+call(vi,v[1])+'return o;}\n'
+                face=', bool face : SV_IsFrontFace' if any(p['semantic']=='SV_IsFrontFace0' for p in f[1]) else ''
+                source+='Targets frag(Varyings i'+face+') {Targets o=(Targets)0;'+call(fi,f[1])+'return o;}\n'
+                if condition:source+='#endif\n'
+                entry.append(source)
+            return 'HLSLPROGRAM\n#pragma target 4.0\n#pragma vertex vert\n#pragma fragment frag\n'+entry_directives+'#include "UnityCG.cginc"\n'+structure('AppData',inputs)+'\n'+structure('Varyings',varyings)+'\n'+structure('Targets',targets)+'\n'+''.join(entry)+'ENDHLSL\n'
+        def pair(context,pass_index,keys):
+            matches=[]
+            for stage in ['progVertex','progFragment']:
+                found=[r['index'] for r in context[2] if r['kind']=='program' and r['pass_index']==pass_index and r['stage']==stage and r['keywords']==sorted(keys)]
+                if len(found)!=1:raise RuntimeError('Native feature/pass pair is ambiguous: '+str(keys))
+                matches.append(found[0])
+            return matches
+        variants=[];tree=standard[0];passes=tree['m_ParsedForm']['m_SubShaders'][0]['m_Passes']
+        shadow_features=set(k for r in standard[2] if r['kind']=='program' and r['pass_index']==1 for k in r['keywords'])&set(FEATURES)
+        for i,features in enumerate(feature_sets):
+            name='AndroidNativeStandard'+str(i);vi,fi=pair(standard,0,set(features)|{'LIGHTPROBE_SH','UNITY_HDR_ON'})
+            shader='// Private recovered candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'+name+'" {\nProperties {\n'+properties(tree)+'\n}\nSubShader {Tags {"RenderType"="Opaque"}\n'
+            shader+='Pass {Name "DEFERRED" Tags {"LightMode"="Deferred"}\n'+render_state(passes[0]['m_State'])+block(standard,[(None,vi,fi)])+'}\n'
+            shadow_pairs=[]
+            for keyword in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
+                svi,sfi=pair(standard,1,(set(features)&shadow_features)|{keyword});shadow_pairs.append(('defined('+keyword+')',svi,sfi))
+            shader+='Pass {Name "ShadowCaster" Tags {"LightMode"="ShadowCaster"}\n'+render_state(passes[1]['m_State'])+block(standard,shadow_pairs,'#pragma multi_compile_shadowcaster\n')+'}\n}}\n'
+            (sources/(name+'.shader')).write_text(shader);variants.append({'resource':name,'keywords':list(features),'vertex':vi,'fragment':fi})
+        light_tree=lighting[0];passes=light_tree['m_ParsedForm']['m_SubShaders'][0]['m_Passes'];allkeys=sorted(set(k for r in lighting[2] if r['kind']=='program' and r['pass_index']==0 for k in r['keywords']));pairs=[]
+        for keys in sorted({tuple(r['keywords']) for r in lighting[2] if r['kind']=='program' and r['pass_index']==0}):
+            vi,fi=pair(lighting,0,keys);condition=' && '.join(('defined('+k+')' if k in keys else '!defined('+k+')') for k in allkeys);pairs.append((condition,vi,fi))
+        shader='// Private recovered lighting candidate; no PC semantic-parity claim.\nShader "Porting Lab/AndroidNativeDeferredLighting" {Properties {\n'+properties(light_tree)+'\n}\nSubShader {\n'
+        shader+='Pass {Tags {"SHADOWSUPPORT"="true"}\n'+render_state(passes[0]['m_State'])+block(lighting,pairs,'#pragma multi_compile_lightpass\n#pragma multi_compile __ UNITY_HDR_ON\n')+'}\n'
+        vi,fi=pair(lighting,1,[]);shader+='Pass {\n'+render_state(passes[1]['m_State'])+block(lighting,[(None,vi,fi)])+'}\n}}\n';(sources/'AndroidNativeDeferredLighting.shader').write_text(shader)
+        write(sources/'AndroidNativeStandardVariants.json',{'features':FEATURES,'variants':variants,'source_material_count':len(rows),'scope':'Measured static material features, mono/noninstanced SH/HDR Standard and original custom lighting; other families/reflections/PC parity remain open'})
+        result.update(success=True,material_count=len(rows),variant_count=len(variants),source_sha256_by_file={p.name:sha(p) for p in sources.iterdir()},scope='Source program candidate, not Android execution or PC parity; original comparison-sampler fallback tool paths explicit')
+    except Exception as error:result['first_failure']=str(error);raise
+    finally:write(out/'receipt.json',result)
+    print(json.dumps({'success':True,'evidence':str(out.relative_to(ROOT)),'variants':result['variant_count']}));return out

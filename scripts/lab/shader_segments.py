@@ -8,8 +8,8 @@ from UnityPy.streams import EndianBinaryReader
 def variants(tree):
     result = {}
     keywords = tree['m_ParsedForm']['m_KeywordNames']
-    for subshader in tree['m_ParsedForm']['m_SubShaders']:
-        for p in subshader['m_Passes']:
+    for subshader_index,subshader in enumerate(tree['m_ParsedForm']['m_SubShaders']):
+        for pass_index,p in enumerate(subshader['m_Passes']):
             for stage in ['progVertex', 'progFragment']:
                 programs = p[stage]['m_PlayerSubPrograms'][3]
                 parameters = p[stage]['m_ParameterBlobIndices'][3]
@@ -18,7 +18,8 @@ def variants(tree):
                     index = program['m_BlobIndex']
                     value = {'index':index,'parameter_index':parameter,'gpu_type':program['m_GpuProgramType'],
                              'keywords':sorted(keywords[k] for k in program['m_KeywordIndices']),
-                             'pass':p['m_State']['m_Name'],'stage':stage}
+                             'pass':p['m_State']['m_Name'],'stage':stage,
+                             'subshader_index':subshader_index,'pass_index':pass_index}
                     if index in result and result[index]!=value:
                         raise RuntimeError('Original shader program identity has conflicting consumers')
                     result[index] = value
@@ -127,7 +128,13 @@ def selected_layout(tree, flattened, record):
     index = record['parameter_index']; offset,length,segment = struct.unpack_from('<iii',flattened,4+12*index)
     if segment!=0: raise RuntimeError('Parameter layout requires normalized segment offsets')
     native = parameter_layout(flattened[offset:offset+length])
-    p = next(p for s in tree['m_ParsedForm']['m_SubShaders'] for p in s['m_Passes'] if p['m_State']['m_Name']==record['pass'])
+    if 'subshader_index' in record and 'pass_index' in record:
+        p=tree['m_ParsedForm']['m_SubShaders'][record['subshader_index']]['m_Passes'][record['pass_index']]
+        if p['m_State']['m_Name']!=record['pass']:raise RuntimeError('Shader pass identity differs from native record')
+    else:
+        matches=[p for s in tree['m_ParsedForm']['m_SubShaders'] for p in s['m_Passes'] if p['m_State']['m_Name']==record['pass']]
+        if len(matches)!=1:raise RuntimeError('Shader pass name is ambiguous; native ordinal required')
+        p=matches[0]
     names = {i:n for n,i in p['m_NameIndices']}; common = p[record['stage']]['m_CommonParameters']
     buffers = {b['name']:b for b in native['buffers'] if b['name']}
     bindings = {b['name']:b['slot'] for b in native['bindings'] if b['kind']==1}
@@ -139,7 +146,8 @@ def selected_layout(tree, flattened, record):
         name = names[b['m_NameIndex']]
         if name not in buffers: raise RuntimeError('Common constant buffer absent from native parameter record')
         buffer = buffers[name]
-        if b['m_Size']!=buffer['size']: raise RuntimeError('Native/common shader buffer size disagreement')
+        if b['m_Size']!=buffer['size'] and not (b.get('m_IsPartialCB') and 0<b['m_Size']<buffer['size']):
+            raise RuntimeError('Native/common shader buffer size disagreement')
         additions = [{'name':names[v['m_NameIndex']],'type':v['m_Type'],'offset':v['m_Index'],
                       'rows':1,'columns':v['m_Dim'],'matrix':False,'array_size':v['m_ArraySize']} for v in b['m_VectorParams']]
         for v in b['m_MatrixParams']:
@@ -147,6 +155,8 @@ def selected_layout(tree, flattened, record):
             additions.append({'name':names[v['m_NameIndex']],'type':v['m_Type'],'offset':v['m_Index'],
                               'rows':4,'columns':4,'matrix':True,'array_size':v['m_ArraySize']})
         for variable in additions:
+            span=(64 if variable['matrix'] else variable['columns']*4)*max(1,variable['array_size'])
+            if variable['offset']+span>buffer['size']:raise RuntimeError('Common shader variable exceeds native buffer')
             previous = next((v for v in buffer['variables'] if v['name']==variable['name']),None)
             if previous and previous!=variable: raise RuntimeError('Native/common constant parameter disagreement')
             if not previous: buffer['variables'].append(variable)

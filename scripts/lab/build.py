@@ -50,7 +50,7 @@ def build(api='gles',force=False):
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
  if receipt.exists() and not force:
   r=read(receipt)
-  if r.get('success') and Path(r['apk']).exists() and sha(r['apk'])==r['apk_sha256']:
+  if r.get('success') and r.get('errors',0)==0 and Path(r['apk']).exists() and sha(r['apk'])==r['apk_sha256']:
    for name,h in r.get('payload',{}).items():
     source=dest/'payload'/name
     if not source.is_file() or sha(source)!=h:raise RuntimeError('Cached payload is missing or changed: '+name)
@@ -70,7 +70,7 @@ def build(api='gles',force=False):
   time.sleep(2)
  else:raise RuntimeError('Build timeout; inspect work/lab-editor.log; no cache stamp written')
  r=read(result)
- if not r['success']:raise RuntimeError(r['result'])
+ if not r['success'] or r.get('errors',0)>0:raise RuntimeError(r['result']+'; build errors='+str(r.get('errors',0)))
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
  key=digest({'inputs':inputs,'api':api,'editor':'2021.3.33f1','backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'

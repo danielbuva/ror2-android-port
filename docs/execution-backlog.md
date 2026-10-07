@@ -3773,3 +3773,41 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** First CodeDom ambiguity/unattributed setter reply and actual reimport/state/read-only confirmation; resulting APK/source/payload hashes and current-launch failures/captures. Do not infer activeColorSpace or PC draw semantics solely from configuration.
 - **STATE/JOURNAL UPDATES REQUIRED:** J367 scoped observation plus J362/J366 rollback;62 tests/fresh preflight/privacy/IP/Conventional Commit. Formal/Moon/normal and earned-Feather checkpoints unchanged.
 - **DEPENDENCIES:** J365/J366 native records/programs/payload, pinned EditorKit material knowledge/bundled Unity2021.3 API, actual original settings/materials. Standard deferred and PC draw capture remain separate work.
+
+
+## I09-J368 — Original Standard and custom lighting in the composed game
+
+- **ID:** I09-J368
+- **TITLE:** Recover measured material/shadow variants and their matching custom deferred light pass.
+- **STATUS:** Native analysis/generation and integrated route COMPLETE; visual result REJECTED. J369 tests the measured HDR mismatch.
+- **CONTEXT:** Source Standard custom GBuffer requires original custom lighting; current forward replacements cannot preserve that contract.
+- **OBSERVATION:** Source settings reference globalgamemanagers.assets object5;384 materials have59 effective native combinations. Original PC settings are HDR/FP16/deferred.
+- **HYPOTHESIS:** Native expressions plus exact resource/layout/render-state/variant bindings can execute in the integrated Android world without gameplay changes.
+- **TASK:** Run all four tools on identical directional/shadow/HDR Standard pairs, preserve disagreements; privately generate59 Standard shaders and matching lighting/shadow passes; retain source ramp importers, build/update/run the composed four-exit route.
+- **CONSTRAINTS:** Immutable original input, recovered math/assets/evidence private. Preserve45 accepted assemblies/six authored scenes/owned results/Moon and normal rollbacks. Reflections explicitly unavailable. No guessed shader math, feature stripping or semantic/parity inference.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored native reader/binder/generator, material/camera ownership, fixed bundle closure/error gate/tests; ignored sources/settings/build/runtime evidence.
+- **TEST COMMAND:** ./dev prototype --action shader-recovery --target deferred; --target deferred-shadow; --target standard-hdr; ./dev prototype --action shader-source-deferred; ./dev preflight; ./dev test; ./dev build --target vulkan --force; fixed work/j368 archive/install/integrated-route through existing environment.
+- **PASS CONDITION:**408 native programs/59 variants with exact source identities and bytecode roundtrips, independently validated fallback where required, actual zero-error Android build/owned update/four exits/cleanup. Capability result stays scoped to execution; visual failure remains rejected.
+- **FAILURE EVIDENCE TO CAPTURE:** Unsupported sample_c_lz, independent dithering width error, binding/import/compiler failures, Succeeded-with36-errors terminal rejected before installation, white-silhouette captures, actual Android tier settings and unchanged original hashes.
+- **STATE/JOURNAL UPDATES REQUIRED:** J368 source/tool/counterexample/runtime/visual split,68 tests/error gate, rollback/update receipts; no formal/Moon/normal/PC visual pointer advance.
+- **DEPENDENCIES:** J365/J367 native contracts, accepted original GraphicsSettings/materials, same pinned toolchains/prior art/exact editor. Matching PC draw capture remains unavailable.
+
+## I09-J369 — Source FP16 HDR settings in the same integrated pipeline
+
+- **ID:** I09-J369
+- **TITLE:** Restore the original HDR render-target contract and observe actual Android formats.
+- **STATUS:** Host/source contract and combined device route PASS; white-silhouette regression removed, broader PC visual/semantic acceptance OPEN.
+- **CONTEXT:** J368 runs but white silhouettes reject its visual acceptance.
+- **OBSERVATION:** Source _FlashColor is zero and actual source scene sky/sun/fog already active. Android3 tiers instead disable HDR/use R11G11B10/Forward while recovered programs encode the original HDR path.
+- **HYPOTHESIS:** Applying original HDR/FP16/deferred tiers restores the expected native encoding without changing shader expressions or original gameplay.
+- **TASK:** Save prior settings, set/read back all3 tiers through pinned idle editor, report actual camera target/GBuffer3 format, build/update the same app and inspect the combined four-exit route.
+- **CONSTRAINTS:** Native programs/45 assemblies/six scene sources unchanged; retain J367/J368 and formal/Moon/normal rollback. Exact Android results retained. Assists explicit, no full normal victory or PC semantic/visual parity claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing bounded camera report, ignored graphics tiers/attempt/build/install/run archives; evidence docs.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; fixed work/j369-settings.py/archive.py/install.py/integrated-route.py through the existing pinned environment.
+- **PASS CONDITION:** Actual zero-error terminal69.630seconds; real FP16 camera target/DeferredShading/Linear plus four original exits/zero PID errors/full cleanup/result retention. Reviewed removal of white silhouettes is a bounded improvement, not PC parity.
+- **FAILURE EVIDENCE TO CAPTURE:** Original/native/source/settings identities, actual target/graphics/GBuffer formats and first runtime/visual failure, all assists/captures and immutable prior settings.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record actual exit stats after completion, PC-reference differences and exact rollback/update status; never advance formal/normal/Moon/visual-parity gates for scoped rendering evidence.
+- **DEPENDENCIES:** J368 source-backed pipeline/counterexamples, exact-editor tier/HLSL contracts and original settings. No new shader math or platform/middleware boundary.
+
+
+**J369 exit:** J369 restores measured original HDR/FP16/deferred tier settings without altering recovered shader expressions. Forced Vulkan build69.630seconds/zero errors and68 host tests pass;45 accepted assemblies/six authored scene hashes/41 payload files retained. Same owned app updated once, dispatch17, APK SHA-256 `083e31402818d1c75f11dea2bc907295480680bd8f3822f9788e4d77424743bb`; original four Android result files/package inventory retained. Combined route completes four native boss/charge/reward/exits into Sky Meadow in434.615original Run seconds/67kills/21pickup messages/192HUD checks,393 native Standard and52 intersection keyword bindings. Nine actual-PID captures0errors/named Timeline warnings/full scoped pipeline/global cleanup/OLED asleep. Runtime directly reports Linear, DeferredShading, camera/GBuffer3 ARGBHalf and R16G16B16A16_SFloat. White silhouettes are removed in reviewed captures; source Snow/Terrain/other families, bright opaque lunar effects, Commando pose/palette and PC draw/semantic/visual parity remain unresolved. Invincibility/high damage/fast charge ON, movement/jump OFF; Moon/normal-victory/formal gates unchanged.

@@ -14,7 +14,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
  public void ObserveNativeAim(MovementBatchProbe.NovaReport report){
   if(!nativeAim)return;
   report.originalAimAnimator=nativeAim.isActiveAndEnabled;report.aimPitchCycle=nativeAnimator.GetFloat("aimPitchCycle");report.aimYawCycle=nativeAnimator.GetFloat("aimYawCycle");
-  report.modelForward=source.forward;report.characterMatteApproximation=true;
+  report.modelForward=source.forward;report.characterMatteApproximation=!AndroidNativeDeferredPresentation.report.available;
  }
  static Transform Copy(Transform s,Transform parent,Dictionary<Transform,Transform> map){var t=new GameObject(s.name).transform;t.gameObject.layer=30;t.SetParent(parent,false);t.localPosition=s.localPosition;t.localRotation=s.localRotation;t.localScale=s.localScale;map[s]=t;foreach(Transform child in s)Copy(child,t,map);return t;}
  public NovaDiagnosticDisplay(Transform model,AssetBundle bundle,string[] assets,GameObject floor,bool actual=false,RoR2.CharacterBody aimingBody=null){
@@ -33,7 +33,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   // PC references expose the temporary Blinn response as chrome-like. Retain
   // source palette/emission and stage lighting while omitting that unrecovered
   // character specular approximation. This is not the original deferred shader.
-  if(aimingBody){if(!actual||!material.HasProperty("_AndroidCharacterMatte"))throw new Exception("Character palette shader contract unavailable");material.SetFloat("_AndroidCharacterMatte",1);}
+  if(aimingBody&&!AndroidNativeDeferredPresentation.report.available){if(!actual||!material.HasProperty("_AndroidCharacterMatte"))throw new Exception("Character palette shader contract unavailable");material.SetFloat("_AndroidCharacterMatte",1);}
   var renderers=model.GetComponentsInChildren<Renderer>(true);
   foreach(var path in assets.Skip(2).Take(3)){
    var mesh=bundle.LoadAsset<Mesh>(path);if(!mesh)throw new Exception("Recovered display mesh missing");var src=renderers.Single(x=>x.name==mesh.name);var target=actual?src.transform:map[src.transform];Renderer renderer;

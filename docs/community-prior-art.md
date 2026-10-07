@@ -181,3 +181,10 @@ Unity2021.3 bundled UnityShaderVariables/UnityCG declarations provide current ma
 
 
 J367 checks actual native keyword/property source disagreement and original globalgamemanagers color setting before broad pipeline integration. EditorKit keyword/property metadata and bundled Unity2021.3 Material/PlayerSettings APIs inform the bridge; exact source shader variants/settings outrank numeric inspector state/exporter defaults.38 existing Unity material clones validate original keyword mappings, then the same composed route supplies actual52 bindings. All source/program/capture material remains private; no upstream implementation or original game logic copied to tracked code.
+
+
+## J368/J369 — Original custom GBuffer and exact-editor lowering
+
+Before extending native bindings, inspect the same pinned four recovery implementations, UnityPy native parameter records and the exact2021.3 bundled UnityShaderVariables/HLSLSupport declarations. EditorKit shader/material property knowledge still informs clone boundaries; shipped GraphicsSettings/program records override importer defaults. The original custom deferred light shader resolves through globalgamemanagers.assets, not the unrelated resource object with the same local ID. Source Standard packing requires that custom light pass; ordinary Unity deferred reflections are explicitly unavailable until their original pass is integrated.
+
+Independent decompilers disagree at actual sample_c_lz support and Standard dithering vector width. Preserve both failures and use only independently compiled shadow output as the scoped fallback. Unity's actual Vulkan cube-shadow convention supplies resource lowering after the original explicit-LOD form fails compilation. A Succeeded build with36 errors is rejected rather than installed. Real device white silhouettes then identify an HDR-tier mismatch; restore measured source FP16 settings and observe actual render targets. No prior-art or original expression is copied into tracked implementation; recovered source/program math stays private. See shader-recovery.md and journal J368/J369; PC draw/semantic/visual parity remains unproven.
