@@ -229,3 +229,10 @@ Before implementation, inspected pinned R2API.Items/ItemAPI.cs and R2API.Directo
 ### Composed Golem no-audio call — J391
 
 Before changing the passed audio boundary, inspected pinned R2API.Sound/SoundAPI.cs (`f539511e`): bank/runtime lifecycle depends on actual initialized native middleware, not successful managed registration. The current process's ChargeLaser.OnExit stack and exact shipped IL identify one direct UInt32 StopPlayingID outside the existing optional no-audio guards. Extend only that call using the inherited conditional stack-preserving adapter; original state/AI/effect cleanup and every other method body/type contract remain authoritative. No community/game implementation copied and no fabricated engine/service success.
+
+
+### J392 — Equipment breadth and completed-session resources
+
+Inspect pinned R2API.Items/ItemAPI.cs at f539511e for EquipmentDef registration timing, valid identity/pickup references and unavailable catalog handling; R2API.Addressables AddressReferencedAsset for explicit handle release. Exact current EquipmentSlot, CharacterBody and projectile fields determine the original missile/saw/black-hole/team-war-cry activation and buff dependencies. Four source definitions have no unlock/expansion requirement and remain ordinary native loot. GoldGat/PassiveHealing/ExtraEquipment stay comparison-only. No community or game implementation is copied into public source.
+
+J391 reports progressive same-process memory growth despite completed object/provider cleanup. Authored presentation teardown uses bundle Unload(false), retaining its loaded shaders/ramps while reloading that bundle each session. J392 restores source shader globals/pipeline and destroys owned cameras/materials before releasing that owned bundle with Unload(true); ordinary Unity unused-asset reclamation runs only after verified complete world/network teardown. Boundary resource counts distinguish retained assets from driver warmup; no live cache purge, gameplay rewrite or leak claim. Whole candidate validation remains required.

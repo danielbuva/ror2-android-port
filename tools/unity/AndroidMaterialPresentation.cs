@@ -81,5 +81,5 @@ public static class AndroidMaterialPresentation {
   }else if(terrain)report.terrain++;else report.surfaces++;
   bindings.Add(new Binding{material=copy,enhanced=shader,fallback=fallback});if(!report.enabled)copy.shader=fallback;
  }
- public static void Finish(){AndroidNativeDeferredPresentation.Finish();bindings.Clear();if(shaders){shaders.Unload(false);shaders=null;}}
+ public static void Finish(){AndroidNativeDeferredPresentation.Finish();bindings.Clear();if(shaders){shaders.Unload(true);shaders=null;}}
 }

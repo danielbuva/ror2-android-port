@@ -3743,3 +3743,27 @@ Private stage/build: work/experiments/scene-runtime/20261007T221221.719800Z; rou
 Same APK, no new installation and all five assists OFF: four genuine original StandardLosses, three fresh restarts, completed-session cleanup for every session, menu return and cold result reload pass in 238.030 wall seconds. Eleven actual-PID captures have zero errors. Exact original four Android result files are restored and hash-verified; Nova is stopped/asleep. Private evidence: work/experiments/scene-runtime/20261007T223016.493393Z.
 
 Playing-session PSS is 793,493 / 883,299 / 912,955 / 944,867 KiB, returned menu 942,307 KiB and cold reload 794,543 KiB. Phase timing, shader/content warmup and native caches differ; this does not yet prove a leak. Investigate actual retained-resource growth using the integrated session loop. All source/provider/network/UI cleanup assertions passed. No forced death, normal victory, stock profile or manual/Moon/PC acceptance is claimed.
+
+
+## J392 — Composed build rejected before dispatch
+
+Combined source/import checks pass for eight eligible original equipment definitions, 155 shaders and 986 material contracts; 88 host tests and preflight pass. The build rejects the expanded 35-provider recipe because the isolated editor retained the older build helper. Tracked guard changes were not copied into that editor. No APK installation or runtime acceptance occurs; J391 remains installed/rollback. Preserve terminal/build evidence. Copy the reviewed exact helper before the next attributed build rather than weakening the provider guard.
+
+Source review also shows original GravSphere intentionally has no ghost prefab: it renders through its own child renderers. Adjust the authored provider assertion to accept that measured source contract; do not invent a ghost or alter the original projectile. J393 repeats the same combined candidate with corrected staging and explicit projectile checks.
+
+
+J393 correction: the edited helper bytes matched, but Unity retained the previous compiled assembly after an authored compiler error. The real first error is missing System.Collections.Generic for the new session-resource list. MCP refresh returned idle and host snippets ran against old compiled types; idle was insufficient compilation evidence. Preserve both rejected build receipts and compiler lines, add the missing import, and require current compilation/schema evidence before the next build. This supersedes the earlier staging-only hypothesis; no APK from either failure was installed.
+
+
+J394 current compilation and loaded session-resource schema pass before build. Live preflight then rejects below 10 GiB before dispatch. Recent immutable archive clones preserve bytes but do not restore sufficient headroom; earlier receipted payload copies yield 134 further independent APFS clones and approximately 11.01 GiB live free space. All failed receipts, source paths, hashes, modes/times/xattrs and unrelated/original data are retained. The idle editor's ordinary unused-asset sweep changes allocation by only about 1 KiB; it is not the storage recovery. Fresh preflight passes and the guarded composed build proceeds.
+
+
+## J394 — Equipment breadth and completed-session asset lifetime
+
+Eight eligible original equipment types coexist with 29 eligible items and the supported source stage subsets. The composed assisted route completes four original exits into Sky Meadow in 417.012 Run seconds/57 kills, nine native Saw activations, 20 pickup notices and 169 HUD comparisons. Pause/8.366-second background recovery, full cleanup and 14 zero-error PID capture directories pass. CommandMissile/Blackhole/TeamWarCry actions remain unexercised. Invincibility/high damage/fast charge are ON for the route; movement/jump assists are OFF. No normal-run acceptance.
+
+The same APK passes four genuine original losses, three restarts, menu return and cold result reload with all assists OFF in 237.406 wall seconds; 11 PID captures have zero errors and exact original results are restored. Completed owned-session reclamation reduces hundreds of loaded GameObjects to nine; post-cleanup totals settle at 27 materials/24 shaders/44 textures/one baseline bundle. Native allocated memory settles near 96.9 MB, but managed/process growth remains: playing PSS 794,729 / 845,712 / 882,640 / 902,040 KiB; cold reload 799,245 KiB. J391 fourth-session PSS was 944,867 KiB, with timing/content/warmup differences. This comparison does not prove a leak fix or stable frame rate.
+
+155 shader imports, 986 material contracts, 88 host tests and the attributed zero-error 154.330-second Vulkan ARM64 build pass. Same app update 39 retains results/settings/package inventory; APK SHA-256 `d1fb0f20cece180241f67bd18c5807de5a781e51be5cf54f8e13ec05648304d5`. Original six scene hashes and 45 accepted assembly identities remain unchanged. All earlier app/shader/Moon/formal/normal rollback points remain intact. Exact rendering, stock platform profiles/unlocks, complete populations, normal victory and manual finale remain outside this acceptance.
+
+Private source/build: work/experiments/scene-runtime/20261007T225157.195329Z; route: work/experiments/native-deferred-runtime/20261007T230611.838158Z; genuine sessions: work/experiments/scene-runtime/20261007T231425.370874Z. Current compiled attempt and APK receipts determine attribution; inherited raw selection purpose text is separately annotated. Native saw icon/notice visually reviewed; existing blue surface, pose/palette and fog/lighting differences stay deferred. OLED asleep.

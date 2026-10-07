@@ -26,7 +26,9 @@ async def main():
    evidence['selection']=await call('set_active_instance',{'instance':matches[0]['id']})
    project=(await s.read_resource('mcpforunity://project/info')).model_dump(mode='json');evidence['project']=project
    if str(expected) not in json.dumps(project):raise RuntimeError('MCP selected project path mismatch')
-   if action=='build':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Build ARM64'})
+   if action=='build':
+    evidence['compilation']=await call('execute_code',{'action':'execute','code':'if(EditorApplication.isCompiling||EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed||BuildPipeline.isBuildingPlayer)throw new System.Exception("Current editor source is not compiled and idle; refuse stale build dispatch");return "currentEditorCompilation=true";'})
+    evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Build ARM64'})
    elif action=='presentation-payload':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Build Android Presentation Payload'})
    elif action=='character-motor-order':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Restore Character Motor Order'})
    elif action=='catalog-addresses':evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Inspect Catalog Addresses'})

@@ -3993,3 +3993,24 @@ Same candidate, all five assists OFF: two genuine original losses/StandardLoss, 
 
 
 I12-J387 exit: J391 passes the combined 29-item/five-commerce route, four original exits into Sky Meadow, an actual Golem spawn, Android background/foreground recovery and full owned cleanup. The failed support-count, buff-count, effect-owner and Golem audio attempts remain recorded separately. Missile is earned; Behemoth/DeathMark/ArmorReductionOnHit procs and healing purchases/wards remain unexercised. Four genuine losses, three restarts, menu return and cold result reload then pass with all assists OFF on the same APK; exact original results are restored. 88 host tests, 155 shader imports, 979 material contracts and the zero-error build pass. Same-process memory growth is the next measured stability uncertainty. Earlier rollback points and all normal/Moon/PC gates remain unchanged.
+
+
+## I13-J392 — Equipment breadth and repeated-session resource lifetime
+
+- **ID:** I13-J392
+- **TITLE:** Compose four additional original equipment types with completed-session reclamation.
+- **STATUS:** PASS — scoped J394 composed route/repeated-session resource acceptance; unexercised actions and process/managed growth remain open.
+- **CONTEXT:** Accepted J391 original content/background/four-loss candidate; manual Moon and PC visual work deferred.
+- **OBSERVATION:** Only four equipment types are available. J391 same-process playing PSS rises across four losses while cold reload returns near baseline; presentation bundle teardown retains loaded assets.
+- **HYPOTHESIS:** Source CommandMissile/Saw/Blackhole/TeamWarCry closures can coexist with original dispatch; releasing owned presentation assets at complete teardown can limit repeated-session retention.
+- **TASK:** Recover eligible equipment definitions, TeamWarCry buff and source projectile/effect providers; retain native pickup/actions/authority/cooldown. Restore owned shader-bundle lifetime and record boundary resource counts; reclaim only after complete world/network cleanup. Host-check together, build once, run the composed route and genuine restart loops.
+- **CONSTRAINTS:** No unlock/ownership fabrication, stock platform profile claim or copied gameplay algorithms. One owned APK; retain results/settings and prior rollbacks; source scene/assembly hashes unchanged. Skip manual navigation/PC guesses; OLED asleep when idle.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored equipment/source closure, equipment/proc provider boundaries, owned projectile/temporary-effect cleanup, presentation bundle and completed-session observations, current device orchestration/docs.
+- **TEST COMMAND:** Pinned MCP combined source/material/import checks, ./dev test, ./dev preflight, forced Vulkan build, receipted same-package update, whole four-exit route and genuine loss/restart/cold-result loop.
+- **PASS CONDITION:** Eligibility/provider/import checks and attributed zero-error build pass; actual integrated original gameplay/lifecycle remains stable with scoped cleanup/retention and zero current-PID errors. Report each equipment as registered versus activated. Compare same-phase memory/resource records; no leak/performance acceptance from totals alone.
+- **FAILURE EVIDENCE TO CAPTURE:** First exact source/provider/compiler/activation/native teardown/restart failure, current PID, resource counts, PSS phase, original result/settings hashes and immutable APK/payload receipt.
+- **STATE/JOURNAL UPDATES REQUIRED:** Separate failed attempts; coarse coverage, active assists and individual unexercised contracts. Public authored-only review/audit and Conventional Commit after scoped acceptance.
+- **DEPENDENCIES:** J391; pinned Items/Addressables and exact source contracts. No manual/PC gate.
+
+
+I13-J392 exit: J394 passes the combined eight-equipment/29-item/five-commerce candidate. Four original exits into Sky Meadow, nine native Saw activations, Android background recovery and cleanup coexist without captured PID errors. CommandMissile/Blackhole/TeamWarCry actions remain unexercised; registration is not individual action acceptance. Four genuine original losses, three restarts, menu return and cold result reload pass on the same APK with all assists OFF. Exact original results are restored. Completed asset counts plateau; process/managed memory still grow and require further attribution. The missing-import/stale compiled helper failures, rejected headroom checks and all previous rollbacks remain preserved. No normal victory, Moon, stock profile or PC parity gate advances.
