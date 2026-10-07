@@ -117,7 +117,7 @@ public sealed partial class MovementBatchProbe {
    Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
   }
   PrepareMoonSupport(cfg);
-  var coreLootEffects=PrepareWorldLootSupport(cfg);
+  var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).ToArray();
   var commerceEffect=PrepareCommerceSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();
   Check(wardSkin&&wardAnimator&&cfg.objectiveWardVisualAssets.Length==5,"Original ward visual contract missing");
@@ -372,8 +372,8 @@ public sealed partial class MovementBatchProbe {
   }
   return new SurfaceMaterialObservation{instanceId=material.GetInstanceID(),shaderId=shader.GetInstanceID(),passCount=material.passCount,keywords=material.shaderKeywords,instancing=material.enableInstancing,doubleSidedGi=material.doubleSidedGI,properties=properties.ToArray()};
  }
- IEnumerable<GenericPickupController> GrantableWorldPickups(CharacterBody player){
-  return EjectionPickups().Where(x=>{var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return def!=null&&def.itemIndex!=ItemIndex.None&&def.coinValue==0&&x.GetInteractability(player.GetComponent<Interactor>())==Interactability.Available;});
+ IEnumerable<GenericPickupController> GrantableWorldPickups(CharacterBody player,bool includeEquipment=false){
+  return EjectionPickups().Where(x=>{var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return def!=null&&(def.itemIndex!=ItemIndex.None||includeEquipment&&player.inventory.currentEquipmentIndex==EquipmentIndex.None&&EligibleWorldEquipment().Contains(EquipmentCatalog.GetEquipmentDef(def.equipmentIndex)))&&def.coinValue==0&&x.GetInteractability(player.GetComponent<Interactor>())==Interactability.Available;});
  }
  bool ObjectiveWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   if(!worldTeleporter||!r.objective.ready)return false;

@@ -7,7 +7,7 @@ import hashlib
 CORE_LOOT = ['PersonalShield', 'NearbyDamageBonus', 'StunChanceOnHit', 'Feather', 'Seed',
              'SprintOutOfCombat', 'SprintArmor', 'AlienHead',
              'UtilitySkillMagazine', 'BarrierOnOverHeal', 'SlowOnHit',
-             'Tooth', 'BonusGoldPackOnKill', 'ArmorPlate', 'StickyBomb', 'ExplodeOnDeath']
+             'Tooth', 'BonusGoldPackOnKill', 'ArmorPlate', 'StickyBomb', 'ExplodeOnDeath', 'BarrierOnKill', 'Bandolier', 'Thorns']
 CORE_LOOT_SUPPORT = [
     ('ShieldBreakEffect', '418e4945609754b41b41aafde8edfb87',
      'Prefabs/Effects/ShieldBreakEffect', 'Assets/RoR2/Base/Common/VFX/Shield/ShieldBreakEffect.prefab'),

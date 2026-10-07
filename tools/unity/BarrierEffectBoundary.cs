@@ -36,7 +36,7 @@ public sealed partial class MovementBatchProbe {
   Check(barrierPrefab&&barrierPrefab.name=="BarrierEffect"&&barrierPrefab.GetComponentsInChildren<Component>(true).All(x=>x),"Original barrier prefab/component identity");
   var effect=barrierPrefab.GetComponent<TemporaryVisualEffect>();
   Check(effect&&effect.visualTransform&&effect.enterComponents.Length>0&&effect.exitComponents.Length>0&&effect.enterComponents.All(x=>x)&&effect.exitComponents.All(x=>x),"Original barrier serialized effect references");
-  Check(AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==BarrierBundle&&b.GetAllAssetNames().Contains(cfg.barrierEffectAsset)),"Barrier provider bundle identity");r.barrierPrefabLoaded=true;
+  Check(AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==BarrierBundle&&b.GetAllAssetNames().Contains(cfg.barrierEffectAsset,StringComparer.OrdinalIgnoreCase)),"Barrier provider bundle identity");r.barrierPrefabLoaded=true;
   barrierHandle=LegacyResourcesAPI.LoadAsync<GameObject>(BarrierPath);
   float deadline=Time.realtimeSinceStartup+5;while(!barrierHandle.IsDone&&Time.realtimeSinceStartup<deadline)yield return null;yield return null;
   Check(barrierHandle.IsDone&&barrierHandle.Status==AsyncOperationStatus.Succeeded&&barrierHandle.Result==barrierPrefab&&LegacyResourcesAPI.ActiveCount==0,"Original async barrier identity/callback balance");

@@ -10,6 +10,7 @@ public sealed partial class MovementBatchProbe {
  public bool skipOfflineMenu;
  NovaInputBridge.Mapping offlineMenuMapping;
  IEnumerator AwaitOfflineRunStart(Result cfg){
+  if(cfg.integratedWorld&&cfg.integratedResults)PrepareOfflineSettings();
   if((!r.freePlay&&!(cfg.recoveredHudEnabled&&r.id.EndsWith("-bringup")))||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu)yield break;
   offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
   offlineMenuMapping.Validate(r.attempt);PrepareRecoveredMenu();offlineStartVisible=true;r.phase="offline-start-menu";Save();

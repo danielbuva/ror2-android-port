@@ -23,7 +23,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldReport {
   public int nativeEffectSourceRenderers,nativeEffectSourceMaterials;public ObjectiveRendererObservation[] nativeEffectViews;
 
-  public NovaThirdPersonView.Report camera;
+  public NovaThirdPersonView.Report camera;public WorldEquipmentReport equipment;
   public bool lunarDefinition,lunarCurrencyAvailable;
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
@@ -109,16 +109,16 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  GameObject[] PrepareWorldLootSupport(Result cfg){
   if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7||cfg.worldLootSupportPaths.Length==9,"Core loot support contract length changed");
+  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7||cfg.worldLootSupportPaths.Length==9||cfg.worldLootSupportPaths.Length==10,"Core loot support contract length changed");
   r.phase="integrated-core-loot-support";Save();var effects=new List<GameObject>();
   foreach(var path in cfg.worldLootSupportPaths){
    int effectStart=effects.Count;var presentationRoots=new List<GameObject>();
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Core loot provider location absent: "+path);var source=objectiveSupportSources[index];
    bool shield=path=="Prefabs/Effects/ShieldBreakEffect",feather=path=="Prefabs/Effects/FeatherEffect",slow=path=="Prefabs/TemporaryVisualEffects/SlowDownTime",healthPack=path=="Prefabs/NetworkedObjects/HealPack",moneyPack=path=="Prefabs/NetworkedObjects/BonusMoneyPack";
-   bool stun=path=="Prefabs/Effects/ImpactEffects/ImpactStunGrenade";
+   bool stun=path=="Prefabs/Effects/ImpactEffects/ImpactStunGrenade",diamond=path=="Prefabs/Effects/ImpactEffects/DiamondDamageBonusEffect";
    bool sticky=path=="Prefabs/Projectiles/StickyBomb",wisp=path=="Prefabs/NetworkedObjects/WilloWispDelay";
-   Check(shield||feather||slow||healthPack||moneyPack||stun||sticky||wisp||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
-   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":slow?"SlowDownTime":healthPack?"HealPack":moneyPack?"BonusMoneyPack":stun?"ImpactStunGrenade":sticky?"StickyBomb":wisp?"WilloWispDelay":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
+   Check(shield||feather||slow||healthPack||moneyPack||stun||sticky||wisp||diamond||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
+   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":slow?"SlowDownTime":healthPack?"HealPack":moneyPack?"BonusMoneyPack":stun?"ImpactStunGrenade":diamond?"DiamondDamageBonusEffect":sticky?"StickyBomb":wisp?"WilloWispDelay":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
    if(slow||healthPack||moneyPack||stun||sticky)worldNativeLootLeaseBaselines.Add(index,(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]));
    if(feather){
     // Original ProcessJump loads this provider asset on each bonus jump.
@@ -127,13 +127,13 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
     worldFeatherReferenceBaseline=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]);
     worldFeatherJumped=()=>{if(worldPlayer.characterMotor.jumpCount>worldPlayer.baseJumpCount)r.world.featherJumps++;};worldPlayer.onJump+=worldFeatherJumped;
    }else if(!healthPack&&!moneyPack&&!stun&&!sticky){
-    var type=wisp?typeof(GlobalEventManager).GetNestedType("CommonAssets",BindingFlags.Public):(shield?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
-    var field=type.GetField(wisp?"explodeOnDeathPrefab":shield?"shieldBreakEffectPrefab":slow?"slowDownTimeTempEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+    var type=wisp?typeof(GlobalEventManager).GetNestedType("CommonAssets",BindingFlags.Public):(shield||diamond?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
+    var field=type.GetField(wisp?"explodeOnDeathPrefab":shield?"shieldBreakEffectPrefab":diamond?"diamondDamageBonusImpactEffectPrefab":slow?"slowDownTimeTempEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
     Check(field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Unowned core loot effect slot: "+path);
     worldLootEffectSlots.Add(field,(GameObject)field.GetValue(null));field.SetValue(null,source);
     Check((GameObject)field.GetValue(null)==source,"Core loot source binding failed: "+path);
    }
-   if(shield||feather||stun){Check(source.GetComponent<EffectComponent>(),"Original core loot EffectComponent missing: "+path);effects.Add(source);}
+   if(shield||feather||stun||diamond){Check(source.GetComponent<EffectComponent>(),"Original core loot EffectComponent missing: "+path);effects.Add(source);}
    else if(healthPack){var pickup=source.GetComponentInChildren<HealthPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<NetworkIdentity>()&&pickup.pickupEffect&&pickup.pickupEffect.GetComponent<EffectComponent>(),"Original heal pack linkage missing");effects.Add(pickup.pickupEffect);}
    else if(moneyPack){var pickup=source.GetComponentInChildren<MoneyPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<NetworkIdentity>(),"Original money pack linkage missing");if(pickup.pickupEffectPrefab){Check(pickup.pickupEffectPrefab.GetComponent<EffectComponent>(),"Original money effect linkage missing");effects.Add(pickup.pickupEffectPrefab);}}
    else if(sticky){var controller=source.GetComponent<RoR2.Projectile.ProjectileController>();var explosion=source.GetComponent<RoR2.Projectile.ProjectileImpactExplosion>();Check(controller&&controller.ghostPrefab&&explosion&&explosion.impactEffect&&source.GetComponent<NetworkIdentity>(),"Original sticky projectile/ghost/blast contract missing");effects.Add(explosion.impactEffect);presentationRoots.Add(controller.ghostPrefab);}
@@ -163,6 +163,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var effect=(TemporaryVisualEffect)field.GetValue(body);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);
  }
  void CleanupWorldLootSupport(){
+  CleanupOfflineSettingsPause();
+  CleanupWorldEquipment();
   if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);
   foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
   if(worldFeatherJumped!=null){if(worldPlayer)worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
@@ -195,7 +197,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   RoR2.ContentManagement.ContentManager._miscPickupDefs=new MiscPickupDef[]{worldLunarCoin};RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;StaticCall(typeof(MiscPickupCatalog),"Init");
   var lunarPickup=worldLunarCoin.CreatePickupDef();
   var moonEquipmentPickups=cfg.moonMission?new[]{RoR2Content.Equipment.AffixLunar.CreatePickupDef()}:new PickupDef[0];
-  PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).Concat(moonEquipmentPickups).Concat(new[]{lunarPickup}).ToArray());
+  PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).Concat(moonEquipmentPickups).Concat(EligibleWorldEquipment().Select(x=>x.CreatePickupDef())).Concat(new[]{lunarPickup}).ToArray());
   if(cfg.moonMission)Check(PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex))==moonEquipmentPickups[0],"Original Lunar equipment pickup metadata missing");
   r.world.lunarDefinition=MiscPickupCatalog.GetMiscDef(worldLunarCoin.miscPickupIndex)==worldLunarCoin&&PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex)==lunarPickup.pickupIndex&&lunarPickup.attemptGrant.Method.DeclaringType==typeof(LunarCoinDef);
   Check(r.world.lunarDefinition&&!Util.LookUpBodyNetworkUser(player),"Original lunar definition or unavailable currency contract changed");r.world.lunarCurrencyAvailable=false;
@@ -207,7 +209,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Length>0){
    previousWorldAvailableItems=Run.instance.availableItems;previousWorldAvailableEquipment=Run.instance.availableEquipment;
    worldAvailableItems=ItemMask.Rent();worldAvailableEquipment=EquipmentMask.Rent();Run.instance.availableItems=worldAvailableItems;Run.instance.availableEquipment=worldAvailableEquipment;
-   foreach(var item in worldLootDefinitions)worldAvailableItems.Add(item.itemIndex);
+   foreach(var item in worldLootDefinitions)worldAvailableItems.Add(item.itemIndex);foreach(var def in EligibleWorldEquipment())worldAvailableEquipment.Add(def.equipmentIndex);
    if(cfg.teleporterLoop)worldAvailableItems.Add(RoR2Content.Items.Knurl.itemIndex);
    Run.instance.BuildDropTable();
   }else{
@@ -239,7 +241,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   yield return null;Check(PauseStopController.instance&&!PauseStopController.instance.isPaused,"Integrated unpaused context missing");
   worldDriver=player.GetComponent<InteractionDriver>();Check(worldDriver&&(!worldDriver||!worldDriver.enabled)&&!worldDriver.interactableOverride,"Unowned integrated interaction driver");
   if(!player.equipmentSlot.characterBody)Call(player.equipmentSlot,"Start");Call(player.equipmentSlot,"UpdateInventory");
-  Check(player.equipmentSlot.equipmentIndex==EquipmentIndex.None&&!player.equipmentSlot.enabled,"Integrated equipment must remain unavailable/ungranted");
+  Check(player.equipmentSlot.equipmentIndex==EquipmentIndex.None&&!player.equipmentSlot.enabled,"Integrated equipment must start empty/ungranted");PrepareWorldEquipment(player,cfg);
   if(DriverField(worldDriver,"networkIdentity")==null)Call(worldDriver,"Awake");
   worldStaging=new GameObject("Inactive offline content staging");worldStaging.SetActive(false);
   var chestSource=artifactBundle.LoadAsset<GameObject>(cfg.chestAsset);OwnChestAnimationSources(chestSource.GetComponent<ModelLocator>().modelTransform);
@@ -248,7 +250,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var barrelOffsets=new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)};
   foreach(var offset in barrelOffsets){var obj=CreateWorldInteractable(artifactBundle.LoadAsset<GameObject>(cfg.barrelAsset),origin+offset,false);if(obj)worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
   foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=CreateWorldInteractable(chestSource,origin+offset,true);if(obj)worldChests.Add(obj.GetComponent<ChestBehavior>());}
-  Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Integrated layout has insufficient walkable source interactables");
+  AddEquipmentBarrel(cfg,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Integrated layout has insufficient walkable source interactables");
   r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;r.world.lootReady=true;
   worldInteraction=(actor,component,obj)=>{if(actor!=worldDriver.interactor)return;if(worldObjects.Contains(obj))r.world.target=obj.name;};GlobalEventManager.OnInteractionsGlobal+=worldInteraction;
   worldDriver.enabled=true;yield return null;Call(activeBodyClient,"Update");
@@ -351,7 +353,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
-  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);
+  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);ObserveWorldEquipment();
   if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
@@ -363,15 +365,15 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  void IntegratedWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   // Explicit automation for integrated validation only; direct app launches use physical controls.
-  bridge.diagnosticInput=!worldManualTakeover;r.world.manualTakeover=worldManualTakeover;
+  bridge.touchEquipment|=worldEquipmentTouch;worldEquipmentTouch=false;bridge.diagnosticInput=!worldManualTakeover;r.world.manualTakeover=worldManualTakeover;
   if(worldManualTakeover){r.world.diagnosticInput=false;return;}
-  r.world.diagnosticInput=true;bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
+  r.world.diagnosticInput=true;WorldEquipmentStimulus(bridge,elapsed);bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
   if(worldObjective==0){var barrel=worldBarrels.FirstOrDefault(x=>x&&!x.Networkopened);if(barrel)target=barrel.gameObject;else worldObjective=1;}
-  if(worldObjective==3&&elapsed-stageEnteredAt<105&&worldChests.Any(x=>x&&!x.NetworkisChestOpened&&player.master.money>=x.GetComponent<PurchaseInteraction>().cost))worldObjective=1;
-  if(worldObjective==1){var chest=worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
-  if(worldObjective>0&&GrantableWorldPickups(player).Any())worldObjective=2;
-  if(worldObjective==2){var pickup=GrantableWorldPickups(player).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline>=r.world.openedChests)worldObjective=3;}
+  if(worldObjective==3&&elapsed-stageEnteredAt<105&&NextAutomaticWorldChest(player)&&player.master.money>=NextAutomaticWorldChest(player).GetComponent<PurchaseInteraction>().cost)worldObjective=1;
+  if(worldObjective==1){var chest=NextAutomaticWorldChest(player);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
+  if(worldObjective>0&&GrantableWorldPickups(player,true).Any())worldObjective=2;
+  if(worldObjective==2){var pickup=GrantableWorldPickups(player,true).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline>=r.world.openedChests)worldObjective=3;}
   if(worldObjective==3&&elapsed-stageEnteredAt<65){var commerce=AffordableWorldCommerce();if(commerce)target=commerce;}
   r.world.objective=worldObjective==0?"Collect original barrel rewards":worldObjective==1?"Purchase original chest":worldObjective==2?"Collect naturally ejected item":"Survive original director combat";
   if(r.teleporterLoop&&elapsed-stageEnteredAt>65){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
@@ -544,13 +546,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();
  }
  void DrawIntegratedWorld(){
+  DrawWorldEquipment();
   var world=r.world;if(world==null||!world.ready)return;
   DrawDebugAcceleration();
   DrawMoonPillarMarkers();
   if(r.enhancedPresentation&&(!recoveredHud||debugPanel)&&GUI.Button(new Rect(recoveredHud?20:Screen.width-270,555,250,42),AndroidMaterialPresentation.report.enabled?"Graphics: approximation":"Graphics: legacy preview"))AndroidMaterialPresentation.SetEnabled(!AndroidMaterialPresentation.report.enabled);
   if(r.id.EndsWith("-bringup")&&world.health>0&&GUI.Button(new Rect(recoveredHud?20:Screen.width-210,recoveredHud?Screen.height-195:20,190,48),worldManualTakeover?"Resume auto route":"Take control")){
    var bridge=worldPlayer?worldPlayer.GetComponent<NovaInputBridge>():null;
-   if(bridge){bridge.Neutral();worldManualTakeover=!worldManualTakeover;bridge.diagnosticInput=!worldManualTakeover;world.manualTakeover=worldManualTakeover;world.diagnosticInput=!worldManualTakeover;Save();}
+   if(bridge){bridge.Neutral();worldManualTakeover=!worldManualTakeover;bridge.touchEquipment|=worldEquipmentTouch;worldEquipmentTouch=false;bridge.diagnosticInput=!worldManualTakeover;world.manualTakeover=worldManualTakeover;world.diagnosticInput=!worldManualTakeover;Save();}
   }
   var style=new GUIStyle(GUI.skin.label){fontSize=22};var shadow=new GUIStyle(style);shadow.normal.textColor=Color.black;
   if(recoveredHud&&world.health>0){GUI.Label(new Rect(20,Screen.height-30,Screen.width-40,26),"Offline composition · source UI/shader approximation · audio unavailable");return;}

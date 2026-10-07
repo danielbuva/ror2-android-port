@@ -14,6 +14,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
  [Serializable] public class Observation {
   public bool ready,menuVisible,menuReferenceHidden,cleaned;public int frames,items,skillSlots;public float health,shield,barrier,level,bossHealth,charge;
   public uint money;public float menuStartX,menuStartY;public int screenWidth,screenHeight;public string stage,objective,scope="Source layout/assets with owned Android data bindings; mobile font/UI shader approximation, not stock startup or PC parity.";
+  public string equipment;public float equipmentCooldown;public int equipmentStock;
   public int buffs,peakBuffs,buffUpdates,pickupNotifications,notificationClockTicks;public bool nativeNotificationQueue,feedbackCleaned,ownedNotificationScheduler;public float notificationT,notificationFixedTime;public string notification;
   public float notificationFlashTime,notificationFlashAlpha;
  }
@@ -23,7 +24,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
  public RectTransform experienceFill;public Image healthFill,shieldFill,barrierFill,bossFill;
  public GameObject bossContainer;public SkillView[] skills;public RectTransform inventoryRoot;
  public RecoveredHudPresentation itemTemplate;public RawImage itemImage;public TMP_Text itemCount;
- public Button startButton,quitButton;public bool isMenu;
+ public RawImage equipmentImage;public TMP_Text equipmentCooldown,equipmentStock;public GameObject equipmentReady;public Button startButton,quitButton;public bool isMenu;
  public RoR2.UI.CrosshairController.SpritePosition[] spreadPositions;public RawImage[] spreadImages;public float spreadAngle,minSpreadAlpha,maxSpreadAlpha;
  readonly Dictionary<ItemIndex,RecoveredHudPresentation> itemViews=new Dictionary<ItemIndex,RecoveredHudPresentation>();
  static Dictionary<string,string> strings;
@@ -59,6 +60,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   var slots=new[]{body.skillLocator.primary,body.skillLocator.secondary,body.skillLocator.utility,body.skillLocator.special};
   float spread=Mathf.Clamp01(body.spreadBloomAngle/Mathf.Max(.001f,spreadAngle));foreach(var part in spreadPositions)part.target.localPosition=Vector3.Lerp(part.zeroPosition,part.onePosition,spread);foreach(var image in spreadImages)image.color=new Color(1,1,1,Mathf.Lerp(minSpreadAlpha,maxSpreadAlpha,spread));
   for(int i=0;i<skills.Length;i++){var slot=slots[i];var view=skills[i];view.icon.sprite=slot?slot.icon:null;view.icon.enabled=slot&&slot.icon;view.cooldown.text=slot&&slot.stock==0?Mathf.CeilToInt(slot.cooldownRemaining).ToString():"";view.stock.text=slot&&slot.maxStock>1?slot.stock.ToString():"";if(view.ready)view.ready.SetActive(slot&&slot.IsReady());}
+  if(equipmentImage){var slot=body.equipmentSlot;var equipmentDef=EquipmentCatalog.GetEquipmentDef(body.inventory.currentEquipmentIndex);equipmentImage.texture=equipmentDef?equipmentDef.pickupIconTexture:null;equipmentImage.enabled=equipmentDef;equipmentCooldown.text=equipmentDef&&slot.stock==0?Mathf.CeilToInt(slot.cooldownTimer).ToString():"";equipmentStock.text=equipmentDef&&slot.maxStock>1?slot.stock.ToString():"";if(equipmentReady)equipmentReady.SetActive(equipmentDef&&slot.stock>0);report.equipment=equipmentDef?equipmentDef.name:"";report.equipmentCooldown=slot.cooldownTimer;report.equipmentStock=slot.stock;}
   var seen=new HashSet<ItemIndex>();
   foreach(var index in body.inventory.itemAcquisitionOrder){int count=body.inventory.GetItemCount(index);if(count<=0)continue;seen.Add(index);RecoveredHudPresentation icon;if(!itemViews.TryGetValue(index,out icon)){icon=Instantiate(itemTemplate,inventoryRoot,false);icon.name="Owned item icon "+index;icon.gameObject.SetActive(true);itemViews.Add(index,icon);}var item=ItemCatalog.GetItemDef(index);icon.itemImage.texture=item?item.pickupIconTexture:null;icon.itemCount.gameObject.SetActive(count>1);icon.itemCount.text=count>1?"x"+count:"";}
   foreach(var pair in itemViews)pair.Value.gameObject.SetActive(seen.Contains(pair.Key));

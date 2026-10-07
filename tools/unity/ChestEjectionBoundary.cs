@@ -22,8 +22,13 @@ public sealed partial class MovementBatchProbe {
  GameObject chestEjectionDroplet,chestEjectionModel;PickupDropletController chestEjectionController;
  IEnumerable<PickupDropletController> EjectionDroplets(){return Resources.FindObjectsOfTypeAll<PickupDropletController>().Where(x=>x.gameObject.scene.IsValid());}
  IEnumerable<GenericPickupController> EjectionPickups(){return Resources.FindObjectsOfTypeAll<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()&&x.gameObject.activeInHierarchy);}
- void OwnChestAnimationSources(Transform model){
-  var animator=model.GetComponent<Animator>();var clip=animator.runtimeAnimatorController.animationClips.First(x=>x.name=="chestArmature|Open");chestEjectionSources=clip.events.Where(x=>x.functionName=="CreatePrefab").Select(x=>x.objectReferenceParameter as GameObject).Distinct().ToArray();chestEjectionPools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);chestEjectionCache=(Dictionary<GameObject,bool>)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);Check(chestEjectionSources.All(x=>x&&!chestEjectionPools.ContainsKey(x)&&!chestEjectionCache.ContainsKey(x)),"Unowned effect pool/cache before source chest activation");ownsChestAnimationSources=true;
+ void OwnChestAnimationSources(Transform model,string openingClip="chestArmature|Open"){
+  var animator=model.GetComponent<Animator>();Check(animator&&animator.runtimeAnimatorController,"Original interactable animator absent");var clips=animator.runtimeAnimatorController.animationClips.Where(x=>x.name==openingClip).Distinct().ToArray();Check(clips.Length>0,"Original interactable opening clip absent: "+openingClip);
+  var sources=clips.SelectMany(x=>x.events).Where(x=>x.functionName=="CreatePrefab").Select(x=>x.objectReferenceParameter as GameObject).Distinct().ToArray();var previous=chestEjectionSources??new GameObject[0];
+  var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);var cache=(Dictionary<GameObject,bool>)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
+  Check(!ownsChestAnimationSources||ReferenceEquals(pools,chestEjectionPools)&&ReferenceEquals(cache,chestEjectionCache),"Original chest effect context changed");
+  Check(sources.All(x=>x&&(previous.Contains(x)||!pools.ContainsKey(x)&&!cache.ContainsKey(x))),"Unowned effect pool/cache before source interactable activation");
+  chestEjectionSources=previous.Concat(sources).Distinct().ToArray();chestEjectionPools=pools;chestEjectionCache=cache;ownsChestAnimationSources=true;
  }
  void PrepareChestEjection(CharacterBody player,ChestBehavior chest,Transform model,int rolled){
   var report=r.chestEjection;report.rolledPickup=rolled;report.purchase.scope=report.scope;Check(r.defaultPickup.callbackMatched&&r.pickupDropletCollision.cleaned&&!EjectionDroplets().Any()&&!EjectionPickups().Any(),"Accepted original source leases and empty loot context required");

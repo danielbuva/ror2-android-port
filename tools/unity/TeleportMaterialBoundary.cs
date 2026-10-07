@@ -43,7 +43,7 @@ public sealed partial class MovementBatchProbe {
  }
  void AcceptTeleportMaterial(Material material,Result cfg){
   Check(material&&material.name=="matTPInOut"&&material.shader,"Actual typed teleport material missing");
-  Check(AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==TeleportBundle&&b.GetAllAssetNames().Contains(cfg.teleportMaterialAsset)),"Provider did not load the separately owned material bundle");
+  Check(AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==TeleportBundle&&b.GetAllAssetNames().Contains(cfg.teleportMaterialAsset,StringComparer.OrdinalIgnoreCase)),"Provider did not load the separately owned material bundle");
   r.teleportMaterialLoaded=true;r.teleportMaterialName=material.name;r.teleportShader=material.shader.name;
  }
  void ObserveTeleportOverlays(CharacterBody body){

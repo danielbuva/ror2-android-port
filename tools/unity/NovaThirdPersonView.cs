@@ -25,7 +25,7 @@ public sealed class NovaThirdPersonView {
  }
  public void Look(Vector2 stick){
   report.physicalFrames++;if(stick.sqrMagnitude>0)report.lookFrames++;
-  yaw+=stick.x*180*Time.deltaTime;pitch-=stick.y*120*Time.deltaTime;
+  yaw+=stick.x*180*Time.deltaTime*AndroidOfflineSettings.current.lookSensitivity;pitch-=stick.y*120*Time.deltaTime*AndroidOfflineSettings.current.lookSensitivity*(AndroidOfflineSettings.current.invertY?-1:1);
   Place();
  }
  public Vector3 Movement(Vector2 stick){

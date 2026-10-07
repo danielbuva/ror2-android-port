@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   ownedNavigationTick=(Action)Delegate.CreateDelegate(typeof(Action),typeof(BroadNavigationSystem).GetMethod("StaticUpdate",BindingFlags.NonPublic|BindingFlags.Static));
  }
  int NavigationAgentCount(){return navigationSystem==null?0:(int)typeof(BroadNavigationSystem).GetProperty("agentCount",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(navigationSystem,null);}
- void FixedUpdate(){TickOriginalRunClock();TickIntegratedResults();if(ownedNavigationTick==null)return;try{ownedNavigationTick();r.director.navigationTicks++;}catch(Exception e){r.director.navigationError=e.ToString();ownedNavigationTick=null;Save();}}
+ void FixedUpdate(){TickOriginalRunClock();TickWorldEquipment();TickIntegratedResults();if(ownedNavigationTick==null)return;try{ownedNavigationTick();r.director.navigationTicks++;}catch(Exception e){r.director.navigationError=e.ToString();ownedNavigationTick=null;Save();}}
  void ObserveOriginalNavigation(){
   if(r.director==null||navigationSystem==null)return;r.director.navigationAgents=NavigationAgentCount();r.director.navigationAgentPeak=Math.Max(r.director.navigationAgentPeak,r.director.navigationAgents);r.director.navigationTime=(float)typeof(BroadNavigationSystem).GetField("localTime",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(navigationSystem);Check(string.IsNullOrEmpty(r.director.navigationError),"Original navigation scheduler failed: "+r.director.navigationError);
   if(enemyAI){var output=enemyAI.broadNavigationAgent.output;r.director.navigationNext|=output.nextPosition.HasValue;r.director.navigationReachable|=output.targetReachable;r.director.navigationPathUpdate=output.lastPathUpdate;}
