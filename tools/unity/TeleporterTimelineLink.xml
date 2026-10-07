@@ -1,0 +1,10 @@
+<linker>
+  <!-- The separately built original teleporter tutorial serializes these four
+       types in 21 records. The player linker cannot infer bundle-only roots. -->
+  <assembly fullname="Unity.Timeline">
+    <type fullname="UnityEngine.Timeline.TimelineAsset" preserve="all" />
+    <type fullname="UnityEngine.Timeline.ControlTrack" preserve="all" />
+    <type fullname="UnityEngine.Timeline.ControlPlayableAsset" preserve="all" />
+    <type fullname="UnityEngine.Timeline.MarkerTrack" preserve="all" />
+  </assembly>
+</linker>

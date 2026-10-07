@@ -50,7 +50,8 @@ public sealed class NovaThirdPersonView {
   var offset=rotation*data.idealLocalCameraPos.value;float wanted=offset.magnitude;
   if(wanted<.5f)throw new Exception("Original third-person camera offset invalid");
   RaycastHit hit;float distance=wanted;
-  if(Physics.SphereCast(pivot,.2f,offset/wanted,out hit,wanted,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)){distance=Mathf.Max(.35f,hit.distance-Mathf.Max(.05f,data.wallCushion.value));report.collisions++;}
+  // Match the shipped camera's world/hull-only obstruction layers.
+  if(Physics.SphereCast(pivot,.2f,offset/wanted,out hit,wanted,LayerIndex.world.mask|LayerIndex.collideWithCharacterHullOnly.mask,QueryTriggerInteraction.Ignore)){distance=Mathf.Max(.35f,hit.distance-Mathf.Max(.05f,data.wallCushion.value));report.collisions++;}
   camera.transform.SetPositionAndRotation(pivot+offset/wanted*distance,rotation);
   camera.fieldOfView=data.fov.alpha>0&&data.fov.value>1?data.fov.value:CharacterCameraParamsData.basic.fov.value;
   report.frames++;report.yaw=yaw;report.pitch=pitch;report.distance=distance;report.minDistance=Mathf.Min(report.minDistance,distance);report.maxDistance=Mathf.Max(report.maxDistance,distance);report.position=camera.transform.position;report.fov=camera.fieldOfView;

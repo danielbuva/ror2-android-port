@@ -7,13 +7,14 @@ using UnityEngine.UI;
 
 // Owned read-only Android bindings over locally generated source-layout views.
 // No LocalUser, stock profile, platform service or original HUD lifecycle is created.
-public sealed class RecoveredHudPresentation : MonoBehaviour {
+public sealed partial class RecoveredHudPresentation : MonoBehaviour {
  [Serializable] public class Entry {public string key,value;}
  [Serializable] public class Strings {public Entry[] entries;}
  [Serializable] public class SkillView {public Image icon;public TMP_Text cooldown,stock,key;public GameObject ready;}
  [Serializable] public class Observation {
   public bool ready,menuVisible,cleaned;public int frames,items,skillSlots;public float health,shield,barrier,level,bossHealth,charge;
   public uint money;public float menuStartX,menuStartY;public int screenWidth,screenHeight;public string stage,objective,scope="Source layout/assets with owned Android data bindings; mobile font/UI shader approximation, not stock startup or PC parity.";
+  public int buffs,peakBuffs,buffUpdates,pickupNotifications,notificationClockTicks;public bool nativeNotificationQueue,feedbackCleaned,ownedNotificationScheduler;public float notificationT,notificationFixedTime;public string notification;
  }
  public TMP_Text currentHealth,fullHealth,level,money,timer,objective,stage,bossName,bossHealth;
  public TMP_Text stageCount,ambientLevel,difficulty;public RoR2.UI.TimerText timerFormatter;public LayoutElement objectiveLayout;
@@ -34,6 +35,7 @@ public sealed class RecoveredHudPresentation : MonoBehaviour {
   if(!currentHealth||!fullHealth||!level||!money||!timer||!timerFormatter||!stageCount||!ambientLevel||!difficulty||!difficultyBackground||!objective||!objectiveLayout||!stage||!healthFill||!shieldFill||!barrierFill||!experienceFill||!bossFill||!bossContainer||!bossName||!bossHealth||!inventoryRoot||!itemTemplate||skills==null||skills.Length!=4)
    throw new InvalidOperationException("Recovered HUD source references absent");
   foreach(var s in skills)if(!s.icon||!s.cooldown||!s.stock||!s.key)throw new InvalidOperationException("Recovered skill display reference absent");
+  ValidateFeedback();
  }
  public void BindMenu(Action start){Validate();startButton.onClick=new Button.ButtonClickedEvent();quitButton.onClick=new Button.ButtonClickedEvent();startButton.onClick.AddListener(()=>start());quitButton.onClick.AddListener(()=>Application.Quit());}
  public void Present(CharacterBody body,MovementBatchProbe.Result run,Observation report){
@@ -61,6 +63,7 @@ public sealed class RecoveredHudPresentation : MonoBehaviour {
   foreach(var pair in itemViews)pair.Value.gameObject.SetActive(seen.Contains(pair.Key));
   bool boss=run.objective!=null&&run.objective.bossMaxHealth>0&&!run.objective.bossDefeated;bossContainer.SetActive(boss);
   if(boss){float ratio=run.objective.bossHealth/Mathf.Max(1,run.objective.bossMaxHealth);Fill(bossFill,0,ratio);bossHealth.text=Mathf.CeilToInt(run.objective.bossHealth)+" / "+Mathf.CeilToInt(run.objective.bossMaxHealth);var group=TeleporterInteraction.instance?TeleporterInteraction.instance.bossGroup:null;bossName.text=group&&!string.IsNullOrEmpty(group.bestObservedName)?group.bestObservedName:"Teleporter boss";}
+  PresentFeedback(body,report);
   report.ready=true;report.frames++;report.items=seen.Count;report.skillSlots=skills.Length;report.health=health.health;report.shield=health.shield;report.barrier=health.barrier;report.level=body.level;report.money=body.master.money;report.stage=scene;report.objective=task;report.bossHealth=run.objective==null?0:run.objective.bossHealth;report.charge=run.objective==null?0:run.objective.charge;
  }
  static void Fill(Image image,float start,float amount){image.gameObject.SetActive(amount>0);var rect=image.rectTransform;rect.anchorMin=new Vector2(Mathf.Clamp01(start),0);rect.anchorMax=new Vector2(Mathf.Clamp01(start+amount),1);rect.offsetMin=rect.offsetMax=Vector2.zero;}

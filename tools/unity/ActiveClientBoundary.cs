@@ -11,11 +11,12 @@ using UnityEngine.Networking;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class ActiveClientReport {
   public bool grounded,serializers,ready,bodyMapped,masterMapped,localAuthority,ownerMatched,effectiveAuthority,skillsAuthority,removed,cleaned,clientSceneCleaned;
+  public bool masterAuthorityBefore,masterLocalPlayerAuthority,masterLocalAuthority,masterOwnerMatched,masterAuthorityRemoved;
   public int identities,behaviours,trackerAllocations,skillCacheInitializations,connectEvents,frames,fixedTicks,syringeCount;public uint bodyId,masterId;
   public float seconds,fixedSeconds,stateSeconds,healthBefore,healthAfter;public string scope,serializing;
   public List<string> serializerTypes=new List<string>();
  }
- NetworkClient activeBodyClient;NetworkConnection activeBodyOwner;NetworkIdentity activeOwnedBody;bool ownsActiveClientScene;
+ NetworkClient activeBodyClient;NetworkConnection activeBodyOwner;NetworkIdentity activeOwnedBody,activeOwnedMaster;bool ownsActiveClientScene;
  void CheckActiveClientSerializers(){
   Check(RoR2.EntitlementManagement.EntitlementCatalog.entitlementDefs.Length==0&&LocalUserManager.readOnlyLocalUsersList.Count==0,"Diagnostic absent-user/catalog scope changed");
   foreach(var identity in NetworkServer.objects.Values.Where(x=>x).ToArray()){
@@ -37,6 +38,15 @@ public sealed partial class MovementBatchProbe {
   r.activeClient.bodyId=identity.netId.Value;r.activeClient.masterId=player.master.netId.Value;r.activeClient.ready=activeBodyOwner.isReady&&activeBodyClient.connection.isReady;r.activeClient.bodyMapped=player.isClient&&ClientScene.FindLocalObject(identity.netId)==player.gameObject;r.activeClient.masterMapped=player.master.isClient&&ClientScene.FindLocalObject(player.master.netId)==player.master.gameObject;Check(r.activeClient.ready&&r.activeClient.bodyMapped&&r.activeClient.masterMapped,"Original active client registry mapping failed");
   Check(identity.AssignClientAuthority(activeBodyOwner),"Original active client ownership rejected");activeOwnedBody=identity;Call(activeBodyClient,"Update");
   r.activeClient.localAuthority=identity.hasAuthority&&player.hasAuthority;r.activeClient.ownerMatched=identity.clientAuthorityOwner==activeBodyOwner;r.activeClient.effectiveAuthority=player.hasEffectiveAuthority&&player.characterMotor.hasEffectiveAuthority;r.activeClient.skillsAuthority=(bool)typeof(SkillLocator).GetField("hasEffectiveAuthority",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(player.skillLocator);Check(r.activeClient.localAuthority&&r.activeClient.ownerMatched&&r.activeClient.effectiveAuthority&&r.activeClient.skillsAuthority,"Original active authority callbacks incomplete");
+  if(r.recoveredHudEnabled){
+   // Original pickup notifications require the actual master, as well as its
+   // body, to belong to the local connection. Preserve the source prefab flag.
+   var masterIdentity=player.master.networkIdentity;r.activeClient.masterAuthorityBefore=masterIdentity.hasAuthority;r.activeClient.masterLocalPlayerAuthority=masterIdentity.localPlayerAuthority;
+   Check(masterIdentity.localPlayerAuthority&&!masterIdentity.hasAuthority&&masterIdentity.clientAuthorityOwner==null,"Unowned original master authority before HUD integration");
+   Check(masterIdentity.AssignClientAuthority(activeBodyOwner),"Original local master ownership rejected");activeOwnedMaster=masterIdentity;Call(activeBodyClient,"Update");
+   r.activeClient.masterLocalAuthority=masterIdentity.hasAuthority&&player.master.hasAuthority;r.activeClient.masterOwnerMatched=masterIdentity.clientAuthorityOwner==activeBodyOwner;
+   Check(r.activeClient.masterLocalAuthority&&r.activeClient.masterOwnerMatched&&player.master.hasEffectiveAuthority,"Original local master authority callbacks incomplete");
+  }
   yield return null;
  }
  IEnumerator ProbeActiveBodyClient(CharacterBody player,Result cfg){
@@ -56,6 +66,7 @@ public sealed partial class MovementBatchProbe {
   CleanupActiveBodyClient();yield return null;yield return null;r.activeClient.cleaned=!NetworkClient.active&&NetworkClient.allClients.Count==0&&NetworkServer.localConnections.Count==0&&NetworkServer.active&&player&&player.master.GetBody()==player&&NetworkServer.FindLocalObject(identity.netId)==player.gameObject;Check(r.activeClient.removed&&r.activeClient.cleaned,"Owned local client cleanup damaged server actor or retained client");Save();
  }
  void CleanupActiveBodyClient(){
+  if(activeOwnedMaster&&activeBodyOwner!=null){Check(activeOwnedMaster.RemoveClientAuthority(activeBodyOwner),"Original master authority removal rejected");if(activeBodyClient!=null)Call(activeBodyClient,"Update");r.activeClient.masterAuthorityRemoved=activeOwnedMaster.clientAuthorityOwner==null&&!activeOwnedMaster.hasAuthority;Check(r.activeClient.masterAuthorityRemoved,"Original master authority removal incomplete");activeOwnedMaster=null;}
   if(activeOwnedBody&&activeBodyOwner!=null){Check(activeOwnedBody.RemoveClientAuthority(activeBodyOwner),"Original active authority removal rejected");if(activeBodyClient!=null)Call(activeBodyClient,"Update");r.activeClient.removed=activeOwnedBody.clientAuthorityOwner==null&&!activeOwnedBody.hasAuthority;Check(r.activeClient.removed,"Original active authority removal incomplete");activeOwnedBody=null;}
   if(activeBodyClient!=null){activeBodyClient.Disconnect();activeBodyClient.Shutdown();activeBodyClient=null;activeBodyOwner=null;}
  }

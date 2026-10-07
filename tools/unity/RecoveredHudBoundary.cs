@@ -25,5 +25,5 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveRecoveredHud(){if(recoveredHud&&worldPlayer)recoveredHud.Present(worldPlayer,r,r.hud);}
  void CleanupRecoveredMenu(){if(recoveredMenu)Destroy(recoveredMenu.gameObject);if(recoveredMenuEvents)Destroy(recoveredMenuEvents);recoveredMenuEvents=null;recoveredMenu=null;if(r.hud!=null)r.hud.menuVisible=false;}
- void CleanupRecoveredHud(){if(recoveredHud)Destroy(recoveredHud.gameObject);recoveredHud=null;CleanupRecoveredMenu();}
+ void CleanupRecoveredHud(){if(recoveredHud){recoveredHud.CleanupFeedback(r.hud);Destroy(recoveredHud.gameObject);}recoveredHud=null;CleanupRecoveredMenu();}
 }

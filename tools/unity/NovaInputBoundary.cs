@@ -67,7 +67,7 @@ public sealed partial class MovementBatchProbe {
     if(r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)r.nova.stopped=true;
     if(spine)ObserveSpinePrimary(body);
     if(cfg.combatSpine)ObserveCombat(body,machine);if(cfg.enemySpine)ObserveEnemy();ObserveOriginalRunClock();
-    if(cfg.integratedWorld){ObserveIntegratedWorld(body,elapsed);ObserveIntegratedResults();if(bringup&&!(r.results!=null&&r.results.persisted))IntegratedWorldStimulus(body,bridge,elapsed);}
+    if(cfg.integratedWorld){ObserveIntegratedWorld(body,elapsed);ObserveIntegratedResults();if(bringup&&!(r.results!=null&&r.results.persisted)){IntegratedWorldStimulus(body,bridge,elapsed);EarnedFeatherInput(body,bridge,elapsed);}}
     if(bringup&&!cfg.integratedWorld){
      bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
      // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.

@@ -27,7 +27,7 @@ public sealed partial class MovementBatchProbe {
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
   public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
   public int lootTier1,lootTier2,lootTier3;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
-  public int featherJumps,featherEffectLoads;public bool featherEffectCleaned;
+  public int featherJumps,featherEffectLoads;public bool featherEffectCleaned,featherInputAttempted;public string featherInputOutcome;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
@@ -141,6 +141,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   foreach(var pair in worldLootSourceLayers)if(pair.Key)pair.Key.layer=pair.Value;worldLootSourceLayers.Clear();
  }
  IEnumerator PrepareIntegratedWorld(CharacterBody player,Result cfg){
+  worldFeatherInputAt=-1;
   Check(((Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null)).Count==0,"Unowned effect pools before integrated world");ownsIntegratedPools=true;
   r.world=new WorldReport{scope="Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",feedbackCapability="Authored pickup HUD; original native-audio notification handler unavailable."};
   worldPlayer=player;PrepareUnavailableWorldPresentation(player);r.phase="integrated-world-client";Save();
@@ -262,7 +263,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    // Original notification handling tolerates missing masters and zero effective stacks.
    // Record those packets without claiming a connected player grant.
    if(!characterMaster)r.world.unresolvedPickupMessages++;else if(!observation.playerMaster)r.world.otherPickupMessages++;else if(quantity==0)r.world.zeroCountPickupMessages++;
-   if(observation.playerMaster&&definition!=null&&quantity>0){r.world.pickupMessages++;r.world.lastPickup=observation.item+" x"+quantity;}Save();
+   if(observation.playerMaster&&definition!=null&&quantity>0){r.world.pickupMessages++;r.world.lastPickup=observation.item+" x"+quantity;if(recoveredHud)recoveredHud.QueuePickup(characterMaster,pickup);}Save();
   });
   ObserveWorldHandlers(false);ObserveWorldHandlers(true);
  }
@@ -356,6 +357,24 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    if(enemy!=null){var aim=enemy.body.corePosition-player.inputBank.aimOrigin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;bridge.diagnosticSecondary=elapsed%12<.2f;bridge.diagnosticSpecial=elapsed%20<.2f;bridge.diagnosticUtility=elapsed%16<.2f;}
    bridge.DiagnosticJump(elapsed%18<.2f);
   }
+ }
+ float worldFeatherInputAt=-1;
+ void EarnedFeatherInput(CharacterBody player,NovaInputBridge bridge,float elapsed){
+  // Whole-game diagnostic input only. Do not grant inventory, change jump limits,
+  // move the body, or claim a controller/normal jump-height acceptance.
+  if(r.world.featherJumps>0){if(r.world.featherInputAttempted)r.world.featherInputOutcome="Original bonus jump and effect observed";return;}
+  if(!bridge.diagnosticInput||worldManualTakeover||r.moon!=null&&r.moon.loaded)return;
+  var motor=player.characterMotor;
+  if(worldFeatherInputAt<0){
+   if(r.world.featherInputAttempted||!r.objective.charging||r.objective.charge>.5f||!motor.isGrounded||player.inventory.GetItemCount(RoR2Content.Items.Feather)<=0||player.maxJumpCount<=player.baseJumpCount)return;
+   if(Vector3.Distance(motor.Motor.TransientPosition,r.objective.position)>r.objective.radius*.5f)return;
+   worldFeatherInputAt=elapsed;r.world.featherInputAttempted=true;r.world.featherInputOutcome="Original grounded press, release, then airborne second press";
+  }
+  float age=elapsed-worldFeatherInputAt;
+  if(age>1.5f){r.world.featherInputOutcome="No bonus jump observed during input sequence";worldFeatherInputAt=-1;return;}
+  bridge.movement=Vector2.zero;bridge.diagnosticSprint=false;
+  bool first=age<.1f,second=age>.35f&&age<.55f&&!motor.isGrounded&&motor.jumpCount==1;
+  bridge.DiagnosticJump(first||second);
  }
  void NavigateWorldInput(CharacterBody player,NovaInputBridge bridge,Vector3 destination,float stopDistance,string target,float elapsed){
   // Match the exact shipped BaseAI navigation reference for this pinned input.
