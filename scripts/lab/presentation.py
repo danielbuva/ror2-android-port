@@ -2,7 +2,7 @@
 from common import *
 import shutil,time
 
-NAMES=['AndroidSurfacePresentation','AndroidTerrainPresentation','AndroidParticlePresentation','AndroidWaterPresentation','AndroidColorGrade','AndroidBillboardPresentation','AndroidOpaqueParticlePresentation','AndroidDistortionPresentation']
+NAMES=['AndroidSurfacePresentation','AndroidTerrainPresentation','AndroidParticlePresentation','AndroidWaterPresentation','AndroidColorGrade','AndroidBillboardPresentation','AndroidOpaqueParticlePresentation','AndroidDistortionPresentation','AndroidIntersectionPresentation']
 
 def build_payload(stages=False):
  from build import preflight,editor

@@ -37,7 +37,7 @@ public static class LabBuild {
    string output=Path.GetFullPath(cfg.output),allowed=Path.Combine(root,"experiments/android-presentation")+Path.DirectorySeparatorChar;
    if(!output.StartsWith(allowed,StringComparison.Ordinal)||cfg.api!="vulkan")throw new Exception("Unexpected Android presentation output/target");
    Directory.CreateDirectory(output);File.WriteAllText(Path.Combine(output,"started.json"),JsonUtility.ToJson(cfg,true));
-   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   var assets=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation","AndroidIntersectionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
    if(!assets.All(File.Exists))throw new Exception("Presentation shader input missing");
    var builds=new System.Collections.Generic.List<AssetBundleBuild>();
    if(cfg.stagePresentation){
@@ -87,7 +87,7 @@ public static class LabBuild {
    PlayerSettings.enableFrameTimingStats=true;
    Directory.CreateDirectory(Path.Combine(root,"generated-android-data"));
    var bundleBuilds=new System.Collections.Generic.List<AssetBundleBuild>();
-   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
+   var presentationShaders=new[]{"AndroidSurfacePresentation","AndroidTerrainPresentation","AndroidParticlePresentation","AndroidWaterPresentation","AndroidColorGrade","AndroidBillboardPresentation","AndroidOpaqueParticlePresentation","AndroidDistortionPresentation","AndroidIntersectionPresentation"}.Select(name=>"Assets/LabLoadingScene/Resources/"+name+".shader").ToArray();
    if(presentationShaders.All(File.Exists))bundleBuilds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=presentationShaders});
    string sceneProbeConfig=Path.Combine(root,"scene-probe-build.json");
    if(File.Exists(sceneProbeConfig)){
@@ -116,8 +116,10 @@ public static class LabBuild {
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="barrier-effect-lab",assetNames=new[]{cfg.barrierEffect}});
     }
     if(cfg.objectiveSupportAssets!=null&&cfg.objectiveSupportAssets.Length>0){
-     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5&&cfg.objectiveSupportAssets.Length!=7&&cfg.objectiveSupportAssets.Length!=8&&cfg.objectiveSupportAssets.Length!=10&&cfg.objectiveSupportAssets.Length!=12&&cfg.objectiveSupportAssets.Length!=13&&cfg.objectiveSupportAssets.Length!=14)||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
+     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5&&cfg.objectiveSupportAssets.Length!=7&&cfg.objectiveSupportAssets.Length!=8&&cfg.objectiveSupportAssets.Length!=10&&cfg.objectiveSupportAssets.Length!=12&&cfg.objectiveSupportAssets.Length!=13&&cfg.objectiveSupportAssets.Length!=14&&cfg.objectiveSupportAssets.Length!=17&&cfg.objectiveSupportAssets.Length!=18)||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
      if(cfg.objectiveSupportAssets.Length==14&&!cfg.objectiveSupportAssets.Any(x=>x.EndsWith("/Items/Feather/FeatherEffect.prefab",StringComparison.OrdinalIgnoreCase)))throw new Exception("Expanded support closure lacks original Feather effect");
+     if(cfg.objectiveSupportAssets.Length>=17&&new[]{"/Items/Feather/FeatherEffect.prefab","/Items/Tooth/HealPack.prefab","/Items/BonusGoldPackOnKill/BonusMoneyPack.prefab","/Items/SlowOnHit/SlowDownTime.prefab"}.Any(suffix=>!cfg.objectiveSupportAssets.Any(x=>x.EndsWith(suffix,StringComparison.OrdinalIgnoreCase))))throw new Exception("Expanded loot closure lacks a required original provider");
+     if(cfg.objectiveSupportAssets.Length==18&&!cfg.objectiveSupportAssets.Any(x=>x.EndsWith("/Items/StunChanceOnHit/ImpactStunGrenade.prefab",StringComparison.OrdinalIgnoreCase)))throw new Exception("Expanded loot closure lacks the original stun impact");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="objective-support-lab",assetNames=cfg.objectiveSupportAssets});
     }
     if(!string.IsNullOrEmpty(cfg.objectiveTMPSettings)){

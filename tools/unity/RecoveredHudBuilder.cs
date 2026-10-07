@@ -112,6 +112,8 @@ public static class RecoveredHudBuilder {
   var objectiveStrip=Named(info,"ObjectiveStrip");Require(objectiveStrip,"Source objective strip absent");objectiveStrip.gameObject.SetActive(true);view.objective=Text(objectiveStrip,"Label");view.objectiveLayout=objectiveStrip.GetComponent<LayoutElement>();view.objective.gameObject.SetActive(true);view.objective.color=Color.white;objectiveStrip.localScale=Vector3.one;
   Hide(hud,"SteamBuildLabel","DebugStats","TutorialObjectiveText","ScoreboardPanel","InspectPanelArea","CinematicUI","VoiceChatNotifications","VoiceChatNotificationManager","ChatBoxRoot","CharacterStats","LunarCoinRoot","VoidCoinRoot","SharedSufferingRoot","Managed_Sprite_HP","RemoteOp","MovePanel","AimPanel","AimPanel (1)","AimPanel (2)","AimPanel (3)","EquipmentRoot","EquipmentCluster","SprintCluster","Hitmarker","CrosshairExtras");
   view.buffRoot.gameObject.SetActive(true);view.notificationRoot.gameObject.SetActive(true);
+  // No stock desktop inspection action is bound by this composed game.
+  Hide(hud,"ContextNotification","InventoryCluster");
   foreach(var t in hud.GetComponentsInChildren<Transform>(true))if(t.name.StartsWith("TUTORIAL:"))t.gameObject.SetActive(false);
   native.mainContainer.SetActive(true);native.mainUIPanel.SetActive(true);view.currentHealth.transform.parent.gameObject.SetActive(true);view.currentHealth.gameObject.SetActive(true);view.fullHealth.gameObject.SetActive(true);
   var crosshair=UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>((string)roots["crosshairSource"]),Named(hud,"CrosshairCanvas"),false);crosshair.SetActive(true);

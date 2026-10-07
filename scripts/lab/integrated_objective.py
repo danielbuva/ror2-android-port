@@ -6,7 +6,8 @@ import hashlib
 
 CORE_LOOT = ['PersonalShield', 'NearbyDamageBonus', 'StunChanceOnHit', 'Feather', 'Seed',
              'SprintOutOfCombat', 'SprintArmor', 'AlienHead',
-             'UtilitySkillMagazine', 'BarrierOnOverHeal']
+             'UtilitySkillMagazine', 'BarrierOnOverHeal', 'SlowOnHit',
+             'Tooth', 'BonusGoldPackOnKill']
 CORE_LOOT_SUPPORT = [
     ('ShieldBreakEffect', '418e4945609754b41b41aafde8edfb87',
      'Prefabs/Effects/ShieldBreakEffect', 'Assets/RoR2/Base/Common/VFX/Shield/ShieldBreakEffect.prefab'),
@@ -14,6 +15,14 @@ CORE_LOOT_SUPPORT = [
      'Prefabs/TemporaryVisualEffects/BucklerDefense', 'Assets/RoR2/Base/Items/SprintArmor/BucklerDefense.prefab'),
     ('FeatherEffect', 'fbd57658e8620d04faae82049b9cd599',
      'Prefabs/Effects/FeatherEffect', 'Assets/RoR2/Base/Items/Feather/FeatherEffect.prefab'),
+    ('HealPack', '7f9217d45f824f245862e65716abc746',
+     'Prefabs/NetworkedObjects/HealPack', 'Assets/RoR2/Base/Items/Tooth/HealPack.prefab'),
+    ('BonusMoneyPack', '1e9827f5ca59d7f4f88119710a554fae',
+     'Prefabs/NetworkedObjects/BonusMoneyPack', 'Assets/RoR2/Base/Items/BonusGoldPackOnKill/BonusMoneyPack.prefab'),
+    ('SlowDownTime', '03c7e0a1960acb641bfcf317445ba2f9',
+     'Prefabs/TemporaryVisualEffects/SlowDownTime', 'Assets/RoR2/Base/Items/SlowOnHit/SlowDownTime.prefab'),
+    ('ImpactStunGrenade', '94d074fb5a17ba64e96f43a9757891e7',
+     'Prefabs/Effects/ImpactEffects/ImpactStunGrenade', 'Assets/RoR2/Base/Items/StunChanceOnHit/ImpactStunGrenade.prefab'),
 ]
 WORLD_COMMERCE = {
     'ShrineChance': 'Assets/RoR2/Base/Interactables/Shrines/ShrineChance/ShrineChance.prefab',
@@ -127,6 +136,8 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
         for name,source in WORLD_COMMERCE.items():roots['commerce'+name]=export/source
         write(out/'world-commerce-support-source.json',contract)
     roots['objectiveWardBuffAsset']=export/'Assets/RoR2/Base/Characters/BeetleGroup/bdBeetleJuice.asset'
+    if broader_loot:
+        roots['worldLootSlowBuffAsset']=export/'Assets/RoR2/Base/Items/SlowOnHit/bdSlow60.asset'
     roots['objectiveWardConfig']=export/'Assets/RoR2/Base/Characters/BeetleGroup/BeetleWard/EntityStates.BeetleQueenMonster.BeetleWardDeath.asset'
     ward_rows=[x.split('|') for x in (WORK/'ward-catalog-query.txt').read_text().splitlines()]
     ward_folder=roots['objectiveWardConfig'].parent
@@ -269,7 +280,7 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
     actor_specs=[dict(name=x,**{k[0].lower()+k[1:]:paths[x+k] for k in ['Body','Master','Card','Avatar','Controller','Material','Mesh']}) for x in actors]
     write(out/'objective-content.json',{'roots':paths,'closure':rows,'bytes':sum(x['bytes'] for x in rows),'ui_remaps':ui_edits,'query_sha256':sha(query_path),'catalog_sha256':sha(export/'Assets/StreamingAssets/aa/catalog.json'),'deferred_unrequested':unrequested,'prior_art':'R2API.Director f539511e separates director activity, catalog readiness and source DCCS selection; current original TeleporterInteraction/BossGroup/HoldoutZoneController/Queen states govern composition. No source implementation copied.'})
     if broader_ui:write(out/'hud-source-roots.json',{key:paths[key] for key in ui_roots})
-    return dict(run_settings,worldCommerceAssets=[paths['commerce'+name] for name in WORLD_COMMERCE] if broader_commerce else [],worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
+    return dict(run_settings,worldLootSlowBuffAsset=paths.get('worldLootSlowBuffAsset',''),worldCommerceAssets=[paths['commerce'+name] for name in WORLD_COMMERCE] if broader_commerce else [],worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 
 def sanitize_optional_content(stage,out):

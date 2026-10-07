@@ -5,7 +5,7 @@ using UnityEngine;
 
 // Owned Android rendering approximations. Original assets and simulation stay intact.
 public static class AndroidMaterialPresentation {
- [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; custom lighting/cloud/distortion/billboard approximations, no original shader parity; opaque cloud extrusion/cloud-normal response unverified";}
+ [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,intersection,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; custom lighting/cloud/intersection/distortion/billboard approximations, no original shader parity; opaque cloud extrusion/cloud-normal response unverified";}
  sealed class Binding {public Material material;public Shader enhanced,fallback;}
  static readonly List<Binding> bindings=new List<Binding>();
  public static Report report=new Report();
@@ -24,11 +24,12 @@ public static class AndroidMaterialPresentation {
   }
   bool cloud=name.IndexOf("Cloud",StringComparison.OrdinalIgnoreCase)>=0;
   bool opaqueCloud=name=="Hopoo Games/FX/Opaque Cloud Remap",distortion=name=="Hopoo Games/FX/Distortion";
+  bool intersection=name=="Hopoo Games/FX/Cloud Intersection Remap";
   bool water=name.IndexOf("Water",StringComparison.OrdinalIgnoreCase)>=0;
   bool snow=name.IndexOf("Snow",StringComparison.OrdinalIgnoreCase)>=0;
   bool foliage=name.IndexOf("Speedtree",StringComparison.OrdinalIgnoreCase)>=0;
   bool billboard=name=="Nature/SpeedTree Billboard";
-  var shader=LoadShader(billboard?"AndroidBillboardPresentation":terrain?"AndroidTerrainPresentation":opaqueCloud?"AndroidOpaqueParticlePresentation":distortion?"AndroidDistortionPresentation":cloud?"AndroidParticlePresentation":water?"AndroidWaterPresentation":"AndroidSurfacePresentation");
+  var shader=LoadShader(billboard?"AndroidBillboardPresentation":terrain?"AndroidTerrainPresentation":opaqueCloud?"AndroidOpaqueParticlePresentation":intersection?"AndroidIntersectionPresentation":distortion?"AndroidDistortionPresentation":cloud?"AndroidParticlePresentation":water?"AndroidWaterPresentation":"AndroidSurfacePresentation");
   if(!shader||!shader.isSupported){report.error="Android material family unavailable: "+name;return;}
   if(billboard){
    // BillboardAsset vertices are atlas-space. Keep the dedicated geometry path
@@ -63,7 +64,7 @@ public static class AndroidMaterialPresentation {
    copy.SetFloat("_AndroidCloud1Enabled",source.HasProperty("_Cloud1Tex")&&source.GetTexture("_Cloud1Tex")?1:0);
    copy.SetFloat("_AndroidCloud2Enabled",source.HasProperty("_Cloud2Tex")&&source.GetTexture("_Cloud2Tex")?1:0);
     copy.renderQueue=opaqueCloud?(source.renderQueue==source.shader.renderQueue?2450:source.renderQueue):3000;
-    if(opaqueCloud)report.opaqueClouds++;else report.particles++;
+    if(opaqueCloud)report.opaqueClouds++;else if(intersection)report.intersection++;else report.particles++;
   }else if(water){
    if(source.HasProperty("_BumpMap")&&source.GetTexture("_BumpMap")){copy.SetTexture("_NormalTex",source.GetTexture("_BumpMap"));copy.SetTextureScale("_NormalTex",source.GetTextureScale("_BumpMap"));}
    copy.renderQueue=3000;report.water++;

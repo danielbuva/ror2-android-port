@@ -28,6 +28,7 @@ public sealed partial class MovementBatchProbe {
   public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
   public int lootTier1,lootTier2,lootTier3;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
   public int featherJumps,featherEffectLoads;public bool featherEffectCleaned,featherInputAttempted;public string featherInputOutcome;
+  public int nativeLootProviderLoads,healthPacks,moneyPacks,stunImpactLoads,slowedEnemiesPeak;public bool nativeLootProvidersCleaned;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
@@ -79,6 +80,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  readonly Dictionary<Renderer,Material[]> worldLootSourceMaterials=new Dictionary<Renderer,Material[]>();
  readonly Dictionary<GameObject,int> worldLootSourceLayers=new Dictionary<GameObject,int>();
  int worldFeatherEffectIndex=-1,worldFeatherReferenceBaseline;CharacterBody.JumpDelegate worldFeatherJumped;
+ readonly Dictionary<int,int> worldNativeLootLeaseBaselines=new Dictionary<int,int>();
+ readonly HashSet<GameObject> worldNativeLootObjects=new HashSet<GameObject>();
 
 
  ItemDef[] WorldTierOneLoot(Result cfg){
@@ -96,43 +99,59 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(loot.All(x=>x)&&loot.Distinct().Count()==loot.Count,"Duplicate or absent composed loot definition");
   return loot.ToArray();
  }
+ BuffDef[] WorldLootBuffs(Result cfg){
+  if(cfg.worldAdditionalLootItems==null||!cfg.worldAdditionalLootItems.Contains("SlowOnHit"))return new BuffDef[0];
+  var def=artifactBundle.LoadAsset<BuffDef>(cfg.worldLootSlowBuffAsset);Check(def&&def.name=="bdSlow60","Original loot slow buff missing");
+  BindEnemyDefinition(typeof(RoR2Content.Buffs),"Slow60",def);return new[]{def};
+ }
  GameObject[] PrepareWorldLootSupport(Result cfg){
   if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3,"Core loot support contract length changed");
+  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7,"Core loot support contract length changed");
   r.phase="integrated-core-loot-support";Save();var effects=new List<GameObject>();
   foreach(var path in cfg.worldLootSupportPaths){
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Core loot provider location absent: "+path);var source=objectiveSupportSources[index];
-   bool shield=path=="Prefabs/Effects/ShieldBreakEffect",feather=path=="Prefabs/Effects/FeatherEffect";Check(shield||feather||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
-   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
+   bool shield=path=="Prefabs/Effects/ShieldBreakEffect",feather=path=="Prefabs/Effects/FeatherEffect",slow=path=="Prefabs/TemporaryVisualEffects/SlowDownTime",healthPack=path=="Prefabs/NetworkedObjects/HealPack",moneyPack=path=="Prefabs/NetworkedObjects/BonusMoneyPack";
+   bool stun=path=="Prefabs/Effects/ImpactEffects/ImpactStunGrenade";
+   Check(shield||feather||slow||healthPack||moneyPack||stun||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
+   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":slow?"SlowDownTime":healthPack?"HealPack":moneyPack?"BonusMoneyPack":stun?"ImpactStunGrenade":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
+   if(slow||healthPack||moneyPack||stun)worldNativeLootLeaseBaselines.Add(index,(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]));
    if(feather){
     // Original ProcessJump loads this provider asset on each bonus jump.
     // Observe those real calls and release their owned leases on teardown.
     Check(worldPlayer&&r.world!=null&&worldFeatherEffectIndex<0,"Unowned Feather effect observation");worldFeatherEffectIndex=index;
     worldFeatherReferenceBaseline=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]);
     worldFeatherJumped=()=>{if(worldPlayer.characterMotor.jumpCount>worldPlayer.baseJumpCount)r.world.featherJumps++;};worldPlayer.onJump+=worldFeatherJumped;
-   }else{
+   }else if(!healthPack&&!moneyPack&&!stun){
     var type=(shield?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
-    var field=type.GetField(shield?"shieldBreakEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+    var field=type.GetField(shield?"shieldBreakEffectPrefab":slow?"slowDownTimeTempEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
     Check(field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Unowned core loot effect slot: "+path);
     worldLootEffectSlots.Add(field,(GameObject)field.GetValue(null));field.SetValue(null,source);
     Check((GameObject)field.GetValue(null)==source,"Core loot source binding failed: "+path);
    }
-   if(shield||feather){Check(source.GetComponent<EffectComponent>(),"Original core loot EffectComponent missing: "+path);effects.Add(source);}else Check(source.GetComponent<TemporaryVisualEffect>()&&source.GetComponent<TemporaryVisualEffect>().visualTransform,"Original BucklerDefense linkage missing");
+   if(shield||feather||stun){Check(source.GetComponent<EffectComponent>(),"Original core loot EffectComponent missing: "+path);effects.Add(source);}
+   else if(healthPack){var pickup=source.GetComponentInChildren<HealthPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<NetworkIdentity>()&&pickup.pickupEffect&&pickup.pickupEffect.GetComponent<EffectComponent>(),"Original heal pack linkage missing");effects.Add(pickup.pickupEffect);}
+   else if(moneyPack){var pickup=source.GetComponentInChildren<MoneyPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<NetworkIdentity>(),"Original money pack linkage missing");if(pickup.pickupEffectPrefab){Check(pickup.pickupEffectPrefab.GetComponent<EffectComponent>(),"Original money effect linkage missing");effects.Add(pickup.pickupEffectPrefab);}}
+   else Check(source.GetComponent<TemporaryVisualEffect>()&&source.GetComponent<TemporaryVisualEffect>().visualTransform,"Original temporary effect linkage missing: "+path);
    foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){
     Check(!renderer.GetComponent<Collider>(),"Core loot renderer shares a collider; preserve its layer before adapting visibility");
     worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;
     renderer.sharedMaterials=renderer.sharedMaterials.Select(original=>{if(!original)return null;var copy=new Material(original);copy.shader=Resources.Load<Shader>("StageSurfacePreview");copy.shaderKeywords=new string[0];AndroidMaterialPresentation.Apply(original,copy);worldMaterials.Add(copy);return copy;}).ToArray();renderer.gameObject.layer=30;
    }
   }
-  return effects.ToArray();
+  return effects.Distinct().ToArray();
  }
- void ObserveWorldLootSupport(CharacterBody body){
+ void ObserveWorldLootSupport(CharacterBody body,bool force=false){
+  r.world.nativeLootProviderLoads=worldNativeLootLeaseBaselines.Sum(pair=>(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value);
+  foreach(var pair in worldNativeLootLeaseBaselines)if(objectiveSupportSources[pair.Key].name=="ImpactStunGrenade")r.world.stunImpactLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;
+  if(RoR2Content.Buffs.Slow60)r.world.slowedEnemiesPeak=Mathf.Max(r.world.slowedEnemiesPeak,directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.body.HasBuff(RoR2Content.Buffs.Slow60)));
+  if(worldNativeLootLeaseBaselines.Count>0&&(force||Time.frameCount%30==0))foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&(x.name=="HealPack(Clone)"||x.name=="BonusMoneyPack(Clone)")))if(worldNativeLootObjects.Add(obj)){worldObjects.Add(obj);if(obj.name=="HealPack(Clone)")r.world.healthPacks++;else r.world.moneyPacks++;}
   if(worldFeatherEffectIndex>=0){r.world.featherEffectLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[worldFeatherEffectIndex])-worldFeatherReferenceBaseline;Check(r.world.featherEffectLoads==r.world.featherJumps,"Original Feather loads differ from observed bonus jumps");}
-  if(worldLootEffectSlots.Count==0)return;var field=typeof(CharacterBody).GetField("bucklerShieldTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic);
+  if(worldLootEffectSlots.Count==0||!body)return;var field=typeof(CharacterBody).GetField("bucklerShieldTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic);
   var effect=(TemporaryVisualEffect)field.GetValue(body);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);
  }
  void CleanupWorldLootSupport(){
-  if(worldPlayer)ObserveWorldLootSupport(worldPlayer);
+  if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);
+  foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
   if(worldFeatherJumped!=null){if(worldPlayer)worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
   if(worldFeatherEffectIndex>=0){for(int i=0;i<r.world.featherEffectLoads;i++)Addressables.Release(objectiveSupportSources[worldFeatherEffectIndex]);worldFeatherEffectIndex=-1;r.world.featherEffectCleaned=true;}
   foreach(var effect in worldLootTemporaryEffects)if(effect)Destroy(effect);
@@ -506,6 +525,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.world==null)yield break;yield return null;yield return null;
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
   r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldFeatherEffectIndex<0&&worldFeatherJumped==null&&worldAvailableItems==null&&worldAvailableEquipment==null;
+  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0;
   if(r.hud!=null){r.hud.cleaned=!recoveredHud&&!recoveredMenu;r.world.cleaned&=r.hud.cleaned;}
   if(r.commerce!=null){r.commerce.cleaned=commerceOwned.All(x=>!x)&&commerceListeners.Count==0&&commercePurchases.Count==0&&!ownsCommerceMessages&&commerceEffectIndex<0;r.world.cleaned&=r.commerce.cleaned;}
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();

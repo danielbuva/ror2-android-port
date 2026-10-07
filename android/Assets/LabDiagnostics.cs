@@ -17,6 +17,13 @@ public sealed class LabDiagnostics : MonoBehaviour
   public float fps,frameMs; public long managedBytes,totalAllocatedBytes;public double cpuFrameMs,gpuFrameMs;
  }
  string root; float elapsed; int frames; float fps; bool ready; Config config=new Config();
+ Renderer referenceGeometry;bool referenceRendering=true;Renderer referenceCube;bool cubeVisibility;
+ public bool ReferenceRendering {get{return referenceRendering;}}
+ public void SetReferenceRendering(bool visible){
+  referenceRendering=visible;if(referenceGeometry)referenceGeometry.enabled=visible;
+  if(!referenceCube){var cube=GameObject.Find("G1 reference cube");if(cube){referenceCube=cube.GetComponent<Renderer>();if(referenceCube)cubeVisibility=referenceCube.enabled;}}
+  if(referenceCube)referenceCube.enabled=visible&&cubeVisibility;
+ }
  IEnumerator Start() {
   root=Application.persistentDataPath; Directory.CreateDirectory(root); Application.logMessageReceived+=OnLog;
   string proof=SimpleJSON.JSON.Parse("{\"assembly\":\"preserved\"}")["assembly"].Value;
@@ -29,7 +36,7 @@ public sealed class LabDiagnostics : MonoBehaviour
     var asset=request.assetBundle.LoadAllAssets<Mesh>().FirstOrDefault();
     if(asset!=null) {
      var go=new GameObject("RoR2 recovered geometry");go.AddComponent<MeshFilter>().sharedMesh=asset;
-     var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=new Material(Shader.Find("Standard"));renderer.sharedMaterial.color=new Color(0.3f,0.8f,0.95f);
+     var renderer=go.AddComponent<MeshRenderer>();referenceGeometry=renderer;renderer.enabled=referenceRendering;renderer.sharedMaterial=new Material(Shader.Find("Standard"));renderer.sharedMaterial.color=new Color(0.3f,0.8f,0.95f);
      var b=asset.bounds;go.transform.position=-b.center;float radius=Mathf.Max(b.extents.magnitude,0.1f);
      Camera.main.transform.position=new Vector3(0,radius*.3f,-radius*2.8f);Camera.main.transform.LookAt(Vector3.zero);
      Debug.Log("LAB_GEOMETRY_OK "+asset.name+" vertices="+asset.vertexCount);

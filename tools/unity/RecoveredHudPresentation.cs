@@ -12,7 +12,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
  [Serializable] public class Strings {public Entry[] entries;}
  [Serializable] public class SkillView {public Image icon;public TMP_Text cooldown,stock,key;public GameObject ready;}
  [Serializable] public class Observation {
-  public bool ready,menuVisible,cleaned;public int frames,items,skillSlots;public float health,shield,barrier,level,bossHealth,charge;
+  public bool ready,menuVisible,menuReferenceHidden,cleaned;public int frames,items,skillSlots;public float health,shield,barrier,level,bossHealth,charge;
   public uint money;public float menuStartX,menuStartY;public int screenWidth,screenHeight;public string stage,objective,scope="Source layout/assets with owned Android data bindings; mobile font/UI shader approximation, not stock startup or PC parity.";
   public int buffs,peakBuffs,buffUpdates,pickupNotifications,notificationClockTicks;public bool nativeNotificationQueue,feedbackCleaned,ownedNotificationScheduler;public float notificationT,notificationFixedTime;public string notification;
  }
@@ -62,7 +62,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   foreach(var index in body.inventory.itemAcquisitionOrder){int count=body.inventory.GetItemCount(index);if(count<=0)continue;seen.Add(index);RecoveredHudPresentation icon;if(!itemViews.TryGetValue(index,out icon)){icon=Instantiate(itemTemplate,inventoryRoot,false);icon.name="Owned item icon "+index;icon.gameObject.SetActive(true);itemViews.Add(index,icon);}var item=ItemCatalog.GetItemDef(index);icon.itemImage.texture=item?item.pickupIconTexture:null;icon.itemCount.gameObject.SetActive(count>1);icon.itemCount.text=count>1?"x"+count:"";}
   foreach(var pair in itemViews)pair.Value.gameObject.SetActive(seen.Contains(pair.Key));
   bool boss=run.objective!=null&&run.objective.bossMaxHealth>0&&!run.objective.bossDefeated;bossContainer.SetActive(boss);
-  if(boss){float ratio=run.objective.bossHealth/Mathf.Max(1,run.objective.bossMaxHealth);Fill(bossFill,0,ratio);bossHealth.text=Mathf.CeilToInt(run.objective.bossHealth)+" / "+Mathf.CeilToInt(run.objective.bossMaxHealth);var group=TeleporterInteraction.instance?TeleporterInteraction.instance.bossGroup:null;bossName.text=group&&!string.IsNullOrEmpty(group.bestObservedName)?group.bestObservedName:"Teleporter boss";}
+  if(boss){float ratio=run.objective.bossHealth/Mathf.Max(1,run.objective.bossMaxHealth);Fill(bossFill,0,ratio);bossHealth.text=Mathf.CeilToInt(run.objective.bossHealth)+" / "+Mathf.CeilToInt(run.objective.bossMaxHealth);var group=TeleporterInteraction.instance?TeleporterInteraction.instance.bossGroup:null;bossName.text=group&&!string.IsNullOrEmpty(group.bestObservedName)?Label(group.bestObservedName):"Teleporter boss";}
   PresentFeedback(body,report);
   report.ready=true;report.frames++;report.items=seen.Count;report.skillSlots=skills.Length;report.health=health.health;report.shield=health.shield;report.barrier=health.barrier;report.level=body.level;report.money=body.master.money;report.stage=scene;report.objective=task;report.bossHealth=run.objective==null?0:run.objective.bossHealth;report.charge=run.objective==null?0:run.objective.charge;
  }
