@@ -4,10 +4,15 @@ import shutil,time,zipfile
 def validate_runtime_support(project, recipe):
  config_path=project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'
  if not config_path.exists():return
- required=read(config_path).get('objectiveSupportAssets',[])
+ config=read(config_path)
+ required=config.get('objectiveSupportAssets',[])
  supplied={path.casefold() for path in recipe.get('objectiveSupportAssets',[])}
  missing=[path for path in required if path.casefold() not in supplied]
  if missing:raise RuntimeError('Runtime objective support omitted from build recipe: '+', '.join(missing))
+ character={path.casefold() for path in recipe.get('prefabAssets',[])}
+ if character & supplied:raise RuntimeError('Runtime objective support has two explicit bundle owners')
+ missing_effects=[path for path in config.get('objectiveEffectAssets',[]) if path.casefold() not in character | supplied]
+ if missing_effects:raise RuntimeError('Runtime objective effect has no explicit bundle owner: '+', '.join(missing_effects))
 
 def preflight():
  cfg=config();base=game();inv=read(WORK/'inventory/files.json');current={str(p.relative_to(base)):(p.stat().st_size,p.stat().st_mtime_ns) for p in base.rglob('*') if p.is_file()};prior={x['path']:(x['size'],x['mtime_ns']) for x in inv['files']}

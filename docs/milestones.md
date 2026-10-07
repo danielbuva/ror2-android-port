@@ -592,3 +592,12 @@ J386 passes five supported source base-stage deck selections and four original b
 Same candidate, all five assists OFF: two genuine original losses/StandardLoss, fresh restart/source HUD/settings/equipment, completed-session cleanup/menu return and cold result reload pass in153.180wall seconds. Seven actual-PID captures have zero errors; exact original four result files are restored. No installation or forced death. Full populations/SceneDirector/DLC/family pools, normal victory, stock Steam profile/unlocks, Moon/finale and PC visual/semantic parity remain unaccepted.
 
 J384/J378 and all Moon/formal/normal rollback points remain retained. Registration does not accept Golem or complete source populations. New content leaves normal-run and deferred visual gates unchanged.
+
+
+## J391 — Composed proc content, background and repeated sessions
+
+The accepted candidate registers 29 eligible original items, five commerce kinds and the required proc dependencies. Four original boss/charge/exits reach Sky Meadow in 418.560 Run seconds with 51 kills, including one native Golem. Missile is earned; the other new individual procs and healing purchases/wards remain unexercised. Android pause/background recovery, full owned cleanup and 15 zero-error PID captures pass. Invincibility/high damage/fast charge are ON for the route; movement/jump assists are OFF.
+
+On the same APK with every assist OFF, four genuine original losses, three restarts, menu return and cold result reload pass in 238.030 wall seconds with 11 zero-error captures. Exact original Android results are restored. Playing-session PSS rises from 793,493 to 944,867 KiB; cold reload is 794,543 KiB. This observation calls for retained-resource versus warmup attribution and does not establish a leak. No stable frame-rate or thermal acceptance.
+
+88 host tests, 155 shader imports, 979 material contracts and a 70.752-second zero-error Vulkan ARM64 build pass. Six scene hashes and 45 assembly/type identities are retained: 44 original DLLs and the explicitly extended no-audio RoR2 transformation. APK SHA-256 `034d7b75cf9dd9abd9a763885a8296edb31e967c7bd0000c6043daa292bf9b64`. Earlier stage/app/shader/Moon/formal/normal rollbacks remain intact. Full populations, normal victory, stock platform profile/unlocks, Moon/finale and PC visual/semantic parity remain unaccepted.

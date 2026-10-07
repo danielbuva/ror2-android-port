@@ -56,9 +56,10 @@ public sealed partial class MovementBatchProbe {
  }
  void ReleaseObjectiveBundlePreload(){if(ownsObjectiveBundlePreload){if(objectiveBundlePreload.IsValid())Addressables.Release(objectiveBundlePreload);ownsObjectiveBundlePreload=false;objectiveBundleLocation=null;}}
  EffectDef[] ObjectiveEffects(Result cfg){
-  var shared=new HashSet<string>(cfg.objectiveSupportAssets??new string[0]);
-  deferredObjectiveEffectPaths=cfg.objectiveEffectAssets.Where(shared.Contains).Distinct().ToArray();
-  var characterPaths=cfg.objectiveEffectAssets.Where(x=>!shared.Contains(x)).Distinct().ToArray();
+  var shared=new HashSet<string>(cfg.objectiveSupportAssets??new string[0],StringComparer.OrdinalIgnoreCase);
+  var effects=new HashSet<string>(cfg.objectiveEffectAssets,StringComparer.OrdinalIgnoreCase);
+  deferredObjectiveEffectPaths=(cfg.objectiveSupportAssets??new string[0]).Where(effects.Contains).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+  var characterPaths=cfg.objectiveEffectAssets.Where(x=>!shared.Contains(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
   objectiveEffectSources=characterPaths.Select(x=>artifactBundle.LoadAsset<GameObject>(x)).ToArray();
   r.rewards.characterEffects=characterPaths;r.rewards.deferredEffects=deferredObjectiveEffectPaths;r.rewards.supportBundlePreloaded=ownsObjectiveBundlePreload;Save();
   for(int i=0;i<objectiveEffectSources.Length;i++)Check(objectiveEffectSources[i]&&objectiveEffectSources[i].GetComponent<EffectComponent>(),"Original character-bundle effect missing: "+characterPaths[i]);
@@ -117,7 +118,7 @@ public sealed partial class MovementBatchProbe {
    Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
   }
   PrepareMoonSupport(cfg);
-  var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).ToArray();
+  var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).ToArray();
   var commerceEffect=PrepareCommerceSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();
   Check(wardSkin&&wardAnimator&&cfg.objectiveWardVisualAssets.Length==5,"Original ward visual contract missing");

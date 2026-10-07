@@ -154,7 +154,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   foreach(var pair in worldNativeLootLeaseBaselines)if(objectiveSupportSources[pair.Key].name=="StickyBomb")r.world.stickyBombLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;
   if(force||Time.frameCount%10==0){
    foreach(var blast in Resources.FindObjectsOfTypeAll<DelayBlast>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="WilloWispDelay(Clone)"))if(worldNativeLootObjects.Add(blast.gameObject)){worldObjects.Add(blast.gameObject);r.world.wispDelaySpawns++;}
-   foreach(var bomb in Resources.FindObjectsOfTypeAll<RoR2.Projectile.ProjectileController>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="StickyBomb(Clone)"))if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);r.world.stickyBombSpawns++;}
+   foreach(var bomb in Resources.FindObjectsOfTypeAll<RoR2.Projectile.ProjectileController>().Where(x=>x.gameObject.scene.IsValid()&&(x.name=="StickyBomb(Clone)"||x.name=="MissileProjectile(Clone)")))if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);if(bomb.name=="StickyBomb(Clone)")r.world.stickyBombSpawns++;}
   }
   if(RoR2Content.Buffs.Slow60)r.world.slowedEnemiesPeak=Mathf.Max(r.world.slowedEnemiesPeak,directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.body.HasBuff(RoR2Content.Buffs.Slow60)));
   if(worldNativeLootLeaseBaselines.Count>0&&(force||Time.frameCount%30==0))foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&(x.name=="HealPack(Clone)"||x.name=="BonusMoneyPack(Clone)")))if(worldNativeLootObjects.Add(obj)){worldObjects.Add(obj);if(obj.name=="HealPack(Clone)")r.world.healthPacks++;else r.world.moneyPacks++;}
@@ -163,6 +163,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var effect=(TemporaryVisualEffect)field.GetValue(body);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);
  }
  void CleanupWorldLootSupport(){
+  CleanupWorldProcContent();
   CleanupOfflineSettingsPause();
   CleanupWorldEquipment();
   if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);

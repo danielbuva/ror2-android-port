@@ -32,5 +32,28 @@ class ComposedSupportTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    validate_runtime_support(Path(directory),{})
 
+ def test_effect_owners_match_unity_lowercase_bundle_paths(self):
+  with tempfile.TemporaryDirectory() as directory:
+   project=Path(directory)
+   shared='Assets/LabLoadingScene/SharedEffect.prefab'
+   character='Assets/LabLoadingScene/CharacterEffect.prefab'
+   write(project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json',{'objectiveSupportAssets':[shared],'objectiveEffectAssets':[shared.lower(),character.lower()]})
+   validate_runtime_support(project,{'objectiveSupportAssets':[shared],'prefabAssets':[character]})
+
+ def test_missing_effect_owner_rejected_before_editor_dispatch(self):
+  with tempfile.TemporaryDirectory() as directory:
+   project=Path(directory)
+   write(project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json',{'objectiveEffectAssets':['Assets/LabLoadingScene/UnownedEffect.prefab']})
+   with self.assertRaisesRegex(RuntimeError,'effect has no explicit bundle owner'):
+    validate_runtime_support(project,{'objectiveSupportAssets':[],'prefabAssets':[]})
+
+ def test_duplicate_effect_bundle_ownership_rejected(self):
+  with tempfile.TemporaryDirectory() as directory:
+   project=Path(directory)
+   shared='Assets/LabLoadingScene/SharedEffect.prefab'
+   write(project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json',{'objectiveSupportAssets':[shared]})
+   with self.assertRaisesRegex(RuntimeError,'two explicit bundle owners'):
+    validate_runtime_support(project,{'objectiveSupportAssets':[shared],'prefabAssets':[shared.lower()]})
+
 
 if __name__=='__main__':unittest.main()
