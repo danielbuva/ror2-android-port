@@ -2,6 +2,7 @@
 from common import *
 from shader_deferred import load_analysis,render_state
 from shader_programs import NativePrograms
+from shader_tessellation import TessellationPrograms
 from shader_source import properties
 from shader_recovery import PINS
 
@@ -15,6 +16,8 @@ FAMILIES={
  'ui-alpha':(-8085301563477162814,'Hopoo Games/UI/Animate Alpha'),
  'distortion':(1142643595885926041,'Hopoo Games/FX/Distortion'),
  'speedtree':(-8684109817920462965,'SpeedtreeOverride/SpeedtreeCustom'),
+ 'water-single':(-8115552462691183134,'CalmWater/Calm Water [DX11]'),
+ 'water':(-92852985697471365,'CalmWater/Calm Water [DX11] [Double Sided]'),
 }
 ENGINE={'STEREO_INSTANCING_ON','UNITY_SINGLE_PASS_STEREO','STEREO_MULTIVIEW_ON','STEREO_CUBEMAP_RENDER_ON','INSTANCING_ON','LIGHTPROBE_SH','DYNAMICLIGHTMAP_ON','SHADOWS_SHADOWMASK','LIGHTMAP_ON','DIRLIGHTMAP_COMBINED','UNITY_HDR_ON','SHADOWS_DEPTH','SHADOWS_CUBE','EDITOR_VISUALIZATION','FOG_LINEAR','FOG_EXP','FOG_EXP2','DIRECTIONAL','LIGHTMAP_SHADOW_MIXING','SHADOWS_SCREEN','VERTEXLIGHT_ON','POINT','SPOT','POINT_COOKIE','DIRECTIONAL_COOKIE','SOFTPARTICLES_ON'}
 
@@ -26,7 +29,11 @@ def generate():
     write(WORK/'material-bindings-current.json',{'path':str(out.relative_to(ROOT))})
     result={'success':False,'semantic_equivalence_proven':False,'PC_draw_validation_performed':False,'selection':selection,'programs':[]}
     try:
-        contexts={name:load_analysis(selection[name],identity,shader) for name,(identity,shader) in FAMILIES.items()}
+        contexts={name:load_analysis(selection[name],identity,shader) for name,(identity,shader) in FAMILIES.items() if name in selection or name not in ['water','water-single']}
+        if ('water' in contexts)!=('water-single' in contexts):raise RuntimeError('Partial native water family selection')
+        topology=selection.get('water_topology','native-tessellation')
+        if topology not in ['native-tessellation','original-vertices']:raise RuntimeError('Unmeasured native water topology selection')
+        result['water_topology']=topology;result['water_geometry_approximation']=topology=='original-vertices'
         reflection=load_analysis(selection['reflections'],3,'Hidden/Internal-DeferredReflections')
         for key in ['d3dasm','hlsl']:
             relative,pin=PINS[key];tool=WORK/relative
@@ -36,21 +43,33 @@ def generate():
             if sha(exe)!=context[4]['tool_binary_hashes'][str(exe.relative_to(WORK))]:raise RuntimeError('Native decompiler binary drift')
         material_file=(ROOT/selection['material_inventory']).resolve()
         if WORK.resolve() not in material_file.parents or sha(material_file)!=selection['material_inventory_sha256']:raise RuntimeError('Measured material inventory drift')
-        rows=[x.split('|') for x in material_file.read_text().splitlines()];emitter=NativePrograms(out,result,exe);families=[]
+        rows=[x.split('|') for x in material_file.read_text().splitlines()];emitter=TessellationPrograms(out,result,exe);families=[]
         for ordinal,(name,context) in enumerate(contexts.items()):
             tree=context[0];form=tree['m_ParsedForm'];sub=form['m_SubShaders'][0];passes=sub['m_Passes'];features=set(form['m_KeywordNames'])-ENGINE-{'UNITY_UI_CLIP_RECT','UNITY_UI_ALPHACLIP'};ui=name=='ui-alpha'
             if name=='speedtree':features-={'ENABLE_WIND','LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE'}
-            first_pass=1 if name=='distortion' else 0
+            water=name in ['water','water-single'];first_pass=1 if name=='distortion' or water else 0
             materials=[x for x in rows if x[1]==form['m_Name']];sets=sorted({tuple(sorted(set(x[2].split(','))&features)) for x in materials})
             if not sets or len(sets)>128:raise RuntimeError('Unexpected native material closure')
             variants=[]
             for i,keys in enumerate(sets):
                 resource='AndroidNativeFamily'+str(ordinal)+'Variant'+str(i)
                 text='// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'+resource+'" {\nProperties {\n'+properties(tree)+'\n}\nSubShader {\n'+tags(sub['m_Tags']['tags'])
-                if name=='distortion':
+                if name=='distortion' or water:
                     grab=passes[0]
                     if grab['m_Type']!=2 or not grab['m_TextureName'] or any(grab[stage]['m_PlayerSubPrograms'] for stage in ['progVertex','progFragment','progHull','progDomain','progGeometry']):raise RuntimeError('Unmeasured native grab pass')
                     text+='GrabPass {'+json.dumps(grab['m_TextureName'])+'}\n'
+                if water:
+                    if topology=='original-vertices' and any(k.startswith('_DISPLACEMENTMODE_') for k in keys):raise RuntimeError('Original-vertex water requires measured non-displacement variants')
+                    for pi in range(1,len(passes)):
+                        p=passes[pi];pairs=[]
+                        for fog in [None,'FOG_LINEAR','FOG_EXP']:
+                            for sh in [False,True]:
+                                for shadow in [False,True]:
+                                    engine={'DIRECTIONAL'}|({fog} if fog else set())|({'LIGHTPROBE_SH'} if sh else set())|({'SHADOWS_SCREEN'} if shadow else set())
+                                    condition=('defined('+fog+')' if fog else '!defined(FOG_LINEAR) && !defined(FOG_EXP)')+' && '+('' if sh else '!')+'defined(LIGHTPROBE_SH) && '+('' if shadow else '!')+'defined(SHADOWS_SCREEN)'
+                                    pairs.append((condition,emitter.quad(context,pi,set(keys)|engine)))
+                        text+='Pass {Name '+json.dumps(p['m_State']['m_Name'])+' '+tags(p['m_State']['m_Tags']['tags'])+render_state(p['m_State'])+emitter.water_block(context,pairs,original_vertices=topology=='original-vertices')+'}\n'
+                    text+='}}\n';(sources/(resource+'.shader')).write_text(text);variants.append({'resource':resource,'keywords':list(keys)});continue
                 text+='Pass {Name '+json.dumps(passes[first_pass]['m_State']['m_Name'])+' '+tags(passes[first_pass]['m_State']['m_Tags']['tags'])+render_state(passes[first_pass]['m_State'],ui=ui)
                 if ui:
                     pairs=[]
@@ -103,7 +122,7 @@ def generate():
                 vi,fi=emitter.pair(reflection,pi,keys);condition=None if len(key_sets)==1 else ('defined(UNITY_HDR_ON)' if 'UNITY_HDR_ON' in keys else '!defined(UNITY_HDR_ON)');pairs.append((condition,vi,fi))
             text+='Pass {\n'+render_state(p['m_State'])+emitter.block(reflection,pairs,'#pragma multi_compile __ UNITY_HDR_ON\n' if len(key_sets)>1 else '')+'}\n'
         text+='}}\n';(sources/'AndroidNativeDeferredReflections.shader').write_text(text)
-        write(sources/'AndroidNativeMaterialFamilies.json',{'families':families,'scope':'Measured static material features, mono/noninstanced HDR deferred; cloud SH/soft-particle variants; original reflection candidate, no PC semantic/visual parity'})
+        write(sources/'AndroidNativeMaterialFamilies.json',{'families':families,'water_topology':topology,'water_geometry_approximation':topology=='original-vertices','scope':'Measured static material features, mono/noninstanced HDR deferred; cloud SH/soft-particle variants; original reflection candidate, no PC semantic/visual parity'})
         result.update(success=True,families=families,variant_count=sum(len(f['variants']) for f in families),source_sha256_by_file={p.name:sha(p) for p in sources.iterdir()})
     except Exception as e:result['first_failure']=str(e);raise
     finally:write(out/'receipt.json',result)

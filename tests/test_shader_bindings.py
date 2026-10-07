@@ -194,3 +194,25 @@ class ShaderConsumerTests(unittest.TestCase):
         fragment=dict(record,index=3,stage='progFragment')
         context=(None,None,[record,fragment],None,None)
         self.assertEqual(NativePrograms(None,None,None).pair(context,1,[],subshader_index=1),[2,3])
+
+    def test_hull_destination_mask_selects_corresponding_source_lanes(self):
+        from shader_tessellation import hull_source
+        fixture='\n'.join(['profile=hs_5_0','dcl_inputControlPointCount 3','dcl_outputControlPointCount 3','dcl_tessDomain tri','dcl_tessPartitioning fractional_odd','dcl_tessOutputPrimitive triangle_cw','hs_fork_phase','mul r0:yzw vicp0[0].xxyz l(7,8,9,10)','max o0:x r0.y l(1)','max o1:x r0.z l(1)','max o2:x r0.w l(1)','hs_join_phase','add o3:x vpc0.x vpc1.x','ret','.end'])
+        text,report=hull_source(fixture)
+        self.assertIn('r0.yzw = (cp0.xyz) * (float3(8,9,10));',text)
+        self.assertTrue(report['implicit_control_point_passthrough'])
+        with self.assertRaisesRegex(RuntimeError,'Unmeasured hull opcode'):
+            hull_source(fixture.replace('mul r0:yzw','sin r0:yzw'))
+        with self.assertRaisesRegex(RuntimeError,'topology/control point'):
+            hull_source(fixture+'\nhs_control_point_phase')
+
+    def test_domain_lowering_keeps_math_and_rejects_consumed_patch_constants(self):
+        from shader_tessellation import domain_source
+        fixture='struct DsControlPoint {float4 v0:INTERNALTESSPOS0;float4 v1:NORMAL0;float4 v2:TANGENT0;float4 v3:TEXCOORD0;};\nstruct DsPatch {float pc0_x:SV_TessFactor0;};\n[domain("tri")]\nvoid main(float3 bary : SV_DomainLocation, DsPatch constants, const OutputPatch<DsControlPoint, 3> patch, out precise float4 o0 : SV_POSITION0) {o0=vertices[1].v0*float4(bary,1);}'
+        text,report=domain_source(fixture)
+        self.assertIn('o0=cp1_v0*float4(bary,1);',text)
+        self.assertTrue(report['body_expressions_unchanged'])
+        with self.assertRaisesRegex(RuntimeError,'Consumed native patch constants'):
+            domain_source(fixture.replace('float4(bary,1)','constants.pc0_x'))
+        with self.assertRaisesRegex(RuntimeError,'Unresolved domain control-point'):
+            domain_source(fixture.replace('vertices[1]','vertices[3]'))

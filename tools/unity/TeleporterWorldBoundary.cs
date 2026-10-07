@@ -20,7 +20,9 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class ObjectiveVisualBinding {public string path,mesh,material;}
  [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public ObjectiveVisualBinding[] bindings;}
- [Serializable] public class ObjectiveRendererObservation {public string path,kind;public string[] materials,shaders;public bool enabled,active,visible;public Vector3 center,size;}
+ [Serializable] public class SurfacePropertyObservation {public string name,type,texture;public Vector4 value;public int textureId,width,height;public Vector2 scale,offset;}
+ [Serializable] public class SurfaceMaterialObservation {public int instanceId,shaderId,passCount;public string[] keywords;public bool instancing,doubleSidedGi;public SurfacePropertyObservation[] properties;}
+ [Serializable] public class ObjectiveRendererObservation {public string path,kind;public int unityFrame;public string[] materials,shaders;public int[] queues;public bool enabled,active,visible,worldOwned;public int particles;public float projectedBoundsFraction;public Vector3 center,size;public string particleRenderMode,particleAlignment;public string[] vertexStreams;public SurfaceMaterialObservation[] materialState;}
  [Serializable] public class ObjectiveReport {
   public bool ready,rules,idle,available,selected,authority,charging,charged,bossDefeated,finished,exitBegan,exitFinished,cleaned,rewardCollected,rewardLeftBehind;
   public int rewardPickupBaseline,rewardPickupMessages;
@@ -29,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   public float charge,radius,bossHealth,bossMaxHealth,sourceDuration,sourceRadius,credits,spent;
   public string state,fsmState,nextScene,exitState,scope;public Vector3 position;
   public List<string> transitions=new List<string>();
-  public ObjectiveRendererObservation[] rendererViews;public int lateNativeMaterials;
+  public ObjectiveRendererObservation[] rendererViews,ownedSurfaceViews,presentedSurfaceViews;public int lateNativeMaterials,ownedSurfaceCount;
  }
  readonly List<GameObject> objectiveTemplates=new List<GameObject>();
  readonly List<CharacterSpawnCard> objectiveCards=new List<CharacterSpawnCard>();
@@ -61,6 +63,21 @@ public sealed partial class MovementBatchProbe {
   r.rewards.characterEffects=characterPaths;r.rewards.deferredEffects=deferredObjectiveEffectPaths;r.rewards.supportBundlePreloaded=ownsObjectiveBundlePreload;Save();
   for(int i=0;i<objectiveEffectSources.Length;i++)Check(objectiveEffectSources[i]&&objectiveEffectSources[i].GetComponent<EffectComponent>(),"Original character-bundle effect missing: "+characterPaths[i]);
   foreach(var source in objectiveEffectSources)source.GetComponent<EffectComponent>().soundName=null;return objectiveEffectSources.Select(x=>new EffectDef(x)).ToArray();
+ }
+ void PresentRegisteredNativeEffects(){
+  // Only registered, owned effect sources are adapted before their native pool
+  // instantiates them. Retain the original arrays for existing scoped teardown.
+  var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);
+  foreach(var renderer in entries.Where(x=>x!=null&&x.prefab).SelectMany(x=>x.prefab.GetComponentsInChildren<Renderer>(true)).Distinct()){
+   if(worldLootSourceMaterials.ContainsKey(renderer))continue;
+   var originals=renderer.sharedMaterials;var copies=(Material[])originals.Clone();bool changed=false;
+   for(int i=0;i<originals.Length;i++){
+    var original=originals[i];if(!original)continue;var copy=new Material(original);
+    if(!AndroidNativeDeferredPresentation.Apply(original,copy)){Destroy(copy);continue;}
+    copies[i]=copy;worldMaterials.Add(copy);r.world.nativeEffectSourceMaterials++;changed=true;
+   }
+   if(changed){worldLootSourceMaterials.Add(renderer,originals);renderer.sharedMaterials=copies;r.world.nativeEffectSourceRenderers++;}
+  }
  }
  void CleanupObjectiveEffects(){
   if(objectiveEffectSources==null)return;var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);var cache=(IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
@@ -117,6 +134,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var locator in ward.GetComponentsInChildren<SfxLocator>(true))foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(locator,null);
   var supportEffects=new[]{objectiveSupportSources[0],objectiveSupportSources[3]}.Concat(moonTransferEffect?new[]{moonTransferEffect}:new GameObject[0]).Concat(coreLootEffects).Concat(commerceEffect?new[]{commerceEffect}:new GameObject[0]).ToArray();foreach(var source in supportEffects)source.GetComponent<EffectComponent>().soundName=null;objectiveEffectSources=objectiveEffectSources.Concat(supportEffects).Distinct().ToArray();
   var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);EffectCatalog.SetEntries(entries.Concat(supportEffects.Select(x=>new EffectDef(x))).GroupBy(x=>x.prefab).Select(x=>x.First()).ToArray());
+  PresentRegisteredNativeEffects();
   foreach(var path in deferredObjectiveEffectPaths){int index=Array.IndexOf(cfg.objectiveSupportAssets,path);Check(index>=0&&supportEffects.Contains(objectiveSupportSources[index])&&EffectCatalog.FindEffectIndexFromPrefab(objectiveSupportSources[index])!=EffectIndex.Invalid,"Deferred original support effect was not registered: "+path);}
   r.rewards.registeredDeferredEffects=deferredObjectiveEffectPaths;Save();
   Check(!OrbEffectSingleton.instance&&OrbEffectSingleton.numPnts==0,"Unowned original orb visual context");
@@ -301,21 +319,58 @@ public sealed partial class MovementBatchProbe {
    foreach(var renderer in objectiveHost.GetComponentsInChildren<Renderer>(true)){
     if(worldPresented.Contains(renderer.GetInstanceID()))continue;
     var materials=renderer.sharedMaterials;bool changed=false;
-    for(int i=0;i<materials.Length;i++)if(materials[i]&&materials[i].shader.name=="Hopoo Games/Deferred/Standard"){
+    for(int i=0;i<materials.Length;i++)if(materials[i]&&(materials[i].shader.name=="Hopoo Games/Deferred/Standard"||materials[i].shader.name=="CalmWater/Calm Water [DX11]"||materials[i].shader.name=="CalmWater/Calm Water [DX11] [Double Sided]")){
      var source=materials[i];var copy=new Material(source);AndroidMaterialPresentation.Apply(source,copy);materials[i]=copy;worldMaterials.Add(copy);r.objective.lateNativeMaterials++;changed=true;
     }
     if(changed){renderer.sharedMaterials=materials;worldPresented.Add(renderer.GetInstanceID());}
    }
   }
-  // Attribute the actual non-particle surface in the composed game before
-  // changing another shader family. This never changes renderer state.
-  if(objectiveHost&&r.objective!=null&&Time.frameCount%30==0)r.objective.rendererViews=objectiveHost.GetComponentsInChildren<Renderer>(true).Where(x=>!(x is ParticleSystemRenderer)).Select(x=>new ObjectiveRendererObservation{path=StageObjectPath(x.transform),kind=x.GetType().Name,materials=x.sharedMaterials.Select(m=>m?m.name:"missing").ToArray(),shaders=x.sharedMaterials.Select(m=>m&&m.shader?m.shader.name:"missing").ToArray(),enabled=x.enabled,active=x.gameObject.activeInHierarchy,visible=x.isVisible,center=x.bounds.center,size=x.bounds.size}).ToArray();
+  // Include particles and owned world views when attributing an opaque surface.
+  // Bounds estimate screen coverage; it is not an occlusion/pixel measurement.
+  if(objectiveHost&&r.objective!=null&&Time.frameCount%30==0){
+   r.objective.rendererViews=objectiveHost.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();
+   var ownedMaterials=new HashSet<Material>(worldMaterials.Where(x=>x));
+   var visible=Resources.FindObjectsOfTypeAll<Renderer>().Where(x=>x&&x.gameObject.scene.IsValid()&&x.gameObject.activeInHierarchy&&x.enabled&&x.isVisible).ToArray();
+   var owned=visible.Where(x=>worldPresented.Contains(x.GetInstanceID())||x.sharedMaterials.Any(m=>m&&ownedMaterials.Contains(m))).Select(ObserveOwnedSurface).OrderByDescending(x=>x.projectedBoundsFraction).ToArray();
+   // Keep the first short-lived native Queen effect observation across stage
+   // reports; it may disappear before the host's next sampling interval.
+   if(r.world.nativeEffectViews==null){
+    var effects=visible.Where(x=>x.GetComponentInParent<EffectComponent>()&&StageObjectPath(x.transform).StartsWith("BeetleQueenBurrow",StringComparison.Ordinal)&&x.sharedMaterials.Any(m=>m&&m.shader&&m.shader.name.StartsWith("Porting Lab/AndroidNativeFamily1Variant",StringComparison.Ordinal))).Select(ObserveOwnedSurface).ToArray();
+    if(effects.Length>0)r.world.nativeEffectViews=effects;
+   }
+   r.objective.ownedSurfaceCount=owned.Length;r.objective.ownedSurfaceViews=owned.Take(64).ToArray();
+   // Effects spawned by native providers need not belong to the world model
+   // list. Observe presentation shaders separately; do not claim ownership.
+   r.objective.presentedSurfaceViews=visible.Where(x=>x.sharedMaterials.Any(m=>m&&m.shader&&(m.shader.name.StartsWith("Porting Lab/",StringComparison.Ordinal)||m.shader.name.StartsWith("Hopoo Games/",StringComparison.Ordinal)))).Select(ObserveOwnedSurface).OrderByDescending(x=>x.projectedBoundsFraction).Take(128).ToArray();
+  }
   FlushObjectiveActors();ObserveObjectiveSupport();if(!worldTeleporter)return;var report=r.objective;report.frames++;report.state=worldTeleporter.activationState.ToString();if(report.state!=objectiveState){objectiveState=report.state;report.transitions.Add(report.state);Save();}
   report.fsmState=worldTeleporter.mainStateMachine.state==null?"uninitialized":worldTeleporter.mainStateMachine.state.GetType().FullName;report.idle=worldTeleporter.isIdle;report.available=worldTeleporter.GetInteractability(worldPlayer.GetComponent<Interactor>())==Interactability.Available;report.selected=worldDriver.currentInteractable==objectiveHost;report.authority=Util.HasEffectiveAuthority(worldTeleporter.GetComponent<NetworkIdentity>());
   report.charge=worldTeleporter.chargeFraction;report.radius=worldTeleporter.holdoutZoneController.currentRadius;report.charging|=worldTeleporter.isCharging;report.charged|=worldTeleporter.isCharged;report.finished|=worldTeleporter.isInFinalSequence;
   report.bossMembers=worldTeleporter.bossGroup.combatSquad.memberCount;report.bossHealth=worldTeleporter.bossGroup.totalObservedHealth;report.bossMaxHealth=worldTeleporter.bossGroup.totalMaxObservedMaxHealth;report.credits=worldTeleporter.bossDirector.monsterCredit;report.spent=worldTeleporter.bossDirector.totalCreditsSpent;report.exitState=typeof(SceneExitController).GetField("exitState",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldTeleporter.sceneExitController).ToString();var destination=worldTeleporter.sceneExitController.useRunNextStageScene?Run.instance.nextStageScene:worldTeleporter.sceneExitController.destinationScene;report.nextScene=destination?destination.cachedName:"unavailable";
   report.bossDeaths=directorActors.Count(x=>x.report.dead&&x.report.origin=="teleporter-director");
   if(report.bossDefeated){report.rewardPickupMessages=r.world.pickupMessages-report.rewardPickupBaseline;report.rewardCollected=report.rewardPickupMessages>0;}
+ }
+ ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer){
+  var materials=renderer.sharedMaterials;var bounds=renderer.bounds;var lo=new Vector2(float.MaxValue,float.MaxValue);var hi=new Vector2(float.MinValue,float.MinValue);bool inFront=false;
+  if(worldView!=null)for(int i=0;i<8;i++){var point=bounds.center+Vector3.Scale(bounds.extents,new Vector3((i&1)==0?-1:1,(i&2)==0?-1:1,(i&4)==0?-1:1));var screen=worldView.ProjectWorldPoint(point);if(screen.z<=0)continue;inFront=true;lo=Vector2.Min(lo,new Vector2(screen.x,screen.y));hi=Vector2.Max(hi,new Vector2(screen.x,screen.y));}
+  float area=inFront?Mathf.Max(0,Mathf.Min(Screen.width,hi.x)-Mathf.Max(0,lo.x))*Mathf.Max(0,Mathf.Min(Screen.height,hi.y)-Mathf.Max(0,lo.y))/(Screen.width*(float)Screen.height):0;var particle=renderer.GetComponent<ParticleSystem>();
+  var particleRenderer=renderer as ParticleSystemRenderer;var streams=new List<ParticleSystemVertexStream>();if(particleRenderer)particleRenderer.GetActiveVertexStreams(streams);
+  bool detailed=particleRenderer||renderer.name=="Water"||renderer.name.IndexOf("AreaIndicator",StringComparison.Ordinal)>=0;
+  return new ObjectiveRendererObservation{unityFrame=Time.frameCount,particleRenderMode=particleRenderer?particleRenderer.renderMode.ToString():null,particleAlignment=particleRenderer?particleRenderer.alignment.ToString():null,vertexStreams=particleRenderer?streams.Select(x=>x.ToString()).ToArray():null,materialState=detailed?materials.Select(ObserveSurfaceMaterial).ToArray():null,path=StageObjectPath(renderer.transform),kind=renderer.GetType().Name,materials=materials.Select(m=>m?m.name:"missing").ToArray(),shaders=materials.Select(m=>m&&m.shader?m.shader.name:"missing").ToArray(),queues=materials.Select(m=>m?m.renderQueue:-1).ToArray(),enabled=renderer.enabled,active=renderer.gameObject.activeInHierarchy,visible=renderer.isVisible,worldOwned=worldPresented.Contains(renderer.GetInstanceID())||materials.Any(m=>m&&worldMaterials.Contains(m)),center=bounds.center,size=bounds.size,particles=particle?particle.particleCount:0,projectedBoundsFraction=area};
+ }
+ SurfaceMaterialObservation ObserveSurfaceMaterial(Material material){
+  if(!material||!material.shader)return null;var shader=material.shader;var properties=new List<SurfacePropertyObservation>();
+  for(int i=0;i<shader.GetPropertyCount();i++){
+   var name=shader.GetPropertyName(i);var type=shader.GetPropertyType(i);var property=new SurfacePropertyObservation{name=name,type=type.ToString()};
+   switch(type){
+    case UnityEngine.Rendering.ShaderPropertyType.Float:case UnityEngine.Rendering.ShaderPropertyType.Range:property.value.x=material.GetFloat(name);break;
+    case UnityEngine.Rendering.ShaderPropertyType.Color:property.value=material.GetColor(name);break;
+    case UnityEngine.Rendering.ShaderPropertyType.Vector:property.value=material.GetVector(name);break;
+    case UnityEngine.Rendering.ShaderPropertyType.Texture:var texture=material.GetTexture(name);property.texture=texture?texture.name:null;property.textureId=texture?texture.GetInstanceID():0;property.width=texture?texture.width:0;property.height=texture?texture.height:0;property.scale=material.GetTextureScale(name);property.offset=material.GetTextureOffset(name);break;
+   }
+   properties.Add(property);
+  }
+  return new SurfaceMaterialObservation{instanceId=material.GetInstanceID(),shaderId=shader.GetInstanceID(),passCount=material.passCount,keywords=material.shaderKeywords,instancing=material.enableInstancing,doubleSidedGi=material.doubleSidedGI,properties=properties.ToArray()};
  }
  IEnumerable<GenericPickupController> GrantableWorldPickups(CharacterBody player){
   return EjectionPickups().Where(x=>{var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return def!=null&&def.itemIndex!=ItemIndex.None&&def.coinValue==0&&x.GetInteractability(player.GetComponent<Interactor>())==Interactability.Available;});

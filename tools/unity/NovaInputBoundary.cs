@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -76,7 +77,16 @@ public sealed partial class MovementBatchProbe {
      if(cfg.automaticDirector&&enemyBody&&fireAge>9&&fireAge<12){var enemyAimDelta=enemyBody.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(enemyAimDelta.x,enemyAimDelta.z).normalized;}bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
      if(DirectorBatch()&&fireAge>18.5f){var target=DirectorReturnFireTarget();bridge.diagnosticPrimary=target;if(target){var batchAim=target.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(batchAim.x,batchAim.z).normalized;}}
     }
-    if(bringup&&worldView!=null&&bridge.diagnosticInput)worldView.DiagnosticDirection(bank.aimDirection);display.Observe(position,bank.aimDirection);
+    if(bringup&&worldView!=null&&bridge.diagnosticInput){
+     var cameraDirection=bank.aimDirection;r.visualCaptureActive=false;
+     // A capture-only camera target never changes the original aim/input bank.
+     // Physical takeover disables this path with diagnosticInput.
+     if(cfg.integratedWorld&&r.stageProgress!=null&&r.stageProgress.current==cfg.visualCaptureStage&&objectiveHost&&!string.IsNullOrEmpty(cfg.visualCaptureRenderer)){
+      var views=objectiveHost.GetComponentsInChildren<Renderer>(true).Where(x=>x.enabled&&x.gameObject.activeInHierarchy&&x.name==cfg.visualCaptureRenderer).ToArray();
+      if(views.Length==1){var view=views[0];cameraDirection=view.bounds.center-bank.aimOrigin;r.visualCaptureActive=true;r.visualCapturePath=StageObjectPath(view.transform);r.visualCaptureCenter=view.bounds.center;}
+     }
+     worldView.DiagnosticDirection(cameraDirection);
+    }display.Observe(position,bank.aimDirection);
     if(elapsed>=next){if((r.freePlay||cfg.integratedWorld)&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
     if(cfg.pauseBeforeMoon&&cfg.teleporterLoop&&r.stageProgress.transitions>=4&&elapsed-r.stageProgress.enteredAt>30){r.nova.seconds=elapsed;break;}
     if(cfg.teleporterLoop&&r.stageProgress.transitions>=Mathf.Max(1,cfg.integratedTransitionTarget)&&elapsed-r.stageProgress.enteredAt>30&&(!cfg.moonMission||(r.moon!=null&&r.moon.gameOver&&(!cfg.integratedResults||(r.results!=null&&r.results.persisted))))){r.nova.seconds=elapsed;break;}

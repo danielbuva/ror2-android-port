@@ -3873,3 +3873,59 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 
 
 **J372 exit:** J372 recovers native SpeedTree/distortion and retains failed CalmWater tessellation analysis.86 private family variants/690 original programs,147 shader imports/944 source-material contracts and80 tests pass. Forced Vulkan build80.934seconds/zero errors retains45 accepted assemblies/six scene hashes/41 payload files. Same app update dispatch20, APK SHA-256 `df8086735fd19e8754f0a635637d12ac16d9b45050e41ebfb17013a9bd12aa9d`; original four Android result files/package inventory retained. Combined assisted route completes four original boss/charge/collected-reward/exits into Sky Meadow in483.450original Run seconds/79kills/22pickup messages/20native notices/214HUD checks.85 foliage/35 distortion bindings and inherited native families/13 late material slots execute; nine PID captures0errors/named Timeline warnings/full scoped cleanup/OLED asleep. Large opaque blue charging surface has unconfirmed owner; white water, neutral/bright Frozen and Commando pose/palette remain visual failures. Invincibility/high damage/fast charge ON, movement/jump OFF. Compatibility observation only; no PC semantic/visual parity, normal victory or Moon advancement.
+
+
+## I09-J373/J374 — Recover water semantics and classify the integrated pipeline
+
+- **ID:** I09-J373/J374
+- **TITLE:** Recover native tessellation/material behavior and test an explicit topology fallback.
+- **STATUS:** Native tessellation rejected; J374 fallback four-exit pass with three collected rewards; J375 binding-only pass and J376 visible-water capture pass. PC equivalence remains open.
+- **CONTEXT:** J372 integrated world and all Moon/formal/normal rollbacks retained.
+- **OBSERVATION:** CalmWater requires hull/domain programs. Independent tools emit unsupported hull or undeclared domain input. The current Vulkan feature query advertises tessellation. J372 charging captures also contain an unconfirmed opaque surface.
+- **HYPOTHESIS:** Original instruction and binding recovery permits faithful source generation; if the native tessellation pipeline fails, original-vertex evaluation can preserve material behavior with a clearly labeled geometry difference. Broader owned renderer/particle observations can constrain surface attribution.
+- **TASK:** Finish the same-program four-tool single/double-sided analysis, lower measured native hull/domain I/O, generate current water closure, host-check, archive and run the composed Vulkan candidate. Preserve J373 native crash; test only the justified original-vertex fallback as a separate attempt. Capture particles/queues/projected bounds without changing renderer state.
+- **CONSTRAINTS:** Original input untouched; all derived math/source/IR/assets/raw evidence ignored. Exact editor/pins, single owned app/update/result retention and OLED sleep. No guessed water math, normal combat/holdout/victory or PC semantic/visual acceptance. No Moon progression. Topology approximation must appear in generated/runtime receipts; reject unmeasured displacement variants.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored tessellation transformer, current family generator/build/dispatch and owned surface observation; private compiler driver outputs, source/stage/build/run receipts; existing evidence documents.
+- **TEST COMMAND:** ./dev doctor; ./dev prototype --action shader-recovery --target water-single; ./dev prototype --action shader-source-materials; pinned MCP import/material contracts; ./dev test; ./dev preflight; ./dev build --target vulkan --force; existing archive/install/sync/combined-run/capture lifecycle.
+- **PASS CONDITION:** Native programs/variants/bindings preserved, unsupported forms rejected; exact host/source/build attribution. Device acceptance requires actual composed route, native consumers, fresh captures, full cleanup and result retention. A discriminating native crash completes analysis without passing native tessellation. An original-vertex pass never advances tessellation/PC parity.
+- **FAILURE EVIDENCE TO CAPTURE:** Tool counterexamples, mask/declaration failures, native roundtrip/IR/compiler hashes and provider limits, shader import/build errors, actual PID disappearance/native stack, last live snapshot, renderer observations and reviewed visual differences.
+- **STATE/JOURNAL UPDATES REQUIRED:** Both attempts, geometry/debug labels, runtime outcome and rollback; update concise state, journal, milestones/risk/visual ledger and scoped observation only after a real pass. Public privacy/IP audit before Conventional Commit.
+- **DEPENDENCIES:** J372; pinned d3dasm domain declaration/render mismatch, independent HLSLDecompiler target errors, native dxbc-spirv IR and exact-editor tessellation/builtin contracts.
+
+
+## I09-J375/J376 — Water draw visibility and effect context
+
+- **ID:** I09-J375/J376
+- **TITLE:** Observe the current native water and opaque-card contracts in the composed game.
+- **STATUS:** DONE — four exits, visible native water capture and scoped observations; original-vertex approximation and PC parity open.
+- **CONTEXT:** J374 late lunar water still used a Windows shader; J375 native-bound it outside the camera.
+- **OBSERVATION:** Binding count alone could not establish a visible draw; native-provider cards bypassed world ownership.
+- **HYPOTHESIS:** Existing material handoff/camera and targeted state records resolve these immediate ambiguities.
+- **TASK:** Clone measured late water, focus only diagnostic camera, capture material/particle streams, compare alternative binary coverage and prepare a small read-only PC draw exporter.
+- **CONSTRAINTS:** Common contract; original shaders/typed records authoritative, no feature downgrade or invented math, no original-install instrumentation, no inferred pixel owner.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing material/teleporter/camera harness, authored PC replay exporter and fixtures; private original/IR/cost/variant groups and complete stage/build/run archives.
+- **TEST COMMAND:** Pinned MCP refresh/import/binding checks; ./dev test; ./dev preflight; ./dev build --target vulkan --force; existing archive/update/sync/whole-route/capture lifecycle.
+- **PASS CONDITION:** Current-launch water visibility and capture agree; four real exits, no new error/crash, full owner/global/pipeline cleanup and results retained. Real PC replay remains a separate unfulfilled assertion.
+- **FAILURE EVIDENCE TO CAPTURE:** Per-pass aliases/missing variants, first compiler error, native stack, actual camera/renderer/material/vertex-stream records and visual differences.
+- **STATE/JOURNAL UPDATES REQUIRED:** J375 binding limit/J376 actual capture/debug labels/rollback, concise state, milestone/risk/visual ledger and scoped pointer; privacy/IP review and Conventional Commit.
+- **DEPENDENCIES:** J374/J375; current legitimate native programs and pinned four-tool/UnityExplorer sources; verified RenderDoc header contract, actual PC runtime unavailable.
+
+## I09-J377/J378 — Registered native effect presentation
+
+- **ID:** I09-J377/J378
+- **TITLE:** Restore recovered shaders on registered effect sources before native pooling.
+- **STATUS:** DONE — J377 observer rejected; J378 persistent observation and composed four-exit acceptance pass. PC parity deferred.
+- **CONTEXT:** J376 combined game shows black/white Queen dust cards.
+- **OBSERVATION:** Captured Queen burrow dust still names the exported Windows Opaque Cloud shader while a recovered family exists.
+- **HYPOTHESIS:** Presenting registered source materials before spawning restores this missing family without rewriting effect behavior.
+- **TASK:** Reuse native material binding and owned source-array rollback across the current effect catalog; build/run the whole candidate and inspect the first real failure.
+- **CONSTRAINTS:** Common contract; preserve particles, vertex streams, colors, renderer layers and native effect pooling/gameplay. Unknown families remain unchanged.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Teleporter effect registration/presentation, existing source-material teardown, private candidate/whole-route evidence and docs.
+- **TEST COMMAND:** Pinned MCP host checks; ./dev test; ./dev preflight; ./dev build --target vulkan --force; existing archive/update/sync/combined-route/captures.
+- **PASS CONDITION:** Adapted source counts and live native Queen shader observation; four real exits, water capture, no new error/crash and full material/provider/result cleanup. No PC parity assertion.
+- **FAILURE EVIDENCE TO CAPTURE:** Missing family/variant/property contract, compile/AOT error, live effect materials/streams/cards, crash and owned cleanup failure.
+- **STATE/JOURNAL UPDATES REQUIRED:** First failure/pass, debug/topology labels, concise state, milestone/risk/visual ledger, private source/APK/payload/receipt rollback and scoped pointer; privacy/IP gate/Conventional Commit.
+- **DEPENDENCIES:** J376 actual effect record; recovered cloud/opaque family/native parameter contracts and current controlled effect catalog.
+
+
+**J378 exit:** J378 retains 92 recovered family variants/990 original programs, 153 shader imports/951 material contracts and 85 passing host tests. Forced Vulkan build 80.268 seconds/zero errors preserves 45 accepted assemblies, six scene hashes and 41 payload files. Single-app update dispatch 26, APK SHA-256 `99e2a13d520612c9b7ef0817eb2ab13c1f6119fa2bf350194d8ce3fbcccc96df`. The composed route completes four original boss/charge/exits into Sky Meadow in 462.665 original Run seconds, 75 kills, 22 pickup messages, 20 native notices and 198 HUD checks. Three rewards are collected; Swamp reward is left behind. Registered effect sources receive 332 recovered material slots across 315 renderers; three live Queen-effect records retain native shaders/vertex streams/frame. Native water is visibly captured (projected bounds 0.562), with original-vertex geometry explicitly approximate. Eleven actual-PID captures have zero errors; full owned cleanup, original result retention and OLED sleep pass. Invincibility/high damage/fast charge ON, movement/jump OFF. No native tessellation, PC semantic/visual parity, normal victory or Moon gate advances.

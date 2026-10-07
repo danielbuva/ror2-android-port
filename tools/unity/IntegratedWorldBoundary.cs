@@ -21,6 +21,8 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldMessageFailure {public float at;public int id;public string side,handler,error;}
  [Serializable] public class NavigationPathPoint {public Vector3 position;public float minimumJumpHeight;}
  [Serializable] public class WorldReport {
+  public int nativeEffectSourceRenderers,nativeEffectSourceMaterials;public ObjectiveRendererObservation[] nativeEffectViews;
+
   public NovaThirdPersonView.Report camera;
   public bool lunarDefinition,lunarCurrencyAvailable;
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
