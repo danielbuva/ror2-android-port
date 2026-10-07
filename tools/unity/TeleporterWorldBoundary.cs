@@ -29,7 +29,7 @@ public sealed partial class MovementBatchProbe {
   public float charge,radius,bossHealth,bossMaxHealth,sourceDuration,sourceRadius,credits,spent;
   public string state,fsmState,nextScene,exitState,scope;public Vector3 position;
   public List<string> transitions=new List<string>();
-  public ObjectiveRendererObservation[] rendererViews;
+  public ObjectiveRendererObservation[] rendererViews;public int lateNativeMaterials;
  }
  readonly List<GameObject> objectiveTemplates=new List<GameObject>();
  readonly List<CharacterSpawnCard> objectiveCards=new List<CharacterSpawnCard>();
@@ -294,6 +294,19 @@ public sealed partial class MovementBatchProbe {
   r.objective.sourceDuration=worldTeleporter.holdoutZoneController.baseChargeDuration;r.objective.sourceRadius=worldTeleporter.holdoutZoneController.baseRadius;r.objective.position=objectiveHost.transform.position;r.objective.ready=true;ObserveTeleporterWorld();Save();
  }
  void ObserveTeleporterWorld(){
+  // Native startup can instantiate additional prong renderers after initial
+  // presentation. Route only their measured recovered family through the same
+  // owned clone path; retain source layers, controllers and unknown materials.
+  if(objectiveHost&&AndroidNativeDeferredPresentation.report.available&&Time.frameCount%30==0){
+   foreach(var renderer in objectiveHost.GetComponentsInChildren<Renderer>(true)){
+    if(worldPresented.Contains(renderer.GetInstanceID()))continue;
+    var materials=renderer.sharedMaterials;bool changed=false;
+    for(int i=0;i<materials.Length;i++)if(materials[i]&&materials[i].shader.name=="Hopoo Games/Deferred/Standard"){
+     var source=materials[i];var copy=new Material(source);AndroidMaterialPresentation.Apply(source,copy);materials[i]=copy;worldMaterials.Add(copy);r.objective.lateNativeMaterials++;changed=true;
+    }
+    if(changed){renderer.sharedMaterials=materials;worldPresented.Add(renderer.GetInstanceID());}
+   }
+  }
   // Attribute the actual non-particle surface in the composed game before
   // changing another shader family. This never changes renderer state.
   if(objectiveHost&&r.objective!=null&&Time.frameCount%30==0)r.objective.rendererViews=objectiveHost.GetComponentsInChildren<Renderer>(true).Where(x=>!(x is ParticleSystemRenderer)).Select(x=>new ObjectiveRendererObservation{path=StageObjectPath(x.transform),kind=x.GetType().Name,materials=x.sharedMaterials.Select(m=>m?m.name:"missing").ToArray(),shaders=x.sharedMaterials.Select(m=>m&&m.shader?m.shader.name:"missing").ToArray(),enabled=x.enabled,active=x.gameObject.activeInHierarchy,visible=x.isVisible,center=x.bounds.center,size=x.bounds.size}).ToArray();

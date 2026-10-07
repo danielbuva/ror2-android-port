@@ -27,7 +27,7 @@ def load_analysis(path,identity,shader):
     return tree,raw,records,programs,receipt
 
 
-def render_state(state):
+def render_state(state,ui=False):
     def value(field,names):
         v=state[field]
         if v['name'] not in ['', '<noninit>']:return '['+v['name']+']'
@@ -39,16 +39,24 @@ def render_state(state):
     if state['offsetFactor']['val']!=0 or state['offsetUnits']['val']!=0 or state['rtSeparateBlend']:
         raise RuntimeError('Native separate blending or polygon offset requires measurement')
     b=state['rtBlend0']
-    if b['blendOp']['val']!=0 or b['blendOpAlpha']['val']!=0 or b['colMask']['val']!=15:raise RuntimeError('Unmeasured native blend operation or color mask')
+    if b['blendOp']['val']!=0 or b['blendOpAlpha']['val']!=0 or (b['colMask']['val']!=15 and not ui):raise RuntimeError('Unmeasured native blend operation or color mask')
     def bv(k):
         v=b[k];return '['+v['name']+']' if v['name'] not in ['', '<noninit>'] else blend[int(v['val'])]
     for k in ['srcBlend','destBlend']:
         if b[k]!=b[k+'Alpha']:raise RuntimeError('Separate native alpha blend requires measurement')
     text='Cull '+value('culling',{0:'Off',1:'Front',2:'Back'})+' ZWrite '+value('zWrite',{0:'Off',1:'On'})+' ZTest '+value('zTest',compare)+' Blend '+bv('srcBlend')+' '+bv('destBlend')+'\n'
     if state['stencilOpFront']!=state['stencilOpBack']:raise RuntimeError('Separate native stencil faces require measurement')
-    op=state['stencilOpFront']
-    if any(op[k]['val']!=0 for k in ['fail','pass','zFail']):raise RuntimeError('Non-keep native stencil operation requires measurement')
-    text+='Stencil {Ref '+value('stencilRef',{i:str(i) for i in range(256)})+' ReadMask '+value('stencilReadMask',{i:str(i) for i in range(256)})+' WriteMask '+value('stencilWriteMask',{i:str(i) for i in range(256)})+' Comp '+compare[int(op['comp']['val'])]+' Pass Keep Fail Keep ZFail Keep}\n'
+    op=state['stencilOp'] if ui else state['stencilOpFront']
+    if ui:
+        mask=b['colMask'];text+='ColorMask '+('['+mask['name']+']' if mask['name'] not in ['', '<noninit>'] else str(int(mask['val'])))+'\n'
+        operations={0:'Keep',1:'Zero',2:'Replace',3:'IncrSat',4:'DecrSat',5:'Invert',6:'IncrWrap',7:'DecrWrap'}
+        def stencil(k,names):
+            v=op[k];return '['+v['name']+']' if v['name'] not in ['', '<noninit>'] else names[int(v['val'])]
+        stencil_text=' Comp '+stencil('comp',compare)+' Pass '+stencil('pass',operations)+' Fail '+stencil('fail',operations)+' ZFail '+stencil('zFail',operations)
+    else:
+        if any(op[k]['val']!=0 for k in ['fail','pass','zFail']):raise RuntimeError('Non-keep native stencil operation requires measurement')
+        stencil_text=' Comp '+compare[int(op['comp']['val'])]+' Pass Keep Fail Keep ZFail Keep'
+    text+='Stencil {Ref '+value('stencilRef',{i:str(i) for i in range(256)})+' ReadMask '+value('stencilReadMask',{i:str(i) for i in range(256)})+' WriteMask '+value('stencilWriteMask',{i:str(i) for i in range(256)})+stencil_text+'}\n'
     return text
 
 

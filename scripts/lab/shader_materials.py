@@ -10,6 +10,9 @@ FAMILIES={
  'opaque-cloud':(-704325499538927933,'Hopoo Games/FX/Opaque Cloud Remap'),
  'snow':(3671293666148614723,'Hopoo Games/Deferred/Snow Topped'),
  'terrain':(5954585457266417408,'Hopoo Games/Deferred/Triplanar Terrain Blend'),
+ 'grass':(-8989458460904117762,'Hopoo Games/Environment/Waving Grass'),
+ 'cloth':(-6170440028897955187,'Hopoo Games/Deferred/Wavy Cloth'),
+ 'ui-alpha':(-8085301563477162814,'Hopoo Games/UI/Animate Alpha'),
 }
 ENGINE={'STEREO_INSTANCING_ON','UNITY_SINGLE_PASS_STEREO','STEREO_MULTIVIEW_ON','STEREO_CUBEMAP_RENDER_ON','INSTANCING_ON','LIGHTPROBE_SH','DYNAMICLIGHTMAP_ON','SHADOWS_SHADOWMASK','LIGHTMAP_ON','DIRLIGHTMAP_COMBINED','UNITY_HDR_ON','SHADOWS_DEPTH','SHADOWS_CUBE','EDITOR_VISUALIZATION','FOG_LINEAR','FOG_EXP','FOG_EXP2','DIRECTIONAL','LIGHTMAP_SHADOW_MIXING','SHADOWS_SCREEN','VERTEXLIGHT_ON','POINT','SPOT','POINT_COOKIE','DIRECTIONAL_COOKIE','SOFTPARTICLES_ON'}
 
@@ -33,15 +36,22 @@ def generate():
         if WORK.resolve() not in material_file.parents or sha(material_file)!=selection['material_inventory_sha256']:raise RuntimeError('Measured material inventory drift')
         rows=[x.split('|') for x in material_file.read_text().splitlines()];emitter=NativePrograms(out,result,exe);families=[]
         for ordinal,(name,context) in enumerate(contexts.items()):
-            tree=context[0];form=tree['m_ParsedForm'];sub=form['m_SubShaders'][0];passes=sub['m_Passes'];features=set(form['m_KeywordNames'])-ENGINE
+            tree=context[0];form=tree['m_ParsedForm'];sub=form['m_SubShaders'][0];passes=sub['m_Passes'];features=set(form['m_KeywordNames'])-ENGINE-{'UNITY_UI_CLIP_RECT','UNITY_UI_ALPHACLIP'};ui=name=='ui-alpha'
             materials=[x for x in rows if x[1]==form['m_Name']];sets=sorted({tuple(sorted(set(x[2].split(','))&features)) for x in materials})
             if not sets or len(sets)>128:raise RuntimeError('Unexpected native material closure')
             variants=[]
             for i,keys in enumerate(sets):
                 resource='AndroidNativeFamily'+str(ordinal)+'Variant'+str(i)
                 text='// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'+resource+'" {\nProperties {\n'+properties(tree)+'\n}\nSubShader {\n'+tags(sub['m_Tags']['tags'])
-                text+='Pass {Name '+json.dumps(passes[0]['m_State']['m_Name'])+' Tags {"LightMode"="'+('ForwardBase' if name=='cloud' else 'Deferred')+'"}\n'+render_state(passes[0]['m_State'])
-                if name=='cloud':
+                text+='Pass {Name '+json.dumps(passes[0]['m_State']['m_Name'])+' '+tags(passes[0]['m_State']['m_Tags']['tags'])+render_state(passes[0]['m_State'],ui=ui)
+                if ui:
+                    pairs=[]
+                    for clip in [False,True]:
+                        for alpha in [False,True]:
+                            engine=({'UNITY_UI_CLIP_RECT'} if clip else set())|({'UNITY_UI_ALPHACLIP'} if alpha else set());vi,fi=emitter.pair(context,0,set(keys)|engine)
+                            condition=('' if clip else '!')+'defined(UNITY_UI_CLIP_RECT) && '+('' if alpha else '!')+'defined(UNITY_UI_ALPHACLIP)';pairs.append((condition,vi,fi))
+                    text+=emitter.block(context,pairs,'#pragma multi_compile_local __ UNITY_UI_CLIP_RECT\n#pragma multi_compile_local __ UNITY_UI_ALPHACLIP\n')
+                elif name=='cloud':
                     pairs=[]
                     for sh in [False,True]:
                         for soft in [False,True]:
@@ -51,7 +61,7 @@ def generate():
                 else:
                     vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON'});text+=emitter.block(context,[(None,vi,fi)])
                 text+='}\n'
-                if name!='cloud':
+                if name not in ['cloud','ui-alpha']:
                     shadow_features={k for r in context[2] if r['kind']=='program' and r['pass_index']==1 for k in r['keywords']}&features;pairs=[]
                     for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
                         vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode});pairs.append(('defined('+mode+')',vi,fi))

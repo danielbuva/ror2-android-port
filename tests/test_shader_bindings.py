@@ -116,3 +116,24 @@ class ShaderBindingTests(unittest.TestCase):
         tree,native,record,raw=self.partial_fixture(partial=False)
         with patch('shader_segments.parameter_layout',return_value=native):
             with self.assertRaisesRegex(RuntimeError,'size disagreement'):selected_layout(tree,raw,record)
+
+
+class ShaderUiStateTests(unittest.TestCase):
+    def fixture(self):
+        def v(value,name='<noninit>'):return {'val':value,'name':name}
+        face={'comp':v(8),'fail':v(0),'pass':v(0),'zFail':v(0)}
+        blend={k:v(n) for k,n in {'blendOp':0,'blendOpAlpha':0,'colMask':0,'srcBlend':5,'srcBlendAlpha':5,'destBlend':10,'destBlendAlpha':10}.items()};blend['colMask']=v(0,'_FixtureMask')
+        state={k:v(n) for k,n in {'offsetFactor':0,'offsetUnits':0,'culling':0,'zWrite':0,'zTest':8,'stencilRef':0,'stencilReadMask':255,'stencilWriteMask':255}.items()}
+        state.update(rtSeparateBlend=False,rtBlend0=blend,stencilOpFront=face,stencilOpBack=face,stencilOp=dict(face,comp=v(0,'_FixtureCompare'),**{'pass':v(0,'_FixtureOperation')}))
+        return state
+
+    def test_ui_uses_shared_stencil_and_property_linked_color_mask(self):
+        from shader_deferred import render_state
+        source=render_state(self.fixture(),ui=True)
+        self.assertIn('ColorMask [_FixtureMask]',source)
+        self.assertIn('Comp [_FixtureCompare] Pass [_FixtureOperation]',source)
+        self.assertIn('Fail Keep ZFail Keep',source)
+
+    def test_ui_extension_does_not_relax_ordinary_state_guard(self):
+        from shader_deferred import render_state
+        with self.assertRaisesRegex(RuntimeError,'color mask'):render_state(self.fixture())

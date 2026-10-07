@@ -14,6 +14,7 @@ using UnityEngine.UI;
 public static class RecoveredHudBuilder {
  const string Output="Assets/LabLoadingScene/Resources/RecoveredUI";
  static readonly Dictionary<Material,Material> fontMaterials=new Dictionary<Material,Material>();
+ static readonly Dictionary<Material,Material> nativeUiMaterials=new Dictionary<Material,Material>();
  static TMP_FontAsset defaultFont;static Shader fontShader;
  static void StageStrings(string attemptDirectory){
   var work=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));var config=JObject.Parse(File.ReadAllText(Path.Combine(work,"config/local.json")));
@@ -48,7 +49,17 @@ public static class RecoveredHudBuilder {
   }
   foreach(var group in root.GetComponentsInChildren<CanvasGroup>(true))group.alpha=1;
   foreach(var canvas in root.GetComponentsInChildren<Canvas>(true))if(canvas.transform==root.transform){canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.worldCamera=null;canvas.sortingOrder=50;}
-  foreach(var graphic in root.GetComponentsInChildren<Graphic>(true))if(!(graphic is TMP_Text)&&!(graphic is TMP_SubMeshUI))graphic.material=Graphic.defaultGraphicMaterial;
+  foreach(var graphic in root.GetComponentsInChildren<Graphic>(true))if(!(graphic is TMP_Text)&&!(graphic is TMP_SubMeshUI)){
+   var source=graphic.material;Material native;
+   if(source&&source.shader.name=="Hopoo Games/UI/Animate Alpha"){
+    if(!nativeUiMaterials.TryGetValue(source,out native)){
+     var text=AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/LabLoadingScene/Resources/AndroidNativeMaterialFamilies.json");Require(text,"Native UI family manifest missing");var family=JsonUtility.FromJson<AndroidNativeDeferredPresentation.Families>(text.text).families.Single(x=>x.shader==source.shader.name);
+     var keys=family.features.Where(x=>source.IsKeywordEnabled(x)).OrderBy(x=>x).ToArray();var variant=family.variants.Single(x=>x.keywords.OrderBy(k=>k).SequenceEqual(keys));var shader=AssetDatabase.LoadAssetAtPath<Shader>("Assets/LabLoadingScene/Resources/"+variant.resource+".shader");Require(shader&&!ShaderUtil.ShaderHasError(shader),"Recovered native UI shader failed");
+     native=new Material(source);native.name="Owned native UI "+source.name;native.shader=shader;native.shaderKeywords=source.shaderKeywords.Where(k=>k=="UNITY_UI_CLIP_RECT"||k=="UNITY_UI_ALPHACLIP").ToArray();native.renderQueue=source.renderQueue==source.shader.renderQueue?-1:source.renderQueue;AssetDatabase.CreateAsset(native,Output+"/NativeUiMaterial"+nativeUiMaterials.Count+".mat");nativeUiMaterials.Add(source,native);
+    }
+    graphic.material=native;
+   }else graphic.material=Graphic.defaultGraphicMaterial;
+  }
   var remove=root.GetComponentsInChildren<MonoBehaviour>(true).Where(component=>!(component is TMP_Text)&&!(component is TimerText)&&!(component is BuffIcon)&&!(component is GenericNotification)&&!(component is AnimateUIAlpha)&&!(component is RecoveredPickupPresentation)&&!(component is RecoveredHudPresentation)&&component.GetType().Namespace!="UnityEngine.UI").ToList();
   while(remove.Count>0){
    var leaf=remove.FirstOrDefault(candidate=>!remove.Any(other=>other!=candidate&&other.gameObject==candidate.gameObject&&other.GetType().GetCustomAttributes(typeof(RequireComponent),true).Cast<RequireComponent>().Any(r=>new[]{r.m_Type0,r.m_Type1,r.m_Type2}.Any(t=>t!=null&&t.IsAssignableFrom(candidate.GetType())))));
@@ -68,7 +79,7 @@ public static class RecoveredHudBuilder {
   Require(!EditorApplication.isCompiling&&!BuildPipeline.isBuildingPlayer&&!EditorApplication.isPlaying,"UI generation requires idle editor");
   var roots=JObject.Parse(File.ReadAllText(Path.Combine(attemptDirectory,"hud-source-roots.json")));Directory.CreateDirectory(Output);
   Require(!File.Exists(Output+"/Hud.prefab"),"Archive existing UI generation before regenerating");
-  StageStrings(attemptDirectory);fontMaterials.Clear();fontShader=AssetDatabase.LoadAssetAtPath<Shader>(Output+"/FontShader/TMP_SDF-Mobile.shader");Require(fontShader&&!ShaderUtil.ShaderHasError(fontShader),"Native mobile font shader absent or failed");
+  StageStrings(attemptDirectory);fontMaterials.Clear();nativeUiMaterials.Clear();fontShader=AssetDatabase.LoadAssetAtPath<Shader>(Output+"/FontShader/TMP_SDF-Mobile.shader");Require(fontShader&&!ShaderUtil.ShaderHasError(fontShader),"Native mobile font shader absent or failed");
   var source=AssetDatabase.LoadAssetAtPath<GameObject>((string)roots["hudSource"]);Require(source&&!source.activeSelf,"Inactive source HUD absent");
   defaultFont=source.GetComponentsInChildren<TMP_Text>(true).First(t=>t.font&&t.font.name.StartsWith("tmpRiskofRainFont")).font;
   // The stock text runtime needs settings before the offline menu, not platform startup.
