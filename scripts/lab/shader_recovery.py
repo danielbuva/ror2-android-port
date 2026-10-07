@@ -62,6 +62,10 @@ def recover(target='lab'):
         'ui-alpha':(-8085301563477162814,'Hopoo Games/UI/Animate Alpha','Default',['DOUBLESAMPLE'],16),
         'grass':(-8989458460904117762,'Hopoo Games/Environment/Waving Grass','DEFERRED',['LIGHTPROBE_SH','UNITY_HDR_ON'],24),
         'cloth':(-6170440028897955187,'Hopoo Games/Deferred/Wavy Cloth','DEFERRED',['LIGHTPROBE_SH','UNITY_HDR_ON','VERTEX_RED_FOR_DISTORTION'],48),
+        'water':(-92852985697471365,'CalmWater/Calm Water [DX11] [Double Sided]','FORWARD',['DIRECTIONAL','LIGHTPROBE_SH','_DISTORTIONQUALITY_LOW','_FOAM_ON','_REFLECTIONTYPE_CUBEMAP'],576),
+        'water-single':(-8115552462691183134,'CalmWater/Calm Water [DX11]','FORWARD',['DIRECTIONAL','LIGHTPROBE_SH','_DISTORTIONQUALITY_HIGH','_REFLECTIONTYPE_CUBEMAP'],900),
+        'distortion':(1142643595885926041,'Hopoo Games/FX/Distortion','',['DISTANCEMODULATION','SOFTPARTICLES_ON'],8),
+        'speedtree':(-8684109817920462965,'SpeedtreeOverride/SpeedtreeCustom','DEFERRED',['EFFECT_BUMP','EFFECT_HUE_VARIATION','GEOM_TYPE_LEAF','LIGHTPROBE_SH','LOD_FADE_PERCENTAGE','UNITY_HDR_ON'],2323),
     }
     if target not in specs: raise RuntimeError('Unknown fixed shader recovery target')
     identity,shader_name,pass_name,keywords,expected_programs = specs[target]
@@ -97,6 +101,7 @@ def recover(target='lab'):
             if p.returncode and not allow_failure: raise RuntimeError('Shader recovery failed at '+label+'; private evidence retained')
             return p
         relative = 'Risk of Rain 2_Data/globalgamemanagers.assets' if target.startswith('deferred') else 'Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_31e119f89c9f8d77f8f8199c00774974.bundle'
+        if target.startswith('water'): relative = 'Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_shader_assets_all_1862e209b8c466bdc3a93b40d3275ff0.bundle'
         source = game()/relative; source_hash = sha(source)
         expected = next(x['sha256'] for x in read(WORK/'inventory/files.json')['files'] if x['path']==relative)
         if source_hash != expected: raise RuntimeError('Shader input drift; review and explicitly accept before recovery')
@@ -111,13 +116,13 @@ def recover(target='lab'):
         if len(programs)!=expected_programs: raise RuntimeError('Native executable program coverage changed')
         write(out/'native-records.json',records)
         selected = []
-        for gpu_type in [15,17]:
+        for gpu_type in ([16,18,21,22] if target.startswith('water') else [15,17]):
             matches = [(r['index'],programs[r['index']]) for r in records if r['kind']=='program' and
-                       r['gpu_type']==gpu_type and r['keywords']==keywords and r['pass']==pass_name]
+                       r['gpu_type']==gpu_type and r['keywords']==keywords and any(c['pass']==pass_name and c['subshader_index']==0 for c in r.get('consumers',[r]))]
             if len(matches)!=1: raise RuntimeError('Original shader variant is ambiguous')
             i,data = matches[0]; program_file = out/f'unity-{i}.dxbc'; program_file.write_bytes(data)
             write(out/f'unity-{i}-layout.json',selected_layout(tree,raw,records[i]))
-            selected.append({'unity_subprogram':i,'gpu_type':gpu_type,'keywords':keywords,'sha256':sha(program_file),
+            selected.append({'unity_subprogram':i,'gpu_type':gpu_type,'stage':records[i]['stage'],'keywords':keywords,'sha256':sha(program_file),
                              'parameter_index':records[i]['parameter_index']})
         receipt.update(shader=adapted['m_Name'],source_bundle=relative,source_sha256=source_hash,programs=selected,
                        native_executable_programs=len(programs),native_record_count=len(records),
@@ -132,7 +137,7 @@ def recover(target='lab'):
         receipt['segment_rebasing_record_bytes_unchanged'] = True
         dll = tools['unity']/'Shader Decompiler/bin/Release/net10.0/Shader Decompiler.dll'
         receipt['unity_tool_binary_sha256'] = sha(dll)
-        options = ['--no-surface-shaders']+(['--no-fuse-temps'] if target.startswith('standard') or target in ['cloud','opaque-cloud','snow','terrain','deferred-reflections','ui-alpha','grass','cloth'] else [])
+        options = ['--no-surface-shaders']+(['--no-fuse-temps'] if target!='lab' else [])
         named = command('unity-decompile',['dotnet',dll,out/'unity-stage0','--out-root',out/'unity-recovered']+options)
         functions = sum('Stage 2: collected ' in line for line in named.stdout.decode(errors='replace').splitlines())
         if functions!=expected_programs: raise RuntimeError('Unity decompiler did not retain all native executable functions')

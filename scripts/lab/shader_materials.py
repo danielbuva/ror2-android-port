@@ -13,6 +13,8 @@ FAMILIES={
  'grass':(-8989458460904117762,'Hopoo Games/Environment/Waving Grass'),
  'cloth':(-6170440028897955187,'Hopoo Games/Deferred/Wavy Cloth'),
  'ui-alpha':(-8085301563477162814,'Hopoo Games/UI/Animate Alpha'),
+ 'distortion':(1142643595885926041,'Hopoo Games/FX/Distortion'),
+ 'speedtree':(-8684109817920462965,'SpeedtreeOverride/SpeedtreeCustom'),
 }
 ENGINE={'STEREO_INSTANCING_ON','UNITY_SINGLE_PASS_STEREO','STEREO_MULTIVIEW_ON','STEREO_CUBEMAP_RENDER_ON','INSTANCING_ON','LIGHTPROBE_SH','DYNAMICLIGHTMAP_ON','SHADOWS_SHADOWMASK','LIGHTMAP_ON','DIRLIGHTMAP_COMBINED','UNITY_HDR_ON','SHADOWS_DEPTH','SHADOWS_CUBE','EDITOR_VISUALIZATION','FOG_LINEAR','FOG_EXP','FOG_EXP2','DIRECTIONAL','LIGHTMAP_SHADOW_MIXING','SHADOWS_SCREEN','VERTEXLIGHT_ON','POINT','SPOT','POINT_COOKIE','DIRECTIONAL_COOKIE','SOFTPARTICLES_ON'}
 
@@ -37,13 +39,19 @@ def generate():
         rows=[x.split('|') for x in material_file.read_text().splitlines()];emitter=NativePrograms(out,result,exe);families=[]
         for ordinal,(name,context) in enumerate(contexts.items()):
             tree=context[0];form=tree['m_ParsedForm'];sub=form['m_SubShaders'][0];passes=sub['m_Passes'];features=set(form['m_KeywordNames'])-ENGINE-{'UNITY_UI_CLIP_RECT','UNITY_UI_ALPHACLIP'};ui=name=='ui-alpha'
+            if name=='speedtree':features-={'ENABLE_WIND','LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE'}
+            first_pass=1 if name=='distortion' else 0
             materials=[x for x in rows if x[1]==form['m_Name']];sets=sorted({tuple(sorted(set(x[2].split(','))&features)) for x in materials})
             if not sets or len(sets)>128:raise RuntimeError('Unexpected native material closure')
             variants=[]
             for i,keys in enumerate(sets):
                 resource='AndroidNativeFamily'+str(ordinal)+'Variant'+str(i)
                 text='// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'+resource+'" {\nProperties {\n'+properties(tree)+'\n}\nSubShader {\n'+tags(sub['m_Tags']['tags'])
-                text+='Pass {Name '+json.dumps(passes[0]['m_State']['m_Name'])+' '+tags(passes[0]['m_State']['m_Tags']['tags'])+render_state(passes[0]['m_State'],ui=ui)
+                if name=='distortion':
+                    grab=passes[0]
+                    if grab['m_Type']!=2 or not grab['m_TextureName'] or any(grab[stage]['m_PlayerSubPrograms'] for stage in ['progVertex','progFragment','progHull','progDomain','progGeometry']):raise RuntimeError('Unmeasured native grab pass')
+                    text+='GrabPass {'+json.dumps(grab['m_TextureName'])+'}\n'
+                text+='Pass {Name '+json.dumps(passes[first_pass]['m_State']['m_Name'])+' '+tags(passes[first_pass]['m_State']['m_Tags']['tags'])+render_state(passes[first_pass]['m_State'],ui=ui)
                 if ui:
                     pairs=[]
                     for clip in [False,True]:
@@ -58,10 +66,30 @@ def generate():
                             engine={'DIRECTIONAL'}|({'LIGHTPROBE_SH'} if sh else set())|({'SOFTPARTICLES_ON'} if soft else set());vi,fi=emitter.pair(context,0,set(keys)|engine)
                             condition=('' if sh else '!')+'defined(LIGHTPROBE_SH) && '+('' if soft else '!')+'defined(SOFTPARTICLES_ON)';pairs.append((condition,vi,fi))
                     text+=emitter.block(context,pairs,'#pragma multi_compile __ LIGHTPROBE_SH\n#pragma multi_compile_particles\n')
+                elif name=='distortion':
+                    pairs=[]
+                    for soft in [False,True]:
+                        vi,fi=emitter.pair(context,first_pass,set(keys)|({'SOFTPARTICLES_ON'} if soft else set()));pairs.append((('' if soft else '!')+'defined(SOFTPARTICLES_ON)',vi,fi))
+                    text+=emitter.block(context,pairs,'#pragma multi_compile_particles\n')
+                elif name=='speedtree':
+                    pairs=[]
+                    for lod in ['LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE']:
+                        for wind in [False,True]:
+                            vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON',lod}|({'ENABLE_WIND'} if wind else set()))
+                            condition=('' if lod=='LOD_FADE_CROSSFADE' else '!')+'defined(LOD_FADE_CROSSFADE) && '+('' if wind else '!')+'defined(ENABLE_WIND)';pairs.append((condition,vi,fi))
+                    text+=emitter.block(context,pairs,'#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n')
                 else:
                     vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON'});text+=emitter.block(context,[(None,vi,fi)])
                 text+='}\n'
-                if name not in ['cloud','ui-alpha']:
+                if name=='speedtree':
+                    shadow_features={k for r in context[2] if r['kind']=='program' and any(c['subshader_index']==0 and c['pass_index']==1 for c in r.get('consumers',[r])) for k in r['keywords']}&features;pairs=[]
+                    for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
+                        for lod in ['LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE']:
+                            for wind in [False,True]:
+                                vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode,lod}|({'ENABLE_WIND'} if wind else set()))
+                                condition='defined('+mode+') && '+('' if lod=='LOD_FADE_CROSSFADE' else '!')+'defined(LOD_FADE_CROSSFADE) && '+('' if wind else '!')+'defined(ENABLE_WIND)';pairs.append((condition,vi,fi))
+                    text+='Pass {Name "ShadowCaster" '+tags(passes[1]['m_State']['m_Tags']['tags'])+render_state(passes[1]['m_State'])+emitter.block(context,pairs,'#pragma multi_compile_shadowcaster\n#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n')+'}\n'
+                elif name not in ['cloud','ui-alpha','distortion']:
                     shadow_features={k for r in context[2] if r['kind']=='program' and r['pass_index']==1 for k in r['keywords']}&features;pairs=[]
                     for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
                         vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode});pairs.append(('defined('+mode+')',vi,fi))

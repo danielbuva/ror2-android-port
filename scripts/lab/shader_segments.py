@@ -4,15 +4,22 @@ import lz4.block
 from UnityPy.export.ShaderConverter import ShaderSubProgram
 from UnityPy.streams import EndianBinaryReader
 
+STAGES = ['progVertex', 'progFragment', 'progHull', 'progDomain', 'progGeometry']
+
 
 def variants(tree):
     result = {}
     keywords = tree['m_ParsedForm']['m_KeywordNames']
     for subshader_index,subshader in enumerate(tree['m_ParsedForm']['m_SubShaders']):
         for pass_index,p in enumerate(subshader['m_Passes']):
-            for stage in ['progVertex', 'progFragment']:
-                programs = p[stage]['m_PlayerSubPrograms'][3]
-                parameters = p[stage]['m_ParameterBlobIndices'][3]
+            for stage in STAGES:
+                tables = p[stage]['m_PlayerSubPrograms']
+                parameter_tables = p[stage]['m_ParameterBlobIndices']
+                if not tables and not parameter_tables: continue
+                if len(tables)!=4 or len(parameter_tables)!=4 or any(tables[:3]) or any(parameter_tables[:3]):
+                    raise RuntimeError('Unmeasured shader platform tables')
+                programs = tables[3]
+                parameters = parameter_tables[3]
                 if len(programs)!=len(parameters): raise RuntimeError('Shader variant/parameter lengths differ')
                 for program,parameter in zip(programs,parameters):
                     index = program['m_BlobIndex']
@@ -20,9 +27,14 @@ def variants(tree):
                              'keywords':sorted(keywords[k] for k in program['m_KeywordIndices']),
                              'pass':p['m_State']['m_Name'],'stage':stage,
                              'subshader_index':subshader_index,'pass_index':pass_index}
-                    if index in result and result[index]!=value:
-                        raise RuntimeError('Original shader program identity has conflicting consumers')
-                    result[index] = value
+                    if index in result:
+                        previous = result[index]
+                        if any(previous[k]!=value[k] for k in ['parameter_index','gpu_type','keywords','stage']):
+                            raise RuntimeError('Original shader program identity has conflicting consumers')
+                        location = {k:value[k] for k in ['pass','subshader_index','pass_index']}
+                        consumers = previous.setdefault('consumers',[{k:previous[k] for k in location}])
+                        if location not in consumers: consumers.append(location)
+                    else: result[index] = value
     return result
 
 
@@ -125,6 +137,11 @@ def parameter_layout(data):
 
 
 def selected_layout(tree, flattened, record):
+    if record.get('consumers'):
+        layouts = [selected_layout(tree,flattened,dict({k:v for k,v in record.items() if k!='consumers'},**consumer)) for consumer in record['consumers']]
+        if any(any(layout[k]!=layouts[0][k] for k in ['buffers','textures']) for layout in layouts[1:]):
+            raise RuntimeError('Shared shader program consumers disagree about native bindings')
+        return layouts[0]
     index = record['parameter_index']; offset,length,segment = struct.unpack_from('<iii',flattened,4+12*index)
     if segment!=0: raise RuntimeError('Parameter layout requires normalized segment offsets')
     native = parameter_layout(flattened[offset:offset+length])

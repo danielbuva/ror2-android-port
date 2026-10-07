@@ -35,7 +35,8 @@ def bind_hlsl(source, layout, entry):
             face=re.fullmatch(r'uint (\w+) : SV_IsFrontFace0',item.strip())
             if not face:raise RuntimeError('Unmeasured shader I/O shape')
             parameters.append({'out':False,'name':face[1],'semantic':'SV_IsFrontFace0','columns':1,'type':'uint'});continue
-        parameters.append({'out':bool(match[1]),'name':match[3],'semantic':match[4],'columns':int(match[2])})
+        semantic=match[4].upper() if match[4].upper()=='SV_POSITION0' else match[4]
+        parameters.append({'out':bool(match[1]),'name':match[3],'semantic':semantic,'columns':int(match[2])})
     body = source[source.index('{',signature.end()):]
     buffers = {b['slot']:b for b in layout['buffers']}; used = []; declarations = {}
     def constant(match):

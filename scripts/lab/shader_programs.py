@@ -59,10 +59,10 @@ class NativePrograms:
             if condition:source+='#endif\n'
             entry.append(source)
         return 'HLSLPROGRAM\n#pragma target 4.0\n#pragma vertex vert\n#pragma fragment frag\n'+entry_directives+'#include "UnityCG.cginc"\n'+structure('AppData',inputs)+'\n'+structure('Varyings',varyings)+'\n'+structure('Targets',targets)+'\n'+''.join(entry)+'ENDHLSL\n'
-    def pair(self,context,pass_index,keys):
+    def pair(self,context,pass_index,keys,subshader_index=0):
         matches=[]
         for stage in ['progVertex','progFragment']:
-            found=[r['index'] for r in context[2] if r['kind']=='program' and r['pass_index']==pass_index and r['stage']==stage and r['keywords']==sorted(keys)]
+            found=[r['index'] for r in context[2] if r['kind']=='program' and r['stage']==stage and r['keywords']==sorted(keys) and any(c['pass_index']==pass_index and c['subshader_index']==subshader_index for c in r.get('consumers',[r]))]
             if len(found)!=1:raise RuntimeError('Native feature/pass pair is ambiguous: '+str(keys))
             matches.append(found[0])
         return matches

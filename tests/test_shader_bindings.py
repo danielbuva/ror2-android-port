@@ -25,6 +25,12 @@ class ShaderBindingTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'no measured binding'):
             bind_hlsl(body,self.layout([self.variable('_Fixture',columns=3)]),'mapped')
 
+    def test_position_semantic_case_does_not_create_a_second_varying(self):
+        body='void main(float4 v0 : POSITION0, out precise float4 o0 : SV_Position0) {o0=v0;}'
+        bound,params,*_=bind_hlsl(body,self.layout([]),'mapped')
+        self.assertEqual(params[1]['semantic'],'SV_POSITION0')
+        self.assertIn('o0=v0;',bound)
+
     def test_unused_padding_is_not_invented_input(self):
         body='void main(out precise float4 o0 : SV_Target0)\n{ o0.xyz = cb0[0].xyz; }'
         bound,_,_,_,reads=bind_hlsl(body,self.layout([self.variable('_Fixture',columns=3)]),'mapped')
@@ -137,3 +143,54 @@ class ShaderUiStateTests(unittest.TestCase):
     def test_ui_extension_does_not_relax_ordinary_state_guard(self):
         from shader_deferred import render_state
         with self.assertRaisesRegex(RuntimeError,'color mask'):render_state(self.fixture())
+
+
+class ShaderConsumerTests(unittest.TestCase):
+    def stage(self,index=2,parameter=1,keywords=None):
+        return {'m_PlayerSubPrograms':[[],[],[],[{'m_BlobIndex':index,'m_GpuProgramType':15,'m_KeywordIndices':keywords or []}]],'m_ParameterBlobIndices':[[],[],[],[parameter]]}
+
+    def fixture(self):
+        from shader_segments import STAGES
+        p={stage:{'m_PlayerSubPrograms':[],'m_ParameterBlobIndices':[]} for stage in STAGES}
+        p['progVertex']=self.stage();p['m_State']={'m_Name':'fixture'}
+        return {'m_ParsedForm':{'m_KeywordNames':['FIXTURE'],'m_SubShaders':[{'m_Passes':[p]}]}}
+
+    def test_empty_grab_and_unused_stages_preserve_program_coverage(self):
+        from shader_segments import variants,STAGES
+        t=self.fixture();grab={stage:{'m_PlayerSubPrograms':[],'m_ParameterBlobIndices':[]} for stage in STAGES};grab['m_State']={'m_Name':''}
+        t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'].insert(0,grab)
+        result=variants(t);self.assertEqual(set(result),{2});self.assertEqual(result[2]['pass_index'],1)
+
+    def test_shared_program_retains_all_pass_consumers(self):
+        from shader_segments import variants
+        import copy
+        t=self.fixture();p=copy.deepcopy(t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'][0]);p['m_State']['m_Name']='other';t['m_ParsedForm']['m_SubShaders'].append({'m_Passes':[p]})
+        result=variants(t);self.assertEqual(len(result),1);self.assertEqual([c['subshader_index'] for c in result[2]['consumers']],[0,1])
+
+    def test_shared_index_cannot_hide_different_parameters_or_keywords(self):
+        from shader_segments import variants
+        import copy
+        for field,value in [('m_ParameterBlobIndices',[[],[],[],[0]]),('m_PlayerSubPrograms',self.stage(keywords=[0])['m_PlayerSubPrograms'])]:
+            t=self.fixture();p=copy.deepcopy(t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'][0]);p['progVertex'][field]=value;t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'].append(p)
+            with self.assertRaisesRegex(RuntimeError,'conflicting consumers'):variants(t)
+
+    def test_hull_and_domain_programs_are_not_silently_dropped(self):
+        from shader_segments import variants
+        t=self.fixture();p=t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'][0];p['progHull']=self.stage(index=3);p['progDomain']=self.stage(index=4)
+        self.assertEqual({r['stage'] for r in variants(t).values()},{'progVertex','progHull','progDomain'})
+
+    def test_shared_program_cannot_hide_binding_disagreement(self):
+        def consumer(name):
+            common={'m_ConstantBufferBindings':[],'m_ConstantBuffers':[],'m_TextureParams':[{'m_NameIndex':0,'m_Index':0,'m_SamplerIndex':0,'m_Dim':2,'m_MultiSampled':False}]}
+            return {'m_State':{'m_Name':name},'m_NameIndices':[(name,0)],'progFragment':{'m_CommonParameters':common}}
+        tree={'m_ParsedForm':{'m_SubShaders':[{'m_Passes':[consumer('_FixtureA'),consumer('_FixtureB')]}]}}
+        record={'parameter_index':0,'stage':'progFragment','consumers':[{'pass':'_FixtureA','subshader_index':0,'pass_index':0},{'pass':'_FixtureB','subshader_index':0,'pass_index':1}]}
+        raw=struct.pack('<Iiii',1,16,12,0)+struct.pack('<iii',202012090,0,0)
+        with self.assertRaisesRegex(RuntimeError,'disagree about native bindings'):selected_layout(tree,raw,record)
+
+    def test_pair_can_resolve_a_nonprimary_shared_consumer(self):
+        from shader_programs import NativePrograms
+        record={'kind':'program','index':2,'stage':'progVertex','keywords':[],'pass_index':0,'subshader_index':0,'consumers':[{'pass_index':0,'subshader_index':0},{'pass_index':1,'subshader_index':1}]}
+        fragment=dict(record,index=3,stage='progFragment')
+        context=(None,None,[record,fragment],None,None)
+        self.assertEqual(NativePrograms(None,None,None).pair(context,1,[],subshader_index=1),[2,3])

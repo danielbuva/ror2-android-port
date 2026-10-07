@@ -211,3 +211,5 @@ The same recovery action accepts `--target cloud`, `opaque-cloud`, `snow`, `terr
 
 
 Additional native recovery targets are `ui-alpha`, `grass` and `cloth`. The private material analysis selection also requires those three analysis paths. Native UI alpha retains original clip/alpha combinations and property-linked stencil/color mask; the owned UI builder clones those source materials into ignored generated views. J371 runs these with the native world material families, and routes late original teleporter Standard renderers through the same owned material handoff. Remaining water/SpeedTree/distortion/pose and PC parity gaps are recorded in the recovery/visual ledgers.
+
+Additional fixed native recovery targets: `./dev prototype --action shader-recovery --target water`, `water-single`, `distortion`, and `speedtree`. Water analysis includes hull/domain stages; incomplete outputs never become accepted runtime shaders. Distortion/foliage private material generation retains named grab passes and measured wind/LOD/source queue contracts. Host import/binding success remains separate from Android execution and PC visual parity.
