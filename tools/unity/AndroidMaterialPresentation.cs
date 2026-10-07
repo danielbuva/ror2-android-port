@@ -5,7 +5,7 @@ using UnityEngine;
 
 // Owned Android rendering approximations. Original assets and simulation stay intact.
 public static class AndroidMaterialPresentation {
- [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,intersection,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; custom lighting/cloud/intersection/distortion/billboard approximations, no original shader parity; opaque cloud extrusion/cloud-normal response unverified";}
+ [Serializable] public class Report {public bool enabled;public int surfaces,terrain,particles,nativeParticles,opaqueClouds,intersection,intersectionKeywordBindings,distortion,water,snow,foliage,billboards,normalMaps,emissionMaps;public string shaderSource,error,scope="Original Unity particle families retained; source intersection keywords bound; custom families remain approximate unless a separate recovered-program receipt supplies them; no original shader parity";}
  sealed class Binding {public Material material;public Shader enhanced,fallback;}
  static readonly List<Binding> bindings=new List<Binding>();
  public static Report report=new Report();
@@ -40,6 +40,14 @@ public static class AndroidMaterialPresentation {
    bindings.Add(new Binding{material=copy,enhanced=shader,fallback=shader});return;
   }
   var fallback=copy.shader;copy.shader=shader;copy.shaderKeywords=new string[0];
+  if(intersection){
+   // Shipped keyword selections can disagree with saved inspector toggle values.
+   // The recovered source dispatches these features explicitly because this
+   // adapter clears the cloned material's legacy keyword set above.
+   copy.SetFloat("_TriplanarOn",Array.IndexOf(source.shaderKeywords,"TRIPLANAR")>=0?1:0);
+   copy.SetFloat("_FadeFromVertexColorsOn",Array.IndexOf(source.shaderKeywords,"FADE_FROM_VERTEX_COLORS")>=0?1:0);
+   report.intersectionKeywordBindings++;
+  }
   if(distortion){
    copy.SetFloat("_AndroidMaskEnabled",source.HasProperty("_MaskTex")&&source.GetTexture("_MaskTex")?1:0);
    // These measured materials use either the exported default or explicit4000.

@@ -4,7 +4,7 @@ import shutil,time
 
 NAMES=['AndroidSurfacePresentation','AndroidTerrainPresentation','AndroidParticlePresentation','AndroidWaterPresentation','AndroidColorGrade','AndroidBillboardPresentation','AndroidOpaqueParticlePresentation','AndroidDistortionPresentation','AndroidIntersectionPresentation']
 
-def build_payload(stages=False):
+def build_payload(stages=False,recovered=False):
  from build import preflight,editor
  from device import Device
  preflight();d=Device();owned=d.owned();base=read(WORK/'config/current-build.json')
@@ -13,10 +13,25 @@ def build_payload(stages=False):
  if 'android-presentation-lab' not in base.get('payload',{}):raise RuntimeError('APK recipe does not provide the presentation bundle contract')
  for name,h in base['payload'].items():
   if sha(WORK/'generated-android-data'/name)!=h:raise RuntimeError('Unattributed payload drift before presentation build: '+name)
+ recovered_sources=None;recovery_receipt=None
+ if recovered:
+  if stages:raise RuntimeError('Recovered programs require the existing scene payload, without scene changes')
+  from shader_source import generate
+  recovered_sources=generate();recovery_receipt=read(recovered_sources/'receipt.json')
+  if not recovery_receipt.get('success') or set(recovery_receipt['source_sha256_by_file'])!={'AndroidIntersectionPresentation.shader'}:raise RuntimeError('Recovered shader source contract changed')
  out=WORK/'experiments/android-presentation'/now();out.mkdir(parents=True);sources=out/'sources';sources.mkdir()
  stage=WORK/'lab-project/Assets/LabLoadingScene/Resources'
+ previous=out/'previous';previous.mkdir()
+ write(previous/'selected-build.json',base)
+ for name in ['android-presentation-lab','android-presentation-lab.manifest']:shutil.copy2(WORK/'generated-android-data'/name,previous/name)
  for name in NAMES:
-  source=ROOT/'tools/unity'/(name+'.shader');shutil.copy2(source,sources/source.name);shutil.copy2(source,stage/source.name)
+  source=ROOT/'tools/unity'/(name+'.shader')
+  if recovered and name=='AndroidIntersectionPresentation':
+   source=recovered_sources/'sources'/source.name
+   if sha(source)!=recovery_receipt['source_sha256_by_file'][source.name]:raise RuntimeError('Recovered shader source drift')
+  existing=stage/source.name
+  if existing.exists():shutil.copy2(existing,previous/source.name)
+  shutil.copy2(source,sources/source.name);shutil.copy2(source,existing)
  include=ROOT/'tools/unity/AndroidRecoveredReflections.cginc';shutil.copy2(include,sources/include.name);shutil.copy2(include,stage/include.name)
  bundles=['android-presentation-lab']
  reflection_guids=[]
@@ -42,8 +57,12 @@ def build_payload(stages=False):
  shutil.copy2(ROOT/'android/Assets/Editor/LabBuild.cs',WORK/'lab-project/Assets/Editor/LabBuild.cs')
  transforms=out/'authored-transformations';transforms.mkdir()
  for name in (['nova_bridge.py','source_reflections.py','presentation.py'] if stages else ['presentation.py']):shutil.copy2(ROOT/'scripts/lab'/name,transforms/name)
+ if recovered:
+  for name in ['shader_source.py','shader_segments.py']:shutil.copy2(ROOT/'scripts/lab'/name,transforms/name)
+  write(out/'shader-recovery.json',{'evidence':str(recovered_sources.relative_to(ROOT)),**recovery_receipt})
  shutil.copy2(ROOT/'android/Assets/Editor/LabBuild.cs',transforms/'LabBuild.cs')
- write(out/'base-build.json',base);write(out/'recipe.json',{'source_sha256':{p.name:sha(p) for p in sources.iterdir()},'transformation_sha256':{p.name:sha(p) for p in transforms.iterdir()},'apk_sha256':base['apk_sha256'],'scope':'Original base-stage atmosphere/lighting/environment particles and exact floating-point probe texture bindings' if stages else 'Authored presentation shaders and reflection include only','no_APK_installation':True,'gameplay_callbacks_unchanged':True})
+ scope='Original base-stage atmosphere/lighting/environment particles and exact floating-point probe texture bindings' if stages else 'Locally generated original intersection bindings/programs, other authored presentation shaders and reflection include' if recovered else 'Authored presentation shaders and reflection include only'
+ write(out/'base-build.json',base);write(out/'recipe.json',{'source_sha256':{p.name:sha(p) for p in sources.iterdir()},'transformation_sha256':{p.name:sha(p) for p in transforms.iterdir()},'apk_sha256':base['apk_sha256'],'scope':scope,'no_APK_installation':True,'gameplay_callbacks_unchanged':True})
  terminal=WORK/'presentation-build-result.json'
  if terminal.exists():terminal.rename(terminal.with_name('previous-presentation-'+now()+'.json'))
  request={'request_id':out.name,'api':'vulkan','presentationOnly':True,'stagePresentation':stages,'output':str(out/'bundle'),'reflectionTextureGuids':reflection_guids};write(WORK/'presentation-build-request.json',request)
@@ -59,6 +78,8 @@ def build_payload(stages=False):
  if started!=request:raise RuntimeError('Presentation build start identity differs')
  # Retain the original full-build/cache receipt and publish a separate payload variant.
  updated=dict(base);updated['payload']=dict(base['payload']);updated['presentation_payload_attempt']=str(out.relative_to(ROOT))
+ if recovered:updated['recovered_shader_sources']=str(recovered_sources.relative_to(ROOT))
+ elif not stages:updated.pop('recovered_shader_sources',None)
  for name in [filename for bundle in bundles for filename in [bundle,bundle+'.manifest']]:
   source=out/'bundle'/name
   if not source.is_file():raise RuntimeError('Presentation output missing: '+name)

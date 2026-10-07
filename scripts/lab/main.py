@@ -24,10 +24,13 @@ try:
  elif a.command=='prototype':
   if a.action=='shader-recovery':
    from shader_recovery import recover
-   recover()
-  elif a.action in ['presentation-payload','stage-presentation-payload']:
+   recover(a.target)
+  elif a.action=='shader-source':
+   from shader_source import generate
+   generate()
+  elif a.action in ['presentation-payload','stage-presentation-payload','recovered-presentation-payload']:
    from presentation import build_payload
-   build_payload(stages=a.action=='stage-presentation-payload')
+   build_payload(stages=a.action=='stage-presentation-payload',recovered=a.action=='recovered-presentation-payload')
   elif a.action=='primary-fire-prepare':
    from primary_fire import prepare
    prepare()

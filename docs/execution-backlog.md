@@ -3720,3 +3720,56 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** Metadata/integral-number schema errors; segmented Standard parser failure; removed cfglib APIs/DNS interruption; first headroom rejection; texture-register/vector-width/comparison-sign/property-state/variant mismatches and missing named builtin layouts.
 - **STATE/JOURNAL UPDATES REQUIRED:** Docs/shader-recovery.md pins/scope/counterexamples; original PC authority/references and current host headroom; no capability/visual pointer advancement. Public staged privacy/manual provenance review and Conventional Commit.
 - **DEPENDENCIES:** Pinned community graphics/AssetRipper exporter review and four pinned upstream recovery implementations plus cfglib/SPIRV-Headers; existing accepted UnityPy/input. Faithful Standard table/bindings and a legitimate PC draw capture remain next work before production replacement.
+
+
+## I09-J365 — Preserve native segment/parameter identities
+
+- **ID:** I09-J365
+- **TITLE:** Decode Standard's segmented programs and complete independent comparison.
+- **STATUS:** Discriminating analysis COMPLETE; independent fragment HLSL validation FAILS. No Standard Android/semantic gate.
+- **CONTEXT:** Current Commando/terrain source uses DEFERRED programs absent from dummy exports.
+- **OBSERVATION:** Table-only first segment and subsequent record segments defeat generic parsing; parameter blobs hold missing builtin/variant bindings.
+- **HYPOTHESIS:** Exact indexed record rebasing and native layouts restore coverage without modifying original executable bytes.
+- **TASK:** Strictly classify all program/parameter records, preserve hashes/identities, run the selected Standard pair through all four pinned tools; preserve compilation counterexample and complete independent IR.
+- **CONSTRAINTS:** Accepted immutable game input; all native/derived output private. No DITHER removal, middleware change or guessed math.1GiB scoped analysis guard;10GiB Unity guard retained.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Shader reader/recovery/router, evidence documents, ignored analysis and fixed archive-space receipts.
+- **TEST COMMAND:** ./dev prototype --action shader-recovery --target standard; ./dev test; ./dev preflight.
+- **PASS CONDITION:**3,514 exact records/3,024 programs/490 parameters, all named functions, selected pair identical DXBC roundtrips and IR. Validation failure remains failure and does not prevent recording independent results.
+- **FAILURE EVIDENCE TO CAPTURE:** Initial table/fusion failures, exact fragment compiler error/unvalidated output, unknown native parameter shapes/bindings; unchanged source/tool pins. Retain initial disk/xattr failure and safe bounded archive clone receipt.
+- **STATE/JOURNAL UPDATES REQUIRED:** J365 scope/counterexample/revisit condition, measured restored host headroom, no formal/Moon/normal advances.
+- **DEPENDENCIES:** J364 pinned tools/current native Unity2021.3 records; source licensing boundaries remain intact. Standard DEFERRED integration is unresolved.
+
+## I09-J366 — Execute recovered intersection programs in the composed game
+
+- **ID:** I09-J366
+- **TITLE:** Replace the one intersection family with privately generated native-program bindings.
+- **STATUS:** Combined Android execution PASS; semantic/PC visual acceptance OPEN.
+- **CONTEXT:** Named output changes native bindings/math/state; accepted game and small presentation payload are the integration base.
+- **OBSERVATION:** Independent register-level outputs/native records preserve the relevant math, columns, slots and blend properties. Existing material adapter clears keywords.
+- **HYPOTHESIS:** Native expressions with measured Unity bindings and explicit material-feature dispatch can compile/run across the current original four-exit loop.
+- **TASK:** Generate four material feature combinations privately, reject unknown consumed contracts, compile the fixed presentation bundle, sync only it, run/review the combined candidate.
+- **CONSTRAINTS:** No generated game math in tracked files, no palette/bone/lighting guess, no APK reinstall/new app. Retain45 assembly identities/six scenes/exact four Android results and all previous rollbacks. Assisted run excludes normal combat/holdout/victory.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored shader-source binding generator, existing presentation build/router, safety tests/evidence docs, ignored shader/bundle/source archives/device captures.
+- **TEST COMMAND:** ./dev prototype --action shader-source; ./dev prototype --action recovered-presentation-payload; ./dev test; compiled-attempt observer PYTHONPATH=scripts/lab python3 work/j366-integrated-route.py.
+- **PASS CONDITION:** Native tree matches accepted bundle; source roundtrips and measured consumed bindings, real Android/ShaderUtil completion, only presentation bundle changes, four exits/zero actual-PID errors/full cleanup.62 host tests. Record52 bindings/412.611seconds/68kills/182 HUD checks without visual-parity inference.
+- **FAILURE EVIDENCE TO CAPTURE:** Partially initialized output compile failure/zero-before-native-write correction, tuple-versus-JSON provenance comparison/retry; actual source/bundle/hashes, first device failure and PC-reference disagreements.
+- **STATE/JOURNAL UPDATES REQUIRED:** J366 scoped runtime observation/payload rollback/assists/OLED/privacy review; retain formal/Moon/normal/Feather pointers. Record source linear versus lab gamma and Standard DEFERRED versus Forward as next measured integration variables.
+- **DEPENDENCIES:** J362/J363 integrated APK/lifecycle, J364 successful same-program tool chain/J365 native layout reader, pinned prior art/current source records. Actual PC draw capture remains unavailable; do not infer it.
+
+
+## I09-J367 — Original keyword dispatch and linear-color integration
+
+- **ID:** I09-J367
+- **TITLE:** Preserve compiled material features and the shipped color setting.
+- **STATUS:** Host/source contract and combined Android route PASS; original visual/semantic acceptance OPEN.
+- **CONTEXT:** J366 recovered family works in composed game; broader materials can disagree with saved inspector toggles.
+- **OBSERVATION:**325 source materials/125 keyword-toggle disagreements;38 currently staged materials agree. Original settings binary records linear, lab gamma.
+- **HYPOTHESIS:** Source keyword dispatch and exact original color setting restore measured behavior without guessed shader math.
+- **TASK:** Map original legacy keywords to generated feature selection, count actual bindings, restore linear via exact editor, host-check current clones, full build/update/run composed game.
+- **CONSTRAINTS:** Immutable legitimate input; all raw/derived/evidence private. Retain45 accepted assemblies/six authored scenes/owned Android results/previous rollbacks; one app updated in place. No Standard/pose/normal/full victory/parity claim.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing Android material adapter/report and ignored project setting/config/attempt/build/payload/source archives; evidence documents.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force; fixed compiled-attempt observers work/j367-source-settings.py, work/j367-archive.py, work/j367-install.py and work/j367-integrated-route.py through existing pinned environment.
+- **PASS CONDITION:** Original raw color setting/hash,38 measured keyword clone contracts, actual request/start/terminal208.116-second/zero-error ARM64 build, single-app update/result retention, four exits408.324seconds/65kills/179HUD checks/52 bindings/zero PID errors/full cleanup/OLED asleep.
+- **FAILURE EVIDENCE TO CAPTURE:** First CodeDom ambiguity/unattributed setter reply and actual reimport/state/read-only confirmation; resulting APK/source/payload hashes and current-launch failures/captures. Do not infer activeColorSpace or PC draw semantics solely from configuration.
+- **STATE/JOURNAL UPDATES REQUIRED:** J367 scoped observation plus J362/J366 rollback;62 tests/fresh preflight/privacy/IP/Conventional Commit. Formal/Moon/normal and earned-Feather checkpoints unchanged.
+- **DEPENDENCIES:** J365/J366 native records/programs/payload, pinned EditorKit material knowledge/bundled Unity2021.3 API, actual original settings/materials. Standard deferred and PC draw capture remain separate work.
