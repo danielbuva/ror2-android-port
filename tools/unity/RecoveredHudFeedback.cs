@@ -15,7 +15,7 @@ public sealed partial class RecoveredHudPresentation {
  RecoveredPickupPresentation notificationView;bool ownsFeedbackQueue;
  float priorQueueFixedTime=-1;
  void ValidateFeedback(){
-  if(!buffRoot||!buffTemplate||!buffTemplate.iconImage||!buffTemplate.stackCount||buffWidth<=0||!notificationRoot||!notificationTemplate||!notificationTemplate.nativeFade||!notificationTemplate.nativeFade.canvasGroup||!notificationTemplate.title||!notificationTemplate.description)
+  if(!buffRoot||!buffTemplate||!buffTemplate.iconImage||!buffTemplate.stackCount||buffWidth<=0||!notificationRoot||!notificationTemplate||!notificationTemplate.nativeFade||!notificationTemplate.nativeFade.canvasGroup||!notificationTemplate.nativeFlash||!notificationTemplate.nativeFlash.rawImage||!notificationTemplate.title||!notificationTemplate.description)
    throw new InvalidOperationException("Recovered feedback source references absent");
  }
  public void QueuePickup(CharacterMaster master,UniquePickup pickup){
@@ -56,7 +56,7 @@ public sealed partial class RecoveredHudPresentation {
    if(notificationView)Destroy(notificationView.gameObject);notificationView=null;currentNotice=notice;report.notification="";
    if(notice!=null){notificationView=Instantiate(notificationTemplate,notificationRoot,false);notificationView.Present(notice);notificationView.gameObject.SetActive(true);report.pickupNotifications++;report.notification=notificationView.title.text;}
   }
-  if(notificationView)notificationView.nativeFade.SetNotificationT(feedbackQueue.GetCurrentNotificationT());
+  if(notificationView){notificationView.nativeFade.SetNotificationT(feedbackQueue.GetCurrentNotificationT());report.notificationFlashTime=notificationView.nativeFlash.time;report.notificationFlashAlpha=notificationView.nativeFlash.rawImage.color.a;}
  }
  public void CleanupFeedback(Observation report){
   if(notificationView)Destroy(notificationView.gameObject);notificationView=null;currentNotice=null;

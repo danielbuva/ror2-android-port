@@ -7,7 +7,7 @@ import hashlib
 CORE_LOOT = ['PersonalShield', 'NearbyDamageBonus', 'StunChanceOnHit', 'Feather', 'Seed',
              'SprintOutOfCombat', 'SprintArmor', 'AlienHead',
              'UtilitySkillMagazine', 'BarrierOnOverHeal', 'SlowOnHit',
-             'Tooth', 'BonusGoldPackOnKill']
+             'Tooth', 'BonusGoldPackOnKill', 'ArmorPlate', 'StickyBomb', 'ExplodeOnDeath']
 CORE_LOOT_SUPPORT = [
     ('ShieldBreakEffect', '418e4945609754b41b41aafde8edfb87',
      'Prefabs/Effects/ShieldBreakEffect', 'Assets/RoR2/Base/Common/VFX/Shield/ShieldBreakEffect.prefab'),
@@ -23,6 +23,10 @@ CORE_LOOT_SUPPORT = [
      'Prefabs/TemporaryVisualEffects/SlowDownTime', 'Assets/RoR2/Base/Items/SlowOnHit/SlowDownTime.prefab'),
     ('ImpactStunGrenade', '94d074fb5a17ba64e96f43a9757891e7',
      'Prefabs/Effects/ImpactEffects/ImpactStunGrenade', 'Assets/RoR2/Base/Items/StunChanceOnHit/ImpactStunGrenade.prefab'),
+    ('StickyBomb', 'e5d428031063f9044819d619aaa9dec4',
+     'Prefabs/Projectiles/StickyBomb', 'Assets/RoR2/Base/Items/StickyBomb/StickyBomb.prefab'),
+    ('WilloWispDelay', '10993db54635a444ea929e22be654844',
+     'Prefabs/NetworkedObjects/WilloWispDelay', 'Assets/RoR2/Base/Items/ExplodeOnDeath/WilloWispDelay.prefab'),
 ]
 WORLD_COMMERCE = {
     'ShrineChance': 'Assets/RoR2/Base/Interactables/Shrines/ShrineChance/ShrineChance.prefab',
@@ -303,6 +307,10 @@ def sanitize_optional_content(stage,out):
     # detacher. Nova cannot reparent its children during source effect-pool return.
     # Keep particle children parent-owned; omit only their detached tail lifetime.
     detach_script='m_Script: {fileID: 1080798252, guid: '+game_guid+', type: 3}'
+    # Native StickyBomb carries these optional source sound components. Exact
+    # MonoScript IDs were measured; RTPCController calls AkSoundEngine directly.
+    game_audio_scripts=['m_Script: {fileID: '+str(i)+', guid: '+game_guid+', type: 3}'
+                        for i in (1132406345, -1095921540)]
     changes=[];effects=[]
     effect_script='m_Script: {fileID: 511512695, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}'
     alpha_script='m_Script: {fileID: -2051541306, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}'
@@ -321,6 +329,7 @@ def sanitize_optional_content(stage,out):
             for block in blocks:
                 match=re.match(r'--- !u!114 &(-?\d+)',block)
                 if match and re.search(r'm_Script: \{fileID: -?\d+, guid: '+audio_guid+r', type: 3\}',block):native_removed.add(match[1]);removed.add(match[1]);continue
+                if match and any(script in block for script in game_audio_scripts):native_removed.add(match[1]);removed.add(match[1]);continue
                 if match and decal_script in block:decal_removed.add(match[1]);removed.add(match[1]);continue
                 if match and detach_script in block:detach_removed.add(match[1]);removed.add(match[1]);continue
                 kept.append(block)

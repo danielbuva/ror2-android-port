@@ -49,7 +49,7 @@ public static class RecoveredHudBuilder {
   foreach(var group in root.GetComponentsInChildren<CanvasGroup>(true))group.alpha=1;
   foreach(var canvas in root.GetComponentsInChildren<Canvas>(true))if(canvas.transform==root.transform){canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.worldCamera=null;canvas.sortingOrder=50;}
   foreach(var graphic in root.GetComponentsInChildren<Graphic>(true))if(!(graphic is TMP_Text)&&!(graphic is TMP_SubMeshUI))graphic.material=Graphic.defaultGraphicMaterial;
-  var remove=root.GetComponentsInChildren<MonoBehaviour>(true).Where(component=>!(component is TMP_Text)&&!(component is TimerText)&&!(component is BuffIcon)&&!(component is GenericNotification)&&!(component is RecoveredPickupPresentation)&&!(component is RecoveredHudPresentation)&&component.GetType().Namespace!="UnityEngine.UI").ToList();
+  var remove=root.GetComponentsInChildren<MonoBehaviour>(true).Where(component=>!(component is TMP_Text)&&!(component is TimerText)&&!(component is BuffIcon)&&!(component is GenericNotification)&&!(component is AnimateUIAlpha)&&!(component is RecoveredPickupPresentation)&&!(component is RecoveredHudPresentation)&&component.GetType().Namespace!="UnityEngine.UI").ToList();
   while(remove.Count>0){
    var leaf=remove.FirstOrDefault(candidate=>!remove.Any(other=>other!=candidate&&other.gameObject==candidate.gameObject&&other.GetType().GetCustomAttributes(typeof(RequireComponent),true).Cast<RequireComponent>().Any(r=>new[]{r.m_Type0,r.m_Type1,r.m_Type2}.Any(t=>t!=null&&t.IsAssignableFrom(candidate.GetType())))));
    Require(leaf,"Generated UI component dependency cycle");remove.Remove(leaf);UnityEngine.Object.DestroyImmediate(leaf);
@@ -80,7 +80,9 @@ public static class RecoveredHudBuilder {
   var hud=UnityEngine.Object.Instantiate(source);hud.name="Owned recovered HUD";
   var native=hud.GetComponent<HUD>();var view=hud.AddComponent<RecoveredHudPresentation>();
   view.currentHealth=native.healthBar.currentHealthText;view.fullHealth=native.healthBar.fullHealthText;view.level=native.levelText.targetText;view.money=native.moneyText.targetText;view.experienceFill=native.expBar.fillRectTransform;
-  view.healthFill=Bar(native.healthBar,native.healthBar.style.instantHealthBarStyle,"Owned health fill");view.shieldFill=Bar(native.healthBar,native.healthBar.style.shieldBarStyle,"Owned shield fill");view.barrierFill=Bar(native.healthBar,native.healthBar.style.barrierBarStyle,"Owned barrier fill");
+  // The stable source green layer covers the yellow instantaneous layer. This
+  // adapter still lacks the original hit/heal trailing motion, not its color.
+  view.healthFill=Bar(native.healthBar,native.healthBar.style.trailingOverHealthBarStyle,"Owned health fill");view.shieldFill=Bar(native.healthBar,native.healthBar.style.shieldBarStyle,"Owned shield fill");view.barrierFill=Bar(native.healthBar,native.healthBar.style.barrierBarStyle,"Owned barrier fill");
   view.skills=native.skillIcons.Select(x=>new RecoveredHudPresentation.SkillView{icon=x.iconImage,cooldown=x.cooldownText,stock=x.stockText,key=Text(x.transform,"SkillKeyText"),ready=x.isReadyPanelObject}).ToArray();
   foreach(var skill in native.skillIcons){if(skill.cooldownRemapPanel)skill.cooldownRemapPanel.gameObject.SetActive(false);if(skill.flashPanelObject)skill.flashPanelObject.SetActive(false);Hide(skill.gameObject,"FlashPanel, Expanding");}
   foreach(var equipment in native.equipmentIcons)if(equipment)equipment.gameObject.SetActive(false);
@@ -98,6 +100,7 @@ public static class RecoveredHudBuilder {
   var noticeSource=(GameObject)noticeField.GetValue(notices);Require(noticeSource,"Original generic notification prefab absent");
   var noticeObject=UnityEngine.Object.Instantiate(noticeSource,hud.transform,false);noticeObject.name="Owned inactive pickup template";noticeObject.SetActive(false);
   var notice=noticeObject.GetComponent<GenericNotification>();view.notificationTemplate=noticeObject.AddComponent<RecoveredPickupPresentation>();view.notificationTemplate.nativeFade=notice;view.notificationTemplate.title=notice.titleTMP;view.notificationTemplate.description=notice.descriptionText.GetComponent<TMP_Text>();
+  view.notificationTemplate.nativeFlash=noticeObject.GetComponentInChildren<AnimateUIAlpha>(true);Require(view.notificationTemplate.nativeFlash&&view.notificationTemplate.nativeFlash.rawImage&&view.notificationTemplate.nativeFlash.alphaCurve.Evaluate(1)==0,"Original notification flash animation absent");
   if(notice.previousIconImage)notice.previousIconImage.gameObject.SetActive(false);if(notice.extraPanel)notice.extraPanel.gameObject.SetActive(false);if(notice.tempPanel)notice.tempPanel.gameObject.SetActive(false);
   view.stage=Text(Named(hud,"MapNameCluster"),"MainText");Text(view.stage.transform.parent,"Subtext").text="";
   var info=UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>((string)roots["runInfoSource"]),Named(hud,"UpperRightCluster"),false);info.SetActive(true);

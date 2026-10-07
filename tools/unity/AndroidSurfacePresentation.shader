@@ -8,6 +8,7 @@ Shader "Porting Lab/Android Surface Presentation" {
   _SnowTex("Recovered snow",2D)="white"{} _SnowColor("Snow tint",Color)=(1,1,1,1) _SnowBias("Snow bias",Float)=0 _AndroidSnowEnabled("Snow family",Float)=0
   _SnowOn("Source snow enabled",Float)=1 _TriplanarOn("Source surface projection",Float)=0 _TriplanarTextureFactor("Source projection scale",Float)=1
   _Fade("Original fade",Range(0,1))=1
+  _AndroidCharacterMatte("Temporary character palette approximation",Float)=0
  }
  CGINCLUDE
    #include "UnityCG.cginc"
@@ -15,7 +16,7 @@ Shader "Porting Lab/Android Surface Presentation" {
    #include "AutoLight.cginc"
    #include "AndroidRecoveredReflections.cginc"
    sampler2D _MainTex,_NormalTex,_EmTex,_SnowTex;float4 _MainTex_ST,_NormalTex_ST,_EmTex_ST,_SnowTex_ST,_Color,_TintColor,_EmColor,_SnowColor;
-   float _NormalStrength,_AndroidNormalEnabled,_EmPower,_EmissionEnabled,_SpecularStrength,_SpecularExponent,_Smoothness,_EnableCutout,_Cutoff,_SnowBias,_AndroidSnowEnabled,_Fade,_SnowOn,_TriplanarOn,_TriplanarTextureFactor;
+   float _AndroidCharacterMatte,_NormalStrength,_AndroidNormalEnabled,_EmPower,_EmissionEnabled,_SpecularStrength,_SpecularExponent,_Smoothness,_EnableCutout,_Cutoff,_SnowBias,_AndroidSnowEnabled,_Fade,_SnowOn,_TriplanarOn,_TriplanarTextureFactor;
    struct appdata{float4 vertex:POSITION;float3 normal:NORMAL;float4 tangent:TANGENT;float2 uv:TEXCOORD0;};
    struct v2f{float4 pos:SV_POSITION;float3 world:TEXCOORD0;float3 normal:TEXCOORD1;float3 tangent:TEXCOORD2;float3 bitangent:TEXCOORD3;float2 uv:TEXCOORD4;UNITY_FOG_COORDS(5) UNITY_LIGHTING_COORDS(6,7)};
    v2f vert(appdata v){v2f o;o.pos=UnityObjectToClipPos(v.vertex);o.world=mul(unity_ObjectToWorld,v.vertex).xyz;o.normal=UnityObjectToWorldNormal(v.normal);o.tangent=UnityObjectToWorldDir(v.tangent.xyz);o.bitangent=cross(o.normal,o.tangent)*v.tangent.w*unity_WorldTransformParams.w;o.uv=v.uv;UNITY_TRANSFER_FOG(o,o.pos);UNITY_TRANSFER_LIGHTING(o,v.uv);return o;}
@@ -28,10 +29,10 @@ Shader "Porting Lab/Android Surface Presentation" {
     albedo=lerp(albedo,tex2D(_SnowTex,i.world.xz*_SnowTex_ST.xy+_SnowTex_ST.zw).rgb*_SnowColor.rgb,snow);
     float3 light=normalize(UnityWorldSpaceLightDir(i.world)),view=normalize(_WorldSpaceCameraPos-i.world);float lambert=saturate(dot(n,light));
     UNITY_LIGHT_ATTENUATION(attenuation,i,i.world);
-    float spec=RecoveredDirectSpecular(n,light,view,_SpecularExponent,_SpecularStrength);
+    float spec=RecoveredDirectSpecular(n,light,view,_SpecularExponent,_SpecularStrength)*(1-saturate(_AndroidCharacterMatte));
     half4 color=half4(_LightColor0.rgb*(albedo*lambert+spec)*attenuation,1);
     if(additional){UNITY_APPLY_FOG_COLOR(i.fogCoord,color,fixed4(0,0,0,0));}
-    else{color.rgb+=albedo*max(ShadeSH9(float4(n,1)),0)+RecoveredReflection(i.world,n,view,_Smoothness,_SpecularStrength)+tex2D(_EmTex,i.uv*_EmTex_ST.xy+_EmTex_ST.zw).rgb*_EmColor.rgb*_EmPower*_EmissionEnabled;UNITY_APPLY_FOG(i.fogCoord,color);}
+    else{color.rgb+=albedo*max(ShadeSH9(float4(n,1)),0)+RecoveredReflection(i.world,n,view,_Smoothness,_SpecularStrength)*(1-saturate(_AndroidCharacterMatte))+tex2D(_EmTex,i.uv*_EmTex_ST.xy+_EmTex_ST.zw).rgb*_EmColor.rgb*_EmPower*_EmissionEnabled;UNITY_APPLY_FOG(i.fogCoord,color);}
     return color;
    }
    half4 frag(v2f i):SV_Target{return shade(i,false);}

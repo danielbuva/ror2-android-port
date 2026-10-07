@@ -20,6 +20,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class ObjectiveVisualBinding {public string path,mesh,material;}
  [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public ObjectiveVisualBinding[] bindings;}
+ [Serializable] public class ObjectiveRendererObservation {public string path,kind;public string[] materials,shaders;public bool enabled,active,visible;public Vector3 center,size;}
  [Serializable] public class ObjectiveReport {
   public bool ready,rules,idle,available,selected,authority,charging,charged,bossDefeated,finished,exitBegan,exitFinished,cleaned,rewardCollected,rewardLeftBehind;
   public int rewardPickupBaseline,rewardPickupMessages;
@@ -28,6 +29,7 @@ public sealed partial class MovementBatchProbe {
   public float charge,radius,bossHealth,bossMaxHealth,sourceDuration,sourceRadius,credits,spent;
   public string state,fsmState,nextScene,exitState,scope;public Vector3 position;
   public List<string> transitions=new List<string>();
+  public ObjectiveRendererObservation[] rendererViews;
  }
  readonly List<GameObject> objectiveTemplates=new List<GameObject>();
  readonly List<CharacterSpawnCard> objectiveCards=new List<CharacterSpawnCard>();
@@ -292,6 +294,9 @@ public sealed partial class MovementBatchProbe {
   r.objective.sourceDuration=worldTeleporter.holdoutZoneController.baseChargeDuration;r.objective.sourceRadius=worldTeleporter.holdoutZoneController.baseRadius;r.objective.position=objectiveHost.transform.position;r.objective.ready=true;ObserveTeleporterWorld();Save();
  }
  void ObserveTeleporterWorld(){
+  // Attribute the actual non-particle surface in the composed game before
+  // changing another shader family. This never changes renderer state.
+  if(objectiveHost&&r.objective!=null&&Time.frameCount%30==0)r.objective.rendererViews=objectiveHost.GetComponentsInChildren<Renderer>(true).Where(x=>!(x is ParticleSystemRenderer)).Select(x=>new ObjectiveRendererObservation{path=StageObjectPath(x.transform),kind=x.GetType().Name,materials=x.sharedMaterials.Select(m=>m?m.name:"missing").ToArray(),shaders=x.sharedMaterials.Select(m=>m&&m.shader?m.shader.name:"missing").ToArray(),enabled=x.enabled,active=x.gameObject.activeInHierarchy,visible=x.isVisible,center=x.bounds.center,size=x.bounds.size}).ToArray();
   FlushObjectiveActors();ObserveObjectiveSupport();if(!worldTeleporter)return;var report=r.objective;report.frames++;report.state=worldTeleporter.activationState.ToString();if(report.state!=objectiveState){objectiveState=report.state;report.transitions.Add(report.state);Save();}
   report.fsmState=worldTeleporter.mainStateMachine.state==null?"uninitialized":worldTeleporter.mainStateMachine.state.GetType().FullName;report.idle=worldTeleporter.isIdle;report.available=worldTeleporter.GetInteractability(worldPlayer.GetComponent<Interactor>())==Interactability.Available;report.selected=worldDriver.currentInteractable==objectiveHost;report.authority=Util.HasEffectiveAuthority(worldTeleporter.GetComponent<NetworkIdentity>());
   report.charge=worldTeleporter.chargeFraction;report.radius=worldTeleporter.holdoutZoneController.currentRadius;report.charging|=worldTeleporter.isCharging;report.charged|=worldTeleporter.isCharged;report.finished|=worldTeleporter.isInFinalSequence;

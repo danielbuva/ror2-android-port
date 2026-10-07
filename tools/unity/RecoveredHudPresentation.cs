@@ -15,6 +15,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   public bool ready,menuVisible,menuReferenceHidden,cleaned;public int frames,items,skillSlots;public float health,shield,barrier,level,bossHealth,charge;
   public uint money;public float menuStartX,menuStartY;public int screenWidth,screenHeight;public string stage,objective,scope="Source layout/assets with owned Android data bindings; mobile font/UI shader approximation, not stock startup or PC parity.";
   public int buffs,peakBuffs,buffUpdates,pickupNotifications,notificationClockTicks;public bool nativeNotificationQueue,feedbackCleaned,ownedNotificationScheduler;public float notificationT,notificationFixedTime;public string notification;
+  public float notificationFlashTime,notificationFlashAlpha;
  }
  public TMP_Text currentHealth,fullHealth,level,money,timer,objective,stage,bossName,bossHealth;
  public TMP_Text stageCount,ambientLevel,difficulty;public RoR2.UI.TimerText timerFormatter;public LayoutElement objectiveLayout;

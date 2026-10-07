@@ -7,6 +7,7 @@ using UnityEngine;
 // stock language/service bindings are replaced with locally recovered strings.
 public sealed class RecoveredPickupPresentation : MonoBehaviour {
  public GenericNotification nativeFade;
+ public AnimateUIAlpha nativeFlash;
  public TMP_Text title,description;
  public void Present(CharacterMasterNotificationQueue.NotificationInfo info){
   var item=info.data as ItemDef;var equipment=info.data as EquipmentDef;

@@ -3685,3 +3685,38 @@ Original arena trigger and four scripted encounter spawns progress PreEncounter�
 - **FAILURE EVIDENCE TO CAPTURE:** Preserve J358 helper/observer/runtime failures; used APK/source/settings/CLI/recipe/payload hashes; native support loads/buffs/packs, first current-PID failure, inspected HUD/material captures and original results before/after.
 - **STATE/JOURNAL UPDATES REQUIRED:** Attribute the successful preinstall J359 build separately from its later null-body teardown review revision; archive both exact source/terminal sets. Record actual combined/lifecycle exits and assistance history. Advance only scoped observations after a passing exit; public staged privacy/manual IP review and Conventional Commit.
 - **DEPENDENCIES:** J358 actual first failure, original SetStateOnHurt and native typed catalog, pinned prior-art Prefab/Items/UI/material contracts; J356/J357/Moon/formal/normal pointers retained.
+
+
+## I09-J361/J362/J363 — Broader loot, source UI behavior and native aim consumer
+
+- **ID:** I09-J361/J362/J363
+- **TITLE:** Add native sticky/on-kill loot and restore measured source HUD/aim behavior in the combined game.
+- **STATUS:** Scoped combined/lifecycle exits PASS; visual pose/palette/teleporter/effect parity FAILS and remains open.
+- **CONTEXT:** J359/J360 is the rollback; nine user PC images expose actual Android presentation failures.
+- **OBSERVATION:** Source green overlays yellow health; original0.4-second notification flash was unscheduled; original AimAnimator was disabled. Three native eligible item definitions have measured support dependencies.
+- **HYPOTHESIS:** Preserve original UI/animation consumers and add exact existing-provider roots without changing gameplay or claiming complete PC appearance.
+- **TASK:** Integrate native flash, source green, optional original aiming, three eligible items/two provider roots, owned source-slot/material/clone cleanup and read-only objective attribution. Host-check/build the combined candidate, then four original exits and same-APK genuine loss/restart/menu/cold-results flow.
+- **CONSTRAINTS:** Preserve source unlocks/drop weights/chance/damage/states,45 accepted assemblies/six scenes and original profiles. Optional audio-unavailable path explicit. No bone rotation, entitlement/authentication/user fabrication, extra app, Moon progression or normal/PC parity claim. Existing character matte approximation labeled and further guessed shader math frozen at J364.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing loot staging/native providers/HUD generation/native display/runtime observations/build root guards; ignored source archives/APK/payload/device evidence.
+- **TEST COMMAND:** ./dev preflight; ./dev test; ./dev build --target vulkan --force. Compiled-attempt observers: .local/lab-venv/bin/python work/j362-integrated-route.py and work/j363-loss-restart.py with existing environment/PYTHONPATH; observer retry uses the same verified APK.
+- **PASS CONDITION:**55 host tests;20 actual support roots, complete source item/provider/UI/aim-link contracts; four native exits/zero PID errors/full owned cleanup; two genuine losses/fresh restart/menu/results restoration. Visual comparison may fail without invalidating the accurately scoped runtime result.
+- **FAILURE EVIDENCE TO CAPTURE:** J361 stale root guard/aim initialization, J362 native Dodge observer rejection; exact source/toolchain/build/payload/assembly/APK hashes and all attempts; first native error and pose/flash/health/teleporter captures; assistance/results/cleanup.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record418.726gameplay seconds/67kills/168HUDchecks/20notices/five Sticky loads/spawns/41 Wisp delays/52 health packs; J363174.698wall seconds/seven clean captures/all assists off. Advance only scoped observations; retain J359/J360 and formal/Moon/normal/visual pointers. Public staged privacy/manual IP review and Conventional Commit.
+- **DEPENDENCIES:** J359/J360, original AimAnimator/Animator/skin/AnimateUIAlpha/HealthBar/GlobalEventManager/projectile contracts; pinned R2API ItemAPI/HealthBarAPI and EditorKit material metadata. Real device/native code outrank prior art.
+
+## I09-J364 — Recover shader programs before further approximation
+
+- **ID:** I09-J364
+- **TITLE:** Run four independent recovery tools on the same shipped Cloud Intersection programs.
+- **STATUS:** Host extraction/tool execution PASS; named-output semantic comparison FAILS; no Android or visual-parity gate.
+- **CONTEXT:** User requires compressed-blob/program recovery, independent math comparison and original PC behavioral authority. Current replacements are approximations.
+- **OBSERVATION:** Original Windows blobs contain recoverable D3D11 programs. Dummy exports contain no implementation. Named output can compile structurally while changing bindings/math/state.
+- **HYPOTHESIS:** Independent register-based decompilers and typed IR reveal native semantics and counterexamples to named reconstruction.
+- **TASK:** Extract all segments read-only, pin/build requested tools, normalize exact schema, run the same measured vertex6/fragment40 through Unity_Shader_Decompiler/d3dasm/HLSLDecompiler/dxbc-spirv. Retain independent outputs and disagreements; expose only this fixed experiment through ./dev.
+- **CONSTRAINTS:** Original source immutable/accepted inventory enforced; all DXBC/HLSL/IR/ShaderLab/SPIR-V/logs/captures/tools private. No unlicensed upstream implementation copied, no further hand-guessed math, accepted APK/project unchanged. PC capture availability is not inferred.100MiB scoped analysis guard does not waive10GiB Unity-build preflight.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Authored fixed shader-recovery orchestrator/router, README/evidence/prior-art records; ignored toolchains/reference pins/raw programs and independent attempts.
+- **TEST COMMAND:** ./dev prototype --action shader-recovery; ./dev test. Already-built pinned tools/isolated analysis bottle required; command does not install them.
+- **PASS CONDITION:** Unchanged accepted bundle;64 Cloud/16 UI/3,024 segmented Standard DXBC containers extracted; same-pair16 tool invocations succeed, both byte-identical assembly roundtrips and actual HLSL compilation pass, IR/SPIR-V produced. Record these as analysis results only, never semantic/Android acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Metadata/integral-number schema errors; segmented Standard parser failure; removed cfglib APIs/DNS interruption; first headroom rejection; texture-register/vector-width/comparison-sign/property-state/variant mismatches and missing named builtin layouts.
+- **STATE/JOURNAL UPDATES REQUIRED:** Docs/shader-recovery.md pins/scope/counterexamples; original PC authority/references and current host headroom; no capability/visual pointer advancement. Public staged privacy/manual provenance review and Conventional Commit.
+- **DEPENDENCIES:** Pinned community graphics/AssetRipper exporter review and four pinned upstream recovery implementations plus cfglib/SPIRV-Headers; existing accepted UnityPy/input. Faithful Standard table/bindings and a legitimate PC draw capture remain next work before production replacement.

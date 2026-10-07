@@ -164,3 +164,10 @@ These file links support the source-scoped conclusions above. The structured ind
 | MoonstormSharedUtils | [LICENSE.md](https://github.com/TeamMoonstorm/MoonstormSharedUtils/blob/fdafff9423ee2efaab44832f95dcd45ae0d4cc39/LICENSE.md) | L5a/post-vanilla |
 | RoRSkinBuilder | [Editor/CodeGeneration/PluginCodeTemplate.cs](https://github.com/KingEnderBrine/RoRSkinBuilder/blob/fcfc5dfe520dd1f14e9e8e156984bc37b8947cdc/Editor/CodeGeneration/PluginCodeTemplate.cs) | L5a/L11/post-vanilla |
 | ProperSave | [ProperSave/ProperSavePlugin.cs](https://github.com/KingEnderBrine/-RoR2-ProperSave/blob/d20c6c8e593cacce7de94cba7a211b010b15e33b/ProperSave/ProperSavePlugin.cs) | L5a/L9/post-vanilla |
+
+
+## J364 — Executed shader-recovery prior art
+
+Read the pinned upstream parser/recovery implementations before adding the fixed read-only action. [Shader recovery ledger](shader-recovery.md) records exact revisions/licenses/dependency compatibility and real same-program outcomes for Unity_Shader_Decompiler, d3dasm, HLSLDecompiler and dxbc-spirv. Existing EditorKit property metadata and pinned AssetRipper shader exporters remain useful contract sources, but dummy exports are not recovered implementations.
+
+Actual native programs outrank tool assumptions: Unity named output misbinds depth/ramp textures, widens vector math, loses comparison-sign semantics and drops material-linked render-state names. d3dasm and HLSLDecompiler agree on the relevant register-level operations; typed IR retains distinctions. Latest cfglib removed APIs required by pinned d3dasm; the measured compatible pin restores the build. No upstream implementation/game-derived shader copied into public source, and no shader/visual capability inferred from compilation or tool marketing. Recover faithful bindings/Standard segmentation before Android integration; legitimate PC draw observation remains the behavioral oracle where possible.

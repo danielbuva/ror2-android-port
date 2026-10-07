@@ -22,7 +22,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action in ['presentation-payload','stage-presentation-payload']:
+  if a.action=='shader-recovery':
+   from shader_recovery import recover
+   recover()
+  elif a.action in ['presentation-payload','stage-presentation-payload']:
    from presentation import build_payload
    build_payload(stages=a.action=='stage-presentation-payload')
   elif a.action=='primary-fire-prepare':
