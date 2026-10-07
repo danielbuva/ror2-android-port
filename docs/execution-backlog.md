@@ -3617,3 +3617,20 @@ Original arena trigger and four scripted encounter spawns progress PreEncounterâ
 - **FAILURE EVIDENCE TO CAPTURE:** Original truncated versus inherited recipe, exact absent asset request, pre-dispatch guard rejection, first build/runtime/visual failure, actual assist events and bonus-jump/provider counts, APK/payload/results/cleanup/OLED receipts.
 - **STATE/JOURNAL UPDATES REQUIRED:** Preserve J351 failed exit, record J352 actual build/update/game outcome and visual review, update only scoped passing evidence. Stage authored files, public privacy/IP audit/manual review and Conventional Commit checkpoint.
 - **DEPENDENCIES:** J351 actual whole-game failure and exact inherited support contract; existing native provider/pinned community content-lifetime knowledge. No new RoR2 subsystem reconstruction or API version change.
+
+
+## I09-J353 â€” Preserve recovered UI through the complete death/restart/menu loop
+
+- **ID:** I09-J353
+- **TITLE:** Run native losses, restart and cold result reload on the coherent recovered-HUD APK
+- **CONTEXT:** J352 passes four assisted original exits with new source HUD/menu/text ownership; session reuse and genuine result persistence need current-candidate evidence.
+- **OBSERVATION:** New owned UI/text roots now surround the already accepted original death/results/session flow. Old ledger recovery evidence does not establish the new presentation's reuse.
+- **HYPOTHESIS:** Existing cleanup restores text/catalog/native owners so a real loss can restart with fresh HUD, return to source menu and cold-reload genuine Android results without another installation.
+- **TASK:** All assists off: actual source menu start, let enemies cause two genuine losses with in-process restart between them, verify fresh state/full owner cleanup, return to recovered menu, cold-load new genuine reports, restore exact original result generations. Visually review restarted HUD/menu and actual-PID logs.
+- **CONSTRAINTS:** Same J352 APK/package/payload, no install/build/runtime patch, fake damage/death/report/victory, original profile/platform change, account data or unattended Moon. Raw sources/evidence/reports private; exact original result retention and OLED sleep. No subagents.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing owned selection/touch menu/native original damage/results/restart flow, private bounded whole-loop capture/backup observer, authored state/journal/milestone/risk/visual summaries only.
+- **TEST COMMAND:** Existing owned launch/touch/capture and native current-PID report; original StandardLoss/XML/ledger count, two completed-session cleanup, source HUD value/render checks, cold reload and exact restoration/installation-count assertions.
+- **PASS CONDITION:** PASS in142.203wall seconds: two genuine unassisted losses, fresh restart/HUD, full owner cleanup, source menu return and cold result reload. Seven actual-PID captures have zero error lines; exact original four files restored and installation count7 unchanged/OLED asleep. First setup-frame observer rejection preserved and corrected without game changes. Source camera/commerce obstruction, Timeline warnings/Feather/PC/stock UI/profile/full-run gates remain open.
+- **FAILURE EVIDENCE TO CAPTURE:** Initial zero world tick versus initialized HUD timing; first game/UI/native result/restart/cold reload failure, original/test XML/primary/backup, actual-PID captures, completed owners, original file hashes and idle power.
+- **STATE/JOURNAL UPDATES REQUIRED:** Distinguish observer rejection from game failure and record actual complete-loop exit. Retain scoped UI/result observation and source camera obstruction; preserve formal/Moon/normal/PC/profile pointers. Privacy/IP review and Conventional Commit summary.
+- **DEPENDENCIES:** J352 complete candidate and source HUD observation; original death/results/ledger provider and J348 recovery policy. Pinned UI/data-lifetime prior art and measured original contracts retained; no new subsystem machinery.
