@@ -54,6 +54,11 @@ def recover(target='lab'):
         'deferred':(5,'Hidden/Internal-DeferredShading','',['DIRECTIONAL','UNITY_HDR_ON'],54),
         'deferred-shadow':(5,'Hidden/Internal-DeferredShading','',['POINT','SHADOWS_CUBE','UNITY_HDR_ON'],54),
         'standard-hdr':(-197252232775272061,'Hopoo Games/Deferred/Standard','DEFERRED',['DITHER','LIGHTPROBE_SH','LIMBREMOVAL','UNITY_HDR_ON'],3024),
+        'cloud':(-658352061839041481,'Hopoo Games/FX/Cloud Remap','FORWARD',['CLOUDOFFSET','DIRECTIONAL','LIGHTPROBE_SH','USE_CLOUDS','VERTEXCOLOR'],1728),
+        'opaque-cloud':(-704325499538927933,'Hopoo Games/FX/Opaque Cloud Remap','DEFERRED',['CLOUDNORMAL','LIGHTPROBE_SH','UNITY_HDR_ON'],192),
+        'snow':(3671293666148614723,'Hopoo Games/Deferred/Snow Topped','DEFERRED',['BINARYBLEND','LIGHTPROBE_SH','TRIPLANAR','UNITY_HDR_ON'],840),
+        'terrain':(5954585457266417408,'Hopoo Games/Deferred/Triplanar Terrain Blend','DEFERRED',['DOUBLESAMPLE','LIGHTPROBE_SH','UNITY_HDR_ON','USE_ALPHA_AS_MASK','USE_VERTEX_COLORS','USE_VERTICAL_BIAS'],480),
+        'deferred-reflections':(3,'Hidden/Internal-DeferredReflections','',['UNITY_HDR_ON'],6),
     }
     if target not in specs: raise RuntimeError('Unknown fixed shader recovery target')
     identity,shader_name,pass_name,keywords,expected_programs = specs[target]
@@ -124,7 +129,7 @@ def recover(target='lab'):
         receipt['segment_rebasing_record_bytes_unchanged'] = True
         dll = tools['unity']/'Shader Decompiler/bin/Release/net10.0/Shader Decompiler.dll'
         receipt['unity_tool_binary_sha256'] = sha(dll)
-        options = ['--no-surface-shaders']+(['--no-fuse-temps'] if target.startswith('standard') else [])
+        options = ['--no-surface-shaders']+(['--no-fuse-temps'] if target.startswith('standard') or target in ['cloud','opaque-cloud','snow','terrain','deferred-reflections'] else [])
         named = command('unity-decompile',['dotnet',dll,out/'unity-stage0','--out-root',out/'unity-recovered']+options)
         functions = sum('Stage 2: collected ' in line for line in named.stdout.decode(errors='replace').splitlines())
         if functions!=expected_programs: raise RuntimeError('Unity decompiler did not retain all native executable functions')

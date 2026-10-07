@@ -1,5 +1,6 @@
 """Authored fixtures check shader resource binding failures, without game code."""
 import struct,sys,unittest
+from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts/lab'))
 from shader_source import bind_hlsl
@@ -88,3 +89,30 @@ class ShaderBindingTests(unittest.TestCase):
         self.assertIn('AndroidNativeCubeShadow(_FixtureShadow,sampler_FixtureShadow,v0.xyz,v0.w).x',bound)
         self.assertIn('SHADER_API_VULKAN',bound)
         self.assertIn('tex.SampleCmpLevelZero(samp,coord,depth)',bound)
+
+
+    def partial_fixture(self,offset=16,partial=True):
+        common={'m_ConstantBufferBindings':[], 'm_ConstantBuffers':[{'m_NameIndex':0,'m_Size':32,'m_IsPartialCB':partial,'m_VectorParams':[{'m_NameIndex':1,'m_Type':0,'m_Index':offset,'m_Dim':4,'m_ArraySize':0}], 'm_MatrixParams':[]}], 'm_TextureParams':[]}
+        p={'m_State':{'m_Name':'fixture'},'m_NameIndices':[('FixtureBuffer',0),('_FixtureUnused',1)],'progFragment':{'m_CommonParameters':common}}
+        tree={'m_ParsedForm':{'m_SubShaders':[{'m_Passes':[p]}]}}
+        native={'buffers':[{'name':'FixtureBuffer','size':16,'variables':[]}], 'bindings':[{'name':'FixtureBuffer','kind':1,'slot':0}]}
+        record={'parameter_index':0,'stage':'progFragment','pass':'fixture','subshader_index':0,'pass_index':0};raw=struct.pack('<Iiii',1,16,0,0)
+        return tree,native,record,raw
+
+    def test_partial_common_uniform_outside_native_extent_is_not_bound(self):
+        tree,native,record,raw=self.partial_fixture()
+        with patch('shader_segments.parameter_layout',return_value=native):layout=selected_layout(tree,raw,record)
+        self.assertEqual(layout['buffers'][0]['variables'],[])
+        self.assertEqual(layout['omitted_common_variables'][0]['name'],'_FixtureUnused')
+        with self.assertRaisesRegex(RuntimeError,'no measured binding'):
+            bind_hlsl('void main(out float4 o0 : SV_Target0) {o0=cb0[1];}',layout,'mapped')
+
+    def test_partial_common_uniform_cannot_cross_native_extent(self):
+        tree,native,record,raw=self.partial_fixture(offset=8)
+        with patch('shader_segments.parameter_layout',return_value=native):
+            with self.assertRaisesRegex(RuntimeError,'exceeds native buffer'):selected_layout(tree,raw,record)
+
+    def test_nonpartial_common_size_disagreement_remains_rejected(self):
+        tree,native,record,raw=self.partial_fixture(partial=False)
+        with patch('shader_segments.parameter_layout',return_value=native):
+            with self.assertRaisesRegex(RuntimeError,'size disagreement'):selected_layout(tree,raw,record)

@@ -12,6 +12,8 @@ public static class LabBuild {
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
  [Serializable] class NativeVariant {public string resource;}
  [Serializable] class NativeManifest {public NativeVariant[] variants;}
+ [Serializable] class NativeFamily {public NativeVariant[] variants;}
+ [Serializable] class NativeFamilies {public NativeFamily[] families;}
  static string[] NativePresentationInputs(){
   const string prefix="Assets/LabLoadingScene/Resources/";string manifestPath=prefix+"AndroidNativeStandardVariants.json";
   if(!File.Exists(manifestPath))return new string[0];
@@ -20,6 +22,8 @@ public static class LabBuild {
   var names=manifest.variants.Select(x=>x.resource).ToArray();
   if(names.Any(x=>string.IsNullOrEmpty(x)||!System.Text.RegularExpressions.Regex.IsMatch(x,"^AndroidNativeStandard[0-9]+$"))||names.Distinct().Count()!=names.Length)throw new Exception("Native shader resource identities invalid");
   var paths=names.Select(x=>prefix+x+".shader").Concat(new[]{manifestPath,prefix+"AndroidNativeDeferredLighting.shader",prefix+"AndroidNativeWarpRamp.png",prefix+"AndroidNativeEliteRamp.png"}).ToArray();
+  string familyPath=prefix+"AndroidNativeMaterialFamilies.json";
+  if(File.Exists(familyPath)){var families=JsonUtility.FromJson<NativeFamilies>(File.ReadAllText(familyPath));if(families==null||families.families==null||families.families.Length!=4||families.families.Any(x=>x==null||x.variants==null||x.variants.Length==0))throw new Exception("Native family closure invalid");var resources=families.families.SelectMany(x=>x.variants).Select(x=>x.resource).ToArray();if(resources.Length>512||resources.Any(x=>string.IsNullOrEmpty(x)||!System.Text.RegularExpressions.Regex.IsMatch(x,"^AndroidNativeFamily[0-9]+Variant[0-9]+$"))||resources.Distinct().Count()!=resources.Length)throw new Exception("Native family identities invalid");paths=paths.Concat(resources.Select(x=>prefix+x+".shader")).Concat(new[]{familyPath,prefix+"AndroidNativeDeferredReflections.shader"}).ToArray();}
   if(!paths.All(File.Exists))throw new Exception("Native shader closure missing an input");return paths;
  }
  [InitializeOnLoadMethod] static void ResumeQueuedBuild(){if(!string.IsNullOrEmpty(SessionState.GetString(PendingBuild,""))){EditorApplication.update-=DispatchBuild;EditorApplication.update+=DispatchBuild;}}

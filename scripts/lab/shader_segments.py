@@ -146,7 +146,7 @@ def selected_layout(tree, flattened, record):
         name = names[b['m_NameIndex']]
         if name not in buffers: raise RuntimeError('Common constant buffer absent from native parameter record')
         buffer = buffers[name]
-        if b['m_Size']!=buffer['size'] and not (b.get('m_IsPartialCB') and 0<b['m_Size']<buffer['size']):
+        if b['m_Size']!=buffer['size'] and not b.get('m_IsPartialCB'):
             raise RuntimeError('Native/common shader buffer size disagreement')
         additions = [{'name':names[v['m_NameIndex']],'type':v['m_Type'],'offset':v['m_Index'],
                       'rows':1,'columns':v['m_Dim'],'matrix':False,'array_size':v['m_ArraySize']} for v in b['m_VectorParams']]
@@ -156,6 +156,9 @@ def selected_layout(tree, flattened, record):
                               'rows':4,'columns':4,'matrix':True,'array_size':v['m_ArraySize']})
         for variable in additions:
             span=(64 if variable['matrix'] else variable['columns']*4)*max(1,variable['array_size'])
+            if variable['offset']>=buffer['size'] and b.get('m_IsPartialCB'):
+                native.setdefault('omitted_common_variables',[]).append(variable)
+                continue
             if variable['offset']+span>buffer['size']:raise RuntimeError('Common shader variable exceeds native buffer')
             previous = next((v for v in buffer['variables'] if v['name']==variable['name']),None)
             if previous and previous!=variable: raise RuntimeError('Native/common constant parameter disagreement')
@@ -175,4 +178,5 @@ def selected_layout(tree, flattened, record):
                                  'native_texture_descriptor':binding['native_texture_descriptor'],
                                  'dimension':None,'scope':'Per-variant binding absent from common layout; resolve dimension from native DXBC declaration'})
     return {'parameter_index':index,'stage':record['stage'],'pass':record['pass'],
-            'buffers':sorted(buffers.values(),key=lambda b:b['slot']),'textures':textures}
+            'buffers':sorted(buffers.values(),key=lambda b:b['slot']),'textures':textures,
+            'omitted_common_variables':native.get('omitted_common_variables',[])}

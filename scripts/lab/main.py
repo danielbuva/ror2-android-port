@@ -31,6 +31,9 @@ try:
   elif a.action=='shader-source-deferred':
    from shader_deferred import generate
    generate()
+  elif a.action=='shader-source-materials':
+   from shader_materials import generate
+   generate()
   elif a.action in ['presentation-payload','stage-presentation-payload','recovered-presentation-payload']:
    from presentation import build_payload
    build_payload(stages=a.action=='stage-presentation-payload',recovered=a.action=='recovered-presentation-payload')

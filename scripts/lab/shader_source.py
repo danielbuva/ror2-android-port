@@ -17,7 +17,10 @@ def properties(tree):
         elif kind==4 and p['m_DefTexture']['m_TexDim'] in [1,2,4]:
             label = {1:'any',2:'2D',4:'Cube'}[p['m_DefTexture']['m_TexDim']]; value = json.dumps(p['m_DefTexture']['m_DefaultName'])+' {}'
         else: raise RuntimeError('Unmeasured recovered property type')
-        lines.append(f'{p["m_Name"]} ({json.dumps(p["m_Description"])}, {label}) = {value}')
+        flags=int(p["m_Flags"]);known={1:"HideInInspector",2:"PerRendererData",4:"NoScaleOffset",8:"Normal",16:"HDR"}
+        if flags&~31:raise RuntimeError("Unmeasured native property flags")
+        attributes="".join("["+label+"]" for bit,label in known.items() if flags&bit)
+        lines.append(f'{attributes}{p["m_Name"]} ({json.dumps(p["m_Description"])}, {label}) = {value}')
     return '\n'.join(lines)
 
 
