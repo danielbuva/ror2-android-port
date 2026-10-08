@@ -17,6 +17,10 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 public sealed partial class MovementBatchProbe {
  bool ownsLoadoutTables,ownsSkillCatalog;
+ bool ownsBodySettingsTransform;
+ Func<IResourceLocation,string> priorBodySettingsTransform,ownedBodySettingsTransform;
+ // A separate closure owns only path strings, never this session or its report.
+ static Func<IResourceLocation,string> CreateBodySettingsTransform(string original,string local){return loc=>loc.InternalId==original?local:loc.InternalId;}
  object priorLoadoutDefaults,priorBodyInfos;
  readonly Dictionary<object,object> priorViewables=new Dictionary<object,object>();
  readonly HashSet<ViewablesCatalog.Node> priorViewableChildren=new HashSet<ViewablesCatalog.Node>();
@@ -59,7 +63,9 @@ public sealed partial class MovementBatchProbe {
   var data=new ResourceManagerRuntimeData{BuildTarget="Android",DisableCatalogUpdateOnStartup=true,LogResourceManagerExceptions=true};
   data.CatalogLocations.Add(new ResourceLocationData(new[]{ResourceManagerRuntimeData.kCatalogAddress},catalog,typeof(ContentCatalogProvider),typeof(ContentCatalogData)));
   File.WriteAllText(settings,JsonUtility.ToJson(data));var originalSettings=Addressables.RuntimePath+"/settings.json";
-  Addressables.InternalIdTransformFunc=loc=>loc.InternalId==originalSettings?settings:loc.InternalId;
+  Check(!ownsBodySettingsTransform,"Existing owned settings transform");
+  priorBodySettingsTransform=Addressables.InternalIdTransformFunc;ownedBodySettingsTransform=CreateBodySettingsTransform(originalSettings,settings);
+  Addressables.InternalIdTransformFunc=ownedBodySettingsTransform;ownsBodySettingsTransform=true;r.catalogTransformInstalled=true;
   var init=Addressables.InitializeAsync();Addressables.ResourceManager.Acquire(init);
   var deadline=Time.realtimeSinceStartup+8;while(!init.IsDone&&Time.realtimeSinceStartup<deadline)yield return null;
   Check(init.IsDone&&init.Status==AsyncOperationStatus.Succeeded,"Real Addressables initialization failed");Addressables.Release(init);
@@ -96,5 +102,14 @@ public sealed partial class MovementBatchProbe {
   if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
   ReleaseObjectiveBundlePreload();CleanupRecoveredText();
+  RestoreBodySettingsTransform();
+ }
+ void RestoreBodySettingsTransform(){
+  if(ownsBodySettingsTransform){
+   Check(ReferenceEquals(Addressables.InternalIdTransformFunc,ownedBodySettingsTransform),"Owned settings transform replaced before cleanup");
+   Addressables.InternalIdTransformFunc=priorBodySettingsTransform;
+   Check(ReferenceEquals(Addressables.InternalIdTransformFunc,priorBodySettingsTransform),"Prior settings transform did not restore");
+   ownsBodySettingsTransform=false;priorBodySettingsTransform=null;ownedBodySettingsTransform=null;r.catalogTransformRestored=true;
+  }
  }
 }

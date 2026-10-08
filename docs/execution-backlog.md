@@ -4172,3 +4172,23 @@ I19-J408 exit: J409's signature/source-checked local attachment/no-audio correct
 
 I20-J411 exit: J411–J416 broad checkpoint: sixteen actor templates include six additional original base families; seven supported source stage subsets grow from eighteen to thirty-six card entries. Native source champion choice is restored where supported; explicit Queen fallback remains elsewhere. Original Genesis Loop boss-only definition/attachment/configurations are registered, without ordinary-loot promotion. J415's two original exits into Scorched Acres/207.244seconds/20kills include three native Jellyfish spawns and four earned Warbanner wards/three native body effects. Its later diagnostic-only end-run guard rejection is preserved. J416 shares the existing menu eligibility guard and passes short whole-candidate gameplay/Warbanner/full owned teardown/menu return with unchanged results; eight separately current-process captures across the two runs have zero errors. No repeated full-route/four-loss mandate, normal victory, Moon/manual, exact PC appearance or full population acceptance. All older rollbacks remain intact.
 Next lifecycle task is the concrete ResourceManager transform owner; thirteen original callback owners plus direct ResourceManager delegates are observed with no read failures, and the latter supplies a positive retaining-root result. Record actual correction and short repeated-session evidence separately; broader memory/thermal/performance acceptance remains open.
+
+
+## I21-J417 — Restore owned settings callback at session teardown
+
+- **ID:** I21-J417
+- **TITLE:** Correct the measured owned Addressables callback without purging foreign state.
+- **STATUS:** SCOPED CORRECTION PASS; completed managed-session retention remains open.
+- **CONTEXT:** J416 records an actual ResourceManager transform closure retaining a completed probe.
+- **OBSERVATION:** Closure holds the probe; menu has344objects/two bundles and42.41MB managed usage.
+- **HYPOTHESIS:** A string-only closure and ownership-checked prior-value restoration remove this root.
+- **TASK:** Preserve exact location mapping, restore prior null/sentinel delegate, reject foreign replacement and measure genuine whole-game teardown.
+- **CONSTRAINTS:** Common public/privacy/original-input/device contract; no foreign callback/cache purge; all original simulation and old rollbacks retained.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** BodyCatalogBoundary, result observations and concise state/evidence documentation.
+- **TEST COMMAND:** Existing forced composed build/install; pinned-editor mapping/closure controls; three ordinary combat/abandon/menu sessions on one APK.
+- **PASS CONDITION:** Owned callback restores every time and no longer retains completed sessions; broader memory acceptance separately requires actual release/plateau.
+- **FAILURE EVIDENCE TO CAPTURE:** Callback mismatch, mapping drift, PID/native errors, menu weak references/managed/resource counts.
+- **STATE/JOURNAL UPDATES REQUIRED:** Record independent root restoration and remaining retention; preserve headroom refusal and random-drop checker rejection.
+- **DEPENDENCIES:** I20-J411/J416 and its measured callback root.
+
+J417 corrects only the attributed owned Addressables settings callback: exact mapping is retained, the closure owns two strings, and teardown restores the prior delegate only while the current value is still owned. Three whole-game combat/abandon/menu sessions pass, with7zero-error current-process captures and unchanged results. Menu resources return to9GameObjects/43textures/one bundle, but completed probes/reports remain alive1→2→3 and managed usage grows42.40→71.45→99.93MB. This is a partial **adapted lifecycle correction**, not resolved memory growth/FPS/thermal acceptance. Same-app update58 retains40eligible items/eight equipment/sixteen actors, source identities and older rollbacks. The random-drop checker timeout stays archived; the corrected lifecycle assessment uses ordinary combat and the same APK, with invincibility/high damage/fast charge ON and no grants. No unchanged full route, loss loop, normal victory, Moon or PC differential replay.
