@@ -179,6 +179,7 @@ public sealed partial class MovementBatchProbe {
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
    (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||
     (cfg.stageCombatDecks!=null&&cfg.stageCombatDecks.Length>0&&new[]{"EntityStates.GolemMonster","EntityStates.LemurianMonster","EntityStates.Wisp1Monster"}.Any(ns=>(t.Namespace??"").StartsWith(ns,StringComparison.Ordinal)))||t.Namespace=="EntityStates.LunarTeleporter"||
+    (cfg.worldAdditionalLootItems!=null&&((cfg.worldAdditionalLootItems.Contains("TPHealingNova")&&t.Namespace=="EntityStates.TeleporterHealNovaController")||(cfg.worldAdditionalLootItems.Contains("Plant")&&t.DeclaringType==typeof(DeskPlantController))))||
     (cfg.moonMission&&(t==typeof(FlyState)||(t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarExploder",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
  }
  EntityStateConfiguration[] PrepareObjectiveConfigs(Result cfg){

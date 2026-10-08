@@ -9,19 +9,20 @@ using UnityEngine.Networking;
 
 // Required source content for native item procs; no proc/damage/ward algorithms here.
 public sealed partial class MovementBatchProbe {
- [Serializable] public class ProcContentReport {public bool ready,cleaned;public int buffs,supportSources;public string scope="Original item/proc content and owned dependency bindings; registration is not individual proc acceptance.";}
+ [Serializable] public class ProcContentReport {public bool ready,cleaned;public int buffs,supportSources,warbannerWards,deskPlants,deskplantWards,healNovaGenerators,healNovaPulses;public string scope="Original item/proc content and owned dependency bindings; registration is not individual proc acceptance.";}
  [Serializable] public class HealingWardObservation {public string shrine;public uint netId;public int purchases;public float radius,interval,healFraction,healPoints;public bool playerTeam,parentMatched,teardownRequested;}
  readonly Dictionary<GameObject,HealingWardObservation> commerceHealingWards=new Dictionary<GameObject,HealingWardObservation>();
  BuffDef[] WorldProcBuffs(Result cfg){
   if(cfg.worldProcBuffAssets==null||cfg.worldProcBuffAssets.Length==0)return new BuffDef[0];
-  var names=new[]{"DeathMark","PulverizeBuildup","Pulverized"};Check(cfg.worldProcBuffAssets.Length==names.Length,"Original proc buff closure differs");
+  var names=new[]{"DeathMark","PulverizeBuildup","Pulverized"};if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains("WardOnLevel"))names=names.Concat(new[]{"Warbanner"}).ToArray();Check(cfg.worldProcBuffAssets.Length==names.Length,"Original proc buff closure differs");
   return cfg.worldProcBuffAssets.Select((path,i)=>{var def=artifactBundle.LoadAsset<BuffDef>(path);Check(def&&def.name=="bd"+names[i],"Original proc buff missing: "+names[i]);BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],def);return def;}).ToArray();
  }
  GameObject[] PrepareWorldProcSupport(Result cfg){
   if(cfg.worldProcSupportPaths==null||cfg.worldProcSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldProcSupportPaths.Length==4,"Original proc support closure differs");var effects=new List<GameObject>();
+  Check(cfg.worldProcSupportPaths.Length==4||cfg.worldProcSupportPaths.Length==9,"Original proc support closure differs");var effects=new List<GameObject>();
   foreach(var path in cfg.worldProcSupportPaths){
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Original proc provider absent: "+path);var source=objectiveSupportSources[index];Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original proc references absent: "+path);
+   if(IsWorldHealingItemSource(path)){PrepareWorldHealingItemSource(path,source);continue;}
    bool missile=path=="Prefabs/Projectiles/MissileProjectile",pulverized=path=="Prefabs/Effects/ImpactEffects/PulverizedEffect",deathmark=path=="Prefabs/TemporaryVisualEffects/DeathMarkEffect";
    Check(missile||pulverized||deathmark||path=="Prefabs/Effects/OmniEffect/OmniExplosionVFXQuick","Unknown original proc source");
    if(missile||pulverized||deathmark){
@@ -49,7 +50,7 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupHealingCommerceWards(){foreach(var pair in commerceHealingWards){if(pair.Key)NetworkServer.Destroy(pair.Key);pair.Value.teardownRequested=true;}commerceHealingWards.Clear();}
  void CleanupWorldProcContent(){
-  CleanupWorldItemBehaviors();CleanupWorldDots();
+  CleanupWorldHealingItems();CleanupWorldItemBehaviors();CleanupWorldDots();
   if(r.procContent!=null)r.procContent.cleaned=true;
  }
 }
