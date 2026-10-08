@@ -52,7 +52,7 @@ static class OptionalPresentationGuard {
   il=fixedUpdate.Body.GetILProcessor();il.InsertBefore(userThis,il.Create(OpCodes.Ldarg_0));il.InsertBefore(userThis,il.Create(OpCodes.Ldfld,user));il.InsertBefore(userThis,il.Create(OpCodes.Brfalse,pings.Previous));
   // Silent PlaySound returns ID0. Retain state exit/cleanup while omitting native
   // stop calls when the same explicit no-audio boundary is active.
-  var soundStops=new[]{("EntityStates.GolemMonster.ChargeLaser",1),("EntityStates.LunarWisp.ChargeLunarGuns",1),("EntityStates.LunarWisp.FireLunarGuns",2),("EntityStates.LunarWisp.SeekingBomb",1),("EntityStates.LunarGolem.ChargeTwinShot",1)};
+  var soundStops=new[]{("EntityStates.GolemMonster.ChargeLaser",1),("EntityStates.Wisp1Monster.ChargeEmbers",1),("EntityStates.LunarWisp.ChargeLunarGuns",1),("EntityStates.LunarWisp.FireLunarGuns",2),("EntityStates.LunarWisp.SeekingBomb",1),("EntityStates.LunarGolem.ChargeTwinShot",1)};
   var stopMethods=new List<MethodDefinition>();
   foreach(var (typeName,count) in soundStops){
    var exit=assembly.MainModule.Types.Single(t=>t.FullName==typeName).Methods.Single(m=>m.Name=="OnExit");
@@ -82,6 +82,6 @@ static class OptionalPresentationGuard {
   if(verified.Name.FullName!=identity||verified.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(verified)))throw new Exception("Optional presentation changed original assembly/type/field/method identity");
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar and one Golem native sound-stop calls and one escape countdown RTPC call bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp native sound-stop calls and one escape countdown RTPC call bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
  }
 }

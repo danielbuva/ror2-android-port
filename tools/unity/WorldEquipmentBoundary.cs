@@ -13,6 +13,7 @@ public sealed partial class MovementBatchProbe {
   public bool ready,cleaned;public string equipment,error,scope="Original equipment pickup/activation/cooldown; owned input/scheduling, source presentation approximation, no stock profile unlocks.";
   public int definitions,eligible,stock,maxStock,ticks,activations,ammoPacks;public float cooldown;
   public List<EquipmentActionObservation> actions=new List<EquipmentActionObservation>();
+  public ObjectiveRendererObservation[] temporaryEffectViews;
  }
  Action worldEquipmentFixed,worldEquipmentInventoryFixed;Action<EquipmentSlot,EquipmentIndex> worldEquipmentActivated;
  readonly List<ChestBehavior> worldEquipmentChests=new List<ChestBehavior>();
@@ -45,7 +46,13 @@ public sealed partial class MovementBatchProbe {
     foreach(var root in roots.Distinct()){foreach(var renderer in root.GetComponentsInChildren<Renderer>(true)){if(worldLootSourceMaterials.ContainsKey(renderer))continue;worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}PresentCommerceModel(root.transform);}
    }
    else if(source.name=="AmmoPack"){var pickup=source.GetComponentInChildren<AmmoPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<UnityEngine.Networking.NetworkIdentity>()&&pickup.pickupEffect,"Original ammo pickup linkage missing");effects.Add(pickup.pickupEffect);}
-   else {Check(source.GetComponent<TemporaryVisualEffect>(),"Unknown equipment support source: "+path);var field=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField(source.name=="ElephantDefense"?"elephantDefenseEffectPrefab":source.name=="TeamWarCryAura"?"teamWarCryEffectPrefab":"lifestealOnHitEffectPrefab",BindingFlags.Public|BindingFlags.Static);Check(field!=null&&field.GetValue(null)==null,"Unowned equipment visual context");worldLootEffectSlots.Add(field,null);field.SetValue(null,source);}
+   else {
+    Check(source.GetComponent<TemporaryVisualEffect>(),"Unknown equipment support source: "+path);var field=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField(source.name=="ElephantDefense"?"elephantDefenseEffectPrefab":source.name=="TeamWarCryAura"?"teamWarCryEffectPrefab":"lifestealOnHitEffectPrefab",BindingFlags.Public|BindingFlags.Static);Check(field!=null&&field.GetValue(null)==null,"Unowned equipment visual context");worldLootEffectSlots.Add(field,null);field.SetValue(null,source);
+    // These prefabs bypass EffectCatalog; bind the same source-driven programs
+    // before original CharacterBody creates their native temporary instances.
+    foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){if(worldLootSourceMaterials.ContainsKey(renderer))continue;worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}
+    PresentCommerceModel(source.transform);
+   }
   }
   foreach(var source in effects.Distinct()){Check(source.GetComponent<EffectComponent>(),"Equipment/proc effect identity absent");source.GetComponent<EffectComponent>().soundName=null;}
   return effects.Distinct().ToArray();
@@ -67,7 +74,7 @@ public sealed partial class MovementBatchProbe {
  void ObserveWorldEquipment(){
   var report=r.world.equipment;if(report==null)return;Check(string.IsNullOrEmpty(report.error),"Original equipment lifecycle failed: "+report.error);
   var def=EquipmentCatalog.GetEquipmentDef(worldEquipmentSlot.equipmentIndex);report.equipment=def?def.name:"";report.stock=worldEquipmentSlot.stock;report.maxStock=worldEquipmentSlot.maxStock;report.cooldown=worldEquipmentSlot.cooldownTimer;
-  foreach(var fieldName in new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}){var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(fieldName,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldPlayer);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);}
+  foreach(var fieldName in new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}){var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(fieldName,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldPlayer);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);report.temporaryEffectViews=effect.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();}}
   foreach(var pickup in Resources.FindObjectsOfTypeAll<AmmoPickup>().Where(x=>x.gameObject.scene.IsValid()))if(worldNativeLootObjects.Add(pickup.baseObject)){worldObjects.Add(pickup.baseObject);report.ammoPacks++;}
  }
  void WorldEquipmentStimulus(NovaInputBridge bridge,float elapsed){

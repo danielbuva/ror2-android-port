@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   public int lootTier1,lootTier2,lootTier3;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
   public int featherJumps,featherEffectLoads;public bool featherEffectCleaned,featherInputAttempted;public string featherInputOutcome;
   public int nativeLootProviderLoads,healthPacks,moneyPacks,stunImpactLoads,slowedEnemiesPeak;public bool nativeLootProvidersCleaned;
-  public int stickyBombLoads,stickyBombSpawns,wispDelaySpawns;
+  public int stickyBombLoads,stickyBombSpawns,wispDelaySpawns,barrierEffects;public float barrier;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;
@@ -109,16 +109,16 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  GameObject[] PrepareWorldLootSupport(Result cfg){
   if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7||cfg.worldLootSupportPaths.Length==9||cfg.worldLootSupportPaths.Length==10,"Core loot support contract length changed");
+  Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7||cfg.worldLootSupportPaths.Length==9||cfg.worldLootSupportPaths.Length==10||cfg.worldLootSupportPaths.Length==11,"Core loot support contract length changed");
   r.phase="integrated-core-loot-support";Save();var effects=new List<GameObject>();
   foreach(var path in cfg.worldLootSupportPaths){
    int effectStart=effects.Count;var presentationRoots=new List<GameObject>();
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Core loot provider location absent: "+path);var source=objectiveSupportSources[index];
    bool shield=path=="Prefabs/Effects/ShieldBreakEffect",feather=path=="Prefabs/Effects/FeatherEffect",slow=path=="Prefabs/TemporaryVisualEffects/SlowDownTime",healthPack=path=="Prefabs/NetworkedObjects/HealPack",moneyPack=path=="Prefabs/NetworkedObjects/BonusMoneyPack";
    bool stun=path=="Prefabs/Effects/ImpactEffects/ImpactStunGrenade",diamond=path=="Prefabs/Effects/ImpactEffects/DiamondDamageBonusEffect";
-   bool sticky=path=="Prefabs/Projectiles/StickyBomb",wisp=path=="Prefabs/NetworkedObjects/WilloWispDelay";
-   Check(shield||feather||slow||healthPack||moneyPack||stun||sticky||wisp||diamond||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
-   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":slow?"SlowDownTime":healthPack?"HealPack":moneyPack?"BonusMoneyPack":stun?"ImpactStunGrenade":diamond?"DiamondDamageBonusEffect":sticky?"StickyBomb":wisp?"WilloWispDelay":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
+   bool sticky=path=="Prefabs/Projectiles/StickyBomb",wisp=path=="Prefabs/NetworkedObjects/WilloWispDelay",barrier=path=="Prefabs/TemporaryVisualEffects/BarrierEffect";
+   Check(shield||feather||slow||healthPack||moneyPack||stun||sticky||wisp||diamond||barrier||path=="Prefabs/TemporaryVisualEffects/BucklerDefense","Unknown core loot support: "+path);
+   Check(source&&source.name==(shield?"ShieldBreakEffect":feather?"FeatherEffect":slow?"SlowDownTime":healthPack?"HealPack":moneyPack?"BonusMoneyPack":stun?"ImpactStunGrenade":diamond?"DiamondDamageBonusEffect":sticky?"StickyBomb":wisp?"WilloWispDelay":barrier?"BarrierEffect":"BucklerDefense"),"Core loot source prefab identity changed: "+path);
    if(slow||healthPack||moneyPack||stun||sticky)worldNativeLootLeaseBaselines.Add(index,(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]));
    if(feather){
     // Original ProcessJump loads this provider asset on each bonus jump.
@@ -128,7 +128,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
     worldFeatherJumped=()=>{if(worldPlayer.characterMotor.jumpCount>worldPlayer.baseJumpCount)r.world.featherJumps++;};worldPlayer.onJump+=worldFeatherJumped;
    }else if(!healthPack&&!moneyPack&&!stun&&!sticky){
     var type=wisp?typeof(GlobalEventManager).GetNestedType("CommonAssets",BindingFlags.Public):(shield||diamond?typeof(HealthComponent):typeof(CharacterBody)).GetNestedType("AssetReferences",BindingFlags.NonPublic);
-    var field=type.GetField(wisp?"explodeOnDeathPrefab":shield?"shieldBreakEffectPrefab":diamond?"diamondDamageBonusImpactEffectPrefab":slow?"slowDownTimeTempEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+    var field=type.GetField(wisp?"explodeOnDeathPrefab":shield?"shieldBreakEffectPrefab":diamond?"diamondDamageBonusImpactEffectPrefab":slow?"slowDownTimeTempEffectPrefab":barrier?"barrierTempEffectPrefab":"bucklerShieldTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);
     Check(field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Unowned core loot effect slot: "+path);
     worldLootEffectSlots.Add(field,(GameObject)field.GetValue(null));field.SetValue(null,source);
     Check((GameObject)field.GetValue(null)==source,"Core loot source binding failed: "+path);
@@ -159,8 +159,11 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(RoR2Content.Buffs.Slow60)r.world.slowedEnemiesPeak=Mathf.Max(r.world.slowedEnemiesPeak,directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.body.HasBuff(RoR2Content.Buffs.Slow60)));
   if(worldNativeLootLeaseBaselines.Count>0&&(force||Time.frameCount%30==0))foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&(x.name=="HealPack(Clone)"||x.name=="BonusMoneyPack(Clone)")))if(worldNativeLootObjects.Add(obj)){worldObjects.Add(obj);if(obj.name=="HealPack(Clone)")r.world.healthPacks++;else r.world.moneyPacks++;}
   if(worldFeatherEffectIndex>=0){r.world.featherEffectLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[worldFeatherEffectIndex])-worldFeatherReferenceBaseline;Check(r.world.featherEffectLoads==r.world.featherJumps,"Original Feather loads differ from observed bonus jumps");}
-  if(worldLootEffectSlots.Count==0||!body)return;var field=typeof(CharacterBody).GetField("bucklerShieldTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic);
-  var effect=(TemporaryVisualEffect)field.GetValue(body);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject))worldLootTemporaryEffects.Add(effect.gameObject);
+  if(worldLootEffectSlots.Count==0||!body)return;r.world.barrier=body.healthComponent.barrier;
+  foreach(var name in new[]{"bucklerShieldTempEffectInstance","barrierTempEffectInstance"}){
+   var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);
+   if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);if(name=="barrierTempEffectInstance"){Check(effect.healthComponent==body.healthComponent&&effect.parentTransform==body.coreTransform,"Original barrier effect body linkage differs");r.world.barrierEffects++;}}
+  }
  }
  void CleanupWorldLootSupport(){
   CleanupWorldProcContent();

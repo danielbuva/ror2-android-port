@@ -217,7 +217,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_blocks=[b for b in blocks if b.startswith('--- !u!114 ') and map_script in b] if map_zones else []
-    expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2}
+    expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2,'wispgraveyard':1,'shipgraveyard':3}
     if map_zones and len(map_blocks)!=expected_zones.get(scene_name):raise RuntimeError('Original stage MapZone contract changed; review source')
     map_owners={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in map_blocks}
     by_id={re.match(r'--- !u!\d+ &(-?\d+)',b)[1]:b for b in blocks}
@@ -237,7 +237,8 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     map_extra=[]
     map_network_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in blocks if b.startswith('--- !u!114 ') and map_network_script in b and re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] in map_owners]
     if map_network_ids and map_team_id is None:raise RuntimeError('Original MapZone TeamFilter identity missing')
-    if map_network_ids and (scene_name!='skymeadow' or len(map_network_ids)!=2):raise RuntimeError('Original MapZone network scope changed')
+    expected_network_zones={'skymeadow':2,'shipgraveyard':3}
+    if map_network_ids and len(map_network_ids)!=expected_network_zones.get(scene_name):raise RuntimeError('Original MapZone network scope changed')
     map_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in map_blocks];deferred_colliders=[]
     for block in blocks:
         match=re.match(r'--- !u!(\d+) &(-?\d+)',block);kind=int(match[1]);file_id=match[2]
@@ -260,7 +261,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         lod_refs=[ref for kind,_,block in kept if kind==205 for ref in re.findall(r'renderer: \{fileID: (-?\d+)\}',block)]
         if any(ref!='0' and ref not in kept_ids for ref in lod_refs):raise RuntimeError('Nonempty source LOD renderer reference would be lost')
         write(out/(scene_name+'-billboard-LOD-contract.json'),{'native_billboards':sum(kind==227 for kind,_,_ in kept),'source_explicit_empty_LOD_slots':lod_refs.count('0'),'all_nonempty_source_LOD_renderers_retained':True,'no_guessed_renderers':True})
-    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'moon2':0}
+    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'wispgraveyard':0,'shipgraveyard':16,'moon2':0}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:

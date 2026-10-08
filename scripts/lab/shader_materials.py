@@ -24,6 +24,27 @@ ENGINE={'STEREO_INSTANCING_ON','UNITY_SINGLE_PASS_STEREO','STEREO_MULTIVIEW_ON',
 def tags(pairs):
     return 'Tags {'+' '.join(json.dumps(k)+'='+json.dumps(v) for k,v in pairs)+'}\n'
 
+def align_exported_subshader_tags(path, tree, evidence):
+    """Restore measured metadata on an owned placeholder; never its shader math."""
+    import re,shutil
+    work=WORK.resolve();path=Path(path).resolve();evidence=Path(evidence).resolve()
+    if (work/'lab-project').resolve() not in path.parents or work not in evidence.parents:
+        raise RuntimeError('Shader metadata correction requires owned ignored copies')
+    form=tree['m_ParsedForm'];subshaders=form['m_SubShaders'];text=path.read_text()
+    names=re.findall(r'^Shader\s+"([^"]+)"',text,re.M)
+    pattern=r'(?m)^(\s*SubShader\s*\{\s*\n)\s*Tags\s*\{[^}]*\}'
+    if names!=[form['m_Name']] or len(subshaders)!=1 or len(re.findall(pattern,text))!=1:
+        raise RuntimeError('Exported shader/tag identity is ambiguous')
+    before=sha(path);backup=evidence/('prior-tags-'+digest(str(path.relative_to(work)))[:16]+'.shader')
+    if backup.exists():raise RuntimeError('Retain each shader metadata attempt separately')
+    shutil.copy2(path,backup)
+    original_tags=subshaders[0]['m_Tags']['tags']
+    updated=re.sub(pattern,lambda m:m[1]+tags(original_tags).rstrip(),text,count=1)
+    path.write_text(updated)
+    return {'shader':form['m_Name'],'path':str(path.relative_to(work)),
+            'before_sha256':before,'after_sha256':sha(path),'native_tags':original_tags,
+            'scope':'Original subshader tags only; placeholder body unchanged, no recovered-math or appearance claim.'}
+
 def generate():
     selection=read(WORK/'config/shader-material-analysis.json');out=WORK/'experiments/material-bindings'/now();out.mkdir(parents=True);sources=out/'sources';sources.mkdir()
     write(WORK/'material-bindings-current.json',{'path':str(out.relative_to(ROOT))})

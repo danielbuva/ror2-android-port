@@ -12,7 +12,7 @@ using UnityEngine.Networking;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit;
-  public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
+  public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneIdentityComponents,mapZoneEmptySceneIds,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,billboards,missingBillboardAssets,emptyLODRendererSlots,meshColliders,colliders,worldColliders,nonWorldColliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive;
   public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
@@ -115,9 +115,18 @@ public sealed partial class MovementBatchProbe {
   if(!stageMoonVolumes){
    foreach(var zone in stageMapZones)if(stageZoneActiveNames.Contains(zone.name))zone.gameObject.SetActive(true);
    if(stageZoneNetworkObjects>0){
-    var identities=Resources.FindObjectsOfTypeAll<NetworkIdentity>().Where(x=>x.gameObject.hideFlags!=HideFlags.NotEditable&&x.gameObject.hideFlags!=HideFlags.HideAndDontSave&&!x.sceneId.IsEmpty()).ToArray();
+    var identities=stageMapZones.Select(x=>x.GetComponent<NetworkIdentity>()).Where(x=>x).ToArray();
     Check(identities.Length==stageZoneNetworkObjects&&identities.All(x=>x.gameObject.scene==stageGeometryScene&&x.GetComponent<MapZone>()),"Unowned stage out-of-bounds scene identities");
-    Check(NetworkServer.SpawnObjects(),"Original out-of-bounds server activation failed");r.stage.mapZoneNetworkObjects=identities.Length;
+    r.stage.mapZoneIdentityComponents=identities.Length;r.stage.mapZoneEmptySceneIds=identities.Count(x=>x.sceneId.IsEmpty());
+    // SpawnObjects enables every scene identity. Preserve source-disabled volumes
+    // when their mission/controller lifecycle is unavailable in this composition.
+    int sourceActive=identities.Count(x=>stageZoneActiveNames.Contains(x.name));
+    Check(sourceActive==0||sourceActive==identities.Length,"Mixed source map-zone activation requires its original lifecycle");
+    if(sourceActive>0){
+     var spawnable=Resources.FindObjectsOfTypeAll<NetworkIdentity>().Where(x=>x.gameObject.hideFlags!=HideFlags.NotEditable&&x.gameObject.hideFlags!=HideFlags.HideAndDontSave&&!x.sceneId.IsEmpty()).ToArray();
+     Check(spawnable.Length==identities.Length&&spawnable.All(x=>identities.Contains(x)),"Unowned spawnable stage identity or missing native scene ID");
+     Check(NetworkServer.SpawnObjects(),"Original out-of-bounds server activation failed");r.stage.mapZoneNetworkObjects=identities.Length;
+    }else {Check(identities.All(x=>!x.gameObject.activeInHierarchy),"Source-disabled map volume unexpectedly active");r.stage.mapZoneNetworkObjects=0;}
    }
   }
   foreach(var zone in stageMapZones){var collider=zone.GetComponent<Collider>();Check(collider&&collider.isTrigger&&zone.gameObject.layer==15,"Original stage MapZone collider/layer differs");Check(collider.enabled,"Original MapZone collider must remain source-enabled");}

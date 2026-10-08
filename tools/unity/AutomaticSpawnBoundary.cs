@@ -95,7 +95,11 @@ public sealed partial class MovementBatchProbe {
    Check(!scripted||(moved&&stopped),"Automatic motion sequence incomplete");Save();
    }
    if(r.id=="body-state-spawn-state-auto-barrier"){ObserveBarrierEffect(body);Check(r.barrierMaterialCopies>0&&r.barrierEffectEntries==1&&r.barrierEffectExited&&r.barrierEffectDestroyed&&!BodyBarrier(body),"Original automatic barrier effect entry/exit/destruction");}
-   if(IsAutomaticHealth())Check(body.healthComponent.enabled&&(cfg.enemySpine?body.healthComponent.health>0&&body.healthComponent.health<=body.maxHealth:body.healthComponent.health==110)&&body.healthComponent.barrier==0,"Original automatic health sustained full health/barrier expiry");
+   if(IsAutomaticHealth()){
+    var health=body.healthComponent;
+    if(cfg.integratedWorld)Check(health.enabled&&health.health>0&&health.health<=health.fullHealth&&health.barrier>=0&&health.barrier<=health.fullBarrier,"Original integrated health/barrier outside native limits");
+    else Check(health.enabled&&(cfg.enemySpine?health.health>0&&health.health<=body.maxHealth:health.health==110)&&health.barrier==0,"Original automatic health sustained full health/barrier expiry");
+   }
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
     r.stationarySeconds=(float)typeof(CharacterBody).GetField("notMovingStopwatch",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);Save();
