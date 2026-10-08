@@ -10,7 +10,8 @@ using UnityEngine.Networking;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class FlightEquipmentObservation {
   public string source;public uint netId;public int samples,flightProviderPeak,antiGravityPeak;
-  public float seconds,maxSpeed,maxRise;public bool passengerObserved,naturallyDestroyed;
+  public float seconds,maxSpeed,maxRise,maxVehicleSpeed;public bool passengerObserved,naturallyDestroyed;
+  public int passengerRenderers,hiddenPassengerSamples,passengerInvisibilityPeak;
   public Vector3 origin;
  }
  [Serializable] public class DeveloperEquipmentSelection {public string equipment,previous;public float seconds;public bool activated;}
@@ -42,12 +43,23 @@ public sealed partial class MovementBatchProbe {
    }
    entry.samples++;entry.seconds=Run.instance.GetRunStopwatch();entry.maxRise=Mathf.Max(entry.maxRise,worldPlayer.transform.position.y-entry.origin.y);entry.maxSpeed=Mathf.Max(entry.maxSpeed,worldPlayer.characterMotor.velocity.magnitude);entry.passengerObserved|=seat&&seat.currentPassengerBody==worldPlayer;
    entry.flightProviderPeak=Mathf.Max(entry.flightProviderPeak,worldPlayer.characterMotor.flightParameters.channeledFlightGranterCount);entry.antiGravityPeak=Mathf.Max(entry.antiGravityPeak,worldPlayer.characterMotor.gravityParameters.channeledAntiGravityGranterCount);
+   var rigidbody=obj.GetComponent<Rigidbody>();if(rigidbody)entry.maxVehicleSpeed=Mathf.Max(entry.maxVehicleSpeed,rigidbody.velocity.magnitude);
+   if(seat&&worldDisplayModel){entry.passengerInvisibilityPeak=Mathf.Max(entry.passengerInvisibilityPeak,worldDisplayModel.invisibilityCount);entry.passengerRenderers=worldDisplayModel.GetComponentsInChildren<Renderer>(true).Count(x=>x.enabled);}
   }
   foreach(var pair in worldFlightObjects)if(!pair.Key)pair.Value.naturallyDestroyed=true;
   // Native OnDestroy removes the body callback, but retains its death listener.
   // Remove only the exact observed owned instance from its measured master.
   foreach(var pair in worldFlightDeathOwners.Where(x=>!x.Key).ToArray())RemoveFlightDeathOwner(pair.Key,pair.Value);
-  if(worldDisplayModel)foreach(var info in worldDisplayModel.baseRendererInfos)if(info.renderer){if(!worldFlightVisibility.ContainsKey(info.renderer))worldFlightVisibility.Add(info.renderer,info.renderer.forceRenderingOff);info.renderer.forceRenderingOff=worldFlightVisibility[info.renderer]||worldDisplayModel.invisibilityCount>0;}
+  if(worldDisplayModel){
+   // The disabled native model's renderer-info array is not the Android view's
+   // full renderer set. Honor the original seated policy on the owned hierarchy.
+   bool hidden=worldDisplayModel.invisibilityCount>0||worldPlayer&&worldPlayer.currentVehicle&&worldPlayer.currentVehicle.hidePassenger;
+   var renderers=worldDisplayModel.GetComponentsInChildren<Renderer>(true);
+   foreach(var renderer in renderers){if(!worldFlightVisibility.ContainsKey(renderer))worldFlightVisibility.Add(renderer,renderer.forceRenderingOff);renderer.forceRenderingOff=worldFlightVisibility[renderer]||hidden;}
+   if(worldPlayer&&worldPlayer.currentVehicle&&hidden&&renderers.Length>0&&renderers.All(x=>x.forceRenderingOff)){
+    FlightEquipmentObservation entry;if(worldFlightObjects.TryGetValue(worldPlayer.currentVehicle.gameObject,out entry))entry.hiddenPassengerSamples++;
+   }
+  }
  }
  void RemoveFlightDeathOwner(JetpackController controller,CharacterMaster master){if(master){master.onBodyDeath.RemoveListener(controller.ReleaseBody);r.world.equipment.ownedFlightDeathCallbacksRemoved++;}worldFlightDeathOwners.Remove(controller);}
  void CleanupFlightEquipment(){
