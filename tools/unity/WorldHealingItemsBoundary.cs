@@ -11,8 +11,15 @@ public sealed partial class MovementBatchProbe {
  static readonly string[] worldHealingItemNames={"WarbannerWard","InterstellarDeskPlant","DeskplantWard","TeleporterHealNovaGenerator","TeleporterHealNovaPulse"};
  readonly HashSet<GameObject> worldHealingItemInstances=new HashSet<GameObject>();
  Action<CharacterBody> worldWarbannerLevel;
- bool IsWorldHealingItemSource(string path){return worldHealingItemNames.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
+ bool IsWorldHealingItemSource(string path){return path=="Prefabs/TemporaryVisualEffects/WarbannerBuffEffect"||worldHealingItemNames.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
  void PrepareWorldHealingItemSource(string path,GameObject source){
+  if(path=="Prefabs/TemporaryVisualEffects/WarbannerBuffEffect"){
+   var effect=source.GetComponent<TemporaryVisualEffect>();Check(effect&&effect.visualTransform,"Original Warbanner temporary effect linkage absent");
+   var field=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField("warbannerEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+   Check(field!=null&&field.GetValue(null)==null,"Unowned Warbanner temporary effect source");worldLootEffectSlots.Add(field,null);field.SetValue(null,source);
+   foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){if(worldLootSourceMaterials.ContainsKey(renderer))continue;worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}
+   PresentCommerceModel(source.transform);return;
+  }
   Check(path=="Prefabs/NetworkedObjects/"+source.name&&source.GetComponent<NetworkIdentity>()&&source.GetComponent<TeamFilter>(),"Original healing-item source/network/team identity differs");
   if(source.name=="WarbannerWard"){
    Check(source.GetComponent<BuffWard>()&&source.GetComponent<BuffWard>().buffDef==RoR2Content.Buffs.Warbanner,"Original Warbanner buff contract differs");
@@ -27,6 +34,11 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveWorldHealingItems(bool force=false){
   if(r.procContent==null||(!force&&Time.frameCount%30!=0))return;
+  foreach(var effect in Resources.FindObjectsOfTypeAll<TemporaryVisualEffect>().Where(x=>x&&x.gameObject.scene.IsValid()&&x.name=="WarbannerBuffEffect(Clone)")){
+   if(worldLootTemporaryEffects.Contains(effect.gameObject))continue;
+   Check(effect.healthComponent&&effect.parentTransform==effect.healthComponent.GetComponent<CharacterBody>().coreTransform,"Original Warbanner buff effect body linkage differs");
+   worldLootTemporaryEffects.Add(effect.gameObject);r.procContent.warbannerBuffEffects++;
+  }
   foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x&&x.scene.IsValid()&&worldHealingItemNames.Any(name=>x.name==name+"(Clone)"))){
    if(!worldHealingItemInstances.Add(obj))continue;var identity=obj.GetComponent<NetworkIdentity>();Check(identity&&identity.netId.Value!=0&&NetworkServer.FindLocalObject(identity.netId)==obj,"Original healing-item local network ownership differs");worldObjects.Add(obj);
    switch(obj.name){case "WarbannerWard(Clone)":r.procContent.warbannerWards++;break;case "InterstellarDeskPlant(Clone)":r.procContent.deskPlants++;break;case "DeskplantWard(Clone)":r.procContent.deskplantWards++;break;case "TeleporterHealNovaGenerator(Clone)":r.procContent.healNovaGenerators++;break;case "TeleporterHealNovaPulse(Clone)":r.procContent.healNovaPulses++;break;}

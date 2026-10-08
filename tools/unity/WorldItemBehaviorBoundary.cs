@@ -47,6 +47,7 @@ public sealed partial class MovementBatchProbe {
   var types=new List<Type>{typeof(MushroomBodyBehavior),typeof(PhasingBodyBehavior)};var defs=new List<ItemDef>{RoR2Content.Items.Mushroom,RoR2Content.Items.Phasing};
   var names=new[]{"FallBoots","Icicle","LaserTurbine"};var nativeTypes=new[]{typeof(HeadstomperBodyBehavior),typeof(IcicleBodyBehavior),typeof(LaserTurbineBodyBehavior)};
   for(int i=0;i<names.Length;i++)if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains(names[i])){var def=ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(names[i]));Check(def&&!def.unlockableDef&&!def.requiredExpansion,"Original legendary item unavailable: "+names[i]);types.Add(nativeTypes[i]);defs.Add(def);}
+  if(cfg.stagePopulationFamilies!=null&&cfg.stagePopulationFamilies.Contains("Vagrant")){var def=RoR2Content.Items.NovaOnLowHealth;Check(def&&!def.unlockableDef&&!def.requiredExpansion&&def.tier==ItemTier.Boss,"Original Vagrant boss item unavailable");types.Add(typeof(NovaOnLowHealthBodyBehavior));defs.Add(def);}
   worldItemBehaviorTypes=types.ToArray();worldItemBehaviorDefinitions=defs.ToArray();r.itemBehaviors=new ItemBehaviorReport{ready=true,definitions=defs.Select(x=>x.name).ToArray()};ownsWorldItemBehaviors=true;
   CharacterBody.onBodyInventoryChangedGlobal+=RefreshWorldItemBehaviors;CharacterBody.onBodyDestroyGlobal+=RemoveWorldItemBehaviors;
   foreach(var body in CharacterBody.readOnlyInstancesList.ToArray())if(body&&body.gameObject.activeInHierarchy)RefreshWorldItemBehaviors(body);

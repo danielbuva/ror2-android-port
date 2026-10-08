@@ -14,7 +14,7 @@ public sealed partial class MovementBatchProbe {
   public string phase;public float seconds;public long allocated,reserved,managed;
   public long managedTotal;public int collections;public string gcMode;public bool incremental;public float collectionSeconds;
   public int trackedCompletedSessions,liveCompletedProbes,liveCompletedReports;public int materials,textures,shaders,gameObjects,bundles;public string[] bundleNames;
-  public string[] ownedCallbackRoots,callbackRootReadFailures;
+  public string[] ownedCallbackRoots,callbackRootReadFailures,callbackOwnerScope;
  }
  static readonly System.Collections.Generic.List<WeakReference[]> completedSessionReferences=new System.Collections.Generic.List<WeakReference[]>();
  void TrackCompletedSessionReferences(){completedSessionReferences.RemoveAll(x=>!x[0].IsAlive&&!x[1].IsAlive);if(completedSessionReferences.Count<128)completedSessionReferences.Add(new[]{new WeakReference(this),new WeakReference(r)});}
@@ -27,14 +27,21 @@ public sealed partial class MovementBatchProbe {
   var roots=new System.Collections.Generic.List<string>();var failures=new System.Collections.Generic.List<string>();
   // Read only already-used gameplay callback owners; never initialize unrelated
   // subsystem types, invoke callbacks or remove original handlers diagnostically.
-  if(completedSessionReferences.Count>0)foreach(var type in new[]{typeof(RoR2Application),typeof(GlobalEventManager),typeof(Run),typeof(CharacterBody),typeof(CharacterMaster),typeof(SceneCatalog),typeof(Stage)})foreach(var field in type.GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static).Where(x=>typeof(Delegate).IsAssignableFrom(x.FieldType))){
+  var callbackOwners=new[]{typeof(RoR2Application),typeof(GlobalEventManager),typeof(Run),typeof(CharacterBody),typeof(CharacterMaster),typeof(SceneCatalog),typeof(Stage),typeof(MasterSummon),typeof(BossGroup),typeof(SceneExitController),typeof(TeleporterInteraction),typeof(Inventory),typeof(DotController)};
+  if(completedSessionReferences.Count>0)foreach(var type in callbackOwners)foreach(var field in type.GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static).Where(x=>typeof(Delegate).IsAssignableFrom(x.FieldType))){
    Delegate callback;try{callback=field.GetValue(null) as Delegate;}catch(Exception e){failures.Add(type.FullName+"."+field.Name+":"+e.GetType().Name);continue;}if(callback==null)continue;
    foreach(var entry in callback.GetInvocationList())for(int i=0;i<completedSessionReferences.Count;i++){
     var probe=completedSessionReferences[i][0].Target;var report=completedSessionReferences[i][1].Target;if(probe==null&&report==null)continue;
     var path=FindCompletedCallbackReference(entry.Target,probe,report,0);if(path!=null)roots.Add(type.FullName+"."+field.Name+" -> "+entry.Method.Name+" -> completed["+i+"]"+path);
    }
   }
-  r.sessionResources.Add(new SessionResourceSample{phase=phase,seconds=Time.realtimeSinceStartup,ownedCallbackRoots=roots.ToArray(),callbackRootReadFailures=failures.ToArray(),trackedCompletedSessions=completedSessionReferences.Count,liveCompletedProbes=completedSessionReferences.Count(x=>x[0].IsAlive),liveCompletedReports=completedSessionReferences.Count(x=>x[1].IsAlive),
+  // Addressables is already live in this composition. Inspect only delegate fields;
+  // do not walk asset graphs, initialize other services or change cached operations.
+  if(completedSessionReferences.Count>0){var manager=UnityEngine.AddressableAssets.Addressables.ResourceManager;foreach(var field in manager.GetType().GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance).Where(x=>typeof(Delegate).IsAssignableFrom(x.FieldType))){
+   Delegate callback;try{callback=field.GetValue(manager) as Delegate;}catch(Exception e){failures.Add(manager.GetType().FullName+"."+field.Name+":"+e.GetType().Name);continue;}if(callback==null)continue;
+   foreach(var entry in callback.GetInvocationList())for(int i=0;i<completedSessionReferences.Count;i++){var path=FindCompletedCallbackReference(entry.Target,completedSessionReferences[i][0].Target,completedSessionReferences[i][1].Target,0);if(path!=null)roots.Add(manager.GetType().FullName+"."+field.Name+" -> "+entry.Method.Name+" -> completed["+i+"]"+path);}
+  }}
+  r.sessionResources.Add(new SessionResourceSample{phase=phase,seconds=Time.realtimeSinceStartup,ownedCallbackRoots=roots.ToArray(),callbackRootReadFailures=failures.ToArray(),callbackOwnerScope=callbackOwners.Select(x=>x.FullName).Concat(new[]{"UnityEngine.ResourceManagement.ResourceManager (instance delegates)"}).ToArray(),trackedCompletedSessions=completedSessionReferences.Count,liveCompletedProbes=completedSessionReferences.Count(x=>x[0].IsAlive),liveCompletedReports=completedSessionReferences.Count(x=>x[1].IsAlive),
    allocated=Profiler.GetTotalAllocatedMemoryLong(),reserved=Profiler.GetTotalReservedMemoryLong(),managed=Profiler.GetMonoUsedSizeLong(),managedTotal=GC.GetTotalMemory(false),collections=GC.CollectionCount(0),gcMode=UnityEngine.Scripting.GarbageCollector.GCMode.ToString(),incremental=UnityEngine.Scripting.GarbageCollector.isIncremental,
    materials=Resources.FindObjectsOfTypeAll<Material>().Length,textures=Resources.FindObjectsOfTypeAll<Texture>().Length,
    shaders=Resources.FindObjectsOfTypeAll<Shader>().Length,gameObjects=Resources.FindObjectsOfTypeAll<GameObject>().Length,

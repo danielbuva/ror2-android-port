@@ -9,9 +9,10 @@ public sealed partial class MovementBatchProbe {
  bool offlineStartVisible,offlineStartSelected,returnToOfflineMenu;
  public bool skipOfflineMenu;
  NovaInputBridge.Mapping offlineMenuMapping;
+ static bool AllowsOfflineSessionMenu(Result session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
  IEnumerator AwaitOfflineRunStart(Result cfg){
   if(cfg.integratedWorld&&cfg.integratedResults)PrepareOfflineSettings();
-  if((!r.freePlay&&!(cfg.recoveredHudEnabled&&r.id.EndsWith("-bringup")))||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu)yield break;
+  if(!AllowsOfflineSessionMenu(r)||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu)yield break;
   offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
   offlineMenuMapping.Validate(r.attempt);PrepareRecoveredMenu();offlineStartVisible=true;r.phase="offline-start-menu";Save();
   while(!offlineStartSelected)yield return null;
@@ -37,7 +38,7 @@ public sealed partial class MovementBatchProbe {
   returnToOfflineMenu=true;restartRequested=true;r.phase="returning-to-offline-menu";Save();
  }
  bool CompletedResultsReturn(){return returnToOfflineMenu&&r.results!=null&&r.results.persisted&&r.results.clientEnding;}
- bool CanAbandonOfflineRun(){return r!=null&&r.freePlay&&r.integratedWorld&&r.world!=null&&r.world.ready&&worldPlayer&&worldPlayer.healthComponent.alive&&r.results!=null&&r.results.ready&&!r.results.serverEnding&&!r.results.reportGenerated&&!r.results.persisted&&!restartRequested;}
+ bool CanAbandonOfflineRun(){return AllowsOfflineSessionMenu(r)&&r.integratedWorld&&r.world!=null&&r.world.ready&&worldPlayer&&worldPlayer.healthComponent.alive&&r.results!=null&&r.results.ready&&!r.results.serverEnding&&!r.results.reportGenerated&&!r.results.persisted&&!restartRequested;}
  void RequestAbandonOfflineRun(){
   if(!CanAbandonOfflineRun())return;
   // Leaving a local session is not an original game ending or a saved result.

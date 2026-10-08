@@ -85,11 +85,12 @@ public sealed partial class MovementBatchProbe {
  }
  GameObject[] moonRoots;EntityStateMachine moonEncounter;MoonBatteryMissionController moonBatteries;EscapeSequenceController moonEscape;ClassicStageInfo moonStageInfo;DirectorCardCategorySelection priorMoonInteractables;
  void BindMoonActorVisuals(GameObject body,Transform model,ObjectiveActorSpec spec){
+  if(spec.activations!=null)foreach(var activation in spec.activations){var target=body.transform.Find(activation.path);Check(target,"Original actor skin activation missing: "+spec.name+"/"+activation.path);target.gameObject.SetActive(activation.active);}
   foreach(var binding in spec.bindings){
    var target=body.transform.Find(binding.path);Check(target,"Original Moon visual transform missing: "+spec.name+"/"+binding.path);
    var renderer=target.GetComponent<Renderer>();var original=artifactBundle.LoadAsset<Material>(binding.material);Check(renderer&&original,"Original Moon renderer/material missing: "+binding.path);
-   var material=Instantiate(original);material.shader=Resources.Load<Shader>("CommandoMaterialPreview");material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",0);objectiveResources.Add(material);renderer.sharedMaterial=material;renderer.gameObject.layer=30;
-   if(!string.IsNullOrEmpty(binding.mesh)){var mesh=artifactBundle.LoadAsset<Mesh>(binding.mesh);Check(mesh,"Original Moon mesh missing");var skin=renderer as SkinnedMeshRenderer;if(skin){Check(mesh.bindposes.Length==skin.bones.Length,"Original Moon bind pose mismatch");skin.sharedMesh=mesh;skin.updateWhenOffscreen=true;}else{var filter=renderer.GetComponent<MeshFilter>();Check(filter,"Moon static mesh filter absent");filter.sharedMesh=mesh;}}
+   var material=Instantiate(original);material.shader=Resources.Load<Shader>("CommandoMaterialPreview");material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",0);if(spec.recoveredMaterials)AndroidMaterialPresentation.Apply(original,material);objectiveResources.Add(material);renderer.sharedMaterial=material;renderer.gameObject.layer=30;
+   if(!string.IsNullOrEmpty(binding.mesh)){var mesh=artifactBundle.LoadAsset<Mesh>(binding.mesh);Check(mesh,"Original actor mesh missing");var skin=renderer as SkinnedMeshRenderer;var particles=renderer as ParticleSystemRenderer;if(skin){Check(mesh.bindposes.Length==skin.bones.Length,"Original actor bind pose mismatch");skin.sharedMesh=mesh;skin.updateWhenOffscreen=true;}else if(particles)particles.mesh=mesh;else{var filter=renderer.GetComponent<MeshFilter>();Check(filter,"Original actor static mesh filter absent: "+spec.name+"/"+binding.path);filter.sharedMesh=mesh;}}
   }
   // Original CharacterModel lifecycle remains presentation-disabled, as in the accepted actors.
   var cm=model.GetComponent<CharacterModel>();Check(cm,"Moon CharacterModel missing");cm.visibility=VisibilityLevel.Invisible;

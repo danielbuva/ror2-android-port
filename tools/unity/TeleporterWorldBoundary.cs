@@ -19,7 +19,8 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // Original interaction/FSM/director/boss squad/holdout/rewards/exit perform gameplay.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class ObjectiveVisualBinding {public string path,mesh,material;}
- [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public ObjectiveVisualBinding[] bindings;}
+ [Serializable] public class ObjectiveVisualActivation {public string path;public bool active;}
+ [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public bool recoveredMaterials;public ObjectiveVisualBinding[] bindings;public ObjectiveVisualActivation[] activations;}
  [Serializable] public class SurfacePropertyObservation {public string name,type,texture;public Vector4 value;public int textureId,width,height;public Vector2 scale,offset;}
  [Serializable] public class SurfaceMaterialObservation {public int instanceId,shaderId,passCount;public string[] keywords;public bool instancing,doubleSidedGi;public SurfacePropertyObservation[] properties;}
  [Serializable] public class ObjectiveRendererObservation {public string path,kind;public int unityFrame;public string[] materials,shaders;public int[] queues;public bool enabled,active,visible,worldOwned;public int particles;public float projectedBoundsFraction;public Vector3 center,size;public string particleRenderMode,particleAlignment;public string[] vertexStreams;public SurfaceMaterialObservation[] materialState;}
@@ -29,7 +30,7 @@ public sealed partial class MovementBatchProbe {
   public string[] rewardTables;
   public int silentSourceComponents,frames,bossSpawns,bossDeaths,bossMembers,normalSpawns,ruleCount,unusedParticleMaterialSlots,previewMaterialSlots;
   public float charge,radius,bossHealth,bossMaxHealth,sourceDuration,sourceRadius,credits,spent;
-  public string state,fsmState,nextScene,exitState,scope;public Vector3 position;
+  public string state,fsmState,nextScene,exitState,scope,bossSelectionScope;public string[] eligibleBossCards;public Vector3 position;
   public List<string> transitions=new List<string>();
   public ObjectiveRendererObservation[] rendererViews,ownedSurfaceViews,presentedSurfaceViews;public int lateNativeMaterials,ownedSurfaceCount;
  }
@@ -92,7 +93,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var master in pendingObjectiveActors.ToArray()){
    pendingObjectiveActors.Remove(master);if(!master)continue;
    RecordDirectorActor(master.gameObject,enemyPlayer,stageCombatActors.Contains(master)?"stage-director":objectiveDirectorActors.Contains(master)?"teleporter-director":master.bodyPrefab.name.StartsWith("Lunar",StringComparison.Ordinal)||master.bodyPrefab.name.StartsWith("Brother",StringComparison.Ordinal)?"moon-encounter":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
-   if(master.bodyPrefab.name=="BeetleQueen2Body"&&!stageCombatActors.Contains(master))r.objective.bossSpawns++;else r.objective.normalSpawns++;
+   if(objectiveDirectorActors.Contains(master))r.objective.bossSpawns++;else r.objective.normalSpawns++;
   }
  }
  void PrepareObjectivePresentationSources(){
@@ -117,7 +118,7 @@ public sealed partial class MovementBatchProbe {
    objectiveSupportLeases[i]=LegacyResourcesAPI.LoadAsync<GameObject>(cfg.objectiveSupportPaths[i]);yield return objectiveSupportLeases[i];objectiveSupportSources[i]=objectiveSupportLeases[i].Result;
    Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
   }
-  PrepareMoonSupport(cfg);
+  PrepareMoonSupport(cfg);PrepareStagePopulationSupport(cfg);
   var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).Concat(PrepareWorldDotSupport(cfg)).Concat(PrepareWorldItemBehaviorSupport(cfg)).ToArray();
   var commerceEffect=PrepareCommerceSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();
@@ -178,7 +179,7 @@ public sealed partial class MovementBatchProbe {
   var assembly=typeof(TeleporterInteraction).Assembly;
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
    (t.DeclaringType==typeof(TeleporterInteraction)||t.Namespace=="EntityStates.BeetleQueenMonster"||t.Namespace=="EntityStates.BeetleGuardMonster"||
-    (cfg.stageCombatDecks!=null&&cfg.stageCombatDecks.Length>0&&new[]{"EntityStates.GolemMonster","EntityStates.LemurianMonster","EntityStates.Wisp1Monster"}.Any(ns=>(t.Namespace??"").StartsWith(ns,StringComparison.Ordinal)))||t.Namespace=="EntityStates.LunarTeleporter"||
+    (cfg.stageCombatDecks!=null&&cfg.stageCombatDecks.Length>0&&new[]{"EntityStates.GolemMonster","EntityStates.LemurianMonster","EntityStates.Wisp1Monster"}.Any(ns=>(t.Namespace??"").StartsWith(ns,StringComparison.Ordinal)))||StagePopulationState(t,cfg)||t.Namespace=="EntityStates.LunarTeleporter"||
     (cfg.worldAdditionalLootItems!=null&&((cfg.worldAdditionalLootItems.Contains("TPHealingNova")&&t.Namespace=="EntityStates.TeleporterHealNovaController")||(cfg.worldAdditionalLootItems.Contains("Plant")&&t.DeclaringType==typeof(DeskPlantController))))||
     (cfg.worldAdditionalLootItems!=null&&((cfg.worldAdditionalLootItems.Contains("FallBoots")&&t.Namespace=="EntityStates.Headstompers")||(cfg.worldAdditionalLootItems.Contains("LaserTurbine")&&t.Namespace=="EntityStates.LaserTurbine")))||
     (cfg.moonMission&&(t==typeof(FlyState)||(t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarExploder",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
@@ -299,7 +300,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var table in objectiveDropTables.Values)Call(table,"Regenerate",Run.instance);
   Check(rewardGroup.dropTable&&rewardGroup.dropTable.GetPickupCount()>0&&objectiveDropTables.Values.All(x=>x.GetPickupCount()>0),"Original objective reward tables have no available pickups");
   r.objective.rewardTables=objectiveDropTables.Values.Select(x=>x.name+"|"+x.GetPickupCount()).ToArray();
-  objectiveBossDeck=Instantiate(automaticDeck);var queen=objectiveCards.Single(x=>x.name=="cscBeetleQueen");var category=objectiveBossDeck.categories[0];var bossCard=category.cards[0];bossCard.spawnCard=queen;bossCard.selectionWeight=1;category.name="Champions";category.selectionWeight=2;category.cards=new[]{bossCard};objectiveBossDeck.categories=new[]{category};
+  PrepareStageBossDeck(cfg);
   worldTeleporter.bossDirector.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
   worldTeleporter.bossDirector.monsterCards=objectiveBossDeck;worldTeleporter.bonusDirector.monsterCards=automaticDeck;
   worldTeleporter.bonusDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer);else RecordDirectorActor(obj,worldPlayer);});

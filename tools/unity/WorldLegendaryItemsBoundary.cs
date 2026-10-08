@@ -13,17 +13,17 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class LegendaryItemObservation {public string source;public uint netId;public string[] states;public int samples,maxIcicles;public float maxCharge,maxVisualSpin;}
  readonly Dictionary<GameObject,LegendaryItemObservation> worldLegendaryItemInstances=new Dictionary<GameObject,LegendaryItemObservation>();
  readonly Dictionary<Behaviour,bool> worldLegendaryRemoteTransforms=new Dictionary<Behaviour,bool>();
- static readonly string[] worldLegendaryControllers={"HeadstompersController","IcicleAura","LaserTurbineController"};
- bool IsWorldLegendaryItemSource(string path){return path=="Prefabs/Effects/ImpactEffects/BootShockwave"||worldLegendaryControllers.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
+ static readonly string[] worldLegendaryControllers={"HeadstompersController","IcicleAura","LaserTurbineController","VagrantNovaItemBodyAttachment"};
+ bool IsWorldLegendaryItemSource(string path){return path=="Prefabs/Effects/ImpactEffects/BootShockwave"||path=="Prefabs/NetworkedObjects/BodyAttachments/VagrantNovaItemBodyAttachment"||worldLegendaryControllers.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
  bool PrepareWorldLegendaryItemSource(string path,GameObject source,int index){
   bool effect=path=="Prefabs/Effects/ImpactEffects/BootShockwave";Check(effect?(bool)source.GetComponent<EffectComponent>():(bool)source.GetComponent<NetworkIdentity>(),"Original legendary provider identity missing: "+path);
   if(source.name=="IcicleAura"){
    Check(source.GetComponent<IcicleAuraController>(),"Original Icicle controller missing");var field=typeof(IcicleBodyBehavior).GetField("icicleAuraPrefab",BindingFlags.NonPublic|BindingFlags.Static);Check(field!=null&&field.GetValue(null)==null,"Unowned Icicle provider");worldLootEffectSlots.Add(field,null);field.SetValue(null,source);
   }else if(!effect)Check(source.GetComponent<NetworkedBodyAttachment>()&&source.GetComponent<EntityStateMachine>(),"Original legendary attachment/state contract missing: "+source.name);
-  if(source.name=="LaserTurbineController"){
+  if(source.name=="LaserTurbineController"||source.name=="VagrantNovaItemBodyAttachment"&&source.GetComponent<RoR2.Networking.CharacterNetworkTransform>()){
    // Its original attachment already follows the owner in this local server/client.
    // Remote snapshot timing requires the unavailable platform network manager.
-   var remote=source.GetComponent<RoR2.Networking.CharacterNetworkTransform>();Check(remote&&remote.enabled,"Original LaserTurbine remote transform contract differs");worldLegendaryRemoteTransforms.Add(remote,remote.enabled);remote.enabled=false;
+   var remote=source.GetComponent<RoR2.Networking.CharacterNetworkTransform>();Check(remote&&remote.enabled,"Original attachment remote transform contract differs: "+source.name);worldLegendaryRemoteTransforms.Add(remote,remote.enabled);remote.enabled=false;
   }
   worldNativeLootLeaseBaselines.Add(index,(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[index]));
   foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){if(worldLootSourceMaterials.ContainsKey(renderer))continue;worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}PresentCommerceModel(source.transform);return effect;

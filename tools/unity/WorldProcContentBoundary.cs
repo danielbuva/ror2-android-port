@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Required source content for native item procs; no proc/damage/ward algorithms here.
 public sealed partial class MovementBatchProbe {
- [Serializable] public class ProcContentReport {public bool ready,cleaned;public int buffs,supportSources,warbannerWards,deskPlants,deskplantWards,healNovaGenerators,healNovaPulses;public string scope="Original item/proc content and owned dependency bindings; registration is not individual proc acceptance.";}
+ [Serializable] public class ProcContentReport {public bool ready,cleaned;public int buffs,supportSources,warbannerWards,warbannerBuffEffects,deskPlants,deskplantWards,healNovaGenerators,healNovaPulses;public string scope="Original item/proc content and owned dependency bindings; registration is not individual proc acceptance.";}
  [Serializable] public class HealingWardObservation {public string shrine;public uint netId;public int purchases;public float radius,interval,healFraction,healPoints;public bool playerTeam,parentMatched,teardownRequested;}
  readonly Dictionary<GameObject,HealingWardObservation> commerceHealingWards=new Dictionary<GameObject,HealingWardObservation>();
  BuffDef[] WorldProcBuffs(Result cfg){
@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
  }
  GameObject[] PrepareWorldProcSupport(Result cfg){
   if(cfg.worldProcSupportPaths==null||cfg.worldProcSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldProcSupportPaths.Length==4||cfg.worldProcSupportPaths.Length==9||cfg.worldProcSupportPaths.Length==13,"Original proc support closure differs");var effects=new List<GameObject>();
+  Check(WorldProcSupportContract(cfg),"Original proc support closure differs");var effects=new List<GameObject>();
   foreach(var path in cfg.worldProcSupportPaths){
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Original proc provider absent: "+path);var source=objectiveSupportSources[index];Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original proc references absent: "+path);
    if(IsWorldHealingItemSource(path)){PrepareWorldHealingItemSource(path,source);continue;}
@@ -39,6 +39,16 @@ public sealed partial class MovementBatchProbe {
    foreach(var root in roots.Distinct())PresentCommerceModel(root.transform);
   }
   r.procContent=new ProcContentReport{ready=true,buffs=cfg.worldProcBuffAssets.Length,supportSources=cfg.worldProcSupportPaths.Length};return effects.Distinct().ToArray();
+ }
+ static bool WorldProcSupportContract(Result cfg){
+  var paths=cfg.worldProcSupportPaths;if(paths==null)return false;
+  if(paths.Length==4||paths.Length==9||paths.Length==13)return true;
+  bool population=(paths.Length==14||paths.Length==15)&&paths.Distinct().Count()==paths.Length&&
+   paths.Contains("Prefabs/NetworkedObjects/BodyAttachments/VagrantNovaItemBodyAttachment")&&
+   cfg.objectiveItemNames!=null&&cfg.objectiveItemNames.Contains("NovaOnLowHealth")&&
+   cfg.stagePopulationFamilies!=null&&cfg.stagePopulationFamilies.Contains("Vagrant");
+  return population&&(paths.Length==14||paths.Contains("Prefabs/TemporaryVisualEffects/WarbannerBuffEffect")&&
+   cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains("WardOnLevel"));
  }
  void ObserveHealingCommerceWards(){
   foreach(var purchase in commercePurchases.Where(x=>x)){
