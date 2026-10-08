@@ -10,9 +10,10 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 public sealed partial class MovementBatchProbe {
  bool StagePopulationState(Type type,Result cfg){
   if(cfg.stagePopulationFamilies==null)return false;
-  var families=new[]{"Titan","Vagrant","Jellyfish","GreaterWisp","Bell","Bison","Imp","HermitCrab","MiniMushroom","ClayBruiser","LemurianBruiser","Parent"};
-  var namespaces=new[]{"TitanMonster","VagrantMonster","JellyfishMonster","GreaterWispMonster","Bell","Bison","ImpMonster","HermitCrab","MiniMushroom","ClayBruiserMonster","LemurianBruiserMonster","ParentMonster"};
+  var families=new[]{"Titan","Vagrant","Jellyfish","GreaterWisp","Bell","Bison","Imp","HermitCrab","MiniMushroom","ClayBruiser","LemurianBruiser","Parent","ImpBoss","ClayBoss","RoboBallBoss","RoboBallMini","Grandparent"};
+  var namespaces=new[]{"TitanMonster","VagrantMonster","JellyfishMonster","GreaterWispMonster","Bell","Bison","ImpMonster","HermitCrab","MiniMushroom","ClayBruiserMonster","LemurianBruiserMonster","ParentMonster","ImpBossMonster","ClayBoss","RoboBallBoss","RoboBallMini","GrandParentBoss"};
   if(cfg.stagePopulationFamilies.Contains("ClayBruiser")&&(type.Namespace??"").StartsWith("EntityStates.ClayBruiser.",StringComparison.Ordinal))return true;
+  if(cfg.stagePopulationFamilies.Contains("Grandparent")&&new[]{"EntityStates.GrandParent","EntityStates.GrandParentSun"}.Contains(type.Namespace))return true;
   if(cfg.stagePopulationFamilies.Contains("Vagrant")&&type.Namespace=="EntityStates.VagrantNovaItem")return true;
   for(int i=0;i<namespaces.Length;i++)if(cfg.stagePopulationFamilies.Contains(families[i])&&
    (type.Namespace=="EntityStates."+namespaces[i]||(type.Namespace??"").StartsWith("EntityStates."+namespaces[i]+".",StringComparison.Ordinal)))return true;

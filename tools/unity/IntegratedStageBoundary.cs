@@ -57,6 +57,7 @@ public sealed partial class MovementBatchProbe {
   transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
   if(rewardDirector)rewardDirector.enabled=false;
   PauseStageMapZones();var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
+  CleanupStageBossInstances();
   // Old actors must release their original navigation agents before replacing source graphs.
   foreach(var actor in directorActors){if(actor.body)NetworkServer.Destroy(actor.body.gameObject);if(actor.master)NetworkServer.Destroy(actor.master.gameObject);if(actor.model)Destroy(actor.model);}
   foreach(var projectile in FindObjectsOfType<RoR2.Projectile.ProjectileController>())NetworkServer.Destroy(projectile.gameObject);

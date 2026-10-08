@@ -34,7 +34,7 @@ public sealed partial class MovementBatchProbe {
   r.runClock.beganFixed=clockRun.fixedTime;r.runClock.beganStopwatch=clockRun.GetRunStopwatch();r.runClock.selectedDifficulty=(int)clockRun.selectedDifficulty;Check(r.runClock.beganFixed==0&&r.runClock.beganStopwatch==0&&clockRun.selectedDifficulty==(r.teleporterLoop?DifficultyIndex.Easy:DifficultyIndex.Normal),"Measured original Run initial clock/difficulty changed");
   ownedRunFixed=(Action)Delegate.CreateDelegate(typeof(Action),clockRun,typeof(Run).GetMethod("FixedUpdate",BindingFlags.NonPublic|BindingFlags.Instance));ownedRunFrame=(Action)Delegate.CreateDelegate(typeof(Action),clockRun,typeof(Run).GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));r.runClock.originalCallbacks=true;
  }
- void TickOriginalRunClock(){if(ownedRunFixed==null)return;try{ownedRunFixed();r.runClock.fixedTicks++;TickMoonTimers();}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
+ void TickOriginalRunClock(){if(ownedRunFixed==null)return;try{ownedRunFixed();r.runClock.fixedTicks++;TickMoonTimers();TickStageBossHeat();}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
  void Update(){TickDebugAcceleration();ObserveOfflineApplicationInput();ObserveWorldRestartInput();TickOriginalStage();if(ownedRunFrame==null)return;try{ownedRunFrame();r.runClock.frameTicks++;}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
  void ObserveOriginalRunClock(){
   if(r.runClock==null||!clockRun)return;Check(string.IsNullOrEmpty(r.runClock.error),"Original Run clock callback failed: "+r.runClock.error);var report=r.runClock;

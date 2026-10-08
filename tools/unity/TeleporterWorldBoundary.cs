@@ -118,7 +118,7 @@ public sealed partial class MovementBatchProbe {
    objectiveSupportLeases[i]=LegacyResourcesAPI.LoadAsync<GameObject>(cfg.objectiveSupportPaths[i]);yield return objectiveSupportLeases[i];objectiveSupportSources[i]=objectiveSupportLeases[i].Result;
    Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
   }
-  PrepareMoonSupport(cfg);PrepareStagePopulationSupport(cfg);
+  PrepareMoonSupport(cfg);PrepareStagePopulationSupport(cfg);var bossSupport=PrepareStageBossContent(cfg);while(bossSupport.MoveNext())yield return bossSupport.Current;
   var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).Concat(PrepareWorldDotSupport(cfg)).Concat(PrepareWorldItemBehaviorSupport(cfg)).ToArray();
   var commerceEffect=PrepareCommerceSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();
@@ -161,7 +161,7 @@ public sealed partial class MovementBatchProbe {
  GameObject objectiveStageHost;Stage objectiveStage;static bool objectiveHoldoutInitialized;
  readonly Dictionary<PickupDropTable,PickupDropTable> objectiveDropTables=new Dictionary<PickupDropTable,PickupDropTable>();
  PickupDropTable ObjectiveDropTable(PickupDropTable source){
-  if(!source)return null;PickupDropTable copy;if(objectiveDropTables.TryGetValue(source,out copy))return copy;
+  if(!source||UnavailableBossRewardTable(source))return null;PickupDropTable copy;if(objectiveDropTables.TryGetValue(source,out copy))return copy;
   copy=Instantiate(source);copy.name=source.name;objectiveDropTables.Add(source,copy);objectiveResources.Add(copy);return copy;
  }
  Collider objectiveBeacon;
@@ -234,7 +234,7 @@ public sealed partial class MovementBatchProbe {
    }
    foreach(var provider in bodyObject.GetComponentsInChildren<SurfaceDefProvider>(true)){var surface=Instantiate(provider.surfaceDef);surface.impactEffectPrefab=null;surface.impactSoundString=null;provider.surfaceDef=surface;objectiveResources.Add(surface);}
    var masterObject=Instantiate(artifactBundle.LoadAsset<GameObject>(spec.master),enemyTemplates.transform);masterObject.name=spec.name+"Master";masterObject.GetComponent<Inventory>().enabled=false;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;masterObject.SetActive(true);objectiveTemplates.Add(masterObject);
-   var card=Instantiate(artifactBundle.LoadAsset<CharacterSpawnCard>(spec.card));Check(card&&card.prefab&&card.directorCreditCost>=0,"Original objective spawn card absent");card.name=card.name.Replace("(Clone)","");card.prefab=masterObject;objectiveCards.Add(card);
+   var cardSource=spec.card==cfg.stageMiniCardAsset?objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<CharacterSpawnCard>(spec.card):artifactBundle.LoadAsset<CharacterSpawnCard>(spec.card);Check(cardSource&&cardSource.prefab&&cardSource.directorCreditCost>=0,"Original objective spawn card absent from its declared bundle owner: "+spec.name);var card=Instantiate(cardSource);card.name=card.name.Replace("(Clone)","");card.prefab=masterObject;objectiveCards.Add(card);
   }
   // The original Queen summons a Guard using its configured source card. Redirect only the
   // generated card's prefab boundary to the owned compatible template; retain source settings.
@@ -492,7 +492,7 @@ public sealed partial class MovementBatchProbe {
   }
   r.world.combatMotion=bridge.movement;if(bridge.movement==Vector2.zero)r.world.combatMotionBlocked++;
  }
- void CleanupTeleporterWorld(){CleanupMoonMission();CleanupStageTransport();
+ void CleanupTeleporterWorld(){CleanupStageBossContent();CleanupMoonMission();CleanupStageTransport();
   if(objectiveSummon!=null)MasterSummon.onServerMasterSummonGlobal-=objectiveSummon;pendingObjectiveActors.Clear();objectiveAmbientExpected.Clear();objectiveDirectorActors.Clear();
   if(objectiveSubscribed){BossGroup.onBossGroupDefeatedServer-=objectiveDefeated;SceneExitController.onBeginExit-=objectiveBeginExit;SceneExitController.onFinishExit-=objectiveFinishExit;objectiveSubscribed=false;}
   ObserveObjectiveSupport(true);CleanupObjectiveEffects();CleanupObjectiveSupport();if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);
