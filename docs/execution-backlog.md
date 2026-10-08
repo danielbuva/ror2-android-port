@@ -4014,3 +4014,24 @@ I12-J387 exit: J391 passes the combined 29-item/five-commerce route, four origin
 
 
 I13-J392 exit: J394 passes the combined eight-equipment/29-item/five-commerce candidate. Four original exits into Sky Meadow, nine native Saw activations, Android background recovery and cleanup coexist without captured PID errors. CommandMissile/Blackhole/TeamWarCry actions remain unexercised; registration is not individual action acceptance. Four genuine original losses, three restarts, menu return and cold result reload pass on the same APK with all assists OFF. Exact original results are restored. Completed asset counts plateau; process/managed memory still grow and require further attribution. The missing-import/stale compiled helper failures, rejected headroom checks and all previous rollbacks remain preserved. No normal victory, Moon, stock profile or PC parity gate advances.
+
+
+## I14-J395 — Original DOT/proc breadth and completed-session managed recovery
+
+- **ID:** I14-J395
+- **TITLE:** Compose source bleed/burn/dagger loot with completed-session managed reclamation.
+- **STATUS:** PASS — scoped J396 composition/session/source recovery; individual native DOT ticks/dagger behavior and managed growth remain open.
+- **CONTEXT:** Accepted J394 equipment/stage/session composition; all manual/Moon/PC paths remain deferred.
+- **OBSERVATION:** Native loaded assets plateau after teardown while managed/process memory grows. Original additional loot needs the native DOT catalog, source buffs, network prefab, pooled effects and original event/projectile bindings.
+- **HYPOTHESIS:** Source-backed dependencies permit native bleed/burn/dagger behavior without rewriting gameplay. A managed collection after full teardown distinguishes uncollected garbage from retained references.
+- **TASK:** Stage three eligible original items and measured buff/provider/overlay closure; initialize original DOT definitions and observe actual infliction/damage/projectiles. Preserve scoped bindings/pool lifetime. Record GC mode/count/used bytes and completed-only collection timing. Host-check together, build one candidate, run four original exits and genuine repeated sessions.
+- **CONSTRAINTS:** Preserve source requirements/coefficients/stacks/damage and local authority; comparison buffs confer no DLC/unlocks. No live cache purge or GC mode change. Retain accepted assembly/scene/shader identities, all rollbacks, one APK package, exact results/settings and OLED sleep. No manual navigation, normal victory or PC appearance claims.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Ignored legitimate item/buff/provider/material closure; owned DOT binding/observation/cleanup, completed-session measurements, existing recipe guard and state/docs.
+- **TEST COMMAND:** Pinned MCP compiled source/material checks; ./dev test; ./dev preflight; forced Vulkan build; attributed archive/same-app update; composed route and genuine loss/restart/cold result reload.
+- **PASS CONDITION:** Source/import/build contracts pass; whole candidate reaches supported route and cleans up without current-PID errors, preserves results/settings and repeats genuine sessions. Separate registered content from actual native damage/proc actions; classify managed recovery numerically without declaring a leak fix from PSS.
+- **FAILURE EVIDENCE TO CAPTURE:** First dependency/type/native tick/pool/provider/teardown/GC failure, build request/terminal/APK and current-PID evidence, original retention and per-session memory.
+- **STATE/JOURNAL UPDATES REQUIRED:** First failures, coarse subsystem classifications, actual-versus-registered behavior, assist labels, preserved rollback pointer and reviewed authored-only Conventional Commit.
+- **DEPENDENCIES:** J394; pinned R2API.Dot/Items/Addressables and exact accepted source. No manual/PC gate.
+
+
+I14-J395 exit: J395 source-material rejection and J396 inherited-validator failure are retained. J396 passes the 32-item/eight-equipment composed route, native DOT initialization/dependency ownership, background recovery, four genuine losses/restarts/cold results and same-package retention. Completed collections reclaim a small fraction while managed/process growth persists. No individual DOT/dagger or leak acceptance; source cloud variant recovered through the existing binary pipeline, no guessed math. Formal/manual/normal/PC gates unchanged.

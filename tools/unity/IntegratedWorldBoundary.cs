@@ -154,7 +154,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   foreach(var pair in worldNativeLootLeaseBaselines)if(objectiveSupportSources[pair.Key].name=="StickyBomb")r.world.stickyBombLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;
   if(force||Time.frameCount%10==0){
    foreach(var blast in Resources.FindObjectsOfTypeAll<DelayBlast>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="WilloWispDelay(Clone)"))if(worldNativeLootObjects.Add(blast.gameObject)){worldObjects.Add(blast.gameObject);r.world.wispDelaySpawns++;}
-   foreach(var bomb in Resources.FindObjectsOfTypeAll<RoR2.Projectile.ProjectileController>().Where(x=>x.gameObject.scene.IsValid()&&(x.name=="StickyBomb(Clone)"||x.name=="MissileProjectile(Clone)"||x.name=="Sawmerang(Clone)"||x.name=="GravSphere(Clone)")))if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);if(bomb.name=="StickyBomb(Clone)")r.world.stickyBombSpawns++;}
+   foreach(var bomb in Resources.FindObjectsOfTypeAll<RoR2.Projectile.ProjectileController>().Where(x=>x.gameObject.scene.IsValid()&&(x.name=="StickyBomb(Clone)"||x.name=="MissileProjectile(Clone)"||x.name=="Sawmerang(Clone)"||x.name=="GravSphere(Clone)"||x.name=="DaggerProjectile(Clone)")))if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);if(bomb.name=="StickyBomb(Clone)")r.world.stickyBombSpawns++;if(bomb.name=="DaggerProjectile(Clone)"&&r.dots!=null)r.dots.daggerSpawns++;}
   }
   if(RoR2Content.Buffs.Slow60)r.world.slowedEnemiesPeak=Mathf.Max(r.world.slowedEnemiesPeak,directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.body.HasBuff(RoR2Content.Buffs.Slow60)));
   if(worldNativeLootLeaseBaselines.Count>0&&(force||Time.frameCount%30==0))foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&(x.name=="HealPack(Clone)"||x.name=="BonusMoneyPack(Clone)")))if(worldNativeLootObjects.Add(obj)){worldObjects.Add(obj);if(obj.name=="HealPack(Clone)")r.world.healthPacks++;else r.world.moneyPacks++;}
@@ -538,10 +538,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   return selected;
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
-  if(r.world==null)yield break;yield return null;yield return null;
+  if(r.world==null)yield break;yield return null;yield return null;FinishWorldDotCleanup();
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
   r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldFeatherEffectIndex<0&&worldFeatherJumped==null&&worldAvailableItems==null&&worldAvailableEquipment==null;
-  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0;
+  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0&&!ownsWorldDots&&(r.dots==null||(r.dots.cleaned&&DotController.readOnlyInstancesList.Count==0));
   if(r.hud!=null){r.hud.cleaned=!recoveredHud&&!recoveredMenu;r.world.cleaned&=r.hud.cleaned;}
   if(r.commerce!=null){r.commerce.cleaned=commerceOwned.All(x=>!x)&&commerceListeners.Count==0&&commercePurchases.Count==0&&!ownsCommerceMessages&&commerceEffectIndex<0;r.world.cleaned&=r.commerce.cleaned;}
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();

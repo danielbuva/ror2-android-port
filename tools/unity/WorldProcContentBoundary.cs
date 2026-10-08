@@ -49,6 +49,7 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupHealingCommerceWards(){foreach(var pair in commerceHealingWards){if(pair.Key)NetworkServer.Destroy(pair.Key);pair.Value.teardownRequested=true;}commerceHealingWards.Clear();}
  void CleanupWorldProcContent(){
+  CleanupWorldDots();
   if(r.procContent!=null)r.procContent.cleaned=true;
  }
 }
