@@ -168,7 +168,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void CleanupWorldLootSupport(){
   CleanupWorldProcContent();
   CleanupOfflineSettingsPause();
-  CleanupWorldEquipment();
+  CleanupWorldItemDisplays();CleanupWorldEquipment();
   if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);
   foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
   if(worldFeatherJumped!=null){if(worldPlayer)worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
@@ -245,7 +245,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   yield return null;Check(PauseStopController.instance&&!PauseStopController.instance.isPaused,"Integrated unpaused context missing");
   worldDriver=player.GetComponent<InteractionDriver>();Check(worldDriver&&(!worldDriver||!worldDriver.enabled)&&!worldDriver.interactableOverride,"Unowned integrated interaction driver");
   if(!player.equipmentSlot.characterBody)Call(player.equipmentSlot,"Start");Call(player.equipmentSlot,"UpdateInventory");
-  Check(player.equipmentSlot.equipmentIndex==EquipmentIndex.None&&!player.equipmentSlot.enabled,"Integrated equipment must start empty/ungranted");PrepareWorldEquipment(player,cfg);
+  Check(player.equipmentSlot.equipmentIndex==EquipmentIndex.None&&!player.equipmentSlot.enabled,"Integrated equipment must start empty/ungranted");PrepareWorldEquipment(player,cfg);PrepareWorldItemDisplays(player,cfg);
   if(DriverField(worldDriver,"networkIdentity")==null)Call(worldDriver,"Awake");
   worldStaging=new GameObject("Inactive offline content staging");worldStaging.SetActive(false);
   var chestSource=artifactBundle.LoadAsset<GameObject>(cfg.chestAsset);OwnChestAnimationSources(chestSource.GetComponent<ModelLocator>().modelTransform);
@@ -254,7 +254,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var barrelOffsets=new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)};
   foreach(var offset in barrelOffsets){var obj=CreateWorldInteractable(artifactBundle.LoadAsset<GameObject>(cfg.barrelAsset),origin+offset,false);if(obj)worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
   foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=CreateWorldInteractable(chestSource,origin+offset,true);if(obj)worldChests.Add(obj.GetComponent<ChestBehavior>());}
-  AddEquipmentBarrel(cfg,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Integrated layout has insufficient walkable source interactables");
+  AddEquipmentBarrel(cfg,origin);AddWorldChestBreadth(cfg,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Integrated layout has insufficient walkable source interactables");
   r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;r.world.lootReady=true;
   worldInteraction=(actor,component,obj)=>{if(actor!=worldDriver.interactor)return;if(worldObjects.Contains(obj))r.world.target=obj.name;};GlobalEventManager.OnInteractionsGlobal+=worldInteraction;
   worldDriver.enabled=true;yield return null;Call(activeBodyClient,"Update");
@@ -323,7 +323,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   originals.Clear();observers.Clear();
  }
 
- GameObject CreateWorldInteractable(GameObject source,Vector3 candidate,bool chest){
+ GameObject CreateWorldInteractable(GameObject source,Vector3 candidate,bool chest,PickupDropTable dropOverride=null){
   RaycastHit hit;if(!Physics.Raycast(candidate+Vector3.up*20,Vector3.down,out hit,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.9f||Mathf.Abs(hit.point.y-worldPlayer.characterMotor.Motor.TransientPosition.y)>2)return null;
   Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Integrated source interactable reference missing");
   var obj=Instantiate(source,worldStaging.transform);obj.name=source.name;worldObjects.Add(obj);
@@ -333,6 +333,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   foreach(var animator in obj.GetComponentsInChildren<Animator>(true)){animator.enabled=chest;animator.cullingMode=AnimatorCullingMode.AlwaysAnimate;}
   var model=obj.GetComponent<ModelLocator>().modelTransform;worldModels.Add(model);PresentWorldModel(model,true);
   foreach(var collider in obj.GetComponentsInChildren<Collider>(true))collider.enabled=true;
+  if(dropOverride)obj.GetComponent<ChestBehavior>().dropTable=dropOverride;
   obj.transform.position=hit.point+Vector3.up*.4f;obj.transform.SetParent(null,true);obj.SetActive(true);NetworkServer.Spawn(obj);if(!chest)worldBarrelConsumers++;return obj;
  }
  void PresentWorldModel(Transform model,bool sourceView,bool optionalObjectiveSlots=false){
@@ -357,9 +358,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
-  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);ObserveWorldEquipment();ObserveWorldItemBehaviors();ObserveWorldHealingItems();ObserveWorldLegendaryItems();
+  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);ObserveWorldEquipment();ObserveWorldItemBehaviors();ObserveWorldHealingItems();ObserveWorldLegendaryItems();ObserveWorldItemDisplays();
   if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
-  world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
+  world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.master.teamIndex!=TeamIndex.Player);ObserveWorldChestBreadth();
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
   var interactor=player.GetComponent<Interactor>();world.interactionDistance=interactor.maxInteractionDistance;
   world.pickupObservations=pickups.Select(x=>{var collider=x.GetComponentsInChildren<Collider>(true).FirstOrDefault(c=>c.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<c.gameObject.layer))!=0);var aim=collider?collider.bounds.center:x.transform.position;var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return new WorldPickupObservation{item=def==null?"invalid":def.internalName,interactability=x.GetInteractability(interactor).ToString(),position=x.transform.position,aimTarget=aim,aimDistance=Vector3.Distance(player.inputBank.aimOrigin,aim),selected=worldDriver.currentInteractable==x.gameObject,collider=collider,interactableLayer=collider};}).ToArray();

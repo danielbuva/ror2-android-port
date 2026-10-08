@@ -92,8 +92,8 @@ public sealed partial class MovementBatchProbe {
  void FlushObjectiveActors(){
   foreach(var master in pendingObjectiveActors.ToArray()){
    pendingObjectiveActors.Remove(master);if(!master)continue;
-   RecordDirectorActor(master.gameObject,enemyPlayer,stageCombatActors.Contains(master)?"stage-director":objectiveDirectorActors.Contains(master)?"teleporter-director":master.bodyPrefab.name.StartsWith("Lunar",StringComparison.Ordinal)||master.bodyPrefab.name.StartsWith("Brother",StringComparison.Ordinal)?"moon-encounter":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
-   if(objectiveDirectorActors.Contains(master))r.objective.bossSpawns++;else r.objective.normalSpawns++;
+   RecordDirectorActor(master.gameObject,enemyPlayer,IsWorldItemGhost(master)?"item-ghost":stageCombatActors.Contains(master)?"stage-director":objectiveDirectorActors.Contains(master)?"teleporter-director":master.bodyPrefab.name.StartsWith("Lunar",StringComparison.Ordinal)||master.bodyPrefab.name.StartsWith("Brother",StringComparison.Ordinal)?"moon-encounter":"queen-summon",objectiveAmbientExpected[master]);objectiveAmbientExpected.Remove(master);
+   if(IsWorldItemGhost(master))continue;if(objectiveDirectorActors.Contains(master))r.objective.bossSpawns++;else r.objective.normalSpawns++;
   }
  }
  void PrepareObjectivePresentationSources(){
@@ -240,7 +240,7 @@ public sealed partial class MovementBatchProbe {
   // generated card's prefab boundary to the owned compatible template; retain source settings.
   EntityStates.BeetleQueenMonster.SummonEggs.spawnCard=objectiveCards.Single(x=>x.name=="cscBeetleGuard");
   objectiveSummon=report=>{
-   if(!report.summonMasterInstance||!objectiveTemplates.Contains(report.masterSummon.masterPrefab))return;
+   if(!report.summonMasterInstance||!(objectiveTemplates.Contains(report.masterSummon.masterPrefab)||rewardCard&&report.masterSummon.masterPrefab==rewardCard.prefab&&IsWorldItemGhost(report.summonMasterInstance)))return;
    var master=report.summonMasterInstance;BindMoonBodySupport(master.GetBody());ownedRewardSummons.Add(master);pendingObjectiveActors.Add(master);
    var summoner=report.masterSummon.summonerBodyObject?report.masterSummon.summonerBodyObject.GetComponent<CharacterBody>():null;
    objectiveAmbientExpected[master]=1+(summoner&&summoner.inventory?summoner.inventory.GetItemCountEffective(RoR2Content.Items.UseAmbientLevel):0);
@@ -431,7 +431,7 @@ public sealed partial class MovementBatchProbe {
    // Once original charging finishes, a source path may leave the holdout to
    // reach a surviving boss. Boss defeat and exit still require original events.
    if(worldTeleporter&&worldTeleporter.chargeFraction>=1)constrainToHoldout=false;r.world.combatHoldoutConstrained=constrainToHoldout;
-   var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive).ToArray();
+   var living=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&x.master.teamIndex!=player.teamComponent.teamIndex).ToArray();
    var actors=living.Where(x=>InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).ToArray();r.world.combatCandidates=living.Length;r.world.combatBoundsRejected=living.Length-actors.Length;
    // The unattended route can aim through terrain or continually select distant
    // adds while the boss survives. Observe actual firing lines before choosing input.

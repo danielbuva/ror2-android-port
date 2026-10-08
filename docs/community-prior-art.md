@@ -285,3 +285,6 @@ Original ParticleSystemRenderer mesh metadata corrects the prior static-filter a
 
 
 J415: pinned R2API.Items/ContentManagement at f539511e distinguishes item catalog registration from dependent behavior/presentation readiness. The exact shipped CharacterBody temporary-effect initializer is authoritative: WarbannerBuffEffect supplies warbannerEffectPrefab, which native stat recalculation uses when the original ward grants Warbanner. Restore that source/provider contract and owned teardown; do not suppress the error, fabricate a ward, or rewrite the buff behavior.
+
+
+J418/J419: pinned R2API.Items/ItemAPI.cs and Director README/internal source at f539511e distinguish eligibility/display initialization and native source pools/placement. Exact shipped chest state/animation/drop-table contracts, Mountain/Order callbacks and native ghost/buff theft remain authoritative; hidden decay context is never ordinary loot, and lunar-currency access is unavailable. Original CharacterModel/ItemDisplayRuleSet/ItemDisplay factories and Commando rule transforms supply the broad display recovery; Android owns only filtered context, inventory subscription and existing material copies. No game/community algorithms, guessed attachment transforms, fake unlocks/identity or PC-parity claim.
