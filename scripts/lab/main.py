@@ -22,7 +22,19 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='shader-recovery':
+  if a.action=='whole-catalog-audit':
+   from whole_catalog import audit
+   audit()
+  elif a.action=='whole-catalog-native':
+   from whole_catalog import native_inventory
+   native_inventory()
+  elif a.action=='whole-catalog-reconcile':
+   from whole_catalog import reconcile
+   reconcile()
+  elif a.action=='whole-catalog-contracts':
+   from whole_catalog import contracts
+   contracts()
+  elif a.action=='shader-recovery':
    from shader_recovery import recover
    recover(a.target)
   elif a.action=='shader-source':

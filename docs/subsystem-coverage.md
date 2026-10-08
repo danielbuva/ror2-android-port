@@ -66,3 +66,6 @@ J422 adds **original + recovered + adapted** actor/pool/configuration breadth an
 
 
 J425 expands **original + recovered + adapted** boss/config/provider/program breadth. Its two-exit/three-encounter combined run adds native Clay Dunestrider observation and owned card/heat/presentation cleanup, with no grants and no individual boss quota. Shatterspleen, Mired Urn, Empathy Cores and Planula remain **unavailable** pending their native proc dependencies; missing source support is never replaced by a cosmetic catalog entry. Source-driven minion/tether/sun integrations are registered but unexercised. The current inventory stays at 42 eligible items/ten equipment. No generic visual improvement, exact PC-parity claim, normal run, manual Moon or memory-resolution acceptance.
+
+
+J426 introduces **original + recovered** whole-catalog metadata/provenance coverage: all six shipped provider roots, native binary container identities, typed conversion and initializer/script contracts. This does not change current runtime content coverage, item eligibility, **adapted** startup, **approximate fallback** visuals or **unavailable** audio/platform capabilities. Quarantine is empty;4,942 unresolved conversions are unaccepted conversion work. Host headroom blocks full import/registration/device composition. J425 remains the current accepted gameplay observation.

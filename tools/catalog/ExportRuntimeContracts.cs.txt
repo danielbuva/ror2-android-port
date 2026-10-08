@@ -1,0 +1,15 @@
+if(EditorApplication.isCompiling||EditorApplication.isUpdating||EditorApplication.isPlayingOrWillChangePlaymode||BuildPipeline.isBuildingPlayer)throw new System.Exception("Editor not idle");
+var scripts=new System.Collections.Generic.List<object>();
+foreach(var script in MonoImporter.GetAllRuntimeMonoScripts()){
+ string guid;long fileId;if(!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(script,out guid,out fileId))continue;
+ var type=script.GetClass();scripts.Add(new{guid,fileId,path=AssetDatabase.GetAssetPath(script),type=type==null?null:type.FullName,assembly=type==null?null:type.Assembly.GetName().Name});
+}
+var initializers=new System.Collections.Generic.List<object>();
+foreach(var type in typeof(RoR2.RoR2Application).Assembly.GetTypes()){
+ foreach(var method in type.GetMethods(System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.DeclaredOnly)){
+  var attribute=method.GetCustomAttributes(typeof(RoR2.SystemInitializerAttribute),false).Cast<RoR2.SystemInitializerAttribute>().FirstOrDefault();
+  if(attribute==null)continue;
+  initializers.Add(new{type=type.FullName,method=method.Name,returns=method.ReturnType.FullName,dependencies=attribute.dependencies.Select(t=>t.FullName).ToArray()});
+ }
+}
+System.IO.File.WriteAllText(OUTPUT,Newtonsoft.Json.JsonConvert.SerializeObject(new{scripts,initializers,platformSystemsInvoked=false,contentProvidersInvoked=false},Newtonsoft.Json.Formatting.Indented));return new{scripts=scripts.Count,initializers=initializers.Count};

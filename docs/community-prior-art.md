@@ -300,3 +300,8 @@ J423/J424: inspected pinned R2API.Director README/internal source and R2API.Addr
 
 
 J425: pinned R2API.Items/ItemAPI.cs at f539511e documents that definitions do not supply valid item indices before catalog initialization; native ItemCatalog.FindItemIndex is the post-initialization lookup. Exact shipped ExplicitPickupDropTable generates from its entries without Run availability filtering, while BossGroup retains ordinary rewards when an optional boss table is absent. Keep the four unsupported original boss rewards explicitly unavailable rather than registering incomplete proc behaviors. Source tables and all implemented gameplay remain unchanged; the authored adapter owns only lookup/reporting/optional-table selection.
+
+
+## J426 — Whole shipped catalogs
+
+Before the complete catalog scanner/converter, inspect pinned R2API.ContentManagement/R2APIContentPackProvider.cs and R2API.Addressables/AddressReferencedAssets/AddressReferencedAsset.cs: original three-phase content packs, typed identity and handle ownership are separate contracts. Local UnityPy ContainerHelper, PPtr.deref and ObjectReader.peek_name provide raw bundle container/type/name ownership without copied game logic. Original RoR2Application/AddressablesLoadHelper/ContentManager and exact-editor metadata establish six providers,29 categories and first-locator ordering. No tested-content whitelist or community gameplay implementation is copied. Native/source ambiguity is retained, not labeled incompatible. See whole-catalog-integration.md.

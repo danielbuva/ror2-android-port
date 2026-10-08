@@ -677,3 +677,6 @@ J420/J421 adds original Milky Chrysalis and Volcanic Egg:42eligible items/ten eq
 
 
 **I26 / J425 composed boss breadth:** 27 templates/55 source cards and native support contracts compile together; one 335.602-second integrated run records two original exits, three encounters and one original Clay Dunestrider death, with six clean captures and honest menu return. Imp Overlord, Solus Control Unit, Grandparent and native minion/tether/sun damage remain unexercised. Four associated boss items are unavailable rather than exposed with incomplete behavior. Invincibility/high damage/fast charge are explicit assists. Normal/full-run, Moon, PC and memory acceptance are unchanged; J423/J424 failures and every prior rollback remain recoverable.
+
+
+**J426 whole-catalog exit:** Host discovery/conversion covers the complete shipped provider/category root graph; no whitelist or quarantine. Full content loading/ContentManager/catalog registration and broad Android acceptance remain pending behind shared subobject/script bindings and failed host headroom. J425 and all prior capability gates remain unchanged. See whole-catalog-integration.md and WG01.
