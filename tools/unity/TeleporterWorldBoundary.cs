@@ -118,7 +118,7 @@ public sealed partial class MovementBatchProbe {
    Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
   }
   PrepareMoonSupport(cfg);
-  var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).Concat(PrepareWorldDotSupport(cfg)).ToArray();
+  var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).Concat(PrepareWorldDotSupport(cfg)).Concat(PrepareWorldItemBehaviorSupport(cfg)).ToArray();
   var commerceEffect=PrepareCommerceSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();
   Check(wardSkin&&wardAnimator&&cfg.objectiveWardVisualAssets.Length==5,"Original ward visual contract missing");

@@ -258,7 +258,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.interactionReady=worldDriver.enabled&&ReferenceEquals(DriverField(worldDriver,"inputBank"),player.inputBank);
   r.world.start=origin;r.world.ready=r.world.authority&&r.world.lootReady&&r.world.interactionReady&&rewardDirector.enabled;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
-  PrepareWorldCommerce(cfg,origin);
+  PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
   PrepareRecoveredHud();Check(r.world.ready,"Integrated session setup incomplete");r.phase="integrated-world-playing";Save();
  }
 
@@ -354,7 +354,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
-  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);ObserveWorldEquipment();
+  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);ObserveWorldEquipment();ObserveWorldItemBehaviors();
   if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive);
   var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
@@ -571,7 +571,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void RestartWorldAfterCleanup(){
   if(!restartRequested)return;Check(r.success&&r.cleanup&&r.world.cleaned&&r.modelDestroyed&&!Run.instance&&!SceneInfo.instance&&!NetworkServer.active&&!NetworkClient.active,"Defeated world not clean enough to restart");
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
-  var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
+  TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupTeleporterWorld();
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;

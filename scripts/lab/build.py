@@ -1,5 +1,17 @@
 from common import *
-import shutil,time,zipfile
+import shutil,time,zipfile,sys
+
+def copy_build_artifact(source, destination):
+ # Independent copy-on-write snapshots prevent repeated payloads exhausting host space.
+ # Fall back to ordinary copies off APFS; artifact identity is always byte-checked.
+ source=Path(source);destination=Path(destination)
+ if not source.is_file() or source.is_symlink() or destination.is_symlink():raise RuntimeError('Build artifact paths must be regular files')
+ destination.parent.mkdir(parents=True,exist_ok=True)
+ cloned=sys.platform=='darwin' and run(['/bin/cp','-c','-p',source,destination],check=False).returncode==0
+ if not cloned:shutil.copy2(source,destination)
+ source_stat=source.stat();destination_stat=destination.stat()
+ if (source_stat.st_dev,source_stat.st_ino)==(destination_stat.st_dev,destination_stat.st_ino) or sha(source)!=sha(destination):raise RuntimeError('Build snapshot independence or hash verification failed')
+ return str(destination)
 
 def validate_runtime_support(project, recipe):
  config_path=project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'
@@ -59,7 +71,7 @@ def build(api='gles',force=False):
    for name,h in r.get('payload',{}).items():
     source=dest/'payload'/name
     if not source.is_file() or sha(source)!=h:raise RuntimeError('Cached payload is missing or changed: '+name)
-    shutil.copy2(source,WORK/'generated-android-data'/name)
+    copy_build_artifact(source,WORK/'generated-android-data'/name)
    write(WORK/'config/current-build.json',r);print(json.dumps({'cached':True,**r},indent=2));return r
  (WORK/'graphics-api.txt').write_text(api);result=WORK/'lab-build/result.json'
  if result.exists():result.rename(result.with_name('previous-'+now()+'.json'))
@@ -79,8 +91,8 @@ def build(api='gles',force=False):
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
  key=digest({'inputs':inputs,'api':api,'editor':'2021.3.33f1','backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
- dest.mkdir(parents=True,exist_ok=True);apk=dest/Path(r['apk']).name;shutil.copy2(r['apk'],apk)
+ dest.mkdir(parents=True,exist_ok=True);apk=dest/Path(r['apk']).name;copy_build_artifact(r['apk'],apk)
  r.update({'apk':str(apk),'apk_sha256':sha(apk),'key':key,'graphics_api':api,'input_id':read(WORK/'inventory/files.json')['input_id']})
- payload=dest/'payload';shutil.copytree(WORK/'generated-android-data',payload,dirs_exist_ok=True)
+ payload=dest/'payload';shutil.copytree(WORK/'generated-android-data',payload,dirs_exist_ok=True,copy_function=copy_build_artifact)
  r['payload']={p.name:sha(p) for p in payload.glob('*') if p.is_file()}
  write(receipt,r);write(WORK/'config/current-build.json',r);print(json.dumps(r,indent=2));return r
