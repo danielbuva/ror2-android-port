@@ -19,10 +19,11 @@ public sealed partial class MovementBatchProbe {
  }
  GameObject[] PrepareWorldProcSupport(Result cfg){
   if(cfg.worldProcSupportPaths==null||cfg.worldProcSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldProcSupportPaths.Length==4||cfg.worldProcSupportPaths.Length==9,"Original proc support closure differs");var effects=new List<GameObject>();
+  Check(cfg.worldProcSupportPaths.Length==4||cfg.worldProcSupportPaths.Length==9||cfg.worldProcSupportPaths.Length==13,"Original proc support closure differs");var effects=new List<GameObject>();
   foreach(var path in cfg.worldProcSupportPaths){
    int index=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(index>=0,"Original proc provider absent: "+path);var source=objectiveSupportSources[index];Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original proc references absent: "+path);
    if(IsWorldHealingItemSource(path)){PrepareWorldHealingItemSource(path,source);continue;}
+   if(IsWorldLegendaryItemSource(path)){var effect=PrepareWorldLegendaryItemSource(path,source,index);if(effect)effects.Add(source);continue;}
    bool missile=path=="Prefabs/Projectiles/MissileProjectile",pulverized=path=="Prefabs/Effects/ImpactEffects/PulverizedEffect",deathmark=path=="Prefabs/TemporaryVisualEffects/DeathMarkEffect";
    Check(missile||pulverized||deathmark||path=="Prefabs/Effects/OmniEffect/OmniExplosionVFXQuick","Unknown original proc source");
    if(missile||pulverized||deathmark){
@@ -50,7 +51,7 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupHealingCommerceWards(){foreach(var pair in commerceHealingWards){if(pair.Key)NetworkServer.Destroy(pair.Key);pair.Value.teardownRequested=true;}commerceHealingWards.Clear();}
  void CleanupWorldProcContent(){
-  CleanupWorldHealingItems();CleanupWorldItemBehaviors();CleanupWorldDots();
+  CleanupWorldHealingItems();CleanupWorldLegendaryItems();CleanupWorldItemBehaviors();CleanupWorldDots();
   if(r.procContent!=null)r.procContent.cleaned=true;
  }
 }

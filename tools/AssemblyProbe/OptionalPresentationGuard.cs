@@ -70,18 +70,25 @@ static class OptionalPresentationGuard {
   il=countdown.Body.GetILProcessor();var rtpcCall=rtpcCalls[0];var afterRtpc=rtpcCall.Next.Next;
   il.InsertBefore(rtpcCall,il.Create(OpCodes.Call,audio));il.InsertBefore(rtpcCall,il.Create(OpCodes.Brfalse,rtpcCall));
   il.InsertBefore(rtpcCall,il.Create(OpCodes.Pop));il.InsertBefore(rtpcCall,il.Create(OpCodes.Pop));il.InsertBefore(rtpcCall,il.Create(OpCodes.Br,afterRtpc));
+  var turbine=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.LaserTurbineController").Methods.Single(m=>m.Name=="UpdateClient");
+  var turbineCalls=turbine.Body.Instructions.Where(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="SetRTPCValue").ToArray();
+  if(turbineCalls.Length!=1||turbineCalls[0].Operand is not MethodReference turbineRtpc||turbineRtpc.ReturnType.Name!="AKRESULT"||turbineRtpc.Parameters.Count!=3||turbineRtpc.Parameters[0].ParameterType.FullName!="System.String"||turbineRtpc.Parameters[1].ParameterType.FullName!="System.Single"||turbineRtpc.Parameters[2].ParameterType.FullName!="UnityEngine.GameObject"||turbineCalls[0].Next.OpCode!=OpCodes.Pop)throw new Exception("Original LaserTurbine audio contract changed");
+  // Preserve the original spin/charge visuals; skip only unavailable native audio.
+  il=turbine.Body.GetILProcessor();var turbineCall=turbineCalls[0];var afterTurbine=turbineCall.Next.Next;
+  il.InsertBefore(turbineCall,il.Create(OpCodes.Call,audio));il.InsertBefore(turbineCall,il.Create(OpCodes.Brfalse,turbineCall));
+  for(int i=0;i<3;i++)il.InsertBefore(turbineCall,il.Create(OpCodes.Pop));il.InsertBefore(turbineCall,il.Create(OpCodes.Br,afterTurbine));
   // Insertion can move targets beyond the signed-byte range; keep branch semantics exactly.
-  foreach(var m in new[]{sound,landing,fixedUpdate,countdown}.Concat(stopMethods))foreach(var instruction in m.Body.Instructions) {
+  foreach(var m in new[]{sound,landing,fixedUpdate,countdown,turbine}.Concat(stopMethods))foreach(var instruction in m.Body.Instructions) {
    if(instruction.OpCode==OpCodes.Br_S)instruction.OpCode=OpCodes.Br;
    else if(instruction.OpCode==OpCodes.Brfalse_S)instruction.OpCode=OpCodes.Brfalse;
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName}.Concat(stopMethods.Select(m=>m.FullName)).ToArray();
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   if(verified.Name.FullName!=identity||verified.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(verified)))throw new Exception("Optional presentation changed original assembly/type/field/method identity");
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp native sound-stop calls and one escape countdown RTPC call bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp native sound-stop calls, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
  }
 }

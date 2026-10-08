@@ -56,7 +56,7 @@ public sealed partial class MovementBatchProbe {
    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
    while(r.freePlay||Time.realtimeSinceStartup-began<(cfg.integratedWorld?(cfg.teleporterLoop?(cfg.integratedRuntimeSeconds>0?cfg.integratedRuntimeSeconds:360):120):bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
     yield return new WaitForEndOfFrame();
-    if(CompletedResultsReturn())yield break;
+    if(CompletedResultsReturn()||CompletedOfflineAbandon())yield break;
     if((r.freePlay||cfg.integratedWorld)&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;if(restartRequested)yield break;Check(false,"Integrated diagnostic run ended by original player death before objective completion");}
     if(cfg.integratedWorld)Check(string.IsNullOrEmpty(r.debugAcceleration.error),"Debug acceleration failure: "+r.debugAcceleration.error);
     if(cfg.teleporterLoop){Check(r.stageProgress!=null&&string.IsNullOrEmpty(r.stageProgress.error),"Original stage callback failed: "+(r.stageProgress==null?"missing":r.stageProgress.error));if(!string.IsNullOrEmpty(pendingStage)){var transition=TransportIntegratedStage(bridge,began);while(transition.MoveNext())yield return transition.Current;previous=solver.TransientPosition;}}

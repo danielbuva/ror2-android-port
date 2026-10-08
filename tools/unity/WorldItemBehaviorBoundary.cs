@@ -10,17 +10,19 @@ using UnityEngine.Networking;
 // Scoped startup adapter; component assignment, stack refresh and simulation are native.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class ItemBehaviorReport {
-  public bool ready,cleaned;public int bodies,assignments,refreshes,mushroomWards,cloakObservations;
-  public string scope="Adapted inventory lifecycle for original Mushroom/Phasing components; original ward/healing/recharge logic. Registration alone is not proc acceptance.";
+  public bool ready,cleaned;public int bodies,assignments,refreshes,mushroomWards,cloakObservations;public string[] definitions;
+  public List<LegendaryItemObservation> legendaryInstances=new List<LegendaryItemObservation>();
+  public string scope="Adapted inventory lifecycle for selected original item components; original ward/healing/recharge/controller logic. Registration alone is not proc acceptance.";
  }
  readonly Dictionary<CharacterBody,BaseItemBodyBehavior[]> worldItemBehaviors=new Dictionary<CharacterBody,BaseItemBodyBehavior[]>();
  readonly HashSet<GameObject> worldMushroomWards=new HashSet<GameObject>();
- readonly Type[] worldItemBehaviorTypes={typeof(MushroomBodyBehavior),typeof(PhasingBodyBehavior)};
+ Type[] worldItemBehaviorTypes={typeof(MushroomBodyBehavior),typeof(PhasingBodyBehavior)};
+ ItemDef[] worldItemBehaviorDefinitions;
  bool ownsWorldItemBehaviors,ownsWorldMushroomBinding;object previousWorldMushroom;
  static FieldInfo MushroomPrefabField(){return typeof(MushroomBodyBehavior).GetField("mushroomWardPrefab",BindingFlags.NonPublic|BindingFlags.Static);}
  BuffDef[] WorldItemBehaviorBuffs(Result cfg){
   if(cfg.worldItemBehaviorBuffAssets==null)return new BuffDef[0];
-  var names=new[]{"Cloak","CloakSpeed"};Check(cfg.worldItemBehaviorBuffAssets.Length==2,"Original item-behavior buff closure differs");
+  var names=new[]{"Cloak","CloakSpeed"};if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains("LaserTurbine"))names=names.Concat(new[]{"LaserTurbineKillCharge"}).ToArray();Check(cfg.worldItemBehaviorBuffAssets.Length==names.Length,"Original item-behavior buff closure differs");
   return cfg.worldItemBehaviorBuffAssets.Select((path,i)=>{var def=artifactBundle.LoadAsset<BuffDef>(path);Check(def&&def.name=="bd"+names[i],"Original stealth buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],def);return def;}).ToArray();
  }
  GameObject[] PrepareWorldItemBehaviorSupport(Result cfg){
@@ -42,14 +44,17 @@ public sealed partial class MovementBatchProbe {
   var context=typeof(BaseItemBodyBehavior).GetField("server",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);
   Check(nativeBodies.Count==0&&context.GetType().GetField("itemTypePairs").GetValue(context)==null,"Native item-behavior lifecycle already initialized; refuse duplicate adapter");
   Check(MushroomPrefabField().GetValue(null)!=null&&RoR2Content.Items.Mushroom&&RoR2Content.Items.Phasing,"Original item behavior inputs absent");
-  r.itemBehaviors=new ItemBehaviorReport{ready=true};ownsWorldItemBehaviors=true;
+  var types=new List<Type>{typeof(MushroomBodyBehavior),typeof(PhasingBodyBehavior)};var defs=new List<ItemDef>{RoR2Content.Items.Mushroom,RoR2Content.Items.Phasing};
+  var names=new[]{"FallBoots","Icicle","LaserTurbine"};var nativeTypes=new[]{typeof(HeadstomperBodyBehavior),typeof(IcicleBodyBehavior),typeof(LaserTurbineBodyBehavior)};
+  for(int i=0;i<names.Length;i++)if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains(names[i])){var def=ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(names[i]));Check(def&&!def.unlockableDef&&!def.requiredExpansion,"Original legendary item unavailable: "+names[i]);types.Add(nativeTypes[i]);defs.Add(def);}
+  worldItemBehaviorTypes=types.ToArray();worldItemBehaviorDefinitions=defs.ToArray();r.itemBehaviors=new ItemBehaviorReport{ready=true,definitions=defs.Select(x=>x.name).ToArray()};ownsWorldItemBehaviors=true;
   CharacterBody.onBodyInventoryChangedGlobal+=RefreshWorldItemBehaviors;CharacterBody.onBodyDestroyGlobal+=RemoveWorldItemBehaviors;
   foreach(var body in CharacterBody.readOnlyInstancesList.ToArray())if(body&&body.gameObject.activeInHierarchy)RefreshWorldItemBehaviors(body);
  }
  void RefreshWorldItemBehaviors(CharacterBody body){
   if(!ownsWorldItemBehaviors||!body||!body.gameObject.activeInHierarchy)return;
-  BaseItemBodyBehavior[] entries;if(!worldItemBehaviors.TryGetValue(body,out entries)){entries=new BaseItemBodyBehavior[2];worldItemBehaviors.Add(body,entries);r.itemBehaviors.bodies++;}
-  var defs=new[]{RoR2Content.Items.Mushroom,RoR2Content.Items.Phasing};var setter=typeof(BaseItemBodyBehavior).GetMethod("SetItemStack",BindingFlags.NonPublic|BindingFlags.Static);
+  BaseItemBodyBehavior[] entries;if(!worldItemBehaviors.TryGetValue(body,out entries)){entries=new BaseItemBodyBehavior[worldItemBehaviorTypes.Length];worldItemBehaviors.Add(body,entries);r.itemBehaviors.bodies++;}
+  var defs=worldItemBehaviorDefinitions;var setter=typeof(BaseItemBodyBehavior).GetMethod("SetItemStack",BindingFlags.NonPublic|BindingFlags.Static);
   for(int i=0;i<entries.Length;i++){var before=entries[i];var args=new object[]{body,entries[i],worldItemBehaviorTypes[i],body.inventory?body.inventory.GetItemCountEffective(defs[i]):0};setter.Invoke(null,args);entries[i]=(BaseItemBodyBehavior)args[1];if(!before&&entries[i])r.itemBehaviors.assignments++;Check(!entries[i]||entries[i].body==body,"Original item-behavior body assignment differs");}r.itemBehaviors.refreshes++;
  }
  void RemoveWorldItemBehaviors(CharacterBody body){BaseItemBodyBehavior[] entries;if(!worldItemBehaviors.TryGetValue(body,out entries))return;foreach(var entry in entries)if(entry)Destroy(entry);worldItemBehaviors.Remove(body);}

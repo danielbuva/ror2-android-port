@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RoR2;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class DebugToggleEvent {
   public float seconds;public string toggle,source;public bool enabled;
  }
+ [Serializable] public class DeveloperItemGrant {public string item;public int before,after,removed;}
  [Serializable] public class DebugAccelerationReport {
   public int version=1;public bool everAssisted,normalGameAcceptanceEligible=true,restored,ownerDestroyed;
   public DebugAccelerationOptions active=new DebugAccelerationOptions();
@@ -24,9 +26,11 @@ public sealed partial class MovementBatchProbe {
   public float originalBaseJumpPower,originalLevelJumpPower,appliedBaseJumpPower,appliedLevelJumpPower,observedJumpPower;public int observedMaxJumpCount;
   public float lastOriginalChargeRate,lastAssistedChargeRate;public int positiveChargeCallbacks,unchangedNonpositiveChargeCallbacks,chargeZones;
   public List<DebugToggleEvent> events=new List<DebugToggleEvent>();
+  public List<DeveloperItemGrant> itemGrants=new List<DeveloperItemGrant>();
  }
  CharacterBody debugBody;bool debugPriorGodMode,debugPanel,ownsDebugAcceleration;float debugNextZoneScan;
  readonly HashSet<HoldoutZoneController> debugChargeZones=new HashSet<HoldoutZoneController>();
+ Inventory debugGrantInventory;
  void PrepareDebugAcceleration(CharacterBody body){
   // Unity can create an empty inline report while reading the launch selection.
   // Serialized presence is not ownership of live body fields or callbacks.
@@ -36,6 +40,21 @@ public sealed partial class MovementBatchProbe {
   ownsDebugAcceleration=true;
   r.debugAcceleration.originalBaseJumpPower=body.baseJumpPower;r.debugAcceleration.originalLevelJumpPower=body.levelJumpPower;
   ApplyDebugAcceleration(r.debugOptions??new DebugAccelerationOptions(),"launch selection");
+  ApplyDeveloperItemGrants();
+ }
+ void ApplyDeveloperItemGrants(){
+  var names=r.developerItemGrants;if(names==null||names.Length==0)return;
+  Check(names.Length<=3&&names.Distinct().Count()==names.Length&&r.debugOptions!=null&&!string.IsNullOrWhiteSpace(r.debugOptions.purpose)&&r.debugOptions.purpose.Length<=160,"Developer grants require a bounded explicit experiment purpose");
+  Check(UnityEngine.Networking.NetworkServer.active&&debugBody.inventory&&worldLootDefinitions!=null,"Developer grant inventory ownership absent");
+  // Validate the complete request before changing the original inventory.
+  var definitions=names.Select(name=>worldLootDefinitions.SingleOrDefault(x=>x.name==name)).ToArray();
+  Check(definitions.All(x=>x&&!x.unlockableDef&&!x.requiredExpansion&&!x.hidden&&x.DoesNotContainTag(ItemTag.WorldUnique)&&x.DoesNotContainTag(ItemTag.IgnoreForDropList)&&!Run.instance.IsItemExpansionLocked(x.itemIndex)),"Developer grant is outside the eligible composed item domain");
+  debugGrantInventory=debugBody.inventory;r.debugAcceleration.everAssisted=true;r.debugAcceleration.normalGameAcceptanceEligible=false;
+  foreach(var def in definitions){var entry=new DeveloperItemGrant{item=def.name,before=debugGrantInventory.GetItemCountPermanent(def)};r.debugAcceleration.itemGrants.Add(entry);debugGrantInventory.GiveItemPermanent(def,1);entry.after=debugGrantInventory.GetItemCountPermanent(def);Check(entry.after==entry.before+1,"Original developer item grant failed: "+def.name);Save();}
+ }
+ void CleanupDeveloperItemGrants(){
+  if(debugGrantInventory){Check(UnityEngine.Networking.NetworkServer.active,"Developer inventory teardown requires owned server");foreach(var entry in r.debugAcceleration.itemGrants){var def=ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(entry.item));int before=debugGrantInventory.GetItemCountPermanent(def);int count=Mathf.Min(1,before);if(count>0)debugGrantInventory.RemoveItemPermanent(def,count);entry.removed=count;Check(debugGrantInventory.GetItemCountPermanent(def)==before-count,"Original developer grant restore failed");}}
+  debugGrantInventory=null;
  }
  void DebugToggle(string name,bool enabled,string source){
   var report=r.debugAcceleration;report.events.Add(new DebugToggleEvent{seconds=r.nova==null?0:r.nova.seconds,toggle=name,enabled=enabled,source=source});
@@ -53,7 +72,7 @@ public sealed partial class MovementBatchProbe {
   }
   if(active.jumpBoost!=next.jumpBoost){
    // Keep the original single-jump consumer, collision, gravity and landing code.
-   // No item grants, unlocks, jump-count edits or direct velocity/position writes.
+   // This toggle grants no items and changes no jump-count or position fields.
    debugBody.baseJumpPower=report.originalBaseJumpPower*(next.jumpBoost?report.jumpMultiplier:1);debugBody.levelJumpPower=report.originalLevelJumpPower*(next.jumpBoost?report.jumpMultiplier:1);DebugToggle("jumpBoost",next.jumpBoost,source);
   }
   if(active.fastCharge!=next.fastCharge){DebugToggle("fastCharge",next.fastCharge,source);if(!next.fastCharge)RemoveDebugChargeCallbacks();debugNextZoneScan=0;}
@@ -112,12 +131,13 @@ public sealed partial class MovementBatchProbe {
   if(GUI.Button(new Rect(x,345,250,44),"F3 Charge x8: "+a.fastCharge))SetDebugToggle(2,!a.fastCharge,"developer panel");
   if(GUI.Button(new Rect(x,395,250,44),"F4 Movement x2: "+a.movementBoost))SetDebugToggle(3,!a.movementBoost,"developer panel");
   if(GUI.Button(new Rect(x,445,250,44),"F5 Jump power x6: "+a.jumpBoost))SetDebugToggle(4,!a.jumpBoost,"developer panel");
-  if(GUI.Button(new Rect(x,495,250,44),"Disable all (run stays assisted)"))ApplyDebugAcceleration(new DebugAccelerationOptions(),"developer panel clear");
+  if(GUI.Button(new Rect(x,495,250,44),"Disable toggles (grants remain)"))ApplyDebugAcceleration(new DebugAccelerationOptions(),"developer panel clear");
  }
- string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal")+"\nJump "+(a.jumpBoost?"x6":"normal");}
+ string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal")+"\nJump "+(a.jumpBoost?"x6":"normal")+(r.debugAcceleration.itemGrants.Count>0?" · granted: "+string.Join(", ",r.debugAcceleration.itemGrants.Select(x=>x.item).ToArray()):"");}
  void CleanupDebugAcceleration(){
   if(!ownsDebugAcceleration||r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
   RemoveDebugChargeCallbacks();
+  CleanupDeveloperItemGrants();
   if(debugBody){ApplyDebugAcceleration(new DebugAccelerationOptions(),"owned cleanup");Check(debugBody.healthComponent.godMode==debugPriorGodMode&&debugBody.baseDamage==r.debugAcceleration.originalBaseDamage&&debugBody.levelDamage==r.debugAcceleration.originalLevelDamage&&debugBody.baseMoveSpeed==r.debugAcceleration.originalBaseMoveSpeed&&debugBody.levelMoveSpeed==r.debugAcceleration.originalLevelMoveSpeed&&debugBody.baseJumpPower==r.debugAcceleration.originalBaseJumpPower&&debugBody.levelJumpPower==r.debugAcceleration.originalLevelJumpPower,"Debug acceleration restore failed");}
   else{var a=r.debugAcceleration.active;if(a.invincibility)DebugToggle("invincibility",false,"owner destroyed");if(a.highDamage)DebugToggle("highDamage",false,"owner destroyed");if(a.fastCharge)DebugToggle("fastCharge",false,"owner destroyed");if(a.movementBoost)DebugToggle("movementBoost",false,"owner destroyed");if(a.jumpBoost)DebugToggle("jumpBoost",false,"owner destroyed");r.debugAcceleration.active=new DebugAccelerationOptions{purpose=r.debugAcceleration.purpose};r.debugAcceleration.ownerDestroyed=true;}
   debugBody=null;ownsDebugAcceleration=false;r.debugAcceleration.restored=true;Save();

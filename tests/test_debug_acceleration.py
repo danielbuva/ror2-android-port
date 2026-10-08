@@ -7,6 +7,31 @@ from debug_acceleration import acceptance_labels, validate_options
 
 
 class DebugAccelerationEvidenceTests(unittest.TestCase):
+    def test_grants_cannot_hide_behind_disabled_toggles_or_normal_claims(self):
+        debug = {'version': 1, 'active': {}, 'events': [], 'everAssisted': True,
+                 'normalGameAcceptanceEligible': False,
+                 'itemGrants': [{'item': 'Icicle', 'before': 0, 'after': 1}]}
+        labels = acceptance_labels({'debugAcceleration': debug})
+        self.assertEqual(labels['excluded_acceptance'],
+                         ['full-normal-run', 'normal-loot', 'normal-progression'])
+        debug['everAssisted'] = False
+        with self.assertRaisesRegex(RuntimeError, 'marked assisted'):
+            acceptance_labels({'debugAcceleration': debug})
+        debug['everAssisted'] = True
+        debug['normalGameAcceptanceEligible'] = True
+        with self.assertRaisesRegex(RuntimeError, 'incorrectly claims'):
+            acceptance_labels({'debugAcceleration': debug})
+
+    def test_invalid_or_duplicate_grant_evidence_is_rejected(self):
+        debug = {'version': 1, 'active': {}, 'events': [], 'everAssisted': True,
+                 'normalGameAcceptanceEligible': False}
+        for grants in [[{'item': 'Icicle', 'before': 0, 'after': 0}],
+                       [{'item': 'Icicle', 'before': False, 'after': 1}],
+                       [{'item': 'Icicle', 'before': 0, 'after': 1}] * 2]:
+            debug['itemGrants'] = grants
+            with self.assertRaisesRegex(RuntimeError, 'grant evidence'):
+                acceptance_labels({'debugAcceleration': debug})
+
     def test_typo_and_truthy_strings_cannot_enable_silent_cheats(self):
         for value in [{'invincible': True}, {'invincibility': 'false'}, {'highDamage': 1}]:
             with self.assertRaises(RuntimeError):

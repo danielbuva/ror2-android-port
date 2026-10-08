@@ -37,4 +37,12 @@ public sealed partial class MovementBatchProbe {
   returnToOfflineMenu=true;restartRequested=true;r.phase="returning-to-offline-menu";Save();
  }
  bool CompletedResultsReturn(){return returnToOfflineMenu&&r.results!=null&&r.results.persisted&&r.results.clientEnding;}
+ bool CanAbandonOfflineRun(){return r!=null&&r.freePlay&&r.integratedWorld&&r.world!=null&&r.world.ready&&worldPlayer&&worldPlayer.healthComponent.alive&&r.results!=null&&r.results.ready&&!r.results.serverEnding&&!r.results.reportGenerated&&!r.results.persisted&&!restartRequested;}
+ void RequestAbandonOfflineRun(){
+  if(!CanAbandonOfflineRun())return;
+  // Leaving a local session is not an original game ending or a saved result.
+  Check(UnityEngine.Networking.NetworkServer.active&&Run.instance,"Live offline session ownership absent");
+  ShowOfflineSettings(false);r.settings.sessionAbandoned=true;returnToOfflineMenu=true;restartRequested=true;r.phase="abandoning-offline-session";Save();
+ }
+ bool CompletedOfflineAbandon(){return returnToOfflineMenu&&r.settings!=null&&r.settings.sessionAbandoned&&r.results!=null&&!r.results.serverEnding&&!r.results.reportGenerated&&!r.results.persisted;}
 }
