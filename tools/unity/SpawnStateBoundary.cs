@@ -10,7 +10,7 @@ public sealed partial class MovementBatchProbe {
  bool ownsSpawnConfig;float priorSpawnDelay;string priorSpawnSound;
  void PrepareSpawnStateCatalog(Result cfg){
   Check(!ownsStateCatalog,"Existing state catalog ownership");
-  var types=new[]{typeof(Uninitialized),typeof(Idle),typeof(SpawnTeleporterState),typeof(GenericCharacterMain)};
+  var types=new[]{typeof(Uninitialized),typeof(Idle),typeof(SpawnTeleporterState),typeof(GenericCharacterMain),typeof(GenericCharacterVehicleSeated)};
   var flags=BindingFlags.NonPublic|BindingFlags.Static;
   Check(((Type[])typeof(EntityStateCatalog).GetField("stateIndexToType",flags).GetValue(null)).Length==0&&((System.Collections.IDictionary)typeof(EntityStateCatalog).GetField("stateTypeToIndex",flags).GetValue(null)).Count==0&&((System.Collections.IDictionary)typeof(EntityStateCatalog).GetField("instanceFieldInitializers",flags).GetValue(null)).Count==0,"Existing state catalog; refuse replacement");
   var config=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.spawnConfigAsset);

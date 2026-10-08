@@ -27,6 +27,7 @@ public sealed partial class MovementBatchProbe {
   public float lastOriginalChargeRate,lastAssistedChargeRate;public int positiveChargeCallbacks,unchangedNonpositiveChargeCallbacks,chargeZones;
   public List<DebugToggleEvent> events=new List<DebugToggleEvent>();
   public List<DeveloperItemGrant> itemGrants=new List<DeveloperItemGrant>();
+  public List<DeveloperEquipmentSelection> equipmentSelections=new List<DeveloperEquipmentSelection>();
  }
  CharacterBody debugBody;bool debugPriorGodMode,debugPanel,ownsDebugAcceleration;float debugNextZoneScan;
  readonly HashSet<HoldoutZoneController> debugChargeZones=new HashSet<HoldoutZoneController>();

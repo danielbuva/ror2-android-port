@@ -27,7 +27,7 @@ public sealed partial class MovementBatchProbe {
   var roots=new System.Collections.Generic.List<string>();var failures=new System.Collections.Generic.List<string>();
   // Read only already-used gameplay callback owners; never initialize unrelated
   // subsystem types, invoke callbacks or remove original handlers diagnostically.
-  var callbackOwners=new[]{typeof(RoR2Application),typeof(GlobalEventManager),typeof(Run),typeof(CharacterBody),typeof(CharacterMaster),typeof(SceneCatalog),typeof(Stage),typeof(MasterSummon),typeof(BossGroup),typeof(SceneExitController),typeof(TeleporterInteraction),typeof(Inventory),typeof(DotController)};
+  var callbackOwners=new[]{typeof(RoR2Application),typeof(GlobalEventManager),typeof(Run),typeof(CharacterBody),typeof(CharacterMaster),typeof(SceneCatalog),typeof(Stage),typeof(MasterSummon),typeof(BossGroup),typeof(SceneExitController),typeof(TeleporterInteraction),typeof(Inventory),typeof(DotController),typeof(EquipmentSlot),typeof(VehicleSeat)};
   if(completedSessionReferences.Count>0)foreach(var type in callbackOwners)foreach(var field in type.GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static).Where(x=>typeof(Delegate).IsAssignableFrom(x.FieldType))){
    Delegate callback;try{callback=field.GetValue(null) as Delegate;}catch(Exception e){failures.Add(type.FullName+"."+field.Name+":"+e.GetType().Name);continue;}if(callback==null)continue;
    foreach(var entry in callback.GetInvocationList())for(int i=0;i<completedSessionReferences.Count;i++){

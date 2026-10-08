@@ -13,6 +13,8 @@ public sealed partial class MovementBatchProbe {
   public bool ready,cleaned;public string equipment,error,scope="Original equipment pickup/activation/cooldown; owned input/scheduling, source presentation approximation, no stock profile unlocks.";
   public int definitions,eligible,stock,maxStock,ticks,activations,ammoPacks;public float cooldown;
   public List<EquipmentActionObservation> actions=new List<EquipmentActionObservation>();
+  public List<FlightEquipmentObservation> flightObjects=new List<FlightEquipmentObservation>();
+  public int ownedFlightDeathCallbacksRemoved;public bool flightCleaned;
   public ObjectiveRendererObservation[] temporaryEffectViews;
  }
  Action worldEquipmentFixed,worldEquipmentInventoryFixed;Action<EquipmentSlot,EquipmentIndex> worldEquipmentActivated;
@@ -20,7 +22,7 @@ public sealed partial class MovementBatchProbe {
  EquipmentDef[] worldEquipmentDefinitions;EquipmentSlot worldEquipmentSlot;float equipmentLastInput=-100;bool worldEquipmentTouch;NovaInputBridge worldEquipmentBridge;
  EquipmentDef[] WorldEquipmentDefs(Result cfg){
   if(cfg.worldEquipmentAssets==null||cfg.worldEquipmentAssets.Length==0)return new EquipmentDef[0];
-  var names=new[]{"Fruit","CritOnUse","GainArmor","LifestealOnHit","GoldGat","PassiveHealing","CommandMissile","Saw","Blackhole","TeamWarCry"};
+  var names=new[]{"Fruit","CritOnUse","GainArmor","LifestealOnHit","GoldGat","PassiveHealing","CommandMissile","Saw","Blackhole","TeamWarCry","Jetpack","FireBallDash"};
   Check(cfg.worldEquipmentAssets.Length==names.Length,"Equipment source context differs");
   worldEquipmentDefinitions=cfg.worldEquipmentAssets.Select(x=>artifactBundle.LoadAsset<EquipmentDef>(x)).ToArray();
   for(int i=0;i<names.Length;i++){var def=worldEquipmentDefinitions[i];Check(def&&def.name==names[i],"Original equipment definition missing: "+names[i]);BindEnemyDefinition(typeof(RoR2Content.Equipment),names[i],def);if(i<4||i>=6)Check(!def.unlockableDef&&!def.requiredExpansion&&def.canDrop&&!def.isLunar&&!def.isBoss,"Equipment requires unavailable ownership/profile: "+names[i]);}
@@ -35,7 +37,7 @@ public sealed partial class MovementBatchProbe {
  IEnumerable<EquipmentDef> EligibleWorldEquipment(){return (worldEquipmentDefinitions??new EquipmentDef[0]).Where(x=>x.name!="GoldGat"&&x.name!="PassiveHealing");}
  GameObject[] PrepareWorldEquipmentSupport(Result cfg){
   if(cfg.worldEquipmentSupportPaths==null||cfg.worldEquipmentSupportPaths.Length==0)return new GameObject[0];
-  Check(cfg.worldEquipmentSupportPaths.Length==10,"Equipment/proc provider closure differs");var effects=new List<GameObject>();
+  Check(cfg.worldEquipmentSupportPaths.Length==12,"Equipment/proc provider closure differs");var effects=new List<GameObject>();
   foreach(var path in cfg.worldEquipmentSupportPaths){
    int i=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(i>=0,"Equipment/proc provider missing: "+path);var source=objectiveSupportSources[i];Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Equipment/proc source reference missing: "+path);
    worldNativeLootLeaseBaselines.Add(i,(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[i]));
@@ -45,6 +47,7 @@ public sealed partial class MovementBatchProbe {
     var roots=new List<GameObject>{source};if(controller.ghostPrefab)roots.Add(controller.ghostPrefab);foreach(var component in source.GetComponents<Component>())foreach(var field in component.GetType().GetFields(BindingFlags.Public|BindingFlags.Instance)){if(field.FieldType!=typeof(GameObject))continue;var effect=field.GetValue(component) as GameObject;if(effect&&effect.GetComponent<EffectComponent>()){roots.Add(effect);effects.Add(effect);}}
     foreach(var root in roots.Distinct()){foreach(var renderer in root.GetComponentsInChildren<Renderer>(true)){if(worldLootSourceMaterials.ContainsKey(renderer))continue;worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}PresentCommerceModel(root.transform);}
    }
+   else if(source.name=="JetpackController"||source.name=="FireballVehicle")PrepareFlightEquipmentSource(source,effects);
    else if(source.name=="AmmoPack"){var pickup=source.GetComponentInChildren<AmmoPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<UnityEngine.Networking.NetworkIdentity>()&&pickup.pickupEffect,"Original ammo pickup linkage missing");effects.Add(pickup.pickupEffect);}
    else {
     Check(source.GetComponent<TemporaryVisualEffect>(),"Unknown equipment support source: "+path);var field=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField(source.name=="ElephantDefense"?"elephantDefenseEffectPrefab":source.name=="TeamWarCryAura"?"teamWarCryEffectPrefab":"lifestealOnHitEffectPrefab",BindingFlags.Public|BindingFlags.Static);Check(field!=null&&field.GetValue(null)==null,"Unowned equipment visual context");worldLootEffectSlots.Add(field,null);field.SetValue(null,source);
@@ -72,16 +75,18 @@ public sealed partial class MovementBatchProbe {
   catch(Exception e){r.world.equipment.error=e.ToString();worldEquipmentFixed=null;Save();}
  }
  void ObserveWorldEquipment(){
-  var report=r.world.equipment;if(report==null)return;Check(string.IsNullOrEmpty(report.error),"Original equipment lifecycle failed: "+report.error);
+  var report=r.world.equipment;if(report==null)return;ObserveFlightEquipment();Check(string.IsNullOrEmpty(report.error),"Original equipment lifecycle failed: "+report.error);
   var def=EquipmentCatalog.GetEquipmentDef(worldEquipmentSlot.equipmentIndex);report.equipment=def?def.name:"";report.stock=worldEquipmentSlot.stock;report.maxStock=worldEquipmentSlot.maxStock;report.cooldown=worldEquipmentSlot.cooldownTimer;
   foreach(var fieldName in new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}){var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(fieldName,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldPlayer);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);report.temporaryEffectViews=effect.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();}}
   foreach(var pickup in Resources.FindObjectsOfTypeAll<AmmoPickup>().Where(x=>x.gameObject.scene.IsValid()))if(worldNativeLootObjects.Add(pickup.baseObject)){worldObjects.Add(pickup.baseObject);report.ammoPacks++;}
  }
  void WorldEquipmentStimulus(NovaInputBridge bridge,float elapsed){
   bridge.diagnosticEquipment=false;if(r.world.equipment==null)return;
+  if(DeveloperEquipmentStimulus(bridge,elapsed))return;
   if(worldEquipmentSlot.stock>0&&worldEquipmentSlot.equipmentIndex!=EquipmentIndex.None&&elapsed-equipmentLastInput>45){bridge.diagnosticEquipment=true;equipmentLastInput=elapsed;}
  }
  void CleanupWorldEquipment(){
+  CleanupFlightEquipment();
   worldEquipmentFixed=null;worldEquipmentInventoryFixed=null;worldEquipmentTouch=false;worldEquipmentChests.Clear();equipmentLastInput=-100;
   if(worldEquipmentActivated!=null)EquipmentSlot.onServerEquipmentActivated-=worldEquipmentActivated;worldEquipmentActivated=null;worldEquipmentDefinitions=null;worldEquipmentSlot=null;worldEquipmentBridge=null;if(r.world!=null&&r.world.equipment!=null)r.world.equipment.cleaned=true;
  }

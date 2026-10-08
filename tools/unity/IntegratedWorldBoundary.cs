@@ -168,7 +168,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void CleanupWorldLootSupport(){
   CleanupWorldProcContent();
   CleanupOfflineSettingsPause();
-  CleanupWorldItemDisplays();CleanupWorldEquipment();
+  CleanupWorldEquipment();CleanupWorldItemDisplays();
   if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);
   foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
   if(worldFeatherJumped!=null){if(worldPlayer)worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
@@ -542,7 +542,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   return selected;
  }
  IEnumerator VerifyIntegratedWorldCleanup(){
-  if(r.world==null)yield break;yield return null;yield return null;FinishWorldDotCleanup();
+  if(r.world==null)yield break;yield return null;yield return null;FinishWorldDotCleanup();VerifyFlightEquipmentCleanup();
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
   r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldFeatherEffectIndex<0&&worldFeatherJumped==null&&worldAvailableItems==null&&worldAvailableEquipment==null;
   r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0&&!ownsWorldDots&&(r.dots==null||(r.dots.cleaned&&DotController.readOnlyInstancesList.Count==0));
