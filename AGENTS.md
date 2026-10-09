@@ -25,6 +25,8 @@ The real device is the final authority. Never declare success from compilation, 
 
 After meaningful progress update concise PORTING_STATE.md, append failed experiments with evidence/revisit conditions to docs/PORTING_JOURNAL.md, and maintain milestones/backlog. Commit small logical changes after checking staged files for proprietary material. Avoid unrelated rewrites. Read ADR-001 before changing architecture.
 
+Historical storage follows the user's J427 cleanup authorization: only J425 and the paused J323 Moon candidate remain ready-to-use rollbacks. Superseded source trees have adjacent `.retired.json` markers and hash-verified compressed content under ignored `work/retired-storage`; restore only a specifically needed tree using `scripts/compact-history.py`. Obsolete APK/payload outputs may require rebuilding. Preserve findings and receipts; do not treat the retired source store as disposable cache. See `docs/history-retention.md` before using an older checkpoint.
+
 
 ## Prior-art-first rule
 

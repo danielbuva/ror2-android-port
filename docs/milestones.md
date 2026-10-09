@@ -680,3 +680,5 @@ J420/J421 adds original Milky Chrysalis and Volcanic Egg:42eligible items/ten eq
 
 
 **J426 whole-catalog exit:** Host discovery/conversion covers the complete shipped provider/category root graph; no whitelist or quarantine. Full content loading/ContentManager/catalog registration and broad Android acceptance remain pending behind shared subobject/script bindings and failed host headroom. J425 and all prior capability gates remain unchanged. See whole-catalog-integration.md and WG01.
+
+J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB reclaimed; 319.4 GB free at completion), retaining verified J425/J323 rollbacks and compact historical source/findings. Old executables and payloads may require rebuilding. Actual archive restoration and all 110 host tests pass. Gameplay, startup, Moon and visual milestones retain their previous status. See docs/history-retention.md.

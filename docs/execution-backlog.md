@@ -4299,3 +4299,21 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **FAILURE EVIDENCE TO CAPTURE:** Native/export/subobject ambiguity, script binding and initializer owner, source inconsistencies, input drift, first import/registration/AOT/provider failure, storage/headroom and exact build/payload/launch receipts.
 - **STATE/JOURNAL UPDATES REQUIRED:** State, journal, milestones, coverage and whole-catalog report; privacy/IP review and Conventional Commit.
 - **DEPENDENCIES:** Accepted J425 composition and legitimate input; shared conversions, nine recovered-script bindings, enough host import/build space. Existing Wwise/platform ownership boundaries remain.
+
+## M01 / J427 — Aggressive host history retirement
+
+- **ID:** M01 / J427.
+- **TITLE:** Retire superseded snapshots and generated build outputs.
+- **CONTEXT:** User-authorized storage cleanup; at most two ready-to-use rollbacks.
+- **OBSERVATION:** Historical scene experiments/build archives report approximately 247.7/76.1 GB, including APFS-shared extents.
+- **HYPOTHESIS:** Distinct source data plus manifests preserve useful development history without expanded copies; obsolete generated outputs need not remain installed-ready.
+- **TASK:** Preserve J425 and J323 Moon, compact superseded source trees, discard obsolete APK/payload outputs, verify actual restoration/retained integrity and measure actual free space.
+- **CONSTRAINTS:** Ignored historical paths only; no original input, active project, toolchain, profiles, unrelated data or device mutation. Preserve findings/receipts and exact current selection.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** scripts/compact-history.py, maintenance tests, retention documentation and ignored local archive/deletion ledgers.
+- **TEST COMMAND:** ./dev doctor; ./dev test; explicit protected retirement plan; actual archived-source restoration; selected rollback integrity comparison.
+- **PASS CONDITION:** Two usable unchanged rollbacks; useful historical source/evidence preserved; obsolete full copies and generated outputs retired; actual disk gain reported. No gameplay gate advance.
+- **FAILURE EVIDENCE TO CAPTURE:** Hash/corruption/path/protection/concurrent-write rejection, partial-retirement marker, deletion ledger, original and final free-space measurements.
+- **STATE/JOURNAL UPDATES REQUIRED:** State, journal, retention guide and backlog exit; staged privacy/IP review and Conventional Commit.
+- **DEPENDENCIES:** Explicit user cleanup authorization, two verified source/APK/payload compositions and closed historical trees.
+
+**M01 exit — complete:** Reclaimed 218.8 GB of actual space, with 319.4 GB available at completion. Two verified full rollbacks remain; 387 source trees are compacted, and 437 obsolete APK copies plus 351 obsolete cache payload trees are removed. Actual source restoration and all 110 host tests pass. See docs/history-retention.md. No gameplay gate advances.
