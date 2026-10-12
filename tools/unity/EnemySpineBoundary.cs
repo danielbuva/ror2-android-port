@@ -29,6 +29,7 @@ public sealed partial class MovementBatchProbe {
   var field=typeof(EliteCatalog).GetField("eliteDefs",BindingFlags.NonPublic|BindingFlags.Static);priorEnemyElites=(EliteDef[])field.GetValue(null);priorEnemyEliteList=EliteCatalog.eliteList.ToArray();Check((priorEnemyElites==null||priorEnemyElites.Length==0)&&priorEnemyEliteList.Length==0,"Existing elite catalog");
   var names=new[]{"Poison","Haunted","Lunar","Void"};var defs=cfg.enemyEliteAssets.Select(x=>artifactBundle.LoadAsset<EliteDef>(x)).ToArray();Check(defs.Length==4,"Measured death elite definitions missing");for(int i=0;i<4;i++){Check(defs[i]&&defs[i].name=="ed"+names[i],"Original elite identity");BindEnemyDefinition(i==3?typeof(DLC1Content.Elites):typeof(RoR2Content.Elites),names[i],defs[i]);}
   var all=ComposedEliteDefinitions(cfg);ownsEnemyElites=true;StaticCall(typeof(EliteCatalog),"SetEliteDefs",new object[]{all});foreach(var def in all)Check(def.eliteIndex!=EliteIndex.None&&EliteCatalog.GetEliteDef(def.eliteIndex)==def,"Original elite catalog identity");
+  if(r.liveCatalogs!=null)WholeCatalogComposed.PopulateDefinitionFields("Elites",all,"ed");
  }
  EliteDef[] ComposedEliteDefinitions(Result cfg){
   var definitions=cfg.enemyEliteAssets.Select(path=>artifactBundle.LoadAsset<EliteDef>(path));

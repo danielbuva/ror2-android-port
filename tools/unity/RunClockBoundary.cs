@@ -13,6 +13,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class RunClockReport {
   public bool catalogReady,originalCallbacks,stopwatchRunning,cleaned,asyncAssetsReleased;public string scene,error,scope;public int sceneIndex,selectedDifficulty,fixedTicks,frameTicks,asyncAssetTicks;public float beganFixed,beganStopwatch,fixedTime,frameTime,stampTime,stopwatch,difficulty,compensatedDifficulty,ambient;public bool paused;
  }
+ Action<SceneExitController> ownedStageAsyncRelease,nativeStageAsyncRelease;
  Action ownedRunFixed,ownedRunFrame,ownedAsyncAssetFrame;bool ownsRunAsyncLifecycle;Run clockRun;Scene priorClockScene;SceneDef[] priorContentScenes;SceneDef clockSceneDef;SceneDef[] clockSceneDefs;
  readonly Dictionary<FieldInfo,object> clockSceneFields=new Dictionary<FieldInfo,object>();IDictionary clockSceneMap;ResourceAvailability priorSceneAvailability;
  FieldInfo clockFixedStamp,clockFrameStamp;object priorClockFixedStamp,priorClockFrameStamp;bool ownsRunSceneCatalog;
@@ -38,6 +39,17 @@ public sealed partial class MovementBatchProbe {
   Check(!RoR2Application.instance||!RoR2Application.instance.isActiveAndEnabled,"Original application already schedules async assets");
   Check(RewardField(typeof(AssetAsyncLiaison),"asyncOnUpdate").GetValue(null)!=null&&RewardField(typeof(AssetAsyncLiaison),"asyncOnSceneTransitionStarted").GetValue(null)!=null,"Original async asset startup callbacks missing");
   ownedAsyncAssetFrame=(Action)Delegate.CreateDelegate(typeof(Action),typeof(AssetAsyncLiaison).GetMethod("OnUpdate",BindingFlags.NonPublic|BindingFlags.Static));ownsRunAsyncLifecycle=true;
+  nativeStageAsyncRelease=AssetAsyncLiaison.OnSceneTransitionStarted;
+  ownedStageAsyncRelease=exit=>{if(ownsIntegratedPools)ReturnIntegratedStageEffects();nativeStageAsyncRelease(exit);};
+  ReplaceOwnedStageRelease(nativeStageAsyncRelease,ownedStageAsyncRelease);
+ }
+ void ReplaceOwnedStageRelease(Action<SceneExitController> before,Action<SceneExitController> after){
+  // Preserve every listener and its order. The native callback must receive an
+  // empty owned effect pool before its synchronous asset-release operation.
+  var field=typeof(SceneExitController).GetField("onFinishExit",BindingFlags.Static|BindingFlags.NonPublic);
+  var listeners=(Delegate)field.GetValue(null);var entries=listeners==null?new Delegate[0]:listeners.GetInvocationList();
+  Check(entries.Count(value=>value.Equals(before))==1,"Native stage asset-release callback ownership changed");
+  field.SetValue(null,Delegate.Combine(entries.Select(value=>value.Equals(before)?after:value).ToArray()));
  }
  void TickOriginalRunClock(){if(ownedRunFixed==null)return;try{ownedRunFixed();r.runClock.fixedTicks++;TickMoonTimers();TickStageBossHeat();}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;Save();}}
  void Update(){TickDebugAcceleration();ObserveOfflineApplicationInput();ObserveWorldRestartInput();TickOriginalStage();if(ownedRunFrame==null)return;try{if(ownedAsyncAssetFrame!=null){ownedAsyncAssetFrame();r.runClock.asyncAssetTicks++;}ownedRunFrame();r.runClock.frameTicks++;}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;ownedAsyncAssetFrame=null;Save();}}
@@ -58,6 +70,7 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupRunClock(){
   if(!ownsRunSceneCatalog)return;if(clockRun&&string.IsNullOrEmpty(r.runClock.error))ObserveOriginalRunClock();ownedRunFixed=null;ownedRunFrame=null;ownedAsyncAssetFrame=null;
+  if(ownedStageAsyncRelease!=null){ReplaceOwnedStageRelease(ownedStageAsyncRelease,nativeStageAsyncRelease);ownedStageAsyncRelease=null;nativeStageAsyncRelease=null;}
   SceneManager.activeSceneChanged-=(UnityEngine.Events.UnityAction<Scene,Scene>)Delegate.CreateDelegate(typeof(UnityEngine.Events.UnityAction<Scene,Scene>),typeof(SceneCatalog).GetMethod("OnActiveSceneChanged",BindingFlags.NonPublic|BindingFlags.Static));
   if(priorClockScene.IsValid()&&priorClockScene.isLoaded&&SceneManager.GetActiveScene()!=priorClockScene)Check(SceneManager.SetActiveScene(priorClockScene),"Prior active scene restoration failed");
   if(clockSceneDefs!=null)foreach(var def in clockSceneDefs)if(def)def.sceneDefIndex=SceneIndex.Invalid;ContentManager._sceneDefs=priorContentScenes;clockSceneMap.Clear();foreach(var entry in clockSceneFields)entry.Key.SetValue(null,entry.Value);SceneCatalog.availability=priorSceneAvailability;

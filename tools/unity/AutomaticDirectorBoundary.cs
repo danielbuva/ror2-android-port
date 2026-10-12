@@ -78,7 +78,7 @@ public sealed partial class MovementBatchProbe {
    var originals=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterMaster,new GameObject[0]);
    var byName=adaptedMasters.ToDictionary(value=>value.name,StringComparer.Ordinal);
    Check(byName.Keys.All(name=>originals.Any(value=>value.name==name)),"Owned adapted master absent from original provider category");
-   masters=originals.Select(value=>byName.ContainsKey(value.name)?byName[value.name]:value).ToArray();r.liveCatalogs.masters=masters.Length;r.liveCatalogs.adaptedMasters=adaptedMasters.Length;
+   masters=PrepareWholeMasterTemplates(originals,adaptedMasters);r.liveCatalogs.masters=masters.Length;r.liveCatalogs.adaptedMasters=masters.Count(value=>objectiveTemplates.Contains(value)||adaptedMasters.Contains(value));
   }
   StaticCall(typeof(MasterCatalog),"SetEntries",new object[]{masters});
   var index=MasterCatalog.FindMasterIndex(template);Check(MasterCatalog.GetMasterPrefab(index)==template,"Original master catalog identity");r.director.masterIndex=(int)index;
@@ -113,7 +113,7 @@ public sealed partial class MovementBatchProbe {
   Check(r.director.originalTarget&&r.director.preloaded&&r.director.creditConserved&&r.director.placement&&(cfg.integratedWorld||limit==3?rewardDirector.enabled:!rewardDirector.enabled),"Original targeting/preload/credit/placement assertions failed");Save();
  }
  void CleanupAutomaticDirector(){
-  CleanupStageCombatDecks();ownedNavigationTick=null;
+  CleanupStageCombatDecks();CleanupWholePopulation();ownedNavigationTick=null;
   if(directorPlayerRegistered&&directorPlayer){Call(directorPlayer,"OnDisable");directorPlayerRegistered=false;}
   if(automaticDirectorHost)Destroy(automaticDirectorHost);if(automaticDeck)Destroy(automaticDeck);
   if(directorMasterMap!=null){directorMasterMap.Clear();foreach(var entry in directorMasterFields)entry.Key.SetValue(null,entry.Value);directorMasterFields.Clear();DirectorRequestedMasters().Clear();DirectorMessageMasters().Clear();RewardField(typeof(CombatDirector),"eliteTiers").SetValue(null,priorDirectorEliteTiers);}

@@ -788,6 +788,33 @@ def repair_root_bindings():
     print(json.dumps(dict(repaired=len(repairs), closure_files=len(result['files']))))
 
 
+
+def original_stage_contexts(export, stages, input_id, pool_keys):
+    """Recover native population policy from each original serialized scene."""
+    export=Path(export);contexts={}
+    fields={'ignoreArtifactsThatRebuildCards':bool,'contentSourceMixLimitOverride':bool,
+            'contentSourceMixLimitOverrideValue':int,'contentInteractableOnlySourceMixLimitOverride':bool,
+            'contentInteractableOnlySourceMixLimitOverrideValue':int,
+            'sceneDirectorInteractibleCredits':int,'sceneDirectorMonsterCredits':int}
+    for stage in stages:
+        source=export/('Assets/RoR2/Base/Scenes/'+stage+'/'+stage+'.unity')
+        records=[block for block in re.split(r'(?=^--- !u!)',source.read_text(),flags=re.M)
+                 if re.search(r'^  monsterDccsPool:',block,re.M)]
+        if len(records)!=1:raise RuntimeError('Original stage population context is ambiguous: '+stage)
+        record=records[0];result={'source_sha256':sha(source),'fields':{}}
+        for name in ['monsterDccsPool','interactableDccsPool']:
+            match=re.search(r'^  '+name+r': \{fileID: [-0-9]+, guid: ([a-f0-9]{32}), type: [0-9]+\}',record,re.M)
+            if not match:raise RuntimeError('Original stage pool reference missing: '+stage+'/'+name)
+            if match[1] not in pool_keys:raise RuntimeError('Stage pool has no unique typed runtime location: '+stage+'/'+name)
+            result[name]=pool_keys[match[1]]
+        for name,kind in fields.items():
+            match=re.search(r'^  '+name+r': (-?\d+)$',record,re.M)
+            if not match:raise RuntimeError('Original stage population policy missing: '+stage+'/'+name)
+            value=int(match[1]);result['fields'][name]=bool(value) if kind is bool else value
+        contexts[stage]=result
+    return {'input_id':input_id,'stages':contexts,'scope':'Original pool references and native population policy. SceneDirector placement/bonus-object credits are not yet integrated.'}
+
+
 def build_integration(code_only=False):
     from build import build, freeze_whole_payload
     out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
@@ -798,7 +825,20 @@ def build_integration(code_only=False):
     project = WORK/'lab-project'
     if (WORK/'scene-probe-build.json').exists() and not (project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json').is_file():
         raise RuntimeError('Composed session is not staged for this generation; migrate it before building against an old scene recipe')
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs']:
+    stage_config=project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'
+    if stage_config.exists():
+        stages=[row['name'] for row in read(stage_config).get('stageCombatDecks',[])]
+        export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+        pool_keys={}
+        for row in manifest['locations']:
+            if not row['type'].startswith('RoR2.DccsPool,'):continue
+            meta=(project/(row['path']+'.meta')).read_text()
+            guid=re.search(r'^guid: ([a-f0-9]{32})$',meta,re.M)[1]
+            if guid in pool_keys and pool_keys[guid]!=row['primaryKey']:
+                raise RuntimeError('Ambiguous stage pool serialized owner')
+            pool_keys[guid]=row['primaryKey']
+        write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'
     body_text=body_boundary.read_text()

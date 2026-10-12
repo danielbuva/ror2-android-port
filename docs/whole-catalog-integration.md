@@ -1,4 +1,4 @@
-# Whole-catalog integration — J431/J433
+# Whole-catalog integration — J431/J434
 
 Architecture C remains active. Load original content providers and ContentManager phases through converted Android locations; preserve original keys, types and asset relationships. Loading expansion/entitlement definitions never grants ownership or enables an expansion. Stock platform/profile startup remains stopped.
 
@@ -21,6 +21,12 @@ Candidate33 connects295items/59equipment/275buffs, thirteen original tiers,629na
 Candidate36 connects native290bodies/204masters/563skills/378families/414projectiles and1,897state configurations to composition. Native AddressablesLoadHelper.CanLoadType/JunkContent policy and per-provider NamedAssetCollection ordering define membership. Preserve28adapted masters and208accepted configuration adaptations; other original catalog assets remain canonical. Native state initialization drives nested preload coroutines and registers1,905original types. The discovered closure follows all nonempty preload string keys; the owned runtime table omits81empty source entries and retains931nonempty keys in native order. Cleanup restores4,537static fields and the prior preload arrays.
 
 Host7,090typed roots/130tests and combined432.442seconds/29kills/four-transition Android exit pass with zero current-process errors and full cleanup. This is assisted live catalog integration, not all actors/procs, stock startup, normal combat, visual parity or performance acceptance. Next expand original director/session consumers from these complete catalogs. Three source-unassigned master bodies, one empty skill variant and unresolved soft references remain contextual findings, not automatic quarantine.
+
+## Native stage population — J434
+
+Candidate40 uses exact source scene policy and uniquely typed pool addresses for seven converted base stages. Original ClassicStageInfo.RebuildCards/DCCSBlender selects monster/interactable categories with native restrictions; owned source spawn-card copies reference201adapted master templates/189assigned bodies. Three intentionally body-unassigned masters stay original. Five observed monster decks exclude zero cards. Original SceneDirector placement/bonus-object credits and full session initialization remain next; no automatic content quarantine.
+
+The combined441.784second/31kill/four-transition run passes with zero current-process errors and full cleanup. Native deferred HUD sprite loading restores inventory/equipment icons. Owned runtime effect sound metadata clears/restores without changing baked source assets; a wrapper at the native stage-release listener's original position returns live effect loans and restores at teardown.131host tests pass. Registration/preparation does not establish every actor/proc, normal/full-run, PC visual or sustained-performance acceptance.
 
 ## Retained J428 Android evidence
 

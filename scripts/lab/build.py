@@ -69,6 +69,11 @@ WHOLE_PLAYER_INPUTS={'Assets/LabDiagnostics.cs','Assets/Lab.unity','Assets/Lab.u
  'Assets/LabLoadingScene/BodyCatalogBoundary.cs','Assets/LabLoadingScene/WholeCatalogComposed.cs',
  'Assets/LabLoadingScene/WholeCatalogComposed.cs.meta','Assets/LabLoadingScene/WholeCatalogPreservation.meta',
  'Assets/LabLoadingScene/WholeCatalogPreservation/link.xml','Assets/LabLoadingScene/WholeCatalogPreservation/link.xml.meta'}
+# These sources/metadata are APK-only consumers of unchanged converted assets.
+WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+name+suffix
+ for name in ['AutomaticDirectorBoundary.cs','StageCombatDeckBoundary.cs',
+              'EnemySpineBoundary.cs','MoonMissionBoundary.cs','WholePopulationBoundary.cs',
+              'Resources/WholeStageContexts.json','RecoveredHudPresentation.cs','EnemyRewardBoundary.cs','IntegratedStageBoundary.cs','RunClockBoundary.cs','TeleporterWorldBoundary.cs'] for suffix in ['', '.meta'])
 
 def whole_payload_inputs(project):
  return {str(p.relative_to(project)):sha(p) for folder in ['Assets','Packages','ProjectSettings'] for p in (project/folder).rglob('*') if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith('Assets/Editor/')}

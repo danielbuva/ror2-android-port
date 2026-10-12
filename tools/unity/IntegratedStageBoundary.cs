@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks,mapZoneCount,mapZoneNetworkObjects;public string[] mapZoneActiveNames;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
-  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests;
+  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned;
   public float enteredAt,experienceSettlementSeconds;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter,experienceAtExit,pendingExperienceAtExit;public int pendingExperienceAwardsAtExit;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
@@ -120,7 +120,9 @@ public sealed partial class MovementBatchProbe {
  void ReturnIntegratedStageEffects(){
   Check(ownsIntegratedPools,"Stage effect pools have no integrated ownership baseline");
   var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);
+  int loans=pools.Values.Sum(pool=>pool.InUseCount());
   foreach(var pool in pools.Values.ToArray())foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);
+  if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
  void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}

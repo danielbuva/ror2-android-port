@@ -210,7 +210,7 @@ public static class WholeCatalogComposed {
  public static void RestoreDefinitionFields(){foreach(var pair in priorDefinitionFields)pair.Key.SetValue(null,pair.Value);priorDefinitionFields.Clear();}
  public static RoR2.BuffDef[] BuffDefinitions(){if(!owned)throw new Exception("Shared original buff owner unavailable");return owned.LoadAllAssets<RoR2.BuffDef>();}
  public static RoR2.ItemDef[] ItemDefinitions(){if(!owned)throw new Exception("Shared original item owner unavailable");return owned.LoadAllAssets<RoR2.ItemDef>();}
- public static RoR2.EliteDef[] EliteDefinitions(){if(!owned)throw new Exception("Shared original elite owner unavailable");return owned.LoadAllAssets<RoR2.EliteDef>();}
+ public static RoR2.EliteDef[] EliteDefinitions(){return CategoryFamily(RoR2.ContentManagement.AddressablesLabels.eliteDef,new RoR2.EliteDef[0]);}
  public static RoR2.KeyItemDef[] KeyItemDefinitions(){if(!owned)throw new Exception("Shared original key-item owner unavailable");return owned.LoadAllAssets<RoR2.KeyItemDef>();}
  public static RoR2.ItemGroupType[] ItemGroupTypes(){if(!owned)throw new Exception("Shared original item-group owner unavailable");return owned.LoadAllAssets<RoR2.ItemGroupType>();}
  public static RoR2.ItemGroupProvider[] ItemGroupProviders(){if(!owned)throw new Exception("Shared original item-group provider owner unavailable");return owned.LoadAllAssets<RoR2.ItemGroupProvider>();}

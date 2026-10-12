@@ -67,6 +67,11 @@ public sealed partial class MovementBatchProbe {
  }
  bool OriginalActorEquipment(CharacterBody body){
   if(body.inventory.currentEquipmentIndex==EquipmentIndex.None)return true;
+  if(r.liveCatalogs!=null){
+   var equipment=EquipmentCatalog.GetEquipmentDef(body.inventory.currentEquipmentIndex);if(!equipment)return false;
+   var elite=EliteCatalog.GetEliteDefFromEquipmentIndex(body.inventory.currentEquipmentIndex);
+   return elite&&elite.IsAvailable()||wholeSpawnCards.Values.Any(card=>card.prefab.GetComponent<CharacterMaster>().bodyPrefab==body.master.bodyPrefab&&card.equipmentToGrant.Contains(equipment));
+  }
   return IsObjectiveActor(body)&&body.name.StartsWith("Lunar",StringComparison.Ordinal)&&RoR2Content.Equipment.AffixLunar&&
    body.inventory.currentEquipmentIndex==RoR2Content.Equipment.AffixLunar.equipmentIndex&&
    EquipmentCatalog.GetEquipmentDef(body.inventory.currentEquipmentIndex)==RoR2Content.Equipment.AffixLunar&&RoR2Content.Elites.Lunar.IsAvailable();

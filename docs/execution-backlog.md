@@ -4351,3 +4351,20 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **FAILURE EVIDENCE TO CAPTURE:** Candidate34 unsupported global-name guard;35 adapted-name/preload closure errors;124stale typed imports before refresh. Failed receipts/raw evidence retained; no failed pointer advancement.
 - **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit, two current accepted compositions, staged public audit and Conventional Commit.
 - **DEPENDENCIES:** J432 rollback, native category/preload contracts, pinned R2API ContentManagement/ContentAddition/CatalogBlockers.
+
+
+## C04 / J434 — Native stage populations and complete actor templates
+
+- **ID:** C04 / J434; composed exit passes, individual content behavior remains open.
+- **TITLE:** Integrate original stage population policy and shared Android actor activation.
+- **CONTEXT:** J433 complete live catalogs exceed the legacy selected actor/deck consumers.
+- **OBSERVATION:** Maintained stage lists exclude source cards; updated deferred icons, effect audio metadata and stage-release ordering have shared lifecycle contracts.
+- **HYPOTHESIS:** Original ClassicStageInfo/DccsPool/DCCSBlender can select complete source populations using owned adapted templates and paired asset lifetimes.
+- **TASK:** Recover seven source scene policies and typed pool addresses; prepare all assigned canonical masters; retain native availability/preloads; integrate deferred HUD sprites and paired optional-audio/effect-pool release.
+- **CONSTRAINTS:** Common contract; no unlock/platform grants, content allowlist, guessed shader math, manual/Moon routing or all-content acceptance claims.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing whole-catalog/build/director/body/HUD/clock/cleanup boundaries, one shared whole-population consumer and source-policy parser checks.
+- **TEST COMMAND:** Existing doctor/preflight/test; exact-editor pool/actor/elite/icon/audio/callback-order host checks; whole-catalog-build; movement-batch-retry with explicit migration acceleration.
+- **PASS CONDITION:** Five native stage selections exclude zero cards;201adapted masters coexist through441.784world seconds/31kills/four genuine transitions with zero current-process errors and complete cleanup. Candidate40 passes;131host tests pass. SceneDirector placement and unobserved actor behavior remain open.
+- **FAILURE EVIDENCE TO CAPTURE:** Candidate37 wrong elite owner;38 native audio dispatch and nonempty effect-pool release;39 host callback-order rejection before installation. Preserve immutable receipts/raw evidence and first-failure classifications.
+- **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit; preserve candidate36 rollback and retire superseded generated outputs only after retained hash checks; staged public audit and Conventional Commit.
+- **DEPENDENCIES:** J433 rollback, pinned R2API.Director/Sound ownership and observation contracts, measured current original scene/pool/async UI/effect initialization.

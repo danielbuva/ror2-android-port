@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
-from whole_catalog import analyze, catalog_roots, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots
+from whole_catalog import original_stage_contexts, analyze, catalog_roots, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots
 import build
 from common import sha, write
 
@@ -144,6 +144,26 @@ class WholeCatalogTests(unittest.TestCase):
             self.assertEqual(result['summary']['catalog_roots'], 1)
             self.assertEqual(result['summary']['soft_reference_edges'], 1)
             self.assertEqual(result['summary']['quarantine'], [])
+
+    def test_original_stage_policy_requires_unique_complete_source_record(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            scene=root/'Assets/RoR2/Base/Scenes/example/example.unity'
+            scene.parent.mkdir(parents=True)
+            record='--- !u!114 &1\n  monsterDccsPool: {fileID: 11400000, guid: '+('a'*32)+', type: 2}\n  interactableDccsPool: {fileID: 11400000, guid: '+('b'*32)+', type: 2}\n'
+            for name,value in [('ignoreArtifactsThatRebuildCards',0),('contentSourceMixLimitOverride',1),('contentSourceMixLimitOverrideValue',3),('contentInteractableOnlySourceMixLimitOverride',0),('contentInteractableOnlySourceMixLimitOverrideValue',2),('sceneDirectorInteractibleCredits',220),('sceneDirectorMonsterCredits',100)]:
+                record+='  '+name+': '+str(value)+'\n'
+            scene.write_text(record)
+            result=original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+            self.assertEqual(result['stages']['example']['monsterDccsPool'],'Original/Monsters')
+            self.assertEqual(result['stages']['example']['fields']['contentSourceMixLimitOverrideValue'],3)
+            self.assertIs(result['stages']['example']['fields']['contentSourceMixLimitOverride'],True)
+            scene.write_text(record+record)
+            with self.assertRaisesRegex(RuntimeError,'ambiguous'):
+                original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+            scene.write_text(record.replace('  sceneDirectorMonsterCredits: 100\n',''))
+            with self.assertRaisesRegex(RuntimeError,'policy missing'):
+                original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
 
     def test_state_preload_strings_extend_runtime_closure(self):
         with tempfile.TemporaryDirectory() as temp:

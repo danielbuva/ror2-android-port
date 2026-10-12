@@ -16,7 +16,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class RewardReport {
   public string[] characterEffects,deferredEffects,registeredDeferredEffects,retainedOperations;
-  public bool supportBundlePreloaded;
+  public bool supportBundlePreloaded,effectSoundMetadataRestored;public int unavailableEffectSounds;
   public bool assetsReady,directedSpawn,spawnContract,queuedExperience,delivered,cleaned,equipmentMaskReady;public int equipmentDefinitions,expansionLockedEquipment;public int playerTeamBefore,playerTeamAfter;public bool inactiveFixtureRemoved;public int summonEvents,spawnEvents,creditCost,spawnValue,pendingPeak,ambientItems,boostHpItems,boostDamageItems;public uint goldExpected,experienceExpected,moneyBefore,moneyAfter,teamLevel;public ulong experienceBefore,experienceAfter;public float spawnLevelBeforeStart,spawnLevelAfterStart;public int acquisitionCount,equipmentIndex;public float bodyCost,compensatedDifficulty,deathAt,experienceAt,goldEvents;public string scope;public string seed,seedSource;
  }
  const string RewardBundle="enemy-reward-lab";

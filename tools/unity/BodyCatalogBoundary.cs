@@ -114,6 +114,15 @@ public sealed partial class MovementBatchProbe {
   if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.ConfigureLocations();
  }
  ResourceAvailability priorComposedEffectAvailability;
+ readonly Dictionary<EffectDef,string> priorComposedEffectSounds=new Dictionary<EffectDef,string>();
+ void AdaptComposedEffectAudio(EffectDef definition){
+  // These owned runtime records are distinct from original baked assets.
+  // Audio is unavailable; preserve visual dispatch and restore the event metadata.
+  if(string.IsNullOrEmpty(definition.spawnSoundEventName)||priorComposedEffectSounds.ContainsKey(definition))return;
+  priorComposedEffectSounds.Add(definition,definition.spawnSoundEventName);
+  typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(definition,null,null);
+  if(r.rewards!=null)r.rewards.unavailableEffectSounds=priorComposedEffectSounds.Count;
+ }
  readonly Dictionary<int,GameObject> priorCatalogBodyTemplates=new Dictionary<int,GameObject>();
  void SetCatalogBodyTemplate(int index,GameObject template){
   ((GameObject[])RewardField(typeof(BodyCatalog),"bodyPrefabs").GetValue(null))[index]=template;
@@ -136,6 +145,7 @@ public sealed partial class MovementBatchProbe {
   EffectCatalog.SetEntries(Array.Empty<EffectDef>());EffectCatalog.availability.MakeAvailable();
   Check(EffectCatalog.effectCount>0,"Original baked effect catalog unavailable");
   RegisterComposedEffects(definitions);
+  foreach(var definition in (EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null))AdaptComposedEffectAudio(definition);
  }
  void RegisterComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions){
   var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);
@@ -143,12 +153,14 @@ public sealed partial class MovementBatchProbe {
    var index=EffectCatalog.FindEffectIndex(definition.prefabName);
    Check(index!=EffectIndex.Invalid&&definition.prefabEffectComponent,"Original baked effect identity absent: "+definition.prefabName);
    typeof(EffectDef).GetProperty("index").SetValue(definition,index,null);
-   definition.prefabEffectComponent.effectIndex=index;entries[(int)index]=definition;
+   definition.prefabEffectComponent.effectIndex=index;entries[(int)index]=definition;AdaptComposedEffectAudio(definition);
   }
  }
  void RestoreComposedEffects(EffectDef[] previous){
   var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);
   foreach(var definition in entries)if(definition.prefabEffectComponent)definition.prefabEffectComponent.effectIndex=EffectIndex.Invalid;
+  foreach(var pair in priorComposedEffectSounds)typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key,pair.Value,null);priorComposedEffectSounds.Clear();
+  if(r.rewards!=null)r.rewards.effectSoundMetadataRestored=true;
   RewardField(typeof(EffectCatalog),"entries").SetValue(null,previous);
   ((IDictionary)RewardField(typeof(EffectCatalog),"nameToEffectIndex").GetValue(null)).Clear();
   EffectCatalog.availability=priorComposedEffectAvailability;
