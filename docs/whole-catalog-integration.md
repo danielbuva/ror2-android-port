@@ -1,10 +1,10 @@
-# Whole-catalog integration — J431/J432
+# Whole-catalog integration — J431/J433
 
 Architecture C remains active. Load original content providers and ContentManager phases through converted Android locations; preserve original keys, types and asset relationships. Loading expansion/entitlement definitions never grants ownership or enables an expansion. Stock platform/profile startup remains stopped.
 
 ## Updated host generation
 
-Steam25475991 uses the approved exact Unity2021.3.45f2. Original IL discovers seven providers/33 categories and254 catalog address literals; provider labels remain governed by the original typed loaders. Runtime address roots add baked catalogs, shared UI and other non-provider resources. All6,515 required roots load with their original types; the complete discovered closure has42,292 files, including original BakedEffectData.assetGUID dependencies. Seven original provider phases and thirteen native catalog initializers finish with zero reported errors. Host registration:295 items,59 equipment,290 bodies,204 masters,275 buffs,20 elites,414 projectiles,76 scene definitions,1,897 state configurations,563 skills and21 drone definitions. Additional categories retain73 craftables, seven cursed-book spells and one each of key-item/item-group type/provider.
+Steam25475991 uses the approved exact Unity2021.3.45f2. Original IL discovers seven providers/33 categories and254 catalog address literals; provider labels remain governed by the original typed loaders. Runtime address roots add baked catalogs, shared UI and other non-provider resources. All7,090 required roots load with their original types; the complete discovered closure has42,592 files, including original BakedEffectData.assetGUID and plain-string state preloadGUIDReferences dependencies. Seven original provider phases and thirteen native catalog initializers finish with zero reported errors. Host registration:295 items,59 equipment,290 bodies,204 masters,275 buffs,20 elites,414 projectiles,76 scene definitions,1,897 state configurations,563 skills and21 drone definitions. Additional categories retain73 craftables, seven cursed-book spells and one each of key-item/item-group type/provider.
 
 Provider effectDefs is legitimately empty in this build. Original EffectCatalog loads its separate BakedEffectsCatalog; the native catalog registers1,679 effects. Counts distinguish provider arrays from initialized native catalogs.
 
@@ -16,7 +16,11 @@ A scene GUID collision is resolved only where the original catalog uniquely iden
 
 Candidate33 connects295items/59equipment/275buffs, thirteen original tiers,629native holder bindings and84original item-behavior associations to live composition. Original item/tier setters, ContentLoadHelper and association methods retain their contracts; Android owns scheduling/snapshots/cleanup. Source requirements replace the loot whitelist while retaining42fresh-profile items/10equipment. An earned Vagrant attachment exercises the native host-authority option with its original identity flag retained. The combined431.144second/four-transition run passes with zero errors and complete cleanup; assists prevent normal-game acceptance. Detailed material/property census now requires `detailedVisualDiagnostics` or a targeted visual capture; native material adaptation and ordinary evidence remain enabled.
 
-For the next spawn/catalog batch, preserve native AddressablesLoadHelper.CanLoadType and JunkContent.loadOnlyExplicitTypes. Raw labels include unused categories and exceed native membership by23bodies/10masters/52skills/40families. The policy-aware host graph matches290bodies/204masters/563skills/378families; unassigned master bodies/skill variants and unresolved state references require source/runtime context before changing them. No Android quarantine follows from the graph alone.
+## Live actor/state integration — J433
+
+Candidate36 connects native290bodies/204masters/563skills/378families/414projectiles and1,897state configurations to composition. Native AddressablesLoadHelper.CanLoadType/JunkContent policy and per-provider NamedAssetCollection ordering define membership. Preserve28adapted masters and208accepted configuration adaptations; other original catalog assets remain canonical. Native state initialization drives nested preload coroutines and registers1,905original types. The discovered closure follows all nonempty preload string keys; the owned runtime table omits81empty source entries and retains931nonempty keys in native order. Cleanup restores4,537static fields and the prior preload arrays.
+
+Host7,090typed roots/130tests and combined432.442seconds/29kills/four-transition Android exit pass with zero current-process errors and full cleanup. This is assisted live catalog integration, not all actors/procs, stock startup, normal combat, visual parity or performance acceptance. Next expand original director/session consumers from these complete catalogs. Three source-unassigned master bodies, one empty skill variant and unresolved soft references remain contextual findings, not automatic quarantine.
 
 ## Retained J428 Android evidence
 

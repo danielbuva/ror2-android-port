@@ -5,11 +5,13 @@ rollbacks and retire superseded full snapshots and build outputs. Earlier journa
 statements that every archived APK/full snapshot remained present describe the
 state at those historical exits; this retention policy supersedes them.
 
+During the approved Steam25475991 migration, J433 candidate36 is the current composed build and J432 candidate33 is its immediate verified APK/payload rollback. J425/J323 below and the old-input J428 migration material remain protected. Superseded candidate31 and failed34/35 generated APK/payload are retired; receipts, findings and authored transformation records remain. Current pointers are under ignored `work/checkpoints`.
+
 The expanded rollbacks are:
 
 | Role | Retained composition | Source/evidence directory |
 | --- | --- | --- |
-| Current integrated game | J425, APK `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` | `work/experiments/scene-runtime/20261008T163328.528634Z` |
+| Pre-migration integrated game | J425, APK `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` | `work/experiments/scene-runtime/20261008T163328.528634Z` |
 | Paused Moon candidate | J323, APK `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` | `work/experiments/scene-runtime/20261006T034153.546343Z` |
 
 Both retain their exact APK, matching complete payload, source archive, settings,

@@ -240,7 +240,7 @@ public sealed partial class MovementBatchProbe {
    }
    foreach(var provider in bodyObject.GetComponentsInChildren<SurfaceDefProvider>(true)){var surface=Instantiate(provider.surfaceDef);surface.impactEffectPrefab=null;surface.impactSoundString=null;provider.surfaceDef=surface;objectiveResources.Add(surface);}
    BindCatalogBodyTemplate(bodyObject);
-   var masterObject=Instantiate(artifactBundle.LoadAsset<GameObject>(spec.master),enemyTemplates.transform);masterObject.name=spec.name+"Master";masterObject.GetComponent<Inventory>().enabled=false;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;masterObject.SetActive(true);objectiveTemplates.Add(masterObject);
+   var masterSource=artifactBundle.LoadAsset<GameObject>(spec.master);var masterObject=Instantiate(masterSource,enemyTemplates.transform);masterObject.name=masterSource.name;masterObject.GetComponent<Inventory>().enabled=false;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;masterObject.SetActive(true);objectiveTemplates.Add(masterObject);
    var cardSource=spec.card==cfg.stageMiniCardAsset?objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<CharacterSpawnCard>(spec.card):artifactBundle.LoadAsset<CharacterSpawnCard>(spec.card);Check(cardSource&&cardSource.prefab&&cardSource.directorCreditCost>=0,"Original objective spawn card absent from its declared bundle owner: "+spec.name);var card=Instantiate(cardSource);card.name=card.name.Replace("(Clone)","");card.prefab=masterObject;objectiveCards.Add(card);
   }
   // The original Queen summons a Guard using its configured source card. Redirect only the

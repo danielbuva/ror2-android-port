@@ -15,6 +15,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  // These exact definitions register identities; original eligibility remains authoritative.
  [Serializable] public class MoonCatalogSpec {public string[] items,buffs,equipment;}
  [Serializable] public class Result {
+  public LiveCatalogReport liveCatalogs;
   public string stageBossArmorBuffAsset;public string stageOverheatBuffAsset,stageOverheatVisualAsset,stageGrandparentSunAsset,stageMiniCardAsset,stageMiniCardKey,stageMiniCardPath;public StageBossContentReport stageBossContent;
   public bool catalogTransformInstalled,catalogTransformRestored;
   public bool worldItemDisplays;public WorldItemDisplayReport itemDisplays;public WorldChestSpec[] worldChestBreadth;public ChestBreadthReport chestBreadth;
@@ -427,6 +428,8 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
     WholeCatalogComposed.PopulateDefinitionFields("Items",ItemCatalog.allItemDefs.ToArray());
     WholeCatalogComposed.PopulateDefinitionFields("Equipment",EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).ToArray());
+    WholeCatalogComposed.PopulateBodyFields(BodyCatalog.allBodyPrefabs.ToArray());
+    r.liveCatalogs.projectiles=WholeCatalogComposed.PrepareProjectiles();
     WholeCatalogComposed.PopulateDefinitionFields("Buffs",Enumerable.Range(0,BuffCatalog.buffCount).Select(index=>BuffCatalog.GetBuffDef((BuffIndex)index)).ToArray(),"bd");
    }
    manager=CreateTeamContext(out teamHost);Call(team,"Awake");team.teamIndex=TeamIndex.None;team.teamIndex=TeamIndex.Player;Check(team.body==body&&TeamComponent.GetTeamMembers(TeamIndex.Player).Contains(team),"Recovered player team context");
@@ -451,13 +454,13 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    }
 
   }finally{
-   WholeCatalogComposed.RestoreDefinitionFields();body.onRecalculateStats-=observed;if(healthAwake)Call(body.healthComponent,"OnDestroy");if(team)Call(team,"OnDestroy");if(artifacts){Call(artifacts,"OnDisable");Call(artifacts,"OnDestroy");}if(run)Call(run,"OnDisable");if(runHost)Destroy(runHost);if(manager)Call(manager,"OnDisable");if(teamHost)Destroy(teamHost);
+   WholeCatalogComposed.RestoreProjectiles();if(r.liveCatalogs!=null)r.liveCatalogs.projectileCleanup=ProjectileCatalog.projectilePrefabCount==0;WholeCatalogComposed.RestoreDefinitionFields();body.onRecalculateStats-=observed;if(healthAwake)Call(body.healthComponent,"OnDestroy");if(team)Call(team,"OnDestroy");if(artifacts){Call(artifacts,"OnDisable");Call(artifacts,"OnDestroy");}if(run)Call(run,"OnDisable");if(runHost)Destroy(runHost);if(manager)Call(manager,"OnDisable");if(teamHost)Destroy(teamHost);
    RoR2Content.Artifacts.WeakAssKnees=oldFall;RoR2Content.Artifacts.Glass=priorGlass;StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{priorDefs});StaticCall(typeof(RunArtifactManager),"Init");DLC1Content.Equipment.EliteVoidEquipment=oldVoid;RoR2Content.Equipment.LunarPotion=oldPotion;
   }
  }
  IEnumerator SpawnBoundary(CharacterBody body,Result cfg){
   var master=body.master;Check(master&&!master.hasBody&&master.GetBody()==null&&body.master==master,"Expected one-way diagnostic link");Check(master.loadout!=null,"Original master loadout missing");var writer=new NetworkWriter();master.loadout.Serialize(writer);var bytes=writer.ToArray();var decoded=new Loadout();var reader=new NetworkReader(bytes);decoded.Deserialize(reader);Check(reader.Position==bytes.Length&&decoded.ValueEquals(master.loadout),"Original master loadout round trip");Check(bytes.Length==1&&bytes[0]==0,"Expected untouched default loadout");
-  if(r.id=="body-state-spawn-state-catalog"||r.id=="body-state-spawn-state-material"){PrepareSpawnStateCatalog(cfg);yield break;}
+  if(r.id=="body-state-spawn-state-catalog"||r.id=="body-state-spawn-state-material"){var preparation=PrepareSpawnStateCatalog(cfg);while(preparation.MoveNext())yield return preparation.Current;yield break;}
   if(r.id=="body-state-spawn-loadout-catalog"){
    Check(ownsBodyCatalog&&BodyCatalog.GetBodyPrefab(body.bodyIndex)==artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset),"Catalog/body prefab identity");
    Check(master.loadout.bodyLoadoutManager.GetSkinIndex(body.bodyIndex)==0&&decoded.bodyLoadoutManager.GetSkinIndex(body.bodyIndex)==0,"Original catalog-aware default skin selection");yield break;
@@ -473,7 +476,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   try{if(automaticSpawn){foreach(Transform child in prefab.transform){childStates.Add(child.gameObject,child.gameObject.activeSelf);child.gameObject.SetActive(false);}prefab.SetActive(true);}
   if(cfg.stageGeometry){var geometry=PrepareStageGeometry(cfg.stageMapZoneCount,cfg.stageMapZoneActiveNames,cfg.stagePreviewCallbacks,cfg.stagePreviewNames);while(geometry.MoveNext())yield return geometry.Current;}
   // The current original SpawnBody preloads skill states while applying its loadout.
-  if(r.id.StartsWith("body-state-spawn-state-auto-"))PrepareSpawnStateCatalog(cfg);
+  if(r.id.StartsWith("body-state-spawn-state-auto-")){var preparation=PrepareSpawnStateCatalog(cfg);while(preparation.MoveNext())yield return preparation.Current;}
   r.phase="original-master-spawn";Save();var spawned=master.SpawnBody(cfg.stageGeometry?r.stage.spawnPosition:new Vector3(0,12,0),Quaternion.identity);if(spawned)spawned.gameObject.SetActive(false);Check(spawned&&spawned!=body,"Original body creation");Check(master.hasBody&&master.GetBody()==spawned&&spawned.master==master,"Original reciprocal linkage");Check(NetworkServer.FindLocalObject(spawned.netId)==spawned.gameObject,"Original spawned body server mapping");
    if(r.id=="body-state-spawn-body-start-catalog"||r.id.StartsWith("body-state-spawn-state-")){r.spawnedBodyIndex=(int)spawned.bodyIndex;Check(ownsBodyCatalog&&spawned.bodyIndex==prefab.GetComponent<CharacterBody>().bodyIndex&&BodyCatalog.GetBodyPrefab(spawned.bodyIndex)==prefab,"Spawn retained original catalog-assigned identity");}
    if(!IsAutomaticBody()&&(r.id=="body-state-spawn-master-start"||r.id=="body-state-spawn-body-start"||r.id=="body-state-spawn-body-start-catalog"||r.id.StartsWith("body-state-spawn-state-"))){
@@ -545,9 +548,14 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   }finally{if(recoveredOwnedIdentity){Check(recoveredOwnedIdentity.RemoveClientAuthority(recoveredOwner),"Recovered authority removal");Call(recoveredClient,"Update");Check(recoveredOwnedIdentity.clientAuthorityOwner==null,"Recovered owner release");recoveredOwnedIdentity=null;}Physics.gravity=savedGravity;Call(machine,"OnDestroy");}Check(Physics.gravity==savedGravity,"Recovered gravity restoration");Check(machine.state==null&&motor.moveDirection==Vector3.zero&&!host.activeInHierarchy,"Recovered state exit/cleanup");
  }
 
- static void BuildStateCatalog(Type[] types,EntityStateConfiguration[] configs=null){
-  var routine=(IEnumerator)typeof(EntityStateCatalog).GetMethod("SetElements",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{types,configs??Array.Empty<EntityStateConfiguration>()});while(routine.MoveNext()){};
+ static IEnumerator BuildStateCatalogRoutine(Type[] types,EntityStateConfiguration[] configs=null){
+  var stack=new Stack<IEnumerator>();stack.Push((IEnumerator)typeof(EntityStateCatalog).GetMethod("SetElements",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{types,configs??Array.Empty<EntityStateConfiguration>()}));
+  // Drive native nested preload initialization too; dropping it silently skipped a catalog.
+  try{while(stack.Count>0){var routine=stack.Peek();if(!routine.MoveNext()){(stack.Pop() as IDisposable)?.Dispose();continue;}var nested=routine.Current as IEnumerator;if(nested!=null)stack.Push(nested);else yield return routine.Current;}}
+  finally{while(stack.Count>0)(stack.Pop() as IDisposable)?.Dispose();}
  }
+ static void BuildStateCatalog(Type[] types,EntityStateConfiguration[] configs=null){var routine=BuildStateCatalogRoutine(types,configs);while(routine.MoveNext()){};}
+
  void PrepareStateCatalog(CharacterBody body){
   r.phase="recovered-state-catalog";Save();var flags=BindingFlags.Static|BindingFlags.NonPublic;
   Check(((Type[])typeof(EntityStateCatalog).GetField("stateIndexToType",flags).GetValue(null)).Length==0&&((IDictionary)typeof(EntityStateCatalog).GetField("stateTypeToIndex",flags).GetValue(null)).Count==0&&((IDictionary)typeof(EntityStateCatalog).GetField("instanceFieldInitializers",flags).GetValue(null)).Count==0,"Existing state catalog; refusing replacement");

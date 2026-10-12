@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using EntityStates;
@@ -7,12 +9,47 @@ using RoR2;
 using UnityEngine;
 
 public sealed partial class MovementBatchProbe {
+ [Serializable] public class LiveCatalogReport {
+  public int emptyPreloadKeys,projectiles,bodies,masters,adaptedMasters,skills,skillFamilies,emptySkillVariants,stateTypes,stateConfigurations,adaptedStateConfigurations,staticStateFields,preloadGUIDs;
+  public bool projectileCleanup,stateCleanup,bodySkillCleanup;public string scope="Native provider category membership and original catalog setters in the composed session; selected actor templates/configuration adaptations retained. Registration is not all-content gameplay acceptance.";
+ }
+ readonly Dictionary<FieldInfo,object> wholeStateFields=new Dictionary<FieldInfo,object>();
+ readonly Dictionary<FieldInfo,object> wholePreloadFields=new Dictionary<FieldInfo,object>();
+ void CaptureWholeStateOwnership(EntityStateConfiguration[] configs){
+  Check(wholeStateFields.Count==0&&wholePreloadFields.Count==0,"Whole state fields already owned");
+  foreach(var config in configs){var type=(Type)config.targetType;if(type==null)continue;foreach(var value in config.serializedFieldsCollection.serializedFields){
+   var field=type.GetField(value.fieldName,BindingFlags.Public|BindingFlags.Static);
+   if(field!=null&&!wholeStateFields.ContainsKey(field))wholeStateFields.Add(field,field.GetValue(null));
+  }}
+  foreach(var name in new[]{"preloadGUIDLocators","preloadGUIDs"}){var field=typeof(EntityStatePreloadCatalog).GetField(name,BindingFlags.NonPublic|BindingFlags.Static);wholePreloadFields.Add(field,field.GetValue(null));}
+ }
+ static int RemoveEmptyStatePreloadKeys(){
+  var flags=BindingFlags.NonPublic|BindingFlags.Static;var type=typeof(EntityStatePreloadCatalog);
+  var locatorField=type.GetField("preloadGUIDLocators",flags);var guidField=type.GetField("preloadGUIDs",flags);
+  var locators=((EntityStatePreloadCatalog.PreloadLocator[])locatorField.GetValue(null)).ToArray();var original=(string[])guidField.GetValue(null);
+  var valid=new List<string>();int skipped=0;
+  // Empty strings are absent references, never a successfully loaded object.
+  // Preserve the native locator ownership/order and every nonempty source key.
+  for(int i=0;i<locators.Length;i++){var locator=locators[i];int start=valid.Count;
+   if(locator.index<0||locator.totalPreloadItems<0||locator.index+locator.totalPreloadItems>original.Length)throw new Exception("Native preload locator outside owned array");
+   for(int j=locator.index;j<locator.index+locator.totalPreloadItems;j++){if(string.IsNullOrEmpty(original[j]))skipped++;else valid.Add(original[j]);}
+   locators[i]=new EntityStatePreloadCatalog.PreloadLocator{index=start,totalPreloadItems=valid.Count-start};
+  }
+  locatorField.SetValue(null,locators);guidField.SetValue(null,valid.ToArray());return skipped;
+ }
+ void RestoreWholeStateOwnership(){
+  foreach(var pair in wholeStateFields)pair.Key.SetValue(null,pair.Value);wholeStateFields.Clear();
+  foreach(var pair in wholePreloadFields)pair.Key.SetValue(null,pair.Value);wholePreloadFields.Clear();
+  if(r.liveCatalogs!=null)r.liveCatalogs.stateCleanup=EntityStateCatalog.entityStateCount==0;
+ }
  bool ownsSpawnConfig;float priorSpawnDelay;string priorSpawnSound;
- void PrepareSpawnStateCatalog(Result cfg){
+ IEnumerator PrepareSpawnStateCatalog(Result cfg){
   Check(!ownsStateCatalog,"Existing state catalog ownership");
   var types=new[]{typeof(Uninitialized),typeof(Idle),typeof(SpawnTeleporterState),typeof(GenericCharacterMain),typeof(GenericCharacterVehicleSeated)};
   var flags=BindingFlags.NonPublic|BindingFlags.Static;
   Check(((Type[])typeof(EntityStateCatalog).GetField("stateIndexToType",flags).GetValue(null)).Length==0&&((System.Collections.IDictionary)typeof(EntityStateCatalog).GetField("stateTypeToIndex",flags).GetValue(null)).Count==0&&((System.Collections.IDictionary)typeof(EntityStateCatalog).GetField("instanceFieldInitializers",flags).GetValue(null)).Count==0,"Existing state catalog; refuse replacement");
+  var originals=r.liveCatalogs!=null?WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.entityStateConfiguration,new EntityStateConfiguration[0]):null;
+  if(originals!=null)CaptureWholeStateOwnership(originals);
   var config=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.spawnConfigAsset);
   Check(config&&(Type)config.targetType==typeof(SpawnTeleporterState),"Actual spawn configuration identity");
   priorSpawnDelay=SpawnTeleporterState.initialDelay;priorSpawnSound=SpawnTeleporterState.soundString;ownsSpawnConfig=true;
@@ -24,14 +61,22 @@ public sealed partial class MovementBatchProbe {
   if(cfg.barrelInteraction)types=types.Concat(new[]{typeof(EntityStates.Barrel.Opening),typeof(EntityStates.Barrel.Opened)}).Distinct().ToArray();
   if(cfg.worldChestBreadth!=null)types=types.Concat(WorldChestTypes(cfg)).Distinct().ToArray();
   if(cfg.teleporterLoop)foreach(var actor in cfg.objectiveActors)foreach(var hurt in artifactBundle.LoadAsset<GameObject>(actor.body).GetComponentsInChildren<SetStateOnHurt>(true).Where(x=>x.canBeHitStunned))Check(hurt.hurtState.stateType!=null&&types.Contains(hurt.hurtState.stateType),"Original actor hurt state absent from selected catalog: "+actor.name);
-  ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();BuildStateCatalog(types,configs);if(IsPlayableSpine())ApplySpineExclusions();if(cfg.enemySpine)EnemyExclusions();if(cfg.teleporterLoop){StunState.stunVfxPrefab=artifactBundle.LoadAsset<GameObject>(cfg.objectiveStunAsset);Check(StunState.stunVfxPrefab,"Original composed stun presentation missing");}
-  foreach(var type in types){var index=EntityStateCatalog.GetStateIndex(type);Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==type&&EntityStateCatalog.InstantiateState(index).GetType()==type,"Original spawn state identity round trip");}
+  var selectedTypes=types;
+  if(originals!=null){types=originals.Select(value=>(Type)value.targetType).Where(value=>value!=null).Concat(types).Distinct().ToArray();r.liveCatalogs.stateTypes=types.Length;r.liveCatalogs.stateConfigurations=originals.Length;r.liveCatalogs.adaptedStateConfigurations=configs.Length;r.liveCatalogs.staticStateFields=wholeStateFields.Count;}
+  ownsStateCatalog=true;r.phase="original-spawn-state-catalog";Save();
+  var initialize=BuildStateCatalogRoutine(types,originals??configs);while(initialize.MoveNext())yield return initialize.Current;
+  // Retain the accepted bounded configuration adaptations without changing the
+  // native full configuration/preload ordering or replacing original programs.
+  if(originals!=null){r.liveCatalogs.emptyPreloadKeys=RemoveEmptyStatePreloadKeys();foreach(var selected in configs)StaticCall(typeof(EntityStateCatalog),"ApplyEntityStateConfiguration",selected);r.liveCatalogs.preloadGUIDs=((string[])typeof(EntityStatePreloadCatalog).GetField("preloadGUIDs",flags).GetValue(null)).Length;}
+  if(IsPlayableSpine())ApplySpineExclusions();if(cfg.enemySpine)EnemyExclusions();if(cfg.teleporterLoop){StunState.stunVfxPrefab=artifactBundle.LoadAsset<GameObject>(cfg.objectiveStunAsset);Check(StunState.stunVfxPrefab,"Original composed stun presentation missing");}
+  foreach(var type in types){var index=EntityStateCatalog.GetStateIndex(type);Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==type,"Original complete state identity round trip");}
+  foreach(var type in selectedTypes){var index=EntityStateCatalog.GetStateIndex(type);Check(EntityStateCatalog.InstantiateState(index).GetType()==type,"Original live state constructor identity");}
   Check(cfg.sourceSpawnDelay>0&&cfg.sourceSpawnDelay<10&&SpawnTeleporterState.initialDelay==cfg.sourceSpawnDelay,"Original configured spawn delay");
   Check(SpawnTeleporterState.soundString==cfg.sourceSpawnSound,"Original configured spawn sound");
  }
- void CleanupSpawnConfig(){CleanupObjectiveConfigs();CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
+ void CleanupSpawnConfig(){CleanupObjectiveConfigs();CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}RestoreWholeStateOwnership();}
  void ProbeSpawnStates(CharacterBody body,Result cfg){
-  if(!ownsStateCatalog)PrepareSpawnStateCatalog(cfg);
+  if(!ownsStateCatalog){var preparation=PrepareSpawnStateCatalog(cfg);while(preparation.MoveNext()){};}
   if(r.id=="body-state-spawn-state-overlay"){ProbeTeleportOverlay(body,cfg);return;}
   if(r.id=="body-state-spawn-state-buff-removal"){
    Check(RoR2Content.Buffs.MedkitHeal&&RoR2Content.Buffs.TonicBuff&&DLC2Content.Buffs.SoulCost,"Original removal definitions");

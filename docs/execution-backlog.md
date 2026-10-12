@@ -4335,3 +4335,19 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **FAILURE EVIDENCE TO CAPTURE:** Canonical identities, missing association/native dependencies, AOT/runtime errors, current process/build and cleanup. Candidate32 earned Vagrant authority error preserved and repaired through native host-authority option.
 - **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit record; public audit and Conventional Commit.
 - **DEPENDENCIES:** J431 updated rollback, complete converted catalog ownership and pinned R2API ContentManagement/Items/Prefab contracts.
+
+## C03 / J433 — Complete live actor and state catalogs
+
+- **ID:** C03 / J433; composed exit passes, individual content behavior remains open.
+- **TITLE:** Connect complete original actor/skill/state/projectile context.
+- **CONTEXT:** J431 native registration and J432 live definition families exceed the selected live actor context.
+- **OBSERVATION:** Selected body/master/skill/state buffers omit shared dependencies; native preload keys are plain serialized strings.
+- **HYPOTHESIS:** Original category policy, catalog setters and preload initialization fit the owned composed lifecycle.
+- **TASK:** Integrate full canonical catalogs, retain adapted actor/configuration boundaries, follow native preload closure and restore owned static state.
+- **CONSTRAINTS:** Common contract; no unlock/platform grants, manual/Moon routing, speculative quarantine or all-content acceptance claims.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing whole-catalog discovery/validator and body/director/state/movement/projectile boundaries.
+- **TEST COMMAND:** doctor/preflight/test; exact-editor catalog/loadout/state checks; whole-catalog-build; movement-batch-retry with explicit migration acceleration.
+- **PASS CONDITION:** Native290bodies/204masters/563skills/378families/414projectiles/1,897configs coexist through four genuine transitions with full cleanup and zero errors. Candidate36 passes432.442seconds/29kills;7,090typed roots/130tests pass.
+- **FAILURE EVIDENCE TO CAPTURE:** Candidate34 unsupported global-name guard;35 adapted-name/preload closure errors;124stale typed imports before refresh. Failed receipts/raw evidence retained; no failed pointer advancement.
+- **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit, two current accepted compositions, staged public audit and Conventional Commit.
+- **DEPENDENCIES:** J432 rollback, native category/preload contracts, pinned R2API ContentManagement/ContentAddition/CatalogBlockers.

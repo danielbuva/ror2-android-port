@@ -145,6 +145,30 @@ class WholeCatalogTests(unittest.TestCase):
             self.assertEqual(result['summary']['soft_reference_edges'], 1)
             self.assertEqual(result['summary']['quarantine'], [])
 
+    def test_state_preload_strings_extend_runtime_closure(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root/'Assets').mkdir()
+            guid = 'a'*32
+            (root/'Assets/root.asset').write_text('%YAML\n  preloadGUIDReferences:\n  - '+guid+'\n  - \n')
+            (root/'Assets/preloaded.prefab').write_text('%YAML\n  m_Name: preloaded\n')
+            categories = ['category'+str(i) for i in range(29)]
+            helper = '\n'.join('FindLocationsThenAddLoadOperation(AddressablesLabels.'+name+')' for name in categories)
+            data = dict(keys=[dict(key='ContentPack:base', locations=[1]),
+                              dict(key=categories[0], locations=[1]), dict(key=guid, locations=[2])],
+                        providers=[dict(identifier='base')],
+                        labels=[dict(name=name, key=name) for name in categories],
+                        locations=[dict(id=1, internalId='Assets/root.asset', dependencies=[], type='Example.Config, Example'),
+                                   dict(id=2, internalId='Assets/preloaded.prefab', dependencies=[], type='UnityEngine.GameObject, Example')])
+            source = root/'catalog.json'
+            source.write_text(json.dumps(data))
+            result = analyze(source, root, {'b'*32:'Assets/root.asset', 'c'*32:'Assets/preloaded.prefab'}, helper)
+            self.assertEqual(result['files'], ['Assets/preloaded.prefab', 'Assets/root.asset'])
+            self.assertEqual(result['runtime_roots'], [2])
+            self.assertEqual(result['runtime_key_edges'][0]['field'], 'preloadGUIDReferences')
+            self.assertEqual(result['summary']['issues']['invalid-preload-key'], 1)
+            self.assertEqual(result['summary']['quarantine'], [])
+
     def test_broken_original_dependency_graph_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

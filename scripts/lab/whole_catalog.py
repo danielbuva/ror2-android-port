@@ -188,8 +188,19 @@ def analyze(source, export, index, helper, native_overrides=None, runtime_candid
                 issues.append(dict(source=relative, guid=guid, category='serialized-guid-missing'))
         # BakedEffectData.assetGUID feeds EffectDef's original async reference;
         # unlike Unity's AssetReference it has no m_ prefix in serialized data.
-        for guid in set(re.findall(r'\b(?:m_AssetGUID|assetGUID):\s*([a-f0-9]{32})', text)):
+        # Native state preloads store runtime GUID keys as plain YAML strings,
+        # outside both PPtr and AssetReference fields. Follow the entire family.
+        preload_blocks = re.findall(r'^  preloadGUIDReferences:[ \t]*\n((?:  -[^\n]*\n?)*)', text, re.M)
+        preloads = {value.strip() for block in preload_blocks for value in re.findall(r'^  -(.*)$', block, re.M)}
+        invalid_preloads = sorted(key for key in preloads if not re.fullmatch(r'[a-f0-9]{32}', key))
+        if invalid_preloads:
+            issues.append(dict(source=relative, keys=invalid_preloads, category='invalid-preload-key'))
+        valid_preloads = preloads - set(invalid_preloads)
+        for guid in set(re.findall(r'\b(?:m_AssetGUID|assetGUID):\s*([a-f0-9]{32})', text)) | valid_preloads:
             targets = key_locations.get(guid, [])
+            if guid in valid_preloads:
+                runtime_roots.update(targets)
+                runtime_edges.append(dict(key=guid, locations=targets, source=relative, field='preloadGUIDReferences'))
             resolved = [converted[x]['source'] for x in targets if x in converted]
             soft_edges.append(dict(source=relative, key=guid, locations=targets, resolved=resolved))
             pending.extend(resolved)

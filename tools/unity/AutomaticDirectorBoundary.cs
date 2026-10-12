@@ -72,7 +72,15 @@ public sealed partial class MovementBatchProbe {
   while(((Array)RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null)).Cast<object>().Any(tier=>tier==null)&&Time.realtimeSinceStartup<eliteDeadline)yield return null;
   Check(((Array)RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null)).Cast<object>().All(tier=>tier!=null),"Original elite tier initialization incomplete");
   foreach(var name in new[]{"masterPrefabs","masterPrefabMasterComponents","aiMasterPrefabs","masterNames"}){var field=RewardField(typeof(MasterCatalog),name);var old=field.GetValue(null);Check(old==null||((Array)old).Length==0,"Existing master catalog "+name);directorMasterFields[field]=old;}
-  directorMasterMap=(IDictionary)RewardField(typeof(MasterCatalog),"nameToIndexMap").GetValue(null);Check(directorMasterMap.Count==0&&DirectorRequestedMasters().Count==0&&DirectorMessageMasters().Count==0,"Existing preload/catalog state");if(cfg.teleporterLoop)PrepareObjectiveActorTemplates(cfg);StaticCall(typeof(MasterCatalog),"SetEntries",new object[]{new[]{template}.Concat(objectiveTemplates.Where(x=>x.GetComponent<CharacterMaster>())).ToArray()});
+  directorMasterMap=(IDictionary)RewardField(typeof(MasterCatalog),"nameToIndexMap").GetValue(null);Check(directorMasterMap.Count==0&&DirectorRequestedMasters().Count==0&&DirectorMessageMasters().Count==0,"Existing preload/catalog state");if(cfg.teleporterLoop)PrepareObjectiveActorTemplates(cfg);
+  var adaptedMasters=new[]{template}.Concat(objectiveTemplates.Where(x=>x.GetComponent<CharacterMaster>())).ToArray();var masters=adaptedMasters;
+  if(r.liveCatalogs!=null){
+   var originals=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterMaster,new GameObject[0]);
+   var byName=adaptedMasters.ToDictionary(value=>value.name,StringComparer.Ordinal);
+   Check(byName.Keys.All(name=>originals.Any(value=>value.name==name)),"Owned adapted master absent from original provider category");
+   masters=originals.Select(value=>byName.ContainsKey(value.name)?byName[value.name]:value).ToArray();r.liveCatalogs.masters=masters.Length;r.liveCatalogs.adaptedMasters=adaptedMasters.Length;
+  }
+  StaticCall(typeof(MasterCatalog),"SetEntries",new object[]{masters});
   var index=MasterCatalog.FindMasterIndex(template);Check(MasterCatalog.GetMasterPrefab(index)==template,"Original master catalog identity");r.director.masterIndex=(int)index;
   directorPlayer=player.master.GetComponent<PlayerCharacterMasterController>();Check(directorPlayer&&!directorPlayer.gameObject.activeInHierarchy&&!directorPlayer.networkUser&&PlayerCharacterMasterController.instances.Count==0,"Measured local player registration scope changed");
   if(!directorPlayer.master)Call(directorPlayer,"Awake");Check(directorPlayer.master==player.master,"Original player controller master binding");directorPlayerRegistered=true;Call(directorPlayer,"OnEnable");r.director.playerRegistered=PlayerCharacterMasterController.instances.Count==1&&PlayerCharacterMasterController.instances[0]==directorPlayer;Check(r.director.playerRegistered,"Original player registration missing");

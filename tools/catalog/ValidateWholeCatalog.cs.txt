@@ -1,4 +1,6 @@
 if(EditorApplication.isCompiling||EditorApplication.isUpdating||EditorApplication.isPlayingOrWillChangePlaymode||BuildPipeline.isBuildingPlayer)throw new System.Exception("Editor not idle");
+AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new System.Exception("Imported catalog has pending compilation; retry after it completes");
 var output=OUTPUT;
 var manifest=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(output),"manifest.json")));
 var failures=new System.Collections.Generic.List<object>();var counts=new System.Collections.Generic.Dictionary<string,int>();int loaded=0;

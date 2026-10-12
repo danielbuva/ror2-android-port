@@ -31,8 +31,14 @@ public sealed partial class MovementBatchProbe {
   priorLoadoutDefaults=LoadoutField("defaultBodyLoadouts").GetValue(null);priorBodyInfos=LoadoutField("allBodyInfos").GetValue(null);
   Check(priorLoadoutDefaults==null&&priorBodyInfos==null,"Existing loadout defaults ownership");
   var slots=prefab.GetComponents<GenericSkill>();Check(slots.Length==4,"Original Commando skill-slot count");
-  var families=BodyCatalog.allBodyPrefabs.SelectMany(x=>x.GetComponents<GenericSkill>()).Select(x=>x.skillFamily).Where(x=>x).Distinct().ToArray();Check(families.Length>=4&&families.All(x=>x&&x.variants.Length>0&&x.defaultVariantIndex<x.variants.Length),"Actual family/default-variant contract");
-  var defs=families.SelectMany(x=>x.variants.Select(v=>v.skillDef)).Distinct().ToArray();Check(defs.All(x=>x),"Original skill definition missing");
+  bool complete=r.liveCatalogs!=null;
+  var selectedFamilies=BodyCatalog.allBodyPrefabs.SelectMany(x=>x.GetComponents<GenericSkill>()).Select(x=>x.skillFamily).Where(x=>x).Distinct().ToArray();
+  var families=complete?WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.skillFamily,selectedFamilies):selectedFamilies;
+  Check(families.Length>=4&&families.All(x=>x&&x.variants.Length>0&&x.defaultVariantIndex<x.variants.Length),"Actual family/default-variant contract");
+  // A source Copycat family has an empty variant. Register it unchanged; never invent a SkillDef.
+  var selectedDefs=families.SelectMany(x=>x.variants.Select(v=>v.skillDef)).Where(x=>x).Distinct().ToArray();
+  var defs=complete?WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.skillDef,selectedDefs):selectedDefs;
+  if(complete){r.liveCatalogs.skills=defs.Length;r.liveCatalogs.skillFamilies=families.Length;r.liveCatalogs.emptySkillVariants=families.Sum(family=>family.variants.Count(variant=>!variant.skillDef));}
   ownsSkillCatalog=true;StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)defs);StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)families);
   foreach(var family in families)Check(SkillCatalog.GetSkillFamily(family.catalogIndex)==family,"Original family catalog identity");
   foreach(var def in defs)Check(SkillCatalog.GetSkillDef(def.skillIndex)==def,"Original skill catalog identity");
@@ -91,9 +97,9 @@ public sealed partial class MovementBatchProbe {
   r.phase="original-body-catalog-register";Save();
   var bodies=cfg.enemySpine?new[]{prefab,artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset)}:new[]{prefab};if(cfg.teleporterLoop)bodies=bodies.Concat(cfg.objectiveActors.Select(x=>artifactBundle.LoadAsset<GameObject>(x.body))).ToArray();
   if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
-   var comparisons=WholeCatalogComposed.BodyComparisons(typeof(DLC4Content.BodyPrefabs));
-   foreach(var comparison in comparisons)BindEnemyDefinition(typeof(DLC4Content.BodyPrefabs),comparison.name,comparison);
-   bodies=bodies.Concat(comparisons.Select(comparison=>comparison.gameObject)).Distinct().ToArray();
+   bodies=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.characterBody,bodies.Distinct());
+   r.liveCatalogs=new LiveCatalogReport{bodies=bodies.Length};
+
   }
   ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)bodies);
   deadline=Time.realtimeSinceStartup+3;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;
@@ -175,7 +181,7 @@ public sealed partial class MovementBatchProbe {
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
   ReleaseObjectiveBundlePreload();CleanupRecoveredText();
   if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.Release();
-  RestoreBodySettingsTransform();
+  RestoreBodySettingsTransform();if(r.liveCatalogs!=null){r.liveCatalogs.bodySkillCleanup=BodyCatalog.bodyCount==0&&SkillCatalog.skillCount==0&&SkillCatalog.skillFamilyCount==0;}
  }
  void RestoreBodySettingsTransform(){
   if(ownsBodySettingsTransform){

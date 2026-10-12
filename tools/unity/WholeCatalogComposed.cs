@@ -84,11 +84,45 @@ public static class WholeCatalogComposed {
   definitionFamilies.Clear();borrowedNames=null;if(owned){owned.Unload(true);owned=null;}
  }
  // Complete definition families share the existing converted owner; no tested-content whitelist.
- static readonly Dictionary<Type,UnityEngine.Object[]> definitionFamilies=new Dictionary<Type,UnityEngine.Object[]>();
+ static readonly Dictionary<string,UnityEngine.Object[]> definitionFamilies=new Dictionary<string,UnityEngine.Object[]>();
+ // Labels alone include Junk content which the original provider does not publish.
+ // Resolve each provider using its native category policy and collection ordering.
+ public static int[][] FamilyLocationGroups(JObject manifest,string category){
+  var keys=manifest["keys"].Where(row=>row["keyType"]==null||(string)row["keyType"]=="System.String").ToDictionary(row=>(string)row["key"],row=>new HashSet<int>(row["locations"].Select(value=>(int)value)));
+  var helper=new RoR2.ContentManagement.AddressablesLoadHelper(new IResourceLocator[0]);
+  return manifest["providers"].Select(provider=>{
+   var instance=Activator.CreateInstance(Type.GetType((string)provider["type"],true));
+   var pack=(RoR2.ContentManagement.ContentPack)instance.GetType().GetField("contentPack",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(instance);
+   if(!helper.CanLoadType(category,pack))return new int[0];
+   return keys["ContentPack:"+(string)provider["identifier"]].Intersect(keys[category]).ToArray();
+  }).ToArray();
+ }
+ public static T[] CategoryFamily<T>(string category,IEnumerable<T> selected) where T:UnityEngine.Object {
+  if(!owned)throw new Exception("Complete category owner unavailable: "+category);
+  string key=typeof(T).FullName+":"+category;UnityEngine.Object[] values;
+  if(!definitionFamilies.TryGetValue(key,out values)){
+   var manifest=JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath,"payload","whole-catalog.json")));
+   var locations=manifest["locations"].ToDictionary(row=>(int)row["id"]);
+   values=FamilyLocationGroups(manifest,category).SelectMany(group=>{
+    var collection=new RoR2.ContentManagement.NamedAssetCollection<T>(value=>((UnityEngine.Object)value).name);
+    collection.Add(group.Select(id=>{
+     var row=locations[id];if(!typeof(T).IsAssignableFrom(Type.GetType((string)row["type"],true)))throw new Exception("Original category type differs: "+category);
+     var bundle=AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(value=>value.name==(string)row["bundle"]);
+     if(!bundle)throw new Exception("Original category owner not loaded: "+category+"/"+row["bundle"]);
+     var asset=bundle.LoadAsset<T>((string)row["path"]);if(!asset)throw new Exception("Original category asset missing: "+category+"/"+row["path"]);return asset;
+    }).ToArray());return collection.ToArray();
+   }).Distinct().Cast<UnityEngine.Object>().ToArray();
+   // Native collections enforce names within each provider, not across packs.
+   if(values.Length==0)throw new Exception("Original category is empty: "+category);
+   definitionFamilies.Add(key,values);
+  }
+  if(selected.Any(value=>!values.Contains(value)))throw new Exception("Selected asset outside original category: "+category);
+  return values.Cast<T>().ToArray();
+ }
  public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected) where T:UnityEngine.Object {
   if(!owned)throw new Exception("Complete definition owner unavailable: "+typeof(T).FullName);
   UnityEngine.Object[] values;
-  if(!definitionFamilies.TryGetValue(typeof(T),out values)){
+  if(!definitionFamilies.TryGetValue(typeof(T).FullName,out values)){
    var manifest=JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath,"payload","whole-catalog.json")));
    var roots=new HashSet<int>(manifest["provider_roots"].Select(value=>(int)value));
    values=manifest["locations"].Where(row=>roots.Contains((int)row["id"])&&typeof(T).IsAssignableFrom(Type.GetType((string)row["type"],true))).Select(row=>{
@@ -97,7 +131,7 @@ public static class WholeCatalogComposed {
     return bundle.LoadAsset<T>((string)row["path"]);
    }).Distinct().Cast<UnityEngine.Object>().ToArray();
    if(values.Length==0||values.Any(value=>!value)||values.Select(value=>value.name).Distinct().Count()!=values.Length)throw new Exception("Complete definition identity missing or ambiguous: "+typeof(T).FullName);
-   definitionFamilies.Add(typeof(T),values);
+   definitionFamilies.Add(typeof(T).FullName,values);
   }
   if(selected.Any(value=>!values.Contains(value)))throw new Exception("Selected definition is outside original provider family: "+typeof(T).FullName);
   return values.Cast<T>().ToArray();
@@ -123,6 +157,38 @@ public static class WholeCatalogComposed {
    RoR2.ContentManagement.ContentLoadHelper.PopulateTypeFields(holder,collection,name=>prefix+name);
    foreach(var field in fields)if(field.GetValue(null)==null)throw new Exception("Original definition holder unbound: "+holder.FullName+"/"+field.Name);
   }
+ }
+ public static void PopulateBodyFields(GameObject[] prefabs){
+  var byName=prefabs.ToDictionary(value=>value.name,StringComparer.Ordinal);
+  var manifest=JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath,"payload","whole-catalog.json")));
+  foreach(var provider in manifest["providers"]){
+   var holder=Type.GetType((string)provider["type"],true).GetNestedType("BodyPrefabs");if(holder==null)continue;
+   var fields=holder.GetFields(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
+   var assets=fields.Select(field=>{
+    var target=(RoR2.ContentManagement.TargetAssetNameAttribute)Attribute.GetCustomAttribute(field,typeof(RoR2.ContentManagement.TargetAssetNameAttribute));GameObject value;
+    if(field.FieldType!=typeof(RoR2.CharacterBody)||!byName.TryGetValue(target!=null?target.targetAssetName:field.Name,out value))throw new Exception("Original body holder contract absent: "+holder.FullName+"/"+field.Name);
+    if(!priorDefinitionFields.ContainsKey(field))priorDefinitionFields.Add(field,field.GetValue(null));
+    if(field.GetValue(null)!=null&&!ReferenceEquals(field.GetValue(null),value.GetComponent<RoR2.CharacterBody>()))throw new Exception("Original body holder has a foreign owner: "+field.Name);return value;
+   }).Distinct().ToArray();
+   var collection=new RoR2.ContentManagement.NamedAssetCollection<GameObject>(value=>value.name);collection.Add(assets);
+   RoR2.ContentManagement.ContentLoadHelper.PopulateTypeFields(holder,collection,(GameObject value)=>value.GetComponent<RoR2.CharacterBody>());
+  }
+ }
+ static Dictionary<RoR2.Projectile.ProjectileController,int> priorProjectileIndices;
+ static global::ResourceAvailability priorProjectileAvailability;
+ public static int PrepareProjectiles(){
+  if(priorProjectileIndices!=null||RoR2.ProjectileCatalog.projectilePrefabCount!=0)throw new Exception("Projectile catalog has a foreign owner");
+  var values=CategoryFamily(RoR2.ContentManagement.AddressablesLabels.projectile,new GameObject[0]);
+  priorProjectileIndices=values.Select(value=>value.GetComponent<RoR2.Projectile.ProjectileController>()).ToDictionary(value=>value,value=>value.catalogIndex);
+  priorProjectileAvailability=RoR2.ProjectileCatalog.catalogAvailability;
+  typeof(RoR2.ProjectileCatalog).GetMethod("SetProjectilePrefabs",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static).Invoke(null,new object[]{values});
+  RoR2.ProjectileCatalog.catalogAvailability.MakeAvailable();
+  if(values.Any(value=>RoR2.ProjectileCatalog.GetProjectilePrefab(RoR2.ProjectileCatalog.GetProjectileIndex(value))!=value))throw new Exception("Original projectile catalog identity differs");return values.Length;
+ }
+ public static void RestoreProjectiles(){
+  if(priorProjectileIndices==null)return;
+  typeof(RoR2.ProjectileCatalog).GetMethod("SetProjectilePrefabs",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static).Invoke(null,new object[]{new GameObject[0]});
+  foreach(var pair in priorProjectileIndices)pair.Key.catalogIndex=pair.Value;priorProjectileIndices=null;RoR2.ProjectileCatalog.catalogAvailability=priorProjectileAvailability;
  }
  static RoR2.ItemTierDef[] priorTierContent;static object priorTierDefinitions;static global::ResourceAvailability priorTierAvailability;
  static Dictionary<RoR2.ItemTierDef,RoR2.ItemTier> originalTiers;
