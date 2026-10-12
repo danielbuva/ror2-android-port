@@ -7,7 +7,7 @@ Read `PORTING_STATE.md` first, then `environment/ENVIRONMENT_REPORT.md` and the 
 - Never modify the original legitimate game installation. Configure its external path in ignored `work/config/local.json` (example in environment/).
 - Never commit original game assets, binaries, decompiled source, generated Unity data, Wwise banks, proprietary middleware, account data, credentials or signing keys. All game-derived material stays under ignored `work/`. Raw logs/screenshots are local and may contain private data.
 - Open tooling + transformations + user-supplied legitimate game input is the distribution model. Do not bypass DRM, ownership, entitlement, authentication or license checks. Optional offline service adapters must not claim ownership/authentication success.
-- Exact editor: Unity **2021.3.33f1 (ee5a2aa03ab2), macOS ARM64**. Use bundled SDK/NDK/OpenJDK through scripts/env.sh. Canonical ADB is `/opt/homebrew/bin/adb`.
+- Exact editor: Unity **2021.3.45f2 (88f88f591b2e), macOS ARM64** (user-approved Steam migration; retain 2021.3.33f1 for old rollbacks). Use bundled SDK/NDK/OpenJDK through scripts/env.sh. Canonical ADB is `/opt/homebrew/bin/adb`.
 - Require the explicitly configured authorized device serial. Query current adopted storage and free space every install. Physical internal storage is nearly full. Never format, repartition, erase, change storage configuration, or remove/move existing games/data to make space.
 - Never hardcode a portable SD path or remembered adopted UUID. Record package placement and runtime data backing after installation. The disposable lab package is `dev.ror2lab.arm64`; reset requires its local ownership receipt. Bootstrap smoke uses a separate package and refuses pre-existing installs.
 

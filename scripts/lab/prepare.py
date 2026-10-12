@@ -3,6 +3,12 @@ import shutil
 
 def prepare():
  import UnityPy
+ accepted=read(WORK/'config/accepted-input.json')['input_id'];inventory=read(WORK/'inventory/files.json')
+ if inventory['input_id']!=accepted or inventory['unity_versions']!=[toolchain()['unity_version']]:raise RuntimeError('Lab preparation requires accepted input and matching editor')
+ dest=WORK/'lab-project'
+ if dest.exists() and any(dest.iterdir()):
+  from build import validate_project_generation
+  validate_project_generation(dest,accepted)
  dest=WORK/'lab-project'; dest.mkdir(exist_ok=True)
  for name in ['Packages','ProjectSettings']:
   if not (dest/name).exists():shutil.copytree(ROOT/'smoke'/name,dest/name)
@@ -29,4 +35,5 @@ def prepare():
  sample=min(candidates,key=lambda r:((game()/r['file']).stat().st_size,r['file']))
  payload=WORK/'generated-android-data';payload.mkdir(exist_ok=True);shutil.copy2(game()/sample['file'],payload/'windows-shaders.bundle')
  write(WORK/'inventory/windows-shader-prototype.json',{'source':sample['file'],'sha256':sample['sha256'],'shaders':sample['shaders']})
+ write(dest/'.port-input.json',{'input_id':accepted,'unity':toolchain()['unity_version'],'phase':'utility laboratory inputs only'})
  print(dest)

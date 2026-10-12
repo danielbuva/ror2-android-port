@@ -2,7 +2,7 @@
 from common import *
 import shutil
 
-CECIL = Path('/Applications/Unity/Hub/Editor/2021.3.33f1/Unity.app/Contents/MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll')
+CECIL = Path(os.environ['UNITY_EDITOR']).parent.parent/'MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll'
 
 def probe_tool():
     out = WORK/'tools/assembly-probe'

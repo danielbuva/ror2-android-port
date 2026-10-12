@@ -1,13 +1,27 @@
 import copy
 import sys
 import unittest
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
 from input_migration import compare_surfaces, guard_comparison
+from build import validate_project_generation
+from common import write
 
 
 class InputMigrationTests(unittest.TestCase):
+    def test_editor_update_cannot_bless_old_or_unrecorded_project(self):
+        with tempfile.TemporaryDirectory() as temp:
+            project=Path(temp)
+            with self.assertRaisesRegex(RuntimeError, 'input generation'):
+                validate_project_generation(project, 'new')
+            write(project/'.port-input.json', dict(input_id='old'))
+            with self.assertRaisesRegex(RuntimeError, 'input generation'):
+                validate_project_generation(project, 'new')
+            write(project/'.port-input.json', dict(input_id='new'))
+            validate_project_generation(project, 'new')
+
     def fixture(self):
         return [dict(file='RoR2.dll', sha256='old', surface=dict(name='Game, Version=1', references=[],
                 types=[dict(name='Body', contract='type', fieldOrder=['health'],

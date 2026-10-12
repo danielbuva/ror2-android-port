@@ -6,7 +6,8 @@ foreach(var row in manifest["locations"].Where(x=>(bool)x["root"])){
  string path=(string)row["path"],typeName=(string)row["type"];var type=System.Type.GetType(typeName,false);
  try{
   if(type==null)throw new System.Exception("Required type unavailable: "+typeName);
-  var asset=AssetDatabase.LoadAssetAtPath(path,type);if(asset==null)throw new System.Exception("Typed original catalog root failed to import");
+  var importType=type==typeof(UnityEngine.ResourceManagement.ResourceProviders.SceneInstance)?typeof(SceneAsset):type;
+  var asset=AssetDatabase.LoadAssetAtPath(path,importType);if(asset==null)throw new System.Exception("Typed original catalog root failed to import");
   loaded++;string kind=type.FullName;if(!counts.ContainsKey(kind))counts[kind]=0;counts[kind]++;
  }catch(System.Exception ex){failures.Add(new{id=(int)row["id"],path,type=typeName,error=ex.ToString()});}
 }

@@ -2,6 +2,7 @@
 import json, os, shutil, subprocess, sys, datetime
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
+pin=json.loads((root/'environment/toolchain.json').read_text())
 checks=[]
 def check(name,ok,detail): checks.append({'name':name,'ok':bool(ok),'detail':detail})
 def run(args,timeout=20):
@@ -17,8 +18,8 @@ plist=unity.parent.parent/'Info.plist'
 if plist.exists():
     import plistlib
     v=plistlib.loads(plist.read_bytes()).get('CFBundleVersion','unknown')
-    check('Unity exact version',v=='2021.3.33f1',v)
-for name,path in [('Android SDK',Path(os.environ['ANDROID_HOME'])/'platforms/android-30/android.jar'),('Android NDK',Path(os.environ['ANDROID_NDK_ROOT'])/'source.properties'),('Unity JDK',Path(os.environ['JAVA_HOME'])/'bin/java'),('Android module',Path(os.environ['UNITY_ANDROID_ROOT'])/'UnityEditor.Android.Extensions.dll')]:
+    check('Unity exact version',v==pin['unity_version'],v)
+for name,path in [('Android SDK',Path(os.environ['ANDROID_HOME'])/('platforms/android-'+str(pin['android_api'])+'/android.jar')),('Android NDK',Path(os.environ['ANDROID_NDK_ROOT'])/'source.properties'),('Unity JDK',Path(os.environ['JAVA_HOME'])/'bin/java'),('Android module',Path(os.environ['UNITY_ANDROID_ROOT'])/'UnityEditor.Android.Extensions.dll')]:
     check(name,path.exists(),str(path))
 for name,cmd in [('ilspycmd',[str(root/'scripts/ilspycmd'),'--version']),('AssetRipper',[str(root/'scripts/assetripper'),'--version'])]:
     ok,out=run(cmd);check(name,ok,out)

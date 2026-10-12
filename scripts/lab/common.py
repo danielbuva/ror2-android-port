@@ -3,6 +3,7 @@ import hashlib,json,os,subprocess,datetime
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 WORK=ROOT/'work'
+def toolchain(): return read(ROOT/'environment/toolchain.json')
 def read(p): return json.loads(Path(p).read_text())
 def write(p,v):
  p=Path(p); p.parent.mkdir(parents=True,exist_ok=True); tmp=p.with_suffix(p.suffix+'.tmp'); tmp.write_text(json.dumps(v,indent=2,sort_keys=True)+'\n'); tmp.replace(p)

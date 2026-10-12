@@ -3,7 +3,7 @@ import time,re,shlex,zipfile
 PACKAGE='dev.ror2lab.arm64'
 ADB='/opt/homebrew/bin/adb'
 def validate_apk_identity(apk):
- aapt=Path('/Applications/Unity/Hub/Editor/2021.3.33f1/PlaybackEngines/AndroidPlayer/SDK/build-tools/30.0.2/aapt')
+ aapt=Path(os.environ['UNITY_ANDROID_ROOT'])/'SDK/build-tools'/toolchain()['android_build_tools']/'aapt'
  metadata=run([aapt,'dump','badging',apk]).stdout.decode(errors='replace')
  package=re.search(r"^package: name='([^']+)'",metadata,re.M)
  if not package or package[1]!=PACKAGE:

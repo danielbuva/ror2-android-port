@@ -17,6 +17,7 @@ PATTERNS = {
 PUBLIC_ENVIRONMENT = {
     'environment/ENVIRONMENT_REPORT.md', 'environment/lab-config.example.json',
     'environment/paths.env.example', 'environment/turnip-target.json',
+    'environment/toolchain.json',
 }
 PRIVATE_SUFFIXES = {'.apk', '.aab', '.dll', '.exe', '.bundle', '.assets', '.bank',
                     '.wem', '.so', '.dylib', '.keystore', '.jks', '.log', '.png'}

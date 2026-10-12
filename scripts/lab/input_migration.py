@@ -114,7 +114,7 @@ def check_update():
                    exact_assemblies=sum(x['same_bytes'] for x in comparison['assemblies']),
                    game_changes={k:len(ror2[k]) for k in ('added_types','removed_types','changed_fields','added_methods','removed_methods','changed_method_bodies')},
                    unchanged_optional_guards=sum(x['same_contract'] and x['same_body'] for x in guard_rows),
-                   optional_guards=len(guard_rows), editor_pin_matches=new_inventory['unity_versions'] == ['2021.3.33f1'],
+                   optional_guards=len(guard_rows), editor_pin_matches=new_inventory['unity_versions'] == [toolchain()['unity_version']],
                    tool_sources={p.name:sha(p) for p in [ROOT/'tools/AssemblyProbe/MigrationSurface.cs', Path(__file__)]})
     write(out/'result.json', summary)
     write(out.parent/'latest.json', dict(path=str(out.relative_to(ROOT)), success=True))

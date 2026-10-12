@@ -15,8 +15,9 @@ def doctor(as_json=False):
  check('UnityPy pin',lambda:importlib.metadata.version('UnityPy')=='1.25.3')
  check('PE parser pin',lambda:importlib.metadata.version('pefile')=='2024.8.26')
  check('lab source project',lambda:(WORK/'lab-project/Assets/LabDiagnostics.cs').exists())
+ check('lab input generation',lambda:read(WORK/'lab-project/.port-input.json')['input_id']==read(WORK/'config/accepted-input.json')['input_id'])
  check('last passing lab checkpoint',lambda:any(read(x).get('success') for x in (WORK/'runs').glob('*/result.json')))
- result={'success':p.returncode==0 and all(x['ok'] for x in checks),'bootstrap':bootstrap,'lab':checks,'limits':['RoR2 gameplay has not booted','Full-game native/AOT/shader compatibility unresolved']}
+ result={'success':p.returncode==0 and all(x['ok'] for x in checks),'bootstrap':bootstrap,'lab':checks,'limits':['Stock platform startup and complete normal run remain unaccepted','Full-game native/AOT/shader compatibility unresolved']}
  write(WORK/'doctor.json',result)
  if as_json:print(json.dumps(result,indent=2))
  else:

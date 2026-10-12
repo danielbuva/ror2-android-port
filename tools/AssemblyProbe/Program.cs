@@ -15,6 +15,8 @@ if (args.Length > 0 && args[0] == "--migration-surface") { MigrationSurface.Run(
 
 if (args.Length > 0 && args[0] == "--migration-self-test") { MigrationSurface.SelfTest(args[1]); return; }
 
+if (args.Length > 0 && args[0] == "--catalog-contract") { CatalogContract.Run(args[1]); return; }
+
 // Read-only metadata attribution. Never loads or runs the inspected game assembly.
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(args[0]))!);

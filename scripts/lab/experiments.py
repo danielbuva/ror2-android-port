@@ -3,7 +3,7 @@ import re,collections,xml.etree.ElementTree as ET,struct
 
 def recompile():
  src=next(x for x in read(WORK/'inventory/decompilation.json') if x['assembly']=='RoR2.dll');folder=ROOT/src['output'];out=WORK/'experiments/recompile'/now();out.mkdir(parents=True,exist_ok=True);managed=game()/'Risk of Rain 2_Data/Managed';results=[]
- compilers=[('net10-csharp14',[Path.home()/'.local/share/dotnet/dotnet',Path.home()/'.local/share/dotnet/sdk/10.0.401/Roslyn/bincore/csc.dll'],'14'),('unity-csharp9',[Path('/Applications/Unity/Hub/Editor/2021.3.33f1/Unity.app/Contents/MonoBleedingEdge/bin/mono'),Path('/Applications/Unity/Hub/Editor/2021.3.33f1/Unity.app/Contents/MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe')],'9')]
+ compilers=[('net10-csharp14',[Path.home()/'.local/share/dotnet/dotnet',Path.home()/'.local/share/dotnet/sdk/10.0.401/Roslyn/bincore/csc.dll'],'14'),('unity-csharp9',[Path(os.environ['UNITY_EDITOR']).parent.parent/'MonoBleedingEdge/bin/mono',Path(os.environ['UNITY_EDITOR']).parent.parent/'MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe'],'9')]
  for label,cmd,lang in compilers:
   args=['/noconfig','/nostdlib+','/target:library','/unsafe+','/langversion:'+lang,'/out:"'+str(out/(label+'.dll'))+'"']+['/reference:"'+str(p)+'"' for p in sorted(managed.glob('*.dll')) if p.name!='RoR2.dll']+['"'+str(p)+'"' for p in sorted(folder.rglob('*.cs'))]
   rsp=out/(label+'.rsp');rsp.write_text('\n'.join(args));p=run(cmd+['@'+str(rsp)],timeout=180,check=False);log=(p.stdout+p.stderr).decode(errors='replace');(out/(label+'.log')).write_text(log)

@@ -8,7 +8,11 @@ static class OptionalPresentationGuard {
  public static void Run(string[] args) {
   string Hash(string p)=>Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))).ToLowerInvariant();
   var input=args[0];var output=args[1];var expected=args[2];
-  if(Hash(input)!=expected||expected!="0497a902a7aaf3c97fa2f1251a5364723b0c1b422839f7002a4b5f9c02563e4f")throw new Exception("Optional guard requires the measured original input");
+  // J429/J430 reviews both originals, including the four changed surrounding
+  // bodies. Every insertion contract below still has to match the selected IL.
+  var measured=new[]{"0497a902a7aaf3c97fa2f1251a5364723b0c1b422839f7002a4b5f9c02563e4f",
+   "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d"};
+  if(Hash(input)!=expected||!measured.Contains(expected))throw new Exception("Optional guard requires a reviewed original input");
   if(Path.GetFullPath(input)==Path.GetFullPath(output)||File.Exists(output))throw new Exception("Require new distinct output");
   var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(input))!);resolver.AddSearchDirectory(args[3]);
   using var assembly=AssemblyDefinition.ReadAssembly(input,new ReaderParameters{AssemblyResolver=resolver});

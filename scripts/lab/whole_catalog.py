@@ -73,11 +73,58 @@ def resolve_path(internal_id, source_paths, folded_paths=None):
     return None, 'unresolved-conversion'
 
 
-def analyze(source, export, index, helper, native_overrides=None):
+def scene_guid_owners(candidates, data, input_id):
+    """Keep catalog GUID targets and give colliding exported scenes local IDs.
+
+    A scene address and a serialized asset GUID are different identities. Only
+    repair scenes when the original catalog explicitly disambiguates both paths.
+    """
+    index, repairs = {}, []
+    locations = {row['id']: row for row in data['locations']}
+    keys = {row['key']: row['locations'] for row in data['keys'] if row.get('keyType', 'System.String')=='System.String'}
+    scene_paths = {row['internalId'] for row in data['locations'] if row.get('type', '').split(',')[0]=='UnityEngine.ResourceManagement.ResourceProviders.SceneInstance'}
+    for guid, paths in candidates.items():
+        if len(paths)==1:
+            index[guid]=paths[0]
+            continue
+        targets={locations[identity]['internalId'] for identity in keys.get(guid, [])}
+        if len(targets)!=1 or not targets<=set(paths) or not set(paths)<=scene_paths or any(not path.endswith('.unity') for path in paths):
+            raise RuntimeError('Ambiguous exported GUID identity: '+guid)
+        owner=next(iter(targets));index[guid]=owner
+        for path in sorted(set(paths)-{owner}):
+            generated=digest(dict(input_id=input_id,source_guid=guid,scene_path=path))[:32]
+            if generated in candidates or generated in index:
+                raise RuntimeError('Generated scene GUID collision')
+            index[generated]=path
+            repairs.append(dict(source=path,source_guid=guid,guid=generated,catalog_guid_owner=owner,
+                                reason='Distinct original scene address; exported GUID belongs to another scene'))
+    return index, repairs
+
+
+def runtime_key_roots(data, candidates):
+    """Exact IL address literals; provider labels retain their own typed loader.
+
+    A stage name or label appearing in an unrelated string comparison is not an
+    asset request. Accept catalog addresses, internal paths and GUID keys only.
+    """
+    keys = {row['key']: row['locations'] for row in data['keys'] if row.get('keyType', 'System.String') == 'System.String'}
+    locations = {row['id']: row for row in data['locations']}
+    roots, edges = set(), []
+    for row in candidates:
+        key=row['key']
+        found = [identity for identity in keys.get(key, []) if locations[identity]['internalId'].startswith('Assets/')
+                 and (re.fullmatch(r'[a-fA-F0-9]{32}',key) or key in (locations[identity].get('primaryKey'),locations[identity]['internalId']))]
+        if found:
+            roots.update(found)
+            edges.append(dict(key=row['key'], locations=found, methods=row['methods']))
+    return roots, edges
+
+
+def analyze(source, export, index, helper, native_overrides=None, runtime_candidates=()):
     data = read_catalog(source)
     categories = list(dict.fromkeys(re.findall(r'FindLocationsThenAddLoadOperation(?:<[^>]+>)?\(AddressablesLabels\.(\w+)', helper)))
-    if len(categories) != 29:
-        raise RuntimeError('Original provider category contract changed; review before conversion')
+    if not categories:
+        raise RuntimeError('Original provider category contract absent')
     packs, roots = catalog_roots(data, categories)
     locations = {row['id']: row for row in data['locations']}
     if len(locations) != len(data['locations']):
@@ -85,6 +132,8 @@ def analyze(source, export, index, helper, native_overrides=None):
     for row in locations.values():
         if not set(row['dependencies']) <= locations.keys():
             raise RuntimeError('Broken original catalog dependency')
+    runtime_roots, runtime_edges = runtime_key_roots(data, runtime_candidates)
+    seeds = roots | runtime_roots
     # Indexed source identity, rather than a filesystem search per resource.
     paths = set(index.values())
     folded_paths = {}
@@ -103,10 +152,10 @@ def analyze(source, export, index, helper, native_overrides=None):
         else:
             unresolved.append(dict(id=row['id'], internalId=row['internalId'], type=row['type'],
                                    owning_bundle=row['dependencies'][0] if row['dependencies'] else None,
-                                   dependency_count=len(row['dependencies']), category=reason, catalog_root=row['id'] in roots))
+                                   dependency_count=len(row['dependencies']), category=reason, catalog_root=row['id'] in roots, runtime_root=row['id'] in runtime_roots))
     key_locations = {row['key']: row['locations'] for row in data['keys'] if row.get('keyType', 'System.String') == 'System.String'}
     # Serialized references and runtime AssetReference keys are different edges.
-    pending = deque(converted[identity]['source'] for identity in sorted(roots) if identity in converted)
+    pending = deque(converted[identity]['source'] for identity in sorted(seeds) if identity in converted)
     seen = set()
     issues = []
     soft_edges = []
@@ -150,6 +199,9 @@ def analyze(source, export, index, helper, native_overrides=None):
         keys=len(data['keys']), locations=len(locations), providers=len(packs),
         provider_categories=len(categories), catalog_roots=len(roots),
         resolved_roots=len(roots & converted.keys()),
+        runtime_key_edges=len(runtime_edges), runtime_roots=len(runtime_roots),
+        resolved_runtime_roots=len(runtime_roots & converted.keys()),
+        unresolved_runtime_roots=sorted(runtime_roots-converted.keys()),
         root_types=dict(Counter(locations[x]['type'].split(',')[0] if locations[x]['type'] else 'unresolved-type' for x in roots)),
         converted_locations=len(converted), unresolved_locations=len(unresolved),
         unresolved_root_locations=[row['id'] for row in unresolved if row['catalog_root']],
@@ -158,7 +210,7 @@ def analyze(source, export, index, helper, native_overrides=None):
         quarantine=[],
         scope='Host metadata/serialized closure only. Unresolved conversion is not incompatibility. No loading, registration, gameplay, ownership or Android acceptance.',
     )
-    return dict(summary=summary, packs=packs, roots=sorted(roots), converted=converted,
+    return dict(summary=summary, packs=packs, roots=sorted(roots), runtime_roots=sorted(runtime_roots), runtime_key_edges=runtime_edges, converted=converted,
                 unresolved=unresolved, files=sorted(seen), scripts=sorted(scripts),
                 soft_edges=soft_edges, issues=issues)
 
@@ -249,7 +301,10 @@ def reconcile():
     assembly_hash = sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll')
     key = digest(dict(input=assembly_hash, ilspy='11.0.0.9375', args='project-referencepath-csharp9-v2'))
     helper = WORK/'decompiled/RoR2'/key[:16]/'RoR2.ContentManagement/AddressablesLoadHelper.cs'
-    result = analyze(catalog_path(out), export, index, helper.read_text(), conversions)
+    contract=read(out/'original-catalog-contract.json')
+    if contract['input_sha256']!=assembly_hash:
+        raise RuntimeError('Runtime key metadata belongs to different input')
+    result = analyze(catalog_path(out), export, index, helper.read_text(), conversions, contract.get('assetKeyCandidates', []))
     result['source_catalog_sha256'] = closure['source_catalog_sha256']
     result['metadata_sha256'] = sha(catalog_path(out))
     result['input_id'] = closure['input_id']
@@ -278,16 +333,19 @@ def audit():
     export_catalog(out)
     source = out/'source-catalog.json'
     # Generated index only caches original GUID metadata, never supplies a readiness filter.
-    index = {}
+    candidates = {}
     for meta in (export/'Assets').rglob('*.meta'):
         match = re.search(r'^guid:\s*([a-f0-9]{32})', meta.read_text(errors='replace'), re.M)
         if not match:
             continue
         relative = str(Path(str(meta)[:-5]).relative_to(export))
-        if match[1] in index:
-            raise RuntimeError('Ambiguous exported GUID identity')
-        index[match[1]] = relative
-    result = analyze(source, export, index, helper.read_text())
+        candidates.setdefault(match[1], []).append(relative)
+    data=read_catalog(source)
+    index, repairs=scene_guid_owners(candidates, data, read(WORK/'inventory/files.json')['input_id'])
+    write(out/'source-guid-repairs.json', repairs)
+    if list(dict.fromkeys(re.findall(r'FindLocationsThenAddLoadOperation(?:<[^>]+>)?\(AddressablesLabels\.(\w+)', helper.read_text())))!=read(out/'original-catalog-contract.json')['categories']:
+        raise RuntimeError('Recovered provider categories disagree with original IL')
+    result = analyze(source, export, index, helper.read_text(), runtime_candidates=read(out/'original-catalog-contract.json').get('assetKeyCandidates', []))
     result['input_id'] = read(WORK/'inventory/files.json')['input_id']
     result['source_catalog_sha256'] = sha(export/'Assets/StreamingAssets/aa/catalog.json')
     result['metadata_sha256'] = sha(source)
@@ -302,6 +360,15 @@ def export_catalog(out, template='ExportCatalog.cs.txt', filename='source-catalo
     """Read the shipped schema through the already pinned, idle lab editor."""
     export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
     code = (ROOT/'tools/catalog'/template).read_text()
+    if 'PROVIDER_TYPES' in code:
+        from boundaries import probe_tool
+        original = game()/'Risk of Rain 2_Data/Managed/RoR2.dll'
+        expected = next(row['sha256'] for row in read(WORK/'inventory/files.json')['files'] if row['path']=='Risk of Rain 2_Data/Managed/RoR2.dll')
+        contract = json.loads(run(probe_tool()+['--catalog-contract', original], timeout=120).stdout)
+        if contract['input_sha256']!=expected:
+            raise RuntimeError('Provider contract belongs to unaccepted input')
+        write(out/'original-catalog-contract.json', contract)
+        code = code.replace('PROVIDER_TYPES', 'new string[]{'+','.join(json.dumps(name) for name in contract['providers'])+'}')
     code = code.replace('CATALOG', json.dumps(str(export/'Assets/StreamingAssets/aa/catalog.json')))
     code = code.replace('OUTPUT', json.dumps(str(out/filename)))
     client = '''import asyncio,json
@@ -326,6 +393,8 @@ asyncio.run(main())
 '''
     script = out/(Path(template).stem+'-query.py')
     script.write_text(client)
+    version=toolchain()['unity_version']
+    code='if(Application.unityVersion!='+json.dumps(version)+'||EditorUtility.scriptCompilationFailed||EditorApplication.isCompiling||EditorApplication.isUpdating||EditorApplication.isPlayingOrWillChangePlaymode||BuildPipeline.isBuildingPlayer)throw new System.Exception("Catalog evidence requires the exact editor with current compiled source and idle state");'+code
     write(script.with_suffix('.json'), dict(project=str(WORK/'lab-project'), code=code, response=str(out/(Path(template).stem+'-query-result.json'))))
     run([ROOT/'.local/tools/unity-mcp/Server/.venv/bin/python', script], timeout=180)
 
@@ -376,6 +445,30 @@ def contracts():
     write(destination/'result.json', result)
     write(out/'contracts-latest.json', dict(path=str(destination.relative_to(ROOT))))
     print(json.dumps(dict(result['summary'], initializers=len(runtime['initializers'])), indent=2))
+
+
+def inspect_native_bundle(identity, locations, file_index):
+    """Read one accepted original container, including typed subasset entries."""
+    import UnityPy
+    basename=locations[identity]['internalId'].replace('\\', '/').rsplit('/',1)[-1]
+    matches=file_index.get(basename,[])
+    if len(matches)!=1:
+        raise RuntimeError('Ambiguous or absent legitimate bundle input')
+    source=game()/matches[0]['path']
+    if sha(source)!=matches[0]['sha256']:
+        raise RuntimeError('Original bundle drift; explicitly review and accept')
+    environment=UnityPy.load(str(source))
+    containers=[]
+    for obj in environment.objects:
+        if obj.type.name!='AssetBundle':
+            continue
+        for address,info in obj.read().m_Container:
+            asset=info.asset.deref()
+            containers.append(dict(address=address,type=asset.type.name,name=asset.peek_name(),
+                                   path_id=asset.path_id,serialized_file=asset.assets_file.name))
+    if not containers:
+        raise RuntimeError('No original asset container records')
+    return dict(location=identity,source=matches[0]['path'],sha256=matches[0]['sha256'],containers=containers)
 
 
 def native_inventory():
@@ -443,6 +536,30 @@ def native_inventory():
         raise RuntimeError('Original container inspection incomplete; preserve and inspect its first failure')
 
 
+def repair_support_source(export, mapped, project, destination):
+    """Resolve one observed decompiler ambiguity from the original field types."""
+    relative='Assets/Scripts/Assembly-CSharp/AffixBeadProjectileSound.cs'
+    if relative not in mapped:
+        return
+    from boundaries import probe_tool
+    binary=game()/'Risk of Rain 2_Data/Managed/Assembly-CSharp.dll'
+    expected=next(row['sha256'] for row in read(WORK/'inventory/files.json')['files'] if row['path']=='Risk of Rain 2_Data/Managed/Assembly-CSharp.dll')
+    contract=json.loads(run(probe_tool()+[binary,'AffixBeadProjectileSound'],timeout=120).stdout)
+    if contract['sha256']!=expected or len(contract['types'])!=1:
+        raise RuntimeError('Recovered support source requires the accepted original field contract')
+    fields={row['name']:row['type'] for row in contract['types'][0]['fields']}
+    if fields!={'SpawnBeadChaseEvent':'AK.Wwise.Event','ExplodeEvent':'AK.Wwise.Event'}:
+        raise RuntimeError('Observed support source ambiguity changed; inspect original types')
+    source=export/relative;target=project/mapped[relative];text=source.read_text()
+    corrected='using Event = AK.Wwise.Event;\n'+text
+    if target.read_text() not in (text,corrected):
+        raise RuntimeError('Unexpected edits to recovered support source')
+    target.write_text(corrected)
+    write(destination/'support-source-alias.json',dict(source=relative,target=mapped[relative],
+          source_sha256=sha(source),output_sha256=sha(target),original_assembly_sha256=expected,fields=fields,
+          scope='Qualify the two original audio-event field types; original methods unchanged; no audio availability claim'))
+
+
 def prepare_integration():
     """Import the complete discovered closure, reusing existing GUID owners once."""
     from build import preflight
@@ -455,6 +572,7 @@ def prepare_integration():
     metadata = read_catalog(catalog_path(out))
     index = read(out/'source-guid-index.json')
     guids = {path: guid for guid, path in index.items()}
+    repairs = {row['source']: row for row in read(out/'source-guid-repairs.json')} if (out/'source-guid-repairs.json').exists() else {}
     project = WORK/'lab-project'
     owners = {}
     for meta in (project/'Assets').rglob('*.meta'):
@@ -488,6 +606,12 @@ def prepare_integration():
         target = project/target_relative
         copy_catalog_asset(source, target)
         copy_catalog_asset(Path(str(source)+'.meta'), Path(str(target)+'.meta'))
+        if relative in repairs:
+            repair=repairs[relative];meta=Path(str(target)+'.meta')
+            original='guid: '+repair['source_guid']
+            if meta.read_text().count(original)!=1 or guid!=repair['guid']:
+                raise RuntimeError('Measured scene GUID repair no longer matches export')
+            meta.write_text(meta.read_text().replace(original,'guid: '+guid))
         with source.open('rb') as stream:
             yaml = stream.read(5) == b'%YAML'
         if yaml:
@@ -498,8 +622,11 @@ def prepare_integration():
                 target.write_text(text)
         mapped[relative] = target_relative
         owners[guid] = target_relative
-        copies.append(dict(source=relative, target=target_relative, sha256=sha(target)))
-    roots = set(closure['roots'])
+        copies.append(dict(source=relative, target=target_relative, sha256=sha(target),meta_sha256=sha(Path(str(target)+'.meta'))))
+    repair_support_source(export,mapped,project,destination)
+    for copied in copies:
+        copied['sha256']=sha(project/copied['target'])
+    roots = set(closure['roots']) | set(closure.get('runtime_roots', []))
     locations = []
     for row in metadata['locations']:
         conversion = closure['converted'].get(str(row['id']))
@@ -511,7 +638,7 @@ def prepare_integration():
     manifest = dict(input_id=closure['input_id'], attempt=destination.name,
                     locations=locations, keys=metadata['keys'], providers=metadata['providers'],
                     source_catalog_sha256=closure['source_catalog_sha256'],
-                    roots=closure['roots'], quarantine=[])
+                    roots=sorted(roots), provider_roots=closure['roots'], runtime_roots=closure.get('runtime_roots', []), quarantine=[])
     write(destination/'manifest.json', manifest)
     write(destination/'import-receipt.json', dict(copied=copies, reused=len(mapped)-len(copies),
                                                files=len(mapped), roots=len(roots)))
@@ -568,13 +695,55 @@ def repair_root_bindings():
     runtime = read(contracts/'runtime-contracts.json')
     scripts = {(row['guid'], str(row['fileId'])): row['type'] for row in runtime['scripts']}
     conversions = read(out/'native-conversions.json')['conversions']
+    correction_path=out/'typed-import-conversions.json'
+    if correction_path.exists():
+        corrections=read(correction_path)
+        if corrections['metadata_sha256']!=sha(catalog_path(out)):
+            raise RuntimeError('Typed import corrections belong to a different catalog')
+        conversions.update(corrections['conversions'])
     repairs = []
+    file_index={}
+    for file in read(WORK/'inventory/files.json')['files']:
+        file_index.setdefault(Path(file['path']).name,[]).append(file)
     for failure in failed:
         row = locations[failure['id']]
-        if row['id'] not in closure['roots']:
+        if row['id'] not in set(closure['roots'])|set(closure.get('runtime_roots',[])):
             raise RuntimeError('Unexpected non-root import failure')
         old = closure['converted'][str(row['id'])]['source']
         wanted = row['type'].split(',')[0]
+        if wanted in ('UnityEngine.Material','UnityEngine.Texture2D'):
+            owner=row['dependencies'][0]
+            receipt=attempt/('typed-import-native-'+str(owner)+'.json')
+            if not receipt.exists():
+                write(receipt,inspect_native_bundle(owner,locations,file_index))
+            original=read(receipt)
+            accepted=next(file for file in read(WORK/'inventory/files.json')['files'] if file['path']==original['source'])
+            if original['sha256']!=accepted['sha256'] or original['location']!=owner:
+                raise RuntimeError('Typed subasset receipt belongs to different input')
+            kind=wanted.rsplit('.',1)[-1]
+            native=[entry for entry in original['containers'] if entry['address'].casefold()==row['internalId'].casefold() and entry['type']==kind]
+            exported={}
+            for candidate in (export/old).parent.iterdir():
+                if candidate.suffix=='.meta' or not candidate.is_file():
+                    continue
+                with candidate.open('rb') as stream:
+                    prefix=stream.read(16384)
+                text=prefix.decode(errors='replace') if prefix.startswith(b'%YAML') else ''
+                header=re.search(r'^--- !u!(\d+)',text,re.M)
+                name=re.search(r'^  m_Name: (.*)$',text,re.M)
+                asset_kind={21:'Material',28:'Texture2D'}.get(int(header[1])) if header else None
+                object_name=name[1] if name else None
+                if candidate.suffix.lower() in ('.png','.tga','.jpg','.exr'):
+                    asset_kind,object_name='Texture2D',candidate.stem
+                if asset_kind and object_name:
+                    exported.setdefault((str(Path(old).parent),asset_kind,object_name),[]).append(str(candidate.relative_to(export)))
+            objects,issues=native_candidates(native,exported)
+            if issues or len(objects)!=1:
+                raise RuntimeError('Original typed subasset conversion remains ambiguous: '+str(dict(location=row['id'],objects=objects,issues=issues)))
+            conversion=dict(source=objects[0]['source'],resolution='original-typed-container',native=objects[0],original_internal_id=row['internalId'])
+            conversions[str(row['id'])]=conversion
+            repairs.append(dict(location=row['id'],previous=old,conversion=conversion))
+            continue
         name = Path(row['internalId']).stem
         candidates = []
         for candidate in (export/old).parent.glob('*.asset'):
@@ -597,7 +766,10 @@ def repair_root_bindings():
     assembly_hash = sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll')
     key = digest(dict(input=assembly_hash, ilspy='11.0.0.9375', args='project-referencepath-csharp9-v2'))
     helper = WORK/'decompiled/RoR2'/key[:16]/'RoR2.ContentManagement/AddressablesLoadHelper.cs'
-    result = analyze(catalog_path(out), export, read(out/'source-guid-index.json'), helper.read_text(), conversions)
+    contract=read(out/'original-catalog-contract.json')
+    if contract['input_sha256']!=assembly_hash:
+        raise RuntimeError('Runtime key metadata belongs to different input')
+    result = analyze(catalog_path(out), export, read(out/'source-guid-index.json'), helper.read_text(), conversions, contract.get('assetKeyCandidates',[]))
     result.update(input_id=closure['input_id'], source_catalog_sha256=closure['source_catalog_sha256'], metadata_sha256=sha(catalog_path(out)))
     write(out/'reconciled-closure.json', result)
     print(json.dumps(dict(repaired=len(repairs), closure_files=len(result['files']))))
@@ -611,6 +783,8 @@ def build_integration(code_only=False):
         raise RuntimeError('Whole roots must pass typed import before building')
     manifest = read(attempt/'manifest.json')
     project = WORK/'lab-project'
+    if (WORK/'scene-probe-build.json').exists() and not (project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json').is_file():
+        raise RuntimeError('Composed session is not staged for this generation; migrate it before building against an old scene recipe')
     for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'

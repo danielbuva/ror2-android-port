@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
-from whole_catalog import analyze, catalog_roots, native_candidates, read_catalog, resolve_path
+from whole_catalog import analyze, catalog_roots, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots
 import build
 from common import sha, write
 
@@ -48,6 +48,35 @@ class WholePayloadReuseTests(unittest.TestCase):
 
 
 class WholeCatalogTests(unittest.TestCase):
+    def test_runtime_keys_use_exact_original_identity_and_keep_consumers(self):
+        data=dict(keys=[dict(key='baked-key',locations=[1]),dict(key='missing-conversion',locations=[2]),dict(key='bundle',locations=[3]),dict(key='typed',keyType='System.Type',locations=[1])],
+                  locations=[dict(id=1,internalId='Assets/baked.asset',primaryKey='baked-key'),dict(id=2,internalId='Assets/missing.asset',primaryKey='missing-conversion'),dict(id=3,internalId='library:/bundle')])
+        candidates=[dict(key=key,methods=['Original.Method']) for key in ['baked-key','missing-conversion','bundle','typed','Baked-key']]
+        roots,edges=runtime_key_roots(data,candidates)
+        self.assertEqual(roots,{1,2})
+        self.assertEqual([row['key'] for row in edges],['baked-key','missing-conversion'])
+        self.assertEqual(edges[0]['methods'],['Original.Method'])
+        data['keys'].append(dict(key='stage-name',locations=[1,2]))
+        self.assertEqual(runtime_key_roots(data,[dict(key='stage-name',methods=['Original.CompareStage'])]),(set(),[]))
+
+    def test_scene_collision_keeps_original_guid_target_and_both_addresses(self):
+        guid='a'*32
+        paths=['Assets/stage.unity','Assets/stageTest.unity']
+        data=dict(keys=[dict(key=guid,locations=[1])],locations=[dict(id=i+1,internalId=p,type='UnityEngine.ResourceManagement.ResourceProviders.SceneInstance, Unity.ResourceManager') for i,p in enumerate(paths)])
+        index, repairs=scene_guid_owners({guid:paths},data,'input')
+        self.assertEqual(index[guid],paths[0])
+        self.assertEqual(set(index.values()),set(paths))
+        self.assertEqual(repairs[0]['source'],paths[1])
+        self.assertEqual(scene_guid_owners({guid:paths},data,'input'),(index,repairs))
+        data['keys'][0]['locations']=[1,2]
+        with self.assertRaisesRegex(RuntimeError,'Ambiguous'):
+            scene_guid_owners({guid:paths},data,'input')
+
+    def test_non_scene_guid_collision_still_requires_attribution(self):
+        data=dict(keys=[dict(key='a',locations=[1])],locations=[dict(id=1,internalId='Assets/body.prefab',type='UnityEngine.GameObject')])
+        with self.assertRaisesRegex(RuntimeError,'Ambiguous'):
+            scene_guid_owners({'a':['Assets/body.prefab','Assets/bodyOther.prefab']},data,'input')
+
     def test_unverified_content_is_still_a_root(self):
         data = dict(keys=[dict(key='ContentPack:base', locations=[1, 2]),
                           dict(key='Items', locations=[1, 2, 3])],

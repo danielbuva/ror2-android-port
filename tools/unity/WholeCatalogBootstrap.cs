@@ -21,7 +21,7 @@ public sealed class WholeCatalogBootstrap : MonoBehaviour {
  public static bool Requested {get{return File.Exists(Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json"));}}
  JObject selection,manifest;string reportPath,error;int errors;float started;readonly List<string> messages=new List<string>();
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]static void Initialize(){if(Requested)new GameObject("Original whole-catalog boot").AddComponent<WholeCatalogBootstrap>();}
- void Log(string message,string trace,LogType kind){if(kind==LogType.Exception||kind==LogType.Error||kind==LogType.Assert){errors++;if(messages.Count<32)messages.Add(message+"\n"+trace);}}
+ void Log(string message,string trace,LogType kind){if(kind==LogType.Exception||kind==LogType.Error||kind==LogType.Assert){errors++;WholeCatalogLoader.failures.Add(message+"\n"+trace);if(messages.Count<32)messages.Add(message+"\n"+trace);}}
  void Save(bool finished,bool success){File.WriteAllText(reportPath,Newtonsoft.Json.JsonConvert.SerializeObject(new{finished,success,phase=WholeCatalogLoader.phase,progress=WholeCatalogLoader.progress,error,errors,messages,seconds=Time.realtimeSinceStartup-started,counts=WholeCatalogLoader.Counts(),input=manifest?["input_id"],attempt=manifest?["attempt"],scope="Original whole catalogs; platform startup and unavailable audio remain deferred"}));}
  IEnumerator Start(){
   // The historical Windows-bundle negative control belongs to lab startup, not
@@ -54,16 +54,8 @@ public sealed class WholeCatalogBootstrap : MonoBehaviour {
   string original=Addressables.RuntimePath+"/settings.json";Addressables.InternalIdTransformFunc=location=>location.InternalId==original?settings:location.InternalId;
   yield return WholeCatalogLoader.Load(manifest,typeof(BundledAssetProvider).FullName,Path.Combine(Application.persistentDataPath,"payload"));
   if(errors!=0)throw new Exception("Original provider loading reported errors; refuse incomplete catalog initialization");
-  // Exercise native catalog initialization as a broad dependency scan. This list
-  // deliberately excludes stock platform/profile and native audio initialization.
-  foreach(string name in new[]{"ItemTierCatalog","ItemCatalog","EquipmentCatalog","BuffCatalog","EliteCatalog","EntityStateCatalog","BodyCatalog","MasterCatalog","ProjectileCatalog","EffectCatalog","SkillCatalog","SurvivorCatalog","SceneCatalog"}){
-   WholeCatalogLoader.phase="catalog:"+name;var type=typeof(RoR2Application).Assembly.GetTypes().Single(x=>x.Name==name);var method=type.GetMethod("Init",BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic,null,Type.EmptyTypes,null);if(method==null)throw new Exception("Original catalog initializer absent: "+name);
-   object value;try{value=method.Invoke(null,null);}catch(TargetInvocationException e){throw new Exception("Original catalog initializer failed: "+name,e.InnerException??e);}
-   var routine=value as IEnumerator;if(routine!=null)yield return routine;
-   if(errors!=0)throw new Exception("Original catalog initializer logged failure: "+name);
-   yield return null;
-  }
-  WholeCatalogLoader.phase="whole-catalogs-ready";
+  yield return WholeCatalogLoader.InitializeCatalogs();
+  if(errors!=0)throw new Exception("Original catalog initialization logged failure");
  }
  void OnGUI(){GUI.Label(new Rect(24,24,900,140),"Original catalog integration\n"+WholeCatalogLoader.phase+" "+(WholeCatalogLoader.progress*100).ToString("F0")+"%\n"+(error??""));}
 }

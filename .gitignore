@@ -51,4 +51,5 @@ __pycache__/
 !/environment/ENVIRONMENT_REPORT.md
 !/environment/lab-config.example.json
 !/environment/paths.env.example
+!/environment/toolchain.json
 !/environment/turnip-target.json

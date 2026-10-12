@@ -144,7 +144,7 @@ def controller_run():
 
 def validate_apk(apk):
     from device import PACKAGE
-    aapt=Path('/Applications/Unity/Hub/Editor/2021.3.33f1/PlaybackEngines/AndroidPlayer/SDK/build-tools/30.0.2/aapt')
+    aapt=Path(os.environ['UNITY_ANDROID_ROOT'])/'SDK/build-tools'/toolchain()['android_build_tools']/'aapt'
     text=run([aapt,'dump','badging',apk]).stdout.decode()
     package=re.search(r"^package: name='([^']+)'",text,re.M)
     if not package or package[1]!=PACKAGE:

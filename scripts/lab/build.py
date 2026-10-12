@@ -26,13 +26,24 @@ def validate_runtime_support(project, recipe):
  missing_effects=[path for path in config.get('objectiveEffectAssets',[]) if path.casefold() not in character | supplied]
  if missing_effects:raise RuntimeError('Runtime objective effect has no explicit bundle owner: '+', '.join(missing_effects))
 
+def validate_project_generation(project, input_id):
+ marker=Path(project)/'.port-input.json'
+ if not marker.exists() or read(marker).get('input_id')!=input_id:
+  raise RuntimeError('Lab project belongs to another or unrecorded input generation; stage the reviewed migration before building')
+
 def preflight():
  cfg=config();base=game();inv=read(WORK/'inventory/files.json');current={str(p.relative_to(base)):(p.stat().st_size,p.stat().st_mtime_ns) for p in base.rglob('*') if p.is_file()};prior={x['path']:(x['size'],x['mtime_ns']) for x in inv['files']}
  if current!=prior:raise RuntimeError('Input changed: run ./dev inspect, review input-diff and explicitly adopt a new baseline')
  accepted=read(WORK/'config/accepted-input.json') if (WORK/'config/accepted-input.json').exists() else None
  if not accepted or accepted['input_id']!=inv['input_id']:raise RuntimeError('Input not accepted; review inventory before updating work/config/accepted-input.json')
+ validate_project_generation(WORK/'lab-project',inv['input_id'])
  if shutil.disk_usage(ROOT).free<10*1024**3:raise RuntimeError('Less than 10 GiB host headroom')
- if (ROOT/'smoke/ProjectSettings/ProjectVersion.txt').read_text().find('2021.3.33f1')<0:raise RuntimeError('Unity version pin changed')
+ pin=toolchain()
+ if inv['unity_versions']!=[pin['unity_version']]:raise RuntimeError('Accepted game and exact editor pin differ')
+ if (ROOT/'smoke/ProjectSettings/ProjectVersion.txt').read_text().find(pin['unity_version']+' ('+pin['unity_revision']+')')<0:raise RuntimeError('Unity source version pin changed')
+ import plistlib
+ plist=Path(os.environ['UNITY_EDITOR']).parent.parent/'Info.plist'
+ if plistlib.loads(plist.read_bytes()).get('CFBundleVersion')!=pin['unity_version']:raise RuntimeError('Selected editor differs from exact pin')
  tracked=run(['git','ls-files','-z'],check=True).stdout.decode().split('\0');bad=[p for p in tracked if p.startswith(('work/','build/','logs/','screenshots/')) or Path(p).suffix.lower() in ['.dll','.exe','.so','.apk','.aab','.bnk','.wem','.bundle','.keystore','.jks']]
  if bad:raise RuntimeError('Restricted files tracked: '+str(bad))
  from device import Device
@@ -84,7 +95,7 @@ def build(api='gles',force=False,reuse_payload=False):
  shutil.copytree(ROOT/'android/Assets',project/'Assets',dirs_exist_ok=True)
  if reuse_payload:validate_whole_payload_reuse(project)
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
- key=digest({'inputs':inputs,'api':api,'editor':'2021.3.33f1','backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
+ key=digest({'inputs':inputs,'api':api,'editor':toolchain(),'backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
  if receipt.exists() and not force:
   r=read(receipt)
@@ -110,7 +121,7 @@ def build(api='gles',force=False,reuse_payload=False):
  r=read(result)
  if not r['success'] or r.get('errors',0)>0:raise RuntimeError(r['result']+'; build errors='+str(r.get('errors',0)))
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
- key=digest({'inputs':inputs,'api':api,'editor':'2021.3.33f1','backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
+ key=digest({'inputs':inputs,'api':api,'editor':toolchain(),'backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
  dest.mkdir(parents=True,exist_ok=True);apk=dest/Path(r['apk']).name;copy_build_artifact(r['apk'],apk)
  r.update({'apk':str(apk),'apk_sha256':sha(apk),'key':key,'graphics_api':api,'input_id':read(WORK/'inventory/files.json')['input_id']})

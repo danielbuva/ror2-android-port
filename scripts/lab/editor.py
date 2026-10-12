@@ -26,6 +26,8 @@ async def main():
    evidence['selection']=await call('set_active_instance',{'instance':matches[0]['id']})
    project=(await s.read_resource('mcpforunity://project/info')).model_dump(mode='json');evidence['project']=project
    if str(expected) not in json.dumps(project):raise RuntimeError('MCP selected project path mismatch')
+   version=json.loads((ROOT/'environment/toolchain.json').read_text())['unity_version']
+   evidence['editor_pin']=await call('execute_code',{'action':'execute','code':'if(Application.unityVersion!='+json.dumps(version)+')throw new System.Exception("Connected editor differs from approved exact pin");return Application.unityVersion;'})
    if action=='build':
     evidence['compilation']=await call('execute_code',{'action':'execute','code':'if(EditorApplication.isCompiling||EditorApplication.isUpdating||EditorUtility.scriptCompilationFailed||BuildPipeline.isBuildingPlayer)throw new System.Exception("Current editor source is not compiled and idle; refuse stale build dispatch");return "currentEditorCompilation=true";'})
     evidence['result']=await call('execute_menu_item',{'menu_path':'Porting Lab/Build ARM64'})
