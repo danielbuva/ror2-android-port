@@ -52,10 +52,10 @@ public sealed partial class MovementBatchProbe {
   for(int i=0;i<2;i++){string key;Check(LegacyResourcesAPI.GetGuid(names[i],out key)&&key==cfg.enemyDirectorTeamKeys[i],"Original team effect legacy identity");rewardLocator.Add(key,new ResourceLocationBase(key,cfg.enemyDirectorTeamAssets[i],typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));}
   // Natural TeamCatalog constructor retains its real limit, effect and sound contracts.
   var player=TeamCatalog.GetTeamDef(TeamIndex.Player);var monster=TeamCatalog.GetTeamDef(TeamIndex.Monster);
-  // The static constructor runs only once. Owned teardown releases and clears its four
+  // The static constructor runs only once. Owned teardown releases and clears its
   // original provider leases; a restarted session must acquire those exact assets again.
   if(r.session>1){
-   var teams=new[]{TeamIndex.Player,TeamIndex.Monster,TeamIndex.Lunar,TeamIndex.Void};
+   var teams=Enum.GetValues(typeof(TeamIndex)).Cast<TeamIndex>().Where(team=>team>=TeamIndex.Player&&team<TeamIndex.Count).ToArray();
    Check(teams.All(x=>!TeamCatalog.GetTeamDef(x).levelUpEffect),"Previous session retained team effect ownership");
    foreach(var team in teams)TeamCatalog.GetTeamDef(team).levelUpEffect=LegacyResourcesAPI.Load<GameObject>(names[team==TeamIndex.Player?0:1]);
   }
@@ -67,6 +67,10 @@ public sealed partial class MovementBatchProbe {
   int limit=cfg.integratedWorld?int.MaxValue:cfg.directorSpawnLimit==0?1:cfg.directorSpawnLimit;Check(cfg.integratedWorld||limit==1||limit==3,"Unmeasured director batch limit");r.director=new DirectorReport{automatic=true,spawnLimit=limit,monsterLimit=TeamCatalog.GetTeamDef(TeamIndex.Monster).softCharacterLimit,scope="Original enabled fast director; source timing/credits/target/team limit/approximate placement, one base Beetle card, bounded "+limit+" spawns; no connected user, full stage, elite or full wave acceptance"};if(cfg.integratedWorld)r.director.scope="Continuous original enabled fast director, one original base Beetle card and real team limit/credits/placement; no artificial spawn cutoff. Original Run clock with unavailable stock startup/user/profile/progression.";r.phase="automatic-director-context";Save();
   Check(RunArtifactManager.instance&&!RunArtifactManager.instance.IsArtifactEnabled(RoR2Content.Artifacts.eliteOnlyArtifactDef),"Original disabled Honor artifact missing");
   priorDirectorEliteTiers=RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null);Check(priorDirectorEliteTiers==null,"Existing original elite tiers");StaticCall(typeof(CombatDirector),"Init");
+  // Current original Init fills tier entries through asynchronous asset collections.
+  float eliteDeadline=Time.realtimeSinceStartup+20;
+  while(((Array)RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null)).Cast<object>().Any(tier=>tier==null)&&Time.realtimeSinceStartup<eliteDeadline)yield return null;
+  Check(((Array)RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null)).Cast<object>().All(tier=>tier!=null),"Original elite tier initialization incomplete");
   foreach(var name in new[]{"masterPrefabs","masterPrefabMasterComponents","aiMasterPrefabs","masterNames"}){var field=RewardField(typeof(MasterCatalog),name);var old=field.GetValue(null);Check(old==null||((Array)old).Length==0,"Existing master catalog "+name);directorMasterFields[field]=old;}
   directorMasterMap=(IDictionary)RewardField(typeof(MasterCatalog),"nameToIndexMap").GetValue(null);Check(directorMasterMap.Count==0&&DirectorRequestedMasters().Count==0&&DirectorMessageMasters().Count==0,"Existing preload/catalog state");if(cfg.teleporterLoop)PrepareObjectiveActorTemplates(cfg);StaticCall(typeof(MasterCatalog),"SetEntries",new object[]{new[]{template}.Concat(objectiveTemplates.Where(x=>x.GetComponent<CharacterMaster>())).ToArray()});
   var index=MasterCatalog.FindMasterIndex(template);Check(MasterCatalog.GetMasterPrefab(index)==template,"Original master catalog identity");r.director.masterIndex=(int)index;
@@ -74,7 +78,9 @@ public sealed partial class MovementBatchProbe {
   if(!directorPlayer.master)Call(directorPlayer,"Awake");Check(directorPlayer.master==player.master,"Original player controller master binding");directorPlayerRegistered=true;Call(directorPlayer,"OnEnable");r.director.playerRegistered=PlayerCharacterMasterController.instances.Count==1&&PlayerCharacterMasterController.instances[0]==directorPlayer;Check(r.director.playerRegistered,"Original player registration missing");
   r.director.participatingPlayers=Run.instance.participatingPlayerCount;r.director.livingPlayers=Run.instance.livingPlayerCount;Check(r.director.participatingPlayers==PlayerCharacterMasterController.instances.Count&&r.director.participatingPlayers==1&&r.director.livingPlayers==PlayerCharacterMasterController.GetPlayersWithBodiesCount()&&r.director.livingPlayers==1&&!directorPlayer.isConnected&&!directorPlayer.networkUser,"Original participant/body counts or unavailable user contract changed");
   StartOriginalRunClock();
-  automaticDeck=Instantiate(artifactBundle.LoadAsset<DirectorCardCategorySelection>(cfg.enemyDirectorDeckAsset));Check(automaticDeck&&automaticDeck.categories.Length==1&&automaticDeck.categories[0].cards.Length==1,"Measured one-card director subset missing");
+  automaticDeck=Instantiate(artifactBundle.LoadAsset<DirectorCardCategorySelection>(cfg.enemyDirectorDeckAsset));Check(automaticDeck,"Original initial director deck missing");
+  var categories=automaticDeck.categories.Where(sourceCategory=>sourceCategory.cards.Any(candidate=>candidate.spawnCard&&candidate.spawnCard.name==rewardCard.name)).ToArray();Check(categories.Length==1,"Original initial actor category ambiguous");
+  var category=categories[0];category.cards=category.cards.Where(candidate=>candidate.spawnCard&&candidate.spawnCard.name==rewardCard.name).ToArray();automaticDeck.categories=new[]{category};Check(category.cards.Length==1,"Original initial actor card ambiguous");
   var card=automaticDeck.categories[0].cards[0];Check(card.spawnCard.name==rewardCard.name&&card.selectionWeight==2&&card.spawnDistance==DirectorCore.MonsterSpawnDistance.Standard&&!card.preventOverhead&&card.minimumStageCompletions==0&&!card.requiredUnlockableDef&&!card.forbiddenUnlockableDef&&string.IsNullOrEmpty(card.requiredUnlockable)&&string.IsNullOrEmpty(card.forbiddenUnlockable),"Source Beetle card metadata changed");card.spawnCard=rewardCard;r.director.selectedCardWeight=card.selectionWeight;Check(card.IsAvailable(),"Original base card availability failed");
   automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.enemyDirectorAsset));Check(automaticDirectorHost&&!automaticDirectorHost.activeSelf,"Source director root isolation missing");rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();Check(rewardDirector&&rewardDirector.enabled&&automaticDirectorHost.GetComponents<MonoBehaviour>().Length==1,"Source fast director component scope changed");
   r.director.sourceSettings=rewardDirector.monsterCredit==0&&rewardDirector.creditMultiplier==.75f&&rewardDirector.moneyWaveIntervals.Length==1&&rewardDirector.moneyWaveIntervals[0].min==1&&rewardDirector.moneyWaveIntervals[0].max==1&&rewardDirector.minRerollSpawnInterval==4.5f&&rewardDirector.maxRerollSpawnInterval==9&&rewardDirector.targetPlayers&&!rewardDirector.ignoreTeamSizeLimit&&rewardDirector.maximumNumberToSpawnBeforeSkipping==6&&rewardDirector.spawnDistanceMultiplier==1&&rewardDirector.minSpawnRange==0&&!rewardDirector.shouldSpawnOneWave;
@@ -106,7 +112,7 @@ public sealed partial class MovementBatchProbe {
  }
  void ReleaseDirectorAssets(){
   if(directorTeamEffects==null)return;
-  foreach(var team in new[]{TeamIndex.Player,TeamIndex.Monster,TeamIndex.Lunar,TeamIndex.Void}){var def=TeamCatalog.GetTeamDef(team);var effect=def.levelUpEffect;Check(effect==directorTeamEffects[team==TeamIndex.Player?0:1],"Owned team effect reference changed before release");def.levelUpEffect=null;Addressables.Release(effect);}
+  foreach(var team in Enum.GetValues(typeof(TeamIndex)).Cast<TeamIndex>().Where(team=>team>=TeamIndex.Player&&team<TeamIndex.Count)){var def=TeamCatalog.GetTeamDef(team);var effect=def.levelUpEffect;Check(effect==directorTeamEffects[team==TeamIndex.Player?0:1],"Owned team effect reference changed before release");def.levelUpEffect=null;Addressables.Release(effect);}
   directorTeamEffects=null;r.director.navigationAgents=NavigationAgentCount();r.director.cleaned=!automaticDirectorHost&&!automaticDeck&&!directorPlayerRegistered&&PlayerCharacterMasterController.instances.Count==0&&directorMasterMap.Count==0&&r.director.navigationAgents==0;Check(r.director.cleaned,"Automatic director owned teardown incomplete");
  }
 }

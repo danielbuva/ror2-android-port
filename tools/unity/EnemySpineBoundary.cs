@@ -28,8 +28,15 @@ public sealed partial class MovementBatchProbe {
  void PrepareEnemyElites(Result cfg){
   var field=typeof(EliteCatalog).GetField("eliteDefs",BindingFlags.NonPublic|BindingFlags.Static);priorEnemyElites=(EliteDef[])field.GetValue(null);priorEnemyEliteList=EliteCatalog.eliteList.ToArray();Check((priorEnemyElites==null||priorEnemyElites.Length==0)&&priorEnemyEliteList.Length==0,"Existing elite catalog");
   var names=new[]{"Poison","Haunted","Lunar","Void"};var defs=cfg.enemyEliteAssets.Select(x=>artifactBundle.LoadAsset<EliteDef>(x)).ToArray();Check(defs.Length==4,"Measured death elite definitions missing");for(int i=0;i<4;i++){Check(defs[i]&&defs[i].name=="ed"+names[i],"Original elite identity");BindEnemyDefinition(i==3?typeof(DLC1Content.Elites):typeof(RoR2Content.Elites),names[i],defs[i]);}
-  ownsEnemyElites=true;StaticCall(typeof(EliteCatalog),"SetEliteDefs",new object[]{defs});foreach(var def in defs)Check(def.eliteIndex!=EliteIndex.None&&EliteCatalog.GetEliteDef(def.eliteIndex)==def,"Original elite catalog identity");
+  var all=ComposedEliteDefinitions(cfg);ownsEnemyElites=true;StaticCall(typeof(EliteCatalog),"SetEliteDefs",new object[]{all});foreach(var def in all)Check(def.eliteIndex!=EliteIndex.None&&EliteCatalog.GetEliteDef(def.eliteIndex)==def,"Original elite catalog identity");
  }
+ EliteDef[] ComposedEliteDefinitions(Result cfg){
+  var definitions=cfg.enemyEliteAssets.Select(path=>artifactBundle.LoadAsset<EliteDef>(path));
+  if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap"))definitions=definitions.Concat(WholeCatalogComposed.EliteDefinitions());
+  var result=definitions.Distinct().ToArray();Check(result.All(def=>def)&&result.Select(def=>def.name).Distinct().Count()==result.Length,"Original elite definition identity ambiguous");return result;
+ }
+ EquipmentDef[] ComposedEliteEquipment(Result cfg){return cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")?ComposedEliteDefinitions(cfg).Select(def=>def.eliteEquipmentDef).Where(def=>def).Distinct().ToArray():new EquipmentDef[0];}
+ BuffDef[] ComposedEliteBuffs(Result cfg){return ComposedEliteEquipment(cfg).Select(def=>def.passiveBuffDef).Where(def=>def).Distinct().ToArray();}
  BuffDef[] EnemyDeathBuffs(Result cfg){if(!cfg.enemySpine)return new BuffDef[0];var def=artifactBundle.LoadAsset<BuffDef>(cfg.enemyDeathBuffAsset);Check(def&&def.name=="bdExtraLifeBuff","Original death buff missing");BindEnemyDefinition(typeof(DLC2Content.Buffs),"ExtraLifeBuff",def);return new[]{def};}
  EquipmentDef[] EnemyDeathEquipment(Result cfg){if(!cfg.enemySpine)return new EquipmentDef[0];var names=new[]{"HealAndRevive","HealAndReviveConsumed"};var defs=cfg.enemyDeathEquipment.Select(x=>artifactBundle.LoadAsset<EquipmentDef>(x)).ToArray();for(int i=0;i<2;i++){Check(defs[i]&&defs[i].name==names[i],"Original death equipment missing");BindEnemyDefinition(typeof(DLC2Content.Equipment),names[i],defs[i]);}if(cfg.originalMoneyCost){var card=artifactBundle.LoadAsset<EquipmentDef>(cfg.multiShopCardAsset);Check(card&&card.name=="MultiShopCard","Original money-cost comparison equipment missing");BindEnemyDefinition(typeof(DLC1Content.Equipment),"MultiShopCard",card);return defs.Concat(new[]{card}).ToArray();}return defs;}
  Type[] EnemyTypes(){return new[]{typeof(EntityStates.BeetleMonster.SpawnState),typeof(EntityStates.BeetleMonster.HeadbuttState),typeof(EntityStates.AI.Walker.Wander),typeof(EntityStates.AI.Walker.Combat),typeof(EntityStates.AI.Walker.LookBusy),typeof(EntityStates.AI.Walker.Guard),typeof(GenericCharacterDeath),typeof(HurtState),typeof(HurtStateFlyer),typeof(StunState),typeof(SleepState),typeof(EntityStates.Emote.SurpriseState),typeof(EntityStates.EmotePoint)};}
@@ -38,7 +45,8 @@ public sealed partial class MovementBatchProbe {
   foreach(var path in new[]{cfg.enemySpawnConfigAsset,cfg.enemyAttackConfigAsset,cfg.enemySleepConfigAsset}){
    var original=artifactBundle.LoadAsset<EntityStateConfiguration>(path);Check(original,"Original enemy state configuration missing");var copy=Instantiate(original);copy.serializedFieldsCollection.serializedFields=original.serializedFieldsCollection.serializedFields.ToArray();
    for(int i=0;i<copy.serializedFieldsCollection.serializedFields.Length;i++){
-    var field=copy.serializedFieldsCollection.serializedFields[i];if(field.fieldName.IndexOf("sound",StringComparison.OrdinalIgnoreCase)>=0)copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue="";
+    var field=copy.serializedFieldsCollection.serializedFields[i];var member=((Type)copy.targetType).GetField(field.fieldName);
+    if(member!=null&&member.FieldType==typeof(string)&&field.fieldName.IndexOf("sound",StringComparison.OrdinalIgnoreCase)>=0)copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue="";
     if(field.fieldName.IndexOf("effect",StringComparison.OrdinalIgnoreCase)>=0)copy.serializedFieldsCollection.serializedFields[i].fieldValue.objectValue=null;
    }
    enemyConfigs.Add(copy);
@@ -73,6 +81,8 @@ public sealed partial class MovementBatchProbe {
   GlobalEventManager.onServerDamageDealt+=EnemyDamage;GlobalEventManager.onCharacterDeathGlobal+=EnemyDeath;r.enemy.playerKillsBefore=player.killCountServer;
   r.enemy.excludedCallbacks=new[]{"CharacterNetworkTransform platform snapshot clock","InteractionDriver pause/interaction context","EquipmentSlot targeting catalogs",cfg.enemyRewards?"Inventory automatic equipment refresh (only original UseAmbientLevel)":"Inventory automatic equipment refresh (empty inventory only)",cfg.enemyRewards?"Optional logbook/profile drop":"DeathRewards gold/XP/drop producers"};
   var position=player.transform.position+Vector3.forward*9;RaycastHit ground;Check(Physics.Raycast(position+Vector3.up*20,Vector3.down,out ground,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore),"Original terrain enemy spawn floor missing");position=ground.point+Vector3.up*2;
+  // Updated original SpawnBody resolves through BodyCatalog, not master.bodyPrefab.
+  BindCatalogBodyTemplate(bodyTemplate);
   r.phase="original-enemy-master-spawn";Save();
   if(cfg.enemyRewards){var spawning=SpawnRewardEnemy(bodyTemplate,position,player,cfg);while(spawning.MoveNext())yield return spawning.Current;}
   else{
@@ -96,7 +106,7 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupEnemy(){
   GlobalEventManager.onServerDamageDealt-=EnemyDamage;GlobalEventManager.onCharacterDeathGlobal-=EnemyDeath;if(enemyMasterHost)NetworkServer.Destroy(enemyMasterHost);if(enemyBody)NetworkServer.Destroy(enemyBody.gameObject);if(enemyDetachedModel)Destroy(enemyDetachedModel); // Original ModelLocator relinquishes a corpse on death; the bounded fixture still owns that detached object.
-  CleanupDirectorActors();CleanupRewardHosts();if(enemySceneHost)Destroy(enemySceneHost);if(enemyTemplates)Destroy(enemyTemplates);if(enemyMaterial)Destroy(enemyMaterial);if(enemySurface)Destroy(enemySurface);
+  CleanupDirectorActors();CleanupRewardHosts();RestoreCatalogBodyTemplates();if(enemySceneHost)Destroy(enemySceneHost);if(enemyTemplates)Destroy(enemyTemplates);if(enemyMaterial)Destroy(enemyMaterial);if(enemySurface)Destroy(enemySurface);
  }
  IEnumerator VerifyEnemyCleanup(){if(r.enemy==null)yield break;for(int i=0;i<3;i++)yield return null;var remaining=new[]{enemyMasterHost?"master":null,enemyBody?"body":null,enemyDetachedModel?"model/corpse":null,enemySceneHost?"scene context":null,enemyTemplates?"templates":null,enemyMaterial?"material":null,enemySurface?"surface":null,SceneInfo.instance?"SceneInfo singleton":null}.Where(x=>x!=null).ToArray();r.enemy.cleaned=remaining.Length==0;Check(r.enemy.cleaned,"Owned enemy destruction before provider release: "+string.Join(",",remaining));VerifyDirectorActorCleanup();Save();}
  void CleanupEnemyConfigs(){if(ownsEnemyElites){typeof(EliteCatalog).GetField("eliteDefs",BindingFlags.NonPublic|BindingFlags.Static).SetValue(null,priorEnemyElites);EliteCatalog.eliteList.Clear();EliteCatalog.eliteList.AddRange(priorEnemyEliteList);ownsEnemyElites=false;}foreach(var entry in enemyStaticFields)entry.Key.SetValue(null,entry.Value);enemyStaticFields.Clear();foreach(var cfg in enemyConfigs)if(cfg)Destroy(cfg);enemyConfigs.Clear();}

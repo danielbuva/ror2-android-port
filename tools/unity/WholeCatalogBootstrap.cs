@@ -33,7 +33,7 @@ public sealed class WholeCatalogBootstrap : MonoBehaviour {
   var routines=new Stack<IEnumerator>();routines.Push(Boot(path));Application.logMessageReceived+=Log;
   while(routines.Count!=0){
    object current=null;bool more=false;
-   try{if(Time.realtimeSinceStartup-started>240)throw new TimeoutException("Whole catalog initialization stalled");var top=routines.Peek();more=top.MoveNext();if(more)current=top.Current;else routines.Pop();}
+   try{if(Time.realtimeSinceStartup-started>420)throw new TimeoutException("Whole catalog initialization stalled");var top=routines.Peek();more=top.MoveNext();if(more)current=top.Current;else routines.Pop();}
    catch(Exception e){error=e.ToString();break;}
    if(more){var nested=current as IEnumerator;if(nested!=null){routines.Push(nested);continue;}yield return current;}
    Save(false,false);

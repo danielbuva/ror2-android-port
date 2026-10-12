@@ -55,6 +55,13 @@ public sealed partial class MovementBatchProbe {
   // explicit table is absent. Never create unusable items or change source tables.
   return true;
  }
+ ItemDef[] ComposedBaseBossRewards(Result cfg){
+  if(!cfg.teleporterLoop)return new ItemDef[0];
+  var tables=cfg.objectiveActors.Select(actor=>artifactBundle.LoadAsset<GameObject>(actor.body).GetComponent<DeathRewards>()).Where(rewards=>rewards).Select(rewards=>rewards.bossDropTable as ExplicitPickupDropTable).Where(table=>table);
+  var items=tables.SelectMany(table=>table.pickupEntries).Select(entry=>entry.pickupDef as ItemDef).Where(item=>item&&ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(item.name))==item).Distinct().ToArray();
+  foreach(var item in items)Check(item.tier==ItemTier.Boss&&!item.requiredExpansion&&!item.unlockableDef&&!item.hidden,"Original composed boss reward requires unavailable policy: "+item.name);
+  return items;
+ }
  int StageHeatCount(){return (int)stageHeatCount.GetValue(stageHeatEntries);}
  object StageHeatPair(int index){return stageHeatItem.GetValue(stageHeatEntries,new object[]{index});}
  CharacterBody StageHeatBody(object pair){return (CharacterBody)pair.GetType().GetProperty("Key").GetValue(pair);}

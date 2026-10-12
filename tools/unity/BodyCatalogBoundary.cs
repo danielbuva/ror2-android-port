@@ -54,6 +54,10 @@ public sealed partial class MovementBatchProbe {
  }
 
  IEnumerator RegisterBodyCatalog(){
+  // Current original SpawnBody requires the game's PreSplash preset table.
+  // This immutable application table is initialized once, not per session.
+  if(BodyHandlingConfig.DefaultSettings==null){r.phase="original-body-handling-presets";Save();BodyHandlingConfig.Presets.InitializePresets();}
+  Check(BodyHandlingConfig.DefaultSettings!=null&&BodyHandlingConfig.DefaultSettings.currentPreset==BodyHandlingPresetIndex.Initial,"Original body-handling presets unavailable");
   if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){var shared=WholeCatalogComposed.Prepare();while(shared.MoveNext())yield return shared.Current;}
   Check(BodyCatalog.bodyCount==0&&LegacyResourcesAPI.ActiveCount==0,"Existing catalog/request ownership");
   r.phase="body-catalog-initialize";Save();
@@ -86,6 +90,11 @@ public sealed partial class MovementBatchProbe {
   Check(portrait&&portrait.name=="texCommandoIcon","Serialized portrait missing");
   r.phase="original-body-catalog-register";Save();
   var bodies=cfg.enemySpine?new[]{prefab,artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset)}:new[]{prefab};if(cfg.teleporterLoop)bodies=bodies.Concat(cfg.objectiveActors.Select(x=>artifactBundle.LoadAsset<GameObject>(x.body))).ToArray();
+  if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
+   var comparisons=WholeCatalogComposed.BodyComparisons(typeof(DLC4Content.BodyPrefabs));
+   foreach(var comparison in comparisons)BindEnemyDefinition(typeof(DLC4Content.BodyPrefabs),comparison.name,comparison);
+   bodies=bodies.Concat(comparisons.Select(comparison=>comparison.gameObject)).Distinct().ToArray();
+  }
   ownsBodyCatalog=true;StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)bodies);
   deadline=Time.realtimeSinceStartup+3;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;
   yield return null;yield return null;
@@ -96,10 +105,72 @@ public sealed partial class MovementBatchProbe {
   Check(body.portraitIcon==portrait,"Missing-key callback replaced serialized portrait");
   Check(!prefab.activeSelf,"Catalog registration activated gameplay");
   if(cfg.initializeLoadoutTables)PrepareLoadoutTables(prefab);
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.ConfigureLocations();
+ }
+ ResourceAvailability priorComposedEffectAvailability;
+ readonly Dictionary<int,GameObject> priorCatalogBodyTemplates=new Dictionary<int,GameObject>();
+ void SetCatalogBodyTemplate(int index,GameObject template){
+  ((GameObject[])RewardField(typeof(BodyCatalog),"bodyPrefabs").GetValue(null))[index]=template;
+  ((CharacterBody[])RewardField(typeof(BodyCatalog),"bodyPrefabBodyComponents").GetValue(null))[index]=template.GetComponent<CharacterBody>();
+  ((Component[][])RewardField(typeof(BodyCatalog),"bodyComponents").GetValue(null))[index]=template.GetComponents<Component>();
+  ((GenericSkill[][])RewardField(typeof(BodyCatalog),"skillSlots").GetValue(null))[index]=template.GetComponents<GenericSkill>();
+ }
+ void BindCatalogBodyTemplate(GameObject template){
+  var body=template.GetComponent<CharacterBody>();int index=(int)body.bodyIndex;
+  var original=BodyCatalog.GetBodyPrefab(body.bodyIndex);
+  Check(ownsBodyCatalog&&original&&original.name==template.name&&original!=template&&template.activeSelf&&!template.activeInHierarchy&&!priorCatalogBodyTemplates.ContainsKey(index),"Owned catalog body-template identity invalid: "+template.name);
+  priorCatalogBodyTemplates.Add(index,original);SetCatalogBodyTemplate(index,template);
+  Check(BodyCatalog.GetBodyPrefab(body.bodyIndex)==template&&BodyCatalog.GetBodyPrefabBodyComponent(body.bodyIndex)==body,"Original spawn catalog did not select the owned template");
+ }
+ void RestoreCatalogBodyTemplates(){foreach(var pair in priorCatalogBodyTemplates)SetCatalogBodyTemplate(pair.Key,pair.Value);priorCatalogBodyTemplates.Clear();}
+ void InitializeComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions){
+  priorComposedEffectAvailability=EffectCatalog.availability;
+  // The composed path has no ContentManager additions array. The current
+  // original providers supply no extra EffectDefs beyond their baked catalog.
+  EffectCatalog.SetEntries(Array.Empty<EffectDef>());EffectCatalog.availability.MakeAvailable();
+  Check(EffectCatalog.effectCount>0,"Original baked effect catalog unavailable");
+  RegisterComposedEffects(definitions);
+ }
+ void RegisterComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions){
+  var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);
+  foreach(var definition in definitions){
+   var index=EffectCatalog.FindEffectIndex(definition.prefabName);
+   Check(index!=EffectIndex.Invalid&&definition.prefabEffectComponent,"Original baked effect identity absent: "+definition.prefabName);
+   typeof(EffectDef).GetProperty("index").SetValue(definition,index,null);
+   definition.prefabEffectComponent.effectIndex=index;entries[(int)index]=definition;
+  }
+ }
+ void RestoreComposedEffects(EffectDef[] previous){
+  var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);
+  foreach(var definition in entries)if(definition.prefabEffectComponent)definition.prefabEffectComponent.effectIndex=EffectIndex.Invalid;
+  RewardField(typeof(EffectCatalog),"entries").SetValue(null,previous);
+  ((IDictionary)RewardField(typeof(EffectCatalog),"nameToEffectIndex").GetValue(null)).Clear();
+  EffectCatalog.availability=priorComposedEffectAvailability;
+ }
+ BuffDef[] UpdatedComparisonBuffs(Result cfg){
+  if(!cfg.integratedWorld||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return new BuffDef[0];
+  var definitions=WholeCatalogComposed.BuffDefinitions();
+  // The current original DLC4 provider maps Buffs fields to "bd" + field name.
+  // Definition registration supplies comparisons; it grants no buff or expansion.
+  var fields=typeof(DLC4Content.Buffs).GetFields(BindingFlags.Public|BindingFlags.Static);
+  var selected=fields.Select(field=>definitions.SingleOrDefault(def=>def.name=="bd"+field.Name)).ToArray();
+  Check(selected.All(def=>def)&&selected.Distinct().Count()==fields.Length,"Current original comparison buff identities missing or ambiguous");
+  for(int i=0;i<fields.Length;i++)BindEnemyDefinition(typeof(DLC4Content.Buffs),fields[i].Name,selected[i]);
+  return selected;
+ }
+ ItemDef[] UpdatedComparisonItems(Result cfg){
+  if(!cfg.integratedWorld||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return new ItemDef[0];
+  var definitions=WholeCatalogComposed.ItemDefinitions();
+  var fields=typeof(DLC4Content.Items).GetFields(BindingFlags.Public|BindingFlags.Static);
+  var selected=fields.Select(field=>definitions.SingleOrDefault(def=>def.name==field.Name)).ToArray();
+  Check(selected.All(def=>def)&&selected.Distinct().Count()==fields.Length,"Current original comparison item identities missing or ambiguous");
+  for(int i=0;i<fields.Length;i++)BindEnemyDefinition(typeof(DLC4Content.Items),fields[i].Name,selected[i]);
+  return selected;
  }
  void CleanupBodyCatalog(){
   Check(LegacyResourcesAPI.ActiveCount==0,"Refuse teardown with pending portrait callbacks");
   CleanupLoadoutTables();
+  RestoreCatalogBodyTemplates();
   if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
   ReleaseObjectiveBundlePreload();CleanupRecoveredText();

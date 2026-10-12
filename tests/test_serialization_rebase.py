@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
 from serialization_rebase import RebaseConflict, local_ids, rebase_yaml
+from composition_migration import scene_contract
 
 
 def fixture(component='11', enabled='1', extra=''):
@@ -51,6 +52,22 @@ class SerializationRebaseTests(unittest.TestCase):
         result, _ = rebase_yaml(fixture(), android, current)
         self.assertNotIn('--- !u!114', result)
         self.assertIn('optional: {fileID: 0}', result)
+
+    def test_scene_update_measures_previews_and_retains_only_zone_network_context(self):
+        source = fixture().replace('fileID: 99, guid:', 'fileID: 866789372, guid:')
+        source = source.replace('  m_Name: Owner', '  m_Name: Owner\n  m_IsActive: 1')
+        source += ('--- !u!4 &12\nTransform:\n  m_GameObject: {fileID: 1}\n  m_Father: {fileID: 0}\n'
+                   '--- !u!114 &13\nMonoBehaviour:\n  m_GameObject: {fileID: 1}\n'
+                   '  m_Script: {fileID: 372142912, guid: '+'b'*32+', type: 3}\n')
+        source = source.replace('  - component: {fileID: 11}', '  - component: {fileID: 11}\n  - component: {fileID: 13}')
+        staged, counts, removed = scene_contract(source, source)
+        self.assertEqual(counts['previewCallbacks'], 1)
+        self.assertEqual(counts['previewNames'], ['Owner'])
+        self.assertEqual(removed, ['13'])
+        self.assertNotIn('component: {fileID: 13}', staged)
+        self.assertNotIn('--- !u!114 &13', staged)
+        with self.assertRaisesRegex(RuntimeError, 'Unreviewed'):
+            scene_contract(source.replace('866789372', '99'), source.replace('866789372', '99'))
 
 
 if __name__ == '__main__':

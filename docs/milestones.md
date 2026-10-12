@@ -1,7 +1,6 @@
 # Capability gates
 
-J431 migration is host-staged, with current source relationships and expanded binary-backed material coverage. Updated Android gameplay acceptance is pending; no formal gate advances from host import or shader generation.
-J430: matching Steam25475991/Unity2021.3.45f2 host migration passes6,515 typed roots, seven original providers and thirteen native catalog initializers (1,679 baked effects).120 host tests pass. Migrate the composed session next, then build/test Android. Nova still runs the retained old-input APK; J425/J323 and manual/Moon gates remain intact. See PORTING_STATE.md.
+J431: Steam25475991/Unity2021.3.45f2 native Android catalog registration passes seven providers/thirteen initializers in98.526s/zero errors, matching host counts. Candidate31 updated composed gameplay executes453.022seconds/32kills/four transitions through Sky Meadow with full cleanup and zero current-process errors. Preview hierarchy and native HUD subobject lookup repairs pass; appearance/performance remain unaccepted. 129 host tests pass. Debug invincibility/high damage/fast charge ON; movement/jump OFF. No formal game capability gate advances. Prior input/editor and J425/J323 remain available; manual/Moon/PC acceptance is unchanged. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evidence, not compilation alone. Shared procedure: preflight → minimal change/build → install/runtime-path discovery/sync/run → structured logs/crash/state plus relevant visual capture → first-failure classification → state/journal/commit. Query live storage on each install/size increase and retain prior APK/payload; never change storage or unrelated data.
 

@@ -11,6 +11,111 @@ def private_path(value):
     return path
 
 
+def assembly_paths(project,generation):
+    result={}
+    for name,original in generation['original_assemblies'].items():
+        matches=list((project/'Assets').rglob(name))
+        expected=generation.get('transformed_assemblies',{}).get(name,original)
+        if len(matches)!=1 or sha(matches[0])!=expected:
+            raise RuntimeError('Current runtime assembly placement/identity is ambiguous: '+name)
+        result[name]=str(matches[0].relative_to(project))
+    return result
+
+
+def restore_script_orders(project,source):
+    """Retain shipped nonzero MonoScript orders on the corresponding runtime DLLs."""
+    import UnityPy
+    generation=read(project/'.port-input.json')
+    paths=assembly_paths(project,generation)
+    selected={};unavailable=[]
+    for obj in UnityPy.load(str(source)).objects:
+        if obj.type.name!='MonoScript':continue
+        row=obj.read_typetree();order=row.get('m_ExecutionOrder',0)
+        if not order:continue
+        assembly=row['m_AssemblyName'];name='.'.join(filter(None,[row['m_Namespace'],row['m_ClassName']]))
+        if assembly not in paths:
+            unavailable.append(dict(assembly=assembly,type=name,order=order));continue
+        orders=selected.setdefault(assembly,{})
+        if name in orders:raise RuntimeError('Duplicate original script execution-order owner')
+        orders[name]=order
+    plan=[]
+    for assembly,orders in selected.items():
+        meta=Path(str(project/paths[assembly])+'.meta');text=meta.read_text()
+        match=re.search(r'^  executionOrder:(?: \{\})?\n(?:    .*\n)*',text,re.M)
+        if not match:raise RuntimeError('Runtime plugin execution-order metadata missing: '+assembly)
+        prior={}
+        for line in match[0].splitlines()[1:]:
+            name,value=line.strip().rsplit(': ',1);prior[name]=int(value)
+        merged=dict(prior,**orders)
+        block='  executionOrder:\n'+''.join('    '+name+': '+str(value)+'\n' for name,value in sorted(merged.items()))
+        plan.append((meta,text[:match.start()]+block+text[match.end():],dict(assembly=assembly,orders=orders,before_sha256=sha(meta))))
+    # Validate all owners before writing any importer.
+    for meta,text,row in plan:
+        meta.write_text(text);row['after_sha256']=sha(meta)
+    return dict(input_id=generation['input_id'],source_sha256=sha(source),
+                restored=[row for _,_,row in plan],unavailable_assemblies=unavailable)
+
+
+def scene_contract(source_text,staged_text):
+    """Measure current reduced-scene contracts; retain the existing callback policy."""
+    from serialization_rebase import objects,identity,hierarchy_keys
+    header,rows=objects(staged_text);_,original=objects(source_text)
+    # These are the existing measured MonoScript file IDs, not object file IDs.
+    preview='866789372';zone='-376374237';network='372142912';team='-1895344032'
+    def script(block):
+        value=identity(block)[2]
+        return re.search(r'fileID: (-?\d+)',value)[1] if value else None
+    behaviours={fid:block for fid,block in rows.items() if identity(block)[0]=='114'}
+    for fid,block in behaviours.items():
+        if fid not in original or identity(block)!=identity(original[fid]):
+            raise RuntimeError('Current scene callback differs from original identity: '+fid)
+        if script(block) not in {preview,zone,network,team}:
+            raise RuntimeError('Unreviewed reduced-scene callback: '+fid)
+    zone_owners={identity(block)[1] for block in behaviours.values() if script(block)==zone}
+    # The type-based rebase can retain new network identities outside MapZones.
+    # The accepted reduced-scene policy retained only zone-owned identities.
+    removed={fid for fid,block in behaviours.items() if script(block) in {network,team} and identity(block)[1] not in zone_owners}
+    for fid in removed:del rows[fid]
+    for fid,block in list(rows.items()):
+        if identity(block)[0]=='1':
+            rows[fid]=re.sub(r'^  - component: \{fileID: (-?\d+)\}\n',lambda m:'' if m[1] in removed else m[0],block,flags=re.M)
+    paths=hierarchy_keys(rows)
+    def decode_name(value):
+        return json.loads(value) if value.startswith('"') else value[1:-1].replace("''", "'") if value.startswith("'") else value
+    def name(owner):
+        return decode_name(re.search(r'^  m_Name: (.*)$',rows[owner],re.M)[1])
+    previews=[identity(block)[1] for fid,block in behaviours.items() if fid not in removed and script(block)==preview]
+    active=sorted(name(owner) for owner in zone_owners if re.search(r'^  m_IsActive: 1$',original[owner],re.M))
+    empty={33:[],64:[],137:[]}
+    for fid,block in rows.items():
+        kind,owner,_=identity(block)
+        if int(kind) in empty and re.search(r'^  m_Mesh: \{fileID: 0\}$',block,re.M):
+            if not re.search(r'^  m_Mesh: \{fileID: 0\}$',original[fid],re.M):
+                raise RuntimeError('Staging lost an original mesh reference: '+fid)
+            empty[int(kind)].append('/'.join(decode_name(part) for part in paths[owner]))
+    counts=dict(previewCallbacks=len(previews),previewNames=sorted(name(owner) for owner in previews),
+                mapZoneCount=len(zone_owners),mapZoneActiveNames=active,
+                mapZoneNetworkObjects=sum(script(block)==network and fid not in removed for fid,block in behaviours.items()),
+                emptyMeshPaths=sorted(empty[33]+empty[137]),emptyColliderPaths=sorted(empty[64]))
+    return header+''.join(rows.values()),counts,sorted(removed)
+
+
+def refresh_scene_contracts(project,export,configuration,recipe):
+    observations=[]
+    stages={row['scene']:row for row in configuration['integratedStages'] if not row.get('moonMission')}
+    for path in [recipe['stageScene']]+[row['scene'] for row in configuration['integratedStages'] if not row.get('moonMission')]:
+        staged=project/path;source=export/('Assets/'+path.removeprefix('Assets/WholeGame/'))
+        before=sha(staged);text,counts,removed=scene_contract(source.read_text(),staged.read_text())
+        if text!=staged.read_text():staged.write_text(text)
+        if path==recipe['stageScene']:
+            configuration.update(stagePreviewCallbacks=counts['previewCallbacks'],stagePreviewNames=counts['previewNames'],
+                                 stageMapZoneCount=counts['mapZoneCount'],stageMapZoneActiveNames=counts['mapZoneActiveNames'])
+        else:stages[path].update(counts)
+        observations.append(dict(scene=path,source_sha256=sha(source),before_sha256=before,after_sha256=sha(staged),
+                                 removed_nonzone_network_components=removed,**counts))
+    return observations
+
+
 def stage_missing_sources():
     """Import current-source dependencies used only by the composed configuration."""
     from whole_catalog import copy_catalog_asset,repair_support_source
@@ -240,9 +345,13 @@ def stage():
     # Reapply the accepted shared unavailable-presentation boundary as part of
     # importing the composed-only current dependencies.
     stage_missing_sources()
+    scene_contracts=refresh_scene_contracts(project,export,configuration,recipe)
+    write(project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json',configuration)
+    write(evidence/'current-scene-contracts.json',scene_contracts)
     # A fresh attempt is necessary for existing build/run attribution. It is a
     # small receipt, never another project snapshot or inherited assembly proof.
     generation = read(project/'.port-input.json')
+    write(evidence/'current-original-script-orders.json',restore_script_orders(project,game()/'Risk of Rain 2_Data/globalgamemanagers.assets'))
     old_attempt = ROOT/read(WORK/'experiments/scene-runtime/current.json')['path']
     mapping = read(old_attempt/'nova-input-mapping.json')
     if sha(ROOT/mapping['observation']) != mapping['observation_sha256']:
@@ -252,7 +361,9 @@ def stage():
     probe = 'body-state-spawn-state-auto-nova-spine-bringup'
     write(evidence/'attempt.json',dict(attempt=evidence.name,input_id=accepted,stage=str(project/'Assets/LabLoadingScene'),
           original_assemblies=generation['original_assemblies'],transformed_assemblies=generation['transformed_assemblies'],
-          movement_batch=True,playable_spine=True,integrated_world=True,teleporter_loop=True,
+          assembly_paths=assembly_paths(project,generation),
+          configuration_sha256=sha(project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'),
+          movement_batch=True,playable_spine=True,integrated_world=True,teleporter_loop=True,automated_menu_start=True,
           batch_ids=[probe],batch_seconds={probe:900},batch_stop_when_complete=[probe],
           status='Updated composed generation staged; Android acceptance pending'))
     write(WORK/'experiments/scene-runtime/current.json',dict(path=str(evidence.relative_to(ROOT))))

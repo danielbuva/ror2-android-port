@@ -10,7 +10,7 @@ using UnityEngine;
 // Original Unity callbacks; the harness only observes and supplies diagnostic input.
 public sealed partial class MovementBatchProbe {
  IEnumerator AutomaticSpawnBoundary(CharacterBody body,Result cfg){
-  PrepareSpawnStateCatalog(cfg);
+  if(!ownsStateCatalog)PrepareSpawnStateCatalog(cfg);
   var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");
   var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;var spawnedMaster=body.master;
   bool automaticBody=IsAutomaticBody(),automaticDirection=IsAutomaticDirection(),automaticModel=IsAutomaticModel();

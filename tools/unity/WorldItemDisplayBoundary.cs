@@ -23,7 +23,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var group in worldDisplayRules.keyAssetRuleGroups){
    Check(group.keyAsset&&(!(group.keyAssetAddress?.RuntimeKeyIsValid()??false)),"Unresolved display key address");
    foreach(var rule in group.displayRuleGroup.rules??new ItemDisplayRule[0])if(rule.ruleType==ItemDisplayRuleType.ParentedPrefab)
-    Check(rule.followerPrefab&&!(rule.followerPrefabAddress?.RuntimeKeyIsValid()??false)&&worldDisplayModel.GetComponent<ChildLocator>().FindChild(rule.childName),"Original display prefab/parent contract absent");
+    Check((rule.followerPrefab||(rule.followerPrefabAddress?.RuntimeKeyIsValid()??false))&&worldDisplayModel.GetComponent<ChildLocator>().FindChild(rule.childName),"Original display prefab/address/parent contract absent: "+group.keyAsset.name+" / "+rule.childName);
   }
   var generation=worldDisplayRules.GenerateRuntimeValuesAsync();Check(!generation.MoveNext(),"Direct source display rules yielded an unresolved request");worldDisplayModel.itemDisplayRuleSet=worldDisplayRules;
   r.itemDisplays=new WorldItemDisplayReport{groups=worldDisplayRules.keyAssetRuleGroups.Length,rules=worldDisplayRules.keyAssetRuleGroups.Sum(group=>(group.displayRuleGroup.rules??new ItemDisplayRule[0]).Length)};

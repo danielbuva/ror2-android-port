@@ -582,12 +582,23 @@ def movement_batch_run(cases=None, retry=False, interactive=False, debug_options
     if options is not None and not a.get('integrated_world'):raise RuntimeError('Debug acceleration requires the composed integrated world')
     if not a.get('movement_batch') or ((out/'batch-result.json').exists() and not retry):raise RuntimeError('Not a fresh batch')
     terminal=WORK/'lab-build/result.json'
-    if not terminal.exists() or terminal.stat().st_mtime_ns<(out/'attempt.json').stat().st_mtime_ns:raise RuntimeError('No completed forced build for this batch; wait for build completion')
+    freshness=(out/'attempt.json').stat().st_mtime_ns
+    if a.get('configuration_sha256'):
+        configuration=Path(a['stage'])/'Resources/MovementBatchProbe.json'
+        if sha(configuration)!=a['configuration_sha256'] or read(configuration)['attempt']!=out.name:raise RuntimeError('Composed configuration differs from staged generation')
+        # Placement/report metadata can change after compilation without changing
+        # the APK. Attribute freshness to the receipted runtime configuration.
+        freshness=configuration.stat().st_mtime_ns
+        if a.get('input_id')!=b.get('input_id'):raise RuntimeError('Composed attempt and selected APK inputs differ')
+    if not terminal.exists() or terminal.stat().st_mtime_ns<freshness:raise RuntimeError('No completed forced build for this batch; wait for build completion')
     finished=read(terminal)
     if not finished.get('success') or sha(Path(finished['apk']))!=b.get('apk_sha256'):raise RuntimeError('Terminal build does not match selected APK')
     if not b.get('success') or sha(Path(b['apk']))!=b['apk_sha256']:raise RuntimeError('Build not valid')
     for name,h in a['original_assemblies'].items():
-        if sha(Path(a['stage'])/'Plugins'/name)!=a.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Original assembly drift')
+        placement=a.get('assembly_paths',{}).get(name)
+        path=(WORK/'lab-project'/placement).resolve() if placement else Path(a['stage'])/'Plugins'/name
+        if placement and not path.is_relative_to((WORK/'lab-project/Assets').resolve()):raise RuntimeError('Runtime assembly placement escaped current project')
+        if sha(path)!=a.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Original assembly drift')
     attempt_id=out.name
     if retry:
         parent=out;out=parent/'verification'/now();out.mkdir(parents=True)
@@ -625,6 +636,12 @@ def movement_batch_run(cases=None, retry=False, interactive=False, debug_options
                             if time.monotonic()-terminal_error_at>=15:break
                         if live.get('phase')!=last_phase:
                             last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
+                        if a.get('automated_menu_start') and last_phase=='offline-start-menu' and 'menu-start' not in captured:
+                            hud=live.get('hud') or {};x=hud.get('menuStartX',0);y=hud.get('menuStartY',0)
+                            if not hud.get('menuVisible') or not 0<x<hud.get('screenWidth',0) or not 0<y<hud.get('screenHeight',0):
+                                raise RuntimeError('Current recovered-menu button geometry is unavailable')
+                            d.sh('input','tap',round(x),round(y));captured.add('menu-start')
+                            write(attempt/'automated-menu-start.json',dict(pid=pid,attempt=attempt_id,x=x,y=y,source='Current launch recovered-menu button geometry'))
                         if last_phase=='integrated-world-playing' and 'world' not in captured:
                             d.collect('screenshot',attempt/'visual-world');captured.add('world')
                         if last_phase=='original-barrel-opening' and 'barrel' not in captured:

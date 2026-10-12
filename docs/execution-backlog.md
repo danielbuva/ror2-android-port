@@ -1,6 +1,6 @@
 # Execution backlog
 
-J431: composed Steam25475991 migration is staged;222 source adaptations,79 extra dependencies,347 binary-backed material variants and6,515 typed roots pass host checks.127 tests pass. Android build/run acceptance pending; inspect the active terminal receipt before dispatching another build. Connect full native catalogs to the live session/director after migration acceptance. Preserve J428/J425/J323 and defer Moon/manual/PC gates. See PORTING_STATE.md.
+J431: matching updated editor/input and full native Android catalog registration pass. Candidate31 composed game executes453.022seconds/32kills/four transitions through Sky Meadow with full cleanup and zero current-process errors. Original groups, authored inactive previews and native HUD subobject lookup pass; icon appearance, transition occlusion and performance remain findings. 129 host tests pass. Debug assistance never establishes normal gameplay acceptance. Keep full-catalog session/director connection next, preserve input/editor/rollbacks and defer manual/Moon/PC gates. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 

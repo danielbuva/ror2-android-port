@@ -24,7 +24,7 @@ public sealed partial class MovementBatchProbe {
   if(source.name=="WarbannerWard"){
    Check(source.GetComponent<BuffWard>()&&source.GetComponent<BuffWard>().buffDef==RoR2Content.Buffs.Warbanner,"Original Warbanner buff contract differs");
    var owner=typeof(RoR2.Items.WardOnLevelManager);var field=owner.GetField("wardPrefab",BindingFlags.NonPublic|BindingFlags.Static);Check(field!=null&&field.GetValue(null)==null&&worldWarbannerLevel==null,"Unowned native Warbanner callback/provider");
-   worldLootEffectSlots.Add(field,null);field.SetValue(null,source);worldWarbannerLevel=(Action<CharacterBody>)Delegate.CreateDelegate(typeof(Action<CharacterBody>),owner.GetMethod("OnCharacterLevelUp",BindingFlags.NonPublic|BindingFlags.Static));GlobalEventManager.onCharacterLevelUp+=worldWarbannerLevel;
+   worldLootEffectSlots.Add(field,null);field.SetValue(null,source);worldWarbannerLevel=RoR2.Items.WardOnLevelManager.OnCharacterLevelUp;GlobalEventManager.onCharacterLevelUp+=worldWarbannerLevel;
   }else if(source.name=="InterstellarDeskPlant"){
    var plant=source.GetComponent<DeskPlantController>();Check(plant&&plant.plantObject&&plant.seedObject&&source.GetComponent<EntityStateMachine>(),"Original Desk Plant state/presentation contract differs");
   }else if(source.name=="DeskplantWard")Check(source.GetComponent<HealingWard>(),"Original Desk Plant healing ward missing");

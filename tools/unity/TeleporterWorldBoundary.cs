@@ -54,6 +54,11 @@ public sealed partial class MovementBatchProbe {
   objectiveBundleLocation=new ResourceLocationBase("objective-support-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","objective-support-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));objectiveBundleLocation.Data=new AssetBundleRequestOptions{BundleName="objective-support-lab"};
   objectiveBundlePreload=Addressables.ResourceManager.ProvideResource<IAssetBundleResource>(objectiveBundleLocation);ownsObjectiveBundlePreload=true;yield return objectiveBundlePreload;
   Check(objectiveBundlePreload.Status==AsyncOperationStatus.Succeeded&&objectiveBundlePreload.Result!=null&&objectiveBundlePreload.Result.GetAssetBundle(),"Original shared-support bundle container failed before prefab deserialization");
+  // Attribute the current Android-only binding failure before bulk shared-asset deserialization.
+  var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+  var ward=objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<GameObject>(cfg.objectiveSupportAssets[1]);
+  var missing=ward?ward.GetComponentsInChildren<Transform>(true).Where(child=>child.GetComponents<Component>().Any(component=>!component)).Select(child=>child.name).ToArray():new[]{"prefab absent"};
+  Check(ward&&missing.Length==0,"Preloaded original ward script binding failed: "+string.Join(",",missing));
  }
  void ReleaseObjectiveBundlePreload(){if(ownsObjectiveBundlePreload){if(objectiveBundlePreload.IsValid())Addressables.Release(objectiveBundlePreload);ownsObjectiveBundlePreload=false;objectiveBundleLocation=null;}}
  EffectDef[] ObjectiveEffects(Result cfg){
@@ -70,7 +75,7 @@ public sealed partial class MovementBatchProbe {
   // Only registered, owned effect sources are adapted before their native pool
   // instantiates them. Retain the original arrays for existing scoped teardown.
   var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);
-  foreach(var renderer in entries.Where(x=>x!=null&&x.prefab).SelectMany(x=>x.prefab.GetComponentsInChildren<Renderer>(true)).Distinct()){
+  foreach(var renderer in entries.Where(x=>x!=null&&x.prefabEffectComponent&&x.prefab).SelectMany(x=>x.prefab.GetComponentsInChildren<Renderer>(true)).Distinct()){
    if(worldLootSourceMaterials.ContainsKey(renderer))continue;
    var originals=renderer.sharedMaterials;var copies=(Material[])originals.Clone();bool changed=false;
    for(int i=0;i<originals.Length;i++){
@@ -116,7 +121,7 @@ public sealed partial class MovementBatchProbe {
    string key;Check(LegacyResourcesAPI.GetGuid(cfg.objectiveSupportPaths[i],out key)&&key==cfg.objectiveSupportKeys[i],"Original Queen/exit legacy identity changed");
    objectiveLocator.Add(key,new ResourceLocationBase(key,cfg.objectiveSupportAssets[i],typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));
    objectiveSupportLeases[i]=LegacyResourcesAPI.LoadAsync<GameObject>(cfg.objectiveSupportPaths[i]);yield return objectiveSupportLeases[i];objectiveSupportSources[i]=objectiveSupportLeases[i].Result;
-   Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing");
+   Check(objectiveSupportSources[i]&&objectiveSupportSources[i].GetComponentsInChildren<Component>(true).All(x=>x),"Original objective support serialization missing: "+cfg.objectiveSupportPaths[i]+" / "+objectiveSupportLeases[i].Status);
   }
   PrepareMoonSupport(cfg);PrepareStagePopulationSupport(cfg);var bossSupport=PrepareStageBossContent(cfg);while(bossSupport.MoveNext())yield return bossSupport.Current;
   var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).Concat(PrepareWorldDotSupport(cfg)).Concat(PrepareWorldItemBehaviorSupport(cfg)).ToArray();
@@ -135,7 +140,7 @@ public sealed partial class MovementBatchProbe {
   }
   foreach(var locator in ward.GetComponentsInChildren<SfxLocator>(true))foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(locator,null);
   var supportEffects=new[]{objectiveSupportSources[0],objectiveSupportSources[3]}.Concat(moonTransferEffect?new[]{moonTransferEffect}:new GameObject[0]).Concat(coreLootEffects).Concat(commerceEffect?new[]{commerceEffect}:new GameObject[0]).ToArray();foreach(var source in supportEffects)source.GetComponent<EffectComponent>().soundName=null;objectiveEffectSources=objectiveEffectSources.Concat(supportEffects).Distinct().ToArray();
-  var entries=(EffectDef[])RewardField(typeof(EffectCatalog),"entries").GetValue(null);EffectCatalog.SetEntries(entries.Concat(supportEffects.Select(x=>new EffectDef(x))).GroupBy(x=>x.prefab).Select(x=>x.First()).ToArray());
+  RegisterComposedEffects(supportEffects.Select(x=>new EffectDef(x)));
   PresentRegisteredNativeEffects();
   foreach(var path in deferredObjectiveEffectPaths){int index=Array.IndexOf(cfg.objectiveSupportAssets,path);Check(index>=0&&supportEffects.Contains(objectiveSupportSources[index])&&EffectCatalog.FindEffectIndexFromPrefab(objectiveSupportSources[index])!=EffectIndex.Invalid,"Deferred original support effect was not registered: "+path);}
   r.rewards.registeredDeferredEffects=deferredObjectiveEffectPaths;Save();
@@ -145,7 +150,7 @@ public sealed partial class MovementBatchProbe {
  void ObserveObjectiveSupport(bool force=false){
   if(!force&&Time.frameCount%30!=0)return;
   if(objectiveSupportSources==null)return;
-  foreach(var source in objectiveSupportSources.Skip(1).Take(2))foreach(var instance in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&x.name==source.name+"(Clone)"))if(!objectiveSupportInstances.Contains(instance))objectiveSupportInstances.Add(instance);
+  foreach(var source in objectiveSupportSources.Skip(1).Take(2).Where(source=>source))foreach(var instance in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&x.name==source.name+"(Clone)"))if(!objectiveSupportInstances.Contains(instance))objectiveSupportInstances.Add(instance);
  }
  void CleanupObjectiveSupport(){
   CleanupWorldLootSupport();
@@ -192,7 +197,8 @@ public sealed partial class MovementBatchProbe {
    var copy=Instantiate(source);copy.serializedFieldsCollection.serializedFields=source.serializedFieldsCollection.serializedFields.ToArray();
    for(int i=0;i<copy.serializedFieldsCollection.serializedFields.Length;i++){
     var field=copy.serializedFieldsCollection.serializedFields[i];
-    if(field.fieldName.IndexOf("sound",StringComparison.OrdinalIgnoreCase)>=0)copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue="";
+    var member=((Type)copy.targetType).GetField(field.fieldName);
+    if(member!=null&&member.FieldType==typeof(string)&&field.fieldName.IndexOf("sound",StringComparison.OrdinalIgnoreCase)>=0)copy.serializedFieldsCollection.serializedFields[i].fieldValue.stringValue="";
     // Retain genuine effect references: some original animation/state calls are unconditional.
     var projectile=field.fieldValue.objectValue as GameObject;
     if(projectile&&projectile.GetComponent<RoR2.Projectile.ProjectileController>()){
@@ -233,6 +239,7 @@ public sealed partial class MovementBatchProbe {
     for(int i=0;i<characterModel.baseRendererInfos.Length;i++)characterModel.baseRendererInfos[i].defaultMaterial=material;
    }
    foreach(var provider in bodyObject.GetComponentsInChildren<SurfaceDefProvider>(true)){var surface=Instantiate(provider.surfaceDef);surface.impactEffectPrefab=null;surface.impactSoundString=null;provider.surfaceDef=surface;objectiveResources.Add(surface);}
+   BindCatalogBodyTemplate(bodyObject);
    var masterObject=Instantiate(artifactBundle.LoadAsset<GameObject>(spec.master),enemyTemplates.transform);masterObject.name=spec.name+"Master";masterObject.GetComponent<Inventory>().enabled=false;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;masterObject.SetActive(true);objectiveTemplates.Add(masterObject);
    var cardSource=spec.card==cfg.stageMiniCardAsset?objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<CharacterSpawnCard>(spec.card):artifactBundle.LoadAsset<CharacterSpawnCard>(spec.card);Check(cardSource&&cardSource.prefab&&cardSource.directorCreditCost>=0,"Original objective spawn card absent from its declared bundle owner: "+spec.name);var card=Instantiate(cardSource);card.name=card.name.Replace("(Clone)","");card.prefab=masterObject;objectiveCards.Add(card);
   }
@@ -298,8 +305,8 @@ public sealed partial class MovementBatchProbe {
   var rewardGroup=objectiveHost.GetComponent<BossGroup>();Check(rewardGroup,"Original objective BossGroup component absent");
   rewardGroup.dropTable=ObjectiveDropTable(rewardGroup.dropTable);
   foreach(var table in objectiveDropTables.Values)Call(table,"Regenerate",Run.instance);
-  Check(rewardGroup.dropTable&&rewardGroup.dropTable.GetPickupCount()>0&&objectiveDropTables.Values.All(x=>x.GetPickupCount()>0),"Original objective reward tables have no available pickups");
   r.objective.rewardTables=objectiveDropTables.Values.Select(x=>x.name+"|"+x.GetPickupCount()).ToArray();
+  Save();Check(rewardGroup.dropTable&&rewardGroup.dropTable.GetPickupCount()>0&&objectiveDropTables.Values.All(x=>x.GetPickupCount()>0),"Original objective reward tables have no available pickups: "+string.Join(",",r.objective.rewardTables));
   PrepareStageBossDeck(cfg);
   worldTeleporter.bossDirector.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
   worldTeleporter.bossDirector.monsterCards=objectiveBossDeck;worldTeleporter.bonusDirector.monsterCards=automaticDeck;

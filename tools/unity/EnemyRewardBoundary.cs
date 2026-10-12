@@ -10,11 +10,12 @@ using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Owned configuration/observation around original director, summon and reward callbacks.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class RewardReport {
-  public string[] characterEffects,deferredEffects,registeredDeferredEffects;
+  public string[] characterEffects,deferredEffects,registeredDeferredEffects,retainedOperations;
   public bool supportBundlePreloaded;
   public bool assetsReady,directedSpawn,spawnContract,queuedExperience,delivered,cleaned,equipmentMaskReady;public int equipmentDefinitions,expansionLockedEquipment;public int playerTeamBefore,playerTeamAfter;public bool inactiveFixtureRemoved;public int summonEvents,spawnEvents,creditCost,spawnValue,pendingPeak,ambientItems,boostHpItems,boostDamageItems;public uint goldExpected,experienceExpected,moneyBefore,moneyAfter,teamLevel;public ulong experienceBefore,experienceAfter;public float spawnLevelBeforeStart,spawnLevelAfterStart;public int acquisitionCount,equipmentIndex;public float bodyCost,compensatedDifficulty,deathAt,experienceAt,goldEvents;public string scope;public string seed,seedSource;
  }
@@ -37,13 +38,13 @@ public sealed partial class MovementBatchProbe {
   float deadline=Time.realtimeSinceStartup+8;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;yield return null;
   rewardPrefabs=new[]{(GameObject)RewardField(typeof(DeathRewards),"coinEffectPrefab").GetValue(null),(GameObject)RewardField(typeof(DeathRewards),"logbookPrefab").GetValue(null),(GameObject)RewardField(typeof(ExperienceManager),"experienceOrbPrefab").GetValue(null)};
   var names=new[]{"CoinEmitter","LogPickup","ExpOrb"};Check(LegacyResourcesAPI.ActiveCount==0&&ExperienceManager.instance==rewardExperience,"Original reward callbacks incomplete");for(int i=0;i<3;i++)Check(rewardPrefabs[i]&&rewardPrefabs[i].name==names[i]&&rewardPrefabs[i].GetComponentsInChildren<Component>(true).All(x=>x),"Genuine reward prefab contract "+names[i]);
-  var entries=typeof(EffectCatalog).GetField("entries",BindingFlags.NonPublic|BindingFlags.Static);priorRewardEffects=(EffectDef[])entries.GetValue(null);Check(priorRewardEffects.Length==0,"Existing effect catalog");ownsRewardEffects=true;EffectCatalog.SetEntries(new[]{new EffectDef(rewardPrefabs[0])}.Concat(cfg.teleporterLoop?ObjectiveEffects(cfg):new EffectDef[0]).GroupBy(x=>x.prefab).Select(x=>x.First()).ToArray());Check(EffectCatalog.FindEffectIndexFromPrefab(rewardPrefabs[0])!=EffectIndex.Invalid,"Original coin effect catalog identity");
+  var entries=typeof(EffectCatalog).GetField("entries",BindingFlags.NonPublic|BindingFlags.Static);priorRewardEffects=(EffectDef[])entries.GetValue(null);Check(priorRewardEffects.Length==0,"Existing effect catalog");ownsRewardEffects=true;InitializeComposedEffects(new[]{new EffectDef(rewardPrefabs[0])}.Concat(cfg.teleporterLoop?ObjectiveEffects(cfg):new EffectDef[0]).GroupBy(x=>x.prefab).Select(x=>x.First()).ToArray());Check(EffectCatalog.FindEffectIndexFromPrefab(rewardPrefabs[0])!=EffectIndex.Invalid,"Original coin effect catalog identity");
   rewardRun=Run.instance;if(cfg.teleporterLoop){rewardRun.selectedDifficulty=DifficultyIndex.Easy;player.RecalculateStats();}
   Check(rewardRun&&rewardRun.expansionLockedItems==null&&rewardRun.expansionLockedEquipment==null,"Existing expansion item/equipment mask");ownedRewardMask=ItemMask.Rent();rewardRun.expansionLockedItems=ownedRewardMask;
   ownedRewardEquipmentMask=EquipmentMask.Rent();rewardRun.expansionLockedEquipment=ownedRewardEquipmentMask;RefreshRewardEquipmentMask(false);
   var internalItems=new[]{RoR2Content.Items.UseAmbientLevel,RoR2Content.Items.BoostHp,RoR2Content.Items.BoostDamage};if(cfg.originalItemPickup)internalItems=internalItems.Concat(new[]{RoR2Content.Items.Syringe}).ToArray();if(cfg.originalChestDropTable){var baseLoot=RoR2Content.Items.ChainLightning;Check(baseLoot&&!baseLoot.requiredExpansion&&!baseLoot.unlockableDef&&baseLoot.tier==ItemTier.Tier2,"Measured base loot definition contract changed");internalItems=internalItems.Concat(new[]{baseLoot}).ToArray();}Check(internalItems.All(x=>x&&!x.requiredExpansion),"Required allowed items must be original base definitions");
   if(cfg.integratedWorld){var loot=WorldLoot(cfg);foreach(var item in loot)Check(item&&!item.requiredExpansion&&!item.unlockableDef,"Integrated unlocked base loot unavailable: "+(item?item.name:"missing definition"));internalItems=internalItems.Concat(loot).Distinct().ToArray();}
-  if(cfg.teleporterLoop){var bossLoot=RoR2Content.Items.Knurl;Check(bossLoot&&!bossLoot.requiredExpansion&&!bossLoot.unlockableDef&&bossLoot.tier==ItemTier.Boss,"Original unlocked Queen reward contract changed");internalItems=internalItems.Concat(new[]{bossLoot}).ToArray();}
+  if(cfg.teleporterLoop)internalItems=internalItems.Concat(ComposedBaseBossRewards(cfg)).Distinct().ToArray();
   foreach(var item in ItemCatalog.allItemDefs)if(!internalItems.Contains(item))ownedRewardMask.Add(item.itemIndex);
   Check(internalItems.All(x=>!rewardRun.IsItemExpansionLocked(x.itemIndex))&&ItemCatalog.allItemDefs.Where(x=>!internalItems.Contains(x)).All(x=>rewardRun.IsItemExpansionLocked(x.itemIndex)),"Owned diagnostic grant mask changed");
   rewardPlayerMaster=player.master;Check(player.isPlayerControlled&&rewardPlayerMaster&&TeamManager.instance,"Original reward recipient missing");
@@ -91,8 +92,25 @@ public sealed partial class MovementBatchProbe {
  void CleanupRewardHosts(){if(r.rewards==null)return;CleanupAutomaticDirector();if(observesRewardSummon){MasterSummon.onServerMasterSummonGlobal-=RewardSummon;observesRewardSummon=false;}if(rewardPlayerMaster)rewardPlayerMaster.OnGoldCollected-=RewardGold;if(rewardFixtureTeam)rewardFixtureTeam.teamIndex=priorRewardFixtureTeam;foreach(var summon in ownedRewardSummons)if(summon&&summon.gameObject!=enemyMasterHost)NetworkServer.Destroy(summon.gameObject);if(rewardExperienceHost)Destroy(rewardExperienceHost);if(rewardDirectorHost)Destroy(rewardDirectorHost);if(rewardPlacementHost)Destroy(rewardPlacementHost);if(rewardCard)Destroy(rewardCard);if(rewardRun){rewardRun.stageRng=priorStageRng;rewardRun.stageRngGenerator=priorStageGenerator;if(ownsRewardRunRng){rewardRun.runRNG=priorRunRng;rewardRun.loopRngGenerator=priorLoopRng;rewardRun.nextStageRng=priorNextStageRng;rewardRun.seed=priorRunSeed;rewardRun.EventFlagsToResetOnLoop=priorRunLoopResetFlags;ownsRewardRunRng=false;}if(ownedRewardMask!=null&&rewardRun.expansionLockedItems==ownedRewardMask)rewardRun.expansionLockedItems=null;if(ownedRewardEquipmentMask!=null&&rewardRun.expansionLockedEquipment==ownedRewardEquipmentMask)rewardRun.expansionLockedEquipment=null;}if(ownedRewardMask!=null){ItemMask.Return(ownedRewardMask);ownedRewardMask=null;}if(ownedRewardEquipmentMask!=null){EquipmentMask.Return(ownedRewardEquipmentMask);ownedRewardEquipmentMask=null;}}
  IEnumerator CleanupEnemyRewards(){
   if(rewardLocator==null)yield break;yield return null;Check(ownedRewardSummons.All(x=>!x)&&!rewardExperienceHost&&!rewardDirectorHost&&!rewardPlacementHost&&!rewardCard&&!ExperienceManager.instance&&!DirectorCore.instance&&CombatDirector.instancesList.Count==0,"Owned reward/director teardown incomplete");
-  if(ownsRewardEffects){EffectCatalog.SetEntries(priorRewardEffects);ownsRewardEffects=false;}ReleaseDirectorAssets();
+  ReleaseCompletedRunAsyncAssets();
+  if(ownsRewardEffects){RestoreComposedEffects(priorRewardEffects);ownsRewardEffects=false;}ReleaseDirectorAssets();
   RewardField(typeof(DeathRewards),"coinEffectPrefab").SetValue(null,priorCoinPrefab);RewardField(typeof(DeathRewards),"logbookPrefab").SetValue(null,priorLogPrefab);RewardField(typeof(ExperienceManager),"experienceOrbPrefab").SetValue(null,priorOrbPrefab);
-  var poolCache=(IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);if(rewardPrefabs!=null)foreach(var prefab in rewardPrefabs)if(prefab){poolCache.Remove(prefab);Addressables.Release(prefab);}yield return null;Check(!AssetBundle.GetAllLoadedAssetBundles().Any(x=>x.name==RewardBundle),"Reward provider bundle retained");Addressables.RemoveResourceLocator(rewardLocator);rewardLocator=null;r.rewards.cleaned=true;Save();
+  var poolCache=(IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);if(rewardPrefabs!=null)foreach(var prefab in rewardPrefabs)if(prefab){poolCache.Remove(prefab);Addressables.Release(prefab);}yield return null;
+  if(AssetBundle.GetAllLoadedAssetBundles().Any(x=>x.name==RewardBundle)){
+   // Observe the current native cache graph before rejecting retention; never decrement unknown leases.
+   var cache=(IDictionary)typeof(UnityEngine.ResourceManagement.ResourceManager).GetField("m_AssetOperationCache",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(Addressables.ResourceManager);
+   var contract=typeof(UnityEngine.ResourceManagement.ResourceManager).Assembly.GetType("UnityEngine.ResourceManagement.AsyncOperations.IAsyncOperation");var rows=new List<string>();
+   foreach(DictionaryEntry pair in cache){
+    var operation=pair.Value;var name=(string)contract.GetProperty("DebugName").GetValue(operation);var references=contract.GetProperty("ReferenceCount").GetValue(operation);
+    if(name.Contains(RewardBundle)||(rewardPrefabs??new GameObject[0]).Any(prefab=>prefab&&name.Contains(prefab.name)))rows.Add(name+" / references="+references);
+    var dependencies=new List<AsyncOperationHandle>();contract.GetMethod("GetDependencies").Invoke(operation,new object[]{dependencies});
+    foreach(var dependency in dependencies.Where(handle=>handle.IsValid())){
+     var dependencyName=dependency.DebugName;
+     if(dependencyName.Contains(RewardBundle))rows.Add("owner="+name+" / references="+references+" -> "+dependencyName);
+    }
+   }
+   r.rewards.retainedOperations=rows.ToArray();Save();
+  }
+  Check(!AssetBundle.GetAllLoadedAssetBundles().Any(x=>x.name==RewardBundle),"Reward provider bundle retained");Addressables.RemoveResourceLocator(rewardLocator);rewardLocator=null;r.rewards.cleaned=true;Save();
  }
 }

@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupSpawnConfig(){CleanupObjectiveConfigs();CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}}
  void ProbeSpawnStates(CharacterBody body,Result cfg){
-  PrepareSpawnStateCatalog(cfg);
+  if(!ownsStateCatalog)PrepareSpawnStateCatalog(cfg);
   if(r.id=="body-state-spawn-state-overlay"){ProbeTeleportOverlay(body,cfg);return;}
   if(r.id=="body-state-spawn-state-buff-removal"){
    Check(RoR2Content.Buffs.MedkitHeal&&RoR2Content.Buffs.TonicBuff&&DLC2Content.Buffs.SoulCost,"Original removal definitions");

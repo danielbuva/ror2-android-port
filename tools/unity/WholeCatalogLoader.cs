@@ -31,26 +31,7 @@ public static class WholeCatalogLoader {
   var initialization=Addressables.InitializeAsync();Addressables.ResourceManager.Acquire(initialization);yield return initialization;
   if(initialization.Status!=AsyncOperationStatus.Succeeded)throw new Exception("Whole catalog Addressables initialization failed",initialization.OperationException);
   Addressables.Release(initialization);
-  if(bundlePath!=null){var providers=Addressables.ResourceManager.ResourceProviders;if(!providers.Any(x=>x is AssetBundleProvider))providers.Add(new AssetBundleProvider());if(!providers.Any(x=>x is BundledAssetProvider))providers.Add(new BundledAssetProvider());}
-  // Stock helpers use First(), so an empty initialization locator cannot precede us.
-  foreach(var prior in Addressables.ResourceLocators.ToArray())Addressables.RemoveResourceLocator(prior);
-  locator=new ResourceLocationMap("original-whole-catalog");
-  var locations=new Dictionary<int,IResourceLocation>();var bundles=new Dictionary<string,IResourceLocation>();
-  if(bundlePath!=null)foreach(var pair in (JObject)manifest["bundles"]){var dependency=new ResourceLocationBase(pair.Key,Path.Combine(bundlePath,pair.Key),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));dependency.Data=new AssetBundleRequestOptions{BundleName=pair.Key};bundles.Add(pair.Key,dependency);}
-  foreach(var row in manifest["locations"]){
-   var type=Type.GetType((string)row["type"],false);if(type==null)throw new Exception("Original resource type unavailable: "+row["type"]);
-   IResourceLocation[] dependencies=new IResourceLocation[0];string provider=assetProvider;
-   if(bundlePath!=null){string owner=(string)row["bundle"];dependencies=new[]{bundles[owner]}.Concat(manifest["bundles"][owner]["dependencies"].Select(x=>bundles[(string)x])).ToArray();if(type==typeof(SceneInstance))provider=typeof(SceneProvider).FullName;}
-   locations.Add((int)row["id"],new ResourceLocationBase((string)row["primaryKey"],(string)row["path"],provider,type,dependencies));
-  }
-  foreach(var key in manifest["keys"]){
-   // Non-string keys require their original decoder; never silently stringify them.
-   if(key["keyType"]!=null&&(string)key["keyType"]!="System.String")continue;
-   var found=key["locations"].Select(x=>(int)x).Where(locations.ContainsKey).Select(x=>locations[x]).ToList();
-   if(found.Count!=0)locator.Add((string)key["key"],found);
-  }
-  Addressables.AddResourceLocator(locator);
-  if(!ReferenceEquals(Addressables.ResourceLocators.First(),locator))throw new Exception("Whole catalog locator order lost");
+  RegisterLocations(manifest,assetProvider,bundlePath);
   phase="original-content-providers";
   ContentManager.CollectContentPackProvidersDelegate collect=add=>{
    foreach(var row in manifest["providers"]){var type=Type.GetType((string)row["type"],true);var provider=(IContentPackProvider)Activator.CreateInstance(type);if(provider.identifier!=(string)row["identifier"])throw new Exception("Original provider identity changed");add(provider);}
@@ -60,6 +41,31 @@ public static class WholeCatalogLoader {
   finally{ContentManager.collectContentPackProviders-=collect;}
   if(ContentManager.allLoadedContentPacks.Length!=manifest["providers"].Count())throw new Exception("Original provider count mismatch");
   phase="content-manager-assigned";
+ }
+ public static void RegisterLocations(JObject manifest,string assetProvider,string bundlePath,string borrowedProvider=null,ISet<string> borrowedBundles=null,string borrowedAssetProvider=null){
+  if(bundlePath!=null){var providers=Addressables.ResourceManager.ResourceProviders;if(!providers.Any(x=>x is AssetBundleProvider))providers.Add(new AssetBundleProvider());if(!providers.Any(x=>x is BundledAssetProvider))providers.Add(new BundledAssetProvider());}
+  // Stock helpers use First(), so an empty initialization locator cannot precede us.
+  var dynamicLocators=Addressables.ResourceLocators.Where(prior=>prior.LocatorId=="DynamicResourceLocator").ToArray();
+  foreach(var prior in Addressables.ResourceLocators.ToArray())Addressables.RemoveResourceLocator(prior);
+  locator=new ResourceLocationMap("original-whole-catalog");
+  var locations=new Dictionary<int,IResourceLocation>();var bundles=new Dictionary<string,IResourceLocation>();
+  if(bundlePath!=null)foreach(var pair in (JObject)manifest["bundles"]){string provider=borrowedBundles!=null&&borrowedBundles.Contains(pair.Key)?borrowedProvider:typeof(AssetBundleProvider).FullName;if(string.IsNullOrEmpty(provider))throw new Exception("Borrowed bundle provider absent");var dependency=new ResourceLocationBase(pair.Key,Path.Combine(bundlePath,pair.Key),provider,typeof(IAssetBundleResource));dependency.Data=new AssetBundleRequestOptions{BundleName=pair.Key};bundles.Add(pair.Key,dependency);}
+  foreach(var row in manifest["locations"]){
+   var type=Type.GetType((string)row["type"],false);if(type==null)throw new Exception("Original resource type unavailable: "+row["type"]);
+   IResourceLocation[] dependencies=new IResourceLocation[0];string provider=assetProvider;
+   if(bundlePath!=null){string owner=(string)row["bundle"];dependencies=new[]{bundles[owner]}.Concat(manifest["bundles"][owner]["dependencies"].Select(x=>bundles[(string)x])).ToArray();if(borrowedBundles!=null&&borrowedBundles.Contains(owner))provider=borrowedAssetProvider;if(type==typeof(SceneInstance))provider=typeof(SceneProvider).FullName;if(string.IsNullOrEmpty(provider))throw new Exception("Borrowed asset provider absent");}
+   locations.Add((int)row["id"],new ResourceLocationBase((string)row["primaryKey"],(string)row["path"],provider,type,dependencies));
+  }
+  foreach(var key in manifest["keys"]){
+   // Non-string keys require their original decoder; never silently stringify them.
+   if(key["keyType"]!=null&&(string)key["keyType"]!="System.String")continue;
+   var found=key["locations"].Select(x=>(int)x).Where(locations.ContainsKey).Select(x=>locations[x]).ToList();
+   if(found.Count!=0)locator.Add((string)key["key"],found);
+  }
+  Addressables.AddResourceLocator(locator);
+  // The original locator resolves GUID[subobject] through the typed main location.
+  foreach(var dynamicLocator in dynamicLocators)Addressables.AddResourceLocator(dynamicLocator);
+  if(!ReferenceEquals(Addressables.ResourceLocators.First(),locator))throw new Exception("Whole catalog locator order lost");
  }
  // Share the already measured catalog-only path between host and Android.
  // Platform/profile/audio startup is deliberately outside this owned sequence.

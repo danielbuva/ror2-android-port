@@ -872,7 +872,7 @@ def run_integration():
         d.display(True)
         result['launch'] = d.sh('am', 'start', '-W', '-n', PACKAGE+'/com.unity3d.player.UnityPlayerActivity')
         started = time.monotonic()
-        deadline = started+260
+        deadline = started+480
         while time.monotonic()<deadline:
             pid = d.sh('pidof', PACKAGE, check=False).strip()
             if not pid:

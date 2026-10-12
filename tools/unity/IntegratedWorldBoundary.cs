@@ -107,6 +107,18 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var def=artifactBundle.LoadAsset<BuffDef>(cfg.worldLootSlowBuffAsset);Check(def&&def.name=="bdSlow60","Original loot slow buff missing");
   BindEnemyDefinition(typeof(RoR2Content.Buffs),"Slow60",def);return new[]{def};
  }
+ readonly Dictionary<string,AsyncOperationHandle<GameObject>> worldProjectileGhostLeases=new Dictionary<string,AsyncOperationHandle<GameObject>>();
+ GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller){
+  Check(controller,"Original projectile controller absent");
+  // Match the shipped controller's address-first selection without filling its obsolete direct field.
+  if(controller.ghostPrefabAddress==null||!controller.ghostPrefabAddress.RuntimeKeyIsValid())return controller.ghostPrefab;
+  var key=controller.ghostPrefabAddress.RuntimeKey.ToString();AsyncOperationHandle<GameObject> lease;
+  if(!worldProjectileGhostLeases.TryGetValue(key,out lease)){
+   lease=Addressables.LoadAssetAsync<GameObject>(controller.ghostPrefabAddress);worldProjectileGhostLeases.Add(key,lease);lease.WaitForCompletion();
+  }
+  Check(lease.Status==AsyncOperationStatus.Succeeded&&lease.Result&&lease.Result.GetComponent<RoR2.Projectile.ProjectileGhostController>()&&lease.Result.GetComponentsInChildren<Component>(true).All(component=>component),"Original projectile ghost address contract failed: "+controller.name);
+  return lease.Result;
+ }
  GameObject[] PrepareWorldLootSupport(Result cfg){
   if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
   Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7||cfg.worldLootSupportPaths.Length==9||cfg.worldLootSupportPaths.Length==10||cfg.worldLootSupportPaths.Length==11,"Core loot support contract length changed");
@@ -136,7 +148,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    if(shield||feather||stun||diamond){Check(source.GetComponent<EffectComponent>(),"Original core loot EffectComponent missing: "+path);effects.Add(source);}
    else if(healthPack){var pickup=source.GetComponentInChildren<HealthPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<NetworkIdentity>()&&pickup.pickupEffect&&pickup.pickupEffect.GetComponent<EffectComponent>(),"Original heal pack linkage missing");effects.Add(pickup.pickupEffect);}
    else if(moneyPack){var pickup=source.GetComponentInChildren<MoneyPickup>(true);Check(pickup&&pickup.baseObject==source&&pickup.teamFilter&&source.GetComponent<NetworkIdentity>(),"Original money pack linkage missing");if(pickup.pickupEffectPrefab){Check(pickup.pickupEffectPrefab.GetComponent<EffectComponent>(),"Original money effect linkage missing");effects.Add(pickup.pickupEffectPrefab);}}
-   else if(sticky){var controller=source.GetComponent<RoR2.Projectile.ProjectileController>();var explosion=source.GetComponent<RoR2.Projectile.ProjectileImpactExplosion>();Check(controller&&controller.ghostPrefab&&explosion&&explosion.impactEffect&&source.GetComponent<NetworkIdentity>(),"Original sticky projectile/ghost/blast contract missing");effects.Add(explosion.impactEffect);presentationRoots.Add(controller.ghostPrefab);}
+   else if(sticky){var ghost=OriginalProjectileGhost(source.GetComponent<RoR2.Projectile.ProjectileController>());var explosion=source.GetComponent<RoR2.Projectile.ProjectileImpactExplosion>();Check(ghost&&explosion&&explosion.impactEffect&&source.GetComponent<NetworkIdentity>(),"Original sticky projectile/ghost/blast contract missing");effects.Add(explosion.impactEffect);presentationRoots.Add(ghost);}
    else if(wisp){var blast=source.GetComponent<DelayBlast>();Check(blast&&blast.explosionEffect&&source.GetComponent<TeamFilter>()&&source.GetComponent<NetworkIdentity>(),"Original on-kill delay/blast contract missing");if(blast.delayEffect)effects.Add(blast.delayEffect);effects.Add(blast.explosionEffect);}
    else Check(source.GetComponent<TemporaryVisualEffect>()&&source.GetComponent<TemporaryVisualEffect>().visualTransform,"Original temporary effect linkage missing: "+path);
    foreach(var renderer in presentationRoots.Concat(new[]{source}).Concat(effects.Skip(effectStart)).Distinct().SelectMany(x=>x.GetComponentsInChildren<Renderer>(true)).Distinct()){
@@ -177,6 +189,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   foreach(var pair in worldLootEffectSlots)pair.Key.SetValue(null,pair.Value);worldLootEffectSlots.Clear();
   foreach(var pair in worldLootSourceMaterials)if(pair.Key)pair.Key.sharedMaterials=pair.Value;worldLootSourceMaterials.Clear();
   foreach(var pair in worldLootSourceLayers)if(pair.Key)pair.Key.layer=pair.Value;worldLootSourceLayers.Clear();
+  foreach(var lease in worldProjectileGhostLeases.Values)if(lease.IsValid())Addressables.Release(lease);worldProjectileGhostLeases.Clear();
  }
  IEnumerator PrepareIntegratedWorld(CharacterBody player,Result cfg){
   worldFeatherInputAt=-1;
@@ -196,7 +209,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   priorPickupAvailability=PickupCatalog.availability;ownsPickupCatalog=true;
   Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Unowned integrated misc catalog");
   worldLunarCoin=artifactBundle.LoadAsset<LunarCoinDef>(cfg.worldLunarCoinAsset);
-  Check(worldLunarCoin&&worldLunarCoin.name=="LunarCoin"&&worldLunarCoin.coinValue==1&&worldLunarCoin.displayPrefab&&worldLunarCoin.dropletDisplayPrefab,"Original lunar coin definition/display missing");
+  Check(worldLunarCoin&&worldLunarCoin.name=="LunarCoin"&&worldLunarCoin.coinValue==1&&(worldLunarCoin.displayPrefab||worldLunarCoin.pickupModelReference!=null&&worldLunarCoin.pickupModelReference.RuntimeKeyIsValid())&&worldLunarCoin.dropletDisplayPrefab,"Original lunar coin definition/display missing");
   previousWorldMiscContent=RoR2.ContentManagement.ContentManager._miscPickupDefs;previousWorldMiscCatalog=RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").GetValue(null);previousWorldMiscAvailability=MiscPickupCatalog.availability;ownsWorldMisc=true;
   RoR2.ContentManagement.ContentManager._miscPickupDefs=new MiscPickupDef[]{worldLunarCoin};RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;StaticCall(typeof(MiscPickupCatalog),"Init");
   var lunarPickup=worldLunarCoin.CreatePickupDef();
@@ -214,7 +227,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    previousWorldAvailableItems=Run.instance.availableItems;previousWorldAvailableEquipment=Run.instance.availableEquipment;
    worldAvailableItems=ItemMask.Rent();worldAvailableEquipment=EquipmentMask.Rent();Run.instance.availableItems=worldAvailableItems;Run.instance.availableEquipment=worldAvailableEquipment;
    foreach(var item in worldLootDefinitions)worldAvailableItems.Add(item.itemIndex);foreach(var def in EligibleWorldEquipment())worldAvailableEquipment.Add(def.equipmentIndex);
-   if(cfg.teleporterLoop)worldAvailableItems.Add(RoR2Content.Items.Knurl.itemIndex);
+   if(cfg.teleporterLoop){
+    // Current explicit tables honor Run availability. Include their indexed base boss rewards,
+    // preserving their original tables/weights and all expansion/unlock restrictions.
+    foreach(var item in ComposedBaseBossRewards(cfg)){
+     Check(!Run.instance.IsItemExpansionLocked(item.itemIndex),"Owned base boss reward mask differs: "+item.name);
+     worldAvailableItems.Add(item.itemIndex);
+    }
+   }
    Run.instance.BuildDropTable();
   }else{
    foreach(var item in worldLootDefinitions)if(item.tier==ItemTier.Tier1)Run.instance.availableTier1DropList.Add(PickupCatalog.FindPickupIndex(item.itemIndex));else if(item.tier==ItemTier.Tier2)Run.instance.availableTier2DropList.Add(PickupCatalog.FindPickupIndex(item.itemIndex));
@@ -222,7 +242,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.lootTier1=Run.instance.availableTier1DropList.Count;r.world.lootTier2=Run.instance.availableTier2DropList.Count;r.world.lootTier3=Run.instance.availableTier3DropList.Count;
   Check(r.world.lootTier1+r.world.lootTier2+r.world.lootTier3==worldLootDefinitions.Length,"Original composed drop lists differ from eligible item domain");
   moneyCatalogField=typeof(CostTypeCatalog).GetField("costTypeDefs",flags);priorMoneyCatalog=moneyCatalogField.GetValue(null);
-  Check(priorMoneyCatalog==null&&!ownsMoneyCatalog,"Unowned integrated cost catalog");ownsMoneyCatalog=true;StaticCall(typeof(CostTypeCatalog),"Init");
+  Check((priorMoneyCatalog==null||((Array)priorMoneyCatalog).Length==0)&&!ownsMoneyCatalog,"Unowned integrated cost catalog");ownsMoneyCatalog=true;StaticCall(typeof(CostTypeCatalog),"Init");
+  Check(CostTypeCatalog.costTypeCount==(int)CostTypeIndex.Count&&CostTypeCatalog.GetCostTypeDef(CostTypeIndex.Money).name=="Money","Original integrated cost catalog initialization differs");
   var generic=PrepareOriginalDefaultPickup(cfg);while(generic.MoveNext())yield return generic.Current;
   r.phase="integrated-world-loot";Save();
   worldDropletField=RewardField(typeof(PickupDropletController),"pickupDropletPrefab");priorWorldDroplet=worldDropletField.GetValue(null);
@@ -545,7 +566,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.world==null)yield break;yield return null;yield return null;FinishWorldDotCleanup();VerifyFlightEquipmentCleanup();
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
   r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldFeatherEffectIndex<0&&worldFeatherJumped==null&&worldAvailableItems==null&&worldAvailableEquipment==null;
-  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0&&!ownsWorldDots&&(r.dots==null||(r.dots.cleaned&&DotController.readOnlyInstancesList.Count==0));
+  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0&&worldProjectileGhostLeases.Count==0&&!ownsWorldDots&&(r.dots==null||(r.dots.cleaned&&DotController.readOnlyInstancesList.Count==0));
   if(r.hud!=null){r.hud.cleaned=!recoveredHud&&!recoveredMenu;r.world.cleaned&=r.hud.cleaned;}
   if(r.commerce!=null){r.commerce.cleaned=commerceOwned.All(x=>!x)&&commerceListeners.Count==0&&commercePurchases.Count==0&&!ownsCommerceMessages&&commerceEffectIndex<0;r.world.cleaned&=r.commerce.cleaned;}
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();
