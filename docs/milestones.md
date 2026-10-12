@@ -1,5 +1,7 @@
 # Capability gates
 
+J428: whole-catalog host and ARM64 registration complete; 6,025 roots/six providers, selected native initializers and ordinary composed launch pass. Broad content behavior and full session integration remain open. See PORTING_STATE.md. Steam migration follows this batch; Moon/manual gates stay paused.
+
 Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evidence, not compilation alone. Shared procedure: preflight → minimal change/build → install/runtime-path discovery/sync/run → structured logs/crash/state plus relevant visual capture → first-failure classification → state/journal/commit. Query live storage on each install/size increase and retain prior APK/payload; never change storage or unrelated data.
 
 | Gate | Status | Objective, scope and acceptance | Dependencies / principal risk |

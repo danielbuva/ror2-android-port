@@ -2,10 +2,49 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
 from whole_catalog import analyze, catalog_roots, native_candidates, read_catalog, resolve_path
+import build
+from common import sha, write
+
+
+class WholePayloadReuseTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.work = Path(self.temp.name)
+        self.project = self.work/'lab-project'
+        self.allowed = sorted(build.WHOLE_PLAYER_INPUTS)
+        for name in self.allowed+['Assets/Content.prefab']:
+            path = self.project/name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('fixture')
+        payload = self.work/'generated-android-data/content'
+        payload.parent.mkdir()
+        payload.write_text('content fixture')
+        write(self.work/'whole-catalog-code-base.json', dict(allowed=self.allowed,
+              files={'Assets/Content.prefab':sha(self.project/'Assets/Content.prefab')},
+              payload={'content':sha(payload)}))
+        self.patcher = patch.object(build, 'WORK', self.work)
+        self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
+        self.temp.cleanup()
+
+    def test_code_only_fix_cannot_reuse_changed_game_content(self):
+        (self.project/'Assets/LabDiagnostics.cs').write_text('updated harness method')
+        build.validate_whole_payload_reuse(self.project)
+        (self.project/'Assets/Content.prefab').write_text('changed game content')
+        with self.assertRaisesRegex(RuntimeError, 'Content inputs changed'):
+            build.validate_whole_payload_reuse(self.project)
+
+    def test_reuse_rejects_corrupted_or_added_payload(self):
+        (self.work/'generated-android-data/content').write_text('corrupted')
+        with self.assertRaisesRegex(RuntimeError, 'payload identity changed'):
+            build.validate_whole_payload_reuse(self.project)
 
 
 class WholeCatalogTests(unittest.TestCase):

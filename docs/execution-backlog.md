@@ -1,5 +1,7 @@
 # Execution backlog
 
+J428: whole-catalog host and ARM64 registration complete; 6,025 roots/six providers, selected native initializers and ordinary composed launch pass. Broad content behavior and full session integration remain open. See PORTING_STATE.md. Steam migration follows this batch; Moon/manual gates stay paused.
+
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 
 Every record uses the required issue schema. All outputs containing game-derived data remain ignored. Future tasks must be split from the measured first failure, not speculative downstream fixes.

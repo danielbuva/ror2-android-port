@@ -101,6 +101,10 @@ class Device:
  def sync(self):
   self.owned();runtime=read(WORK/'device/runtime.json');path=runtime['persistentDataPath'];storage=self.storage()
   if not path.endswith('/Android/data/'+PACKAGE+'/files'):raise RuntimeError('Unexpected runtime content path; inspect storage before extending sync policy')
+  if storage['mode']=='adopted':
+   # Refuse a physical-internal emulated root before creating or transferring data.
+   parts=self.sh('df','-k',path).splitlines()[-1].split()
+   if int(parts[1])*1024!=storage['adopted']['total_bytes']:raise RuntimeError('Runtime payload path is not backed by the selected adopted volume')
   dest=path+'/payload';self.sh('mkdir','-p',dest);files=list((WORK/'generated-android-data').glob('*'));manifest=[]
   for p in sorted(files):
    if not p.is_file() or p.suffix=='.manifest':continue

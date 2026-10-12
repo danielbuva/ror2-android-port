@@ -34,6 +34,27 @@ try:
   elif a.action=='whole-catalog-contracts':
    from whole_catalog import contracts
    contracts()
+  elif a.action=='whole-catalog-prepare':
+   from whole_catalog import prepare_integration
+   prepare_integration()
+  elif a.action=='whole-catalog-host':
+   from whole_catalog import host_integration
+   host_integration()
+  elif a.action=='whole-catalog-host-providers':
+   from whole_catalog import host_providers
+   host_providers()
+  elif a.action=='whole-catalog-repair-bindings':
+   from whole_catalog import repair_root_bindings
+   repair_root_bindings()
+  elif a.action=='whole-catalog-build':
+   from whole_catalog import build_integration
+   build_integration()
+  elif a.action=='whole-catalog-code-build':
+   from whole_catalog import build_integration
+   build_integration(code_only=True)
+  elif a.action=='whole-catalog-run':
+   from whole_catalog import run_integration
+   run_integration()
   elif a.action=='shader-recovery':
    from shader_recovery import recover
    recover(a.target)

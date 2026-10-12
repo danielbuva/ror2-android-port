@@ -1,48 +1,48 @@
-# Whole-catalog integration — J426
+# Whole-catalog integration — J426 / J428
 
-Architecture C remains active. Replace the expansion of selected test content with the shipped content-provider seam: converted Android locations, original content providers, original ContentManager phases and original catalogs. Retain the accepted selected-content composition as rollback. Registration does not establish gameplay, rendering, unlocks or ownership.
+Architecture C remains active. Load original content providers and ContentManager phases through converted Android locations; preserve original keys, types and asset relationships. Loading expansion/entitlement definitions never grants ownership or enables an expansion. Stock platform/profile startup remains stopped.
 
-## Measured source scope
+## Current evidence
 
-The exact-editor locator decodes 62,243 keys and 37,673 resource locations from the accepted PC catalog. All six shipped providers are present: base, junk, DLC1, CU8, DLC2 and DLC3. Their original helper uses 29 content categories. Their intersections contain 6,025 typed locations, including 231 ItemDef locations, 59 EquipmentDef locations and 1,522 entity-state configurations. These are location counts, not a count of distinct supported gameplay behaviors.
+The accepted PC catalog contains 62,243 keys, 37,673 locations, six providers and 29 content categories. All 6,025 provider roots now pass typed import. The complete discovered closure contains 32,515 source files; existing GUID owners are reused rather than copied into duplicate snapshots. Original bundle/container identities remain in ignored J426 evidence. Imported contracts now bind 1,182 script identities directly and twenty through measured UI remaps.
 
-All 6,025 roots map to exports after resolving punctuation, trailing whitespace and case differences. The serialized/runtime-reference closure contains 32,507 files and 6,242,096,750 source bytes. This includes scenes, models, textures, configurations, scripts and middleware references; it is not a proposed APK size.
+A filename collision mapped the Captain survivor to a mesh. The correction selects the unique sibling with the original name and measured SurvivorDef script identity; its receipted override survives reconciliation. Unresolved imported-model/subobject conversions and original missing references remain explicit. **Quarantine is empty.** Typed root loading is not an audit of every child component or scene reference.
 
-The first YAML-only scan would miss runtime AssetReference edges. The broader scan records 1,761 of those edges. It retains the original keys, requested resource types, provider records, ordered dependencies, source GUID relationships and pack/category membership. No tested-content whitelist participates in root selection.
+J428 builds eighty Android bundles, approximately 1.15 GiB, and updates the same owned app on adopted storage. The real Nova completes the six original providers’ loading/generation/finalization phases and original ContentManager assignment, then thirteen selected native catalog initializers, in 229.615 seconds with zero phase errors:
 
-## Binary-backed conversion
+| Registered content | Count |
+| --- | ---: |
+| Bodies / masters | 237 / 164 |
+| Items / equipment | 231 / 59 |
+| Buffs / elites | 207 / 19 |
+| Projectiles / effects | 339 / 1,191 |
+| Scene definitions | 68 |
+| State configurations / skills | 1,522 / 485 |
+| Drone definitions | 21 |
 
-Read-only inspection of 635 hash-verified original bundles yields 48,381 container object records with zero bundle/object read failures. Matching original address, object type, object name and exported owner resolves 2,799 additional typed locations. Each mapping retains its original serialized-file/path identity. Imported-model filenames alone are insufficient evidence for selecting a mesh or avatar.
+The ordinary composed launch still works: recovered menu, first stage, enemy attacks, natural defeat and persisted Android result. Its live eligible pools remain the selected composition. This does **not** make every registered item/enemy/stage functional or complete stock startup, original scene integrity, normal victory, Moon/escape, audio, or visual parity. Imported child-script/NGSS shader warnings remain findings; no arbitrary exclusion follows from them.
 
-4,942 location conversions remain unresolved. Common cases include multiple original meshes/clips under one imported-model address and nested GameObjects represented inside an exported prefab. The mapper retains the candidates and native identities; it does not choose an arbitrary object, remove the entry or label it incompatible. Explicit subobject requests and default imported-model loading need a shared conversion/provider contract.
+## Reusable fixes and commands
 
-436 runtime-reference conversion flags remain after this conservative scan. They count unresolved candidate location sets, not necessarily failed requests of the consumer's exact type. Two keys are absent from the shipped catalog, and three serialized GUID references are absent from the export index. Preserve those source inconsistencies and determine their actual consumers before quarantine.
+- Native bundle providers must be registered explicitly after real Addressables initialization. Stock helpers choose the first locator; the converted locator must precede the empty initialization locator.
+- The player linker cannot see separately built bundles. Generate preservation roots from the measured resource and serialized-script contracts; the teleporter-only Timeline roots were insufficient for the complete catalog.
+- Existing composed bundles now reference the shared content bundle. Preload it before body/support deserialization and release it through owned cleanup. Repeated-menu retention remains unaccepted.
+- Code-only fixes can reuse the frozen payload after all game-content/package/settings inputs and payload hashes verify. Only explicit player harness, entry-scene and linker inputs are exempt; edits to game content reject reuse.
+- Capture boot errors after the known lab Windows-bundle negative control finishes. Preserve failures; do not suppress new content errors.
 
-**Quarantine remains empty.** Missing conversion, untested content and unresolved initialization are separate from demonstrated Android incompatibility.
-
-## Shared binding and initialization boundaries
-
-The imported script inventory matches 1,173 source script identities directly. Twenty additional UI identities map to already measured package remaps, with current input/export hashes and actual imported target types verified. Nine recovered-script identities remain unresolved: directional/contact NGSS, blurred background, Chef unlock effects, bead projectile sound, audio spline/follower, sound trigger and vertex instance streams. This is a binding gap, not evidence that every dependent asset must be excluded.
-
-Reflection records 98 original system initializers and their declared dependencies without invoking them. The content provider's default-locator assumption is significant: original helpers select the first locator. A converted catalog must own that position and retain typed labels/aliases; the current empty diagnostic initialization must not accidentally remain first.
-
-The measured original phases are LoadStaticContentAsync, GenerateContentPackAsync and FinalizeAsync, followed by ContentManager assignment. Use those original phases rather than cosmetic definition registration. SceneCatalog and the remaining catalog dependency graph follow. Do not invoke every initializer blindly: NetworkSoundEventCatalog calls the unavailable native Wwise ID API, and stock platform/profile startup retains the documented Steam boundary. Loading entitlement/expansion definitions never grants entitlement, enables an expansion or fabricates authentication.
-
-## Cheap workflow and current exit
-
-```bash
-./dev prototype --action whole-catalog-audit
-./dev prototype --action whole-catalog-native
-./dev prototype --action whole-catalog-reconcile
+```sh
+./dev prototype --action whole-catalog-prepare
+./dev prototype --action whole-catalog-host
+./dev prototype --action whole-catalog-repair-bindings
 ./dev prototype --action whole-catalog-contracts
+./dev prototype --action whole-catalog-host-providers
+./dev prototype --action whole-catalog-build
+./dev prototype --action whole-catalog-code-build
+./dev prototype --action whole-catalog-run
 ```
 
-These actions emit ignored evidence. They discover and reconcile the complete source graph; they do not install content or pass full catalog registration. The only lookup narrowing is a concrete conversion identity constraint. Multiple candidates remain explicit.
+Use repair/code-only actions only for their recorded conditions. Evidence pointers: `work/experiments/whole-catalog/latest.json` → `integration-latest.json` → build/device/composed receipts. `work/checkpoints/LAST_OBSERVED_WHOLE_CATALOG.json` pins the accepted scope. Keep J425 and J323 as rollback versions; retain only the active additional candidate, not superseded executable copies. No new full source snapshot is needed.
 
-The first expanded metadata representation redundantly emitted 32,353,309 dependency edges and occupied 447 MiB. The revised schema interns 1,471 ordered dependency sets, preserving those edges while reducing the report to about 54 MiB. Historical reports remain byte-identical through lossless filesystem compression. This change serves the immediate broad scan, not a general cache redesign.
+Prior art: pinned R2API.ContentManagement provider phases and R2API.Addressables typed keys/handle lifetimes; shipped Addressables ResourceManager providers and linker contracts; existing ControllerAddressProbe/TeleporterWorldBoundary native-provider registration. Current input and device evidence override community version assumptions.
 
-Doctor passes. Host build preflight rejects less than ten GiB available space. Closed owned text compression retains exact hashes/paths and recovers some headroom, but the guard remains unsatisfied. No broad Unity import, ContentManager registration, APK build or Android integration run is accepted by J426. Do not lower the guard or delete unrelated files, accepted APKs, payloads or failed evidence. Budget import/cache/bundle space for this measured closure before dispatch.
-
-Next: resolve shared typed subobject and recovered-script bindings; prepare a complete converted location catalog and closure; run original content providers/catalog phases; classify their first actual failure. Then validate one composed Android candidate using the same owned package. Quarantine only a demonstrated incompatible identity with evidence and affected consumers. Keep normal/Moon/manual/PC rollback pointers and platform ownership checks intact.
-
-Prior art: pinned R2API.ContentManagement provider source explains the three original phases and ContentPack identity; pinned R2API.Addressables distinguishes typed keys and handle lifetimes. Local UnityPy ContainerHelper, PPtr dereferencing and ObjectReader.peek_name expose original container ownership without decompiling gameplay logic. The current shipped binaries/assets and exact-editor metadata override community assumptions. No upstream implementation or game-derived source is published.
+Next: migrate the Steam input after this batch as requested, then connect full native catalogs to the live session/director/gameplay path. Keep manual Moon/finale and PC visual differential work deferred. Reject unreviewed input drift.

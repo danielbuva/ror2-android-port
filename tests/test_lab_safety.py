@@ -33,6 +33,17 @@ class SafetyTests(unittest.TestCase):
   self.d.owned=lambda:{};self.d.storage=lambda:{}
   write(self.root/'device/runtime.json',{'persistentDataPath':'/data/local/tmp/another-game'})
   with self.assertRaisesRegex(RuntimeError,'Unexpected runtime'):self.d.sync()
+ def test_adopted_sync_rejects_internal_backing_before_writing(self):
+  self.d.owned=lambda:{};self.d.storage=lambda:{'mode':'adopted','adopted':{'total_bytes':900*1024**3}}
+  calls=[]
+  def shell(*args,**kwargs):
+   calls.append(args)
+   if args[:2]==('df','-k'):return 'Filesystem 1K-blocks Used Available Use% Mounted on\ninternal 100000000 1 99999999 1% /storage/emulated'
+   self.fail('Storage rejection must precede writes')
+  self.d.sh=shell
+  write(self.root/'device/runtime.json',{'persistentDataPath':'/storage/emulated/0/Android/data/'+device.PACKAGE+'/files'})
+  with self.assertRaisesRegex(RuntimeError,'not backed'):self.d.sync()
+  self.assertEqual(len(calls),1)
  def test_reset_absent_package_does_not_call_adb_uninstall(self):
   self.d.exists=lambda:False
   self.assertFalse(self.d.reset()['removed'])

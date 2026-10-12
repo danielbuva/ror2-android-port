@@ -1,0 +1,3 @@
+var output=OUTPUT;var directory=System.IO.Path.GetDirectoryName(output);
+WholeCatalogHost.Begin(System.IO.Path.Combine(directory,"manifest.json"),System.IO.Path.Combine(directory,"host-provider-result.json"));
+System.IO.File.WriteAllText(output,"{\"dispatched\":true}");return "Original whole-catalog providers queued";

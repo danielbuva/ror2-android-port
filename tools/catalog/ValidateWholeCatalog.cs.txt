@@ -1,0 +1,14 @@
+if(EditorApplication.isCompiling||EditorApplication.isUpdating||EditorApplication.isPlayingOrWillChangePlaymode||BuildPipeline.isBuildingPlayer)throw new System.Exception("Editor not idle");
+var output=OUTPUT;
+var manifest=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(output),"manifest.json")));
+var failures=new System.Collections.Generic.List<object>();var counts=new System.Collections.Generic.Dictionary<string,int>();int loaded=0;
+foreach(var row in manifest["locations"].Where(x=>(bool)x["root"])){
+ string path=(string)row["path"],typeName=(string)row["type"];var type=System.Type.GetType(typeName,false);
+ try{
+  if(type==null)throw new System.Exception("Required type unavailable: "+typeName);
+  var asset=AssetDatabase.LoadAssetAtPath(path,type);if(asset==null)throw new System.Exception("Typed original catalog root failed to import");
+  loaded++;string kind=type.FullName;if(!counts.ContainsKey(kind))counts[kind]=0;counts[kind]++;
+ }catch(System.Exception ex){failures.Add(new{id=(int)row["id"],path,type=typeName,error=ex.ToString()});}
+}
+var result=new{success=failures.Count==0,summary=new{expected=manifest["roots"].Count(),loaded,failed=failures.Count,types=counts,scope="Exact-editor typed import; no Android or gameplay acceptance"},failures};
+System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return result.summary;

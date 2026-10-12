@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
- [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation;public string[] reflectionTextureGuids;}
+ [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation,reusePayload;public string[] reflectionTextureGuids;}
  [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
  [Serializable] class NativeVariant {public string resource;}
  [Serializable] class NativeManifest {public NativeVariant[] variants;}
@@ -180,7 +180,15 @@ public static class LabBuild {
    var mesh=AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Recovered/geometry.obj");
    if(mesh==null)throw new Exception("Recovered mesh missing; prototype preparation required");
    bundleBuilds.Add(new AssetBundleBuild{assetBundleName="labgeometry",assetNames=new[]{"Assets/Recovered/geometry.obj"}});
-   if(!BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),bundleBuilds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android))throw new Exception("Requested bundle build failed");
+   var currentRequest=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
+   if(currentRequest.request_id!=result.request_id)throw new InvalidOperationException("Build request changed after dispatch");
+   if(!currentRequest.reusePayload){
+    var wholeBuilder=File.Exists(Path.Combine(root,"whole-catalog-build.json"))?Type.GetType("WholeCatalogBuild, Assembly-CSharp-Editor",true):null;
+    if(wholeBuilder!=null)wholeBuilder.GetMethod("Append").Invoke(null,new object[]{root,bundleBuilds});
+    var bundleManifest=BuildPipeline.BuildAssetBundles(Path.Combine(root,"generated-android-data"),bundleBuilds.ToArray(),BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.Android);
+    if(!bundleManifest)throw new Exception("Requested bundle build failed");
+    if(wholeBuilder!=null)wholeBuilder.GetMethod("Complete").Invoke(null,new object[]{bundleManifest});
+   }
    foreach(var path in presentationShaders.Where(x=>x.EndsWith(".shader",StringComparison.Ordinal))){var shader=AssetDatabase.LoadAssetAtPath<Shader>(path);var messages=ShaderUtil.GetShaderMessages(shader).Where(x=>x.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error).ToArray();if(messages.Length>0){result.errors=messages.Length;throw new Exception("Android shader compile errors: "+path+"; "+messages[0].message);}}
    var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
    var camera=new GameObject("Lab Camera").AddComponent<Camera>();camera.tag="MainCamera";camera.backgroundColor=new Color(.04f,.06f,.09f);camera.clearFlags=CameraClearFlags.SolidColor;camera.gameObject.AddComponent<LabDiagnostics>();

@@ -54,6 +54,7 @@ public sealed partial class MovementBatchProbe {
  }
 
  IEnumerator RegisterBodyCatalog(){
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){var shared=WholeCatalogComposed.Prepare();while(shared.MoveNext())yield return shared.Current;}
   Check(BodyCatalog.bodyCount==0&&LegacyResourcesAPI.ActiveCount==0,"Existing catalog/request ownership");
   r.phase="body-catalog-initialize";Save();
   var directory=Path.Combine(Application.persistentDataPath,"body-catalog-probe");Directory.CreateDirectory(directory);
@@ -102,6 +103,7 @@ public sealed partial class MovementBatchProbe {
   if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
   ReleaseObjectiveBundlePreload();CleanupRecoveredText();
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.Release();
   RestoreBodySettingsTransform();
  }
  void RestoreBodySettingsTransform(){

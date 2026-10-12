@@ -5,6 +5,22 @@ from collections import Counter, deque
 import re
 
 
+def copy_catalog_asset(source, target):
+    """Bulk imports must not launch one subprocess for every asset and meta file."""
+    import ctypes, shutil, sys
+    source, target = Path(source), Path(target)
+    if source.is_symlink() or target.is_symlink():
+        raise RuntimeError('Catalog import refuses symlinks')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if not target.exists() and sys.platform == 'darwin':
+        clone = ctypes.CDLL('/usr/lib/libSystem.B.dylib', use_errno=True).clonefile
+        clone.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32]
+        clone.restype = ctypes.c_int
+        if clone(str(source).encode(), str(target).encode(), 0) == 0:
+            return
+    shutil.copy2(source, target)
+
+
 def read_catalog(path):
     data = read(path)
     if data.get('schemaVersion') == 2:
@@ -224,6 +240,12 @@ def reconcile():
         conversions[str(row['id'])] = dict(source=objects[0]['source'], resolution='original-typed-container',
                                            native=objects[0], original_internal_id=row['internalId'])
     write(out/'native-conversions.json', dict(conversions=conversions, issues=issues, quarantine=[]))
+    collision_receipt = out/'typed-import-conversions.json'
+    if collision_receipt.exists():
+        corrected = read(collision_receipt)
+        if corrected['metadata_sha256'] != sha(catalog_path(out)):
+            raise RuntimeError('Typed import corrections belong to a different catalog')
+        conversions.update(corrected['conversions'])
     assembly_hash = sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll')
     key = digest(dict(input=assembly_hash, ilspy='11.0.0.9375', args='project-referencepath-csharp9-v2'))
     helper = WORK/'decompiled/RoR2'/key[:16]/'RoR2.ContentManagement/AddressablesLoadHelper.cs'
@@ -419,3 +441,295 @@ def native_inventory():
     print(json.dumps(dict(inspected=len(receipts), failures=len(errors), evidence=str(destination.relative_to(ROOT)))))
     if not result['success']:
         raise RuntimeError('Original container inspection incomplete; preserve and inspect its first failure')
+
+
+def prepare_integration():
+    """Import the complete discovered closure, reusing existing GUID owners once."""
+    from build import preflight
+    preflight()
+    out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+    export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    closure = read(out/'reconciled-closure.json')
+    if closure['input_id'] != read(WORK/'config/accepted-input.json')['input_id']:
+        raise RuntimeError('Whole catalog belongs to different input')
+    metadata = read_catalog(catalog_path(out))
+    index = read(out/'source-guid-index.json')
+    guids = {path: guid for guid, path in index.items()}
+    project = WORK/'lab-project'
+    owners = {}
+    for meta in (project/'Assets').rglob('*.meta'):
+        match = re.search(r'^guid:\s*([a-f0-9]{32})', meta.read_text(errors='replace'), re.M)
+        if match:
+            if match[1] in owners:
+                raise RuntimeError('Duplicate imported GUID; refuse ambiguous whole-content ownership')
+            owners[match[1]] = str(Path(str(meta)[:-5]).relative_to(project))
+    remaps = read(WORK/'config/hud-ui-remaps.json')
+    if remaps['input_id'] != closure['input_id']:
+        raise RuntimeError('UI remaps belong to different input')
+    destination = out/('integration-'+now())
+    destination.mkdir()
+    mapped = {}
+    copies = []
+    # Copy each original identity once. Do not overwrite the accepted composition.
+    for relative in closure['files']:
+        source = export/relative
+        guid = guids.get(relative)
+        if not guid or not source.is_file():
+            raise RuntimeError('Missing discovered source identity: '+relative)
+        existing = owners.get(guid)
+        if existing:
+            mapped[relative] = existing
+            continue
+        if source.suffix == '.dll':
+            # Exporter DLLs are not the receipted original runtime plugin inputs.
+            # Their references are already measured through the binding remap table.
+            continue
+        target_relative = 'Assets/WholeGame/'+relative.removeprefix('Assets/')
+        target = project/target_relative
+        copy_catalog_asset(source, target)
+        copy_catalog_asset(Path(str(source)+'.meta'), Path(str(target)+'.meta'))
+        with source.open('rb') as stream:
+            yaml = stream.read(5) == b'%YAML'
+        if yaml:
+            text = source.read_text()
+            for row in remaps['rows']:
+                text = text.replace(row['from'], row['to'])
+            if text != source.read_text():
+                target.write_text(text)
+        mapped[relative] = target_relative
+        owners[guid] = target_relative
+        copies.append(dict(source=relative, target=target_relative, sha256=sha(target)))
+    roots = set(closure['roots'])
+    locations = []
+    for row in metadata['locations']:
+        conversion = closure['converted'].get(str(row['id']))
+        if conversion and conversion['source'] in mapped:
+            locations.append(dict(id=row['id'], path=mapped[conversion['source']], type=row['type'],
+                                  primaryKey=row['primaryKey'], root=row['id'] in roots))
+    if not roots <= {row['id'] for row in locations}:
+        raise RuntimeError('Provider roots lost during staging')
+    manifest = dict(input_id=closure['input_id'], attempt=destination.name,
+                    locations=locations, keys=metadata['keys'], providers=metadata['providers'],
+                    source_catalog_sha256=closure['source_catalog_sha256'],
+                    roots=closure['roots'], quarantine=[])
+    write(destination/'manifest.json', manifest)
+    write(destination/'import-receipt.json', dict(copied=copies, reused=len(mapped)-len(copies),
+                                               files=len(mapped), roots=len(roots)))
+    write(out/'integration-latest.json', dict(path=str(destination.relative_to(ROOT))))
+    copy_catalog_asset(ROOT/'tools/unity/WholeCatalogLoader.cs', project/'Assets/LabLoadingScene/WholeCatalogLoader.cs')
+    copy_catalog_asset(ROOT/'tools/unity/WholeCatalogBootstrap.cs', project/'Assets/LabLoadingScene/WholeCatalogBootstrap.cs')
+    copy_catalog_asset(ROOT/'tools/catalog/WholeCatalogHost.cs', project/'Assets/Editor/WholeCatalogHost.cs')
+    print(json.dumps(dict(copied=len(copies), reused=len(mapped)-len(copies), roots=len(roots),
+                          mapped_locations=len(locations), evidence=str(destination.relative_to(ROOT)))))
+
+
+def host_integration():
+    """Cheap engine import/type checks before a large Android content build."""
+    out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+    attempt = ROOT/read(out/'integration-latest.json')['path']
+    export_catalog(attempt, 'ValidateWholeCatalog.cs.txt', 'host-integration.json')
+    result = read(attempt/'host-integration.json')
+    print(json.dumps(result['summary'], indent=2))
+    if not result['success']:
+        raise RuntimeError('Whole-content import has concrete failures; inspect host-integration.json')
+
+
+def host_providers():
+    import time
+    out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+    attempt = ROOT/read(out/'integration-latest.json')['path']
+    result_path = attempt/'host-provider-result.json'
+    if result_path.exists():
+        result_path.rename(attempt/('host-provider-previous-'+now()+'.json'))
+    export_catalog(attempt, 'StartWholeCatalog.cs.txt', 'host-provider-dispatch.json')
+    deadline = time.monotonic()+300
+    while time.monotonic()<deadline:
+        if result_path.exists():
+            result = read(result_path)
+            if result.get('success') or result.get('error') or result.get('finished'):
+                print(json.dumps(result, indent=2))
+                if not result['success']:
+                    raise RuntimeError('Original content-provider integration failed; retain attributed evidence')
+                return
+        time.sleep(2)
+    raise RuntimeError('Host provider dispatch has no terminal result; inspect before repeating')
+
+
+def repair_root_bindings():
+    """Resolve exporter filename collisions by measured script/type identity."""
+    out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+    attempt = ROOT/read(out/'integration-latest.json')['path']
+    failed = read(attempt/'host-integration.json')['failures']
+    export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+    closure = read(out/'reconciled-closure.json')
+    metadata = read_catalog(catalog_path(out))
+    locations = {row['id']: row for row in metadata['locations']}
+    contracts = ROOT/read(out/'contracts-latest.json')['path']
+    runtime = read(contracts/'runtime-contracts.json')
+    scripts = {(row['guid'], str(row['fileId'])): row['type'] for row in runtime['scripts']}
+    conversions = read(out/'native-conversions.json')['conversions']
+    repairs = []
+    for failure in failed:
+        row = locations[failure['id']]
+        if row['id'] not in closure['roots']:
+            raise RuntimeError('Unexpected non-root import failure')
+        old = closure['converted'][str(row['id'])]['source']
+        wanted = row['type'].split(',')[0]
+        name = Path(row['internalId']).stem
+        candidates = []
+        for candidate in (export/old).parent.glob('*.asset'):
+            with candidate.open('rb') as stream:
+                text = stream.read(65536).decode(errors='replace')
+            script = re.search(r'm_Script: \{fileID: (-?\d+), guid: ([a-f0-9]{32}), type: \d+\}', text)
+            object_name = re.search(r'^  m_Name: (.*)$', text, re.M)
+            if script and object_name and object_name[1] == name and scripts.get((script[2], script[1])) == wanted:
+                candidates.append(str(candidate.relative_to(export)))
+        if len(candidates) != 1:
+            raise RuntimeError('Typed collision unresolved: '+str(dict(location=row['id'], candidates=candidates)))
+        conversion = dict(source=candidates[0], resolution='typed-script-export-collision',
+                          original_internal_id=row['internalId'], expected_type=wanted)
+        conversions[str(row['id'])] = conversion
+        repairs.append(dict(location=row['id'], previous=old, conversion=conversion))
+    write(attempt/'typed-import-repairs.json', repairs)
+    prior_corrections = read(out/'typed-import-conversions.json')['conversions'] if (out/'typed-import-conversions.json').exists() else {}
+    prior_corrections.update({str(row['location']):row['conversion'] for row in repairs})
+    write(out/'typed-import-conversions.json', dict(metadata_sha256=sha(catalog_path(out)), conversions=prior_corrections))
+    assembly_hash = sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll')
+    key = digest(dict(input=assembly_hash, ilspy='11.0.0.9375', args='project-referencepath-csharp9-v2'))
+    helper = WORK/'decompiled/RoR2'/key[:16]/'RoR2.ContentManagement/AddressablesLoadHelper.cs'
+    result = analyze(catalog_path(out), export, read(out/'source-guid-index.json'), helper.read_text(), conversions)
+    result.update(input_id=closure['input_id'], source_catalog_sha256=closure['source_catalog_sha256'], metadata_sha256=sha(catalog_path(out)))
+    write(out/'reconciled-closure.json', result)
+    print(json.dumps(dict(repaired=len(repairs), closure_files=len(result['files']))))
+
+
+def build_integration(code_only=False):
+    from build import build, freeze_whole_payload
+    out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+    attempt = ROOT/read(out/'integration-latest.json')['path']
+    if not read(attempt/'host-integration.json')['success']:
+        raise RuntimeError('Whole roots must pass typed import before building')
+    manifest = read(attempt/'manifest.json')
+    project = WORK/'lab-project'
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs']:
+        copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
+    body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'
+    body_text=body_boundary.read_text()
+    if 'WholeCatalogComposed.Prepare' not in body_text:
+        body_text=body_text.replace(' IEnumerator RegisterBodyCatalog(){',' IEnumerator RegisterBodyCatalog(){\n  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){var shared=WholeCatalogComposed.Prepare();while(shared.MoveNext())yield return shared.Current;}')
+        body_text=body_text.replace('ReleaseObjectiveBundlePreload();CleanupRecoveredText();','ReleaseObjectiveBundlePreload();CleanupRecoveredText();\n  if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.Release();')
+        body_boundary.write_text(body_text)
+    # Bundle-only serialized components and reflected location types are invisible
+    # to the APK linker. Preserve their measured contracts, not a tested whitelist.
+    import xml.etree.ElementTree as ET
+    roots={}
+    for row in manifest['locations']:
+        type_name, assembly = row['type'].split(',')[:2]
+        roots.setdefault(assembly.strip(),set()).add(type_name)
+    contract_dir=ROOT/read(out/'contracts-latest.json')['path']
+    for row in read(contract_dir/'result.json')['contracts']:
+        bound=row.get('target_imported') or row.get('imported')
+        if bound and bound['type']:
+            roots.setdefault(bound['assembly'],set()).add(bound['type'])
+    linker=ET.Element('linker')
+    for name,types in sorted(roots.items()):
+        assembly=ET.SubElement(linker,'assembly',fullname=name)
+        for type_name in sorted(types):
+            ET.SubElement(assembly,'type',fullname=type_name.replace('+','/'),preserve='all')
+    link_path=project/'Assets/LabLoadingScene/WholeCatalogPreservation/link.xml'
+    link_path.parent.mkdir(exist_ok=True)
+    ET.ElementTree(linker).write(link_path,encoding='unicode')
+    copy_catalog_asset(ROOT/'tools/catalog/WholeCatalogBuild.cs', project/'Assets/Editor/WholeCatalogBuild.cs')
+    # Extend the accepted integration; no regeneration of its large stage snapshots.
+    runtime = project/'Assets/LabLoadingScene/MovementBatchProbe.cs'
+    text = runtime.read_text()
+    guard='  if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yield break;'
+    if guard not in text:
+        needle=' IEnumerator Start(){'
+        if text.count(needle)!=1:
+            raise RuntimeError('Accepted integration entry point changed')
+        text=text.replace(needle,needle+'\n'+guard)
+        runtime.write_text(text)
+    write(project/'Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json',
+          dict(attempt=manifest['attempt'], input_id=manifest['input_id']))
+    write(WORK/'whole-catalog-build.json', dict(manifest=str(attempt/'manifest.json')))
+    previous = attempt/'build.json'
+    if previous.exists():
+        previous.rename(attempt/('build-previous-'+now()+'.json'))
+    result = build('vulkan', force=True,reuse_payload=code_only)
+    write(attempt/'build.json', result)
+    if not code_only:
+        freeze_whole_payload(project,result)
+
+
+def run_integration():
+    """One broad, attributed device scan; leave the ordinary game launch available."""
+    import time
+    from device import Device, PACKAGE
+    from build import preflight
+    preflight()
+    out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+    attempt = ROOT/read(out/'integration-latest.json')['path']
+    evidence = attempt/('device-'+now())
+    evidence.mkdir()
+    d = Device()
+    result = dict(success=False)
+    selection_path = None
+    try:
+        result['install'] = d.install(read(WORK/'config/current-build.json')['apk'])
+        result['bootstrap'] = d.launch()
+        runtime = read(WORK/'device/runtime.json')['persistentDataPath']
+        result['sync'] = d.sync()
+        candidate_selection = runtime+'/whole-catalog-selection.json'
+        if d.sh('sh', '-c', 'test ! -e '+candidate_selection+' || echo present', check=False).strip() == 'present':
+            raise RuntimeError('Unexpected existing catalog launch selection')
+        source = WORK/'generated-android-data/whole-catalog.json'
+        write(evidence/'selection.json', dict(manifest_sha256=sha(source)))
+        d.cmd('push', str(evidence/'selection.json'), candidate_selection)
+        selection_path = candidate_selection
+        d.sh('am', 'force-stop', PACKAGE)
+        previous_report = runtime+'/whole-catalog-result.json'
+        previous = d.sh('cat', previous_report, check=False)
+        if previous:
+            (evidence/'previous-runtime.txt').write_text(previous)
+        d.sh('rm', '-f', previous_report)
+        d.display(True)
+        result['launch'] = d.sh('am', 'start', '-W', '-n', PACKAGE+'/com.unity3d.player.UnityPlayerActivity')
+        started = time.monotonic()
+        deadline = started+260
+        while time.monotonic()<deadline:
+            pid = d.sh('pidof', PACKAGE, check=False).strip()
+            if not pid:
+                raise RuntimeError('Integrated catalog process exited')
+            result['pid'] = pid
+            text = d.sh('cat', previous_report, check=False)
+            try:
+                record = json.loads(text)
+            except ValueError:
+                record = None
+            if record:
+                write(evidence/'runtime.json', record)
+                if record.get('finished'):
+                    result['runtime'] = record
+                    result['success'] = record['success']
+                    break
+            time.sleep(1)
+        if 'runtime' not in result:
+            raise RuntimeError('Whole-catalog scan has no terminal result')
+        result['seconds'] = time.monotonic()-started
+    except Exception as error:
+        result['error'] = str(error)
+        raise
+    finally:
+        try:
+            d.collect('all', evidence/'capture')
+        finally:
+            d.sh('am', 'force-stop', PACKAGE)
+            if selection_path:
+                d.sh('rm', '-f', selection_path)
+            d.display(False)
+            write(evidence/'result.json', result)
+            write(attempt/'device-latest.json', dict(path=str(evidence.relative_to(ROOT))))
+    print(json.dumps(dict(success=result['success'], runtime=result.get('runtime'), evidence=str(evidence.relative_to(ROOT))), indent=2))
+    if not result['success']:
+        raise RuntimeError('Whole-catalog Android integration failed; inspect first attributed failure')

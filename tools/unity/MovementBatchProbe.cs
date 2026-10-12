@@ -33,6 +33,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  }
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Init(){if(Resources.Load<TextAsset>("MovementBatchProbe"))new GameObject("Isolated movement batch").AddComponent<MovementBatchProbe>();}
  IEnumerator Start(){
+  if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yield break;
   yield return new WaitForSeconds(8);
   var path=System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-selection.json");var config=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   if(File.Exists(path)){r=JsonUtility.FromJson<Result>(File.ReadAllText(path));if(r.attempt!=config.attempt)yield break;}

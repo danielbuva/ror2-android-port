@@ -19,6 +19,7 @@ public sealed class LabDiagnostics : MonoBehaviour
  string root; float elapsed; int frames; float fps; bool ready; Config config=new Config();
  Renderer referenceGeometry;bool referenceRendering=true;Renderer referenceCube;bool cubeVisibility;
  public bool ReferenceRendering {get{return referenceRendering;}}
+ public bool Ready {get{return ready;}}
  public void SetReferenceRendering(bool visible){
   referenceRendering=visible;if(referenceGeometry)referenceGeometry.enabled=visible;
   if(!referenceCube){var cube=GameObject.Find("G1 reference cube");if(cube){referenceCube=cube.GetComponent<Renderer>();if(referenceCube)cubeVisibility=referenceCube.enabled;}}

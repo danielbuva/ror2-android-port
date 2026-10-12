@@ -53,7 +53,27 @@ def editor(target='lab',action='inspect'):
  if action=='minimal-build':preflight()
  return run([ROOT/'.local/tools/unity-mcp/Server/.venv/bin/python',ROOT/'scripts/lab/editor.py',target,action],timeout=200).stdout.decode()
 
-def build(api='gles',force=False):
+WHOLE_PLAYER_INPUTS={'Assets/LabDiagnostics.cs','Assets/Lab.unity','Assets/Lab.unity.meta',
+ 'Assets/LabLoadingScene/WholeCatalogLoader.cs','Assets/LabLoadingScene/WholeCatalogBootstrap.cs',
+ 'Assets/LabLoadingScene/BodyCatalogBoundary.cs','Assets/LabLoadingScene/WholeCatalogComposed.cs',
+ 'Assets/LabLoadingScene/WholeCatalogComposed.cs.meta','Assets/LabLoadingScene/WholeCatalogPreservation.meta',
+ 'Assets/LabLoadingScene/WholeCatalogPreservation/link.xml','Assets/LabLoadingScene/WholeCatalogPreservation/link.xml.meta'}
+
+def whole_payload_inputs(project):
+ return {str(p.relative_to(project)):sha(p) for folder in ['Assets','Packages','ProjectSettings'] for p in (project/folder).rglob('*') if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith('Assets/Editor/')}
+
+def freeze_whole_payload(project, result):
+ write(WORK/'whole-catalog-code-base.json',dict(files=whole_payload_inputs(project),allowed=sorted(WHOLE_PLAYER_INPUTS),payload=result['payload'],build_key=result['key']))
+
+def validate_whole_payload_reuse(project):
+ receipt=read(WORK/'whole-catalog-code-base.json')
+ if set(receipt['allowed'])!=WHOLE_PLAYER_INPUTS:raise RuntimeError('Unexpected code-only content exception')
+ current=whole_payload_inputs(project)
+ if current!=receipt['files']:raise RuntimeError('Content inputs changed; code-only bundle reuse rejected')
+ current_payload={p.name:sha(p) for p in (WORK/'generated-android-data').iterdir() if p.is_file()}
+ if current_payload!=receipt['payload']:raise RuntimeError('Frozen whole-catalog payload identity changed')
+
+def build(api='gles',force=False,reuse_payload=False):
  if api not in ['gles','vulkan','lab']:raise RuntimeError('Build target must be gles or vulkan')
  if api=='lab':api='gles'
  preflight()
@@ -62,6 +82,7 @@ def build(api='gles',force=False):
  if recipe.exists():validate_runtime_support(project,read(recipe))
  # Copy changed tool-owned sources only. Never reset project settings during an incremental build.
  shutil.copytree(ROOT/'android/Assets',project/'Assets',dirs_exist_ok=True)
+ if reuse_payload:validate_whole_payload_reuse(project)
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
  key=digest({'inputs':inputs,'api':api,'editor':'2021.3.33f1','backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
@@ -75,10 +96,10 @@ def build(api='gles',force=False):
    write(WORK/'config/current-build.json',r);print(json.dumps({'cached':True,**r},indent=2));return r
  (WORK/'graphics-api.txt').write_text(api);result=WORK/'lab-build/result.json'
  if result.exists():result.rename(result.with_name('previous-'+now()+'.json'))
- request_id=now();write(WORK/'build-request.json',{'request_id':request_id,'api':api})
+ request_id=now();write(WORK/'build-request.json',{'request_id':request_id,'api':api,'reusePayload':reuse_payload})
  print(editor('lab','refresh'),flush=True)
  print(editor('lab','build'),flush=True)
- dispatch_deadline=time.monotonic()+120;deadline=time.monotonic()+1200
+ dispatch_deadline=time.monotonic()+120;deadline=time.monotonic()+(3600 if (WORK/'whole-catalog-build.json').exists() else 1200)
  while time.monotonic()<deadline:
   if result.exists():
    if read(result).get('request_id')!=request_id:raise RuntimeError('Terminal build receipt belongs to a different request')
