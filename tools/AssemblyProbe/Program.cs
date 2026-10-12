@@ -11,6 +11,10 @@ if (args.Length > 0 && args[0] == "--optional-presentation-guard") { OptionalPre
 
 if (args.Length > 0 && args[0] == "--slice") { Slice.Run(args.Skip(1).ToArray()); return; }
 
+if (args.Length > 0 && args[0] == "--migration-surface") { MigrationSurface.Run(args.Skip(1).ToArray()); return; }
+
+if (args.Length > 0 && args[0] == "--migration-self-test") { MigrationSurface.SelfTest(args[1]); return; }
+
 // Read-only metadata attribution. Never loads or runs the inspected game assembly.
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(args[0]))!);

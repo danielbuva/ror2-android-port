@@ -1,8 +1,8 @@
 from common import *
 import re,struct,collections
 
-def inspect(full=False):
- base=game(); out=WORK/'inventory'; out.mkdir(parents=True,exist_ok=True)
+def inspect(full=False,base=None,out=None):
+ base=Path(base) if base is not None else game(); out=Path(out) if out is not None else WORK/'inventory'; out.mkdir(parents=True,exist_ok=True)
  previous=read(out/'files.json') if (out/'files.json').exists() else {}
  old={x['path']:x for x in previous.get('files',[])}; files=[]
  for p in sorted(base.rglob('*')):

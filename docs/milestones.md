@@ -1,6 +1,6 @@
 # Capability gates
 
-J428: whole-catalog host and ARM64 registration complete; 6,025 roots/six providers, selected native initializers and ordinary composed launch pass. Broad content behavior and full session integration remain open. See PORTING_STATE.md. Steam migration follows this batch; Moon/manual gates stay paused.
+J429: accepted input preserved; Steam update25475991/Unity2021.3.45f2 reviewed separately. Both-version adapter API compilation passes; matching-editor decision/migration and runtime acceptance remain open. J428 catalog registration does not establish broad live content; J425/J323 rollbacks and paused Moon/manual gates stay intact. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evidence, not compilation alone. Shared procedure: preflight → minimal change/build → install/runtime-path discovery/sync/run → structured logs/crash/state plus relevant visual capture → first-failure classification → state/journal/commit. Query live storage on each install/size increase and retain prior APK/payload; never change storage or unrelated data.
 

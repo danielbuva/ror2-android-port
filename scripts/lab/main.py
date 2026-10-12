@@ -22,7 +22,10 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='whole-catalog-audit':
+  if a.action=='input-update-check':
+   from input_migration import check_update
+   check_update()
+  elif a.action=='whole-catalog-audit':
    from whole_catalog import audit
    audit()
   elif a.action=='whole-catalog-native':

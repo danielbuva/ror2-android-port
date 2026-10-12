@@ -35,7 +35,7 @@ public sealed partial class MovementBatchProbe {
   try{
    if(cfg.automaticDirector){Check(!cfg.sourceQueriesHitTriggers,"Source placement trigger-query flag changed");Physics.queriesHitTriggers=cfg.sourceQueriesHitTriggers;}
    if(!cfg.stageGeometry){obstacle=GameObject.CreatePrimitive(PrimitiveType.Cube);obstacle.name="Owned Nova floor";obstacle.layer=30;obstacle.transform.position=new Vector3(0,9,0);obstacle.transform.localScale=new Vector3(200,1,200);}
-   solver.StableGroundLayers=cfg.stageGeometry?LayerIndex.world.mask:1<<30;solver.CollidableLayers=solver.StableGroundLayers;solver.SetGroundSolvingActivation(true);Physics.SyncTransforms();Physics.gravity=new Vector3(0,cfg.sourceGravity,0);
+   solver.StableGroundLayers=cfg.stageGeometry?(int)LayerIndex.world.mask:1<<30;solver.CollidableLayers=solver.StableGroundLayers;solver.SetGroundSolvingActivation(true);Physics.SyncTransforms();Physics.gravity=new Vector3(0,cfg.sourceGravity,0);
    var deadline=Time.realtimeSinceStartup+3;while(!solver.GroundingStatus.IsStableOnGround&&Time.realtimeSinceStartup<deadline){yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);}
    Check(solver.GroundingStatus.IsStableOnGround&&r.nova.landings==1&&body.healthComponent.health==110,"Original spawned body landing before physical input");
    // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.

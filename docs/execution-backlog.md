@@ -1,6 +1,6 @@
 # Execution backlog
 
-J428: whole-catalog host and ARM64 registration complete; 6,025 roots/six providers, selected native initializers and ordinary composed launch pass. Broad content behavior and full session integration remain open. See PORTING_STATE.md. Steam migration follows this batch; Moon/manual gates stay paused.
+J429: accepted input preserved; Steam update25475991/Unity2021.3.45f2 reviewed separately. Both-version adapter API compilation passes; editor-pin decision and actual migration remain pending. J428 whole-catalog Android evidence and J425/J323 rollbacks stay intact; broad live-content/session integration remains open. See PORTING_STATE.md. Moon/manual gates stay paused.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 

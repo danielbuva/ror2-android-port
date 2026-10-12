@@ -24,6 +24,16 @@ public sealed partial class MovementBatchProbe {
  bool directorPlayerRegistered;GameObject[] directorTeamEffects;object priorDirectorEliteTiers;
  readonly Dictionary<FieldInfo,object> directorMasterFields=new Dictionary<FieldInfo,object>();IDictionary directorMasterMap;
  float automaticDirectorBegan,automaticDirectorFixedBegan;
+ // The update separates server bookkeeping from the client preload cache. Read
+ // the measured server lists in either input; never substitute client readiness.
+ List<MasterCatalog.MasterIndex> DirectorPreloadList(string original,string updated){
+  var flags=BindingFlags.Public|BindingFlags.Static;var type=typeof(NetworkPreloadManager);
+  var field=type.GetField(original,flags)??type.GetField(updated,flags);
+  Check(field!=null&&field.FieldType==typeof(List<MasterCatalog.MasterIndex>),"Original server preload-list contract missing: "+original+" / "+updated);
+  var value=(List<MasterCatalog.MasterIndex>)field.GetValue(null);Check(value!=null,"Original server preload list is null");return value;
+ }
+ List<MasterCatalog.MasterIndex> DirectorRequestedMasters(){return DirectorPreloadList("previouslyRequestedMasters","previouslyRequestedMastersServer");}
+ List<MasterCatalog.MasterIndex> DirectorMessageMasters(){return DirectorPreloadList("requestMasterList","masterListForMessageGeneration");}
  Action ownedNavigationTick;BroadNavigationSystem navigationSystem;
  void StartOriginalNavigation(){
   Check(!RoR2Application.instance||!RoR2Application.instance.isActiveAndEnabled,"Original application already schedules navigation");navigationSystem=RoR2.CharacterAI.BaseAI.nodeGraphNavigationSystem;
@@ -58,7 +68,7 @@ public sealed partial class MovementBatchProbe {
   Check(RunArtifactManager.instance&&!RunArtifactManager.instance.IsArtifactEnabled(RoR2Content.Artifacts.eliteOnlyArtifactDef),"Original disabled Honor artifact missing");
   priorDirectorEliteTiers=RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null);Check(priorDirectorEliteTiers==null,"Existing original elite tiers");StaticCall(typeof(CombatDirector),"Init");
   foreach(var name in new[]{"masterPrefabs","masterPrefabMasterComponents","aiMasterPrefabs","masterNames"}){var field=RewardField(typeof(MasterCatalog),name);var old=field.GetValue(null);Check(old==null||((Array)old).Length==0,"Existing master catalog "+name);directorMasterFields[field]=old;}
-  directorMasterMap=(IDictionary)RewardField(typeof(MasterCatalog),"nameToIndexMap").GetValue(null);Check(directorMasterMap.Count==0&&NetworkPreloadManager.previouslyRequestedMasters.Count==0&&NetworkPreloadManager.requestMasterList.Count==0,"Existing preload/catalog state");if(cfg.teleporterLoop)PrepareObjectiveActorTemplates(cfg);StaticCall(typeof(MasterCatalog),"SetEntries",new object[]{new[]{template}.Concat(objectiveTemplates.Where(x=>x.GetComponent<CharacterMaster>())).ToArray()});
+  directorMasterMap=(IDictionary)RewardField(typeof(MasterCatalog),"nameToIndexMap").GetValue(null);Check(directorMasterMap.Count==0&&DirectorRequestedMasters().Count==0&&DirectorMessageMasters().Count==0,"Existing preload/catalog state");if(cfg.teleporterLoop)PrepareObjectiveActorTemplates(cfg);StaticCall(typeof(MasterCatalog),"SetEntries",new object[]{new[]{template}.Concat(objectiveTemplates.Where(x=>x.GetComponent<CharacterMaster>())).ToArray()});
   var index=MasterCatalog.FindMasterIndex(template);Check(MasterCatalog.GetMasterPrefab(index)==template,"Original master catalog identity");r.director.masterIndex=(int)index;
   directorPlayer=player.master.GetComponent<PlayerCharacterMasterController>();Check(directorPlayer&&!directorPlayer.gameObject.activeInHierarchy&&!directorPlayer.networkUser&&PlayerCharacterMasterController.instances.Count==0,"Measured local player registration scope changed");
   if(!directorPlayer.master)Call(directorPlayer,"Awake");Check(directorPlayer.master==player.master,"Original player controller master binding");directorPlayerRegistered=true;Call(directorPlayer,"OnEnable");r.director.playerRegistered=PlayerCharacterMasterController.instances.Count==1&&PlayerCharacterMasterController.instances[0]==directorPlayer;Check(r.director.playerRegistered,"Original player registration missing");
@@ -78,7 +88,7 @@ public sealed partial class MovementBatchProbe {
    while(!enemyBody&&Time.realtimeSinceStartup-automaticDirectorBegan<55){yield return new WaitForEndOfFrame();r.director.seconds=Time.realtimeSinceStartup-automaticDirectorBegan;var credit=rewardDirector.monsterCredit;if(credit>previous)r.director.creditSteps++;previous=credit;r.director.creditPeak=Mathf.Max(r.director.creditPeak,credit);r.director.originalTarget|=rewardDirector.currentSpawnTarget==player.gameObject;if(Time.frameCount%30==0)Save();}
   }finally{CaptureRewardSummons(template.GetComponent<CharacterMaster>().bodyPrefab,template);}
   Check(enemyBody&&r.rewards.spawnEvents==1&&r.rewards.summonEvents==1,"Original scheduled spawn timed out");yield return null;
-  r.director.creditAfter=rewardDirector.monsterCredit;r.director.spent=rewardDirector.totalCreditsSpent;r.director.preloaded=NetworkPreloadManager.previouslyRequestedMasters.Count==1&&NetworkPreloadManager.previouslyRequestedMasters[0].Equals(index);
+  r.director.creditAfter=rewardDirector.monsterCredit;r.director.spent=rewardDirector.totalCreditsSpent;r.director.preloaded=DirectorRequestedMasters().Count==1&&DirectorRequestedMasters()[0].Equals(index);
   // Original participant/body getters count the real registered master, without a NetworkUser.
   var waves=(Array)typeof(CombatDirector).GetField("moneyWaves",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(rewardDirector);var wave=waves.GetValue(0);var wt=wave.GetType();float timer=(float)wt.GetField("timer").GetValue(wave),fraction=(float)wt.GetField("accumulatedAward",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(wave);
   float rate=rewardDirector.creditMultiplier*(1+.4f*Run.instance.compensatedDifficultyCoefficient)*(.5f+.5f*Run.instance.participatingPlayerCount);float earned=r.director.creditAfter+r.director.spent+fraction,scheduled=earned/rate+timer;
@@ -92,7 +102,7 @@ public sealed partial class MovementBatchProbe {
   CleanupStageCombatDecks();ownedNavigationTick=null;
   if(directorPlayerRegistered&&directorPlayer){Call(directorPlayer,"OnDisable");directorPlayerRegistered=false;}
   if(automaticDirectorHost)Destroy(automaticDirectorHost);if(automaticDeck)Destroy(automaticDeck);
-  if(directorMasterMap!=null){directorMasterMap.Clear();foreach(var entry in directorMasterFields)entry.Key.SetValue(null,entry.Value);directorMasterFields.Clear();NetworkPreloadManager.previouslyRequestedMasters.Clear();NetworkPreloadManager.requestMasterList.Clear();RewardField(typeof(CombatDirector),"eliteTiers").SetValue(null,priorDirectorEliteTiers);}
+  if(directorMasterMap!=null){directorMasterMap.Clear();foreach(var entry in directorMasterFields)entry.Key.SetValue(null,entry.Value);directorMasterFields.Clear();DirectorRequestedMasters().Clear();DirectorMessageMasters().Clear();RewardField(typeof(CombatDirector),"eliteTiers").SetValue(null,priorDirectorEliteTiers);}
  }
  void ReleaseDirectorAssets(){
   if(directorTeamEffects==null)return;
