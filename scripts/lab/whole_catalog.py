@@ -186,7 +186,9 @@ def analyze(source, export, index, helper, native_overrides=None, runtime_candid
                 pending.append(target)
             else:
                 issues.append(dict(source=relative, guid=guid, category='serialized-guid-missing'))
-        for guid in set(re.findall(r'm_AssetGUID:\s*([a-f0-9]{32})', text)):
+        # BakedEffectData.assetGUID feeds EffectDef's original async reference;
+        # unlike Unity's AssetReference it has no m_ prefix in serialized data.
+        for guid in set(re.findall(r'\b(?:m_AssetGUID|assetGUID):\s*([a-f0-9]{32})', text)):
             targets = key_locations.get(guid, [])
             resolved = [converted[x]['source'] for x in targets if x in converted]
             soft_edges.append(dict(source=relative, key=guid, locations=targets, resolved=resolved))

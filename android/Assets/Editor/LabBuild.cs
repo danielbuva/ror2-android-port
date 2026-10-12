@@ -14,6 +14,11 @@ public static class LabBuild {
  [Serializable] class NativeManifest {public NativeVariant[] variants;}
  [Serializable] class NativeFamily {public NativeVariant[] variants;}
  [Serializable] class NativeFamilies {public NativeFamily[] families;}
+ static bool IsOwnedContentPath(string path){
+  if(string.IsNullOrEmpty(path)||!path.StartsWith("Assets/",StringComparison.Ordinal))return false;
+  string full=Path.GetFullPath(Path.Combine(Application.dataPath,"..",path));
+  return new[]{"LabLoadingScene","WholeGame"}.Any(folder=>full.StartsWith(Path.Combine(Application.dataPath,folder)+Path.DirectorySeparatorChar,StringComparison.Ordinal));
+ }
  static string[] NativePresentationInputs(){
   const string prefix="Assets/LabLoadingScene/Resources/";string manifestPath=prefix+"AndroidNativeStandardVariants.json";
   if(!File.Exists(manifestPath))return new string[0];
@@ -62,7 +67,7 @@ public static class LabBuild {
     var paths=new[]{sceneCfg.stageScene}.Concat(sceneCfg.nextStageScenes??new string[0]).ToArray();
     foreach(var name in new[]{"golemplains","foggyswamp","frozenwall","dampcavesimple","skymeadow"}){
      var path=paths.Single(x=>Path.GetFileNameWithoutExtension(x)==name);
-     if(!path.StartsWith("Assets/LabLoadingScene/StageGeometry/",StringComparison.Ordinal)||!File.Exists(path))throw new Exception("Unexpected stage presentation path");
+     if(!IsOwnedContentPath(path)||!File.Exists(path))throw new Exception("Unexpected stage presentation path");
      builds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{path}});
     }
    }else builds.Add(new AssetBundleBuild{assetBundleName="android-presentation-lab",assetNames=assets});
@@ -79,7 +84,7 @@ public static class LabBuild {
   var rows=new System.Collections.Generic.List<ReflectionImport>();
   foreach(var guid in guids){
    var path=AssetDatabase.GUIDToAssetPath(guid);
-   if(!path.StartsWith("Assets/LabLoadingScene/",StringComparison.Ordinal)||!path.EndsWith(".exr",StringComparison.OrdinalIgnoreCase))throw new Exception("Reflection texture outside generated lab assets");
+   if(!IsOwnedContentPath(path)||!path.EndsWith(".exr",StringComparison.OrdinalIgnoreCase))throw new Exception("Reflection texture outside generated lab assets");
    var importer=AssetImporter.GetAtPath(path) as TextureImporter;var before=AssetDatabase.LoadAssetAtPath<Cubemap>(path);
    if(importer==null||before==null||importer.textureShape!=TextureImporterShape.TextureCube||importer.sRGBTexture)throw new Exception("Unexpected source reflection importer");
    var row=new ReflectionImport{guid=guid,path=path,before=before.format.ToString(),size=before.width,mips=before.mipmapCount,readable=importer.isReadable,sRGB=importer.sRGBTexture};
@@ -108,31 +113,31 @@ public static class LabBuild {
    string sceneProbeConfig=Path.Combine(root,"scene-probe-build.json");
    if(File.Exists(sceneProbeConfig)){
     var cfg=JsonUtility.FromJson<SceneProbeConfig>(File.ReadAllText(sceneProbeConfig));
-    if(!cfg.scene.StartsWith("Assets/LabLoadingScene/") || !File.Exists(cfg.scene))throw new Exception("Unexpected loading scene probe path");
+    if(!IsOwnedContentPath(cfg.scene) || !File.Exists(cfg.scene))throw new Exception("Unexpected loading scene probe path");
     bundleBuilds.Add(new AssetBundleBuild{assetBundleName="loadingbasic-lab",assetNames=new[]{cfg.scene}});
     if(!string.IsNullOrEmpty(cfg.stageScene)){
-     if(!cfg.stageScene.StartsWith("Assets/LabLoadingScene/StageGeometry/")||!File.Exists(cfg.stageScene))throw new Exception("Unexpected stage geometry probe path");
+     if(!IsOwnedContentPath(cfg.stageScene)||!File.Exists(cfg.stageScene))throw new Exception("Unexpected stage geometry probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="golemplains-spine-lab",assetNames=new[]{cfg.stageScene}});
     }
     foreach(var nextStage in (cfg.nextStageScenes??new string[0]).Concat(string.IsNullOrEmpty(cfg.nextStageScene)?new string[0]:new[]{cfg.nextStageScene}).Distinct()){
      string name=Path.GetFileNameWithoutExtension(nextStage);
-     if(!nextStage.StartsWith("Assets/LabLoadingScene/StageGeometry/")||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
+     if(!IsOwnedContentPath(nextStage)||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{nextStage}});
     }
     if(!string.IsNullOrEmpty(cfg.prefab)){
-     if(!cfg.prefab.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.prefab))throw new Exception("Unexpected prefab probe path");
+     if(!IsOwnedContentPath(cfg.prefab)||!File.Exists(cfg.prefab))throw new Exception("Unexpected prefab probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="commando-prefab-lab",assetNames=new System.Collections.Generic.List<string>(cfg.prefabAssets??new string[0]){cfg.prefab}.Distinct(StringComparer.OrdinalIgnoreCase).ToArray()});
     }
     if(!string.IsNullOrEmpty(cfg.teleportMaterial)){
-     if(!cfg.teleportMaterial.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.teleportMaterial))throw new Exception("Unexpected teleport material probe path");
+     if(!IsOwnedContentPath(cfg.teleportMaterial)||!File.Exists(cfg.teleportMaterial))throw new Exception("Unexpected teleport material probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="teleport-material-lab",assetNames=new[]{cfg.teleportMaterial}});
     }
     if(!string.IsNullOrEmpty(cfg.barrierEffect)){
-     if(!cfg.barrierEffect.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.barrierEffect))throw new Exception("Unexpected barrier effect probe path");
+     if(!IsOwnedContentPath(cfg.barrierEffect)||!File.Exists(cfg.barrierEffect))throw new Exception("Unexpected barrier effect probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="barrier-effect-lab",assetNames=new[]{cfg.barrierEffect}});
     }
     if(cfg.objectiveSupportAssets!=null&&cfg.objectiveSupportAssets.Length>0){
-     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5&&cfg.objectiveSupportAssets.Length!=7&&cfg.objectiveSupportAssets.Length!=8&&cfg.objectiveSupportAssets.Length!=10&&cfg.objectiveSupportAssets.Length!=12&&cfg.objectiveSupportAssets.Length!=13&&cfg.objectiveSupportAssets.Length!=14&&cfg.objectiveSupportAssets.Length!=17&&cfg.objectiveSupportAssets.Length!=18&&cfg.objectiveSupportAssets.Length!=20&&cfg.objectiveSupportAssets.Length!=26&&cfg.objectiveSupportAssets.Length!=27&&cfg.objectiveSupportAssets.Length!=31&&cfg.objectiveSupportAssets.Length!=35&&cfg.objectiveSupportAssets.Length!=40&&cfg.objectiveSupportAssets.Length!=42&&cfg.objectiveSupportAssets.Length!=43&&cfg.objectiveSupportAssets.Length!=48&&cfg.objectiveSupportAssets.Length!=52&&cfg.objectiveSupportAssets.Length!=54&&cfg.objectiveSupportAssets.Length!=55&&cfg.objectiveSupportAssets.Length!=57&&cfg.objectiveSupportAssets.Length!=58&&cfg.objectiveSupportAssets.Length!=60)||cfg.objectiveSupportAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
+     if((cfg.objectiveSupportAssets.Length!=4&&cfg.objectiveSupportAssets.Length!=5&&cfg.objectiveSupportAssets.Length!=7&&cfg.objectiveSupportAssets.Length!=8&&cfg.objectiveSupportAssets.Length!=10&&cfg.objectiveSupportAssets.Length!=12&&cfg.objectiveSupportAssets.Length!=13&&cfg.objectiveSupportAssets.Length!=14&&cfg.objectiveSupportAssets.Length!=17&&cfg.objectiveSupportAssets.Length!=18&&cfg.objectiveSupportAssets.Length!=20&&cfg.objectiveSupportAssets.Length!=26&&cfg.objectiveSupportAssets.Length!=27&&cfg.objectiveSupportAssets.Length!=31&&cfg.objectiveSupportAssets.Length!=35&&cfg.objectiveSupportAssets.Length!=40&&cfg.objectiveSupportAssets.Length!=42&&cfg.objectiveSupportAssets.Length!=43&&cfg.objectiveSupportAssets.Length!=48&&cfg.objectiveSupportAssets.Length!=52&&cfg.objectiveSupportAssets.Length!=54&&cfg.objectiveSupportAssets.Length!=55&&cfg.objectiveSupportAssets.Length!=57&&cfg.objectiveSupportAssets.Length!=58&&cfg.objectiveSupportAssets.Length!=60)||cfg.objectiveSupportAssets.Any(x=>!IsOwnedContentPath(x)||!File.Exists(x)))throw new Exception("Unexpected original objective support paths");
      if(cfg.objectiveSupportAssets.Length>=57&&new[]{"/JetpackController.prefab","/FireballVehicle.prefab"}.Any(suffix=>!cfg.objectiveSupportAssets.Any(x=>x.EndsWith(suffix,StringComparison.OrdinalIgnoreCase))))throw new Exception("Expanded flight equipment closure lacks an original provider");
      if(cfg.objectiveSupportAssets.Length>=58&&!cfg.objectiveSupportAssets.Any(x=>x.EndsWith("/MiniMushroomWard.prefab")))throw new Exception("Original mushroom ward support contract absent");
      if(cfg.objectiveSupportAssets.Length==60&&new[]{"/TarTether.prefab","/cscRoboBallMini.asset"}.Any(suffix=>!cfg.objectiveSupportAssets.Any(x=>x.EndsWith(suffix,StringComparison.Ordinal))))throw new Exception("Original boss provider closure absent");
@@ -152,28 +157,28 @@ public static class LabBuild {
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="objective-support-lab",assetNames=cfg.objectiveSupportAssets});
     }
     if(!string.IsNullOrEmpty(cfg.objectiveTMPSettings)){
-     if(!cfg.objectiveTMPSettings.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.objectiveTMPSettings))throw new Exception("Unexpected original TMP settings path");
+     if(!IsOwnedContentPath(cfg.objectiveTMPSettings)||!File.Exists(cfg.objectiveTMPSettings))throw new Exception("Unexpected original TMP settings path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="objective-ui-lab",assetNames=new[]{cfg.objectiveTMPSettings}});
     }
     if(!string.IsNullOrEmpty(cfg.teleporterIndicator)){
-     if(!cfg.teleporterIndicator.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.teleporterIndicator))throw new Exception("Unexpected teleporter indicator path");
+     if(!IsOwnedContentPath(cfg.teleporterIndicator)||!File.Exists(cfg.teleporterIndicator))throw new Exception("Unexpected teleporter indicator path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="teleporter-indicator-lab",assetNames=new[]{cfg.teleporterIndicator}});
     }
     if(!string.IsNullOrEmpty(cfg.playerDeathEffect)){
-     if(!cfg.playerDeathEffect.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.playerDeathEffect))throw new Exception("Unexpected player death effect path");
+     if(!IsOwnedContentPath(cfg.playerDeathEffect)||!File.Exists(cfg.playerDeathEffect))throw new Exception("Unexpected player death effect path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="player-death-effect-lab",assetNames=new[]{cfg.playerDeathEffect}});
     }
     // S155 needs an independent provider lease while the character bundle stays loaded.
     if(!string.IsNullOrEmpty(cfg.pickupDroplet)){
-     if(!cfg.pickupDroplet.StartsWith("Assets/LabLoadingScene/")||!File.Exists(cfg.pickupDroplet))throw new Exception("Unexpected pickup droplet probe path");
+     if(!IsOwnedContentPath(cfg.pickupDroplet)||!File.Exists(cfg.pickupDroplet))throw new Exception("Unexpected pickup droplet probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="pickup-droplet-lab",assetNames=new[]{cfg.pickupDroplet}});
     }
     if(!string.IsNullOrEmpty(cfg.genericPickup)){
-     if(!cfg.genericPickup.StartsWith("Assets/LabLoadingScene/",StringComparison.OrdinalIgnoreCase)||!File.Exists(cfg.genericPickup))throw new Exception("Unexpected generic pickup path");
+     if(!IsOwnedContentPath(cfg.genericPickup)||!File.Exists(cfg.genericPickup))throw new Exception("Unexpected generic pickup path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="generic-pickup-lab",assetNames=new[]{cfg.genericPickup}});
     }
     if(cfg.enemyRewardAssets!=null&&cfg.enemyRewardAssets.Length>0){
-     if((cfg.enemyRewardAssets.Length!=3&&cfg.enemyRewardAssets.Length!=5)||cfg.enemyRewardAssets.Any(x=>!x.StartsWith("Assets/LabLoadingScene/")||!File.Exists(x)))throw new Exception("Unexpected enemy reward/team probe paths");
+     if((cfg.enemyRewardAssets.Length!=3&&cfg.enemyRewardAssets.Length!=5)||cfg.enemyRewardAssets.Any(x=>!IsOwnedContentPath(x)||!File.Exists(x)))throw new Exception("Unexpected enemy reward/team probe paths");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="enemy-reward-lab",assetNames=cfg.enemyRewardAssets});
     }
    }

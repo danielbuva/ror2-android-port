@@ -287,7 +287,7 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
     return dict(run_settings,worldLootSlowBuffAsset=paths.get('worldLootSlowBuffAsset',''),worldCommerceAssets=[paths['commerce'+name] for name in WORLD_COMMERCE] if broader_commerce else [],worldAdditionalLootItems=CORE_LOOT if broader_loot else [],worldLootSupportPaths=[x[2] for x in CORE_LOOT_SUPPORT] if broader_loot else [],objectiveWardVisualAssets=[paths['ward'+k] for k in ['Controller','Avatar','Mesh','Material','SphereMaterial']],objectiveSupportAssets=[paths[k] for k in support_roots],objectiveSupportKeys=support_keys,objectiveSupportPaths=support_paths,objectiveWardBuffAsset=paths['objectiveWardBuffAsset'],objectiveTMPSettingsAsset=paths['objectiveTMPSettingsAsset'],objectiveTMPSettingsKey='3f5b5dff67a942289a9defa416b206f3',objectiveStunAsset=paths['objectiveStunAsset'],teleporterLoop=True,teleporterAsset=paths['teleporterAsset'],lunarTeleporterAsset=paths['lunarTeleporterAsset'],teleporterIndicatorAsset=paths['teleporterIndicatorAsset'],teleporterIndicatorKey='ff2b34b72be1ef444a3dcc24d5c10b47',objectiveActors=actor_specs,objectiveConfigAssets=[paths[k] for k in configs],objectiveItemNames=item_names,objectiveItemAssets=[paths['item'+n] for n in item_names],objectiveArtifactAssets=[paths[k] for k in artifact_keys],runSceneDefAssets=scenes)
 
 
-def sanitize_optional_content(stage,out):
+def sanitize_optional_content(stage,out,content_root=None):
     """Adapt optional presentation on generated Android prefabs.
 
     These files are owned ignored copies; script GUID identity is checked against the
@@ -317,8 +317,11 @@ def sanitize_optional_content(stage,out):
     projectile_script='m_Script: {fileID: -1848696948, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}'
     silent_guid=re.search(r'^guid: ([a-f0-9]{32})',(stage/'SilentProjectileBoundary.cs.meta').read_text(),re.M)[1]
     silent_script='m_Script: {fileID: 11500000, guid: '+silent_guid+', type: 3}'
-    for src in sorted(stage.rglob('*')):
+    roots=[stage] if content_root is None else [stage,content_root]
+    for src in sorted({path for root in roots for path in root.rglob('*')}):
         if src.suffix not in {'.prefab','.asset'}:continue
+        with src.open('rb') as stream:
+            if stream.read(5)!=b'%YAML':continue
         text=src.read_text(errors='replace')
         if not text.startswith('%YAML'):continue
         before=sha(src);removed=set();native_removed=set();decal_removed=set();detach_removed=set();empty_renderers=[];silent_projectiles=[];generated=text
@@ -348,7 +351,8 @@ def sanitize_optional_content(stage,out):
             alpha_objects={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',block)[1] for block in blocks if alpha_script in block and '  decal: {fileID: 0}' in block}
             all_ids={m[1] for m in re.finditer(r'^--- !u!\d+ &(-?\d+)',generated,re.M)}
             for object_id in sorted(alpha_objects-renderer_objects):
-                component_id=str(7000000000000000+int(hashlib.sha256((str(src.relative_to(stage))+'|'+object_id).encode()).hexdigest()[:12],16))
+                relative=src.relative_to(stage) if src.is_relative_to(stage) else src.relative_to(WORK/'lab-project')
+                component_id=str(7000000000000000+int(hashlib.sha256((str(relative)+'|'+object_id).encode()).hexdigest()[:12],16))
                 while component_id in all_ids:component_id=str(int(component_id)+1)
                 all_ids.add(component_id)
                 pattern=r'(^--- !u!1 &'+object_id+r'\n.*?)(?=^--- !u!|\Z)'
@@ -365,7 +369,8 @@ def sanitize_optional_content(stage,out):
             hosts={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in blocks if projectile_script in b}
             prepared={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in blocks if silent_script in b}
             for object_id in sorted(hosts-prepared):
-                component_id=str(8000000000000000+int(hashlib.sha256((str(src.relative_to(stage))+'|silent|'+object_id).encode()).hexdigest()[:12],16))
+                relative=src.relative_to(stage) if src.is_relative_to(stage) else src.relative_to(WORK/'lab-project')
+                component_id=str(8000000000000000+int(hashlib.sha256((str(relative)+'|silent|'+object_id).encode()).hexdigest()[:12],16))
                 while component_id in all_ids:component_id=str(int(component_id)+1)
                 all_ids.add(component_id)
                 pattern=r'(^--- !u!1 &'+object_id+r'\n.*?)(?=^--- !u!|\Z)'

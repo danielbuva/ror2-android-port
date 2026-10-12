@@ -5,9 +5,21 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts/lab'))
 from shader_source import bind_hlsl
 from shader_segments import parameter_layout,selected_layout
+from shader_programs import NativePrograms,NativeVariantUnavailable
 
 
 class ShaderBindingTests(unittest.TestCase):
+    def test_missing_variant_is_distinct_from_ambiguous_original_programs(self):
+        emitter=NativePrograms(None,{},None)
+        context=({'m_ParsedForm':{'m_Name':'Fixture'}},None,[],None,None)
+        with self.assertRaises(NativeVariantUnavailable):
+            emitter.pair(context,0,{'FEATURE'})
+        record=dict(kind='program',index=1,stage='progVertex',keywords=['FEATURE'],pass_index=0,subshader_index=0)
+        context[2].extend([record,dict(record,index=2)])
+        with self.assertRaisesRegex(RuntimeError,'ambiguous') as captured:
+            emitter.pair(context,0,{'FEATURE'})
+        self.assertNotIsInstance(captured.exception,NativeVariantUnavailable)
+
     def layout(self,variables,textures=()):
         return {'buffers':[{'slot':0,'variables':variables}], 'textures':textures}
 

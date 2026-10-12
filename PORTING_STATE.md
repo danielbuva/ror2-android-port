@@ -1,4 +1,4 @@
-# Porting state — 2026-10-11 PDT
+# Porting state — 2026-10-12 PDT
 
 Architecture C remains active: user-approved exact Unity 2021.3.45f2 for Steam build25475991, original managed code, converted Android content and explicit offline adapters. The integrated composition runs on Nova; the complete original game, stock startup, normal full-run acceptance and visual parity remain unfinished.
 
@@ -27,5 +27,7 @@ The updated host generation imports49 current original runtime assemblies with t
 
 Shared repairs preserve both colliding scene addresses, original font/material/atlas identities, measured UI bindings and the original support-script event types. Current-source compilation guards reject stale editor binaries. `docs/whole-catalog-integration.md` records reusable behavior; ignored `work/experiments/input-migration/toolchain-2021.3.45f2/host-exit.json` and `work/checkpoints/LAST_OBSERVED_UPDATED_HOST_CATALOG.json` pin this host checkpoint.
 
-Next: migrate the composed gameplay configuration/content relationships to this new generation, connect full native catalogs to the session/director path, then build/test one updated Android candidate. The current Nova APK/payload still use the old input and reverify unchanged; OLED asleep. Do not build the stale old scene recipe against the fresh project or install a catalog-only replacement for the working game. No manual/Moon/finale work.
+**J431 in progress:** The composed configuration and222 serialized adaptations now rebase onto current source identities, preserving new source fields and rejecting ambiguous owners. Four removed Clay Bruiser copycat states are absent from the current original DLL; Commando FireBarrage moves to its measured current source. Current baked-effect GUID references expand the closure to42,292 files; all6,515 typed roots still pass. Composed-only dependencies add79 files. Binary-backed generation covers127 Standard and220 family variants; two absent original combinations retain explicitly approximate presentation. Android content/player build is underway; no updated APK is installed yet. Ignored evidence: `work/experiments/input-migration/composed-25475991/`.
+
+Next: inspect the terminal build, run the updated composed candidate on adopted storage, fix its first failure, then connect full native catalogs to the live session/director path. The current Nova APK/payload still use the old input and reverify unchanged; OLED asleep. Do not build the stale old scene recipe against the fresh project or install a catalog-only replacement for the working game. No manual/Moon/finale work.
 Use `./dev doctor`, `./dev preflight`, `./dev test`; whole-catalog actions are in `scripts/lab/whole_catalog.py`. Prior failures/findings remain in `docs/PORTING_JOURNAL.md`; consult pinned prior art before new game-specific mechanisms. Keep documentation to current decisions, meaningful failures and reusable evidence pointers.

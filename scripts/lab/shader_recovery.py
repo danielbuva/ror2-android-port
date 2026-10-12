@@ -69,6 +69,15 @@ def recover(target='lab'):
     }
     if target not in specs: raise RuntimeError('Unknown fixed shader recovery target')
     identity,shader_name,pass_name,keywords,expected_programs = specs[target]
+    # The accepted Steam update retains shader identities but changes variant
+    # coverage. Keep both measured generations explicit; never infer new coverage
+    # from whatever the parser happens to return.
+    updated_input = '6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88'
+    is_updated = read(WORK/'config/accepted-input.json')['input_id'] == updated_input
+    if is_updated:
+        expected_programs = {'standard':3240,'standard-hdr':3240,'cloud':1984,
+                             'opaque-cloud':312,'snow':888,'terrain':528,
+                             'speedtree':2631,'water':864,'water-single':1200}.get(target, expected_programs)
     out = WORK/'experiments/shader-recovery'/now(); out.mkdir(parents=True)
     receipt = {'success':False, 'read_only':True, 'semantic_equivalence_proven':False,
                'Android_shader_acceptance':False, 'PC_draw_validation_performed':False, 'commands':[]}
@@ -102,6 +111,11 @@ def recover(target='lab'):
             return p
         relative = 'Risk of Rain 2_Data/globalgamemanagers.assets' if target.startswith('deferred') else 'Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-shaders_shader_assets_all_31e119f89c9f8d77f8f8199c00774974.bundle'
         if target.startswith('water'): relative = 'Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/calmwater_shader_assets_all_1862e209b8c466bdc3a93b40d3275ff0.bundle'
+        if is_updated and not target.startswith('deferred'):
+            family = 'calmwater_shader_assets_all_' if target.startswith('water') else 'ror2-base-shaders_shader_assets_all_'
+            candidates = [x['path'] for x in inventory['files'] if Path(x['path']).name.startswith(family) and x['path'].endswith('.bundle')]
+            if len(candidates) != 1: raise RuntimeError('Accepted shader bundle identity is ambiguous')
+            relative = candidates[0]
         source = game()/relative; source_hash = sha(source)
         expected = next(x['sha256'] for x in read(WORK/'inventory/files.json')['files'] if x['path']==relative)
         if source_hash != expected: raise RuntimeError('Shader input drift; review and explicitly accept before recovery')

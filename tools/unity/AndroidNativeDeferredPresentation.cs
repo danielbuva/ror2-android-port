@@ -9,7 +9,7 @@ public static class AndroidNativeDeferredPresentation {
  [Serializable] public class Manifest {public string[] features;public Variant[] variants;public int source_material_count;public string scope;}
  [Serializable] public class Family {public string shader;public string[] features;public Variant[] variants;}
  [Serializable] public class Families {public Family[] families;public string scope,water_topology;public bool water_geometry_approximation;}
- [Serializable] public class Report {public bool available,active,globalsRestored,pipelineRestored,reflectionsAvailable,waterGeometryApproximation;public int variantCount,materialBindings,familyVariants,cloudBindings,opaqueCloudBindings,snowBindings,terrainBindings,grassBindings,clothBindings,uiBindings,distortionBindings,speedtreeBindings,waterBindings;public string activeColorSpace,requestedPath,actualPath,error,waterTopology;public string scope="Native Standard/lighting candidate; static mono/noninstanced SH/HDR features; additional families/reflections depend on a separately receipted private manifest; no PC parity";}
+ [Serializable] public class Report {public bool available,active,globalsRestored,pipelineRestored,reflectionsAvailable,waterGeometryApproximation;public int unrecoveredMaterialBindings;public List<string> unrecoveredVariants=new List<string>();public int variantCount,materialBindings,familyVariants,cloudBindings,opaqueCloudBindings,snowBindings,terrainBindings,grassBindings,clothBindings,uiBindings,distortionBindings,speedtreeBindings,waterBindings;public string activeColorSpace,requestedPath,actualPath,error,waterTopology;public string scope="Native Standard/lighting candidate; static mono/noninstanced SH/HDR features; additional families/reflections depend on a separately receipted private manifest; no PC parity";}
  public static Report report=new Report();
  static Manifest manifest;static Families families;static Shader reflections;static Shader lighting,previousLighting,previousReflections;static BuiltinShaderMode previousLightingMode,previousReflectionMode;static bool ownsPipeline;
  static readonly Dictionary<string,Shader> variants=new Dictionary<string,Shader>();
@@ -43,17 +43,22 @@ public static class AndroidNativeDeferredPresentation {
    report.available=true;report.active=AndroidMaterialPresentation.report.enabled;report.variantCount=variants.Count;
   }catch(Exception e){report.error=e.Message;Finish();}
  }
+ static bool Unrecovered(Material source,string keys){
+  report.unrecoveredMaterialBindings++;var observation=source.shader.name+"|"+keys;
+  if(report.unrecoveredVariants.Count<32&&!report.unrecoveredVariants.Contains(observation))report.unrecoveredVariants.Add(observation);
+  return false; // Keep the existing explicitly approximate presentation path.
+ }
  public static bool Apply(Material source,Material copy){
   if(!report.available)return false;
   if(source.shader.name!="Hopoo Games/Deferred/Standard"){
    if(families==null)return false;Family found=null;foreach(var family in families.families)if(family.shader==source.shader.name){found=family;break;}if(found==null)return false;
    var keys=new List<string>();foreach(var feature in found.features)if(Array.IndexOf(source.shaderKeywords,feature)>=0)keys.Add(feature);Shader familyShader;
-   if(!familyVariants.TryGetValue(found.shader+"|"+Key(keys.ToArray()),out familyShader))throw new Exception("Unmeasured native family feature combination: "+found.shader+"/"+Key(keys.ToArray()));
+   if(!familyVariants.TryGetValue(found.shader+"|"+Key(keys.ToArray()),out familyShader))return Unrecovered(source,Key(keys.ToArray()));
    copy.shader=familyShader;copy.shaderKeywords=new string[0];copy.renderQueue=source.renderQueue==source.shader.renderQueue?-1:source.renderQueue;
    switch(found.shader){case "CalmWater/Calm Water [DX11]":case "CalmWater/Calm Water [DX11] [Double Sided]":report.waterBindings++;break;case "Hopoo Games/FX/Cloud Remap":report.cloudBindings++;break;case "Hopoo Games/FX/Opaque Cloud Remap":report.opaqueCloudBindings++;break;case "Hopoo Games/Deferred/Snow Topped":report.snowBindings++;break;case "Hopoo Games/Deferred/Triplanar Terrain Blend":report.terrainBindings++;break;case "Hopoo Games/Environment/Waving Grass":report.grassBindings++;break;case "Hopoo Games/Deferred/Wavy Cloth":report.clothBindings++;break;case "Hopoo Games/UI/Animate Alpha":report.uiBindings++;copy.shaderKeywords=Array.FindAll(source.shaderKeywords,k=>k=="UNITY_UI_CLIP_RECT"||k=="UNITY_UI_ALPHACLIP");break;case "Hopoo Games/FX/Distortion":report.distortionBindings++;break;case "SpeedtreeOverride/SpeedtreeCustom":report.speedtreeBindings++;copy.shaderKeywords=Array.FindAll(source.shaderKeywords,k=>k=="ENABLE_WIND"||k=="LOD_FADE_PERCENTAGE"||k=="LOD_FADE_CROSSFADE");break;}return true;
   }
   var selected=new List<string>();foreach(var feature in manifest.features)if(Array.IndexOf(source.shaderKeywords,feature)>=0)selected.Add(feature);
-  Shader shader;if(!variants.TryGetValue(Key(selected.ToArray()),out shader))throw new Exception("Unmeasured native Standard feature combination: "+Key(selected.ToArray()));
+  Shader shader;if(!variants.TryGetValue(Key(selected.ToArray()),out shader))return Unrecovered(source,Key(selected.ToArray()));
   copy.shader=shader;copy.shaderKeywords=new string[0];copy.renderQueue=source.renderQueue;report.materialBindings++;return true;
  }
  public static void Configure(Camera view){

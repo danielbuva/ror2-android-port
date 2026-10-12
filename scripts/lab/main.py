@@ -25,6 +25,12 @@ try:
   if a.action=='input-update-check':
    from input_migration import check_update
    check_update()
+  elif a.action=='composition-update-stage':
+   from composition_migration import stage
+   stage()
+  elif a.action=='composition-update-dependencies':
+   from composition_migration import stage_missing_sources
+   stage_missing_sources()
   elif a.action=='whole-catalog-audit':
    from whole_catalog import audit
    audit()

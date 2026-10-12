@@ -1,6 +1,6 @@
 # Execution backlog
 
-J430: matching Steam25475991/Unity2021.3.45f2 host migration passes6,515 typed roots, seven original providers and thirteen native catalog initializers (1,679 baked effects).120 host tests pass. Migrate the composed session next, then build/test Android. Nova still runs the retained old-input APK; J425/J323 and manual/Moon gates remain intact. See PORTING_STATE.md.
+J431: composed Steam25475991 migration is staged;222 source adaptations,79 extra dependencies,347 binary-backed material variants and6,515 typed roots pass host checks.127 tests pass. Android build/run acceptance pending; inspect the active terminal receipt before dispatching another build. Connect full native catalogs to the live session/director after migration acceptance. Preserve J428/J425/J323 and defer Moon/manual/PC gates. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 

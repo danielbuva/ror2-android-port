@@ -127,7 +127,7 @@ class WholeCatalogTests(unittest.TestCase):
             root = Path(temp)
             guid = 'a'*32
             (root/'Assets').mkdir()
-            (root/'Assets/root.asset').write_text('%YAML\nm_AssetGUID: '+guid+'\n')
+            (root/'Assets/root.asset').write_text('%YAML\nm_AssetGUID: '+guid+'\nassetGUID: '+guid+'\n')
             (root/'Assets/dependency.asset').write_text('%YAML\nm_Name: dependency\n')
             categories = ['category'+str(i) for i in range(29)]
             helper = '\n'.join('FindLocationsThenAddLoadOperation(AddressablesLabels.'+name+')' for name in categories)

@@ -1,7 +1,7 @@
 """Privately recover the measured cloud, snow, terrain and reflection closure."""
 from common import *
 from shader_deferred import load_analysis,render_state
-from shader_programs import NativePrograms
+from shader_programs import NativePrograms,NativeVariantUnavailable
 from shader_tessellation import TessellationPrograms
 from shader_source import properties
 from shader_recovery import PINS
@@ -48,7 +48,7 @@ def align_exported_subshader_tags(path, tree, evidence):
 def generate():
     selection=read(WORK/'config/shader-material-analysis.json');out=WORK/'experiments/material-bindings'/now();out.mkdir(parents=True);sources=out/'sources';sources.mkdir()
     write(WORK/'material-bindings-current.json',{'path':str(out.relative_to(ROOT))})
-    result={'success':False,'semantic_equivalence_proven':False,'PC_draw_validation_performed':False,'selection':selection,'programs':[]}
+    result={'success':False,'semantic_equivalence_proven':False,'PC_draw_validation_performed':False,'selection':selection,'programs':[],'deferred_variants':[]}
     try:
         contexts={name:load_analysis(selection[name],identity,shader) for name,(identity,shader) in FAMILIES.items() if name in selection or name not in ['water','water-single']}
         if ('water' in contexts)!=('water-single' in contexts):raise RuntimeError('Partial native water family selection')
@@ -73,68 +73,71 @@ def generate():
             if not sets or len(sets)>128:raise RuntimeError('Unexpected native material closure')
             variants=[]
             for i,keys in enumerate(sets):
-                resource='AndroidNativeFamily'+str(ordinal)+'Variant'+str(i)
-                text='// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'+resource+'" {\nProperties {\n'+properties(tree)+'\n}\nSubShader {\n'+tags(sub['m_Tags']['tags'])
-                if name=='distortion' or water:
-                    grab=passes[0]
-                    if grab['m_Type']!=2 or not grab['m_TextureName'] or any(grab[stage]['m_PlayerSubPrograms'] for stage in ['progVertex','progFragment','progHull','progDomain','progGeometry']):raise RuntimeError('Unmeasured native grab pass')
-                    text+='GrabPass {'+json.dumps(grab['m_TextureName'])+'}\n'
-                if water:
-                    if topology=='original-vertices' and any(k.startswith('_DISPLACEMENTMODE_') for k in keys):raise RuntimeError('Original-vertex water requires measured non-displacement variants')
-                    for pi in range(1,len(passes)):
-                        p=passes[pi];pairs=[]
-                        for fog in [None,'FOG_LINEAR','FOG_EXP']:
-                            for sh in [False,True]:
-                                for shadow in [False,True]:
-                                    engine={'DIRECTIONAL'}|({fog} if fog else set())|({'LIGHTPROBE_SH'} if sh else set())|({'SHADOWS_SCREEN'} if shadow else set())
-                                    condition=('defined('+fog+')' if fog else '!defined(FOG_LINEAR) && !defined(FOG_EXP)')+' && '+('' if sh else '!')+'defined(LIGHTPROBE_SH) && '+('' if shadow else '!')+'defined(SHADOWS_SCREEN)'
-                                    pairs.append((condition,emitter.quad(context,pi,set(keys)|engine)))
-                        text+='Pass {Name '+json.dumps(p['m_State']['m_Name'])+' '+tags(p['m_State']['m_Tags']['tags'])+render_state(p['m_State'])+emitter.water_block(context,pairs,original_vertices=topology=='original-vertices')+'}\n'
-                    text+='}}\n';(sources/(resource+'.shader')).write_text(text);variants.append({'resource':resource,'keywords':list(keys)});continue
-                text+='Pass {Name '+json.dumps(passes[first_pass]['m_State']['m_Name'])+' '+tags(passes[first_pass]['m_State']['m_Tags']['tags'])+render_state(passes[first_pass]['m_State'],ui=ui)
-                if ui:
-                    pairs=[]
-                    for clip in [False,True]:
-                        for alpha in [False,True]:
-                            engine=({'UNITY_UI_CLIP_RECT'} if clip else set())|({'UNITY_UI_ALPHACLIP'} if alpha else set());vi,fi=emitter.pair(context,0,set(keys)|engine)
-                            condition=('' if clip else '!')+'defined(UNITY_UI_CLIP_RECT) && '+('' if alpha else '!')+'defined(UNITY_UI_ALPHACLIP)';pairs.append((condition,vi,fi))
-                    text+=emitter.block(context,pairs,'#pragma multi_compile_local __ UNITY_UI_CLIP_RECT\n#pragma multi_compile_local __ UNITY_UI_ALPHACLIP\n')
-                elif name=='cloud':
-                    pairs=[]
-                    for sh in [False,True]:
+                try:
+                    resource='AndroidNativeFamily'+str(ordinal)+'Variant'+str(i)
+                    text='// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'+resource+'" {\nProperties {\n'+properties(tree)+'\n}\nSubShader {\n'+tags(sub['m_Tags']['tags'])
+                    if name=='distortion' or water:
+                        grab=passes[0]
+                        if grab['m_Type']!=2 or not grab['m_TextureName'] or any(grab[stage]['m_PlayerSubPrograms'] for stage in ['progVertex','progFragment','progHull','progDomain','progGeometry']):raise RuntimeError('Unmeasured native grab pass')
+                        text+='GrabPass {'+json.dumps(grab['m_TextureName'])+'}\n'
+                    if water:
+                        if topology=='original-vertices' and any(k.startswith('_DISPLACEMENTMODE_') for k in keys):raise NativeVariantUnavailable('Displacement requires deferred original tessellation/PC draw evidence')
+                        for pi in range(1,len(passes)):
+                            p=passes[pi];pairs=[]
+                            for fog in [None,'FOG_LINEAR','FOG_EXP']:
+                                for sh in [False,True]:
+                                    for shadow in [False,True]:
+                                        engine={'DIRECTIONAL'}|({fog} if fog else set())|({'LIGHTPROBE_SH'} if sh else set())|({'SHADOWS_SCREEN'} if shadow else set())
+                                        condition=('defined('+fog+')' if fog else '!defined(FOG_LINEAR) && !defined(FOG_EXP)')+' && '+('' if sh else '!')+'defined(LIGHTPROBE_SH) && '+('' if shadow else '!')+'defined(SHADOWS_SCREEN)'
+                                        pairs.append((condition,emitter.quad(context,pi,set(keys)|engine)))
+                            text+='Pass {Name '+json.dumps(p['m_State']['m_Name'])+' '+tags(p['m_State']['m_Tags']['tags'])+render_state(p['m_State'])+emitter.water_block(context,pairs,original_vertices=topology=='original-vertices')+'}\n'
+                        text+='}}\n';(sources/(resource+'.shader')).write_text(text);variants.append({'resource':resource,'keywords':list(keys)});continue
+                    text+='Pass {Name '+json.dumps(passes[first_pass]['m_State']['m_Name'])+' '+tags(passes[first_pass]['m_State']['m_Tags']['tags'])+render_state(passes[first_pass]['m_State'],ui=ui)
+                    if ui:
+                        pairs=[]
+                        for clip in [False,True]:
+                            for alpha in [False,True]:
+                                engine=({'UNITY_UI_CLIP_RECT'} if clip else set())|({'UNITY_UI_ALPHACLIP'} if alpha else set());vi,fi=emitter.pair(context,0,set(keys)|engine)
+                                condition=('' if clip else '!')+'defined(UNITY_UI_CLIP_RECT) && '+('' if alpha else '!')+'defined(UNITY_UI_ALPHACLIP)';pairs.append((condition,vi,fi))
+                        text+=emitter.block(context,pairs,'#pragma multi_compile_local __ UNITY_UI_CLIP_RECT\n#pragma multi_compile_local __ UNITY_UI_ALPHACLIP\n')
+                    elif name=='cloud':
+                        pairs=[]
+                        for sh in [False,True]:
+                            for soft in [False,True]:
+                                engine={'DIRECTIONAL'}|({'LIGHTPROBE_SH'} if sh else set())|({'SOFTPARTICLES_ON'} if soft else set());vi,fi=emitter.pair(context,0,set(keys)|engine)
+                                condition=('' if sh else '!')+'defined(LIGHTPROBE_SH) && '+('' if soft else '!')+'defined(SOFTPARTICLES_ON)';pairs.append((condition,vi,fi))
+                        text+=emitter.block(context,pairs,'#pragma multi_compile __ LIGHTPROBE_SH\n#pragma multi_compile_particles\n')
+                    elif name=='distortion':
+                        pairs=[]
                         for soft in [False,True]:
-                            engine={'DIRECTIONAL'}|({'LIGHTPROBE_SH'} if sh else set())|({'SOFTPARTICLES_ON'} if soft else set());vi,fi=emitter.pair(context,0,set(keys)|engine)
-                            condition=('' if sh else '!')+'defined(LIGHTPROBE_SH) && '+('' if soft else '!')+'defined(SOFTPARTICLES_ON)';pairs.append((condition,vi,fi))
-                    text+=emitter.block(context,pairs,'#pragma multi_compile __ LIGHTPROBE_SH\n#pragma multi_compile_particles\n')
-                elif name=='distortion':
-                    pairs=[]
-                    for soft in [False,True]:
-                        vi,fi=emitter.pair(context,first_pass,set(keys)|({'SOFTPARTICLES_ON'} if soft else set()));pairs.append((('' if soft else '!')+'defined(SOFTPARTICLES_ON)',vi,fi))
-                    text+=emitter.block(context,pairs,'#pragma multi_compile_particles\n')
-                elif name=='speedtree':
-                    pairs=[]
-                    for lod in ['LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE']:
-                        for wind in [False,True]:
-                            vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON',lod}|({'ENABLE_WIND'} if wind else set()))
-                            condition=('' if lod=='LOD_FADE_CROSSFADE' else '!')+'defined(LOD_FADE_CROSSFADE) && '+('' if wind else '!')+'defined(ENABLE_WIND)';pairs.append((condition,vi,fi))
-                    text+=emitter.block(context,pairs,'#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n')
-                else:
-                    vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON'});text+=emitter.block(context,[(None,vi,fi)])
-                text+='}\n'
-                if name=='speedtree':
-                    shadow_features={k for r in context[2] if r['kind']=='program' and any(c['subshader_index']==0 and c['pass_index']==1 for c in r.get('consumers',[r])) for k in r['keywords']}&features;pairs=[]
-                    for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
+                            vi,fi=emitter.pair(context,first_pass,set(keys)|({'SOFTPARTICLES_ON'} if soft else set()));pairs.append((('' if soft else '!')+'defined(SOFTPARTICLES_ON)',vi,fi))
+                        text+=emitter.block(context,pairs,'#pragma multi_compile_particles\n')
+                    elif name=='speedtree':
+                        pairs=[]
                         for lod in ['LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE']:
                             for wind in [False,True]:
-                                vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode,lod}|({'ENABLE_WIND'} if wind else set()))
-                                condition='defined('+mode+') && '+('' if lod=='LOD_FADE_CROSSFADE' else '!')+'defined(LOD_FADE_CROSSFADE) && '+('' if wind else '!')+'defined(ENABLE_WIND)';pairs.append((condition,vi,fi))
-                    text+='Pass {Name "ShadowCaster" '+tags(passes[1]['m_State']['m_Tags']['tags'])+render_state(passes[1]['m_State'])+emitter.block(context,pairs,'#pragma multi_compile_shadowcaster\n#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n')+'}\n'
-                elif name not in ['cloud','ui-alpha','distortion']:
-                    shadow_features={k for r in context[2] if r['kind']=='program' and r['pass_index']==1 for k in r['keywords']}&features;pairs=[]
-                    for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
-                        vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode});pairs.append(('defined('+mode+')',vi,fi))
-                    text+='Pass {Name "ShadowCaster" Tags {"LightMode"="ShadowCaster"}\n'+render_state(passes[1]['m_State'])+emitter.block(context,pairs,'#pragma multi_compile_shadowcaster\n')+'}\n'
-                text+='}}\n';(sources/(resource+'.shader')).write_text(text);variants.append({'resource':resource,'keywords':list(keys)})
+                                vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON',lod}|({'ENABLE_WIND'} if wind else set()))
+                                condition=('' if lod=='LOD_FADE_CROSSFADE' else '!')+'defined(LOD_FADE_CROSSFADE) && '+('' if wind else '!')+'defined(ENABLE_WIND)';pairs.append((condition,vi,fi))
+                        text+=emitter.block(context,pairs,'#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n')
+                    else:
+                        vi,fi=emitter.pair(context,0,set(keys)|{'LIGHTPROBE_SH','UNITY_HDR_ON'});text+=emitter.block(context,[(None,vi,fi)])
+                    text+='}\n'
+                    if name=='speedtree':
+                        shadow_features={k for r in context[2] if r['kind']=='program' and any(c['subshader_index']==0 and c['pass_index']==1 for c in r.get('consumers',[r])) for k in r['keywords']}&features;pairs=[]
+                        for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
+                            for lod in ['LOD_FADE_PERCENTAGE','LOD_FADE_CROSSFADE']:
+                                for wind in [False,True]:
+                                    vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode,lod}|({'ENABLE_WIND'} if wind else set()))
+                                    condition='defined('+mode+') && '+('' if lod=='LOD_FADE_CROSSFADE' else '!')+'defined(LOD_FADE_CROSSFADE) && '+('' if wind else '!')+'defined(ENABLE_WIND)';pairs.append((condition,vi,fi))
+                        text+='Pass {Name "ShadowCaster" '+tags(passes[1]['m_State']['m_Tags']['tags'])+render_state(passes[1]['m_State'])+emitter.block(context,pairs,'#pragma multi_compile_shadowcaster\n#pragma multi_compile LOD_FADE_PERCENTAGE LOD_FADE_CROSSFADE\n#pragma multi_compile __ ENABLE_WIND\n')+'}\n'
+                    elif name not in ['cloud','ui-alpha','distortion']:
+                        shadow_features={k for r in context[2] if r['kind']=='program' and r['pass_index']==1 for k in r['keywords']}&features;pairs=[]
+                        for mode in ['SHADOWS_DEPTH','SHADOWS_CUBE']:
+                            vi,fi=emitter.pair(context,1,(set(keys)&shadow_features)|{mode});pairs.append(('defined('+mode+')',vi,fi))
+                        text+='Pass {Name "ShadowCaster" Tags {"LightMode"="ShadowCaster"}\n'+render_state(passes[1]['m_State'])+emitter.block(context,pairs,'#pragma multi_compile_shadowcaster\n')+'}\n'
+                    text+='}}\n';(sources/(resource+'.shader')).write_text(text);variants.append({'resource':resource,'keywords':list(keys)})
+                except NativeVariantUnavailable as exc:
+                    result['deferred_variants'].append(dict(shader=form['m_Name'],keywords=list(keys),reason=str(exc),materials=[x[0] for x in materials if tuple(sorted(set(x[2].split(','))&features))==keys],scope='Existing explicitly approximate presentation only; original asset/gameplay retained'))
             families.append({'shader':form['m_Name'],'features':sorted(features),'variants':variants,'source_material_count':len(materials)})
         passes=reflection[0]['m_ParsedForm']['m_SubShaders'][0]['m_Passes'];text='// Private original reflection candidate; PC parity unverified.\nShader "Porting Lab/AndroidNativeDeferredReflections" {Properties {\n'+properties(reflection[0])+'\n}\nSubShader {\n'
         for pi,p in enumerate(passes):
@@ -143,7 +146,7 @@ def generate():
                 vi,fi=emitter.pair(reflection,pi,keys);condition=None if len(key_sets)==1 else ('defined(UNITY_HDR_ON)' if 'UNITY_HDR_ON' in keys else '!defined(UNITY_HDR_ON)');pairs.append((condition,vi,fi))
             text+='Pass {\n'+render_state(p['m_State'])+emitter.block(reflection,pairs,'#pragma multi_compile __ UNITY_HDR_ON\n' if len(key_sets)>1 else '')+'}\n'
         text+='}}\n';(sources/'AndroidNativeDeferredReflections.shader').write_text(text)
-        write(sources/'AndroidNativeMaterialFamilies.json',{'families':families,'water_topology':topology,'water_geometry_approximation':topology=='original-vertices','scope':'Measured static material features, mono/noninstanced HDR deferred; cloud SH/soft-particle variants; original reflection candidate, no PC semantic/visual parity'})
+        write(sources/'AndroidNativeMaterialFamilies.json',{'families':families,'deferred_variants':result['deferred_variants'],'water_topology':topology,'water_geometry_approximation':topology=='original-vertices','scope':'Measured static material features, mono/noninstanced HDR deferred; cloud SH/soft-particle variants; original reflection candidate, no PC semantic/visual parity'})
         result.update(success=True,families=families,variant_count=sum(len(f['variants']) for f in families),source_sha256_by_file={p.name:sha(p) for p in sources.iterdir()})
     except Exception as e:result['first_failure']=str(e);raise
     finally:write(out/'receipt.json',result)
