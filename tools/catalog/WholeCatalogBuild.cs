@@ -6,6 +6,18 @@ using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
 
+public sealed class WholeItemBehaviorPreservation : UnityEditor.Build.IPreprocessBuildWithReport {
+ public int callbackOrder {get{return -100;}}
+ public void OnPreprocessBuild(UnityEditor.Build.Reporting.BuildReport report){
+  var types=typeof(RoR2.CharacterBody).Assembly.GetTypes().SelectMany(type=>type.GetMethods(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.DeclaredOnly)).Where(method=>Attribute.IsDefined(method,typeof(RoR2.Items.BaseItemBodyBehavior.ItemDefAssociationAttribute))).SelectMany(method=>{
+   var association=(RoR2.Items.BaseItemBodyBehavior.ItemDefAssociationAttribute)Attribute.GetCustomAttribute(method,typeof(RoR2.Items.BaseItemBodyBehavior.ItemDefAssociationAttribute));
+   return new[]{method.DeclaringType,association.behaviorTypeOverride??method.DeclaringType};
+  }).Distinct().OrderBy(type=>type.FullName).ToArray();
+  string directory="Assets/LabLoadingScene/WholeCatalogPreservation";if(!Directory.Exists(directory))return;
+  var root=new System.Xml.Linq.XElement("linker",new System.Xml.Linq.XElement("assembly",new System.Xml.Linq.XAttribute("fullname",typeof(RoR2.CharacterBody).Assembly.GetName().Name),types.Select(type=>new System.Xml.Linq.XElement("type",new System.Xml.Linq.XAttribute("fullname",type.FullName.Replace('+','/')),new System.Xml.Linq.XAttribute("preserve","all")))));
+  directory=Path.Combine(directory,"item-behaviors");Directory.CreateDirectory(directory);string path=Path.Combine(directory,"link.xml");File.WriteAllText(path,root.ToString());AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
+ }
+}
 public static class WholeCatalogBuild {
  static JObject catalog;static string root;
  public static void Append(string work,List<AssetBundleBuild> builds){

@@ -4319,3 +4319,19 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **DEPENDENCIES:** Explicit user cleanup authorization, two verified source/APK/payload compositions and closed historical trees.
 
 **M01 exit — complete:** Reclaimed 218.8 GB of actual space, with 319.4 GB available at completion. Two verified full rollbacks remain; 387 source trees are compacted, and 437 obsolete APK copies plus 351 obsolete cache payload trees are removed. Actual source restoration and all 110 host tests pass. See docs/history-retention.md. No gameplay gate advances.
+
+## C02 / J432 — Complete live definition families
+
+- **ID:** C02 / J432; current composed exit passes, individual content coverage remains open.
+- **TITLE:** Connect original complete definition families and item associations.
+- **CONTEXT:** J431 native full registration exceeds selected live pools.
+- **OBSERVATION:** Selected buffers, six behavior types and maintained loot lists remain.
+- **HYPOTHESIS:** Native families/bindings/associations fit the owned live lifecycle.
+- **TASK:** Integrate full item/equipment/buff/tier data, original holder population and behavior scheduling; preserve requirements and cleanup.
+- **CONSTRAINTS:** Common safety contract; no unlock/platform grants, manual/Moon routing or fabricated behavior acceptance.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** WholeCatalogComposed, existing movement/loot/equipment/item boundaries and measured build linker roots.
+- **TEST COMMAND:** doctor/preflight/test; exact-editor binding/association checks; whole-catalog-build; movement-batch-retry with explicit migration acceleration.
+- **PASS CONDITION:** Full295/59/275families,13tiers/629bindings/84associations coexist through four real transitions with zero errors and complete cleanup. Candidate33 passes431.144seconds/34kills; fresh eligible counts remain42/10.
+- **FAILURE EVIDENCE TO CAPTURE:** Canonical identities, missing association/native dependencies, AOT/runtime errors, current process/build and cleanup. Candidate32 earned Vagrant authority error preserved and repaired through native host-authority option.
+- **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit record; public audit and Conventional Commit.
+- **DEPENDENCIES:** J431 updated rollback, complete converted catalog ownership and pinned R2API ContentManagement/Items/Prefab contracts.

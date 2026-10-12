@@ -81,8 +81,67 @@ public static class WholeCatalogComposed {
  }
  public static void Release(){
   if(ownedLocator!=null){Addressables.RemoveResourceLocator(ownedLocator);foreach(var locator in priorLocators){Addressables.RemoveResourceLocator(locator);Addressables.AddResourceLocator(locator);}WholeCatalogLoader.locator=null;ownedLocator=null;priorLocators=null;}
-  borrowedNames=null;if(owned){owned.Unload(true);owned=null;}
+  definitionFamilies.Clear();borrowedNames=null;if(owned){owned.Unload(true);owned=null;}
  }
+ // Complete definition families share the existing converted owner; no tested-content whitelist.
+ static readonly Dictionary<Type,UnityEngine.Object[]> definitionFamilies=new Dictionary<Type,UnityEngine.Object[]>();
+ public static T[] DefinitionFamily<T>(System.Collections.Generic.IEnumerable<T> selected) where T:UnityEngine.Object {
+  if(!owned)throw new Exception("Complete definition owner unavailable: "+typeof(T).FullName);
+  UnityEngine.Object[] values;
+  if(!definitionFamilies.TryGetValue(typeof(T),out values)){
+   var manifest=JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath,"payload","whole-catalog.json")));
+   var roots=new HashSet<int>(manifest["provider_roots"].Select(value=>(int)value));
+   values=manifest["locations"].Where(row=>roots.Contains((int)row["id"])&&typeof(T).IsAssignableFrom(Type.GetType((string)row["type"],true))).Select(row=>{
+    string owner=(string)row["bundle"];var bundle=AssetBundle.GetAllLoadedAssetBundles().SingleOrDefault(value=>value.name==owner);
+    if(!bundle)throw new Exception("Original definition owner not loaded: "+typeof(T).FullName+"/"+owner);
+    return bundle.LoadAsset<T>((string)row["path"]);
+   }).Distinct().Cast<UnityEngine.Object>().ToArray();
+   if(values.Length==0||values.Any(value=>!value)||values.Select(value=>value.name).Distinct().Count()!=values.Length)throw new Exception("Complete definition identity missing or ambiguous: "+typeof(T).FullName);
+   definitionFamilies.Add(typeof(T),values);
+  }
+  if(selected.Any(value=>!values.Contains(value)))throw new Exception("Selected definition is outside original provider family: "+typeof(T).FullName);
+  return values.Cast<T>().ToArray();
+ }
+ static readonly Dictionary<System.Reflection.FieldInfo,object> priorDefinitionFields=new Dictionary<System.Reflection.FieldInfo,object>();
+ public static void PopulateDefinitionFields<T>(string family,T[] definitions,string prefix="") where T:UnityEngine.Object {
+  var manifest=JObject.Parse(File.ReadAllText(Path.Combine(Application.persistentDataPath,"payload","whole-catalog.json")));
+  var byName=definitions.ToDictionary(value=>value.name,StringComparer.Ordinal);
+  foreach(var provider in manifest["providers"]){
+   var holder=Type.GetType((string)provider["type"],true).GetNestedType(family);
+   if(holder==null)continue;
+   var fields=holder.GetFields(System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.Static);
+   var assets=fields.Select(field=>{
+    if(field.FieldType!=typeof(T))throw new Exception("Original definition holder type differs: "+holder.FullName+"/"+field.Name);
+    var target=(RoR2.ContentManagement.TargetAssetNameAttribute)Attribute.GetCustomAttribute(field,typeof(RoR2.ContentManagement.TargetAssetNameAttribute));
+    string name=target!=null?target.targetAssetName:prefix+field.Name;T value;
+    if(!byName.TryGetValue(name,out value))throw new Exception("Original definition holder asset absent: "+holder.FullName+"/"+name);
+    if(!priorDefinitionFields.ContainsKey(field))priorDefinitionFields.Add(field,field.GetValue(null));
+    if(field.GetValue(null)!=null&&!ReferenceEquals(field.GetValue(null),value))throw new Exception("Original definition holder identity changed: "+holder.FullName+"/"+name);
+    return value;
+   }).Distinct().ToArray();
+   var collection=new RoR2.ContentManagement.NamedAssetCollection<T>(value=>value.name);collection.Add(assets);
+   RoR2.ContentManagement.ContentLoadHelper.PopulateTypeFields(holder,collection,name=>prefix+name);
+   foreach(var field in fields)if(field.GetValue(null)==null)throw new Exception("Original definition holder unbound: "+holder.FullName+"/"+field.Name);
+  }
+ }
+ static RoR2.ItemTierDef[] priorTierContent;static object priorTierDefinitions;static global::ResourceAvailability priorTierAvailability;
+ static Dictionary<RoR2.ItemTierDef,RoR2.ItemTier> originalTiers;
+ public static void PrepareItemTiers(){
+  if(originalTiers!=null)throw new Exception("Item tiers already owned");
+  var type=typeof(RoR2.ItemTierCatalog);var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static;
+  var map=(System.Collections.IDictionary)type.GetField("itemTierToDef",flags).GetValue(null);
+  if(RoR2.ItemTierCatalog.itemCount!=0||map.Count!=0)throw new Exception("Item tiers have a foreign owner");
+  priorTierContent=RoR2.ContentManagement.ContentManager._itemTierDefs;priorTierDefinitions=type.GetField("itemTierDefs",flags).GetValue(null);priorTierAvailability=RoR2.ItemTierCatalog.availability;
+  var values=DefinitionFamily(new RoR2.ItemTierDef[0]);originalTiers=values.ToDictionary(value=>value,value=>value.tier);
+  RoR2.ContentManagement.ContentManager._itemTierDefs=values;type.GetMethod("Init",flags).Invoke(null,null);
+  if(values.Any(value=>RoR2.ItemTierCatalog.GetItemTierDef(value.tier)!=value))throw new Exception("Original item-tier identity differs");
+ }
+ public static void RestoreItemTiers(){
+  if(originalTiers==null)return;var type=typeof(RoR2.ItemTierCatalog);var flags=System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Static;
+  ((System.Collections.IDictionary)type.GetField("itemTierToDef",flags).GetValue(null)).Clear();type.GetField("itemTierDefs",flags).SetValue(null,priorTierDefinitions);
+  RoR2.ContentManagement.ContentManager._itemTierDefs=priorTierContent;RoR2.ItemTierCatalog.availability=priorTierAvailability;foreach(var pair in originalTiers)pair.Key.tier=pair.Value;originalTiers=null;
+ }
+ public static void RestoreDefinitionFields(){foreach(var pair in priorDefinitionFields)pair.Key.SetValue(null,pair.Value);priorDefinitionFields.Clear();}
  public static RoR2.BuffDef[] BuffDefinitions(){if(!owned)throw new Exception("Shared original buff owner unavailable");return owned.LoadAllAssets<RoR2.BuffDef>();}
  public static RoR2.ItemDef[] ItemDefinitions(){if(!owned)throw new Exception("Shared original item owner unavailable");return owned.LoadAllAssets<RoR2.ItemDef>();}
  public static RoR2.EliteDef[] EliteDefinitions(){if(!owned)throw new Exception("Shared original elite owner unavailable");return owned.LoadAllAssets<RoR2.EliteDef>();}

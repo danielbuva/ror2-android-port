@@ -1,4 +1,4 @@
-# Whole-catalog integration — J431
+# Whole-catalog integration — J431/J432
 
 Architecture C remains active. Load original content providers and ContentManager phases through converted Android locations; preserve original keys, types and asset relationships. Loading expansion/entitlement definitions never grants ownership or enables an expansion. Stock platform/profile startup remains stopped.
 
@@ -11,6 +11,12 @@ Provider effectDefs is legitimately empty in this build. Original EffectCatalog 
 **Updated Android exit:** the matching ARM64 Vulkan player completes all seven providers/thirteen native catalog initializers in98.526s, zero errors, with the same host counts.91 bundles total approximately1.67 GiB. Evidence: current integration's `device-latest.json`. This is native registration, not live complete-game pool/session or appearance acceptance. The rebased ordinary composition now executes original movement/combat, objective rewards, statistics and transitions. Candidate31 completes453.022world seconds/32kills/four genuine stage transitions through Sky Meadow, with complete world/clock/provider/results cleanup and zero current-process error lines. Original item-group metadata restores pickup lookup without fabricated membership. Authored inactive preview hierarchy and native GUID[subobject] lookup/name/type selection pass the composed run. White icon presentation, transition camera/scene occlusion and instrumented88.076ms mean frame pacing remain findings. Invincibility/high damage/fast charge were ON; movement/jump OFF. This is not normal gameplay, full live-catalog pool, route or appearance acceptance. The paused Moon/input/editor/working rollbacks remain available.
 
 A scene GUID collision is resolved only where the original catalog uniquely identifies the owner and retains both scene addresses. Typed font subassets use original bundle container/type/name/path-ID records; the font, material and atlas remain separate converted locations. A recovered support-script Event ambiguity is qualified from the original field metadata. Current-source compilation failure, import/build/Play Mode and editor mismatch reject catalog evidence. All forty-nine runtime plugin hashes retain their approved originals/transformation. Imported contracts bind1,510 identities directly and21 through measured remaps; one unresolved binding remains explicit. Quarantine is empty.
+
+## Live definition integration — J432
+
+Candidate33 connects295items/59equipment/275buffs, thirteen original tiers,629native holder bindings and84original item-behavior associations to live composition. Original item/tier setters, ContentLoadHelper and association methods retain their contracts; Android owns scheduling/snapshots/cleanup. Source requirements replace the loot whitelist while retaining42fresh-profile items/10equipment. An earned Vagrant attachment exercises the native host-authority option with its original identity flag retained. The combined431.144second/four-transition run passes with zero errors and complete cleanup; assists prevent normal-game acceptance. Detailed material/property census now requires `detailedVisualDiagnostics` or a targeted visual capture; native material adaptation and ordinary evidence remain enabled.
+
+For the next spawn/catalog batch, preserve native AddressablesLoadHelper.CanLoadType and JunkContent.loadOnlyExplicitTypes. Raw labels include unused categories and exceed native membership by23bodies/10masters/52skills/40families. The policy-aware host graph matches290bodies/204masters/563skills/378families; unassigned master bodies/skill variants and unresolved state references require source/runtime context before changing them. No Android quarantine follows from the graph alone.
 
 ## Retained J428 Android evidence
 
@@ -61,4 +67,4 @@ Use repair/code-only actions only for their recorded conditions. Evidence pointe
 
 Prior art: pinned R2API.ContentManagement provider phases and R2API.Addressables typed keys/handle lifetimes; shipped Addressables ResourceManager providers and linker contracts; existing ControllerAddressProbe/TeleporterWorldBoundary native-provider registration. Current input and device evidence override community version assumptions.
 
-Next: retain the accepted updated composition and connect full native catalogs to the live session/director/gameplay path in one coherent Android candidate. Keep manual Moon/finale and PC visual differential work deferred. Reject unreviewed input drift.
+Next: retain candidate33 and connect full native body/master/skill/state catalogs to the live spawn/session path, honoring native provider category policy. Keep manual Moon/finale and PC visual differential work deferred. Reject unreviewed input drift.

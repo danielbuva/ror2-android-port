@@ -91,6 +91,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   return WorldLoot(cfg).Where(x=>x.tier==ItemTier.Tier1).ToArray();
  }
  ItemDef[] WorldLoot(Result cfg){
+  if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap"))return ItemCatalog.allItemDefs.Where(item=>item&&!item.requiredExpansion&&!item.unlockableDef&&!item.hidden&&(item.tier==ItemTier.Tier1||item.tier==ItemTier.Tier2||item.tier==ItemTier.Tier3)&&item.DoesNotContainTag(ItemTag.IgnoreForDropList)&&item.DoesNotContainTag(ItemTag.WorldUnique)).ToArray();
   var loot=new List<ItemDef>{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe};
   // Receipted additions only. Older accepted configurations retain their original pool.
   if(cfg.teleporterLoop&&cfg.objectiveItemNames!=null){

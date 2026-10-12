@@ -12,7 +12,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class ItemBehaviorReport {
   public bool ready,cleaned;public int bodies,assignments,refreshes,mushroomWards,cloakObservations;public string[] definitions;
   public List<LegendaryItemObservation> legendaryInstances=new List<LegendaryItemObservation>();
-  public string scope="Adapted inventory lifecycle for selected original item components; original ward/healing/recharge/controller logic. Registration alone is not proc acceptance.";
+  public string scope="Adapted inventory lifecycle using original item associations; original ward/healing/recharge/controller logic. Registration alone is not proc acceptance.";
  }
  readonly Dictionary<CharacterBody,BaseItemBodyBehavior[]> worldItemBehaviors=new Dictionary<CharacterBody,BaseItemBodyBehavior[]>();
  readonly HashSet<GameObject> worldMushroomWards=new HashSet<GameObject>();
@@ -48,6 +48,18 @@ public sealed partial class MovementBatchProbe {
   var names=new[]{"FallBoots","Icicle","LaserTurbine"};var nativeTypes=new[]{typeof(HeadstomperBodyBehavior),typeof(IcicleBodyBehavior),typeof(LaserTurbineBodyBehavior)};
   for(int i=0;i<names.Length;i++)if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains(names[i])){var def=ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(names[i]));Check(def&&!def.unlockableDef&&!def.requiredExpansion,"Original legendary item unavailable: "+names[i]);types.Add(nativeTypes[i]);defs.Add(def);}
   if(cfg.stagePopulationFamilies!=null&&cfg.stagePopulationFamilies.Contains("Vagrant")){var def=RoR2Content.Items.NovaOnLowHealth;Check(def&&!def.unlockableDef&&!def.requiredExpansion&&def.tier==ItemTier.Boss,"Original Vagrant boss item unavailable");types.Add(typeof(NovaOnLowHealthBodyBehavior));defs.Add(def);}
+  if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
+   types.Clear();defs.Clear();
+   foreach(var method in typeof(CharacterBody).Assembly.GetTypes().SelectMany(type=>type.GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static|BindingFlags.DeclaredOnly))){
+    var association=(BaseItemBodyBehavior.ItemDefAssociationAttribute)Attribute.GetCustomAttribute(method,typeof(BaseItemBodyBehavior.ItemDefAssociationAttribute));
+    if(association==null||!(NetworkServer.active&&association.useOnServer||NetworkClient.active&&association.useOnClient))continue;
+    var type=association.behaviorTypeOverride??method.DeclaringType;
+    Check(typeof(BaseItemBodyBehavior).IsAssignableFrom(type)&&!type.IsAbstract&&method.GetParameters().Length==0&&!method.IsGenericMethod&&method.ReturnType==typeof(ItemDef),"Original item-behavior association signature differs: "+method.Name);
+    var def=(ItemDef)method.Invoke(null,null);Check(def&&def.itemIndex!=ItemIndex.None&&ItemCatalog.GetItemDef(def.itemIndex)==def,"Original item-behavior association is unregistered: "+type.FullName);
+    types.Add(type);defs.Add(def);
+   }
+   Check(types.Count>0&&types.Distinct().Count()==types.Count,"Original item-behavior association family ambiguous");
+  }
   worldItemBehaviorTypes=types.ToArray();worldItemBehaviorDefinitions=defs.ToArray();r.itemBehaviors=new ItemBehaviorReport{ready=true,definitions=defs.Select(x=>x.name).ToArray()};ownsWorldItemBehaviors=true;
   CharacterBody.onBodyInventoryChangedGlobal+=RefreshWorldItemBehaviors;CharacterBody.onBodyDestroyGlobal+=RemoveWorldItemBehaviors;
   foreach(var body in CharacterBody.readOnlyInstancesList.ToArray())if(body&&body.gameObject.activeInHierarchy)RefreshWorldItemBehaviors(body);
@@ -64,7 +76,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var pair in worldItemBehaviors.ToArray()){
    if(!pair.Key){worldItemBehaviors.Remove(pair.Key);continue;}
    if(pair.Key.HasBuff(RoR2Content.Buffs.Cloak))r.itemBehaviors.cloakObservations++;
-   var behavior=pair.Value[0];if(!behavior)continue;var obj=(GameObject)typeof(MushroomBodyBehavior).GetField("mushroomWardGameObject",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(behavior);
+   int mushroom=Array.IndexOf(worldItemBehaviorTypes,typeof(MushroomBodyBehavior));var behavior=mushroom<0?null:pair.Value[mushroom];if(!behavior)continue;var obj=(GameObject)typeof(MushroomBodyBehavior).GetField("mushroomWardGameObject",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(behavior);
    if(obj&&worldMushroomWards.Add(obj)){var ward=obj.GetComponent<HealingWard>();Check(ward&&ward.netId.Value!=0&&obj.GetComponent<TeamFilter>().teamIndex==pair.Key.teamComponent.teamIndex,"Native Mushroom ward authority/team differs");r.itemBehaviors.mushroomWards++;worldObjects.Add(obj);}
   }
  }

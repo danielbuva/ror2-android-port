@@ -34,7 +34,10 @@ public sealed partial class MovementBatchProbe {
   var defs=cfg.worldEquipmentBuffAssets.Select(x=>artifactBundle.LoadAsset<BuffDef>(x)).ToArray();
   for(int i=0;i<names.Length;i++){Check(defs[i]&&defs[i].name=="bd"+names[i],"Original equipment buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],defs[i]);}return defs;
  }
- IEnumerable<EquipmentDef> EligibleWorldEquipment(){return (worldEquipmentDefinitions??new EquipmentDef[0]).Where(x=>x.name!="GoldGat"&&x.name!="PassiveHealing");}
+ IEnumerable<EquipmentDef> EligibleWorldEquipment(){
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")&&r.integratedWorld)return EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).Where(def=>def&&def.canDrop&&!def.isLunar&&!def.isBoss&&!def.requiredExpansion&&!def.unlockableDef);
+  return (worldEquipmentDefinitions??new EquipmentDef[0]).Where(x=>x.name!="GoldGat"&&x.name!="PassiveHealing");
+ }
  GameObject[] PrepareWorldEquipmentSupport(Result cfg){
   if(cfg.worldEquipmentSupportPaths==null||cfg.worldEquipmentSupportPaths.Length==0)return new GameObject[0];
   Check(cfg.worldEquipmentSupportPaths.Length==12,"Equipment/proc provider closure differs");var effects=new List<GameObject>();

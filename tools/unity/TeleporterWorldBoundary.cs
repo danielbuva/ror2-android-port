@@ -337,9 +337,11 @@ public sealed partial class MovementBatchProbe {
     if(changed){renderer.sharedMaterials=materials;worldPresented.Add(renderer.GetInstanceID());}
    }
   }
+  // The full material/property census serves explicit visual attribution only;
+  // normal gameplay runs retain lightweight objective evidence and adaptation.
   // Include particles and owned world views when attributing an opaque surface.
   // Bounds estimate screen coverage; it is not an occlusion/pixel measurement.
-  if(objectiveHost&&r.objective!=null&&Time.frameCount%30==0){
+  if(objectiveHost&&r.objective!=null&&(r.detailedVisualDiagnostics||r.visualCaptureActive)&&Time.frameCount%30==0){
    r.objective.rendererViews=objectiveHost.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();
    var ownedMaterials=new HashSet<Material>(worldMaterials.Where(x=>x));
    var visible=Resources.FindObjectsOfTypeAll<Renderer>().Where(x=>x&&x.gameObject.scene.IsValid()&&x.gameObject.activeInHierarchy&&x.enabled&&x.isVisible).ToArray();
