@@ -4384,3 +4384,34 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **FAILURE EVIDENCE TO CAPTURE:** Host singleton/card-sharing/alias rejects;43 missing drone mask;44 empty Lunar table;45 final nonempty effect-pool release;46 direct projectile loop audio. Preserve separate attempts/receipts and reject failed pointer advancement.
 - **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit; retain candidate40 rollback, retire superseded generated outputs after retained hash checks, staged privacy/IP audit and Conventional Commit.
 - **DEPENDENCIES:** J434 rollback; pinned R2API.Director cloning/population, Addressables/Skin effect ownership and Sound engine-init observations; measured original scene, pickup/rule, loop-audio and asynchronous UI contracts.
+
+
+## C06 / J436 — Original-format Android profile and session persistence
+- **ID:** C06 / J436; scoped native profile/session acceptance passed through candidate51.
+- **TITLE:** Native profile data with recoverable Android storage.
+- **CONTEXT:** Candidate47 integrates full native catalogs/directors; local results/settings exist, original profile persistence does not.
+- **OBSERVATION:** Native UserProfile construction first fails on missing Rewired default keyboard maps. Original empty-map XML fields support unavailable maps; fresh source profile version avoids legacy input migrations.
+- **HYPOTHESIS:** One readiness-guarded constructor boundary and owned local save-system context permit original defaults, fields, statistics and loadout serialization without platform startup.
+- **TASK:** Register the complete source survivor family, retain source redirect resources, round-trip native XML, atomically persist result identity with genuine statistics, exclude assisted results, pair teardown and exercise real loss/restart/cold reload.
+- **CONSTRAINTS:** No Steam/cloud import, login/authentication/ownership success, fabricated unlocks/currency or Rewired mapping acceptance. Original inputs immutable; one adopted-storage app; preserve the accepted rollback/Moon candidate and existing results/settings.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Android profile/results/menu adapters, exact-input constructor transformation, existing APK-only recipe and ignored host/device receipts.
+- **TEST COMMAND:** ./dev test; exact-editor AndroidProfileHost.Run; ./dev preflight; ./dev prototype --action whole-catalog-code-build; existing owned install/sync/run/capture with an ignored session driver.
+- **PASS CONDITION:** Original field/stat/loadout round trip, durable result deduplication and recovery pass host; genuine Android losses survive restart/cold load with clean owned teardown and retained prior files. Candidate50 passes native profile/result semantics;51 repairs deferred inventory teardown and passes two live abandonments, four clean process captures and unchanged saves. Full progression and memory stability remain open.
+- **FAILURE EVIDENCE TO CAPTURE:** First constructor/serializer/storage/runtime failure, symbolic DLL diff, current PID, complete session report and owned save generations.
+- **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit record; preserve failed attempts locally; reviewed Conventional Commit and staged public audit.
+- **DEPENDENCIES:** J435 candidate47. Prior art: pinned ProperSave's explicit persistentDataPath/PhysicalFileSystem/SubFileSystem storage boundary; no implementation copied. Exact shipped UserProfile/SaveFieldAttribute/XmlUtility/SaveSystem contracts are authoritative.
+
+## C07 — Earned offline progression and native availability
+- **ID:** C07; prepared source/standalone compile only, not integrated.
+- **TITLE:** Connect genuine Android progress to original unlock and loot contracts.
+- **CONTEXT:** J436 persists original result statistics; complete native definitions currently retain fresh-profile eligibility.
+- **OBSERVATION:** UnlockableCatalog is absent; an unresolved index can falsely satisfy native HasUnlockable. Run consumes unavailable NetworkUser unlock sets. Eleven native persistent-stat achievement classes are structurally independent of live player input, while award dispatch still calls platform services.
+- **HYPOTHESIS:** Complete owned metadata and unchanged threshold logic can use a detached local profile, with truthful optional service boundaries and atomic earned-only rewards.
+- **TASK:** Initialize native unlock metadata before profile decode; preserve reflective achievement roots; evaluate the complete compatible stat family, resolve native optional dispatch, and feed only earned definitions into original availability. Keep unsupported achievement families and skin/loadout consumers explicit.
+- **CONSTRAINTS:** No grants, invented ownership, platform login, copied decompiled implementation or native reward algorithm replacement. Assisted runs remain excluded. No manual/Moon routing.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Profile/result/availability consumers, one owned progression context, narrow optional dispatch only if measured necessary.
+- **TEST COMMAND:** Native host threshold/locked-state/ownership fixtures; existing whole-catalog-code-build and composed genuine death/restart flow.
+- **PASS CONDITION:** Original earned reward survives cold load and affects the next native drop table; fresh locked rewards remain unavailable, no external-service success is claimed, cleanup passes.
+- **FAILURE EVIDENCE TO CAPTURE:** First metadata/index/entitlement/dispatch failure and precise native call; assisted/duplicate exclusion; original result and profile identity.
+- **STATE/JOURNAL UPDATES REQUIRED:** Concise coverage/exit and failed-call evidence. Ignored draft/hook/compiler receipt: work/experiments/whole-catalog/gameplay/progression-draft/receipt.json.
+- **DEPENDENCIES:** J436 accepted profile lifecycle. Pinned R2API.Unlockable/Loadout registration seams; current native achievement, activity and currency-dispatch contracts. Standalone compilation is not host execution or Android acceptance.

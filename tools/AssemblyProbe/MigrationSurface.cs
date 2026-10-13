@@ -8,6 +8,24 @@ using System.Text.Json;
 // Read-only update comparison. Symbolic operands avoid mistaking metadata-token
 // renumbering for a gameplay change. Matching fingerprints are not runtime proof.
 static class MigrationSurface {
+ public static void Compare(string[] args){
+  using var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(args[2]);
+  using var left=AssemblyDefinition.ReadAssembly(args[0],new ReaderParameters{AssemblyResolver=resolver});
+  using var right=AssemblyDefinition.ReadAssembly(args[1],new ReaderParameters{AssemblyResolver=resolver});
+  using var l=JsonDocument.Parse(Json(Surface(left)));using var r=JsonDocument.Parse(Json(Surface(right)));
+  var lt=l.RootElement.GetProperty("types").EnumerateArray().ToDictionary(t=>t.GetProperty("name").GetString()!);
+  var rt=r.RootElement.GetProperty("types").EnumerateArray().ToDictionary(t=>t.GetProperty("name").GetString()!);
+  bool contracts=left.Name.FullName==right.Name.FullName&&left.MainModule.Mvid==right.MainModule.Mvid&&lt.Keys.SequenceEqual(rt.Keys)&&l.RootElement.GetProperty("references").ToString()==r.RootElement.GetProperty("references").ToString();
+  var changed=new List<string>();int same=0;
+  foreach(var pair in lt){
+   if(!rt.TryGetValue(pair.Key,out var other)){contracts=false;continue;}
+   foreach(var field in new[]{"contract","fieldOrder","fields"})contracts&=pair.Value.GetProperty(field).ToString()==other.GetProperty(field).ToString();
+   var methods=pair.Value.GetProperty("methods").EnumerateArray().ToDictionary(m=>m.GetProperty("name").GetString()!);
+   var newer=other.GetProperty("methods").EnumerateArray().ToDictionary(m=>m.GetProperty("name").GetString()!);contracts&=methods.Keys.SequenceEqual(newer.Keys);
+   foreach(var method in methods){if(!newer.TryGetValue(method.Key,out var value)){contracts=false;continue;}contracts&=method.Value.GetProperty("contract").GetString()==value.GetProperty("contract").GetString();if(method.Value.GetProperty("body").GetString()==value.GetProperty("body").GetString())same++;else changed.Add(method.Key);}
+  }
+  Console.WriteLine(Json(new{contracts_preserved=contracts,unchanged_methods=same,changed_methods=changed}));if(!contracts)throw new Exception("Assembly contract divergence");
+ }
  static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
  static string Json(object? value) => JsonSerializer.Serialize(value);
  static string Value(object? value) => value switch {

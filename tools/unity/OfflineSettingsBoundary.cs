@@ -33,6 +33,7 @@ public sealed partial class MovementBatchProbe {
   if(GUI.Button(new Rect(x+220,y+180,200,45),"Resume"))ShowOfflineSettings(false);
   r.settings.canEndRun=CanAbandonOfflineRun();var end=new Rect(x,y+245,420,45);r.settings.endRunButtonX=end.center.x;r.settings.endRunButtonY=end.center.y;
   if(r.settings.canEndRun&&GUI.Button(end,"End run and return to menu"))RequestAbandonOfflineRun();
+  if(r.profile!=null&&r.profile.ready)GUI.Label(new Rect(x,y+302,420,44),"Android profile · "+r.profile.appliedRuns+" genuine results · "+r.profile.kills+" kills\nSteam/cloud and Rewired maps unavailable");
   ObserveOfflineSettings();if(offlineSettingsPaused&&Event.current.type==EventType.Repaint&&Time.frameCount%30==0){r.settings.observations++;Save();}
  }
  void CleanupOfflineSettingsPause(){if(offlineSettingsPaused)ShowOfflineSettings(false);}

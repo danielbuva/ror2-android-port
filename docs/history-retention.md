@@ -5,7 +5,7 @@ rollbacks and retire superseded full snapshots and build outputs. Earlier journa
 statements that every archived APK/full snapshot remained present describe the
 state at those historical exits; this retention policy supersedes them.
 
-During the approved Steam25475991 migration, J435 candidate47 is current and J434 candidate40 is its immediate verified APK/payload rollback. J425/J323 below and old-input J428 migration material remain protected. Superseded36, unused41/42 and failed43–46 generated APK/payload are retired after complete hash verification of both retained compositions and freezing the accepted payload receipt. Findings, failed runs, receipts and the authored patch remain. This retirement removes13.81GBlogical generated data and reclaims802MBactual space; APFS shares unchanged extents. Another224MBof rebuildable metadata intermediates is removed with differential summaries/inputs retained. Current pointers are under ignored `work/checkpoints`; ledger `work/cleanup-analysis/J435-generated.json`.
+During the approved Steam25475991 migration, J436 candidate51 is current and J435 candidate47 is its immediate verified APK/payload rollback. J425/J323 below and old-input J428 migration material remain protected. After both retained APKs and all188payload files verify, superseded40/48–50 generated APK/payload outputs are retired. Findings, failed runs, receipts and authored changes remain. J436 removes7.90GBlogical generated data; available host space increases approximately1.46GB with APFS sharing. Current pointers are under ignored `work/checkpoints`; ledger `work/cleanup-analysis/J436-generated.json`. Earlier retirement findings remain in the journal and their ignored ledgers.
 
 The expanded rollbacks are:
 

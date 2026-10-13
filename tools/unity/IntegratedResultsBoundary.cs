@@ -20,21 +20,7 @@ public sealed partial class MovementBatchProbe {
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
  [Serializable] sealed class AndroidRunEntry {public string file,ending;public bool win,debugAssisted;public string debugEvidence;public float seconds;public int stages;}
- sealed class UnavailableProfileSaveSystem:SaveSystem {
-  static Exception Unavailable(){return new NotSupportedException("Stock profile operations unavailable in the composed Android run; original RunReport and owned local results are separate.");}
-  protected override void ProcessFileOutputQueue(){throw Unavailable();}
-  protected override void StartSave(UserProfile profile,bool blocking){throw Unavailable();}
-  protected override LoadUserProfileOperationResult LoadUserProfileFromDisk(IFileSystem files,UPath path){throw Unavailable();}
-  public override void InitializeSaveSystem(){throw Unavailable();}
-  public override void LoadInitialData(){throw Unavailable();}
-  public override void LoadUserProfiles(){throw Unavailable();}
-  public override UserProfile LoadPrimaryProfile(){return null;}
-  public override string GetPlatformUsernameOrDefault(string defaultName){return defaultName;}
-  public override UserProfile CreateProfile(IFileSystem files,string name,ulong platformUserID=0){throw Unavailable();}
-  public override void SaveHistory(byte[] data,string name){throw Unavailable();}
-  public override Dictionary<string,byte[]> LoadHistory(){throw Unavailable();}
- }
- SaveSystem previousResultsSaveSystem;UnavailableProfileSaveSystem resultsSaveSystem;bool ownsResultsSaveSystem;
+ SaveSystem previousResultsSaveSystem;AndroidProfileSaveSystem resultsSaveSystem;bool ownsResultsSaveSystem;
  static string resultsStatsSignature;static bool resultsSerializersReady;
  readonly Dictionary<FieldInfo,object> resultsEventContext=new Dictionary<FieldInfo,object>();
  PlayerStatsComponent resultsStats;Action resultsStatsFixed,resultsStatsProcess;GameObject resultsTemplate;GameObject previousGameOverPrefab;
@@ -73,7 +59,7 @@ public sealed partial class MovementBatchProbe {
   if(!cfg.integratedResults)return;
   r.results=new IntegratedResultsReport{scope="Original statistics, genuine Run.BeginGameOver/GameOverController/RunReport and client ending. Owned Android result presentation and run ledger; stock cutscene, Steam profiles, authentication, achievements and lunar awards unavailable."};r.phase="integrated-results-context";Save();
   Check(NetworkServer.active&&activeBodyClient.isConnected&&!GameOverController.instance&&PlayerStatsComponent.instancesList.Count==0,"Unowned results context");
-  previousResultsSaveSystem=PlatformSystems.saveSystem;Check(previousResultsSaveSystem==null,"Existing platform save-system context");resultsSaveSystem=new UnavailableProfileSaveSystem();PlatformSystems.saveSystem=resultsSaveSystem;ownsResultsSaveSystem=true;
+  previousResultsSaveSystem=PlatformSystems.saveSystem;Check(previousResultsSaveSystem==null,"Existing platform save-system context");resultsSaveSystem=new AndroidProfileSaveSystem();PlatformSystems.saveSystem=resultsSaveSystem;ownsResultsSaveSystem=true;
   // Current StatDef adds PerKeyItemStatDef. Register original metadata before its fixed buffers;
   // this grants no key item and does not start its pickup/platform simulation.
   ResultsStep("key-item-statistics");PrepareResultsKeyItems();
@@ -110,12 +96,13 @@ public sealed partial class MovementBatchProbe {
   Check(!GameOverController.instance&&controller.runReport!=null,"Android result template activated stock flow");previousGameOverPrefab=Run.instance.gameOverPrefab;Run.instance.gameOverPrefab=resultsTemplate;
   resultsServerEvent=(run,ending)=>{if(run!=Run.instance)return;var created=FindObjectsOfType<GameOverController>().Where(x=>x.gameObject!=resultsTemplate&&x.runReport!=null&&x.runReport.gameEnding==ending).ToArray();Check(created.Length==1,"Original generated ending controller/report missing");resultsController=created[0];resultsRunReport=resultsController.runReport;resultsController.enabled=true;r.results.serverEnding=true;r.results.reportGenerated=true;r.results.ending=ending.cachedName;Save();};
   resultsClientEvent=(run,report)=>{if(run!=Run.instance)return;Check(resultsRunReport!=null&&report.gameEnding==resultsRunReport.gameEnding&&report.playerInfoCount==resultsRunReport.playerInfoCount,"Original client ending/report differs");r.results.clientEnding=true;Save();};Run.onServerGameOver+=resultsServerEvent;Run.onClientGameOverGlobal+=resultsClientEvent;
+  ResultsStep("android-profile");PrepareAndroidProfile();
   ResultsStep("run-identity");if(Run.instance.GetUniqueId()==Guid.Empty){Run.instance.Network_uniqueId=(RoR2.Networking.NetworkGuid)Guid.NewGuid();Run.instance.NetworkstartTimeUtc=(RoR2.Networking.NetworkDateTime)DateTime.UtcNow;}
   Run.instance.isRunning=true;r.results.statsRegistered=true;r.results.statFields=resultsStats.currentStats.fields.Length;r.results.ready=true;Save();
  }
  void TickIntegratedResults(){
   if(r==null||r.results==null||!r.results.ready||resultsStatsFixed==null||!string.IsNullOrEmpty(r.results.error))return;
-  try{resultsStatsFixed();resultsStatsProcess();}catch(Exception e){r.results.error=e.ToString();resultsStatsFixed=null;Save();}
+  try{resultsStatsFixed();resultsStatsProcess();if(resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.saveRequestPending)resultsSaveSystem.local.Save();}catch(Exception e){r.results.error=e.ToString();resultsStatsFixed=null;Save();}
  }
  void ObserveIntegratedResults(){
   if(r.results==null||!r.results.ready)return;var report=r.results;
@@ -130,7 +117,7 @@ public sealed partial class MovementBatchProbe {
   bool assisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted;string debugEvidence=assisted?file+".debug.json":null;
   if(assisted)File.WriteAllText(Path.Combine(resultsDirectory,debugEvidence),JsonUtility.ToJson(r.debugAcceleration,true));
   if(!resultsLedger.runs.Any(x=>x.file==report.reportFile)){resultsLedger.runs.Add(new AndroidRunEntry{file=report.reportFile,ending=report.ending,win=resultsRunReport.gameEnding.isWin,seconds=report.seconds,stages=report.stageClearCount,debugAssisted=assisted,debugEvidence=debugEvidence});SaveAndroidRunLedger();}
-  report.persisted=true;Save();
+  PersistAndroidProfileResult(assisted);report.persisted=true;Save();
  }
  void LoadAndroidRunLedger(){
   var path=Path.Combine(resultsDirectory,"profile.json");var backup=path+".backup";resultsLedger=new AndroidRunLedger();
@@ -153,10 +140,11 @@ public sealed partial class MovementBatchProbe {
   var title=resultsRunReport!=null&&resultsRunReport.gameEnding&&resultsRunReport.gameEnding.isWin?"Victory":"Run ended";
   if(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted)title="DEBUG ASSISTED — "+title+" (no normal-game acceptance)";
   if(r.freePlay&&report.persisted){if(r.phase=="commando-defeated"&&GUI.Button(new Rect(32,390,350,60),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(410,390,400,60),r.phase=="commando-defeated"?"Return to menu":"Return to menu (A)"))RequestResultsMenu();}
-  GUI.Label(new Rect(32,78,820,260),title+" — "+report.ending+"\nOriginal stages cleared: "+report.stageClearCount+"   Time: "+report.seconds.ToString("F0")+"s\nKills: "+report.kills+"   Damage dealt: "+report.damageDealt.ToString("F0")+"\n"+(report.persisted?"Original report saved on this Android device":"Saving original report…")+"\nStock cutscene and Steam profile integration unavailable",style);
+  GUI.Label(new Rect(32,78,820,260),title+" — "+report.ending+"\nOriginal stages cleared: "+report.stageClearCount+"   Time: "+report.seconds.ToString("F0")+"s\nKills: "+report.kills+"   Damage dealt: "+report.damageDealt.ToString("F0")+"\n"+(report.persisted?"Original report saved on this Android device":"Saving original report…")+"\n"+(r.profile!=null&&r.profile.ready?(r.profile.assistedExcluded?"Assisted result excluded from Android profile":"Android profile saved · "+r.profile.appliedRuns+" genuine results"):"Android profile unavailable")+"\nStock cutscene and Steam/cloud profiles unavailable",style);
  }
  void CleanupIntegratedResults(){
   resultsStatsFixed=null;
+  CleanupAndroidProfile();
   if(ownsResultsSaveSystem){Check(ReferenceEquals(PlatformSystems.saveSystem,resultsSaveSystem),"Results save-system boundary ownership changed");PlatformSystems.saveSystem=previousResultsSaveSystem;ownsResultsSaveSystem=false;}
   if(!ownsResultsContext){if(ownsResultsStats&&resultsStats){Call(resultsStats,"OnDestroy");ownsResultsStats=false;}foreach(var entry in resultsEventContext)entry.Key.SetValue(null,entry.Value);resultsEventContext.Clear();CleanupResultsItemGroups();CleanupResultsKeyItems();if(r.results!=null)r.results.cleaned=true;return;}
   Run.onServerGameOver-=resultsServerEvent;Run.onClientGameOverGlobal-=resultsClientEvent;

@@ -24,10 +24,10 @@ public sealed partial class MovementBatchProbe {
  }
  bool DrawOfflineStart(){
   if(!offlineStartVisible)return false;
-  if(recoveredMenu){GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Offline composition · Android-only results · audio/platform profiles unavailable · source UI rendering approximation");return true;}
+  if(recoveredMenu){GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Offline composition · Android profile loads with the run · audio/Steam profiles unavailable · source UI rendering approximation");return true;}
   var style=new GUIStyle(GUI.skin.label){fontSize=30,wordWrap=true};
   GUI.Box(new Rect(20,60,860,400),"Offline RoR2 composition");
-  GUI.Label(new Rect(45,100,800,220),"Commando · Drizzle\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\n\nAudio and stock platform profiles are unavailable. Run results stay on this Android device.",style);
+  GUI.Label(new Rect(45,100,800,220),"Commando · Drizzle\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\n\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",style);
   if(GUI.Button(new Rect(45,340,370,65),"Start run (A)"))offlineStartSelected=true;
   if(GUI.Button(new Rect(440,340,370,65),"Quit"))Application.Quit();
   return true;

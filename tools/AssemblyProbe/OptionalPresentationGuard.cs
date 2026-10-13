@@ -101,6 +101,21 @@ static class OptionalPresentationGuard {
    il.InsertBefore(call,il.Create(OpCodes.Call,audio));il.InsertBefore(call,il.Create(OpCodes.Brfalse,call));
    for(int i=0;i<3;i++)il.InsertBefore(call,il.Create(OpCodes.Pop));il.InsertBefore(call,il.Create(OpCodes.Br,afterCall));loopMethods.Add(setRtpc);
   }
+  var profileMethods=new List<MethodDefinition>();
+  if(expected==measured[1]){
+   // Fresh offline profiles need no controller maps when the optional Rewired
+   // runtime is unavailable. Preserve every original initializer when it is ready.
+   var profile=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.UserProfile");
+   var ctor=profile.Methods.Single(m=>m.IsConstructor&&!m.IsStatic&&m.Parameters.Count==0);
+   var ready=Types(assembly.MainModule.Types).SelectMany(t=>t.Methods).Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).Select(i=>i.Operand).OfType<MethodReference>().First(m=>m.DeclaringType.FullName=="Rewired.ReInput"&&m.Name=="get_isReady"&&m.Parameters.Count==0&&m.ReturnType.FullName=="System.Boolean");
+   foreach(var name in new[]{"keyboardMap","mouseMap","joystickMap"}){
+    var store=ctor.Body.Instructions.Single(i=>i.OpCode==OpCodes.Stfld&&i.Operand is FieldReference f&&f.DeclaringType.FullName==profile.FullName&&f.Name==name);
+    var create=store.Previous;var load=create.Previous;
+    if(create.OpCode!=OpCodes.Newobj||create.Operand is not MethodReference map||map.Parameters.Count!=1||map.DeclaringType.FullName!=((FieldReference)store.Operand).FieldType.FullName||load.OpCode!=OpCodes.Call||load.Operand is not MethodReference defaults||defaults.DeclaringType.FullName!="RoR2.DefaultControllerMaps"||load.Previous.OpCode!=OpCodes.Ldarg_0)throw new Exception("Original profile controller-map initializer changed: "+name);
+    il=ctor.Body.GetILProcessor();il.InsertBefore(load,il.Create(OpCodes.Call,ready));il.InsertBefore(load,il.Create(OpCodes.Brtrue,load));il.InsertBefore(load,il.Create(OpCodes.Ldnull));il.InsertBefore(load,il.Create(OpCodes.Br,store));
+   }
+   profileMethods.Add(ctor);
+  }
   // Insertion can move targets beyond the signed-byte range; keep branch semantics exactly.
   foreach(var m in new[]{sound,landing,fixedUpdate,countdown,turbine}.Concat(stopMethods).Concat(loopMethods))foreach(var instruction in m.Body.Instructions) {
    if(instruction.OpCode==OpCodes.Br_S)instruction.OpCode=OpCodes.Br;
@@ -108,11 +123,11 @@ static class OptionalPresentationGuard {
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).ToArray();
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).Concat(profileMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   if(verified.Name.FullName!=identity||verified.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(verified)))throw new Exception("Optional presentation changed original assembly/type/field/method identity");
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise, ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise. Updated-input UserProfile constructor retains default controller-map creation when ReInput is ready; unavailable input leaves maps null for native local XML. Ownership/authentication unchanged."}));
  }
 }

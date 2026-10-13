@@ -27,6 +27,10 @@ public sealed partial class MovementBatchProbe {
   if(!IsAutomaticModel()||string.IsNullOrEmpty(r.modelTarget))yield break;
   // Root destruction invokes original OnDestroy, whose model destruction is also deferred.
   for(int frame=0;ownedDetachedModel&&frame<3;frame++)yield return null;
-  r.modelDestroyed=!ownedDetachedModel;Check(r.modelDetached&&(string.IsNullOrEmpty(r.firstFailure)?r.modelFollowFrames>300:r.modelFollowFrames>0)&&r.modelDestroyed,"Original detached model destruction before provider release");Save();
+  r.modelDestroyed=!ownedDetachedModel;
+  // Genuine integrated death/abandonment may end before the isolated proof's
+  // sampling quota. Still require observed native follow and actual destruction.
+  int requiredFrames=r.integratedWorld||!string.IsNullOrEmpty(r.firstFailure)?1:301;
+  Check(r.modelDetached&&r.modelFollowFrames>=requiredFrames&&r.modelDestroyed,"Original detached model lifecycle before provider release: followed="+r.modelFollowFrames+" required="+requiredFrames+" destroyed="+r.modelDestroyed);Save();
  }
 }

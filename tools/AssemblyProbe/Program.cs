@@ -12,6 +12,7 @@ if (args.Length > 0 && args[0] == "--optional-presentation-guard") { OptionalPre
 if (args.Length > 0 && args[0] == "--slice") { Slice.Run(args.Skip(1).ToArray()); return; }
 
 if (args.Length > 0 && args[0] == "--migration-surface") { MigrationSurface.Run(args.Skip(1).ToArray()); return; }
+if (args.Length > 0 && args[0] == "--migration-method-diff") { MigrationSurface.Compare(args.Skip(1).ToArray()); return; }
 
 if (args.Length > 0 && args[0] == "--migration-self-test") { MigrationSurface.SelfTest(args[1]); return; }
 
