@@ -32,6 +32,7 @@ public sealed partial class MovementBatchProbe {
   public int featherJumps,featherEffectLoads;public bool featherEffectCleaned,featherInputAttempted;public string featherInputOutcome;
   public int nativeLootProviderLoads,healthPacks,moneyPacks,stunImpactLoads,slowedEnemiesPeak;public bool nativeLootProvidersCleaned;
   public int stickyBombLoads,stickyBombSpawns,wispDelaySpawns,barrierEffects;public float barrier;
+  public string fireTrailDiagnostic;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;public string pickupRegistryStatus;
@@ -56,6 +57,7 @@ public sealed partial class MovementBatchProbe {
  readonly HashSet<int> worldPresented=new HashSet<int>();
  float nextWorldPickupSnapshot;
  string worldPickupRegistryStage;bool worldPickupRegistryFallback;
+ bool fireTrailDiagnosisRecorded;
  Action worldClientUpdate;
  readonly List<BarrelInteraction> worldBarrels=new List<BarrelInteraction>();
  readonly List<ChestBehavior> worldChests=new List<ChestBehavior>();
@@ -395,6 +397,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   long performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
   if(worldClientUpdate==null)worldClientUpdate=(Action)Delegate.CreateDelegate(typeof(Action),activeBodyClient,activeBodyClient.GetType().GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));worldClientUpdate();r.performance.clientUpdateMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
   long objectiveStart=performancePart;ObserveTeleporterWorld();r.performance.teleporterMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();ObserveMoonMission();r.performance.moonMs+=PerformanceMs(performancePart);r.performance.objectiveMs+=PerformanceMs(objectiveStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
+  if(!fireTrailDiagnosisRecorded&&!string.IsNullOrEmpty(r.runSeedOverride)&&Time.frameCount%30==0&&NetworkServer.objects.Values.Any(identity=>{var body=identity?identity.GetComponent<CharacterBody>():null;return body&&body.HasBuff(RoR2Content.Buffs.AffixRed);})){fireTrailDiagnosisRecorded=true;try{world.fireTrailDiagnostic=WholeCatalogComposed.DiagnoseFireTrail();}catch(Exception error){world.fireTrailDiagnostic=error.GetBaseException().ToString();}Save();}
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
@@ -652,7 +655,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupTeleporterWorld();
-  worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;
+  worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;fireTrailDiagnosisRecorded=false;
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}

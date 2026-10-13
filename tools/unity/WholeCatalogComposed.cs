@@ -10,6 +10,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.Util;
 using System.Collections.Generic;
+using System.Reflection;
 
 // The expanded build gives old assets a shared bundle owner. Keep that owner
 // loaded before the existing composed game deserializes its body/support assets.
@@ -18,6 +19,10 @@ public static class WholeCatalogComposed {
  static IResourceLocator[] priorLocators;
  static IResourceLocator ownedLocator;
  static HashSet<string> borrowedNames;
+ static readonly List<WeakReference> releasedLocators=new List<WeakReference>();
+ static readonly List<WeakReference> releasedManifests=new List<WeakReference>();
+ static WeakReference currentManifest;
+ static int lastDetachedAssetOperations;
  delegate bool ExtractSubObjectKey(object key,out string mainKey,out string subKey);
  static readonly ExtractSubObjectKey originalSubObjectKey=(ExtractSubObjectKey)Delegate.CreateDelegate(typeof(ExtractSubObjectKey),typeof(ResourceManagerConfig).GetMethod("ExtractKeyAndSubKey",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic));
  sealed class BorrowedBundle : IAssetBundleResource {
@@ -38,13 +43,18 @@ public static class WholeCatalogComposed {
   public override void Release(IResourceLocation location,object asset){}
  }
  sealed class BorrowedAssetProvider : ResourceProviderBase {
+  static readonly HashSet<string> reportedFailures=new HashSet<string>(StringComparer.Ordinal);
+  public static void ResetFailures(){lock(reportedFailures)reportedFailures.Clear();}
   // Match the shipped provider's broad request contract (including Object loads).
   public override Type GetDefaultType(IResourceLocation location){return typeof(object);}
   public override void Provide(ProvideHandle handle){
    try{
     var dependencies=new List<object>();handle.GetDependencies(dependencies);
-    var resource=dependencies.OfType<IAssetBundleResource>().FirstOrDefault();
-    if(resource==null)throw new Exception("Borrowed asset bundle dependency absent");
+    var declared=handle.Location.Dependencies;
+    if(declared==null||declared.Count==0)throw new Exception("Borrowed asset owner not declared");
+    string owner=declared[0].PrimaryKey;
+    var resource=dependencies.OfType<IAssetBundleResource>().SingleOrDefault(value=>value.GetAssetBundle().name==owner);
+    if(resource==null)throw new Exception("Borrowed asset owner absent: "+owner);
     string path=handle.ResourceManager.TransformInternalId(handle.Location);
     if(handle.Type.IsArray)throw new Exception("Unmeasured borrowed array contract: "+path);
     string mainKey,subKey;var bundle=resource.GetAssetBundle();
@@ -54,7 +64,11 @@ public static class WholeCatalogComposed {
      :bundle.LoadAsset(path,handle.Type);
     if(!asset)throw new Exception("Borrowed typed asset missing: "+path+" / "+handle.Type.FullName);
     handle.Complete<UnityEngine.Object>(asset,true,null);
-   }catch(Exception error){handle.Complete<UnityEngine.Object>(null,false,error);}
+   }catch(Exception error){
+    string failure=handle.Location.InternalId+" / "+handle.Type.FullName+" / "+error.Message;
+    lock(reportedFailures)if(reportedFailures.Add(failure))Debug.LogError("Borrowed asset provider failed: "+failure);
+    handle.Complete<UnityEngine.Object>(null,false,error);
+   }
   }
   public override void Release(IResourceLocation location,object asset){}
  }
@@ -71,6 +85,7 @@ public static class WholeCatalogComposed {
   if(!owned||ownedLocator!=null)throw new Exception("Shared content location ownership invalid");
   string payload=Path.Combine(Application.persistentDataPath,"payload");
   var manifest=JObject.Parse(File.ReadAllText(Path.Combine(payload,"whole-catalog.json")));
+  currentManifest=new WeakReference(manifest);
   var descriptor=JObject.Parse(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);
   if((string)manifest["input_id"]!=(string)descriptor["input_id"]||(string)manifest["attempt"]!=(string)descriptor["attempt"])throw new Exception("Composed APK/catalog generation mismatch");
   priorLocators=Addressables.ResourceLocators.ToArray();
@@ -80,8 +95,51 @@ public static class WholeCatalogComposed {
   WholeCatalogLoader.RegisterLocations(manifest,typeof(BundledAssetProvider).FullName,payload,typeof(BorrowedBundleProvider).FullName,borrowedNames,typeof(BorrowedAssetProvider).FullName);ownedLocator=WholeCatalogLoader.locator;
  }
  public static void Release(){
-  if(ownedLocator!=null){Addressables.RemoveResourceLocator(ownedLocator);foreach(var locator in priorLocators){Addressables.RemoveResourceLocator(locator);Addressables.AddResourceLocator(locator);}WholeCatalogLoader.locator=null;ownedLocator=null;priorLocators=null;}
-  definitionFamilies.Clear();borrowedNames=null;if(owned){owned.Unload(true);owned=null;}
+  lastDetachedAssetOperations=DetachBorrowedAssetCache();
+  if(ownedLocator!=null){releasedLocators.Add(new WeakReference(ownedLocator));releasedManifests.Add(currentManifest);currentManifest=null;Addressables.RemoveResourceLocator(ownedLocator);foreach(var locator in priorLocators){Addressables.RemoveResourceLocator(locator);Addressables.AddResourceLocator(locator);}WholeCatalogLoader.locator=null;ownedLocator=null;priorLocators=null;}
+  definitionFamilies.Clear();BorrowedAssetProvider.ResetFailures();borrowedNames=null;if(owned){owned.Unload(true);owned=null;}
+ }
+ // LegacyResourcesAPI.Load keeps successful handles after returning its asset.
+ // The session has ended, so remove only completed operations from this owned
+ // locator before unloading its bundles. Retained original handles remain valid
+ // for their callers; a later session must not reuse their destroyed Unity result.
+ static int DetachBorrowedAssetCache(){
+  if(ownedLocator==null)return 0;
+  var manager=Addressables.ResourceManager;
+  var field=manager.GetType().GetField("m_AssetOperationCache",BindingFlags.Instance|BindingFlags.NonPublic);
+  var cache=field==null?null:field.GetValue(manager) as System.Collections.IDictionary;
+  if(cache==null)throw new Exception("Original resource operation cache contract changed");
+  var stale=new List<System.Collections.DictionaryEntry>();
+  foreach(System.Collections.DictionaryEntry entry in cache){
+   var key=entry.Key;var keyType=key.GetType();if(keyType.Name!="LocationCacheKey")continue;
+   var locationField=keyType.GetField("m_Location",BindingFlags.Instance|BindingFlags.NonPublic);
+   var location=locationField==null?null:locationField.GetValue(key) as IResourceLocation;
+   if(location==null||location.ProviderId!=typeof(BorrowedAssetProvider).FullName||location.Dependencies==null||location.Dependencies.Count==0)continue;
+   var owner=location.Dependencies[0].PrimaryKey;
+   if(owner!="whole-game-content"&&owner!="commando-prefab-lab"&&owner!="objective-support-lab")continue;
+   var operation=entry.Value;var asyncType=operation.GetType().GetInterfaces().SingleOrDefault(value=>value.FullName=="UnityEngine.ResourceManagement.AsyncOperations.IAsyncOperation");
+   var cacheType=operation.GetType().GetInterfaces().SingleOrDefault(value=>value.FullName=="UnityEngine.ResourceManagement.AsyncOperations.ICachable");
+   if(asyncType==null||cacheType==null||!(bool)asyncType.GetProperty("IsDone").GetValue(operation,null)||!ReferenceEquals(cacheType.GetProperty("Key").GetValue(operation,null),key))throw new Exception("Owned resource operation is pending or changed");
+   stale.Add(entry);
+  }
+  foreach(var entry in stale){
+   var operation=entry.Value;var cacheType=operation.GetType().GetInterfaces().Single(value=>value.FullName=="UnityEngine.ResourceManagement.AsyncOperations.ICachable");
+   cacheType.GetProperty("Key").SetValue(operation,null,null);
+   cache.Remove(entry.Key);
+  }
+  return stale.Count;
+ }
+ public static int[] ReleasedCatalogRetention(){return new[]{releasedLocators.Count,releasedLocators.Count(value=>value.IsAlive),releasedManifests.Count(value=>value!=null&&value.IsAlive),Addressables.ResourceLocators.Count(),lastDetachedAssetOperations};}
+ public static string DiagnoseFireTrail(){
+  const string path="Prefabs/FireTrail";
+  string guid;if(!RoR2.LegacyResourcesAPI.GetGuid(path,out guid))return "original legacy alias missing";
+  IList<IResourceLocation> locations=null;bool located=WholeCatalogLoader.locator!=null&&WholeCatalogLoader.locator.Locate(guid,typeof(GameObject),out locations);
+  var direct=owned?owned.LoadAsset<GameObject>("Assets/WholeGame/RoR2/Base/Common/DamageTrails/FireTrail.prefab"):null;
+  var handle=Addressables.LoadAssetAsync<GameObject>(guid);
+  try{
+   var result=handle.WaitForCompletion();
+   return Newtonsoft.Json.JsonConvert.SerializeObject(new{located,count=locations==null?0:locations.Count,providers=locations==null?new string[0]:locations.Select(value=>value.ProviderId).ToArray(),direct=direct!=null,status=handle.Status.ToString(),result=result!=null,error=handle.OperationException==null?"":handle.OperationException.GetBaseException().Message});
+  }finally{if(handle.IsValid())Addressables.Release(handle);}
  }
  // Complete definition families share the existing converted owner; no tested-content whitelist.
  static readonly Dictionary<string,UnityEngine.Object[]> definitionFamilies=new Dictionary<string,UnityEngine.Object[]>();

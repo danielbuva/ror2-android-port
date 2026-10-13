@@ -14,6 +14,7 @@ public sealed partial class MovementBatchProbe {
   public string phase;public float seconds;public long allocated,reserved,managed;
   public long managedTotal;public int collections;public string gcMode;public bool incremental;public float collectionSeconds;
   public int trackedCompletedSessions,liveCompletedProbes,liveCompletedReports;public int materials,textures,shaders,gameObjects,bundles;public string[] bundleNames;
+  public int catalogGenerations,catalogLocatorsAlive,catalogManifestsAlive,activeLocators,detachedCatalogOperations;
   public string[] ownedCallbackRoots,callbackRootReadFailures,callbackOwnerScope,statQueueCounts;
  }
  static readonly System.Collections.Generic.List<WeakReference[]> completedSessionReferences=new System.Collections.Generic.List<WeakReference[]>();
@@ -41,7 +42,8 @@ public sealed partial class MovementBatchProbe {
    Delegate callback;try{callback=field.GetValue(manager) as Delegate;}catch(Exception e){failures.Add(manager.GetType().FullName+"."+field.Name+":"+e.GetType().Name);continue;}if(callback==null)continue;
    foreach(var entry in callback.GetInvocationList())for(int i=0;i<completedSessionReferences.Count;i++){var path=FindCompletedCallbackReference(entry.Target,completedSessionReferences[i][0].Target,completedSessionReferences[i][1].Target,0);if(path!=null)roots.Add(manager.GetType().FullName+"."+field.Name+" -> "+entry.Method.Name+" -> completed["+i+"]"+path);}
   }}
-  r.sessionResources.Add(new SessionResourceSample{phase=phase,seconds=Time.realtimeSinceStartup,ownedCallbackRoots=roots.ToArray(),callbackRootReadFailures=failures.ToArray(),callbackOwnerScope=callbackOwners.Select(x=>x.FullName).Concat(new[]{"UnityEngine.ResourceManagement.ResourceManager (instance delegates)"}).ToArray(),statQueueCounts=ReadStatQueueCounts(),trackedCompletedSessions=completedSessionReferences.Count,liveCompletedProbes=completedSessionReferences.Count(x=>x[0].IsAlive),liveCompletedReports=completedSessionReferences.Count(x=>x[1].IsAlive),
+  var catalogs=WholeCatalogComposed.ReleasedCatalogRetention();
+  r.sessionResources.Add(new SessionResourceSample{phase=phase,seconds=Time.realtimeSinceStartup,ownedCallbackRoots=roots.ToArray(),callbackRootReadFailures=failures.ToArray(),callbackOwnerScope=callbackOwners.Select(x=>x.FullName).Concat(new[]{"UnityEngine.ResourceManagement.ResourceManager (instance delegates)"}).ToArray(),statQueueCounts=ReadStatQueueCounts(),trackedCompletedSessions=completedSessionReferences.Count,liveCompletedProbes=completedSessionReferences.Count(x=>x[0].IsAlive),liveCompletedReports=completedSessionReferences.Count(x=>x[1].IsAlive),catalogGenerations=catalogs[0],catalogLocatorsAlive=catalogs[1],catalogManifestsAlive=catalogs[2],activeLocators=catalogs[3],detachedCatalogOperations=catalogs[4],
    allocated=Profiler.GetTotalAllocatedMemoryLong(),reserved=Profiler.GetTotalReservedMemoryLong(),managed=Profiler.GetMonoUsedSizeLong(),managedTotal=GC.GetTotalMemory(false),collections=GC.CollectionCount(0),gcMode=UnityEngine.Scripting.GarbageCollector.GCMode.ToString(),incremental=UnityEngine.Scripting.GarbageCollector.isIncremental,
    materials=Resources.FindObjectsOfTypeAll<Material>().Length,textures=Resources.FindObjectsOfTypeAll<Texture>().Length,
    shaders=Resources.FindObjectsOfTypeAll<Shader>().Length,gameObjects=Resources.FindObjectsOfTypeAll<GameObject>().Length,
