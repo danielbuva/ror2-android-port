@@ -1,21 +1,32 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RoR2;
 using RoR2.Items;
+using RoR2.Orbs;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Scoped startup adapter; component assignment, stack refresh and simulation are native.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class ItemBehaviorReport {
-  public bool ready,cleaned;public int bodies,assignments,refreshes,mushroomWards,cloakObservations;public string[] definitions;
+  public bool ready,cleaned,sourceSupport;public int bodies,assignments,refreshes,mushroomWards,cloakObservations,whipBuffSamples,nearbyIndicators,wispOrbsPeak;
+  public string[] definitions,normalLoot,bossRewards,requestedDeveloperGrants;public float whipPeakMoveSpeed;
   public List<LegendaryItemObservation> legendaryInstances=new List<LegendaryItemObservation>();
-  public string scope="Adapted inventory lifecycle using original item associations; original ward/healing/recharge/controller logic. Registration alone is not proc acceptance.";
+  public string scope="Original item associations and effects with adapted provider leases and read-only observations. Normal loot, source boss rewards and requested developer grants are distinct; effect registration alone is not behavior acceptance.";
  }
  readonly Dictionary<CharacterBody,BaseItemBodyBehavior[]> worldItemBehaviors=new Dictionary<CharacterBody,BaseItemBodyBehavior[]>();
  readonly HashSet<GameObject> worldMushroomWards=new HashSet<GameObject>();
+ readonly HashSet<GameObject> worldNearbyIndicators=new HashSet<GameObject>();
+ readonly Dictionary<string,AsyncOperationHandle<GameObject>> worldItemSupportLeases=new Dictionary<string,AsyncOperationHandle<GameObject>>();
+ readonly Dictionary<string,int> worldItemSupportBaselines=new Dictionary<string,int>();
+ static readonly string[] wholeItemSupportPaths={"Prefabs/NetworkedObjects/NearbyDamageBonusIndicator","Prefabs/Effects/SprintActivate","Prefabs/Effects/OrbEffects/WispOrbEffect"};
+ static readonly string[] wholeItemSupportKeys={"5ba295c0a3919a544939e6efe1ff17b3","dce12bd0bdcbe9b4ea19ca0511cf8f72","7e6c65661679e0440a67d4a33fe2dcc3"};
+ int worldNearbyBehaviorIndex=-1;FieldInfo worldNearbyIndicatorField,worldTravelingOrbsField;
  Type[] worldItemBehaviorTypes={typeof(MushroomBodyBehavior),typeof(PhasingBodyBehavior)};
  ItemDef[] worldItemBehaviorDefinitions;
  bool ownsWorldItemBehaviors,ownsWorldMushroomBinding;object previousWorldMushroom;
@@ -36,6 +47,36 @@ public sealed partial class MovementBatchProbe {
    PresentCommerceModel(source.transform);
   }
   return effects.ToArray();
+ }
+ // These roots are already present in the accepted whole-content manifest. Own
+ // their original LegacyResourcesAPI leases before native behavior execution;
+ // no asset is copied into authored source or enabled by a synthetic grant.
+ IEnumerator PrepareWholeItemBehaviorSupport(Result cfg){
+  if(!cfg.integratedWorld||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))yield break;
+  Check(worldItemSupportLeases.Count==0&&RoR2Content.Buffs.WhipBoost&&RoR2Content.Items.SprintOutOfCombat&&RoR2Content.Items.NearbyDamageBonus&&RoR2Content.Items.SprintWisp,"Original whole-item source definitions absent");
+  for(int i=0;i<wholeItemSupportPaths.Length;i++){
+   var path=wholeItemSupportPaths[i];string key;
+   Check(LegacyResourcesAPI.GetGuid(path,out key)&&key==wholeItemSupportKeys[i],"Original whole-item legacy key changed: "+path);
+   var lease=LegacyResourcesAPI.LoadAsync<GameObject>(path);worldItemSupportLeases.Add(path,lease);yield return lease;
+   var source=lease.Result;
+   Check(lease.Status==AsyncOperationStatus.Succeeded&&source&&source.name==path.Substring(path.LastIndexOf('/')+1)&&source.GetComponentsInChildren<Component>(true).All(component=>component),"Original whole-item source graph absent: "+path);
+   if(i==0){
+    Check(source.GetComponent<NetworkIdentity>()&&source.GetComponent<NetworkedBodyAttachment>(),"Original nearby indicator attachment contract absent");
+    foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){
+     if(worldLootSourceMaterials.ContainsKey(renderer))continue;
+     worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;
+    }
+    PresentCommerceModel(source.transform);
+   }else{
+    Check(source.GetComponent<EffectComponent>(),"Original whole-item effect component absent: "+path);
+    source.GetComponent<EffectComponent>().soundName=null;
+   }
+   worldItemSupportBaselines.Add(path,(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(lease));
+  }
+ }
+ GameObject[] WholeItemBehaviorEffects(){
+  if(worldItemSupportLeases.Count==0)return new GameObject[0];
+  return wholeItemSupportPaths.Skip(1).Select(path=>worldItemSupportLeases[path].Result).ToArray();
  }
  void PrepareWorldItemBehaviors(Result cfg){
   if(cfg.worldItemBehaviorBuffAssets==null)return;
@@ -60,7 +101,19 @@ public sealed partial class MovementBatchProbe {
    }
    Check(types.Count>0&&types.Distinct().Count()==types.Count,"Original item-behavior association family ambiguous");
   }
-  worldItemBehaviorTypes=types.ToArray();worldItemBehaviorDefinitions=defs.ToArray();r.itemBehaviors=new ItemBehaviorReport{ready=true,definitions=defs.Select(x=>x.name).ToArray()};ownsWorldItemBehaviors=true;
+  if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
+   foreach(var pair in new[]{new[]{"RoR2.Items.RedWhipBodyBehavior","SprintOutOfCombat"},new[]{"RoR2.Items.NearbyDamageBonusBodyBehavior","NearbyDamageBonus"},new[]{"RoR2.Items.SprintWispBodyBehavior","SprintWisp"}}){
+    var found=Array.FindIndex(types.ToArray(),type=>type.FullName==pair[0]);
+    Check(found>=0&&defs[found].name==pair[1],"Original whole-item association missing: "+pair[1]);
+   }
+   Check(worldItemSupportLeases.Count==wholeItemSupportPaths.Length&&worldItemSupportBaselines.Count==wholeItemSupportPaths.Length,"Original whole-item support not owned before behavior activation");
+   worldNearbyBehaviorIndex=types.FindIndex(type=>type.FullName=="RoR2.Items.NearbyDamageBonusBodyBehavior");
+   worldNearbyIndicatorField=types[worldNearbyBehaviorIndex].GetField("nearbyDamageBonusIndicator",BindingFlags.NonPublic|BindingFlags.Instance);
+   worldTravelingOrbsField=typeof(OrbManager).GetField("travelingOrbs",BindingFlags.Instance|BindingFlags.NonPublic);
+   Check(worldNearbyIndicatorField!=null&&worldNearbyIndicatorField.FieldType==typeof(GameObject)&&worldTravelingOrbsField!=null,"Original whole-item observation fields changed");
+  }
+  var bossRewardItems=ComposedBaseBossRewards(cfg);
+  worldItemBehaviorTypes=types.ToArray();worldItemBehaviorDefinitions=defs.ToArray();r.itemBehaviors=new ItemBehaviorReport{ready=true,sourceSupport=worldItemSupportLeases.Count==wholeItemSupportPaths.Length,definitions=defs.Select(x=>x.name).ToArray(),normalLoot=defs.Where(def=>worldLootDefinitions.Contains(def)).Select(x=>x.name).ToArray(),bossRewards=defs.Where(def=>bossRewardItems.Contains(def)).Select(x=>x.name).ToArray(),requestedDeveloperGrants=(r.developerItemGrants??new string[0]).Where(name=>defs.Any(def=>def.name==name)).ToArray()};ownsWorldItemBehaviors=true;
   CharacterBody.onBodyInventoryChangedGlobal+=RefreshWorldItemBehaviors;CharacterBody.onBodyDestroyGlobal+=RemoveWorldItemBehaviors;
   foreach(var body in CharacterBody.readOnlyInstancesList.ToArray())if(body&&body.gameObject.activeInHierarchy)RefreshWorldItemBehaviors(body);
  }
@@ -76,8 +129,28 @@ public sealed partial class MovementBatchProbe {
   foreach(var pair in worldItemBehaviors.ToArray()){
    if(!pair.Key){worldItemBehaviors.Remove(pair.Key);continue;}
    if(pair.Key.HasBuff(RoR2Content.Buffs.Cloak))r.itemBehaviors.cloakObservations++;
+   if(worldItemSupportLeases.Count==wholeItemSupportPaths.Length){
+    if(pair.Key.HasBuff(RoR2Content.Buffs.WhipBoost)){r.itemBehaviors.whipBuffSamples++;r.itemBehaviors.whipPeakMoveSpeed=Mathf.Max(r.itemBehaviors.whipPeakMoveSpeed,pair.Key.moveSpeed);}
+    if(worldNearbyBehaviorIndex>=0&&pair.Value[worldNearbyBehaviorIndex]){
+     var indicator=(GameObject)worldNearbyIndicatorField.GetValue(pair.Value[worldNearbyBehaviorIndex]);
+     if(indicator&&worldNearbyIndicators.Add(indicator)){
+      var attachment=indicator.GetComponent<NetworkedBodyAttachment>();var identity=indicator.GetComponent<NetworkIdentity>();
+      Check(attachment&&attachment.attachedBody==pair.Key&&identity&&identity.netId.Value!=0&&NetworkServer.FindLocalObject(identity.netId)==indicator,"Original nearby indicator authority/body linkage differs");
+      r.itemBehaviors.nearbyIndicators++;
+     }
+    }
+   }
    int mushroom=Array.IndexOf(worldItemBehaviorTypes,typeof(MushroomBodyBehavior));var behavior=mushroom<0?null:pair.Value[mushroom];if(!behavior)continue;var obj=(GameObject)typeof(MushroomBodyBehavior).GetField("mushroomWardGameObject",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(behavior);
    if(obj&&worldMushroomWards.Add(obj)){var ward=obj.GetComponent<HealingWard>();Check(ward&&ward.netId.Value!=0&&obj.GetComponent<TeamFilter>().teamIndex==pair.Key.teamComponent.teamIndex,"Native Mushroom ward authority/team differs");r.itemBehaviors.mushroomWards++;worldObjects.Add(obj);}
+  }
+  if(worldItemSupportLeases.Count==wholeItemSupportPaths.Length&&OrbManager.instance){
+   int count=0;
+   foreach(var orb in (IEnumerable<Orb>)worldTravelingOrbsField.GetValue(OrbManager.instance)){
+    var wisp=orb as DevilOrb;
+    var attacker=wisp!=null&&wisp.attacker?wisp.attacker.GetComponent<CharacterBody>():null;
+    if(wisp!=null&&wisp.effectType==DevilOrb.EffectType.Wisp&&attacker&&worldItemBehaviors.ContainsKey(attacker))count++;
+   }
+   r.itemBehaviors.wispOrbsPeak=Math.Max(r.itemBehaviors.wispOrbsPeak,count);
   }
  }
  void CleanupWorldItemBehaviors(){
@@ -85,5 +158,19 @@ public sealed partial class MovementBatchProbe {
    foreach(var body in worldItemBehaviors.Keys.ToArray())RemoveWorldItemBehaviors(body);foreach(var ward in worldMushroomWards)if(ward)NetworkServer.Destroy(ward);worldMushroomWards.Clear();r.itemBehaviors.cleaned=true;
   }
   if(ownsWorldMushroomBinding){MushroomPrefabField().SetValue(null,previousWorldMushroom);ownsWorldMushroomBinding=false;}
+  if(worldItemSupportLeases.Count>0){
+   var cache=(System.Collections.IDictionary)typeof(OrbStorageUtility).GetField("_orbDictionary",BindingFlags.Static|BindingFlags.NonPublic).GetValue(null);
+   var orbPath=wholeItemSupportPaths[2];if(cache.Contains(orbPath))cache.Remove(orbPath);
+   foreach(var pair in worldItemSupportLeases){
+    if(!pair.Value.IsValid())continue;
+    int baseline;if(worldItemSupportBaselines.TryGetValue(pair.Key,out baseline)){
+     var count=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pair.Value)-baseline;
+     Check(count>=0,"Original whole-item provider ownership changed: "+pair.Key);
+     for(int i=0;i<count;i++)Addressables.Release(pair.Value.Result);
+    }
+    Addressables.Release(pair.Value);
+   }
+   worldItemSupportLeases.Clear();worldItemSupportBaselines.Clear();worldNearbyIndicators.Clear();worldNearbyBehaviorIndex=-1;worldNearbyIndicatorField=null;worldTravelingOrbsField=null;
+  }
  }
 }

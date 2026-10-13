@@ -412,13 +412,17 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // as soon as earned money permits; clearing every barrel is not a game rule.
   if(r.liveCatalogs!=null&&worldObjective==0){var chest=NextAutomaticWorldChest(player);if(chest)worldObjective=1;}
   if(worldObjective==0){var barrel=worldBarrels.Where(x=>x&&!x.Networkopened).OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();if(barrel)target=barrel.gameObject;else worldObjective=1;}
-  if(worldObjective==3&&elapsed-stageEnteredAt<105&&NextAutomaticWorldChest(player)&&player.master.money>=NextAutomaticWorldChest(player).GetComponent<PurchaseInteraction>().cost)worldObjective=1;
+  if(worldObjective==3&&elapsed-stageEnteredAt<160&&NextAutomaticWorldChest(player)&&player.master.money>=NextAutomaticWorldChest(player).GetComponent<PurchaseInteraction>().cost)worldObjective=1;
   if(worldObjective==1){var chest=NextAutomaticWorldChest(player);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
   if(worldObjective>0&&GrantableWorldPickups(player,true).Any())worldObjective=2;
   if(worldObjective==2){var pickup=GrantableWorldPickups(player,true).OrderBy(x=>Vector3.Distance(x.transform.position,player.corePosition)).FirstOrDefault();if(pickup)target=pickup.gameObject;else if(r.world.pickupMessages-stagePickupBaseline>=r.world.openedChests)worldObjective=3;}
   if(worldObjective==3&&elapsed-stageEnteredAt<65){var commerce=AffordableWorldCommerce();if(commerce)target=commerce;}
   r.world.objective=worldObjective==0?"Collect original barrel rewards":worldObjective==1?"Purchase original chest":worldObjective==2?"Collect naturally ejected item":"Survive original director combat";
-  if(r.teleporterLoop&&elapsed-stageEnteredAt>65){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
+  // Keep diagnostic combat/shopping active briefly when the original stage
+  // actually spawned an equipment barrel. The native purchase still requires
+  // earned money and the normal drop/acquisition path.
+  bool shoppingForNativeEquipment=worldEquipmentChests.Any(x=>x&&!x.NetworkisChestOpened)&&player.inventory.currentEquipmentIndex==EquipmentIndex.None&&elapsed-stageEnteredAt<160;
+  if(r.teleporterLoop&&elapsed-stageEnteredAt>65&&!shoppingForNativeEquipment){if(ObjectiveWorldStimulus(player,bridge,elapsed))return;}
   bridge.movement=Vector2.zero;
   if(target){
    if(r.teleporterLoop&&DefendWorldApproach(player,bridge,target,elapsed))return;

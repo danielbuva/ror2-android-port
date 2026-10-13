@@ -4415,3 +4415,21 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **FAILURE EVIDENCE TO CAPTURE:** First metadata/index/entitlement/dispatch failure and precise native call; assisted/duplicate exclusion; original result and profile identity.
 - **STATE/JOURNAL UPDATES REQUIRED:** J437 journal and concise state/coverage/exit; failed attempts retained under ignored progression evidence.
 - **DEPENDENCIES:** J436 accepted profile lifecycle. Pinned R2API.Unlockable/Loadout registration seams; current native achievement, activity and currency-dispatch contracts. Host and Android acceptance are limited to the eleven persistent-stat classes; other achievement families and lunar purchase/transport remain open.
+
+## C09 / J439 — Original item effects and native equipment path
+- **ID / TITLE:** C09, source-backed item behavior and original equipment-barrel acquisition.
+- **CONTEXT / OBSERVATION:** Whole catalogs register 84 item associations, but few have executed; native stage population can spawn `iscEquipmentBarrel` outside the old lab layout.
+- **HYPOTHESIS / TASK:** Own exact shipped item-effect leases, observe native Whip/Focus Crystal/Wisp behavior, categorize native barrel by its source card, and let diagnostic input save earned currency for its normal purchase/activation.
+- **CONSTRAINTS / AREAS:** Original behavior and director selection stay unchanged; no asset commits, item unlocks or fabricated grants. Item/equipment/stage diagnostic consumers and code-only recipe only.
+- **TEST / PASS:** Doctor, preflight,132host tests and exact-editor Vulkan build pass. Assisted Android run confirms Whip and Focus Crystal,143.6world seconds/21kills/one genuine transition, zero current-process errors and unchanged saves. Wisp orb and equipment activation remain unproved.
+- **FAILURE / UPDATE:** Preserve false observer assertion and30/33currency cutoff separately. Latest run's first real blocker is original `goolake` selection without converted content; state/J439 updated, no route gate advances.
+- **DEPENDENCIES:** C08, pinned R2API.Items behavior knowledge, accepted original LegacyResourcesAPI, associations and SceneDirector card identities.
+
+## C10 — Complete eligible base-stage scene coverage
+- **ID / TITLE:** C10, source-backed Android conversion for original scene destinations.
+- **CONTEXT / OBSERVATION:** Original Run selected `goolake`; five converted next-stage scenes exclude it.
+- **HYPOTHESIS / TASK:** Inventory every eligible base-game destination and stage its original reduced scene, MapZone/preview contracts, graphs and dependency closure through the existing pipeline. Preserve source SceneCatalog/Run selection.
+- **CONSTRAINTS / AREAS:** Ignored converted assets stay local; original installation, entitlements, saved profiles and Moon candidate stay untouched. Extend only scene converter/build recipe and required stage data.
+- **TEST / PASS:** Host source-contract/closure checks, exact-editor import and composed Vulkan build, then one guarded Android route that loads whatever eligible original destination is selected with matching scene name/graphs and no current-process error.
+- **FAILURE / UPDATE:** Capture first scene import/reference/runtime failure, APK/payload hashes and current PID. Update concise state/journal; no synthetic reroute.
+- **DEPENDENCIES:** C09 evidence, accepted Steam scene catalog, pinned R2API.Director scene lifecycle observations.

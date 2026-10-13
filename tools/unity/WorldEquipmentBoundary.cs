@@ -11,7 +11,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class EquipmentActionObservation {public string equipment;public float seconds,health,armor,crit;public int stock;}
  [Serializable] public class WorldEquipmentReport {
   public bool ready,cleaned;public string equipment,error,scope="Original equipment pickup/activation/cooldown; owned input/scheduling, source presentation approximation, no stock profile unlocks.";
-  public int definitions,eligible,stock,maxStock,ticks,activations,ammoPacks;public float cooldown;
+  public int definitions,eligible,stock,maxStock,ticks,activations,ammoPacks,sourceBarrels,openedBarrels;public float cooldown;
   public List<EquipmentActionObservation> actions=new List<EquipmentActionObservation>();
   public List<FlightEquipmentObservation> flightObjects=new List<FlightEquipmentObservation>();
   public int ownedFlightDeathCallbacksRemoved;public bool flightCleaned;
@@ -79,7 +79,7 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveWorldEquipment(){
   var report=r.world.equipment;if(report==null)return;ObserveFlightEquipment();Check(string.IsNullOrEmpty(report.error),"Original equipment lifecycle failed: "+report.error);
-  var def=EquipmentCatalog.GetEquipmentDef(worldEquipmentSlot.equipmentIndex);report.equipment=def?def.name:"";report.stock=worldEquipmentSlot.stock;report.maxStock=worldEquipmentSlot.maxStock;report.cooldown=worldEquipmentSlot.cooldownTimer;
+  var def=EquipmentCatalog.GetEquipmentDef(worldEquipmentSlot.equipmentIndex);report.equipment=def?def.name:"";report.stock=worldEquipmentSlot.stock;report.maxStock=worldEquipmentSlot.maxStock;report.cooldown=worldEquipmentSlot.cooldownTimer;report.sourceBarrels=worldEquipmentChests.Count(x=>x);report.openedBarrels=worldEquipmentChests.Count(x=>x&&x.NetworkisChestOpened);
   foreach(var fieldName in new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}){var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(fieldName,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldPlayer);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);report.temporaryEffectViews=effect.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();}}
   foreach(var pickup in Resources.FindObjectsOfTypeAll<AmmoPickup>().Where(x=>x.gameObject.scene.IsValid()))if(worldNativeLootObjects.Add(pickup.baseObject)){worldObjects.Add(pickup.baseObject);report.ammoPacks++;}
  }
@@ -98,7 +98,13 @@ public sealed partial class MovementBatchProbe {
  }
  ChestBehavior NextAutomaticWorldChest(CharacterBody player){
   // Diagnostic route chooses a normal purchase; it never grants equipment or bypasses cost.
-  if(r.liveCatalogs!=null)return worldChests.Where(x=>{if(!x||x.NetworkisChestOpened)return false;var purchase=x.GetComponent<PurchaseInteraction>();return purchase&&purchase.available&&purchase.costType==CostTypeIndex.Money&&player.master.money>=purchase.cost;}).OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();
+  if(r.liveCatalogs!=null){
+   // Save earned money for a native EquipmentBarrel while the slot is empty;
+   // shopping an ordinary chest first can consume the exact currency needed.
+   if(player.inventory.currentEquipmentIndex==EquipmentIndex.None){var equipment=worldEquipmentChests.Where(x=>{if(!x||x.NetworkisChestOpened)return false;var purchase=x.GetComponent<PurchaseInteraction>();return purchase&&purchase.available&&purchase.costType==CostTypeIndex.Money;}).OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();if(equipment){var cost=equipment.GetComponent<PurchaseInteraction>().cost;return player.master.money>=cost?equipment:null;}}
+   var affordable=worldChests.Where(x=>{if(!x||x.NetworkisChestOpened)return false;var purchase=x.GetComponent<PurchaseInteraction>();return purchase&&purchase.available&&purchase.costType==CostTypeIndex.Money&&player.master.money>=purchase.cost;}).ToArray();
+   return affordable.OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();
+  }
   if(player.inventory.currentEquipmentIndex==EquipmentIndex.None){var equipment=worldEquipmentChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(equipment)return equipment;}
   return worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened&&!worldEquipmentChests.Contains(x));
  }

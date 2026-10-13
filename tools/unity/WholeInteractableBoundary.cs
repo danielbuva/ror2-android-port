@@ -58,7 +58,7 @@ public sealed partial class MovementBatchProbe {
   if(director!=wholeSceneDirector)return;
   Check(obj&&card.GetSpawnCard()&&wholeInteractableCards.Values.Contains(card.GetSpawnCard()),"Native interactable has no owned source card");
   worldObjects.Add(obj);commerceOwned.Add(obj);var barrel=obj.GetComponent<BarrelInteraction>();if(barrel){worldBarrels.Add(barrel);worldBarrelConsumers++;}
-  var chest=obj.GetComponent<ChestBehavior>();if(chest)worldChests.Add(chest);
+  var chest=obj.GetComponent<ChestBehavior>();if(chest){worldChests.Add(chest);if(card.GetSpawnCard().name=="iscEquipmentBarrel")worldEquipmentChests.Add(chest);}
   var shop=obj.GetComponent<MultiShopController>();if(shop){commerceShops.Add(shop);r.commerce.shops++;foreach(var terminal in shop.terminalGameObjectsList){worldObjects.Add(terminal);commerceOwned.Add(terminal);WatchCommercePurchase(terminal.GetComponent<PurchaseInteraction>());}}
   var purchase=obj.GetComponent<PurchaseInteraction>();if(purchase)WatchCommercePurchase(purchase);
   if(obj.GetComponent<ShrineChanceBehavior>())r.commerce.chanceShrines++;
