@@ -209,6 +209,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.authority=player.networkIdentity.hasAuthority&&activeBodyClient.isConnected&&activeBodyOwner.isReady;
   Check(r.world.authority,"Integrated local authority missing");
   PrepareWholeRunAvailability();
+  var displayRules=PrepareWholeModelDisplayRules();while(displayRules.MoveNext())yield return displayRules.Current;
   // Source catalogs persist for the session, rather than being rebuilt around each interaction.
   var flags=BindingFlags.Static|BindingFlags.NonPublic;
   Check(!ownsPickupCatalog&&PickupCatalog.pickupCount==0,"Unowned integrated pickup catalog");

@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks,mapZoneCount,mapZoneNetworkObjects;public string[] mapZoneActiveNames;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
-  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned;
+  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved;
   public float enteredAt,experienceSettlementSeconds;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter,experienceAtExit,pendingExperienceAtExit;public int pendingExperienceAwardsAtExit;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
@@ -55,9 +55,14 @@ public sealed partial class MovementBatchProbe {
   Check(r.objective.bossDefeated&&r.objective.charged&&r.objective.exitFinished&&objectiveStage.completed,"Original stage boss/charge/exit/completion missing before scene transport");
   report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;report.completed.Add(stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
   transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
+  var beetleGland=body.GetComponent<RoR2.Items.BeetleGlandBodyBehavior>();bool resumeBeetleGland=beetleGland&&beetleGland.enabled;if(resumeBeetleGland)beetleGland.enabled=false;
   if(rewardDirector)rewardDirector.enabled=false;
   PauseStageMapZones();var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
   CleanupStageBossInstances();
+  // The native item can summon a player-owned ally outside the stage director.
+  // Retire its body/master before replacing the source navigation graph; its
+  // original item behavior may naturally resummon after the new stage loads.
+  report.playerSummonsRemoved+=DestroyWholePlayerSummons();
   // Old actors must release their original navigation agents before replacing source graphs.
   foreach(var actor in directorActors){if(actor.body)NetworkServer.Destroy(actor.body.gameObject);if(actor.master)NetworkServer.Destroy(actor.master.gameObject);if(actor.model)Destroy(actor.model);}
   foreach(var projectile in FindObjectsOfType<RoR2.Projectile.ProjectileController>())NetworkServer.Destroy(projectile.gameObject);
@@ -67,7 +72,7 @@ public sealed partial class MovementBatchProbe {
   CleanupWholeStagePool();
   if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);if(objectiveStage){Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}if(enemySceneHost)Destroy(enemySceneHost);
   yield return null;yield return null;
-  Check(!SceneInfo.instance&&!ClassicStageInfo.instance&&!Stage.instance&&!TeleporterInteraction.instance&&NavigationAgentCount()==0,"Old original scene context survived transition");
+  Check(!SceneInfo.instance&&!ClassicStageInfo.instance&&!Stage.instance&&!TeleporterInteraction.instance&&NavigationAgentCount()==0,"Old original scene context survived transition: scene="+(bool)SceneInfo.instance+", stageInfo="+(bool)ClassicStageInfo.instance+", stage="+(bool)Stage.instance+", teleporter="+(bool)TeleporterInteraction.instance+", agents="+NavigationAgentCount());
   // Earned XP can still be in the original timed queue after the exit. Let its
   // normal FixedUpdate settle it before taking the strict transport baseline.
   r.phase="integrated-stage-xp-settlement";report.experienceAtExit=TeamManager.instance.GetTeamExperience(TeamIndex.Player);int pendingCount;report.pendingExperienceAtExit=PendingStagePlayerExperience(out pendingCount);report.pendingExperienceAwardsAtExit=pendingCount;
@@ -118,7 +123,7 @@ public sealed partial class MovementBatchProbe {
   else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;PrepareWorldCommerce(integratedStageConfig,origin);var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;}
   report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
   Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.completed.Count,"Original run/master/authority/inventory/XP/count continuity failed");
-  stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;bridge.enabled=true;r.phase="integrated-world-playing";Save();
+  stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;if(resumeBeetleGland&&beetleGland)beetleGland.enabled=true;bridge.enabled=true;r.phase="integrated-world-playing";Save();
  }
  void ReturnIntegratedStageEffects(){
   Check(ownsIntegratedPools,"Stage effect pools have no integrated ownership baseline");

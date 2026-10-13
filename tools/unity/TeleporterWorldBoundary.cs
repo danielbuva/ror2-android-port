@@ -445,7 +445,11 @@ public sealed partial class MovementBatchProbe {
   if(worldDriver.currentInteractable==target)return false;
   var threat=directorActors.Where(x=>x.body&&x.body.healthComponent.alive&&InsideSourceStageBounds(DirectorPhysicsPosition(x.body))).OrderBy(x=>Vector3.Distance(x.body.corePosition,player.corePosition)).FirstOrDefault();
   if(threat==null||Vector3.Distance(threat.body.corePosition,player.corePosition)>=20)return false;
-  if(worldTeleporter&&worldTeleporter.isCharged){
+  // The diagnostic route must not starve a real idle teleporter indefinitely
+  // while the original director continuously replaces nearby attackers.
+  // After the shopping window, keep travelling and firing through the same
+  // input boundary; the teleporter still needs its real selector and events.
+  if(worldTeleporter&&(worldTeleporter.isCharged||worldTeleporter.isIdle&&elapsed-stageEnteredAt>120)){
    // Defend en route without replacing source objective movement. In-range
    // interaction takes aim priority, including the original reward selector.
    if(Vector3.Distance(player.corePosition,target.transform.position)<=player.GetComponent<Interactor>().maxInteractionDistance)return false;

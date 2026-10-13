@@ -44,6 +44,20 @@ static class OptionalPresentationGuard {
   var landing=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.GlobalEventManager").Methods.Single(m=>m.Name=="OnCharacterHitGroundSFX");
   if(landing.ReturnType.FullName!="System.Void"||landing.Parameters.Count!=3||!landing.Body.Instructions.Any(i=>i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="SetSwitch"))throw new Exception("Original optional landing SFX contract changed");
   il=landing.Body.GetILProcessor();original=landing.Body.Instructions[0];il.InsertBefore(original,il.Create(OpCodes.Call,audio));il.InsertBefore(original,il.Create(OpCodes.Brfalse,original));il.InsertBefore(original,il.Create(OpCodes.Ret));
+  // Every activated original CharacterModel constructs this RTPC setter. Keep
+  // its fields/value tracking, but omit native ID and update calls only when
+  // the already-established no-audio boundary is active.
+  var rtpcSetter=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.WwiseUtils.RtpcSetter");
+  var rtpcCtor=rtpcSetter.Methods.Single(m=>m.IsConstructor&&!m.IsStatic&&m.Parameters.Count==2);
+  var idCall=rtpcCtor.Body.Instructions.Single(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="GetIDFromString"&&mr.ReturnType.FullName=="System.UInt32"&&mr.Parameters.Count==1&&mr.Parameters[0].ParameterType.FullName=="System.String");
+  var idStore=idCall.Next;var idLoad=idCall.Previous?.Previous;
+  if(idLoad?.OpCode!=OpCodes.Ldarg_0||idCall.Previous?.OpCode!=OpCodes.Ldarg_1||idStore?.OpCode!=OpCodes.Stfld||idStore.Operand is not FieldReference idField||idField.DeclaringType.FullName!=rtpcSetter.FullName||idField.Name!="id")throw new Exception("Original RTPC ID initializer changed");
+  il=rtpcCtor.Body.GetILProcessor();il.InsertBefore(idLoad,il.Create(OpCodes.Call,audio));il.InsertBefore(idLoad,il.Create(OpCodes.Brfalse,idLoad));il.InsertBefore(idLoad,il.Create(OpCodes.Ldarg_0));il.InsertBefore(idLoad,il.Create(OpCodes.Ldc_I4_0));il.InsertBefore(idLoad,il.Create(OpCodes.Br,idStore));
+  var rtpcFlush=rtpcSetter.Methods.Single(m=>m.Name=="FlushIfChanged"&&m.Parameters.Count==0);
+  var nativeRtpc=rtpcFlush.Body.Instructions.Where(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="SetRTPCValue").ToArray();
+  var expectedStore=rtpcFlush.Body.Instructions.Single(i=>i.OpCode==OpCodes.Stfld&&i.Operand is FieldReference f&&f.DeclaringType.FullName==rtpcSetter.FullName&&f.Name=="expectedEngineValue");
+  if(nativeRtpc.Length!=2||nativeRtpc.Any(i=>i.Next?.OpCode!=OpCodes.Pop)||expectedStore.Next?.OpCode!=OpCodes.Ldarg_0)throw new Exception("Original RTPC flush contract changed");
+  il=rtpcFlush.Body.GetILProcessor();original=expectedStore.Next;il.InsertBefore(original,il.Create(OpCodes.Call,audio));il.InsertBefore(original,il.Create(OpCodes.Brfalse,original));il.InsertBefore(original,il.Create(OpCodes.Ret));
   var teleporter=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.TeleporterInteraction");var fixedUpdate=teleporter.Methods.Single(m=>m.Name=="FixedUpdate");
   var instructions=fixedUpdate.Body.Instructions;
   var profiles=instructions.Where(i=>i.Operand is MethodReference mr&&mr.Name=="get_userProfile").ToArray();
@@ -117,17 +131,17 @@ static class OptionalPresentationGuard {
    profileMethods.Add(ctor);
   }
   // Insertion can move targets beyond the signed-byte range; keep branch semantics exactly.
-  foreach(var m in new[]{sound,landing,fixedUpdate,countdown,turbine}.Concat(stopMethods).Concat(loopMethods))foreach(var instruction in m.Body.Instructions) {
+  foreach(var m in new[]{sound,landing,rtpcCtor,rtpcFlush,fixedUpdate,countdown,turbine}.Concat(stopMethods).Concat(loopMethods))foreach(var instruction in m.Body.Instructions) {
    if(instruction.OpCode==OpCodes.Br_S)instruction.OpCode=OpCodes.Br;
    else if(instruction.OpCode==OpCodes.Brfalse_S)instruction.OpCode=OpCodes.Brfalse;
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).Concat(profileMethods.Select(m=>m.FullName)).ToArray();
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,rtpcCtor.FullName,rtpcFlush.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).Concat(profileMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   if(verified.Name.FullName!=identity||verified.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(verified)))throw new Exception("Optional presentation changed original assembly/type/field/method identity");
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise. Updated-input UserProfile constructor retains default controller-map creation when ReInput is ready; unavailable input leaves maps null for native local XML. Ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); CharacterModel RTPC IDs and value flush retain managed state while omitting only unavailable native calls; five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise. Updated-input UserProfile constructor retains default controller-map creation when ReInput is ready; unavailable input leaves maps null for native local XML. Ownership/authentication unchanged."}));
  }
 }

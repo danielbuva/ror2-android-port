@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -6,12 +7,16 @@ using Newtonsoft.Json.Linq;
 using RoR2;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Original pools choose content. Android owns template activation and unavailable audio.
 public sealed partial class MovementBatchProbe {
  readonly Dictionary<string,GameObject> wholeMasterTemplates=new Dictionary<string,GameObject>(StringComparer.Ordinal);
  readonly Dictionary<CharacterSpawnCard,CharacterSpawnCard> wholeSpawnCards=new Dictionary<CharacterSpawnCard,CharacterSpawnCard>();
+ readonly HashSet<CharacterMaster> wholePlayerSummons=new HashSet<CharacterMaster>();
+ readonly HashSet<ItemDisplayRuleSet> wholeModelDisplayRules=new HashSet<ItemDisplayRuleSet>();
+ CharacterSpawnCard wholeBeetleAllyCard;GameObject priorBeetleAllyMaster;bool observesWholePlayerSummons;
  readonly List<AsyncOperationHandle> wholeStageLeases=new List<AsyncOperationHandle>();
  ClassicStageInfo wholeStageInfo;
  readonly Dictionary<FieldInfo,object> priorWholeDroneFields=new Dictionary<FieldInfo,object>();
@@ -95,7 +100,38 @@ public sealed partial class MovementBatchProbe {
    foreach(var behaviour in masterObject.GetComponentsInChildren<MonoBehaviour>(true))if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal))DestroyImmediate(behaviour);
    masterObject.SetActive(true);objectiveTemplates.Add(masterObject);wholeMasterTemplates.Add(source.name,masterObject);
   }
+  // The original Beetle Gland behavior loads this card by legacy key each time
+  // it summons. Bind only its prefab to the same owned master used by the native
+  // catalog; restore the source card before releasing the content owner.
+  const string allyPath="SpawnCards/CharacterSpawnCards/cscBeetleGuardAlly";
+  string allyKey;Check(LegacyResourcesAPI.GetGuid(allyPath,out allyKey)&&!string.IsNullOrEmpty(allyKey),"Original Beetle Gland spawn-card alias missing");
+  wholeBeetleAllyCard=LegacyResourcesAPI.Load<SpawnCard>(allyPath) as CharacterSpawnCard;
+  GameObject adaptedAlly=null;
+  Check(wholeBeetleAllyCard&&wholeBeetleAllyCard.name=="cscBeetleGuardAlly"&&wholeBeetleAllyCard.prefab&&wholeMasterTemplates.TryGetValue(wholeBeetleAllyCard.prefab.name,out adaptedAlly)&&adaptedAlly&&adaptedAlly!=wholeBeetleAllyCard.prefab,"Original Beetle Gland master adaptation missing");
+  priorBeetleAllyMaster=wholeBeetleAllyCard.prefab;wholeBeetleAllyCard.prefab=adaptedAlly;
+  Check(!observesWholePlayerSummons,"Player summon observer already registered");MasterSummon.onServerMasterSummonGlobal+=ObserveWholePlayerSummon;observesWholePlayerSummons=true;
   return originals.Select(value=>wholeMasterTemplates[value.name]).ToArray();
+ }
+ void ObserveWholePlayerSummon(MasterSummon.MasterSummonReport report){
+  if(report.leaderMasterInstance==rewardPlayerMaster&&report.summonMasterInstance&&report.summonMasterInstance.teamIndex==TeamIndex.Player)wholePlayerSummons.Add(report.summonMasterInstance);
+ }
+ int DestroyWholePlayerSummons(){
+  int count=0;
+  foreach(var summon in wholePlayerSummons){if(!summon)continue;var body=summon.GetBody();if(body&&body!=worldPlayer)NetworkServer.Destroy(body.gameObject);NetworkServer.Destroy(summon.gameObject);count++;}
+  wholePlayerSummons.Clear();return count;
+ }
+ IEnumerator PrepareWholeModelDisplayRules(){
+  if(r.liveCatalogs==null)yield break;
+  // Stock ItemDisplayRuleSet.Init visits enabled instances. Converted inactive
+  // body prefabs are cataloged without that startup path, so run the original
+  // per-set initializer once after all item/equipment/key-item catalogs exist.
+  var models=BodyCatalog.allBodyPrefabs.Where(body=>body).SelectMany(body=>body.GetComponentsInChildren<CharacterModel>(true))
+   .Concat(objectiveTemplates.Where(template=>template).SelectMany(template=>template.GetComponentsInChildren<CharacterModel>(true)));
+  foreach(var rules in models.Select(model=>model.itemDisplayRuleSet).Where(rules=>rules).Distinct()){
+   if(!wholeModelDisplayRules.Add(rules))continue;
+   var original=rules.GenerateRuntimeValuesAsync();while(original.MoveNext())yield return original.Current;
+  }
+  Check(wholeModelDisplayRules.Count>0,"Original catalog body display rules unavailable");
  }
  CharacterSpawnCard WholeSpawnCard(CharacterSpawnCard source){
   CharacterSpawnCard copy;if(wholeSpawnCards.TryGetValue(source,out copy))return copy;
@@ -144,6 +180,9 @@ public sealed partial class MovementBatchProbe {
   foreach(var lease in wholeStageLeases)if(lease.IsValid())Addressables.Release(lease);wholeStageLeases.Clear();
  }
  void CleanupWholePopulation(){
-  CleanupWholeInteractables();CleanupWholeStagePool();CleanupWholeRunAvailability();foreach(var card in wholeSpawnCards.Values)if(card)Destroy(card);wholeSpawnCards.Clear();wholeMasterTemplates.Clear();
+  if(observesWholePlayerSummons){MasterSummon.onServerMasterSummonGlobal-=ObserveWholePlayerSummon;observesWholePlayerSummons=false;}
+  DestroyWholePlayerSummons();
+  if(wholeBeetleAllyCard){Check(wholeBeetleAllyCard.prefab==wholeMasterTemplates[priorBeetleAllyMaster.name],"Owned Beetle Gland card changed");wholeBeetleAllyCard.prefab=priorBeetleAllyMaster;wholeBeetleAllyCard=null;priorBeetleAllyMaster=null;}
+  CleanupWholeInteractables();CleanupWholeStagePool();CleanupWholeRunAvailability();foreach(var card in wholeSpawnCards.Values)if(card)Destroy(card);wholeSpawnCards.Clear();wholeMasterTemplates.Clear();wholeModelDisplayRules.Clear();
  }
 }
