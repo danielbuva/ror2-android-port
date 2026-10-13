@@ -217,7 +217,8 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     preview_script="m_Script: {fileID: 866789372, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_blocks=[b for b in blocks if b.startswith('--- !u!114 ') and map_script in b] if map_zones else []
-    expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2,'wispgraveyard':1,'shipgraveyard':3}
+    expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2,'wispgraveyard':1,'shipgraveyard':3,
+                    'blackbeach':5,'blackbeach2':10,'golemplains2':15,'goolake':6,'rootjungle':4}
     if map_zones and len(map_blocks)!=expected_zones.get(scene_name):raise RuntimeError('Original stage MapZone contract changed; review source')
     map_owners={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in map_blocks}
     by_id={re.match(r'--- !u!\d+ &(-?\d+)',b)[1]:b for b in blocks}
@@ -237,7 +238,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     map_extra=[]
     map_network_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in blocks if b.startswith('--- !u!114 ') and map_network_script in b and re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] in map_owners]
     if map_network_ids and map_team_id is None:raise RuntimeError('Original MapZone TeamFilter identity missing')
-    expected_network_zones={'skymeadow':2,'shipgraveyard':3}
+    expected_network_zones={'skymeadow':2,'shipgraveyard':3,'blackbeach2':9,'golemplains2':14}
     if map_network_ids and len(map_network_ids)!=expected_network_zones.get(scene_name):raise RuntimeError('Original MapZone network scope changed')
     map_ids=[re.match(r'--- !u!114 &(-?\d+)',b)[1] for b in map_blocks];deferred_colliders=[]
     for block in blocks:
@@ -261,7 +262,8 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         lod_refs=[ref for kind,_,block in kept if kind==205 for ref in re.findall(r'renderer: \{fileID: (-?\d+)\}',block)]
         if any(ref!='0' and ref not in kept_ids for ref in lod_refs):raise RuntimeError('Nonempty source LOD renderer reference would be lost')
         write(out/(scene_name+'-billboard-LOD-contract.json'),{'native_billboards':sum(kind==227 for kind,_,_ in kept),'source_explicit_empty_LOD_slots':lod_refs.count('0'),'all_nonempty_source_LOD_renderers_retained':True,'no_guessed_renderers':True})
-    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'wispgraveyard':0,'shipgraveyard':16,'moon2':0}
+    expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'wispgraveyard':0,'shipgraveyard':16,'moon2':0,
+                       'blackbeach':41,'blackbeach2':26,'golemplains2':13,'goolake':26,'rootjungle':23}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
@@ -301,7 +303,12 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         if presentation and guid==scene_guid:
             # LightingData points back to this scene. Traverse the reduced scene already
             # queued above, never the discarded source gameplay dependency graph.
-            if src!=source or existing.get(guid)!=dest:raise RuntimeError('Lighting data scene identity differs from converted scene')
+            if src!=source:
+                catalog=ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
+                owner=read(catalog/'source-guid-index.json').get(guid)
+                if owner!=str(source.relative_to(export)):raise RuntimeError('Lighting data scene has no unique catalog owner')
+                src=source # AssetRipper also exports blackbeachTest with this GUID.
+            if existing.get(guid)!=dest:raise RuntimeError('Lighting data scene identity differs from converted scene')
             continue
         if src.suffix=='.dll':
             if src.name=='RoR2.dll' and guid in existing and existing[guid]==stage/'Plugins/RoR2.dll':continue
@@ -336,7 +343,9 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     for fid in preview_ids:
         go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',source_blocks[fid][1])[1]
         preview_names.append(re.search(r'^  m_Name: (.*)$',source_blocks[go_id][1],re.M)[1])
-    expected_names=['HELPER LIGHT'] if scene_name=='dampcavesimple' else ['EscapePodMesh']*len(preview_ids)
+    preview_additional={'blackbeach':{'WakeAltarMesh':3},'blackbeach2':{'WakeAltarMesh':6},'golemplains2':{'WakeAltarMesh':1},
+                        'goolake':{'WakeAltarMesh':2},'rootjungle':{'WakeAltarMesh':3,'mdlBase':4}}
+    expected_names=['HELPER LIGHT'] if scene_name=='dampcavesimple' else ['EscapePodMesh']*(len(preview_ids)-sum(preview_additional.get(scene_name,{}).values()))+[name for name,count in preview_additional.get(scene_name,{}).items() for _ in range(count)]
     if sorted(preview_names)!=sorted(expected_names):raise RuntimeError('Original preview object names changed; review source')
     def object_path(go_id):
         go=source_blocks[go_id][1];name=re.search(r'^  m_Name: (.*)$',go,re.M)[1]

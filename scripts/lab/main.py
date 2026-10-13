@@ -31,6 +31,9 @@ try:
   elif a.action=='composition-update-dependencies':
    from composition_migration import stage_missing_sources
    stage_missing_sources()
+  elif a.action=='stage-variants':
+   from stage_variants import stage
+   print(json.dumps(stage()))
   elif a.action=='whole-catalog-audit':
    from whole_catalog import audit
    audit()

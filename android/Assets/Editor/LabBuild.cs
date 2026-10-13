@@ -121,7 +121,7 @@ public static class LabBuild {
     }
     foreach(var nextStage in (cfg.nextStageScenes??new string[0]).Concat(string.IsNullOrEmpty(cfg.nextStageScene)?new string[0]:new[]{cfg.nextStageScene}).Distinct()){
      string name=Path.GetFileNameWithoutExtension(nextStage);
-     if(!IsOwnedContentPath(nextStage)||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
+     if(!IsOwnedContentPath(nextStage)||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2","blackbeach","blackbeach2","golemplains2","goolake","rootjungle"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{nextStage}});
     }
     if(!string.IsNullOrEmpty(cfg.prefab)){
