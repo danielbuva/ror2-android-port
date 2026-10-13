@@ -24,12 +24,12 @@ J435 mixed instrumented frame pacing is126.536ms mean/5,120frames; performance a
 
 ## Rollback, device and storage
 
-- The J451 combat-measurement candidate is installed and stopped on adopted storage; OLED asleep. Its APK receipt is `work/config/current-build.json`; J449 is the immediate source-matched rollback and J446 the earlier lifecycle rollback. J445, C09, C07 and candidate51 receipts remain historical; candidate51 requires its matched pre-C07 profile/result pair. Preserve the post-C07 pair separately. Failed52–54 and superseded47 outputs were retired; their receipts, authored source and evidence remain. Ignored cleanup receipt: `work/cleanup-analysis/J437-generated.json`.
+- The J451 combat-measurement candidate is installed and stopped on adopted storage; OLED asleep. Its APK receipt is `work/config/current-build.json`; J449 is the immediate source-matched rollback. J446, J445, C09, C07 and candidate51 receipts remain historical; candidate51 requires its matched pre-C07 profile/result pair. Preserve the post-C07 pair separately. Failed52–54 and superseded47 outputs were retired; their receipts, authored source and evidence remain. The protected J425/J323 rollbacks remain ready. Ignored cleanup receipts: `work/cleanup-analysis/J437-generated.json` and `J451-build-cache-prune.json`.
 - J425 integrated gameplay rollback: APK `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0`, source/evidence `work/experiments/scene-runtime/20261008T163328.528634Z`.
 - J323 paused Moon: APK `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9`, source/evidence `work/experiments/scene-runtime/20261006T034153.546343Z`. Do not autonomously navigate Moon/finale.
 - Old input Steam21587608 is hash-verified/read-only under `work/inputs/steam-21587608`; old33f1 editor and J428 project remain under `work/migrations/steam-21587608/lab-project`. J428 APK `50456ae5c0bb02fbf0fec699943ec61383566d8a300063d730f1d12cbed199ef` remains available during migration.
 - Use only the configured adopted-storage Nova and `dev.ror2lab.arm64`, updating in place. Recheck live storage, package placement and runtime backing each install. No unrelated data/storage changes; do not control Thor. Sleep OLED whenever idle.
-- Retain two accepted executable rollbacks plus active migration material; prune superseded generated outputs while preserving findings/receipts. Retired compressed sources are development history, not cache: `docs/history-retention.md`. Avoid new full snapshots.
+- Retain J449 plus the protected J425/J323 executable rollbacks and active migration material; prune superseded generated outputs while preserving findings/receipts. J451 pruned 30 obsolete build-cache APK/payload copies (52.04 GiB logical, about 5.3 GiB physical free-space gain). Retired compressed sources are development history, not cache: `docs/history-retention.md`. Avoid new full snapshots.
 
 ## C07 progression baseline and C08 composed candidate
 
