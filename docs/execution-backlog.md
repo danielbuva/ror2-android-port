@@ -1,6 +1,6 @@
 # Execution backlog
 
-J431: matching updated editor/input and full native Android catalog registration pass. Candidate31 composed game executes453.022seconds/32kills/four transitions through Sky Meadow with full cleanup and zero current-process errors. Original groups, authored inactive previews and native HUD subobject lookup pass; icon appearance, transition occlusion and performance remain findings. 129 host tests pass. Debug assistance never establishes normal gameplay acceptance. Keep full-catalog session/director connection next, preserve input/editor/rollbacks and defer manual/Moon/PC gates. See PORTING_STATE.md.
+C08 is the active composed candidate. Next: broaden another source-backed gameplay/profile family with host checks and one combined Android run; separately attribute observed low frame rate and session-memory growth. Keep physical controller-reconnect/settings acceptance and manual Moon/finale for a user-present pass. Preserve C07 and matched-profile candidate51 rollbacks. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 

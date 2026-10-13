@@ -91,7 +91,7 @@ public sealed partial class MovementBatchProbe {
    Check(NetworkServer.active&&r.itemDisplays.ready,"Developer equipment source/display ownership absent");
    if(!developerEquipmentInventory){developerEquipmentInventory=worldPlayer.inventory;developerEquipmentPrior=developerEquipmentInventory.GetActiveEquipment();}
    var def=EligibleWorldEquipment().Single(x=>x.name==names[developerEquipmentCursor]);var previous=EquipmentCatalog.GetEquipmentDef(developerEquipmentInventory.currentEquipmentIndex);
-   SetDeveloperEquipmentState(developerEquipmentInventory,new EquipmentState(def.equipmentIndex,Run.FixedTimeStamp.negativeInfinity,1));r.debugAcceleration.equipmentSelections.Add(new DeveloperEquipmentSelection{equipment=def.name,previous=previous?previous.name:"",seconds=elapsed});r.debugAcceleration.everAssisted=true;r.debugAcceleration.normalGameAcceptanceEligible=false;
+   r.debugAcceleration.everAssisted=true;r.debugAcceleration.normalGameAcceptanceEligible=false;SetDeveloperEquipmentState(developerEquipmentInventory,new EquipmentState(def.equipmentIndex,Run.FixedTimeStamp.negativeInfinity,1));r.debugAcceleration.equipmentSelections.Add(new DeveloperEquipmentSelection{equipment=def.name,previous=previous?previous.name:"",seconds=elapsed});
    developerEquipmentCursor++;developerEquipmentChangedAt=elapsed;
   }
   if(developerEquipmentCursor>0){var selection=r.debugAcceleration.equipmentSelections.Last();selection.activated|=r.world.equipment.actions.Any(x=>x.equipment==selection.equipment&&x.seconds>=developerEquipmentChangedAt);if(!selection.activated&&worldEquipmentSlot.equipmentIndex==developerEquipmentInventory.currentEquipmentIndex&&worldEquipmentSlot.stock>0&&elapsed-developerEquipmentChangedAt<5)bridge.diagnosticEquipment=true;}

@@ -65,7 +65,7 @@ public static class AndroidProgressionHost {
   Check(BodyCatalog.bodyCount==0&&ItemCatalog.itemCount==0&&EquipmentCatalog.equipmentCount==0&&ArtifactCatalog.artifactCount==0&&SurvivorCatalog.survivorCount==0,"Host fixture would replace live catalogs");
   var recipe=JObject.Parse(File.ReadAllText(Path.Combine(work,"whole-catalog-build.json")));var manifest=JObject.Parse(File.ReadAllText((string)recipe["manifest"]));
   using(var fixture=new Fixture())using(var owner=new AndroidProgressionBoundary()){
-   foreach(var type in new[]{typeof(ItemCatalog),typeof(EquipmentCatalog),typeof(ArtifactCatalog),typeof(BodyCatalog),typeof(SurvivorCatalog)})fixture.Catalog(type);
+   foreach(var type in new[]{typeof(ItemCatalog),typeof(EquipmentCatalog),typeof(ArtifactCatalog),typeof(BodyCatalog),typeof(SurvivorCatalog),typeof(PickupCatalog)})fixture.Catalog(type);
    fixture.Remember(typeof(ContentManager),"_itemDefs");fixture.Remember(typeof(StatSheet),"fieldsTemplate");fixture.Remember(typeof(StatSheet),"nonDefaultFieldsBuffer");fixture.Remember(typeof(XmlUtility),"ValueReplacements");
    var oldDefault=UserProfile.defaultProfile;fixture.Remember(()=>UserProfile.defaultProfile=oldDefault);
    var viewRoot=(ViewablesCatalog.Node)Field(typeof(ViewablesCatalog),"rootNode").GetValue(null);var oldNodes=viewRoot.children.ToArray();var viewMap=(IDictionary)Field(typeof(ViewablesCatalog),"fullNameToNodeMap").GetValue(null);var oldMap=Entries(viewMap);
@@ -85,11 +85,12 @@ public static class AndroidProgressionHost {
    // ContentManager normally creates the empty item array before native registration.
    if(Field(typeof(ContentManager),"_itemDefs").GetValue(null)==null)Set(typeof(ContentManager),"_itemDefs",Array.Empty<ItemDef>());
    NativeSet(typeof(ItemCatalog),"SetItemDefs",items);NativeSet(typeof(EquipmentCatalog),"SetEquipmentDefs",equipment);NativeSet(typeof(ArtifactCatalog),"SetArtifactDefs",artifacts);NativeSet(typeof(SurvivorCatalog),"SetSurvivorDefs",survivors);
+   PickupCatalog.SetEntries(items.Select(def=>def.CreatePickupDef()).Concat(equipment.Select(def=>def.CreatePickupDef())).ToArray());
    var routine=owner.Prepare(unlocks);try{while(routine.MoveNext())Check(routine.Current==null,"Unexpected asynchronous native metadata dependency");}finally{(routine as IDisposable)?.Dispose();}
    var stats=StatDef.allStatDefs.Select(def=>new StatField{statDef=def}).ToArray();Set(typeof(StatSheet),"fieldsTemplate",stats);Set(typeof(StatSheet),"nonDefaultFieldsBuffer",new bool[stats.Length]);var redirects=AssetDatabase.LoadAssetAtPath<UserProfileRedirectData>("Assets/WholeGame/RoR2/Base/Core/UserProfileRedirects.asset");Check(redirects,"Source redirect data absent");Set(typeof(XmlUtility),"ValueReplacements",redirects);
    if(UserProfile.saveFields==null)UserProfile.GenerateSaveFieldFunctions();UserProfile.LoadDefaultProfile();var empty=Clone(UserProfile.defaultProfile);
-   var thresholds=Run(owner,empty);var persistence=CheckPersistence(owner,directory);
-   return new{success=true,thresholds,persistence,bodies=bodies.Length,items=items.Length,equipment=equipment.Length,artifacts=artifacts.Length,survivors=survivors.Length,unlockables=owner.unlockables,duplicateNames=owner.duplicateUnlockNames,achievements=owner.achievements,fixtureStatFields=stats.Length,syntheticHostDataOnly=true,sourceSurvivorAssetsUnchanged=true,bodyPortraitInitializationTested=false};
+   var thresholds=Run(owner,empty);var persistence=CheckPersistence(owner,directory);var discovery=AndroidDiscoveryHost.Run(owner,empty,Path.Combine(directory,"discovery"));
+   return new{success=true,thresholds,persistence,discovery,bodies=bodies.Length,items=items.Length,equipment=equipment.Length,artifacts=artifacts.Length,survivors=survivors.Length,unlockables=owner.unlockables,duplicateNames=owner.duplicateUnlockNames,achievements=owner.achievements,fixtureStatFields=stats.Length,syntheticHostDataOnly=true,sourceSurvivorAssetsUnchanged=true,bodyPortraitInitializationTested=false};
   }
  }
  public static object Run(AndroidProgressionBoundary owner,UserProfile emptyFixture){

@@ -28,6 +28,12 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   public uint coinsBefore,coinsAfter,collectedBefore,collectedAfter;
   public int unavailableActivityRequests;
  }
+ [Serializable] public sealed class DiscoveryReport {
+  public string pickup;
+  public string[] awarded=Array.Empty<string>();
+  public uint coinsBefore,coinsAfter;
+  public bool discovered;
+ }
  sealed class UnavailableActivityDispatch:ActivityManager {
   public int requests;
   public override void TryToSetActivityAvailability(BaseActivitySelector selector,bool available,bool applyAsDelta=true,bool sendImmediate=true){requests++;}
@@ -42,6 +48,7 @@ public sealed class AndroidProgressionBoundary : IDisposable {
  readonly Dictionary<Run,HashSet<UnlockableDef>[]> priorRunUnlocks=new Dictionary<Run,HashSet<UnlockableDef>[]>();
  IList identifiers;object[] priorIdentifiers;
  AchievementDef[] persistentStats=Array.Empty<AchievementDef>();
+ AchievementDef[] pickupAchievements=Array.Empty<AchievementDef>();
  UnlockableDef[] ownedDefinitions=Array.Empty<UnlockableDef>();
  bool acquired,disposed;
  public bool ready {get;private set;}
@@ -49,6 +56,7 @@ public sealed class AndroidProgressionBoundary : IDisposable {
  public int achievements {get;private set;}
  public string[] duplicateUnlockNames {get;private set;}=Array.Empty<string>();
  public AchievementDef[] persistentStatDefinitions {get{return persistentStats.ToArray();}}
+ public AchievementDef[] pickupDiscoveryDefinitions {get{return pickupAchievements.ToArray();}}
  const BindingFlags StaticFlags=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
  static readonly string[] RunUnlockSets={"unlockablesUnlockedByAnyUser","unlockablesUnlockedByAllUsers","unlockablesAlreadyFullyObtained"};
  static FieldInfo Field(Type type,string name){var field=type.GetField(name,StaticFlags|BindingFlags.Instance);if(field==null)throw new InvalidOperationException("Original progression field absent: "+type.FullName+"."+name);return field;}
@@ -87,6 +95,8 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   foreach(var def in map.Values)if(!string.IsNullOrEmpty(def.unlockableRewardIdentifier))RequireDefinition(UnlockableCatalog.GetUnlockableDef(def.unlockableRewardIdentifier));
   persistentStats=map.Values.Where(def=>typeof(BaseStatMilestoneAchievement).IsAssignableFrom(def.type)).OrderBy(def=>def.identifier,StringComparer.Ordinal).ToArray();
   Check(persistentStats.Length>0&&persistentStats.All(def=>def.type.BaseType==typeof(BaseStatMilestoneAchievement)&&def.serverTrackerType==null&&def.type.GetMethod("OnInstall").DeclaringType==typeof(BaseStatMilestoneAchievement)&&def.type.GetMethod("OnUninstall").DeclaringType==typeof(BaseStatMilestoneAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Unmeasured persistent-stat achievement implementation");
+  pickupAchievements=new[]{"Discover10UniqueTier1","Discover5Equipment"}.Select(id=>map[id]).ToArray();
+  Check(pickupAchievements[0].type==typeof(Discover10UniqueTier1Achievement)&&pickupAchievements[1].type==typeof(Discover5EquipmentAchievement)&&pickupAchievements.All(def=>def.serverTrackerType==null&&def.type.BaseType==typeof(BaseAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Original pickup-discovery achievement contract changed");
   achievements=map.Count;AchievementManager.availability.MakeAvailable();ready=true;
  }
 
@@ -162,6 +172,47 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   finally{bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;Check(owned,"Platform activity ownership changed during local transaction");}
  }
 
+ // The original PlayerCharacterMasterController forwards these exact inventory
+ // client events to UserProfile.DiscoverPickup. Android owns only the missing
+ // unauthenticated profile link; both achievement classes and grants are native.
+ public DiscoveryReport ApplyDiscoveryCandidate(UserProfile candidate,PickupIndex pickup){
+  ValidateProfile(candidate);Check(!candidate.canSave&&!candidate.saveRequestPending&&pickup.isValid&&!candidate.HasDiscoveredPickup(pickup),"Discovery requires a new pickup on an unsaveable profile transaction");
+  var pickupDef=PickupCatalog.GetPickupDef(pickup);Check(pickupDef!=null,"Original pickup identity differs");ValidateUnlockNotifications();
+  var prior=PlatformSystems.activityManager;Check(prior==null,"Foreign platform activity owner");
+  var unavailable=new UnavailableActivityDispatch();var report=new DiscoveryReport{pickup=pickupDef.internalName,coinsBefore=candidate.coins};
+  var user=new LocalUser{userProfile=candidate};Check(user.inputPlayer==null&&!user.currentNetworkUser&&LocalUserManager.readOnlyLocalUsersList.Count==0&&NetworkUser.readOnlyInstancesList.Count==0,"Discovery acquired a user/platform context");
+  var owner=new UserAchievementManager{localUser=user,userProfile=candidate};
+  var installed=new List<BaseAchievement>();var callbacks=candidate.onPickupDiscovered;
+  PlatformSystems.activityManager=unavailable;
+  try{
+   foreach(var definition in pickupAchievements){
+    if(candidate.HasAchievement(definition.identifier))continue;
+    var reward=UnlockableCatalog.GetUnlockableDef(definition.unlockableRewardIdentifier);RequireDefinition(reward);
+    var expansion=UnlockableCatalog.GetExpansionDefForUnlockable(reward.index);
+    if(expansion&&expansion.requiredEntitlement)continue;
+    var achievement=(BaseAchievement)Activator.CreateInstance(definition.type);achievement.achievementDef=definition;achievement.owner=owner;
+    installed.Add(achievement);achievement.OnInstall();
+   }
+   candidate.DiscoverPickup(pickup);report.discovered=candidate.HasDiscoveredPickup(pickup);
+   var awarded=new List<string>();
+   foreach(var achievement in installed)if(achievement.shouldGrant){
+    var definition=achievement.achievementDef;var reward=UnlockableCatalog.GetUnlockableDef(definition.unlockableRewardIdentifier);RequireDefinition(reward);
+    candidate.AddAchievement(definition.identifier,false);achievement.OnGranted();
+    candidate.coins=HGMath.UintSafeAdd(candidate.coins,definition.lunarCoinReward);
+    candidate.totalCollectedCoins=HGMath.UintSafeAdd(candidate.totalCollectedCoins,definition.lunarCoinReward);
+    Check(candidate.HasAchievement(definition.identifier)&&candidate.statSheet.HasUnlockable(reward),"Original pickup-discovery award differs");awarded.Add(definition.identifier);
+   }
+   report.awarded=awarded.ToArray();report.coinsAfter=candidate.coins;
+   Check(owner.dirtyGrantsCount==awarded.Count&&report.discovered,"Original pickup-discovery grant count differs");
+  }
+  finally{
+   for(int i=installed.Count-1;i>=0;i--)installed[i].OnUninstall();
+   bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;
+   Check(owned&&candidate.onPickupDiscovered==callbacks&&!unavailable.IsInitialized,"Original pickup callbacks or unavailable activity owner retained");
+  }
+  return report;
+ }
+
  public int PopulateEarnedRunAvailability(Run run,UserProfile profile){
   ValidateProfile(profile);Check(run&&NetworkServer.active&&run.participatingPlayerCount==1&&NetworkUser.readOnlyInstancesList.Count==0,"Earned availability requires the owned offline single-player Run");
   var sets=RunUnlockSets.Select(name=>(HashSet<UnlockableDef>)Field(typeof(Run),name).GetValue(run)).ToArray();
@@ -184,6 +235,6 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   foreach(var entry in priorMaps){entry.Key.Clear();foreach(var pair in entry.Value)entry.Key.Add(pair.Key,pair.Value);}
   foreach(var entry in priorFields)entry.Key.SetValue(null,entry.Value);
   identifiers.Clear();foreach(var value in priorIdentifiers)identifiers.Add(value);
-  priorDefinitions.Clear();priorMaps.Clear();priorFields.Clear();ownedDefinitions=Array.Empty<UnlockableDef>();persistentStats=Array.Empty<AchievementDef>();acquired=false;
+  priorDefinitions.Clear();priorMaps.Clear();priorFields.Clear();ownedDefinitions=Array.Empty<UnlockableDef>();persistentStats=Array.Empty<AchievementDef>();pickupAchievements=Array.Empty<AchievementDef>();acquired=false;
  }
 }

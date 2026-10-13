@@ -89,7 +89,7 @@ public sealed partial class MovementBatchProbe {
   ResultsStep("item-groups");PrepareResultsItemGroups();
   ResultsStep("report-xml");var folder=RewardField(typeof(RunReport),"runReportsFolder");Check(folder!=null,"Original report-folder field absent");previousReportFolder=(string)folder.GetValue(null);if(!resultsSerializersReady){StaticCall(typeof(RunReport),"Init");resultsSerializersReady=true;}
   resultsDirectory=Path.Combine(Application.persistentDataPath,"offline-run-results-v1");Directory.CreateDirectory(resultsDirectory);folder.SetValue(null,resultsDirectory+Path.DirectorySeparatorChar);LoadAndroidRunLedger();r.results.priorRuns=resultsLedger.runs.Count;
-  ResultsStep("android-profile");PrepareAndroidProfile();
+  ResultsStep("android-profile");PrepareAndroidProfile(player);
   // GameOverController.Awake creates RunReport, whose RuleBook requires the
   // native default-value metadata. This applies no Run rules or availability.
   ResultsStep("rule-metadata");PrepareObjectiveRuleCatalog();

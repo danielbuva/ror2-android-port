@@ -1,5 +1,6 @@
 using System.Collections;
 using System.IO;
+using System.Linq;
 using RoR2;
 using UnityEngine;
 
@@ -9,6 +10,19 @@ public sealed partial class MovementBatchProbe {
  bool offlineStartVisible,offlineStartSelected,returnToOfflineMenu;
  public bool skipOfflineMenu;
  NovaInputBridge.Mapping offlineMenuMapping;
+ NovaInputBridge.ControllerPresence offlineUiPresence;
+ bool OfflineUiControllerPresent(){
+  var names=UnityEngine.Input.GetJoystickNames();
+  if(names.Length==0||string.IsNullOrEmpty(names[0])||names.Skip(1).Any(name=>!string.IsNullOrEmpty(name))){offlineUiPresence?.Suspend();return false;}
+  var map=offlineMenuMapping??(r!=null&&r.nova!=null?r.nova.mapping:null);
+  if(map==null)return false;
+  if(offlineUiPresence==null)offlineUiPresence=new NovaInputBridge.ControllerPresence(names[0]);
+  var raw=NovaInputBridge.ReadRaw();
+  bool neutral=raw.buttons.All(down=>!down)&&new[]{map.moveX,map.moveY,map.aimX,map.aimY}.All(axis=>Mathf.Abs(raw.axes[axis])<=AndroidOfflineSettings.current.deadzone);
+  return offlineUiPresence.Observe(names,neutral,Time.realtimeSinceStartup);
+ }
+ void OnApplicationFocus(bool focused){if(!focused)offlineUiPresence?.Suspend();}
+ void OnApplicationPause(bool paused){if(paused)offlineUiPresence?.Suspend();}
  static bool AllowsOfflineSessionMenu(Result session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
  IEnumerator AwaitOfflineRunStart(Result cfg){
   if(cfg.integratedWorld&&cfg.integratedResults)PrepareOfflineSettings();
@@ -19,8 +33,9 @@ public sealed partial class MovementBatchProbe {
   offlineStartVisible=false;CleanupRecoveredMenu();r.phase="started";Save();
  }
  void ObserveOfflineApplicationInput(){
-  if(offlineStartVisible){if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+offlineMenuMapping.jump)))offlineStartSelected=true;return;}
-  if(r!=null&&r.phase!="commando-defeated"&&r.freePlay&&r.results!=null&&r.results.persisted&&r.nova!=null&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump)))RequestResultsMenu();
+  if(offlineStartVisible){if(OfflineUiControllerPresent()&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+offlineMenuMapping.jump)))offlineStartSelected=true;return;}
+  ObserveOfflineSettingsControllerInput();
+  if(r!=null&&r.phase!="commando-defeated"&&r.freePlay&&r.results!=null&&r.results.persisted&&r.nova!=null&&!offlineSettingsVisible&&OfflineUiControllerPresent()&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump)))RequestResultsMenu();
  }
  bool DrawOfflineStart(){
   if(!offlineStartVisible)return false;

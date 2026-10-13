@@ -5,11 +5,12 @@ using System.Reflection;
 using RoR2;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Zio;
 
 public sealed partial class MovementBatchProbe {
- [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public uint earnedCoins;public ulong kills;}
+ [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public uint earnedCoins;public ulong kills;}
  sealed class AndroidProfileSaveSystem:SaveSystem {
   public AndroidOfflineProfile local;
   static Exception Unavailable(){return new NotSupportedException("Steam identity, cloud/profile import and platform history unavailable; owned Android profile only.");}
@@ -24,13 +25,15 @@ public sealed partial class MovementBatchProbe {
   public override Dictionary<string,byte[]> LoadHistory(){throw Unavailable();}
  }
  AndroidProgressionBoundary androidProgression;
+ AndroidProgressionBoundary.DiscoveryReport pendingDiscovery;
+ Inventory discoveryInventory;Action<ItemIndex> discoveryItem;Action<EquipmentIndex,uint> discoveryEquipment;Action<KeyItemIndex> discoveryKeyItem;
  readonly Dictionary<FieldInfo,object> priorProfileCatalog=new Dictionary<FieldInfo,object>();
  readonly Dictionary<SurvivorDef,SurvivorIndex> priorProfileSurvivors=new Dictionary<SurvivorDef,SurvivorIndex>();
  ViewablesCatalog.Node profileViewablesRoot;ViewablesCatalog.Node[] priorProfileNodes;
  Dictionary<string,ViewablesCatalog.Node> profileViewablesMap,priorProfileViewables;
  UserProfile priorDefaultProfile;object priorProfileRedirects;bool ownsProfileContext;
  AsyncOperationHandle<UserProfileRedirectData> profileRedirectLease;bool ownsProfileRedirectLease;
- void PrepareAndroidProfile(){
+ void PrepareAndroidProfile(CharacterBody player){
   if(!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;
   r.profile=new AndroidProfileReport{scope="Original UserProfile/default/XML/statistics/loadout on Android only; recoverable local generations. Native persistent-stat achievements and earned local currency; platform reporting, login, Steam/cloud import and Rewired maps unavailable. Other achievement families remain deferred."};Save();
   Check(SurvivorCatalog.survivorCount==0&&UserProfile.defaultProfile==null&&priorProfileCatalog.Count==0,"Foreign survivor/profile context");
@@ -59,10 +62,23 @@ public sealed partial class MovementBatchProbe {
   if(UserProfile.saveFields==null)UserProfile.GenerateSaveFieldFunctions();
   Check(PickupCatalog.pickupCount>0,"Native profile requires complete pickup metadata first");
   UserProfile.LoadDefaultProfile();Check(!UserProfile.defaultProfile.canSave&&!UserProfile.defaultProfile.loggedIn&&UserProfile.defaultProfile.coins==0,"Native default profile unexpectedly has platform/currency state");
-  var local=new AndroidOfflineProfile(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"),resultsLedger.runs.Select(ProfileRunIdentity),candidate=>{r.profile.awards=androidProgression.ApplyPersistentStatCandidate(candidate);});resultsSaveSystem.local=local;resultsSaveSystem.userProfile=local.profile;resultsSaveSystem.isInitialLoadFinished=true;
+  var local=new AndroidOfflineProfile(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"),resultsLedger.runs.Select(ProfileRunIdentity),candidate=>{r.profile.awards=androidProgression.ApplyPersistentStatCandidate(candidate);},(candidate,pickup)=>{pendingDiscovery=androidProgression.ApplyDiscoveryCandidate(candidate,pickup);});resultsSaveSystem.local=local;resultsSaveSystem.userProfile=local.profile;resultsSaveSystem.isInitialLoadFinished=true;
   r.profile.discoverySlots=((bool[])typeof(UserProfile).GetField("discoveredPickups",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(local.profile)).Length;Check(r.profile.discoverySlots==PickupCatalog.pickupCount,"Native profile discovery capacity differs from catalog");
   ReconcileAndroidProfile(local);resultsSaveSystem.userProfile=local.profile;
   r.profile.ready=true;r.profile.created=local.recovery=="new";r.profile.roundTrip=true;r.profile.recovery=local.recovery;r.profile.saveFields=UserProfile.saveFields.Length;r.profile.statFields=local.profile.statSheet.fields.Length;r.profile.survivors=SurvivorCatalog.survivorCount;ObserveAndroidProfile();Save();
+  Check(player&&player.master&&player.master.inventory&&player.master.inventory==player.inventory&&!directorPlayer.networkUser&&discoveryInventory==null,"Owned offline player pickup discovery identity missing");
+  discoveryInventory=player.inventory;
+  discoveryItem=index=>RecordProfileDiscovery(PickupCatalog.FindPickupIndex(index));
+  discoveryEquipment=(index,slot)=>RecordProfileDiscovery(PickupCatalog.FindPickupIndex(index));
+  discoveryKeyItem=index=>RecordProfileDiscovery(PickupCatalog.FindPickupIndex(index));
+  discoveryInventory.onItemAddedClient+=discoveryItem;discoveryInventory.onEquipmentChangedClient+=discoveryEquipment;discoveryInventory.onKeyItemAddedClient+=discoveryKeyItem;
+ }
+ void RecordProfileDiscovery(PickupIndex pickup){
+  if(r.profile==null||!r.profile.ready||!pickup.isValid)return;
+  Check(discoveryInventory!=null&&resultsSaveSystem.local!=null&&NetworkClient.active,"Original pickup event has no owned offline player context");
+  if((r.nova!=null&&r.nova.diagnosticInput)||(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted)){r.profile.assistedDiscoveriesExcluded++;return;}
+  pendingDiscovery=null;
+  if(resultsSaveSystem.local.DiscoverPickup(pickup)){Check(pendingDiscovery!=null&&pendingDiscovery.discovered,"Native discovery report missing after profile commit");r.profile.discovery=pendingDiscovery;resultsSaveSystem.userProfile=resultsSaveSystem.local.profile;r.profile.discoveredPickups++;ObserveAndroidProfile();Save();}
  }
  Guid ProfileRunIdentity(AndroidRunEntry entry){
   var stem=System.IO.Path.GetFileNameWithoutExtension(entry.file);Guid id;
@@ -86,6 +102,10 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupAndroidProfile(){
   if(!ownsProfileContext)return;
+  if(!ReferenceEquals(discoveryInventory,null)){
+   discoveryInventory.onItemAddedClient-=discoveryItem;discoveryInventory.onEquipmentChangedClient-=discoveryEquipment;discoveryInventory.onKeyItemAddedClient-=discoveryKeyItem;
+   discoveryInventory=null;discoveryItem=null;discoveryEquipment=null;discoveryKeyItem=null;
+  }
   try{if(resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.saveRequestPending)resultsSaveSystem.local.Save();}
   catch(Exception error){
    // Preserve the save failure but finish every owned teardown. A failed disk
@@ -93,7 +113,7 @@ public sealed partial class MovementBatchProbe {
    if(r.profile!=null)r.profile.error=error.ToString();r.error+=" Android profile save during cleanup: "+error;r.success=false;
    if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=error.GetBaseException().Message;r.firstFailurePhase="android-profile-cleanup-save";}
   }
-  if(androidProgression!=null){androidProgression.Dispose();androidProgression=null;}
+  pendingDiscovery=null;if(androidProgression!=null){androidProgression.Dispose();androidProgression=null;}
   UserProfile.defaultProfile=priorDefaultProfile;RewardField(typeof(XmlUtility),"ValueReplacements").SetValue(null,priorProfileRedirects);
   if(ownsProfileRedirectLease){if(profileRedirectLease.IsValid())Addressables.Release(profileRedirectLease);ownsProfileRedirectLease=false;}
   foreach(var node in profileViewablesRoot.children.ToArray())if(!priorProfileNodes.Contains(node))node.SetParent(null);

@@ -17,11 +17,11 @@ using UnityEngine;
 public sealed class AndroidOfflineProfile {
  [Serializable] sealed class Generation {public int version=2;public string xml,sha256;public List<string> appliedRuns=new List<string>(),baselineRuns=new List<string>();}
  public readonly string directory;public string recovery="new";public UserProfile profile {get;private set;}
- Generation generation;readonly List<string> initialBaseline;readonly bool baselineProvided;readonly Action<UserProfile> progression;
+ Generation generation;readonly List<string> initialBaseline;readonly bool baselineProvided;readonly Action<UserProfile> progression;readonly Action<UserProfile,PickupIndex> discovery;
  public int appliedRuns {get{return generation.appliedRuns.Count;}}
  public int baselineRuns {get{return generation.baselineRuns.Count;}}
  string primary {get{return Path.Combine(directory,"profile.json");}}
- public AndroidOfflineProfile(string directory,IEnumerable<Guid> baselineRuns=null,Action<UserProfile> progression=null){this.directory=directory;this.progression=progression;baselineProvided=baselineRuns!=null;initialBaseline=(baselineRuns??Enumerable.Empty<Guid>()).Select(id=>{if(id==Guid.Empty)throw new ArgumentException("Baseline run identity is empty");return id.ToString("N");}).Distinct().OrderBy(id=>id,StringComparer.Ordinal).ToList();Directory.CreateDirectory(directory);Load();EnsureBaselineBackup();}
+ public AndroidOfflineProfile(string directory,IEnumerable<Guid> baselineRuns=null,Action<UserProfile> progression=null,Action<UserProfile,PickupIndex> discovery=null){this.directory=directory;this.progression=progression;this.discovery=discovery;baselineProvided=baselineRuns!=null;initialBaseline=(baselineRuns??Enumerable.Empty<Guid>()).Select(id=>{if(id==Guid.Empty)throw new ArgumentException("Baseline run identity is empty");return id.ToString("N");}).Distinct().OrderBy(id=>id,StringComparer.Ordinal).ToList();Directory.CreateDirectory(directory);Load();EnsureBaselineBackup();}
  static string Hash(Generation value){var text=value.xml+"\n"+string.Join("\n",value.appliedRuns);if(value.version==2)text="2\n"+value.xml.Length+"\n"+text+"\nbaseline\n"+string.Join("\n",value.baselineRuns);using(var hash=SHA256.Create())return BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(text))).Replace("-","").ToLowerInvariant();}
  static bool ValidIds(List<string> ids){return ids!=null&&ids.Distinct().Count()==ids.Count&&ids.All(id=>{Guid result;return id!=null&&Guid.TryParseExact(id,"N",out result)&&result!=Guid.Empty&&id==result.ToString("N");});}
  static XDocument Parse(string text){using(var input=new StringReader(text))using(var reader=XmlReader.Create(input,new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null}))return XDocument.Load(reader);}
@@ -93,7 +93,7 @@ public sealed class AndroidOfflineProfile {
  }
  void Commit(UserProfile candidate,IEnumerable<string> ids){
   var unlocks=ProfileUnlocks(candidate);var next=Encode(candidate,ids,generation==null?initialBaseline:generation.baselineRuns);var roundTrip=Decode(next);
-  if(UserProfile.saveFields.Any(field=>field.getter(roundTrip)!=field.getter(candidate))||roundTrip.statSheet.fields.Length!=candidate.statSheet.fields.Length||!roundTrip.statSheet.fields.Select(field=>field.ToString()).SequenceEqual(candidate.statSheet.fields.Select(field=>field.ToString()))||!XNode.DeepEquals(roundTrip.loadout.ToXml("loadout"),candidate.loadout.ToXml("loadout")))throw new InvalidDataException("Native Android profile XML round trip differs");
+  if(UserProfile.saveFields.Any(field=>field.getter(roundTrip)!=field.getter(candidate))||roundTrip.statSheet.fields.Length!=candidate.statSheet.fields.Length||!roundTrip.statSheet.fields.Select(field=>field.ToString()).SequenceEqual(candidate.statSheet.fields.Select(field=>field.ToString()))||!XNode.DeepEquals(roundTrip.loadout.ToXml("loadout"),candidate.loadout.ToXml("loadout"))||Enumerable.Range(0,PickupCatalog.pickupCount).Any(index=>roundTrip.HasDiscoveredPickup(new PickupIndex(index))!=candidate.HasDiscoveredPickup(new PickupIndex(index))))throw new InvalidDataException("Native Android profile XML round trip differs");
   if(!SameUnlocks(unlocks,ProfileUnlocks(roundTrip)))throw new InvalidOperationException("Original profile unlock identity changed during commit");
   ReplacePrimary(next);profile=candidate;profile.canSave=true;profile.saveRequestPending=false;
  }
@@ -102,5 +102,13 @@ public sealed class AndroidOfflineProfile {
  public bool ApplyResult(Guid run,StatSheet delta){
   if(run==Guid.Empty||delta==null)throw new ArgumentException("Genuine run identity/statistics required");var id=run.ToString("N");if(!ShouldApply(run))return false;
   var candidate=Decode(Encode(profile,generation.appliedRuns,generation.baselineRuns));candidate.canSave=false;candidate.ApplyDeltaStatSheet(delta);progression?.Invoke(candidate);Commit(candidate,generation.appliedRuns.Concat(new[]{id}));return true;
+ }
+ public bool DiscoverPickup(PickupIndex pickup){
+  if(!pickup.isValid||pickup.value>=PickupCatalog.pickupCount||PickupCatalog.GetPickupDef(pickup)==null)throw new ArgumentException("Original pickup identity required");
+  if(profile.HasDiscoveredPickup(pickup))return false;
+  var candidate=Decode(Encode(profile,generation.appliedRuns,generation.baselineRuns));candidate.canSave=false;
+  if(discovery==null)candidate.DiscoverPickup(pickup);else discovery(candidate,pickup);
+  if(!candidate.HasDiscoveredPickup(pickup))throw new InvalidOperationException("Original pickup discovery was not recorded");
+  Commit(candidate,generation.appliedRuns);return true;
  }
 }

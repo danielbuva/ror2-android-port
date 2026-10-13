@@ -19,10 +19,39 @@ public sealed class NovaInputBridge : MonoBehaviour {
   }
  }
  [Serializable] public class Raw {public float[] axes=new float[16];public bool[] buttons=new bool[20];}
+ // Unity's measured slot-1 exposure is the only accepted mapping. A temporary
+ // absence must release every held action, then require a stable neutral sample
+ // from that same slot/name before physical input resumes.
+ public sealed class ControllerPresence {
+  public const float ReacquireSeconds=.25f;
+  public readonly string expectedName;
+  public bool connected {get;private set;}
+  public int suspensions {get;private set;}
+  public int reconnections {get;private set;}
+  bool everConnected;float neutralSince=-1;
+  public ControllerPresence(string name){if(string.IsNullOrEmpty(name))throw new ArgumentException("Measured controller name required",nameof(name));expectedName=name;}
+  public bool Matches(string[] names){
+   if(names==null||names.Length==0||names[0]!=expectedName)return false;
+   for(int i=1;i<names.Length;i++)if(!string.IsNullOrEmpty(names[i]))return false;
+   return true;
+  }
+  public bool Observe(string[] names,bool neutral,float now){
+   if(!Matches(names)){Suspend();return false;}
+   if(connected)return true;
+   if(!neutral){neutralSince=-1;return false;}
+   if(neutralSince<0){neutralSince=now;return false;}
+   if(now-neutralSince<ReacquireSeconds)return false;
+   connected=true;if(everConnected)reconnections++;everConnected=true;return true;
+  }
+  public void Suspend(){if(connected)suspensions++;connected=false;neutralSince=-1;}
+ }
  public InputBankTest bank;public Mapping mapping;public string error;
  public NovaThirdPersonView thirdPerson;
  public bool diagnosticEquipment,touchEquipment;public bool enablePrimary,enableAllSkills,diagnosticInput;public bool diagnosticSprint,diagnosticPrimary,diagnosticSecondary,diagnosticUtility,diagnosticSpecial,diagnosticInteract;public Vector3 diagnosticAim;public Vector2 movement,aim;public int fixedTicks,jumpPresses,aimTicks;
- bool focused=true,jumpHeld,jumpLatched;
+ bool focused=true,jumpHeld,jumpLatched;ControllerPresence presence;static string requiredControllerName;
+ public bool controllerConnected=>presence!=null&&presence.connected;
+ public int controllerSuspensions=>presence==null?0:presence.suspensions;
+ public int controllerReconnections=>presence==null?0:presence.reconnections;
  public static void RequireNova(){
 #if UNITY_ANDROID && !UNITY_EDITOR
   using(var build=new AndroidJavaClass("android.os.Build"))if(build.GetStatic<string>("MODEL")!="Retroid Pocket Nova")throw new Exception("This bridge is authorized only for Nova");
@@ -31,21 +60,35 @@ public sealed class NovaInputBridge : MonoBehaviour {
 #endif
   var names=UnityEngine.Input.GetJoystickNames();
   if(names.Length==0||string.IsNullOrEmpty(names[0])||names.Count(x=>!string.IsNullOrEmpty(x))!=1)throw new Exception("Require one controller in Unity joystick slot 1");
+  requiredControllerName=names[0];
  }
  public static Raw ReadRaw(){
   var raw=new Raw();for(int i=0;i<raw.axes.Length;i++)raw.axes[i]=UnityEngine.Input.GetAxisRaw("NovaLabAxis"+i);
   for(int i=0;i<raw.buttons.Length;i++)raw.buttons[i]=UnityEngine.Input.GetKey((KeyCode)((int)KeyCode.Joystick1Button0+i));return raw;
  }
  static Vector2 Stick(Raw raw,int x,int y,float sign){var v=new Vector2(raw.axes[x],raw.axes[y]*sign);float n=v.magnitude;return n<=AndroidOfflineSettings.current.deadzone?Vector2.zero:v/n*Mathf.Min(1,(n-AndroidOfflineSettings.current.deadzone)/(1-AndroidOfflineSettings.current.deadzone));}
+ static bool NeutralSample(Raw raw,Mapping map){
+  for(int i=0;i<raw.buttons.Length;i++)if(raw.buttons[i])return false;
+  var limit=AndroidOfflineSettings.current.deadzone;
+  return Mathf.Abs(raw.axes[map.moveX])<=limit&&Mathf.Abs(raw.axes[map.moveY])<=limit&&Mathf.Abs(raw.axes[map.aimX])<=limit&&Mathf.Abs(raw.axes[map.aimY])<=limit;
+ }
  void Update(){
   try{
-   if(!bank||mapping==null||!focused){Neutral();return;}
-   RequireNova();if(Time.timeScale==0){Neutral();return;}if(diagnosticInput)return;var raw=ReadRaw();movement=Stick(raw,mapping.moveX,mapping.moveY,mapping.moveYSign);aim=Stick(raw,mapping.aimX,mapping.aimY,mapping.aimYSign);if(thirdPerson!=null)thirdPerson.Look(aim);
+   if(!bank||mapping==null||!focused){presence?.Suspend();Neutral();return;}
+   if(presence==null)presence=new ControllerPresence(requiredControllerName);
+   if(Time.timeScale==0){presence.Suspend();Neutral();return;}
+   var names=UnityEngine.Input.GetJoystickNames();
+   if(!presence.Matches(names)){presence.Suspend();Neutral();return;}
+   var raw=ReadRaw();
+   if(!presence.Observe(names,NeutralSample(raw,mapping),Time.realtimeSinceStartup)){Neutral();return;}
+   if(diagnosticInput)return;
+   movement=Stick(raw,mapping.moveX,mapping.moveY,mapping.moveYSign);aim=Stick(raw,mapping.aimX,mapping.aimY,mapping.aimYSign);if(thirdPerson!=null)thirdPerson.Look(aim);
    bool down=raw.buttons[mapping.jump];jumpLatched|=down&&!jumpHeld;jumpHeld=down;
   }catch(Exception e){error=e.ToString();enabled=false;Neutral();}
  }
  void FixedUpdate(){
-  if(!bank||mapping==null||!focused)return;
+  if(!bank||mapping==null||!focused||presence==null||!presence.connected||Time.timeScale==0){Neutral();return;}
+  if(!presence.Matches(UnityEngine.Input.GetJoystickNames())){presence.Suspend();Neutral();return;}
   bank.moveVector=thirdPerson!=null&&!diagnosticInput?thirdPerson.Movement(movement):new Vector3(movement.x,0,movement.y);bank.SetRawMoveStates(movement);
   if(diagnosticInput&&diagnosticAim.sqrMagnitude>0){bank.aimDirection=diagnosticAim;aimTicks++;}
   else if(thirdPerson!=null&&!diagnosticInput){bank.aimDirection=thirdPerson.Aim();aimTicks++;thirdPerson.report.maxAimError=Mathf.Max(thirdPerson.report.maxAimError,Vector3.Angle(bank.aimDirection,thirdPerson.report.direction));}
@@ -56,7 +99,7 @@ public sealed class NovaInputBridge : MonoBehaviour {
  }
  public void DiagnosticJump(bool down){jumpLatched|=down&&!jumpHeld;jumpHeld=down;}
  public void Neutral(){movement=aim=Vector2.zero;jumpHeld=jumpLatched=false;if(!bank)return;bank.moveVector=Vector3.zero;bank.SetRawMoveStates(Vector2.zero);bank.jump.PushState(false);bank.skill1.PushState(false);bank.skill2.PushState(false);bank.skill3.PushState(false);bank.skill4.PushState(false);bank.interact.PushState(false);bank.sprint.PushState(false);bank.activateEquipment.PushState(false);touchEquipment=diagnosticEquipment=false;}
- void OnApplicationFocus(bool value){focused=value;if(!value)Neutral();}
- void OnApplicationPause(bool value){focused=!value;if(value)Neutral();}
- void OnDisable(){Neutral();}
+ void OnApplicationFocus(bool value){focused=value;if(!value){presence?.Suspend();Neutral();}}
+ void OnApplicationPause(bool value){focused=!value;if(value){presence?.Suspend();Neutral();}}
+ void OnDisable(){presence?.Suspend();Neutral();}
 }

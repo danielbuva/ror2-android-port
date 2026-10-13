@@ -14,7 +14,7 @@ public sealed partial class MovementBatchProbe {
   public string phase;public float seconds;public long allocated,reserved,managed;
   public long managedTotal;public int collections;public string gcMode;public bool incremental;public float collectionSeconds;
   public int trackedCompletedSessions,liveCompletedProbes,liveCompletedReports;public int materials,textures,shaders,gameObjects,bundles;public string[] bundleNames;
-  public string[] ownedCallbackRoots,callbackRootReadFailures,callbackOwnerScope;
+  public string[] ownedCallbackRoots,callbackRootReadFailures,callbackOwnerScope,statQueueCounts;
  }
  static readonly System.Collections.Generic.List<WeakReference[]> completedSessionReferences=new System.Collections.Generic.List<WeakReference[]>();
  void TrackCompletedSessionReferences(){completedSessionReferences.RemoveAll(x=>!x[0].IsAlive&&!x[1].IsAlive);if(completedSessionReferences.Count<128)completedSessionReferences.Add(new[]{new WeakReference(this),new WeakReference(r)});}
@@ -41,11 +41,26 @@ public sealed partial class MovementBatchProbe {
    Delegate callback;try{callback=field.GetValue(manager) as Delegate;}catch(Exception e){failures.Add(manager.GetType().FullName+"."+field.Name+":"+e.GetType().Name);continue;}if(callback==null)continue;
    foreach(var entry in callback.GetInvocationList())for(int i=0;i<completedSessionReferences.Count;i++){var path=FindCompletedCallbackReference(entry.Target,completedSessionReferences[i][0].Target,completedSessionReferences[i][1].Target,0);if(path!=null)roots.Add(manager.GetType().FullName+"."+field.Name+" -> "+entry.Method.Name+" -> completed["+i+"]"+path);}
   }}
-  r.sessionResources.Add(new SessionResourceSample{phase=phase,seconds=Time.realtimeSinceStartup,ownedCallbackRoots=roots.ToArray(),callbackRootReadFailures=failures.ToArray(),callbackOwnerScope=callbackOwners.Select(x=>x.FullName).Concat(new[]{"UnityEngine.ResourceManagement.ResourceManager (instance delegates)"}).ToArray(),trackedCompletedSessions=completedSessionReferences.Count,liveCompletedProbes=completedSessionReferences.Count(x=>x[0].IsAlive),liveCompletedReports=completedSessionReferences.Count(x=>x[1].IsAlive),
+  r.sessionResources.Add(new SessionResourceSample{phase=phase,seconds=Time.realtimeSinceStartup,ownedCallbackRoots=roots.ToArray(),callbackRootReadFailures=failures.ToArray(),callbackOwnerScope=callbackOwners.Select(x=>x.FullName).Concat(new[]{"UnityEngine.ResourceManagement.ResourceManager (instance delegates)"}).ToArray(),statQueueCounts=ReadStatQueueCounts(),trackedCompletedSessions=completedSessionReferences.Count,liveCompletedProbes=completedSessionReferences.Count(x=>x[0].IsAlive),liveCompletedReports=completedSessionReferences.Count(x=>x[1].IsAlive),
    allocated=Profiler.GetTotalAllocatedMemoryLong(),reserved=Profiler.GetTotalReservedMemoryLong(),managed=Profiler.GetMonoUsedSizeLong(),managedTotal=GC.GetTotalMemory(false),collections=GC.CollectionCount(0),gcMode=UnityEngine.Scripting.GarbageCollector.GCMode.ToString(),incremental=UnityEngine.Scripting.GarbageCollector.isIncremental,
    materials=Resources.FindObjectsOfTypeAll<Material>().Length,textures=Resources.FindObjectsOfTypeAll<Texture>().Length,
    shaders=Resources.FindObjectsOfTypeAll<Shader>().Length,gameObjects=Resources.FindObjectsOfTypeAll<GameObject>().Length,
    bundles=AssetBundle.GetAllLoadedAssetBundles().Count(),bundleNames=AssetBundle.GetAllLoadedAssetBundles().Select(x=>x.name).OrderBy(x=>x).ToArray()});
+ }
+ static string[] ReadStatQueueCounts(){
+  // Original StatManager owns these event queues. Count only at existing
+  // resource samples; never drain events or infer a retaining root from count.
+  var type=typeof(RoR2.Stats.PlayerStatsComponent).Assembly.GetType("RoR2.Stats.StatManager",false);
+  if(type==null)return new[]{"StatManager:unavailable"};
+  var names=new[]{"damageEvents","deathEvents","healingEvents","goldCollectedEvents","purchaseStatEvents","characterUpdateEvents","itemCollectedEvents","itemGainedEvents"};
+  var values=new string[names.Length];
+  for(int i=0;i<names.Length;i++){
+   var field=type.GetField(names[i],BindingFlags.Static|BindingFlags.NonPublic);
+   if(field==null){values[i]=names[i]+":missing";continue;}
+   try{var queue=field.GetValue(null);var count=queue==null?null:queue.GetType().GetProperty("Count",BindingFlags.Public|BindingFlags.Instance);values[i]=names[i]+":"+(count==null?"unreadable":count.GetValue(queue,null).ToString());}
+   catch(Exception e){values[i]=names[i]+":"+e.GetType().Name;}
+  }
+  return values;
  }
  static string FindCompletedCallbackReference(object value,object probe,object report,int depth){
   if(value==null)return null;if(ReferenceEquals(value,probe))return ":probe";if(ReferenceEquals(value,report))return ":report";

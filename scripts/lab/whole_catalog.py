@@ -881,8 +881,10 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','WorldFlightEquipmentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
+    for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
+        copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)
     body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'
     body_text=body_boundary.read_text()
     if 'WholeCatalogComposed.Prepare' not in body_text:
