@@ -443,6 +443,20 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   bridge.touchEquipment|=worldEquipmentTouch;worldEquipmentTouch=false;bridge.diagnosticInput=!worldManualTakeover;r.world.manualTakeover=worldManualTakeover;
   if(worldManualTakeover){r.world.diagnosticInput=false;return;}
   r.world.diagnosticInput=true;WorldEquipmentStimulus(bridge,elapsed);bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
+  // Measurement-only input: keep the whole director/combat simulation active
+  // without spending the frame budget on the unattended shopping/path route.
+  if(r.combatPerformanceFocus){
+   bridge.movement=Vector2.zero;r.world.objective="Measure original combat with stationary input";
+   var origin=player.inputBank.aimOrigin;CharacterBody visibleBody=null;Vector3 visiblePoint=Vector3.zero;float nearest=float.PositiveInfinity;
+   foreach(var actor in directorActors){
+    if(!actor.body||!actor.body.healthComponent.alive||actor.master.teamIndex==player.teamComponent.teamIndex)continue;
+    bool visible;var point=WorldCombatAimPoint(actor.body,origin,out visible);if(!visible)continue;
+    var distance=(point-origin).sqrMagnitude;if(distance>=nearest)continue;
+    nearest=distance;visibleBody=actor.body;visiblePoint=point;
+   }
+   if(visibleBody){var aim=visiblePoint-origin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=true;r.world.combatTarget=visibleBody.name;r.world.combatTargetDistance=Mathf.Sqrt(nearest);r.world.combatLineOfSight=true;}
+   return;
+  }
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
   // Native placement spreads barrels across the map. Diagnostic input can shop
   // as soon as earned money permits; clearing every barrel is not a game rule.
