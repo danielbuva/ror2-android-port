@@ -72,7 +72,7 @@ WHOLE_PLAYER_INPUTS={'Assets/LabDiagnostics.cs','Assets/Lab.unity','Assets/Lab.u
 # These sources/metadata are APK-only consumers of unchanged converted assets.
 WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+name+suffix
  for name in ['AutomaticDirectorBoundary.cs','StageCombatDeckBoundary.cs',
-              'EnemySpineBoundary.cs','MoonMissionBoundary.cs','WholePopulationBoundary.cs',
+              'EnemySpineBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','MoonMissionBoundary.cs','WholePopulationBoundary.cs',
               'Resources/WholeStageContexts.json','RecoveredHudPresentation.cs','EnemyRewardBoundary.cs','IntegratedStageBoundary.cs','RunClockBoundary.cs','TeleporterWorldBoundary.cs','WholeInteractableBoundary.cs','MovementBatchProbe.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','IntegratedWorldBoundary.cs','RecoveredPickupPresentation.cs','RecoveredHudFeedback.cs','IntegratedResultsBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','WorldItemBehaviorBoundary.cs','AutomaticModelBoundary.cs','DirectorActorBoundary.cs','AndroidPresentationCamera.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','WorldItemDisplayBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs'] for suffix in ['', '.meta'])
 
 def whole_payload_inputs(project):

@@ -22,7 +22,29 @@ public sealed partial class MovementBatchProbe {
  readonly List<BillboardAsset> stageGeometryBillboards=new List<BillboardAsset>();
  bool stageMoonVolumes;int stageZoneNetworkObjects;string[] stageZoneActiveNames;
  MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
- IEnumerator PrepareStageGeometry(int mapZones=0,string[] activeNames=null,int previewCount=23,string[] previewNames=null){var load=LoadStageGeometry("golemplains-spine-lab",previewCount,null,mapZones,activeNames,previewNames);while(load.MoveNext())yield return load.Current;}
+ IntegratedStageSpec firstStageSpec;string firstStageName;bool firstStagePolicyConsumed;float firstStageSelectionValue;
+ IEnumerator PrepareStageGeometry(Result cfg){
+  firstStageSpec=null;firstStageName="golemplains";firstStagePolicyConsumed=false;
+  if(cfg.integratedWorld&&cfg.teleporterLoop&&r.freePlay){
+   // Run.Start is unavailable behind the stock platform boundary. Use its shipped
+   // scene group, weighted selector and RNG before the body needs stage geometry.
+   var group=WholeCatalogComposed.LoadOwnedContent<SceneCollection>("Assets/WholeGame/RoR2/Base/SceneGroups/sgStage1.asset");
+   Check(group&&group.name=="sgStage1","Original starting scene group unavailable");
+   var choices=new WeightedSelection<SceneDef>();group.AddToWeightedSelection(choices,scene=>scene&&!scene.requiredExpansion);
+   var names=choices.choices.Take(choices.Count).Select(choice=>choice.value.cachedName).OrderBy(name=>name).ToArray();
+   Check(names.SequenceEqual(new[]{"blackbeach","blackbeach2","golemplains","golemplains2","lakes"})&&Mathf.Abs(choices.GetTotalWeight()-3f)<.001f,"Original eligible starting scenes or weights changed");
+   var runRng=new Xoroshiro128Plus(SelectOwnedRunSeed(cfg));var stageRng=new Xoroshiro128Plus(runRng.nextUlong);
+   firstStageSelectionValue=stageRng.nextNormalizedFloat;var selected=choices.Evaluate(firstStageSelectionValue);
+   Check(selected&&selected.stageOrder==1,"Original starting scene selection failed");firstStageName=selected.cachedName;firstStagePolicyConsumed=true;
+   if(firstStageName!="golemplains"){
+    firstStageSpec=cfg.integratedStages.SingleOrDefault(stage=>stage.name==firstStageName);
+    Check(firstStageSpec!=null&&!firstStageSpec.moonMission,"Original starting scene has no converted Android content: "+firstStageName);
+   }
+  }
+  var load=firstStageSpec==null?LoadStageGeometry("golemplains-spine-lab",cfg.stagePreviewCallbacks,null,cfg.stageMapZoneCount,cfg.stageMapZoneActiveNames,cfg.stagePreviewNames):LoadStageGeometry(firstStageSpec.bundle,firstStageSpec.previewCallbacks,firstStageSpec);
+  while(load.MoveNext())yield return load.Current;
+  Check(stageGeometryScene.name==firstStageName,"Selected original starting scene differs from loaded Android geometry");
+ }
  IEnumerator LoadStageGeometry(string bundleName,int previewCount,IntegratedStageSpec spec,int initialMapZones=0,string[] initialActiveNames=null,string[] initialPreviewNames=null){
   r.stage=new StageGeometryReport();r.phase="stage-geometry-load";Save();
   stageGeometryBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload",bundleName));

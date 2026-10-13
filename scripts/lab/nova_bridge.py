@@ -200,12 +200,12 @@ def stage_combat_configs(stage,previous,out):
     return {key:value.lower() for key,value in paths.items()}
 
 
-def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False,reflection_bindings=None,billboards=False):
+def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golemplains",map_zones=False,presentation=False,reflection_bindings=None,billboards=False,scene_root="Base"):
     """Recover source geometry; integrated runs additionally retain exact MapZone callbacks."""
     import shutil
     from scene_closure import REFERENCE
     export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
-    source=export/('Assets/RoR2/Base/Scenes/'+scene_name+'/'+scene_name+'.unity')
+    source=export/('Assets/RoR2/'+scene_root+'/Scenes/'+scene_name+'/'+scene_name+'.unity')
     text=source.read_text();header=text[:text.index('--- !u!')];blocks=re.split(r'(?=^--- !u!)',text,flags=re.M)[1:]
     # Preserve geometry/LOD and selected source MapZone callbacks; omit unrelated native/presentation data.
     keep={1,4,23,33,64,65,135,136,137,205,224};kept=[];removed=set();root_objects=set();counts={};preview_ids=[]
@@ -218,7 +218,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
     map_script="m_Script: {fileID: -376374237, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     map_blocks=[b for b in blocks if b.startswith('--- !u!114 ') and map_script in b] if map_zones else []
     expected_zones={'golemplains':1,'foggyswamp':5,'frozenwall':2,'dampcavesimple':4,'skymeadow':2,'wispgraveyard':1,'shipgraveyard':3,
-                    'blackbeach':5,'blackbeach2':10,'golemplains2':15,'goolake':6,'rootjungle':4}
+                    'blackbeach':5,'blackbeach2':10,'golemplains2':15,'goolake':6,'rootjungle':4,'lakes':5}
     if map_zones and len(map_blocks)!=expected_zones.get(scene_name):raise RuntimeError('Original stage MapZone contract changed; review source')
     map_owners={re.search(r'm_GameObject: \{fileID: (-?\d+)\}',b)[1] for b in map_blocks}
     by_id={re.match(r'--- !u!\d+ &(-?\d+)',b)[1]:b for b in blocks}
@@ -263,7 +263,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         if any(ref!='0' and ref not in kept_ids for ref in lod_refs):raise RuntimeError('Nonempty source LOD renderer reference would be lost')
         write(out/(scene_name+'-billboard-LOD-contract.json'),{'native_billboards':sum(kind==227 for kind,_,_ in kept),'source_explicit_empty_LOD_slots':lod_refs.count('0'),'all_nonempty_source_LOD_renderers_retained':True,'no_guessed_renderers':True})
     expected_previews={'golemplains':23,'foggyswamp':0,'frozenwall':23,'dampcavesimple':1,'skymeadow':12,'wispgraveyard':0,'shipgraveyard':16,'moon2':0,
-                       'blackbeach':41,'blackbeach2':26,'golemplains2':13,'goolake':26,'rootjungle':23}
+                       'blackbeach':41,'blackbeach2':26,'golemplains2':13,'goolake':26,'rootjungle':23,'lakes':19}
     if scene_name not in expected_previews or len(preview_ids)!=expected_previews[scene_name]:raise RuntimeError("Measured original escape-pod preview callback set changed; review source")
     updated=[]
     for kind,file_id,block in kept:
@@ -344,7 +344,7 @@ def stage_first_stage_geometry(stage,out,original_name=False,scene_name="golempl
         go_id=re.search(r'm_GameObject: \{fileID: (-?\d+)\}',source_blocks[fid][1])[1]
         preview_names.append(re.search(r'^  m_Name: (.*)$',source_blocks[go_id][1],re.M)[1])
     preview_additional={'blackbeach':{'WakeAltarMesh':3},'blackbeach2':{'WakeAltarMesh':6},'golemplains2':{'WakeAltarMesh':1},
-                        'goolake':{'WakeAltarMesh':2},'rootjungle':{'WakeAltarMesh':3,'mdlBase':4}}
+                        'goolake':{'WakeAltarMesh':2},'rootjungle':{'WakeAltarMesh':3,'mdlBase':4},'lakes':{'WakeAltarMesh':3}}
     expected_names=['HELPER LIGHT'] if scene_name=='dampcavesimple' else ['EscapePodMesh']*(len(preview_ids)-sum(preview_additional.get(scene_name,{}).values()))+[name for name,count in preview_additional.get(scene_name,{}).items() for _ in range(count)]
     if sorted(preview_names)!=sorted(expected_names):raise RuntimeError('Original preview object names changed; review source')
     def object_path(go_id):

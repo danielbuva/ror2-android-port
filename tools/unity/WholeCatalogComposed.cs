@@ -25,6 +25,12 @@ public static class WholeCatalogComposed {
  static int lastDetachedAssetOperations;
  delegate bool ExtractSubObjectKey(object key,out string mainKey,out string subKey);
  static readonly ExtractSubObjectKey originalSubObjectKey=(ExtractSubObjectKey)Delegate.CreateDelegate(typeof(ExtractSubObjectKey),typeof(ResourceManagerConfig).GetMethod("ExtractKeyAndSubKey",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic));
+ public static T LoadOwnedContent<T>(string path) where T:UnityEngine.Object {
+  if(!owned)throw new Exception("Shared whole-content owner is not active");
+  var asset=owned.LoadAsset<T>(path);
+  if(!asset)throw new Exception("Accepted shared content asset is missing: "+path);
+  return asset;
+ }
  sealed class BorrowedBundle : IAssetBundleResource {
   readonly string name;public BorrowedBundle(string value){name=value;}
   public AssetBundle GetAssetBundle(){

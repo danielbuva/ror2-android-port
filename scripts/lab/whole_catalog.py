@@ -805,7 +805,8 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
             'contentInteractableOnlySourceMixLimitOverrideValue':int,
             'sceneDirectorInteractibleCredits':int,'sceneDirectorMonsterCredits':int}
     for stage in stages:
-        source=export/('Assets/RoR2/Base/Scenes/'+stage+'/'+stage+'.unity')
+        scene_root='DLC2' if stage=='lakes' else 'Base'
+        source=export/('Assets/RoR2/'+scene_root+'/Scenes/'+stage+'/'+stage+'.unity')
         blocks=re.split(r'(?=^--- !u!)',source.read_text(),flags=re.M)
         records=[block for block in blocks
                  if re.search(r'^  monsterDccsPool:',block,re.M)]
@@ -881,7 +882,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)

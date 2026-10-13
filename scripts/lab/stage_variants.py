@@ -1,4 +1,4 @@
-"""Stage the five measured base-game scene variants without changing native stage selection."""
+"""Stage measured source scenes selected by the original stage groups."""
 import gzip
 import json
 import re
@@ -13,7 +13,13 @@ VARIANTS = {
     'golemplains2': 'f3dcbfa1cf86a3e1bc3d42642b199114ce403543a41f4c00ccf5410e30ad297f',
     'goolake': 'edbd7dfa00ab03ea1d1cfa723afea5f0985ccfc6820d5ff86da0c971d3011b6d',
     'rootjungle': '9208b430b51ff6feae9c687fc7e35c0bd103e5749fefff5759c8f2ca4237d1c3',
+    'lakes': 'bf03c16ab1a2c9dcafba759917e0b1224f8bdd3dca5da719d30c8fc72f37f2e2',
 }
+LAKES_SOURCE_SHA256 = '36782d7d6eaf8ce6eb2fb0e1cb321a7fc6e9b38cb41aee196c0ed20acaa765e4'
+
+
+def scene_root(name):
+    return 'DLC2' if name == 'lakes' else 'Base'
 
 
 def include_runtime_graph_roots(config, recipe, project, accepted_files):
@@ -59,20 +65,20 @@ def stage():
     accepted_files = read(WORK/'whole-catalog-code-base.json')['files']
     accepted_payload = {path.lower():digest for path,digest in accepted_files.items()}
     names = [row['name'] for row in config['integratedStages']]
-    pending = list(VARIANTS)
-    if all(name in names for name in pending):
-        if all(sha(project/'Assets/WholeGame/RoR2/Base/Scenes'/name/(name+'.unity')) == digest
-               for name,digest in VARIANTS.items()):
+    pending = [name for name in VARIANTS if name not in names]
+    staged = [name for name in VARIANTS if name in names]
+    if all(sha(project/'Assets/WholeGame/RoR2'/scene_root(name)/'Scenes'/name/(name+'.unity')) == VARIANTS[name]
+           for name in staged):
+        if not pending:
             for row in config['integratedStages']:
                 if row['name'] in VARIANTS:
                     row['previewNames'] = sorted(row['previewNames'])
             added = include_runtime_graph_roots(config,recipe,project,accepted_files)
             write(config_path,config)
             if added:write(recipe_path,recipe)
-            return {'success':True, 'already_staged':True, 'stages':pending,'runtime_graph_roots_added':added}
+            return {'success':True, 'already_staged':True, 'stages':staged,'runtime_graph_roots_added':added}
+    else:
         raise RuntimeError('Previously staged scene variant changed; review before regenerating')
-    if any(name in names for name in pending):
-        raise RuntimeError('Partial stage-variant configuration requires review')
     if len({row['name'] for row in config['stageCombatDecks']}) != len(config['stageCombatDecks']):
         raise RuntimeError('Duplicate existing stage-combat contract')
     if any(name in {row['name'] for row in config['stageCombatDecks']} for name in pending):
@@ -89,17 +95,21 @@ def stage():
     source_receipts = []
     recipe_before = recipe_path.read_bytes()
     try:
-        for name,digest in VARIANTS.items():
-            target = project/'Assets/WholeGame/RoR2/Base/Scenes'/name/(name+'.unity')
-            source = export/'Assets/RoR2/Base/Scenes'/name/(name+'.unity')
+        for name in pending:
+            digest = VARIANTS[name]
+            root = scene_root(name)
+            target = project/'Assets/WholeGame/RoR2'/root/'Scenes'/name/(name+'.unity')
+            source = export/'Assets/RoR2'/root/'Scenes'/name/(name+'.unity')
             if not target.is_file() or not source.is_file():
                 raise RuntimeError('Accepted scene source is missing: '+name)
+            if name == 'lakes' and sha(source) != LAKES_SOURCE_SHA256:
+                raise RuntimeError('Original Lakes source changed; review before conversion')
             if sha(target) == digest:
                 raise RuntimeError('Converted scene exists outside the stage-variant configuration: '+name)
             with gzip.open(originals/(name+'.unity.gz'),'wb',compresslevel=6) as archive:
                 archive.write(target.read_bytes())
             spec = stage_first_stage_geometry(project/'Assets/LabLoadingScene',out,
-                    original_name=True,scene_name=name,map_zones=True,presentation=True,billboards=True)
+                    original_name=True,scene_name=name,map_zones=True,presentation=True,billboards=True,scene_root=root)
             generated = temporary/(name+'.unity')
             if sha(generated) != digest:
                 raise RuntimeError('Recovered scene variant differs from the measured source projection: '+name)
@@ -132,7 +142,7 @@ def stage():
             spec['scene'] = str(target.relative_to(project)).lower()
             candidates[name] = (generated.read_bytes(),spec,target)
             source_receipts.append({'name':name,'source_sha256':sha(source),
-                                    'previous_sha256':sha(target),'generated_sha256':digest,
+                                    'previous_sha256':sha(target),'generated_sha256':sha(generated),
                                     'preview_callbacks':counts['previewCallbacks'],
                                     'map_zones':counts['mapZoneCount']})
 
