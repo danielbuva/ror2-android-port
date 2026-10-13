@@ -1,6 +1,6 @@
 # Capability gates
 
-J434: candidate40 selects original native stage pools without card exclusions, prepares201canonical actor templates and restores deferred inventory/equipment icons. The441.784second/31kill/four-transition composed run passes full cleanup and zero current-process errors, with explicit invincibility/high damage/fast charge.131host tests pass. Native SceneDirector placement, individual content behavior, normal/full-run/visual/performance gates remain open; Moon/manual gates unchanged. See PORTING_STATE.md.
+J435: candidate47 connects native SceneDirector population and complete pickup/drone/artifact availability, exact legacy aliases and deferred notifications.627.520world seconds/57kills/four genuine transitions/144placements/two earned-money chest purchases pass full cleanup and zero current-process errors.131host tests/7,458typed roots pass. Invincibility/high damage/fast charge ON; no grants. Teleporter/player-entry adapters, individual content behavior, normal/full-run/visual/performance and Moon/manual gates remain open. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Each gate requires stored real-device evidence, not compilation alone. Shared procedure: preflight → minimal change/build → install/runtime-path discovery/sync/run → structured logs/crash/state plus relevant visual capture → first-failure classification → state/journal/commit. Query live storage on each install/size increase and retain prior APK/payload; never change storage or unrelated data.
 

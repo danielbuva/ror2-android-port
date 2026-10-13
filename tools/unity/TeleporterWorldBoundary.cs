@@ -261,7 +261,7 @@ public sealed partial class MovementBatchProbe {
  void PrepareObjectiveRules(){
   // RuleCatalog/RuleBook cache definitions for the process. Restart may reuse this exact
   // catalog signature, but cannot rebuild it while cached RuleBook rule references survive.
-  var signature=string.Join("|",ItemCatalog.allItemDefs.Select(x=>x.name))+"/"+string.Join("|",Enumerable.Range(0,EquipmentCatalog.equipmentCount).Select(x=>EquipmentCatalog.GetEquipmentDef((EquipmentIndex)x).name));
+  var signature=string.Join("|",ItemCatalog.allItemDefs.Select(x=>x.name))+"/"+string.Join("|",Enumerable.Range(0,EquipmentCatalog.equipmentCount).Select(x=>EquipmentCatalog.GetEquipmentDef((EquipmentIndex)x).name))+"/"+string.Join("|",DroneCatalog.allDroneDefs.Select(x=>x.name))+"/"+string.Join("|",KeyItemCatalog.allKeyItemDefs.Select(x=>x.name));
   if(objectiveRuleSignature==null){Check(RuleCatalog.ruleCount==0,"Unowned original rules");StaticCall(typeof(RuleCatalog),"Init");StaticCall(typeof(RuleBook),"Init");objectiveRuleSignature=signature;}
   Check(objectiveRuleSignature==signature&&RuleCatalog.FindRuleDef("Misc.StageOrder")!=null,"Restart rule catalog input changed");
   var run=Run.instance;var networkBook=run.GetComponent<NetworkRuleBook>();Check(networkBook,"Original Run rule component absent");
@@ -270,6 +270,7 @@ public sealed partial class MovementBatchProbe {
   var easy=RuleCatalog.FindChoiceDef("Difficulty.Easy");Check(easy!=null,"Original Drizzle rule missing");run.ruleBook.ApplyChoice(easy);Check(run.ruleBook.FindDifficulty()==DifficultyIndex.Easy&&run.selectedDifficulty==DifficultyIndex.Easy,"Original chosen Drizzle difficulty mismatch");
   Check(run.ruleBook.stageOrder==StageOrder.Normal&&!run.ruleBook.keepMoneyBetweenStages,"Original default stage-order/money rules changed");
   RefreshRewardEquipmentMask(true);
+  RefreshWholeRunAvailability();
   if(r.moonCatalog!=null){var lunar=RoR2Content.Equipment.AffixLunar;Check(lunar&&EquipmentCatalog.GetEquipmentDef(lunar.equipmentIndex)==lunar&&!lunar.requiredExpansion&&!run.IsEquipmentExpansionLocked(lunar.equipmentIndex),"Original base Lunar equipment availability failed");}
   Check(run.runRNG!=null&&run.loopRngGenerator!=null&&run.nextStageRng!=null&&run.bossRewardRng!=null,"Original Run random streams absent");r.objective.rules=true;r.objective.ruleCount=RuleCatalog.ruleCount;
  }

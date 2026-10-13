@@ -44,6 +44,7 @@ public sealed partial class MovementBatchProbe {
  KeyItemDef[] priorResultsKeyItems;string[] priorResultsKeyItemNames;bool ownsResultsKeyItems;
  void PrepareResultsKeyItems(){
   if(!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;
+  if(ownsResultsKeyItems){Check(KeyItemCatalog.keyItemCount==WholeCatalogComposed.KeyItemDefinitions().Length,"Owned key-item catalog changed");return;}
   priorResultsKeyItems=ContentManager._keyItemDefs;priorResultsKeyItemNames=KeyItemCatalog.keyItemNames;
   var map=(System.Collections.IDictionary)RewardField(typeof(KeyItemCatalog),"keyItemNameToIndex").GetValue(null);
   Check(!ownsResultsKeyItems&&(priorResultsKeyItems==null||priorResultsKeyItems.Length==0)&&priorResultsKeyItemNames.Length==0&&map.Count==0,"Unowned key-item statistics catalog");

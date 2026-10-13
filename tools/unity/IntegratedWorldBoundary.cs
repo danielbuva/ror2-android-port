@@ -73,6 +73,7 @@ public sealed partial class MovementBatchProbe {
  readonly RaycastHit[] worldTerrainHits=new RaycastHit[64];
  NovaThirdPersonView worldView;bool restartRequested,worldManualTakeover;public int sessionIndex=1;
  bool ownsWorldMisc;MiscPickupDef[] previousWorldMiscContent;object previousWorldMiscCatalog;
+ readonly Dictionary<MiscPickupDef,MiscPickupIndex> priorWholeMiscIndices=new Dictionary<MiscPickupDef,MiscPickupIndex>();
  ResourceAvailability previousWorldMiscAvailability;LunarCoinDef worldLunarCoin;
 Action<TeamIndex> unavailableTeamLevelSound;Action<Run> unavailableAmbientSound;Action<CharacterBody> unavailableLevelEffect;
 Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
@@ -200,10 +201,11 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var connect=ConnectActiveBodyClient(player);while(connect.MoveNext())yield return connect.Current;
   r.world.authority=player.networkIdentity.hasAuthority&&activeBodyClient.isConnected&&activeBodyOwner.isReady;
   Check(r.world.authority,"Integrated local authority missing");
+  PrepareWholeRunAvailability();
   // Source catalogs persist for the session, rather than being rebuilt around each interaction.
   var flags=BindingFlags.Static|BindingFlags.NonPublic;
   Check(!ownsPickupCatalog&&PickupCatalog.pickupCount==0,"Unowned integrated pickup catalog");
-  foreach(var name in new[]{"entries","itemIndexToPickupIndex","equipmentIndexToPickupIndex","artifactIndexToPickupIndex","miscPickupIndexToPickupIndex","droneIndexToPickupIndex","<pickupCount>k__BackingField"}){var field=typeof(PickupCatalog).GetField(name,flags);Check(field!=null,"Integrated pickup field absent: "+name);priorPickupFields[field]=field.GetValue(null);}
+  foreach(var name in new[]{"entries","itemIndexToPickupIndex","equipmentIndexToPickupIndex","artifactIndexToPickupIndex","miscPickupIndexToPickupIndex","droneIndexToPickupIndex","keyItemIndexToPickupIndex","<pickupCount>k__BackingField"}){var field=typeof(PickupCatalog).GetField(name,flags);Check(field!=null,"Integrated pickup field absent: "+name);priorPickupFields[field]=field.GetValue(null);}
   pickupNameMap=(IDictionary)typeof(PickupCatalog).GetField("nameToPickupIndex",flags).GetValue(null);
   pickupTierMap=(IDictionary)typeof(PickupCatalog).GetField("itemTierToPickupIndex",flags).GetValue(null);
   Check(pickupNameMap.Count==0&&pickupTierMap.Count==0,"Unowned integrated pickup maps");
@@ -212,11 +214,15 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   worldLunarCoin=artifactBundle.LoadAsset<LunarCoinDef>(cfg.worldLunarCoinAsset);
   Check(worldLunarCoin&&worldLunarCoin.name=="LunarCoin"&&worldLunarCoin.coinValue==1&&(worldLunarCoin.displayPrefab||worldLunarCoin.pickupModelReference!=null&&worldLunarCoin.pickupModelReference.RuntimeKeyIsValid())&&worldLunarCoin.dropletDisplayPrefab,"Original lunar coin definition/display missing");
   previousWorldMiscContent=RoR2.ContentManagement.ContentManager._miscPickupDefs;previousWorldMiscCatalog=RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").GetValue(null);previousWorldMiscAvailability=MiscPickupCatalog.availability;ownsWorldMisc=true;
-  RoR2.ContentManagement.ContentManager._miscPickupDefs=new MiscPickupDef[]{worldLunarCoin};RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;StaticCall(typeof(MiscPickupCatalog),"Init");
+  var miscDefinitions=r.liveCatalogs!=null?WholeCatalogComposed.DefinitionFamily<MiscPickupDef>(new[]{worldLunarCoin}):new MiscPickupDef[]{worldLunarCoin};
+  if(r.liveCatalogs!=null)foreach(var def in miscDefinitions)priorWholeMiscIndices.Add(def,def.miscPickupIndex);
+  RoR2.ContentManagement.ContentManager._miscPickupDefs=miscDefinitions;if(r.liveCatalogs==null)RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;StaticCall(typeof(MiscPickupCatalog),"Init");
+  if(r.liveCatalogs!=null)WholeCatalogComposed.PopulateDefinitionFields("MiscPickups",miscDefinitions);
   var lunarPickup=worldLunarCoin.CreatePickupDef();
   var moonEquipmentPickups=cfg.moonMission?new[]{RoR2Content.Equipment.AffixLunar.CreatePickupDef()}:new PickupDef[0];
-  PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).Concat(moonEquipmentPickups).Concat(EligibleWorldEquipment().Select(x=>x.CreatePickupDef())).Concat(new[]{lunarPickup}).ToArray());
-  if(cfg.moonMission)Check(PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex))==moonEquipmentPickups[0],"Original Lunar equipment pickup metadata missing");
+  if(r.liveCatalogs!=null){var pickups=PrepareWholePickups();while(pickups.MoveNext())yield return pickups.Current;lunarPickup=PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex));Check(lunarPickup!=null,"Native Lunar pickup metadata missing");}
+  else PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).Concat(moonEquipmentPickups).Concat(EligibleWorldEquipment().Select(x=>x.CreatePickupDef())).Concat(new[]{lunarPickup}).ToArray());
+  if(cfg.moonMission)Check(PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex)).equipmentIndex==RoR2Content.Equipment.AffixLunar.equipmentIndex,"Original Lunar equipment pickup metadata missing");
   r.world.lunarDefinition=MiscPickupCatalog.GetMiscDef(worldLunarCoin.miscPickupIndex)==worldLunarCoin&&PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex)==lunarPickup.pickupIndex&&lunarPickup.attemptGrant.Method.DeclaringType==typeof(LunarCoinDef);
   Check(r.world.lunarDefinition&&!Util.LookUpBodyNetworkUser(player),"Original lunar definition or unavailable currency contract changed");r.world.lunarCurrencyAvailable=false;
   Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&Run.instance.availableTier3DropList.Count==0,"Unowned integrated loot lists");
@@ -271,12 +277,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(DriverField(worldDriver,"networkIdentity")==null)Call(worldDriver,"Awake");
   worldStaging=new GameObject("Inactive offline content staging");worldStaging.SetActive(false);
   var chestSource=artifactBundle.LoadAsset<GameObject>(cfg.chestAsset);OwnChestAnimationSources(chestSource.GetComponent<ModelLocator>().modelTransform);
-  // Measured near-spawn layout; placement is an Android adapter, not original SceneDirector placement.
   var origin=player.characterMotor.Motor.TransientPosition;
+  if(r.liveCatalogs==null){
+  // Measured near-spawn layout; placement is an Android adapter, not original SceneDirector placement.
   var barrelOffsets=new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)};
   foreach(var offset in barrelOffsets){var obj=CreateWorldInteractable(artifactBundle.LoadAsset<GameObject>(cfg.barrelAsset),origin+offset,false);if(obj)worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
   foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=CreateWorldInteractable(chestSource,origin+offset,true);if(obj)worldChests.Add(obj.GetComponent<ChestBehavior>());}
   AddEquipmentBarrel(cfg,origin);AddWorldChestBreadth(cfg,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Integrated layout has insufficient walkable source interactables");
+  }
   r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;r.world.lootReady=true;
   worldInteraction=(actor,component,obj)=>{if(actor!=worldDriver.interactor)return;if(worldObjects.Contains(obj))r.world.target=obj.name;};GlobalEventManager.OnInteractionsGlobal+=worldInteraction;
   worldDriver.enabled=true;yield return null;Call(activeBodyClient,"Update");
@@ -284,6 +292,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.start=origin;r.world.ready=r.world.authority&&r.world.lootReady&&r.world.interactionReady&&rewardDirector.enabled;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
   PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
+  var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
   PrepareRecoveredHud();Check(r.world.ready,"Integrated session setup incomplete");r.phase="integrated-world-playing";Save();
  }
 
@@ -396,7 +405,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(worldManualTakeover){r.world.diagnosticInput=false;return;}
   r.world.diagnosticInput=true;WorldEquipmentStimulus(bridge,elapsed);bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
-  if(worldObjective==0){var barrel=worldBarrels.FirstOrDefault(x=>x&&!x.Networkopened);if(barrel)target=barrel.gameObject;else worldObjective=1;}
+  // Native placement spreads barrels across the map. Diagnostic input can shop
+  // as soon as earned money permits; clearing every barrel is not a game rule.
+  if(r.liveCatalogs!=null&&worldObjective==0){var chest=NextAutomaticWorldChest(player);if(chest)worldObjective=1;}
+  if(worldObjective==0){var barrel=worldBarrels.Where(x=>x&&!x.Networkopened).OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();if(barrel)target=barrel.gameObject;else worldObjective=1;}
   if(worldObjective==3&&elapsed-stageEnteredAt<105&&NextAutomaticWorldChest(player)&&player.master.money>=NextAutomaticWorldChest(player).GetComponent<PurchaseInteraction>().cost)worldObjective=1;
   if(worldObjective==1){var chest=NextAutomaticWorldChest(player);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}
   if(worldObjective>0&&GrantableWorldPickups(player,true).Any())worldObjective=2;
@@ -617,7 +629,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    else{Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();Run.instance.availableTier3DropList.Clear();}
    if(worldChestTable)worldChestTable.RegenerateDropTable(Run.instance);Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&Run.instance.availableTier3DropList.Count==0&&(!worldChestTable||worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;
   }
-  if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}
+  if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;foreach(var entry in priorWholeMiscIndices)entry.Key.miscPickupIndex=entry.Value;priorWholeMiscIndices.Clear();RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}
   if(worldDropletField!=null)worldDropletField.SetValue(null,priorWorldDroplet);if(ownsWorldDroplet&&worldDropletSource){Addressables.Release(worldDropletSource);ownsWorldDroplet=false;}if(worldDropletLocator!=null){Addressables.RemoveResourceLocator(worldDropletLocator);worldDropletLocator=null;}
   foreach(var material in worldMaterials)if(material)Destroy(material);
   Save();

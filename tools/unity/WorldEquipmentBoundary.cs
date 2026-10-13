@@ -35,7 +35,7 @@ public sealed partial class MovementBatchProbe {
   for(int i=0;i<names.Length;i++){Check(defs[i]&&defs[i].name=="bd"+names[i],"Original equipment buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],defs[i]);}return defs;
  }
  IEnumerable<EquipmentDef> EligibleWorldEquipment(){
-  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")&&r.integratedWorld)return EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).Where(def=>def&&def.canDrop&&!def.isLunar&&!def.isBoss&&!def.requiredExpansion&&!def.unlockableDef);
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")&&r.integratedWorld)return EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).Where(def=>def&&def.canDrop&&!def.requiredExpansion&&!def.unlockableDef);
   return (worldEquipmentDefinitions??new EquipmentDef[0]).Where(x=>x.name!="GoldGat"&&x.name!="PassiveHealing");
  }
  GameObject[] PrepareWorldEquipmentSupport(Result cfg){
@@ -98,6 +98,7 @@ public sealed partial class MovementBatchProbe {
  }
  ChestBehavior NextAutomaticWorldChest(CharacterBody player){
   // Diagnostic route chooses a normal purchase; it never grants equipment or bypasses cost.
+  if(r.liveCatalogs!=null)return worldChests.Where(x=>{if(!x||x.NetworkisChestOpened)return false;var purchase=x.GetComponent<PurchaseInteraction>();return purchase&&purchase.available&&purchase.costType==CostTypeIndex.Money&&player.master.money>=purchase.cost;}).OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();
   if(player.inventory.currentEquipmentIndex==EquipmentIndex.None){var equipment=worldEquipmentChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened);if(equipment)return equipment;}
   return worldChests.FirstOrDefault(x=>x&&!x.NetworkisChestOpened&&!worldEquipmentChests.Contains(x));
  }

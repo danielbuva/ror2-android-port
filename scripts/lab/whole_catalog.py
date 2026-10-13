@@ -101,26 +101,27 @@ def scene_guid_owners(candidates, data, input_id):
     return index, repairs
 
 
-def runtime_key_roots(data, candidates):
+def runtime_key_roots(data, candidates, legacy_aliases=None):
     """Exact IL address literals; provider labels retain their own typed loader.
 
     A stage name or label appearing in an unrelated string comparison is not an
-    asset request. Accept catalog addresses, internal paths and GUID keys only.
+    asset request. Accept catalog addresses, internal paths, GUID keys and exact
+    aliases resolved by the shipped LegacyResourcesAPI initializer only.
     """
     keys = {row['key']: row['locations'] for row in data['keys'] if row.get('keyType', 'System.String') == 'System.String'}
     locations = {row['id']: row for row in data['locations']}
     roots, edges = set(), []
     for row in candidates:
-        key=row['key']
+        key=(legacy_aliases or {}).get(row['key'],row['key'])
         found = [identity for identity in keys.get(key, []) if locations[identity]['internalId'].startswith('Assets/')
                  and (re.fullmatch(r'[a-fA-F0-9]{32}',key) or key in (locations[identity].get('primaryKey'),locations[identity]['internalId']))]
         if found:
             roots.update(found)
-            edges.append(dict(key=row['key'], locations=found, methods=row['methods']))
+            edges.append(dict(key=key, source_key=row['key'], locations=found, methods=row['methods']))
     return roots, edges
 
 
-def analyze(source, export, index, helper, native_overrides=None, runtime_candidates=()):
+def analyze(source, export, index, helper, native_overrides=None, runtime_candidates=(), legacy_aliases=None):
     data = read_catalog(source)
     categories = list(dict.fromkeys(re.findall(r'FindLocationsThenAddLoadOperation(?:<[^>]+>)?\(AddressablesLabels\.(\w+)', helper)))
     if not categories:
@@ -132,7 +133,7 @@ def analyze(source, export, index, helper, native_overrides=None, runtime_candid
     for row in locations.values():
         if not set(row['dependencies']) <= locations.keys():
             raise RuntimeError('Broken original catalog dependency')
-    runtime_roots, runtime_edges = runtime_key_roots(data, runtime_candidates)
+    runtime_roots, runtime_edges = runtime_key_roots(data, runtime_candidates,legacy_aliases)
     seeds = roots | runtime_roots
     # Indexed source identity, rather than a filesystem search per resource.
     paths = set(index.values())
@@ -317,7 +318,10 @@ def reconcile():
     contract=read(out/'original-catalog-contract.json')
     if contract['input_sha256']!=assembly_hash:
         raise RuntimeError('Runtime key metadata belongs to different input')
-    result = analyze(catalog_path(out), export, index, helper.read_text(), conversions, contract.get('assetKeyCandidates', []))
+    legacy_hash=next(row['sha256'] for row in read(WORK/'inventory/files.json')['files'] if row['path']=='Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll')
+    if contract.get('legacyInputSha256')!=legacy_hash:
+        raise RuntimeError('Refresh the native catalog contract for the accepted legacy assembly')
+    result = analyze(catalog_path(out), export, index, helper.read_text(), conversions, contract.get('assetKeyCandidates', []),contract.get('legacyAliases',{}))
     result['source_catalog_sha256'] = closure['source_catalog_sha256']
     result['metadata_sha256'] = sha(catalog_path(out))
     result['input_id'] = closure['input_id']
@@ -358,7 +362,8 @@ def audit():
     write(out/'source-guid-repairs.json', repairs)
     if list(dict.fromkeys(re.findall(r'FindLocationsThenAddLoadOperation(?:<[^>]+>)?\(AddressablesLabels\.(\w+)', helper.read_text())))!=read(out/'original-catalog-contract.json')['categories']:
         raise RuntimeError('Recovered provider categories disagree with original IL')
-    result = analyze(source, export, index, helper.read_text(), runtime_candidates=read(out/'original-catalog-contract.json').get('assetKeyCandidates', []))
+    contract=read(out/'original-catalog-contract.json')
+    result = analyze(source, export, index, helper.read_text(), runtime_candidates=contract.get('assetKeyCandidates', []),legacy_aliases=contract.get('legacyAliases',{}))
     result['input_id'] = read(WORK/'inventory/files.json')['input_id']
     result['source_catalog_sha256'] = sha(export/'Assets/StreamingAssets/aa/catalog.json')
     result['metadata_sha256'] = sha(source)
@@ -380,6 +385,9 @@ def export_catalog(out, template='ExportCatalog.cs.txt', filename='source-catalo
         contract = json.loads(run(probe_tool()+['--catalog-contract', original], timeout=120).stdout)
         if contract['input_sha256']!=expected:
             raise RuntimeError('Provider contract belongs to unaccepted input')
+        expected_legacy=next(row['sha256'] for row in read(WORK/'inventory/files.json')['files'] if row['path']=='Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll')
+        if contract['legacyInputSha256']!=expected_legacy:
+            raise RuntimeError('Legacy resource contract belongs to unaccepted input')
         write(out/'original-catalog-contract.json', contract)
         code = code.replace('PROVIDER_TYPES', 'new string[]{'+','.join(json.dumps(name) for name in contract['providers'])+'}')
     code = code.replace('CATALOG', json.dumps(str(export/'Assets/StreamingAssets/aa/catalog.json')))
@@ -798,7 +806,8 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
             'sceneDirectorInteractibleCredits':int,'sceneDirectorMonsterCredits':int}
     for stage in stages:
         source=export/('Assets/RoR2/Base/Scenes/'+stage+'/'+stage+'.unity')
-        records=[block for block in re.split(r'(?=^--- !u!)',source.read_text(),flags=re.M)
+        blocks=re.split(r'(?=^--- !u!)',source.read_text(),flags=re.M)
+        records=[block for block in blocks
                  if re.search(r'^  monsterDccsPool:',block,re.M)]
         if len(records)!=1:raise RuntimeError('Original stage population context is ambiguous: '+stage)
         record=records[0];result={'source_sha256':sha(source),'fields':{}}
@@ -811,8 +820,42 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
             match=re.search(r'^  '+name+r': (-?\d+)$',record,re.M)
             if not match:raise RuntimeError('Original stage population policy missing: '+stage+'/'+name)
             value=int(match[1]);result['fields'][name]=bool(value) if kind is bool else value
+        directors=[block for block in blocks if re.search(r'^  usePlacedSpawnPoints:',block,re.M)]
+        if len(directors)!=1:raise RuntimeError('Original scene director is ambiguous: '+stage)
+        result['director_fields']={}
+        for name,kind in {'usePlacedSpawnPoints':bool,'expRewardCoefficient':float,'eliteBias':float,'spawnDistanceMultiplier':float}.items():
+            match=re.search(r'^  '+name+r': ([-0-9.eE+]+)$',directors[0],re.M)
+            if not match:raise RuntimeError('Original scene director policy missing: '+stage+'/'+name)
+            result['director_fields'][name]=bool(int(match[1])) if kind is bool else float(match[1])
+        if not re.search(r'^  monsterSpawnTargetOverride: \{fileID: 0\}$',directors[0],re.M):
+            raise RuntimeError('Original scene monster target requires a measured binding: '+stage)
+        objects={};transforms={};game_transforms={}
+        for block in blocks:
+            header=re.match(r'--- !u!(\d+) &(-?\d+)',block)
+            if not header:continue
+            kind,identity=map(int,header.groups())
+            if kind==1:
+                name=re.search(r'^  m_Name: (.*)$',block,re.M)
+                if name:objects[identity]=name[1]
+            elif kind in (4,224):
+                owner=re.search(r'^  m_GameObject: \{fileID: (-?\d+)\}',block,re.M)
+                parent=re.search(r'^  m_Father: \{fileID: (-?\d+)\}',block,re.M)
+                if owner and parent:transforms[identity]=(int(owner[1]),int(parent[1]));game_transforms[int(owner[1])]=identity
+        def object_path(identity):
+            path=[];seen=set();current=game_transforms.get(identity)
+            while current:
+                if current in seen or current not in transforms:raise RuntimeError('Original bonus object hierarchy invalid: '+stage)
+                seen.add(current);owner,current=transforms[current];path.append(objects[owner])
+            if not path:raise RuntimeError('Original bonus object is absent: '+stage)
+            return '/'.join(reversed(path))
+        bonus=re.search(r'^  bonusInteractibleCreditObjects:(.*?)(?=^  [A-Za-z_]\w*:|\Z)',record,re.S|re.M)
+        if not bonus:raise RuntimeError('Original bonus credit policy missing: '+stage)
+        entries=list(re.finditer(r'^  - objectThatGrantsPointsIfEnabled: \{fileID: (-?\d+)\}\n    points: (-?\d+)$',bonus[1],re.M))
+        if bonus[1].strip()!='[]' and (not entries or len(entries)!=bonus[1].count('objectThatGrantsPointsIfEnabled:')):
+            raise RuntimeError('Original bonus credit entry is unresolved: '+stage)
+        result['bonus_credits']=[{'path':object_path(int(match[1])),'points':int(match[2])} for match in entries]
         contexts[stage]=result
-    return {'input_id':input_id,'stages':contexts,'scope':'Original pool references and native population policy. SceneDirector placement/bonus-object credits are not yet integrated.'}
+    return {'input_id':input_id,'stages':contexts,'scope':'Original pool, scene-director policy and bonus-credit object identities. Android retains continuous-body entry and teleporter lifecycle adapters.'}
 
 
 def build_integration(code_only=False):
@@ -838,7 +881,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'
     body_text=body_boundary.read_text()

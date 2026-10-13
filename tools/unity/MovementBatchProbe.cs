@@ -426,9 +426,12 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
     Check(!GlobalEventManager.instance&&!oldFall,"Existing landing context");var fall=artifactBundle.LoadAsset<ArtifactDef>(cfg.artifactAsset);Check(fall&&fall.cachedName=="WeakAssKnees","Recovered fall definition");StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{new[]{glass}.Concat(EnemyArtifacts(cfg,fall)).Concat(ChestPurchaseArtifacts(cfg)).Concat(DropletFlightArtifacts(cfg)).Concat(ObjectiveArtifacts(cfg)).Distinct().ToArray()});RoR2Content.Artifacts.WeakAssKnees=fall;StaticCall(typeof(RunArtifactManager),"Init");eventHost=new GameObject("Recovered landing event context");eventHost.SetActive(false);Call(eventHost.AddComponent<GlobalEventManager>(),"OnEnable");Check(GlobalEventManager.instance==eventHost.GetComponent<GlobalEventManager>(),"Original landing event singleton");
    }
    if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
+    var wholeArtifacts=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.artifactDef,Enumerable.Range(0,ArtifactCatalog.artifactCount).Select(index=>ArtifactCatalog.GetArtifactDef((ArtifactIndex)index)));
+    StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{wholeArtifacts});WholeCatalogComposed.PopulateDefinitionFields("Artifacts",wholeArtifacts);StaticCall(typeof(RunArtifactManager),"Init");
     WholeCatalogComposed.PopulateDefinitionFields("Items",ItemCatalog.allItemDefs.ToArray());
     WholeCatalogComposed.PopulateDefinitionFields("Equipment",EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).ToArray());
     WholeCatalogComposed.PopulateBodyFields(BodyCatalog.allBodyPrefabs.ToArray());
+    PrepareWholeDroneCatalog();
     r.liveCatalogs.projectiles=WholeCatalogComposed.PrepareProjectiles();
     WholeCatalogComposed.PopulateDefinitionFields("Buffs",Enumerable.Range(0,BuffCatalog.buffCount).Select(index=>BuffCatalog.GetBuffDef((BuffIndex)index)).ToArray(),"bd");
    }

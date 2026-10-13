@@ -77,6 +77,7 @@ public sealed partial class MovementBatchProbe {
    Check(!activeBodyClient.handlers.ContainsKey(59),"Unowned platform chat handler");ownsCommerceMessages=true;
    activeBodyClient.RegisterHandler(59,message=>{var native=ChatMessageBase.Instantiate(message.reader.ReadByte());Check(native!=null,"Original local gameplay message type missing");native.Deserialize(message.reader);r.commerce.messages++;var subject=native as Chat.SubjectFormatChatMessage;var simple=native as Chat.SimpleChatMessage;r.commerce.lastMessage=subject!=null?subject.baseToken:(simple!=null?simple.baseToken:native.GetType().Name);});
   }
+  if(r.liveCatalogs!=null){r.commerce.scope="Original complete stage interactable selection/credits/node placement and native purchase behaviors; owned Android activation/audio/presentation and continuous-body/teleporter lifecycle adapters. Registration is not every interactable behavior acceptance.";return;}
   // Reserve the original camera orbit plus each unscaled source model footprint.
   // The old 8m offsets let tall terminals occupy the initial third-person view.
   var directions=new[]{Vector3.right,Vector3.left,Vector3.forward,Vector3.back,new Vector3(1,0,1).normalized,new Vector3(-1,0,1).normalized,new Vector3(1,0,-1).normalized,new Vector3(-1,0,-1).normalized};int start=0;

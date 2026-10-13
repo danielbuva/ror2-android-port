@@ -9,7 +9,7 @@ using UnityEngine;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageCombatDeckSpec {public string name,asset;public int cards,categories,excluded;}
  [Serializable] public class StageCombatSpawn {public string card;public int count;}
- [Serializable] public class StageCombatDeckReport {public string stage;public string[] cards;public int excluded;public bool nativePool;public string[] interactableCards;public List<StageCombatSpawn> spawned=new List<StageCombatSpawn>();}
+ [Serializable] public class StageCombatDeckReport {public string stage;public string[] cards;public int excluded;public bool nativePool,nativeScenePopulation;public int initialInteractableCredits,remainingInteractableCredits,playerSpawnPoints,droneDefinitions,availableDrones,pickupDefinitions,lunarLoot;public List<string> placedInteractables=new List<string>();public string[] interactableCards;public List<StageCombatSpawn> spawned=new List<StageCombatSpawn>();}
  readonly HashSet<CharacterMaster> stageCombatActors=new HashSet<CharacterMaster>();StageCombatDeckReport currentStageCombatDeck;
  void SelectStageCombatDeck(Result cfg,string stage){
   if(cfg.stageCombatDecks==null||cfg.stageCombatDecks.Length==0||stage=="moon2")return;

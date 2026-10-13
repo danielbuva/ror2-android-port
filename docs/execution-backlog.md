@@ -4368,3 +4368,19 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **FAILURE EVIDENCE TO CAPTURE:** Candidate37 wrong elite owner;38 native audio dispatch and nonempty effect-pool release;39 host callback-order rejection before installation. Preserve immutable receipts/raw evidence and first-failure classifications.
 - **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit; preserve candidate36 rollback and retire superseded generated outputs only after retained hash checks; staged public audit and Conventional Commit.
 - **DEPENDENCIES:** J433 rollback, pinned R2API.Director/Sound ownership and observation contracts, measured current original scene/pool/async UI/effect initialization.
+
+## C05 / J435 — Complete native interactable population and pickup domains
+
+- **ID:** C05 / J435; scoped composed acceptance passed in candidate47.
+- **TITLE:** Replace the maintained entry layout with native source scene population.
+- **CONTEXT:** J434 native stage selection/full actor templates exceed the authored placement and ordinary-only pickup consumers.
+- **OBSERVATION:** Source cards require native drone masks, legacy SpawnPoint aliases and complete Lunar pickup domains; native final asset release requires returned effect loans.
+- **HYPOTHESIS:** Original SceneDirector/PickupCatalog/rule-generated masks fit the owned Android lifecycle without content whitelists.
+- **TASK:** Follow exact legacy aliases, retain source-card ownership, invoke native scene population, register complete current pickup/drone/artifact families, pair resources and restore deferred notification icons.
+- **CONSTRAINTS:** Common safety contract; no unlock/expansion/platform grants, Lunar currency bypass, guessed shader math or manual/Moon routing. Teleporter/continuous-body entry adapters remain explicit.
+- **EXPECTED FILES/SYSTEMS TO TOUCH:** Existing catalog/build/assembly metadata, stage/loot/HUD/lifecycle boundaries and one native interactable consumer.
+- **TEST COMMAND:** doctor/preflight/test; exact-editor alias/card-ownership/typed-root/drone/pickup checks; whole-catalog-build then guarded code-build; movement-batch-retry with explicit acceleration.
+- **PASS CONDITION:** Complete eligible source decks populate across four real transitions; actual native money purchase/pickup notifications, zero current-process errors and complete cleanup. All131host tests/7,458typed roots pass. Candidate47:627.520seconds/57kills/four transitions/144placements/two native money chest purchases/five loaded notification icons, full cleanup and zero current-process errors. Invincibility/high damage/fast charge ON; no normal/full-game acceptance.
+- **FAILURE EVIDENCE TO CAPTURE:** Host singleton/card-sharing/alias rejects;43 missing drone mask;44 empty Lunar table;45 final nonempty effect-pool release;46 direct projectile loop audio. Preserve separate attempts/receipts and reject failed pointer advancement.
+- **STATE/JOURNAL UPDATES REQUIRED:** Concise state/coverage/exit; retain candidate40 rollback, retire superseded generated outputs after retained hash checks, staged privacy/IP audit and Conventional Commit.
+- **DEPENDENCIES:** J434 rollback; pinned R2API.Director cloning/population, Addressables/Skin effect ownership and Sound engine-init observations; measured original scene, pickup/rule, loop-audio and asynchronous UI contracts.

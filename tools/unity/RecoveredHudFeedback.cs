@@ -12,7 +12,7 @@ public sealed partial class RecoveredHudPresentation {
  readonly Dictionary<BuffIndex,BuffIcon> buffViews=new Dictionary<BuffIndex,BuffIcon>();
  CharacterMasterNotificationQueue feedbackQueue;CharacterMaster feedbackMaster;
  CharacterMasterNotificationQueue.NotificationInfo currentNotice;
- RecoveredPickupPresentation notificationView;bool ownsFeedbackQueue;
+ RecoveredPickupPresentation notificationView;bool ownsFeedbackQueue,notificationIconObserved;
  float priorQueueFixedTime=-1;
  void ValidateFeedback(){
   if(!buffRoot||!buffTemplate||!buffTemplate.iconImage||!buffTemplate.stackCount||buffWidth<=0||!notificationRoot||!notificationTemplate||!notificationTemplate.nativeFade||!notificationTemplate.nativeFade.canvasGroup||!notificationTemplate.nativeFlash||!notificationTemplate.nativeFlash.rawImage||!notificationTemplate.title||!notificationTemplate.description)
@@ -53,10 +53,10 @@ public sealed partial class RecoveredHudPresentation {
   report.buffs=visible;report.peakBuffs=Mathf.Max(report.peakBuffs,visible);report.nativeNotificationQueue=true;
   var notice=feedbackQueue.GetCurrentNotification();
   if(!ReferenceEquals(notice,currentNotice)){
-   if(notificationView)Destroy(notificationView.gameObject);notificationView=null;currentNotice=notice;report.notification="";
+   if(notificationView)Destroy(notificationView.gameObject);notificationView=null;currentNotice=notice;report.notification="";notificationIconObserved=false;
    if(notice!=null){notificationView=Instantiate(notificationTemplate,notificationRoot,false);notificationView.Present(notice);notificationView.gameObject.SetActive(true);report.pickupNotifications++;report.notification=notificationView.title.text;}
   }
-  if(notificationView){notificationView.nativeFade.SetNotificationT(feedbackQueue.GetCurrentNotificationT());report.notificationFlashTime=notificationView.nativeFlash.time;report.notificationFlashAlpha=notificationView.nativeFlash.rawImage.color.a;}
+  if(notificationView){notificationView.nativeFade.SetNotificationT(feedbackQueue.GetCurrentNotificationT());report.notificationFlashTime=notificationView.nativeFlash.time;report.notificationFlashAlpha=notificationView.nativeFlash.rawImage.color.a;if(!notificationIconObserved&&notificationView.iconLoaded){notificationIconObserved=true;report.loadedNotificationIcons++;}}
  }
  public void CleanupFeedback(Observation report){
   if(notificationView)Destroy(notificationView.gameObject);notificationView=null;currentNotice=null;

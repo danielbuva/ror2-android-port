@@ -83,18 +83,36 @@ static class OptionalPresentationGuard {
   il=turbine.Body.GetILProcessor();var turbineCall=turbineCalls[0];var afterTurbine=turbineCall.Next.Next;
   il.InsertBefore(turbineCall,il.Create(OpCodes.Call,audio));il.InsertBefore(turbineCall,il.Create(OpCodes.Brfalse,turbineCall));
   for(int i=0;i<3;i++)il.InsertBefore(turbineCall,il.Create(OpCodes.Pop));il.InsertBefore(turbineCall,il.Create(OpCodes.Br,afterTurbine));
+  var loopMethods=new List<MethodDefinition>();
+  if(expected==measured[1]){
+   // Preserve native loop heap/helper bookkeeping. The measured direct event
+   // calls use the same signature as the existing unavailable-audio utility.
+   var loops=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.Audio.LoopSoundManager");
+   foreach(var name in new[]{"PlaySoundLoopLocal","StopSoundLoopLocal"}){
+    var method=loops.Methods.Single(m=>m.Name==name);
+    var calls=method.Body.Instructions.Where(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="PostEvent").ToArray();
+    if(calls.Length!=1||calls[0].Operand is not MethodReference post||post.ReturnType.FullName!=sound.ReturnType.FullName||!post.Parameters.Select(p=>p.ParameterType.FullName).SequenceEqual(sound.Parameters.Select(p=>p.ParameterType.FullName)))throw new Exception("Original loop event contract changed: "+name);
+    calls[0].Operand=sound;loopMethods.Add(method);
+   }
+   var setRtpc=loops.NestedTypes.Single(t=>t.Name=="SoundLoopPtr").Methods.Single(m=>m.Name=="SetRtpc");
+   var callsRtpc=setRtpc.Body.Instructions.Where(i=>i.OpCode==OpCodes.Call&&i.Operand is MethodReference mr&&mr.DeclaringType.Name=="AkSoundEngine"&&mr.Name=="SetRTPCValueByPlayingID").ToArray();
+   if(callsRtpc.Length!=1||callsRtpc[0].Operand is not MethodReference loopRtpc||loopRtpc.ReturnType.Name!="AKRESULT"||!loopRtpc.Parameters.Select(p=>p.ParameterType.FullName).SequenceEqual(new[]{"System.String","System.Single","System.UInt32"})||callsRtpc[0].Next.OpCode!=OpCodes.Pop)throw new Exception("Original loop RTPC contract changed");
+   il=setRtpc.Body.GetILProcessor();var call=callsRtpc[0];var afterCall=call.Next.Next;
+   il.InsertBefore(call,il.Create(OpCodes.Call,audio));il.InsertBefore(call,il.Create(OpCodes.Brfalse,call));
+   for(int i=0;i<3;i++)il.InsertBefore(call,il.Create(OpCodes.Pop));il.InsertBefore(call,il.Create(OpCodes.Br,afterCall));loopMethods.Add(setRtpc);
+  }
   // Insertion can move targets beyond the signed-byte range; keep branch semantics exactly.
-  foreach(var m in new[]{sound,landing,fixedUpdate,countdown,turbine}.Concat(stopMethods))foreach(var instruction in m.Body.Instructions) {
+  foreach(var m in new[]{sound,landing,fixedUpdate,countdown,turbine}.Concat(stopMethods).Concat(loopMethods))foreach(var instruction in m.Body.Instructions) {
    if(instruction.OpCode==OpCodes.Br_S)instruction.OpCode=OpCodes.Br;
    else if(instruction.OpCode==OpCodes.Brfalse_S)instruction.OpCode=OpCodes.Brfalse;
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).ToArray();
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   if(verified.Name.FullName!=identity||verified.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(verified)))throw new Exception("Optional presentation changed original assembly/type/field/method identity");
   var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Original gameplay, original sound bodies otherwise, ownership/authentication unchanged."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise, ownership/authentication unchanged."}));
  }
 }

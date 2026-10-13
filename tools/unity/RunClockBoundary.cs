@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 // Schedules unchanged original clock callbacks on the owned inactive Run, without its startup.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class RunClockReport {
-  public bool catalogReady,originalCallbacks,stopwatchRunning,cleaned,asyncAssetsReleased;public string scene,error,scope;public int sceneIndex,selectedDifficulty,fixedTicks,frameTicks,asyncAssetTicks;public float beganFixed,beganStopwatch,fixedTime,frameTime,stampTime,stopwatch,difficulty,compensatedDifficulty,ambient;public bool paused;
+  public bool catalogReady,originalCallbacks,stopwatchRunning,cleaned,asyncAssetsReleased;public string scene,error,scope;public int sceneIndex,selectedDifficulty,fixedTicks,frameTicks,asyncAssetTicks,endRunEffectLoansReturned;public float beganFixed,beganStopwatch,fixedTime,frameTime,stampTime,stopwatch,difficulty,compensatedDifficulty,ambient;public bool paused;
  }
  Action<SceneExitController> ownedStageAsyncRelease,nativeStageAsyncRelease;
  Action ownedRunFixed,ownedRunFrame,ownedAsyncAssetFrame;bool ownsRunAsyncLifecycle;Run clockRun;Scene priorClockScene;SceneDef[] priorContentScenes;SceneDef clockSceneDef;SceneDef[] clockSceneDefs;
@@ -55,6 +55,9 @@ public sealed partial class MovementBatchProbe {
  void Update(){TickDebugAcceleration();ObserveOfflineApplicationInput();ObserveWorldRestartInput();TickOriginalStage();if(ownedRunFrame==null)return;try{if(ownedAsyncAssetFrame!=null){ownedAsyncAssetFrame();r.runClock.asyncAssetTicks++;}ownedRunFrame();r.runClock.frameTicks++;}catch(Exception e){r.runClock.error=e.ToString();ownedRunFixed=null;ownedRunFrame=null;ownedAsyncAssetFrame=null;Save();}}
  void ReleaseCompletedRunAsyncAssets(){
   if(!ownsRunAsyncLifecycle)return;Check(!Run.instance,"Async end-run release requires completed owned Run teardown");
+  // The final stage has no exit callback. Return this world's remaining native
+  // effect loans after actor teardown, before the original forced pool release.
+  if(ownsIntegratedPools){var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);r.runClock.endRunEffectLoansReturned=pools.Values.Sum(pool=>pool.InUseCount());ReturnIntegratedStageEffects();}
   // The inactive owned Run does not dispatch OnDestroy; use its shipped asset-release callback after actors exit.
   AssetAsyncLiaison.AssetAsyncReleaseAllReferences(true);ownsRunAsyncLifecycle=false;r.runClock.asyncAssetsReleased=true;Save();
  }

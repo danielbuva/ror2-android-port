@@ -41,10 +41,27 @@ static class CatalogContract {
    .SelectMany(m=>m.Body.Instructions.Where(i=>i.OpCode==OpCodes.Ldstr).Select(i=>new{key=(string)i.Operand,method=m.FullName}))
    .GroupBy(row=>row.key,StringComparer.Ordinal).OrderBy(group=>group.Key,StringComparer.Ordinal)
    .Select(group=>new{key=group.Key,methods=group.Select(row=>row.method).Distinct().OrderBy(name=>name,StringComparer.Ordinal).ToArray()}).ToArray();
+  var legacyFile=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(file))!,"LegacyResourcesAPI.dll");
+  using var legacy=AssemblyDefinition.ReadAssembly(legacyFile);
+  var legacyAliases=new Dictionary<string,string>(StringComparer.Ordinal);
+  int legacyAssignments=0,legacyReassignments=0;
+  var initializer=Types(legacy.MainModule.Types).Single(type=>type.FullName=="RoR2.LegacyResourcesAPI").Methods.Single(method=>method.IsConstructor&&method.IsStatic);
+  var instructions=initializer.Body.Instructions;
+  for(int i=2;i<instructions.Count;i++){
+   if(instructions[i].Operand is not MethodReference setter||setter.Name!="set_Item"||!setter.DeclaringType.FullName.StartsWith("System.Collections.Generic.Dictionary`2<System.String,System.String>",StringComparison.Ordinal))continue;
+   if(instructions[i-2].OpCode!=OpCodes.Ldstr||instructions[i-1].OpCode!=OpCodes.Ldstr)throw new Exception("Original legacy alias assignment requires reviewed IL");
+   var alias=(string)instructions[i-2].Operand;var key=(string)instructions[i-1].Operand;
+   if(string.IsNullOrEmpty(alias)||string.IsNullOrEmpty(key))throw new Exception("Original legacy alias identity is empty");
+   // The shipped initializer also uses canonical addresses and intentional
+   // reassignment. Preserve dictionary setter order, including the final value.
+   legacyAssignments++;if(legacyAliases.ContainsKey(alias))legacyReassignments++;legacyAliases[alias]=key;
+  }
+  if(legacyAliases.Count==0)throw new Exception("Original legacy resource aliases absent");
   Console.WriteLine(JsonSerializer.Serialize(new{
    input_sha256=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant(),
    registrationMethod=registration.method.FullName,registrationBody=MigrationSurface.Body(registration.method),providers,categories,initializers,
-   phaseValues=phase?.Fields.Where(f=>f.HasConstant).ToDictionary(f=>f.Name,f=>f.Constant),assetKeyCandidates,
+   phaseValues=phase?.Fields.Where(f=>f.HasConstant).ToDictionary(f=>f.Name,f=>f.Constant),assetKeyCandidates,legacyAliases,
+   legacyInputSha256=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(legacyFile))).ToLowerInvariant(),legacyAssignments,legacyReassignments,
    scope="Read-only original IL/metadata; no provider, initializer, ownership or platform service invoked"
   }));
  }
