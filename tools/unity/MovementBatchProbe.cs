@@ -15,6 +15,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  // These exact definitions register identities; original eligibility remains authoritative.
  [Serializable] public class MoonCatalogSpec {public string[] items,buffs,equipment;}
  [Serializable] public class Result {
+  public PerformanceReport performance;
   public LiveCatalogReport liveCatalogs;
   public string stageBossArmorBuffAsset;public string stageOverheatBuffAsset,stageOverheatVisualAsset,stageGrandparentSunAsset,stageMiniCardAsset,stageMiniCardKey,stageMiniCardPath;public StageBossContentReport stageBossContent;
   public bool catalogTransformInstalled,catalogTransformRestored;

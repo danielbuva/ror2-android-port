@@ -73,7 +73,8 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveStageBossContent(bool force=false){
   if(r.stageBossContent==null||(!force&&Time.frameCount%30!=0))return;
-  foreach(var obj in Resources.FindObjectsOfTypeAll<GrandParentSunController>().Where(x=>x.gameObject.scene.IsValid()).Select(x=>x.gameObject).Concat(Resources.FindObjectsOfTypeAll<TarTetherController>().Where(x=>x.gameObject.scene.IsValid()).Select(x=>x.gameObject)).Distinct()){
+  var instances=force?Resources.FindObjectsOfTypeAll<GameObject>():NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray();
+  foreach(var obj in instances.Where(x=>x&&x.scene.IsValid()&&(x.GetComponent<GrandParentSunController>()||x.GetComponent<TarTetherController>()))){
    if(!stageBossInstances.Add(obj))continue;var id=obj.GetComponent<NetworkIdentity>();Check(id&&id.netId.Value!=0&&NetworkServer.FindLocalObject(id.netId)==obj,"Boss support has no owned server identity");if(obj.GetComponent<GrandParentSunController>())r.stageBossContent.suns++;else r.stageBossContent.tethers++;
   }
   foreach(var master in ownedRewardSummons.Where(x=>x&&x.bodyPrefab&&x.bodyPrefab.name=="RoboBallMiniBody"))if(stageMiniInstances.Add(master))r.stageBossContent.minions++;

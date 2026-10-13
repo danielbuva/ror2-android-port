@@ -151,7 +151,10 @@ public sealed partial class MovementBatchProbe {
  void ObserveObjectiveSupport(bool force=false){
   if(!force&&Time.frameCount%30!=0)return;
   if(objectiveSupportSources==null)return;
-  foreach(var source in objectiveSupportSources.Skip(1).Take(2).Where(source=>source))foreach(var instance in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&x.name==source.name+"(Clone)"))if(!objectiveSupportInstances.Contains(instance))objectiveSupportInstances.Add(instance);
+  // Both support sources are native networked objects. Normal observation can
+  // use the server's spawned identities; teardown still sweeps inactive scenes.
+  var instances=force?Resources.FindObjectsOfTypeAll<GameObject>():NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray();
+  foreach(var source in objectiveSupportSources.Skip(1).Take(2).Where(source=>source))foreach(var instance in instances.Where(x=>x&&x.scene.IsValid()&&x.name==source.name+"(Clone)"))if(!objectiveSupportInstances.Contains(instance))objectiveSupportInstances.Add(instance);
  }
  void CleanupObjectiveSupport(){
   CleanupWorldLootSupport();

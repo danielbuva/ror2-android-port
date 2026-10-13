@@ -54,6 +54,8 @@ public sealed partial class MovementBatchProbe {
  readonly List<Transform> worldModels=new List<Transform>();
  readonly List<Material> worldMaterials=new List<Material>();
  readonly HashSet<int> worldPresented=new HashSet<int>();
+ float nextWorldPickupSnapshot;
+ Action worldClientUpdate;
  readonly List<BarrelInteraction> worldBarrels=new List<BarrelInteraction>();
  readonly List<ChestBehavior> worldChests=new List<ChestBehavior>();
  GameObject worldStaging,worldPause;InteractionDriver worldDriver;CharacterBody worldPlayer;
@@ -86,6 +88,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  int worldFeatherEffectIndex=-1,worldFeatherReferenceBaseline;CharacterBody.JumpDelegate worldFeatherJumped;
  readonly Dictionary<int,int> worldNativeLootLeaseBaselines=new Dictionary<int,int>();
  readonly HashSet<GameObject> worldNativeLootObjects=new HashSet<GameObject>();
+ static readonly PropertyInfo worldNativeLootReferenceCount=typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic);
+ static readonly FieldInfo[] worldBarrierEffectFields=new[]{"bucklerShieldTempEffectInstance","barrierTempEffectInstance"}.Select(name=>typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)).ToArray();
 
 
  ItemDef[] WorldTierOneLoot(Result cfg){
@@ -163,20 +167,18 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   return effects.Distinct().ToArray();
  }
  void ObserveWorldLootSupport(CharacterBody body,bool force=false){
-  r.world.nativeLootProviderLoads=worldNativeLootLeaseBaselines.Sum(pair=>(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value);
-  foreach(var pair in worldNativeLootLeaseBaselines)if(objectiveSupportSources[pair.Key].name=="ImpactStunGrenade")r.world.stunImpactLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;
-  foreach(var pair in worldNativeLootLeaseBaselines)if(objectiveSupportSources[pair.Key].name=="StickyBomb")r.world.stickyBombLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;
+  int loads=0;foreach(var pair in worldNativeLootLeaseBaselines){int count=(int)worldNativeLootReferenceCount.GetValue(objectiveSupportLeases[pair.Key])-pair.Value;loads+=count;var name=objectiveSupportSources[pair.Key].name;if(name=="ImpactStunGrenade")r.world.stunImpactLoads=count;else if(name=="StickyBomb")r.world.stickyBombLoads=count;}r.world.nativeLootProviderLoads=loads;
   if(force||Time.frameCount%10==0){
-   foreach(var blast in Resources.FindObjectsOfTypeAll<DelayBlast>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="WilloWispDelay(Clone)"))if(worldNativeLootObjects.Add(blast.gameObject)){worldObjects.Add(blast.gameObject);r.world.wispDelaySpawns++;}
-   foreach(var bomb in Resources.FindObjectsOfTypeAll<RoR2.Projectile.ProjectileController>().Where(x=>x.gameObject.scene.IsValid()&&(x.name=="StickyBomb(Clone)"||x.name=="MissileProjectile(Clone)"||x.name=="Sawmerang(Clone)"||x.name=="GravSphere(Clone)"||x.name=="DaggerProjectile(Clone)")))if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);if(bomb.name=="StickyBomb(Clone)")r.world.stickyBombSpawns++;if(bomb.name=="DaggerProjectile(Clone)"&&r.dots!=null)r.dots.daggerSpawns++;}
+   foreach(var blast in UnityEngine.Object.FindObjectsOfType<DelayBlast>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="WilloWispDelay(Clone)"))if(worldNativeLootObjects.Add(blast.gameObject)){worldObjects.Add(blast.gameObject);r.world.wispDelaySpawns++;}
+   foreach(var identity in NetworkServer.objects.Values){if(!identity||!identity.gameObject.scene.IsValid())continue;var bomb=identity.GetComponent<RoR2.Projectile.ProjectileController>();if(!bomb||!(bomb.name=="StickyBomb(Clone)"||bomb.name=="MissileProjectile(Clone)"||bomb.name=="Sawmerang(Clone)"||bomb.name=="GravSphere(Clone)"||bomb.name=="DaggerProjectile(Clone)"))continue;if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);if(bomb.name=="StickyBomb(Clone)")r.world.stickyBombSpawns++;if(bomb.name=="DaggerProjectile(Clone)"&&r.dots!=null)r.dots.daggerSpawns++;}}
   }
   if(RoR2Content.Buffs.Slow60)r.world.slowedEnemiesPeak=Mathf.Max(r.world.slowedEnemiesPeak,directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.body.HasBuff(RoR2Content.Buffs.Slow60)));
-  if(worldNativeLootLeaseBaselines.Count>0&&(force||Time.frameCount%30==0))foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x.scene.IsValid()&&(x.name=="HealPack(Clone)"||x.name=="BonusMoneyPack(Clone)")))if(worldNativeLootObjects.Add(obj)){worldObjects.Add(obj);if(obj.name=="HealPack(Clone)")r.world.healthPacks++;else r.world.moneyPacks++;}
-  if(worldFeatherEffectIndex>=0){r.world.featherEffectLoads=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[worldFeatherEffectIndex])-worldFeatherReferenceBaseline;Check(r.world.featherEffectLoads==r.world.featherJumps,"Original Feather loads differ from observed bonus jumps");}
+  if(worldNativeLootLeaseBaselines.Count>0&&(force||Time.frameCount%30==0)){var packs=force?Resources.FindObjectsOfTypeAll<GameObject>():NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray();foreach(var obj in packs.Where(x=>x&&x.scene.IsValid()&&(x.name=="HealPack(Clone)"||x.name=="BonusMoneyPack(Clone)")))if(worldNativeLootObjects.Add(obj)){worldObjects.Add(obj);if(obj.name=="HealPack(Clone)")r.world.healthPacks++;else r.world.moneyPacks++;}}
+  if(worldFeatherEffectIndex>=0){r.world.featherEffectLoads=(int)worldNativeLootReferenceCount.GetValue(objectiveSupportLeases[worldFeatherEffectIndex])-worldFeatherReferenceBaseline;Check(r.world.featherEffectLoads==r.world.featherJumps,"Original Feather loads differ from observed bonus jumps");}
   if(worldLootEffectSlots.Count==0||!body)return;r.world.barrier=body.healthComponent.barrier;
-  foreach(var name in new[]{"bucklerShieldTempEffectInstance","barrierTempEffectInstance"}){
-   var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);
-   if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);if(name=="barrierTempEffectInstance"){Check(effect.healthComponent==body.healthComponent&&effect.parentTransform==body.coreTransform,"Original barrier effect body linkage differs");r.world.barrierEffects++;}}
+  foreach(var field in worldBarrierEffectFields){
+   var effect=(TemporaryVisualEffect)field.GetValue(body);
+   if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);if(field.Name=="barrierTempEffectInstance"){Check(effect.healthComponent==body.healthComponent&&effect.parentTransform==body.coreTransform,"Original barrier effect body linkage differs");r.world.barrierEffects++;}}
   }
  }
  void CleanupWorldLootSupport(){
@@ -387,20 +389,37 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   }
  }
  void ObserveIntegratedWorld(CharacterBody player,float elapsed){
-  Call(activeBodyClient,"Update");Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
-  ObserveTeleporterWorld();ObserveMoonMission();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
+  long performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  if(worldClientUpdate==null)worldClientUpdate=(Action)Delegate.CreateDelegate(typeof(Action),activeBodyClient,activeBodyClient.GetType().GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));worldClientUpdate();r.performance.clientUpdateMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
+  long objectiveStart=performancePart;ObserveTeleporterWorld();r.performance.teleporterMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();ObserveMoonMission();r.performance.moonMs+=PerformanceMs(performancePart);r.performance.objectiveMs+=PerformanceMs(objectiveStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
   world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
-  world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);ObserveWorldLootSupport(player);ObserveWorldEquipment();ObserveWorldItemBehaviors();ObserveWorldHealingItems();ObserveStageBossContent();ObserveWorldLegendaryItems();ObserveWorldItemDisplays();
+  long lootStart=performancePart;world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(worldLootDefinitions[i]);
+  if(Time.frameCount%6==0)ObserveWorldLootSupport(player);r.performance.lootSupportMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  ObserveWorldEquipment();r.performance.equipmentMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  ObserveWorldItemBehaviors();r.performance.itemBehaviorsMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  ObserveWorldHealingItems();r.performance.healingMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  ObserveStageBossContent();r.performance.bossMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  ObserveWorldLegendaryItems();r.performance.legendaryMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  ObserveWorldItemDisplays();r.performance.itemDisplayMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  r.performance.lootMs+=PerformanceMs(lootStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
   if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
   world.openedBarrels=worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.master.teamIndex!=TeamIndex.Player);ObserveWorldChestBreadth();
-  var pickups=EjectionPickups().ToArray();world.pickups=pickups.Length;world.droplets=EjectionDroplets().Count();
-  var interactor=player.GetComponent<Interactor>();world.interactionDistance=interactor.maxInteractionDistance;
-  world.pickupObservations=pickups.Select(x=>{var collider=x.GetComponentsInChildren<Collider>(true).FirstOrDefault(c=>c.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<c.gameObject.layer))!=0);var aim=collider?collider.bounds.center:x.transform.position;var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return new WorldPickupObservation{item=def==null?"invalid":def.internalName,interactability=x.GetInteractability(interactor).ToString(),position=x.transform.position,aimTarget=aim,aimDistance=Vector3.Distance(player.inputBank.aimOrigin,aim),selected=worldDriver.currentInteractable==x.gameObject,collider=collider,interactableLayer=collider};}).ToArray();
-  foreach(var pickup in pickups){if(!pickup.pickupDisplay)continue;var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pickup.pickupDisplay);if(model)PresentWorldModel(model.transform,false);}
+  // These are live-world observations. The broad Resources API also walks the
+  // complete loaded catalog and its inactive source prefabs every rendered frame.
+  if(elapsed>=nextWorldPickupSnapshot){
+   // The snapshot is diagnostic state; native pickup creation, collision and
+   // interaction still run every frame through their original callbacks.
+   nextWorldPickupSnapshot=elapsed+1f;
+   var pickups=UnityEngine.Object.FindObjectsOfType<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()).ToArray();world.pickups=pickups.Length;world.droplets=UnityEngine.Object.FindObjectsOfType<PickupDropletController>().Count(x=>x.gameObject.scene.IsValid());
+   var interactor=player.GetComponent<Interactor>();world.interactionDistance=interactor.maxInteractionDistance;
+   world.pickupObservations=pickups.Select(x=>{var collider=x.GetComponentsInChildren<Collider>(true).FirstOrDefault(c=>c.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<c.gameObject.layer))!=0);var aim=collider?collider.bounds.center:x.transform.position;var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return new WorldPickupObservation{item=def==null?"invalid":def.internalName,interactability=x.GetInteractability(interactor).ToString(),position=x.transform.position,aimTarget=aim,aimDistance=Vector3.Distance(player.inputBank.aimOrigin,aim),selected=worldDriver.currentInteractable==x.gameObject,collider=collider,interactableLayer=collider};}).ToArray();
+   foreach(var pickup in pickups){if(!pickup.pickupDisplay)continue;var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pickup.pickupDisplay);if(model)PresentWorldModel(model.transform,false);}
+  }
   world.secondary=r.combat.secondaryEntries;world.roll=r.combat.utilityEntries;world.barrage=r.combat.specialEntries;
-  world.target=worldDriver.currentInteractable?worldDriver.currentInteractable.name:"";ObserveWorldCommerce();ObserveRecoveredHud();
+  r.performance.pickupMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+  world.target=worldDriver.currentInteractable?worldDriver.currentInteractable.name:"";ObserveWorldCommerce();ObserveRecoveredHud();r.performance.commerceHudMs+=PerformanceMs(performancePart);
  }
  void IntegratedWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
   // Explicit automation for integrated validation only; direct app launches use physical controls.
@@ -619,6 +638,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupTeleporterWorld();
+  worldClientUpdate=null;nextWorldPickupSnapshot=0;
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}

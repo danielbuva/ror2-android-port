@@ -86,7 +86,9 @@ public sealed partial class MovementBatchProbe {
   var weapon=player.skillLocator.primary.stateMachine.state;r.combat.weaponState=weapon.GetType().FullName;r.combat.bodyState=machine.state.GetType().FullName;
   if(weapon!=lastCombatWeapon){if(weapon is FireFMJ)r.combat.secondaryEntries++;if(weapon is FireBarrage)r.combat.specialEntries++;lastCombatWeapon=weapon;}
   if(machine.state!=lastCombatBody){if(machine.state is DodgeState)r.combat.utilityEntries++;lastCombatBody=machine.state;}
-  foreach(var projectile in FindObjectsOfType<ProjectileController>())observedProjectiles.Add(projectile.GetInstanceID());r.combat.projectiles=observedProjectiles.Count;r.combat.projectileSoundGuards=SilentProjectileBoundary.prepared;
+  // The local server owns every spawned original projectile. Its live identity
+  // registry avoids traversing the complete Unity object graph each frame.
+  foreach(var identity in NetworkServer.objects.Values){if(!identity)continue;var projectile=identity.GetComponent<ProjectileController>();if(projectile)observedProjectiles.Add(projectile.GetInstanceID());}r.combat.projectiles=observedProjectiles.Count;r.combat.projectileSoundGuards=SilentProjectileBoundary.prepared;
   r.combat.healthAfter=targetBody?targetBody.healthComponent.health:0;
  }
  void CleanupCombatScene(){

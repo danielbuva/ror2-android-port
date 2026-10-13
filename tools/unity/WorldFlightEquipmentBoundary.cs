@@ -17,6 +17,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class DeveloperEquipmentSelection {public string equipment,previous;public float seconds;public bool activated;}
  readonly Dictionary<GameObject,FlightEquipmentObservation> worldFlightObjects=new Dictionary<GameObject,FlightEquipmentObservation>();
  readonly Dictionary<JetpackController,CharacterMaster> worldFlightDeathOwners=new Dictionary<JetpackController,CharacterMaster>();
+ float worldFlightDiscoveryUntil,worldFlightDiscoveryNext;
  readonly Dictionary<Renderer,bool> worldFlightVisibility=new Dictionary<Renderer,bool>();
  EquipmentState developerEquipmentPrior;Inventory developerEquipmentInventory;int developerEquipmentCursor;float developerEquipmentChangedAt;
 
@@ -32,8 +33,13 @@ public sealed partial class MovementBatchProbe {
   foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){if(worldLootSourceMaterials.ContainsKey(renderer))continue;worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}
   PresentCommerceModel(source.transform);
  }
- void ObserveFlightEquipment(){
-  foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x&&x.scene.IsValid()&&(x.name=="JetpackController(Clone)"||x.name=="FireballVehicle(Clone)"))){
+ void ObserveFlightEquipment(bool includeInactive=false){
+  // Live updates need scene instances, not every inactive asset in the complete
+  // registered catalog. The final cleanup still audits inactive scene objects.
+  bool discover=includeInactive||Time.realtimeSinceStartup<worldFlightDiscoveryUntil&&Time.realtimeSinceStartup>=worldFlightDiscoveryNext;
+  if(discover&&!includeInactive)worldFlightDiscoveryNext=Time.realtimeSinceStartup+.1f;
+  var candidates=includeInactive?Resources.FindObjectsOfTypeAll<GameObject>():discover?NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray():worldFlightObjects.Keys.ToArray();
+  foreach(var obj in candidates.Where(x=>x&&x.scene.IsValid()&&(x.name=="JetpackController(Clone)"||x.name=="FireballVehicle(Clone)"))){
    var attachment=obj.GetComponent<NetworkedBodyAttachment>();var seat=obj.GetComponent<VehicleSeat>();
    Check(attachment?attachment.attachedBody==worldPlayer:seat&&seat.currentPassengerBody==worldPlayer,"Flight equipment owned passenger/body differs");
    FlightEquipmentObservation entry;if(!worldFlightObjects.TryGetValue(obj,out entry)){
@@ -63,12 +69,13 @@ public sealed partial class MovementBatchProbe {
  }
  void RemoveFlightDeathOwner(JetpackController controller,CharacterMaster master){if(master){master.onBodyDeath.RemoveListener(controller.ReleaseBody);r.world.equipment.ownedFlightDeathCallbacksRemoved++;}worldFlightDeathOwners.Remove(controller);}
  void CleanupFlightEquipment(){
-  if(r.world==null||r.world.equipment==null)return;ObserveFlightEquipment();
+  if(r.world==null||r.world.equipment==null)return;ObserveFlightEquipment(true);
   foreach(var pair in worldFlightDeathOwners.ToArray())RemoveFlightDeathOwner(pair.Key,pair.Value);
   foreach(var obj in worldFlightObjects.Keys)if(obj)NetworkServer.Destroy(obj);
   foreach(var pair in worldFlightVisibility)if(pair.Key)pair.Key.forceRenderingOff=pair.Value;worldFlightVisibility.Clear();
   if(developerEquipmentInventory){SetDeveloperEquipmentState(developerEquipmentInventory,developerEquipmentPrior);developerEquipmentInventory=null;}
   developerEquipmentCursor=0;developerEquipmentChangedAt=0;
+  worldFlightDiscoveryUntil=worldFlightDiscoveryNext=0;
  }
  void VerifyFlightEquipmentCleanup(){
   if(r.world==null||r.world.equipment==null)return;

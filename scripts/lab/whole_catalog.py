@@ -859,7 +859,7 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
 
 
 def build_integration(code_only=False):
-    from build import build, freeze_whole_payload
+    from build import build, freeze_whole_payload, WHOLE_PLAYER_INPUTS
     out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
     attempt = ROOT/read(out/'integration-latest.json')['path']
     if not read(attempt/'host-integration.json')['success']:
@@ -881,7 +881,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','WorldFlightEquipmentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)
@@ -930,6 +930,13 @@ def build_integration(code_only=False):
     write(project/'Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json',
           dict(attempt=manifest['attempt'], input_id=manifest['input_id']))
     write(WORK/'whole-catalog-build.json', dict(manifest=str(attempt/'manifest.json')))
+    if code_only:
+        for rel in sorted(WHOLE_PLAYER_INPUTS):
+            if not rel.endswith('.cs'):
+                continue
+            source=ROOT/'tools/unity'/Path(rel).name
+            if source.is_file() and sha(source)!=sha(project/rel):
+                raise RuntimeError('Code-only source was not staged: '+rel)
     previous = attempt/'build.json'
     if previous.exists():
         previous.rename(attempt/('build-previous-'+now()+'.json'))

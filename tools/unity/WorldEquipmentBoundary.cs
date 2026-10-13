@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using RoR2;
 using UnityEngine;
+using UnityEngine.Networking;
 
 // Supplies eligible shipped equipment content and input/lifecycle scheduling.
 // Original grants, activation dispatch, buffs, healing and cooldowns execute unchanged.
@@ -18,6 +19,7 @@ public sealed partial class MovementBatchProbe {
   public ObjectiveRendererObservation[] temporaryEffectViews;
  }
  Action worldEquipmentFixed,worldEquipmentInventoryFixed;Action<EquipmentSlot,EquipmentIndex> worldEquipmentActivated;
+ static readonly FieldInfo[] worldEquipmentEffectFields=new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}.Select(name=>typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)).ToArray();
  readonly List<ChestBehavior> worldEquipmentChests=new List<ChestBehavior>();
  EquipmentDef[] worldEquipmentDefinitions;EquipmentSlot worldEquipmentSlot;float equipmentLastInput=-100;bool worldEquipmentTouch;NovaInputBridge worldEquipmentBridge;
  EquipmentDef[] WorldEquipmentDefs(Result cfg){
@@ -70,18 +72,18 @@ public sealed partial class MovementBatchProbe {
   Call(worldEquipmentSlot,"UpdateAuthority");Check((bool)typeof(EquipmentSlot).GetField("hasEffectiveAuthority",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldEquipmentSlot),"Original equipment authority missing");
   worldEquipmentFixed=(Action)Delegate.CreateDelegate(typeof(Action),worldEquipmentSlot,typeof(EquipmentSlot).GetMethod("FixedUpdate",BindingFlags.Instance|BindingFlags.NonPublic));
   if(!player.inventory.isActiveAndEnabled)worldEquipmentInventoryFixed=(Action)Delegate.CreateDelegate(typeof(Action),player.inventory,typeof(Inventory).GetMethod("FixedUpdate",BindingFlags.Instance|BindingFlags.NonPublic));
-  worldEquipmentActivated=(slot,index)=>{if(slot!=worldEquipmentSlot)return;var def=EquipmentCatalog.GetEquipmentDef(index);Check(EligibleWorldEquipment().Contains(def),"Unsupported equipment activated");r.world.equipment.activations++;r.world.equipment.actions.Add(new EquipmentActionObservation{equipment=def.name,seconds=Run.instance.GetRunStopwatch(),stock=slot.stock,health=player.healthComponent.health,armor=player.armor,crit=player.crit});};EquipmentSlot.onServerEquipmentActivated+=worldEquipmentActivated;r.world.equipment.ready=true;
+  worldEquipmentActivated=(slot,index)=>{if(slot!=worldEquipmentSlot)return;var def=EquipmentCatalog.GetEquipmentDef(index);Check(EligibleWorldEquipment().Contains(def),"Unsupported equipment activated");if(def.name=="Jetpack"||def.name=="FireBallDash")worldFlightDiscoveryUntil=Time.realtimeSinceStartup+5;r.world.equipment.activations++;r.world.equipment.actions.Add(new EquipmentActionObservation{equipment=def.name,seconds=Run.instance.GetRunStopwatch(),stock=slot.stock,health=player.healthComponent.health,armor=player.armor,crit=player.crit});};EquipmentSlot.onServerEquipmentActivated+=worldEquipmentActivated;r.world.equipment.ready=true;
  }
  void TickWorldEquipment(){
   if(worldEquipmentFixed==null||!worldPlayer||!worldPlayer.healthComponent.alive)return;
   try{if(worldEquipmentInventoryFixed!=null)worldEquipmentInventoryFixed();worldEquipmentFixed();r.world.equipment.ticks++;}
   catch(Exception e){r.world.equipment.error=e.ToString();worldEquipmentFixed=null;Save();}
  }
- void ObserveWorldEquipment(){
-  var report=r.world.equipment;if(report==null)return;ObserveFlightEquipment();Check(string.IsNullOrEmpty(report.error),"Original equipment lifecycle failed: "+report.error);
-  var def=EquipmentCatalog.GetEquipmentDef(worldEquipmentSlot.equipmentIndex);report.equipment=def?def.name:"";report.stock=worldEquipmentSlot.stock;report.maxStock=worldEquipmentSlot.maxStock;report.cooldown=worldEquipmentSlot.cooldownTimer;report.sourceBarrels=worldEquipmentChests.Count(x=>x);report.openedBarrels=worldEquipmentChests.Count(x=>x&&x.NetworkisChestOpened);
-  foreach(var fieldName in new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}){var effect=(TemporaryVisualEffect)typeof(CharacterBody).GetField(fieldName,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldPlayer);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);report.temporaryEffectViews=effect.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();}}
-  foreach(var pickup in Resources.FindObjectsOfTypeAll<AmmoPickup>().Where(x=>x.gameObject.scene.IsValid()))if(worldNativeLootObjects.Add(pickup.baseObject)){worldObjects.Add(pickup.baseObject);report.ammoPacks++;}
+ void ObserveWorldEquipment(bool force=false){
+  var report=r.world.equipment;if(report==null)return;long began=System.Diagnostics.Stopwatch.GetTimestamp();ObserveFlightEquipment();r.performance.flightMs+=PerformanceMs(began);Check(string.IsNullOrEmpty(report.error),"Original equipment lifecycle failed: "+report.error);
+  began=System.Diagnostics.Stopwatch.GetTimestamp();var def=EquipmentCatalog.GetEquipmentDef(worldEquipmentSlot.equipmentIndex);report.equipment=def?def.name:"";report.stock=worldEquipmentSlot.stock;report.maxStock=worldEquipmentSlot.maxStock;report.cooldown=worldEquipmentSlot.cooldownTimer;report.sourceBarrels=worldEquipmentChests.Count(x=>x);report.openedBarrels=worldEquipmentChests.Count(x=>x&&x.NetworkisChestOpened);r.performance.equipmentStateMs+=PerformanceMs(began);
+  began=System.Diagnostics.Stopwatch.GetTimestamp();foreach(var field in worldEquipmentEffectFields){var effect=(TemporaryVisualEffect)field.GetValue(worldPlayer);if(effect&&!worldLootTemporaryEffects.Contains(effect.gameObject)){worldLootTemporaryEffects.Add(effect.gameObject);report.temporaryEffectViews=effect.GetComponentsInChildren<Renderer>(true).Select(ObserveOwnedSurface).ToArray();}}r.performance.temporaryEffectMs+=PerformanceMs(began);
+  began=System.Diagnostics.Stopwatch.GetTimestamp();var ammo=force?Resources.FindObjectsOfTypeAll<AmmoPickup>().Where(x=>x&&x.gameObject.scene.IsValid()).ToArray():NetworkServer.objects.Values.Where(x=>x&&x.name=="AmmoPack(Clone)").Select(x=>x.GetComponentInChildren<AmmoPickup>(true)).Where(x=>x).ToArray();foreach(var pickup in ammo)if(worldNativeLootObjects.Add(pickup.baseObject)){worldObjects.Add(pickup.baseObject);report.ammoPacks++;}r.performance.ammoMs+=PerformanceMs(began);
  }
  void WorldEquipmentStimulus(NovaInputBridge bridge,float elapsed){
   bridge.diagnosticEquipment=false;if(r.world.equipment==null)return;
@@ -89,6 +91,7 @@ public sealed partial class MovementBatchProbe {
   if(worldEquipmentSlot.stock>0&&worldEquipmentSlot.equipmentIndex!=EquipmentIndex.None&&elapsed-equipmentLastInput>45){bridge.diagnosticEquipment=true;equipmentLastInput=elapsed;}
  }
  void CleanupWorldEquipment(){
+  ObserveWorldEquipment(true);
   CleanupFlightEquipment();
   worldEquipmentFixed=null;worldEquipmentInventoryFixed=null;worldEquipmentTouch=false;worldEquipmentChests.Clear();equipmentLastInput=-100;
   if(worldEquipmentActivated!=null)EquipmentSlot.onServerEquipmentActivated-=worldEquipmentActivated;worldEquipmentActivated=null;worldEquipmentDefinitions=null;worldEquipmentSlot=null;worldEquipmentBridge=null;if(r.world!=null&&r.world.equipment!=null)r.world.equipment.cleaned=true;

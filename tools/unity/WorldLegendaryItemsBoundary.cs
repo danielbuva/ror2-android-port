@@ -38,7 +38,8 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveWorldLegendaryItems(bool force=false){
   if(r.itemBehaviors==null||(!force&&Time.frameCount%30!=0))return;
-  foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x&&x.scene.IsValid()&&worldLegendaryControllers.Any(name=>x.name==name+"(Clone)"))){
+  var instances=force?Resources.FindObjectsOfTypeAll<GameObject>():NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray();
+  foreach(var obj in instances.Where(x=>x&&x.scene.IsValid()&&worldLegendaryControllers.Any(name=>x.name==name+"(Clone)"))){
    LegendaryItemObservation observation;if(!worldLegendaryItemInstances.TryGetValue(obj,out observation)){var identity=obj.GetComponent<NetworkIdentity>();Check(identity&&identity.netId.Value!=0&&NetworkServer.FindLocalObject(identity.netId)==obj,"Original legendary local network ownership differs");worldObjects.Add(obj);observation=new LegendaryItemObservation{source=obj.name,netId=identity.netId.Value,states=new string[0]};worldLegendaryItemInstances.Add(obj,observation);r.itemBehaviors.legendaryInstances.Add(observation);}
    observation.samples++;var network=obj.GetComponent<NetworkIdentity>();var attachment=obj.GetComponent<NetworkedBodyAttachment>();observation.localPlayerAuthority=network.localPlayerAuthority;observation.hasAuthority=network.hasAuthority;observation.forceHostAuthority=attachment&&attachment.forceHostAuthority;observation.states=observation.states.Concat(obj.GetComponents<EntityStateMachine>().Where(x=>x.state!=null).Select(x=>x.state.GetType().FullName)).Distinct().ToArray();Check(observation.states.Length<=11,"Unexpected legendary state domain");
    var icicle=obj.GetComponent<IcicleAuraController>();if(icicle)observation.maxIcicles=Mathf.Max(observation.maxIcicles,icicle.NetworkfinalIcicleCount);

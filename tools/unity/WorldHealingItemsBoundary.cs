@@ -34,12 +34,14 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveWorldHealingItems(bool force=false){
   if(r.procContent==null||(!force&&Time.frameCount%30!=0))return;
-  foreach(var effect in Resources.FindObjectsOfTypeAll<TemporaryVisualEffect>().Where(x=>x&&x.gameObject.scene.IsValid()&&x.name=="WarbannerBuffEffect(Clone)")){
+  var effects=force?Resources.FindObjectsOfTypeAll<TemporaryVisualEffect>():UnityEngine.Object.FindObjectsOfType<TemporaryVisualEffect>();
+  foreach(var effect in effects.Where(x=>x&&x.gameObject.scene.IsValid()&&x.name=="WarbannerBuffEffect(Clone)")){
    if(worldLootTemporaryEffects.Contains(effect.gameObject))continue;
    Check(effect.healthComponent&&effect.parentTransform==effect.healthComponent.GetComponent<CharacterBody>().coreTransform,"Original Warbanner buff effect body linkage differs");
    worldLootTemporaryEffects.Add(effect.gameObject);r.procContent.warbannerBuffEffects++;
   }
-  foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>().Where(x=>x&&x.scene.IsValid()&&worldHealingItemNames.Any(name=>x.name==name+"(Clone)"))){
+  var instances=force?Resources.FindObjectsOfTypeAll<GameObject>():NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray();
+  foreach(var obj in instances.Where(x=>x&&x.scene.IsValid()&&worldHealingItemNames.Any(name=>x.name==name+"(Clone)"))){
    if(!worldHealingItemInstances.Add(obj))continue;var identity=obj.GetComponent<NetworkIdentity>();Check(identity&&identity.netId.Value!=0&&NetworkServer.FindLocalObject(identity.netId)==obj,"Original healing-item local network ownership differs");worldObjects.Add(obj);
    switch(obj.name){case "WarbannerWard(Clone)":r.procContent.warbannerWards++;break;case "InterstellarDeskPlant(Clone)":r.procContent.deskPlants++;break;case "DeskplantWard(Clone)":r.procContent.deskplantWards++;break;case "TeleporterHealNovaGenerator(Clone)":r.procContent.healNovaGenerators++;break;case "TeleporterHealNovaPulse(Clone)":r.procContent.healNovaPulses++;break;}
   }
