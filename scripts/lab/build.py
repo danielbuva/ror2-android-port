@@ -89,6 +89,22 @@ def validate_whole_payload_reuse(project):
  current_payload={p.name:sha(p) for p in (WORK/'generated-android-data').iterdir() if p.is_file()}
  if current_payload!=receipt['payload']:raise RuntimeError('Frozen whole-catalog payload identity changed')
 
+def build_cache_key(project,api):
+ project=Path(project)
+ inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings']
+         for p in sorted((project/sub).rglob('*')) if p.is_file()}
+ external={}
+ recipe=WORK/'scene-probe-build.json'
+ if recipe.exists():external['bundle_recipe']=sha(recipe)
+ whole=WORK/'whole-catalog-build.json'
+ if whole.exists():
+  manifest=Path(read(whole)['manifest'])
+  if not manifest.is_absolute():manifest=ROOT/manifest
+  if not manifest.is_file():raise RuntimeError('Whole-catalog build manifest is missing')
+  external['whole_catalog_manifest']=sha(manifest)
+ return digest({'inputs':inputs,'external':external,'api':api,'editor':toolchain(),
+                'backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
+
 def build(api='gles',force=False,reuse_payload=False):
  if api not in ['gles','vulkan','lab']:raise RuntimeError('Build target must be gles or vulkan')
  if api=='lab':api='gles'
@@ -99,8 +115,7 @@ def build(api='gles',force=False,reuse_payload=False):
  # Copy changed tool-owned sources only. Never reset project settings during an incremental build.
  shutil.copytree(ROOT/'android/Assets',project/'Assets',dirs_exist_ok=True)
  if reuse_payload:validate_whole_payload_reuse(project)
- inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
- key=digest({'inputs':inputs,'api':api,'editor':toolchain(),'backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
+ key=build_cache_key(project,api)
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
  if receipt.exists() and not force:
   r=read(receipt)
@@ -125,8 +140,7 @@ def build(api='gles',force=False,reuse_payload=False):
  else:raise RuntimeError('Build timeout; inspect work/lab-editor.log; no cache stamp written')
  r=read(result)
  if not r['success'] or r.get('errors',0)>0:raise RuntimeError(r['result']+'; build errors='+str(r.get('errors',0)))
- inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings'] for p in sorted((project/sub).rglob('*')) if p.is_file() and p.suffix!='.unity' and p.name!='Lab.unity.meta'}
- key=digest({'inputs':inputs,'api':api,'editor':toolchain(),'backend':'IL2CPP-ARM64','tool':sha(ROOT/'scripts/lab/build.py')})
+ key=build_cache_key(project,api)
  dest=WORK/'build-cache'/key;receipt=dest/'result.json'
  dest.mkdir(parents=True,exist_ok=True);apk=dest/Path(r['apk']).name;copy_build_artifact(r['apk'],apk)
  r.update({'apk':str(apk),'apk_sha256':sha(apk),'key':key,'graphics_api':api,'input_id':read(WORK/'inventory/files.json')['input_id']})

@@ -16,6 +16,28 @@ VARIANTS = {
 }
 
 
+def include_runtime_graph_roots(config, recipe, project, accepted_files):
+    """Keep each accepted stage graph in the bundle queried by transport."""
+    accepted = {path.casefold(): (path, digest) for path, digest in accepted_files.items()}
+    existing = {path.casefold() for path in recipe.get('prefabAssets', [])}
+    added = []
+    for stage in config['integratedStages']:
+        if stage['name'] not in VARIANTS:
+            continue
+        for field in ('groundGraph', 'airGraph'):
+            key = stage[field].casefold()
+            if key not in accepted:
+                raise RuntimeError('Variant graph is absent from accepted inputs: '+stage['name']+'/'+field)
+            path, digest = accepted[key]
+            if sha(project/path) != digest:
+                raise RuntimeError('Accepted variant graph changed: '+stage['name']+'/'+field)
+            if key not in existing:
+                recipe.setdefault('prefabAssets', []).append(path)
+                existing.add(key)
+                added.append(path)
+    return added
+
+
 def stage():
     from build import preflight
     from composition_migration import scene_contract
@@ -34,7 +56,8 @@ def stage():
     recipe_path = WORK/'scene-probe-build.json'
     config = read(config_path)
     recipe = read(recipe_path)
-    accepted_payload = {path.lower():digest for path,digest in read(WORK/'whole-catalog-code-base.json')['files'].items()}
+    accepted_files = read(WORK/'whole-catalog-code-base.json')['files']
+    accepted_payload = {path.lower():digest for path,digest in accepted_files.items()}
     names = [row['name'] for row in config['integratedStages']]
     pending = list(VARIANTS)
     if all(name in names for name in pending):
@@ -43,8 +66,10 @@ def stage():
             for row in config['integratedStages']:
                 if row['name'] in VARIANTS:
                     row['previewNames'] = sorted(row['previewNames'])
+            added = include_runtime_graph_roots(config,recipe,project,accepted_files)
             write(config_path,config)
-            return {'success':True, 'already_staged':True, 'stages':pending}
+            if added:write(recipe_path,recipe)
+            return {'success':True, 'already_staged':True, 'stages':pending,'runtime_graph_roots_added':added}
         raise RuntimeError('Previously staged scene variant changed; review before regenerating')
     if any(name in names for name in pending):
         raise RuntimeError('Partial stage-variant configuration requires review')
@@ -131,6 +156,7 @@ def stage():
             scene = str(candidates[name][2].relative_to(project))
             if scene not in recipe['nextStageScenes']:
                 recipe['nextStageScenes'].append(scene)
+        added_graphs = include_runtime_graph_roots(config,recipe,project,accepted_files)
         write(out/'preview.json',{'input_id':input_id,'scenes':source_receipts,
             'stage_names':next_names,
             'prior_art':'Pinned R2API.Director stage/SceneCatalog seams informed the validation boundary; shipped scene and pool records are authoritative. Native stage selection is unchanged.'})
@@ -148,6 +174,7 @@ def stage():
                 path.write_bytes(data)
             raise
         result = {'success':True,'input_id':input_id,'stages':pending,
+                  'runtime_graph_roots_added':added_graphs,
                   'scene_sha256':{name:sha(candidates[name][2]) for name in pending},
                   'config_sha256':sha(config_path),'contexts_sha256':sha(context_path),
                   'recipe_sha256':sha(recipe_path),'editor_sha256':sha(editor_path),
