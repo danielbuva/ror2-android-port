@@ -29,9 +29,14 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  static void Call(object obj,string method,params object[] args){obj.GetType().GetMethod(method,BindingFlags.NonPublic|BindingFlags.Instance).Invoke(obj,args);}
  void Save(){
   var path=System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+r.id+".json");
-  var pending=path+".pending";File.WriteAllText(pending,JsonUtility.ToJson(r,false));
-  // Same-volume rename keeps adb readers on a complete previous or next report.
-  if(File.Exists(path))File.Replace(pending,path,null);else File.Move(pending,path);
+  var pending=path+".pending";var fullTrace=r.integratedWorld&&r.nova!=null?r.nova.observations:null;
+  if(fullTrace!=null&&fullTrace.Count>64)r.nova.observations=fullTrace.GetRange(fullTrace.Count-64,64);
+  try{
+   File.WriteAllText(pending,JsonUtility.ToJson(r,false));
+   // Same-volume rename keeps adb readers on a complete previous or next report.
+   if(File.Exists(path))File.Replace(pending,path,null);else File.Move(pending,path);
+  }finally{if(fullTrace!=null)r.nova.observations=fullTrace;}
+  FlushNovaTrace();
  }
  [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Init(){if(Resources.Load<TextAsset>("MovementBatchProbe"))new GameObject("Isolated movement batch").AddComponent<MovementBatchProbe>();}
  IEnumerator Start(){

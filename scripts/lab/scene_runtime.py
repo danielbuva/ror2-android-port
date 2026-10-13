@@ -2,6 +2,23 @@
 from common import *
 import re, shutil
 
+def preserve_input_trace(device,runtime,attempt,report,expected_pid):
+    nova=report.get('nova') or {}
+    recent=nova.get('observations') or []
+    total=nova.get('samples',0)
+    if not report.get('integratedWorld') or total<=len(recent):return
+    if str(report.get('pid'))!=str(expected_pid):raise RuntimeError('Input trace report PID mismatch')
+    remote=runtime+'/movement-batch-'+report['id']+'-'+str(expected_pid)+'-'+str(int(report['session']))+'-input.jsonl'
+    local=attempt/'input-trace.jsonl'
+    device.cmd('pull',remote,str(local))
+    expected=0
+    for line in local.read_text().splitlines():
+        chunk=json.loads(line)
+        if chunk['firstSample']!=expected or chunk['attempt']!=report['attempt'] or chunk['id']!=report['id'] or str(chunk['pid'])!=str(expected_pid) or chunk['session']!=report['session']:
+            raise RuntimeError('Input trace chunk gap or identity mismatch')
+        expected+=len(chunk['observations'])
+    if expected<total-len(recent):raise RuntimeError('Input trace and live report leave an observation gap')
+
 def scene_prepare(include_prefab=False):
     from build import preflight
     preflight()
@@ -697,6 +714,11 @@ def movement_batch_run(cases=None, retry=False, interactive=False, debug_options
                         try:result.update(acceptance_labels(read(attempt/name),options))
                         except Exception as e:result['debug_acceptance_error']=str(e);result['success']=False
                         break
+            for name in ['probe.json','interrupted-probe.json']:
+                if (attempt/name).exists():
+                    try:preserve_input_trace(d,runtime,attempt,read(attempt/name),pid)
+                    except Exception as e:result['trace_capture_error']=str(e);result['success']=False
+                    break
             try:d.collect('all',attempt/'device')
             except Exception as e:result['capture_error']=str(e);result['success']=False
             log=attempt/'device/unity.log'
