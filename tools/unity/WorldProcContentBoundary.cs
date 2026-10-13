@@ -52,6 +52,7 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveHealingCommerceWards(){
   foreach(var purchase in commercePurchases.Where(x=>x)){
+   if(commercePurchaseCounts[purchase]==0)continue;
    var shrine=purchase.GetComponent<ShrineHealingBehavior>();if(!shrine)continue;var obj=(GameObject)typeof(ShrineHealingBehavior).GetField("wardInstance",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(shrine);if(!obj)continue;
    var ward=obj.GetComponent<HealingWard>();Check(ward&&obj.GetComponent<TeamFilter>()&&ward.netId.Value!=0,"Native healing shrine ward/network identity absent");
    HealingWardObservation row;if(!commerceHealingWards.TryGetValue(obj,out row)){row=new HealingWardObservation{shrine=shrine.name,netId=ward.netId.Value};commerceHealingWards.Add(obj,row);worldObjects.Add(obj);r.commerce.healingWards.Add(row);PresentCommerceModel(obj.transform);}

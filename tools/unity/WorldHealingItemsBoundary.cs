@@ -9,6 +9,7 @@ using UnityEngine.Networking;
 // Source providers and native callbacks only; no ward, pulse or plant algorithms.
 public sealed partial class MovementBatchProbe {
  static readonly string[] worldHealingItemNames={"WarbannerWard","InterstellarDeskPlant","DeskplantWard","TeleporterHealNovaGenerator","TeleporterHealNovaPulse"};
+ static readonly FieldInfo worldWarbannerEffectField=typeof(CharacterBody).GetField("warbannerEffectInstance",BindingFlags.NonPublic|BindingFlags.Instance);
  readonly HashSet<GameObject> worldHealingItemInstances=new HashSet<GameObject>();
  Action<CharacterBody> worldWarbannerLevel;
  bool IsWorldHealingItemSource(string path){return path=="Prefabs/TemporaryVisualEffects/WarbannerBuffEffect"||worldHealingItemNames.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
@@ -34,17 +35,24 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveWorldHealingItems(bool force=false){
   if(r.procContent==null||(!force&&Time.frameCount%30!=0))return;
-  var effects=force?Resources.FindObjectsOfTypeAll<TemporaryVisualEffect>():UnityEngine.Object.FindObjectsOfType<TemporaryVisualEffect>();
-  foreach(var effect in effects.Where(x=>x&&x.gameObject.scene.IsValid()&&x.name=="WarbannerBuffEffect(Clone)")){
-   if(worldLootTemporaryEffects.Contains(effect.gameObject))continue;
-   Check(effect.healthComponent&&effect.parentTransform==effect.healthComponent.GetComponent<CharacterBody>().coreTransform,"Original Warbanner buff effect body linkage differs");
-   worldLootTemporaryEffects.Add(effect.gameObject);r.procContent.warbannerBuffEffects++;
+  if(force)foreach(var effect in Resources.FindObjectsOfTypeAll<TemporaryVisualEffect>())ObserveWorldWarbannerEffect(effect);
+  else{
+   // CharacterBody owns the exact temporary visual instance. Read that source
+   // field from live bodies instead of searching the entire loaded catalog.
+   Check(worldWarbannerEffectField!=null,"Original Warbanner effect owner field absent");
+   if(worldPlayer)ObserveWorldWarbannerEffect((TemporaryVisualEffect)worldWarbannerEffectField.GetValue(worldPlayer));
+   foreach(var actor in directorActors)if(actor.body)ObserveWorldWarbannerEffect((TemporaryVisualEffect)worldWarbannerEffectField.GetValue(actor.body));
   }
   var instances=force?Resources.FindObjectsOfTypeAll<GameObject>():NetworkServer.objects.Values.Where(x=>x).Select(x=>x.gameObject).ToArray();
   foreach(var obj in instances.Where(x=>x&&x.scene.IsValid()&&worldHealingItemNames.Any(name=>x.name==name+"(Clone)"))){
    if(!worldHealingItemInstances.Add(obj))continue;var identity=obj.GetComponent<NetworkIdentity>();Check(identity&&identity.netId.Value!=0&&NetworkServer.FindLocalObject(identity.netId)==obj,"Original healing-item local network ownership differs");worldObjects.Add(obj);
    switch(obj.name){case "WarbannerWard(Clone)":r.procContent.warbannerWards++;break;case "InterstellarDeskPlant(Clone)":r.procContent.deskPlants++;break;case "DeskplantWard(Clone)":r.procContent.deskplantWards++;break;case "TeleporterHealNovaGenerator(Clone)":r.procContent.healNovaGenerators++;break;case "TeleporterHealNovaPulse(Clone)":r.procContent.healNovaPulses++;break;}
   }
+ }
+ void ObserveWorldWarbannerEffect(TemporaryVisualEffect effect){
+  if(!effect||!effect.gameObject.scene.IsValid()||effect.name!="WarbannerBuffEffect(Clone)"||worldLootTemporaryEffects.Contains(effect.gameObject))return;
+  Check(effect.healthComponent&&effect.parentTransform==effect.healthComponent.GetComponent<CharacterBody>().coreTransform,"Original Warbanner buff effect body linkage differs");
+  worldLootTemporaryEffects.Add(effect.gameObject);r.procContent.warbannerBuffEffects++;
  }
  void CleanupWorldHealingItems(){
   ObserveWorldHealingItems(true);if(worldWarbannerLevel!=null){GlobalEventManager.onCharacterLevelUp-=worldWarbannerLevel;worldWarbannerLevel=null;}

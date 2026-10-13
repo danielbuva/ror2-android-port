@@ -34,7 +34,7 @@ public sealed partial class MovementBatchProbe {
   public int stickyBombLoads,stickyBombSpawns,wispDelaySpawns,barrierEffects;public float barrier;
   public float simulationSeconds,seconds,health,maxHealth,level,attackSpeed,crit,regen,moveSpeed,difficulty,distance;
   public string scope,objective,target,lastPickup,feedbackCapability;public Vector3 start,position;
-  public float interactionDistance;public WorldPickupObservation[] pickupObservations;
+  public float interactionDistance;public WorldPickupObservation[] pickupObservations;public string pickupRegistryStatus;
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
@@ -55,6 +55,7 @@ public sealed partial class MovementBatchProbe {
  readonly List<Material> worldMaterials=new List<Material>();
  readonly HashSet<int> worldPresented=new HashSet<int>();
  float nextWorldPickupSnapshot;
+ string worldPickupRegistryStage;bool worldPickupRegistryFallback;
  Action worldClientUpdate;
  readonly List<BarrelInteraction> worldBarrels=new List<BarrelInteraction>();
  readonly List<ChestBehavior> worldChests=new List<ChestBehavior>();
@@ -88,6 +89,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  int worldFeatherEffectIndex=-1,worldFeatherReferenceBaseline;CharacterBody.JumpDelegate worldFeatherJumped;
  readonly Dictionary<int,int> worldNativeLootLeaseBaselines=new Dictionary<int,int>();
  readonly HashSet<GameObject> worldNativeLootObjects=new HashSet<GameObject>();
+ bool worldWispEffectEligible;
  static readonly PropertyInfo worldNativeLootReferenceCount=typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic);
  static readonly FieldInfo[] worldBarrierEffectFields=new[]{"bucklerShieldTempEffectInstance","barrierTempEffectInstance"}.Select(name=>typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)).ToArray();
 
@@ -169,7 +171,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  void ObserveWorldLootSupport(CharacterBody body,bool force=false){
   int loads=0;foreach(var pair in worldNativeLootLeaseBaselines){int count=(int)worldNativeLootReferenceCount.GetValue(objectiveSupportLeases[pair.Key])-pair.Value;loads+=count;var name=objectiveSupportSources[pair.Key].name;if(name=="ImpactStunGrenade")r.world.stunImpactLoads=count;else if(name=="StickyBomb")r.world.stickyBombLoads=count;}r.world.nativeLootProviderLoads=loads;
   if(force||Time.frameCount%10==0){
-   foreach(var blast in UnityEngine.Object.FindObjectsOfType<DelayBlast>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="WilloWispDelay(Clone)"))if(worldNativeLootObjects.Add(blast.gameObject)){worldObjects.Add(blast.gameObject);r.world.wispDelaySpawns++;}
+   if(!worldWispEffectEligible)worldWispEffectEligible=(body&&body.inventory&&body.inventory.GetItemCount(RoR2Content.Items.ExplodeOnDeath)>0)||directorActors.Any(x=>x.body&&x.body.inventory&&x.body.inventory.GetItemCount(RoR2Content.Items.ExplodeOnDeath)>0);
+   if(worldWispEffectEligible)foreach(var blast in UnityEngine.Object.FindObjectsOfType<DelayBlast>().Where(x=>x.gameObject.scene.IsValid()&&x.name=="WilloWispDelay(Clone)"))if(worldNativeLootObjects.Add(blast.gameObject)){worldObjects.Add(blast.gameObject);r.world.wispDelaySpawns++;}
    foreach(var identity in NetworkServer.objects.Values){if(!identity||!identity.gameObject.scene.IsValid())continue;var bomb=identity.GetComponent<RoR2.Projectile.ProjectileController>();if(!bomb||!(bomb.name=="StickyBomb(Clone)"||bomb.name=="MissileProjectile(Clone)"||bomb.name=="Sawmerang(Clone)"||bomb.name=="GravSphere(Clone)"||bomb.name=="DaggerProjectile(Clone)"))continue;if(worldNativeLootObjects.Add(bomb.gameObject)){worldObjects.Add(bomb.gameObject);if(bomb.name=="StickyBomb(Clone)")r.world.stickyBombSpawns++;if(bomb.name=="DaggerProjectile(Clone)"&&r.dots!=null)r.dots.daggerSpawns++;}}
   }
   if(RoR2Content.Buffs.Slow60)r.world.slowedEnemiesPeak=Mathf.Max(r.world.slowedEnemiesPeak,directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.body.HasBuff(RoR2Content.Buffs.Slow60)));
@@ -186,7 +189,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   CleanupOfflineSettingsPause();
   CleanupWorldEquipment();CleanupWorldItemDisplays();
   if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);
-  foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
+  foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();worldWispEffectEligible=false;if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
   if(worldFeatherJumped!=null){if(!ReferenceEquals(worldPlayer,null))worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
   if(worldFeatherEffectIndex>=0){for(int i=0;i<r.world.featherEffectLoads;i++)Addressables.Release(objectiveSupportSources[worldFeatherEffectIndex]);worldFeatherEffectIndex=-1;r.world.featherEffectCleaned=true;}
   foreach(var effect in worldLootTemporaryEffects)if(effect)Destroy(effect);
@@ -412,7 +415,18 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    // The snapshot is diagnostic state; native pickup creation, collision and
    // interaction still run every frame through their original callbacks.
    nextWorldPickupSnapshot=elapsed+1f;
-   var pickups=UnityEngine.Object.FindObjectsOfType<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()).ToArray();world.pickups=pickups.Length;world.droplets=UnityEngine.Object.FindObjectsOfType<PickupDropletController>().Count(x=>x.gameObject.scene.IsValid());
+   var identities=NetworkServer.objects.Values.Where(x=>x&&x.gameObject.scene.IsValid()).ToArray();
+   var registeredPickups=identities.Select(x=>x.GetComponent<GenericPickupController>()).Where(x=>x).ToArray();
+   var registeredDroplets=identities.Select(x=>x.GetComponent<PickupDropletController>()).Where(x=>x).ToArray();
+   var currentStage=r.stageProgress==null?"":r.stageProgress.current;
+   if(currentStage!=worldPickupRegistryStage&&elapsed-stageEnteredAt>5){
+    var allPickups=UnityEngine.Object.FindObjectsOfType<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()).ToArray();
+    var allDroplets=UnityEngine.Object.FindObjectsOfType<PickupDropletController>().Where(x=>x.gameObject.scene.IsValid()).ToArray();
+    worldPickupRegistryFallback=allPickups.Length!=registeredPickups.Length||allDroplets.Length!=registeredDroplets.Length||allPickups.Any(x=>!registeredPickups.Contains(x))||allDroplets.Any(x=>!registeredDroplets.Contains(x));
+    worldPickupRegistryStage=currentStage;world.pickupRegistryStatus=worldPickupRegistryFallback?"Original network registry incomplete; broad observation retained":"Original network registry matches live pickups and droplets";
+   }
+   var pickups=worldPickupRegistryFallback?UnityEngine.Object.FindObjectsOfType<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()).ToArray():registeredPickups;
+   world.pickups=pickups.Length;world.droplets=worldPickupRegistryFallback?UnityEngine.Object.FindObjectsOfType<PickupDropletController>().Count(x=>x.gameObject.scene.IsValid()):registeredDroplets.Length;
    var interactor=player.GetComponent<Interactor>();world.interactionDistance=interactor.maxInteractionDistance;
    world.pickupObservations=pickups.Select(x=>{var collider=x.GetComponentsInChildren<Collider>(true).FirstOrDefault(c=>c.enabled&&(LayerIndex.CommonMasks.interactable.value&(1<<c.gameObject.layer))!=0);var aim=collider?collider.bounds.center:x.transform.position;var def=PickupCatalog.GetPickupDef(x.pickup.pickupIndex);return new WorldPickupObservation{item=def==null?"invalid":def.internalName,interactability=x.GetInteractability(interactor).ToString(),position=x.transform.position,aimTarget=aim,aimDistance=Vector3.Distance(player.inputBank.aimOrigin,aim),selected=worldDriver.currentInteractable==x.gameObject,collider=collider,interactableLayer=collider};}).ToArray();
    foreach(var pickup in pickups){if(!pickup.pickupDisplay)continue;var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pickup.pickupDisplay);if(model)PresentWorldModel(model.transform,false);}
@@ -638,7 +652,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
  void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupTeleporterWorld();
-  worldClientUpdate=null;nextWorldPickupSnapshot=0;
+  worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}

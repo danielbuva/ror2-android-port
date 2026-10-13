@@ -9,6 +9,7 @@ using RoR2;
 using RoR2.ContentManagement;
 using RoR2.Stats;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Networking;
 
 // Original statistics/report generation; owned Android presentation and local run ledger.
@@ -16,7 +17,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedResultsReport {
   public bool ready,statsRegistered,serverEnding,clientEnding,reportGenerated,reportReloaded,persisted,cleaned;
   public string scope,error,ending,reportFile,ledgerRecovery,ledgerRecoveryError,ledgerRejectedPrimary,initializationStep;public int players,items,stageClearCount,statFields,priorRuns,itemGroupTypes,itemGroupProviders,itemGroups;
-  public float seconds;public double damageDealt,damageTaken;public ulong kills;
+  public float seconds,startupCollectionSeconds;public double damageDealt,damageTaken;public ulong kills;public long startupManagedBefore,startupManagedAfter;
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
  [Serializable] sealed class AndroidRunEntry {public string file,ending;public bool win,debugAssisted;public string debugEvidence;public float seconds;public int stages;}
@@ -62,7 +63,16 @@ public sealed partial class MovementBatchProbe {
   previousResultsSaveSystem=PlatformSystems.saveSystem;Check(previousResultsSaveSystem==null,"Existing platform save-system context");resultsSaveSystem=new AndroidProfileSaveSystem();PlatformSystems.saveSystem=resultsSaveSystem;ownsResultsSaveSystem=true;
   // Current StatDef adds PerKeyItemStatDef. Register original metadata before its fixed buffers;
   // this grants no key item and does not start its pickup/platform simulation.
-  ResultsStep("key-item-statistics");PrepareResultsKeyItems();
+  ResultsStep("key-item-statistics");
+  // Full-catalog loading leaves a large transient managed graph. On this device
+  // an unlucky collection schedule let the process exceed its memory limit here.
+  // Reclaim only at this loading boundary, before native statistics allocate.
+  r.results.startupManagedBefore=Profiler.GetMonoUsedSizeLong();
+  if(r.results.startupManagedBefore>1073741824L&&UnityEngine.Scripting.GarbageCollector.GCMode!=UnityEngine.Scripting.GarbageCollector.Mode.Disabled){
+   var began=Time.realtimeSinceStartup;GC.Collect();r.results.startupCollectionSeconds=Time.realtimeSinceStartup-began;
+  }
+  r.results.startupManagedAfter=Profiler.GetMonoUsedSizeLong();Save();
+  PrepareResultsKeyItems();
   var signature=string.Join("|",Enumerable.Range(0,BodyCatalog.bodyCount).Select(x=>BodyCatalog.GetBodyName((BodyIndex)x)))+"/"+string.Join("|",ItemCatalog.allItemDefs.Select(x=>x.name))+"/"+string.Join("|",clockSceneDefs.Select(x=>x.cachedName))+"/"+string.Join("|",KeyItemCatalog.keyItemNames);
   if(resultsStatsSignature==null){StaticCall(typeof(StatDef),"Init");StaticCall(typeof(StatSheet),"Init");resultsStatsSignature=signature;}else {Check(resultsStatsSignature==signature,"Restart original statistics catalog changed");resultsSaveSystem.isXmlReady=true;}
   ResultsStep("player-statistics");resultsStats=player.master.GetComponent<PlayerStatsComponent>();Check(resultsStats&&resultsStats.currentStats==null&&!resultsStats.gameObject.activeInHierarchy,"Original inactive player statistics scope changed");Call(resultsStats,"Awake");ownsResultsStats=true;

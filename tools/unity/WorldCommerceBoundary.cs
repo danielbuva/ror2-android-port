@@ -20,6 +20,8 @@ public sealed partial class MovementBatchProbe {
  readonly List<GameObject> commerceTemplates=new List<GameObject>();
  readonly Dictionary<PurchaseInteraction,UnityAction<CostTypeDef.PayCostContext,CostTypeDef.PayCostResults>> commerceListeners=new Dictionary<PurchaseInteraction,UnityAction<CostTypeDef.PayCostContext,CostTypeDef.PayCostResults>>();
  readonly Dictionary<PurchaseInteraction,int> commercePurchaseCounts=new Dictionary<PurchaseInteraction,int>();
+ readonly HashSet<int> commercePresentedPickupModels=new HashSet<int>();
+ static readonly FieldInfo commercePickupModelField=typeof(PickupDisplay).GetField("modelObject",BindingFlags.NonPublic|BindingFlags.Instance);
  int commerceEffectIndex=-1,commerceEffectBaseline,commerceDirectShrineEffectLoads;bool ownsCommerceMessages;
  public static float CommerceRadius(GameObject source){
   float radius=0;var center=source.transform.position;
@@ -104,14 +106,14 @@ public sealed partial class MovementBatchProbe {
  void ObserveWorldCommerce(){
   if(r.commerce==null)return;
   ObserveHealingCommerceWards();
-  foreach(var purchase in commercePurchases){if(!purchase)continue;var terminal=purchase.GetComponent<ShopTerminalBehavior>();if(terminal&&terminal.pickupDisplay){var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(terminal.pickupDisplay);if(model)PresentCommerceModel(model.transform);}}
+  foreach(var purchase in commercePurchases){if(!purchase)continue;var terminal=purchase.GetComponent<ShopTerminalBehavior>();if(terminal&&terminal.pickupDisplay){var model=(GameObject)commercePickupModelField.GetValue(terminal.pickupDisplay);if(model&&commercePresentedPickupModels.Add(model.GetInstanceID()))PresentCommerceModel(model.transform);}}
   if(Time.frameCount%30!=0)return;
   r.commerce.objects=commercePurchases.Where(x=>x).Select(x=>{var terminal=x.GetComponent<ShopTerminalBehavior>();var pickup=terminal?PickupCatalog.GetPickupDef(terminal.Networkpickup.pickupIndex):null;return new CommerceObservation{source=x.name,netId=x.netId.Value,cost=x.cost,costType=x.costType.ToString(),available=x.available,purchases=commercePurchaseCounts[x],item=pickup==null?null:pickup.internalName,hidden=terminal&&terminal.Networkhidden,purchased=terminal&&terminal.NetworkhasBeenPurchased};}).ToArray();
  }
  GameObject AffordableWorldCommerce(){return commercePurchases.FirstOrDefault(x=>x&&x.available&&(x.costType==CostTypeIndex.None||x.costType==CostTypeIndex.Money)&&commercePurchaseCounts[x]==0&&(x.costType==CostTypeIndex.None||worldPlayer.master.money>=x.cost))?.gameObject;}
  void CleanupWorldCommerce(bool final=false){
   ObserveWorldChestBreadth();worldBreadthChests.Clear();CleanupHealingCommerceWards();
-  foreach(var pair in commerceListeners)if(pair.Key)pair.Key.onDetailedPurchaseServer.RemoveListener(pair.Value);commerceListeners.Clear();commercePurchases.Clear();commercePurchaseCounts.Clear();commerceShops.Clear();
+  foreach(var pair in commerceListeners)if(pair.Key)pair.Key.onDetailedPurchaseServer.RemoveListener(pair.Value);commerceListeners.Clear();commercePurchases.Clear();commercePurchaseCounts.Clear();commerceShops.Clear();commercePresentedPickupModels.Clear();
   foreach(var template in commerceTemplates)if(template)Destroy(template);commerceTemplates.Clear();
   if(!final)return;
   if(ownsCommerceMessages&&activeBodyClient!=null){activeBodyClient.UnregisterHandler(59);ownsCommerceMessages=false;}
