@@ -89,14 +89,17 @@ public sealed partial class MovementBatchProbe {
   ResultsStep("item-groups");PrepareResultsItemGroups();
   ResultsStep("report-xml");var folder=RewardField(typeof(RunReport),"runReportsFolder");Check(folder!=null,"Original report-folder field absent");previousReportFolder=(string)folder.GetValue(null);if(!resultsSerializersReady){StaticCall(typeof(RunReport),"Init");resultsSerializersReady=true;}
   resultsDirectory=Path.Combine(Application.persistentDataPath,"offline-run-results-v1");Directory.CreateDirectory(resultsDirectory);folder.SetValue(null,resultsDirectory+Path.DirectorySeparatorChar);LoadAndroidRunLedger();r.results.priorRuns=resultsLedger.runs.Count;
+  ResultsStep("android-profile");PrepareAndroidProfile();
+  // GameOverController.Awake creates RunReport, whose RuleBook requires the
+  // native default-value metadata. This applies no Run rules or availability.
+  ResultsStep("rule-metadata");PrepareObjectiveRuleCatalog();
   // Disabled stock cutscene/vote/UI scheduling is an explicit Android presentation adapter.
   // The unchanged original ending method still creates its controller and genuine report.
   ResultsStep("ending-template");resultsTemplate=new GameObject("Owned Android original result template");resultsTemplate.SetActive(false);resultsTemplate.AddComponent<NetworkIdentity>();var fsm=resultsTemplate.AddComponent<EntityStateMachine>();fsm.customName="Main";fsm.enabled=false;
   var vote=resultsTemplate.AddComponent<VoteController>();vote.enabled=false;var controller=resultsTemplate.AddComponent<GameOverController>();controller.enabled=false;resultsTemplate.SetActive(true);
-  Check(!GameOverController.instance&&controller.runReport!=null,"Android result template activated stock flow");previousGameOverPrefab=Run.instance.gameOverPrefab;Run.instance.gameOverPrefab=resultsTemplate;
+  Check(controller.runReport!=null,"Original result template Awake did not create its RunReport");Check(!GameOverController.instance,"Disabled Android result template activated stock flow");previousGameOverPrefab=Run.instance.gameOverPrefab;Run.instance.gameOverPrefab=resultsTemplate;
   resultsServerEvent=(run,ending)=>{if(run!=Run.instance)return;var created=FindObjectsOfType<GameOverController>().Where(x=>x.gameObject!=resultsTemplate&&x.runReport!=null&&x.runReport.gameEnding==ending).ToArray();Check(created.Length==1,"Original generated ending controller/report missing");resultsController=created[0];resultsRunReport=resultsController.runReport;resultsController.enabled=true;r.results.serverEnding=true;r.results.reportGenerated=true;r.results.ending=ending.cachedName;Save();};
   resultsClientEvent=(run,report)=>{if(run!=Run.instance)return;Check(resultsRunReport!=null&&report.gameEnding==resultsRunReport.gameEnding&&report.playerInfoCount==resultsRunReport.playerInfoCount,"Original client ending/report differs");r.results.clientEnding=true;Save();};Run.onServerGameOver+=resultsServerEvent;Run.onClientGameOverGlobal+=resultsClientEvent;
-  ResultsStep("android-profile");PrepareAndroidProfile();
   ResultsStep("run-identity");if(Run.instance.GetUniqueId()==Guid.Empty){Run.instance.Network_uniqueId=(RoR2.Networking.NetworkGuid)Guid.NewGuid();Run.instance.NetworkstartTimeUtc=(RoR2.Networking.NetworkDateTime)DateTime.UtcNow;}
   Run.instance.isRunning=true;r.results.statsRegistered=true;r.results.statFields=resultsStats.currentStats.fields.Length;r.results.ready=true;Save();
  }

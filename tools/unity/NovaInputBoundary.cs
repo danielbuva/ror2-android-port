@@ -47,7 +47,7 @@ public sealed partial class MovementBatchProbe {
    if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
    if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
    if(cfg.integratedWorld){var world=PrepareIntegratedWorld(body,cfg);while(world.MoveNext())yield return world.Current;}
-   PrepareIntegratedResults(body,cfg);
+   if(!cfg.integratedWorld)PrepareIntegratedResults(body,cfg);
    if(cfg.teleporterLoop)display.camera.cullingMask|=LayerIndex.defaultLayer.mask;
    if(cfg.integratedWorld){display.ConfigureThirdPerson(body);worldView=display.thirdPerson;r.world.camera=worldView.report;}
    bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;bridge.thirdPerson=display.thirdPerson;r.nova.originalInputConsumer=true;worldEquipmentBridge=bridge;

@@ -881,7 +881,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','WorldItemDisplayBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'
     body_text=body_boundary.read_text()
@@ -901,6 +901,11 @@ def build_integration(code_only=False):
         bound=row.get('target_imported') or row.get('imported')
         if bound and bound['type']:
             roots.setdefault(bound['assembly'],set()).add(bound['type'])
+    # Native achievement registration discovers these original classes through
+    # reflection; preserve their metadata, constructors and threshold properties.
+    progression={'RoR2.UnlockableCatalog','RoR2.AchievementManager','RoR2.RegisterAchievementAttribute',
+                 'RoR2.LocalUser','RoR2.UserAchievementManager','RoR2.Achievements.*'}
+    roots.setdefault('RoR2',set()).update(progression)
     linker=ET.Element('linker')
     for name,types in sorted(roots.items()):
         assembly=ET.SubElement(linker,'assembly',fullname=name)

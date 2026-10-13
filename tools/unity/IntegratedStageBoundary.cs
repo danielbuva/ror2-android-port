@@ -105,7 +105,7 @@ public sealed partial class MovementBatchProbe {
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(automaticDirectorHost)Destroy(automaticDirectorHost);yield return null;
   SelectStageCombatDeck(integratedStageConfig,next.name);automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
-  automaticDirectorHost.AddComponent<DirectorCore>();rewardDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer);else RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);
+  automaticDirectorHost.AddComponent<DirectorCore>();var spawningDirector=rewardDirector;spawningDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer,spawningDirector);else RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);
   Check(DirectorCore.instance&&rewardDirector.enabled&&CombatDirector.instancesList.Contains(rewardDirector),"Next-stage original director missing");
   worldObjective=0;stagePickupBaseline=r.world.pickupMessages;worldLastPress=-1;
   var origin=solver.TransientPosition;var chestSource=artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);

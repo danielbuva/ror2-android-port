@@ -258,12 +258,24 @@ public sealed partial class MovementBatchProbe {
  }
  bool IsObjectiveActor(CharacterBody body){return body&&objectiveTemplates.Any(x=>x==body.master.bodyPrefab);}
 
- void PrepareObjectiveRules(){
+ void PrepareObjectiveRuleCatalog(){
   // RuleCatalog/RuleBook cache definitions for the process. Restart may reuse this exact
   // catalog signature, but cannot rebuild it while cached RuleBook rule references survive.
   var signature=string.Join("|",ItemCatalog.allItemDefs.Select(x=>x.name))+"/"+string.Join("|",Enumerable.Range(0,EquipmentCatalog.equipmentCount).Select(x=>EquipmentCatalog.GetEquipmentDef((EquipmentIndex)x).name))+"/"+string.Join("|",DroneCatalog.allDroneDefs.Select(x=>x.name))+"/"+string.Join("|",KeyItemCatalog.allKeyItemDefs.Select(x=>x.name));
-  if(objectiveRuleSignature==null){Check(RuleCatalog.ruleCount==0,"Unowned original rules");StaticCall(typeof(RuleCatalog),"Init");StaticCall(typeof(RuleBook),"Init");objectiveRuleSignature=signature;}
+  if(objectiveRuleSignature==null){
+   Check(RuleCatalog.ruleCount==0,"Unowned original rules");
+   // FromKarma captures native unlock references. Gather only that metadata;
+   // KarmaManager.Init would also start unrelated prefab/Run lifecycle work.
+   var priorKarmaUnlocks=KarmaManager.startingKarmaUnlockables;
+   try{
+    if(androidProgression!=null){Check(priorKarmaUnlocks!=null&&priorKarmaUnlocks.Count==0,"Unowned Karma unlock metadata");KarmaManager.startingKarmaUnlockables=new List<UnlockableDef>();StaticCall(typeof(KarmaManager),"GatherStartingKarmaUnlockables");Check(KarmaManager.startingKarmaUnlockables.All(def=>!def||UnlockableCatalog.GetUnlockableDef(def.cachedName)==def),"Original Karma rule unlock metadata identity differs");}
+    StaticCall(typeof(RuleCatalog),"Init");StaticCall(typeof(RuleBook),"Init");objectiveRuleSignature=signature;
+   }finally{KarmaManager.startingKarmaUnlockables=priorKarmaUnlocks;}
+  }
   Check(objectiveRuleSignature==signature&&RuleCatalog.FindRuleDef("Misc.StageOrder")!=null,"Restart rule catalog input changed");
+ }
+ void PrepareObjectiveRules(){
+  PrepareObjectiveRuleCatalog();
   var run=Run.instance;var networkBook=run.GetComponent<NetworkRuleBook>();Check(networkBook,"Original Run rule component absent");
   if(networkBook.ruleBook==null)Call(networkBook,"Awake");
   typeof(Run).GetField("networkRuleBookComponent",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(run,networkBook);
@@ -277,6 +289,9 @@ public sealed partial class MovementBatchProbe {
  static string objectiveRuleSignature;
  IEnumerator PrepareTeleporterWorld(Result cfg){
   r.phase="integrated-teleporter-context";Save();PrepareObjectiveRules();
+  // Rules refresh the loaded profile's earned Run unlock sets before native
+  // DirectorCard.IsAvailable filters this first stage's population. Do not reroll.
+  if(r.liveCatalogs!=null&&currentStageCombatDeck==null)SelectStageCombatDeck(cfg,stageGeometryScene.name);
   var bundle=new ResourceLocationBase("teleporter-indicator-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","teleporter-indicator-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));bundle.Data=new AssetBundleRequestOptions{BundleName="teleporter-indicator-lab"};
   objectiveLocator=new ResourceLocationMap("composed-teleporter");objectiveLocator.Add(cfg.teleporterIndicatorKey,new ResourceLocationBase(cfg.teleporterIndicatorKey,cfg.teleporterIndicatorAsset,typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));Addressables.AddResourceLocator(objectiveLocator);
   var uiBundle=new ResourceLocationBase("objective-ui-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","objective-ui-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));uiBundle.Data=new AssetBundleRequestOptions{BundleName="objective-ui-lab"};
@@ -311,7 +326,7 @@ public sealed partial class MovementBatchProbe {
   PrepareStageBossDeck(cfg);
   worldTeleporter.bossDirector.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
   worldTeleporter.bossDirector.monsterCards=objectiveBossDeck;worldTeleporter.bonusDirector.monsterCards=automaticDeck;
-  worldTeleporter.bonusDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer);else RecordDirectorActor(obj,worldPlayer);});
+  var bonusDirector=worldTeleporter.bonusDirector;bonusDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer,bonusDirector);else RecordDirectorActor(obj,worldPlayer);});
   var model=objectiveHost.GetComponent<ModelLocator>().modelTransform;worldModels.Add(model);PresentWorldModel(model,false,true);
   objectiveBeacon=objectiveHost.GetComponentsInChildren<Collider>(true).Single(x=>x.GetComponent<EntityLocator>()&&x.GetComponent<EntityLocator>().entity==objectiveHost);Check(objectiveBeacon.gameObject.layer==LayerIndex.defaultLayer.intVal,"Original teleporter interaction layer changed");
   if(!objectiveSubscribed)objectiveDefeated=group=>{if(worldTeleporter&&group==worldTeleporter.bossGroup){r.objective.bossDefeated=true;r.objective.rewardPickupBaseline=r.world.pickupMessages;Save();}};

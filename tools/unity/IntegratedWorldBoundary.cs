@@ -185,7 +185,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   CleanupWorldEquipment();CleanupWorldItemDisplays();
   if(r.world!=null)ObserveWorldLootSupport(worldPlayer,true);
   foreach(var pair in worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveSupportLeases[pair.Key])-pair.Value;Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(objectiveSupportSources[pair.Key]);}worldNativeLootLeaseBaselines.Clear();worldNativeLootObjects.Clear();if(r.world!=null)r.world.nativeLootProvidersCleaned=true;
-  if(worldFeatherJumped!=null){if(worldPlayer)worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
+  if(worldFeatherJumped!=null){if(!ReferenceEquals(worldPlayer,null))worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
   if(worldFeatherEffectIndex>=0){for(int i=0;i<r.world.featherEffectLoads;i++)Addressables.Release(objectiveSupportSources[worldFeatherEffectIndex]);worldFeatherEffectIndex=-1;r.world.featherEffectCleaned=true;}
   foreach(var effect in worldLootTemporaryEffects)if(effect)Destroy(effect);
   foreach(var pair in worldLootEffectSlots)pair.Key.SetValue(null,pair.Value);worldLootEffectSlots.Clear();
@@ -222,6 +222,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var moonEquipmentPickups=cfg.moonMission?new[]{RoR2Content.Equipment.AffixLunar.CreatePickupDef()}:new PickupDef[0];
   if(r.liveCatalogs!=null){var pickups=PrepareWholePickups();while(pickups.MoveNext())yield return pickups.Current;lunarPickup=PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex));Check(lunarPickup!=null,"Native Lunar pickup metadata missing");}
   else PickupCatalog.SetEntries(ItemCatalog.allItemDefs.Select(x=>x.CreatePickupDef()).Concat(moonEquipmentPickups).Concat(EligibleWorldEquipment().Select(x=>x.CreatePickupDef())).Concat(new[]{lunarPickup}).ToArray());
+  // Native profiles size discovery storage from this complete pickup catalog.
+  // Load earned state before native rules and the first stage choose loot.
+  PrepareIntegratedResults(player,cfg);
   if(cfg.moonMission)Check(PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex)).equipmentIndex==RoR2Content.Equipment.AffixLunar.equipmentIndex,"Original Lunar equipment pickup metadata missing");
   r.world.lunarDefinition=MiscPickupCatalog.GetMiscDef(worldLunarCoin.miscPickupIndex)==worldLunarCoin&&PickupCatalog.FindPickupIndex(worldLunarCoin.miscPickupIndex)==lunarPickup.pickupIndex&&lunarPickup.attemptGrant.Method.DeclaringType==typeof(LunarCoinDef);
   Check(r.world.lunarDefinition&&!Util.LookUpBodyNetworkUser(player),"Original lunar definition or unavailable currency contract changed");r.world.lunarCurrencyAvailable=false;

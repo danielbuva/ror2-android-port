@@ -47,7 +47,8 @@ public sealed partial class MovementBatchProbe {
  }
  void ObserveWorldItemDisplays(){if(r.itemDisplays==null)return;Check(string.IsNullOrEmpty(r.itemDisplays.error),"Original item display callback failed: "+r.itemDisplays.error);}
  void CleanupWorldItemDisplays(){
-  if(worldDisplayBody&&worldDisplayInventoryChanged!=null)worldDisplayBody.onInventoryChanged-=worldDisplayInventoryChanged;worldDisplayInventoryChanged=null;
+  // Native death destroys the Unity object before this managed subscription ends.
+  if(!ReferenceEquals(worldDisplayBody,null)&&worldDisplayInventoryChanged!=null)worldDisplayBody.onInventoryChanged-=worldDisplayInventoryChanged;worldDisplayInventoryChanged=null;
   if(worldDisplayModel){worldDisplayModel.DisableAllItemDisplays();Call(worldDisplayModel,"SetEquipmentDisplay",EquipmentIndex.None);worldDisplayModel.itemDisplayRuleSet=worldDisplayPriorRules;}
   if(worldDisplayRules)Destroy(worldDisplayRules);worldDisplayRules=null;worldDisplayPriorRules=null;worldDisplayModel=null;worldDisplayBody=null;
   if(r.itemDisplays!=null)r.itemDisplays.cleaned=true;worldDisplayInstances.Clear();

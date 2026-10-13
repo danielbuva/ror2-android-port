@@ -4402,7 +4402,7 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **DEPENDENCIES:** J435 candidate47. Prior art: pinned ProperSave's explicit persistentDataPath/PhysicalFileSystem/SubFileSystem storage boundary; no implementation copied. Exact shipped UserProfile/SaveFieldAttribute/XmlUtility/SaveSystem contracts are authoritative.
 
 ## C07 — Earned offline progression and native availability
-- **ID:** C07; prepared source/standalone compile only, not integrated.
+- **ID:** C07 / J437; bounded native persistent-stat progression accepted on candidate55.
 - **TITLE:** Connect genuine Android progress to original unlock and loot contracts.
 - **CONTEXT:** J436 persists original result statistics; complete native definitions currently retain fresh-profile eligibility.
 - **OBSERVATION:** UnlockableCatalog is absent; an unresolved index can falsely satisfy native HasUnlockable. Run consumes unavailable NetworkUser unlock sets. Eleven native persistent-stat achievement classes are structurally independent of live player input, while award dispatch still calls platform services.
@@ -4413,5 +4413,5 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **TEST COMMAND:** Native host threshold/locked-state/ownership fixtures; existing whole-catalog-code-build and composed genuine death/restart flow.
 - **PASS CONDITION:** Original earned reward survives cold load and affects the next native drop table; fresh locked rewards remain unavailable, no external-service success is claimed, cleanup passes.
 - **FAILURE EVIDENCE TO CAPTURE:** First metadata/index/entitlement/dispatch failure and precise native call; assisted/duplicate exclusion; original result and profile identity.
-- **STATE/JOURNAL UPDATES REQUIRED:** Concise coverage/exit and failed-call evidence. Ignored draft/hook/compiler receipt: work/experiments/whole-catalog/gameplay/progression-draft/receipt.json.
-- **DEPENDENCIES:** J436 accepted profile lifecycle. Pinned R2API.Unlockable/Loadout registration seams; current native achievement, activity and currency-dispatch contracts. Standalone compilation is not host execution or Android acceptance.
+- **STATE/JOURNAL UPDATES REQUIRED:** J437 journal and concise state/coverage/exit; failed attempts retained under ignored progression evidence.
+- **DEPENDENCIES:** J436 accepted profile lifecycle. Pinned R2API.Unlockable/Loadout registration seams; current native achievement, activity and currency-dispatch contracts. Host and Android acceptance are limited to the eleven persistent-stat classes; other achievement families and lunar purchase/transport remain open.

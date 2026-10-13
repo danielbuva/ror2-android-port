@@ -53,6 +53,7 @@ public sealed partial class MovementBatchProbe {
  }
  void RefreshWholeRunAvailability(){
   if(!wholeAvailabilityRun)return;
+  if(androidProgression!=null&&r.profile!=null&&r.profile.ready)r.profile.availableEarnedUnlocks=androidProgression.PopulateEarnedRunAvailability(wholeAvailabilityRun,resultsSaveSystem.local.profile);
   var run=wholeAvailabilityRun;run.ruleBook.GenerateDroneMask(wholeAvailableDrones);run.ruleBook.GenerateKeyItemMask(wholeAvailableKeyItems);wholeLockedDrones.Clear();wholeLockedKeyItems.Clear();
   // Native rules retain every droppable family, including Lunar content. Currency
   // access is a separate purchase boundary; it must not create empty source tables.
@@ -62,6 +63,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var def in DroneCatalog.allDroneDefs)if(def.requiredExpansion&&!run.IsExpansionEnabled(def.requiredExpansion)){wholeAvailableDrones.Remove(def.droneIndex);wholeLockedDrones.Add(def.droneIndex);}
   foreach(var def in KeyItemCatalog.allKeyItemDefs){if(def.requiredExpansion&&!run.IsExpansionEnabled(def.requiredExpansion)){wholeAvailableKeyItems.Remove(def.keyItemIndex);wholeLockedKeyItems.Add(def.keyItemIndex);}if(def.unlockableDef&&!run.IsUnlockableUnlocked(def.unlockableDef))wholeAvailableKeyItems.Remove(def.keyItemIndex);}
   run.BuildDropTable();
+  if(r.profile!=null&&r.profile.ready)r.profile.earnedLoot=ItemCatalog.allItemDefs.Where(def=>def.unlockableDef&&worldAvailableItems.Contains(def.itemIndex)).Select(def=>def.name).OrderBy(name=>name,StringComparer.Ordinal).ToArray();
  }
  void CleanupWholeRunAvailability(){
   CleanupWholePickups();
