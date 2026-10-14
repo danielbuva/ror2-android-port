@@ -4467,3 +4467,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** The composed game used an inactive synthetic Stage. Call original `Run.OnServerSceneChanged` after source population, spawn its networked Stage prefab and run `Stage.Start`/server-begin callbacks on both sides of an actual exit. The first run exposed a missing Cursed Book spell catalog; register its seven original definitions with owned cleanup.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor ARM64 build and assisted adopted-storage Lakes → Goolake run: two original stage-begin callbacks, one genuine exit, zero current-PID Unity errors. Diagnostic failures and passing run are preserved under ignored J464 evidence.
 - **OPEN / DEPENDENCIES:** Normal/full-route and sustained 60 FPS remain open. Depends on J463, exact shipped `Run`/`Stage`/`CharacterMaster` contracts and pinned R2API.Director stage timing. J463, J459 and Moon rollbacks retained.
+
+## C16 / J465 — Register original crafting recipes
+
+- **OBSERVATION / TASK:** The composed game retained all 73 original CraftableDefs but did not initialize the native ingredient and recipe catalogs. Use their original initializers after PickupCatalog and restore owned static state at session exit.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor build and assisted Lakes → Goolake device run with one genuine exit, two original stage begins and zero current-PID Unity errors. All source recipes register; individual crafting actions remain untested.
+- **OPEN / DEPENDENCIES:** Original `IngredientTypeCatalog`/`CraftableCatalog` contracts and pinned R2API.Items registration timing; normal/full-route and 60 FPS remain open. J464 rollback retained.

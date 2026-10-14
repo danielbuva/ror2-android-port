@@ -694,3 +694,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J463 scoped event-owner exit:** The serialized source GlobalEventManager owns events in both device-tested stages and hands off across one genuine exit with zero current-process errors. Stock application startup, normal/full-route play and sustained 60 FPS remain open.
 
 **J464 scoped original Stage exit:** Original `Run.OnServerSceneChanged` spawns the shipped networked Stage prefab and its server-begin callbacks fire in two device-tested source stages across one genuine exit. The composed session now owns the seven shipped Cursed Book spell definitions needed by original master regeneration. Assisted test only; normal/full-route, stock startup and sustained 60 FPS remain open.
+
+**J465 scoped crafting-catalog exit:** The composed session registers all 73 shipped crafting definitions through original ingredient and recipe catalogs and survives a genuine assisted Lakes → Goolake exit. Individual crafting actions, normal/full-route and sustained 60 FPS remain open.

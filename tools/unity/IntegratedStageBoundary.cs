@@ -30,6 +30,25 @@ public sealed partial class MovementBatchProbe {
  string pendingStage;bool transportingStage;int stagePickupBaseline;float stageEnteredAt;
  HashSet<GameObject> stageStaticRoots=new HashSet<GameObject>();
  CursedBookSpellDef[] priorStageSpells;string[] priorStageSpellNames;ResourceAvailability priorStageSpellAvailability;bool ownsStageSpells;
+ CraftableDef[] priorCraftableContent;object priorCraftableDefs,priorCraftableRecipes,priorIngredientTypes;ResourceAvailability priorCraftableAvailability,priorIngredientAvailability;bool ownsCraftableCatalog;
+ void PrepareCraftableCatalog(){
+  if(r.liveCatalogs==null||!stageSourceObjects)return;
+  Check(!ownsCraftableCatalog&&PickupCatalog.pickupCount>0&&IngredientTypeCatalog.ingredientTypeCount==0&&CraftableCatalog.recipeCount==0&&CraftableCatalog.pickupToIngredientSearchTable.Count==0&&CraftableCatalog.resultToRecipeSearchTable.Count==0,"Original crafting dependencies have unexpected owners");
+  var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<CraftableDef>());
+  Check(definitions.Length>0&&definitions.All(def=>def&&def.recipes!=null)&&definitions.Select(def=>def.name).Distinct().Count()==definitions.Length,"Original craftable definition closure is incomplete");
+  priorCraftableContent=ContentManager._craftableDefs;priorCraftableDefs=RewardField(typeof(CraftableCatalog),"craftableDefs").GetValue(null);priorCraftableRecipes=RewardField(typeof(CraftableCatalog),"allRecipes").GetValue(null);priorIngredientTypes=RewardField(typeof(IngredientTypeCatalog),"ingredientTypeDefs").GetValue(null);priorCraftableAvailability=CraftableCatalog.availability;priorIngredientAvailability=IngredientTypeCatalog.availability;
+  ownsCraftableCatalog=true;StaticCall(typeof(IngredientTypeCatalog),"Init");
+  Check(IngredientTypeCatalog.ingredientTypeCount==5,"Original ingredient type initialization differs");
+  ContentManager._craftableDefs=definitions;StaticCall(typeof(CraftableCatalog),"Init");
+  var recipes=(IList)RewardField(typeof(CraftableCatalog),"allRecipes").GetValue(null);
+  Check(CraftableCatalog.recipeCount==definitions.Length&&recipes.Count==definitions.Sum(def=>def.recipes.Length),"Original craftable recipe registration differs");
+ }
+ void CleanupCraftableCatalog(){
+  if(!ownsCraftableCatalog)return;
+  CraftableCatalog.pickupToIngredientSearchTable.Clear();CraftableCatalog.resultToRecipeSearchTable.Clear();
+  RewardField(typeof(CraftableCatalog),"craftableDefs").SetValue(null,priorCraftableDefs);RewardField(typeof(CraftableCatalog),"allRecipes").SetValue(null,priorCraftableRecipes);ContentManager._craftableDefs=priorCraftableContent;CraftableCatalog.availability=priorCraftableAvailability;
+  RewardField(typeof(IngredientTypeCatalog),"ingredientTypeDefs").SetValue(null,priorIngredientTypes);IngredientTypeCatalog.availability=priorIngredientAvailability;ownsCraftableCatalog=false;
+ }
  void PrepareStageSpellCatalog(){
   if(r.liveCatalogs==null||!stageSourceObjects)return;
   Check(!ownsStageSpells&&CursedBookSpellCatalog.spellCount==0,"Unowned original Cursed Book spell catalog");
@@ -49,6 +68,7 @@ public sealed partial class MovementBatchProbe {
   Check(!NetworkManager.singleton&&cfg.integratedStages!=null&&cfg.integratedStages.Length>0,"Unowned scene transport or missing converted stages");
   integratedStageConfig=cfg;r.stageProgress=new StageProgressReport{current=stageGeometryScene.name,bodyId=worldPlayer.netId.Value,masterId=worldPlayer.master.netId.Value,scope="Original Stage.Update, SceneExit and Run.AdvanceStage accounting; additive recovered scene/graph transport. Temporary continuous live-body/master/inventory adapter instead of stock network-user respawn. Stock startup, profiles, unsupported destinations and victory remain unavailable."};
   PrepareStageSpellCatalog();
+  PrepareCraftableCatalog();
   worldTransportHost=new GameObject("Owned Android additive scene transport");worldTransport=worldTransportHost.AddComponent<AndroidStageTransport>();worldTransport.enabled=false;
   Check(NetworkManager.singleton==worldTransport,"Original NetworkManager singleton registration missing");
   var online=worldTransport.CanPlayOnline();Check(online.MoveNext()&&online.Current==RoR2.Networking.NetworkManagerSystem.CanPlayOnlineState.No,"Android transport must report online capability unavailable");
@@ -191,5 +211,5 @@ public sealed partial class MovementBatchProbe {
   if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
- void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
+ void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupCraftableCatalog();CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }
