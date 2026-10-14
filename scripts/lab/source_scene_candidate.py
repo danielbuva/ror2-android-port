@@ -23,7 +23,7 @@ UNAVAILABLE_RENDER_SCRIPTS = {('-1252323107', '90eda32cd325c26600dacf144354b407'
 
 
 def stage_unavailable_audio():
-    """Preserve dynamic source objects while making absent native audio explicit."""
+    """Preserve dynamic source objects while reporting absent native audio."""
     from boundaries import probe_tool
     import shutil
     project = WORK / 'lab-project'
@@ -35,7 +35,25 @@ def stage_unavailable_audio():
     names = ('AK.Wwise.Unity.API.dll', 'AK.Wwise.Unity.MonoBehaviour.dll')
     original = game() / 'Risk of Rain 2_Data/Managed'
     stage = project / 'Assets/LabLoadingScene/Plugins'
-    output = WORK / 'experiments/source-scenes/audio-boundary'
+    output = WORK / 'experiments/source-scenes/audio-boundary-v3'
+    legacy = [WORK / 'experiments/source-scenes/audio-boundary-v2',
+              WORK / 'experiments/source-scenes/audio-boundary']
+    legacy_receipts = [(folder, read(folder / 'receipt.json')) for folder in legacy
+                       if (folder / 'receipt.json').exists()]
+    def source_and_stage_verified():
+        for name in names:
+            expected = generation['original_assemblies'][name]
+            if sha(original / name) != expected:
+                raise RuntimeError('Original Wwise assembly changed: ' + name)
+            current = sha(stage / name)
+            if current == expected and name not in generation['transformed_assemblies']:
+                continue
+            if (generation['transformed_assemblies'].get(name) == current and
+                    any(receipt['input_id'] == generation['input_id']
+                        and current == receipt['outputs'][name] and sha(folder / name) == current
+                        for folder, receipt in legacy_receipts)):
+                continue
+            raise RuntimeError('Current Wwise staging differs from original and reviewed prior boundary: ' + name)
     if (output / 'receipt.json').exists():
         prior = read(output / 'receipt.json')
         if prior['input_id'] != generation['input_id'] or any(
@@ -47,23 +65,18 @@ def stage_unavailable_audio():
                generation['transformed_assemblies'].get(name) == prior['outputs'][name]
                for name in names):
             return prior
-        if all(sha(stage / name) == generation['original_assemblies'][name] and
-               name not in generation['transformed_assemblies'] for name in names):
-            for name in names:
-                shutil.copy2(output / name, stage / name)
-                generation['transformed_assemblies'][name] = prior['outputs'][name]
-            write(marker, generation)
-            return prior
-        raise RuntimeError('Current Wwise staging differs from original and transformed receipts')
+        source_and_stage_verified()
+        for name in names:
+            shutil.copy2(output / name, stage / name)
+            generation['transformed_assemblies'][name] = prior['outputs'][name]
+        write(marker, generation)
+        return prior
     output.mkdir(parents=True, exist_ok=True)
-    for name in names:
-        expected = generation['original_assemblies'][name]
-        if sha(original / name) != expected or sha(stage / name) != expected:
-            raise RuntimeError('Original Wwise assembly changed: ' + name)
+    source_and_stage_verified()
     api, mono = names
     report = json.loads(run(probe_tool() + ['--wwise-unavailable',
-        stage / api, output / api, generation['original_assemblies'][api],
-        stage / mono, output / mono, generation['original_assemblies'][mono], original], timeout=120).stdout)
+        original / api, output / api, generation['original_assemblies'][api],
+        original / mono, output / mono, generation['original_assemblies'][mono], original], timeout=120).stdout)
     outputs = {api: report['api_output_sha256'], mono: report['mono_output_sha256']}
     if any(sha(output / name) != outputs[name] for name in names):
         raise RuntimeError('Audio boundary output hash mismatch')

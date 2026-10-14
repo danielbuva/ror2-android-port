@@ -118,6 +118,22 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   BindEnemyDefinition(typeof(RoR2Content.Buffs),"Slow60",def);return new[]{def};
  }
  readonly Dictionary<string,AsyncOperationHandle<GameObject>> worldProjectileGhostLeases=new Dictionary<string,AsyncOperationHandle<GameObject>>();
+ void PrepareSourceTemporaryVisuals(){
+  // Treebot's original states can apply Weak and Fruiting immediately. In
+  // this offline composition CharacterBody's legacy async preload does not
+  // populate those slots, so lease the shipped prefabs from the owned catalog.
+  var type=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic);
+  var entries=new[]{
+   (field:"weakTempEffectPrefab",path:"Assets/WholeGame/RoR2/Base/Characters/Treebot/WeakEffect.prefab"),
+   (field:"fruitingEffectPrefab",path:"Assets/WholeGame/RoR2/Base/Characters/Treebot/FruitingEffect.prefab")
+  };
+  foreach(var entry in entries){
+   var source=WholeCatalogComposed.LoadOwnedContent<GameObject>(entry.path);
+   var field=type.GetField(entry.field,BindingFlags.Public|BindingFlags.Static);
+   Check(source&&source.GetComponent<TemporaryVisualEffect>()&&field!=null&&field.FieldType==typeof(GameObject)&&!((GameObject)field.GetValue(null)),"Original temporary visual binding unavailable: "+entry.field);
+   worldLootEffectSlots.Add(field,null);field.SetValue(null,source);
+  }
+ }
  GameObject OriginalProjectileGhost(RoR2.Projectile.ProjectileController controller){
   Check(controller,"Original projectile controller absent");
   // Match the shipped controller's address-first selection without filling its obsolete direct field.

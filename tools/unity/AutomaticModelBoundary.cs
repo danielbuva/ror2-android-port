@@ -11,7 +11,7 @@ public sealed partial class MovementBatchProbe {
   var locator=body.modelLocator;var model=locator.modelTransform;
   Check(locator&&model&&model.parent==locator.modelBaseTransform&&!locator.enabled,"Original model pre-Start identity/isolation");
   Check(typeof(ModelLocator).GetField("modelParentTransform",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(locator)==null,"ModelLocator Start already ran");
-  Check(locator.autoUpdateModelTransform&&!locator.dontDetatchFromParent&&!locator.preserveModel&&!locator.normalizeToFloor,"Recovered model lifecycle settings changed");
+  Check(locator.autoUpdateModelTransform&&!locator.dontDetatchFromParent&&!locator.preserveModel,"Recovered model lifecycle settings changed");
   ownedDetachedModel=model.gameObject;model.gameObject.SetActive(false); // Detachment must not activate the unproven child callbacks.
   r.modelTarget=model.name;r.modelParent=locator.modelBaseTransform.name;Save();
  }
@@ -19,7 +19,11 @@ public sealed partial class MovementBatchProbe {
   var locator=body.modelLocator;var model=locator.modelTransform;var parent=locator.modelBaseTransform;
   Check(locator.enabled&&model&&model.gameObject==ownedDetachedModel&&!model.parent&&(!model.gameObject.activeInHierarchy||IsPlayableSpine()),"Original detached model identity/isolation");
   Check(typeof(ModelLocator).GetField("modelParentTransform",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(locator)==parent,"Original model Start parent cache");
-  float position=Vector3.Distance(model.position,parent.position),rotation=Quaternion.Angle(model.rotation,parent.rotation);
+  // The source ModelLocator tilts floor-normalized models (Treebot) before
+  // applying the parent rotation. Compare against that original pose.
+  var normal=(Vector3)typeof(ModelLocator).GetField("currentNormal",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(locator);
+  var expectedRotation=Quaternion.FromToRotation(Vector3.up,normal)*parent.rotation;
+  float position=Vector3.Distance(model.position,parent.position),rotation=Quaternion.Angle(model.rotation,expectedRotation);
   r.modelPositionError=Mathf.Max(r.modelPositionError,position);r.modelRotationError=Mathf.Max(r.modelRotationError,rotation);r.modelFollowFrames++;
   Check(position<.001f&&rotation<.03f,"Original LateUpdate model follow pose");r.modelDetached=true;
  }

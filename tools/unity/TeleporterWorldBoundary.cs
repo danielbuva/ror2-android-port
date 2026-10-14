@@ -126,6 +126,7 @@ public sealed partial class MovementBatchProbe {
   }
   PrepareMoonSupport(cfg);PrepareStagePopulationSupport(cfg);var bossSupport=PrepareStageBossContent(cfg);while(bossSupport.MoveNext())yield return bossSupport.Current;
   var wholeItemSupport=PrepareWholeItemBehaviorSupport(cfg);while(wholeItemSupport.MoveNext())yield return wholeItemSupport.Current;
+  PrepareSourceTemporaryVisuals();
   var coreLootEffects=PrepareWorldLootSupport(cfg).Concat(PrepareWorldEquipmentSupport(cfg)).Concat(PrepareWorldProcSupport(cfg)).Concat(PrepareWorldDotSupport(cfg)).Concat(PrepareWorldItemBehaviorSupport(cfg)).Concat(WholeItemBehaviorEffects()).ToArray();
   var commerceEffect=PrepareCommerceSupport(cfg);
   var ward=objectiveSupportSources[1];var wardModel=ward.GetComponent<ModelLocator>().modelTransform;var wardSkin=wardModel.GetComponent<ModelSkinController>();var wardAnimator=wardModel.GetComponent<Animator>();

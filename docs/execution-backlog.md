@@ -4497,3 +4497,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** Complete PickupCatalog existed, but source transmutation groups were unset. Run the shipped initializer after native rule masks, validate eligible members, and clean only owned static tables/callbacks.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor APK, assisted Lakes → Goolake exit, zero current-PID errors, unchanged payload; two invincibility-assisted same-process cleanups with unchanged profile/settings and cleared transmutation state.
 - **FAILURE / OPEN:** Fixed an editor-only `PickupIndex` construction error before install. Individual transmutation consumers, normal full route and release-target 60 FPS remain open. Next priority is survivor selection. Depends on J468, shipped manager and pinned R2API.Items index timing.
+
+## C21 / J471 — Broaden original base-survivor execution
+
+- **OBSERVATION / TASK:** J470 proved Huntress, while nine locked base survivors remained unrun. Add assisted developer-only source selection without granting unlocks; preserve shipped body/animator identities and resolve only observed shared failures.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor build; each additional base body entered Lakes, with final Treebot and normal-menu Huntress runs error-free. Final Huntress warmed frame time remained comparable to J470 (29.3 vs 29.2 ms); no release-FPS claim.
+- **FAILURE / OPEN:** First failures were Loader/Mage no-audio native calls, Mage's empty local-player index, and Treebot model/effect dependencies; ignored attempts retain evidence. Full skills, normal unlock progression, stage loops, fidelity and sustained 60 FPS remain open. Depends on J470, shipped source content and pinned R2API.Skins/DebugToolkit/R2API.Sound contract clues.

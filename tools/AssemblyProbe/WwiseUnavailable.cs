@@ -54,6 +54,25 @@ static class WwiseUnavailable {
      initialized.Body.Instructions[1].OpCode!=OpCodes.Ret)throw new Exception("Original native initialization query changed");
   initialized.Body.Instructions[0].OpCode=OpCodes.Ldc_I4_0;
   initialized.Body.Instructions[0].Operand=null;
+  // Loader's original charge state (and other source states) updates an RTPC
+  // by playing ID each fixed tick. Preserve the original call when an engine
+  // exists; report the shipped not-initialized result on this no-audio build.
+  var akResult=api.MainModule.Types.Single(t=>t.FullName=="AKRESULT");
+  var notInitialized=akResult.Fields.Single(f=>f.Name=="AK_NotInitialized");
+  if(!notInitialized.HasConstant||Convert.ToInt32(notInitialized.Constant)!=102)throw new Exception("Original Wwise unavailable result changed");
+  var rtpc=api.MainModule.Types.Single(t=>t.FullName=="AkSoundEngine").Methods.Single(m=>m.Name=="SetRTPCValueByPlayingID"&&m.Parameters.Select(p=>p.ParameterType.FullName).SequenceEqual(new[]{"System.String","System.Single","System.UInt32"}));
+  if(rtpc.ReturnType.FullName!="AKRESULT"||rtpc.Body.Instructions.Count!=5||rtpc.Body.Instructions[0].OpCode!=OpCodes.Ldarg_0||rtpc.Body.Instructions[1].OpCode!=OpCodes.Ldarg_1||rtpc.Body.Instructions[2].OpCode!=OpCodes.Ldarg_2||rtpc.Body.Instructions[3].OpCode!=OpCodes.Call||rtpc.Body.Instructions[3].Operand is not MethodReference rtpcNative||rtpcNative.DeclaringType.FullName!="AkSoundEnginePINVOKE"||rtpcNative.Name!="CSharp_SetRTPCValueByPlayingID__SWIG_7"||rtpc.Body.Instructions[4].OpCode!=OpCodes.Ret)throw new Exception("Original Wwise RTPC-by-playing-ID contract changed");
+  var rtpcIl=rtpc.Body.GetILProcessor();var rtpcOriginal=rtpc.Body.Instructions[0];
+  rtpcIl.InsertBefore(rtpcOriginal,rtpcIl.Create(OpCodes.Call,initialized));
+  rtpcIl.InsertBefore(rtpcOriginal,rtpcIl.Create(OpCodes.Brtrue,rtpcOriginal));
+  rtpcIl.InsertBefore(rtpcOriginal,rtpcIl.Create(OpCodes.Ldc_I4,102));
+  rtpcIl.InsertBefore(rtpcOriginal,rtpcIl.Create(OpCodes.Ret));
+  var stopPlaying=api.MainModule.Types.Single(t=>t.FullName=="AkSoundEngine").Methods.Single(m=>m.Name=="StopPlayingID"&&m.Parameters.Count==1&&m.Parameters[0].ParameterType.FullName=="System.UInt32");
+  if(stopPlaying.ReturnType.FullName!="System.Void"||stopPlaying.Body.Instructions.Count!=3||stopPlaying.Body.Instructions[0].OpCode!=OpCodes.Ldarg_0||stopPlaying.Body.Instructions[1].OpCode!=OpCodes.Call||stopPlaying.Body.Instructions[1].Operand is not MethodReference stopNative||stopNative.DeclaringType.FullName!="AkSoundEnginePINVOKE"||stopNative.Name!="CSharp_StopPlayingID__SWIG_2"||stopPlaying.Body.Instructions[2].OpCode!=OpCodes.Ret)throw new Exception("Original Wwise stop-by-playing-ID contract changed");
+  var stopIl=stopPlaying.Body.GetILProcessor();var stopOriginal=stopPlaying.Body.Instructions[0];
+  stopIl.InsertBefore(stopOriginal,stopIl.Create(OpCodes.Call,initialized));
+  stopIl.InsertBefore(stopOriginal,stopIl.Create(OpCodes.Brtrue,stopOriginal));
+  stopIl.InsertBefore(stopOriginal,stopIl.Create(OpCodes.Ret));
   var imported=mono.MainModule.ImportReference(initialized);
   var gameObj=mono.MainModule.Types.Single(t=>t.FullName=="AkGameObj");
   var setPosition=gameObj.Methods.Single(m=>m.Name=="SetPosition"&&m.Parameters.Count==0);
@@ -74,7 +93,7 @@ static class WwiseUnavailable {
   api.Write(apiOutput);mono.Write(monoOutput);
   using var apiCheck=AssemblyDefinition.ReadAssembly(apiOutput,new ReaderParameters{AssemblyResolver=resolver});
   using var monoCheck=AssemblyDefinition.ReadAssembly(monoOutput,new ReaderParameters{AssemblyResolver=resolver});
-  var changedApi=new[]{initialized.FullName};var changedMono=new[]{setPosition.FullName,handle.FullName,stop.FullName};
+  var changedApi=new[]{initialized.FullName,rtpc.FullName,stopPlaying.FullName};var changedMono=new[]{setPosition.FullName,handle.FullName,stop.FullName};
   void Verify(AssemblyDefinition output,string identity,Guid mvid,string[] contracts,Dictionary<string,string> before,string[] changed) {
    if(output.Name.FullName!=identity||output.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(output)))throw new Exception("Wwise assembly identity/contract changed");
    var after=Types(output.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
@@ -83,6 +102,6 @@ static class WwiseUnavailable {
   }
   Verify(apiCheck,apiIdentity,apiMvid,apiContracts,apiBefore,changedApi);
   Verify(monoCheck,monoIdentity,monoMvid,monoContracts,monoBefore,changedMono);
-  Console.WriteLine(JsonSerializer.Serialize(new{api_input_sha256=args[2],api_output_sha256=Hash(apiOutput),mono_input_sha256=args[5],mono_output_sha256=Hash(monoOutput),methods=changedApi.Concat(changedMono),assembly_identities_preserved=true,scope="Native audio unavailable: IsInitialized false; dynamically created AkGameObj positional audio and AkEvent playback/stop skip native calls. No sound or ownership success synthesized."}));
+  Console.WriteLine(JsonSerializer.Serialize(new{api_input_sha256=args[2],api_output_sha256=Hash(apiOutput),mono_input_sha256=args[5],mono_output_sha256=Hash(monoOutput),methods=changedApi.Concat(changedMono),assembly_identities_preserved=true,scope="Native audio unavailable: IsInitialized false; dynamically created AkGameObj positional audio and AkEvent playback/stop skip native calls. RTPC-by-playing-ID reports AK_NotInitialized and stop-by-playing-ID skips only when the sound engine is absent. No sound or ownership success synthesized."}));
  }
 }

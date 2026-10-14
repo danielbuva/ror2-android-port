@@ -18,8 +18,9 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   report.modelForward=source.forward;report.characterMatteApproximation=!AndroidNativeDeferredPresentation.report.available;
  }
  static Transform Copy(Transform s,Transform parent,Dictionary<Transform,Transform> map){var t=new GameObject(s.name).transform;t.gameObject.layer=30;t.SetParent(parent,false);t.localPosition=s.localPosition;t.localRotation=s.localRotation;t.localScale=s.localScale;map[s]=t;foreach(Transform child in s)Copy(child,t,map);return t;}
- public NovaDiagnosticDisplay(Transform model,AssetBundle bundle,string[] assets,GameObject floor,bool actual=false,RoR2.CharacterBody aimingBody=null,bool sourceSurvivor=false){
+ public NovaDiagnosticDisplay(Transform model,AssetBundle bundle,string[] assets,GameObject floor,bool actual=false,RoR2.CharacterBody aimingBody=null,string sourceSurvivor=null){
   actualModel=actual;
+  bool sourceSelected=!string.IsNullOrEmpty(sourceSurvivor);
   source=model;root=new GameObject("Nova recovered survivor display");
   var map=new Dictionary<Transform,Transform>();if(!actual)copy=Copy(model,root.transform,map);
   else foreach(var component in model.GetComponentsInChildren<MonoBehaviour>(true)){
@@ -28,14 +29,14 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
    if(component.GetType().Name.StartsWith("Ak",StringComparison.Ordinal))UnityEngine.Object.DestroyImmediate(component);
   }
   var shader=Resources.Load<Shader>("CommandoMaterialPreview");var simple=Resources.Load<Shader>("CommandoPreview");
-  if((!sourceSurvivor&&(assets==null||assets.Length!=6))||!shader||!shader.isSupported||!simple)throw new Exception("Nova display contract unavailable");
-  if(!sourceSurvivor){material=new Material(bundle.LoadAsset<Material>(assets[5]));material.shader=shader;material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",1);AndroidMaterialPresentation.Apply(bundle.LoadAsset<Material>(assets[5]),material);}
+  if((!sourceSelected&&(assets==null||assets.Length!=6))||!shader||!shader.isSupported||!simple)throw new Exception("Nova display contract unavailable");
+  if(!sourceSelected){material=new Material(bundle.LoadAsset<Material>(assets[5]));material.shader=shader;material.shaderKeywords=new string[0];material.SetFloat("_EmissionEnabled",1);AndroidMaterialPresentation.Apply(bundle.LoadAsset<Material>(assets[5]),material);}
   // PC references expose the temporary Blinn response as chrome-like. Retain
   // source palette/emission and stage lighting while omitting that unrecovered
   // character specular approximation. This is not the original deferred shader.
-  if(aimingBody&&!sourceSurvivor&&!AndroidNativeDeferredPresentation.report.available){if(!actual||!material.HasProperty("_AndroidCharacterMatte"))throw new Exception("Character palette shader contract unavailable");material.SetFloat("_AndroidCharacterMatte",1);}
+  if(aimingBody&&!sourceSelected&&!AndroidNativeDeferredPresentation.report.available){if(!actual||!material.HasProperty("_AndroidCharacterMatte"))throw new Exception("Character palette shader contract unavailable");material.SetFloat("_AndroidCharacterMatte",1);}
   var renderers=model.GetComponentsInChildren<Renderer>(true);
-  if(sourceSurvivor){
+  if(sourceSelected){
    if(!actual||renderers.Length==0)throw new Exception("Source survivor model renderers unavailable");
    foreach(var renderer in renderers){renderer.gameObject.layer=30;var sources=renderer.sharedMaterials;var copies=new Material[sources.Length];for(int i=0;i<sources.Length;i++){if(!sources[i])continue;copies[i]=new Material(sources[i]);AndroidMaterialPresentation.Apply(sources[i],copies[i]);ownedSurvivorMaterials.Add(copies[i]);}renderer.sharedMaterials=copies;}
   }else foreach(var path in assets.Skip(2).Take(3)){
@@ -48,16 +49,16 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   if(actual){
    foreach(var collider in model.GetComponentsInChildren<Collider>(true))collider.enabled=false;
    var animator=model.GetComponent<Animator>();if(!animator)throw new Exception("Original survivor Animator missing");
-   if(sourceSurvivor){animator.runtimeAnimatorController=WholeCatalogComposed.LoadOwnedContent<RuntimeAnimatorController>("Assets/WholeGame/RoR2/Base/Characters/Huntress/animHuntress.controller");animator.avatar=WholeCatalogComposed.LoadOwnedContent<Avatar>("Assets/WholeGame/RoR2/Base/Characters/Huntress/mdlHuntressAvatar.asset");}
+   if(sourceSelected){var rootPath="Assets/WholeGame/RoR2/Base/Characters/"+sourceSurvivor+"/";animator.runtimeAnimatorController=WholeCatalogComposed.LoadOwnedContent<RuntimeAnimatorController>(rootPath+"anim"+sourceSurvivor+".controller");animator.avatar=WholeCatalogComposed.LoadOwnedContent<Avatar>(rootPath+"mdl"+sourceSurvivor+"Avatar.asset");}
    else{animator.runtimeAnimatorController=bundle.LoadAsset<RuntimeAnimatorController>(assets[0]);animator.avatar=bundle.LoadAsset<Avatar>(assets[1]);}
    animator.applyRootMotion=false;animator.cullingMode=AnimatorCullingMode.AlwaysAnimate;animator.enabled=true;
    if(aimingBody){
     nativeAim=model.GetComponent<RoR2.AimAnimator>();nativeAnimator=animator;
-    if(!nativeAim||nativeAim.inputBank!=aimingBody.inputBank||nativeAim.directionComponent!=aimingBody.characterDirection||(!sourceSurvivor&&nativeAim.aimType!=RoR2.AimAnimator.AimType.Direct))
+    if(!nativeAim||nativeAim.inputBank!=aimingBody.inputBank||nativeAim.directionComponent!=aimingBody.characterDirection||(!sourceSelected&&nativeAim.aimType!=RoR2.AimAnimator.AimType.Direct))
      throw new Exception("Original Commando aim links/layers unavailable");
    }
    model.gameObject.SetActive(true);
-   if(nativeAim){animator.Update(0);if(!sourceSurvivor&&(animator.GetLayerIndex("AimPitch")<0||animator.GetLayerIndex("AimYaw")<0))throw new Exception("Initialized original Commando aim layers unavailable");nativeAim.enabled=true;}
+   if(nativeAim){animator.Update(0);if(!sourceSelected&&(animator.GetLayerIndex("AimPitch")<0||animator.GetLayerIndex("AimYaw")<0))throw new Exception("Initialized original Commando aim layers unavailable");nativeAim.enabled=true;}
   }
   grid=new Texture2D(64,64);for(int y=0;y<64;y++)for(int x=0;x<64;x++)grid.SetPixel(x,y,x<2||y<2?new Color(.2f,.24f,.3f):new Color(.075f,.09f,.12f));grid.Apply();grid.wrapMode=TextureWrapMode.Repeat;
   floorMaterial=new Material(simple);floorMaterial.mainTexture=grid;floorMaterial.mainTextureScale=Vector2.one*50;if(floor)floor.GetComponent<Renderer>().sharedMaterial=floorMaterial;

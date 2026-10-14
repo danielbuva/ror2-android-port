@@ -28,7 +28,8 @@ public sealed partial class MovementBatchProbe {
  IEnumerator AwaitOfflineRunStart(Result cfg){
   if(cfg.integratedWorld&&cfg.integratedResults)PrepareOfflineSettings();
   if(string.IsNullOrEmpty(r.selectedSurvivor))r.selectedSurvivor=pendingOfflineSurvivor;
-  if(!AllowsOfflineSessionMenu(r)||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu)yield break;
+  // A developer-only survivor override is never shown as an earned menu choice.
+  if(!AllowsOfflineSessionMenu(r)||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu||r.developerSurvivorOverride)yield break;
   offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
   offlineMenuMapping.Validate(r.attempt);PrepareRecoveredMenu();offlineStartVisible=true;r.phase="offline-start-menu";Save();
   while(!offlineStartSelected)yield return null;

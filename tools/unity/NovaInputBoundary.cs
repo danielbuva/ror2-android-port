@@ -58,7 +58,7 @@ public sealed partial class MovementBatchProbe {
    Check(solver.GroundingStatus.IsStableOnGround&&r.nova.landings==1&&body.healthComponent.health==body.maxHealth,"Original spawned body landing before physical input");
    // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.
    body.SetAimTimer(130);
-   display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle,spine,cfg.originalAimPresentation?body:null,SelectedHuntress());r.framePacing=display.presentationCamera.report;
+   display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle,spine,cfg.originalAimPresentation?body:null,SelectedSourceSurvivor()?r.selectedSurvivor:null);r.framePacing=display.presentationCamera.report;
    if(cfg.stageGeometry)display.camera.cullingMask|=LayerIndex.world.mask;
    if(cfg.combatSpine)PrepareCombatScene(body,cfg);
    if(cfg.originalRunClock){var sceneContext=PrepareRunSceneContext(cfg);while(sceneContext.MoveNext())yield return sceneContext.Current;}

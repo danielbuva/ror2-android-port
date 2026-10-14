@@ -17,7 +17,7 @@ public sealed partial class MovementBatchProbe {
   var direction=body.GetComponent<CharacterDirection>();
   if(automaticDirection)Check(direction&&!direction.modelAnimator,"Direction Start already ran; refuse automatic scheduling claim");
   bool movingMotor=r.id!="body-state-spawn-state-auto-state",scripted=r.id=="body-state-spawn-state-auto-motion";
-  Check(machine&&machine.state is Uninitialized&&machine.initialStateType.stateType==typeof(SpawnTeleporterState)&&machine.mainStateType.stateType==typeof(GenericCharacterMain),"Original automatic state starting identity");
+  Check(machine&&machine.state is Uninitialized&&machine.initialStateType.stateType==typeof(SpawnTeleporterState)&&machine.mainStateType.stateType!=null&&typeof(GenericCharacterMain).IsAssignableFrom(machine.mainStateType.stateType),"Original automatic state starting identity");
   Check(motor&&solver&&motor.Motor==solver&&input&&!body.gameObject.activeInHierarchy,"Automatic fixture motor/input isolation");
   var model=body.modelLocator.modelTransform.GetComponent<CharacterModel>();int invisible=model.invisibilityCount;
   var savedGravity=Physics.gravity;var savedLayers=solver.CollidableLayers;
