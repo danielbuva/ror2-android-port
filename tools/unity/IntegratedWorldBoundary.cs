@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using HG.Reflection;
 using RoR2;
+using RoR2.Networking;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.AddressableAssets;
@@ -38,6 +40,7 @@ public sealed partial class MovementBatchProbe {
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;public string pickupRegistryStatus;
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
+  public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets;public bool sourceConstructTurretHandler,offlineChatBoundary;public string offlineChatLastToken;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
@@ -69,6 +72,7 @@ public sealed partial class MovementBatchProbe {
  Action<Interactor,IInteractable,GameObject> worldInteraction;
  bool ownsWorldTeleportHandler;
  readonly Dictionary<short,NetworkMessageDelegate> worldClientHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldServerHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldClientObservers=new Dictionary<short,NetworkMessageDelegate>(),worldServerObservers=new Dictionary<short,NetworkMessageDelegate>();
+ readonly List<short> worldSourceServerHandlerIds=new List<short>(),worldSourceClientHandlerIds=new List<short>();
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
@@ -403,7 +407,41 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    if(!characterMaster)r.world.unresolvedPickupMessages++;else if(!observation.playerMaster)r.world.otherPickupMessages++;else if(quantity==0)r.world.zeroCountPickupMessages++;
    if(observation.playerMaster&&definition!=null&&quantity>0){r.world.pickupMessages++;r.world.lastPickup=observation.item+" x"+quantity;if(recoveredHud)recoveredHud.QueuePickup(characterMaster,pickup);}Save();
   });
+  RegisterMissingOriginalWorldMessages();
   ObserveWorldHandlers(false);ObserveWorldHandlers(true);
+ }
+ void RegisterMissingOriginalWorldMessages(){
+  // Stock NetworkManagerSystem registers these searched source methods during
+  // OnStartServer/OnStartClient. The owned offline loopback has neither manager.
+  SearchableAttribute.ScanAssembly(typeof(CharacterBody).Assembly);
+  var attributes=SearchableAttribute.GetInstances<NetworkMessageHandlerAttribute>();
+  Check(attributes!=null,"Original network-message attributes were not discovered");
+  var source=attributes.Cast<NetworkMessageHandlerAttribute>().Where(x=>x.server||x.client).ToArray();
+  Check(source.All(x=>x.target is MethodInfo&&((MethodInfo)x.target).IsStatic),"Original network-message method contract changed");
+  Check(source.Where(x=>x.server).Select(x=>x.msgType).Distinct().Count()==source.Count(x=>x.server)&&source.Where(x=>x.client).Select(x=>x.msgType).Distinct().Count()==source.Count(x=>x.client),"Original network-message IDs are ambiguous");
+  foreach(var attribute in source){
+   var handler=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),(MethodInfo)attribute.target);
+   if(attribute.server&&!NetworkServer.handlers.ContainsKey(attribute.msgType)){NetworkServer.RegisterHandler(attribute.msgType,handler);worldSourceServerHandlerIds.Add(attribute.msgType);}
+   if(attribute.client&&!activeBodyClient.handlers.ContainsKey(attribute.msgType)){
+    // The shipped Chat receiver asks the platform user manager whether text
+    // chat is allowed. An absent offline user cannot answer that question.
+    if(attribute.msgType==59&&PlatformSystems.userManager==null){handler=ObserveUnavailablePlatformChat;r.world.offlineChatBoundary=true;}
+    activeBodyClient.RegisterHandler(attribute.msgType,handler);worldSourceClientHandlerIds.Add(attribute.msgType);
+   }
+  }
+  NetworkMessageDelegate turret;
+  r.world.sourceConstructTurretHandler=NetworkServer.handlers.TryGetValue(UmsgType.ConstructTurret,out turret)&&turret.Method.DeclaringType==typeof(CharacterBody)&&turret.Method.Name=="HandleConstructTurret";
+  r.world.sourceServerMessageHandlers=worldSourceServerHandlerIds.Count;r.world.sourceClientMessageHandlers=worldSourceClientHandlerIds.Count;
+  Check(r.world.sourceConstructTurretHandler&&r.world.sourceServerMessageHandlers>0,"Original local server gameplay messages did not register");
+ }
+ void ObserveUnavailablePlatformChat(NetworkMessage message){
+  var native=ChatMessageBase.Instantiate(message.reader.ReadByte());
+  if(native==null)return;
+  native.Deserialize(message.reader);
+  r.world.offlineChatPackets++;
+  var subject=native as Chat.SubjectFormatChatMessage;var simple=native as Chat.SimpleChatMessage;
+  r.world.offlineChatLastToken=subject!=null?subject.baseToken:(simple!=null?simple.baseToken:native.GetType().Name);
+  if(r.commerce!=null){r.commerce.messages++;r.commerce.lastMessage=r.world.offlineChatLastToken;}
  }
  void ObserveWorldHandlers(bool server){
   var handlers=server?NetworkServer.handlers:activeBodyClient.handlers;var originals=server?worldServerHandlers:worldClientHandlers;var observers=server?worldServerObservers:worldClientObservers;
@@ -763,6 +801,8 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(rewardPrefabs!=null){var prefab=rewardPrefabs[0];var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);EffectPool pool;if(pools.TryGetValue(prefab,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(prefab);pool.Kill();}((IDictionary)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null)).Remove(prefab);}
   if(ownsWorldCoinLease&&worldCoinLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease)-worldCoinBaseline;Check(extra>=0&&extra<=worldBarrelConsumers,"Unattributed integrated barrel coin leases");for(int i=0;i<extra;i++)Addressables.Release(worldCoinLease.Result);Addressables.Release(worldCoinLease);ownsWorldCoinLease=false;}
   RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);if(ownsWorldTeleportHandler){if(activeBodyClient!=null)activeBodyClient.UnregisterHandler(68);if(NetworkServer.active)NetworkServer.UnregisterHandler(68);ownsWorldTeleportHandler=false;}
+  if(activeBodyClient!=null)foreach(var id in worldSourceClientHandlerIds)activeBodyClient.UnregisterHandler(id);worldSourceClientHandlerIds.Clear();
+  if(NetworkServer.active)foreach(var id in worldSourceServerHandlerIds)NetworkServer.UnregisterHandler(id);worldSourceServerHandlerIds.Clear();
   if(worldVfxOption!=null)worldVfxOption.AttemptSetString(priorWorldVfx);if(priorWorldXp!=null)SettingsConVars.cvExpAndMoneyEffects.AttemptSetString(priorWorldXp);
   if(ownsWorldLists&&Run.instance){
    if(worldAvailableItems!=null){worldAvailableItems.Clear();worldAvailableEquipment.Clear();Run.instance.BuildDropTable();Run.instance.availableItems=previousWorldAvailableItems;Run.instance.availableEquipment=previousWorldAvailableEquipment;ItemMask.Return(worldAvailableItems);EquipmentMask.Return(worldAvailableEquipment);worldAvailableItems=null;worldAvailableEquipment=null;}
