@@ -87,7 +87,9 @@ public sealed partial class MovementBatchProbe {
     Check(field!=null&&Equals(field.GetValue(wholeSceneDirector),property.Value.ToObject(field.FieldType)),"Original source Director field drift: "+property.Name);
    }
    Check(DirectorCore.instance==roots[0].GetComponent<DirectorCore>()&&CombatDirector.instancesList.Contains(mapDirectors[0])&&CombatDirector.instancesList.Contains(mapDirectors[1]),"Original source continuous directors are not running");
+   Check(sourceGameManagerRoot&&GlobalEventManager.instance==sourceGameManagerRoot.GetComponent<GlobalEventManager>(),"Original source stage event owner is not running");
    currentStageCombatDeck.sourceSceneDirector=true;currentStageCombatDeck.sourceContinuousDirectors=2;
+   currentStageCombatDeck.sourceGameManager=true;
   }else{
    wholeSceneDirector=automaticDirectorHost.AddComponent<SceneDirector>();wholeSceneDirector.enabled=false;
    foreach(var property in ((JObject)wholeStageContext["director_fields"]).Properties()){

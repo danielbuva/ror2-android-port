@@ -4455,3 +4455,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / HYPOTHESIS / TASK:** Each source stage has the original fast/slow pair and core; replace the synthetic single-director lifecycle while keeping teleporter startup ordered and reduced-scene rollback intact.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor build, Lakes → Goolake genuine exit, both original directors registered per stage, zero current-PID errors. Assisted two-stage pass only; crowded-stage 60 FPS and normal/full-route acceptance remain open.
 - **EVIDENCE / DEPENDENCIES:** J462 ignored run; depends on J461 source SceneDirector and pinned R2API.Director timing. J459 and Moon rollback retained.
+
+## C14 / J463 — Activate source stage event ownership
+
+- **OBSERVATION / TASK:** Source GameManager roots retain the original event singleton; hand off ownership at stage entry/teardown without duplicating or changing static gameplay events.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor build and assisted Lakes → Goolake genuine exit with source event owner in both stages and zero current-PID errors.
+- **OPEN / EVIDENCE:** Normal/full-route and 60 FPS gates remain open; J463 ignored run, J459 four-exit and Moon rollback retained.

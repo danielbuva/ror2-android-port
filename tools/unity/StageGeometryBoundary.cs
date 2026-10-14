@@ -21,15 +21,35 @@ public sealed partial class MovementBatchProbe {
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
  readonly List<Material> stageGeometryMaterials=new List<Material>();
  readonly List<BillboardAsset> stageGeometryBillboards=new List<BillboardAsset>();
- bool stageMoonVolumes,stageSourceObjects;GameObject sourceSceneInfoRoot;int stageZoneNetworkObjects;string[] stageZoneActiveNames,stageSourceNames=new string[0];
+ bool stageMoonVolumes,stageSourceObjects;GameObject sourceSceneInfoRoot,sourceGameManagerRoot;int stageZoneNetworkObjects;string[] stageZoneActiveNames,stageSourceNames=new string[0];
+ void ActivateSourceGameManager(){
+  var previous=eventHost?eventHost.GetComponent<GlobalEventManager>():null;
+  Check(stageSourceObjects&&!sourceGameManagerRoot&&previous&&GlobalEventManager.instance==previous,"Original source event owner requires the existing local event context");
+  var roots=stageGeometryScene.GetRootGameObjects().Where(x=>x.name=="GameManager").ToArray();
+  Check(roots.Length==1&&!roots[0].activeSelf,"Original source GameManager root absent or already active");
+  var root=roots[0];var manager=root.GetComponent<GlobalEventManager>();
+  Check(manager&&root.GetComponents<MonoBehaviour>().Length==1,"Original source GameManager component contract changed");
+  Call(previous,"OnDisable");
+  try{root.SetActive(true);Check(GlobalEventManager.instance==manager,"Original source GlobalEventManager did not adopt the singleton");sourceGameManagerRoot=root;}
+  catch{root.SetActive(false);Call(previous,"OnEnable");throw;}
+ }
+ void DeactivateSourceGameManager(){
+  if(!sourceGameManagerRoot)return;
+  sourceGameManagerRoot.SetActive(false);sourceGameManagerRoot=null;
+  Check(!GlobalEventManager.instance,"Original source event owner survived stage teardown");
+  var previous=eventHost.GetComponent<GlobalEventManager>();Call(previous,"OnEnable");
+  Check(GlobalEventManager.instance==previous,"Local event owner was not restored after source stage");
+ }
  SceneInfo ActivateSourceSceneInfo(){
   Check(stageSourceObjects&&Run.instance&&NetworkServer.active&&!SceneInfo.instance&&!ClassicStageInfo.instance&&!sourceSceneInfoRoot,"Original source context requires an active owned run and no duplicate context");
   var roots=stageGeometryScene.GetRootGameObjects().Where(x=>x.name=="SceneInfo").ToArray();Check(roots.Length==1&&!roots[0].activeSelf,"Original source SceneInfo root absent or already activated");
   var root=roots[0];var info=root.GetComponent<SceneInfo>();var population=root.GetComponent<ClassicStageInfo>();
   Check(info&&population&&root.GetComponents<MonoBehaviour>().All(x=>x&&!x.GetType().FullName.StartsWith("Ak")&&x.GetType().Name!="RTPCController"),"Original source scene context contains missing/native-audio components");
-  sourceSceneInfoRoot=root;root.SetActive(true);return info;
+  ActivateSourceGameManager();
+  try{sourceSceneInfoRoot=root;root.SetActive(true);Check(SceneInfo.instance==info&&ClassicStageInfo.instance==population,"Original source scene owner did not initialize");return info;}
+  catch{root.SetActive(false);sourceSceneInfoRoot=null;DeactivateSourceGameManager();throw;}
  }
- void DeactivateSourceSceneInfo(){if(sourceSceneInfoRoot){sourceSceneInfoRoot.SetActive(false);sourceSceneInfoRoot=null;}Check(!SceneInfo.instance&&!ClassicStageInfo.instance,"Original source scene context survived deactivation");}
+ void DeactivateSourceSceneInfo(){if(sourceSceneInfoRoot){sourceSceneInfoRoot.SetActive(false);sourceSceneInfoRoot=null;}Check(!SceneInfo.instance&&!ClassicStageInfo.instance,"Original source scene context survived deactivation");DeactivateSourceGameManager();}
  MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
  IntegratedStageSpec firstStageSpec;string firstStageName;bool firstStagePolicyConsumed;float firstStageSelectionValue;
  IEnumerator PrepareStageGeometry(Result cfg){

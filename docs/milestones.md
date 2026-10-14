@@ -690,3 +690,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J461 scoped Director exit:** All 13 source stages select their serialized SceneDirector; Lakes and Goolake populated on device with one genuine exit and zero current-process errors. The source root's two continuous CombatDirectors remain inactive while the accepted runtime director owns ongoing waves. Full-route, normal-play and 60 FPS gates remain open.
 
 **J462 scoped Director-root exit:** The original fast/slow CombatDirectors and DirectorCore run in both device-tested source stages; one genuine Lakes → Goolake exit and zero current-process errors pass. Crowded-stage 60 FPS, normal-play and full-route gates remain open.
+
+**J463 scoped event-owner exit:** The serialized source GlobalEventManager owns events in both device-tested stages and hands off across one genuine exit with zero current-process errors. Stock application startup, normal/full-route play and sustained 60 FPS remain open.
