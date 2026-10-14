@@ -4449,3 +4449,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / HYPOTHESIS / TASK:** Source scenes retain serialized Director policy and cards; invoke their original startup SceneDirector/map population while keeping the existing continuous runtime director.
 - **TEST / PASS:** 136 host tests, exact-editor build, Lakes → Goolake genuine exit, source population in both stages, zero current-PID errors. Assisted two-stage pass only; broader root activation and normal play remain open.
 - **EVIDENCE / DEPENDENCIES:** J461 ignored run; depends on J460 stage owners and pinned R2API.Director startup timing. J459 four-exit rollback and Moon candidate remain unchanged.
+
+## C13 / J462 — Activate source continuous combat directors
+
+- **OBSERVATION / HYPOTHESIS / TASK:** Each source stage has the original fast/slow pair and core; replace the synthetic single-director lifecycle while keeping teleporter startup ordered and reduced-scene rollback intact.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor build, Lakes → Goolake genuine exit, both original directors registered per stage, zero current-PID errors. Assisted two-stage pass only; crowded-stage 60 FPS and normal/full-route acceptance remain open.
+- **EVIDENCE / DEPENDENCIES:** J462 ignored run; depends on J461 source SceneDirector and pinned R2API.Director timing. J459 and Moon rollback retained.

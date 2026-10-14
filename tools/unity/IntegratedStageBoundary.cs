@@ -56,7 +56,7 @@ public sealed partial class MovementBatchProbe {
   report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;report.completed.Add(stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
   transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
   var beetleGland=body.GetComponent<RoR2.Items.BeetleGlandBodyBehavior>();bool resumeBeetleGland=beetleGland&&beetleGland.enabled;if(resumeBeetleGland)beetleGland.enabled=false;
-  if(rewardDirector)rewardDirector.enabled=false;
+  if(sourceSlowDirector)sourceSlowDirector.enabled=false;if(rewardDirector)rewardDirector.enabled=false;
   PauseStageMapZones();var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
   CleanupStageBossInstances();
   // The native item can summon a player-owned ally outside the stage director.
@@ -118,9 +118,10 @@ public sealed partial class MovementBatchProbe {
   Check(Util.IsPositionWithinMapBounds(solver.TransientPosition),"Original source bounds reject grounded next-stage entry");
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(automaticDirectorHost)Destroy(automaticDirectorHost);yield return null;
-  SelectStageCombatDeck(integratedStageConfig,next.name);automaticDirectorHost=Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
-  automaticDirectorHost.AddComponent<DirectorCore>();var spawningDirector=rewardDirector;spawningDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer,spawningDirector);else RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);
-  Check(DirectorCore.instance&&rewardDirector.enabled&&CombatDirector.instancesList.Contains(rewardDirector),"Next-stage original director missing");
+  sourceSlowDirector=null;SelectStageCombatDeck(integratedStageConfig,next.name);automaticDirectorHost=stageSourceObjects?SourceStageDirectorRoot(false):Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
+  if(stageSourceObjects){sourceSlowDirector.monsterCards=automaticDeck;ObserveSourceSlowDirector(worldPlayer);}else automaticDirectorHost.AddComponent<DirectorCore>();
+  var spawningDirector=rewardDirector;spawningDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer,spawningDirector);else RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);
+  Check(DirectorCore.instance==automaticDirectorHost.GetComponent<DirectorCore>()&&rewardDirector.enabled&&CombatDirector.instancesList.Contains(rewardDirector)&&(!stageSourceObjects||CombatDirector.instancesList.Contains(sourceSlowDirector)),"Next-stage original director missing");
   worldObjective=0;stagePickupBaseline=r.world.pickupMessages;worldLastPress=-1;
   var origin=solver.TransientPosition;var chestSource=artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);
   if(r.liveCatalogs==null||next.moonMission){

@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.Events;
 
 // Native SceneDirector owns selection, credits, caps, placement and initial map spawns.
 // Android owns inactive templates, explicit no-audio presentation and paired resources.
@@ -17,7 +16,7 @@ public sealed partial class MovementBatchProbe {
  readonly Dictionary<GameObject,GameObject> wholeInteractableTemplates=new Dictionary<GameObject,GameObject>();
  readonly Dictionary<SpawnCard,SpawnCard> wholeInteractableCards=new Dictionary<SpawnCard,SpawnCard>();
  readonly List<GameObject> wholePlayerSpawnPoints=new List<GameObject>();
- SceneDirector wholeSceneDirector;CombatDirector wholeSourceMapDirector;UnityAction<GameObject> wholeSourceMapSpawnListener;JObject wholeStageContext;GameObject priorSpawnPointPrefab;
+ SceneDirector wholeSceneDirector;JObject wholeStageContext;GameObject priorSpawnPointPrefab;
  AsyncOperationHandle<GameObject> wholeSpawnPointLease;bool ownsSpawnPointPrefab;
 
  GameObject WholeInteractableTemplate(GameObject source){
@@ -79,21 +78,16 @@ public sealed partial class MovementBatchProbe {
   }
   if(stageSourceObjects){
    var roots=stageGeometryScene.GetRootGameObjects().Where(root=>root.name=="Director").ToArray();
-   Check(roots.Length==1&&!roots[0].activeSelf,"Original source Director owner absent or already active");
+   Check(roots.Length==1&&roots[0].activeSelf&&roots[0]==automaticDirectorHost,"Original source Director owner differs from active combat owner");
    wholeSceneDirector=roots[0].GetComponent<SceneDirector>();
    var mapDirectors=roots[0].GetComponents<CombatDirector>();
-   Check(wholeSceneDirector&&wholeSceneDirector.enabled&&mapDirectors.Length==2&&mapDirectors[0].enabled,"Original source Director component contract changed");
+   Check(wholeSceneDirector&&!wholeSceneDirector.enabled&&mapDirectors.Length==2&&mapDirectors[0]==rewardDirector&&mapDirectors[1]==sourceSlowDirector,"Original source Director component contract changed");
    foreach(var property in ((JObject)wholeStageContext["director_fields"]).Properties()){
     var field=typeof(SceneDirector).GetField(property.Name,BindingFlags.Public|BindingFlags.Instance);
     Check(field!=null&&Equals(field.GetValue(wholeSceneDirector),property.Value.ToObject(field.FieldType)),"Original source Director field drift: "+property.Name);
    }
-   wholeSourceMapDirector=mapDirectors[0];wholeSourceMapDirector.monsterCards=automaticDeck;
-   wholeSourceMapSpawnListener=obj=>{RecordRewardSpawn(obj);RecordStageCombatSpawn(obj,worldPlayer,wholeSourceMapDirector);};
-   Check(wholeSourceMapDirector.onSpawnedServer!=null,"Original source map-spawn event missing");
-   wholeSourceMapDirector.onSpawnedServer.AddListener(wholeSourceMapSpawnListener);
-   // This root stays inactive to avoid a second DirectorCore and two ticking
-   // CombatDirectors. SceneDirector.Start calls its original map director directly.
-   Call(wholeSourceMapDirector,"Awake");currentStageCombatDeck.sourceSceneDirector=true;
+   Check(DirectorCore.instance==roots[0].GetComponent<DirectorCore>()&&CombatDirector.instancesList.Contains(mapDirectors[0])&&CombatDirector.instancesList.Contains(mapDirectors[1]),"Original source continuous directors are not running");
+   currentStageCombatDeck.sourceSceneDirector=true;currentStageCombatDeck.sourceContinuousDirectors=2;
   }else{
    wholeSceneDirector=automaticDirectorHost.AddComponent<SceneDirector>();wholeSceneDirector.enabled=false;
    foreach(var property in ((JObject)wholeStageContext["director_fields"]).Properties()){
@@ -124,7 +118,6 @@ public sealed partial class MovementBatchProbe {
   r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;Save();yield return null;
  }
  void CleanupWholeStageInteractables(){
-  if(wholeSourceMapDirector){if(wholeSourceMapSpawnListener!=null&&wholeSourceMapDirector.onSpawnedServer!=null)wholeSourceMapDirector.onSpawnedServer.RemoveListener(wholeSourceMapSpawnListener);wholeSourceMapDirector=null;wholeSourceMapSpawnListener=null;}
   if(wholeSceneDirector){if(stageSourceObjects)wholeSceneDirector.teleporterInstance=null;else Destroy(wholeSceneDirector);}wholeSceneDirector=null;
   foreach(var point in wholePlayerSpawnPoints)if(point)Destroy(point);wholePlayerSpawnPoints.Clear();
   foreach(var card in wholeInteractableCards.Values)if(card)Destroy(card);wholeInteractableCards.Clear();

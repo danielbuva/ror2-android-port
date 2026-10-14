@@ -688,3 +688,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J460 scoped stage-source exit:** Four original source stage `SceneInfo`/`ClassicStageInfo` owners initialized across three genuine exits with zero current-process errors. The fourth exit failed because unattended traversal wedged outside Ship Graveyard's real holdout; native charge remained 58%. J459 remains the four-exit rollback. Whole-game, normal-game and 60 FPS gates are unchanged.
 
 **J461 scoped Director exit:** All 13 source stages select their serialized SceneDirector; Lakes and Goolake populated on device with one genuine exit and zero current-process errors. The source root's two continuous CombatDirectors remain inactive while the accepted runtime director owns ongoing waves. Full-route, normal-play and 60 FPS gates remain open.
+
+**J462 scoped Director-root exit:** The original fast/slow CombatDirectors and DirectorCore run in both device-tested source stages; one genuine Lakes → Goolake exit and zero current-process errors pass. Crowded-stage 60 FPS, normal-play and full-route gates remain open.
