@@ -252,6 +252,10 @@ public sealed partial class MovementBatchProbe {
   EntityStates.BeetleQueenMonster.SummonEggs.spawnCard=objectiveCards.Single(x=>x.name=="cscBeetleGuard");
   objectiveSummon=report=>{
    if(!report.summonMasterInstance||!(objectiveTemplates.Contains(report.masterSummon.masterPrefab)||rewardCard&&report.masterSummon.masterPrefab==rewardCard.prefab&&IsWorldItemGhost(report.summonMasterInstance)))return;
+   // Complete-catalog templates include player-owned repairable drones. Their
+   // original summons belong to the player-minion observer, not the hostile
+   // director actor/reward observer below.
+   if(report.summonMasterInstance.teamIndex==TeamIndex.Player&&!IsWorldItemGhost(report.summonMasterInstance))return;
    var master=report.summonMasterInstance;BindMoonBodySupport(master.GetBody());ownedRewardSummons.Add(master);pendingObjectiveActors.Add(master);
    var summoner=report.masterSummon.summonerBodyObject?report.masterSummon.summonerBodyObject.GetComponent<CharacterBody>():null;
    objectiveAmbientExpected[master]=1+(summoner&&summoner.inventory?summoner.inventory.GetItemCountEffective(RoR2Content.Items.UseAmbientLevel):0);

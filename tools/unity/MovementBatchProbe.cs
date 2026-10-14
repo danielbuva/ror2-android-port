@@ -17,6 +17,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  [Serializable] public class Result {
   public PerformanceReport performance;
   public bool combatPerformanceFocus;
+  public bool commerceSweep;
   public LiveCatalogReport liveCatalogs;
   public string stageBossArmorBuffAsset;public string stageOverheatBuffAsset,stageOverheatVisualAsset,stageGrandparentSunAsset,stageMiniCardAsset,stageMiniCardKey,stageMiniCardPath;public StageBossContentReport stageBossContent;
   public bool catalogTransformInstalled,catalogTransformRestored;

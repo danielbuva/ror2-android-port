@@ -459,6 +459,24 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    return;
   }
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
+  // Assisted dependency scan of several source interactable families in one
+  // composed stage. Only the existing player input/earned Money path purchases;
+  // ordinary runs and source selection remain untouched.
+  if(r.commerceSweep&&r.stageProgress!=null&&r.stageProgress.transitions==0&&elapsed-stageEnteredAt<330){
+   Check(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted,"Commerce sweep must be marked assisted");
+   var purchase=NextCommerceSweepTarget(player);
+   if(purchase){
+    target=purchase.gameObject;r.world.objective="Purchase original "+CommerceSweepFamily(purchase);
+    if(DefendWorldApproach(player,bridge,target,elapsed))return;
+    NavigateWorldInput(player,bridge,target.transform.position,.4f,target.name,elapsed);
+    var collider=target.GetComponentsInChildren<Collider>(true).FirstOrDefault(x=>x.enabled&&!x.isTrigger);
+    var aim=(collider?collider.bounds.center:target.transform.position)-player.inputBank.aimOrigin;
+    bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;
+    var selected=worldDriver.currentInteractable?worldDriver.currentInteractable.GetComponent<PurchaseInteraction>():null;
+    if(selected&&selected.available&&CommerceSweepFamily(selected)==CommerceSweepFamily(purchase)&&selected.CanBeAffordedByInteractor(player.GetComponent<Interactor>())&&elapsed-worldLastPress>.5f){bridge.diagnosticInteract=true;worldLastPress=elapsed;}
+   }else{r.world.objective="Earn currency for original interactables";ObjectiveCombatInput(player,bridge,elapsed,Vector2.zero,false);}
+   return;
+  }
   // Native placement spreads barrels across the map. Diagnostic input can shop
   // as soon as earned money permits; clearing every barrel is not a game rule.
   if(r.liveCatalogs!=null&&worldObjective==0){var chest=NextAutomaticWorldChest(player);if(chest)worldObjective=1;}
