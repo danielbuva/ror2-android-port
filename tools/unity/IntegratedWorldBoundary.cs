@@ -462,7 +462,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // Assisted dependency scan of several source interactable families in one
   // composed stage. Only the existing player input/earned Money path purchases;
   // ordinary runs and source selection remain untouched.
-  if(r.commerceSweep&&r.stageProgress!=null&&r.stageProgress.transitions==0&&elapsed-stageEnteredAt<330){
+  if(r.commerceSweep&&r.stageProgress!=null&&r.stageProgress.transitions==0&&elapsed-stageEnteredAt<330&&r.commerce!=null&&!r.commerce.purchases.Any(p=>p.family=="drone-or-turret")){
    Check(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted,"Commerce sweep must be marked assisted");
    var purchase=NextCommerceSweepTarget(player);
    if(purchase){
