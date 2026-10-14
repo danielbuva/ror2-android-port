@@ -24,7 +24,10 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
   source=model;root=new GameObject("Nova recovered survivor display");
   var map=new Dictionary<Transform,Transform>();if(!actual)copy=Copy(model,root.transform,map);
   else foreach(var component in model.GetComponentsInChildren<MonoBehaviour>(true)){
-   component.enabled=false;
+   // Animation events still fire on a disabled receiver, but its original
+   // Start cache never runs. Keep the shipped event receiver active for source
+   // survivors while the unrelated model callbacks remain isolated.
+   component.enabled=sourceSelected&&component is RoR2.AnimationEvents&&component.enabled;
    // Optional native sound producers cannot enter Awake on this silent Android instance.
    if(component.GetType().Name.StartsWith("Ak",StringComparison.Ordinal))UnityEngine.Object.DestroyImmediate(component);
   }

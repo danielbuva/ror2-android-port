@@ -11,6 +11,7 @@ using UnityEngine;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class LiveCatalogReport {
   public int emptyPreloadKeys,projectiles,bodies,masters,adaptedMasters,skills,skillFamilies,emptySkillVariants,stateTypes,stateConfigurations,adaptedStateConfigurations,staticStateFields,preloadGUIDs;
+  public string[] missingSourcePreloadKeys;
   public bool projectileCleanup,stateCleanup,bodySkillCleanup;public string scope="Native provider category membership and original catalog setters in the composed session; selected actor templates/configuration adaptations retained. Registration is not all-content gameplay acceptance.";
  }
  readonly Dictionary<FieldInfo,object> wholeStateFields=new Dictionary<FieldInfo,object>();
@@ -23,18 +24,30 @@ public sealed partial class MovementBatchProbe {
   }}
   foreach(var name in new[]{"preloadGUIDLocators","preloadGUIDs"}){var field=typeof(EntityStatePreloadCatalog).GetField(name,BindingFlags.NonPublic|BindingFlags.Static);wholePreloadFields.Add(field,field.GetValue(null));}
  }
- static int RemoveEmptyStatePreloadKeys(){
+ [Serializable] sealed class PreloadSourceDescriptor {public string[] missingSourcePreloadKeys;}
+ int RemoveEmptyStatePreloadKeys(){
   var flags=BindingFlags.NonPublic|BindingFlags.Static;var type=typeof(EntityStatePreloadCatalog);
   var locatorField=type.GetField("preloadGUIDLocators",flags);var guidField=type.GetField("preloadGUIDs",flags);
   var locators=((EntityStatePreloadCatalog.PreloadLocator[])locatorField.GetValue(null)).ToArray();var original=(string[])guidField.GetValue(null);
-  var valid=new List<string>();int skipped=0;
-  // Empty strings are absent references, never a successfully loaded object.
-  // Preserve the native locator ownership/order and every nonempty source key.
+  var descriptor=JsonUtility.FromJson<PreloadSourceDescriptor>(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);
+  var sourceMissing=new HashSet<string>(descriptor.missingSourcePreloadKeys??Array.Empty<string>(),StringComparer.Ordinal);
+  var valid=new List<string>();var observedMissing=new HashSet<string>(StringComparer.Ordinal);int skipped=0;
+  // Empty slots and keys absent from the exact shipped PC catalog cannot
+  // preload. Keep every other native key and its state/locator ordering intact.
   for(int i=0;i<locators.Length;i++){var locator=locators[i];int start=valid.Count;
    if(locator.index<0||locator.totalPreloadItems<0||locator.index+locator.totalPreloadItems>original.Length)throw new Exception("Native preload locator outside owned array");
-   for(int j=locator.index;j<locator.index+locator.totalPreloadItems;j++){if(string.IsNullOrEmpty(original[j]))skipped++;else valid.Add(original[j]);}
+   for(int j=locator.index;j<locator.index+locator.totalPreloadItems;j++){
+    var key=original[j];if(string.IsNullOrEmpty(key)){skipped++;continue;}
+    if(sourceMissing.Contains(key)){
+     IList<UnityEngine.ResourceManagement.ResourceLocations.IResourceLocation> locations;
+     if(WholeCatalogLoader.locator.Locate(key,typeof(GameObject),out locations))throw new Exception("Source-missing preload unexpectedly resolves: "+key);
+     observedMissing.Add(key);continue;
+    }
+    valid.Add(key);
+   }
    locators[i]=new EntityStatePreloadCatalog.PreloadLocator{index=start,totalPreloadItems=valid.Count-start};
   }
+  r.liveCatalogs.missingSourcePreloadKeys=observedMissing.OrderBy(key=>key,StringComparer.Ordinal).ToArray();
   locatorField.SetValue(null,locators);guidField.SetValue(null,valid.ToArray());return skipped;
  }
  void RestoreWholeStateOwnership(){

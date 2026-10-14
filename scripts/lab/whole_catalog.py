@@ -1033,7 +1033,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)
@@ -1079,8 +1079,14 @@ def build_integration(code_only=False):
             raise RuntimeError('Accepted integration entry point changed')
         text=text.replace(needle,needle+'\n'+guard)
         runtime.write_text(text)
+    closure = read(out/'reconciled-closure.json')
+    if closure['input_id'] != manifest['input_id']:
+        raise RuntimeError('Source preload evidence belongs to another accepted input')
+    missing_preloads = sorted({row['key'] for row in closure['runtime_key_edges']
+                               if row.get('field') == 'preloadGUIDReferences' and not row.get('locations')})
     write(project/'Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json',
-          dict(attempt=manifest['attempt'], input_id=manifest['input_id']))
+          dict(attempt=manifest['attempt'], input_id=manifest['input_id'],
+               missingSourcePreloadKeys=missing_preloads))
     write(WORK/'whole-catalog-build.json', dict(manifest=str(attempt/'manifest.json')))
     if code_only:
         for rel in sorted(WHOLE_PLAYER_INPUTS):

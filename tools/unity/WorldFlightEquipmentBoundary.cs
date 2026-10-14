@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
  readonly Dictionary<JetpackController,CharacterMaster> worldFlightDeathOwners=new Dictionary<JetpackController,CharacterMaster>();
  float worldFlightDiscoveryUntil,worldFlightDiscoveryNext;
  readonly Dictionary<Renderer,bool> worldFlightVisibility=new Dictionary<Renderer,bool>();
- EquipmentState developerEquipmentPrior;Inventory developerEquipmentInventory;int developerEquipmentCursor;float developerEquipmentChangedAt;
+ EquipmentState developerEquipmentPrior;Inventory developerEquipmentInventory;int developerEquipmentCursor;float developerEquipmentChangedAt,developerEquipmentNextAt=4;bool developerEquipmentValidated;
 
  void PrepareFlightEquipmentSource(GameObject source,List<GameObject> effects){
   Check(source.GetComponent<NetworkIdentity>(),"Original flight equipment network identity absent");
@@ -74,7 +74,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var obj in worldFlightObjects.Keys)if(obj)NetworkServer.Destroy(obj);
   foreach(var pair in worldFlightVisibility)if(pair.Key)pair.Key.forceRenderingOff=pair.Value;worldFlightVisibility.Clear();
   if(developerEquipmentInventory){SetDeveloperEquipmentState(developerEquipmentInventory,developerEquipmentPrior);developerEquipmentInventory=null;}
-  developerEquipmentCursor=0;developerEquipmentChangedAt=0;
+  developerEquipmentCursor=0;developerEquipmentChangedAt=0;developerEquipmentNextAt=4;developerEquipmentValidated=false;
   worldFlightDiscoveryUntil=worldFlightDiscoveryNext=0;
  }
  void VerifyFlightEquipmentCleanup(){
@@ -93,13 +93,18 @@ public sealed partial class MovementBatchProbe {
  }
  bool DeveloperEquipmentStimulusOwned(NovaInputBridge bridge,float elapsed){
   var names=r.developerEquipmentSequence;if(names==null||names.Length==0)return false;
-  Check(names.Length<=2&&names.Distinct().Count()==names.Length&&names.All(x=>x=="Jetpack"||x=="FireBallDash")&&r.debugOptions!=null&&!string.IsNullOrWhiteSpace(r.debugOptions.purpose)&&r.debugOptions.purpose.Length<=160,"Developer flight selection requires bounded explicit purpose");
-  if(developerEquipmentCursor<names.Length&&elapsed>=4+developerEquipmentCursor*30&&worldPlayer.characterMotor.isGrounded&&!worldPlayer.currentVehicle&&!JetpackController.FindJetpackController(worldPlayer.gameObject)){
+  if(!developerEquipmentValidated){
+   var eligible=EligibleWorldEquipment().Where(def=>Run.instance.IsEquipmentAvailable(def.equipmentIndex)).Select(def=>def.name).ToArray();
+   Check(names.Length<=12&&names.Distinct().Count()==names.Length&&names.All(eligible.Contains)&&r.debugOptions!=null&&!string.IsNullOrWhiteSpace(r.debugOptions.purpose)&&r.debugOptions.purpose.Length<=160,"Developer equipment selection requires available original definitions and a bounded explicit purpose");
+   developerEquipmentValidated=true;
+  }
+  if(developerEquipmentCursor<names.Length&&elapsed>=developerEquipmentNextAt&&worldPlayer.characterMotor.isGrounded&&!worldPlayer.currentVehicle&&!JetpackController.FindJetpackController(worldPlayer.gameObject)){
    Check(NetworkServer.active&&r.itemDisplays.ready,"Developer equipment source/display ownership absent");
    if(!developerEquipmentInventory){developerEquipmentInventory=worldPlayer.inventory;developerEquipmentPrior=developerEquipmentInventory.GetActiveEquipment();}
    var def=EligibleWorldEquipment().Single(x=>x.name==names[developerEquipmentCursor]);var previous=EquipmentCatalog.GetEquipmentDef(developerEquipmentInventory.currentEquipmentIndex);
    r.debugAcceleration.everAssisted=true;r.debugAcceleration.normalGameAcceptanceEligible=false;SetDeveloperEquipmentState(developerEquipmentInventory,new EquipmentState(def.equipmentIndex,Run.FixedTimeStamp.negativeInfinity,1));r.debugAcceleration.equipmentSelections.Add(new DeveloperEquipmentSelection{equipment=def.name,previous=previous?previous.name:"",seconds=elapsed});
    developerEquipmentCursor++;developerEquipmentChangedAt=elapsed;
+   developerEquipmentNextAt=elapsed+(def.name=="Jetpack"||def.name=="FireBallDash"?30:12);
   }
   if(developerEquipmentCursor>0){var selection=r.debugAcceleration.equipmentSelections.Last();selection.activated|=r.world.equipment.actions.Any(x=>x.equipment==selection.equipment&&x.seconds>=developerEquipmentChangedAt);if(!selection.activated&&worldEquipmentSlot.equipmentIndex==developerEquipmentInventory.currentEquipmentIndex&&worldEquipmentSlot.stock>0&&elapsed-developerEquipmentChangedAt<5)bridge.diagnosticEquipment=true;}
   return true;
