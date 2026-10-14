@@ -28,7 +28,7 @@ public sealed partial class MovementBatchProbe {
   public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
   public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
-  public int lootTier1,lootTier2,lootTier3;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
+  public int lootTier1,lootTier2,lootTier3,transmutationGroups,transmutationMapped;public bool transmutationCleaned;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
   public int featherJumps,featherEffectLoads;public bool featherEffectCleaned,featherInputAttempted;public string featherInputOutcome;
   public int nativeLootProviderLoads,healthPacks,moneyPacks,stunImpactLoads,slowedEnemiesPeak;public bool nativeLootProvidersCleaned;
   public int stickyBombLoads,stickyBombSpawns,wispDelaySpawns,barrierEffects;public float barrier;
@@ -302,12 +302,53 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.interactionReady=worldDriver.enabled&&ReferenceEquals(DriverField(worldDriver,"inputBank"),player.inputBank);
   r.world.start=origin;r.world.ready=r.world.authority&&r.world.lootReady&&r.world.interactionReady&&rewardDirector.enabled;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
+  if(r.liveCatalogs!=null&&cfg.teleporterLoop){var transmutation=PrepareWorldTransmutation();while(transmutation.MoveNext())yield return transmutation.Current;}
   PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
   var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;
   PrepareRecoveredHud();Check(r.world.ready,"Integrated session setup incomplete");r.phase="integrated-world-playing";Save();
  }
 
+ readonly Dictionary<FieldInfo,object> priorWorldTransmutationFields=new Dictionary<FieldInfo,object>();
+ Action<Run> worldTransmutationRunStart;bool ownsWorldTransmutation;
+ IEnumerator PrepareWorldTransmutation(){
+  Check(!ownsWorldTransmutation&&Run.instance&&PickupCatalog.pickupCount>0,"Original transmutation requires owned Run and pickup catalog");
+  var type=typeof(PickupTransmutationManager);var flags=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
+  var fields=type.GetFields(flags).Where(field=>field.FieldType.IsArray&&!field.IsInitOnly).ToArray();
+  var groups=type.GetField("pickupGroups",flags);var groupMap=type.GetField("pickupGroupMap",flags);var available=type.GetField("availablePickupGroupMap",flags);
+  Check(groups!=null&&groupMap!=null&&available!=null&&fields.Length>=20&&((Array)groups.GetValue(null)).Length==0&&((Array)groupMap.GetValue(null)).Length==0&&((Array)available.GetValue(null)).Length==0,"Unowned original transmutation tables");
+  foreach(var field in fields)priorWorldTransmutationFields.Add(field,field.GetValue(null));
+  var callback=type.GetMethod("RebuildAvailablePickupGroups",BindingFlags.Static|BindingFlags.NonPublic);
+  var runEvent=typeof(Run).GetField("onRunStartGlobal",flags);
+  Check(callback!=null&&runEvent!=null,"Original transmutation Run callback missing");
+  worldTransmutationRunStart=(Action<Run>)Delegate.CreateDelegate(typeof(Action<Run>),callback);
+  var listeners=(Delegate)runEvent.GetValue(null);
+  Check(listeners==null||!listeners.GetInvocationList().Contains(worldTransmutationRunStart),"Unowned original transmutation callback");
+  ownsWorldTransmutation=true;r.phase="original-pickup-transmutation";Save();
+  var init=PickupTransmutationManager.Init();while(init.MoveNext())yield return init.Current;
+  StaticCall(type,"RebuildAvailablePickupGroups",Run.instance);
+  var sourceGroups=(PickupIndex[][])groups.GetValue(null);var sourceMap=(PickupIndex[][])groupMap.GetValue(null);
+  Check(sourceGroups.Length==16&&sourceMap.Length==PickupCatalog.pickupCount,"Original transmutation group shape differs");
+  int mapped=0;
+  for(int index=0;index<PickupCatalog.pickupCount;index++){
+   var pickup=new PickupIndex(index);var original=PickupTransmutationManager.GetGroupFromPickupIndex(pickup);
+   if(original==null||!original.Contains(pickup))continue;
+   var eligible=PickupTransmutationManager.GetAvailableGroupFromPickupIndex(pickup);
+   Check(eligible!=null&&eligible.SequenceEqual(original.Where(Run.instance.IsPickupAvailable)),"Original transmutation availability differs: "+index);
+   mapped++;
+  }
+  Check(mapped>100&&((Delegate)runEvent.GetValue(null)).GetInvocationList().Count(value=>value.Equals(worldTransmutationRunStart))==1,"Original transmutation coverage or Run callback missing");
+  r.world.transmutationGroups=sourceGroups.Length;r.world.transmutationMapped=mapped;Save();
+ }
+ void CleanupWorldTransmutation(){
+  if(!ownsWorldTransmutation)return;
+  Run.onRunStartGlobal-=worldTransmutationRunStart;
+  foreach(var pair in priorWorldTransmutationFields)pair.Key.SetValue(null,pair.Value);
+  priorWorldTransmutationFields.Clear();ownsWorldTransmutation=false;worldTransmutationRunStart=null;
+  var flags=BindingFlags.Static|BindingFlags.NonPublic;var type=typeof(PickupTransmutationManager);
+  r.world.transmutationCleaned=((Array)type.GetField("pickupGroups",flags).GetValue(null)).Length==0&&((Array)type.GetField("availablePickupGroupMap",flags).GetValue(null)).Length==0;
+  Check(r.world.transmutationCleaned,"Original transmutation tables outlived the pickup catalog");
+ }
  void PrepareUnavailableWorldPresentation(CharacterBody player){
   // Optional presentation requires stock application/native audio/item-display contexts.
   // Remove only these measured original listeners; all original XP/level/inventory events remain.
@@ -660,7 +701,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.world==null)yield break;yield return null;yield return null;FinishWorldDotCleanup();VerifyFlightEquipmentCleanup();
   if(r.objective!=null){r.objective.cleaned=!objectiveHost&&!objectiveStageHost&&!objectiveBossDeck&&objectiveResources.All(x=>!x)&&objectiveCards.All(x=>!x)&&objectiveTemplates.All(x=>!x)&&!ownsObjectiveIndicator&&objectiveLocator==null&&!objectiveSubscribed&&!TeleporterInteraction.instance&&!Stage.instance;Check(r.objective.cleaned,"Owned teleporter/actor/context/provider cleanup incomplete");}
   r.world.cleaned=worldObjects.All(x=>!x)&&worldModels.All(x=>!x)&&worldMaterials.All(x=>!x)&&!worldStaging&&!worldPause&&(!worldDriver||!worldDriver.enabled)&&!PauseStopController.instance&&!EjectionPickups().Any()&&!EjectionDroplets().Any()&&!ownsWorldDroplet&&!ownsWorldCoinLease&&worldDropletLocator==null&&!ownsPickupCatalog&&!ownsMoneyCatalog&&!ownsWorldLists&&!ownsWorldPresentation&&!ownsWorldMisc&&worldLootEffectSlots.Count==0&&worldLootSourceMaterials.Count==0&&worldLootSourceLayers.Count==0&&worldLootTemporaryEffects.All(x=>!x)&&worldFeatherEffectIndex<0&&worldFeatherJumped==null&&worldAvailableItems==null&&worldAvailableEquipment==null;
-  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0&&worldProjectileGhostLeases.Count==0&&!ownsWorldDots&&(r.dots==null||(r.dots.cleaned&&DotController.readOnlyInstancesList.Count==0));
+  r.world.cleaned&=worldNativeLootLeaseBaselines.Count==0&&worldNativeLootObjects.Count==0&&worldProjectileGhostLeases.Count==0&&!ownsWorldDots&&(r.dots==null||(r.dots.cleaned&&DotController.readOnlyInstancesList.Count==0))&&!ownsWorldTransmutation&&(r.world.transmutationGroups==0||r.world.transmutationCleaned);
   if(r.hud!=null){r.hud.cleaned=!recoveredHud&&!recoveredMenu;r.world.cleaned&=r.hud.cleaned;}
   if(r.commerce!=null){r.commerce.cleaned=commerceOwned.All(x=>!x)&&commerceListeners.Count==0&&commercePurchases.Count==0&&!ownsCommerceMessages&&commerceEffectIndex<0;r.world.cleaned&=r.commerce.cleaned;}
   Check(r.world.cleaned,"Integrated content/input/loot/source/catalog cleanup incomplete");Save();
@@ -692,7 +733,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
   TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
- void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupTeleporterWorld();
+ void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupWorldTransmutation();CleanupTeleporterWorld();
   worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;fireTrailDiagnosisRecorded=false;
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;

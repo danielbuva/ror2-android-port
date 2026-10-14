@@ -4491,3 +4491,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** Complete bodies and projectiles were registered, but original body availability and SkinCatalog remained unset. Run the shipped skin initializer and deferred bake across every source body; restore owned indices/arrays across sessions.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor build, assisted Lakes → Goolake exit and assisted two-session restart with zero current-PID errors, unchanged payload and profile/settings.
 - **FAILURE / OPEN:** Code-only staging omitted the changed source file and was repaired before build. A separate unassisted teardown attempt died normally before pause; do not claim combat regression or normal-run acceptance. Pose/material parity, managed session growth, full route and release-target 60 FPS remain open. Depends on J467, shipped SkinCatalog and pinned R2API.Skins lifecycle evidence.
+
+## C20 / J469 — Restore original pickup transmutation
+
+- **OBSERVATION / TASK:** Complete PickupCatalog existed, but source transmutation groups were unset. Run the shipped initializer after native rule masks, validate eligible members, and clean only owned static tables/callbacks.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor APK, assisted Lakes → Goolake exit, zero current-PID errors, unchanged payload; two invincibility-assisted same-process cleanups with unchanged profile/settings and cleared transmutation state.
+- **FAILURE / OPEN:** Fixed an editor-only `PickupIndex` construction error before install. Individual transmutation consumers, normal full route and release-target 60 FPS remain open. Next priority is survivor selection. Depends on J468, shipped manager and pinned R2API.Items index timing.

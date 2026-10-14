@@ -702,3 +702,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J467 scoped shared-catalog exit:** The unmodded provider-selected 72 SurfaceDefs and seven attributed original damage macros register natively; assisted Lakes → Goolake and two unassisted same-process cleanup/restarts pass. Individual effect/damage semantics, normal full route and release-target sustained 60 FPS remain open.
 
 **J468 scoped skin-catalog exit:** Complete original body availability and source-referenced SkinDefs bake through native catalog initialization. Assisted Lakes → Goolake and two assisted same-process cleanup/restarts pass; Commando pose/material parity, normal full route, managed-growth diagnosis and release-target 60 FPS remain open.
+
+**J469 scoped transmutation exit:** Native 16-group pickup transmutation covers 223 mapped original pickups under genuine availability; assisted two-stage run and two same-process cleanups pass. Individual consumers, normal full route and release-target 60 FPS remain open. Next focus: survivors and selection; Moon/finale remains paused.
