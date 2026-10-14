@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 // Recovered geometry and original out-of-bounds volumes; owned Android entry/material boundary.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
-  public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit,originalStageObjects;
+  public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit,originalStageObjects,sourceSceneInfoActive,sourceStagePopulationActive;
   public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneIdentityComponents,mapZoneEmptySceneIds,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,billboards,missingBillboardAssets,emptyLODRendererSlots,meshColliders,colliders,worldColliders,nonWorldColliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive,previewsInactiveByParent;
   public int sourceRockZones,sourceRockPrefabSlots,sourceRockPrefabsResolved,sourceRockComponentsResolved,sourceRockZonePointsResolved,sourceDustManagers,sourceDustPrefabsResolved,sourceDustLocationsResolved;
@@ -21,7 +21,15 @@ public sealed partial class MovementBatchProbe {
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
  readonly List<Material> stageGeometryMaterials=new List<Material>();
  readonly List<BillboardAsset> stageGeometryBillboards=new List<BillboardAsset>();
- bool stageMoonVolumes,stageSourceObjects;int stageZoneNetworkObjects;string[] stageZoneActiveNames,stageSourceNames=new string[0];
+ bool stageMoonVolumes,stageSourceObjects;GameObject sourceSceneInfoRoot;int stageZoneNetworkObjects;string[] stageZoneActiveNames,stageSourceNames=new string[0];
+ SceneInfo ActivateSourceSceneInfo(){
+  Check(stageSourceObjects&&Run.instance&&NetworkServer.active&&!SceneInfo.instance&&!ClassicStageInfo.instance&&!sourceSceneInfoRoot,"Original source context requires an active owned run and no duplicate context");
+  var roots=stageGeometryScene.GetRootGameObjects().Where(x=>x.name=="SceneInfo").ToArray();Check(roots.Length==1&&!roots[0].activeSelf,"Original source SceneInfo root absent or already activated");
+  var root=roots[0];var info=root.GetComponent<SceneInfo>();var population=root.GetComponent<ClassicStageInfo>();
+  Check(info&&population&&root.GetComponents<MonoBehaviour>().All(x=>x&&!x.GetType().FullName.StartsWith("Ak")&&x.GetType().Name!="RTPCController"),"Original source scene context contains missing/native-audio components");
+  sourceSceneInfoRoot=root;root.SetActive(true);return info;
+ }
+ void DeactivateSourceSceneInfo(){if(sourceSceneInfoRoot){sourceSceneInfoRoot.SetActive(false);sourceSceneInfoRoot=null;}Check(!SceneInfo.instance&&!ClassicStageInfo.instance,"Original source scene context survived deactivation");}
  MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
  IntegratedStageSpec firstStageSpec;string firstStageName;bool firstStagePolicyConsumed;float firstStageSelectionValue;
  IEnumerator PrepareStageGeometry(Result cfg){

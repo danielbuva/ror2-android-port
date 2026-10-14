@@ -70,7 +70,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var pickup in EjectionPickups().ToArray())NetworkServer.Destroy(pickup.gameObject);foreach(var droplet in EjectionDroplets().ToArray())NetworkServer.Destroy(droplet.gameObject);
   CleanupWholeStageInteractables();CleanupWorldCommerce();foreach(var obj in worldObjects)if(obj)NetworkServer.Destroy(obj);worldObjects.Clear();worldBarrels.Clear();worldChests.Clear();
   CleanupWholeStagePool();
-  if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);if(objectiveStage){Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}if(enemySceneHost)Destroy(enemySceneHost);
+  if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);if(objectiveStage){Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(enemySceneHost)Destroy(enemySceneHost);
   yield return null;yield return null;
   // Keep historical values in the plain report, but stop the persistent probe
   // from retaining actor/component wrappers from every completed stage.
@@ -102,9 +102,11 @@ public sealed partial class MovementBatchProbe {
   Check(report.activeSceneVerified&&actualSceneDef&&actualSceneDef.cachedName==next.name,"Actual next scene catalog/name mismatch");
   SceneInfo info;
   if(next.moonMission)info=SceneInfo.instance;
+  else if(stageSourceObjects)info=ActivateSourceSceneInfo();
   else{enemySceneHost=new GameObject("Owned original next-stage SceneInfo");enemySceneHost.SetActive(false);SceneManager.MoveGameObjectToScene(enemySceneHost,stageGeometryScene);
   info=enemySceneHost.AddComponent<SceneInfo>();typeof(SceneInfo).GetField("groundNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.groundGraph));typeof(SceneInfo).GetField("airNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.airGraph));enemySceneHost.SetActive(true);}yield return null;
   Check(SceneInfo.instance==info&&info.groundNodes.GetNodeCount()>0&&info.airNodes.GetNodeCount()>0,"Recovered next-stage navigation missing");
+  if(stageSourceObjects){r.stage.sourceSceneInfoActive=true;r.stage.sourceStagePopulationActive=ClassicStageInfo.instance==sourceSceneInfoRoot.GetComponent<ClassicStageInfo>()&&ClassicStageInfo.instance.monsterSelection!=null;Check(r.stage.sourceStagePopulationActive,"Original source next-stage population did not initialize");}
   // Explicit temporary entry placement; movement afterward is original motor/state/solver.
   report.entryObservations.Clear();ObserveStageEntry(motor,"before-original-teleport");
   TeleportHelper.TeleportGameObject(body.gameObject,r.stage.spawnPosition);solver.CollidableLayers=LayerIndex.world.mask;solver.StableGroundLayers=LayerIndex.world.mask;solver.SetGroundSolvingActivation(true);solver.ForceUnground();solver.enabled=true;Physics.SyncTransforms();
@@ -140,5 +142,5 @@ public sealed partial class MovementBatchProbe {
   if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
- void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
+ void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }

@@ -488,13 +488,18 @@ public sealed partial class MovementBatchProbe {
     float safeDistance=20;
     bool escape=nearest!=null&&distance<safeDistance;
     Vector2 desired=escape?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
-    if(constrainToHoldout&&planar.magnitude>50)desired=planar.normalized;
+    bool returnToHoldout=constrainToHoldout&&worldTeleporter&&planar.magnitude>Mathf.Max(12f,worldTeleporter.holdoutZoneController.currentRadius*.75f);
     bool approach=!escape&&(!target.visible||target.distance>32)&&(!constrainToHoldout||planar.magnitude<=50);
-    if(approach){
+    if(returnToHoldout){
+     // The unattended input driver follows the original scene graph back into
+     // the real holdout; native charge, enemies and attacks remain unchanged.
+     NavigateWorldInput(player,bridge,objectiveHost.transform.position,Mathf.Max(2f,worldTeleporter.holdoutZoneController.currentRadius*.35f),"Return to original holdout",elapsed);
+     r.world.combatHoldoutReturnFrames++;r.world.combatHoldoutReturnDistance=planar.magnitude;
+    }else if(approach){
      NavigateWorldInput(player,bridge,DirectorPhysicsPosition(target.actor.body),1,"Combat: "+target.actor.body.name,elapsed);r.world.combatApproachFrames++;
     }else SelectCombatMotion(player,bridge,desired,actors,escape);
     r.world.combatTarget=target.actor.body.name;r.world.combatLineOfSight=target.visible;r.world.combatTargetBoss=target.boss;r.world.combatTargetDistance=target.distance;r.world.combatThreatDistance=distance;r.world.combatAimOrigin=origin;r.world.combatAimTarget=target.point;
-    bool evade=nearest!=null&&distance<16;bridge.diagnosticSprint=evade;if(!approach)bridge.DiagnosticJump(elapsed%1.8f<.25f);
+    bool evade=nearest!=null&&distance<16;if(!returnToHoldout)bridge.diagnosticSprint=evade;if(!approach&&!returnToHoldout)bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=target.point-origin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=target.visible;bridge.diagnosticSecondary=target.visible&&elapsed%4<.2f;bridge.diagnosticSpecial=target.visible&&elapsed%10<.2f;
     if(r.commerceSweep&&CommerceSweepPendingRepairs()){bridge.diagnosticUtility=bridge.diagnosticSecondary=bridge.diagnosticSpecial=false;}

@@ -121,6 +121,8 @@ public sealed partial class MovementBatchProbe {
  void ReleaseDirectorAssets(){
   if(directorTeamEffects==null)return;
   foreach(var team in Enum.GetValues(typeof(TeamIndex)).Cast<TeamIndex>().Where(team=>team>=TeamIndex.Player&&team<TeamIndex.Count)){var def=TeamCatalog.GetTeamDef(team);var effect=def.levelUpEffect;Check(effect==directorTeamEffects[team==TeamIndex.Player?0:1],"Owned team effect reference changed before release");def.levelUpEffect=null;Addressables.Release(effect);}
-  directorTeamEffects=null;r.director.navigationAgents=NavigationAgentCount();r.director.cleaned=!automaticDirectorHost&&!automaticDeck&&!directorPlayerRegistered&&PlayerCharacterMasterController.instances.Count==0&&directorMasterMap.Count==0&&r.director.navigationAgents==0;Check(r.director.cleaned,"Automatic director owned teardown incomplete");
+  directorTeamEffects=null;int agents=NavigationAgentCount();bool cleaned=!automaticDirectorHost&&!automaticDeck&&!directorPlayerRegistered&&PlayerCharacterMasterController.instances.Count==0&&(directorMasterMap==null||directorMasterMap.Count==0)&&agents==0;
+  if(r.director!=null){r.director.navigationAgents=agents;r.director.cleaned=cleaned;}
+  Check(cleaned,"Automatic director owned teardown incomplete");
  }
 }

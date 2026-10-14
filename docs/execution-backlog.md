@@ -4433,3 +4433,13 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **TEST / PASS:** Host source-contract/closure checks, exact-editor import and composed Vulkan build, then one guarded Android route that loads whatever eligible original destination is selected with matching scene name/graphs and no current-process error.
 - **FAILURE / UPDATE:** Capture first scene import/reference/runtime failure, APK/payload hashes and current PID. Update concise state/journal; no synthetic reroute.
 - **DEPENDENCIES:** C09 evidence, accepted Steam scene catalog, pinned R2API.Director scene lifecycle observations.
+
+## C11 / J460 — Activate original serialized stage owners
+
+- **ID / TITLE:** C11 / J460, original scene navigation and population owners; scoped device result.
+- **CONTEXT / OBSERVATION:** Complete source scenes were loaded, but their serialized `SceneInfo` roots remained inactive while the port reconstructed stage owners.
+- **HYPOTHESIS / TASK:** Activate source owners after original Run RNG/server setup; omit only unavailable native-audio clients, preserve the original DccsPool/graph relationships across stage changes.
+- **CONSTRAINTS / AREAS:** Architecture C, legitimate ignored assets, truthful no-audio, no ownership grants, Moon/manual route deferred; scene preparation and shared stage/run lifecycle.
+- **TEST / PASS:** Doctor/preflight, 136 host tests, exact-editor ARM64 build; four source stage owners active across three genuine exits, zero current-PID errors. The required four-exit replay did not pass.
+- **FAILURE / UPDATE:** First activation failed in `ClassicStageInfo.Awake` because Run stage RNG came later; repaired by moving its existing initialization. Final assisted route wedged outside Ship Graveyard's original holdout at 58% charge despite graph return and late jump assist. Preserve ignored J460 run and J459 rollback; next check source collision/path or a distinct genuine route. State, journal and milestone updated.
+- **DEPENDENCIES:** J459 source scenes, pinned R2API.Addressables/Director scene identity, accepted current Steam input and adopted-storage Nova.

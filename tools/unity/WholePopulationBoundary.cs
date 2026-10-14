@@ -18,7 +18,7 @@ public sealed partial class MovementBatchProbe {
  readonly HashSet<ItemDisplayRuleSet> wholeModelDisplayRules=new HashSet<ItemDisplayRuleSet>();
  CharacterSpawnCard wholeBeetleAllyCard;GameObject priorBeetleAllyMaster;bool observesWholePlayerSummons;
  readonly List<AsyncOperationHandle> wholeStageLeases=new List<AsyncOperationHandle>();
- ClassicStageInfo wholeStageInfo;
+ ClassicStageInfo wholeStageInfo;bool wholeStageInfoSerialized;
  readonly Dictionary<FieldInfo,object> priorWholeDroneFields=new Dictionary<FieldInfo,object>();
  readonly Dictionary<DroneDef,object[]> priorWholeDroneDefinitions=new Dictionary<DroneDef,object[]>();
  Run wholeAvailabilityRun;DroneMask wholeAvailableDrones,wholeLockedDrones;KeyItemMask wholeAvailableKeyItems,wholeLockedKeyItems;
@@ -147,20 +147,29 @@ public sealed partial class MovementBatchProbe {
   CleanupWholeStagePool();var text=Resources.Load<TextAsset>("WholeStageContexts");Check(text,"Original stage context metadata absent");
   var contexts=JObject.Parse(text.text);var generation=JObject.Parse(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);Check((string)contexts["input_id"]==(string)generation["input_id"],"Stage population input generation differs");
   var source=(JObject)contexts["stages"][stage];wholeStageContext=source;Check(source!=null,"Original stage context absent: "+stage);
-  var info=SceneInfo.instance;Check(info&&!info.GetComponent<ClassicStageInfo>()&&!ClassicStageInfo.instance,"Stage context has a foreign population owner");
-  // Add to the existing scene owner: RequireComponent must not create another SceneInfo.
-  wholeStageInfo=info.gameObject.AddComponent<ClassicStageInfo>();wholeStageInfo.enabled=false;Call(wholeStageInfo,"OnEnable");
-  foreach(var name in new[]{"monsterDccsPool","interactableDccsPool"}){
-   var handle=Addressables.LoadAssetAsync<DccsPool>((string)source[name]);wholeStageLeases.Add(handle);var pool=handle.WaitForCompletion();Check(handle.Status==AsyncOperationStatus.Succeeded&&pool,"Original stage pool unavailable: "+stage+"/"+name);
-   typeof(ClassicStageInfo).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).SetValue(wholeStageInfo,pool);
+  var info=SceneInfo.instance;Check(info,"Stage navigation/population owner missing");
+  if(stageSourceObjects){
+   wholeStageInfo=info.GetComponent<ClassicStageInfo>();
+   wholeStageInfoSerialized=true;
+   Check(info.gameObject==sourceSceneInfoRoot&&wholeStageInfo&&ClassicStageInfo.instance==wholeStageInfo&&wholeStageInfo.monsterSelection!=null&&wholeStageInfo.interactableCategories,"Original serialized stage population did not start");
+   foreach(var name in new[]{"monsterDccsPool","interactableDccsPool"}){
+    var field=typeof(ClassicStageInfo).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic);Check(field!=null&&field.GetValue(wholeStageInfo) is DccsPool,"Original serialized stage pool missing: "+stage+"/"+name);
+   }
+  }else{
+   wholeStageInfoSerialized=false;
+   Check(!info.GetComponent<ClassicStageInfo>()&&!ClassicStageInfo.instance,"Stage context has a foreign population owner");
+   // Reduced-scene rollback still reconstructs the measured source fields.
+   wholeStageInfo=info.gameObject.AddComponent<ClassicStageInfo>();wholeStageInfo.enabled=false;Call(wholeStageInfo,"OnEnable");
+   foreach(var name in new[]{"monsterDccsPool","interactableDccsPool"}){
+    var handle=Addressables.LoadAssetAsync<DccsPool>((string)source[name]);wholeStageLeases.Add(handle);var pool=handle.WaitForCompletion();Check(handle.Status==AsyncOperationStatus.Succeeded&&pool,"Original stage pool unavailable: "+stage+"/"+name);
+    typeof(ClassicStageInfo).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).SetValue(wholeStageInfo,pool);
+   }
+   foreach(var property in ((JObject)source["fields"]).Properties()){
+    var field=typeof(ClassicStageInfo).GetField(property.Name,BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic);Check(field!=null,"Original population field absent: "+property.Name);
+    field.SetValue(wholeStageInfo,property.Value.ToObject(field.FieldType));
+   }
+   Call(wholeStageInfo,"RebuildCards",new object[]{null,null});
   }
-  foreach(var property in ((JObject)source["fields"]).Properties()){
-   var field=typeof(ClassicStageInfo).GetField(property.Name,BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic);Check(field!=null,"Original population field absent: "+property.Name);
-   field.SetValue(wholeStageInfo,property.Value.ToObject(field.FieldType));
-  }
-  // Native Awake seeds this context; native RebuildCards owns mixing, family,
-  // expansion, unlock and stage restrictions plus the master preload requests.
-  Call(wholeStageInfo,"RebuildCards",new object[]{null,null});
   var selected=(DirectorCardCategorySelection)typeof(ClassicStageInfo).GetField("modifiableMonsterCategories",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(wholeStageInfo);Check(selected,"Original population selection returned no deck: "+stage);
   var deck=Instantiate(selected);
   var sourceCards=selected.categories.SelectMany(category=>category.cards).ToArray();
@@ -181,7 +190,14 @@ public sealed partial class MovementBatchProbe {
   return deck;
  }
  void CleanupWholeStagePool(){
-  if(wholeStageInfo){Call(wholeStageInfo,"OnDisable");Call(wholeStageInfo,"OnDestroy");if(wholeStageInfo.interactableCategories)Destroy(wholeStageInfo.interactableCategories);Destroy(wholeStageInfo);wholeStageInfo=null;}
+  if(wholeStageInfo){
+   bool serialized=wholeStageInfoSerialized;
+   if(wholeStageInfo.interactableCategories){Destroy(wholeStageInfo.interactableCategories);wholeStageInfo.interactableCategories=null;}
+   if(serialized)wholeStageInfo.enabled=false;
+   else{Call(wholeStageInfo,"OnDisable");Call(wholeStageInfo,"OnDestroy");Destroy(wholeStageInfo);}
+   wholeStageInfo=null;
+  }
+  wholeStageInfoSerialized=false;
   foreach(var lease in wholeStageLeases)if(lease.IsValid())Addressables.Release(lease);wholeStageLeases.Clear();
  }
  void CleanupWholePopulation(){

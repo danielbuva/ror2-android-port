@@ -51,7 +51,18 @@ public sealed partial class MovementBatchProbe {
   rewardPlayerMaster=player.master;Check(player.isPlayerControlled&&rewardPlayerMaster&&TeamManager.instance,"Original reward recipient missing");
   rewardFixtureTeam=host.GetComponent<TeamComponent>();priorRewardFixtureTeam=rewardFixtureTeam.teamIndex;r.rewards.playerTeamBefore=TeamComponent.GetTeamMembers(TeamIndex.Player).Count;
   Check(host!=player.gameObject&&!host.activeInHierarchy&&rewardFixtureTeam.body.master==rewardPlayerMaster&&priorRewardFixtureTeam==TeamIndex.Player&&r.rewards.playerTeamBefore==2,"Measured inactive fixture/team identity changed");rewardFixtureTeam.teamIndex=TeamIndex.None;r.rewards.playerTeamAfter=TeamComponent.GetTeamMembers(TeamIndex.Player).Count;Check(r.rewards.playerTeamAfter==1&&TeamComponent.GetTeamMembers(TeamIndex.Player)[0]==player.teamComponent,"Original reward recipient must be the sole live player body");r.rewards.inactiveFixtureRemoved=true;r.rewards.moneyBefore=rewardPlayerMaster.money;r.rewards.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);rewardPlayerMaster.OnGoldCollected+=RewardGold;
+  // The original source ClassicStageInfo.Awake consumes the stage RNG when its
+  // scene root activates, before the directed enemy spawn below.
+  InitializeRewardRunStreams(cfg);
   if(cfg.automaticDirector){var assets=PrepareDirectorAssets(cfg,bundle);while(assets.MoveNext())yield return assets.Current;}r.rewards.assetsReady=true;Save();
+ }
+ void InitializeRewardRunStreams(Result cfg){
+  priorStageGenerator=rewardRun.stageRngGenerator;priorStageRng=rewardRun.stageRng;priorRunRng=rewardRun.runRNG;priorLoopRng=rewardRun.loopRngGenerator;priorNextStageRng=rewardRun.nextStageRng;priorRunSeed=rewardRun.seed;
+  Check(priorStageGenerator==null&&priorStageRng==null&&priorRunRng==null&&priorLoopRng==null&&priorNextStageRng==null,"Existing Run RNG context");ownsRewardRunRng=true;
+  priorRunLoopResetFlags=rewardRun.EventFlagsToResetOnLoop;Check(priorRunLoopResetFlags==null&&(!cfg.teleporterLoop||cfg.runEventFlagsToResetOnLoop!=null),"Original loop-reset serialized contract absent or unowned");rewardRun.EventFlagsToResetOnLoop=cfg.runEventFlagsToResetOnLoop==null?Array.Empty<string>():cfg.runEventFlagsToResetOnLoop.ToArray();
+  rewardRun.seed=SelectOwnedRunSeed(cfg);r.rewards.seed=rewardRun.seed.ToString(System.Globalization.CultureInfo.InvariantCulture);rewardRun.runRNG=new Xoroshiro128Plus(rewardRun.seed);rewardRun.nextStageRng=new Xoroshiro128Plus(rewardRun.runRNG.nextUlong);
+  if(firstStagePolicyConsumed)Check(rewardRun.nextStageRng.nextNormalizedFloat==firstStageSelectionValue,"Original starting-scene RNG draw differs from the owned Run stream");
+  rewardRun.stageRngGenerator=new Xoroshiro128Plus(rewardRun.runRNG.nextUlong);Call(rewardRun,"GenerateStageRNG");Call(rewardRun,"GenerateLoopRNG");
  }
  EquipmentMask ownedRewardEquipmentMask;
  void RefreshRewardEquipmentMask(bool rulesReady){
@@ -64,13 +75,7 @@ public sealed partial class MovementBatchProbe {
  IEnumerator SpawnRewardEnemy(GameObject bodyTemplate,Vector3 position,CharacterBody player,Result cfg){
   var source=artifactBundle.LoadAsset<CharacterSpawnCard>(cfg.enemySpawnCardAsset);Check(source&&source.name=="cscBeetle"&&source.directorCreditCost==8&&source.prefab.GetComponent<CharacterMaster>()&&source.sendOverNetwork&&!source.occupyPosition&&source.equipmentToGrant.Length==0&&source.itemsToGrant.Length==0&&(source.loadout==null||source.loadout.isEmpty),"Original cscBeetle contract changed");
   rewardCard=Instantiate(source);rewardCard.name=source.name;var template=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.enemyMasterAsset),enemyTemplates.transform);template.name=source.prefab.name;template.GetComponent<Inventory>().enabled=false;template.GetComponent<CharacterMaster>().bodyPrefab=bodyTemplate;template.SetActive(true);rewardCard.prefab=template;
-  // Same deterministic segment as original Run.Start; full platform-dependent Start remains deferred.
-  priorStageGenerator=rewardRun.stageRngGenerator;priorStageRng=rewardRun.stageRng;priorRunRng=rewardRun.runRNG;priorLoopRng=rewardRun.loopRngGenerator;priorNextStageRng=rewardRun.nextStageRng;priorRunSeed=rewardRun.seed;
-  Check(priorStageGenerator==null&&priorStageRng==null&&priorRunRng==null&&priorLoopRng==null&&priorNextStageRng==null,"Existing Run RNG context");ownsRewardRunRng=true;
-  priorRunLoopResetFlags=rewardRun.EventFlagsToResetOnLoop;Check(priorRunLoopResetFlags==null&&(!cfg.teleporterLoop||cfg.runEventFlagsToResetOnLoop!=null),"Original loop-reset serialized contract absent or unowned");rewardRun.EventFlagsToResetOnLoop=cfg.runEventFlagsToResetOnLoop==null?Array.Empty<string>():cfg.runEventFlagsToResetOnLoop.ToArray();
-  rewardRun.seed=SelectOwnedRunSeed(cfg);r.rewards.seed=rewardRun.seed.ToString(System.Globalization.CultureInfo.InvariantCulture);rewardRun.runRNG=new Xoroshiro128Plus(rewardRun.seed);rewardRun.nextStageRng=new Xoroshiro128Plus(rewardRun.runRNG.nextUlong);
-  if(firstStagePolicyConsumed)Check(rewardRun.nextStageRng.nextNormalizedFloat==firstStageSelectionValue,"Original starting-scene RNG draw differs from the owned Run stream");
-  rewardRun.stageRngGenerator=new Xoroshiro128Plus(rewardRun.runRNG.nextUlong);Call(rewardRun,"GenerateStageRNG");Call(rewardRun,"GenerateLoopRNG");
+  Check(ownsRewardRunRng&&rewardRun.stageRng!=null&&rewardRun.runRNG!=null,"Original Run RNG streams must precede source scene activation");
   rewardDirectorHost=new GameObject("Owned directed original spawn context");rewardDirectorHost.SetActive(false);rewardDirectorHost.AddComponent<DirectorCore>();if(!cfg.automaticDirector){rewardDirector=rewardDirectorHost.AddComponent<CombatDirector>();rewardDirector.enabled=false;rewardDirector.moneyWaveIntervals=new RangeFloat[0];rewardDirector.ignoreTeamSizeLimit=true;}rewardDirectorHost.SetActive(true);Check(DirectorCore.instance==rewardDirectorHost.GetComponent<DirectorCore>(),"Original DirectorCore singleton missing");
   MasterSummon.onServerMasterSummonGlobal+=RewardSummon;observesRewardSummon=true;
   if(cfg.automaticDirector){var automatic=SpawnAutomaticEnemy(template,player,cfg);while(automatic.MoveNext())yield return automatic.Current;}

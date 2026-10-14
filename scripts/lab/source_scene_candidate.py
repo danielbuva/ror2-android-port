@@ -13,11 +13,11 @@ SCENES = {name: 'Base' for name in ('golemplains', 'foggyswamp', 'frozenwall',
           'dampcavesimple', 'skymeadow', 'wispgraveyard', 'shipgraveyard',
           'blackbeach', 'blackbeach2', 'golemplains2', 'goolake', 'rootjungle')}
 SCENES['lakes'] = 'DLC2'
-# Exact source MonoScript identities for the first observed Android failures.
-# Unavailable native audio components are omitted; unavailable render effects
-# retain their serialized fields but do not run their OnEnable callbacks.
-NO_AUDIO_SCRIPTS = {('-130519023', '2b6c926553287666f24ffd5af5ba21cb'),
-                    ('-1752031980', '2b6c926553287666f24ffd5af5ba21cb')}
+# The original Wwise assembly has no authorized Android native engine. Keep
+# scene-local game logic, but do not activate serialized native-audio clients.
+# RTPCController is the game's own direct Wwise-only component on SceneInfo.
+NO_AUDIO_GUID = '2b6c926553287666f24ffd5af5ba21cb'
+NO_AUDIO_GAME_SCRIPT = ('-1095921540', '951ce57ad999ac1f040a4dceb5f8b763')
 UNAVAILABLE_RENDER_SCRIPTS = {('-1252323107', '90eda32cd325c26600dacf144354b407'),
                               ('11500000', 'c716ef2e96be153a122ff34c6f228460')}
 
@@ -129,7 +129,7 @@ def prepare(names=('lakes',)):
             script = re.search(r'm_Script: \{fileID: (-?\d+), guid: ([a-f0-9]{32}), type: 3\}', block)
             if not script:
                 continue
-            if script.groups() in NO_AUDIO_SCRIPTS:
+            if script[2] == NO_AUDIO_GUID or script.groups() == NO_AUDIO_GAME_SCRIPT:
                 removed_audio.add(fid)
             elif script.groups() in UNAVAILABLE_RENDER_SCRIPTS:
                 if not re.search(r'^  m_Enabled: 1$', block, re.M):
