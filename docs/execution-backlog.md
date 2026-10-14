@@ -4443,3 +4443,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **TEST / PASS:** Doctor/preflight, 136 host tests, exact-editor ARM64 build; four source stage owners active across three genuine exits, zero current-PID errors. The required four-exit replay did not pass.
 - **FAILURE / UPDATE:** First activation failed in `ClassicStageInfo.Awake` because Run stage RNG came later; repaired by moving its existing initialization. Final assisted route wedged outside Ship Graveyard's original holdout at 58% charge despite graph return and late jump assist. Preserve ignored J460 run and J459 rollback; next check source collision/path or a distinct genuine route. State, journal and milestone updated.
 - **DEPENDENCIES:** J459 source scenes, pinned R2API.Addressables/Director scene identity, accepted current Steam input and adopted-storage Nova.
+
+## C12 / J461 — Use source stage Director ownership
+
+- **OBSERVATION / HYPOTHESIS / TASK:** Source scenes retain serialized Director policy and cards; invoke their original startup SceneDirector/map population while keeping the existing continuous runtime director.
+- **TEST / PASS:** 136 host tests, exact-editor build, Lakes → Goolake genuine exit, source population in both stages, zero current-PID errors. Assisted two-stage pass only; broader root activation and normal play remain open.
+- **EVIDENCE / DEPENDENCIES:** J461 ignored run; depends on J460 stage owners and pinned R2API.Director startup timing. J459 four-exit rollback and Moon candidate remain unchanged.

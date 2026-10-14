@@ -9,7 +9,7 @@ using UnityEngine;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageCombatDeckSpec {public string name,asset;public int cards,categories,excluded;}
  [Serializable] public class StageCombatSpawn {public string card,director,master,body;public int count,directorInstanceId,spawnCardInstanceId;public bool inheritedWave;}
- [Serializable] public class StageCombatDeckReport {public string stage;public string[] cards;public int excluded;public bool nativePool,nativeScenePopulation;public int initialInteractableCredits,remainingInteractableCredits,playerSpawnPoints,droneDefinitions,availableDrones,pickupDefinitions,lunarLoot;public List<string> placedInteractables=new List<string>();public string[] interactableCards;public List<StageCombatSpawn> spawned=new List<StageCombatSpawn>();}
+ [Serializable] public class StageCombatDeckReport {public string stage;public string[] cards;public int excluded;public bool nativePool,nativeScenePopulation,sourceSceneDirector;public int initialInteractableCredits,remainingInteractableCredits,playerSpawnPoints,droneDefinitions,availableDrones,pickupDefinitions,lunarLoot;public List<string> placedInteractables=new List<string>();public string[] interactableCards;public List<StageCombatSpawn> spawned=new List<StageCombatSpawn>();}
  readonly HashSet<CharacterMaster> stageCombatActors=new HashSet<CharacterMaster>();StageCombatDeckReport currentStageCombatDeck;
  sealed class InheritedStageWave {public DirectorCard selected;public CharacterSpawnCard spawnCard;public GameObject master,body;}
  readonly Dictionary<CombatDirector,InheritedStageWave> inheritedStageWaves=new Dictionary<CombatDirector,InheritedStageWave>();

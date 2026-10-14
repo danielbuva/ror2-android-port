@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.Events;
 
 // Native SceneDirector owns selection, credits, caps, placement and initial map spawns.
 // Android owns inactive templates, explicit no-audio presentation and paired resources.
@@ -16,7 +17,7 @@ public sealed partial class MovementBatchProbe {
  readonly Dictionary<GameObject,GameObject> wholeInteractableTemplates=new Dictionary<GameObject,GameObject>();
  readonly Dictionary<SpawnCard,SpawnCard> wholeInteractableCards=new Dictionary<SpawnCard,SpawnCard>();
  readonly List<GameObject> wholePlayerSpawnPoints=new List<GameObject>();
- SceneDirector wholeSceneDirector;JObject wholeStageContext;GameObject priorSpawnPointPrefab;
+ SceneDirector wholeSceneDirector;CombatDirector wholeSourceMapDirector;UnityAction<GameObject> wholeSourceMapSpawnListener;JObject wholeStageContext;GameObject priorSpawnPointPrefab;
  AsyncOperationHandle<GameObject> wholeSpawnPointLease;bool ownsSpawnPointPrefab;
 
  GameObject WholeInteractableTemplate(GameObject source){
@@ -76,17 +77,40 @@ public sealed partial class MovementBatchProbe {
    wholeSpawnPointLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/SpawnPoint");ownsSpawnPointPrefab=true;yield return wholeSpawnPointLease;
    Check(wholeSpawnPointLease.Status==AsyncOperationStatus.Succeeded&&wholeSpawnPointLease.Result,"Original player-spawn prefab unavailable");field.SetValue(null,wholeSpawnPointLease.Result);
   }
-  wholeSceneDirector=automaticDirectorHost.AddComponent<SceneDirector>();wholeSceneDirector.enabled=false;
-  foreach(var property in ((JObject)wholeStageContext["director_fields"]).Properties()){
-   var field=typeof(SceneDirector).GetField(property.Name,BindingFlags.Public|BindingFlags.Instance);Check(field!=null,"Original scene director field unavailable: "+property.Name);field.SetValue(wholeSceneDirector,property.Value.ToObject(field.FieldType));
+  if(stageSourceObjects){
+   var roots=stageGeometryScene.GetRootGameObjects().Where(root=>root.name=="Director").ToArray();
+   Check(roots.Length==1&&!roots[0].activeSelf,"Original source Director owner absent or already active");
+   wholeSceneDirector=roots[0].GetComponent<SceneDirector>();
+   var mapDirectors=roots[0].GetComponents<CombatDirector>();
+   Check(wholeSceneDirector&&wholeSceneDirector.enabled&&mapDirectors.Length==2&&mapDirectors[0].enabled,"Original source Director component contract changed");
+   foreach(var property in ((JObject)wholeStageContext["director_fields"]).Properties()){
+    var field=typeof(SceneDirector).GetField(property.Name,BindingFlags.Public|BindingFlags.Instance);
+    Check(field!=null&&Equals(field.GetValue(wholeSceneDirector),property.Value.ToObject(field.FieldType)),"Original source Director field drift: "+property.Name);
+   }
+   wholeSourceMapDirector=mapDirectors[0];wholeSourceMapDirector.monsterCards=automaticDeck;
+   wholeSourceMapSpawnListener=obj=>{RecordRewardSpawn(obj);RecordStageCombatSpawn(obj,worldPlayer,wholeSourceMapDirector);};
+   Check(wholeSourceMapDirector.onSpawnedServer!=null,"Original source map-spawn event missing");
+   wholeSourceMapDirector.onSpawnedServer.AddListener(wholeSourceMapSpawnListener);
+   // This root stays inactive to avoid a second DirectorCore and two ticking
+   // CombatDirectors. SceneDirector.Start calls its original map director directly.
+   Call(wholeSourceMapDirector,"Awake");currentStageCombatDeck.sourceSceneDirector=true;
+  }else{
+   wholeSceneDirector=automaticDirectorHost.AddComponent<SceneDirector>();wholeSceneDirector.enabled=false;
+   foreach(var property in ((JObject)wholeStageContext["director_fields"]).Properties()){
+    var field=typeof(SceneDirector).GetField(property.Name,BindingFlags.Public|BindingFlags.Instance);Check(field!=null,"Original scene director field unavailable: "+property.Name);field.SetValue(wholeSceneDirector,property.Value.ToObject(field.FieldType));
+   }
   }
   // Keep the accepted teleporter lifecycle; native population reuses that instance.
   wholeSceneDirector.teleporterInstance=worldTeleporter.gameObject;
-  wholeStageInfo.bonusInteractibleCreditObjects=((JArray)wholeStageContext["bonus_credits"]).Select(row=>{
+  var sourceBonuses=((JArray)wholeStageContext["bonus_credits"]).Select(row=>{
    var matches=stageGeometryScene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<Transform>(true)).Where(value=>StageObjectPath(value)==(string)row["path"]).ToArray();
    Check(matches.Length==1,"Original stage bonus-credit object is ambiguous: "+row["path"]);
    return new ClassicStageInfo.BonusInteractibleCreditObject{objectThatGrantsPointsIfEnabled=matches[0].gameObject,points=(int)row["points"]};
   }).ToArray();
+  if(stageSourceObjects){
+   var serialized=wholeStageInfo.bonusInteractibleCreditObjects??new ClassicStageInfo.BonusInteractibleCreditObject[0];
+   Check(serialized.Length==sourceBonuses.Length&&serialized.Zip(sourceBonuses,(actual,expected)=>actual.objectThatGrantsPointsIfEnabled==expected.objectThatGrantsPointsIfEnabled&&actual.points==expected.points).All(x=>x),"Original source bonus-credit references differ");
+  }else wholeStageInfo.bonusInteractibleCreditObjects=sourceBonuses;
   int credits=wholeStageInfo.sceneDirectorInteractibleCredits;
   foreach(var bonus in wholeStageInfo.bonusInteractibleCreditObjects)if(bonus.objectThatGrantsPointsIfEnabled.activeSelf)credits+=bonus.points;
   currentStageCombatDeck.initialInteractableCredits=credits;
@@ -100,7 +124,8 @@ public sealed partial class MovementBatchProbe {
   r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;Save();yield return null;
  }
  void CleanupWholeStageInteractables(){
-  if(wholeSceneDirector)Destroy(wholeSceneDirector);wholeSceneDirector=null;
+  if(wholeSourceMapDirector){if(wholeSourceMapSpawnListener!=null&&wholeSourceMapDirector.onSpawnedServer!=null)wholeSourceMapDirector.onSpawnedServer.RemoveListener(wholeSourceMapSpawnListener);wholeSourceMapDirector=null;wholeSourceMapSpawnListener=null;}
+  if(wholeSceneDirector){if(stageSourceObjects)wholeSceneDirector.teleporterInstance=null;else Destroy(wholeSceneDirector);}wholeSceneDirector=null;
   foreach(var point in wholePlayerSpawnPoints)if(point)Destroy(point);wholePlayerSpawnPoints.Clear();
   foreach(var card in wholeInteractableCards.Values)if(card)Destroy(card);wholeInteractableCards.Clear();
   foreach(var template in wholeInteractableTemplates.Values)if(template)Destroy(template);wholeInteractableTemplates.Clear();
