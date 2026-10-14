@@ -48,7 +48,7 @@ public sealed partial class MovementBatchProbe {
   public bool motorGrounded,motorStable,jumpDown,jumpPressed,jumpClaimed;public int motorJumpCount,motorMaxJumpCount;public Vector3 motorVelocity,motorGroundPoint;public string motorGroundCollider,movementState;
   public bool manualTakeover;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
-  public int combatVisibleCandidates,combatOccludedCandidates,combatApproachFrames;public bool combatLineOfSight,combatTargetBoss,combatHoldoutConstrained;public float combatTargetDistance,combatThreatDistance;public Vector3 combatAimOrigin,combatAimTarget;
+  public int combatVisibleCandidates,combatOccludedCandidates,combatApproachFrames;public bool combatLineOfSight,combatTargetBoss,combatHoldoutConstrained,combatPrimaryRequested;public float combatTargetDistance,combatThreatDistance;public Vector3 combatAimOrigin,combatAimTarget;
   public Vector3 combatTargetPhysicsPosition,combatTargetCorePosition;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
@@ -459,10 +459,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    return;
   }
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
-  // Assisted dependency scan of several source interactable families in one
+  // Assisted dependency scan of the source repairable ally types in one
   // composed stage. Only the existing player input/earned Money path purchases;
   // ordinary runs and source selection remain untouched.
-  if(r.commerceSweep&&r.stageProgress!=null&&r.stageProgress.transitions==0&&elapsed-stageEnteredAt<330&&r.commerce!=null&&!r.commerce.purchases.Any(p=>p.family=="drone-or-turret")){
+  if(r.commerceSweep&&r.stageProgress!=null&&r.stageProgress.transitions==0&&elapsed-stageEnteredAt<420&&CommerceSweepPendingRepairs()){
    Check(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted,"Commerce sweep must be marked assisted");
    var purchase=NextCommerceSweepTarget(player);
    if(purchase){

@@ -477,6 +477,9 @@ public sealed partial class MovementBatchProbe {
    r.world.combatVisibleCandidates=targets.Count(x=>x.visible);r.world.combatOccludedCandidates=targets.Length-r.world.combatVisibleCandidates;
    var guardIndex=BodyCatalog.FindBodyIndex("BeetleGuardBody");
    var target=targets.OrderBy(x=>!x.visible?(x.boss?5:6):x.actor.body.bodyIndex==guardIndex&&x.distance<25?0:x.distance<16?1:x.boss?2:x.distance<40?3:4).ThenBy(x=>x.distance).FirstOrDefault();
+   // A fully overlapping enemy can make the unattended muzzle aim collapse
+   // while this assisted route is earning legitimate repair currency.
+   if(r.commerceSweep&&CommerceSweepPendingRepairs()&&target!=null&&target.distance<2){var clear=targets.Where(x=>x.visible&&x.distance>=5).OrderBy(x=>x.distance).FirstOrDefault();if(clear!=null)target=clear;}
    if(target!=null){
     // A distant occluded add must not interrupt a source-reachable boss approach.
     // Near contact remains a threat even without a clear firing line.
@@ -494,6 +497,8 @@ public sealed partial class MovementBatchProbe {
     bool evade=nearest!=null&&distance<16;bridge.diagnosticSprint=evade;if(!approach)bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=target.point-origin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=target.visible;bridge.diagnosticSecondary=target.visible&&elapsed%4<.2f;bridge.diagnosticSpecial=target.visible&&elapsed%10<.2f;
+    if(r.commerceSweep&&CommerceSweepPendingRepairs()){bridge.diagnosticUtility=bridge.diagnosticSecondary=bridge.diagnosticSpecial=false;}
+    r.world.combatPrimaryRequested=bridge.diagnosticPrimary;
    }
  }
  Vector3 WorldCombatAimPoint(CharacterBody target,Vector3 origin,out bool visible){

@@ -3,7 +3,7 @@ AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new System.Exception("Imported catalog has pending compilation; retry after it completes");
 var output=OUTPUT;
 var manifest=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(output),"manifest.json")));
-var failures=new System.Collections.Generic.List<object>();var counts=new System.Collections.Generic.Dictionary<string,int>();int loaded=0;
+var failures=new System.Collections.Generic.List<object>();var counts=new System.Collections.Generic.Dictionary<string,int>();int loaded=0,meshAliasesLoaded=0;
 foreach(var row in manifest["locations"].Where(x=>(bool)x["root"])){
  string path=(string)row["path"],typeName=(string)row["type"];var type=System.Type.GetType(typeName,false);
  try{
@@ -13,5 +13,13 @@ foreach(var row in manifest["locations"].Where(x=>(bool)x["root"])){
   loaded++;string kind=type.FullName;if(!counts.ContainsKey(kind))counts[kind]=0;counts[kind]++;
  }catch(System.Exception ex){failures.Add(new{id=(int)row["id"],path,type=typeName,error=ex.ToString()});}
 }
-var result=new{success=failures.Count==0,summary=new{expected=manifest["roots"].Count(),loaded,failed=failures.Count,types=counts,scope="Exact-editor typed import; no Android or gameplay acceptance"},failures};
+foreach(var row in manifest["locations"].Where(x=>((string)x["primaryKey"]).Contains("[")&&((string)x["type"]).StartsWith("UnityEngine.Mesh,"))){
+ string path=(string)row["path"],key=(string)row["primaryKey"];
+ try{
+  var mesh=AssetDatabase.LoadAssetAtPath<UnityEngine.Mesh>(path);
+  if(!mesh||mesh.name!=key.Substring(key.IndexOf('[')+1,key.Length-key.IndexOf('[')-2))throw new System.Exception("Original typed mesh alias failed to import with its shipped subobject name");
+  meshAliasesLoaded++;
+ }catch(System.Exception ex){failures.Add(new{id=(int)row["id"],path,key,error=ex.ToString()});}
+}
+var result=new{success=failures.Count==0,summary=new{expected=manifest["roots"].Count(),loaded,meshAliasesLoaded,failed=failures.Count,types=counts,scope="Exact-editor typed import and named mesh aliases; no Android or gameplay acceptance"},failures};
 System.IO.File.WriteAllText(output,Newtonsoft.Json.JsonConvert.SerializeObject(result,Newtonsoft.Json.Formatting.Indented));return result.summary;

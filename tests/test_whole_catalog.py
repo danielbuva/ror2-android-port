@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
-from whole_catalog import original_stage_contexts, analyze, catalog_roots, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots, source_mesh_subobjects
+from whole_catalog import original_stage_contexts, analyze, catalog_roots, exported_mesh_signature, native_mesh_signature, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots, source_mesh_subobjects
 import build
 from common import sha, write
 
@@ -48,6 +48,17 @@ class WholePayloadReuseTests(unittest.TestCase):
 
 
 class WholeCatalogTests(unittest.TestCase):
+    def test_ambiguous_mesh_export_requires_matching_native_buffers(self):
+        native=dict(m_VertexData=dict(m_VertexCount=3,m_DataSize=b'\x01\x02\x03'),
+                    m_IndexBuffer=[0,1,2],m_SubMeshes=[dict(firstByte=0,indexCount=3,topology=0,
+                                                               baseVertex=0,firstVertex=0,vertexCount=3)])
+        source='%YAML 1.1\n--- !u!43 &4300000\nMesh:\n  m_SubMeshes:\n  - serializedVersion: 2\n    firstByte: 0\n    indexCount: 3\n    topology: 0\n    baseVertex: 0\n    firstVertex: 0\n    vertexCount: 3\n  m_Shapes:\n    vertices: []\n  m_IndexBuffer: 000102\n  m_VertexData:\n    m_VertexCount: 3\n    _typelessdata: 010203\n'
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'same-name.asset';path.write_text(source)
+            self.assertEqual(exported_mesh_signature(path),native_mesh_signature(native))
+            path.write_text(source.replace('010203','010204'))
+            self.assertNotEqual(exported_mesh_signature(path),native_mesh_signature(native))
+
     def test_mesh_subobjects_require_exact_guid_name_type_and_native_export(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);(root/'Assets').mkdir()

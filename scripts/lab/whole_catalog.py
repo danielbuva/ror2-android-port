@@ -634,6 +634,85 @@ def source_mesh_subobjects(export, closure, metadata, native):
     return resolved, unresolved
 
 
+def exported_mesh_signature(path):
+    """Compare structural mesh data, never a same-named export filename alone."""
+    import hashlib
+    text = path.read_text()
+    vertex = re.search(r'^    m_VertexCount: (\d+)$', text, re.M)
+    submeshes = re.search(r'^  m_SubMeshes:\n(.*?)(?=^  m_Shapes:)', text, re.M | re.S)
+    index = re.search(r'^  m_IndexBuffer: ([0-9a-f]+)$', text, re.M)
+    data = re.search(r'^    _typelessdata: ([0-9a-f]+)$', text, re.M)
+    if not vertex or not submeshes or not index or not data:
+        return None
+    fields = ('firstByte', 'indexCount', 'topology', 'baseVertex', 'firstVertex', 'vertexCount')
+    rows = re.split(r'^  - serializedVersion: \d+\n', submeshes[1], flags=re.M)[1:]
+    values = [tuple(int(re.search(r'^    '+field+r': (-?\d+)$', row, re.M)[1])
+                    for field in fields) for row in rows]
+    return (int(vertex[1]), tuple(values), hashlib.sha256(bytes.fromhex(index[1])).hexdigest(),
+            hashlib.sha256(bytes.fromhex(data[1])).hexdigest()) if values else None
+
+
+def native_mesh_signature(tree):
+    import hashlib
+    fields = ('firstByte', 'indexCount', 'topology', 'baseVertex', 'firstVertex', 'vertexCount')
+    try:
+        return (int(tree['m_VertexData']['m_VertexCount']),
+                tuple(tuple(int(row[field]) for field in fields) for row in tree['m_SubMeshes']),
+                hashlib.sha256(bytes(tree['m_IndexBuffer'])).hexdigest(),
+                hashlib.sha256(bytes(tree['m_VertexData']['m_DataSize'])).hexdigest())
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return None
+
+
+def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, receipts, accepted):
+    """Resolve only unique native/export mesh signatures from accepted binaries."""
+    import UnityPy
+    locations = {row['id']: row for row in metadata['locations']}
+    issues = {row['location']: row for row in native['issues']}
+    files = {row['path']: row['sha256'] for row in accepted['files']}
+    if accepted['input_id'] != read(WORK/'config/accepted-input.json')['input_id']:
+        raise RuntimeError('Ambiguous mesh recovery requires accepted input')
+    needed = {}
+    for row in unresolved:
+        if len(row['mesh_locations']) != 1:
+            continue
+        identity = row['mesh_locations'][0]
+        name = row['key'].split('[', 1)[1][:-1]
+        failures = [failure for failure in issues.get(identity, {}).get('failures', [])
+                    if failure['category'] == 'ambiguous-exported-object'
+                    and failure['native']['type'] == 'Mesh' and failure['native']['name'] == name]
+        if len(failures) != 1:
+            continue
+        owner = locations[identity]['dependencies'][0]
+        needed.setdefault(owner, []).append((row, identity, failures[0]))
+    resolved = []
+    for owner, requests in needed.items():
+        receipt = receipts/('%s.json' % owner)
+        if not receipt.exists():
+            continue
+        evidence = read(receipt)
+        source = evidence['source']
+        if evidence['location'] != owner or source not in files or evidence['sha256'] != files[source] or sha(game()/source) != files[source]:
+            raise RuntimeError('Original mesh bundle receipt or accepted hash differs')
+        environment = UnityPy.load(str(game()/source))
+        objects = {(obj.assets_file.name, obj.path_id): obj for obj in environment.objects if obj.type.name == 'Mesh'}
+        for row, identity, failure in requests:
+            original = failure['native']
+            obj = objects.get((original['serialized_file'], original['path_id']))
+            if obj is None:
+                continue
+            signature = native_mesh_signature(obj.read_typetree())
+            matches = [candidate for candidate in failure['candidates']
+                       if (export/candidate).is_file() and exported_mesh_signature(export/candidate) == signature]
+            if signature is None or len(matches) != 1:
+                continue
+            resolved.append(dict(key=row['key'], source=matches[0], native_path_id=original['path_id'],
+                                 type=locations[identity]['type'], original_location=identity,
+                                 resolution='native-mesh-signature'))
+        del environment
+    return resolved
+
+
 def prepare_integration():
     """Import the complete discovered closure, reusing existing GUID owners once."""
     from build import preflight
@@ -646,6 +725,12 @@ def prepare_integration():
     metadata = read_catalog(catalog_path(out))
     native = read(out/'native-conversions.json')
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
+    receipts = ROOT/read(out/'native-latest.json')['path']
+    recovered = recover_ambiguous_mesh_subobjects(export, unresolved_mesh_subobjects, metadata, native,
+                                                   receipts, read(WORK/'inventory/files.json'))
+    mesh_subobjects.extend(recovered)
+    unresolved_mesh_subobjects = [row for row in unresolved_mesh_subobjects
+                                  if row['key'] not in {entry['key'] for entry in recovered}]
     index = read(out/'source-guid-index.json')
     guids = {path: guid for guid, path in index.items()}
     repairs = {row['source']: row for row in read(out/'source-guid-repairs.json')} if (out/'source-guid-repairs.json').exists() else {}

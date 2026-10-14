@@ -11,9 +11,9 @@ using UnityEngine.AddressableAssets;
 // Original purchase/selection/shrine code; owned layout, presentation and observations.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class CommerceObservation {public string source,item,costType;public uint netId;public int cost,purchases;public bool available,hidden,purchased;}
- [Serializable] public class CommercePurchase {public float at,healthAfter,shieldAfter;public string source,family,costType;public int cost;public uint moneyAfter;public bool debugAssisted;}
+ [Serializable] public class CommercePurchase {public float at,healthAfter,shieldAfter;public string source,family,subtype,costType;public int cost;public uint moneyAfter;public bool debugAssisted;}
  [Serializable] public class CommercePlacement {public string source,scene;public Vector3 position,sourceScale,placedScale;public float radius,spawnDistance,requiredDistance;}
- [Serializable] public class CommerceReport {public string scope,lastMessage;public int shops,chanceShrines,bloodShrines,healingShrines,bossShrines,restackShrines,messages,playerSummons,playerSummonBodies;public bool cleaned;public CommerceObservation[] objects;public List<CommercePurchase> purchases=new List<CommercePurchase>();public List<CommercePlacement> placements=new List<CommercePlacement>();public List<HealingWardObservation> healingWards=new List<HealingWardObservation>();}
+ [Serializable] public class CommerceReport {public string scope,lastMessage;public int shops,chanceShrines,bloodShrines,healingShrines,bossShrines,restackShrines,messages,playerSummons,playerSummonBodies;public bool cleaned;public CommerceObservation[] objects;public List<string> repairableTypes=new List<string>();public List<CommercePurchase> purchases=new List<CommercePurchase>();public List<CommercePlacement> placements=new List<CommercePlacement>();public List<HealingWardObservation> healingWards=new List<HealingWardObservation>();}
  readonly List<PurchaseInteraction> commercePurchases=new List<PurchaseInteraction>();
  readonly List<MultiShopController> commerceShops=new List<MultiShopController>();
  readonly List<GameObject> commerceOwned=new List<GameObject>();
@@ -68,24 +68,26 @@ public sealed partial class MovementBatchProbe {
  string CommerceSweepFamily(PurchaseInteraction purchase){
   if(purchase.GetComponent<ShrineChanceBehavior>())return "chance-shrine";
   if(purchase.GetComponent<ShopTerminalBehavior>())return "multishop";
-  if(purchase.name.IndexOf("Drone",StringComparison.Ordinal)>=0||purchase.name.IndexOf("Turret",StringComparison.Ordinal)>=0)return "drone-or-turret";
+  if(purchase.GetComponent<SummonMasterBehavior>())return "drone-or-turret";
   if(purchase.GetComponent<ShrineHealingBehavior>())return "healing-shrine";
   return null;
  }
+ string RepairableCommerceType(PurchaseInteraction purchase){var summon=purchase.GetComponent<SummonMasterBehavior>();return summon&&summon.masterPrefab?summon.masterPrefab.name:null;}
+ bool CommerceSweepPendingRepairs(){return r.commerce!=null&&r.commerce.repairableTypes.Any(type=>!r.commerce.purchases.Any(p=>p.subtype==type));}
  PurchaseInteraction NextCommerceSweepTarget(CharacterBody player){
   if(r.commerce==null||player==null||player.master==null)return null;
-  var completed=new HashSet<string>(r.commerce.purchases.Select(p=>p.family).Where(f=>f!=null));var interactor=player.GetComponent<Interactor>();
-  var candidates=commercePurchases.Where(p=>p&&p.available&&p.costType==CostTypeIndex.Money&&commercePurchaseCounts[p]==0&&
-    CommerceSweepFamily(p)!=null&&CommerceSweepFamily(p)!="healing-shrine"&&!completed.Contains(CommerceSweepFamily(p)));
-  // Finish the repairable ally boundary before spending earned money on shops.
-  if(!completed.Contains("drone-or-turret"))candidates=candidates.Where(p=>CommerceSweepFamily(p)=="drone-or-turret");
-  return candidates.Where(p=>p.CanBeAffordedByInteractor(interactor)).OrderBy(p=>p.cost).ThenBy(p=>Vector3.SqrMagnitude(p.transform.position-player.corePosition)).FirstOrDefault();
+  var pending=new HashSet<string>(r.commerce.repairableTypes.Where(type=>!r.commerce.purchases.Any(p=>p.subtype==type)));
+  var interactor=player.GetComponent<Interactor>();
+  return commercePurchases.Where(p=>p&&p.available&&p.costType==CostTypeIndex.Money&&commercePurchaseCounts[p]==0&&
+    pending.Contains(RepairableCommerceType(p))&&p.CanBeAffordedByInteractor(interactor))
+    .OrderBy(p=>p.cost).ThenBy(p=>Vector3.SqrMagnitude(p.transform.position-player.corePosition)).FirstOrDefault();
  }
  void WatchCommercePurchase(PurchaseInteraction purchase){
   Check(purchase&&!commerceListeners.ContainsKey(purchase),"Duplicate or missing original commerce purchase component");commercePurchases.Add(purchase);commercePurchaseCounts[purchase]=0;
+  var subtype=RepairableCommerceType(purchase);if(subtype!=null&&!r.commerce.repairableTypes.Contains(subtype))r.commerce.repairableTypes.Add(subtype);
   UnityAction<CostTypeDef.PayCostContext,CostTypeDef.PayCostResults> listener=(context,result)=>{
    commercePurchaseCounts[purchase]++;if((purchase.GetComponent<ShrineBloodBehavior>()||purchase.GetComponent<ShrineHealingBehavior>()||purchase.GetComponent<ShrineBossBehavior>()||purchase.GetComponent<ShrineRestackBehavior>()))commerceDirectShrineEffectLoads++;
-   Check(context.activatorBody==worldPlayer&&context.purchaseInteraction==purchase,"Original commerce purchase context changed");r.commerce.purchases.Add(new CommercePurchase{at=r.world.seconds,source=purchase.name,family=CommerceSweepFamily(purchase),cost=context.cost,costType=purchase.costType.ToString(),moneyAfter=worldPlayer.master.money,healthAfter=worldPlayer.healthComponent.health,shieldAfter=worldPlayer.healthComponent.shield,debugAssisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted});Save();
+   Check(context.activatorBody==worldPlayer&&context.purchaseInteraction==purchase,"Original commerce purchase context changed");r.commerce.purchases.Add(new CommercePurchase{at=r.world.seconds,source=purchase.name,family=CommerceSweepFamily(purchase),subtype=subtype,cost=context.cost,costType=purchase.costType.ToString(),moneyAfter=worldPlayer.master.money,healthAfter=worldPlayer.healthComponent.health,shieldAfter=worldPlayer.healthComponent.shield,debugAssisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted});Save();
   };commerceListeners.Add(purchase,listener);purchase.onDetailedPurchaseServer.AddListener(listener);
  }
  void PrepareWorldCommerce(Result cfg,Vector3 origin){
