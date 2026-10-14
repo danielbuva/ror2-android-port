@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks,mapZoneCount,mapZoneNetworkObjects;public string[] mapZoneActiveNames;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
-  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved;
+  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved,retiredActorObservers,retiredModelObservers,retiredCommerceObservers;
   public float enteredAt,experienceSettlementSeconds;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter,experienceAtExit,pendingExperienceAtExit;public int pendingExperienceAwardsAtExit;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
@@ -64,7 +64,7 @@ public sealed partial class MovementBatchProbe {
   // original item behavior may naturally resummon after the new stage loads.
   report.playerSummonsRemoved+=DestroyWholePlayerSummons();
   // Old actors must release their original navigation agents before replacing source graphs.
-  foreach(var actor in directorActors){if(actor.body)NetworkServer.Destroy(actor.body.gameObject);if(actor.master)NetworkServer.Destroy(actor.master.gameObject);if(actor.model)Destroy(actor.model);}
+  CleanupDirectorActors();
   foreach(var projectile in FindObjectsOfType<RoR2.Projectile.ProjectileController>())NetworkServer.Destroy(projectile.gameObject);
   foreach(var instance in objectiveSupportInstances)if(instance)NetworkServer.Destroy(instance);objectiveSupportInstances.Clear();
   foreach(var pickup in EjectionPickups().ToArray())NetworkServer.Destroy(pickup.gameObject);foreach(var droplet in EjectionDroplets().ToArray())NetworkServer.Destroy(droplet.gameObject);
@@ -72,6 +72,13 @@ public sealed partial class MovementBatchProbe {
   CleanupWholeStagePool();
   if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);if(objectiveStage){Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}if(enemySceneHost)Destroy(enemySceneHost);
   yield return null;yield return null;
+  // Keep historical values in the plain report, but stop the persistent probe
+  // from retaining actor/component wrappers from every completed stage.
+  Check(directorActors.All(actor=>!actor.body&&!actor.master&&!actor.model),"Old stage actor observer retained a live source object");
+  foreach(var actor in directorActors)actor.report.cleaned=true;
+  report.retiredActorObservers+=directorActors.Count;directorActors.Clear();
+  report.retiredModelObservers+=worldModels.RemoveAll(model=>!model);
+  report.retiredCommerceObservers+=commerceOwned.RemoveAll(obj=>!obj);
   Check(!SceneInfo.instance&&!ClassicStageInfo.instance&&!Stage.instance&&!TeleporterInteraction.instance&&NavigationAgentCount()==0,"Old original scene context survived transition: scene="+(bool)SceneInfo.instance+", stageInfo="+(bool)ClassicStageInfo.instance+", stage="+(bool)Stage.instance+", teleporter="+(bool)TeleporterInteraction.instance+", agents="+NavigationAgentCount());
   // Earned XP can still be in the original timed queue after the exit. Let its
   // normal FixedUpdate settle it before taking the strict transport baseline.
