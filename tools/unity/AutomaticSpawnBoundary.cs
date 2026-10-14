@@ -38,7 +38,7 @@ public sealed partial class MovementBatchProbe {
    Check(machine.state is SpawnTeleporterState&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==1&&model.invisibilityCount==invisible+1,"Automatic original spawn Start/buff/model effects");r.spawnStateEntries++;
    if(automaticBody){
     r.spawnedHealth=body.healthComponent.health;r.spawnedSkinIndex=body.skinIndex;r.automaticBodyRegistered=CharacterBody.readOnlyInstancesList.Contains(body);Save();
-    Check(r.masterStartEvents==1&&r.bodyStartEvents==1&&r.automaticBodyStatsEvents>=1&&r.automaticBodyRegistered&&r.spawnedHealth==110,"Original automatic body Start/events/stats/registration");
+    Check(r.masterStartEvents==1&&r.bodyStartEvents==1&&r.automaticBodyStatsEvents>=1&&r.automaticBodyRegistered&&r.spawnedHealth==body.baseMaxHealth,"Original automatic body Start/events/stats/registration");
    }
    if(movingMotor){
     r.rawAuthority=body.hasAuthority;r.effectiveAuthority=RoR2.Util.HasEffectiveAuthority(body.gameObject);
@@ -57,7 +57,7 @@ public sealed partial class MovementBatchProbe {
    float buffDuration=0;Check(r.hiddenBuffCount==1&&body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration)&&buffDuration>2.5f&&buffDuration<=3f&&(automaticBody||buffDuration==3f),"Original spawn exit timed hidden buff duration");r.spawnExitBuffSeconds=buffDuration;
    Check(r.teleportOverlays==1,"Original automatic spawn overlay not observed");r.spawnState=machine.state.GetType().FullName;
    r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
-   Check((cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110)&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Original automatic spawned computed stats");
+   Check((cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==body.baseMaxHealth:body.healthComponent.health==body.baseMaxHealth)&&body.moveSpeed==body.baseMoveSpeed&&body.acceleration==body.baseAcceleration&&body.jumpPower==body.baseJumpPower,"Original automatic spawned computed stats");
    if(IsAutomaticHealth()){
     if(IsPlayableSpine())body.healthComponent.enabled=true;else{var healthRoutine=AutomaticHealthBoundary(body,machine);while(healthRoutine.MoveNext())yield return healthRoutine.Current;}
    }
@@ -98,7 +98,7 @@ public sealed partial class MovementBatchProbe {
    if(IsAutomaticHealth()){
     var health=body.healthComponent;
     if(cfg.integratedWorld)Check(health.enabled&&health.health>0&&health.health<=health.fullHealth&&health.barrier>=0&&health.barrier<=health.fullBarrier,"Original integrated health/barrier outside native limits");
-    else Check(health.enabled&&(cfg.enemySpine?health.health>0&&health.health<=body.maxHealth:health.health==110)&&health.barrier==0,"Original automatic health sustained full health/barrier expiry");
+    else Check(health.enabled&&(cfg.enemySpine?health.health>0&&health.health<=body.maxHealth:health.health==body.baseMaxHealth)&&health.barrier==0,"Original automatic health sustained full health/barrier expiry");
    }
    if(automaticBody){
     r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);r.spawnBuffExpired=r.hiddenBuffCount==0&&!body.GetTimedBuffTotalDurationForIndex(RoR2Content.Buffs.HiddenInvincibility.buffIndex,out buffDuration);
@@ -107,12 +107,12 @@ public sealed partial class MovementBatchProbe {
     // A continuing integrated run may have original item, buff and state
     // modifiers after several stages; its level-one numeric baseline is no
     // longer an invariant. Keep exact values for the bounded early probes.
-    bool integratedStats=body.healthComponent.health>0&&body.maxHealth>=110&&
+    bool integratedStats=body.healthComponent.health>0&&body.maxHealth>=body.baseMaxHealth&&
       !float.IsNaN(body.moveSpeed)&&!float.IsInfinity(body.moveSpeed)&&
       !float.IsNaN(body.acceleration)&&!float.IsInfinity(body.acceleration)&&
       !float.IsNaN(body.jumpPower)&&!float.IsInfinity(body.jumpPower)&&
       !float.IsNaN(body.attackSpeed)&&!float.IsInfinity(body.attackSpeed);
-    bool earlyStats=(cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==110:body.healthComponent.health==110)&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15;
+    bool earlyStats=(cfg.enemySpine?body.healthComponent.health>0&&body.maxHealth==body.baseMaxHealth:body.healthComponent.health==body.baseMaxHealth)&&body.moveSpeed==body.baseMoveSpeed&&body.acceleration==body.baseAcceleration&&body.jumpPower==body.baseJumpPower;
     Check((cfg.integratedWorld?integratedStats:earlyStats)&&r.bodyStartEvents==1&&r.masterStartEvents==1,"Original continuing body stats/Start uniqueness: health="+body.healthComponent.health+", max="+body.maxHealth+", move="+body.moveSpeed+", acceleration="+body.acceleration+", jump="+body.jumpPower+", attack="+body.attackSpeed+", bodyStart="+r.bodyStartEvents+", masterStart="+r.masterStartEvents);
    }
   }finally{

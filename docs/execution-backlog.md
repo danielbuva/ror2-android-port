@@ -1,6 +1,6 @@
 # Execution backlog
 
-C08 is the active composed candidate. Next: broaden another source-backed gameplay/profile family with host checks and one combined Android run; separately attribute observed low frame rate and session-memory growth. Keep physical controller-reconnect/settings acceptance and manual Moon/finale for a user-present pass. Preserve C07 and matched-profile candidate51 rollbacks. See PORTING_STATE.md.
+J470 is the active composed candidate. Next: expand source-backed playable survivor/skill coverage and correct the visibly broken Huntress rendering with original asset evidence; then run a combined stage loop. Preserve J469 and paused J323 rollbacks. Sustained 60 FPS is release acceptance, while large unexplained regressions still require attribution. Manual Moon/finale remains deferred. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 

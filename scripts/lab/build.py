@@ -73,7 +73,7 @@ WHOLE_PLAYER_INPUTS={'Assets/LabDiagnostics.cs','Assets/Lab.unity','Assets/Lab.u
 WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+name+suffix
  for name in ['AutomaticDirectorBoundary.cs','AutomaticSpawnBoundary.cs','StageCombatDeckBoundary.cs',
               'EnemySpineBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','MoonMissionBoundary.cs','WholePopulationBoundary.cs',
-              'Resources/WholeStageContexts.json','RecoveredHudPresentation.cs','EnemyRewardBoundary.cs','IntegratedStageBoundary.cs','RunClockBoundary.cs','TeleporterWorldBoundary.cs','WholeInteractableBoundary.cs','MovementBatchProbe.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','IntegratedWorldBoundary.cs','RecoveredPickupPresentation.cs','RecoveredHudFeedback.cs','IntegratedResultsBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','WorldItemBehaviorBoundary.cs','AutomaticModelBoundary.cs','DirectorActorBoundary.cs','AndroidPresentationCamera.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','WorldItemDisplayBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs'] for suffix in ['', '.meta'])
+              'Resources/WholeStageContexts.json','RecoveredHudPresentation.cs','EnemyRewardBoundary.cs','IntegratedStageBoundary.cs','RunClockBoundary.cs','TeleporterWorldBoundary.cs','WholeInteractableBoundary.cs','MovementBatchProbe.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','IntegratedWorldBoundary.cs','RecoveredPickupPresentation.cs','RecoveredHudFeedback.cs','IntegratedResultsBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','WorldItemBehaviorBoundary.cs','AutomaticModelBoundary.cs','DirectorActorBoundary.cs','AndroidPresentationCamera.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','WorldItemDisplayBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs'] for suffix in ['', '.meta'])
 
 def whole_payload_inputs(project):
  return {str(p.relative_to(project)):sha(p) for folder in ['Assets','Packages','ProjectSettings'] for p in (project/folder).rglob('*') if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith('Assets/Editor/')}
@@ -83,11 +83,15 @@ def freeze_whole_payload(project, result):
 
 def validate_whole_payload_reuse(project):
  receipt=read(WORK/'whole-catalog-code-base.json')
- if set(receipt['allowed'])!=WHOLE_PLAYER_INPUTS:raise RuntimeError('Unexpected code-only content exception')
+ previous_allowed=set(receipt['allowed'])
+ added=WHOLE_PLAYER_INPUTS-previous_allowed
+ if previous_allowed-WHOLE_PLAYER_INPUTS or any(not p.startswith('Assets/LabLoadingScene/') or not p.endswith(('.cs','.cs.meta')) for p in added):raise RuntimeError('Unexpected code-only content exception')
  current=whole_payload_inputs(project)
- if current!=receipt['files']:raise RuntimeError('Content inputs changed; code-only bundle reuse rejected')
+ expected={path:value for path,value in receipt['files'].items() if path not in added}
+ if current!=expected:raise RuntimeError('Content inputs changed; code-only bundle reuse rejected')
  current_payload={p.name:sha(p) for p in (WORK/'generated-android-data').iterdir() if p.is_file()}
  if current_payload!=receipt['payload']:raise RuntimeError('Frozen whole-catalog payload identity changed')
+ if added:write(WORK/'whole-catalog-code-base.json',dict(receipt,files=current,allowed=sorted(WHOLE_PLAYER_INPUTS)))
 
 def build_cache_key(project,api):
  project=Path(project)
