@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using RoR2;
 using RoR2.Navigation;
+using RoR2.ContentManagement;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -14,7 +15,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks,mapZoneCount,mapZoneNetworkObjects;public string[] mapZoneActiveNames;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
-  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved,retiredActorObservers,retiredModelObservers,retiredCommerceObservers;
+  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved,retiredActorObservers,retiredModelObservers,retiredCommerceObservers,originalStageBegins;
   public float enteredAt,experienceSettlementSeconds;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter,experienceAtExit,pendingExperienceAtExit;public int pendingExperienceAwardsAtExit;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
@@ -28,15 +29,62 @@ public sealed partial class MovementBatchProbe {
  AndroidStageTransport worldTransport;GameObject worldTransportHost;Result integratedStageConfig;
  string pendingStage;bool transportingStage;int stagePickupBaseline;float stageEnteredAt;
  HashSet<GameObject> stageStaticRoots=new HashSet<GameObject>();
+ CursedBookSpellDef[] priorStageSpells;string[] priorStageSpellNames;ResourceAvailability priorStageSpellAvailability;bool ownsStageSpells;
+ void PrepareStageSpellCatalog(){
+  if(r.liveCatalogs==null||!stageSourceObjects)return;
+  Check(!ownsStageSpells&&CursedBookSpellCatalog.spellCount==0,"Unowned original Cursed Book spell catalog");
+  var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<CursedBookSpellDef>());
+  Check(definitions.Length>0&&definitions.All(spell=>spell&&spell.itemDef&&spell.consumedItemDef)&&definitions.Select(spell=>spell.name).Distinct().Count()==definitions.Length,"Original Cursed Book spell closure is incomplete");
+  priorStageSpells=ContentManager._cursedBookSpellDefs;priorStageSpellNames=CursedBookSpellCatalog.spellNames;priorStageSpellAvailability=CursedBookSpellCatalog.availability;
+  ContentManager._cursedBookSpellDefs=Array.Empty<CursedBookSpellDef>();ownsStageSpells=true;
+  StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{definitions});CursedBookSpellCatalog.availability.MakeAvailable();
+  Check(CursedBookSpellCatalog.spellCount==definitions.Length&&CursedBookSpellCatalog.allCursedBookSpellDefs.All(spell=>spell.itemDef.itemIndex!=ItemIndex.None&&spell.consumedItemDef.itemIndex!=ItemIndex.None),"Original Cursed Book spell registration differs");
+ }
+ void CleanupStageSpellCatalog(){
+  if(!ownsStageSpells)return;
+  StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{Array.Empty<CursedBookSpellDef>()});
+  ContentManager._cursedBookSpellDefs=priorStageSpells;CursedBookSpellCatalog.spellNames=priorStageSpellNames;CursedBookSpellCatalog.availability=priorStageSpellAvailability;ownsStageSpells=false;
+ }
  void PrepareStageTransport(Result cfg){
   Check(!NetworkManager.singleton&&cfg.integratedStages!=null&&cfg.integratedStages.Length>0,"Unowned scene transport or missing converted stages");
   integratedStageConfig=cfg;r.stageProgress=new StageProgressReport{current=stageGeometryScene.name,bodyId=worldPlayer.netId.Value,masterId=worldPlayer.master.netId.Value,scope="Original Stage.Update, SceneExit and Run.AdvanceStage accounting; additive recovered scene/graph transport. Temporary continuous live-body/master/inventory adapter instead of stock network-user respawn. Stock startup, profiles, unsupported destinations and victory remain unavailable."};
+  PrepareStageSpellCatalog();
   worldTransportHost=new GameObject("Owned Android additive scene transport");worldTransport=worldTransportHost.AddComponent<AndroidStageTransport>();worldTransport.enabled=false;
   Check(NetworkManager.singleton==worldTransport,"Original NetworkManager singleton registration missing");
   var online=worldTransport.CanPlayOnline();Check(online.MoveNext()&&online.Current==RoR2.Networking.NetworkManagerSystem.CanPlayOnlineState.No,"Android transport must report online capability unavailable");
   worldTransport.requested=name=>{Check(string.IsNullOrEmpty(pendingStage)&&!transportingStage,"Overlapping original stage requests");pendingStage=name;r.stageProgress.requested=name;r.stageProgress.stageClearCount=Run.instance.stageClearCount;Save();};
  }
+ bool ownsOriginalStage;
+ IEnumerator BeginOriginalStage(){
+  if(r.liveCatalogs==null||!stageSourceObjects)yield break;
+  Check(objectiveStage&&!objectiveStageHost.activeInHierarchy&&Stage.instance==objectiveStage&&NetworkServer.active&&Run.instance,"Temporary stage context missing before original handoff");
+  var spells=ContentManager.cursedBookSpellDefs;
+  Check(spells!=null,"Original Cursed Book spell array absent before Stage.Start");
+  foreach(var spell in spells)Check(spell&&spell.itemDef&&spell.consumedItemDef,"Original Cursed Book spell item references missing before Stage.Start: "+(spell?spell.name:"null spell")+" / item="+(spell&&(bool)spell.itemDef)+" / consumed="+(spell&&(bool)spell.consumedItemDef));
+  var source=WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Core/Network/Stage.prefab");
+  var sourceIdentity=source.GetComponent<NetworkIdentity>();
+  Check(source.name=="Stage"&&sourceIdentity&&source.GetComponent<Stage>()&&source.GetComponents<Component>().Length==3,"Original Stage prefab contract changed");
+  var prior=objectiveStageHost;Call(objectiveStage,"OnDisable");Check(!Stage.instance,"Temporary Stage singleton survived original handoff");Destroy(prior);
+  int begins=0;Action<Stage> onBegin=stage=>{if(stage==objectiveStage)begins++;};Stage.onServerStageBegin+=onBegin;
+  try{
+   Run.instance.OnServerSceneChanged(stageGeometryScene.name);
+   objectiveStage=Stage.instance;objectiveStageHost=objectiveStage?objectiveStage.gameObject:null;
+   var identity=objectiveStageHost?objectiveStageHost.GetComponent<NetworkIdentity>():null;
+   Check(objectiveStageHost&&objectiveStageHost.activeInHierarchy&&identity&&identity.netId.Value!=0&&identity.assetId.Equals(sourceIdentity.assetId),"Original Run did not spawn the source Stage prefab");
+   ownsOriginalStage=true;
+   yield return null;
+   Check(begins==1&&objectiveStage&&objectiveStage.sceneDef==SceneCatalog.GetSceneDefForCurrentScene(),"Original Stage.Start or server-begin callback did not complete");
+   r.stageProgress.originalStageBegins++;Save();
+  }finally{Stage.onServerStageBegin-=onBegin;}
+ }
+ void ReleaseObjectiveStage(){
+  if(!objectiveStage)return;
+  if(ownsOriginalStage){Check(NetworkServer.active,"Original Stage requires a live server for teardown");NetworkServer.Destroy(objectiveStageHost);ownsOriginalStage=false;}
+  else{Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}
+  objectiveStage=null;objectiveStageHost=null;
+ }
  void TickOriginalStage(){
+  if(ownsOriginalStage)return; // Active source prefab receives Unity's own Update.
   if(r==null||!r.teleporterLoop||!objectiveStage||transportingStage||r.stageProgress==null||!string.IsNullOrEmpty(r.stageProgress.error))return;
   try{Call(objectiveStage,"Update");}catch(Exception e){r.stageProgress.error=e.ToString();if(Run.instance)r.stageProgress.stageClearCount=Run.instance.stageClearCount;Save();}
  }
@@ -70,7 +118,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var pickup in EjectionPickups().ToArray())NetworkServer.Destroy(pickup.gameObject);foreach(var droplet in EjectionDroplets().ToArray())NetworkServer.Destroy(droplet.gameObject);
   CleanupWholeStageInteractables();CleanupWorldCommerce();foreach(var obj in worldObjects)if(obj)NetworkServer.Destroy(obj);worldObjects.Clear();worldBarrels.Clear();worldChests.Clear();
   CleanupWholeStagePool();
-  if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);if(objectiveStage){Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(enemySceneHost)Destroy(enemySceneHost);
+  if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);ReleaseObjectiveStage();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(enemySceneHost)Destroy(enemySceneHost);
   yield return null;yield return null;
   // Keep historical values in the plain report, but stop the persistent probe
   // from retaining actor/component wrappers from every completed stage.
@@ -130,7 +178,7 @@ public sealed partial class MovementBatchProbe {
   AddEquipmentBarrel(integratedStageConfig,origin);if(!next.moonMission)AddWorldChestBreadth(integratedStageConfig,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Recovered next-stage layout lacks walkable interactables");r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;
   }
   if(next.moonMission){rewardDirector.enabled=false;var mission=PrepareMoonWorld();while(mission.MoveNext())yield return mission.Current;objectiveStageHost=new GameObject("Owned Moon stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");}
-  else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;PrepareWorldCommerce(integratedStageConfig,origin);var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;}
+  else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;PrepareWorldCommerce(integratedStageConfig,origin);var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;}
   report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
   Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.completed.Count,"Original run/master/authority/inventory/XP/count continuity failed");
   stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;if(resumeBeetleGland&&beetleGland)beetleGland.enabled=true;bridge.enabled=true;r.phase="integrated-world-playing";Save();
@@ -143,5 +191,5 @@ public sealed partial class MovementBatchProbe {
   if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
- void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
+ void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }

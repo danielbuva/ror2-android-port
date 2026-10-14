@@ -543,7 +543,7 @@ public sealed partial class MovementBatchProbe {
   if(objectiveSummon!=null)MasterSummon.onServerMasterSummonGlobal-=objectiveSummon;pendingObjectiveActors.Clear();objectiveAmbientExpected.Clear();objectiveDirectorActors.Clear();
   if(objectiveSubscribed){BossGroup.onBossGroupDefeatedServer-=objectiveDefeated;SceneExitController.onBeginExit-=objectiveBeginExit;SceneExitController.onFinishExit-=objectiveFinishExit;objectiveSubscribed=false;}
   ObserveObjectiveSupport(true);CleanupObjectiveEffects();CleanupObjectiveSupport();if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);
-  if(objectiveStage){Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}
+  ReleaseObjectiveStage();
   foreach(var resource in objectiveResources)if(resource)Destroy(resource);objectiveDropTables.Clear();foreach(var card in objectiveCards)if(card)Destroy(card);
   if(ownsObjectiveIndicator&&objectiveIndicatorLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveIndicatorLease)-objectiveIndicatorReferences;Check(extra>=0&&extra<=objectiveIndicatorConsumers,"Unattributed teleporter indicator leases");for(int i=0;i<extra;i++)Addressables.Release(objectiveIndicatorSource);Addressables.Release(objectiveIndicatorLease);ownsObjectiveIndicator=false;objectiveIndicatorSource=null;}
   if(ownsObjectiveTMP){objectiveTMPField.SetValue(null,priorObjectiveTMP);if(objectiveTMPLease.IsValid())Addressables.Release(objectiveTMPLease);ownsObjectiveTMP=false;objectiveTMPSettings=null;}

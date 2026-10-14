@@ -304,6 +304,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
   PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
+  var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;
   PrepareRecoveredHud();Check(r.world.ready,"Integrated session setup incomplete");r.phase="integrated-world-playing";Save();
  }
 

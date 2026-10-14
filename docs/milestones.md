@@ -692,3 +692,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J462 scoped Director-root exit:** The original fast/slow CombatDirectors and DirectorCore run in both device-tested source stages; one genuine Lakes → Goolake exit and zero current-process errors pass. Crowded-stage 60 FPS, normal-play and full-route gates remain open.
 
 **J463 scoped event-owner exit:** The serialized source GlobalEventManager owns events in both device-tested stages and hands off across one genuine exit with zero current-process errors. Stock application startup, normal/full-route play and sustained 60 FPS remain open.
+
+**J464 scoped original Stage exit:** Original `Run.OnServerSceneChanged` spawns the shipped networked Stage prefab and its server-begin callbacks fire in two device-tested source stages across one genuine exit. The composed session now owns the seven shipped Cursed Book spell definitions needed by original master regeneration. Assisted test only; normal/full-route, stock startup and sustained 60 FPS remain open.

@@ -4461,3 +4461,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** Source GameManager roots retain the original event singleton; hand off ownership at stage entry/teardown without duplicating or changing static gameplay events.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor build and assisted Lakes → Goolake genuine exit with source event owner in both stages and zero current-PID errors.
 - **OPEN / EVIDENCE:** Normal/full-route and 60 FPS gates remain open; J463 ignored run, J459 four-exit and Moon rollback retained.
+
+## C15 / J464 — Hand Stage lifecycle to original Run and prefab
+
+- **OBSERVATION / TASK:** The composed game used an inactive synthetic Stage. Call original `Run.OnServerSceneChanged` after source population, spawn its networked Stage prefab and run `Stage.Start`/server-begin callbacks on both sides of an actual exit. The first run exposed a missing Cursed Book spell catalog; register its seven original definitions with owned cleanup.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor ARM64 build and assisted adopted-storage Lakes → Goolake run: two original stage-begin callbacks, one genuine exit, zero current-PID Unity errors. Diagnostic failures and passing run are preserved under ignored J464 evidence.
+- **OPEN / DEPENDENCIES:** Normal/full-route and sustained 60 FPS remain open. Depends on J463, exact shipped `Run`/`Stage`/`CharacterMaster` contracts and pinned R2API.Director stage timing. J463, J459 and Moon rollbacks retained.
