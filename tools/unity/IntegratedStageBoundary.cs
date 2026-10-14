@@ -31,6 +31,42 @@ public sealed partial class MovementBatchProbe {
  HashSet<GameObject> stageStaticRoots=new HashSet<GameObject>();
  CursedBookSpellDef[] priorStageSpells;string[] priorStageSpellNames;ResourceAvailability priorStageSpellAvailability;bool ownsStageSpells;
  CraftableDef[] priorCraftableContent;object priorCraftableDefs,priorCraftableRecipes,priorIngredientTypes;ResourceAvailability priorCraftableAvailability,priorIngredientAvailability;bool ownsCraftableCatalog;
+ SurfaceDef[] priorSurfaceContent;bool ownsSurfaceCatalog;
+ static bool originalDamageMacrosReady;
+ void PrepareOriginalSurfaceCatalog(){
+  if(r.liveCatalogs==null||!stageSourceObjects)return;
+  Check(!ownsSurfaceCatalog&&SurfaceDefCatalog.surfaceCount==0,"Unowned original surface definitions");
+  var definitions=WholeCatalogComposed.CategoryFamily(AddressablesLabels.surfaceDef,Array.Empty<SurfaceDef>());
+  // The Junk provider advertises four extra assets but its source ContentPack
+  // deliberately loads only item/equipment/buff/elite labels in an unmodded run.
+  Check(definitions.Length==72&&definitions.All(def=>def)&&definitions.Select(def=>def.name).Distinct().Count()==definitions.Length,"Original surface-definition family differs from accepted input");
+  priorSurfaceContent=ContentManager._surfaceDefs;
+  Check(priorSurfaceContent==null||priorSurfaceContent.Length==0,"Unowned surface-definition content array");
+  ContentManager._surfaceDefs=definitions;ownsSurfaceCatalog=true;
+  StaticCall(typeof(SurfaceDefCatalog),"Init");
+  Check(SurfaceDefCatalog.surfaceCount==definitions.Length&&definitions.All(def=>def.surfaceDefIndex!=SurfaceDefIndex.Invalid&&SurfaceDefCatalog.GetSurfaceDef(def.surfaceDefIndex)==def),"Original surface-definition indices differ");
+ }
+ void CleanupOriginalSurfaceCatalog(){
+  if(!ownsSurfaceCatalog)return;
+  StaticCall(typeof(SurfaceDefCatalog),"SetSurfaceDefs",new object[]{Array.Empty<SurfaceDef>()});
+  ContentManager._surfaceDefs=priorSurfaceContent;ownsSurfaceCatalog=false;
+  Check(SurfaceDefCatalog.surfaceCount==0,"Original surface-definition catalog outlived its owned bundle");
+ }
+ void PrepareOriginalDamageMacros(){
+  if(r.liveCatalogs==null||!stageSourceObjects)return;
+  var expected=new[]{"MidasTouch","ChefFireDamage","ChefBoostedFireDamage","ChefBoostedIceDamage","ChefIceDamage","VultureHunterLaser","EngiHealMechanical"};
+  if(!originalDamageMacrosReady){
+   Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count==0,"Unowned original damage-macro catalog");
+   // Original startup scans opted-in assemblies before SystemInitializer runs.
+   HG.Reflection.SearchableAttribute.ScanAssembly(typeof(DamageMacroCatalog).Assembly);
+   HG.Reflection.SearchableAttribute.ScanAssembly(typeof(EntityStates.Chef.Sear).Assembly);
+   var methods=HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
+   Check(methods!=null&&methods.Count==expected.Length&&methods.Cast<DamageMacroMethodAttribute>().All(method=>method.target is MethodInfo&&expected.Contains(method.searchableName)),"Original damage-macro searchable methods differ from accepted input");
+   StaticCall(typeof(DamageMacroCatalog),"Initialize");
+   originalDamageMacrosReady=true;
+  }
+  Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count==expected.Length&&expected.All(name=>DamageMacroCatalog.macroNameToIndexReadOnly.ContainsKey(name)),"Original damage-macro registration differs");
+ }
  void PrepareCraftableCatalog(){
   if(r.liveCatalogs==null||!stageSourceObjects)return;
   Check(!ownsCraftableCatalog&&PickupCatalog.pickupCount>0&&IngredientTypeCatalog.ingredientTypeCount==0&&CraftableCatalog.recipeCount==0&&CraftableCatalog.pickupToIngredientSearchTable.Count==0&&CraftableCatalog.resultToRecipeSearchTable.Count==0,"Original crafting dependencies have unexpected owners");
@@ -69,6 +105,8 @@ public sealed partial class MovementBatchProbe {
   integratedStageConfig=cfg;r.stageProgress=new StageProgressReport{current=stageGeometryScene.name,bodyId=worldPlayer.netId.Value,masterId=worldPlayer.master.netId.Value,scope="Original Stage.Update, SceneExit and Run.AdvanceStage accounting; additive recovered scene/graph transport. Temporary continuous live-body/master/inventory adapter instead of stock network-user respawn. Stock startup, profiles, unsupported destinations and victory remain unavailable."};
   PrepareStageSpellCatalog();
   PrepareCraftableCatalog();
+  PrepareOriginalSurfaceCatalog();
+  PrepareOriginalDamageMacros();
   worldTransportHost=new GameObject("Owned Android additive scene transport");worldTransport=worldTransportHost.AddComponent<AndroidStageTransport>();worldTransport.enabled=false;
   Check(NetworkManager.singleton==worldTransport,"Original NetworkManager singleton registration missing");
   var online=worldTransport.CanPlayOnline();Check(online.MoveNext()&&online.Current==RoR2.Networking.NetworkManagerSystem.CanPlayOnlineState.No,"Android transport must report online capability unavailable");
@@ -211,5 +249,5 @@ public sealed partial class MovementBatchProbe {
   if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
- void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupOriginalGameModes();CleanupCraftableCatalog();CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
+ void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupOriginalGameModes();CleanupOriginalSurfaceCatalog();CleanupCraftableCatalog();CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }

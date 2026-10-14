@@ -4479,3 +4479,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / HYPOTHESIS / TASK:** The composed session constructed an empty Run and left all shipped game-mode prefabs unregistered. Clone the original inactive ClassicRun prefab, preserve its serialized loop settings, initialize the complete native GameModeCatalog after rules, and restore ownership on exit.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor ARM64 build, assisted Lakes → Goolake genuine exit with two original stage begins and zero current-PID errors; two unassisted living-body end-run/menu cleanups with fresh restart and unchanged profile/results/settings.
 - **OPEN / EVIDENCE:** Stock Run.Awake/Start, alternate-mode playability, normal full route and sustained 60 FPS remain open. J466 ignored failed/passing attempts and lifecycle check; J465 and Moon rollbacks retained. Depends on shipped ClassicRun/GameModeCatalog and pinned R2API.ContentManagement timing.
+
+## C18 / J467 — Register shipped surfaces and damage macros
+
+- **OBSERVATION / TASK:** EffectManager and original hit/damage code consume unregistered source catalogs. Use native provider filtering to register 72 SurfaceDefs and original searchable attributes to register seven damage macros; keep surface ownership scoped and macro registration process-stable.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor build, assisted Lakes → Goolake exit, two original stage begins, zero current-PID errors and unchanged payload; unassisted two-session cleanup/restart with unchanged profile.
+- **FAILURE / OPEN:** First rejected 76-asset assumption ignored JunkContent's explicit provider filter; preserve ignored first-failure run. Individual macro/effect behavior, normal full route and release-target 60 FPS remain open. Depends on J466, pinned R2API.ContentManagement and shipped loader/macro contracts.

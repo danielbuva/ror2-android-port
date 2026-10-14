@@ -698,3 +698,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J465 scoped crafting-catalog exit:** The composed session registers all 73 shipped crafting definitions through original ingredient and recipe catalogs and survives a genuine assisted Lakes → Goolake exit. Individual crafting actions, normal/full-route and sustained 60 FPS remain open.
 
 **J466 scoped run-owner exit:** The inactive composed Run now comes from the original serialized ClassicRun prefab, and all five shipped game-mode prefabs register through native GameModeCatalog. Assisted Lakes → Goolake and two unassisted end-run/menu/restart cleanups pass; stock Run startup, alternate modes, normal full route and release-target sustained 60 FPS remain open.
+
+**J467 scoped shared-catalog exit:** The unmodded provider-selected 72 SurfaceDefs and seven attributed original damage macros register natively; assisted Lakes → Goolake and two unassisted same-process cleanup/restarts pass. Individual effect/damage semantics, normal full route and release-target sustained 60 FPS remain open.
