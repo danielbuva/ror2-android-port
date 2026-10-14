@@ -117,7 +117,12 @@ public sealed partial class MovementBatchProbe {
  }
  int DestroyWholePlayerSummons(){
   int count=0;
-  foreach(var summon in wholePlayerSummons){if(!summon)continue;var body=summon.GetBody();if(body&&body!=worldPlayer)NetworkServer.Destroy(body.gameObject);NetworkServer.Destroy(summon.gameObject);count++;}
+  foreach(var summon in wholePlayerSummons){if(!summon)continue;
+   // Original OnDestroy also removes MinionLeash. Do that through the original
+   // ownership API while Run still exists; Destroy is deferred until a frame
+   // where the owned Run may already have been disabled.
+   var ownership=summon.GetComponent<MinionOwnership>();if(ownership&&ownership.group!=null){Check(Run.instance&&NetworkServer.active,"Owned minion needs a live Run for original inventory release");ownership.SetOwner(null);}
+   var body=summon.GetBody();if(body&&body!=worldPlayer)NetworkServer.Destroy(body.gameObject);NetworkServer.Destroy(summon.gameObject);count++;}
   wholePlayerSummons.Clear();return count;
  }
  IEnumerator PrepareWholeModelDisplayRules(){

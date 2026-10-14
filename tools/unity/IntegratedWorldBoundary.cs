@@ -462,6 +462,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // Native placement spreads barrels across the map. Diagnostic input can shop
   // as soon as earned money permits; clearing every barrel is not a game rule.
   if(r.liveCatalogs!=null&&worldObjective==0){var chest=NextAutomaticWorldChest(player);if(chest)worldObjective=1;}
+  // On some original layouts the teleporter is beside the entry point. An
+  // unattended shopping route can strand itself across a disconnected graph
+  // before ever selecting it; take the nearby native objective first.
+  if(r.teleporterLoop&&worldTeleporter&&worldTeleporter.isIdle&&objectiveHost&&Vector3.Distance(player.corePosition,objectiveHost.transform.position)<20f&&ObjectiveWorldStimulus(player,bridge,elapsed))return;
   if(worldObjective==0){var barrel=worldBarrels.Where(x=>x&&!x.Networkopened).OrderBy(x=>Vector3.SqrMagnitude(x.transform.position-player.corePosition)).FirstOrDefault();if(barrel)target=barrel.gameObject;else worldObjective=1;}
   if(worldObjective==3&&elapsed-stageEnteredAt<160&&NextAutomaticWorldChest(player)&&player.master.money>=NextAutomaticWorldChest(player).GetComponent<PurchaseInteraction>().cost)worldObjective=1;
   if(worldObjective==1){var chest=NextAutomaticWorldChest(player);if(r.world.openedChests>r.world.pickupMessages-stagePickupBaseline)worldObjective=2;else if(chest&&player.master.money>=chest.GetComponent<PurchaseInteraction>().cost)target=chest.gameObject;else worldObjective=3;}

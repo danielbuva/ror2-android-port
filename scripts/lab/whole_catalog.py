@@ -581,6 +581,59 @@ def repair_support_source(export, mapped, project, destination):
           scope='Qualify the two original audio-event field types; original methods unchanged; no audio availability claim'))
 
 
+def source_mesh_subobjects(export, closure, metadata, native):
+    """Resolve original GUID[subobject] mesh keys to exact native/exported objects.
+
+    AssetRipper exports FBX mesh subobjects as separate .asset files. A typed
+    main-FBX location cannot identify which mesh the shipped SkinDef requested.
+    Require both the serialized name and the native container identity before
+    adding a location; leave missing/ambiguous references explicit.
+    """
+    pattern = re.compile(r'm_AssetGUID: ([a-f0-9]{32})\s*\n\s*m_SubObjectName: ([^\n]+)\s*\n\s*m_SubObjectType: UnityEngine.Mesh,')
+    locations = {row['id']: row for row in metadata['locations']}
+    guid_locations = {row['key']: row['locations'] for row in metadata['keys']
+                      if row.get('keyType', 'System.String') == 'System.String' and re.fullmatch(r'[a-f0-9]{32}', row['key'])}
+    issues = {row['location']: row for row in native['issues']}
+    seen, resolved, unresolved = set(), [], []
+    for relative in closure['files']:
+        path = export/relative
+        if path.suffix not in {'.asset', '.prefab', '.unity'} or not path.is_file():
+            continue
+        with path.open('rb') as stream:
+            if stream.read(5) != b'%YAML':
+                continue
+        for guid, raw_name in pattern.findall(path.read_text()):
+            name = raw_name.strip()
+            if name.startswith('"'):
+                name = json.loads(name)
+            elif name.startswith("'") and name.endswith("'"):
+                name = name[1:-1].replace("''", "'")
+            key = guid+'['+name+']'
+            if key in seen:
+                continue
+            seen.add(key)
+            mesh_ids = [identity for identity in guid_locations.get(guid, [])
+                        if locations[identity]['type'].startswith('UnityEngine.Mesh,')]
+            candidates = []
+            for identity in mesh_ids:
+                issue = issues.get(identity)
+                if issue:
+                    candidates.extend(issue.get('objects', []))
+                else:
+                    candidates.append(closure['converted'].get(str(identity), {}).get('native', {}))
+            matches = {(row['source'], row['native_path_id']) for row in candidates
+                       if row.get('type') == 'Mesh' and row.get('name') == name
+                       and row.get('source') and (export/row['source']).is_file()}
+            if len(mesh_ids) == 1 and len(matches) == 1:
+                source, path_id = next(iter(matches))
+                resolved.append(dict(key=key, source=source, native_path_id=path_id,
+                                     type=locations[mesh_ids[0]]['type'], original_location=mesh_ids[0]))
+            else:
+                unresolved.append(dict(key=key, source=relative, mesh_locations=mesh_ids,
+                                       matching_native_exports=len(matches)))
+    return resolved, unresolved
+
+
 def prepare_integration():
     """Import the complete discovered closure, reusing existing GUID owners once."""
     from build import preflight
@@ -591,6 +644,8 @@ def prepare_integration():
     if closure['input_id'] != read(WORK/'config/accepted-input.json')['input_id']:
         raise RuntimeError('Whole catalog belongs to different input')
     metadata = read_catalog(catalog_path(out))
+    native = read(out/'native-conversions.json')
+    mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
     index = read(out/'source-guid-index.json')
     guids = {path: guid for guid, path in index.items()}
     repairs = {row['source']: row for row in read(out/'source-guid-repairs.json')} if (out/'source-guid-repairs.json').exists() else {}
@@ -610,7 +665,7 @@ def prepare_integration():
     mapped = {}
     copies = []
     # Copy each original identity once. Do not overwrite the accepted composition.
-    for relative in closure['files']:
+    for relative in sorted(set(closure['files']) | {row['source'] for row in mesh_subobjects}):
         source = export/relative
         guid = guids.get(relative)
         if not guid or not source.is_file():
@@ -654,13 +709,24 @@ def prepare_integration():
         if conversion and conversion['source'] in mapped:
             locations.append(dict(id=row['id'], path=mapped[conversion['source']], type=row['type'],
                                   primaryKey=row['primaryKey'], root=row['id'] in roots))
+    next_location_id=max(row['id'] for row in metadata['locations'])+1
+    subobject_keys=[]
+    for row in mesh_subobjects:
+        if row['source'] not in mapped:
+            raise RuntimeError('Exact original mesh subobject was not staged: '+row['key'])
+        locations.append(dict(id=next_location_id,path=mapped[row['source']],type=row['type'],
+                              primaryKey=row['key'],root=False))
+        subobject_keys.append(dict(key=row['key'],keyType='System.String',locations=[next_location_id]))
+        next_location_id+=1
     if not roots <= {row['id'] for row in locations}:
         raise RuntimeError('Provider roots lost during staging')
     manifest = dict(input_id=closure['input_id'], attempt=destination.name,
-                    locations=locations, keys=metadata['keys'], providers=metadata['providers'],
+                    locations=locations, keys=metadata['keys']+subobject_keys, providers=metadata['providers'],
                     source_catalog_sha256=closure['source_catalog_sha256'],
                     roots=sorted(roots), provider_roots=closure['roots'], runtime_roots=closure.get('runtime_roots', []), quarantine=[])
     write(destination/'manifest.json', manifest)
+    write(destination/'mesh-subobjects.json',dict(resolved=mesh_subobjects,unresolved=unresolved_mesh_subobjects,
+                                                   scope='Exact original serialized GUID/name/type and native container/export identity; unresolved refs stay explicit'))
     write(destination/'import-receipt.json', dict(copied=copies, reused=len(mapped)-len(copies),
                                                files=len(mapped), roots=len(roots)))
     write(out/'integration-latest.json', dict(path=str(destination.relative_to(ROOT))))

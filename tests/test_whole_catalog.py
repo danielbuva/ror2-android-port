@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
-from whole_catalog import original_stage_contexts, analyze, catalog_roots, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots
+from whole_catalog import original_stage_contexts, analyze, catalog_roots, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots, source_mesh_subobjects
 import build
 from common import sha, write
 
@@ -48,6 +48,21 @@ class WholePayloadReuseTests(unittest.TestCase):
 
 
 class WholeCatalogTests(unittest.TestCase):
+    def test_mesh_subobjects_require_exact_guid_name_type_and_native_export(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'Assets').mkdir()
+            (root/'Assets/skin.asset').write_text('%YAML\nmeshAddress:\n  m_AssetGUID: '+'a'*32+'\n  m_SubObjectName: VultureMesh\n  m_SubObjectType: UnityEngine.Mesh, UnityEngine.CoreModule\n'
+                'otherMeshAddress:\n  m_AssetGUID: '+'b'*32+'\n  m_SubObjectName: VultureMesh\n  m_SubObjectType: UnityEngine.Mesh, UnityEngine.CoreModule\n')
+            (root/'Assets/VultureMesh.asset').write_text('%YAML\n')
+            metadata=dict(keys=[dict(key=g*32,keyType='System.String',locations=[i]) for i,g in enumerate('ab',1)],
+                          locations=[dict(id=i,type='UnityEngine.Mesh, UnityEngine.CoreModule') for i in (1,2)])
+            native=dict(issues=[dict(location=i,objects=[dict(name=name,type='Mesh',source='Assets/VultureMesh.asset',native_path_id=i)])
+                                for i,name in ((1,'VultureMesh'),(2,'OtherMesh'))])
+            resolved,unresolved=source_mesh_subobjects(root,dict(files=['Assets/skin.asset'],converted={}),metadata,native)
+            self.assertEqual([row['key'] for row in resolved],['a'*32+'[VultureMesh]'])
+            self.assertEqual(resolved[0]['native_path_id'],1)
+            self.assertEqual([row['key'] for row in unresolved],['b'*32+'[VultureMesh]'])
+
     def test_runtime_keys_use_exact_original_identity_and_keep_consumers(self):
         data=dict(keys=[dict(key='baked-key',locations=[1]),dict(key='missing-conversion',locations=[2]),dict(key='bundle',locations=[3]),dict(key='typed',keyType='System.Type',locations=[1])],
                   locations=[dict(id=1,internalId='Assets/baked.asset',primaryKey='baked-key'),dict(id=2,internalId='Assets/missing.asset',primaryKey='missing-conversion'),dict(id=3,internalId='library:/bundle')])
