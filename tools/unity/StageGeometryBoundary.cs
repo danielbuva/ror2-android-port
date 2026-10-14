@@ -11,20 +11,21 @@ using UnityEngine.Networking;
 // Recovered geometry and original out-of-bounds volumes; owned Android entry/material boundary.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class StageGeometryReport {
-  public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit;
+  public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit,originalStageObjects;
   public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneIdentityComponents,mapZoneEmptySceneIds,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
   public int activeRoots,terrainMaterials,surfaceMaterials,terrainTextureMaterials;public bool terrainTexturesBound;public int objects,renderers,billboards,missingBillboardAssets,emptyLODRendererSlots,meshColliders,colliders,worldColliders,nonWorldColliders,missingMeshes,missingColliderMeshes,behaviours,previewDisableComponents,previewsInactive,previewsInactiveByParent;
+  public int sourceRockZones,sourceRockPrefabSlots,sourceRockPrefabsResolved,sourceRockComponentsResolved,sourceRockZonePointsResolved,sourceDustManagers,sourceDustPrefabsResolved,sourceDustLocationsResolved;
   public Vector3 spawnPosition,groundPosition,groundNormal,entryOrigin;
   public string[] emptyMeshPaths,emptyColliderPaths;
  }
  AssetBundle stageGeometryBundle;Scene stageGeometryScene;
  readonly List<Material> stageGeometryMaterials=new List<Material>();
  readonly List<BillboardAsset> stageGeometryBillboards=new List<BillboardAsset>();
- bool stageMoonVolumes;int stageZoneNetworkObjects;string[] stageZoneActiveNames;
+ bool stageMoonVolumes,stageSourceObjects;int stageZoneNetworkObjects;string[] stageZoneActiveNames,stageSourceNames=new string[0];
  MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
  IntegratedStageSpec firstStageSpec;string firstStageName;bool firstStagePolicyConsumed;float firstStageSelectionValue;
  IEnumerator PrepareStageGeometry(Result cfg){
-  firstStageSpec=null;firstStageName="golemplains";firstStagePolicyConsumed=false;
+  firstStageSpec=null;firstStageName="golemplains";firstStagePolicyConsumed=false;stageSourceNames=r.originalStageSceneNames??cfg.originalStageSceneNames??new string[0];
   if(cfg.integratedWorld&&cfg.teleporterLoop&&r.freePlay){
    // Run.Start is unavailable behind the stock platform boundary. Use its shipped
    // scene group, weighted selector and RNG before the body needs stage geometry.
@@ -47,6 +48,10 @@ public sealed partial class MovementBatchProbe {
  }
  IEnumerator LoadStageGeometry(string bundleName,int previewCount,IntegratedStageSpec spec,int initialMapZones=0,string[] initialActiveNames=null,string[] initialPreviewNames=null){
   r.stage=new StageGeometryReport();r.phase="stage-geometry-load";Save();
+  string stageName=bundleName.Replace("-spine-lab","");
+  stageSourceObjects=stageSourceNames.Contains(stageName);
+  if(stageSourceObjects){Check(bundleName==stageName+"-spine-lab","Unreviewed original stage-scene switch");bundleName=stageName+"-source-lab";}
+  r.stage.originalStageObjects=stageSourceObjects;
   stageGeometryBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload",bundleName));
   Check(stageGeometryBundle,"Recovered stage geometry bundle missing");var scenes=stageGeometryBundle.GetAllScenePaths();Check(scenes.Length==1,"Expected one recovered stage geometry scene");
   yield return SceneManager.LoadSceneAsync(scenes[0],LoadSceneMode.Additive);stageGeometryScene=SceneManager.GetSceneByPath(scenes[0]);
@@ -54,6 +59,17 @@ public sealed partial class MovementBatchProbe {
   yield return null; // Allow original scene preview Start callbacks; no manual deactivation.
   var roots=stageGeometryScene.GetRootGameObjects();stageStaticRoots=new HashSet<GameObject>(roots);var transforms=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>(true)).ToArray();
   r.stage.objects=transforms.Length;r.stage.behaviours=roots.Sum(x=>x.GetComponentsInChildren<MonoBehaviour>(true).Length);
+  if(stageSourceObjects){
+   var rocks=roots.SelectMany(x=>x.GetComponentsInChildren<MaulingRockZoneManager>(true)).ToArray();
+   r.stage.sourceRockZones=rocks.Length;
+   foreach(var rock in rocks){
+    if(rock.maulingRockProjectilePrefabs!=null){r.stage.sourceRockPrefabSlots+=rock.maulingRockProjectilePrefabs.Count;
+     foreach(var prefab in rock.maulingRockProjectilePrefabs)if(prefab){r.stage.sourceRockPrefabsResolved++;if(prefab.GetComponent<MaulingRock>())r.stage.sourceRockComponentsResolved++;}}
+    if(rock.startZonePoint1&&rock.startZonePoint2&&rock.endZonePoint1&&rock.endZonePoint2)r.stage.sourceRockZonePointsResolved++;
+   }
+   var dust=roots.SelectMany(x=>x.GetComponentsInChildren<RoR2.DustStreakManager>(true)).ToArray();r.stage.sourceDustManagers=dust.Length;
+   foreach(var manager in dust){if(manager.dustStreakPrefab)r.stage.sourceDustPrefabsResolved++;if(manager.dustStreakLocations!=null)r.stage.sourceDustLocationsResolved+=manager.dustStreakLocations.Count(x=>x);}
+  }
   var previewCallbacks=roots.SelectMany(x=>x.GetComponentsInChildren<MonoBehaviour>(true)).ToArray();
   // Shipped inactive variant parents legitimately prevent Start from running.
   r.stage.previewDisableComponents=previewCallbacks.Count(x=>x&&x.GetType()==typeof(DisableOnStart));r.stage.previewsInactive=previewCallbacks.Count(x=>x&&x is DisableOnStart&&!x.gameObject.activeInHierarchy);r.stage.previewsInactiveByParent=previewCallbacks.Count(x=>x&&x is DisableOnStart&&x.gameObject.activeSelf&&!x.gameObject.activeInHierarchy);
@@ -62,7 +78,12 @@ public sealed partial class MovementBatchProbe {
   stageMoonVolumes=moon;stageZoneNetworkObjects=spec==null?0:spec.mapZoneNetworkObjects;stageZoneActiveNames=(spec==null?initialActiveNames:spec.mapZoneActiveNames)??new string[0];
   stageMapZones=roots.SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).ToArray();r.stage.mapZoneCount=stageMapZones.Length;
   StartStageMapZoneObservations();
-  r.stage.activeRoots=roots.Count(x=>x.activeSelf);Check(moon?r.stage.behaviours==spec.missionComponents&&previewCallbacks.All(x=>x)&&r.stage.activeRoots==0:r.stage.behaviours==previewCount+expectedMapZones+stageZoneNetworkObjects*2&&stageMapZones.Length==expectedMapZones&&previewCallbacks.All(x=>x&&(x is DisableOnStart||x is MapZone||((x is NetworkIdentity||x is TeamFilter)&&x.GetComponent<MapZone>())))&&r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&previewCallbacks.Where(x=>x is DisableOnStart).Select(x=>x.gameObject.name).OrderBy(x=>x).SequenceEqual(previewNames.OrderBy(x=>x))&&r.stage.activeRoots>0,"Original preview Start or scene behaviour allowlist failed");
+  r.stage.activeRoots=roots.Count(x=>x.activeSelf);
+  bool previewContract=r.stage.previewDisableComponents==previewCount&&r.stage.previewsInactive==previewCount&&previewCallbacks.Where(x=>x is DisableOnStart).Select(x=>x.gameObject.name).OrderBy(x=>x).SequenceEqual(previewNames.OrderBy(x=>x));
+  Check(moon?r.stage.behaviours==spec.missionComponents&&previewCallbacks.All(x=>x)&&r.stage.activeRoots==0:
+   stageSourceObjects?roots.Count(x=>new[]{"RoR2Application","SceneInfo","Director","GameManager","Main Camera"}.Contains(x.name)&&x.activeSelf)==0&&r.stage.behaviours>previewCount+expectedMapZones+stageZoneNetworkObjects*2&&stageMapZones.Length==expectedMapZones&&previewCallbacks.All(x=>x)&&r.stage.previewsInactive==r.stage.previewDisableComponents&&r.stage.activeRoots>0:
+   r.stage.behaviours==previewCount+expectedMapZones+stageZoneNetworkObjects*2&&stageMapZones.Length==expectedMapZones&&previewCallbacks.All(x=>x&&(x is DisableOnStart||x is MapZone||((x is NetworkIdentity||x is TeamFilter)&&x.GetComponent<MapZone>())))&&previewContract&&r.stage.activeRoots>0,
+   "Original stage scene missing scripts, duplicate global owners, or preview contract mismatch");
   Shader terrainShader=Resources.Load<Shader>("StageTerrainPreview"),surfaceShader=Resources.Load<Shader>("StageSurfacePreview");
   Check(terrainShader&&terrainShader.isSupported&&surfaceShader&&surfaceShader.isSupported,"Diagnostic stage material shaders unavailable");r.stage.terrainTexturesBound=true;
   var replacements=new Dictionary<Material,Material>();var emptyMeshes=new List<string>();var emptyColliders=new List<string>();
@@ -71,7 +92,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var renderer in roots.SelectMany(x=>x.GetComponentsInChildren<Renderer>(true))){
    // Full Moon retains original physics/interaction/presentation layer roles.
    // Renderer layer changes also change any collider on that GameObject.
-   if(!moon&&!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
+   if(!moon&&!stageSourceObjects&&!renderer.GetComponents<Collider>().Any(x=>x.isTrigger))renderer.gameObject.layer=LayerIndex.world.intVal;var filter=renderer.GetComponent<MeshFilter>();var skinned=renderer as SkinnedMeshRenderer;
    if((filter&&!filter.sharedMesh)||(skinned&&!skinned.sharedMesh)){r.stage.missingMeshes++;emptyMeshes.Add(StageObjectPath(renderer.transform));}
    var billboard=renderer as BillboardRenderer;
    if(billboard){r.stage.billboards++;if(!billboard.billboard)r.stage.missingBillboardAssets++;Check(billboard.billboard&&billboard.billboard.material,"Original billboard asset/material missing");}
@@ -104,7 +125,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var collider in roots.SelectMany(x=>x.GetComponentsInChildren<Collider>(true))){
    // A non-trigger ambient/post-process volume is not world geometry. Promoting
    // Moon's source layer20 sphere ejects the landing body through KCC penetration.
-   if(!moon&&!collider.isTrigger)collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
+   if(!moon&&!stageSourceObjects&&!collider.isTrigger)collider.gameObject.layer=LayerIndex.world.intVal;if(collider.isTrigger)continue;r.stage.colliders++;
    if(collider.gameObject.layer==LayerIndex.world.intVal)r.stage.worldColliders++;else r.stage.nonWorldColliders++;
    var mesh=collider as MeshCollider;if(mesh){r.stage.meshColliders++;if(!mesh.sharedMesh){r.stage.missingColliderMeshes++;emptyColliders.Add(StageObjectPath(mesh.transform));}}
   }

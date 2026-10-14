@@ -34,6 +34,11 @@ try:
   elif a.action=='stage-variants':
    from stage_variants import stage
    print(json.dumps(stage()))
+  elif a.action=='source-scene-prepare':
+   from source_scene_candidate import SCENES,prepare,stage_unavailable_audio
+   staged=prepare(tuple(SCENES) if a.target=='all' else ('lakes',))
+   boundary=stage_unavailable_audio()
+   print(json.dumps({'scenes':staged,'audio_boundary':boundary}))
   elif a.action=='whole-catalog-audit':
    from whole_catalog import audit
    audit()

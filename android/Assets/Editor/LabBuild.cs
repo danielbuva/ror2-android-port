@@ -124,6 +124,11 @@ public static class LabBuild {
      if(!IsOwnedContentPath(nextStage)||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2","blackbeach","blackbeach2","golemplains2","goolake","rootjungle","lakes"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{nextStage}});
     }
+    foreach(var sourceStage in cfg.sourceStageScenes??new string[0]){
+     string filename=Path.GetFileNameWithoutExtension(sourceStage);
+     if(!IsOwnedContentPath(sourceStage)||!File.Exists(sourceStage)||!new[]{"golemplains","foggyswamp","frozenwall","dampcavesimple","skymeadow","wispgraveyard","shipgraveyard","blackbeach","blackbeach2","golemplains2","goolake","rootjungle","lakes"}.Contains(filename)||sourceStage!="Assets/LabLoadingScene/SourceScenes/"+filename+"/"+filename+".unity")throw new Exception("Unexpected original stage-scene candidate path");
+     bundleBuilds.Add(new AssetBundleBuild{assetBundleName=filename+"-source-lab",assetNames=new[]{sourceStage}});
+    }
     if(!string.IsNullOrEmpty(cfg.prefab)){
      if(!IsOwnedContentPath(cfg.prefab)||!File.Exists(cfg.prefab))throw new Exception("Unexpected prefab probe path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName="commando-prefab-lab",assetNames=new System.Collections.Generic.List<string>(cfg.prefabAssets??new string[0]){cfg.prefab}.Distinct(StringComparer.OrdinalIgnoreCase).ToArray()});
@@ -206,7 +211,7 @@ public static class LabBuild {
   }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
- [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,nextStageScene,playerDeathEffect,pickupDroplet,genericPickup,teleporterIndicator,objectiveTMPSettings;public string[] prefabAssets,enemyRewardAssets,objectiveSupportAssets,nextStageScenes;}
+ [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,nextStageScene,playerDeathEffect,pickupDroplet,genericPickup,teleporterIndicator,objectiveTMPSettings;public string[] prefabAssets,enemyRewardAssets,objectiveSupportAssets,nextStageScenes,sourceStageScenes;}
  [MenuItem("Porting Lab/Record Backend Constraints")]
  public static void Backend(){
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));
