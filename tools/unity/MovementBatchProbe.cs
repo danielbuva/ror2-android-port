@@ -448,6 +448,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
     WholeCatalogComposed.PopulateBodyFields(BodyCatalog.allBodyPrefabs.ToArray());
     PrepareWholeDroneCatalog();
     r.liveCatalogs.projectiles=WholeCatalogComposed.PrepareProjectiles();
+    var skins=RegisterOriginalSkins();while(skins.MoveNext())yield return skins.Current;
     WholeCatalogComposed.PopulateDefinitionFields("Buffs",Enumerable.Range(0,BuffCatalog.buffCount).Select(index=>BuffCatalog.GetBuffDef((BuffIndex)index)).ToArray(),"bd");
    }
    manager=CreateTeamContext(out teamHost);Call(team,"Awake");team.teamIndex=TeamIndex.None;team.teamIndex=TeamIndex.Player;Check(team.body==body&&TeamComponent.GetTeamMembers(TeamIndex.Player).Contains(team),"Recovered player team context");
@@ -483,7 +484,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    }
 
   }finally{
-   WholeCatalogComposed.RestoreProjectiles();if(r.liveCatalogs!=null)r.liveCatalogs.projectileCleanup=ProjectileCatalog.projectilePrefabCount==0;WholeCatalogComposed.RestoreDefinitionFields();body.onRecalculateStats-=observed;if(healthAwake)Call(body.healthComponent,"OnDestroy");if(team)Call(team,"OnDestroy");
+   CleanupOriginalSkins();WholeCatalogComposed.RestoreProjectiles();if(r.liveCatalogs!=null)r.liveCatalogs.projectileCleanup=ProjectileCatalog.projectilePrefabCount==0;WholeCatalogComposed.RestoreDefinitionFields();body.onRecalculateStats-=observed;if(healthAwake)Call(body.healthComponent,"OnDestroy");if(team)Call(team,"OnDestroy");
    if(artifacts){if(RunArtifactManager.instance==artifacts)Call(artifacts,"OnDisable");var enabled=typeof(RunArtifactManager).GetField("_enabledArtifacts",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(artifacts);if(enabled!=null){Check(Enumerable.Range(0,ArtifactCatalog.artifactCount).All(i=>ArtifactCatalog.GetArtifactDef((ArtifactIndex)i)),"Original artifact catalog changed before Run teardown");Call(artifacts,"OnDestroy");}}
    if(run&&Run.instance==run)Call(run,"OnDisable");if(runStaging)Destroy(runStaging);else if(runHost)Destroy(runHost);if(manager)Call(manager,"OnDisable");if(teamHost)Destroy(teamHost);
    RoR2Content.Artifacts.WeakAssKnees=oldFall;RoR2Content.Artifacts.Glass=priorGlass;StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{priorDefs});StaticCall(typeof(RunArtifactManager),"Init");DLC1Content.Equipment.EliteVoidEquipment=oldVoid;RoR2Content.Equipment.LunarPotion=oldPotion;

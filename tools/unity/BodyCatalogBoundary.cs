@@ -17,6 +17,35 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 
 public sealed partial class MovementBatchProbe {
  bool ownsLoadoutTables,ownsSkillCatalog;
+ bool ownsBodyAvailability,ownsSkinCatalog;
+ ResourceAvailability priorBodyAvailability,priorSkinAvailability;
+ SkinDef[] priorSkinDefs;SkinDef[][] priorSkinsByBody;
+ readonly Dictionary<SkinDef,SkinIndex> priorSkinIndices=new Dictionary<SkinDef,SkinIndex>();
+ readonly Dictionary<string,SkinIndex> priorSkinNames=new Dictionary<string,SkinIndex>();
+ static FieldInfo SkinField(string name){return typeof(SkinCatalog).GetField(name,BindingFlags.NonPublic|BindingFlags.Static);}
+ IEnumerator RegisterOriginalSkins(){
+  Check(r.liveCatalogs!=null&&BodyCatalog.availability.available&&ProjectileCatalog.catalogAvailability.available&&SkinCatalog.skinCount==0&&!ownsSkinCatalog,"Original skin catalog dependencies or ownership missing");
+  priorSkinDefs=(SkinDef[])SkinField("allSkinDefs").GetValue(null);priorSkinsByBody=(SkinDef[][])SkinField("skinsByBody").GetValue(null);priorSkinAvailability=SkinCatalog.availability;
+  var names=(Dictionary<string,SkinIndex>)SkinField("skinNameToIndex").GetValue(null);
+  Check(priorSkinDefs.Length==0&&priorSkinsByBody.Length==0&&names.Count==0&&!priorSkinAvailability.available,"Unowned original skin catalog state");
+  foreach(var prefab in BodyCatalog.allBodyPrefabs){var locator=prefab.GetComponent<ModelLocator>();if(!locator||!locator.modelTransform)continue;var controller=locator.modelTransform.GetComponent<ModelSkinController>();if(!controller)continue;foreach(var skin in controller.skins)if(skin&&!priorSkinIndices.ContainsKey(skin))priorSkinIndices.Add(skin,skin.skinIndex);}
+  foreach(var pair in names)priorSkinNames.Add(pair.Key,pair.Value);
+  ownsSkinCatalog=true;r.phase="original-skin-catalog-register";Save();
+  var method=typeof(SkinCatalog).GetMethod("Init",BindingFlags.NonPublic|BindingFlags.Static);
+  Check(method!=null,"Original skin initializer missing");
+  var routine=(IEnumerator)method.Invoke(null,null);var deadline=Time.realtimeSinceStartup+180f;
+  while(routine.MoveNext()){Check(Time.realtimeSinceStartup<deadline,"Original skin catalog initialization timed out");yield return routine.Current;}
+  Check(SkinCatalog.availability.available&&SkinCatalog.skinCount==priorSkinIndices.Count&&priorSkinIndices.Keys.All(skin=>skin.runtimeSkin!=null&&SkinCatalog.GetSkinDef(skin.skinIndex)==skin),"Original skin baking or index identity differs");
+  var commando=BodyCatalog.FindBodyIndex("CommandoBody");Check(SkinCatalog.GetBodySkinCount(commando)>0&&SkinCatalog.GetBodySkinDef(commando,0),"Original Commando default skin missing");
+ }
+ void CleanupOriginalSkins(){
+  if(!ownsSkinCatalog)return;
+  foreach(var pair in priorSkinIndices)if(pair.Key)pair.Key.skinIndex=pair.Value;
+  SkinField("allSkinDefs").SetValue(null,priorSkinDefs);SkinField("skinsByBody").SetValue(null,priorSkinsByBody);
+  var names=(Dictionary<string,SkinIndex>)SkinField("skinNameToIndex").GetValue(null);names.Clear();foreach(var pair in priorSkinNames)names.Add(pair.Key,pair.Value);
+  SkinCatalog.availability=priorSkinAvailability;ownsSkinCatalog=false;priorSkinIndices.Clear();priorSkinNames.Clear();
+  Check(SkinCatalog.skinCount==0,"Original skin catalog outlived its owned body bundle");
+ }
  bool ownsBodySettingsTransform;
  Func<IResourceLocation,string> priorBodySettingsTransform,ownedBodySettingsTransform;
  // A separate closure owns only path strings, never this session or its report.
@@ -111,7 +140,11 @@ public sealed partial class MovementBatchProbe {
   Check(body.portraitIcon==portrait,"Missing-key callback replaced serialized portrait");
   Check(!prefab.activeSelf,"Catalog registration activated gameplay");
   if(cfg.initializeLoadoutTables)PrepareLoadoutTables(prefab);
-  if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.ConfigureLocations();
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){
+   WholeCatalogComposed.ConfigureLocations();
+   priorBodyAvailability=BodyCatalog.availability;Check(!priorBodyAvailability.available,"Unowned original body availability");
+   BodyCatalog.availability.MakeAvailable();ownsBodyAvailability=true;
+  }
  }
  ResourceAvailability priorComposedEffectAvailability;
  readonly Dictionary<EffectDef,string> priorComposedEffectSounds=new Dictionary<EffectDef,string>();
@@ -187,8 +220,10 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupBodyCatalog(){
   Check(LegacyResourcesAPI.ActiveCount==0,"Refuse teardown with pending portrait callbacks");
+  CleanupOriginalSkins();
   CleanupLoadoutTables();
   RestoreCatalogBodyTemplates();
+  if(ownsBodyAvailability){BodyCatalog.availability=priorBodyAvailability;ownsBodyAvailability=false;}
   if(ownsBodyCatalog){StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)new GameObject[0]);Check(BodyCatalog.bodyCount==0,"Owned catalog reset failed");ownsBodyCatalog=false;}
   if(artifactBundle){artifactBundle.Unload(true);artifactBundle=null;}
   ReleaseObjectiveBundlePreload();CleanupRecoveredText();

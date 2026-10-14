@@ -4485,3 +4485,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** EffectManager and original hit/damage code consume unregistered source catalogs. Use native provider filtering to register 72 SurfaceDefs and original searchable attributes to register seven damage macros; keep surface ownership scoped and macro registration process-stable.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor build, assisted Lakes → Goolake exit, two original stage begins, zero current-PID errors and unchanged payload; unassisted two-session cleanup/restart with unchanged profile.
 - **FAILURE / OPEN:** First rejected 76-asset assumption ignored JunkContent's explicit provider filter; preserve ignored first-failure run. Individual macro/effect behavior, normal full route and release-target 60 FPS remain open. Depends on J466, pinned R2API.ContentManagement and shipped loader/macro contracts.
+
+## C19 / J468 — Initialize original skin family
+
+- **OBSERVATION / TASK:** Complete bodies and projectiles were registered, but original body availability and SkinCatalog remained unset. Run the shipped skin initializer and deferred bake across every source body; restore owned indices/arrays across sessions.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor build, assisted Lakes → Goolake exit and assisted two-session restart with zero current-PID errors, unchanged payload and profile/settings.
+- **FAILURE / OPEN:** Code-only staging omitted the changed source file and was repaired before build. A separate unassisted teardown attempt died normally before pause; do not claim combat regression or normal-run acceptance. Pose/material parity, managed session growth, full route and release-target 60 FPS remain open. Depends on J467, shipped SkinCatalog and pinned R2API.Skins lifecycle evidence.
