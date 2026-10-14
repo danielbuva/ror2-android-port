@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using EntityStates;
 using RoR2;
+using RoR2.ContentManagement;
 using RoR2.CharacterAI;
 using RoR2.Orbs;
 using UnityEngine;
@@ -281,6 +282,26 @@ public sealed partial class MovementBatchProbe {
    }finally{KarmaManager.startingKarmaUnlockables=priorKarmaUnlocks;}
   }
   Check(objectiveRuleSignature==signature&&RuleCatalog.FindRuleDef("Misc.StageOrder")!=null,"Restart rule catalog input changed");
+  PrepareOriginalGameModes();
+ }
+ GameObject[] priorGameModeContent;ResourceAvailability priorGameModeAvailability;bool ownsGameModeCatalog;
+ void PrepareOriginalGameModes(){
+  if(r.liveCatalogs==null||!stageSourceObjects||ownsGameModeCatalog)return;
+  Check(GameModeCatalog.gameModeCount==0,"Unowned original game-mode catalog");
+  var modes=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.gameMode,Array.Empty<GameObject>());
+  Check(modes.Length>0&&modes.All(mode=>mode&&mode.GetComponent<Run>())&&modes.Select(mode=>mode.name).Distinct().Count()==modes.Length,"Original game-mode prefab family changed");
+  priorGameModeContent=ContentManager._gameModePrefabs;priorGameModeAvailability=GameModeCatalog.availability;
+  Check(priorGameModeContent==null||priorGameModeContent.Length==0,"Unowned game-mode content array");
+  ContentManager._gameModePrefabs=modes;ownsGameModeCatalog=true;
+  StaticCall(typeof(GameModeCatalog),"LoadGameModes");
+  var classic=GameModeCatalog.FindGameModePrefabComponent("ClassicRun");
+  Check(GameModeCatalog.gameModeCount==modes.Length&&classic&&classic.gameObject==modes.Single(mode=>mode.name=="ClassicRun")&&classic!=Run.instance,"Original ClassicRun catalog identity differs");
+ }
+ void CleanupOriginalGameModes(){
+  if(!ownsGameModeCatalog)return;
+  StaticCall(typeof(GameModeCatalog),"SetGameModes",new object[]{Array.Empty<Run>()});
+  ContentManager._gameModePrefabs=priorGameModeContent;GameModeCatalog.availability=priorGameModeAvailability;ownsGameModeCatalog=false;
+  Check(GameModeCatalog.gameModeCount==0&&!GameModeCatalog.FindGameModePrefabComponent("ClassicRun"),"Original game-mode catalog outlived its owned bundle");
  }
  void PrepareObjectiveRules(){
   PrepareObjectiveRuleCatalog();

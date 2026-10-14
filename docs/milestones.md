@@ -696,3 +696,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J464 scoped original Stage exit:** Original `Run.OnServerSceneChanged` spawns the shipped networked Stage prefab and its server-begin callbacks fire in two device-tested source stages across one genuine exit. The composed session now owns the seven shipped Cursed Book spell definitions needed by original master regeneration. Assisted test only; normal/full-route, stock startup and sustained 60 FPS remain open.
 
 **J465 scoped crafting-catalog exit:** The composed session registers all 73 shipped crafting definitions through original ingredient and recipe catalogs and survives a genuine assisted Lakes → Goolake exit. Individual crafting actions, normal/full-route and sustained 60 FPS remain open.
+
+**J466 scoped run-owner exit:** The inactive composed Run now comes from the original serialized ClassicRun prefab, and all five shipped game-mode prefabs register through native GameModeCatalog. Assisted Lakes → Goolake and two unassisted end-run/menu/restart cleanups pass; stock Run startup, alternate modes, normal full route and release-target sustained 60 FPS remain open.

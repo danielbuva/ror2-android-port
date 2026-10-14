@@ -425,8 +425,12 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   try{Call(run,"OnEnable");Check(Run.instance==run&&!owned.activeInHierarchy,"Original Run singleton assignment");}finally{Call(run,"OnDisable");Destroy(owned);}Check(!Run.instance,"Original Run singleton cleanup");
  }
  bool IsStatsProbe(){return r.id=="body-original-stats"||r.id=="body-level-stats"||r.id=="body-computed-motor"||r.id.StartsWith("body-state-");}
+ static bool SerializedMaskEmpty(ItemMask mask){return mask==null||Enumerable.Range(0,mask.Count).All(index=>!mask.Contains((ItemIndex)index));}
+ static bool SerializedMaskEmpty(EquipmentMask mask){return mask==null||Enumerable.Range(0,mask.Count).All(index=>!mask.Contains((EquipmentIndex)index));}
+ static bool SerializedMaskEmpty(DroneMask mask){return mask==null||Enumerable.Range(0,mask.Count).All(index=>!mask.Contains((DroneIndex)index));}
+ static bool SerializedMaskEmpty(KeyItemMask mask){return mask==null||Enumerable.Range(0,mask.Count).All(index=>!mask.Contains((KeyItemIndex)index));}
  IEnumerator OriginalStats(CharacterBody body,Result cfg){
-  Check(!Run.instance&&!RunArtifactManager.instance&&!TeamManager.instance,"Existing stats context");GameObject teamHost=null,runHost=null;TeamManager manager=null;Run run=null;RunArtifactManager artifacts=null;var team=body.teamComponent;bool healthAwake=false;
+  Check(!Run.instance&&!RunArtifactManager.instance&&!TeamManager.instance,"Existing stats context");GameObject teamHost=null,runHost=null,runStaging=null;TeamManager manager=null;Run run=null;RunArtifactManager artifacts=null;var team=body.teamComponent;bool healthAwake=false;
   var priorDefs=(ArtifactDef[])typeof(ArtifactCatalog).GetField("artifactDefs",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);var priorGlass=RoR2Content.Artifacts.glassArtifactDef;var oldVoid=DLC1Content.Equipment.EliteVoidEquipment;var oldPotion=RoR2Content.Equipment.LunarPotion;var oldFall=RoR2Content.Artifacts.weakAssKneesArtifactDef;
   Check(priorDefs.Length==0&&!priorGlass&&!oldVoid&&!oldPotion,"Existing stats content bindings");
   Action<CharacterBody> observed=b=>{if(b==body)r.statsEvents++;};
@@ -447,7 +451,18 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
     WholeCatalogComposed.PopulateDefinitionFields("Buffs",Enumerable.Range(0,BuffCatalog.buffCount).Select(index=>BuffCatalog.GetBuffDef((BuffIndex)index)).ToArray(),"bd");
    }
    manager=CreateTeamContext(out teamHost);Call(team,"Awake");team.teamIndex=TeamIndex.None;team.teamIndex=TeamIndex.Player;Check(team.body==body&&TeamComponent.GetTeamMembers(TeamIndex.Player).Contains(team),"Recovered player team context");
-   runHost=new GameObject("Inactive stat Run context");runHost.SetActive(false);artifacts=runHost.AddComponent<RunArtifactManager>();run=runHost.GetComponent<Run>();Call(run,"OnEnable");Call(artifacts,"Awake");Call(artifacts,"OnEnable");Check(Run.instance==run&&!artifacts.IsArtifactEnabled(glass),"Original disabled Glass context");
+   if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")){
+    var source=WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/GameModes/ClassicRun/ClassicRun.prefab");
+    Check(source.name=="ClassicRun"&&source.GetComponent<Run>()&&source.GetComponent<RunArtifactManager>()&&source.GetComponent<NetworkRuleBook>()&&source.GetComponent<NetworkIdentity>(),"Original ClassicRun prefab owner changed");
+    runStaging=new GameObject("Inactive original Run staging");runStaging.SetActive(false);runHost=Instantiate(source,runStaging.transform);runHost.name=source.name;
+    run=runHost.GetComponent<Run>();artifacts=runHost.GetComponent<RunArtifactManager>();
+    Check(run&&artifacts&&!runHost.activeInHierarchy&&run.EventFlagsToResetOnLoop!=null&&(!cfg.teleporterLoop||run.EventFlagsToResetOnLoop.SequenceEqual(cfg.runEventFlagsToResetOnLoop)),"Original ClassicRun serialized loop contract changed");
+    // Run.Awake normally replaces the empty serialized masks with rented ones.
+    // This inactive session still supplies those pools through its owned adapters.
+    Check(SerializedMaskEmpty(run.availableItems)&&SerializedMaskEmpty(run.expansionLockedItems)&&SerializedMaskEmpty(run.availableEquipment)&&SerializedMaskEmpty(run.expansionLockedEquipment)&&SerializedMaskEmpty(run.availableDrones)&&SerializedMaskEmpty(run.expansionLockedDrones)&&SerializedMaskEmpty(run.availableKeyItems)&&SerializedMaskEmpty(run.expansionLockedKeyItems),"Original ClassicRun serialized availability masks are nonempty");
+    run.availableItems=null;run.expansionLockedItems=null;run.availableEquipment=null;run.expansionLockedEquipment=null;run.availableDrones=null;run.expansionLockedDrones=null;run.availableKeyItems=null;run.expansionLockedKeyItems=null;
+   }else{runHost=new GameObject("Inactive stat Run context");runHost.SetActive(false);artifacts=runHost.AddComponent<RunArtifactManager>();run=runHost.GetComponent<Run>();}
+   Call(run,"OnEnable");Call(artifacts,"Awake");Call(artifacts,"OnEnable");Check(Run.instance==run&&!artifacts.IsArtifactEnabled(glass),"Original disabled Glass context");
    Call(body.healthComponent,"Awake");healthAwake=true;Check(body.healthComponent.body==body,"Original health body cache");body.onRecalculateStats+=observed;r.phase="original-recalculate-stats";Save();body.RecalculateStats();
    r.maxHealth=body.maxHealth;r.moveSpeed=body.moveSpeed;r.damage=body.damage;r.jumpPower=body.jumpPower;r.level=body.level;
    Check(r.statsEvents==1&&r.level==1,"Original stat completion/level");Check(Mathf.Abs(r.maxHealth-110)<.001f&&Mathf.Abs(r.moveSpeed-7)<.001f&&Mathf.Abs(r.damage-12)<.001f&&Mathf.Abs(r.jumpPower-15)<.001f,"Recovered Commando base stats");Check(!host.activeInHierarchy&&!runHost.activeInHierarchy,"Broad gameplay activation");
@@ -468,7 +483,9 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    }
 
   }finally{
-   WholeCatalogComposed.RestoreProjectiles();if(r.liveCatalogs!=null)r.liveCatalogs.projectileCleanup=ProjectileCatalog.projectilePrefabCount==0;WholeCatalogComposed.RestoreDefinitionFields();body.onRecalculateStats-=observed;if(healthAwake)Call(body.healthComponent,"OnDestroy");if(team)Call(team,"OnDestroy");if(artifacts){Call(artifacts,"OnDisable");Call(artifacts,"OnDestroy");}if(run)Call(run,"OnDisable");if(runHost)Destroy(runHost);if(manager)Call(manager,"OnDisable");if(teamHost)Destroy(teamHost);
+   WholeCatalogComposed.RestoreProjectiles();if(r.liveCatalogs!=null)r.liveCatalogs.projectileCleanup=ProjectileCatalog.projectilePrefabCount==0;WholeCatalogComposed.RestoreDefinitionFields();body.onRecalculateStats-=observed;if(healthAwake)Call(body.healthComponent,"OnDestroy");if(team)Call(team,"OnDestroy");
+   if(artifacts){if(RunArtifactManager.instance==artifacts)Call(artifacts,"OnDisable");var enabled=typeof(RunArtifactManager).GetField("_enabledArtifacts",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(artifacts);if(enabled!=null){Check(Enumerable.Range(0,ArtifactCatalog.artifactCount).All(i=>ArtifactCatalog.GetArtifactDef((ArtifactIndex)i)),"Original artifact catalog changed before Run teardown");Call(artifacts,"OnDestroy");}}
+   if(run&&Run.instance==run)Call(run,"OnDisable");if(runStaging)Destroy(runStaging);else if(runHost)Destroy(runHost);if(manager)Call(manager,"OnDisable");if(teamHost)Destroy(teamHost);
    RoR2Content.Artifacts.WeakAssKnees=oldFall;RoR2Content.Artifacts.Glass=priorGlass;StaticCall(typeof(ArtifactCatalog),"SetArtifactDefs",new object[]{priorDefs});StaticCall(typeof(RunArtifactManager),"Init");DLC1Content.Equipment.EliteVoidEquipment=oldVoid;RoR2Content.Equipment.LunarPotion=oldPotion;
   }
  }
@@ -478,7 +495,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    while(true){
     bool more=false;object current=null;
     try{more=routine.MoveNext();if(more)current=routine.Current;}
-    catch(Exception error){failure=error;break;}
+    catch(Exception error){failure=error;if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=error.ToString();r.firstFailurePhase=r.phase;Save();}break;}
     if(!more)break;yield return current;
    }
   }finally{(routine as IDisposable)?.Dispose();}

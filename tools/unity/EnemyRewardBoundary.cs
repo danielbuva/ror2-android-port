@@ -59,7 +59,9 @@ public sealed partial class MovementBatchProbe {
  void InitializeRewardRunStreams(Result cfg){
   priorStageGenerator=rewardRun.stageRngGenerator;priorStageRng=rewardRun.stageRng;priorRunRng=rewardRun.runRNG;priorLoopRng=rewardRun.loopRngGenerator;priorNextStageRng=rewardRun.nextStageRng;priorRunSeed=rewardRun.seed;
   Check(priorStageGenerator==null&&priorStageRng==null&&priorRunRng==null&&priorLoopRng==null&&priorNextStageRng==null,"Existing Run RNG context");ownsRewardRunRng=true;
-  priorRunLoopResetFlags=rewardRun.EventFlagsToResetOnLoop;Check(priorRunLoopResetFlags==null&&(!cfg.teleporterLoop||cfg.runEventFlagsToResetOnLoop!=null),"Original loop-reset serialized contract absent or unowned");rewardRun.EventFlagsToResetOnLoop=cfg.runEventFlagsToResetOnLoop==null?Array.Empty<string>():cfg.runEventFlagsToResetOnLoop.ToArray();
+  priorRunLoopResetFlags=rewardRun.EventFlagsToResetOnLoop;Check(!cfg.teleporterLoop||cfg.runEventFlagsToResetOnLoop!=null,"Original loop-reset settings absent");
+  if(priorRunLoopResetFlags==null)rewardRun.EventFlagsToResetOnLoop=cfg.runEventFlagsToResetOnLoop==null?Array.Empty<string>():cfg.runEventFlagsToResetOnLoop.ToArray();
+  else Check(cfg.integratedWorld&&cfg.runEventFlagsToResetOnLoop!=null&&priorRunLoopResetFlags.SequenceEqual(cfg.runEventFlagsToResetOnLoop),"Original ClassicRun loop-reset settings differ from accepted input");
   rewardRun.seed=SelectOwnedRunSeed(cfg);r.rewards.seed=rewardRun.seed.ToString(System.Globalization.CultureInfo.InvariantCulture);rewardRun.runRNG=new Xoroshiro128Plus(rewardRun.seed);rewardRun.nextStageRng=new Xoroshiro128Plus(rewardRun.runRNG.nextUlong);
   if(firstStagePolicyConsumed)Check(rewardRun.nextStageRng.nextNormalizedFloat==firstStageSelectionValue,"Original starting-scene RNG draw differs from the owned Run stream");
   rewardRun.stageRngGenerator=new Xoroshiro128Plus(rewardRun.runRNG.nextUlong);Call(rewardRun,"GenerateStageRNG");Call(rewardRun,"GenerateLoopRNG");

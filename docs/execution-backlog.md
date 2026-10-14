@@ -4473,3 +4473,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** The composed game retained all 73 original CraftableDefs but did not initialize the native ingredient and recipe catalogs. Use their original initializers after PickupCatalog and restore owned static state at session exit.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor build and assisted Lakes → Goolake device run with one genuine exit, two original stage begins and zero current-PID Unity errors. All source recipes register; individual crafting actions remain untested.
 - **OPEN / DEPENDENCIES:** Original `IngredientTypeCatalog`/`CraftableCatalog` contracts and pinned R2API.Items registration timing; normal/full-route and 60 FPS remain open. J464 rollback retained.
+
+## C17 / J466 — Register original game modes and use serialized ClassicRun owner
+
+- **OBSERVATION / HYPOTHESIS / TASK:** The composed session constructed an empty Run and left all shipped game-mode prefabs unregistered. Clone the original inactive ClassicRun prefab, preserve its serialized loop settings, initialize the complete native GameModeCatalog after rules, and restore ownership on exit.
+- **TEST / PASS:** Preflight, 136 host tests, exact-editor ARM64 build, assisted Lakes → Goolake genuine exit with two original stage begins and zero current-PID errors; two unassisted living-body end-run/menu cleanups with fresh restart and unchanged profile/results/settings.
+- **OPEN / EVIDENCE:** Stock Run.Awake/Start, alternate-mode playability, normal full route and sustained 60 FPS remain open. J466 ignored failed/passing attempts and lifecycle check; J465 and Moon rollbacks retained. Depends on shipped ClassicRun/GameModeCatalog and pinned R2API.ContentManagement timing.

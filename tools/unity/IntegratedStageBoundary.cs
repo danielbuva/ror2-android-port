@@ -211,5 +211,5 @@ public sealed partial class MovementBatchProbe {
   if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
   Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
  }
- void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupCraftableCatalog();CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
+ void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupOriginalGameModes();CleanupCraftableCatalog();CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }
