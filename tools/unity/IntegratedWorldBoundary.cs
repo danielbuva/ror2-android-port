@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using HG.Reflection;
 using RoR2;
+using RoR2.Audio;
 using RoR2.Networking;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -40,7 +41,7 @@ public sealed partial class MovementBatchProbe {
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;public string pickupRegistryStatus;
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
-  public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets;public bool sourceConstructTurretHandler,offlineChatBoundary;public string offlineChatLastToken;
+  public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets,offlinePointSoundPackets;public bool sourceConstructTurretHandler,offlineChatBoundary,offlinePointSoundBoundary;public string offlineChatLastToken,offlinePointSoundLastEvent;public Vector3 offlinePointSoundLastPosition;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
@@ -73,6 +74,7 @@ public sealed partial class MovementBatchProbe {
  bool ownsWorldTeleportHandler;
  readonly Dictionary<short,NetworkMessageDelegate> worldClientHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldServerHandlers=new Dictionary<short,NetworkMessageDelegate>(),worldClientObservers=new Dictionary<short,NetworkMessageDelegate>(),worldServerObservers=new Dictionary<short,NetworkMessageDelegate>();
  readonly List<short> worldSourceServerHandlerIds=new List<short>(),worldSourceClientHandlerIds=new List<short>();
+ NetworkSoundEventDef[] worldOfflineNetworkSoundDefs;
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
@@ -426,6 +428,14 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
     // The shipped Chat receiver asks the platform user manager whether text
     // chat is allowed. An absent offline user cannot answer that question.
     if(attribute.msgType==59&&PlatformSystems.userManager==null){handler=ObserveUnavailablePlatformChat;r.world.offlineChatBoundary=true;}
+    // The shipped point-sound receiver maps the index to a Wwise event, then
+    // emits it. Decode the original packet when the audio engine is absent.
+    if(attribute.msgType==72&&WwiseIntegrationManager.noAudio){
+     var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<NetworkSoundEventDef>());
+     Check(definitions!=null&&definitions.Length>0&&definitions.All(def=>def),"Original network-sound definitions are unavailable");
+     worldOfflineNetworkSoundDefs=definitions.OrderBy(def=>def.name,StringComparer.Ordinal).ToArray();
+     handler=ObserveUnavailablePointSound;r.world.offlinePointSoundBoundary=true;
+    }
     activeBodyClient.RegisterHandler(attribute.msgType,handler);worldSourceClientHandlerIds.Add(attribute.msgType);
    }
   }
@@ -442,6 +452,15 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var subject=native as Chat.SubjectFormatChatMessage;var simple=native as Chat.SimpleChatMessage;
   r.world.offlineChatLastToken=subject!=null?subject.baseToken:(simple!=null?simple.baseToken:native.GetType().Name);
   if(r.commerce!=null){r.commerce.messages++;r.commerce.lastMessage=r.world.offlineChatLastToken;}
+ }
+ void ObserveUnavailablePointSound(NetworkMessage message){
+  var index=message.reader.ReadNetworkSoundEventIndex();
+  var position=message.reader.ReadVector3();
+  Check(worldOfflineNetworkSoundDefs!=null,"Owned network-sound decoder was not prepared");
+  Check(index==NetworkSoundEventIndex.Invalid||(int)index>=0&&(int)index<worldOfflineNetworkSoundDefs.Length,"Original point-sound index is outside the source catalog");
+  r.world.offlinePointSoundPackets++;
+  r.world.offlinePointSoundLastEvent=index==NetworkSoundEventIndex.Invalid?"invalid":worldOfflineNetworkSoundDefs[(int)index].eventName;
+  r.world.offlinePointSoundLastPosition=position;
  }
  void ObserveWorldHandlers(bool server){
   var handlers=server?NetworkServer.handlers:activeBodyClient.handlers;var originals=server?worldServerHandlers:worldClientHandlers;var observers=server?worldServerObservers:worldClientObservers;
@@ -802,7 +821,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(ownsWorldCoinLease&&worldCoinLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease)-worldCoinBaseline;Check(extra>=0&&extra<=worldBarrelConsumers,"Unattributed integrated barrel coin leases");for(int i=0;i<extra;i++)Addressables.Release(worldCoinLease.Result);Addressables.Release(worldCoinLease);ownsWorldCoinLease=false;}
   RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(activeBodyClient!=null)foreach(short id in new short[]{52,55,57})activeBodyClient.UnregisterHandler(id);if(ownsWorldTeleportHandler){if(activeBodyClient!=null)activeBodyClient.UnregisterHandler(68);if(NetworkServer.active)NetworkServer.UnregisterHandler(68);ownsWorldTeleportHandler=false;}
   if(activeBodyClient!=null)foreach(var id in worldSourceClientHandlerIds)activeBodyClient.UnregisterHandler(id);worldSourceClientHandlerIds.Clear();
-  if(NetworkServer.active)foreach(var id in worldSourceServerHandlerIds)NetworkServer.UnregisterHandler(id);worldSourceServerHandlerIds.Clear();
+  if(NetworkServer.active)foreach(var id in worldSourceServerHandlerIds)NetworkServer.UnregisterHandler(id);worldSourceServerHandlerIds.Clear();worldOfflineNetworkSoundDefs=null;
   if(worldVfxOption!=null)worldVfxOption.AttemptSetString(priorWorldVfx);if(priorWorldXp!=null)SettingsConVars.cvExpAndMoneyEffects.AttemptSetString(priorWorldXp);
   if(ownsWorldLists&&Run.instance){
    if(worldAvailableItems!=null){worldAvailableItems.Clear();worldAvailableEquipment.Clear();Run.instance.BuildDropTable();Run.instance.availableItems=previousWorldAvailableItems;Run.instance.availableEquipment=previousWorldAvailableEquipment;ItemMask.Return(worldAvailableItems);EquipmentMask.Return(worldAvailableEquipment);worldAvailableItems=null;worldAvailableEquipment=null;}
