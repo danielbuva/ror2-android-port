@@ -507,11 +507,16 @@ public sealed partial class MovementBatchProbe {
     // Near contact remains a threat even without a clear firing line.
     var nearest=targets.Where(x=>x.visible||x.distance<8).OrderBy(x=>x.distance).FirstOrDefault();
     var fromThreat=player.characterMotor.Motor.TransientPosition-DirectorPhysicsPosition(nearest!=null?nearest.actor.body:target.actor.body);float distance=fromThreat.magnitude;fromThreat.y=0;
-    float safeDistance=20;
+    // The source Loader primary is a BasicMeleeAttack. A ranged retreat ring
+    // kept it outside its own hitbox for the entire unattended route.
+    var primary=player.skillLocator.primary.skillDef;
+    bool meleePrimary=primary&&primary.activationState.stateType!=null&&typeof(EntityStates.BasicMeleeAttack).IsAssignableFrom(primary.activationState.stateType);
+    float safeDistance=meleePrimary?1.6f:20f,engagementRange=meleePrimary?2.2f:32f;
+    r.world.combatMeleePrimary=meleePrimary;r.world.combatEngagementRange=engagementRange;
     bool escape=nearest!=null&&distance<safeDistance;
     Vector2 desired=escape?new Vector2(fromThreat.x,fromThreat.z).normalized:distance>safeDistance+12?-new Vector2(fromThreat.x,fromThreat.z).normalized:new Vector2(fromThreat.z,-fromThreat.x).normalized;
     bool returnToHoldout=constrainToHoldout&&worldTeleporter&&planar.magnitude>Mathf.Max(12f,worldTeleporter.holdoutZoneController.currentRadius*.75f);
-    bool approach=!escape&&(!target.visible||target.distance>32)&&(!constrainToHoldout||planar.magnitude<=50);
+    bool approach=!escape&&(!target.visible||target.distance>engagementRange)&&(!constrainToHoldout||planar.magnitude<=50);
     if(returnToHoldout){
      // The unattended input driver follows the original scene graph back into
      // the real holdout; native charge, enemies and attacks remain unchanged.
@@ -521,7 +526,7 @@ public sealed partial class MovementBatchProbe {
      NavigateWorldInput(player,bridge,DirectorPhysicsPosition(target.actor.body),1,"Combat: "+target.actor.body.name,elapsed);r.world.combatApproachFrames++;
     }else SelectCombatMotion(player,bridge,desired,actors,escape);
     r.world.combatTarget=target.actor.body.name;r.world.combatLineOfSight=target.visible;r.world.combatTargetBoss=target.boss;r.world.combatTargetDistance=target.distance;r.world.combatThreatDistance=distance;r.world.combatAimOrigin=origin;r.world.combatAimTarget=target.point;
-    bool evade=nearest!=null&&distance<16;if(!returnToHoldout)bridge.diagnosticSprint=evade;if(!approach&&!returnToHoldout)bridge.DiagnosticJump(elapsed%1.8f<.25f);
+    bool evade=!meleePrimary&&nearest!=null&&distance<16;if(!returnToHoldout)bridge.diagnosticSprint=evade;if(!approach&&!returnToHoldout)bridge.DiagnosticJump(elapsed%1.8f<.25f);
     bridge.diagnosticUtility=evade&&player.skillLocator.utility.CanExecute();
     var aim=target.point-origin;bridge.aim=new Vector2(aim.x,aim.z).normalized;bridge.diagnosticAim=aim.normalized;bridge.diagnosticPrimary=target.visible;bridge.diagnosticSecondary=target.visible&&elapsed%4<.2f;bridge.diagnosticSpecial=target.visible&&elapsed%10<.2f;
     if(r.commerceSweep&&CommerceSweepPendingRepairs()){bridge.diagnosticUtility=bridge.diagnosticSecondary=bridge.diagnosticSpecial=false;}

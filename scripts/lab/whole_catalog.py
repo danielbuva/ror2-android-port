@@ -1012,12 +1012,27 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
 
 def build_integration(code_only=False):
     from build import build, freeze_whole_payload, WHOLE_PLAYER_INPUTS
+    from animation_bindings import repair as repair_animation_bindings
+    from body_visual_map import generate as generate_body_visual_map
     out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
     attempt = ROOT/read(out/'integration-latest.json')['path']
     if not read(attempt/'host-integration.json')['success']:
         raise RuntimeError('Whole roots must pass typed import before building')
     manifest = read(attempt/'manifest.json')
     project = WORK/'lab-project'
+    assembly_hash=sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll')
+    decompile_key=digest(dict(input=assembly_hash,ilspy='11.0.0.9375',args='project-referencepath-csharp9-v2'))
+    source=WORK/'decompiled/RoR2'/decompile_key[:16]/'RoR2/CharacterBody.cs'
+    contract=read(out/'original-catalog-contract.json')
+    if contract['input_sha256']!=assembly_hash or manifest['input_id']!=read(WORK/'config/accepted-input.json')['input_id']:
+        raise RuntimeError('Original body visual references belong to another accepted input')
+    visual_map=generate_body_visual_map(source,project/'Assets/LabLoadingScene/OriginalBodyVisualMap.cs',manifest['input_id'],contract['legacyAliases'],manifest)
+    write(WORK/'body-visual-map-latest.json',visual_map)
+    animation_bindings = repair_animation_bindings(project)
+    if code_only and animation_bindings['repaired']:
+        raise RuntimeError('Original animation curves changed; a content build is required')
+    if animation_bindings['repaired'] or animation_bindings['unresolved']:
+        write(WORK/'animation-bindings-latest.json', animation_bindings)
     if (WORK/'scene-probe-build.json').exists() and not (project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json').is_file():
         raise RuntimeError('Composed session is not staged for this generation; migrate it before building against an old scene recipe')
     stage_config=project/'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'
@@ -1033,7 +1048,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','IntegratedWorldBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','IntegratedWorldBoundary.cs','OriginalBodyVisualBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)

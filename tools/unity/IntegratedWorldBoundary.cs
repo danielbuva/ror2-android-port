@@ -41,7 +41,8 @@ public sealed partial class MovementBatchProbe {
   public float interactionDistance;public WorldPickupObservation[] pickupObservations;public string pickupRegistryStatus;
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
-  public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets,offlinePointSoundPackets;public bool sourceConstructTurretHandler,offlineChatBoundary,offlinePointSoundBoundary;public string offlineChatLastToken,offlinePointSoundLastEvent;public Vector3 offlinePointSoundLastPosition;
+  public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets,offlinePointSoundPackets,offlineEffectSoundPackets;public bool sourceConstructTurretHandler,offlineChatBoundary,offlinePointSoundBoundary,offlineEffectSoundBoundary;public string offlineChatLastToken,offlinePointSoundLastEvent,offlineEffectSoundLastEvent;public Vector3 offlinePointSoundLastPosition;
+  public int bodyVisualSlots;public string[] bodyVisualUnavailable;public bool bodyVisualCleaned;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
@@ -53,6 +54,7 @@ public sealed partial class MovementBatchProbe {
   public bool manualTakeover;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
   public int combatVisibleCandidates,combatOccludedCandidates,combatApproachFrames,combatHoldoutReturnFrames;public bool combatLineOfSight,combatTargetBoss,combatHoldoutConstrained,combatPrimaryRequested;public float combatTargetDistance,combatThreatDistance,combatHoldoutReturnDistance;public Vector3 combatAimOrigin,combatAimTarget;
+  public bool combatMeleePrimary;public float combatEngagementRange;
   public Vector3 combatTargetPhysicsPosition,combatTargetCorePosition;
  }
  readonly List<GameObject> worldObjects=new List<GameObject>();
@@ -324,6 +326,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.interactionReady=worldDriver.enabled&&ReferenceEquals(DriverField(worldDriver,"inputBank"),player.inputBank);
   r.world.start=origin;r.world.ready=r.world.authority&&r.world.lootReady&&r.world.interactionReady&&rewardDirector.enabled;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
+  if(r.liveCatalogs!=null){var visuals=PrepareOriginalBodyVisualReferences();while(visuals.MoveNext())yield return visuals.Current;}
   if(r.liveCatalogs!=null&&cfg.teleporterLoop){var transmutation=PrepareWorldTransmutation();while(transmutation.MoveNext())yield return transmutation.Current;}
   PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
@@ -392,7 +395,11 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var effects=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(EffectManager).GetMethod("HandleEffectClient",BindingFlags.Static|BindingFlags.NonPublic));
   var xp=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(ExperienceManager).GetMethod("HandleCreateExpEffect",BindingFlags.Static|BindingFlags.NonPublic));
   var teleport=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(TeleportHelper).GetMethod("HandleTeleport",BindingFlags.Static|BindingFlags.NonPublic));ownsWorldTeleportHandler=true;activeBodyClient.RegisterHandler(68,teleport);NetworkServer.RegisterHandler(68,teleport);
-  activeBodyClient.RegisterHandler(52,msg=>{r.world.coinMessages++;effects(msg);});
+  if(WwiseIntegrationManager.noAudio){
+   var effectPacketType=typeof(EffectManager).GetNestedType("EffectMessage",BindingFlags.NonPublic);
+   Check(effectPacketType!=null&&typeof(MessageBase).IsAssignableFrom(effectPacketType)&&effectPacketType.GetField("effectIndex")!=null&&effectPacketType.GetField("effectData")!=null,"Original effect packet contract changed");
+   activeBodyClient.RegisterHandler(52,msg=>{r.world.coinMessages++;ObserveUnavailableEffectSound(msg,effectPacketType);});r.world.offlineEffectSoundBoundary=true;
+  }else activeBodyClient.RegisterHandler(52,msg=>{r.world.coinMessages++;effects(msg);});
   activeBodyClient.RegisterHandler(55,msg=>{r.world.xpMessages++;xp(msg);});
   // Decode with the original MessageBase. Do not call the original native-audio UI handler
   // or fabricate its completion/profile discovery. Server grant, quantity and identity stay original.
@@ -461,6 +468,22 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.offlinePointSoundPackets++;
   r.world.offlinePointSoundLastEvent=index==NetworkSoundEventIndex.Invalid?"invalid":worldOfflineNetworkSoundDefs[(int)index].eventName;
   r.world.offlinePointSoundLastPosition=position;
+ }
+ void ObserveUnavailableEffectSound(NetworkMessage message,Type packetType){
+  // The shipped client handler decodes this MessageBase and calls SpawnEffect.
+  // Only its Wwise event is unavailable: preserve the effect index/data and
+  // original visual spawn, while recording the removed sound request.
+  var packet=(MessageBase)Activator.CreateInstance(packetType,true);message.ReadMessage(packet);
+  var index=(EffectIndex)packetType.GetField("effectIndex").GetValue(packet);
+  var data=(EffectData)packetType.GetField("effectData").GetValue(packet);
+  Check(data!=null,"Original effect packet data missing");
+  var sound=data.networkSoundEventIndex;
+  if(sound!=NetworkSoundEventIndex.Invalid){
+   Check(worldOfflineNetworkSoundDefs!=null&&(int)sound>=0&&(int)sound<worldOfflineNetworkSoundDefs.Length,"Original effect sound index is outside the source catalog");
+   r.world.offlineEffectSoundPackets++;r.world.offlineEffectSoundLastEvent=worldOfflineNetworkSoundDefs[(int)sound].eventName;
+   data.networkSoundEventIndex=NetworkSoundEventIndex.Invalid;
+  }
+  EffectManager.SpawnEffect(index,data,false);
  }
  void ObserveWorldHandlers(bool server){
   var handlers=server?NetworkServer.handlers:activeBodyClient.handlers;var originals=server?worldServerHandlers:worldClientHandlers;var observers=server?worldServerObservers:worldClientObservers;
@@ -807,7 +830,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
   TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
- void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupWorldTransmutation();CleanupTeleporterWorld();
+ void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupWorldTransmutation();CleanupTeleporterWorld();CleanupOriginalBodyVisualReferences();
   worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;fireTrailDiagnosisRecorded=false;
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;

@@ -17,12 +17,15 @@ public sealed partial class MovementBatchProbe {
   public float healthBefore,healthAfter,damageDealt,lastDamage;
   public string bodyState,weaponState,secondaryDefinition,utilityDefinition,specialDefinition;
   public bool targetServer,targetHurtBox,cleaned;public Vector3 targetCenter,aimOrigin;public int hurtBoxLayer,hurtBoxes;
+  public string meleeCurve,meleeAnimatorController;public float meleeCurvePeak,meleeHitBoxAimDistance;
+  public int meleeAttackTicksPeak,meleeHitBoxCount,meleeActiveHitBoxes,meleeAnimationStateHash;
  }
  readonly List<EntityStateConfiguration> combatConfigs=new List<EntityStateConfiguration>();
  readonly HashSet<int> observedProjectiles=new HashSet<int>();
  GameObject projectileTemplateHost,projectileHost,targetHost,targetVisual;
  GameObject ownedFMJ;CharacterBody targetBody;Material combatMaterial;Texture2D combatTexture;
  EntityState lastCombatBody,lastCombatWeapon;
+ static readonly FieldInfo meleeAttackTicksField=typeof(BasicMeleeAttack).GetField("meleeAttackTicks",BindingFlags.Instance|BindingFlags.NonPublic);
  EntityStateConfiguration[] PrepareCombatConfigs(Result cfg){
   r.combat=new CombatReport();SilentProjectileBoundary.prepared=0;
   foreach(var asset in new[]{cfg.secondaryConfigAsset,cfg.utilityConfigAsset,cfg.specialConfigAsset}){
@@ -84,6 +87,23 @@ public sealed partial class MovementBatchProbe {
  void ObserveCombatDamage(DamageReport report){if(r.integratedWorld){if(report.attackerBody!=worldPlayer)return;}else if(report.victimBody!=targetBody)return;r.combat.damageEvents++;r.combat.lastDamage=report.damageDealt;r.combat.damageDealt+=report.damageDealt;}
  void ObserveCombat(CharacterBody player,EntityStateMachine machine){
   var weapon=player.skillLocator.primary.stateMachine.state;r.combat.weaponState=weapon.GetType().FullName;r.combat.bodyState=machine.state.GetType().FullName;
+  var melee=weapon as BasicMeleeAttack;
+  if(melee!=null){
+   var animator=player.modelLocator&&player.modelLocator.modelTransform?player.modelLocator.modelTransform.GetComponent<Animator>():null;
+   var curve=melee.mecanimHitboxActiveParameter;r.combat.meleeCurve=curve;
+   if(animator){
+    r.combat.meleeAnimatorController=animator.runtimeAnimatorController?animator.runtimeAnimatorController.name:"";
+    if(!string.IsNullOrEmpty(curve)&&animator.parameters.Any(parameter=>parameter.name==curve))r.combat.meleeCurvePeak=Mathf.Max(r.combat.meleeCurvePeak,animator.GetFloat(curve));
+    var layer=animator.GetLayerIndex("Gesture, Override");if(layer>=0)r.combat.meleeAnimationStateHash=animator.GetCurrentAnimatorStateInfo(layer).shortNameHash;
+   }
+   if(meleeAttackTicksField!=null)r.combat.meleeAttackTicksPeak=Mathf.Max(r.combat.meleeAttackTicksPeak,(int)meleeAttackTicksField.GetValue(melee));
+   var group=melee.OverlapAttack!=null?melee.OverlapAttack.hitBoxGroup:null;
+   if(group&&group.hitBoxes!=null){
+    r.combat.meleeHitBoxCount=group.hitBoxes.Length;
+    r.combat.meleeActiveHitBoxes=group.hitBoxes.Count(box=>box&&box.enabled&&box.gameObject.activeInHierarchy);
+    if(r.world!=null)foreach(var box in group.hitBoxes)if(box&&box.enabled&&box.gameObject.activeInHierarchy){var distance=Vector3.Distance(box.transform.position,r.world.combatAimTarget);if(r.combat.meleeHitBoxAimDistance<=0||distance<r.combat.meleeHitBoxAimDistance)r.combat.meleeHitBoxAimDistance=distance;}
+   }
+  }
   if(weapon!=lastCombatWeapon){if(weapon is FireFMJ)r.combat.secondaryEntries++;if(weapon is FireBarrage)r.combat.specialEntries++;lastCombatWeapon=weapon;}
   if(machine.state!=lastCombatBody){if(machine.state is DodgeState)r.combat.utilityEntries++;lastCombatBody=machine.state;}
   // The local server owns every spawned original projectile. Its live identity
