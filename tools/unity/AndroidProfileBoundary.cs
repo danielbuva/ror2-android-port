@@ -25,6 +25,9 @@ public sealed partial class MovementBatchProbe {
   public override Dictionary<string,byte[]> LoadHistory(){throw Unavailable();}
  }
  AndroidProgressionBoundary androidProgression;
+ bool HasOwnedProfileUnlock(UnlockableDef definition){
+  return !definition||resultsSaveSystem!=null&&resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.HasUnlockable(definition);
+ }
  AndroidProgressionBoundary.DiscoveryReport pendingDiscovery;
  Inventory discoveryInventory;Action<ItemIndex> discoveryItem;Action<EquipmentIndex,uint> discoveryEquipment;Action<KeyItemIndex> discoveryKeyItem;
  readonly Dictionary<FieldInfo,object> priorProfileCatalog=new Dictionary<FieldInfo,object>();

@@ -313,6 +313,17 @@ public sealed partial class MovementBatchProbe {
   Check(run.ruleBook.stageOrder==StageOrder.Normal&&!run.ruleBook.keepMoneyBetweenStages,"Original default stage-order/money rules changed");
   RefreshRewardEquipmentMask(true);
   RefreshWholeRunAvailability();
+  if(worldChestTable){
+   // The owned table was first generated before native rules and earned profile
+   // unlocks populated Run availability. Rebuild it from the source lists now.
+   var expected=worldLootDefinitions.Select(item=>PickupCatalog.FindPickupIndex(item.itemIndex)).OrderBy(index=>index.value).ToArray();
+   var available=run.availableTier1DropList.Concat(run.availableTier2DropList).Concat(run.availableTier3DropList).OrderBy(index=>index.value).ToArray();
+   Check(expected.SequenceEqual(available),"Original unlocked tier lists differ from the Android profile's eligible loot");
+   worldChestTable.RegenerateDropTable(run);
+   r.world.lootTier1=run.availableTier1DropList.Count;r.world.lootTier2=run.availableTier2DropList.Count;r.world.lootTier3=run.availableTier3DropList.Count;
+   r.world.lootDomain=worldChestTable.GetPickupCount();
+   Check(r.world.lootDomain==expected.Length,"Original chest table missed an earned eligible item");
+  }
   if(r.moonCatalog!=null){var lunar=RoR2Content.Equipment.AffixLunar;Check(lunar&&EquipmentCatalog.GetEquipmentDef(lunar.equipmentIndex)==lunar&&!lunar.requiredExpansion&&!run.IsEquipmentExpansionLocked(lunar.equipmentIndex),"Original base Lunar equipment availability failed");}
   Check(run.runRNG!=null&&run.loopRngGenerator!=null&&run.nextStageRng!=null&&run.bossRewardRng!=null,"Original Run random streams absent");r.objective.rules=true;r.objective.ruleCount=RuleCatalog.ruleCount;
  }

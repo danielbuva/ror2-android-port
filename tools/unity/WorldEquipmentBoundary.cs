@@ -37,7 +37,7 @@ public sealed partial class MovementBatchProbe {
   for(int i=0;i<names.Length;i++){Check(defs[i]&&defs[i].name=="bd"+names[i],"Original equipment buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],defs[i]);}return defs;
  }
  IEnumerable<EquipmentDef> EligibleWorldEquipment(){
-  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")&&r.integratedWorld)return EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).Where(def=>def&&def.canDrop&&!def.requiredExpansion&&!def.unlockableDef);
+  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")&&r.integratedWorld)return EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).Where(def=>def&&def.canDrop&&!def.requiredExpansion&&HasOwnedProfileUnlock(def.unlockableDef));
   return (worldEquipmentDefinitions??new EquipmentDef[0]).Where(x=>x.name!="GoldGat"&&x.name!="PassiveHealing");
  }
  GameObject[] PrepareWorldEquipmentSupport(Result cfg){
