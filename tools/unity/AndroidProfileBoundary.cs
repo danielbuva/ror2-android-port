@@ -70,7 +70,7 @@ public sealed partial class MovementBatchProbe {
   return !definition||resultsSaveSystem!=null&&resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.HasUnlockable(definition);
  }
  AndroidProgressionBoundary.DiscoveryReport pendingDiscovery;
- Action<TeleporterInteraction> profileProgressionCharge;Action<DamageReport> profileEliteDeath;Action<BossGroup> profileQuickBoss;Action<SceneExitController> profileTeleporterExit;Action<SceneExitControllerColossusPortal> profileColossusExit;bool profileFirstTeleporterRecorded;
+ Action<TeleporterInteraction> profileProgressionCharge,profileTeleporterBegin;Action<DamageDealtMessage> profileTeleporterDamage;Action<DamageReport> profileEliteDeath;Action<BossGroup> profileQuickBoss,profileMountainBoss;Action<Stage> profileLoopStage;Action<SceneExitController> profileTeleporterExit;Action<SceneExitControllerColossusPortal> profileColossusExit;bool profileFirstTeleporterRecorded,profileTeleporterCharging,profileTeleporterHit;
  readonly HashSet<string> profileObservedEvents=new HashSet<string>(StringComparer.Ordinal);
  Inventory discoveryInventory;Action<ItemIndex> discoveryItem;Action<EquipmentIndex,uint> discoveryEquipment;Action<KeyItemIndex> discoveryKeyItem;
  readonly Dictionary<FieldInfo,object> priorProfileCatalog=new Dictionary<FieldInfo,object>();
@@ -115,8 +115,12 @@ public sealed partial class MovementBatchProbe {
   ConfirmAndroidProfileLoadout(player,local.profile);
   r.profile.ready=true;r.profile.created=local.recovery=="new";r.profile.roundTrip=true;r.profile.recovery=local.recovery;r.profile.saveFields=UserProfile.saveFields.Length;r.profile.statFields=local.profile.statSheet.fields.Length;r.profile.survivors=SurvivorCatalog.survivorCount;ObserveAndroidProfile();Save();
   profileProgressionCharge=ObserveOfflineTeleporterProgression;TeleporterInteraction.onTeleporterChargedGlobal+=profileProgressionCharge;
+  profileTeleporterBegin=teleporter=>{if(teleporter==worldTeleporter){profileTeleporterCharging=true;profileTeleporterHit=false;}};TeleporterInteraction.onTeleporterBeginChargingGlobal+=profileTeleporterBegin;
+  profileTeleporterDamage=message=>{if(profileTeleporterCharging&&message!=null&&worldPlayer&&message.victim==worldPlayer.gameObject)profileTeleporterHit=true;};GlobalEventManager.onClientDamageNotified+=profileTeleporterDamage;
   profileEliteDeath=damage=>{if(damage!=null&&damage.victimIsElite&&worldPlayer&&damage.attackerMaster==worldPlayer.master)RecordOfflineOriginalEvent("KillEliteMonster");};GlobalEventManager.onDeathProcServer+=profileEliteDeath;
   profileQuickBoss=group=>{if(group&&group.fixedTimeSinceEnabled<=15f&&group.GetComponent<TeleporterInteraction>())RecordOfflineOriginalEvent("KillBossQuick");};BossGroup.onBossGroupDefeatedServer+=profileQuickBoss;
+  profileMountainBoss=group=>{if(group&&worldTeleporter&&worldPlayer&&worldPlayer.healthComponent&&worldPlayer.healthComponent.alive&&worldTeleporter.bossDirector&&worldTeleporter.bossDirector.combatSquad==group.combatSquad&&worldTeleporter.shrineBonusStacks>=2)RecordOfflineOriginalEvent("CompleteMultiBossShrine");};BossGroup.onBossGroupDefeatedServer+=profileMountainBoss;
+  profileLoopStage=stage=>{var scene=SceneCatalog.GetSceneDefForCurrentScene();if(stage&&Run.instance&&Run.instance.GetType()==typeof(Run)&&Run.instance.loopClearCount>0&&scene&&(scene.sceneType==SceneType.Stage||scene.sceneType==SceneType.UntimedStage)&&!scene.isFinalStage&&scene.stageOrder==1)RecordOfflineOriginalEvent("LoopOnce");};Stage.onServerStageBegin+=profileLoopStage;
   profileTeleporterExit=exit=>{if(exit&&exit.portalUsedAfterTeleporterEventFinish&&worldPlayer&&worldPlayer.healthComponent&&worldPlayer.healthComponent.alive)RecordOfflineOriginalEvent("CompleteTeleporter");};SceneExitController.onBeginExit+=profileTeleporterExit;
   profileColossusExit=exit=>{if(exit&&worldPlayer&&worldPlayer.healthComponent&&worldPlayer.healthComponent.alive)RecordOfflineOriginalEvent("CompleteTeleporter");};SceneExitControllerColossusPortal.onBeginExit+=profileColossusExit;
   Check(player&&player.master&&player.master.inventory&&player.master.inventory==player.inventory&&!directorPlayer.networkUser&&discoveryInventory==null,"Owned offline player pickup discovery identity missing");
@@ -136,7 +140,12 @@ public sealed partial class MovementBatchProbe {
  void ObserveOfflineTeleporterProgression(TeleporterInteraction teleporter){
   if(r.profile==null||!r.profile.ready||teleporter!=worldTeleporter)return;
   Check(resultsStats&&resultsStats.currentStats!=null&&resultsSaveSystem.local!=null&&androidProgression!=null,"Original charged-stage achievement lacks its offline profile/stat context");
-  var scene=SceneCatalog.GetSceneDefForCurrentScene();var stats=resultsStats.currentStats;
+  var scene=SceneCatalog.GetSceneDefForCurrentScene();var stats=resultsStats.currentStats;var body=worldPlayer;var health=body?body.healthComponent:null;
+  if(scene&&scene.sceneType==SceneType.Stage&&health&&health.alive){
+   if(profileTeleporterCharging&&!profileTeleporterHit)RecordOfflineOriginalEvent("CompleteTeleporterWithoutInjury");
+   if(health.combinedHealthFraction<=0.1f)RecordOfflineOriginalEvent("ChargeTeleporterWhileNearDeath");
+  }
+  profileTeleporterCharging=false;
   r.profile.threeStageChargedEvents++;
   // The shipped Toolbot server tracker applies this stat on the first charged
   // teleporter. Its NetworkUser is absent in the owned offline session.
@@ -186,8 +195,12 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupAndroidProfile(){
   if(profileProgressionCharge!=null){TeleporterInteraction.onTeleporterChargedGlobal-=profileProgressionCharge;profileProgressionCharge=null;}profileFirstTeleporterRecorded=false;
+  if(profileTeleporterBegin!=null){TeleporterInteraction.onTeleporterBeginChargingGlobal-=profileTeleporterBegin;profileTeleporterBegin=null;}
+  if(profileTeleporterDamage!=null){GlobalEventManager.onClientDamageNotified-=profileTeleporterDamage;profileTeleporterDamage=null;}profileTeleporterCharging=false;profileTeleporterHit=false;
   if(profileEliteDeath!=null){GlobalEventManager.onDeathProcServer-=profileEliteDeath;profileEliteDeath=null;}
   if(profileQuickBoss!=null){BossGroup.onBossGroupDefeatedServer-=profileQuickBoss;profileQuickBoss=null;}
+  if(profileMountainBoss!=null){BossGroup.onBossGroupDefeatedServer-=profileMountainBoss;profileMountainBoss=null;}
+  if(profileLoopStage!=null){Stage.onServerStageBegin-=profileLoopStage;profileLoopStage=null;}
   if(profileTeleporterExit!=null){SceneExitController.onBeginExit-=profileTeleporterExit;profileTeleporterExit=null;}
   if(profileColossusExit!=null){SceneExitControllerColossusPortal.onBeginExit-=profileColossusExit;profileColossusExit=null;}
   profileObservedEvents.Clear();
