@@ -67,8 +67,11 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   if(Run.instance&&difficulty&&difficultySegments!=null&&difficultySegments.Length>0){int tier=Mathf.Clamp(Mathf.FloorToInt((Run.instance.ambientLevel-1)/Mathf.Max(.001f,levelsPerSegment)),0,difficultySegments.Length-1);difficulty.text=Label(difficultySegments[tier].token);difficultyBackground.color=difficultySegments[tier].color;}
   string scene=run.stageProgress!=null?run.stageProgress.current:"golemplains";var def=SceneCatalog.GetSceneDefFromSceneName(scene);stage.text=def?Label(def.nameToken):scene;
   string task=run.world==null?"":run.world.objective;
-  if(run.objective!=null&&run.objective.ready){task=run.objective.charging?"Charge the teleporter: "+Mathf.FloorToInt(run.objective.charge*100)+"%":run.objective.charged?"Use the teleporter":run.objective.bossSpawns>0&&!run.objective.bossDefeated?"Defeat the teleporter boss":"Find and activate the teleporter";}
-  if(run.world!=null&&!string.IsNullOrEmpty(run.world.target))task+="\nB: "+run.world.target;
+  if(!health.alive)task="Commando defeated";
+  else{
+   if(run.objective!=null&&run.objective.ready){task=run.objective.charging?"Charge the teleporter: "+Mathf.FloorToInt(run.objective.charge*100)+"%":run.objective.charged?"Use the teleporter":run.objective.bossSpawns>0&&!run.objective.bossDefeated?"Defeat the teleporter boss":"Find and activate the teleporter";}
+   if(run.world!=null&&!string.IsNullOrEmpty(run.world.target))task+="\nB: "+run.world.target;
+  }
   objective.text=task;
   objectiveLayout.preferredHeight=Mathf.Max(objectiveLayout.minHeight,objective.GetPreferredValues(task,Mathf.Max(1,objective.rectTransform.rect.width),Mathf.Infinity).y+8);
   var slots=new[]{body.skillLocator.primary,body.skillLocator.secondary,body.skillLocator.utility,body.skillLocator.special};
@@ -79,7 +82,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   foreach(var index in body.inventory.itemAcquisitionOrder){int count=body.inventory.GetItemCount(index);if(count<=0)continue;seen.Add(index);RecoveredHudPresentation icon;if(!itemViews.TryGetValue(index,out icon)){icon=Instantiate(itemTemplate,inventoryRoot,false);icon.name="Owned item icon "+index;icon.gameObject.SetActive(true);itemViews.Add(index,icon);}var item=ItemCatalog.GetItemDef(index);BindPickupIcon(icon.itemImage,item);icon.itemCount.gameObject.SetActive(count>1);icon.itemCount.text=count>1?"x"+count:"";}
   foreach(var pair in itemViews)pair.Value.gameObject.SetActive(seen.Contains(pair.Key));
   report.pickupIconBindings=pickupIconBindings.Count;report.loadedPickupIcons=0;foreach(var pair in pickupIconBindings)if(pair.Key&&pair.Key.enabled&&pair.Key.texture)report.loadedPickupIcons++;
-  bool boss=run.objective!=null&&run.objective.bossMaxHealth>0&&!run.objective.bossDefeated;bossContainer.SetActive(boss);
+  bool boss=health.alive&&run.objective!=null&&run.objective.bossMaxHealth>0&&!run.objective.bossDefeated;bossContainer.SetActive(boss);
   if(boss){float ratio=run.objective.bossHealth/Mathf.Max(1,run.objective.bossMaxHealth);Fill(bossFill,0,ratio);bossHealth.text=Mathf.CeilToInt(run.objective.bossHealth)+" / "+Mathf.CeilToInt(run.objective.bossMaxHealth);var group=TeleporterInteraction.instance?TeleporterInteraction.instance.bossGroup:null;bossName.text=group&&!string.IsNullOrEmpty(group.bestObservedName)?Label(group.bestObservedName):"Teleporter boss";}
   PresentFeedback(body,report);
   report.ready=true;report.frames++;report.items=seen.Count;report.skillSlots=skills.Length;report.health=health.health;report.shield=health.shield;report.barrier=health.barrier;report.level=body.level;report.money=body.master.money;report.stage=scene;report.objective=task;report.bossHealth=run.objective==null?0:run.objective.bossHealth;report.charge=run.objective==null?0:run.objective.charge;
