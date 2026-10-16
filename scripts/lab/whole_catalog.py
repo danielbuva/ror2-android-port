@@ -1055,8 +1055,13 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','IntegratedWorldBoundary.cs','OriginalBodyVisualBoundary.cs','OriginalGlobalCommonAssetsBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
-        copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
+    # A code-only build must compile every authored runtime source already in
+    # the project. The former hand-maintained list omitted DOT and debug-input
+    # fixes while still producing a successful but stale APK.
+    runtime = project/'Assets/LabLoadingScene'
+    for source_file in sorted((ROOT/'tools/unity').glob('*.cs')):
+        if (runtime/source_file.name).is_file():
+            copy_catalog_asset(source_file, runtime/source_file.name)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)
     body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'

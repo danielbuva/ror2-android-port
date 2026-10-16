@@ -74,6 +74,10 @@ WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+name+suffix
  for name in ['AutomaticDirectorBoundary.cs','AutomaticSpawnBoundary.cs','StageCombatDeckBoundary.cs',
               'EnemySpineBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','MoonMissionBoundary.cs','WholePopulationBoundary.cs',
               'Resources/WholeStageContexts.json','OriginalBodyVisualMap.cs','OriginalHealthVisualMap.cs','OriginalGlobalCommonAssetMap.cs','OriginalBodyVisualBoundary.cs','OriginalGlobalCommonAssetsBoundary.cs','RecoveredHudPresentation.cs','EnemyRewardBoundary.cs','IntegratedStageBoundary.cs','RunClockBoundary.cs','TeleporterWorldBoundary.cs','WholeInteractableBoundary.cs','MovementBatchProbe.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','IntegratedWorldBoundary.cs','RecoveredPickupPresentation.cs','RecoveredHudFeedback.cs','IntegratedResultsBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','WorldItemBehaviorBoundary.cs','AutomaticModelBoundary.cs','DirectorActorBoundary.cs','AndroidPresentationCamera.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','WorldItemDisplayBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs'] for suffix in ['', '.meta'])
+WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+source_file.name+suffix
+ for source_file in (ROOT/'tools/unity').glob('*.cs')
+ if (WORK/'lab-project/Assets/LabLoadingScene'/source_file.name).is_file()
+ for suffix in ('', '.meta'))
 
 def whole_payload_inputs(project):
  return {str(p.relative_to(project)):sha(p) for folder in ['Assets','Packages','ProjectSettings'] for p in (project/folder).rglob('*') if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith('Assets/Editor/')}

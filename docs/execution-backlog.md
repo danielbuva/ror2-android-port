@@ -1,6 +1,6 @@
 # Execution backlog
 
-J479 is the active composed candidate. The Toolbot stage path passed on one source layout; the separate near-spawn teleporter layout still needs objective-stall recovery evidence. Continue broader original gameplay and profile eligibility without blocking on this unattended route. Preserve J478 and paused J323 rollbacks. Sustained 60 FPS is release acceptance; investigate large unexplained regressions. Manual Moon/finale remains deferred. See PORTING_STATE.md.
+J480 is the active composed candidate. Croco poison effects and all six source DOT visual families are bound; poison tick damage remains unproven under high-damage acceleration. The Toolbot near-spawn teleporter layout still needs objective-stall recovery evidence. Continue broad original gameplay and profile eligibility; preserve J479 and paused J323 rollbacks. Sustained 60 FPS is release acceptance; investigate large unexplained regressions. Manual Moon/finale remains deferred. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 

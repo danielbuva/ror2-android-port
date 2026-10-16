@@ -12,10 +12,12 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class DotObservation {public string type;public int inflictions,damageEvents;public float damage;}
  [Serializable] public class WorldDotReport {
   public bool ready,cleaned;public int definitions,daggerSpawns,peakControllers;
-  public string scope="Original bleed/burn/dagger dependencies. Other DOT buffs are comparison identities only, without expansion or unlock grants. Registration is not proc acceptance; audio unavailable.";
+  public string scope="Original DOT definitions, damage and six source burn/poison visual families; no expansion or unlock grants. Registration is not proc acceptance; audio unavailable.";
+  public string[] effectTypes;
   public List<DotObservation> observations=new List<DotObservation>();
  }
- object previousWorldDotDefs;bool ownsWorldDots;BurnEffectController.EffectParams previousWorldBurn;
+ object previousWorldDotDefs;bool ownsWorldDots;
+ readonly Dictionary<FieldInfo,BurnEffectController.EffectParams> previousWorldBurnEffects=new Dictionary<FieldInfo,BurnEffectController.EffectParams>();
  DotController.OnDotInflictedServerGlobalDelegate worldDotInflicted;Action<DamageReport> worldDotDamage;
  readonly List<GameObject> worldDotPoolSources=new List<GameObject>();
  BuffDef[] WorldDotBuffs(Result cfg){
@@ -29,10 +31,22 @@ public sealed partial class MovementBatchProbe {
   var name=index.ToString();var row=r.dots.observations.FirstOrDefault(x=>x.type==name);
   if(row==null){row=new DotObservation{type=name};r.dots.observations.Add(row);}return row;
  }
+ void BindWorldBurnEffect(string fieldName,string materialPath,string prefabPath){
+  var field=typeof(BurnEffectController).GetField(fieldName,BindingFlags.Static|BindingFlags.Public);
+  Check(field!=null&&field.FieldType==typeof(BurnEffectController.EffectParams)&&field.GetValue(null)==null,"Foreign original DOT effect: "+fieldName);
+  var material=WholeCatalogComposed.LoadOwnedContent<Material>(materialPath);
+  var prefab=WholeCatalogComposed.LoadOwnedContent<GameObject>(prefabPath);
+  Check(material&&prefab&&prefab.GetComponent<BurnEffectControllerHelper>(),"Original DOT effect source differs: "+fieldName);
+  var copy=new Material(material);AndroidMaterialPresentation.Apply(material,copy);worldMaterials.Add(copy);
+  foreach(var renderer in prefab.GetComponentsInChildren<Renderer>(true))if(!worldLootSourceMaterials.ContainsKey(renderer)){worldLootSourceMaterials.Add(renderer,renderer.sharedMaterials);worldLootSourceLayers[renderer.gameObject]=renderer.gameObject.layer;}
+  PresentCommerceModel(prefab.transform);worldDotPoolSources.Add(prefab);
+  previousWorldBurnEffects.Add(field,null);field.SetValue(null,new BurnEffectController.EffectParams{overlayMaterial=copy,fireEffectPrefab=prefab});
+ }
  GameObject[] PrepareWorldDotSupport(Result cfg){
   if(cfg.worldDotBuffAssets==null||cfg.worldDotBuffAssets.Length==0)return new GameObject[0];
   var field=typeof(DotController).GetField("dotDefs",BindingFlags.Static|BindingFlags.NonPublic);previousWorldDotDefs=field.GetValue(null);
-  Check(previousWorldDotDefs==null&&DotController.readOnlyInstancesList.Count==0&&BurnEffectController.normalEffect==null,"Unowned original DOT context");
+  var burnFields=new[]{"normalEffect","helfireEffect","poisonEffect","blightEffect","strongerBurnEffect","lynxPoisonEffect"}.Select(name=>typeof(BurnEffectController).GetField(name,BindingFlags.Static|BindingFlags.Public)).ToArray();
+  Check(previousWorldDotDefs==null&&DotController.readOnlyInstancesList.Count==0&&burnFields.All(field=>field!=null&&field.FieldType==typeof(BurnEffectController.EffectParams)&&field.GetValue(null)==null),"Unowned original DOT context");
   ownsWorldDots=true;StaticCall(typeof(DotController),"InitDotCatalog");
   var defs=(Array)field.GetValue(null);Check(defs!=null&&defs.Length==(int)DotController.DotIndex.Count,"Original DOT catalog initialization differs");
   foreach(DotController.DotIndex index in Enum.GetValues(typeof(DotController.DotIndex))){if(index<DotController.DotIndex.Bleed||index>=DotController.DotIndex.Count)continue;var def=DotController.GetDotDef(index);Check(def!=null&&def.interval>0&&(!def.associatedBuff||BuffCatalog.GetBuffDef(def.associatedBuff.buffIndex)==def.associatedBuff),"Original DOT definition/buff not indexed: "+index);}
@@ -53,8 +67,16 @@ public sealed partial class MovementBatchProbe {
    foreach(var root in roots.Distinct())PresentCommerceModel(root.transform);
   }
   var overlay=artifactBundle.LoadAsset<Material>(cfg.worldDotBurnMaterialAsset);Check(overlay&&overlay.name=="matOnFire","Original burn overlay absent");var copy=new Material(overlay);AndroidMaterialPresentation.Apply(overlay,copy);worldMaterials.Add(copy);
-  previousWorldBurn=BurnEffectController.normalEffect;BurnEffectController.normalEffect=new BurnEffectController.EffectParams{overlayMaterial=copy,fireEffectPrefab=objectiveSupportSources[Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/FireEffect")]};
-  r.dots=new WorldDotReport{ready=true,definitions=defs.Length};
+  var normal=typeof(BurnEffectController).GetField("normalEffect",BindingFlags.Static|BindingFlags.Public);previousWorldBurnEffects.Add(normal,null);
+  BurnEffectController.normalEffect=new BurnEffectController.EffectParams{startSound="Play_item_proc_igniteOnKill_Loop",stopSound="Stop_item_proc_igniteOnKill_Loop",overlayMaterial=copy,fireEffectPrefab=objectiveSupportSources[Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/FireEffect")]};
+  BindWorldBurnEffect("helfireEffect","Assets/WholeGame/RoR2/Base/Equipment/BurnNearby/matOnHelfire.mat","Assets/WholeGame/RoR2/Base/Equipment/BurnNearby/HelfireEffect.prefab");
+  BurnEffectController.helfireEffect.startSound="Play_item_proc_igniteOnKill_Loop";BurnEffectController.helfireEffect.stopSound="Stop_item_proc_igniteOnKill_Loop";
+  BindWorldBurnEffect("poisonEffect","Assets/WholeGame/RoR2/Base/Characters/Croco/matPoisoned.mat","Assets/WholeGame/RoR2/Base/Characters/Croco/PoisonEffect.prefab");
+  BindWorldBurnEffect("blightEffect","Assets/WholeGame/RoR2/Base/Characters/Croco/matBlighted.mat","Assets/WholeGame/RoR2/Base/Characters/Croco/BlightEffect.prefab");
+  BindWorldBurnEffect("strongerBurnEffect","Assets/WholeGame/RoR2/DLC1/Items/StrengthenBurn/matStrongerBurn.mat","Assets/WholeGame/RoR2/DLC1/Items/StrengthenBurn/StrongerBurnEffect.prefab");
+  // This source binding does not make DLC4 content available to a run.
+  BindWorldBurnEffect("lynxPoisonEffect","Assets/WholeGame/RoR2/DLC4/Common/Buffs/bdLynxPoison/matLynxPoisoned.mat","Assets/WholeGame/RoR2/DLC4/Common/Buffs/bdLynxPoison/LynxPoisonEffect.prefab");
+  r.dots=new WorldDotReport{ready=true,definitions=defs.Length,effectTypes=previousWorldBurnEffects.Keys.Select(field=>field.Name).OrderBy(name=>name).ToArray()};
   worldDotInflicted=(DotController controller,ref InflictDotInfo info)=>{Check(controller&&controller.victimObject==info.victimObject&&controller.netId.Value!=0,"Native DOT victim/network binding differs");WorldDotRow(info.dotIndex).inflictions++;r.dots.peakControllers=Mathf.Max(r.dots.peakControllers,DotController.readOnlyInstancesList.Count);};
   worldDotDamage=report=>{if(report.damageInfo.dotIndex==DotController.DotIndex.None)return;var row=WorldDotRow(report.damageInfo.dotIndex);row.damageEvents++;row.damage+=report.damageDealt;};
   DotController.onDotInflictedServerGlobal+=worldDotInflicted;GlobalEventManager.onServerDamageDealt+=worldDotDamage;
@@ -65,7 +87,8 @@ public sealed partial class MovementBatchProbe {
   if(worldDotInflicted!=null)DotController.onDotInflictedServerGlobal-=worldDotInflicted;if(worldDotDamage!=null)GlobalEventManager.onServerDamageDealt-=worldDotDamage;worldDotInflicted=null;worldDotDamage=null;
   // Empty native stacks while their victim/buff/server context is still valid.
   foreach(var controller in DotController.readOnlyInstancesList.ToArray())if(controller){controller.enabled=false;var stacks=(IList)typeof(DotController).GetField("dotStackList",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(controller);if(NetworkServer.active&&stacks!=null)while(stacks.Count>0)Call(controller,"RemoveDotStackAtServer",stacks.Count-1);Call(controller,"HandleDestroy");}
-  typeof(DotController).GetField("dotDefs",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,previousWorldDotDefs);BurnEffectController.normalEffect=previousWorldBurn;ownsWorldDots=false;
+  typeof(DotController).GetField("dotDefs",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,previousWorldDotDefs);
+  foreach(var entry in previousWorldBurnEffects)entry.Key.SetValue(null,entry.Value);previousWorldBurnEffects.Clear();ownsWorldDots=false;
  }
  void FinishWorldDotCleanup(){
   if(r.dots==null)return;
