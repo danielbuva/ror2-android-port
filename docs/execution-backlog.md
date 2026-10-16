@@ -1,6 +1,6 @@
 # Execution backlog
 
-J480 is the active composed candidate. Croco poison effects and all six source DOT visual families are bound; poison tick damage remains unproven under high-damage acceleration. The Toolbot near-spawn teleporter layout still needs objective-stall recovery evidence. Continue broad original gameplay and profile eligibility; preserve J479 and paused J323 rollbacks. Sustained 60 FPS is release acceptance; investigate large unexplained regressions. Manual Moon/finale remains deferred. See PORTING_STATE.md.
+J481 confirms the J480 candidate also completes an assisted Merc stage with original boss/exit and exercised objective-distance fallback. Croco poison tick damage remains unproven under high-damage acceleration; the specific failed Toolbot layout remains unproven. Continue broad original gameplay and profile eligibility; preserve J479 and paused J323 rollbacks. Sustained 60 FPS is release acceptance; investigate large unexplained regressions. Manual Moon/finale remains deferred. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.
 
