@@ -4505,3 +4505,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** J470 proved Huntress, while nine locked base survivors remained unrun. Add assisted developer-only source selection without granting unlocks; preserve shipped body/animator identities and resolve only observed shared failures.
 - **TEST / PASS:** Preflight, 136 host tests, exact-editor build; each additional base body entered Lakes, with final Treebot and normal-menu Huntress runs error-free. Final Huntress warmed frame time remained comparable to J470 (29.3 vs 29.2 ms); no release-FPS claim.
 - **FAILURE / OPEN:** First failures were Loader/Mage no-audio native calls, Mage's empty local-player index, and Treebot model/effect dependencies; ignored attempts retain evidence. Full skills, normal unlock progression, stage loops, fidelity and sustained 60 FPS remain open. Depends on J470, shipped source content and pinned R2API.Skins/DebugToolkit/R2API.Sound contract clues.
+
+## C22 / J485 — Integrate the original Gold Shores detour
+
+- **OBSERVATION / TASK:** The converted scene existed, but its native shrine/portal/mission and return were unrun. Register its original SceneDef, activate the source out-of-bounds MapZone in the additive lifecycle, and follow a receipted assisted portal route.
+- **TEST / PASS:** 139 host tests, preflight, exact-editor ARM64 build, original shrine purchase, four of seven native beacons, boss and return portal, two genuine transitions into Goolake, unchanged stage count through the intermission, zero current-process errors. Four native out-of-bounds rescues were separately observed on the same APK.
+- **OPEN:** Natural shrine frequency, normal combat/holdout, Gold visual parity and release-target 60 FPS. Moon/finale remains paused; continue broad original stage and content coverage.

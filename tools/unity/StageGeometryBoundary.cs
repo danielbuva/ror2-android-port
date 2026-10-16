@@ -184,6 +184,16 @@ public sealed partial class MovementBatchProbe {
  void EnableStageMapZones(){
   if(stageMapZones.Length==0)return;
   if(r.stage.mapZonesReady)return;
+  if(stageGeometryScene.name=="goldshores"){
+   // The exported Gold Shores out-of-bounds box starts disabled, but its
+   // original network identity and TriggerExit teleport are required by this
+   // additive scene lifecycle. Activate only that measured source object;
+   // no position or teleport behavior is replaced.
+   Check(stageMapZones.Length==1&&stageZoneNetworkObjects==1&&stageZoneActiveNames.Length==0,"Gold Shores source out-of-bounds contract changed");
+   var zone=stageMapZones[0];var box=zone.GetComponent<BoxCollider>();var identity=zone.GetComponent<NetworkIdentity>();
+   Check(zone.name=="HOLDER: Map Zone"&&!zone.gameObject.activeSelf&&zone.triggerType==MapZone.TriggerType.TriggerExit&&zone.zoneType==MapZone.ZoneType.OutOfBounds&&box&&box.isTrigger&&identity&&!identity.sceneId.IsEmpty(),"Gold Shores original out-of-bounds volume differs");
+   stageZoneActiveNames=new[]{zone.name};
+  }
   if(!stageMoonVolumes){
    foreach(var zone in stageMapZones)if(stageZoneActiveNames.Contains(zone.name))zone.gameObject.SetActive(true);
    if(stageZoneNetworkObjects>0){
@@ -195,9 +205,18 @@ public sealed partial class MovementBatchProbe {
     int sourceActive=identities.Count(x=>stageZoneActiveNames.Contains(x.name));
     Check(sourceActive==0||sourceActive==identities.Length,"Mixed source map-zone activation requires its original lifecycle");
     if(sourceActive>0){
-     var spawnable=Resources.FindObjectsOfTypeAll<NetworkIdentity>().Where(x=>x.gameObject.hideFlags!=HideFlags.NotEditable&&x.gameObject.hideFlags!=HideFlags.HideAndDontSave&&!x.sceneId.IsEmpty()).ToArray();
-     Check(spawnable.Length==identities.Length&&spawnable.All(x=>identities.Contains(x)),"Unowned spawnable stage identity or missing native scene ID");
-     Check(NetworkServer.SpawnObjects(),"Original out-of-bounds server activation failed");r.stage.mapZoneNetworkObjects=identities.Length;
+     if(stageGeometryScene.name=="goldshores"){
+      // The source scene also contains unrelated network identities. A global
+      // SpawnObjects would activate their lifecycles before the Gold mission.
+      Check(identities.Length==1&&!identities[0].isServer,"Gold Shores map-zone identity was already spawned");
+      NetworkServer.Spawn(identities[0].gameObject);
+      Check(identities[0].isServer&&identities[0].netId.Value!=0,"Original Gold Shores out-of-bounds identity did not spawn");
+     }else{
+      var spawnable=Resources.FindObjectsOfTypeAll<NetworkIdentity>().Where(x=>x.gameObject.hideFlags!=HideFlags.NotEditable&&x.gameObject.hideFlags!=HideFlags.HideAndDontSave&&!x.sceneId.IsEmpty()).ToArray();
+      Check(spawnable.Length==identities.Length&&spawnable.All(x=>identities.Contains(x)),"Unowned spawnable stage identity or missing native scene ID");
+      Check(NetworkServer.SpawnObjects(),"Original out-of-bounds server activation failed");
+     }
+     r.stage.mapZoneNetworkObjects=identities.Length;
     }else {Check(identities.All(x=>!x.gameObject.activeInHierarchy),"Source-disabled map volume unexpectedly active");r.stage.mapZoneNetworkObjects=0;}
    }
   }

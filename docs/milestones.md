@@ -706,3 +706,5 @@ J427 maintenance only: user-authorized cleanup restores host headroom (218.8 GB 
 **J468 scoped skin-catalog exit:** Complete original body availability and source-referenced SkinDefs bake through native catalog initialization. Assisted Lakes → Goolake and two assisted same-process cleanup/restarts pass; Commando pose/material parity, normal full route, managed-growth diagnosis and release-target 60 FPS remain open.
 
 **J469 scoped transmutation exit:** Native 16-group pickup transmutation covers 223 mapped original pickups under genuine availability; assisted two-stage run and two same-process cleanups pass. Individual consumers, normal full route and release-target 60 FPS remain open. Next focus: survivors and selection; Moon/finale remains paused.
+
+**J485 stage-coverage exit:** An assisted original Gold shrine → Gold Shores four-beacon/boss mission → Goolake return passed on Nova with two genuine transitions and zero current-process errors. The original Gold out-of-bounds volume performed native rescues. Normal combat, natural shrine availability, visual parity, Moon/finale and release-target 60 FPS remain open.

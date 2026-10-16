@@ -371,8 +371,16 @@ public sealed partial class MovementBatchProbe {
   var model=objectiveHost.GetComponent<ModelLocator>().modelTransform;worldModels.Add(model);PresentWorldModel(model,false,true);
   objectiveBeacon=objectiveHost.GetComponentsInChildren<Collider>(true).Single(x=>x.GetComponent<EntityLocator>()&&x.GetComponent<EntityLocator>().entity==objectiveHost);Check(objectiveBeacon.gameObject.layer==LayerIndex.defaultLayer.intVal,"Original teleporter interaction layer changed");
   if(!objectiveSubscribed)objectiveDefeated=group=>{if(worldTeleporter&&group==worldTeleporter.bossGroup){r.objective.bossDefeated=true;r.objective.rewardPickupBaseline=r.world.pickupMessages;Save();}};
-  if(!objectiveSubscribed)objectiveBeginExit=exit=>{if(worldTeleporter&&exit==worldTeleporter.sceneExitController){r.objective.exitBegan=true;Save();}};
-  if(!objectiveSubscribed)objectiveFinishExit=exit=>{if(worldTeleporter&&exit==worldTeleporter.sceneExitController){r.objective.exitFinished=true;Save();}};
+  if(!objectiveSubscribed)objectiveBeginExit=exit=>{
+   if(worldTeleporter&&exit==worldTeleporter.sceneExitController){r.objective.exitBegan=true;Save();}
+   else if(IsGoldshoresEntryPortal(exit)){r.objective.exitBegan=true;if(r.goldshores==null)r.goldshores=new GoldshoresMissionReport();r.goldshores.shrinePurchased=true;Save();}
+   else if(IsGoldshoresReturnPortal(exit)){r.goldshores.exitBegan=true;Save();}
+  };
+  if(!objectiveSubscribed)objectiveFinishExit=exit=>{
+   if(worldTeleporter&&exit==worldTeleporter.sceneExitController){r.objective.exitFinished=true;Save();}
+   else if(IsGoldshoresEntryPortal(exit)){r.objective.exitFinished=true;r.goldshores.entryPortalUsed=true;r.stageProgress.goldPortalEntry=true;Save();}
+   else if(IsGoldshoresReturnPortal(exit)){r.goldshores.exitFinished=true;r.goldshores.returnScene=exit.destinationScene?exit.destinationScene.cachedName:"unavailable";Save();}
+  };
   if(!objectiveSubscribed){BossGroup.onBossGroupDefeatedServer+=objectiveDefeated;SceneExitController.onBeginExit+=objectiveBeginExit;SceneExitController.onFinishExit+=objectiveFinishExit;objectiveSubscribed=true;}
   objectiveHost.transform.position=hit.point;objectiveHost.transform.SetParent(null,true);objectiveHost.SetActive(true);NetworkServer.Spawn(objectiveHost);yield return null;
   Check(TeleporterInteraction.instance==worldTeleporter&&worldTeleporter.holdoutZoneController&&worldTeleporter.bossGroup&&Run.instance.nextStageScene,"Original objective Awake/Start context incomplete");

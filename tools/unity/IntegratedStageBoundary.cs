@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedStageSpec {public bool moonMission;public string[] activeRoots;public int missionComponents;public string name,bundle,scene,groundGraph,airGraph;public int previewCallbacks,mapZoneCount,mapZoneNetworkObjects;public string[] mapZoneActiveNames;public string[] previewNames,emptyMeshPaths,emptyColliderPaths;}
  [Serializable] public class StageProgressReport {
-  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified;public int transitions,stageClearCount,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved,retiredActorObservers,retiredModelObservers,retiredCommerceObservers,originalStageBegins;
+  public string current,requested,error,scope,actualScene,actualSceneDef;public bool transporting,cleaned,activeSceneVerified,goldPortalEntry;public int transitions,stageClearCount,countedStages,completedBarrels,completedChests,effectLoansReturned,playerSummonsRemoved,retiredActorObservers,retiredModelObservers,retiredCommerceObservers,originalStageBegins;
   public float enteredAt,experienceSettlementSeconds;public uint bodyId,masterId,moneyBefore,moneyAfter;public ulong experienceBefore,experienceAfter,experienceAtExit,pendingExperienceAtExit;public int pendingExperienceAwardsAtExit;
   public int itemsBefore,itemsAfter;public List<string> completed=new List<string>();
   public List<ObjectiveReport> completedObjectives=new List<ObjectiveReport>();
@@ -158,8 +158,14 @@ public sealed partial class MovementBatchProbe {
   var next=integratedStageConfig.integratedStages.SingleOrDefault(x=>x.name==pendingStage);
   Check(next!=null,"Original next destination has no accepted converted content: "+pendingStage);
   var report=r.stageProgress;var run=Run.instance;var body=worldPlayer;var master=body.master;
-  Check(r.objective.bossDefeated&&r.objective.charged&&r.objective.exitFinished&&objectiveStage.completed,"Original stage boss/charge/exit/completion missing before scene transport");
-  report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;report.completed.Add(stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
+  var leaving=SceneCatalog.GetSceneDefForCurrentScene();Check(leaving&&leaving.cachedName==stageGeometryScene.name,"Original departing scene definition changed");
+  bool leavingGold=leaving.cachedName=="goldshores";
+  if(leavingGold)Check(r.goldshores!=null&&r.goldshores.exitFinished&&objectiveStage.completed,"Original Gold Shores mission exit/completion missing before scene transport");
+  else Check(r.objective.bossDefeated&&r.objective.charged&&r.objective.exitFinished&&objectiveStage.completed,"Original stage boss/charge/exit/completion missing before scene transport");
+  if((leaving.sceneType==SceneType.Stage||leaving.sceneType==SceneType.UntimedStage)&&!leaving.preventStageAdvanceCounter)report.countedStages++;
+  report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;
+  report.completed.Add(leavingGold?"goldshores|original-beacons|original-boss|original-exit":stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");
+  report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
   transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
   var beetleGland=body.GetComponent<RoR2.Items.BeetleGlandBodyBehavior>();bool resumeBeetleGland=beetleGland&&beetleGland.enabled;if(resumeBeetleGland)beetleGland.enabled=false;
   if(sourceSlowDirector)sourceSlowDirector.enabled=false;if(rewardDirector)rewardDirector.enabled=false;
@@ -236,9 +242,16 @@ public sealed partial class MovementBatchProbe {
   AddEquipmentBarrel(integratedStageConfig,origin);if(!next.moonMission)AddWorldChestBreadth(integratedStageConfig,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Recovered next-stage layout lacks walkable interactables");r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;
   }
   if(next.moonMission){rewardDirector.enabled=false;var mission=PrepareMoonWorld();while(mission.MoveNext())yield return mission.Current;objectiveStageHost=new GameObject("Owned Moon stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");}
-  else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;PrepareWorldCommerce(integratedStageConfig,origin);var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;}
+  else{
+   bool gold=next.name=="goldshores";
+   if(gold)PrepareGoldshoresStage();else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;PrepareWorldCommerce(integratedStageConfig,origin);}
+   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
+   var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;
+   if(gold){var goldMission=BeginGoldshoresMission();while(goldMission.MoveNext())yield return goldMission.Current;}
+   else PlaceGoldshoresDiagnosticShrine();
+  }
   report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
-  Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.completed.Count,"Original run/master/authority/inventory/XP/count continuity failed");
+  Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.countedStages,"Original run/master/authority/inventory/XP/count continuity failed");
   stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;if(resumeBeetleGland&&beetleGland)beetleGland.enabled=true;bridge.enabled=true;r.phase="integrated-world-playing";Save();
  }
  void ReturnIntegratedStageEffects(){

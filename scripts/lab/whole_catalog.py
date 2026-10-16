@@ -1059,6 +1059,7 @@ def build_integration(code_only=False):
     # the project. The former hand-maintained list omitted DOT and debug-input
     # fixes while still producing a successful but stale APK.
     runtime = project/'Assets/LabLoadingScene'
+    copy_catalog_asset(ROOT/'tools/unity/GoldshoresBoundary.cs', runtime/'GoldshoresBoundary.cs')
     for source_file in sorted((ROOT/'tools/unity').glob('*.cs')):
         if (runtime/source_file.name).is_file():
             copy_catalog_asset(source_file, runtime/source_file.name)

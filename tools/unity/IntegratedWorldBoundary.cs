@@ -332,7 +332,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(r.liveCatalogs!=null&&cfg.teleporterLoop){var transmutation=PrepareWorldTransmutation();while(transmutation.MoveNext())yield return transmutation.Current;}
   PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
-  var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;
+  var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;PlaceGoldshoresDiagnosticShrine();
   PrepareRecoveredHud();Check(r.world.ready,"Integrated session setup incomplete");r.phase="integrated-world-playing";Save();
  }
 
@@ -538,7 +538,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   ObserveSourceAnimationEvents(player,elapsed);
   long performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
   if(worldClientUpdate==null)worldClientUpdate=(Action)Delegate.CreateDelegate(typeof(Action),activeBodyClient,activeBodyClient.GetType().GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));worldClientUpdate();r.performance.clientUpdateMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();Check(activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
-  long objectiveStart=performancePart;ObserveTeleporterWorld();r.performance.teleporterMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();ObserveMoonMission();r.performance.moonMs+=PerformanceMs(performancePart);r.performance.objectiveMs+=PerformanceMs(objectiveStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
+  long objectiveStart=performancePart;ObserveTeleporterWorld();r.performance.teleporterMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();ObserveMoonMission();ObserveGoldshoresMission();r.performance.moonMs+=PerformanceMs(performancePart);r.performance.objectiveMs+=PerformanceMs(objectiveStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();var world=r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
   if(!fireTrailDiagnosisRecorded&&!string.IsNullOrEmpty(r.runSeedOverride)&&Time.frameCount%30==0&&NetworkServer.objects.Values.Any(identity=>{var body=identity?identity.GetComponent<CharacterBody>():null;return body&&body.HasBuff(RoR2Content.Buffs.AffixRed);})){fireTrailDiagnosisRecorded=true;try{world.fireTrailDiagnostic=WholeCatalogComposed.DiagnoseFireTrail();}catch(Exception error){world.fireTrailDiagnostic=error.GetBaseException().ToString();}Save();}
   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
   world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
@@ -600,6 +600,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
    return;
   }
   if(r.moon!=null&&r.moon.loaded&&MoonWorldStimulus(player,bridge,elapsed))return;
+  if(GoldshoresRouteStimulus(player,bridge,elapsed))return;
   // Assisted dependency scan of the source repairable ally types in one
   // composed stage. Only the existing player input/earned Money path purchases;
   // ordinary runs and source selection remain untouched.
@@ -721,10 +722,16 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   if(worldNavigationBody!=player){worldLocalNavigator.SetBody(player);worldNavigationBody=player;worldNavigationUpdatedAt=elapsed;worldNavigationHasProgress=false;worldNavigationHasObjectiveProgress=false;}
   // Original graph traversal can include jumps. Terrain fallback has no such
   // link contract: retain the source cliff guard for its local steering too.
-  worldLocalNavigator.targetPosition=waypoint+(player.transform.position-position);worldLocalNavigator.allowWalkOffCliff=!r.world.navigationTerrainFallback;worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
+  // Gold Shores' shipped out-of-bounds volume is inactive in the recovered
+  // scene. The unattended driver must not follow a graph edge over an exposed
+  // drop while pursuing currency targets; source player physics remains intact.
+  worldLocalNavigator.targetPosition=waypoint+(player.transform.position-position);worldLocalNavigator.allowWalkOffCliff=!r.world.navigationTerrainFallback&&stageGeometryScene.name!="goldshores";worldLocalNavigator.Update(Mathf.Clamp(elapsed-worldNavigationUpdatedAt,.001f,.1f));worldNavigationUpdatedAt=elapsed;
   r.world.navigationAllowWalkOffCliff=worldLocalNavigator.allowWalkOffCliff;
   r.world.navigationLocalMovement=worldLocalNavigator.moveVector;r.world.navigationLocalObstructed=worldLocalNavigator.wasObstructedLastUpdate;r.world.navigationLocalJumpSpeed=worldLocalNavigator.jumpSpeed;
-  bridge.movement=movement.magnitude>stopDistance?new Vector2(worldLocalNavigator.moveVector.x,worldLocalNavigator.moveVector.z):Vector2.zero;
+  // The requested stopping distance belongs to the final objective, not the
+  // next graph waypoint. A broad holdout radius can exceed a nearby waypoint
+  // while the player is still far outside the real charge zone.
+  bridge.movement=Vector3.Distance(position,destination)>stopDistance?new Vector2(worldLocalNavigator.moveVector.x,worldLocalNavigator.moveVector.z):Vector2.zero;
   // Walking in a circle is not progress toward the source waypoint. The real
   // Wetland return capture does this at full speed, so source frustration stays
   // zero. Recovery requests a normal player jump; source physics owns the result.

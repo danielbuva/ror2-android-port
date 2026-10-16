@@ -70,7 +70,7 @@ public sealed partial class MovementBatchProbe {
  }
  IEnumerator PopulateWholeStage(){
   if(r.liveCatalogs==null)yield break;
-  Check(wholeStageInfo&&ClassicStageInfo.instance==wholeStageInfo&&wholeStageContext!=null&&objectiveStage&&worldTeleporter&&DirectorCore.instance,"Native stage population context incomplete");
+  Check(wholeStageInfo&&ClassicStageInfo.instance==wholeStageInfo&&wholeStageContext!=null&&objectiveStage&&DirectorCore.instance&&(worldTeleporter||stageGeometryScene.name=="goldshores"),"Native stage population context incomplete");
   if(!ownsSpawnPointPrefab){
    var field=typeof(SpawnPoint).GetField("prefab",BindingFlags.Static|BindingFlags.NonPublic);priorSpawnPointPrefab=(GameObject)field.GetValue(null);Check(!priorSpawnPointPrefab,"Foreign player-spawn prefab owner");
    wholeSpawnPointLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/SpawnPoint");ownsSpawnPointPrefab=true;yield return wholeSpawnPointLease;
@@ -96,8 +96,8 @@ public sealed partial class MovementBatchProbe {
     var field=typeof(SceneDirector).GetField(property.Name,BindingFlags.Public|BindingFlags.Instance);Check(field!=null,"Original scene director field unavailable: "+property.Name);field.SetValue(wholeSceneDirector,property.Value.ToObject(field.FieldType));
    }
   }
-  // Keep the accepted teleporter lifecycle; native population reuses that instance.
-  wholeSceneDirector.teleporterInstance=worldTeleporter.gameObject;
+  // Ordinary stages reuse the accepted native teleporter; Gold Shores has none.
+  wholeSceneDirector.teleporterInstance=worldTeleporter?worldTeleporter.gameObject:null;
   var sourceBonuses=((JArray)wholeStageContext["bonus_credits"]).Select(row=>{
    var matches=stageGeometryScene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<Transform>(true)).Where(value=>StageObjectPath(value)==(string)row["path"]).ToArray();
    Check(matches.Length==1,"Original stage bonus-credit object is ambiguous: "+row["path"]);

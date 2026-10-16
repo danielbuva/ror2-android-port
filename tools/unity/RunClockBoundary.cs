@@ -25,7 +25,15 @@ public sealed partial class MovementBatchProbe {
   var firstSceneAsset=firstStagePolicyConsumed?cfg.runSceneDefAssets.Single(asset=>System.IO.Path.GetFileNameWithoutExtension(asset).Equals(firstStageName,StringComparison.OrdinalIgnoreCase)):cfg.runSceneDefAsset;
   clockSceneDef=artifactBundle.LoadAsset<SceneDef>(firstSceneAsset);Check(clockSceneDef&&clockSceneDef.cachedName==(firstStageName??"golemplains")&&clockSceneDef.sceneType==SceneType.Stage&&clockSceneDef.stageOrder==1&&!clockSceneDef.requiredExpansion,"Original base stage metadata changed");
   Check(stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded&&stageGeometryScene.name==clockSceneDef.cachedName,"Converted stage scene name must match original metadata");
-  priorClockScene=SceneManager.GetActiveScene();ownsRunSceneCatalog=true;Check(SceneManager.SetActiveScene(stageGeometryScene),"Converted stage active-scene selection failed");clockSceneDefs=cfg.teleporterLoop?cfg.runSceneDefAssets.Select(x=>artifactBundle.LoadAsset<SceneDef>(x)).Distinct().ToArray():new[]{clockSceneDef};Check(clockSceneDefs.All(x=>x)&&clockSceneDefs.Contains(clockSceneDef),"Converted scene metadata missing: "+(cfg.runSceneDefAssets==null?"first stage":string.Join(",",cfg.runSceneDefAssets.Where(x=>!artifactBundle.LoadAsset<SceneDef>(x)))));ContentManager._sceneDefs=clockSceneDefs;
+  priorClockScene=SceneManager.GetActiveScene();ownsRunSceneCatalog=true;Check(SceneManager.SetActiveScene(stageGeometryScene),"Converted stage active-scene selection failed");clockSceneDefs=cfg.teleporterLoop?cfg.runSceneDefAssets.Select(x=>artifactBundle.LoadAsset<SceneDef>(x)).Distinct().ToArray():new[]{clockSceneDef};Check(clockSceneDefs.All(x=>x)&&clockSceneDefs.Contains(clockSceneDef),"Converted scene metadata missing: "+(cfg.runSceneDefAssets==null?"first stage":string.Join(",",cfg.runSceneDefAssets.Where(x=>!artifactBundle.LoadAsset<SceneDef>(x)))));
+  // The Gold Shores SceneDef is already an original whole-catalog root. Register
+  // it with the same original SceneCatalog initialization as the ordinary stages.
+  if(cfg.integratedStages!=null&&cfg.integratedStages.Any(stage=>stage.name=="goldshores")){
+   var gold=WholeCatalogComposed.LoadOwnedContent<SceneDef>("Assets/WholeGame/RoR2/Base/Scenes/goldshores/goldshores.asset");
+   Check(gold.cachedName=="goldshores"&&gold.sceneType==SceneType.Intermission&&gold.stageOrder==96&&!gold.requiredExpansion,"Original Gold Shores scene metadata differs");
+   clockSceneDefs=clockSceneDefs.Concat(new[]{gold}).Distinct().ToArray();
+  }
+  ContentManager._sceneDefs=clockSceneDefs;
   var init=SceneCatalog.Init();while(init.MoveNext())yield return init.Current;
   // Run the shipped scene-policy initializer; never manufacture a waiver.
   StaticCall(typeof(ExpansionWaiver),"Init");Check(!ExpansionWaiver.expansionsWaived,"Original scene policy unexpectedly enabled a waiver");

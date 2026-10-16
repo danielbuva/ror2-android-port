@@ -41,6 +41,7 @@ public sealed partial class MovementBatchProbe {
   ownsDebugAcceleration=true;
   r.debugAcceleration.originalBaseJumpPower=body.baseJumpPower;r.debugAcceleration.originalLevelJumpPower=body.levelJumpPower;
   ApplyDebugAcceleration(r.debugOptions??new DebugAccelerationOptions(),"launch selection");
+  if(r.goldshoresRoute&&r.goldshores!=null&&r.goldshores.diagnosticShrineSpawned)DebugToggle("diagnosticGoldShrinePlacement",true,"selected assisted integration route");
   if(r.developerSurvivorOverride)DebugToggle("developerSurvivorOverride",true,"launch selection");
   ApplyDeveloperItemGrants();
  }
