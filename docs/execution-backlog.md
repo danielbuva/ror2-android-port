@@ -4517,3 +4517,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** The original provider publishes 76 unique non-Junk SceneDefs, while the composed `SceneCatalog` held a selected subset. Load the native provider family from the shared bundle and keep source scene-group references identical to registered definitions; retain the converted-destination transport boundary.
 - **TEST / PASS:** Preflight, 139 host tests, exact-editor ARM64 APK; 76 catalog definitions and 14 converted destinations reported on device. Assisted Lakes → Goolake completed a native boss/teleporter exit, two original stage begins and 20 seconds of subsequent gameplay with zero current-process errors.
 - **OPEN:** Convert more source destinations before allowing their entry. Native expansion requirements remain intact; unconverted scenes, normal combat, full route and sustained 60 FPS are unaccepted. Depends on J485 and the shipped `SceneCatalog`/provider contract.
+
+## C24 / J487 — Register original item relationships and repair same-process restart
+
+- **OBSERVATION / TASK:** Shipped DLC1 item relationships were absent from the composed `ItemCatalog`. Register the complete original provider, then test menu return and a second session without restoring stale original stage-event delegates.
+- **TEST / PASS:** Preflight, 139 host tests, zero-error exact-editor ARM64 build; both same-process sessions reached original Stage.Start with 32 unique pairs and zero current-process errors. First-session owned cleanup passed.
+- **FAILURE / OPEN:** The first APK exposed a disposed inventory through a resurrected `CharacterMaster` callback; the failed attempt and a later test-deadline expiry remain local evidence. Item transformation behavior, normal gameplay, long-session memory and release-target 60 FPS remain open. Next, continue broad source stage/content integration without using performance as a per-batch gate.

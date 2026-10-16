@@ -16,7 +16,7 @@ using UnityEngine.Networking;
 public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedResultsReport {
   public bool ready,statsRegistered,serverEnding,clientEnding,reportGenerated,reportReloaded,persisted,cleaned;
-  public string scope,error,ending,reportFile,ledgerRecovery,ledgerRecoveryError,ledgerRejectedPrimary,initializationStep;public int players,items,stageClearCount,statFields,priorRuns,itemGroupTypes,itemGroupProviders,itemGroups;
+  public string scope,error,ending,reportFile,ledgerRecovery,ledgerRecoveryError,ledgerRejectedPrimary,initializationStep;public int players,items,stageClearCount,statFields,priorRuns,itemGroupTypes,itemGroupProviders,itemGroups,itemRelationshipTypes,itemRelationshipProviders,itemRelationshipPairs;
   public float seconds,startupCollectionSeconds;public double damageDealt,damageTaken;public ulong kills;public long startupManagedBefore,startupManagedAfter;
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
@@ -54,7 +54,46 @@ public sealed partial class MovementBatchProbe {
   r.results.itemGroupTypes=types.Length;r.results.itemGroupProviders=providers.Length;r.results.itemGroups=providers.Sum(provider=>provider.groups.Length);
  }
  void CleanupResultsItemGroups(){if(!ownsResultsItemGroups)return;StaticCall(typeof(ItemCatalog),"SetItemGroups",new object[]{Array.Empty<ItemGroupProvider>()});ownsResultsItemGroups=false;}
+ bool ownsResultsItemRelationships;ItemRelationshipType[] priorResultsRelationshipTypes;ItemRelationshipProvider[] priorResultsRelationshipProviders;
+ void PrepareResultsItemRelationships(){
+  if(!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;
+  var map=(System.Collections.IDictionary)RewardField(typeof(ItemCatalog),"itemRelationships").GetValue(null);
+  var typeField=typeof(ContentManager).GetField("_itemRelationshipTypes",BindingFlags.NonPublic|BindingFlags.Static);
+  var providerField=typeof(ContentManager).GetField("_itemRelationshipProviders",BindingFlags.NonPublic|BindingFlags.Static);
+  Check(typeField!=null&&providerField!=null&&!ownsResultsItemRelationships&&map.Count==0,"Unowned item-relationship catalog");
+  priorResultsRelationshipTypes=(ItemRelationshipType[])typeField.GetValue(null);priorResultsRelationshipProviders=(ItemRelationshipProvider[])providerField.GetValue(null);
+  Check((priorResultsRelationshipTypes==null||priorResultsRelationshipTypes.Length==0)&&(priorResultsRelationshipProviders==null||priorResultsRelationshipProviders.Length==0),"Existing item-relationship content owner");
+  var types=WholeCatalogComposed.CategoryFamily(AddressablesLabels.itemRelationshipType,Array.Empty<ItemRelationshipType>());
+  var providers=WholeCatalogComposed.CategoryFamily(AddressablesLabels.itemRelationshipProvider,Array.Empty<ItemRelationshipProvider>());
+  Check(types.Length==1&&providers.Length==1&&types[0]&&providers[0]&&providers[0].relationshipType==types[0]&&providers[0].relationships!=null&&providers[0].relationships.Length>0&&providers[0].relationships.All(pair=>pair.itemDef1&&pair.itemDef2&&ItemCatalog.GetItemDef(pair.itemDef1.itemIndex)==pair.itemDef1&&ItemCatalog.GetItemDef(pair.itemDef2.itemIndex)==pair.itemDef2),"Original item relationship source or item identity differs");
+  WholeCatalogComposed.PopulateDefinitionFields("ItemRelationshipTypes",types);
+  ownsResultsItemRelationships=true;typeField.SetValue(null,types);providerField.SetValue(null,providers);
+  StaticCall(typeof(ItemCatalog),"SetItemRelationships",new object[]{providers});
+  var pairs=ItemCatalog.GetItemPairsForRelationship(types[0]);
+  Check(map.Count==types.Length&&pairs.Length==providers[0].relationships.Distinct().Count(),"Original item relationship registration differs");
+  r.results.itemRelationshipTypes=types.Length;r.results.itemRelationshipProviders=providers.Length;r.results.itemRelationshipPairs=pairs.Length;
+ }
+ void CleanupResultsItemRelationships(){
+  if(!ownsResultsItemRelationships)return;
+  StaticCall(typeof(ItemCatalog),"SetItemRelationships",new object[]{Array.Empty<ItemRelationshipProvider>()});
+  typeof(ContentManager).GetField("_itemRelationshipTypes",BindingFlags.NonPublic|BindingFlags.Static).SetValue(null,priorResultsRelationshipTypes);
+  typeof(ContentManager).GetField("_itemRelationshipProviders",BindingFlags.NonPublic|BindingFlags.Static).SetValue(null,priorResultsRelationshipProviders);
+  priorResultsRelationshipTypes=null;priorResultsRelationshipProviders=null;ownsResultsItemRelationships=false;
+ }
  void RememberResultsEvent(Type type,string name){var field=type.GetField(name,BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic);Check(field!=null,"Original results event missing: "+type.Name+"/"+name);resultsEventContext[field]=field.GetValue(null);}
+ void ReleaseResultsEvents(){
+  // StatManager.Init adds static handlers. Replaying the whole pre-init delegate
+  // snapshot can resurrect a CharacterMaster already destroyed during the run.
+  var stats=typeof(PlayerStatsComponent).Assembly.GetType("RoR2.Stats.StatManager",true);
+  foreach(var entry in resultsEventContext){
+   var current=entry.Key.GetValue(null) as Delegate;var prior=entry.Value as Delegate;
+   if(current==null)continue;
+   var priorHandlers=prior==null?Array.Empty<Delegate>():prior.GetInvocationList();
+   foreach(var handler in current.GetInvocationList())if(handler.Method.DeclaringType==stats&&!priorHandlers.Contains(handler))current=Delegate.Remove(current,handler);
+   entry.Key.SetValue(null,current);
+  }
+  resultsEventContext.Clear();
+ }
  void ResultsStep(string value){r.results.initializationStep=value;Save();}
  void PrepareIntegratedResults(CharacterBody player,Result cfg){
   if(!cfg.integratedResults)return;
@@ -96,7 +135,7 @@ public sealed partial class MovementBatchProbe {
    try{ContentManager._itemDefs=itemDefs;providersField.SetValue(null,Array.Empty<ItemRelationshipProvider>());ContentManager._itemGroupProviders=Array.Empty<ItemGroupProvider>();StaticCall(typeof(ItemCatalog),"Init");Check(ItemCatalog.allItemDefs.SequenceEqual(itemDefs)&&relationships.Count==0&&groups.Count==0&&HGXml.SerializationRules<ItemIndex[]>.defaultRules!=null,"Original item XML/catalog initialization differs");}
    finally{ContentManager._itemDefs=previousItems;providersField.SetValue(null,previousProviders);ContentManager._itemGroupProviders=previousGroups;ItemCatalog.availability=previousAvailability;}
   }
-  ResultsStep("item-groups");PrepareResultsItemGroups();
+  ResultsStep("item-groups");PrepareResultsItemGroups();ResultsStep("item-relationships");PrepareResultsItemRelationships();
   ResultsStep("report-xml");var folder=RewardField(typeof(RunReport),"runReportsFolder");Check(folder!=null,"Original report-folder field absent");previousReportFolder=(string)folder.GetValue(null);if(!resultsSerializersReady){StaticCall(typeof(RunReport),"Init");resultsSerializersReady=true;}
   resultsDirectory=Path.Combine(Application.persistentDataPath,"offline-run-results-v1");Directory.CreateDirectory(resultsDirectory);folder.SetValue(null,resultsDirectory+Path.DirectorySeparatorChar);LoadAndroidRunLedger();r.results.priorRuns=resultsLedger.runs.Count;
   ResultsStep("android-profile");PrepareAndroidProfile(player);
@@ -159,13 +198,13 @@ public sealed partial class MovementBatchProbe {
   resultsStatsFixed=null;
   CleanupAndroidProfile();
   if(ownsResultsSaveSystem){Check(ReferenceEquals(PlatformSystems.saveSystem,resultsSaveSystem),"Results save-system boundary ownership changed");PlatformSystems.saveSystem=previousResultsSaveSystem;ownsResultsSaveSystem=false;}
-  if(!ownsResultsContext){if(ownsResultsStats&&resultsStats){Call(resultsStats,"OnDestroy");ownsResultsStats=false;}foreach(var entry in resultsEventContext)entry.Key.SetValue(null,entry.Value);resultsEventContext.Clear();CleanupResultsItemGroups();CleanupResultsKeyItems();if(r.results!=null)r.results.cleaned=true;return;}
+  if(!ownsResultsContext){if(ownsResultsStats&&resultsStats){Call(resultsStats,"OnDestroy");ownsResultsStats=false;}ReleaseResultsEvents();CleanupResultsItemRelationships();CleanupResultsItemGroups();CleanupResultsKeyItems();if(r.results!=null)r.results.cleaned=true;return;}
   Run.onServerGameOver-=resultsServerEvent;Run.onClientGameOverGlobal-=resultsClientEvent;
   if(Run.instance)Run.instance.gameOverPrefab=previousGameOverPrefab;
   if(resultsController)NetworkServer.Destroy(resultsController.gameObject);if(resultsTemplate)Destroy(resultsTemplate);
   if(ownsResultsStats&&resultsStats){Call(resultsStats,"OnDestroy");ownsResultsStats=false;}
-  foreach(var entry in resultsEventContext)entry.Key.SetValue(null,entry.Value);resultsEventContext.Clear();
+  ReleaseResultsEvents();
   ContentManager._gameEndingDefs=previousEndingContent;StaticCall(typeof(GameEndingCatalog),"SetGameEndingDefs",new object[]{previousEndingCatalog});typeof(RunReport).GetField("runReportsFolder",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,previousReportFolder);
-  CleanupResultsItemGroups();CleanupResultsKeyItems();ownsResultsContext=false;if(r.results!=null)r.results.cleaned=true;
+  CleanupResultsItemRelationships();CleanupResultsItemGroups();CleanupResultsKeyItems();ownsResultsContext=false;if(r.results!=null)r.results.cleaned=true;
  }
 }
