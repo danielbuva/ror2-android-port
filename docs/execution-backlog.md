@@ -1,5 +1,7 @@
 # Execution backlog
 
+J489 puts all 20 visible original survivor definitions on the Android offline menu, while enabling only profile-eligible choices. A Nova tap selected Huntress and reached original world play. Continue broad integration; this recovered UI does not pass original menu or locked-survivor acceptance. Keep 60 FPS as eventual release acceptance and investigate only meaningful unexplained regressions during content work.
+
 J488 adds nine exact-source DLC1/DLC2 stage transports and source scenes, bringing the composed recipe to 23 destinations. The integrated Android build and one assisted base-stage transition pass; the new DLC scenes remain unplayed pending a truthful original expansion-availability path. Keep broad integration and major-regression checks moving; 60 FPS is release acceptance.
 
 J484 stages Gold Shores scene/content beside the normal-stage composition. Its native portal/mission/return path is the next integrated gameplay target; do not infer special-realm acceptance from the build or Lakes launch. Keep 60 FPS as release acceptance while watching for major unexplained regressions. Manual Moon/finale remains deferred.
