@@ -66,10 +66,9 @@ public sealed class AndroidOfflineProfile {
  static void Write(string path,Generation value){using(var stream=new FileStream(path,FileMode.Create,FileAccess.Write,FileShare.None)){using(var writer=new StreamWriter(stream,new UTF8Encoding(false),1024,true)){writer.Write(JsonUtility.ToJson(value));writer.Flush();}stream.Flush(true);}}
  static bool IsCorrupt(Exception error){return error is InvalidDataException||error is XmlException||error is ArgumentException;}
  static Generation ReadRecoverable(string path){try{return Read(path);}catch(Exception error){if(!IsCorrupt(error))throw;return null;}}
- // The menu precedes native catalog initialization. Read only the owned,
- // checksummed unlock names here; full native decode and identity checks still
- // run when the profile is opened for the session.
- public static HashSet<string> PreviewUnlockNames(string directory){
+ // The menu precedes native profile initialization. Inspect only an owned,
+ // checksummed generation here; full native decode still runs in the session.
+ static XDocument PreviewDocument(string directory){
   string primary=Path.Combine(directory,"profile.json");
   var paths=new[]{primary,primary+".backup",primary+".pending"};
   foreach(var path in paths){
@@ -82,11 +81,23 @@ public sealed class AndroidOfflineProfile {
     if(document.Root==null||document.Root.Name!="UserProfile"||document.Root.Elements("stats").Count()!=1)throw new InvalidDataException("Android profile preview XML invalid");
     var unlocks=document.Root.Element("stats").Elements("unlock").ToArray();
     if(unlocks.Any(element=>element.HasElements||string.IsNullOrEmpty(element.Value))||unlocks.Select(element=>element.Value).Distinct(StringComparer.Ordinal).Count()!=unlocks.Length)throw new InvalidDataException("Android profile preview unlocks invalid");
-    return new HashSet<string>(unlocks.Select(element=>element.Value),StringComparer.Ordinal);
+    return document;
    }catch(Exception error){if(!IsCorrupt(error))throw;}
   }
   if(paths.Any(File.Exists))throw new InvalidDataException("Android profile has no valid generation for survivor selection");
-  return new HashSet<string>(StringComparer.Ordinal);
+  return null;
+ }
+ public static HashSet<string> PreviewUnlockNames(string directory){
+  var document=PreviewDocument(directory);
+  return document==null?new HashSet<string>(StringComparer.Ordinal):new HashSet<string>(document.Root.Element("stats").Elements("unlock").Select(element=>element.Value),StringComparer.Ordinal);
+ }
+ public static Loadout PreviewLoadout(string directory){
+  var document=PreviewDocument(directory);var loadout=new Loadout();
+  if(document==null)return loadout;
+  if(document.Root.Elements("loadout").Count()!=1)throw new InvalidDataException("Original Android profile loadout missing/duplicated");
+  var element=document.Root.Element("loadout");
+  if(element.Elements("BodyLoadouts").Count()!=1||!loadout.FromXml(element)||!XNode.DeepEquals(loadout.ToXml("loadout"),element))throw new InvalidOperationException("Original profile loadout cannot round-trip against accepted body/skill/skin catalogs");
+  return loadout;
  }
  static void Reject(string path){if(File.Exists(path))File.Move(path,path+".rejected-"+Guid.NewGuid().ToString("N"));}
  void Adopt(Generation value,string source){generation=value;profile=Decode(value);profile.canSave=true;recovery=source;if(value.version==1){if(!baselineProvided)throw new InvalidOperationException("Owned run-ledger baseline required for profile migration");generation=new Generation{xml=value.xml,appliedRuns=value.appliedRuns.ToList(),baselineRuns=initialBaseline.Except(value.appliedRuns).ToList()};generation.sha256=Hash(generation);ReplacePrimary(generation);recovery+="-migrated-v1";}}

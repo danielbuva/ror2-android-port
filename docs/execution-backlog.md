@@ -4535,3 +4535,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** The recovered menu applied the original difficulty rule but reset its choice on cold launch and lacked physical difficulty navigation. Persist its validated rule index in Android-owned preferences and map the measured right stick separately from survivor selection.
 - **TEST / PASS:** 139 host tests, preflight, exact-editor Vulkan build and a two-cold-launch Nova run: Rainstorm survived restart and reached 20 seconds of original world play with native rule index 1 and no first failure.
 - **OPEN:** Physically verify right-stick menu navigation; assisted startup does not establish normal combat or sustained 60 FPS. Continue broad integration while preserving J490 and Moon rollback.
+
+## C26 / J492 — Apply original profile loadout at player spawn
+
+- **OBSERVATION / TASK:** The owned native profile decoded only after `SpawnBody`, so its saved skin/skill preferences could not affect the player. Read a checksum-valid native loadout after catalog initialization, enforce owned unlock/expansion eligibility, apply selected-body choices before original spawn, and compare against full native decode.
+- **TEST / PASS:** 139 host tests, preflight, exact-editor Vulkan build; Commando and Huntress each reached 20 seconds of world play with spawned skin/skills matching the saved default loadout and no new first failure.
+- **OPEN:** Exercise a genuinely earned nondefault preference and add player-facing editing without bypassing the profile generation or native unlock rules. Normal combat and release-target 60 FPS remain open.

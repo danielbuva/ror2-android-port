@@ -10,7 +10,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using Zio;
 
 public sealed partial class MovementBatchProbe {
- [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public uint earnedCoins;public ulong kills;}
+ [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public uint earnedCoins;public ulong kills;}
  sealed class AndroidProfileSaveSystem:SaveSystem {
   public AndroidOfflineProfile local;
   static Exception Unavailable(){return new NotSupportedException("Steam identity, cloud/profile import and platform history unavailable; owned Android profile only.");}
@@ -25,6 +25,40 @@ public sealed partial class MovementBatchProbe {
   public override Dictionary<string,byte[]> LoadHistory(){throw Unavailable();}
  }
  AndroidProgressionBoundary androidProgression;
+ BodyIndex previewLoadoutBody=BodyIndex.None;uint previewLoadoutSkin;int[] previewLoadoutSkills;
+ void ApplyAndroidProfileLoadoutBeforeSpawn(CharacterMaster master,GameObject prefab){
+  if(r.liveCatalogs==null||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;
+  Check(master&&master.loadout!=null&&prefab&&SkinCatalog.availability.available,"Original profile loadout requires owned master and skin catalog");
+  var body=prefab.GetComponent<CharacterBody>();Check(body&&body.bodyIndex!=BodyIndex.None&&BodyCatalog.GetBodyPrefab(body.bodyIndex)==prefab,"Selected profile loadout body identity changed");
+  var directory=System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1");
+  var unlocked=AndroidOfflineProfile.PreviewUnlockNames(directory);
+  var preview=AndroidOfflineProfile.PreviewLoadout(directory);
+  uint skinIndex=preview.bodyLoadoutManager.GetSkinIndex(body.bodyIndex);
+  Check(skinIndex<int.MaxValue&&skinIndex<SkinCatalog.GetBodySkinCount(body.bodyIndex),"Saved original skin index unavailable");
+  var skin=SkinCatalog.GetBodySkinDef(body.bodyIndex,(int)skinIndex);
+  Check(skin&&string.IsNullOrEmpty(skin.unlockableName)&&(!skin.unlockableDef||!skin.unlockableDef.requiredExpansion&&unlocked.Contains(skin.unlockableDef.cachedName)),"Saved original skin requires an unavailable unlock or expansion");
+  var slots=prefab.GetComponents<GenericSkill>();var selected=new Loadout();var variants=new int[slots.Length];
+  selected.bodyLoadoutManager.SetSkinIndex(body.bodyIndex,skinIndex);
+  for(int i=0;i<slots.Length;i++){
+   var family=slots[i].skillFamily;uint index=preview.bodyLoadoutManager.GetSkillVariant(body.bodyIndex,i);
+   Check(family&&index<family.variants.Length&&family.variants[(int)index].skillDef,"Saved original skill variant unavailable");
+   var variant=family.variants[(int)index];
+   Check(string.IsNullOrEmpty(variant.unlockableName)&&(!variant.unlockableDef||!variant.unlockableDef.requiredExpansion&&unlocked.Contains(variant.unlockableDef.cachedName)),"Saved original skill requires an unavailable unlock or expansion");
+   selected.bodyLoadoutManager.SetSkillVariant(body.bodyIndex,i,index);variants[i]=(int)index;
+  }
+  selected.Copy(master.loadout);previewLoadoutBody=body.bodyIndex;previewLoadoutSkin=skinIndex;previewLoadoutSkills=variants;
+  Check(master.loadout.bodyLoadoutManager.GetSkinIndex(body.bodyIndex)==skinIndex&&Enumerable.Range(0,variants.Length).All(i=>master.loadout.bodyLoadoutManager.GetSkillVariant(body.bodyIndex,i)==variants[i]),"Original pre-spawn loadout copy differs");
+ }
+ void ConfirmAndroidProfileLoadout(CharacterBody player,UserProfile profile){
+  if(previewLoadoutBody==BodyIndex.None)return;
+  Check(player&&player.master&&player.bodyIndex==previewLoadoutBody&&profile!=null&&profile.loadout!=null,"Original profile loadout verification context missing");
+  var bodyLoadout=profile.loadout.bodyLoadoutManager;
+  Check(bodyLoadout.GetSkinIndex(previewLoadoutBody)==previewLoadoutSkin&&player.skinIndex==previewLoadoutSkin,"Decoded original profile skin differs from spawned body");
+  var skills=player.GetComponents<GenericSkill>();
+  Check(skills.Length==previewLoadoutSkills.Length,"Original spawned skill slot count changed");
+  for(int i=0;i<skills.Length;i++)Check(skills[i]&&skills[i].skillFamily&&bodyLoadout.GetSkillVariant(previewLoadoutBody,i)==previewLoadoutSkills[i]&&skills[i].skillDef==skills[i].skillFamily.variants[previewLoadoutSkills[i]].skillDef,"Decoded original profile skill differs from spawned body");
+  r.profile.loadoutAppliedBeforeSpawn=true;r.profile.loadoutVerified=true;r.profile.selectedSkin=previewLoadoutSkin;r.profile.selectedSkillVariants=previewLoadoutSkills;
+ }
  bool HasOwnedProfileUnlock(UnlockableDef definition){
   return !definition||resultsSaveSystem!=null&&resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.HasUnlockable(definition);
  }
@@ -69,6 +103,7 @@ public sealed partial class MovementBatchProbe {
   r.profile.discoverySlots=((bool[])typeof(UserProfile).GetField("discoveredPickups",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(local.profile)).Length;Check(r.profile.discoverySlots==PickupCatalog.pickupCount,"Native profile discovery capacity differs from catalog");
   ReconcileAndroidProfile(local);resultsSaveSystem.userProfile=local.profile;
   ConfirmSelectedSurvivorUnlock();
+  ConfirmAndroidProfileLoadout(player,local.profile);
   r.profile.ready=true;r.profile.created=local.recovery=="new";r.profile.roundTrip=true;r.profile.recovery=local.recovery;r.profile.saveFields=UserProfile.saveFields.Length;r.profile.statFields=local.profile.statSheet.fields.Length;r.profile.survivors=SurvivorCatalog.survivorCount;ObserveAndroidProfile();Save();
   Check(player&&player.master&&player.master.inventory&&player.master.inventory==player.inventory&&!directorPlayer.networkUser&&discoveryInventory==null,"Owned offline player pickup discovery identity missing");
   discoveryInventory=player.inventory;
@@ -105,7 +140,7 @@ public sealed partial class MovementBatchProbe {
   ObserveAndroidProfile();
  }
  void CleanupAndroidProfile(){
-  if(!ownsProfileContext)return;
+  if(!ownsProfileContext){previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;return;}
   if(!ReferenceEquals(discoveryInventory,null)){
    discoveryInventory.onItemAddedClient-=discoveryItem;discoveryInventory.onEquipmentChangedClient-=discoveryEquipment;discoveryInventory.onKeyItemAddedClient-=discoveryKeyItem;
    discoveryInventory=null;discoveryItem=null;discoveryEquipment=null;discoveryKeyItem=null;
@@ -125,5 +160,6 @@ public sealed partial class MovementBatchProbe {
   Check(priorProfileViewables.All(pair=>profileViewablesMap.ContainsKey(pair.Key)&&ReferenceEquals(profileViewablesMap[pair.Key],pair.Value)),"Foreign viewable identity changed");
   foreach(var pair in priorProfileSurvivors)pair.Key.survivorIndex=pair.Value;foreach(var pair in priorProfileCatalog)pair.Key.SetValue(null,pair.Value);
   priorProfileSurvivors.Clear();priorProfileCatalog.Clear();resultsSaveSystem.local=null;resultsSaveSystem.userProfile=null;ownsProfileContext=false;if(r.profile!=null)r.profile.cleaned=true;
+  previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;
  }
 }
