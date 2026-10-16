@@ -136,7 +136,7 @@ public sealed partial class MovementBatchProbe {
   if(GUI.Button(new Rect(x,445,250,44),"F5 Jump power x6: "+a.jumpBoost))SetDebugToggle(4,!a.jumpBoost,"developer panel");
   if(GUI.Button(new Rect(x,495,250,44),"Disable toggles (grants remain)"))ApplyDebugAcceleration(new DebugAccelerationOptions(),"developer panel clear");
  }
- string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal")+"\nJump "+(a.jumpBoost?"x6":"normal")+(r.debugAcceleration.itemGrants.Count>0?" · granted: "+string.Join(", ",r.debugAcceleration.itemGrants.Select(x=>x.item).ToArray()):"");}
+ string DebugAccelerationLabel(){var a=r.debugAcceleration.active;return "Invincible "+a.invincibility+" · damage "+(a.highDamage?"x1000":"normal")+"\nCharge "+(a.fastCharge?"x8":"normal")+" · movement "+(a.movementBoost?"x2":"normal")+"\nJump "+(a.jumpBoost?"x6":"normal")+(r.debugAcceleration.events.Any(x=>x.toggle=="diagnosticInput"&&x.enabled)?" · diagnostic input":"")+(r.debugAcceleration.itemGrants.Count>0?" · granted: "+string.Join(", ",r.debugAcceleration.itemGrants.Select(x=>x.item).ToArray()):"");}
  void CleanupDebugAcceleration(){
   if(!ownsDebugAcceleration||r==null||r.debugAcceleration==null||r.debugAcceleration.restored)return;
   RemoveDebugChargeCallbacks();

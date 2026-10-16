@@ -585,6 +585,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // Explicit automation for integrated validation only; direct app launches use physical controls.
   bridge.touchEquipment|=worldEquipmentTouch;worldEquipmentTouch=false;bridge.diagnosticInput=!worldManualTakeover;r.world.manualTakeover=worldManualTakeover;
   if(worldManualTakeover){r.world.diagnosticInput=false;return;}
+  if(!r.world.diagnosticInputEver){Check(r.debugAcceleration!=null,"Unattended input has no owned diagnostic evidence");DebugToggle("diagnosticInput",true,"unattended route");}
   r.world.diagnosticInput=true;r.world.diagnosticInputEver=true;WorldEquipmentStimulus(bridge,elapsed);bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
   // Measurement-only input: keep the whole director/combat simulation active
   // without spending the frame budget on the unattended shopping/path route.
