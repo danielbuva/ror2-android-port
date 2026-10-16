@@ -43,7 +43,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets,offlinePointSoundPackets,offlineEffectSoundPackets;public bool sourceConstructTurretHandler,offlineChatBoundary,offlinePointSoundBoundary,offlineEffectSoundBoundary;public string offlineChatLastToken,offlinePointSoundLastEvent,offlineEffectSoundLastEvent;public Vector3 offlinePointSoundLastPosition;
   public int bodyVisualSlots,healthVisualSlots,globalCommonAssetSlots;public string[] bodyVisualUnavailable,healthVisualUnavailable,globalCommonAssetUnavailable;public bool bodyVisualCleaned,globalCommonAssetCleaned;
-  public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
+  public string navigationTarget;public bool navigationReachable,navigationJump,navigationElevatedApproachAttempted,navigationElevatedApproachFound,navigationElevatedApproachActive;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
   public bool navigationTerrainFallback,navigationTerrainNoCandidate,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked,navigationObjectiveRecoveryFrames;public Vector3 navigationTerrainTarget;
@@ -81,6 +81,7 @@ public sealed partial class MovementBatchProbe {
  NetworkSoundEventDef[] worldOfflineNetworkSoundDefs;
  int worldObjective;float worldLastPress=-1;
  RoR2.PathFollower worldPathFollower=new RoR2.PathFollower();Vector3 worldPathTarget;float worldPathRequested=-100;
+ RoR2.Navigation.NodeGraph worldElevatedApproachGraph;Vector3 worldElevatedApproachObjective,worldElevatedApproachDestination;bool worldElevatedApproachActive;
  LocalNavigator worldLocalNavigator=new LocalNavigator();CharacterBody worldNavigationBody;float worldNavigationUpdatedAt;
  Vector3 worldNavigationProgressWaypoint,worldNavigationProgressDestination;float worldNavigationProgressDistance,worldNavigationProgressAt,worldNavigationRecoveryUntil=-1;bool worldNavigationHasProgress;
  Vector3 worldNavigationObjective;float worldNavigationObjectiveDistance,worldNavigationObjectiveProgressAt;bool worldNavigationHasObjectiveProgress;
@@ -676,6 +677,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   var position=player.temporaryPathfindingFootpositionDoNotUseWillBePatchedOut;var delta=destination-position;var planar=new Vector2(delta.x,delta.z);r.world.navigationReference=position;
   var graph=SceneInfo.instance?SceneInfo.instance.groundNodes:null;var waypoint=destination;
   bool moon=r.moon!=null&&r.moon.loaded;
+  if(worldElevatedApproachActive&&(moon||graph!=worldElevatedApproachGraph||Vector3.Distance(destination,worldElevatedApproachObjective)>2||Vector3.Distance(position,worldElevatedApproachDestination)<3))worldElevatedApproachActive=false;
+  var routeDestination=worldElevatedApproachActive?worldElevatedApproachDestination:destination;
+  r.world.navigationElevatedApproachActive=worldElevatedApproachActive;
   // Players may sprint while travelling. Let original input/stat callbacks supply
   // the actual speed used by the next source path request, including earned items.
   if(moon||elapsed<worldTerrainRecoveryUntil)bridge.diagnosticSprint=planar.magnitude>8;
@@ -685,21 +689,27 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // motor limits, graph gates, physics, interaction range and item positions remain authoritative.
   RaycastHit obstacle;bool needsRoute=Mathf.Abs(delta.y)>2||planar.magnitude>15||Physics.Linecast(position+Vector3.up,destination+Vector3.up,out obstacle,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
   if(graph&&needsRoute){
-   if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(destination,worldPathTarget)>2||elapsed-worldPathRequested>8){
+   if(worldPathFollower.nodeGraph!=graph||Vector3.Distance(routeDestination,worldPathTarget)>2||elapsed-worldPathRequested>8){
     r.world.navigationHull=player.hullClassification.ToString();r.world.navigationJumpHeight=player.maxJumpHeight.ToString("R",System.Globalization.CultureInfo.InvariantCulture);r.world.navigationMaxSpeed=player.moveSpeed;r.world.navigationMaxSlope=player.characterMotor.Motor.MaxStableSlopeAngle;r.world.navigationGravityY=Physics.gravity.y;r.world.navigationGraphNodes=graph.GetNodeCount();
     r.world.navigationNearestNode=graph.FindClosestNode(position,player.hullClassification).nodeIndex;var startNode=graph.FindClosestNodeWithRaycast(position,player.hullClassification,100,2);r.world.navigationStartNode=startNode.nodeIndex;Vector3 startPosition;r.world.navigationStartPosition=graph.GetNodePosition(startNode,out startPosition)?startPosition:Vector3.zero;
     r.world.navigationApproachBoundsRejected=r.world.navigationApproachTooShort=r.world.navigationApproachUnreachable=0;
     using(var path=new RoR2.Path(graph)){
-     var task=graph.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest{path=path,startPos=position,endPos=destination,hullClassification=player.hullClassification,maxSlope=player.characterMotor.Motor.MaxStableSlopeAngle,maxJumpHeight=player.maxJumpHeight,maxSpeed=player.moveSpeed});
+     var task=graph.ComputePath(new RoR2.Navigation.NodeGraph.PathRequest{path=path,startPos=position,endPos=routeDestination,hullClassification=player.hullClassification,maxSlope=player.characterMotor.Motor.MaxStableSlopeAngle,maxJumpHeight=player.maxJumpHeight,maxSpeed=player.moveSpeed});
      Check(task.status==RoR2.Navigation.PathTask.TaskStatus.Complete,"Original stage path did not complete");
      r.world.navigationReachable=task.wasReachable;r.world.navigationPartial=false;r.world.navigationPartialCandidates=0;r.world.navigationPartialNode=-1;r.world.navigationPartialSeconds=0;
-     // Moon's monster graph need not connect to the player's battery destination.
-     // Ask the original solver for a reachable approach before abandoning its route.
-     if(moon&&!task.wasReachable)r.world.navigationPartial=FindSourceWorldApproach(player,graph,path,position,destination);
+     // A stage graph can report its nearest target node reachable while returning
+     // no traversal to an objective on a higher platform. Once direct movement
+     // stalls, ask that same source graph for a reachable upper approach.
+     bool elevatedStall=!moon&&!worldElevatedApproachActive&&task.wasReachable&&path.waypointsCount<2&&delta.y>player.maxJumpHeight&&worldNavigationHasObjectiveProgress&&elapsed-worldNavigationObjectiveProgressAt>6;
+     if(elevatedStall)r.world.navigationElevatedApproachAttempted=true;
+     if(moon&&!task.wasReachable||elevatedStall){
+      r.world.navigationPartial=FindSourceWorldApproach(player,graph,path,position,destination,elevatedStall);
+      if(elevatedStall&&r.world.navigationPartial){r.world.navigationElevatedApproachFound=true;worldElevatedApproachActive=true;worldElevatedApproachGraph=graph;worldElevatedApproachObjective=destination;worldElevatedApproachDestination=r.world.navigationPartialDestination;r.world.navigationElevatedApproachActive=true;routeDestination=worldElevatedApproachDestination;}
+     }
      r.world.navigationWaypoints=path.waypointsCount;worldPathFollower.SetPath(path);
      var observed=new List<NavigationPathPoint>();for(int i=0;i<path.waypointsCount;i++){Vector3 node;Check(graph.GetNodePosition(path[i].nodeIndex,out node),"Original path node position unavailable");observed.Add(new NavigationPathPoint{position=node,minimumJumpHeight=path[i].minJumpHeight});}r.world.navigationPath=observed.ToArray();
     }
-    worldPathTarget=destination;worldPathRequested=elapsed;
+    worldPathTarget=routeDestination;worldPathRequested=elapsed;
    }
    worldPathFollower.UpdatePosition(position);var next=worldPathFollower.GetNextPosition();if(next.HasValue)waypoint=next.Value;
    r.world.navigationJump=worldPathFollower.nextWaypointNeedsJump;
@@ -708,8 +718,9 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   bool sourceApproach=r.world.navigationPartial&&!worldPathFollower.isFinished;
   // A refreshed source path can keep changing its local waypoint while the
   // player circles the same obstacle. Compare progress to the real objective.
-  bool objectiveStalled=worldNavigationHasObjectiveProgress&&Vector3.Distance(destination,worldNavigationObjective)<2&&elapsed-worldNavigationObjectiveProgressAt>6;
-  if(needsRoute&&((graph&&!r.world.navigationReachable&&!sourceApproach)||stalled||objectiveStalled))worldTerrainRecoveryUntil=elapsed+4;
+  bool objectiveStalled=worldNavigationHasObjectiveProgress&&Vector3.Distance(routeDestination,worldNavigationObjective)<2&&elapsed-worldNavigationObjectiveProgressAt>6;
+  bool followingElevatedSourcePath=worldElevatedApproachActive&&r.world.navigationReachable&&!worldPathFollower.isFinished&&r.world.navigationWaypoints>2;
+  if(needsRoute&&((graph&&!r.world.navigationReachable&&!sourceApproach)||stalled||objectiveStalled&&!followingElevatedSourcePath))worldTerrainRecoveryUntil=elapsed+4;
   if(needsRoute&&elapsed<worldTerrainRecoveryUntil){
    // The source graph can be disconnected or reach a waypoint the current
    // approach cannot traverse. Retain its result; steer normal input over ground.
@@ -740,19 +751,29 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.navigationStalledSeconds=elapsed-worldNavigationProgressAt;
   // Terrain replanning changes the local waypoint even while circling the same
   // obstacle. Track the actual objective separately so it cannot hide that stall.
-  float objectiveDistance=Vector3.Distance(position,destination);
-  if(!worldNavigationHasObjectiveProgress||Vector3.Distance(destination,worldNavigationObjective)>2||objectiveDistance<worldNavigationObjectiveDistance-.5f){worldNavigationHasObjectiveProgress=true;worldNavigationObjective=destination;worldNavigationObjectiveDistance=objectiveDistance;worldNavigationObjectiveProgressAt=elapsed;}
+  float objectiveDistance=Vector3.Distance(position,routeDestination);
+  if(!worldNavigationHasObjectiveProgress||Vector3.Distance(routeDestination,worldNavigationObjective)>2||objectiveDistance<worldNavigationObjectiveDistance-.5f){worldNavigationHasObjectiveProgress=true;worldNavigationObjective=routeDestination;worldNavigationObjectiveDistance=objectiveDistance;worldNavigationObjectiveProgressAt=elapsed;}
   r.world.navigationObjectiveStalledSeconds=elapsed-worldNavigationObjectiveProgressAt;r.world.navigationObjectiveProgressDistance=worldNavigationObjectiveDistance;
   r.world.navigationProgressDistance=worldNavigationProgressDistance;r.world.navigationRecoveryJump=remaining>Mathf.Max(1,stopDistance)&&(r.world.navigationStalledSeconds>3||(r.world.navigationTerrainFallback&&r.world.navigationObjectiveStalledSeconds>3));
   bool jump=(r.world.navigationJump||worldLocalNavigator.jumpSpeed>0||r.world.navigationRecoveryJump)&&player.characterMotor.isGrounded&&elapsed%1.5f<.25f;bridge.DiagnosticJump(jump);if(jump&&r.world.navigationRecoveryJump)r.world.navigationRecoveryJumpFrames++;
   if(r.world.navigationRecoveryJump&&elapsed>worldNavigationRecoveryUntil){worldNavigationRecoveryUntil=elapsed+3;r.world.navigationRecoveries++;worldPathRequested=-100;}
  }
- bool FindSourceWorldApproach(CharacterBody player,RoR2.Navigation.NodeGraph graph,RoR2.Path path,Vector3 position,Vector3 destination){
+ bool FindSourceWorldApproach(CharacterBody player,RoR2.Navigation.NodeGraph graph,RoR2.Path path,Vector3 position,Vector3 destination,bool elevated=false){
   var began=Time.realtimeSinceStartup;float currentDistance=Vector3.Distance(position,destination);
   var candidates=new List<KeyValuePair<float,RoR2.Navigation.NodeGraph.NodeIndex>>();
   foreach(var index in graph.GetActiveNodesForHullMask((HullMask)(1<<(int)player.hullClassification))){
    Vector3 node;Check(graph.GetNodePosition(index,out node),"Original approach node unavailable");float distance=Vector3.Distance(node,destination);
-   if(distance>=currentDistance-8)continue;if(!InsideSourceStageBounds(node)){r.world.navigationApproachBoundsRejected++;continue;}candidates.Add(new KeyValuePair<float,RoR2.Navigation.NodeGraph.NodeIndex>(distance,index));
+   if(elevated){
+    // The ramp's first useful node may be farther from the objective than the
+    // stranded footpoint. Its source elevation, bounds and computed path must
+    // agree; proximity alone never authorizes a jump or teleport.
+    // This source teleporter platform lies between lower and upper graph
+    // surfaces. Reach the upper connected surface,
+    // then let the original motor traverse down to the placed objective.
+    float height=node.y-destination.y;
+    if(height<-player.maxJumpHeight||height>Mathf.Max(12f,player.maxJumpHeight*4f)||distance>currentDistance+8)continue;
+   }else if(distance>=currentDistance-8)continue;
+   if(!InsideSourceStageBounds(node)){r.world.navigationApproachBoundsRejected++;continue;}candidates.Add(new KeyValuePair<float,RoR2.Navigation.NodeGraph.NodeIndex>(distance,index));
   }
   candidates.Sort((a,b)=>a.Key.CompareTo(b.Key));
   foreach(var candidate in candidates){
@@ -847,7 +868,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  }
  void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupWorldTransmutation();CleanupTeleporterWorld();CleanupOriginalGlobalCommonAssets();CleanupOriginalBodyVisualReferences();
   worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;fireTrailDiagnosisRecorded=false;
-  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
+  worldPathFollower.Reset();worldElevatedApproachActive=false;worldElevatedApproachGraph=null;worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
   if(ownsWorldPresentation){GlobalEventManager.onTeamLevelUp+=unavailableTeamLevelSound;Run.onRunAmbientLevelUp+=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp+=unavailableLevelEffect;if(worldPlayer&&worldPlayer.inventory)worldPlayer.inventory.onItemAddedClient+=unavailableItemHighlight;ownsWorldPresentation=false;}
   if(worldInteraction!=null)GlobalEventManager.OnInteractionsGlobal-=worldInteraction;if(worldDriver)worldDriver.enabled=false;
