@@ -22,8 +22,8 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   public bool alreadyAchieved,wouldGrant,granted;
  }
  [Serializable] public sealed class AwardReport {
-  public string scope="Native persistent-stat checks and local unlock APIs; Android-local currency delivery. External achievements, activities and network transport unavailable.";
-  public ThresholdObservation[] observations;
+  public string scope="Native persistent-stat and measured stat-driven checks with local unlock APIs; Android-local currency delivery. External achievements, activities and network transport unavailable.";
+  public ThresholdObservation[] observations,statDrivenObservations;
   public string[] awarded;
   public uint coinsBefore,coinsAfter,collectedBefore,collectedAfter;
   public int unavailableActivityRequests;
@@ -53,6 +53,7 @@ public sealed class AndroidProgressionBoundary : IDisposable {
  readonly Dictionary<Run,HashSet<UnlockableDef>[]> priorRunUnlocks=new Dictionary<Run,HashSet<UnlockableDef>[]>();
  IList identifiers;object[] priorIdentifiers;
  AchievementDef[] persistentStats=Array.Empty<AchievementDef>();
+ AchievementDef[] statDrivenAchievements=Array.Empty<AchievementDef>();
  AchievementDef[] pickupAchievements=Array.Empty<AchievementDef>();
  UnlockableDef[] ownedDefinitions=Array.Empty<UnlockableDef>();
  bool acquired,disposed;
@@ -100,6 +101,8 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   foreach(var def in map.Values)if(!string.IsNullOrEmpty(def.unlockableRewardIdentifier))RequireDefinition(UnlockableCatalog.GetUnlockableDef(def.unlockableRewardIdentifier));
   persistentStats=map.Values.Where(def=>typeof(BaseStatMilestoneAchievement).IsAssignableFrom(def.type)).OrderBy(def=>def.identifier,StringComparer.Ordinal).ToArray();
   Check(persistentStats.Length>0&&persistentStats.All(def=>def.type.BaseType==typeof(BaseStatMilestoneAchievement)&&def.serverTrackerType==null&&def.type.GetMethod("OnInstall").DeclaringType==typeof(BaseStatMilestoneAchievement)&&def.type.GetMethod("OnUninstall").DeclaringType==typeof(BaseStatMilestoneAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Unmeasured persistent-stat achievement implementation");
+  statDrivenAchievements=new[]{map["RepeatFirstTeleporter"],map["UseThreePortals"]};
+  Check(statDrivenAchievements[0].type==typeof(RepeatFirstTeleporterAchievement)&&statDrivenAchievements[0].serverTrackerType!=null&&statDrivenAchievements[0].unlockableRewardIdentifier=="Characters.Toolbot"&&statDrivenAchievements[0].serverIndex.intValue>=0&&statDrivenAchievements[0].serverIndex.intValue<AchievementManager.serverAchievementCount&&statDrivenAchievements[1].type==typeof(UseThreePortalsAchievement)&&statDrivenAchievements[1].serverTrackerType==null&&statDrivenAchievements[1].unlockableRewardIdentifier=="Items.Tonic"&&statDrivenAchievements.All(def=>def.type.BaseType==typeof(BaseAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Original stat-driven achievement contract changed");
   pickupAchievements=new[]{"Discover10UniqueTier1","Discover5Equipment"}.Select(id=>map[id]).ToArray();
   Check(pickupAchievements[0].type==typeof(Discover10UniqueTier1Achievement)&&pickupAchievements[1].type==typeof(Discover5EquipmentAchievement)&&pickupAchievements.All(def=>def.serverTrackerType==null&&def.type.BaseType==typeof(BaseAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Original pickup-discovery achievement contract changed");
   achievements=map.Count;AchievementManager.availability.MakeAvailable();ready=true;
@@ -159,6 +162,31 @@ public sealed class AndroidProgressionBoundary : IDisposable {
  }
  public ThresholdObservation InspectPersistentStatCandidate(UserProfile candidate,AchievementDef definition){ValidateProfile(candidate);var clone=UserProfile.FromXml(UserProfile.ToXml(candidate));clone.canSave=false;return Evaluate(clone,definition,false);}
  public ThresholdObservation[] InspectPersistentStatCandidate(UserProfile candidate){return persistentStats.Select(def=>InspectPersistentStatCandidate(candidate,def)).ToArray();}
+ ThresholdObservation EvaluateStatDriven(UserProfile candidate,AchievementDef definition){
+  ValidateProfile(candidate);Check(statDrivenAchievements.Contains(definition)&&!candidate.canSave&&candidate.onStatsReceived==null,"Stat-driven award requires an owned detached profile");
+  var reward=UnlockableCatalog.GetUnlockableDef(definition.unlockableRewardIdentifier);RequireDefinition(reward);
+  var observation=new ThresholdObservation{identifier=definition.identifier,reward=reward.cachedName,stat=definition.identifier=="RepeatFirstTeleporter"?StatDef.firstTeleporterCompleted.name:"per-stage portal visits",requirement=definition.identifier=="RepeatFirstTeleporter"?5uL:3uL,alreadyAchieved=candidate.HasAchievement(definition.identifier),lunarReward=definition.lunarCoinReward};
+  if(observation.alreadyAchieved)return observation;
+  var expansion=UnlockableCatalog.GetExpansionDefForUnlockable(reward.index);
+  if(expansion&&expansion.requiredEntitlement){observation.blocked="Original reward requires unavailable platform entitlement context";return observation;}
+  var before=UserProfile.ToXml(candidate).ToString();var user=new LocalUser{userProfile=candidate};
+  Check(user.inputPlayer==null&&!user.currentNetworkUser&&LocalUserManager.readOnlyLocalUsersList.Count==0&&NetworkUser.readOnlyInstancesList.Count==0,"Stat-driven award acquired a user/platform identity");
+  var owner=new UserAchievementManager{localUser=user,userProfile=candidate};
+  var achievement=(BaseAchievement)Activator.CreateInstance(definition.type);achievement.achievementDef=definition;achievement.owner=owner;
+  bool entered=false;
+  try{
+   entered=true;achievement.OnInstall();candidate.onStatsReceived?.Invoke();
+   observation.progress=(ulong)Mathf.Max(0,Mathf.RoundToInt(achievement.ProgressForAchievement()*observation.requirement));
+   observation.wouldGrant=achievement.shouldGrant;Check(owner.dirtyGrantsCount==(observation.wouldGrant?1:0),"Original stat-driven grant observation differs");
+   if(observation.wouldGrant){
+    candidate.AddAchievement(definition.identifier,false);achievement.OnGranted();
+    candidate.coins=HGMath.UintSafeAdd(candidate.coins,definition.lunarCoinReward);
+    candidate.totalCollectedCoins=HGMath.UintSafeAdd(candidate.totalCollectedCoins,definition.lunarCoinReward);
+    Check(candidate.HasAchievement(definition.identifier)&&candidate.statSheet.HasUnlockable(reward),"Original stat-driven reward differs");observation.granted=true;
+   }
+  }finally{if(entered)achievement.OnUninstall();}
+  Check(candidate.onStatsReceived==null&&(observation.granted||UserProfile.ToXml(candidate).ToString()==before),"Stat-driven evaluation retained callbacks or unearned data");return observation;
+ }
  static void ValidateUnlockNotifications(){
   Check(LocalUserManager.readOnlyLocalUsersList.Count==0&&NetworkUser.readOnlyInstancesList.Count==0,"Local award transaction has a registered user");
   var callbacks=Field(typeof(UserProfile),"onUnlockableGranted").GetValue(null) as Delegate;
@@ -173,7 +201,7 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   var prior=PlatformSystems.activityManager;Check(prior==null,"Foreign platform activity owner");
   var unavailable=new UnavailableActivityDispatch();var report=new AwardReport{coinsBefore=candidate.coins,collectedBefore=candidate.totalCollectedCoins};
   PlatformSystems.activityManager=unavailable;
-  try{report.observations=persistentStats.Select(def=>Evaluate(candidate,def,true)).ToArray();report.awarded=report.observations.Where(row=>row.granted).Select(row=>row.identifier).ToArray();report.coinsAfter=candidate.coins;report.collectedAfter=candidate.totalCollectedCoins;report.unavailableActivityRequests=unavailable.requests;Check(!unavailable.IsInitialized,"Offline activity adapter claimed initialization");return report;}
+  try{report.observations=persistentStats.Select(def=>Evaluate(candidate,def,true)).ToArray();report.statDrivenObservations=statDrivenAchievements.Select(def=>EvaluateStatDriven(candidate,def)).ToArray();report.awarded=report.observations.Concat(report.statDrivenObservations).Where(row=>row.granted).Select(row=>row.identifier).ToArray();report.coinsAfter=candidate.coins;report.collectedAfter=candidate.totalCollectedCoins;report.unavailableActivityRequests=unavailable.requests;Check(!unavailable.IsInitialized,"Offline activity adapter claimed initialization");return report;}
   finally{bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;Check(owned,"Platform activity ownership changed during local transaction");}
  }
 
