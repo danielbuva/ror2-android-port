@@ -30,24 +30,26 @@ public sealed partial class MovementBatchProbe {
   if(string.IsNullOrEmpty(r.selectedSurvivor))r.selectedSurvivor=pendingOfflineSurvivor;
   // A developer-only survivor override is never shown as an earned menu choice.
   if(!AllowsOfflineSessionMenu(r)||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu||r.developerSurvivorOverride)yield break;
+  offlineUnlockPreview=null;var choices=OrdinarySurvivorChoices();
+  if(!choices.Any(value=>value.cachedName==r.selectedSurvivor))r.selectedSurvivor=choices[0].cachedName;
   offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
   offlineMenuMapping.Validate(r.attempt);PrepareRecoveredMenu();offlineStartVisible=true;r.phase="offline-start-menu";Save();
   while(!offlineStartSelected)yield return null;
   offlineStartVisible=false;CleanupRecoveredMenu();pendingOfflineSurvivor=r.selectedSurvivor;SelectedPlayerPrefab(cfg);r.phase="started";Save();
  }
  void ObserveOfflineApplicationInput(){
-  if(offlineStartVisible){if(OfflineUiControllerPresent()){var horizontal=NovaInputBridge.ReadRaw().axes[offlineMenuMapping.moveX];if(Mathf.Abs(horizontal)<.3f)offlineSurvivorStickLatched=false;else if(!offlineSurvivorStickLatched&&Mathf.Abs(horizontal)>.65f){r.selectedSurvivor=r.selectedSurvivor=="Commando"?"Huntress":"Commando";offlineSurvivorStickLatched=true;Save();}if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+offlineMenuMapping.jump)))offlineStartSelected=true;}return;}
+  if(offlineStartVisible){if(OfflineUiControllerPresent()){var horizontal=NovaInputBridge.ReadRaw().axes[offlineMenuMapping.moveX];if(Mathf.Abs(horizontal)<.3f)offlineSurvivorStickLatched=false;else if(!offlineSurvivorStickLatched&&Mathf.Abs(horizontal)>.65f){CycleOrdinarySurvivor(horizontal>0?1:-1);offlineSurvivorStickLatched=true;}if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+offlineMenuMapping.jump)))offlineStartSelected=true;}return;}
   ObserveOfflineSettingsControllerInput();
   if(r!=null&&r.phase!="commando-defeated"&&r.freePlay&&r.results!=null&&r.results.persisted&&r.nova!=null&&!offlineSettingsVisible&&OfflineUiControllerPresent()&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump)))RequestResultsMenu();
  }
  bool DrawOfflineStart(){
   if(!offlineStartVisible)return false;
   var selected=string.IsNullOrEmpty(r.selectedSurvivor)?"Commando":r.selectedSurvivor;
-  if(recoveredMenu){GUI.Box(new Rect(20,Screen.height-156,470,88),"Original base survivor");if(GUI.Button(new Rect(40,Screen.height-127,430,48),selected+"  ◀  ▶")){r.selectedSurvivor=selected=="Commando"?"Huntress":"Commando";Save();}GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Offline composition · Android profile loads with the run · audio/Steam profiles unavailable · source UI rendering approximation");return true;}
+  if(recoveredMenu){GUI.Box(new Rect(20,Screen.height-156,470,88),"Original base survivor · Android profile");if(GUI.Button(new Rect(40,Screen.height-127,430,48),selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Offline composition · original unlocks verified when run starts · audio/Steam profiles unavailable · source UI rendering approximation");return true;}
   var style=new GUIStyle(GUI.skin.label){fontSize=30,wordWrap=true};
   GUI.Box(new Rect(20,60,860,400),"Offline RoR2 composition");
   GUI.Label(new Rect(45,100,800,220),selected+" · Drizzle\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\n\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",style);
-  if(GUI.Button(new Rect(45,270,370,55),"Survivor: "+selected+"  ◀  ▶")){r.selectedSurvivor=selected=="Commando"?"Huntress":"Commando";Save();}
+  if(GUI.Button(new Rect(45,270,370,55),"Survivor: "+selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);
   if(GUI.Button(new Rect(45,340,370,65),"Start run (A)"))offlineStartSelected=true;
   if(GUI.Button(new Rect(440,340,370,65),"Quit"))Application.Quit();
   return true;

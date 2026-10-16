@@ -1,16 +1,43 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using RoR2;
 using UnityEngine;
 
-// Ordinary selection remains limited to shipped, freely available survivors.
-// An explicit developer-only base survivor selection can exercise original code
-// without granting an unlock or claiming normal-run acceptance.
+// Ordinary selection follows the original survivor contract and the owned
+// Android profile. Developer-only selections remain assisted.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class SourceAnimationEventReport {public string model;public float seconds;public bool componentEnabled,modelActive,characterBodyMatched,locatorPresent,cachedLocator,cachedBody;public bool[] airstrikeMuzzles;}
  float nextSourceAnimationObservation;
  GameObject selectedBodyStaging;
+ HashSet<string> offlineUnlockPreview;
+ void EnsureOfflineUnlockPreview(){if(offlineUnlockPreview==null)offlineUnlockPreview=AndroidOfflineProfile.PreviewUnlockNames(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"));}
+ static string SurvivorUnlockName(SurvivorDef survivor){return survivor.unlockableDef?survivor.unlockableDef.cachedName:survivor.unlockableName;}
+ bool IsOrdinarySurvivorAvailable(SurvivorDef survivor){
+  if(!survivor||!survivor.bodyPrefab||survivor.hidden||survivor.GetRequiredExpansion()||survivor.GetRequiredEntitlement())return false;
+  var name=SurvivorUnlockName(survivor);if(string.IsNullOrEmpty(name))return true;
+  EnsureOfflineUnlockPreview();return offlineUnlockPreview.Contains(name);
+ }
+ SurvivorDef[] OrdinarySurvivorChoices(){
+  EnsureOfflineUnlockPreview();
+  var definitions=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.survivorDef,Array.Empty<SurvivorDef>());
+  var choices=definitions.Where(IsOrdinarySurvivorAvailable).OrderBy(value=>value.cachedName=="Commando"?0:value.cachedName=="Huntress"?1:2).ThenBy(value=>value.cachedName,StringComparer.Ordinal).ToArray();
+  Check(choices.Any(value=>value.cachedName=="Commando")&&choices.Any(value=>value.cachedName=="Huntress"),"Original free survivor choices unavailable");
+  return choices;
+ }
+ void CycleOrdinarySurvivor(int direction){
+  var choices=OrdinarySurvivorChoices();var index=Array.FindIndex(choices,value=>value.cachedName==r.selectedSurvivor);
+  r.selectedSurvivor=choices[(index+direction+choices.Length)%choices.Length].cachedName;Save();
+ }
+ void ConfirmSelectedSurvivorUnlock(){
+  if(r.developerSurvivorOverride||string.IsNullOrEmpty(r.selectedSurvivor))return;
+  var survivor=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.survivorDef,Array.Empty<SurvivorDef>()).SingleOrDefault(value=>value&&value.cachedName==r.selectedSurvivor);
+  Check(survivor!=null,"Selected survivor missing when native profile loaded");
+  var name=SurvivorUnlockName(survivor);if(string.IsNullOrEmpty(name))return;
+  var definition=UnlockableCatalog.GetUnlockableDef(name);
+  Check(definition&&definition.cachedName==name&&(!survivor.unlockableDef||survivor.unlockableDef==definition)&&HasOwnedProfileUnlock(definition),"Selected survivor lacks its original Android profile unlock");
+ }
  bool SelectedSourceSurvivor(){return r!=null&&!string.IsNullOrEmpty(r.selectedSurvivor)&&r.selectedSurvivor!="Commando";}
  GameObject SelectedPlayerPrefab(Result cfg){
   if(string.IsNullOrEmpty(r.selectedSurvivor))r.selectedSurvivor="Commando";
@@ -19,8 +46,8 @@ public sealed partial class MovementBatchProbe {
   var definitions=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.survivorDef,Array.Empty<SurvivorDef>());
   var survivor=definitions.SingleOrDefault(value=>value&&value.cachedName==r.selectedSurvivor);
   Check(survivor&&survivor.bodyPrefab&&!survivor.hidden&&!survivor.GetRequiredExpansion()&&!survivor.GetRequiredEntitlement(),"Selected survivor requires an unavailable original expansion or entitlement");
-  bool locked=survivor.unlockableDef||!string.IsNullOrEmpty(survivor.unlockableName);
-  Check(!locked||r.developerSurvivorOverride&&r.debugOptions!=null&&!string.IsNullOrWhiteSpace(r.debugOptions.purpose)&&r.debugOptions.purpose.Length<=160,"Selected survivor requires an original unlock; developer selection needs an explicit diagnostic purpose");
+  bool locked=!string.IsNullOrEmpty(SurvivorUnlockName(survivor));
+  Check(!locked||IsOrdinarySurvivorAvailable(survivor)||r.developerSurvivorOverride&&r.debugOptions!=null&&!string.IsNullOrWhiteSpace(r.debugOptions.purpose)&&r.debugOptions.purpose.Length<=160,"Selected survivor requires an original unlock; developer selection needs an explicit diagnostic purpose");
   Check(!r.developerSurvivorOverride||locked,"Developer survivor override is limited to locked base survivors");
   var body=survivor.bodyPrefab.GetComponent<CharacterBody>();
   Check(body&&body.bodyIndex!=BodyIndex.None&&BodyCatalog.GetBodyPrefab(body.bodyIndex)==survivor.bodyPrefab,"Selected source survivor/body catalog identity differs");

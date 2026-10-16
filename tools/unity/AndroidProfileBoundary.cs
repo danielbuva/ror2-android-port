@@ -68,6 +68,7 @@ public sealed partial class MovementBatchProbe {
   var local=new AndroidOfflineProfile(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"),resultsLedger.runs.Select(ProfileRunIdentity),candidate=>{r.profile.awards=androidProgression.ApplyPersistentStatCandidate(candidate);},(candidate,pickup)=>{pendingDiscovery=androidProgression.ApplyDiscoveryCandidate(candidate,pickup);});resultsSaveSystem.local=local;resultsSaveSystem.userProfile=local.profile;resultsSaveSystem.isInitialLoadFinished=true;
   r.profile.discoverySlots=((bool[])typeof(UserProfile).GetField("discoveredPickups",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(local.profile)).Length;Check(r.profile.discoverySlots==PickupCatalog.pickupCount,"Native profile discovery capacity differs from catalog");
   ReconcileAndroidProfile(local);resultsSaveSystem.userProfile=local.profile;
+  ConfirmSelectedSurvivorUnlock();
   r.profile.ready=true;r.profile.created=local.recovery=="new";r.profile.roundTrip=true;r.profile.recovery=local.recovery;r.profile.saveFields=UserProfile.saveFields.Length;r.profile.statFields=local.profile.statSheet.fields.Length;r.profile.survivors=SurvivorCatalog.survivorCount;ObserveAndroidProfile();Save();
   Check(player&&player.master&&player.master.inventory&&player.master.inventory==player.inventory&&!directorPlayer.networkUser&&discoveryInventory==null,"Owned offline player pickup discovery identity missing");
   discoveryInventory=player.inventory;
