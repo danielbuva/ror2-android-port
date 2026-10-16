@@ -4511,3 +4511,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** The converted scene existed, but its native shrine/portal/mission and return were unrun. Register its original SceneDef, activate the source out-of-bounds MapZone in the additive lifecycle, and follow a receipted assisted portal route.
 - **TEST / PASS:** 139 host tests, preflight, exact-editor ARM64 build, original shrine purchase, four of seven native beacons, boss and return portal, two genuine transitions into Goolake, unchanged stage count through the intermission, zero current-process errors. Four native out-of-bounds rescues were separately observed on the same APK.
 - **OPEN:** Natural shrine frequency, normal combat/holdout, Gold visual parity and release-target 60 FPS. Moon/finale remains paused; continue broad original stage and content coverage.
+
+## C23 / J486 — Register complete original scene definitions
+
+- **OBSERVATION / TASK:** The original provider publishes 76 unique non-Junk SceneDefs, while the composed `SceneCatalog` held a selected subset. Load the native provider family from the shared bundle and keep source scene-group references identical to registered definitions; retain the converted-destination transport boundary.
+- **TEST / PASS:** Preflight, 139 host tests, exact-editor ARM64 APK; 76 catalog definitions and 14 converted destinations reported on device. Assisted Lakes → Goolake completed a native boss/teleporter exit, two original stage begins and 20 seconds of subsequent gameplay with zero current-process errors.
+- **OPEN:** Convert more source destinations before allowing their entry. Native expansion requirements remain intact; unconverted scenes, normal combat, full route and sustained 60 FPS are unaccepted. Depends on J485 and the shipped `SceneCatalog`/provider contract.

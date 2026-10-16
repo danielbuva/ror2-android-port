@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 // Schedules unchanged original clock callbacks on the owned inactive Run, without its startup.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class RunClockReport {
-  public bool catalogReady,originalCallbacks,stopwatchRunning,cleaned,asyncAssetsReleased;public string scene,error,scope;public int sceneIndex,selectedDifficulty,fixedTicks,frameTicks,asyncAssetTicks,endRunEffectLoansReturned;public float beganFixed,beganStopwatch,fixedTime,frameTime,stampTime,stopwatch,difficulty,compensatedDifficulty,ambient;public bool paused;
+  public bool catalogReady,originalCallbacks,stopwatchRunning,cleaned,asyncAssetsReleased;public string scene,error,scope;public int sceneIndex,sceneDefs,convertedDestinations,selectedDifficulty,fixedTicks,frameTicks,asyncAssetTicks,endRunEffectLoansReturned;public float beganFixed,beganStopwatch,fixedTime,frameTime,stampTime,stopwatch,difficulty,compensatedDifficulty,ambient;public bool paused;
  }
  Action<SceneExitController> ownedStageAsyncRelease,nativeStageAsyncRelease;
  Action ownedRunFixed,ownedRunFrame,ownedAsyncAssetFrame;bool ownsRunAsyncLifecycle;Run clockRun;Scene priorClockScene;SceneDef[] priorContentScenes;SceneDef clockSceneDef;SceneDef[] clockSceneDefs;
@@ -23,12 +23,16 @@ public sealed partial class MovementBatchProbe {
   var flags=BindingFlags.NonPublic|BindingFlags.Static;foreach(var name in new[]{"indexToSceneDef","_stageSceneDefs","_baseSceneNames","currentSceneDef","<mostRecentSceneDef>k__BackingField"}){var field=typeof(SceneCatalog).GetField(name,flags);Check(field!=null,"Original scene catalog field missing: "+name);clockSceneFields[field]=field.GetValue(null);}
   clockSceneMap=(IDictionary)typeof(SceneCatalog).GetField("nameToIndex",flags).GetValue(null);Check(clockSceneMap.Count==0,"Existing scene name map");priorSceneAvailability=SceneCatalog.availability;priorContentScenes=ContentManager._sceneDefs;
   var firstSceneAsset=firstStagePolicyConsumed?cfg.runSceneDefAssets.Single(asset=>System.IO.Path.GetFileNameWithoutExtension(asset).Equals(firstStageName,StringComparison.OrdinalIgnoreCase)):cfg.runSceneDefAsset;
-  clockSceneDef=artifactBundle.LoadAsset<SceneDef>(firstSceneAsset);Check(clockSceneDef&&clockSceneDef.cachedName==(firstStageName??"golemplains")&&clockSceneDef.sceneType==SceneType.Stage&&clockSceneDef.stageOrder==1&&!clockSceneDef.requiredExpansion,"Original base stage metadata changed");
+  var stagedFirst=artifactBundle.LoadAsset<SceneDef>(firstSceneAsset);
+  var sourceScenes=cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap")?WholeCatalogComposed.CategoryFamily(AddressablesLabels.sceneDef,Array.Empty<SceneDef>()):null;
+  clockSceneDef=sourceScenes==null?stagedFirst:sourceScenes.SingleOrDefault(scene=>scene.cachedName==(firstStageName??"golemplains"));
+  Check(stagedFirst&&clockSceneDef&&clockSceneDef.cachedName==(firstStageName??"golemplains")&&clockSceneDef.sceneType==SceneType.Stage&&clockSceneDef.stageOrder==1&&!clockSceneDef.requiredExpansion&&stagedFirst.cachedName==clockSceneDef.cachedName&&stagedFirst.sceneType==clockSceneDef.sceneType&&stagedFirst.stageOrder==clockSceneDef.stageOrder,"Original base stage metadata changed");
   Check(stageGeometryScene.IsValid()&&stageGeometryScene.isLoaded&&stageGeometryScene.name==clockSceneDef.cachedName,"Converted stage scene name must match original metadata");
-  priorClockScene=SceneManager.GetActiveScene();ownsRunSceneCatalog=true;Check(SceneManager.SetActiveScene(stageGeometryScene),"Converted stage active-scene selection failed");clockSceneDefs=cfg.teleporterLoop?cfg.runSceneDefAssets.Select(x=>artifactBundle.LoadAsset<SceneDef>(x)).Distinct().ToArray():new[]{clockSceneDef};Check(clockSceneDefs.All(x=>x)&&clockSceneDefs.Contains(clockSceneDef),"Converted scene metadata missing: "+(cfg.runSceneDefAssets==null?"first stage":string.Join(",",cfg.runSceneDefAssets.Where(x=>!artifactBundle.LoadAsset<SceneDef>(x)))));
-  // The Gold Shores SceneDef is already an original whole-catalog root. Register
-  // it with the same original SceneCatalog initialization as the ordinary stages.
-  if(cfg.integratedStages!=null&&cfg.integratedStages.Any(stage=>stage.name=="goldshores")){
+  priorClockScene=SceneManager.GetActiveScene();ownsRunSceneCatalog=true;Check(SceneManager.SetActiveScene(stageGeometryScene),"Converted stage active-scene selection failed");clockSceneDefs=sourceScenes??(cfg.teleporterLoop?cfg.runSceneDefAssets.Select(x=>artifactBundle.LoadAsset<SceneDef>(x)).Distinct().ToArray():new[]{clockSceneDef});Check(clockSceneDefs.All(x=>x)&&clockSceneDefs.Contains(clockSceneDef),"Converted scene metadata missing: "+(cfg.runSceneDefAssets==null?"first stage":string.Join(",",cfg.runSceneDefAssets.Where(x=>!artifactBundle.LoadAsset<SceneDef>(x)))));
+  if(sourceScenes!=null)Check(clockSceneDefs.Select(scene=>scene.cachedName).Distinct(StringComparer.Ordinal).Count()==clockSceneDefs.Length&&cfg.runSceneDefAssets.All(path=>clockSceneDefs.Any(scene=>scene.cachedName==System.IO.Path.GetFileNameWithoutExtension(path))),"Original scene provider identities or staged definitions differ");
+  // Older selected-catalog compositions need the original Gold Shores definition;
+  // the complete provider family above already contains it.
+  if(sourceScenes==null&&cfg.integratedStages!=null&&cfg.integratedStages.Any(stage=>stage.name=="goldshores")){
    var gold=WholeCatalogComposed.LoadOwnedContent<SceneDef>("Assets/WholeGame/RoR2/Base/Scenes/goldshores/goldshores.asset");
    Check(gold.cachedName=="goldshores"&&gold.sceneType==SceneType.Intermission&&gold.stageOrder==96&&!gold.requiredExpansion,"Original Gold Shores scene metadata differs");
    clockSceneDefs=clockSceneDefs.Concat(new[]{gold}).Distinct().ToArray();
@@ -37,7 +41,7 @@ public sealed partial class MovementBatchProbe {
   var init=SceneCatalog.Init();while(init.MoveNext())yield return init.Current;
   // Run the shipped scene-policy initializer; never manufacture a waiver.
   StaticCall(typeof(ExpansionWaiver),"Init");Check(!ExpansionWaiver.expansionsWaived,"Original scene policy unexpectedly enabled a waiver");
-  r.runClock.scene=SceneManager.GetActiveScene().name;r.runClock.sceneIndex=(int)clockSceneDef.sceneDefIndex;r.runClock.catalogReady=SceneCatalog.mostRecentSceneDef==clockSceneDef&&SceneCatalog.GetSceneDefForCurrentScene()==clockSceneDef&&SceneCatalog.GetSceneDef(clockSceneDef.sceneDefIndex)==clockSceneDef&&SceneCatalog.sceneDefCount==clockSceneDefs.Length;
+  r.runClock.scene=SceneManager.GetActiveScene().name;r.runClock.sceneIndex=(int)clockSceneDef.sceneDefIndex;r.runClock.sceneDefs=clockSceneDefs.Length;r.runClock.convertedDestinations=(cfg.integratedStages??new IntegratedStageSpec[0]).Length;r.runClock.catalogReady=SceneCatalog.mostRecentSceneDef==clockSceneDef&&SceneCatalog.GetSceneDefForCurrentScene()==clockSceneDef&&SceneCatalog.GetSceneDef(clockSceneDef.sceneDefIndex)==clockSceneDef&&SceneCatalog.sceneDefCount==clockSceneDefs.Length;
   Check(r.runClock.catalogReady,"Original scene catalog identity/completion failed");Save();
  }
  void StartOriginalRunClock(){

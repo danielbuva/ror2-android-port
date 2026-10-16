@@ -1,6 +1,6 @@
 # Capability gates
 
-J484 adds a host-validated Gold Shores source/converted scene and a composed Android Lakes launch. Special-realm entry, native beacons/boss and return remain open; no gate advances. The 60 FPS target is eventual release acceptance, with large unexplained regressions still requiring attribution.
+J486 registers all 76 original provider-published scene definitions and passes an assisted Lakes → Goolake original exit on Android. Only 14 destinations have converted playable content; this is catalog breadth, not full stage or normal-run acceptance. The 60 FPS target remains eventual release acceptance, with large unexplained regressions still requiring attribution.
 
 C08 adds native pickup discovery and two original discovery achievements, controller neutral-reconnect protection, basic pause/menu binds and read-only StatManager queue counts. The composed Android candidate ran86.12world seconds without current-process errors; diagnostic input and acceleration excluded one observed pickup from saved progression. This does not advance normal-game, controller, full-run or performance acceptance. J437 remains the unassisted earned-progression proof; J436 remains native profile/recovery proof; J435 remains source director/placement breadth proof. See PORTING_STATE.md.
 
