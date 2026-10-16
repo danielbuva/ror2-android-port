@@ -14,6 +14,9 @@ SCENES = {name: 'Base' for name in ('golemplains', 'foggyswamp', 'frozenwall',
           'blackbeach', 'blackbeach2', 'golemplains2', 'goolake', 'rootjungle',
           'goldshores')}
 SCENES['lakes'] = 'DLC2'
+SCENES.update({name: 'DLC1' for name in ('ancientloft', 'snowyforest', 'sulfurpools')})
+SCENES.update({name: 'DLC2' for name in ('habitat', 'habitatfall', 'helminthroost',
+                                      'lakesnight', 'village', 'villagenight')})
 # The original Wwise assembly has no authorized Android native engine. Keep
 # scene-local game logic, but do not activate serialized native-audio clients.
 # RTPCController is the game's own direct Wwise-only component on SceneInfo.

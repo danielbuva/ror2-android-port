@@ -180,31 +180,32 @@ class WholeCatalogTests(unittest.TestCase):
     def test_original_stage_policy_requires_unique_complete_source_record(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp)
-            scene=root/'Assets/RoR2/Base/Scenes/example/example.unity'
+            stage='golemplains'
+            scene=root/'Assets/RoR2/Base/Scenes'/stage/(stage+'.unity')
             scene.parent.mkdir(parents=True)
             record='--- !u!114 &1\n  monsterDccsPool: {fileID: 11400000, guid: '+('a'*32)+', type: 2}\n  interactableDccsPool: {fileID: 11400000, guid: '+('b'*32)+', type: 2}\n'
             for name,value in [('ignoreArtifactsThatRebuildCards',0),('contentSourceMixLimitOverride',1),('contentSourceMixLimitOverrideValue',3),('contentInteractableOnlySourceMixLimitOverride',0),('contentInteractableOnlySourceMixLimitOverrideValue',2),('sceneDirectorInteractibleCredits',220),('sceneDirectorMonsterCredits',100)]:
                 record+='  '+name+': '+str(value)+'\n'
             record+='  bonusInteractibleCreditObjects: []\n--- !u!114 &2\n  usePlacedSpawnPoints: 0\n  expRewardCoefficient: 0.06666667\n  eliteBias: 2\n  spawnDistanceMultiplier: 6\n  monsterSpawnTargetOverride: {fileID: 0}\n'
             scene.write_text(record)
-            result=original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
-            self.assertEqual(result['stages']['example']['director_fields']['spawnDistanceMultiplier'],6)
-            self.assertEqual(result['stages']['example']['bonus_credits'],[])
-            self.assertEqual(result['stages']['example']['monsterDccsPool'],'Original/Monsters')
-            self.assertEqual(result['stages']['example']['fields']['contentSourceMixLimitOverrideValue'],3)
-            self.assertIs(result['stages']['example']['fields']['contentSourceMixLimitOverride'],True)
+            result=original_stage_contexts(root,[stage],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+            self.assertEqual(result['stages'][stage]['director_fields']['spawnDistanceMultiplier'],6)
+            self.assertEqual(result['stages'][stage]['bonus_credits'],[])
+            self.assertEqual(result['stages'][stage]['monsterDccsPool'],'Original/Monsters')
+            self.assertEqual(result['stages'][stage]['fields']['contentSourceMixLimitOverrideValue'],3)
+            self.assertIs(result['stages'][stage]['fields']['contentSourceMixLimitOverride'],True)
             scene.write_text(record.replace('bonusInteractibleCreditObjects: []','bonusInteractibleCreditObjects:\n  - objectThatGrantsPointsIfEnabled: {fileID: 5}\n    points: 160')+'--- !u!1 &5\n  m_Name: Variant\n--- !u!4 &6\n  m_GameObject: {fileID: 5}\n  m_Father: {fileID: 8}\n--- !u!1 &7\n  m_Name: Environment\n--- !u!4 &8\n  m_GameObject: {fileID: 7}\n  m_Father: {fileID: 0}\n')
-            result=original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
-            self.assertEqual(result['stages']['example']['bonus_credits'],[{'path':'Environment/Variant','points':160}])
+            result=original_stage_contexts(root,[stage],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+            self.assertEqual(result['stages'][stage]['bonus_credits'],[{'path':'Environment/Variant','points':160}])
             scene.write_text(scene.read_text().replace('points: 160','points: unknown'))
             with self.assertRaisesRegex(RuntimeError,'bonus credit entry'):
-                original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+                original_stage_contexts(root,[stage],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
             scene.write_text(record+record)
             with self.assertRaisesRegex(RuntimeError,'ambiguous'):
-                original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+                original_stage_contexts(root,[stage],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
             scene.write_text(record.replace('  sceneDirectorMonsterCredits: 100\n',''))
             with self.assertRaisesRegex(RuntimeError,'policy missing'):
-                original_stage_contexts(root,['example'],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
+                original_stage_contexts(root,[stage],'accepted',{'a'*32:'Original/Monsters','b'*32:'Original/Interactables'})
 
     def test_state_preload_strings_extend_runtime_closure(self):
         with tempfile.TemporaryDirectory() as temp:

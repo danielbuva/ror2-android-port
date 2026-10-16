@@ -1,5 +1,7 @@
 # Execution backlog
 
+J488 adds nine exact-source DLC1/DLC2 stage transports and source scenes, bringing the composed recipe to 23 destinations. The integrated Android build and one assisted base-stage transition pass; the new DLC scenes remain unplayed pending a truthful original expansion-availability path. Keep broad integration and major-regression checks moving; 60 FPS is release acceptance.
+
 J484 stages Gold Shores scene/content beside the normal-stage composition. Its native portal/mission/return path is the next integrated gameplay target; do not infer special-realm acceptance from the build or Lakes launch. Keep 60 FPS as release acceptance while watching for major unexplained regressions. Manual Moon/finale remains deferred.
 
 J481 confirms the J480 candidate also completes an assisted Merc stage with original boss/exit and exercised objective-distance fallback. Croco poison tick damage remains unproven under high-damage acceleration; the specific failed Toolbot layout remains unproven. Continue broad original gameplay and profile eligibility; preserve J479 and paused J323 rollbacks. Sustained 60 FPS is release acceptance; investigate large unexplained regressions. Manual Moon/finale remains deferred. See PORTING_STATE.md.

@@ -950,13 +950,16 @@ def repair_root_bindings():
 
 def original_stage_contexts(export, stages, input_id, pool_keys):
     """Recover native population policy from each original serialized scene."""
+    from source_scene_candidate import SCENES
     export=Path(export);contexts={}
     fields={'ignoreArtifactsThatRebuildCards':bool,'contentSourceMixLimitOverride':bool,
             'contentSourceMixLimitOverrideValue':int,'contentInteractableOnlySourceMixLimitOverride':bool,
             'contentInteractableOnlySourceMixLimitOverrideValue':int,
             'sceneDirectorInteractibleCredits':int,'sceneDirectorMonsterCredits':int}
     for stage in stages:
-        scene_root='DLC2' if stage=='lakes' else 'Base'
+        if stage not in SCENES:
+            raise RuntimeError('Unreviewed original stage population source: '+stage)
+        scene_root=SCENES[stage]
         source=export/('Assets/RoR2/'+scene_root+'/Scenes/'+stage+'/'+stage+'.unity')
         blocks=re.split(r'(?=^--- !u!)',source.read_text(),flags=re.M)
         records=[block for block in blocks

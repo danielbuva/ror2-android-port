@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 from common import ROOT, WORK, now, read, sha, write
+from source_scene_candidate import SCENES
 
 VARIANTS = {
     'blackbeach': '9672ae28cd6b03b2c7533f6084607595858708a148ee5e66114fc61f70c43a58',
@@ -15,12 +16,32 @@ VARIANTS = {
     'rootjungle': '9208b430b51ff6feae9c687fc7e35c0bd103e5749fefff5759c8f2ca4237d1c3',
     'lakes': 'bf03c16ab1a2c9dcafba759917e0b1224f8bdd3dca5da719d30c8fc72f37f2e2',
     'goldshores': 'c01ab9ea9abf8145fb0f6322966730061afaf2d5281f610cad61f4eac7b84338',
+    'ancientloft': 'ec03cfb0a9b745ed57d3d86af750038f5017edd8c03f9aaf63d19d1f009f799a',
+    'snowyforest': 'cec55d6208a04d34916bbf6baa14d924d6bcb435a816a51806264fbe6fef00a1',
+    'sulfurpools': '95cc78087b9347763ca2b01646724e0a0b5052f77c2ceceda124919cd75595dd',
+    'habitat': 'b789fc3d388fcfc1987cb18e415b4aa2531e79db8656572312d0961add048bd7',
+    'habitatfall': '843cb9306b5376906f143e5fc392dd329ca8aedde0b3a5973efadc3eec55ddbd',
+    'helminthroost': '0b6094c1a18911e0e6e7dce90002061a52fba4840f4952cde9673fe48a7aeff8',
+    'lakesnight': '0c7d11679300d123c323a4b4c9d8444cbb28dd280da30173f8f0e8f9720bf59a',
+    'village': '7af265fa4ce228a6c3cdbfd9e77d73db1b3d491de4eb787c87f76e74ed2d962c',
+    'villagenight': 'c833bafe1c6a2827f28455ca4a0903914923c99b6c652581e57426ee617fbd05',
 }
-LAKES_SOURCE_SHA256 = '36782d7d6eaf8ce6eb2fb0e1cb321a7fc6e9b38cb41aee196c0ed20acaa765e4'
+SOURCE_SHA256 = {
+    'lakes': '36782d7d6eaf8ce6eb2fb0e1cb321a7fc6e9b38cb41aee196c0ed20acaa765e4',
+    'ancientloft': '258b21f2367240d1d2e4804d44e421e3f9cdc1ab8417c2aa866876a58a0a7b3f',
+    'snowyforest': 'b104f59af63c89ee1320d6ecb1cd4c8a8ed20145dc5a5fbc928ba140824b0505',
+    'sulfurpools': '9a5a64ffa4dc5ff166d9197ee28a80bbc97ecbf26f62d5e2cec20e17936d0f53',
+    'habitat': '7874db0a03a060120d8679287c6850fce348f61c994e289724c02d08168ac519',
+    'habitatfall': 'cac8f86f449dc6f13fa6d79bac3fb047531d022a7bdb9a146b3e645cbcf94f3a',
+    'helminthroost': 'f0f1cb671464f1c2d4f98ab46c6bedcc21c0ea9a2b1e303ee24467c6c7b97409',
+    'lakesnight': '33aa6fa8a260c1579e6649cfc2c33bc3f97df4928242672eb497f5da7cf5e67c',
+    'village': '7d1e5e7ea10dd73df9418a0a9fcca9828ae9749292bb3899b022bfc5202891a2',
+    'villagenight': '45e1672cff6ad69d46b18b659d02cb828e061d2f6b98e6e7bc9dae900283f07d',
+}
 
 
 def scene_root(name):
-    return 'DLC2' if name == 'lakes' else 'Base'
+    return SCENES[name]
 
 
 def include_runtime_graph_roots(config, recipe, project, accepted_files):
@@ -103,8 +124,8 @@ def stage():
             source = export/'Assets/RoR2'/root/'Scenes'/name/(name+'.unity')
             if not target.is_file() or not source.is_file():
                 raise RuntimeError('Accepted scene source is missing: '+name)
-            if name == 'lakes' and sha(source) != LAKES_SOURCE_SHA256:
-                raise RuntimeError('Original Lakes source changed; review before conversion')
+            if name in SOURCE_SHA256 and sha(source) != SOURCE_SHA256[name]:
+                raise RuntimeError('Original stage source changed; review before conversion: '+name)
             if sha(target) == digest:
                 raise RuntimeError('Converted scene exists outside the stage-variant configuration: '+name)
             with gzip.open(originals/(name+'.unity.gz'),'wb',compresslevel=6) as archive:
