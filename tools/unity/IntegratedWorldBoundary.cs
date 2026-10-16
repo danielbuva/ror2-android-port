@@ -42,7 +42,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets,offlinePointSoundPackets,offlineEffectSoundPackets;public bool sourceConstructTurretHandler,offlineChatBoundary,offlinePointSoundBoundary,offlineEffectSoundBoundary;public string offlineChatLastToken,offlinePointSoundLastEvent,offlineEffectSoundLastEvent;public Vector3 offlinePointSoundLastPosition;
-  public int bodyVisualSlots;public string[] bodyVisualUnavailable;public bool bodyVisualCleaned;
+  public int bodyVisualSlots,healthVisualSlots;public string[] bodyVisualUnavailable,healthVisualUnavailable;public bool bodyVisualCleaned;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
@@ -51,7 +51,9 @@ public sealed partial class MovementBatchProbe {
   public bool navigationPartial;public int navigationPartialCandidates,navigationPartialNode=-1;public float navigationPartialSeconds;public Vector3 navigationPartialDestination;
   public string navigationHull,navigationJumpHeight;public int navigationGraphNodes,navigationStartNode=-1,navigationNearestNode=-1,navigationApproachBoundsRejected,navigationApproachTooShort,navigationApproachUnreachable;public float navigationMaxSpeed,navigationMaxSlope,navigationGravityY;public Vector3 navigationStartPosition;
   public bool motorGrounded,motorStable,jumpDown,jumpPressed,jumpClaimed;public int motorJumpCount,motorMaxJumpCount;public Vector3 motorVelocity,motorGroundPoint;public string motorGroundCollider,movementState;
-  public bool manualTakeover;
+  public bool manualTakeover,inputBridgeEnabled,inputBridgeActive,inputControllerConnected,playerObjectActive,playerMotorEnabled,pauseControllerPaused;
+  public int inputControllerSuspensions,inputControllerReconnections;
+  public float liveTimeScale,liveFixedDeltaTime;
   public int combatMotionSamples,combatMotionBlocked,combatCandidates,combatBoundsRejected,travelDefenseFrames;public string combatTarget,travelDefenseTarget;public Vector3 combatGround,combatDestination;public Vector2 combatMotion;
   public int combatVisibleCandidates,combatOccludedCandidates,combatApproachFrames,combatHoldoutReturnFrames;public bool combatLineOfSight,combatTargetBoss,combatHoldoutConstrained,combatPrimaryRequested;public float combatTargetDistance,combatThreatDistance,combatHoldoutReturnDistance;public Vector3 combatAimOrigin,combatAimTarget;
   public bool combatMeleePrimary;public float combatEngagementRange;

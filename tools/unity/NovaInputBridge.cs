@@ -78,23 +78,31 @@ public sealed class NovaInputBridge : MonoBehaviour {
    if(presence==null)presence=new ControllerPresence(requiredControllerName);
    if(Time.timeScale==0){presence.Suspend();Neutral();return;}
    var names=UnityEngine.Input.GetJoystickNames();
+   // The developer's deterministic input is independent of the physical
+   // controller. Keep observing its connection for later manual takeover, but
+   // never stall automated source gameplay when Android drops that device.
+   if(diagnosticInput){
+    if(!presence.Matches(names))presence.Suspend();
+    else presence.Observe(names,NeutralSample(ReadRaw(),mapping),Time.realtimeSinceStartup);
+    return;
+   }
    if(!presence.Matches(names)){presence.Suspend();Neutral();return;}
    var raw=ReadRaw();
    if(!presence.Observe(names,NeutralSample(raw,mapping),Time.realtimeSinceStartup)){Neutral();return;}
-   if(diagnosticInput)return;
    movement=Stick(raw,mapping.moveX,mapping.moveY,mapping.moveYSign);aim=Stick(raw,mapping.aimX,mapping.aimY,mapping.aimYSign);if(thirdPerson!=null)thirdPerson.Look(aim);
    bool down=raw.buttons[mapping.jump];jumpLatched|=down&&!jumpHeld;jumpHeld=down;
   }catch(Exception e){error=e.ToString();enabled=false;Neutral();}
  }
  void FixedUpdate(){
-  if(!bank||mapping==null||!focused||presence==null||!presence.connected||Time.timeScale==0){Neutral();return;}
-  if(!presence.Matches(UnityEngine.Input.GetJoystickNames())){presence.Suspend();Neutral();return;}
+  if(!bank||mapping==null||!focused||Time.timeScale==0){Neutral();return;}
+  if(!diagnosticInput&&(presence==null||!presence.connected)){Neutral();return;}
+  if(!diagnosticInput&&!presence.Matches(UnityEngine.Input.GetJoystickNames())){presence.Suspend();Neutral();return;}
   bank.moveVector=thirdPerson!=null&&!diagnosticInput?thirdPerson.Movement(movement):new Vector3(movement.x,0,movement.y);bank.SetRawMoveStates(movement);
   if(diagnosticInput&&diagnosticAim.sqrMagnitude>0){bank.aimDirection=diagnosticAim;aimTicks++;}
   else if(thirdPerson!=null&&!diagnosticInput){bank.aimDirection=thirdPerson.Aim();aimTicks++;thirdPerson.report.maxAimError=Mathf.Max(thirdPerson.report.maxAimError,Vector3.Angle(bank.aimDirection,thirdPerson.report.direction));}
   else if(aim.sqrMagnitude>0){bank.aimDirection=new Vector3(aim.x,0,aim.y);aimTicks++;}
   bank.jump.PushState(jumpHeld||jumpLatched);if(bank.jump.justPressed)jumpPresses++;jumpLatched=false;
-  bank.activateEquipment.PushState((diagnosticInput&&diagnosticEquipment)||touchEquipment);touchEquipment=false;bank.sprint.PushState(diagnosticInput&&diagnosticSprint);var raw=ReadRaw();bank.interact.PushState(diagnosticInput?diagnosticInteract:mapping.enableInteraction&&raw.buttons[mapping.interact]);bool all=mapping.enableSkills||enableAllSkills;
+  bank.activateEquipment.PushState((diagnosticInput&&diagnosticEquipment)||touchEquipment);touchEquipment=false;bank.sprint.PushState(diagnosticInput&&diagnosticSprint);var raw=diagnosticInput?null:ReadRaw();bank.interact.PushState(diagnosticInput?diagnosticInteract:mapping.enableInteraction&&raw.buttons[mapping.interact]);bool all=mapping.enableSkills||enableAllSkills;
   bank.skill1.PushState(diagnosticInput?diagnosticPrimary:(all||enablePrimary)&&raw.buttons[mapping.primary]);bank.skill2.PushState(diagnosticInput?diagnosticSecondary:all&&raw.buttons[mapping.secondary]);bank.skill3.PushState(diagnosticInput?diagnosticUtility:all&&raw.buttons[mapping.utility]);bank.skill4.PushState(diagnosticInput?diagnosticSpecial:all&&raw.buttons[mapping.special]);fixedTicks++;
  }
  public void DiagnosticJump(bool down){jumpLatched|=down&&!jumpHeld;jumpHeld=down;}

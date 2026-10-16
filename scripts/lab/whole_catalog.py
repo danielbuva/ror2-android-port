@@ -1027,7 +1027,11 @@ def build_integration(code_only=False):
     if contract['input_sha256']!=assembly_hash or manifest['input_id']!=read(WORK/'config/accepted-input.json')['input_id']:
         raise RuntimeError('Original body visual references belong to another accepted input')
     visual_map=generate_body_visual_map(source,project/'Assets/LabLoadingScene/OriginalBodyVisualMap.cs',manifest['input_id'],contract['legacyAliases'],manifest)
-    write(WORK/'body-visual-map-latest.json',visual_map)
+    health_source=source.with_name('HealthComponent.cs')
+    health_visual_map=generate_body_visual_map(health_source,project/'Assets/LabLoadingScene/OriginalHealthVisualMap.cs',manifest['input_id'],contract['legacyAliases'],manifest)
+    if health_visual_map['unlocated_fields']:
+        raise RuntimeError('Original health visual references are absent from the accepted content closure')
+    write(WORK/'body-visual-map-latest.json',dict(body=visual_map,health=health_visual_map))
     animation_bindings = repair_animation_bindings(project)
     if code_only and animation_bindings['repaired']:
         raise RuntimeError('Original animation curves changed; a content build is required')

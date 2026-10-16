@@ -32,6 +32,9 @@ def extract(source: str):
 
 def generate(source: Path, destination: Path, input_id: str, legacy_aliases: dict, manifest: dict):
     rows = extract(source.read_text())
+    class_name = destination.stem
+    if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', class_name):
+        raise RuntimeError('Generated visual-map class name is invalid')
     keys = {entry['key'] for entry in manifest['keys'] if isinstance(entry['key'], str)}
     missing = []
     for kind, path, field in rows:
@@ -39,8 +42,8 @@ def generate(source: Path, destination: Path, input_id: str, legacy_aliases: dic
         if not key or key not in keys:
             missing.append(field)
     source_rows = ',\n'.join('  new string[] {' + ','.join(json.dumps(value) for value in row) + '}' for row in rows)
-    code = ('// Generated from the accepted original CharacterBody.AssetReferences.Resolve.\n'
-            'public static class OriginalBodyVisualMap {\n'
+    code = ('// Generated from the accepted original ' + source.stem + '.AssetReferences.Resolve.\n'
+            'public static class ' + class_name + ' {\n'
             ' public const string InputId = ' + json.dumps(input_id) + ';\n'
             ' public static readonly string[][] Rows = new string[][] {\n' + source_rows + '\n };\n}\n')
     destination.parent.mkdir(parents=True, exist_ok=True)

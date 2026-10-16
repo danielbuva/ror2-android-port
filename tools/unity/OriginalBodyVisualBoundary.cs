@@ -9,49 +9,56 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-// Bind the original CharacterBody temporary-visual references from the exact
-// shipped initializer's field/path pairs. Handles remain owned by this session.
+// Bind the original CharacterBody and HealthComponent visual references from
+// their exact shipped initializer field/path pairs. Handles stay session-owned.
 public sealed partial class MovementBatchProbe {
- readonly Dictionary<FieldInfo,GameObject> priorBodyVisualSlots=new Dictionary<FieldInfo,GameObject>();
- readonly List<AsyncOperationHandle<GameObject>> ownedBodyVisualHandles=new List<AsyncOperationHandle<GameObject>>();
+ readonly Dictionary<FieldInfo,GameObject> priorOriginalVisualSlots=new Dictionary<FieldInfo,GameObject>();
+ readonly List<AsyncOperationHandle<GameObject>> ownedOriginalVisualHandles=new List<AsyncOperationHandle<GameObject>>();
  IEnumerator PrepareOriginalBodyVisualReferences(){
   var descriptor=JObject.Parse(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);
-  Check(OriginalBodyVisualMap.InputId==(string)descriptor["input_id"],"Original body visuals belong to another input");
-  var owner=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic);
-  Check(owner!=null,"Original CharacterBody visual-reference owner changed");
-  var pending=new List<KeyValuePair<FieldInfo,AsyncOperationHandle<GameObject>>>();
-  var unavailable=new List<string>();
-  foreach(var row in OriginalBodyVisualMap.Rows){
-   Check(row.Length==3,"Original body visual mapping changed");
-   var field=owner.GetField(row[2],BindingFlags.Public|BindingFlags.Static);
-   Check(field!=null&&field.FieldType==typeof(GameObject),"Original body visual slot changed: "+row[2]);
-   // Other owned adapters may already provide the same source asset.
-   if((GameObject)field.GetValue(null))continue;
-   string key;
-   if(row[0]=="LegacyResourcesAPI"){
-    if(!LegacyResourcesAPI.GetGuid(row[1],out key)){unavailable.Add(row[2]+": legacy alias absent");continue;}
-   }else Check(row[0]=="Addressables","Unknown original body visual loader");
-   var handle=row[0]=="LegacyResourcesAPI"?LegacyResourcesAPI.LoadAsync<GameObject>(row[1]):Addressables.LoadAssetAsync<GameObject>(row[1]);
-   ownedBodyVisualHandles.Add(handle);pending.Add(new KeyValuePair<FieldInfo,AsyncOperationHandle<GameObject>>(field,handle));
+  var input=(string)descriptor["input_id"];
+  Check(OriginalBodyVisualMap.InputId==input&&OriginalHealthVisualMap.InputId==input,"Original visual maps belong to another input");
+  var pending=new List<Tuple<FieldInfo,AsyncOperationHandle<GameObject>,bool>>();
+  var bodyUnavailable=new List<string>();var healthUnavailable=new List<string>();
+  foreach(var family in new[]{new {type=typeof(CharacterBody),rows=OriginalBodyVisualMap.Rows},new {type=typeof(HealthComponent),rows=OriginalHealthVisualMap.Rows}}){
+   var owner=family.type.GetNestedType("AssetReferences",BindingFlags.NonPublic);
+   Check(owner!=null,"Original visual-reference owner changed: "+family.type.Name);
+   bool health=family.type==typeof(HealthComponent);
+   foreach(var row in family.rows){
+    Check(row.Length==3,"Original visual mapping changed: "+family.type.Name);
+    var field=owner.GetField(row[2],BindingFlags.Public|BindingFlags.Static);
+    Check(field!=null&&field.FieldType==typeof(GameObject),"Original visual slot changed: "+family.type.Name+"."+row[2]);
+    // Existing owned adapters retain their original bindings.
+    if((GameObject)field.GetValue(null))continue;
+    string key;
+    if(row[0]=="LegacyResourcesAPI"){
+     if(!LegacyResourcesAPI.GetGuid(row[1],out key)){(health?healthUnavailable:bodyUnavailable).Add(row[2]+": legacy alias absent");continue;}
+    }else Check(row[0]=="Addressables","Unknown original visual loader");
+    var handle=row[0]=="LegacyResourcesAPI"?LegacyResourcesAPI.LoadAsync<GameObject>(row[1]):Addressables.LoadAssetAsync<GameObject>(row[1]);
+    ownedOriginalVisualHandles.Add(handle);pending.Add(Tuple.Create(field,handle,health));
+   }
   }
   var deadline=Time.realtimeSinceStartup+45f;
-  while(pending.Any(entry=>!entry.Value.IsDone)&&Time.realtimeSinceStartup<deadline)yield return null;
-  Check(pending.All(entry=>entry.Value.IsDone),"Original CharacterBody visual-reference load timed out");
+  while(pending.Any(entry=>!entry.Item2.IsDone)&&Time.realtimeSinceStartup<deadline)yield return null;
+  Check(pending.All(entry=>entry.Item2.IsDone),"Original visual-reference load timed out");
   foreach(var entry in pending){
-   var handle=entry.Value;
-   if(handle.Status!=AsyncOperationStatus.Succeeded||!handle.Result){unavailable.Add(entry.Key.Name+": original asset load failed");continue;}
-   Check(!((GameObject)entry.Key.GetValue(null)),"Original body visual slot changed during load");
-   priorBodyVisualSlots.Add(entry.Key,null);entry.Key.SetValue(null,handle.Result);
+   var handle=entry.Item2;
+   if(handle.Status!=AsyncOperationStatus.Succeeded||!handle.Result){(entry.Item3?healthUnavailable:bodyUnavailable).Add(entry.Item1.Name+": original asset load failed");continue;}
+   Check(!((GameObject)entry.Item1.GetValue(null)),"Original visual slot changed during load");
+   priorOriginalVisualSlots.Add(entry.Item1,null);entry.Item1.SetValue(null,handle.Result);
   }
-  var exposed=owner.GetField("mercExposeEffectPrefab",BindingFlags.Public|BindingFlags.Static);
+  var exposed=typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField("mercExposeEffectPrefab",BindingFlags.Public|BindingFlags.Static);
   Check(exposed!=null&&(GameObject)exposed.GetValue(null),"Original Merc expose visual missing after source reference load");
-  r.world.bodyVisualSlots=priorBodyVisualSlots.Count;r.world.bodyVisualUnavailable=unavailable.ToArray();Save();
+  Check(healthUnavailable.Count==0,"Original HealthComponent visual-reference closure failed: "+string.Join(",",healthUnavailable.ToArray()));
+  r.world.bodyVisualSlots=priorOriginalVisualSlots.Keys.Count(field=>field.DeclaringType.DeclaringType==typeof(CharacterBody));
+  r.world.healthVisualSlots=priorOriginalVisualSlots.Keys.Count(field=>field.DeclaringType.DeclaringType==typeof(HealthComponent));
+  r.world.bodyVisualUnavailable=bodyUnavailable.ToArray();r.world.healthVisualUnavailable=healthUnavailable.ToArray();Save();
  }
  void CleanupOriginalBodyVisualReferences(){
-  foreach(var entry in priorBodyVisualSlots)entry.Key.SetValue(null,entry.Value);
-  priorBodyVisualSlots.Clear();
-  foreach(var handle in ownedBodyVisualHandles)if(handle.IsValid())Addressables.Release(handle);
-  ownedBodyVisualHandles.Clear();
+  foreach(var entry in priorOriginalVisualSlots)entry.Key.SetValue(null,entry.Value);
+  priorOriginalVisualSlots.Clear();
+  foreach(var handle in ownedOriginalVisualHandles)if(handle.IsValid())Addressables.Release(handle);
+  ownedOriginalVisualHandles.Clear();
   if(r.world!=null)r.world.bodyVisualCleaned=true;
  }
 }

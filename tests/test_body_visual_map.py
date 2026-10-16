@@ -36,6 +36,14 @@ public static void Resolve()
             self.assertEqual(report, {'rows': 2, 'unlocated_fields': []})
             self.assertIn('Game/Beta.prefab', output.read_text())
             self.assertIn('new string[] {', output.read_text())
+            health_output = Path(temporary) / 'OriginalHealthVisualMap.cs'
+            generate(path, health_output, 'accepted-input', {'Prefabs/Alpha': 'original-guid'},
+                     {'keys': [{'key': 'original-guid'}, {'key': 'Game/Beta.prefab'}]})
+            self.assertIn('class OriginalHealthVisualMap', health_output.read_text())
+            with self.assertRaisesRegex(RuntimeError, 'class name is invalid'):
+                generate(path, Path(temporary) / 'invalid-map.cs', 'accepted-input',
+                         {'Prefabs/Alpha': 'original-guid'},
+                         {'keys': [{'key': 'original-guid'}, {'key': 'Game/Beta.prefab'}]})
             with self.assertRaisesRegex(RuntimeError, 'initializer changed'):
                 extract(source.replace('betaEffect = x.Result;', 'betaEffect = null;'))
 
