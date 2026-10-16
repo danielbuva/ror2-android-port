@@ -1014,6 +1014,7 @@ def build_integration(code_only=False):
     from build import build, freeze_whole_payload, WHOLE_PLAYER_INPUTS
     from animation_bindings import repair as repair_animation_bindings
     from body_visual_map import generate as generate_body_visual_map
+    from common_assets_map import generate as generate_common_asset_map
     out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
     attempt = ROOT/read(out/'integration-latest.json')['path']
     if not read(attempt/'host-integration.json')['success']:
@@ -1031,7 +1032,9 @@ def build_integration(code_only=False):
     health_visual_map=generate_body_visual_map(health_source,project/'Assets/LabLoadingScene/OriginalHealthVisualMap.cs',manifest['input_id'],contract['legacyAliases'],manifest)
     if health_visual_map['unlocated_fields']:
         raise RuntimeError('Original health visual references are absent from the accepted content closure')
+    common_map=generate_common_asset_map(source.with_name('GlobalEventManager.cs'),project/'Assets/LabLoadingScene/OriginalGlobalCommonAssetMap.cs',manifest['input_id'],contract['legacyAliases'],manifest,{'groundOnHitPrefab','hollowPack'})
     write(WORK/'body-visual-map-latest.json',dict(body=visual_map,health=health_visual_map))
+    write(WORK/'global-common-map-latest.json',common_map)
     animation_bindings = repair_animation_bindings(project)
     if code_only and animation_bindings['repaired']:
         raise RuntimeError('Original animation curves changed; a content build is required')
@@ -1052,7 +1055,7 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','IntegratedWorldBoundary.cs','OriginalBodyVisualBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
+    for filename in ['WholeCatalogLoader.cs', 'WholeCatalogBootstrap.cs','WholeCatalogComposed.cs','WholePopulationBoundary.cs','WholeInteractableBoundary.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','IntegratedWorldBoundary.cs','OriginalBodyVisualBoundary.cs','OriginalGlobalCommonAssetsBoundary.cs','MovementBatchProbe.cs','BodyCatalogBoundary.cs','IntegratedResultsBoundary.cs','OfflineApplicationBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs','DirectorActorBoundary.cs','AutomaticModelBoundary.cs','AutomaticSpawnBoundary.cs','WorldItemDisplayBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','StageCombatDeckBoundary.cs','AutomaticDirectorBoundary.cs','IntegratedStageBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','RunClockBoundary.cs','EnemySpineBoundary.cs','TeleporterWorldBoundary.cs','EnemyRewardBoundary.cs','AndroidPresentationCamera.cs','RecoveredHudPresentation.cs','RecoveredHudFeedback.cs','RecoveredPickupPresentation.cs']:
         copy_catalog_asset(ROOT/'tools/unity'/filename, project/'Assets/LabLoadingScene'/filename)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)

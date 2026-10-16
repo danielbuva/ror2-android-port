@@ -42,7 +42,7 @@ public sealed partial class MovementBatchProbe {
   public List<WorldPickupMessageObservation> pickupMessageObservations=new List<WorldPickupMessageObservation>();public int unresolvedPickupMessages,otherPickupMessages,zeroCountPickupMessages;
   public List<WorldMessageFailure> messageFailures=new List<WorldMessageFailure>();public int messageFailureCount;
   public int sourceServerMessageHandlers,sourceClientMessageHandlers,offlineChatPackets,offlinePointSoundPackets,offlineEffectSoundPackets;public bool sourceConstructTurretHandler,offlineChatBoundary,offlinePointSoundBoundary,offlineEffectSoundBoundary;public string offlineChatLastToken,offlinePointSoundLastEvent,offlineEffectSoundLastEvent;public Vector3 offlinePointSoundLastPosition;
-  public int bodyVisualSlots,healthVisualSlots;public string[] bodyVisualUnavailable,healthVisualUnavailable;public bool bodyVisualCleaned;
+  public int bodyVisualSlots,healthVisualSlots,globalCommonAssetSlots;public string[] bodyVisualUnavailable,healthVisualUnavailable,globalCommonAssetUnavailable;public bool bodyVisualCleaned,globalCommonAssetCleaned;
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
@@ -328,7 +328,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   r.world.interactionReady=worldDriver.enabled&&ReferenceEquals(DriverField(worldDriver,"inputBank"),player.inputBank);
   r.world.start=origin;r.world.ready=r.world.authority&&r.world.lootReady&&r.world.interactionReady&&rewardDirector.enabled;
   if(cfg.teleporterLoop){var objective=PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
-  if(r.liveCatalogs!=null){var visuals=PrepareOriginalBodyVisualReferences();while(visuals.MoveNext())yield return visuals.Current;}
+  if(r.liveCatalogs!=null){var visuals=PrepareOriginalBodyVisualReferences();while(visuals.MoveNext())yield return visuals.Current;var common=PrepareOriginalGlobalCommonAssets();while(common.MoveNext())yield return common.Current;}
   if(r.liveCatalogs!=null&&cfg.teleporterLoop){var transmutation=PrepareWorldTransmutation();while(transmutation.MoveNext())yield return transmutation.Current;}
   PrepareWorldItemBehaviors(cfg);PrepareWorldCommerce(cfg,origin);
   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
@@ -832,7 +832,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+sessionIndex+".json"),JsonUtility.ToJson(r,true));
   TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=sessionIndex+1;next.skipOfflineMenu=!returnToOfflineMenu;Destroy(gameObject);
  }
- void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupWorldTransmutation();CleanupTeleporterWorld();CleanupOriginalBodyVisualReferences();
+ void CleanupIntegratedWorld(){CleanupRecoveredHud();CleanupIntegratedResults();CleanupWorldCommerce(true);CleanupWorldTransmutation();CleanupTeleporterWorld();CleanupOriginalGlobalCommonAssets();CleanupOriginalBodyVisualReferences();
   worldClientUpdate=null;nextWorldPickupSnapshot=0;worldPickupRegistryStage=null;worldPickupRegistryFallback=false;fireTrailDiagnosisRecorded=false;
   worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
   if(r.world==null)return;
