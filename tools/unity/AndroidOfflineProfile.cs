@@ -153,4 +153,10 @@ public sealed class AndroidOfflineProfile {
   if(!candidate.HasDiscoveredPickup(pickup))throw new InvalidOperationException("Original pickup discovery was not recorded");
   Commit(candidate,generation.appliedRuns);return true;
  }
+ public bool AwardObservedEvent(Func<UserProfile,bool> award){
+  if(award==null)throw new ArgumentNullException("award");
+  var candidate=Decode(Encode(profile,generation.appliedRuns,generation.baselineRuns));candidate.canSave=false;
+  if(!award(candidate))return false;
+  Commit(candidate,generation.appliedRuns);return true;
+ }
 }

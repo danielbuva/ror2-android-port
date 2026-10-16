@@ -10,7 +10,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using Zio;
 
 public sealed partial class MovementBatchProbe {
- [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified,loadoutMenuCommitted;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public uint earnedCoins;public ulong kills;}
+ [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified,loadoutMenuCommitted,threeStageEligible,threeStageAssistedExcluded,threeStageAwarded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded,threeStageChargedEvents;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public AndroidProgressionBoundary.ThreeStageReport threeStageAward;public uint earnedCoins;public ulong kills;}
  sealed class AndroidProfileSaveSystem:SaveSystem {
   public AndroidOfflineProfile local;
   static Exception Unavailable(){return new NotSupportedException("Steam identity, cloud/profile import and platform history unavailable; owned Android profile only.");}
@@ -70,6 +70,7 @@ public sealed partial class MovementBatchProbe {
   return !definition||resultsSaveSystem!=null&&resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.HasUnlockable(definition);
  }
  AndroidProgressionBoundary.DiscoveryReport pendingDiscovery;
+ Action<TeleporterInteraction> profileThreeStageCharge;
  Inventory discoveryInventory;Action<ItemIndex> discoveryItem;Action<EquipmentIndex,uint> discoveryEquipment;Action<KeyItemIndex> discoveryKeyItem;
  readonly Dictionary<FieldInfo,object> priorProfileCatalog=new Dictionary<FieldInfo,object>();
  readonly Dictionary<SurvivorDef,SurvivorIndex> priorProfileSurvivors=new Dictionary<SurvivorDef,SurvivorIndex>();
@@ -79,7 +80,7 @@ public sealed partial class MovementBatchProbe {
  AsyncOperationHandle<UserProfileRedirectData> profileRedirectLease;bool ownsProfileRedirectLease;
  void PrepareAndroidProfile(CharacterBody player){
   if(!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;
-  r.profile=new AndroidProfileReport{scope="Original UserProfile/default/XML/statistics/loadout on Android only; recoverable local generations. Native persistent-stat achievements and earned local currency; platform reporting, login, Steam/cloud import and Rewired maps unavailable. Other achievement families remain deferred."};Save();
+  r.profile=new AndroidProfileReport{scope="Original UserProfile/default/XML/statistics/loadout on Android only; recoverable local generations. Native persistent-stat and measured three-stage achievement awards; platform reporting, login, Steam/cloud import and Rewired maps unavailable. Other event-achievement families remain deferred."};Save();
   Check(SurvivorCatalog.survivorCount==0&&UserProfile.defaultProfile==null&&priorProfileCatalog.Count==0,"Foreign survivor/profile context");
   var flags=BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
   foreach(var field in typeof(SurvivorCatalog).GetFields(flags))if(!field.IsLiteral&&!field.IsInitOnly&&(field.FieldType.IsArray||field.FieldType==typeof(SurvivorDef)||field.FieldType==typeof(global::ResourceAvailability)))priorProfileCatalog.Add(field,field.GetValue(null));
@@ -112,6 +113,7 @@ public sealed partial class MovementBatchProbe {
   ConfirmSelectedSurvivorUnlock();
   ConfirmAndroidProfileLoadout(player,local.profile);
   r.profile.ready=true;r.profile.created=local.recovery=="new";r.profile.roundTrip=true;r.profile.recovery=local.recovery;r.profile.saveFields=UserProfile.saveFields.Length;r.profile.statFields=local.profile.statSheet.fields.Length;r.profile.survivors=SurvivorCatalog.survivorCount;ObserveAndroidProfile();Save();
+  profileThreeStageCharge=ObserveThreeStageAchievement;TeleporterInteraction.onTeleporterChargedGlobal+=profileThreeStageCharge;
   Check(player&&player.master&&player.master.inventory&&player.master.inventory==player.inventory&&!directorPlayer.networkUser&&discoveryInventory==null,"Owned offline player pickup discovery identity missing");
   discoveryInventory=player.inventory;
   discoveryItem=index=>RecordProfileDiscovery(PickupCatalog.FindPickupIndex(index));
@@ -125,6 +127,19 @@ public sealed partial class MovementBatchProbe {
   if((r.nova!=null&&r.nova.diagnosticInput)||(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted)){r.profile.assistedDiscoveriesExcluded++;return;}
   pendingDiscovery=null;
   if(resultsSaveSystem.local.DiscoverPickup(pickup)){Check(pendingDiscovery!=null&&pendingDiscovery.discovered,"Native discovery report missing after profile commit");r.profile.discovery=pendingDiscovery;resultsSaveSystem.userProfile=resultsSaveSystem.local.profile;r.profile.discoveredPickups++;ObserveAndroidProfile();Save();}
+ }
+ void ObserveThreeStageAchievement(TeleporterInteraction teleporter){
+  if(r.profile==null||!r.profile.ready||teleporter!=worldTeleporter)return;
+  Check(resultsStats&&resultsStats.currentStats!=null&&resultsSaveSystem.local!=null&&androidProgression!=null,"Original charged-stage achievement lacks its offline profile/stat context");
+  var scene=SceneCatalog.GetSceneDefForCurrentScene();var stats=resultsStats.currentStats;
+  r.profile.threeStageChargedEvents++;
+  bool eligible=Run.instance&&Run.instance.GetType()==typeof(Run)&&scene&&scene.stageOrder==3&&stats.GetStatValueULong(RoR2.Stats.StatDef.totalDeaths)==0;
+  if(!eligible){Save();return;}
+  r.profile.threeStageEligible=true;
+  if(r.world!=null&&r.world.diagnosticInputEver||r.nova!=null&&r.nova.diagnosticInput||r.developerSurvivorOverride||r.debugAcceleration!=null&&r.debugAcceleration.everAssisted){r.profile.threeStageAssistedExcluded=true;Save();return;}
+  var awarded=resultsSaveSystem.local.AwardObservedEvent(candidate=>{r.profile.threeStageAward=androidProgression.ApplyThreeStageCandidate(candidate,stats,scene);return r.profile.threeStageAward.granted;});
+  Check(r.profile.threeStageAward!=null&&awarded==r.profile.threeStageAward.granted,"Original third-stage award transaction disagrees with committed profile");
+  r.profile.threeStageAwarded=awarded;resultsSaveSystem.userProfile=resultsSaveSystem.local.profile;ObserveAndroidProfile();Save();
  }
  Guid ProfileRunIdentity(AndroidRunEntry entry){
   var stem=System.IO.Path.GetFileNameWithoutExtension(entry.file);Guid id;
@@ -147,6 +162,7 @@ public sealed partial class MovementBatchProbe {
   ObserveAndroidProfile();
  }
  void CleanupAndroidProfile(){
+  if(profileThreeStageCharge!=null){TeleporterInteraction.onTeleporterChargedGlobal-=profileThreeStageCharge;profileThreeStageCharge=null;}
   if(!ownsProfileContext){previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;offlinePendingLoadout=null;offlineLoadoutEdited=false;return;}
   if(!ReferenceEquals(discoveryInventory,null)){
    discoveryInventory.onItemAddedClient-=discoveryItem;discoveryInventory.onEquipmentChangedClient-=discoveryEquipment;discoveryInventory.onKeyItemAddedClient-=discoveryKeyItem;

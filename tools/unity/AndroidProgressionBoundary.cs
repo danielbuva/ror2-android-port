@@ -34,6 +34,11 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   public uint coinsBefore,coinsAfter;
   public bool discovered;
  }
+ [Serializable] public sealed class ThreeStageReport {
+  public string identifier,reward,scene,blocked;
+  public int stageOrder;public ulong deaths;
+  public bool eligible,alreadyAchieved,granted;
+ }
  sealed class UnavailableActivityDispatch:ActivityManager {
   public int requests;
   public override void TryToSetActivityAvailability(BaseActivitySelector selector,bool available,bool applyAsDelta=true,bool sendImmediate=true){requests++;}
@@ -170,6 +175,38 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   PlatformSystems.activityManager=unavailable;
   try{report.observations=persistentStats.Select(def=>Evaluate(candidate,def,true)).ToArray();report.awarded=report.observations.Where(row=>row.granted).Select(row=>row.identifier).ToArray();report.coinsAfter=candidate.coins;report.collectedAfter=candidate.totalCollectedCoins;report.unavailableActivityRequests=unavailable.requests;Check(!unavailable.IsInitialized,"Offline activity adapter claimed initialization");return report;}
   finally{bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;Check(owned,"Platform activity ownership changed during local transaction");}
+ }
+
+ public ThreeStageReport ApplyThreeStageCandidate(UserProfile candidate,StatSheet runStats,SceneDef scene){
+  ValidateProfile(candidate);Check(!candidate.canSave&&!candidate.saveRequestPending&&runStats!=null,"Three-stage award requires an unsaveable profile and original run statistics");ValidateUnlockNotifications();
+  var definition=AchievementManager.GetAchievementDef("CompleteThreeStages");
+  Check(definition!=null&&definition.type==typeof(CompleteThreeStagesAchievement)&&definition.serverTrackerType==null&&definition.unlockableRewardIdentifier=="Characters.Bandit2","Original Bandit achievement contract changed");
+  var reward=UnlockableCatalog.GetUnlockableDef(definition.unlockableRewardIdentifier);RequireDefinition(reward);
+  var report=new ThreeStageReport{identifier=definition.identifier,reward=reward.cachedName,scene=scene?scene.cachedName:string.Empty,stageOrder=scene?scene.stageOrder:0,deaths=runStats.GetStatValueULong(StatDef.totalDeaths),alreadyAchieved=candidate.HasAchievement(definition.identifier)};
+  report.eligible=Run.instance&&Run.instance.GetType()==typeof(Run)&&scene&&scene.stageOrder==3&&report.deaths==0;
+  if(!report.eligible||report.alreadyAchieved)return report;
+  var expansion=UnlockableCatalog.GetExpansionDefForUnlockable(reward.index);
+  if(expansion&&expansion.requiredEntitlement){report.blocked="Original reward requires unavailable platform entitlement context";return report;}
+  var prior=PlatformSystems.activityManager;Check(prior==null,"Foreign platform activity owner");
+  var unavailable=new UnavailableActivityDispatch();var user=new LocalUser{userProfile=candidate};
+  Check(user.inputPlayer==null&&!user.currentNetworkUser&&LocalUserManager.readOnlyLocalUsersList.Count==0&&NetworkUser.readOnlyInstancesList.Count==0,"Three-stage award acquired a platform or network identity");
+  var owner=new UserAchievementManager{localUser=user,userProfile=candidate};
+  var achievement=new CompleteThreeStagesAchievement{achievementDef=definition,owner=owner};
+  PlatformSystems.activityManager=unavailable;
+  try{
+   achievement.OnInstall();
+   try{
+    // The shipped handler reads currentNetworkUser for its death statistic.
+    // This offline boundary supplies the same measured predicate, then calls
+    // the original Grant and OnGranted paths on an unsaveable profile clone.
+    achievement.Grant();Check(achievement.shouldGrant&&owner.dirtyGrantsCount==1,"Original Bandit grant rejected the eligible local event");
+    candidate.AddAchievement(definition.identifier,false);achievement.OnGranted();
+    candidate.coins=HGMath.UintSafeAdd(candidate.coins,definition.lunarCoinReward);
+    candidate.totalCollectedCoins=HGMath.UintSafeAdd(candidate.totalCollectedCoins,definition.lunarCoinReward);
+    Check(candidate.HasAchievement(definition.identifier)&&candidate.statSheet.HasUnlockable(reward),"Original Bandit unlock was not awarded locally");report.granted=true;
+   }finally{achievement.OnUninstall();}
+   Check(!unavailable.IsInitialized,"Offline activity adapter claimed initialization");return report;
+  }finally{bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;Check(owned,"Platform activity ownership changed during three-stage award");}
  }
 
  // The original PlayerCharacterMasterController forwards these exact inventory

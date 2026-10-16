@@ -17,7 +17,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class IntegratedResultsReport {
   public bool ready,statsRegistered,serverEnding,clientEnding,reportGenerated,reportReloaded,persisted,cleaned;
   public string scope,error,ending,reportFile,ledgerRecovery,ledgerRecoveryError,ledgerRejectedPrimary,initializationStep;public int players,items,stageClearCount,statFields,priorRuns,itemGroupTypes,itemGroupProviders,itemGroups,itemRelationshipTypes,itemRelationshipProviders,itemRelationshipPairs;
-  public float seconds,startupCollectionSeconds;public double damageDealt,damageTaken;public ulong kills;public long startupManagedBefore,startupManagedAfter;
+  public float seconds,startupCollectionSeconds;public double damageDealt,damageTaken;public ulong kills,stagesCompletedStat;public int stageVisitsStat;public long startupManagedBefore,startupManagedAfter;
  }
  [Serializable] sealed class AndroidRunLedger {public int version=1;public List<AndroidRunEntry> runs=new List<AndroidRunEntry>();}
  [Serializable] sealed class AndroidRunEntry {public string file,ending;public bool win,debugAssisted;public string debugEvidence;public float seconds;public int stages;}
@@ -25,6 +25,7 @@ public sealed partial class MovementBatchProbe {
  static string resultsStatsSignature;static bool resultsSerializersReady;
  readonly Dictionary<FieldInfo,object> resultsEventContext=new Dictionary<FieldInfo,object>();
  PlayerStatsComponent resultsStats;Action resultsStatsFixed,resultsStatsProcess;GameObject resultsTemplate;GameObject previousGameOverPrefab;
+ Action<Stage> resultsOfflineStageBegin,resultsOfflineStageComplete;readonly HashSet<int> resultsVisitedStages=new HashSet<int>(),resultsCompletedStages=new HashSet<int>();
  GameEndingDef[] previousEndingContent,previousEndingCatalog;string previousReportFolder;
  RunReport resultsRunReport;GameOverController resultsController;Action<Run,GameEndingDef> resultsServerEvent;Action<Run,RunReport> resultsClientEvent;
  string resultsDirectory;AndroidRunLedger resultsLedger;bool ownsResultsContext,ownsResultsStats;
@@ -95,6 +96,24 @@ public sealed partial class MovementBatchProbe {
   resultsEventContext.Clear();
  }
  void ResultsStep(string value){r.results.initializationStep=value;Save();}
+ void RecordOfflineStageBegin(Stage stage){
+  if(!stage||!resultsStats||directorPlayer.isConnected)return;
+  Check(!directorPlayer.networkUser&&resultsStats.playerCharacterMasterController==directorPlayer&&resultsStats.currentStats!=null,"Offline stage statistics lost the owned local player");
+  if(!resultsVisitedStages.Add(stage.GetInstanceID()))return;
+  var definition=PerStageStatDef.totalTimesVisited.FindStatDef(stage.sceneDef?stage.sceneDef.baseSceneName:string.Empty);
+  if(definition!=null)resultsStats.currentStats.PushStatValue(definition,1uL);
+  r.results.stageVisitsStat=resultsVisitedStages.Count;
+ }
+ void RecordOfflineStageComplete(Stage stage){
+  if(!stage||!resultsStats||directorPlayer.isConnected)return;
+  Check(!directorPlayer.networkUser&&resultsStats.playerCharacterMasterController==directorPlayer&&resultsStats.currentStats!=null&&SceneInfo.instance,"Offline stage completion lacks its original local context");
+  if(!resultsCompletedStages.Add(stage.GetInstanceID()))return;
+  var sheet=resultsStats.currentStats;
+  if(SceneInfo.instance.countsAsStage){sheet.PushStatValue(StatDef.totalStagesCompleted,1uL);sheet.PushStatValue(StatDef.highestStagesCompleted,sheet.GetStatValueULong(StatDef.totalStagesCompleted));}
+  var definition=PerStageStatDef.totalTimesCleared.FindStatDef(stage.sceneDef?stage.sceneDef.baseSceneName:string.Empty);
+  if(definition!=null)sheet.PushStatValue(definition,1uL);
+  r.results.stagesCompletedStat=sheet.GetStatValueULong(StatDef.totalStagesCompleted);
+ }
  void PrepareIntegratedResults(CharacterBody player,Result cfg){
   if(!cfg.integratedResults)return;
   r.results=new IntegratedResultsReport{scope="Original statistics, genuine Run.BeginGameOver/GameOverController/RunReport and client ending. Owned Android result presentation and run ledger; stock cutscene, Steam profiles, authentication, achievements and lunar awards unavailable."};r.phase="integrated-results-context";Save();
@@ -122,6 +141,11 @@ public sealed partial class MovementBatchProbe {
   RememberResultsEvent(typeof(Inventory),"onServerItemGiven");RememberResultsEvent(typeof(RoR2Application),"onFixedUpdate");RememberResultsEvent(typeof(EquipmentSlot),"onServerEquipmentActivated");RememberResultsEvent(typeof(InfiniteTowerRun),"onWaveInitialized");RememberResultsEvent(typeof(MasterSummon),"onServerMasterSummonGlobal");
   RememberResultsEvent(typeof(KeyItemSlot),"onServerKeyItemActivated");
   ResultsStep("statistics-callbacks");ownsResultsContext=true;var statManager=typeof(PlayerStatsComponent).Assembly.GetType("RoR2.Stats.StatManager",true);StaticCall(statManager,"Init");resultsStatsProcess=(Action)Delegate.CreateDelegate(typeof(Action),statManager.GetMethod("ForceUpdate",BindingFlags.Public|BindingFlags.Static));resultsStatsFixed=(Action)Delegate.CreateDelegate(typeof(Action),resultsStats,typeof(PlayerStatsComponent).GetMethod("FixedUpdate",BindingFlags.Instance|BindingFlags.NonPublic));
+  // Stock StatManager gates stage counters on NetworkUser connectivity. This
+  // owned offline player has real server stage events but no platform user.
+  resultsOfflineStageBegin=RecordOfflineStageBegin;resultsOfflineStageComplete=RecordOfflineStageComplete;
+  Stage.onServerStageBegin+=resultsOfflineStageBegin;Stage.onServerStageComplete+=resultsOfflineStageComplete;
+  if(Stage.instance)RecordOfflineStageBegin(Stage.instance);
   ResultsStep("ending-catalog");previousEndingContent=ContentManager._gameEndingDefs;previousEndingCatalog=(GameEndingDef[])RewardField(typeof(GameEndingCatalog),"gameEndingDefs").GetValue(null);
   Check(GameEndingCatalog.endingCount==0,"Unowned original ending catalog");var endings=cfg.resultsEndingAssets.Select(x=>artifactBundle.LoadAsset<GameEndingDef>(x)).ToArray();Check(endings.Length>=2&&endings.All(x=>x)&&endings.Any(x=>x.cachedName=="MainEnding"&&x.isWin),"Original game ending definitions missing");ContentManager._gameEndingDefs=endings;StaticCall(typeof(GameEndingCatalog),"Init");
   // The composed catalog previously used SetItemDefs, which does not register the
@@ -159,7 +183,7 @@ public sealed partial class MovementBatchProbe {
  void ObserveIntegratedResults(){
   if(r.results==null||!r.results.ready)return;var report=r.results;
   Check(string.IsNullOrEmpty(report.error),"Original integrated statistics failed: "+report.error);
-  report.damageDealt=resultsStats.currentStats.GetStatValueULong(StatDef.totalDamageDealt);report.damageTaken=resultsStats.currentStats.GetStatValueULong(StatDef.totalDamageTaken);report.kills=resultsStats.currentStats.GetStatValueULong(StatDef.totalKills);
+  report.damageDealt=resultsStats.currentStats.GetStatValueULong(StatDef.totalDamageDealt);report.damageTaken=resultsStats.currentStats.GetStatValueULong(StatDef.totalDamageTaken);report.kills=resultsStats.currentStats.GetStatValueULong(StatDef.totalKills);report.stagesCompletedStat=resultsStats.currentStats.GetStatValueULong(StatDef.totalStagesCompleted);
   if(!report.serverEnding||!report.clientEnding||report.persisted)return;
   Check(Run.instance.isGameOverServer&&!Run.instance.isRunning&&resultsController&&resultsController.netId.Value!=0&&resultsRunReport!=null&&resultsRunReport.playerInfoCount==1&&resultsRunReport.GetPlayerInfo(0).master==resultsStats.characterMaster,"Original final report/ending accounting incomplete");
   report.players=resultsRunReport.playerInfoCount;report.items=resultsRunReport.GetPlayerInfo(0).itemAcquisitionOrder.Length;report.seconds=resultsRunReport.runStopwatchValue;report.stageClearCount=Run.instance.stageClearCount;
@@ -203,6 +227,9 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupIntegratedResults(){
   resultsStatsFixed=null;
+  if(resultsOfflineStageBegin!=null){Stage.onServerStageBegin-=resultsOfflineStageBegin;resultsOfflineStageBegin=null;}
+  if(resultsOfflineStageComplete!=null){Stage.onServerStageComplete-=resultsOfflineStageComplete;resultsOfflineStageComplete=null;}
+  resultsVisitedStages.Clear();resultsCompletedStages.Clear();
   CleanupAndroidProfile();
   if(ownsResultsSaveSystem){Check(ReferenceEquals(PlatformSystems.saveSystem,resultsSaveSystem),"Results save-system boundary ownership changed");PlatformSystems.saveSystem=previousResultsSaveSystem;ownsResultsSaveSystem=false;}
   if(!ownsResultsContext){if(ownsResultsStats&&resultsStats){Call(resultsStats,"OnDestroy");ownsResultsStats=false;}ReleaseResultsEvents();CleanupResultsItemRelationships();CleanupResultsItemGroups();CleanupResultsKeyItems();if(r.results!=null)r.results.cleaned=true;return;}

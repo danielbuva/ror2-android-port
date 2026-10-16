@@ -28,7 +28,7 @@ public sealed partial class MovementBatchProbe {
 
   public NovaThirdPersonView.Report camera;public WorldEquipmentReport equipment;
   public bool lunarDefinition,lunarCurrencyAvailable;
-  public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput;
+  public bool ready,authority,lootReady,interactionReady,cleaned,diagnosticInput,diagnosticInputEver;
   public int tableLoadedCount,barrels,chests,openedBarrels,openedChests,pickups,droplets,pickupMessages,coinMessages,xpMessages,frames,kills,liveEnemies;
   public int lootDomain,syringe,lightning,glasses,slug,drink,steak,secondary,roll,barrage;public uint money;public ulong experience;
   public int lootTier1,lootTier2,lootTier3,transmutationGroups,transmutationMapped;public bool transmutationCleaned;public float shield,maxShield,armor;public WorldItemObservation[] itemStacks;
@@ -585,7 +585,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   // Explicit automation for integrated validation only; direct app launches use physical controls.
   bridge.touchEquipment|=worldEquipmentTouch;worldEquipmentTouch=false;bridge.diagnosticInput=!worldManualTakeover;r.world.manualTakeover=worldManualTakeover;
   if(worldManualTakeover){r.world.diagnosticInput=false;return;}
-  r.world.diagnosticInput=true;WorldEquipmentStimulus(bridge,elapsed);bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
+  r.world.diagnosticInput=true;r.world.diagnosticInputEver=true;WorldEquipmentStimulus(bridge,elapsed);bridge.diagnosticSprint=false;GameObject target=null;bridge.diagnosticInteract=false;bridge.diagnosticPrimary=false;bridge.diagnosticSecondary=false;bridge.diagnosticUtility=false;bridge.diagnosticSpecial=false;bridge.DiagnosticJump(false);
   // Measurement-only input: keep the whole director/combat simulation active
   // without spending the frame budget on the unattended shopping/path route.
   if(r.combatPerformanceFocus){
