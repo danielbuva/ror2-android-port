@@ -11,7 +11,8 @@ GLOBAL_OWNERS = frozenset({'RoR2Application', 'SceneInfo', 'Director', 'GameMana
 OPTIONAL_GLOBAL_OWNER = 'Main Camera'
 SCENES = {name: 'Base' for name in ('golemplains', 'foggyswamp', 'frozenwall',
           'dampcavesimple', 'skymeadow', 'wispgraveyard', 'shipgraveyard',
-          'blackbeach', 'blackbeach2', 'golemplains2', 'goolake', 'rootjungle')}
+          'blackbeach', 'blackbeach2', 'golemplains2', 'goolake', 'rootjungle',
+          'goldshores')}
 SCENES['lakes'] = 'DLC2'
 # The original Wwise assembly has no authorized Android native engine. Keep
 # scene-local game logic, but do not activate serialized native-audio clients.

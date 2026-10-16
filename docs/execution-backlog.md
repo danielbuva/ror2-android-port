@@ -1,5 +1,7 @@
 # Execution backlog
 
+J484 stages Gold Shores scene/content beside the normal-stage composition. Its native portal/mission/return path is the next integrated gameplay target; do not infer special-realm acceptance from the build or Lakes launch. Keep 60 FPS as release acceptance while watching for major unexplained regressions. Manual Moon/finale remains deferred.
+
 J481 confirms the J480 candidate also completes an assisted Merc stage with original boss/exit and exercised objective-distance fallback. Croco poison tick damage remains unproven under high-damage acceleration; the specific failed Toolbot layout remains unproven. Continue broad original gameplay and profile eligibility; preserve J479 and paused J323 rollbacks. Sustained 60 FPS is release acceptance; investigate large unexplained regressions. Manual Moon/finale remains deferred. See PORTING_STATE.md.
 
 Canonical policy: DEVELOPMENT_PLAN.md. Immediate order: T01 → T02 → T05 → T06 → T07. Conditional tooling needs a named triggering experiment. A completed experiment is not necessarily a passed capability gate.

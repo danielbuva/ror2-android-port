@@ -14,6 +14,7 @@ VARIANTS = {
     'goolake': 'edbd7dfa00ab03ea1d1cfa723afea5f0985ccfc6820d5ff86da0c971d3011b6d',
     'rootjungle': '9208b430b51ff6feae9c687fc7e35c0bd103e5749fefff5759c8f2ca4237d1c3',
     'lakes': 'bf03c16ab1a2c9dcafba759917e0b1224f8bdd3dca5da719d30c8fc72f37f2e2',
+    'goldshores': 'c01ab9ea9abf8145fb0f6322966730061afaf2d5281f610cad61f4eac7b84338',
 }
 LAKES_SOURCE_SHA256 = '36782d7d6eaf8ce6eb2fb0e1cb321a7fc6e9b38cb41aee196c0ed20acaa765e4'
 
@@ -116,9 +117,11 @@ def stage():
             checked,counts,removed = scene_contract(source.read_text(),generated.read_text())
             if checked != generated.read_text() or removed:
                 raise RuntimeError('Recovered scene has an unexpected callback or network owner: '+name)
-            if sorted(spec['previewNames']) != counts['previewNames'] or any(spec[key] != counts[key] for key in ('previewCallbacks','mapZoneCount','mapZoneActiveNames','mapZoneNetworkObjects','emptyMeshPaths','emptyColliderPaths')):
+            list_fields = ('mapZoneActiveNames','emptyMeshPaths','emptyColliderPaths')
+            if sorted(spec['previewNames']) != counts['previewNames'] or any(spec[key] != counts[key] for key in ('previewCallbacks','mapZoneCount','mapZoneNetworkObjects')) or any(sorted(spec[key]) != sorted(counts[key]) for key in list_fields):
                 raise RuntimeError('Scene contract report differs from source projection: '+name)
             spec['previewNames'] = counts['previewNames']
+            for key in list_fields:spec[key] = sorted(spec[key])
             prefix = 'assets/labloadingscene/stagegeometry/assets/'
             for kind in ('groundGraph','airGraph'):
                 if not spec[kind].startswith(prefix):

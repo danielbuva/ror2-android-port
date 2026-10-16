@@ -121,12 +121,12 @@ public static class LabBuild {
     }
     foreach(var nextStage in (cfg.nextStageScenes??new string[0]).Concat(string.IsNullOrEmpty(cfg.nextStageScene)?new string[0]:new[]{cfg.nextStageScene}).Distinct()){
      string name=Path.GetFileNameWithoutExtension(nextStage);
-     if(!IsOwnedContentPath(nextStage)||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2","blackbeach","blackbeach2","golemplains2","goolake","rootjungle","lakes"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
+     if(!IsOwnedContentPath(nextStage)||!File.Exists(nextStage)||!new[]{"foggyswamp","frozenwall","wispgraveyard","shipgraveyard","dampcavesimple","skymeadow","moon2","blackbeach","blackbeach2","golemplains2","goolake","rootjungle","lakes","goldshores"}.Contains(name))throw new Exception("Unexpected composed next-stage path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName=name+"-spine-lab",assetNames=new[]{nextStage}});
     }
     foreach(var sourceStage in cfg.sourceStageScenes??new string[0]){
      string filename=Path.GetFileNameWithoutExtension(sourceStage);
-     if(!IsOwnedContentPath(sourceStage)||!File.Exists(sourceStage)||!new[]{"golemplains","foggyswamp","frozenwall","dampcavesimple","skymeadow","wispgraveyard","shipgraveyard","blackbeach","blackbeach2","golemplains2","goolake","rootjungle","lakes"}.Contains(filename)||sourceStage!="Assets/LabLoadingScene/SourceScenes/"+filename+"/"+filename+".unity")throw new Exception("Unexpected original stage-scene candidate path");
+     if(!IsOwnedContentPath(sourceStage)||!File.Exists(sourceStage)||!new[]{"golemplains","foggyswamp","frozenwall","dampcavesimple","skymeadow","wispgraveyard","shipgraveyard","blackbeach","blackbeach2","golemplains2","goolake","rootjungle","lakes","goldshores"}.Contains(filename)||sourceStage!="Assets/LabLoadingScene/SourceScenes/"+filename+"/"+filename+".unity")throw new Exception("Unexpected original stage-scene candidate path");
      bundleBuilds.Add(new AssetBundleBuild{assetBundleName=filename+"-source-lab",assetNames=new[]{sourceStage}});
     }
     if(!string.IsNullOrEmpty(cfg.prefab)){
