@@ -46,7 +46,7 @@ public sealed partial class MovementBatchProbe {
   public string navigationTarget;public bool navigationReachable,navigationJump;public int navigationWaypoints;public Vector3 navigationDestination,navigationWaypoint;
   public int navigationRecoveries,navigationRecoveryJumpFrames;public float navigationStalledSeconds,navigationProgressDistance,navigationObjectiveStalledSeconds,navigationObjectiveProgressDistance;public bool navigationRecoveryJump;
   public Vector3 navigationReference,navigationLocalMovement;public bool navigationLocalObstructed,navigationAllowWalkOffCliff;public float navigationLocalJumpSpeed;public NavigationPathPoint[] navigationPath;
-  public bool navigationTerrainFallback,navigationTerrainNoCandidate,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked;public Vector3 navigationTerrainTarget;
+  public bool navigationTerrainFallback,navigationTerrainNoCandidate,navigationSprint;public int navigationTerrainFrames,navigationTerrainBlocked,navigationObjectiveRecoveryFrames;public Vector3 navigationTerrainTarget;
  public int navigationTerrainLowerChoices,navigationTerrainRayOverflow;
   public bool navigationPartial;public int navigationPartialCandidates,navigationPartialNode=-1;public float navigationPartialSeconds;public Vector3 navigationPartialDestination;
   public string navigationHull,navigationJumpHeight;public int navigationGraphNodes,navigationStartNode=-1,navigationNearestNode=-1,navigationApproachBoundsRejected,navigationApproachTooShort,navigationApproachUnreachable;public float navigationMaxSpeed,navigationMaxSlope,navigationGravityY;public Vector3 navigationStartPosition;
@@ -705,12 +705,16 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   }else{worldPathFollower.Reset();r.world.navigationReachable=true;r.world.navigationPartial=false;r.world.navigationWaypoints=0;r.world.navigationPath=new NavigationPathPoint[0];}
   bool stalled=worldNavigationHasProgress&&elapsed-worldNavigationProgressAt>3&&Vector3.Distance(waypoint,worldNavigationProgressWaypoint)<.5f&&Vector3.Distance(destination,worldNavigationProgressDestination)<2;
   bool sourceApproach=r.world.navigationPartial&&!worldPathFollower.isFinished;
-  if(needsRoute&&((graph&&!r.world.navigationReachable&&!sourceApproach)||stalled))worldTerrainRecoveryUntil=elapsed+4;
+  // A refreshed source path can keep changing its local waypoint while the
+  // player circles the same obstacle. Compare progress to the real objective.
+  bool objectiveStalled=worldNavigationHasObjectiveProgress&&Vector3.Distance(destination,worldNavigationObjective)<2&&elapsed-worldNavigationObjectiveProgressAt>6;
+  if(needsRoute&&((graph&&!r.world.navigationReachable&&!sourceApproach)||stalled||objectiveStalled))worldTerrainRecoveryUntil=elapsed+4;
   if(needsRoute&&elapsed<worldTerrainRecoveryUntil){
    // The source graph can be disconnected or reach a waypoint the current
    // approach cannot traverse. Retain its result; steer normal input over ground.
    // Do not open gates, edit links, invent extra jumps or move the body directly.
    waypoint=TerrainTravelWaypoint(player,position,waypoint,elapsed);
+   if(objectiveStalled)r.world.navigationObjectiveRecoveryFrames++;
    r.world.navigationTerrainFallback=true;r.world.navigationTerrainFrames++;r.world.navigationTerrainTarget=waypoint;
   }
   r.world.navigationWaypoint=waypoint;var direction=waypoint-position;var movement=new Vector2(direction.x,direction.z);
