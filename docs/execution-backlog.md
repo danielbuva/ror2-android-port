@@ -1,5 +1,7 @@
 # Execution backlog
 
+J493 exposes original skin/skill loadout choices for the selected survivor in the Android menu and stages a native profile commit after verified body spawn. Device evidence covers the default Commando path and readable menu; an earned alternate selection remains open. Continue broad original progression/session integration without relaxing unlock or entitlement checks.
+
 J490 adds original offline difficulty choice to the recovered menu. Rainstorm and Monsoon each reached 25 seconds of Android world play with native run rule/clock identity; combat and sustained FPS are not accepted from assisted short runs. The 23 identified source-stage transports are staged, so continue broad runtime/session integration rather than treating the remaining nonstandard SceneDefs as missing normal destinations.
 
 J489 puts all 20 visible original survivor definitions on the Android offline menu, while enabling only profile-eligible choices. A Nova tap selected Huntress and reached original world play. Continue broad integration; this recovered UI does not pass original menu or locked-survivor acceptance. Keep 60 FPS as eventual release acceptance and investigate only meaningful unexplained regressions during content work.

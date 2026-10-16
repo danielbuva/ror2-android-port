@@ -131,6 +131,15 @@ public sealed class AndroidOfflineProfile {
   ReplacePrimary(next);profile=candidate;profile.canSave=true;profile.saveRequestPending=false;
  }
  public void Save(){Commit(profile,generation==null?Enumerable.Empty<string>():generation.appliedRuns);}
+ public bool SelectLoadout(BodyIndex body,uint skin,IReadOnlyList<int> skills){
+  if(body==BodyIndex.None||skills==null||BodyCatalog.GetBodyPrefab(body)==null||skills.Count!=BodyCatalog.GetBodyPrefab(body).GetComponents<GenericSkill>().Length)throw new ArgumentException("Original selected body/skill slots unavailable");
+  var current=profile.loadout.bodyLoadoutManager;
+  if(current.GetSkinIndex(body)==skin&&Enumerable.Range(0,skills.Count).All(i=>current.GetSkillVariant(body,i)==skills[i]))return false;
+  var candidate=Decode(Encode(profile,generation.appliedRuns,generation.baselineRuns));candidate.canSave=false;
+  candidate.loadout.bodyLoadoutManager.SetSkinIndex(body,skin);
+  for(int i=0;i<skills.Count;i++)candidate.loadout.bodyLoadoutManager.SetSkillVariant(body,i,(uint)skills[i]);
+  Commit(candidate,generation.appliedRuns);return true;
+ }
  public bool ShouldApply(Guid run){if(run==Guid.Empty)throw new ArgumentException("Genuine run identity required");var id=run.ToString("N");return !generation.baselineRuns.Contains(id)&&!generation.appliedRuns.Contains(id);}
  public bool ApplyResult(Guid run,StatSheet delta){
   if(run==Guid.Empty||delta==null)throw new ArgumentException("Genuine run identity/statistics required");var id=run.ToString("N");if(!ShouldApply(run))return false;

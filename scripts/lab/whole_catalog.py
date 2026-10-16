@@ -1064,7 +1064,7 @@ def build_integration(code_only=False):
     runtime = project/'Assets/LabLoadingScene'
     copy_catalog_asset(ROOT/'tools/unity/GoldshoresBoundary.cs', runtime/'GoldshoresBoundary.cs')
     for source_file in sorted((ROOT/'tools/unity').glob('*.cs')):
-        if (runtime/source_file.name).is_file():
+        if (runtime/source_file.name).is_file() or 'Assets/LabLoadingScene/'+source_file.name in WHOLE_PLAYER_INPUTS:
             copy_catalog_asset(source_file, runtime/source_file.name)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)

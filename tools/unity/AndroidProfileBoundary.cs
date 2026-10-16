@@ -10,7 +10,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using Zio;
 
 public sealed partial class MovementBatchProbe {
- [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public uint earnedCoins;public ulong kills;}
+ [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified,loadoutMenuCommitted;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public uint earnedCoins;public ulong kills;}
  sealed class AndroidProfileSaveSystem:SaveSystem {
   public AndroidOfflineProfile local;
   static Exception Unavailable(){return new NotSupportedException("Steam identity, cloud/profile import and platform history unavailable; owned Android profile only.");}
@@ -32,7 +32,7 @@ public sealed partial class MovementBatchProbe {
   var body=prefab.GetComponent<CharacterBody>();Check(body&&body.bodyIndex!=BodyIndex.None&&BodyCatalog.GetBodyPrefab(body.bodyIndex)==prefab,"Selected profile loadout body identity changed");
   var directory=System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1");
   var unlocked=AndroidOfflineProfile.PreviewUnlockNames(directory);
-  var preview=AndroidOfflineProfile.PreviewLoadout(directory);
+  var preview=offlineLoadoutEdited&&offlinePendingLoadout!=null?offlinePendingLoadout:AndroidOfflineProfile.PreviewLoadout(directory);
   uint skinIndex=preview.bodyLoadoutManager.GetSkinIndex(body.bodyIndex);
   Check(skinIndex<int.MaxValue&&skinIndex<SkinCatalog.GetBodySkinCount(body.bodyIndex),"Saved original skin index unavailable");
   var skin=SkinCatalog.GetBodySkinDef(body.bodyIndex,(int)skinIndex);
@@ -52,9 +52,16 @@ public sealed partial class MovementBatchProbe {
  void ConfirmAndroidProfileLoadout(CharacterBody player,UserProfile profile){
   if(previewLoadoutBody==BodyIndex.None)return;
   Check(player&&player.master&&player.bodyIndex==previewLoadoutBody&&profile!=null&&profile.loadout!=null,"Original profile loadout verification context missing");
+  var spawnedSkills=player.GetComponents<GenericSkill>();
+  Check(player.skinIndex==previewLoadoutSkin&&spawnedSkills.Length==previewLoadoutSkills.Length&&Enumerable.Range(0,spawnedSkills.Length).All(i=>spawnedSkills[i]&&spawnedSkills[i].skillFamily&&spawnedSkills[i].skillDef==spawnedSkills[i].skillFamily.variants[previewLoadoutSkills[i]].skillDef),"Original spawned body differs from selected loadout");
+  if(offlineLoadoutEdited){
+   Check(resultsSaveSystem.local!=null&&ReferenceEquals(profile,resultsSaveSystem.local.profile),"Selected loadout has no owned profile");
+   r.profile.loadoutMenuCommitted=resultsSaveSystem.local.SelectLoadout(previewLoadoutBody,previewLoadoutSkin,previewLoadoutSkills);
+   profile=resultsSaveSystem.local.profile;resultsSaveSystem.userProfile=profile;
+  }
   var bodyLoadout=profile.loadout.bodyLoadoutManager;
   Check(bodyLoadout.GetSkinIndex(previewLoadoutBody)==previewLoadoutSkin&&player.skinIndex==previewLoadoutSkin,"Decoded original profile skin differs from spawned body");
-  var skills=player.GetComponents<GenericSkill>();
+  var skills=spawnedSkills;
   Check(skills.Length==previewLoadoutSkills.Length,"Original spawned skill slot count changed");
   for(int i=0;i<skills.Length;i++)Check(skills[i]&&skills[i].skillFamily&&bodyLoadout.GetSkillVariant(previewLoadoutBody,i)==previewLoadoutSkills[i]&&skills[i].skillDef==skills[i].skillFamily.variants[previewLoadoutSkills[i]].skillDef,"Decoded original profile skill differs from spawned body");
   r.profile.loadoutAppliedBeforeSpawn=true;r.profile.loadoutVerified=true;r.profile.selectedSkin=previewLoadoutSkin;r.profile.selectedSkillVariants=previewLoadoutSkills;
@@ -140,7 +147,7 @@ public sealed partial class MovementBatchProbe {
   ObserveAndroidProfile();
  }
  void CleanupAndroidProfile(){
-  if(!ownsProfileContext){previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;return;}
+  if(!ownsProfileContext){previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;offlinePendingLoadout=null;offlineLoadoutEdited=false;return;}
   if(!ReferenceEquals(discoveryInventory,null)){
    discoveryInventory.onItemAddedClient-=discoveryItem;discoveryInventory.onEquipmentChangedClient-=discoveryEquipment;discoveryInventory.onKeyItemAddedClient-=discoveryKeyItem;
    discoveryInventory=null;discoveryItem=null;discoveryEquipment=null;discoveryKeyItem=null;
@@ -160,6 +167,6 @@ public sealed partial class MovementBatchProbe {
   Check(priorProfileViewables.All(pair=>profileViewablesMap.ContainsKey(pair.Key)&&ReferenceEquals(profileViewablesMap[pair.Key],pair.Value)),"Foreign viewable identity changed");
   foreach(var pair in priorProfileSurvivors)pair.Key.survivorIndex=pair.Value;foreach(var pair in priorProfileCatalog)pair.Key.SetValue(null,pair.Value);
   priorProfileSurvivors.Clear();priorProfileCatalog.Clear();resultsSaveSystem.local=null;resultsSaveSystem.userProfile=null;ownsProfileContext=false;if(r.profile!=null)r.profile.cleaned=true;
-  previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;
+  previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;offlinePendingLoadout=null;offlineLoadoutEdited=false;
  }
 }

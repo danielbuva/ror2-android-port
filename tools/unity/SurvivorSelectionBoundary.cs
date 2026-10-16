@@ -35,10 +35,12 @@ public sealed partial class MovementBatchProbe {
  void CycleOrdinarySurvivor(int direction){
   var choices=offlineMenuChoices??OrdinarySurvivorChoices();var index=Array.FindIndex(choices,value=>value.cachedName==r.selectedSurvivor);
   r.selectedSurvivor=choices[(index+direction+choices.Length)%choices.Length].cachedName;Save();
+  if(offlineStartVisible)ResetOfflineLoadoutSelection();
  }
  void SelectOrdinarySurvivor(SurvivorDef survivor){
   Check(survivor&&IsOrdinarySurvivorAvailable(survivor)&&OrdinarySurvivorChoices().Contains(survivor),"Unavailable survivor selection");
   r.selectedSurvivor=survivor.cachedName;Save();
+  if(offlineStartVisible)ResetOfflineLoadoutSelection();
  }
  void DrawOfflineSurvivorRoster(SurvivorDef[] roster,SurvivorDef[] choices){
   float width=Mathf.Min(Screen.width-40,1120),height=Mathf.Min(450,Screen.height*.48f),top=Mathf.Max(175,Screen.height*.25f);

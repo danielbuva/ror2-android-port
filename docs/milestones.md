@@ -1,5 +1,7 @@
 # Capability gates
 
+J493 adds a profile-gated original loadout selector to the recovered Android menu and verifies default Commando spawn/profile agreement on device. Changed earned choices, original menu parity and sustained 60 FPS remain open.
+
 J486 registers all 76 original provider-published scene definitions; J488 converts 23 stage destinations, including nine DLC1/DLC2 scenes whose original expansion eligibility is preserved and whose gameplay remains untested. J487 registers the 32 unique shipped DLC1 item relationships and passes two same-process original stage starts after repairing stale event restoration. These are catalog/lifecycle breadth, not item-transformation, full-stage or normal-run acceptance. Sustained 60 FPS remains eventual release acceptance; major unexplained regressions still require attribution.
 
 C08 adds native pickup discovery and two original discovery achievements, controller neutral-reconnect protection, basic pause/menu binds and read-only StatManager queue counts. The composed Android candidate ran86.12world seconds without current-process errors; diagnostic input and acceleration excluded one observed pickup from saved progression. This does not advance normal-game, controller, full-run or performance acceptance. J437 remains the unassisted earned-progression proof; J436 remains native profile/recovery proof; J435 remains source director/placement breadth proof. See PORTING_STATE.md.
