@@ -10,7 +10,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using Zio;
 
 public sealed partial class MovementBatchProbe {
- [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified,loadoutMenuCommitted,threeStageEligible,threeStageAssistedExcluded,threeStageAwarded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded,threeStageChargedEvents;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public AndroidProgressionBoundary.ThreeStageReport threeStageAward;public uint earnedCoins;public ulong kills,firstTeleporterCompletedStat;}
+ [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified,loadoutMenuCommitted,threeStageEligible,threeStageAssistedExcluded,threeStageAwarded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded,threeStageChargedEvents;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public AndroidProgressionBoundary.ThreeStageReport threeStageAward;public List<AndroidProgressionBoundary.EventAwardReport> eventAwards=new List<AndroidProgressionBoundary.EventAwardReport>();public uint earnedCoins;public ulong kills,firstTeleporterCompletedStat;}
  sealed class AndroidProfileSaveSystem:SaveSystem {
   public AndroidOfflineProfile local;
   static Exception Unavailable(){return new NotSupportedException("Steam identity, cloud/profile import and platform history unavailable; owned Android profile only.");}
@@ -70,7 +70,8 @@ public sealed partial class MovementBatchProbe {
   return !definition||resultsSaveSystem!=null&&resultsSaveSystem.local!=null&&resultsSaveSystem.local.profile.HasUnlockable(definition);
  }
  AndroidProgressionBoundary.DiscoveryReport pendingDiscovery;
- Action<TeleporterInteraction> profileProgressionCharge;bool profileFirstTeleporterRecorded;
+ Action<TeleporterInteraction> profileProgressionCharge;Action<DamageReport> profileEliteDeath;Action<BossGroup> profileQuickBoss;Action<SceneExitController> profileTeleporterExit;Action<SceneExitControllerColossusPortal> profileColossusExit;bool profileFirstTeleporterRecorded;
+ readonly HashSet<string> profileObservedEvents=new HashSet<string>(StringComparer.Ordinal);
  Inventory discoveryInventory;Action<ItemIndex> discoveryItem;Action<EquipmentIndex,uint> discoveryEquipment;Action<KeyItemIndex> discoveryKeyItem;
  readonly Dictionary<FieldInfo,object> priorProfileCatalog=new Dictionary<FieldInfo,object>();
  readonly Dictionary<SurvivorDef,SurvivorIndex> priorProfileSurvivors=new Dictionary<SurvivorDef,SurvivorIndex>();
@@ -114,6 +115,10 @@ public sealed partial class MovementBatchProbe {
   ConfirmAndroidProfileLoadout(player,local.profile);
   r.profile.ready=true;r.profile.created=local.recovery=="new";r.profile.roundTrip=true;r.profile.recovery=local.recovery;r.profile.saveFields=UserProfile.saveFields.Length;r.profile.statFields=local.profile.statSheet.fields.Length;r.profile.survivors=SurvivorCatalog.survivorCount;ObserveAndroidProfile();Save();
   profileProgressionCharge=ObserveOfflineTeleporterProgression;TeleporterInteraction.onTeleporterChargedGlobal+=profileProgressionCharge;
+  profileEliteDeath=damage=>{if(damage!=null&&damage.victimIsElite&&worldPlayer&&damage.attackerMaster==worldPlayer.master)RecordOfflineOriginalEvent("KillEliteMonster");};GlobalEventManager.onDeathProcServer+=profileEliteDeath;
+  profileQuickBoss=group=>{if(group&&group.fixedTimeSinceEnabled<=15f&&group.GetComponent<TeleporterInteraction>())RecordOfflineOriginalEvent("KillBossQuick");};BossGroup.onBossGroupDefeatedServer+=profileQuickBoss;
+  profileTeleporterExit=exit=>{if(exit&&exit.portalUsedAfterTeleporterEventFinish&&worldPlayer&&worldPlayer.healthComponent&&worldPlayer.healthComponent.alive)RecordOfflineOriginalEvent("CompleteTeleporter");};SceneExitController.onBeginExit+=profileTeleporterExit;
+  profileColossusExit=exit=>{if(exit&&worldPlayer&&worldPlayer.healthComponent&&worldPlayer.healthComponent.alive)RecordOfflineOriginalEvent("CompleteTeleporter");};SceneExitControllerColossusPortal.onBeginExit+=profileColossusExit;
   Check(player&&player.master&&player.master.inventory&&player.master.inventory==player.inventory&&!directorPlayer.networkUser&&discoveryInventory==null,"Owned offline player pickup discovery identity missing");
   discoveryInventory=player.inventory;
   discoveryItem=index=>RecordProfileDiscovery(PickupCatalog.FindPickupIndex(index));
@@ -144,6 +149,21 @@ public sealed partial class MovementBatchProbe {
   Check(r.profile.threeStageAward!=null&&awarded==r.profile.threeStageAward.granted,"Original third-stage award transaction disagrees with committed profile");
   r.profile.threeStageAwarded=awarded;resultsSaveSystem.userProfile=resultsSaveSystem.local.profile;ObserveAndroidProfile();Save();
  }
+ void RecordOfflineOriginalEvent(string identifier){
+  if(r.profile==null||!r.profile.ready||!NetworkServer.active||!worldPlayer||!worldPlayer.master||profileObservedEvents.Contains(identifier))return;
+  Check(resultsSaveSystem.local!=null&&androidProgression!=null,"Original event achievement lacks its offline profile owner");
+  profileObservedEvents.Add(identifier);
+  bool assisted=r.world!=null&&r.world.diagnosticInputEver||r.nova!=null&&r.nova.diagnosticInput||r.developerSurvivorOverride||r.debugAcceleration!=null&&r.debugAcceleration.everAssisted;
+  AndroidProgressionBoundary.EventAwardReport report;
+  if(assisted)report=new AndroidProgressionBoundary.EventAwardReport{identifier=identifier,blocked="Developer-assisted run excluded from permanent progression"};
+  else{
+   report=null;
+   var awarded=resultsSaveSystem.local.AwardObservedEvent(candidate=>{report=androidProgression.ApplyObservedEventCandidate(candidate,identifier);return report.granted;});
+   Check(report!=null&&awarded==report.granted,"Original event award transaction disagrees with committed profile");
+   resultsSaveSystem.userProfile=resultsSaveSystem.local.profile;ObserveAndroidProfile();
+  }
+  r.profile.eventAwards.Add(report);Save();
+ }
  Guid ProfileRunIdentity(AndroidRunEntry entry){
   var stem=System.IO.Path.GetFileNameWithoutExtension(entry.file);Guid id;
   Check(stem.StartsWith("run-")&&Guid.TryParseExact(stem.Substring(4),"N",out id)&&id!=Guid.Empty,"Owned profile result identity invalid");return Guid.ParseExact(stem.Substring(4),"N");
@@ -166,6 +186,11 @@ public sealed partial class MovementBatchProbe {
  }
  void CleanupAndroidProfile(){
   if(profileProgressionCharge!=null){TeleporterInteraction.onTeleporterChargedGlobal-=profileProgressionCharge;profileProgressionCharge=null;}profileFirstTeleporterRecorded=false;
+  if(profileEliteDeath!=null){GlobalEventManager.onDeathProcServer-=profileEliteDeath;profileEliteDeath=null;}
+  if(profileQuickBoss!=null){BossGroup.onBossGroupDefeatedServer-=profileQuickBoss;profileQuickBoss=null;}
+  if(profileTeleporterExit!=null){SceneExitController.onBeginExit-=profileTeleporterExit;profileTeleporterExit=null;}
+  if(profileColossusExit!=null){SceneExitControllerColossusPortal.onBeginExit-=profileColossusExit;profileColossusExit=null;}
+  profileObservedEvents.Clear();
   if(!ownsProfileContext){previewLoadoutBody=BodyIndex.None;previewLoadoutSkills=null;previewLoadoutSkin=0;offlinePendingLoadout=null;offlineLoadoutEdited=false;return;}
   if(!ReferenceEquals(discoveryInventory,null)){
    discoveryInventory.onItemAddedClient-=discoveryItem;discoveryInventory.onEquipmentChangedClient-=discoveryEquipment;discoveryInventory.onKeyItemAddedClient-=discoveryKeyItem;

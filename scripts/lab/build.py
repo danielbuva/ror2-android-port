@@ -97,6 +97,13 @@ def validate_whole_payload_reuse(project):
  if current_payload!=receipt['payload']:raise RuntimeError('Frozen whole-catalog payload identity changed')
  if added:write(WORK/'whole-catalog-code-base.json',dict(receipt,files=current,allowed=sorted(WHOLE_PLAYER_INPUTS)))
 
+def validate_staged_runtime_sources(project):
+ if not (WORK/'whole-catalog-build.json').exists():return
+ stage=Path(project)/'Assets/LabLoadingScene'
+ stale=[source.name for source in sorted((ROOT/'tools/unity').glob('*.cs'))
+        if (stage/source.name).is_file() and source.read_bytes()!=(stage/source.name).read_bytes()]
+ if stale:raise RuntimeError('Whole-catalog runtime sources are not staged: '+', '.join(stale[:12])+'; run ./dev prototype --action whole-catalog-code-build')
+
 def build_cache_key(project,api):
  project=Path(project)
  inputs={str(p.relative_to(project)):sha(p) for sub in ['Assets','Packages','ProjectSettings']
@@ -120,6 +127,7 @@ def build(api='gles',force=False,reuse_payload=False):
  project=WORK/'lab-project'
  recipe=WORK/'scene-probe-build.json'
  if recipe.exists():validate_runtime_support(project,read(recipe))
+ validate_staged_runtime_sources(project)
  # Copy changed tool-owned sources only. Never reset project settings during an incremental build.
  shutil.copytree(ROOT/'android/Assets',project/'Assets',dirs_exist_ok=True)
  if reuse_payload:validate_whole_payload_reuse(project)

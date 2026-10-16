@@ -10,6 +10,24 @@ from common import write
 
 
 class BuildIdentityTests(unittest.TestCase):
+    def test_whole_catalog_build_rejects_unstaged_authored_runtime_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            work = root / 'work'
+            project = work / 'lab-project'
+            source = root / 'tools/unity/AndroidProfileBoundary.cs'
+            staged = project / 'Assets/LabLoadingScene/AndroidProfileBoundary.cs'
+            source.parent.mkdir(parents=True)
+            staged.parent.mkdir(parents=True)
+            source.write_text('new offline award boundary')
+            staged.write_text('previous offline award boundary')
+            write(work / 'whole-catalog-build.json', {'scope': 'test'})
+            with patch.object(build, 'ROOT', root), patch.object(build, 'WORK', work):
+                with self.assertRaisesRegex(RuntimeError, 'whole-catalog-code-build'):
+                    build.validate_staged_runtime_sources(project)
+                staged.write_bytes(source.read_bytes())
+                build.validate_staged_runtime_sources(project)
+
     def test_scene_recipe_and_catalog_manifest_each_invalidate_cache(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

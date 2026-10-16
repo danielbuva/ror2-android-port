@@ -39,6 +39,10 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   public int stageOrder;public ulong deaths;
   public bool eligible,alreadyAchieved,granted;
  }
+ [Serializable] public sealed class EventAwardReport {
+  public string identifier,reward,blocked;
+  public bool alreadyAchieved,wouldGrant,granted;
+ }
  sealed class UnavailableActivityDispatch:ActivityManager {
   public int requests;
   public override void TryToSetActivityAvailability(BaseActivitySelector selector,bool available,bool applyAsDelta=true,bool sendImmediate=true){requests++;}
@@ -54,6 +58,7 @@ public sealed class AndroidProgressionBoundary : IDisposable {
  IList identifiers;object[] priorIdentifiers;
  AchievementDef[] persistentStats=Array.Empty<AchievementDef>();
  AchievementDef[] statDrivenAchievements=Array.Empty<AchievementDef>();
+ AchievementDef[] observedEventAchievements=Array.Empty<AchievementDef>();
  AchievementDef[] pickupAchievements=Array.Empty<AchievementDef>();
  UnlockableDef[] ownedDefinitions=Array.Empty<UnlockableDef>();
  bool acquired,disposed;
@@ -103,6 +108,8 @@ public sealed class AndroidProgressionBoundary : IDisposable {
   Check(persistentStats.Length>0&&persistentStats.All(def=>def.type.BaseType==typeof(BaseStatMilestoneAchievement)&&def.serverTrackerType==null&&def.type.GetMethod("OnInstall").DeclaringType==typeof(BaseStatMilestoneAchievement)&&def.type.GetMethod("OnUninstall").DeclaringType==typeof(BaseStatMilestoneAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Unmeasured persistent-stat achievement implementation");
   statDrivenAchievements=new[]{map["RepeatFirstTeleporter"],map["UseThreePortals"]};
   Check(statDrivenAchievements[0].type==typeof(RepeatFirstTeleporterAchievement)&&statDrivenAchievements[0].serverTrackerType!=null&&statDrivenAchievements[0].unlockableRewardIdentifier=="Characters.Toolbot"&&statDrivenAchievements[0].serverIndex.intValue>=0&&statDrivenAchievements[0].serverIndex.intValue<AchievementManager.serverAchievementCount&&statDrivenAchievements[1].type==typeof(UseThreePortalsAchievement)&&statDrivenAchievements[1].serverTrackerType==null&&statDrivenAchievements[1].unlockableRewardIdentifier=="Items.Tonic"&&statDrivenAchievements.All(def=>def.type.BaseType==typeof(BaseAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Original stat-driven achievement contract changed");
+  observedEventAchievements=new[]{map["KillEliteMonster"],map["KillBossQuick"],map["CompleteTeleporter"]};
+  Check(observedEventAchievements[0].type==typeof(KillEliteMonsterAchievement)&&observedEventAchievements[0].unlockableRewardIdentifier=="Items.Medkit"&&observedEventAchievements[1].type==typeof(KillBossQuickAchievement)&&observedEventAchievements[1].unlockableRewardIdentifier=="Items.TreasureCache"&&observedEventAchievements[2].type==typeof(CompleteTeleporterAchievement)&&observedEventAchievements[2].unlockableRewardIdentifier=="Items.BossDamageBonus"&&observedEventAchievements.All(def=>def.serverTrackerType!=null&&def.serverIndex.intValue>=0&&def.serverIndex.intValue<AchievementManager.serverAchievementCount&&def.type.BaseType==typeof(BaseAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Original event achievement contract changed");
   pickupAchievements=new[]{"Discover10UniqueTier1","Discover5Equipment"}.Select(id=>map[id]).ToArray();
   Check(pickupAchievements[0].type==typeof(Discover10UniqueTier1Achievement)&&pickupAchievements[1].type==typeof(Discover5EquipmentAchievement)&&pickupAchievements.All(def=>def.serverTrackerType==null&&def.type.BaseType==typeof(BaseAchievement)&&def.type.GetMethod("OnGranted").DeclaringType==typeof(BaseAchievement)),"Original pickup-discovery achievement contract changed");
   achievements=map.Count;AchievementManager.availability.MakeAvailable();ready=true;
@@ -235,6 +242,37 @@ public sealed class AndroidProgressionBoundary : IDisposable {
    }finally{achievement.OnUninstall();}
    Check(!unavailable.IsInitialized,"Offline activity adapter claimed initialization");return report;
   }finally{bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;Check(owned,"Platform activity ownership changed during three-stage award");}
+ }
+
+ // The three predicates are measured at their original server events by the
+ // offline world owner. Their original client grant/reward path remains native.
+ public EventAwardReport ApplyObservedEventCandidate(UserProfile candidate,string identifier){
+  ValidateProfile(candidate);Check(!candidate.canSave&&!candidate.saveRequestPending&&candidate.onStatsReceived==null,"Event award requires a detached unsaveable profile");ValidateUnlockNotifications();
+  var definition=observedEventAchievements.SingleOrDefault(def=>def.identifier==identifier);Check(definition!=null,"Unmeasured original event achievement");
+  var reward=UnlockableCatalog.GetUnlockableDef(definition.unlockableRewardIdentifier);RequireDefinition(reward);
+  var report=new EventAwardReport{identifier=identifier,reward=reward.cachedName,alreadyAchieved=candidate.HasAchievement(identifier)};
+  if(report.alreadyAchieved)return report;
+  var expansion=UnlockableCatalog.GetExpansionDefForUnlockable(reward.index);
+  if(expansion&&expansion.requiredEntitlement){report.blocked="Original reward requires unavailable platform entitlement context";return report;}
+  var prior=PlatformSystems.activityManager;Check(prior==null,"Foreign platform activity owner");
+  var unavailable=new UnavailableActivityDispatch();var user=new LocalUser{userProfile=candidate};
+  Check(user.inputPlayer==null&&!user.currentNetworkUser&&LocalUserManager.readOnlyLocalUsersList.Count==0&&NetworkUser.readOnlyInstancesList.Count==0,"Event award acquired a platform or network identity");
+  var owner=new UserAchievementManager{localUser=user,userProfile=candidate};var achievement=(BaseAchievement)Activator.CreateInstance(definition.type);
+  achievement.achievementDef=definition;achievement.owner=owner;PlatformSystems.activityManager=unavailable;
+  bool entered=false;
+  try{
+   entered=true;achievement.OnInstall();achievement.Grant();report.wouldGrant=achievement.shouldGrant;
+   Check(report.wouldGrant&&owner.dirtyGrantsCount==1,"Original event grant rejected the measured local event");
+   candidate.AddAchievement(identifier,false);achievement.OnGranted();
+   candidate.coins=HGMath.UintSafeAdd(candidate.coins,definition.lunarCoinReward);
+   candidate.totalCollectedCoins=HGMath.UintSafeAdd(candidate.totalCollectedCoins,definition.lunarCoinReward);
+   Check(candidate.HasAchievement(identifier)&&candidate.statSheet.HasUnlockable(reward)&&!unavailable.IsInitialized,"Original event reward or offline platform boundary differs");report.granted=true;
+   return report;
+  }finally{
+   if(entered)achievement.OnUninstall();
+   bool owned=ReferenceEquals(PlatformSystems.activityManager,unavailable);PlatformSystems.activityManager=prior;
+   Check(owned&&candidate.onStatsReceived==null,"Event award retained callbacks or changed platform owner");
+  }
  }
 
  // The original PlayerCharacterMasterController forwards these exact inventory
