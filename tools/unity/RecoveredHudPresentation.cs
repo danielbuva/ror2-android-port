@@ -46,6 +46,12 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   if(strings==null){var file=Resources.Load<TextAsset>("RecoveredUI/Strings");if(!file)throw new InvalidOperationException("Recovered UI strings absent");strings=new Dictionary<string,string>();foreach(var e in JsonUtility.FromJson<Strings>(file.text).entries)strings[e.key]=e.value;}
   string value;return !string.IsNullOrEmpty(token)&&strings.TryGetValue(token,out value)?value:token??"";
  }
+ public static string DefeatObjective(string survivorName){
+  var survivor=SurvivorCatalog.FindSurvivorDef(survivorName);
+  var label=survivor?Label(survivor.displayNameToken):"";
+  if(string.IsNullOrEmpty(label)||survivor&&label==survivor.displayNameToken)label=survivorName;
+  return (string.IsNullOrEmpty(label)?"Survivor":label)+" defeated";
+ }
  public void Validate(){
   if(isMenu){if(!startButton||!quitButton)throw new InvalidOperationException("Recovered menu bindings absent");return;}
   if(!currentHealth||!fullHealth||!level||!money||!timer||!timerFormatter||!stageCount||!ambientLevel||!difficulty||!difficultyBackground||!objective||!objectiveLayout||!stage||!healthFill||!shieldFill||!barrierFill||!experienceFill||!bossFill||!bossContainer||!bossName||!bossHealth||!inventoryRoot||!itemTemplate||skills==null||skills.Length!=4)
@@ -67,7 +73,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   if(Run.instance&&difficulty&&difficultySegments!=null&&difficultySegments.Length>0){int tier=Mathf.Clamp(Mathf.FloorToInt((Run.instance.ambientLevel-1)/Mathf.Max(.001f,levelsPerSegment)),0,difficultySegments.Length-1);difficulty.text=Label(difficultySegments[tier].token);difficultyBackground.color=difficultySegments[tier].color;}
   string scene=run.stageProgress!=null?run.stageProgress.current:"golemplains";var def=SceneCatalog.GetSceneDefFromSceneName(scene);stage.text=def?Label(def.nameToken):scene;
   string task=run.world==null?"":run.world.objective;
-  if(!health.alive)task="Commando defeated";
+  if(!health.alive)task=DefeatObjective(run.selectedSurvivor);
   else{
    if(run.objective!=null&&run.objective.ready){task=run.objective.charging?"Charge the teleporter: "+Mathf.FloorToInt(run.objective.charge*100)+"%":run.objective.charged?"Use the teleporter":run.objective.bossSpawns>0&&!run.objective.bossDefeated?"Defeat the teleporter boss":"Find and activate the teleporter";}
    if(run.world!=null&&!string.IsNullOrEmpty(run.world.target))task+="\nB: "+run.world.target;

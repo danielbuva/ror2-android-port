@@ -187,12 +187,19 @@ public sealed partial class MovementBatchProbe {
  AndroidRunLedger ReadAndroidRunLedger(string path){var value=JsonUtility.FromJson<AndroidRunLedger>(File.ReadAllText(path));ValidateAndroidRunLedger(value!=null&&value.version==1&&value.runs!=null,"Android run ledger schema invalid");foreach(var entry in value.runs)ValidateAndroidRunLedger(entry!=null&&entry.file==Path.GetFileName(entry.file)&&entry.file.StartsWith("run-")&&entry.file.EndsWith(".xml")&&File.Exists(Path.Combine(resultsDirectory,entry.file)),"Android run ledger references a missing result");foreach(var entry in value.runs)if(entry.debugAssisted){ValidateAndroidRunLedger(entry.debugEvidence==Path.ChangeExtension(entry.file,".debug.json")&&File.Exists(Path.Combine(resultsDirectory,entry.debugEvidence)),"Assisted result lacks its owned debug evidence");var debug=JsonUtility.FromJson<DebugAccelerationReport>(File.ReadAllText(Path.Combine(resultsDirectory,entry.debugEvidence)));ValidateAndroidRunLedger(debug!=null&&debug.version==1&&debug.everAssisted&&!debug.normalGameAcceptanceEligible,"Assisted ledger evidence claims normal acceptance");}return value;}
  void SaveAndroidRunLedger(){var path=Path.Combine(resultsDirectory,"profile.json");var pending=path+".pending";File.WriteAllText(pending,JsonUtility.ToJson(resultsLedger,true));ReadAndroidRunLedger(pending);if(File.Exists(path))File.Replace(pending,path,path+".backup");else File.Move(pending,path);var saved=ReadAndroidRunLedger(path);Check(saved.runs.Count==resultsLedger.runs.Count,"Android run ledger write did not persist");}
  void DrawIntegratedResults(){
-  var report=r.results;var style=new GUIStyle(GUI.skin.label){fontSize=28,wordWrap=true};
+  var report=r.results;var style=new GUIStyle(GUI.skin.label){fontSize=25,wordWrap=false};
   GUI.Box(new Rect(12,45,880,330),"Offline run result");
   var title=resultsRunReport!=null&&resultsRunReport.gameEnding&&resultsRunReport.gameEnding.isWin?"Victory":"Run ended";
-  if(r.debugAcceleration!=null&&r.debugAcceleration.everAssisted)title="DEBUG ASSISTED — "+title+" (no normal-game acceptance)";
+  bool assisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted;
   if(r.freePlay&&report.persisted){if(r.phase=="commando-defeated"&&GUI.Button(new Rect(32,390,350,60),"Restart run (A)"))RequestWorldRestart();if(GUI.Button(new Rect(410,390,400,60),r.phase=="commando-defeated"?"Return to menu":"Return to menu (A)"))RequestResultsMenu();}
-  GUI.Label(new Rect(32,78,820,260),title+" — "+report.ending+"\nOriginal stages cleared: "+report.stageClearCount+"   Time: "+report.seconds.ToString("F0")+"s\nKills: "+report.kills+"   Damage dealt: "+report.damageDealt.ToString("F0")+"\n"+(report.persisted?"Original report saved on this Android device":"Saving original report…")+"\n"+(r.profile!=null&&r.profile.ready?(r.profile.assistedExcluded?"Assisted result excluded from Android profile":"Android profile saved · "+r.profile.appliedRuns+" genuine results"):"Android profile unavailable")+"\nStock cutscene and Steam/cloud profiles unavailable",style);
+  var lines=new List<string>{title};
+  if(assisted)lines.Add("DEBUG ASSISTED — not eligible for normal-game acceptance");
+  lines.Add("Original stages cleared: "+report.stageClearCount+"   Time: "+report.seconds.ToString("F0")+"s");
+  lines.Add("Kills: "+report.kills+"   Damage dealt: "+report.damageDealt.ToString("F0"));
+  lines.Add(report.persisted?"Original report saved on this Android device":"Saving original report…");
+  lines.Add(r.profile!=null&&r.profile.ready?(r.profile.assistedExcluded?"Assisted result excluded from Android profile":"Android profile saved · "+r.profile.appliedRuns+" genuine results"):"Android profile unavailable");
+  lines.Add("Stock cutscene and Steam/cloud profiles unavailable");
+  for(int i=0;i<lines.Count;i++)GUI.Label(new Rect(32,78+i*40,840,38),lines[i],style);
  }
  void CleanupIntegratedResults(){
   resultsStatsFixed=null;

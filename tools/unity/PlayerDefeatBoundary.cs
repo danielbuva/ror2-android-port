@@ -33,7 +33,7 @@ public sealed partial class MovementBatchProbe {
  void ObservePlayerDeathEvent(DamageReport report){if(report.victimBody==observedDefeatBody)r.playerDefeat.deathEvents++;}
  IEnumerator ObservePlayerDefeat(CharacterBody body,EntityStateMachine machine,NovaInputBridge bridge){
   Check(body&&!body.healthComponent.alive&&r.playerDefeat!=null,"Original fatal player damage missing");r.playerDefeat.health=body.healthComponent.health;
-  if(r.integratedWorld&&r.world!=null){r.world.health=r.playerDefeat.health;r.world.target="";r.world.objective="Commando defeated";}
+  if(r.integratedWorld&&r.world!=null){r.world.health=r.playerDefeat.health;r.world.target="";r.world.objective=RecoveredHudPresentation.DefeatObjective(r.selectedSurvivor);}
   // The normal world observer stops before its next HUD pass on fatal damage.
   // Bind the original health value once while the body still exists so the
   // results screen cannot retain the last living HP sample.
