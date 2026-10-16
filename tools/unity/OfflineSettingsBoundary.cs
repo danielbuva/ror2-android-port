@@ -10,7 +10,7 @@ public sealed partial class MovementBatchProbe {
  AndroidOfflineSettings offlineSettings;bool offlineSettingsVisible,offlineSettingsPaused;float offlineSettingsTimeScale;
  void PrepareOfflineSettings(){
   if(offlineSettings!=null)return;
-  offlineSettings=new AndroidOfflineSettings(Path.Combine(Application.persistentDataPath,"offline-settings-v1"));AndroidOfflineSettings.current=offlineSettings.values;r.settings=new OfflineSettingsReport{ready=true,recovery=offlineSettings.recovery};ObserveOfflineSettings();
+  offlineSettings=new AndroidOfflineSettings(Path.Combine(Application.persistentDataPath,"offline-settings-v1"));AndroidOfflineSettings.current=offlineSettings.values;offlineDifficulty=(DifficultyIndex)offlineSettings.values.offlineDifficulty;r.settings=new OfflineSettingsReport{ready=true,recovery=offlineSettings.recovery};ObserveOfflineSettings();
  }
  void ObserveOfflineSettings(){if(offlineSettings==null)return;var v=offlineSettings.values;r.settings.buttonX=Screen.width-112.5f;r.settings.buttonY=30;r.settings.deadzone=v.deadzone;r.settings.lookSensitivity=v.lookSensitivity;r.settings.invertY=v.invertY;r.settings.visible=offlineSettingsVisible;r.settings.paused=offlineSettingsPaused;r.settings.timeScale=Time.timeScale;r.settings.runSeconds=Run.instance?Run.instance.GetRunStopwatch():0;r.settings.fixedTicks=r.runClock==null?0:r.runClock.fixedTicks;}
  void ShowOfflineSettings(bool show){

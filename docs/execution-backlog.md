@@ -4529,3 +4529,9 @@ J417 corrects only the attributed owned Addressables settings callback: exact ma
 - **OBSERVATION / TASK:** Shipped DLC1 item relationships were absent from the composed `ItemCatalog`. Register the complete original provider, then test menu return and a second session without restoring stale original stage-event delegates.
 - **TEST / PASS:** Preflight, 139 host tests, zero-error exact-editor ARM64 build; both same-process sessions reached original Stage.Start with 32 unique pairs and zero current-process errors. First-session owned cleanup passed.
 - **FAILURE / OPEN:** The first APK exposed a disposed inventory through a resurrected `CharacterMaster` callback; the failed attempt and a later test-deadline expiry remain local evidence. Item transformation behavior, normal gameplay, long-session memory and release-target 60 FPS remain open. Next, continue broad source stage/content integration without using performance as a per-batch gate.
+
+## C25 / J491 — Retain original offline difficulty selection
+
+- **OBSERVATION / TASK:** The recovered menu applied the original difficulty rule but reset its choice on cold launch and lacked physical difficulty navigation. Persist its validated rule index in Android-owned preferences and map the measured right stick separately from survivor selection.
+- **TEST / PASS:** 139 host tests, preflight, exact-editor Vulkan build and a two-cold-launch Nova run: Rainstorm survived restart and reached 20 seconds of original world play with native rule index 1 and no first failure.
+- **OPEN:** Physically verify right-stick menu navigation; assisted startup does not establish normal combat or sustained 60 FPS. Continue broad integration while preserving J490 and Moon rollback.

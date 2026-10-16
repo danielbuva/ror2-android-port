@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using UnityEngine;
 
-// Android-only input preferences. No platform identity, unlocks or Steam files.
+// Android-only input and menu preferences. No platform identity, unlocks or Steam files.
 public sealed class AndroidOfflineSettings {
- [Serializable] public sealed class Values {public int version=1;public float deadzone=.18f,lookSensitivity=1;public bool invertY;}
+ [Serializable] public sealed class Values {public int version=1,offlineDifficulty;public float deadzone=.18f,lookSensitivity=1;public bool invertY;}
  public static Values current=new Values();
  public readonly string directory;public string recovery="none";public Values values;
  public AndroidOfflineSettings(string directory){this.directory=directory;Directory.CreateDirectory(directory);Load();}
- public static void Validate(Values value){if(value==null||value.version!=1||float.IsNaN(value.deadzone)||float.IsInfinity(value.deadzone)||value.deadzone<.05f||value.deadzone>.4f||float.IsNaN(value.lookSensitivity)||float.IsInfinity(value.lookSensitivity)||value.lookSensitivity<.25f||value.lookSensitivity>3)throw new InvalidDataException("Android input preference schema/range invalid");}
+ public static void Validate(Values value){if(value==null||value.version!=1||value.offlineDifficulty<0||value.offlineDifficulty>2||float.IsNaN(value.deadzone)||float.IsInfinity(value.deadzone)||value.deadzone<.05f||value.deadzone>.4f||float.IsNaN(value.lookSensitivity)||float.IsInfinity(value.lookSensitivity)||value.lookSensitivity<.25f||value.lookSensitivity>3)throw new InvalidDataException("Android offline preference schema/range invalid");}
  Values Read(string path){var value=new Values{version=0,deadzone=0,lookSensitivity=0};JsonUtility.FromJsonOverwrite(File.ReadAllText(path),value);Validate(value);return value;}
  void Load(){
   var path=Path.Combine(directory,"preferences.json");var backup=path+".backup";values=new Values();bool hasPrimary=File.Exists(path);
