@@ -47,7 +47,7 @@ public sealed partial class MovementBatchProbe {
  void StartOriginalRunClock(){
   if(r.runClock==null)return;clockRun=Run.instance;Check(clockRun&&clockRun.GetType()==typeof(Run)&&!clockRun.gameObject.activeInHierarchy&&clockRun.participatingPlayerCount==1&&clockRun.livingPlayerCount==1,"Original inactive Run/live-player clock context missing");
   clockFixedStamp=typeof(Run.FixedTimeStamp).GetField("tNow",BindingFlags.NonPublic|BindingFlags.Static);clockFrameStamp=typeof(Run.TimeStamp).GetField("tNow",BindingFlags.NonPublic|BindingFlags.Static);priorClockFixedStamp=clockFixedStamp.GetValue(null);priorClockFrameStamp=clockFrameStamp.GetValue(null);
-  r.runClock.beganFixed=clockRun.fixedTime;r.runClock.beganStopwatch=clockRun.GetRunStopwatch();r.runClock.selectedDifficulty=(int)clockRun.selectedDifficulty;Check(r.runClock.beganFixed==0&&r.runClock.beganStopwatch==0&&clockRun.selectedDifficulty==(r.teleporterLoop?DifficultyIndex.Easy:DifficultyIndex.Normal),"Measured original Run initial clock/difficulty changed");
+  r.runClock.beganFixed=clockRun.fixedTime;r.runClock.beganStopwatch=clockRun.GetRunStopwatch();r.runClock.selectedDifficulty=(int)clockRun.selectedDifficulty;Check(r.runClock.beganFixed==0&&r.runClock.beganStopwatch==0&&clockRun.selectedDifficulty==(r.teleporterLoop?SelectedOfflineDifficulty():DifficultyIndex.Normal),"Measured original Run initial clock/difficulty changed");
   ownedRunFixed=(Action)Delegate.CreateDelegate(typeof(Action),clockRun,typeof(Run).GetMethod("FixedUpdate",BindingFlags.NonPublic|BindingFlags.Instance));ownedRunFrame=(Action)Delegate.CreateDelegate(typeof(Action),clockRun,typeof(Run).GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));r.runClock.originalCallbacks=true;
   Check(!RoR2Application.instance||!RoR2Application.instance.isActiveAndEnabled,"Original application already schedules async assets");
   Check(RewardField(typeof(AssetAsyncLiaison),"asyncOnUpdate").GetValue(null)!=null&&RewardField(typeof(AssetAsyncLiaison),"asyncOnSceneTransitionStarted").GetValue(null)!=null,"Original async asset startup callbacks missing");
@@ -82,7 +82,7 @@ public sealed partial class MovementBatchProbe {
  void VerifyOriginalRunClock(){
   if(r.runClock==null)return;ObserveOriginalRunClock();var report=r.runClock;Check(report.catalogReady&&report.originalCallbacks&&report.fixedTicks>3000&&report.frameTicks>1000&&report.fixedTime-report.beganFixed>60&&report.stopwatch-report.beganStopwatch>60&&report.stopwatchRunning&&!report.paused,"Original sustained Run clock/stopwatch incomplete");
   Check(Mathf.Abs(report.fixedTime-report.beganFixed-report.fixedTicks*Time.fixedDeltaTime)<.05f&&report.frameTime>=report.fixedTime-.05f&&report.frameTime<=report.fixedTime+Time.fixedDeltaTime+.05f,"Original fixed/frame clock interval failed");
-  Check(report.selectedDifficulty==(r.teleporterLoop?0:1)&&report.difficulty>1.1f&&report.compensatedDifficulty>1.1f&&report.ambient>1&&clockRun.ambientLevelFloor==1,"Original elapsed-time difficulty/ambient progression failed");Save();
+  Check(report.selectedDifficulty==(int)(r.teleporterLoop?SelectedOfflineDifficulty():DifficultyIndex.Normal)&&report.difficulty>1.1f&&report.compensatedDifficulty>1.1f&&report.ambient>1&&clockRun.ambientLevelFloor==1,"Original elapsed-time difficulty/ambient progression failed");Save();
  }
  void CleanupRunClock(){
   if(!ownsRunSceneCatalog)return;if(clockRun&&string.IsNullOrEmpty(r.runClock.error))ObserveOriginalRunClock();ownedRunFixed=null;ownedRunFrame=null;ownedAsyncAssetFrame=null;

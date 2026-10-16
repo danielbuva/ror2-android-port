@@ -31,7 +31,7 @@ public sealed partial class MovementBatchProbe {
   public string[] rewardTables;
   public int silentSourceComponents,frames,bossSpawns,bossDeaths,bossMembers,normalSpawns,ruleCount,unusedParticleMaterialSlots,previewMaterialSlots;
   public float charge,radius,bossHealth,bossMaxHealth,sourceDuration,sourceRadius,credits,spent;
-  public string state,fsmState,nextScene,exitState,scope,bossSelectionScope;public string[] eligibleBossCards;public Vector3 position;
+  public string state,fsmState,nextScene,exitState,scope,bossSelectionScope,difficulty;public string[] eligibleBossCards;public Vector3 position;
   public List<string> transitions=new List<string>();
   public ObjectiveRendererObservation[] rendererViews,ownedSurfaceViews,presentedSurfaceViews;public int lateNativeMaterials,ownedSurfaceCount;
  }
@@ -309,7 +309,7 @@ public sealed partial class MovementBatchProbe {
   var run=Run.instance;var networkBook=run.GetComponent<NetworkRuleBook>();Check(networkBook,"Original Run rule component absent");
   if(networkBook.ruleBook==null)Call(networkBook,"Awake");
   typeof(Run).GetField("networkRuleBookComponent",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(run,networkBook);
-  var easy=RuleCatalog.FindChoiceDef("Difficulty.Easy");Check(easy!=null,"Original Drizzle rule missing");run.ruleBook.ApplyChoice(easy);Check(run.ruleBook.FindDifficulty()==DifficultyIndex.Easy&&run.selectedDifficulty==DifficultyIndex.Easy,"Original chosen Drizzle difficulty mismatch");
+  var selected=SelectedOfflineDifficulty();var rule=RuleCatalog.FindChoiceDef("Difficulty."+selected);Check(rule!=null,"Selected original difficulty rule missing: "+selected);run.ruleBook.ApplyChoice(rule);Check(run.ruleBook.FindDifficulty()==selected&&run.selectedDifficulty==selected,"Original chosen difficulty mismatch");r.objective.difficulty=selected.ToString();
   Check(run.ruleBook.stageOrder==StageOrder.Normal&&!run.ruleBook.keepMoneyBetweenStages,"Original default stage-order/money rules changed");
   RefreshRewardEquipmentMask(true);
   RefreshWholeRunAvailability();
@@ -347,7 +347,7 @@ public sealed partial class MovementBatchProbe {
   PrepareStageTransport(cfg);EnableStageMapZones();var spawn=SpawnStageObjective(cfg);while(spawn.MoveNext())yield return spawn.Current;
  }
  IEnumerator SpawnStageObjective(Result cfg){
-  r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."};objectiveState=null;objectiveRewardApproachAt=-1;
+  r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,difficulty=SelectedOfflineDifficulty().ToString(),scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."};objectiveState=null;objectiveRewardApproachAt=-1;
   Check(!Stage.instance,"Unowned stage lifecycle");objectiveStageHost=new GameObject("Owned Android stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();
   typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");Check(Stage.instance==objectiveStage,"Original stage singleton absent");
   var origin=worldPlayer.characterMotor.Motor.TransientPosition;RaycastHit hit;Check(Physics.Raycast(origin+Vector3.forward*10+Vector3.up*20,Vector3.down,out hit,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore),"Objective placement has no source floor");

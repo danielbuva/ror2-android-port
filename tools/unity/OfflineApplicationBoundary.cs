@@ -10,6 +10,10 @@ public sealed partial class MovementBatchProbe {
  bool offlineStartVisible,offlineStartSelected,returnToOfflineMenu,offlineSurvivorStickLatched;
  Vector2 offlineRosterScroll;
  SurvivorDef[] offlineMenuRoster,offlineMenuChoices;
+ DifficultyIndex offlineDifficulty=DifficultyIndex.Easy;
+ DifficultyIndex SelectedOfflineDifficulty(){Check(offlineDifficulty>=DifficultyIndex.Easy&&offlineDifficulty<=DifficultyIndex.Hard,"Unsupported original offline difficulty");return offlineDifficulty;}
+ string OfflineDifficultyName(){switch(SelectedOfflineDifficulty()){case DifficultyIndex.Easy:return "Drizzle";case DifficultyIndex.Normal:return "Rainstorm";default:return "Monsoon";}}
+ void CycleOfflineDifficulty(){offlineDifficulty=offlineDifficulty==DifficultyIndex.Hard?DifficultyIndex.Easy:offlineDifficulty+1;if(r.hud!=null)r.hud.menuDifficulty=offlineDifficulty.ToString();Save();}
  string pendingOfflineSurvivor="Commando";
  public bool skipOfflineMenu;
  NovaInputBridge.Mapping offlineMenuMapping;
@@ -35,7 +39,7 @@ public sealed partial class MovementBatchProbe {
   offlineUnlockPreview=null;var choices=OrdinarySurvivorChoices();var roster=VisibleSurvivorRoster();
   Check(choices.All(roster.Contains),"Selectable survivor absent from original visible roster");
   offlineMenuRoster=roster;offlineMenuChoices=choices;offlineRosterScroll=Vector2.zero;
-  if(r.hud!=null){r.hud.survivorRosterCount=roster.Length;r.hud.survivorSelectableCount=choices.Length;}
+  if(r.hud!=null){r.hud.survivorRosterCount=roster.Length;r.hud.survivorSelectableCount=choices.Length;r.hud.menuDifficulty=offlineDifficulty.ToString();}
   if(!choices.Any(value=>value.cachedName==r.selectedSurvivor))r.selectedSurvivor=choices[0].cachedName;
   offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
   offlineMenuMapping.Validate(r.attempt);PrepareRecoveredMenu();offlineStartVisible=true;r.phase="offline-start-menu";Save();
@@ -50,11 +54,12 @@ public sealed partial class MovementBatchProbe {
  bool DrawOfflineStart(){
   if(!offlineStartVisible)return false;
   var selected=string.IsNullOrEmpty(r.selectedSurvivor)?"Commando":r.selectedSurvivor;
-  if(recoveredMenu){DrawOfflineSurvivorRoster(offlineMenuRoster,offlineMenuChoices);GUI.Box(new Rect(20,Screen.height-156,470,88),"Selected survivor · Android profile");if(GUI.Button(new Rect(40,Screen.height-127,430,48),selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Offline composition · original unlocks verified when run starts · audio/Steam profiles unavailable · roster/UI rendering approximation");return true;}
+  if(recoveredMenu){DrawOfflineSurvivorRoster(offlineMenuRoster,offlineMenuChoices);GUI.Box(new Rect(20,Screen.height-156,470,88),"Selected survivor · Android profile");if(GUI.Button(new Rect(40,Screen.height-127,430,48),selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);GUI.Box(new Rect(500,Screen.height-156,270,88),"Original difficulty rule");if(GUI.Button(new Rect(520,Screen.height-127,230,48),OfflineDifficultyName()+"  ◀  ▶"))CycleOfflineDifficulty();GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Offline composition · original unlocks verified when run starts · audio/Steam profiles unavailable · roster/UI rendering approximation");return true;}
   var style=new GUIStyle(GUI.skin.label){fontSize=30,wordWrap=true};
   GUI.Box(new Rect(20,60,860,400),"Offline RoR2 composition");
-  GUI.Label(new Rect(45,100,800,220),selected+" · Drizzle\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\n\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",style);
+  GUI.Label(new Rect(45,100,800,220),selected+" · "+OfflineDifficultyName()+"\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\n\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",style);
   if(GUI.Button(new Rect(45,270,370,55),"Survivor: "+selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);
+  if(GUI.Button(new Rect(440,270,370,55),"Difficulty: "+OfflineDifficultyName()+"  ◀  ▶"))CycleOfflineDifficulty();
   if(GUI.Button(new Rect(45,340,370,65),"Start run (A)"))offlineStartSelected=true;
   if(GUI.Button(new Rect(440,340,370,65),"Quit"))Application.Quit();
   return true;

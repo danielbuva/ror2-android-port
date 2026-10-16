@@ -13,7 +13,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
  [Serializable] public class SkillView {public Image icon;public TMP_Text cooldown,stock,key;public GameObject ready;}
  [Serializable] public class Observation {
   public bool ready,menuVisible,menuReferenceHidden,cleaned;public int frames,items,skillSlots,pickupIconBindings,loadedPickupIcons,survivorRosterCount,survivorSelectableCount;public float health,shield,barrier,level,bossHealth,charge;
-  public uint money;public float menuStartX,menuStartY;public int screenWidth,screenHeight;public string stage,objective,scope="Source layout/assets with owned Android data bindings; mobile font/UI shader approximation, not stock startup or PC parity.";
+  public uint money;public float menuStartX,menuStartY;public int screenWidth,screenHeight;public string stage,objective,menuDifficulty,scope="Source layout/assets with owned Android data bindings; mobile font/UI shader approximation, not stock startup or PC parity.";
   public string equipment;public float equipmentIconAlpha;public bool equipmentIconVisible;public float equipmentCooldown;public int equipmentStock;
   public int buffs,peakBuffs,buffUpdates,pickupNotifications,notificationClockTicks,loadedNotificationIcons;public bool nativeNotificationQueue,feedbackCleaned,ownedNotificationScheduler;public float notificationT,notificationFixedTime;public string notification;
   public float notificationFlashTime,notificationFlashAlpha;
