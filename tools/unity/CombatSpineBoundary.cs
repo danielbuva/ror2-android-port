@@ -84,7 +84,14 @@ public sealed partial class MovementBatchProbe {
   GlobalEventManager.onServerDamageDealt+=ObserveCombatDamage;Save();
  }
  Vector2 CombatAim(CharacterBody player){var delta=targetBody.corePosition-player.inputBank.aimOrigin;return new Vector2(delta.x,delta.z).normalized;}
- void ObserveCombatDamage(DamageReport report){if(r.integratedWorld){if(report.attackerBody!=worldPlayer)return;}else if(report.victimBody!=targetBody)return;r.combat.damageEvents++;r.combat.lastDamage=report.damageDealt;r.combat.damageDealt+=report.damageDealt;}
+ void ObserveCombatDamage(DamageReport report){
+  if(r.integratedWorld&&r.world!=null&&r.world.blueEliteHits.Count<4&&report.attackerBody&&report.attackerBody.HasBuff(RoR2Content.Buffs.AffixBlue)&&report.damageInfo!=null){
+   var hit=report.damageInfo.position;
+   r.world.blueEliteHits.Add(new BlueEliteHitObservation{frame=Time.frameCount,seconds=r.world.seconds,attacker=Position(report.attackerBody.corePosition),hit=Position(hit),victim=report.victimBody?Position(report.victimBody.corePosition):"missing",finiteHit=Finite(hit)});
+   Save();
+  }
+  if(r.integratedWorld){if(report.attackerBody!=worldPlayer)return;}else if(report.victimBody!=targetBody)return;r.combat.damageEvents++;r.combat.lastDamage=report.damageDealt;r.combat.damageDealt+=report.damageDealt;
+ }
  void ObserveCombat(CharacterBody player,EntityStateMachine machine){
   var weapon=player.skillLocator.primary.stateMachine.state;r.combat.weaponState=weapon.GetType().FullName;r.combat.bodyState=machine.state.GetType().FullName;
   var melee=weapon as BasicMeleeAttack;
