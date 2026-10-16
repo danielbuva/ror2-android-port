@@ -111,6 +111,9 @@ try:
   elif a.action=='audio-assets-prepare':
    from scene_runtime import audio_assets_prepare
    audio_assets_prepare()
+  elif a.action=='audio-bank-index':
+   from wwise_bank_index import index
+   print(json.dumps(index(verify_decoder=True),sort_keys=True))
   elif a.action=='startup-integration-prepare':
    from scene_runtime import startup_prepare
    startup_prepare(integration=True)
