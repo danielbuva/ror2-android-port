@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'scripts/lab'))
-from whole_catalog import original_stage_contexts, analyze, catalog_roots, exported_mesh_signature, native_mesh_signature, native_candidates, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots, source_mesh_subobjects
+from whole_catalog import original_stage_contexts, analyze, catalog_roots, exported_mesh_signature, native_mesh_signature, native_candidates, preservation_descriptor, read_catalog, resolve_path, scene_guid_owners, runtime_key_roots, source_mesh_subobjects
 import build
 from common import sha, write
 
@@ -243,3 +243,20 @@ class WholeCatalogTests(unittest.TestCase):
             helper = '\n'.join('FindLocationsThenAddLoadOperation(AddressablesLabels.'+n+')' for n in names)
             with self.assertRaisesRegex(RuntimeError, 'Broken original catalog dependency'):
                 analyze(source, root, {}, helper)
+
+
+class PreservationDescriptorTests(unittest.TestCase):
+    def test_bundle_rooted_assemblies_survive_a_fresh_editor(self):
+        import xml.etree.ElementTree as ET
+        linker = ET.fromstring(preservation_descriptor({'RoR2': {'RoR2.ItemDef', 'RoR2.Achievements.*'},
+                                                        'Unity.ResourceManager': {'Outer+Inner'}}))
+        assemblies = {node.get('fullname'): node for node in linker.findall('assembly')}
+        # J33 measured ProviderOperation`1, GroupOperation, ChainOperation`2 and
+        # ResourceManager/CompletedOperation`1; whole-assembly preservation covers them.
+        self.assertEqual(assemblies['Unity.ResourceManager'].get('preserve'), 'all')
+        self.assertEqual([n.get('fullname') for n in assemblies['Unity.ResourceManager']], ['Outer/Inner'])
+        for name in ['KinematicCharacterController', 'Rewired_Core', 'com.unity.multiplayer-hlapi.Runtime']:
+            self.assertEqual(assemblies[name].get('preserve'), 'all')
+        self.assertIsNone(assemblies['RoR2'].get('preserve'))
+        self.assertEqual(sorted(n.get('fullname') for n in assemblies['RoR2']), ['RoR2.Achievements.*', 'RoR2.ItemDef'])
+        self.assertEqual(list(assemblies), sorted(assemblies))

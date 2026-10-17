@@ -23,7 +23,7 @@ synced content payload comes out. Everything game-derived stays under the ignore
 | 4 | Assembly transforms | no current command; see [debt](#known-structural-debt) | `tools/AssemblyProbe/` (`OptionalPresentationGuard`, `WwiseUnavailable`, `AudioGuard`) | transformed `RoR2.dll`, recorded by hash |
 | 5 | Compose the project | `./dev prototype --action composition-update-stage`, then `composition-update-dependencies` | `scripts/lab/composition_migration.py` | `lab-project/` |
 | 6 | Whole-catalog content | `whole-catalog-prepare` → `-host` → `-repair-bindings` (when recorded) → `-contracts` → `-host-providers` | `scripts/lab/whole_catalog.py`, `tools/catalog/` | `experiments/whole-catalog/<timestamp>/` |
-| 7 | Bundles, payload, APK | `whole-catalog-build`, or `whole-catalog-code-build` for a code-only change | `whole_catalog.py` → `build.py` → exact editor via MCP | APK + payload receipts |
+| 7 | Bundles, payload, APK | `whole-catalog-build`, or `whole-catalog-code-build` for a code-only change | `whole_catalog.py` (writes the linker descriptor through `preservation_descriptor`, J506) → `build.py` → exact editor via MCP | APK + payload receipts |
 | 8 | Install and sync | done by `whole-catalog-run`; alone: `./dev install`, `./dev sync-data` | `scripts/lab/device.py` | placement receipt |
 | 9a | Catalog registration scan | `whole-catalog-run` | `whole_catalog.run_integration` | `integration-<timestamp>/device-<timestamp>/` |
 | 9b | Gameplay run | no tracked command: untracked runners in `work/experiments/whole-catalog/gameplay/` ([debt](#known-structural-debt) item 8); captures: `./dev logs`, `crash`, `screenshot`, `perf` | runner + `device.py` | `movement-batch-*.json` report, run folder |
@@ -172,16 +172,16 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
 5. **Hard-coded run folders.** `scene_runtime.py:59`, `:515` and `:883`, and
    `input_migration.py:90` read fixed timestamped evidence folders (all in historical
    actions).
-6. **Dormant text patches on authored C#.** `whole_catalog.py:1074`, `:1075` and `:1111`
+6. **Dormant text patches on authored C#.** `whole_catalog.py:1097`, `:1098` and `:1128`
    inject code into `BodyCatalogBoundary.cs` and `MovementBatchProbe.Start` by exact-text
    `.replace()`. The authored sources already contain that code and each patch first checks
    for it, so today they do nothing; staged copies match the repo byte for byte. They still
-   pin the exact text of `Start`: reformatting it makes `:1111` raise "Accepted integration
+   pin the exact text of `Start`: reformatting it makes `:1128` raise "Accepted integration
    entry point changed". (The other `.replace()` calls in `scripts/lab` remap GUIDs in
    generated Unity YAML or fill a Python-held editor template; they are data transforms,
    not source patches.)
 7. **Build membership depends on history.** A `tools/unity` file is staged if it already
-   exists in the generated project (`build.py:78`, `whole_catalog.py:1067`); further file
+   exists in the generated project (`build.py:78`, `whole_catalog.py:1090`); further file
    lists live in `build.py`, `nova_bridge.py:68` and `scene_runtime.py:584`.
 8. **Experiment drivers outside Git.** Device gameplay runs are driven by about 89 untracked
    runner scripts in `work/experiments/whole-catalog/gameplay/`; `work/` also holds about 700

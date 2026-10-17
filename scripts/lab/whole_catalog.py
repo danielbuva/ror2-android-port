@@ -1013,6 +1013,29 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
     return {'input_id':input_id,'stages':contexts,'scope':'Original pool, scene-director policy and bonus-credit object identities. Android retains continuous-body entry and teleporter lifecycle adapters.'}
 
 
+# A player build only roots an assembly whose types it saw serialized. Asset bundles
+# built earlier in the same editor process count; a code-only build in a fresh editor
+# reuses the payload and sees none, so the linker then strips reflected Addressables
+# operations (J30-J33, J505). Preserve the set the device-verified J503 build rooted
+# instead of depending on editor process history (J506).
+BUNDLE_ROOT_ASSEMBLIES = ('AK.Wwise.Unity.API', 'AK.Wwise.Unity.API.WwiseTypes', 'GenericIK',
+                          'KinematicCharacterController', 'Rewired_Core', 'Unity.Postprocessing.Runtime',
+                          'Unity.ResourceManager', 'com.unity.multiplayer-hlapi.Runtime')
+
+
+def preservation_descriptor(roots):
+    """Return the whole-catalog link.xml for measured type roots and bundle-rooted assemblies."""
+    import xml.etree.ElementTree as ET
+    linker=ET.Element('linker')
+    for name in sorted(set(roots)|set(BUNDLE_ROOT_ASSEMBLIES)):
+        assembly=ET.SubElement(linker,'assembly',fullname=name)
+        if name in BUNDLE_ROOT_ASSEMBLIES:
+            assembly.set('preserve','all')
+        for type_name in sorted(roots.get(name,())):
+            ET.SubElement(assembly,'type',fullname=type_name.replace('+','/'),preserve='all')
+    return ET.tostring(linker,encoding='unicode')
+
+
 def build_integration(code_only=False):
     from build import build, freeze_whole_payload, WHOLE_PLAYER_INPUTS
     from animation_bindings import repair as repair_animation_bindings
@@ -1076,7 +1099,6 @@ def build_integration(code_only=False):
         body_boundary.write_text(body_text)
     # Bundle-only serialized components and reflected location types are invisible
     # to the APK linker. Preserve their measured contracts, not a tested whitelist.
-    import xml.etree.ElementTree as ET
     roots={}
     for row in manifest['locations']:
         type_name, assembly = row['type'].split(',')[:2]
@@ -1091,14 +1113,9 @@ def build_integration(code_only=False):
     progression={'RoR2.UnlockableCatalog','RoR2.AchievementManager','RoR2.RegisterAchievementAttribute',
                  'RoR2.LocalUser','RoR2.UserAchievementManager','RoR2.Achievements.*'}
     roots.setdefault('RoR2',set()).update(progression)
-    linker=ET.Element('linker')
-    for name,types in sorted(roots.items()):
-        assembly=ET.SubElement(linker,'assembly',fullname=name)
-        for type_name in sorted(types):
-            ET.SubElement(assembly,'type',fullname=type_name.replace('+','/'),preserve='all')
     link_path=project/'Assets/LabLoadingScene/WholeCatalogPreservation/link.xml'
     link_path.parent.mkdir(exist_ok=True)
-    ET.ElementTree(linker).write(link_path,encoding='unicode')
+    link_path.write_text(preservation_descriptor(roots))
     copy_catalog_asset(ROOT/'tools/catalog/WholeCatalogBuild.cs', project/'Assets/Editor/WholeCatalogBuild.cs')
     # Extend the accepted integration; no regeneration of its large stage snapshots.
     runtime = project/'Assets/LabLoadingScene/MovementBatchProbe.cs'
