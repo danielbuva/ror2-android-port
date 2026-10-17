@@ -4,6 +4,7 @@ SoundBanksInfo names events and media, while DIDX identifies the media actually
 embedded in each bank. Both are needed before a local Android audio adapter can
 make a source-backed playback choice. This is an inventory, not Wwise playback.
 """
+
 import argparse
 import json
 import shutil
@@ -84,19 +85,21 @@ def index(verify_decoder=False):
         for file in bank.findall("Media/File"):
             media_id = int(file.attrib["Id"])
             location = file.attrib["Location"]
-            declared.append({"id": media_id, "location": location,
-                             "streaming": file.attrib["Streaming"] == "true"})
+            declared.append({"id": media_id, "location": location, "streaming": file.attrib["Streaming"] == "true"})
             all_media.setdefault(media_id, set()).add(relative)
             if (location == "Memory") != (media_id in embedded_ids):
-                mismatches.append({"bank": relative, "media": media_id,
-                                   "location": location, "embedded": media_id in embedded_ids})
-        banks.append({"path": relative, "sha256": sha(path), "bytes": path.stat().st_size,
-                      "embedded": embedded, "declared": declared})
+                mismatches.append({"bank": relative, "media": media_id, "location": location, "embedded": media_id in embedded_ids})
+        banks.append({"path": relative, "sha256": sha(path), "bytes": path.stat().st_size, "embedded": embedded, "declared": declared})
         for event in bank.findall("Events/Event"):
-            events.append({"bank": relative, "id": int(event.attrib["Id"]),
-                           "name": event.attrib["Name"],
-                           "duration_type": event.attrib.get("DurationType"),
-                           "media": [int(item.attrib["Id"]) for item in event.findall("MediaRefs/MediaRef")]})
+            events.append(
+                {
+                    "bank": relative,
+                    "id": int(event.attrib["Id"]),
+                    "name": event.attrib["Name"],
+                    "duration_type": event.attrib.get("DurationType"),
+                    "media": [int(item.attrib["Id"]) for item in event.findall("MediaRefs/MediaRef")],
+                }
+            )
     if mismatches:
         raise ValueError(f"Bank metadata/DIDX mismatch: {len(mismatches)}; first {mismatches[0]}")
     unresolved = [event for event in events if any(media not in all_media for media in event["media"])]
@@ -104,8 +107,7 @@ def index(verify_decoder=False):
         raise ValueError(f"Events reference absent media: {len(unresolved)}; first {unresolved[0]['name']}")
     decoder = None
     if verify_decoder:
-        candidate = min(((bank, media) for bank in banks for media in bank["embedded"]),
-                        key=lambda pair: pair[0]["bytes"], default=None)
+        candidate = min(((bank, media) for bank in banks for media in bank["embedded"]), key=lambda pair: pair[0]["bytes"], default=None)
         if candidate is None:
             raise ValueError("No embedded audio to verify")
         bank, media = candidate
@@ -118,19 +120,27 @@ def index(verify_decoder=False):
         decoder = json.loads(result.stdout)
         if int(decoder["streamInfo"]["name"]) != media["id"] or decoder["numberOfSamples"] <= 0:
             raise ValueError("Decoder subsong does not match DIDX media identity")
-    report = {"input_id": accepted["input_id"], "metadata_sha256": sha(xml),
-              "banks": banks, "events": events,
-              "summary": {"banks": len(banks), "events": len(events),
-                          "embedded_media": sum(len(bank["embedded"]) for bank in banks),
-                          "single_media_events": sum(len(event["media"]) == 1 for event in events),
-                          "multi_media_events": sum(len(event["media"]) > 1 for event in events),
-                          "no_media_events": sum(not event["media"] for event in events)},
-              "decoder_sample": decoder}
+    report = {
+        "input_id": accepted["input_id"],
+        "metadata_sha256": sha(xml),
+        "banks": banks,
+        "events": events,
+        "summary": {
+            "banks": len(banks),
+            "events": len(events),
+            "embedded_media": sum(len(bank["embedded"]) for bank in banks),
+            "single_media_events": sum(len(event["media"]) == 1 for event in events),
+            "multi_media_events": sum(len(event["media"]) > 1 for event in events),
+            "no_media_events": sum(not event["media"] for event in events),
+        },
+        "decoder_sample": decoder,
+    }
     out = WORK / "experiments/audio-recovery" / now()
     write(out / "bank-index.json", report)
-    write(WORK / "experiments/audio-recovery/current.json", {"index": str((out / "bank-index.json").relative_to(WORK)),
-                                                             "input_id": accepted["input_id"],
-                                                             "summary": report["summary"]})
+    write(
+        WORK / "experiments/audio-recovery/current.json",
+        {"index": str((out / "bank-index.json").relative_to(WORK)), "input_id": accepted["input_id"], "summary": report["summary"]},
+    )
     return report["summary"]
 
 

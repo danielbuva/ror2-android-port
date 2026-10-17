@@ -1,230 +1,347 @@
 """Authored fixtures check shader resource binding failures, without game code."""
-import struct,sys,unittest
+
+import struct
+import sys
+import unittest
 from unittest.mock import patch
 from pathlib import Path
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts/lab'))
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from shader_source import bind_hlsl
-from shader_segments import parameter_layout,selected_layout
-from shader_programs import NativePrograms,NativeVariantUnavailable
+from shader_segments import parameter_layout, selected_layout
+from shader_programs import NativePrograms, NativeVariantUnavailable
 
 
 class ShaderBindingTests(unittest.TestCase):
     def test_missing_variant_is_distinct_from_ambiguous_original_programs(self):
-        emitter=NativePrograms(None,{},None)
-        context=({'m_ParsedForm':{'m_Name':'Fixture'}},None,[],None,None)
+        emitter = NativePrograms(None, {}, None)
+        context = ({"m_ParsedForm": {"m_Name": "Fixture"}}, None, [], None, None)
         with self.assertRaises(NativeVariantUnavailable):
-            emitter.pair(context,0,{'FEATURE'})
-        record=dict(kind='program',index=1,stage='progVertex',keywords=['FEATURE'],pass_index=0,subshader_index=0)
-        context[2].extend([record,dict(record,index=2)])
-        with self.assertRaisesRegex(RuntimeError,'ambiguous') as captured:
-            emitter.pair(context,0,{'FEATURE'})
-        self.assertNotIsInstance(captured.exception,NativeVariantUnavailable)
+            emitter.pair(context, 0, {"FEATURE"})
+        record = dict(kind="program", index=1, stage="progVertex", keywords=["FEATURE"], pass_index=0, subshader_index=0)
+        context[2].extend([record, dict(record, index=2)])
+        with self.assertRaisesRegex(RuntimeError, "ambiguous") as captured:
+            emitter.pair(context, 0, {"FEATURE"})
+        self.assertNotIsInstance(captured.exception, NativeVariantUnavailable)
 
-    def layout(self,variables,textures=()):
-        return {'buffers':[{'slot':0,'variables':variables}], 'textures':textures}
+    def layout(self, variables, textures=()):
+        return {"buffers": [{"slot": 0, "variables": variables}], "textures": textures}
 
-    def variable(self,name,columns=4,matrix=False):
-        return {'name':name,'columns':columns,'rows':4 if matrix else 1,'matrix':matrix,'array_size':0,'type':0,'offset':0}
+    def variable(self, name, columns=4, matrix=False):
+        return {"name": name, "columns": columns, "rows": 4 if matrix else 1, "matrix": matrix, "array_size": 0, "type": 0, "offset": 0}
 
     def test_matrix_binding_uses_native_columns(self):
-        body='void main(float4 v0 : POSITION0, out precise float4 o0 : SV_POSITION0)\n{ o0 = cb0[2] * v0.zzzz; }'
-        bound,_,_,_,reads=bind_hlsl(body,self.layout([self.variable('unity_TestMatrix',matrix=True)]),'mapped')
-        self.assertEqual(reads[0]['lanes'],['transpose(unity_TestMatrix)[2].'+c for c in 'xyzw'])
-        self.assertIn('* v0.zzzz;',bound)
+        body = "void main(float4 v0 : POSITION0, out precise float4 o0 : SV_POSITION0)\n{ o0 = cb0[2] * v0.zzzz; }"
+        bound, _, _, _, reads = bind_hlsl(body, self.layout([self.variable("unity_TestMatrix", matrix=True)]), "mapped")
+        self.assertEqual(reads[0]["lanes"], ["transpose(unity_TestMatrix)[2]." + c for c in "xyzw"])
+        self.assertIn("* v0.zzzz;", bound)
 
     def test_rejects_unclassified_consumed_lane(self):
-        body='void main(out precise float4 o0 : SV_Target0)\n{ o0 = cb0[0]; }'
-        with self.assertRaisesRegex(RuntimeError,'no measured binding'):
-            bind_hlsl(body,self.layout([self.variable('_Fixture',columns=3)]),'mapped')
+        body = "void main(out precise float4 o0 : SV_Target0)\n{ o0 = cb0[0]; }"
+        with self.assertRaisesRegex(RuntimeError, "no measured binding"):
+            bind_hlsl(body, self.layout([self.variable("_Fixture", columns=3)]), "mapped")
 
     def test_position_semantic_case_does_not_create_a_second_varying(self):
-        body='void main(float4 v0 : POSITION0, out precise float4 o0 : SV_Position0) {o0=v0;}'
-        bound,params,*_=bind_hlsl(body,self.layout([]),'mapped')
-        self.assertEqual(params[1]['semantic'],'SV_POSITION0')
-        self.assertIn('o0=v0;',bound)
+        body = "void main(float4 v0 : POSITION0, out precise float4 o0 : SV_Position0) {o0=v0;}"
+        bound, params, *_ = bind_hlsl(body, self.layout([]), "mapped")
+        self.assertEqual(params[1]["semantic"], "SV_POSITION0")
+        self.assertIn("o0=v0;", bound)
 
     def test_unused_padding_is_not_invented_input(self):
-        body='void main(out precise float4 o0 : SV_Target0)\n{ o0.xyz = cb0[0].xyz; }'
-        bound,_,_,_,reads=bind_hlsl(body,self.layout([self.variable('_Fixture',columns=3)]),'mapped')
-        self.assertEqual(reads[0]['lanes'][-1],'0.0')
-        self.assertIn('o0=float4(0,0,0,0);',bound)
+        body = "void main(out precise float4 o0 : SV_Target0)\n{ o0.xyz = cb0[0].xyz; }"
+        bound, _, _, _, reads = bind_hlsl(body, self.layout([self.variable("_Fixture", columns=3)]), "mapped")
+        self.assertEqual(reads[0]["lanes"][-1], "0.0")
+        self.assertIn("o0=float4(0,0,0,0);", bound)
 
     def test_texture_and_independent_sampler_indices(self):
-        body='Texture2D<float4> t3 : register(t3);\nSamplerState s4 : register(s4);\nvoid main(float4 v0 : TEXCOORD0, out precise float4 o0 : SV_Target0)\n{ o0 = t3.Sample(s4, v0.xy); }'
-        textures=[{'name':'_FixtureTexture','slot':3,'sampler':4,'dimension':2}]
-        bound,*_=bind_hlsl(body,self.layout([],textures),'mapped')
-        self.assertIn('_FixtureTexture.Sample(sampler_FixtureTexture, v0.xy)',bound)
+        body = "Texture2D<float4> t3 : register(t3);\nSamplerState s4 : register(s4);\nvoid main(float4 v0 : TEXCOORD0, out precise float4 o0 : SV_Target0)\n{ o0 = t3.Sample(s4, v0.xy); }"
+        textures = [{"name": "_FixtureTexture", "slot": 3, "sampler": 4, "dimension": 2}]
+        bound, *_ = bind_hlsl(body, self.layout([], textures), "mapped")
+        self.assertIn("_FixtureTexture.Sample(sampler_FixtureTexture, v0.xy)", bound)
 
     def test_rejects_dynamic_unmeasured_constant_access(self):
-        body='void main(float4 v0 : TEXCOORD0, out precise float4 o0 : SV_Target0)\n{ o0 = cb0[int(v0.x)]; }'
-        with self.assertRaisesRegex(RuntimeError,'dynamic native constant'):
-            bind_hlsl(body,self.layout([]),'mapped')
+        body = "void main(float4 v0 : TEXCOORD0, out precise float4 o0 : SV_Target0)\n{ o0 = cb0[int(v0.x)]; }"
+        with self.assertRaisesRegex(RuntimeError, "dynamic native constant"):
+            bind_hlsl(body, self.layout([]), "mapped")
 
     def test_parameter_records_reject_unknown_structures(self):
-        name=b'Fixture';aligned=struct.pack('<i',len(name))+name+b'\0'
-        record=struct.pack('<ii',202012090,1)+aligned+struct.pack('<iii',16,0,1)
-        with self.assertRaisesRegex(RuntimeError,'Structured shader constants'):
+        name = b"Fixture"
+        aligned = struct.pack("<i", len(name)) + name + b"\0"
+        record = struct.pack("<ii", 202012090, 1) + aligned + struct.pack("<iii", 16, 0, 1)
+        with self.assertRaisesRegex(RuntimeError, "Structured shader constants"):
             parameter_layout(record)
 
     def test_parameter_records_do_not_ignore_trailing_bytes(self):
-        record=struct.pack('<iii',202012090,0,0)+b'extra'
-        with self.assertRaisesRegex(RuntimeError,'trailing shader parameter'):
+        record = struct.pack("<iii", 202012090, 0, 0) + b"extra"
+        with self.assertRaisesRegex(RuntimeError, "trailing shader parameter"):
             parameter_layout(record)
 
     def test_integer_register_lanes_preserve_bits(self):
-        variable=self.variable('_FixtureInteger',columns=1);variable['type']=1
-        body='void main(out precise float4 o0 : SV_Target0)\n{ o0.x = float(asint(cb0[0].x)); }'
-        bound,_,declarations,_,reads=bind_hlsl(body,self.layout([variable]),'mapped')
-        self.assertEqual(reads[0]['lanes'][0],'asfloat(_FixtureInteger)')
-        self.assertEqual(declarations['_FixtureInteger'],'int')
-        self.assertIn('float(asint(',bound)
+        variable = self.variable("_FixtureInteger", columns=1)
+        variable["type"] = 1
+        body = "void main(out precise float4 o0 : SV_Target0)\n{ o0.x = float(asint(cb0[0].x)); }"
+        bound, _, declarations, _, reads = bind_hlsl(body, self.layout([variable]), "mapped")
+        self.assertEqual(reads[0]["lanes"][0], "asfloat(_FixtureInteger)")
+        self.assertEqual(declarations["_FixtureInteger"], "int")
+        self.assertIn("float(asint(", bound)
 
     def test_fixed_builtin_matrix_array_uses_native_element(self):
-        variable=self.variable('unity_FixtureMatrices',matrix=True);variable['array_size']=2
-        body='void main(out precise float4 o0 : SV_Target0)\n{ o0 = cb0[5]; }'
-        _,_,_,_,reads=bind_hlsl(body,self.layout([variable]),'mapped')
-        self.assertEqual(reads[0]['lanes'][0],'transpose(unity_FixtureMatrices[1])[1].x')
+        variable = self.variable("unity_FixtureMatrices", matrix=True)
+        variable["array_size"] = 2
+        body = "void main(out precise float4 o0 : SV_Target0)\n{ o0 = cb0[5]; }"
+        _, _, _, _, reads = bind_hlsl(body, self.layout([variable]), "mapped")
+        self.assertEqual(reads[0]["lanes"][0], "transpose(unity_FixtureMatrices[1])[1].x")
 
     def test_texture_dimension_disagreement_is_rejected(self):
-        body='TextureCube<float4> t0 : register(t0);\nSamplerState s0 : register(s0);\nvoid main(float4 v0 : TEXCOORD0, out precise float4 o0 : SV_Target0)\n{ o0=t0.Sample(s0,v0.xyz); }'
-        with self.assertRaisesRegex(RuntimeError,'dimension disagreement'):
-            bind_hlsl(body,self.layout([],[{'slot':0,'sampler':0,'name':'_FixtureTexture','dimension':2}]),'mapped')
+        body = "TextureCube<float4> t0 : register(t0);\nSamplerState s0 : register(s0);\nvoid main(float4 v0 : TEXCOORD0, out precise float4 o0 : SV_Target0)\n{ o0=t0.Sample(s0,v0.xyz); }"
+        with self.assertRaisesRegex(RuntimeError, "dimension disagreement"):
+            bind_hlsl(body, self.layout([], [{"slot": 0, "sampler": 0, "name": "_FixtureTexture", "dimension": 2}]), "mapped")
 
     def test_unnamed_passes_require_ordinal_identity(self):
-        p={'m_State':{'m_Name':''},'m_NameIndices':[],'progFragment':{'m_CommonParameters':{'m_ConstantBufferBindings':[],'m_ConstantBuffers':[],'m_TextureParams':[]}}}
-        tree={'m_ParsedForm':{'m_SubShaders':[{'m_Passes':[p,p]}]}}
-        record={'parameter_index':0,'stage':'progFragment','pass':''}
-        raw=struct.pack('<Iiii',1,16,12,0)+struct.pack('<iii',202012090,0,0)
-        with self.assertRaisesRegex(RuntimeError,'ambiguous'):
-            selected_layout(tree,raw,record)
-        record.update(subshader_index=0,pass_index=1)
-        self.assertEqual(selected_layout(tree,raw,record)['buffers'],[])
+        p = {
+            "m_State": {"m_Name": ""},
+            "m_NameIndices": [],
+            "progFragment": {"m_CommonParameters": {"m_ConstantBufferBindings": [], "m_ConstantBuffers": [], "m_TextureParams": []}},
+        }
+        tree = {"m_ParsedForm": {"m_SubShaders": [{"m_Passes": [p, p]}]}}
+        record = {"parameter_index": 0, "stage": "progFragment", "pass": ""}
+        raw = struct.pack("<Iiii", 1, 16, 12, 0) + struct.pack("<iii", 202012090, 0, 0)
+        with self.assertRaisesRegex(RuntimeError, "ambiguous"):
+            selected_layout(tree, raw, record)
+        record.update(subshader_index=0, pass_index=1)
+        self.assertEqual(selected_layout(tree, raw, record)["buffers"], [])
 
     def test_cube_comparison_uses_exact_editor_platform_lowering(self):
-        body='TextureCube<float4> t0 : register(t0);\nSamplerComparisonState s0_s : register(s0);\nvoid main(float4 v0 : TEXCOORD0, out float4 o0 : SV_Target0)\n{ o0.x=t0.SampleCmpLevelZero(s0_s,v0.xyz,v0.w).x; }'
-        texture={'slot':0,'sampler':0,'name':'_FixtureShadow','dimension':4}
-        bound,*_=bind_hlsl(body,self.layout([],[texture]),'mapped')
-        self.assertIn('AndroidNativeCubeShadow(_FixtureShadow,sampler_FixtureShadow,v0.xyz,v0.w).x',bound)
-        self.assertIn('SHADER_API_VULKAN',bound)
-        self.assertIn('tex.SampleCmpLevelZero(samp,coord,depth)',bound)
+        body = "TextureCube<float4> t0 : register(t0);\nSamplerComparisonState s0_s : register(s0);\nvoid main(float4 v0 : TEXCOORD0, out float4 o0 : SV_Target0)\n{ o0.x=t0.SampleCmpLevelZero(s0_s,v0.xyz,v0.w).x; }"
+        texture = {"slot": 0, "sampler": 0, "name": "_FixtureShadow", "dimension": 4}
+        bound, *_ = bind_hlsl(body, self.layout([], [texture]), "mapped")
+        self.assertIn("AndroidNativeCubeShadow(_FixtureShadow,sampler_FixtureShadow,v0.xyz,v0.w).x", bound)
+        self.assertIn("SHADER_API_VULKAN", bound)
+        self.assertIn("tex.SampleCmpLevelZero(samp,coord,depth)", bound)
 
-
-    def partial_fixture(self,offset=16,partial=True):
-        common={'m_ConstantBufferBindings':[], 'm_ConstantBuffers':[{'m_NameIndex':0,'m_Size':32,'m_IsPartialCB':partial,'m_VectorParams':[{'m_NameIndex':1,'m_Type':0,'m_Index':offset,'m_Dim':4,'m_ArraySize':0}], 'm_MatrixParams':[]}], 'm_TextureParams':[]}
-        p={'m_State':{'m_Name':'fixture'},'m_NameIndices':[('FixtureBuffer',0),('_FixtureUnused',1)],'progFragment':{'m_CommonParameters':common}}
-        tree={'m_ParsedForm':{'m_SubShaders':[{'m_Passes':[p]}]}}
-        native={'buffers':[{'name':'FixtureBuffer','size':16,'variables':[]}], 'bindings':[{'name':'FixtureBuffer','kind':1,'slot':0}]}
-        record={'parameter_index':0,'stage':'progFragment','pass':'fixture','subshader_index':0,'pass_index':0};raw=struct.pack('<Iiii',1,16,0,0)
-        return tree,native,record,raw
+    def partial_fixture(self, offset=16, partial=True):
+        common = {
+            "m_ConstantBufferBindings": [],
+            "m_ConstantBuffers": [
+                {
+                    "m_NameIndex": 0,
+                    "m_Size": 32,
+                    "m_IsPartialCB": partial,
+                    "m_VectorParams": [{"m_NameIndex": 1, "m_Type": 0, "m_Index": offset, "m_Dim": 4, "m_ArraySize": 0}],
+                    "m_MatrixParams": [],
+                }
+            ],
+            "m_TextureParams": [],
+        }
+        p = {"m_State": {"m_Name": "fixture"}, "m_NameIndices": [("FixtureBuffer", 0), ("_FixtureUnused", 1)], "progFragment": {"m_CommonParameters": common}}
+        tree = {"m_ParsedForm": {"m_SubShaders": [{"m_Passes": [p]}]}}
+        native = {"buffers": [{"name": "FixtureBuffer", "size": 16, "variables": []}], "bindings": [{"name": "FixtureBuffer", "kind": 1, "slot": 0}]}
+        record = {"parameter_index": 0, "stage": "progFragment", "pass": "fixture", "subshader_index": 0, "pass_index": 0}
+        raw = struct.pack("<Iiii", 1, 16, 0, 0)
+        return tree, native, record, raw
 
     def test_partial_common_uniform_outside_native_extent_is_not_bound(self):
-        tree,native,record,raw=self.partial_fixture()
-        with patch('shader_segments.parameter_layout',return_value=native):layout=selected_layout(tree,raw,record)
-        self.assertEqual(layout['buffers'][0]['variables'],[])
-        self.assertEqual(layout['omitted_common_variables'][0]['name'],'_FixtureUnused')
-        with self.assertRaisesRegex(RuntimeError,'no measured binding'):
-            bind_hlsl('void main(out float4 o0 : SV_Target0) {o0=cb0[1];}',layout,'mapped')
+        tree, native, record, raw = self.partial_fixture()
+        with patch("shader_segments.parameter_layout", return_value=native):
+            layout = selected_layout(tree, raw, record)
+        self.assertEqual(layout["buffers"][0]["variables"], [])
+        self.assertEqual(layout["omitted_common_variables"][0]["name"], "_FixtureUnused")
+        with self.assertRaisesRegex(RuntimeError, "no measured binding"):
+            bind_hlsl("void main(out float4 o0 : SV_Target0) {o0=cb0[1];}", layout, "mapped")
 
     def test_partial_common_uniform_cannot_cross_native_extent(self):
-        tree,native,record,raw=self.partial_fixture(offset=8)
-        with patch('shader_segments.parameter_layout',return_value=native):
-            with self.assertRaisesRegex(RuntimeError,'exceeds native buffer'):selected_layout(tree,raw,record)
+        tree, native, record, raw = self.partial_fixture(offset=8)
+        with patch("shader_segments.parameter_layout", return_value=native):
+            with self.assertRaisesRegex(RuntimeError, "exceeds native buffer"):
+                selected_layout(tree, raw, record)
 
     def test_nonpartial_common_size_disagreement_remains_rejected(self):
-        tree,native,record,raw=self.partial_fixture(partial=False)
-        with patch('shader_segments.parameter_layout',return_value=native):
-            with self.assertRaisesRegex(RuntimeError,'size disagreement'):selected_layout(tree,raw,record)
+        tree, native, record, raw = self.partial_fixture(partial=False)
+        with patch("shader_segments.parameter_layout", return_value=native):
+            with self.assertRaisesRegex(RuntimeError, "size disagreement"):
+                selected_layout(tree, raw, record)
 
 
 class ShaderUiStateTests(unittest.TestCase):
     def fixture(self):
-        def v(value,name='<noninit>'):return {'val':value,'name':name}
-        face={'comp':v(8),'fail':v(0),'pass':v(0),'zFail':v(0)}
-        blend={k:v(n) for k,n in {'blendOp':0,'blendOpAlpha':0,'colMask':0,'srcBlend':5,'srcBlendAlpha':5,'destBlend':10,'destBlendAlpha':10}.items()};blend['colMask']=v(0,'_FixtureMask')
-        state={k:v(n) for k,n in {'offsetFactor':0,'offsetUnits':0,'culling':0,'zWrite':0,'zTest':8,'stencilRef':0,'stencilReadMask':255,'stencilWriteMask':255}.items()}
-        state.update(rtSeparateBlend=False,rtBlend0=blend,stencilOpFront=face,stencilOpBack=face,stencilOp=dict(face,comp=v(0,'_FixtureCompare'),**{'pass':v(0,'_FixtureOperation')}))
+        def v(value, name="<noninit>"):
+            return {"val": value, "name": name}
+
+        face = {"comp": v(8), "fail": v(0), "pass": v(0), "zFail": v(0)}
+        blend = {
+            k: v(n)
+            for k, n in {"blendOp": 0, "blendOpAlpha": 0, "colMask": 0, "srcBlend": 5, "srcBlendAlpha": 5, "destBlend": 10, "destBlendAlpha": 10}.items()
+        }
+        blend["colMask"] = v(0, "_FixtureMask")
+        state = {
+            k: v(n)
+            for k, n in {
+                "offsetFactor": 0,
+                "offsetUnits": 0,
+                "culling": 0,
+                "zWrite": 0,
+                "zTest": 8,
+                "stencilRef": 0,
+                "stencilReadMask": 255,
+                "stencilWriteMask": 255,
+            }.items()
+        }
+        state.update(
+            rtSeparateBlend=False,
+            rtBlend0=blend,
+            stencilOpFront=face,
+            stencilOpBack=face,
+            stencilOp=dict(face, comp=v(0, "_FixtureCompare"), **{"pass": v(0, "_FixtureOperation")}),
+        )
         return state
 
     def test_ui_uses_shared_stencil_and_property_linked_color_mask(self):
         from shader_deferred import render_state
-        source=render_state(self.fixture(),ui=True)
-        self.assertIn('ColorMask [_FixtureMask]',source)
-        self.assertIn('Comp [_FixtureCompare] Pass [_FixtureOperation]',source)
-        self.assertIn('Fail Keep ZFail Keep',source)
+
+        source = render_state(self.fixture(), ui=True)
+        self.assertIn("ColorMask [_FixtureMask]", source)
+        self.assertIn("Comp [_FixtureCompare] Pass [_FixtureOperation]", source)
+        self.assertIn("Fail Keep ZFail Keep", source)
 
     def test_ui_extension_does_not_relax_ordinary_state_guard(self):
         from shader_deferred import render_state
-        with self.assertRaisesRegex(RuntimeError,'color mask'):render_state(self.fixture())
+
+        with self.assertRaisesRegex(RuntimeError, "color mask"):
+            render_state(self.fixture())
 
 
 class ShaderConsumerTests(unittest.TestCase):
-    def stage(self,index=2,parameter=1,keywords=None):
-        return {'m_PlayerSubPrograms':[[],[],[],[{'m_BlobIndex':index,'m_GpuProgramType':15,'m_KeywordIndices':keywords or []}]],'m_ParameterBlobIndices':[[],[],[],[parameter]]}
+    def stage(self, index=2, parameter=1, keywords=None):
+        return {
+            "m_PlayerSubPrograms": [[], [], [], [{"m_BlobIndex": index, "m_GpuProgramType": 15, "m_KeywordIndices": keywords or []}]],
+            "m_ParameterBlobIndices": [[], [], [], [parameter]],
+        }
 
     def fixture(self):
         from shader_segments import STAGES
-        p={stage:{'m_PlayerSubPrograms':[],'m_ParameterBlobIndices':[]} for stage in STAGES}
-        p['progVertex']=self.stage();p['m_State']={'m_Name':'fixture'}
-        return {'m_ParsedForm':{'m_KeywordNames':['FIXTURE'],'m_SubShaders':[{'m_Passes':[p]}]}}
+
+        p = {stage: {"m_PlayerSubPrograms": [], "m_ParameterBlobIndices": []} for stage in STAGES}
+        p["progVertex"] = self.stage()
+        p["m_State"] = {"m_Name": "fixture"}
+        return {"m_ParsedForm": {"m_KeywordNames": ["FIXTURE"], "m_SubShaders": [{"m_Passes": [p]}]}}
 
     def test_empty_grab_and_unused_stages_preserve_program_coverage(self):
-        from shader_segments import variants,STAGES
-        t=self.fixture();grab={stage:{'m_PlayerSubPrograms':[],'m_ParameterBlobIndices':[]} for stage in STAGES};grab['m_State']={'m_Name':''}
-        t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'].insert(0,grab)
-        result=variants(t);self.assertEqual(set(result),{2});self.assertEqual(result[2]['pass_index'],1)
+        from shader_segments import variants, STAGES
+
+        t = self.fixture()
+        grab = {stage: {"m_PlayerSubPrograms": [], "m_ParameterBlobIndices": []} for stage in STAGES}
+        grab["m_State"] = {"m_Name": ""}
+        t["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"].insert(0, grab)
+        result = variants(t)
+        self.assertEqual(set(result), {2})
+        self.assertEqual(result[2]["pass_index"], 1)
 
     def test_shared_program_retains_all_pass_consumers(self):
         from shader_segments import variants
         import copy
-        t=self.fixture();p=copy.deepcopy(t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'][0]);p['m_State']['m_Name']='other';t['m_ParsedForm']['m_SubShaders'].append({'m_Passes':[p]})
-        result=variants(t);self.assertEqual(len(result),1);self.assertEqual([c['subshader_index'] for c in result[2]['consumers']],[0,1])
+
+        t = self.fixture()
+        p = copy.deepcopy(t["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0])
+        p["m_State"]["m_Name"] = "other"
+        t["m_ParsedForm"]["m_SubShaders"].append({"m_Passes": [p]})
+        result = variants(t)
+        self.assertEqual(len(result), 1)
+        self.assertEqual([c["subshader_index"] for c in result[2]["consumers"]], [0, 1])
 
     def test_shared_index_cannot_hide_different_parameters_or_keywords(self):
         from shader_segments import variants
         import copy
-        for field,value in [('m_ParameterBlobIndices',[[],[],[],[0]]),('m_PlayerSubPrograms',self.stage(keywords=[0])['m_PlayerSubPrograms'])]:
-            t=self.fixture();p=copy.deepcopy(t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'][0]);p['progVertex'][field]=value;t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'].append(p)
-            with self.assertRaisesRegex(RuntimeError,'conflicting consumers'):variants(t)
+
+        for field, value in [("m_ParameterBlobIndices", [[], [], [], [0]]), ("m_PlayerSubPrograms", self.stage(keywords=[0])["m_PlayerSubPrograms"])]:
+            t = self.fixture()
+            p = copy.deepcopy(t["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0])
+            p["progVertex"][field] = value
+            t["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"].append(p)
+            with self.assertRaisesRegex(RuntimeError, "conflicting consumers"):
+                variants(t)
 
     def test_hull_and_domain_programs_are_not_silently_dropped(self):
         from shader_segments import variants
-        t=self.fixture();p=t['m_ParsedForm']['m_SubShaders'][0]['m_Passes'][0];p['progHull']=self.stage(index=3);p['progDomain']=self.stage(index=4)
-        self.assertEqual({r['stage'] for r in variants(t).values()},{'progVertex','progHull','progDomain'})
+
+        t = self.fixture()
+        p = t["m_ParsedForm"]["m_SubShaders"][0]["m_Passes"][0]
+        p["progHull"] = self.stage(index=3)
+        p["progDomain"] = self.stage(index=4)
+        self.assertEqual({r["stage"] for r in variants(t).values()}, {"progVertex", "progHull", "progDomain"})
 
     def test_shared_program_cannot_hide_binding_disagreement(self):
         def consumer(name):
-            common={'m_ConstantBufferBindings':[],'m_ConstantBuffers':[],'m_TextureParams':[{'m_NameIndex':0,'m_Index':0,'m_SamplerIndex':0,'m_Dim':2,'m_MultiSampled':False}]}
-            return {'m_State':{'m_Name':name},'m_NameIndices':[(name,0)],'progFragment':{'m_CommonParameters':common}}
-        tree={'m_ParsedForm':{'m_SubShaders':[{'m_Passes':[consumer('_FixtureA'),consumer('_FixtureB')]}]}}
-        record={'parameter_index':0,'stage':'progFragment','consumers':[{'pass':'_FixtureA','subshader_index':0,'pass_index':0},{'pass':'_FixtureB','subshader_index':0,'pass_index':1}]}
-        raw=struct.pack('<Iiii',1,16,12,0)+struct.pack('<iii',202012090,0,0)
-        with self.assertRaisesRegex(RuntimeError,'disagree about native bindings'):selected_layout(tree,raw,record)
+            common = {
+                "m_ConstantBufferBindings": [],
+                "m_ConstantBuffers": [],
+                "m_TextureParams": [{"m_NameIndex": 0, "m_Index": 0, "m_SamplerIndex": 0, "m_Dim": 2, "m_MultiSampled": False}],
+            }
+            return {"m_State": {"m_Name": name}, "m_NameIndices": [(name, 0)], "progFragment": {"m_CommonParameters": common}}
+
+        tree = {"m_ParsedForm": {"m_SubShaders": [{"m_Passes": [consumer("_FixtureA"), consumer("_FixtureB")]}]}}
+        record = {
+            "parameter_index": 0,
+            "stage": "progFragment",
+            "consumers": [{"pass": "_FixtureA", "subshader_index": 0, "pass_index": 0}, {"pass": "_FixtureB", "subshader_index": 0, "pass_index": 1}],
+        }
+        raw = struct.pack("<Iiii", 1, 16, 12, 0) + struct.pack("<iii", 202012090, 0, 0)
+        with self.assertRaisesRegex(RuntimeError, "disagree about native bindings"):
+            selected_layout(tree, raw, record)
 
     def test_pair_can_resolve_a_nonprimary_shared_consumer(self):
         from shader_programs import NativePrograms
-        record={'kind':'program','index':2,'stage':'progVertex','keywords':[],'pass_index':0,'subshader_index':0,'consumers':[{'pass_index':0,'subshader_index':0},{'pass_index':1,'subshader_index':1}]}
-        fragment=dict(record,index=3,stage='progFragment')
-        context=(None,None,[record,fragment],None,None)
-        self.assertEqual(NativePrograms(None,None,None).pair(context,1,[],subshader_index=1),[2,3])
+
+        record = {
+            "kind": "program",
+            "index": 2,
+            "stage": "progVertex",
+            "keywords": [],
+            "pass_index": 0,
+            "subshader_index": 0,
+            "consumers": [{"pass_index": 0, "subshader_index": 0}, {"pass_index": 1, "subshader_index": 1}],
+        }
+        fragment = dict(record, index=3, stage="progFragment")
+        context = (None, None, [record, fragment], None, None)
+        self.assertEqual(NativePrograms(None, None, None).pair(context, 1, [], subshader_index=1), [2, 3])
 
     def test_hull_destination_mask_selects_corresponding_source_lanes(self):
         from shader_tessellation import hull_source
-        fixture='\n'.join(['profile=hs_5_0','dcl_inputControlPointCount 3','dcl_outputControlPointCount 3','dcl_tessDomain tri','dcl_tessPartitioning fractional_odd','dcl_tessOutputPrimitive triangle_cw','hs_fork_phase','mul r0:yzw vicp0[0].xxyz l(7,8,9,10)','max o0:x r0.y l(1)','max o1:x r0.z l(1)','max o2:x r0.w l(1)','hs_join_phase','add o3:x vpc0.x vpc1.x','ret','.end'])
-        text,report=hull_source(fixture)
-        self.assertIn('r0.yzw = (cp0.xyz) * (float3(8,9,10));',text)
-        self.assertTrue(report['implicit_control_point_passthrough'])
-        with self.assertRaisesRegex(RuntimeError,'Unmeasured hull opcode'):
-            hull_source(fixture.replace('mul r0:yzw','sin r0:yzw'))
-        with self.assertRaisesRegex(RuntimeError,'topology/control point'):
-            hull_source(fixture+'\nhs_control_point_phase')
+
+        fixture = "\n".join(
+            [
+                "profile=hs_5_0",
+                "dcl_inputControlPointCount 3",
+                "dcl_outputControlPointCount 3",
+                "dcl_tessDomain tri",
+                "dcl_tessPartitioning fractional_odd",
+                "dcl_tessOutputPrimitive triangle_cw",
+                "hs_fork_phase",
+                "mul r0:yzw vicp0[0].xxyz l(7,8,9,10)",
+                "max o0:x r0.y l(1)",
+                "max o1:x r0.z l(1)",
+                "max o2:x r0.w l(1)",
+                "hs_join_phase",
+                "add o3:x vpc0.x vpc1.x",
+                "ret",
+                ".end",
+            ]
+        )
+        text, report = hull_source(fixture)
+        self.assertIn("r0.yzw = (cp0.xyz) * (float3(8,9,10));", text)
+        self.assertTrue(report["implicit_control_point_passthrough"])
+        with self.assertRaisesRegex(RuntimeError, "Unmeasured hull opcode"):
+            hull_source(fixture.replace("mul r0:yzw", "sin r0:yzw"))
+        with self.assertRaisesRegex(RuntimeError, "topology/control point"):
+            hull_source(fixture + "\nhs_control_point_phase")
 
     def test_domain_lowering_keeps_math_and_rejects_consumed_patch_constants(self):
         from shader_tessellation import domain_source
-        fixture='struct DsControlPoint {float4 v0:INTERNALTESSPOS0;float4 v1:NORMAL0;float4 v2:TANGENT0;float4 v3:TEXCOORD0;};\nstruct DsPatch {float pc0_x:SV_TessFactor0;};\n[domain("tri")]\nvoid main(float3 bary : SV_DomainLocation, DsPatch constants, const OutputPatch<DsControlPoint, 3> patch, out precise float4 o0 : SV_POSITION0) {o0=vertices[1].v0*float4(bary,1);}'
-        text,report=domain_source(fixture)
-        self.assertIn('o0=cp1_v0*float4(bary,1);',text)
-        self.assertTrue(report['body_expressions_unchanged'])
-        with self.assertRaisesRegex(RuntimeError,'Consumed native patch constants'):
-            domain_source(fixture.replace('float4(bary,1)','constants.pc0_x'))
-        with self.assertRaisesRegex(RuntimeError,'Unresolved domain control-point'):
-            domain_source(fixture.replace('vertices[1]','vertices[3]'))
+
+        fixture = 'struct DsControlPoint {float4 v0:INTERNALTESSPOS0;float4 v1:NORMAL0;float4 v2:TANGENT0;float4 v3:TEXCOORD0;};\nstruct DsPatch {float pc0_x:SV_TessFactor0;};\n[domain("tri")]\nvoid main(float3 bary : SV_DomainLocation, DsPatch constants, const OutputPatch<DsControlPoint, 3> patch, out precise float4 o0 : SV_POSITION0) {o0=vertices[1].v0*float4(bary,1);}'
+        text, report = domain_source(fixture)
+        self.assertIn("o0=cp1_v0*float4(bary,1);", text)
+        self.assertTrue(report["body_expressions_unchanged"])
+        with self.assertRaisesRegex(RuntimeError, "Consumed native patch constants"):
+            domain_source(fixture.replace("float4(bary,1)", "constants.pc0_x"))
+        with self.assertRaisesRegex(RuntimeError, "Unresolved domain control-point"):
+            domain_source(fixture.replace("vertices[1]", "vertices[3]"))

@@ -11,31 +11,28 @@ import re
 import zlib
 
 
-PARAMETER = re.compile(r'^  - m_Name: (.+)$', re.M)
-PLACEHOLDER = re.compile(r'^(    attribute: )typetree_0x([0-9A-Fa-f]+)_[^\r\n]+$', re.M)
+PARAMETER = re.compile(r"^  - m_Name: (.+)$", re.M)
+PLACEHOLDER = re.compile(r"^(    attribute: )typetree_0x([0-9A-Fa-f]+)_[^\r\n]+$", re.M)
 
 
 def repair(project: Path):
-    root = project / 'Assets/WholeGame'
+    root = project / "Assets/WholeGame"
     names = defaultdict(set)
-    for controller in root.rglob('*.controller'):
-        for name in PARAMETER.findall(controller.read_text(errors='replace')):
-            names[zlib.crc32(name.encode('utf-8'))].add(name)
+    for controller in root.rglob("*.controller"):
+        for name in PARAMETER.findall(controller.read_text(errors="replace")):
+            names[zlib.crc32(name.encode("utf-8"))].add(name)
 
     changed = []
     unresolved = []
-    for clip in root.rglob('*.anim'):
-        source = clip.read_text(errors='replace')
+    for clip in root.rglob("*.anim"):
+        source = clip.read_text(errors="replace")
 
         def replace(match):
             original_hash = int(match[2], 16)
             candidates = names[original_hash]
             # The serialized clip itself must independently identify this as
             # an Animator (class 95) float binding with the same hash.
-            binding = re.search(
-                r'^      attribute: ' + str(original_hash) +
-                r'\n      script: \{fileID: 0\}\n      typeID: 95$',
-                source, re.M)
+            binding = re.search(r"^      attribute: " + str(original_hash) + r"\n      script: \{fileID: 0\}\n      typeID: 95$", source, re.M)
             if len(candidates) != 1 or not binding:
                 unresolved.append((str(clip.relative_to(root)), match[2]))
                 return match[0]
@@ -46,4 +43,4 @@ def repair(project: Path):
         repaired = PLACEHOLDER.sub(replace, source)
         if repaired != source:
             clip.write_text(repaired)
-    return {'repaired': changed, 'unresolved': unresolved}
+    return {"repaired": changed, "unresolved": unresolved}

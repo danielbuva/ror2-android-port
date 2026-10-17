@@ -1,5 +1,8 @@
 from common import *
-import shutil, time, zipfile, sys
+import shutil
+import time
+import zipfile
+import sys
 
 
 def copy_build_artifact(source, destination):

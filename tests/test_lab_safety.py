@@ -1,121 +1,227 @@
-import unittest,tempfile,json,zipfile,sys,types,runpy,io,contextlib
+import unittest
+import tempfile
+import json
+import zipfile
+import sys
+import types
+import runpy
+import io
+import contextlib
 from pathlib import Path
 from unittest.mock import patch
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts/lab'))
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import device
 from common import write
+
+
 class SafetyTests(unittest.TestCase):
- def setUp(self):
-  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.patcher=patch.object(device,'WORK',self.root);self.patcher.start()
-  # These ABI/storage fixtures are ZIP containers, not Android manifests.
-  # APK identity rejection is exercised separately with explicit metadata.
-  self.identity_patcher=patch.object(device,'validate_apk_identity');self.identity_patcher.start()
-  self.d=object.__new__(device.Device);self.d.serial='authorized-test';self.d.base=['must-not-execute-adb']
- def tearDown(self):self.identity_patcher.stop();self.patcher.stop();self.temp.cleanup()
- def apk(self,abi='arm64-v8a'):
-  p=self.root/'test.apk'
-  with zipfile.ZipFile(p,'w') as z:z.writestr('lib/'+abi+'/libtest.so',b'not executable')
-  return p
- def test_existing_unreceipted_package_is_never_modified(self):
-  self.d.exists=lambda:True
-  with self.assertRaisesRegex(RuntimeError,'ownership receipt'):self.d.install(self.apk())
- def test_low_internal_space_blocks_before_install(self):
-  self.d.exists=lambda:False;self.d.storage=lambda:{'internal':{'free_bytes':128},'adopted':{'free_bytes':10**12}}
-  with patch.object(device,'config',return_value={'internal_reserve_mib':1024}):
-   with self.assertRaisesRegex(RuntimeError,'Insufficient internal'):self.d.install(self.apk())
- def test_wrong_abi_blocks_before_install(self):
-  self.d.exists=lambda:False;self.d.storage=lambda:{}
-  # install() reads config() from common's own WORK; keep the real local.json out of the fixture.
-  with patch.object(device,'config',return_value={}):
-   with self.assertRaisesRegex(RuntimeError,'only arm64-v8a'):self.d.install(self.apk('x86_64'))
- def test_ownership_receipt_bound_to_device_and_placement(self):
-  write(self.root/'device/installed.json',{'serial':'someone-else','package':device.PACKAGE,'package_path':'old'})
-  with self.assertRaisesRegex(RuntimeError,'ownership changed'):self.d.owned()
- def test_sync_rejects_arbitrary_destination(self):
-  self.d.owned=lambda:{};self.d.storage=lambda:{}
-  write(self.root/'device/runtime.json',{'persistentDataPath':'/data/local/tmp/another-game'})
-  with self.assertRaisesRegex(RuntimeError,'Unexpected runtime'):self.d.sync()
- def test_adopted_sync_rejects_internal_backing_before_writing(self):
-  self.d.owned=lambda:{};self.d.storage=lambda:{'mode':'adopted','adopted':{'total_bytes':900*1024**3}}
-  calls=[]
-  def shell(*args,**kwargs):
-   calls.append(args)
-   if args[:2]==('df','-k'):return 'Filesystem 1K-blocks Used Available Use% Mounted on\ninternal 100000000 1 99999999 1% /storage/emulated'
-   self.fail('Storage rejection must precede writes')
-  self.d.sh=shell
-  write(self.root/'device/runtime.json',{'persistentDataPath':'/storage/emulated/0/Android/data/'+device.PACKAGE+'/files'})
-  with self.assertRaisesRegex(RuntimeError,'not backed'):self.d.sync()
-  self.assertEqual(len(calls),1)
- def test_reset_absent_package_does_not_call_adb_uninstall(self):
-  self.d.exists=lambda:False
-  self.assertFalse(self.d.reset()['removed'])
- def test_internal_storage_requires_explicit_mode_and_no_adopted_volume(self):
-  self.d.sh=lambda *args,**kwargs:'private:disk mounted '+('a'*8+'-'+('b'*4+'-')*3+'c'*12)
-  with patch.object(device,'config',return_value={'storage_mode':'internal'}):
-   with self.assertRaisesRegex(RuntimeError,'now has adopted'):self.d.storage()
- def test_default_adopted_mode_rejects_missing_volume(self):
-  self.d.sh=lambda *args,**kwargs:''
-  with patch.object(device,'config',return_value={}):
-   with self.assertRaisesRegex(RuntimeError,'mounted adopted'):self.d.storage()
- def test_one_apk_limit_reuses_identical_owned_install_and_rejects_replacement(self):
-  calls=[];installed=[False];self.d.exists=lambda:installed[0]
-  self.d.storage=lambda:{'mode':'internal','uuid':None,'internal':{'free_bytes':10**12},'adopted':None}
-  self.d.sh=lambda *args,**kwargs:'package:/data/app/test/base.apk' if args==('pm','path',device.PACKAGE) else ''
-  def command(*args,**kwargs):calls.append(args);installed[0]=True;return 'Success'
-  self.d.cmd=command
-  with patch.object(device,'config',return_value={'apk_install_limit':1}):
-   apk=self.apk();self.d.install(apk);self.assertTrue(self.d.install(apk)['reused'])
-   self.assertEqual(calls[0][:4],('install','-r','--force-uuid','internal'));self.assertEqual(len(calls),1)
-   with zipfile.ZipFile(apk,'w') as z:z.writestr('lib/arm64-v8a/libtest.so',b'changed')
-   with self.assertRaisesRegex(RuntimeError,'limit exhausted'):self.d.install(apk)
-   installed[0]=False
-   with self.assertRaisesRegex(RuntimeError,'limit exhausted'):self.d.install(apk)
-   self.assertEqual(len(calls),1)
- def test_display_control_refuses_non_nova_before_sending_key(self):
-  calls=[]
-  self.d.sh=lambda *args,**kwargs:(calls.append(args) or 'different-model')
-  with patch.object(device,'config',return_value={'sleep_display_when_idle':True}):
-   with self.assertRaisesRegex(RuntimeError,'authorized only for Nova'):self.d.display(False)
-  self.assertEqual(calls,[('getprop','ro.product.model')])
- def test_authorized_update_replaces_same_package_and_counts_dispatches(self):
-  calls=[];installed=[False];self.d.exists=lambda:installed[0]
-  self.d.storage=lambda:{'mode':'internal','uuid':None,'internal':{'free_bytes':10**12},'adopted':None}
-  self.d.sh=lambda *args,**kwargs:'package:/data/app/test/base.apk' if args==('pm','path',device.PACKAGE) else ''
-  def command(*args,**kwargs):calls.append(args);installed[0]=True;return 'Success'
-  self.d.cmd=command
-  with patch.object(device,'config',return_value={}):
-   apk=self.apk();first=self.d.install(apk)
-   with zipfile.ZipFile(apk,'w') as z:z.writestr('lib/arm64-v8a/libtest.so',b'updated')
-   second=self.d.install(apk)
-  self.assertEqual(first['package'],second['package']);self.assertNotEqual(first['apk_sha256'],second['apk_sha256'])
-  self.assertEqual(len(calls),2)
-  for call in calls:self.assertEqual(call[:4],('install','-r','--force-uuid','internal'))
-  counter=json.loads(next((self.root/'device-install-limits').glob('*.json')).read_text())
-  self.assertEqual(counter['dispatched'],2)
- def test_display_opt_out_never_queries_device(self):
-  self.d.sh=lambda *args,**kwargs:self.fail('Unrequested display operation')
-  with patch.object(device,'config',return_value={}):self.assertFalse(self.d.display(False))
- def test_display_wake_and_sleep_verify_power_state(self):
-  calls=[]
-  def shell(*args,**kwargs):
-   calls.append(args)
-   if args==('getprop','ro.product.model'):return 'Retroid Pocket Nova'
-   if args==('dumpsys','power'):return 'mWakefulness='+('Awake' if ('input','keyevent','KEYCODE_WAKEUP') in calls and ('input','keyevent','KEYCODE_SLEEP') not in calls else 'Asleep')
-   return ''
-  self.d.sh=shell
-  with patch.object(device,'config',return_value={'sleep_display_when_idle':True}):
-   self.assertTrue(self.d.display(True));self.assertTrue(device.Device.display_awakened)
-   self.assertTrue(self.d.display(False));self.assertFalse(device.Device.display_awakened)
- def test_failed_cli_sleeps_awakened_display_and_keeps_first_error(self):
-  calls=[];fake=types.ModuleType('device');scene=types.ModuleType('scene_runtime')
-  class FakeDevice:
-   display_awakened=True
-   def display(self,awake):calls.append(awake)
-  fake.Device=FakeDevice;stderr=io.StringIO()
-  def fail_run():raise RuntimeError('deliberate runtime failure')
-  scene.movement_batch_run=fail_run
-  with patch.dict(sys.modules,{'device':fake,'scene_runtime':scene}),patch.object(sys,'argv',['dev','prototype','--action','movement-batch-run']),contextlib.redirect_stderr(stderr):
-   with self.assertRaises(SystemExit) as ended:runpy.run_path(str(Path(__file__).resolve().parents[1]/'scripts/lab/main.py'),run_name='__main__')
-  self.assertEqual(ended.exception.code,1);self.assertEqual(calls,[False])
-  self.assertIn('deliberate runtime failure',stderr.getvalue())
-if __name__=='__main__':unittest.main()
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp.name)
+        self.patcher = patch.object(device, "WORK", self.root)
+        self.patcher.start()
+        # These ABI/storage fixtures are ZIP containers, not Android manifests.
+        # APK identity rejection is exercised separately with explicit metadata.
+        self.identity_patcher = patch.object(device, "validate_apk_identity")
+        self.identity_patcher.start()
+        self.d = object.__new__(device.Device)
+        self.d.serial = "authorized-test"
+        self.d.base = ["must-not-execute-adb"]
+
+    def tearDown(self):
+        self.identity_patcher.stop()
+        self.patcher.stop()
+        self.temp.cleanup()
+
+    def apk(self, abi="arm64-v8a"):
+        p = self.root / "test.apk"
+        with zipfile.ZipFile(p, "w") as z:
+            z.writestr("lib/" + abi + "/libtest.so", b"not executable")
+        return p
+
+    def test_existing_unreceipted_package_is_never_modified(self):
+        self.d.exists = lambda: True
+        with self.assertRaisesRegex(RuntimeError, "ownership receipt"):
+            self.d.install(self.apk())
+
+    def test_low_internal_space_blocks_before_install(self):
+        self.d.exists = lambda: False
+        self.d.storage = lambda: {"internal": {"free_bytes": 128}, "adopted": {"free_bytes": 10**12}}
+        with patch.object(device, "config", return_value={"internal_reserve_mib": 1024}):
+            with self.assertRaisesRegex(RuntimeError, "Insufficient internal"):
+                self.d.install(self.apk())
+
+    def test_wrong_abi_blocks_before_install(self):
+        self.d.exists = lambda: False
+        self.d.storage = lambda: {}
+        # install() reads config() from common's own WORK; keep the real local.json out of the fixture.
+        with patch.object(device, "config", return_value={}):
+            with self.assertRaisesRegex(RuntimeError, "only arm64-v8a"):
+                self.d.install(self.apk("x86_64"))
+
+    def test_ownership_receipt_bound_to_device_and_placement(self):
+        write(self.root / "device/installed.json", {"serial": "REDACTED", "package": device.PACKAGE, "package_path": "old"})
+        with self.assertRaisesRegex(RuntimeError, "ownership changed"):
+            self.d.owned()
+
+    def test_sync_rejects_arbitrary_destination(self):
+        self.d.owned = lambda: {}
+        self.d.storage = lambda: {}
+        write(self.root / "device/runtime.json", {"persistentDataPath": "/data/local/tmp/another-game"})
+        with self.assertRaisesRegex(RuntimeError, "Unexpected runtime"):
+            self.d.sync()
+
+    def test_adopted_sync_rejects_internal_backing_before_writing(self):
+        self.d.owned = lambda: {}
+        self.d.storage = lambda: {"mode": "adopted", "adopted": {"total_bytes": 900 * 1024**3}}
+        calls = []
+
+        def shell(*args, **kwargs):
+            calls.append(args)
+            if args[:2] == ("df", "-k"):
+                return "Filesystem 1K-blocks Used Available Use% Mounted on\ninternal 100000000 1 99999999 1% /storage/emulated"
+            self.fail("Storage rejection must precede writes")
+
+        self.d.sh = shell
+        write(self.root / "device/runtime.json", {"persistentDataPath": "/storage/emulated/0/Android/data/" + device.PACKAGE + "/files"})
+        with self.assertRaisesRegex(RuntimeError, "not backed"):
+            self.d.sync()
+        self.assertEqual(len(calls), 1)
+
+    def test_reset_absent_package_does_not_call_adb_uninstall(self):
+        self.d.exists = lambda: False
+        self.assertFalse(self.d.reset()["removed"])
+
+    def test_internal_storage_requires_explicit_mode_and_no_adopted_volume(self):
+        self.d.sh = lambda *args, **kwargs: "private:disk mounted " + ("a" * 8 + "-" + ("b" * 4 + "-") * 3 + "c" * 12)
+        with patch.object(device, "config", return_value={"storage_mode": "internal"}):
+            with self.assertRaisesRegex(RuntimeError, "now has adopted"):
+                self.d.storage()
+
+    def test_default_adopted_mode_rejects_missing_volume(self):
+        self.d.sh = lambda *args, **kwargs: ""
+        with patch.object(device, "config", return_value={}):
+            with self.assertRaisesRegex(RuntimeError, "mounted adopted"):
+                self.d.storage()
+
+    def test_one_apk_limit_reuses_identical_owned_install_and_rejects_replacement(self):
+        calls = []
+        installed = [False]
+        self.d.exists = lambda: installed[0]
+        self.d.storage = lambda: {"mode": "internal", "uuid": None, "internal": {"free_bytes": 10**12}, "adopted": None}
+        self.d.sh = lambda *args, **kwargs: "package:/data/app/test/base.apk" if args == ("pm", "path", device.PACKAGE) else ""
+
+        def command(*args, **kwargs):
+            calls.append(args)
+            installed[0] = True
+            return "Success"
+
+        self.d.cmd = command
+        with patch.object(device, "config", return_value={"apk_install_limit": 1}):
+            apk = self.apk()
+            self.d.install(apk)
+            self.assertTrue(self.d.install(apk)["reused"])
+            self.assertEqual(calls[0][:4], ("install", "-r", "--force-uuid", "internal"))
+            self.assertEqual(len(calls), 1)
+            with zipfile.ZipFile(apk, "w") as z:
+                z.writestr("lib/arm64-v8a/libtest.so", b"changed")
+            with self.assertRaisesRegex(RuntimeError, "limit exhausted"):
+                self.d.install(apk)
+            installed[0] = False
+            with self.assertRaisesRegex(RuntimeError, "limit exhausted"):
+                self.d.install(apk)
+            self.assertEqual(len(calls), 1)
+
+    def test_display_control_refuses_non_nova_before_sending_key(self):
+        calls = []
+        self.d.sh = lambda *args, **kwargs: (calls.append(args) or "different-model")
+        with patch.object(device, "config", return_value={"sleep_display_when_idle": True}):
+            with self.assertRaisesRegex(RuntimeError, "authorized only for Nova"):
+                self.d.display(False)
+        self.assertEqual(calls, [("getprop", "ro.product.model")])
+
+    def test_authorized_update_replaces_same_package_and_counts_dispatches(self):
+        calls = []
+        installed = [False]
+        self.d.exists = lambda: installed[0]
+        self.d.storage = lambda: {"mode": "internal", "uuid": None, "internal": {"free_bytes": 10**12}, "adopted": None}
+        self.d.sh = lambda *args, **kwargs: "package:/data/app/test/base.apk" if args == ("pm", "path", device.PACKAGE) else ""
+
+        def command(*args, **kwargs):
+            calls.append(args)
+            installed[0] = True
+            return "Success"
+
+        self.d.cmd = command
+        with patch.object(device, "config", return_value={}):
+            apk = self.apk()
+            first = self.d.install(apk)
+            with zipfile.ZipFile(apk, "w") as z:
+                z.writestr("lib/arm64-v8a/libtest.so", b"updated")
+            second = self.d.install(apk)
+        self.assertEqual(first["package"], second["package"])
+        self.assertNotEqual(first["apk_sha256"], second["apk_sha256"])
+        self.assertEqual(len(calls), 2)
+        for call in calls:
+            self.assertEqual(call[:4], ("install", "-r", "--force-uuid", "internal"))
+        counter = json.loads(next((self.root / "device-install-limits").glob("*.json")).read_text())
+        self.assertEqual(counter["dispatched"], 2)
+
+    def test_display_opt_out_never_queries_device(self):
+        self.d.sh = lambda *args, **kwargs: self.fail("Unrequested display operation")
+        with patch.object(device, "config", return_value={}):
+            self.assertFalse(self.d.display(False))
+
+    def test_display_wake_and_sleep_verify_power_state(self):
+        calls = []
+
+        def shell(*args, **kwargs):
+            calls.append(args)
+            if args == ("getprop", "ro.product.model"):
+                return "Retroid Pocket Nova"
+            if args == ("dumpsys", "power"):
+                return "mWakefulness=" + (
+                    "Awake" if ("input", "keyevent", "KEYCODE_WAKEUP") in calls and ("input", "keyevent", "KEYCODE_SLEEP") not in calls else "Asleep"
+                )
+            return ""
+
+        self.d.sh = shell
+        with patch.object(device, "config", return_value={"sleep_display_when_idle": True}):
+            self.assertTrue(self.d.display(True))
+            self.assertTrue(device.Device.display_awakened)
+            self.assertTrue(self.d.display(False))
+            self.assertFalse(device.Device.display_awakened)
+
+    def test_failed_cli_sleeps_awakened_display_and_keeps_first_error(self):
+        calls = []
+        fake = types.ModuleType("device")
+        scene = types.ModuleType("scene_runtime")
+
+        class FakeDevice:
+            display_awakened = True
+
+            def display(self, awake):
+                calls.append(awake)
+
+        fake.Device = FakeDevice
+        stderr = io.StringIO()
+
+        def fail_run():
+            raise RuntimeError("deliberate runtime failure")
+
+        scene.movement_batch_run = fail_run
+        with (
+            patch.dict(sys.modules, {"device": fake, "scene_runtime": scene}),
+            patch.object(sys, "argv", ["dev", "prototype", "--action", "movement-batch-run"]),
+            contextlib.redirect_stderr(stderr),
+        ):
+            with self.assertRaises(SystemExit) as ended:
+                runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/lab/main.py"), run_name="__main__")
+        self.assertEqual(ended.exception.code, 1)
+        self.assertEqual(calls, [False])
+        self.assertIn("deliberate runtime failure", stderr.getvalue())
+
+
+if __name__ == "__main__":
+    unittest.main()

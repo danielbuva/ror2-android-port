@@ -5,34 +5,37 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EDITOR = Path('/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents/MonoBleedingEdge')
+EDITOR = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents/MonoBleedingEdge")
 
 
 def controller_presence_source():
-    source = (ROOT / 'tools/unity/NovaInputBridge.cs').read_text()
-    start = source.index('public sealed class ControllerPresence')
-    opening = source.index('{', start)
+    source = (ROOT / "tools/unity/NovaInputBridge.cs").read_text()
+    start = source.index("public sealed class ControllerPresence")
+    opening = source.index("{", start)
     depth = 0
     for position in range(opening, len(source)):
-        if source[position] == '{':
+        if source[position] == "{":
             depth += 1
-        elif source[position] == '}':
+        elif source[position] == "}":
             depth -= 1
             if depth == 0:
-                return source[start:position + 1]
-    raise AssertionError('ControllerPresence class does not close')
+                return source[start : position + 1]
+    raise AssertionError("ControllerPresence class does not close")
 
 
 class NovaInputPresenceTests(unittest.TestCase):
     def test_measured_slot_loss_neutral_reacquisition_and_edge_reset(self):
-        mono = EDITOR / 'bin/mono'
-        csc = EDITOR / 'lib/mono/msbuild/Current/bin/Roslyn/csc.exe'
+        mono = EDITOR / "bin/mono"
+        csc = EDITOR / "lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
         if not mono.exists() or not csc.exists():
-            self.skipTest('matching Unity Mono compiler is unavailable')
-        host = '''using System;
+            self.skipTest("matching Unity Mono compiler is unavailable")
+        host = (
+            """using System;
 using System.Linq;
 public sealed class NovaInputBridge {
-''' + controller_presence_source() + '''
+"""
+            + controller_presence_source()
+            + """
 }
 public static class Program {
  static void Check(bool passed,string name){if(!passed)throw new Exception(name);}
@@ -60,20 +63,22 @@ public static class Program {
   Console.WriteLine("presence transitions passed");
  }
 }
-'''
+"""
+        )
         with tempfile.TemporaryDirectory() as directory:
-            source = Path(directory) / 'PresenceHost.cs'
-            output = Path(directory) / 'PresenceHost.exe'
+            source = Path(directory) / "PresenceHost.cs"
+            output = Path(directory) / "PresenceHost.exe"
             source.write_text(host)
             compiled = subprocess.run(
-                [str(mono), str(csc), '-nologo', '-langversion:9', '-out:' + str(output), str(source)],
-                capture_output=True, text=True,
+                [str(mono), str(csc), "-nologo", "-langversion:9", "-out:" + str(output), str(source)],
+                capture_output=True,
+                text=True,
             )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             executed = subprocess.run([str(mono), str(output)], capture_output=True, text=True)
             self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
-            self.assertIn('presence transitions passed', executed.stdout)
+            self.assertIn("presence transitions passed", executed.stdout)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

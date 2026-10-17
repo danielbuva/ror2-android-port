@@ -1,899 +1,2042 @@
 """Small loadingbasic import experiment; game startup is a separate gate."""
-from common import *
-import re, shutil
 
-def preserve_input_trace(device,runtime,attempt,report,expected_pid):
-    nova=report.get('nova') or {}
-    recent=nova.get('observations') or []
-    total=nova.get('samples',0)
-    if not report.get('integratedWorld') or total<=len(recent):return
-    if str(report.get('pid'))!=str(expected_pid):raise RuntimeError('Input trace report PID mismatch')
-    remote=runtime+'/movement-batch-'+report['id']+'-'+str(expected_pid)+'-'+str(int(report['session']))+'-input.jsonl'
-    local=attempt/'input-trace.jsonl'
-    device.cmd('pull',remote,str(local))
-    expected=0
+from common import *
+import re
+import shutil
+
+
+def preserve_input_trace(device, runtime, attempt, report, expected_pid):
+    nova = report.get("nova") or {}
+    recent = nova.get("observations") or []
+    total = nova.get("samples", 0)
+    if not report.get("integratedWorld") or total <= len(recent):
+        return
+    if str(report.get("pid")) != str(expected_pid):
+        raise RuntimeError("Input trace report PID mismatch")
+    remote = runtime + "/movement-batch-" + report["id"] + "-" + str(expected_pid) + "-" + str(int(report["session"])) + "-input.jsonl"
+    local = attempt / "input-trace.jsonl"
+    device.cmd("pull", remote, str(local))
+    expected = 0
     for line in local.read_text().splitlines():
-        chunk=json.loads(line)
-        if chunk['firstSample']!=expected or chunk['attempt']!=report['attempt'] or chunk['id']!=report['id'] or str(chunk['pid'])!=str(expected_pid) or chunk['session']!=report['session']:
-            raise RuntimeError('Input trace chunk gap or identity mismatch')
-        expected+=len(chunk['observations'])
-    if expected<total-len(recent):raise RuntimeError('Input trace and live report leave an observation gap')
+        chunk = json.loads(line)
+        if (
+            chunk["firstSample"] != expected
+            or chunk["attempt"] != report["attempt"]
+            or chunk["id"] != report["id"]
+            or str(chunk["pid"]) != str(expected_pid)
+            or chunk["session"] != report["session"]
+        ):
+            raise RuntimeError("Input trace chunk gap or identity mismatch")
+        expected += len(chunk["observations"])
+    if expected < total - len(recent):
+        raise RuntimeError("Input trace and live report leave an observation gap")
+
 
 def scene_prepare(include_prefab=False):
     from build import preflight
+
     preflight()
-    prior=ROOT/read(WORK/'experiments/scene-closure/latest.json')['path']
-    closure=read(prior/'loadingbasic.json'); identities=read(prior/'editor-identities.json')['rows']
-    prefab=None
+    prior = ROOT / read(WORK / "experiments/scene-closure/latest.json")["path"]
+    closure = read(prior / "loadingbasic.json")
+    identities = read(prior / "editor-identities.json")["rows"]
+    prefab = None
     if include_prefab:
-        prefab=read(prior/'CommandoBody.json')
-        closure['files']=sorted(set(closure['files']+prefab['files']))
-        closure['script_references']+=prefab['script_references']
-    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
-    project=WORK/'lab-project';stage=project/'Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Previous scene stage exists; preserve and classify it first')
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);stage.mkdir()
-    mapping={};queries=[]
+        prefab = read(prior / "CommandoBody.json")
+        closure["files"] = sorted(set(closure["files"] + prefab["files"]))
+        closure["script_references"] += prefab["script_references"]
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    project = WORK / "lab-project"
+    stage = project / "Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Previous scene stage exists; preserve and classify it first")
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    stage.mkdir()
+    mapping = {}
+    queries = []
     for row in identities:
-        if row['path']!='Assets/Plugins/UnityEngine.UI.dll':continue
-        if not any(e['target']==row['path'] and e['fileID']==row['fileID'] for e in closure['script_references']):continue
-        name=row['scriptType'].split('.')[-1]
-        candidates=list((project/'Library/PackageCache/com.unity.ugui@1.0.0').rglob(name+'.cs'))
-        if len(candidates)!=1:raise RuntimeError('Ambiguous package UI script '+name)
-        src=candidates[0];guid=re.search(r'^guid: ([a-f0-9]{32})',Path(str(src)+'.meta').read_text(),re.M).group(1)
-        old='{fileID: '+row['fileID']+', guid: d3e719b59ab71ba3f6b398058c866280, type: 3}'
-        mapping[old]='{fileID: 11500000, guid: '+guid+', type: 3}'
-        queries.append({'path':'Packages/com.unity.ugui/'+str(src.relative_to(project/'Library/PackageCache/com.unity.ugui@1.0.0')),'fileID':'11500000'})
-    copied={};edits=[]
-    for relative in closure['files']:
-        src=export/relative
-        if src.suffix=='.dll':continue
-        dst=stage/Path(relative).relative_to('Assets');dst.parent.mkdir(parents=True,exist_ok=True)
-        shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'));copied[relative]=sha(src)
-        if src.read_bytes()[:5]==b'%YAML':
-            text=src.read_text()
-            for old,new in mapping.items():
-                count=text.count(old)
-                if count:edits.append({'path':relative,'from':old,'to':new,'count':count});text=text.replace(old,new)
+        if row["path"] != "Assets/Plugins/UnityEngine.UI.dll":
+            continue
+        if not any(e["target"] == row["path"] and e["fileID"] == row["fileID"] for e in closure["script_references"]):
+            continue
+        name = row["scriptType"].split(".")[-1]
+        candidates = list((project / "Library/PackageCache/com.unity.ugui@1.0.0").rglob(name + ".cs"))
+        if len(candidates) != 1:
+            raise RuntimeError("Ambiguous package UI script " + name)
+        src = candidates[0]
+        guid = re.search(r"^guid: ([a-f0-9]{32})", Path(str(src) + ".meta").read_text(), re.M).group(1)
+        old = "{fileID: " + row["fileID"] + ", guid: d3e719b59ab71ba3f6b398058c866280, type: 3}"
+        mapping[old] = "{fileID: 11500000, guid: " + guid + ", type: 3}"
+        queries.append({"path": "Packages/com.unity.ugui/" + str(src.relative_to(project / "Library/PackageCache/com.unity.ugui@1.0.0")), "fileID": "11500000"})
+    copied = {}
+    edits = []
+    for relative in closure["files"]:
+        src = export / relative
+        if src.suffix == ".dll":
+            continue
+        dst = stage / Path(relative).relative_to("Assets")
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
+        copied[relative] = sha(src)
+        if src.read_bytes()[:5] == b"%YAML":
+            text = src.read_text()
+            for old, new in mapping.items():
+                count = text.count(old)
+                if count:
+                    edits.append({"path": relative, "from": old, "to": new, "count": count})
+                    text = text.replace(old, new)
             dst.write_text(text)
-    original=read(WORK/'experiments/original-closure-runtime/20260913T024051.910924Z/slice-provenance.json')['original_assemblies']
-    for name,h in original.items():
-        src=game()/'Risk of Rain 2_Data/Managed'/name
-        if sha(src)!=h:raise RuntimeError('Original assembly drift '+name)
-        dst=stage/'Plugins'/name;dst.parent.mkdir(exist_ok=True)
-        shutil.copy2(src,dst);shutil.copy2(export/'Assets/Plugins'/(name+'.meta'),Path(str(dst)+'.meta'))
-    (stage/'link.xml').write_text('<linker><assembly fullname="RoR2" preserve="all" /></linker>\n')
-    result={'attempt':out.name,'stage':str(stage),'scene':'Assets/LabLoadingScene/'+str(Path(closure['root']).relative_to('Assets')),'copied_source_hashes':copied,'original_assemblies':original,'ui_remaps':edits,'status':'staged; import and identity assertions required before any scene execution','evidence':str(out.relative_to(ROOT))}
-    result['ui_query_count']=len(queries)
-    if prefab:result['prefab']='Assets/LabLoadingScene/'+str(Path(prefab['root']).relative_to('Assets'))
-    write(out/'attempt.json',result);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
-    write(project/'Assets/LabReferenceQuery.json',{'attempt':out.name,'output':str(out/'ui-identities.json'),'queries':queries})
-    shutil.copy2(ROOT/'tools/unity/ReferenceIdentityProbe.cs',project/'Assets/Editor/ReferenceIdentityProbe.cs')
-    print(json.dumps({'evidence':result['evidence'],'ui_reference_edits':sum(e['count'] for e in edits),'status':result['status']},indent=2))
+    original = read(WORK / "experiments/original-closure-runtime/20260913T024051.910924Z/slice-provenance.json")["original_assemblies"]
+    for name, h in original.items():
+        src = game() / "Risk of Rain 2_Data/Managed" / name
+        if sha(src) != h:
+            raise RuntimeError("Original assembly drift " + name)
+        dst = stage / "Plugins" / name
+        dst.parent.mkdir(exist_ok=True)
+        shutil.copy2(src, dst)
+        shutil.copy2(export / "Assets/Plugins" / (name + ".meta"), Path(str(dst) + ".meta"))
+    (stage / "link.xml").write_text('<linker><assembly fullname="RoR2" preserve="all" /></linker>\n')
+    result = {
+        "attempt": out.name,
+        "stage": str(stage),
+        "scene": "Assets/LabLoadingScene/" + str(Path(closure["root"]).relative_to("Assets")),
+        "copied_source_hashes": copied,
+        "original_assemblies": original,
+        "ui_remaps": edits,
+        "status": "staged; import and identity assertions required before any scene execution",
+        "evidence": str(out.relative_to(ROOT)),
+    }
+    result["ui_query_count"] = len(queries)
+    if prefab:
+        result["prefab"] = "Assets/LabLoadingScene/" + str(Path(prefab["root"]).relative_to("Assets"))
+    write(out / "attempt.json", result)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    write(project / "Assets/LabReferenceQuery.json", {"attempt": out.name, "output": str(out / "ui-identities.json"), "queries": queries})
+    shutil.copy2(ROOT / "tools/unity/ReferenceIdentityProbe.cs", project / "Assets/Editor/ReferenceIdentityProbe.cs")
+    print(json.dumps({"evidence": result["evidence"], "ui_reference_edits": sum(e["count"] for e in edits), "status": result["status"]}, indent=2))
+
 
 def scene_run(verification=False):
     from device import Device, PACKAGE
     from build import preflight
     import time
-    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];attempt=read(out/'attempt.json')
-    built=read(WORK/'config/current-build.json')
+
+    preflight()
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    attempt = read(out / "attempt.json")
+    built = read(WORK / "config/current-build.json")
     if verification:
-        previous=read(out/'runtime-result.json')
-        if not attempt.get('material_render') or not previous['success'] or previous['build']['apk_sha256']!=built['apk_sha256'] or previous['build']['payload']!=built['payload']:raise RuntimeError('Verification requires passing material attempt and same APK/payload')
-        parent=out;out=parent/'verification'/now()/parent.name;out.mkdir(parents=True);write(out/'attempt.json',{**attempt,'verification_of':str(parent.relative_to(ROOT))})
-    elif (out/'runtime-result.json').exists():raise RuntimeError('Attempt already terminal; preserve before retry')
-    if not built.get('success') or 'loadingbasic-lab' not in built.get('payload',{}):raise RuntimeError('No attributed scene payload build')
-    stage=Path(attempt['stage'])
-    for name,h in attempt['original_assemblies'].items():
-        if sha(stage/'Plugins'/name)!=attempt.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Staged assembly changed '+name)
-    result={'success':False,'attempt':out.name,'build':built,'scope':'Original startup first-yield/PreFrame segment and profile filesystem candidate' if attempt.get('startup') else 'Original '+('skin baking' if attempt.get('skin') else 'avatar subobject' if attempt.get('avatar') else 'controller')+' deferred request; startup inactive' if attempt.get('controller') else 'Isolated original loadingbasic content with application startup inactive'}
-    d=Device();had=d.exists()
+        previous = read(out / "runtime-result.json")
+        if (
+            not attempt.get("material_render")
+            or not previous["success"]
+            or previous["build"]["apk_sha256"] != built["apk_sha256"]
+            or previous["build"]["payload"] != built["payload"]
+        ):
+            raise RuntimeError("Verification requires passing material attempt and same APK/payload")
+        parent = out
+        out = parent / "verification" / now() / parent.name
+        out.mkdir(parents=True)
+        write(out / "attempt.json", {**attempt, "verification_of": str(parent.relative_to(ROOT))})
+    elif (out / "runtime-result.json").exists():
+        raise RuntimeError("Attempt already terminal; preserve before retry")
+    if not built.get("success") or "loadingbasic-lab" not in built.get("payload", {}):
+        raise RuntimeError("No attributed scene payload build")
+    stage = Path(attempt["stage"])
+    for name, h in attempt["original_assemblies"].items():
+        if sha(stage / "Plugins" / name) != attempt.get("transformed_assemblies", {}).get(name, h):
+            raise RuntimeError("Staged assembly changed " + name)
+    result = {
+        "success": False,
+        "attempt": out.name,
+        "build": built,
+        "scope": "Original startup first-yield/PreFrame segment and profile filesystem candidate"
+        if attempt.get("startup")
+        else "Original "
+        + ("skin baking" if attempt.get("skin") else "avatar subobject" if attempt.get("avatar") else "controller")
+        + " deferred request; startup inactive"
+        if attempt.get("controller")
+        else "Isolated original loadingbasic content with application startup inactive",
+    }
+    d = Device()
+    had = d.exists()
     try:
-        result['install']=d.install(built['apk']);d.launch();result['sync']=d.sync();result['launch']=d.launch();pid=result['launch']['pid'];start=time.monotonic()
-        while time.monotonic()-start<(50 if attempt.get('startup') else 70 if attempt.get('skin') else 50 if attempt.get('controller') else 35):
-            if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Scene process died or changed')
+        result["install"] = d.install(built["apk"])
+        d.launch()
+        result["sync"] = d.sync()
+        result["launch"] = d.launch()
+        pid = result["launch"]["pid"]
+        start = time.monotonic()
+        while time.monotonic() - start < (50 if attempt.get("startup") else 70 if attempt.get("skin") else 50 if attempt.get("controller") else 35):
+            if d.sh("pidof", PACKAGE, check=False).strip() != pid:
+                raise RuntimeError("Scene process died or changed")
             time.sleep(1)
-        path=read(WORK/'device/runtime.json')['persistentDataPath'];report_name='startup-segment-probe.json' if attempt.get('startup') else 'controller-address-probe.json' if attempt.get('controller') else 'loading-scene-probe.json';report=json.loads(d.sh('cat',path+'/'+report_name));write(out/'device-probe.json',report)
-        result['success']=report['success'] and report['attempt']==out.name and str(report['pid'])==pid;result['survival_seconds']=time.monotonic()-start
-        if not result['success']:result['error']=report.get('error') or 'Probe assertions or attempt/PID attribution failed'
-        if attempt.get('controller'):
-            d.cmd('pull',path+'/controller-catalog',str(out/'controller-catalog'))
-        if attempt.get('material_render'):
-            material=json.loads(d.sh('cat',path+'/commando-material-probe.json'));write(out/'material-probe.json',material)
-            result['success']=result['success'] and material['success'] and material['attempt']==out.name and str(material['pid'])==pid
-            if not material['success']:result['error']=material.get('error') or 'Material assertions failed'
-            for name in ['commando-material-control.png','commando-material-albedo.png','commando-material-emission.png']:
-                d.cmd('pull',path+'/'+name,str(out/name))
-                if not (out/name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):raise RuntimeError('Material capture missing or invalid')
-        if attempt.get('state_tick'):
-            state=json.loads(d.sh('cat',path+'/entity-state-tick-probe.json'));write(out/'state-tick-probe.json',state)
-            result['success']=result['success'] and state['success'] and state['attempt']==out.name and str(state['pid'])==pid
-            if not result['success']:result['error']=state.get('error') or result.get('error') or 'State tick assertions/attribution failed'
-        if attempt.get('direction_probe'):
-            direction=json.loads(d.sh('cat',path+'/character-direction-probe.json'));write(out/'direction-probe.json',direction)
-            result['success']=result['success'] and direction['success'] and direction['attempt']==out.name and str(direction['pid'])==pid
-            if not result['success']:result['error']=direction.get('error') or result.get('error') or 'Direction assertions/attribution failed'
-        if attempt.get('pose'):
-            pose=json.loads(d.sh('cat',path+'/commando-pose.json'));write(out/'pose-probe.json',pose)
-            result['success']=result['success'] and pose['success'] and pose['attempt']==out.name and str(pose['pid'])==pid
-            for name in ['commando-pose-A.png','commando-pose-B.png']:
-                d.cmd('pull',path+'/'+name,str(out/name))
-                if not (out/name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):raise RuntimeError('Pose capture missing or invalid')
-        foreground=d.sh('dumpsys','activity','activities');write(out/'foreground.json',{'activity_dump':foreground})
-        resumed=[line for line in foreground.splitlines() if 'mResumedActivity:' in line or 'topResumedActivity=' in line]
-        result['foreground_verified']=bool(resumed) and all(PACKAGE+'/' in line for line in resumed)
-        if not result['foreground_verified']:raise RuntimeError('Lab is not the verified foreground activity; screenshot cannot establish visual acceptance')
-        d.collect('all',out/'device')
+        path = read(WORK / "device/runtime.json")["persistentDataPath"]
+        report_name = (
+            "startup-segment-probe.json"
+            if attempt.get("startup")
+            else "controller-address-probe.json"
+            if attempt.get("controller")
+            else "loading-scene-probe.json"
+        )
+        report = json.loads(d.sh("cat", path + "/" + report_name))
+        write(out / "device-probe.json", report)
+        result["success"] = report["success"] and report["attempt"] == out.name and str(report["pid"]) == pid
+        result["survival_seconds"] = time.monotonic() - start
+        if not result["success"]:
+            result["error"] = report.get("error") or "Probe assertions or attempt/PID attribution failed"
+        if attempt.get("controller"):
+            d.cmd("pull", path + "/controller-catalog", str(out / "controller-catalog"))
+        if attempt.get("material_render"):
+            material = json.loads(d.sh("cat", path + "/commando-material-probe.json"))
+            write(out / "material-probe.json", material)
+            result["success"] = result["success"] and material["success"] and material["attempt"] == out.name and str(material["pid"]) == pid
+            if not material["success"]:
+                result["error"] = material.get("error") or "Material assertions failed"
+            for name in ["commando-material-control.png", "commando-material-albedo.png", "commando-material-emission.png"]:
+                d.cmd("pull", path + "/" + name, str(out / name))
+                if not (out / name).read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise RuntimeError("Material capture missing or invalid")
+        if attempt.get("state_tick"):
+            state = json.loads(d.sh("cat", path + "/entity-state-tick-probe.json"))
+            write(out / "state-tick-probe.json", state)
+            result["success"] = result["success"] and state["success"] and state["attempt"] == out.name and str(state["pid"]) == pid
+            if not result["success"]:
+                result["error"] = state.get("error") or result.get("error") or "State tick assertions/attribution failed"
+        if attempt.get("direction_probe"):
+            direction = json.loads(d.sh("cat", path + "/character-direction-probe.json"))
+            write(out / "direction-probe.json", direction)
+            result["success"] = result["success"] and direction["success"] and direction["attempt"] == out.name and str(direction["pid"]) == pid
+            if not result["success"]:
+                result["error"] = direction.get("error") or result.get("error") or "Direction assertions/attribution failed"
+        if attempt.get("pose"):
+            pose = json.loads(d.sh("cat", path + "/commando-pose.json"))
+            write(out / "pose-probe.json", pose)
+            result["success"] = result["success"] and pose["success"] and pose["attempt"] == out.name and str(pose["pid"]) == pid
+            for name in ["commando-pose-A.png", "commando-pose-B.png"]:
+                d.cmd("pull", path + "/" + name, str(out / name))
+                if not (out / name).read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise RuntimeError("Pose capture missing or invalid")
+        foreground = d.sh("dumpsys", "activity", "activities")
+        write(out / "foreground.json", {"activity_dump": foreground})
+        resumed = [line for line in foreground.splitlines() if "mResumedActivity:" in line or "topResumedActivity=" in line]
+        result["foreground_verified"] = bool(resumed) and all(PACKAGE + "/" in line for line in resumed)
+        if not result["foreground_verified"]:
+            raise RuntimeError("Lab is not the verified foreground activity; screenshot cannot establish visual acceptance")
+        d.collect("all", out / "device")
     except Exception as e:
-        result['success']=False;result['error']=str(e)
-        if 'install' in result:
-            try:d.collect('all',out/'device')
-            except Exception as capture:result['capture_error']=str(capture)
+        result["success"] = False
+        result["error"] = str(e)
+        if "install" in result:
+            try:
+                d.collect("all", out / "device")
+            except Exception as capture:
+                result["capture_error"] = str(capture)
     finally:
-        if not had and (WORK/'device/installed.json').exists():
-            try:result['cleanup']=d.reset()
-            except Exception as e:result['cleanup_error']=str(e);result['success']=False
-        write(out/'runtime-result.json',result)
-    print(json.dumps({'success':result['success'],'evidence':str(out.relative_to(ROOT)),'error':result.get('error')},indent=2))
-    if not result['success']:raise RuntimeError('Scene probe failed; inspect '+str(out))
+        if not had and (WORK / "device/installed.json").exists():
+            try:
+                result["cleanup"] = d.reset()
+            except Exception as e:
+                result["cleanup_error"] = str(e)
+                result["success"] = False
+        write(out / "runtime-result.json", result)
+    print(json.dumps({"success": result["success"], "evidence": str(out.relative_to(ROOT)), "error": result.get("error")}, indent=2))
+    if not result["success"]:
+        raise RuntimeError("Scene probe failed; inspect " + str(out))
+
 
 def scene_arm():
     """After UI identity validation, isolate startup for the content-only probe."""
     from build import preflight
-    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json')
-    if 'isolation' in r:raise RuntimeError('Scene already armed; do not apply the transformation twice')
-    ui=read(out/'ui-identities.json')
-    if len(ui['rows'])!=r.get('ui_query_count',4) or not all(x['resolved'] and x['scriptType'].startswith('UnityEngine.UI.') for x in ui['rows']):raise RuntimeError('Required UI script identity assertions failed')
-    if r.get('prefab'):
-        expected=['UnityEditor.Animations.AnimatorController','UnityEngine.Avatar','UnityEngine.Mesh','UnityEngine.Mesh','UnityEngine.Mesh','UnityEngine.Material']
-        if not r.get('default_assets'):raise RuntimeError('Trace and bind default-skin dependencies before arming prefab')
-        asset_rows=read(out/'default-asset-identities.json')['rows']
-        if len(asset_rows)!=6 or [x['objectType'] for x in asset_rows]!=expected or not all(x['resolved'] for x in asset_rows):raise RuntimeError('Default-skin imported asset identity assertions failed')
-    identities=read(ROOT/read(WORK/'experiments/scene-closure/latest.json')['path']/'editor-identities.json')['rows']
-    script=next(x for x in identities if x['scriptType']=='RoR2.RoR2Application')
-    path=WORK/'lab-project'/r['scene'];blocks=re.split(r'(?=^--- !u!)',path.read_text(),flags=re.M)
-    components=[b for b in blocks if 'm_Script: {fileID: '+script['fileID']+', guid: 951ce57ad999ac1f040a4dceb5f8b763,' in b]
-    if len(components)!=1:raise RuntimeError('Expected exactly one original application component')
-    object_id=re.search(r'm_GameObject: \{fileID: (\d+)\}',components[0])[1]
-    indexes=[i for i,b in enumerate(blocks) if re.match(r'--- !u!1 &'+object_id+r'\n',b)]
-    if len(indexes)!=1:raise RuntimeError('Application GameObject identity mismatch')
-    i=indexes[0]
-    if 'm_Name: RoR2Application\n' not in blocks[i] or 'm_IsActive: 1' not in blocks[i]:raise RuntimeError('Unexpected application object state')
-    blocks[i]=blocks[i].replace('m_IsActive: 1','m_IsActive: 0');path.write_text(''.join(blocks))
-    r['isolation']={'gameObjectFileID':int(object_id),'name':'RoR2Application','m_IsActive':0,'reason':'Content-only scene probe; startup and entitlement/authentication logic unchanged and unexecuted'};write(out/'attempt.json',r)
-    if r.get('prefab'):
-        prefab_path=WORK/'lab-project'/r['prefab'];text=prefab_path.read_text();parts=re.split(r'(?=^--- !u!)',text,flags=re.M)
-        candidates=[i for i,b in enumerate(parts) if b.startswith('--- !u!1 ') and 'm_Name: CommandoBody\n' in b]
-        if len(candidates)!=1 or 'm_IsActive: 1' not in parts[candidates[0]]:raise RuntimeError('Unexpected original Commando root')
-        parts[candidates[0]]=parts[candidates[0]].replace('m_IsActive: 1','m_IsActive: 0');prefab_path.write_text(''.join(parts))
-        r['prefab_isolation']='Original CommandoBody root inactive before instantiation; no Awake/OnEnable or simulation acceptance'
-        write(out/'attempt.json',r)
-    write(WORK/'scene-probe-build.json',{'scene':r['scene'],'prefab':r.get('prefab',''),'prefabAssets':r.get('default_assets',[])})
-    resources=Path(r['stage'])/'Resources';resources.mkdir()
-    write(resources/'LoadingSceneProbe.json',{'attempt':out.name,'bundle':'loadingbasic-lab','scene':r['scene'],'prefab':r.get('prefab',''),'prefabAssets':r.get('default_assets',[])})
-    shutil.copy2(ROOT/'tools/unity/LoadingSceneProbe.cs',Path(r['stage'])/'LoadingSceneProbe.cs')
-    shutil.copy2(ROOT/'tools/unity/CommandoPosePreview.cs',Path(r['stage'])/'CommandoPosePreview.cs')
-    print(json.dumps({'armed':True,'evidence':str(out.relative_to(ROOT)),'scope':r['isolation']['reason']}))
+
+    preflight()
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    if "isolation" in r:
+        raise RuntimeError("Scene already armed; do not apply the transformation twice")
+    ui = read(out / "ui-identities.json")
+    if len(ui["rows"]) != r.get("ui_query_count", 4) or not all(x["resolved"] and x["scriptType"].startswith("UnityEngine.UI.") for x in ui["rows"]):
+        raise RuntimeError("Required UI script identity assertions failed")
+    if r.get("prefab"):
+        expected = [
+            "UnityEditor.Animations.AnimatorController",
+            "UnityEngine.Avatar",
+            "UnityEngine.Mesh",
+            "UnityEngine.Mesh",
+            "UnityEngine.Mesh",
+            "UnityEngine.Material",
+        ]
+        if not r.get("default_assets"):
+            raise RuntimeError("Trace and bind default-skin dependencies before arming prefab")
+        asset_rows = read(out / "default-asset-identities.json")["rows"]
+        if len(asset_rows) != 6 or [x["objectType"] for x in asset_rows] != expected or not all(x["resolved"] for x in asset_rows):
+            raise RuntimeError("Default-skin imported asset identity assertions failed")
+    identities = read(ROOT / read(WORK / "experiments/scene-closure/latest.json")["path"] / "editor-identities.json")["rows"]
+    script = next(x for x in identities if x["scriptType"] == "RoR2.RoR2Application")
+    path = WORK / "lab-project" / r["scene"]
+    blocks = re.split(r"(?=^--- !u!)", path.read_text(), flags=re.M)
+    components = [b for b in blocks if "m_Script: {fileID: " + script["fileID"] + ", guid: 951ce57ad999ac1f040a4dceb5f8b763," in b]
+    if len(components) != 1:
+        raise RuntimeError("Expected exactly one original application component")
+    object_id = re.search(r"m_GameObject: \{fileID: (\d+)\}", components[0])[1]
+    indexes = [i for i, b in enumerate(blocks) if re.match(r"--- !u!1 &" + object_id + r"\n", b)]
+    if len(indexes) != 1:
+        raise RuntimeError("Application GameObject identity mismatch")
+    i = indexes[0]
+    if "m_Name: RoR2Application\n" not in blocks[i] or "m_IsActive: 1" not in blocks[i]:
+        raise RuntimeError("Unexpected application object state")
+    blocks[i] = blocks[i].replace("m_IsActive: 1", "m_IsActive: 0")
+    path.write_text("".join(blocks))
+    r["isolation"] = {
+        "gameObjectFileID": int(object_id),
+        "name": "RoR2Application",
+        "m_IsActive": 0,
+        "reason": "Content-only scene probe; startup and entitlement/authentication logic unchanged and unexecuted",
+    }
+    write(out / "attempt.json", r)
+    if r.get("prefab"):
+        prefab_path = WORK / "lab-project" / r["prefab"]
+        text = prefab_path.read_text()
+        parts = re.split(r"(?=^--- !u!)", text, flags=re.M)
+        candidates = [i for i, b in enumerate(parts) if b.startswith("--- !u!1 ") and "m_Name: CommandoBody\n" in b]
+        if len(candidates) != 1 or "m_IsActive: 1" not in parts[candidates[0]]:
+            raise RuntimeError("Unexpected original Commando root")
+        parts[candidates[0]] = parts[candidates[0]].replace("m_IsActive: 1", "m_IsActive: 0")
+        prefab_path.write_text("".join(parts))
+        r["prefab_isolation"] = "Original CommandoBody root inactive before instantiation; no Awake/OnEnable or simulation acceptance"
+        write(out / "attempt.json", r)
+    write(WORK / "scene-probe-build.json", {"scene": r["scene"], "prefab": r.get("prefab", ""), "prefabAssets": r.get("default_assets", [])})
+    resources = Path(r["stage"]) / "Resources"
+    resources.mkdir()
+    write(
+        resources / "LoadingSceneProbe.json",
+        {"attempt": out.name, "bundle": "loadingbasic-lab", "scene": r["scene"], "prefab": r.get("prefab", ""), "prefabAssets": r.get("default_assets", [])},
+    )
+    shutil.copy2(ROOT / "tools/unity/LoadingSceneProbe.cs", Path(r["stage"]) / "LoadingSceneProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/CommandoPosePreview.cs", Path(r["stage"]) / "CommandoPosePreview.cs")
+    print(json.dumps({"armed": True, "evidence": str(out.relative_to(ROOT)), "scope": r["isolation"]["reason"]}))
+
 
 def prefab_bind():
     """Stage only measured default-skin content for binding on an inactive clone."""
     from build import preflight
     from collections import deque
-    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
-    if not r.get('prefab') or r.get('default_assets'):raise RuntimeError('Expected a fresh prefab staging attempt')
-    catalog=read(out/'default-skin-addresses.json')['locations']+read(out/'default-material-address.json')['locations']
-    required={'48ef8327759dd43439416d4823124d9c':('UnityEngine.RuntimeAnimatorController','animCommando.controller'),'47f06aa0c19f14749840757bbb39d4c8':('UnityEngine.Avatar','mdlCommandoDualies.fbx'),'529399f7071eb2641897f2895c5d4ef0':('RoR2.SkinDefParams','skinCommandoDefault_params.asset'),'79721deb6c4df58499b339f81ac8b33d':('UnityEngine.Material','matCommandoDualies.mat')}
-    for key,(kind,name) in required.items():
-        found=[x for x in catalog if x['key']==key and x['type']==kind]
-        if len(found)!=1 or not found[0]['internalId'].endswith('/'+name):raise RuntimeError('Unexpected catalog mapping '+key)
-    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0];base='Assets/RoR2/Base/Characters/Commando/'
-    names=['animCommando.controller','mdlCommandoDualiesAvatar.asset','CommandoMesh.asset','GunMesh.asset','GunMesh.001.asset','matCommandoDualies.mat']
-    index={}
-    for meta in (export/'Assets').rglob('*.meta'):
-        match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
-        if match:index[match[1]]=Path(str(meta)[:-5])
-    queue=deque(export/(base+n) for n in names);seen=set();added={}
+
+    preflight()
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    stage = Path(r["stage"])
+    if not r.get("prefab") or r.get("default_assets"):
+        raise RuntimeError("Expected a fresh prefab staging attempt")
+    catalog = read(out / "default-skin-addresses.json")["locations"] + read(out / "default-material-address.json")["locations"]
+    required = {
+        "48ef8327759dd43439416d4823124d9c": ("UnityEngine.RuntimeAnimatorController", "animCommando.controller"),
+        "47f06aa0c19f14749840757bbb39d4c8": ("UnityEngine.Avatar", "mdlCommandoDualies.fbx"),
+        "529399f7071eb2641897f2895c5d4ef0": ("RoR2.SkinDefParams", "skinCommandoDefault_params.asset"),
+        "79721deb6c4df58499b339f81ac8b33d": ("UnityEngine.Material", "matCommandoDualies.mat"),
+    }
+    for key, (kind, name) in required.items():
+        found = [x for x in catalog if x["key"] == key and x["type"] == kind]
+        if len(found) != 1 or not found[0]["internalId"].endswith("/" + name):
+            raise RuntimeError("Unexpected catalog mapping " + key)
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    base = "Assets/RoR2/Base/Characters/Commando/"
+    names = ["animCommando.controller", "mdlCommandoDualiesAvatar.asset", "CommandoMesh.asset", "GunMesh.asset", "GunMesh.001.asset", "matCommandoDualies.mat"]
+    index = {}
+    for meta in (export / "Assets").rglob("*.meta"):
+        match = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+        if match:
+            index[match[1]] = Path(str(meta)[:-5])
+    queue = deque(export / (base + n) for n in names)
+    seen = set()
+    added = {}
     while queue:
-        src=queue.popleft()
-        if src in seen:continue
+        src = queue.popleft()
+        if src in seen:
+            continue
         seen.add(src)
-        if src.suffix=='.dll':continue
-        dst=stage/src.relative_to(export/'Assets')
+        if src.suffix == ".dll":
+            continue
+        dst = stage / src.relative_to(export / "Assets")
         if not dst.exists():
-            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'));added[str(src.relative_to(export))]=sha(src)
-        if src.read_bytes()[:5]==b'%YAML':
-            for guid in re.findall(r'guid:\s*([a-f0-9]{32})',src.read_text()):
-                if guid.startswith('0000000000000000'):continue
-                target=index.get(guid)
-                if not target or not target.is_file():raise RuntimeError('Unresolved default-skin static GUID '+guid)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
+            added[str(src.relative_to(export))] = sha(src)
+        if src.read_bytes()[:5] == b"%YAML":
+            for guid in re.findall(r"guid:\s*([a-f0-9]{32})", src.read_text()):
+                if guid.startswith("0000000000000000"):
+                    continue
+                target = index.get(guid)
+                if not target or not target.is_file():
+                    raise RuntimeError("Unresolved default-skin static GUID " + guid)
                 queue.append(target)
-    r['default_assets']=['Assets/LabLoadingScene/'+str(Path(base+n).relative_to('Assets')) for n in names]
-    r['default_added_hashes']=added;r['default_binding_scope']='Explicit diagnostic binding on inactive clone; original Addressables/skin-loader execution unproven'
-    write(out/'attempt.json',r)
-    queries=[]
-    for path in r['default_assets']:
-        text=(WORK/'lab-project'/path).read_text();file_id=re.search(r'^--- !u!\d+ &(-?\d+)',text,re.M)[1];queries.append({'path':path,'fileID':file_id})
-    write(WORK/'lab-project/Assets/LabReferenceQuery.json',{'attempt':out.name,'output':str(out/'default-asset-identities.json'),'queries':queries})
-    print(json.dumps({'added_files':len(added),'assets':len(names),'evidence':str(out.relative_to(ROOT))}))
+    r["default_assets"] = ["Assets/LabLoadingScene/" + str(Path(base + n).relative_to("Assets")) for n in names]
+    r["default_added_hashes"] = added
+    r["default_binding_scope"] = "Explicit diagnostic binding on inactive clone; original Addressables/skin-loader execution unproven"
+    write(out / "attempt.json", r)
+    queries = []
+    for path in r["default_assets"]:
+        text = (WORK / "lab-project" / path).read_text()
+        file_id = re.search(r"^--- !u!\d+ &(-?\d+)", text, re.M)[1]
+        queries.append({"path": path, "fileID": file_id})
+    write(WORK / "lab-project/Assets/LabReferenceQuery.json", {"attempt": out.name, "output": str(out / "default-asset-identities.json"), "queries": queries})
+    print(json.dumps({"added_files": len(added), "assets": len(names), "evidence": str(out.relative_to(ROOT))}))
 
 
 def pose_prepare():
     """Reuse the passing inactive content recipe, changing only the visual probe."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_PREFAB_CONTENT.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs from prefab checkpoint')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Previous stage remains; preserve/classify before restoring')
-    for name,h in checkpoint['transformations']['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
-    shutil.copytree(previous/'stage',stage)
-    r=read(previous/'attempt.json');r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'pose':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'restored passing content, visual probe pending'})
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
-    cfg=read(stage/'Resources/LoadingSceneProbe.json');cfg.update({'attempt':out.name,'pose':True});write(stage/'Resources/LoadingSceneProbe.json',cfg)
-    for name in ['LoadingSceneProbe.cs','CommandoPosePreview.cs']:shutil.copy2(ROOT/'tools/unity'/name,stage/name)
-    shutil.copy2(ROOT/'tools/unity/CommandoPreview.shader',stage/'Resources/CommandoPreview.shader')
-    shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':'Transform/renderer-only preview; original gameplay remains inactive'}))
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_PREFAB_CONTENT.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs from prefab checkpoint")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Previous stage remains; preserve/classify before restoring")
+    for name, h in checkpoint["transformations"]["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r = read(previous / "attempt.json")
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "pose": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "restored passing content, visual probe pending",
+        }
+    )
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    cfg = read(stage / "Resources/LoadingSceneProbe.json")
+    cfg.update({"attempt": out.name, "pose": True})
+    write(stage / "Resources/LoadingSceneProbe.json", cfg)
+    for name in ["LoadingSceneProbe.cs", "CommandoPosePreview.cs"]:
+        shutil.copy2(ROOT / "tools/unity" / name, stage / name)
+    shutil.copy2(ROOT / "tools/unity/CommandoPreview.shader", stage / "Resources/CommandoPreview.shader")
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": "Transform/renderer-only preview; original gameplay remains inactive"}))
 
 
 def controller_prepare():
     """Reuse accepted content; replace diagnostic binding with one original request."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_PREFAB_CONTENT.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve and classify previous stage first')
-    for name,h in checkpoint['transformations']['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True)
-    shutil.copytree(previous/'stage',stage)
-    r=read(previous/'attempt.json');r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'controller':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original controller request pending; no scene/prefab activation'})
-    prefab=WORK/'lab-project'/r['prefab'];text=prefab.read_text();key='48ef8327759dd43439416d4823124d9c'
-    if not re.search(r'_animatorControllerAddress:\s*\n\s*m_AssetGUID: '+key,text):raise RuntimeError('Original controller address differs')
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
-    (stage/'Resources/LoadingSceneProbe.json').unlink();(stage/'LoadingSceneProbe.cs').unlink()
-    write(stage/'Resources/ControllerAddressProbe.json',{'attempt':out.name,'key':key,'bundle':'commando-prefab-lab','asset':r['default_assets'][0].lower()})
-    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
-    (stage/'ControllerPreservation').mkdir()
-    shutil.copy2(ROOT/'tools/unity/ControllerAddressLink.xml',stage/'ControllerPreservation/link.xml')
-    shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    write(out/'prior-art.json',{'reference':'docs/community-prior-art.md','sources':['RoR2EditorKit AddressablesPathDictionary','ThunderKit ImportAddressableCatalog','R2API AddressReferencedAsset'],'decision':'Original providers first, real local initialization, explicit original cleanup scheduler; no fake initialization flags'})
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_PREFAB_CONTENT.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve and classify previous stage first")
+    for name, h in checkpoint["transformations"]["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r = read(previous / "attempt.json")
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "controller": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original controller request pending; no scene/prefab activation",
+        }
+    )
+    prefab = WORK / "lab-project" / r["prefab"]
+    text = prefab.read_text()
+    key = "48ef8327759dd43439416d4823124d9c"
+    if not re.search(r"_animatorControllerAddress:\s*\n\s*m_AssetGUID: " + key, text):
+        raise RuntimeError("Original controller address differs")
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    (stage / "Resources/LoadingSceneProbe.json").unlink()
+    (stage / "LoadingSceneProbe.cs").unlink()
+    write(
+        stage / "Resources/ControllerAddressProbe.json",
+        {"attempt": out.name, "key": key, "bundle": "commando-prefab-lab", "asset": r["default_assets"][0].lower()},
+    )
+    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    (stage / "ControllerPreservation").mkdir()
+    shutil.copy2(ROOT / "tools/unity/ControllerAddressLink.xml", stage / "ControllerPreservation/link.xml")
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    write(
+        out / "prior-art.json",
+        {
+            "reference": "docs/community-prior-art.md",
+            "sources": ["RoR2EditorKit AddressablesPathDictionary", "ThunderKit ImportAddressableCatalog", "R2API AddressReferencedAsset"],
+            "decision": "Original providers first, real local initialization, explicit original cleanup scheduler; no fake initialization flags",
+        },
+    )
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": r["status"]}))
 
 
 def avatar_prepare():
     """One original GUID[subobject] request mapped to its recovered standalone Avatar."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_CONTROLLER_LOADER.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    base=ROOT/r['parent_evidence'];catalog=read(base/'default-skin-addresses.json');identities=read(base/'default-asset-identities.json')
-    key='47f06aa0c19f14749840757bbb39d4c8';sub='mdlCommandoDualiesAvatar'
-    location=next(x for x in catalog['locations'] if x['key']==key and x['type']=='UnityEngine.Avatar')
-    identity=next(x for x in identities['rows'] if x['objectType']=='UnityEngine.Avatar' and x['name']==sub and x['resolved'])
-    relative=Path(r['prefab']).relative_to('Assets/LabLoadingScene');prefab=(previous/'stage'/relative).read_text()
-    if not re.search(r'_avatarAddress:\s*\n\s*m_AssetGUID: '+key+r'\s*\n\s*m_SubObjectName: '+sub+r'\s*\n',prefab):raise RuntimeError('Original avatar address differs')
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'avatar':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original avatar subobject request pending; startup inactive'})
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
-    write(stage/'Resources/ControllerAddressProbe.json',{'attempt':out.name,'kind':'avatar','key':key,'subObjectName':sub,'runtimeKey':key+'['+sub+']','asset':identity['path'].lower(),'bundle':'commando-prefab-lab'})
-    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    write(out/'avatar-identity.json',{'original_location':{k:location[k] for k in ['key','internalId','type','provider']},'recovered_identity':identity,'mapping':'Original GUID[subobject] to measured standalone recovered Avatar, not an invented FBX path','prior_art':'RoR2EditorKit BaseGameAssetReferenceTDrawer preserves GUID and subobject separately; original AssetReference.RuntimeKey composes brackets'})
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_CONTROLLER_LOADER.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    base = ROOT / r["parent_evidence"]
+    catalog = read(base / "default-skin-addresses.json")
+    identities = read(base / "default-asset-identities.json")
+    key = "47f06aa0c19f14749840757bbb39d4c8"
+    sub = "mdlCommandoDualiesAvatar"
+    location = next(x for x in catalog["locations"] if x["key"] == key and x["type"] == "UnityEngine.Avatar")
+    identity = next(x for x in identities["rows"] if x["objectType"] == "UnityEngine.Avatar" and x["name"] == sub and x["resolved"])
+    relative = Path(r["prefab"]).relative_to("Assets/LabLoadingScene")
+    prefab = (previous / "stage" / relative).read_text()
+    if not re.search(r"_avatarAddress:\s*\n\s*m_AssetGUID: " + key + r"\s*\n\s*m_SubObjectName: " + sub + r"\s*\n", prefab):
+        raise RuntimeError("Original avatar address differs")
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "avatar": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original avatar subobject request pending; startup inactive",
+        }
+    )
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    write(
+        stage / "Resources/ControllerAddressProbe.json",
+        {
+            "attempt": out.name,
+            "kind": "avatar",
+            "key": key,
+            "subObjectName": sub,
+            "runtimeKey": key + "[" + sub + "]",
+            "asset": identity["path"].lower(),
+            "bundle": "commando-prefab-lab",
+        },
+    )
+    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    write(
+        out / "avatar-identity.json",
+        {
+            "original_location": {k: location[k] for k in ["key", "internalId", "type", "provider"]},
+            "recovered_identity": identity,
+            "mapping": "Original GUID[subobject] to measured standalone recovered Avatar, not an invented FBX path",
+            "prior_art": "RoR2EditorKit BaseGameAssetReferenceTDrawer preserves GUID and subobject separately; original AssetReference.RuntimeKey composes brackets",
+        },
+    )
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": r["status"]}))
 
 
 def skin_prepare():
     """Measure six template paths from serialized references before original baking."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_AVATAR_LOADER.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0];relative=Path('RoR2/Base/Characters/Commando/skinCommandoDefault_params.asset');src=export/'Assets'/relative;params=src.read_text();skin=(previous/'stage'/relative.with_name('skinCommandoDefault.asset')).read_text()
-    if 'baseSkins: []' not in skin:raise RuntimeError('Unexpected base skins')
-    key=re.search(r'skinDefParamsAddress:\s*\n\s*m_AssetGUID: ([a-f0-9]{32})',skin)[1]
-    if key!='529399f7071eb2641897f2895c5d4ef0':raise RuntimeError('Skin params address drift')
-    prefab=(previous/'stage'/Path(r['prefab']).relative_to('Assets/LabLoadingScene')).read_text()
-    blocks={m[1]:m[2] for m in re.finditer(r'^--- !u!\d+ &(-?\d+)\n(.*?)(?=^---|\Z)',prefab,re.M|re.S)}
-    names={i:re.search(r'^  m_Name: (.*)$',b,re.M)[1] for i,b in blocks.items() if b.startswith('GameObject:')}
-    transforms={};go_to_transform={}
-    for i,b in blocks.items():
-        if b.startswith('Transform:'):
-            go=re.search(r'm_GameObject: \{fileID: (-?\d+)',b)[1];parent=re.search(r'm_Father: \{fileID: (-?\d+)',b)[1];transforms[i]=(go,parent);go_to_transform[go]=i
-    root_go=re.search(r'rootObject: \{fileID: (-?\d+)',skin)[1];root_transform=go_to_transform[root_go]
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_AVATAR_LOADER.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    relative = Path("RoR2/Base/Characters/Commando/skinCommandoDefault_params.asset")
+    src = export / "Assets" / relative
+    params = src.read_text()
+    skin = (previous / "stage" / relative.with_name("skinCommandoDefault.asset")).read_text()
+    if "baseSkins: []" not in skin:
+        raise RuntimeError("Unexpected base skins")
+    key = re.search(r"skinDefParamsAddress:\s*\n\s*m_AssetGUID: ([a-f0-9]{32})", skin)[1]
+    if key != "529399f7071eb2641897f2895c5d4ef0":
+        raise RuntimeError("Skin params address drift")
+    prefab = (previous / "stage" / Path(r["prefab"]).relative_to("Assets/LabLoadingScene")).read_text()
+    blocks = {m[1]: m[2] for m in re.finditer(r"^--- !u!\d+ &(-?\d+)\n(.*?)(?=^---|\Z)", prefab, re.M | re.S)}
+    names = {i: re.search(r"^  m_Name: (.*)$", b, re.M)[1] for i, b in blocks.items() if b.startswith("GameObject:")}
+    transforms = {}
+    go_to_transform = {}
+    for i, b in blocks.items():
+        if b.startswith("Transform:"):
+            go = re.search(r"m_GameObject: \{fileID: (-?\d+)", b)[1]
+            parent = re.search(r"m_Father: \{fileID: (-?\d+)", b)[1]
+            transforms[i] = (go, parent)
+            go_to_transform[go] = i
+    root_go = re.search(r"rootObject: \{fileID: (-?\d+)", skin)[1]
+    root_transform = go_to_transform[root_go]
+
     def renderer_path(i):
-        go=re.search(r'm_GameObject: \{fileID: (-?\d+)',blocks[i])[1];node=go_to_transform[go];parts=[];seen=set()
-        while node!=root_transform:
-            if node in seen or node not in transforms:raise RuntimeError('Renderer outside skin root')
-            seen.add(node);go,node=transforms[node];parts.append(names[go])
-        return '/'.join(reversed(parts))
-    renderer_ids=re.findall(r'- renderer: \{fileID: (-?\d+)',params.split('  gameObjectActivations:')[0]);mesh_part=params.split('  meshReplacements:')[1].split('  projectileGhostReplacements:')[0];mesh_ids=re.findall(r'- renderer: \{fileID: (-?\d+)',mesh_part)
-    mesh_pairs=re.findall(r'm_AssetGUID: ([a-f0-9]{32})\s+ m_SubObjectName: (\S+)',mesh_part)
-    materials=re.findall(r'defaultMaterialAddress:\s*\n\s*m_AssetGUID: ([a-f0-9]{32})',params)
-    if len(renderer_ids)!=3 or len(mesh_ids)!=3 or len(mesh_pairs)!=3 or len(set(materials))!=1:raise RuntimeError('Unexpected default skin template contract')
-    for field in ['gameObjectActivations','projectileGhostReplacements','minionSkinReplacements','lightReplacements']:
-        if field+': []' not in params:raise RuntimeError('Unexpected nonempty '+field)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage);shutil.copy2(src,stage/relative);shutil.copy2(Path(str(src)+'.meta'),Path(str(stage/relative)+'.meta'))
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'skin':True,'avatar':False,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original skin baking pending; startup inactive','skin_params_sha256':sha(src)})
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))})
-    root_key=re.search(r'^guid: ([a-f0-9]{32})',(previous/'stage'/Path(str(relative.with_name('skinCommandoDefault.asset'))+'.meta')).read_text(),re.M)[1]
-    cfg={'attempt':out.name,'kind':'skin','key':root_key,'asset':('Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))).lower(),'bundle':'commando-prefab-lab','paramsKey':key,'paramsAsset':('Assets/LabLoadingScene/'+str(relative)).lower(),'rendererPaths':[renderer_path(i) for i in renderer_ids],'meshPaths':[renderer_path(i) for i in mesh_ids],'meshKeys':[g+'['+n+']' for g,n in mesh_pairs],'materialKey':materials[0]}
-    write(stage/'Resources/ControllerAddressProbe.json',cfg);write(out/'skin-contract.json',dict(cfg,root_key_provenance='Diagnostic root uses exported SkinDef GUID; deferred paramsKey is original game address'));shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs')
-    recipe=read(previous/'scene-probe-build.json');recipe['prefabAssets']+=['Assets/LabLoadingScene/'+str(relative), 'Assets/LabLoadingScene/'+str(relative.with_name('skinCommandoDefault.asset'))]
-    write(WORK/'scene-probe-build.json',recipe)
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'renderer_paths':cfg['rendererPaths'],'mesh_paths':cfg['meshPaths']}))
+        go = re.search(r"m_GameObject: \{fileID: (-?\d+)", blocks[i])[1]
+        node = go_to_transform[go]
+        parts = []
+        seen = set()
+        while node != root_transform:
+            if node in seen or node not in transforms:
+                raise RuntimeError("Renderer outside skin root")
+            seen.add(node)
+            go, node = transforms[node]
+            parts.append(names[go])
+        return "/".join(reversed(parts))
+
+    renderer_ids = re.findall(r"- renderer: \{fileID: (-?\d+)", params.split("  gameObjectActivations:")[0])
+    mesh_part = params.split("  meshReplacements:")[1].split("  projectileGhostReplacements:")[0]
+    mesh_ids = re.findall(r"- renderer: \{fileID: (-?\d+)", mesh_part)
+    mesh_pairs = re.findall(r"m_AssetGUID: ([a-f0-9]{32})\s+ m_SubObjectName: (\S+)", mesh_part)
+    materials = re.findall(r"defaultMaterialAddress:\s*\n\s*m_AssetGUID: ([a-f0-9]{32})", params)
+    if len(renderer_ids) != 3 or len(mesh_ids) != 3 or len(mesh_pairs) != 3 or len(set(materials)) != 1:
+        raise RuntimeError("Unexpected default skin template contract")
+    for field in ["gameObjectActivations", "projectileGhostReplacements", "minionSkinReplacements", "lightReplacements"]:
+        if field + ": []" not in params:
+            raise RuntimeError("Unexpected nonempty " + field)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    shutil.copy2(src, stage / relative)
+    shutil.copy2(Path(str(src) + ".meta"), Path(str(stage / relative) + ".meta"))
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "skin": True,
+            "avatar": False,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original skin baking pending; startup inactive",
+            "skin_params_sha256": sha(src),
+        }
+    )
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    root_key = re.search(
+        r"^guid: ([a-f0-9]{32})", (previous / "stage" / Path(str(relative.with_name("skinCommandoDefault.asset")) + ".meta")).read_text(), re.M
+    )[1]
+    cfg = {
+        "attempt": out.name,
+        "kind": "skin",
+        "key": root_key,
+        "asset": ("Assets/LabLoadingScene/" + str(relative.with_name("skinCommandoDefault.asset"))).lower(),
+        "bundle": "commando-prefab-lab",
+        "paramsKey": key,
+        "paramsAsset": ("Assets/LabLoadingScene/" + str(relative)).lower(),
+        "rendererPaths": [renderer_path(i) for i in renderer_ids],
+        "meshPaths": [renderer_path(i) for i in mesh_ids],
+        "meshKeys": [g + "[" + n + "]" for g, n in mesh_pairs],
+        "materialKey": materials[0],
+    }
+    write(stage / "Resources/ControllerAddressProbe.json", cfg)
+    write(out / "skin-contract.json", dict(cfg, root_key_provenance="Diagnostic root uses exported SkinDef GUID; deferred paramsKey is original game address"))
+    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    recipe = read(previous / "scene-probe-build.json")
+    recipe["prefabAssets"] += ["Assets/LabLoadingScene/" + str(relative), "Assets/LabLoadingScene/" + str(relative.with_name("skinCommandoDefault.asset"))]
+    write(WORK / "scene-probe-build.json", recipe)
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "renderer_paths": cfg["rendererPaths"], "mesh_paths": cfg["meshPaths"]}))
 
 
 def skin_apply_prepare():
     """Add only measured material/mesh locations to the accepted original baking probe."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_SKIN_BAKE.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    cfg=read(previous/'stage/Resources/ControllerAddressProbe.json');prefix='Assets/LabLoadingScene/';base='RoR2/Base/Characters/Commando/'
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_SKIN_BAKE.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    cfg = read(previous / "stage/Resources/ControllerAddressProbe.json")
+    prefix = "Assets/LabLoadingScene/"
+    base = "RoR2/Base/Characters/Commando/"
     # J26 measured exported identities; inspect their current archived serialization again.
-    names=[key.split('[',1)[1].rstrip(']') for key in cfg['meshKeys']];mesh_paths=[base+n+'.asset' for n in names]
-    vertices=[]
-    for name,path in zip(names,mesh_paths):
-        text=(previous/'stage'/path).read_text()
-        if re.search(r'^  m_Name: (.*)$',text,re.M)[1]!=name:raise RuntimeError('Mesh name differs')
-        vertices.append(int(re.search(r'm_VertexCount: (\d+)',text)[1]))
-    material_path=base+'matCommandoDualies.mat';material=(previous/'stage'/material_path).read_text();material_name=re.search(r'^  m_Name: (.*)$',material,re.M)[1]
-    if material_name!='matCommandoDualies':raise RuntimeError('Material identity differs')
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'skin_apply':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original skin application on inactive model pending'})
-    cfg.update({'attempt':out.name,'applySkin':True,'meshAssets':[(prefix+x).lower() for x in mesh_paths],'meshNames':names,'meshVertices':vertices,'materialAsset':(prefix+material_path).lower(),'materialName':material_name})
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});write(stage/'Resources/ControllerAddressProbe.json',cfg)
-    write(out/'skin-application-contract.json',dict(cfg,prior_art='Current original RuntimeSkin.ApplyAsync assigns mesh components and CharacterModel.baseRendererInfos; ModelSkinController cleans returned ownership lists. Community skin guidance distinguishes baking from application.',material_scope='Renderer records only; material update and original model lifecycle inactive'))
-    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs');shutil.copy2(ROOT/'tools/unity/ControllerAddressProbe.cs',stage/'ControllerAddressProbe.cs');shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'mesh_vertices':vertices,'scope':r['status']}))
+    names = [key.split("[", 1)[1].rstrip("]") for key in cfg["meshKeys"]]
+    mesh_paths = [base + n + ".asset" for n in names]
+    vertices = []
+    for name, path in zip(names, mesh_paths):
+        text = (previous / "stage" / path).read_text()
+        if re.search(r"^  m_Name: (.*)$", text, re.M)[1] != name:
+            raise RuntimeError("Mesh name differs")
+        vertices.append(int(re.search(r"m_VertexCount: (\d+)", text)[1]))
+    material_path = base + "matCommandoDualies.mat"
+    material = (previous / "stage" / material_path).read_text()
+    material_name = re.search(r"^  m_Name: (.*)$", material, re.M)[1]
+    if material_name != "matCommandoDualies":
+        raise RuntimeError("Material identity differs")
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "skin_apply": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original skin application on inactive model pending",
+        }
+    )
+    cfg.update(
+        {
+            "attempt": out.name,
+            "applySkin": True,
+            "meshAssets": [(prefix + x).lower() for x in mesh_paths],
+            "meshNames": names,
+            "meshVertices": vertices,
+            "materialAsset": (prefix + material_path).lower(),
+            "materialName": material_name,
+        }
+    )
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    write(stage / "Resources/ControllerAddressProbe.json", cfg)
+    write(
+        out / "skin-application-contract.json",
+        dict(
+            cfg,
+            prior_art="Current original RuntimeSkin.ApplyAsync assigns mesh components and CharacterModel.baseRendererInfos; ModelSkinController cleans returned ownership lists. Community skin guidance distinguishes baking from application.",
+            material_scope="Renderer records only; material update and original model lifecycle inactive",
+        ),
+    )
+    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "mesh_vertices": vertices, "scope": r["status"]}))
+
 
 def material_render_prepare():
     """L11-a: restore J38 and add only original slot assignment plus owned display copies."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_SKIN_APPLICATION.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    cfg=read(stage/'Resources/ControllerAddressProbe.json');cfg.update({'attempt':out.name,'materialRender':True})
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'skin_apply':True,'material_render':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'L11-a original renderer assignment and owned Android material display pending'})
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});write(stage/'Resources/ControllerAddressProbe.json',cfg)
-    for name in ['ControllerAddressProbe.cs','CommandoMaterialPreview.cs','CommandoMaterialPreview.shader','CommandoPreview.shader']:shutil.copy2(ROOT/'tools/unity'/name,stage/('Resources/'+name if name.endswith('.shader') else name))
-    write(out/'material-render-contract.json',{'source':'J38 accepted skin application','prior_art':'Pinned RoR2EditorKit ShaderPostprocessor is editor-only; original CharacterModel selection is invoked without lifecycle','scope':'Three original renderer slots then detached owned shader material copies; no gameplay/platform/audio/startup'})
-    shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_SKIN_APPLICATION.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    cfg = read(stage / "Resources/ControllerAddressProbe.json")
+    cfg.update({"attempt": out.name, "materialRender": True})
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "skin_apply": True,
+            "material_render": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "L11-a original renderer assignment and owned Android material display pending",
+        }
+    )
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    write(stage / "Resources/ControllerAddressProbe.json", cfg)
+    for name in ["ControllerAddressProbe.cs", "CommandoMaterialPreview.cs", "CommandoMaterialPreview.shader", "CommandoPreview.shader"]:
+        shutil.copy2(ROOT / "tools/unity" / name, stage / ("Resources/" + name if name.endswith(".shader") else name))
+    write(
+        out / "material-render-contract.json",
+        {
+            "source": "J38 accepted skin application",
+            "prior_art": "Pinned RoR2EditorKit ShaderPostprocessor is editor-only; original CharacterModel selection is invoked without lifecycle",
+            "scope": "Three original renderer slots then detached owned shader material copies; no gameplay/platform/audio/startup",
+        },
+    )
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": r["status"]}))
 
 
 def state_tick_prepare():
     """One scheduling precursor, on the accepted material/content closure."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_MATERIAL_RENDERING.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'state_tick':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original state scheduling precursor pending; no character or authority'})
-    cfg=read(stage/'Resources/ControllerAddressProbe.json');cfg['attempt']=out.name
-    write(stage/'Resources/ControllerAddressProbe.json',cfg);write(stage/'Resources/EntityStateTickProbe.json',{'attempt':out.name})
-    shutil.copy2(ROOT/'tools/unity/EntityStateTickProbe.cs',stage/'EntityStateTickProbe.cs')
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_MATERIAL_RENDERING.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "state_tick": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original state scheduling precursor pending; no character or authority",
+        }
+    )
+    cfg = read(stage / "Resources/ControllerAddressProbe.json")
+    cfg["attempt"] = out.name
+    write(stage / "Resources/ControllerAddressProbe.json", cfg)
+    write(stage / "Resources/EntityStateTickProbe.json", {"attempt": out.name})
+    shutil.copy2(ROOT / "tools/unity/EntityStateTickProbe.cs", stage / "EntityStateTickProbe.cs")
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": r["status"]}))
 
 
 def direction_prepare():
     """Reuse accepted scheduler closure for one original direction/authority probe."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_STATE_SCHEDULER.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'direction_probe':True,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original facing and local server-owned authority pending; no body/master'})
-    for name in ['ControllerAddressProbe','EntityStateTickProbe']:
-        cfg=read(stage/('Resources/'+name+'.json'));cfg['attempt']=out.name;write(stage/('Resources/'+name+'.json'),cfg)
-    write(stage/'Resources/CharacterDirectionProbe.json',{'attempt':out.name});shutil.copy2(ROOT/'tools/unity/CharacterDirectionProbe.cs',stage/'CharacterDirectionProbe.cs')
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_STATE_SCHEDULER.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "direction_probe": True,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original facing and local server-owned authority pending; no body/master",
+        }
+    )
+    for name in ["ControllerAddressProbe", "EntityStateTickProbe"]:
+        cfg = read(stage / ("Resources/" + name + ".json"))
+        cfg["attempt"] = out.name
+        write(stage / ("Resources/" + name + ".json"), cfg)
+    write(stage / "Resources/CharacterDirectionProbe.json", {"attempt": out.name})
+    shutil.copy2(ROOT / "tools/unity/CharacterDirectionProbe.cs", stage / "CharacterDirectionProbe.cs")
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": r["status"]}))
 
 
-def startup_prepare(loading_scene=False, application_awake=False, global_textures=False, interpolation=False, fps_queue=False, volume=False, volume_order=False, ngss=False, integration=False):
+def startup_prepare(
+    loading_scene=False,
+    application_awake=False,
+    global_textures=False,
+    interpolation=False,
+    fps_queue=False,
+    volume=False,
+    volume_order=False,
+    ngss=False,
+    integration=False,
+):
     """Restore accepted runtime and isolate the first original startup phase."""
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints'/('LAST_KNOWN_GOOD_NGSS.json' if integration else 'LAST_KNOWN_GOOD_VOLUME_ORDER.json' if ngss else 'LAST_KNOWN_GOOD_VOLUME.json' if volume_order else 'LAST_KNOWN_GOOD_FPS_QUEUE.json' if volume else 'LAST_KNOWN_GOOD_INTERPOLATION.json' if fps_queue else 'LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json' if interpolation else 'LAST_KNOWN_GOOD_APPLICATION_AWAKE.json' if global_textures else 'LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json' if application_awake else 'LAST_KNOWN_GOOD_STARTUP_SEGMENT.json' if loading_scene else 'LAST_KNOWN_GOOD_SKIN_APPLICATION.json'))
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Archived original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    r.update({'attempt':out.name,'evidence':str(out.relative_to(ROOT)),'stage':str(stage),'startup':True,'controller':False,'skin':False,'skin_apply':False,'avatar':False,'parent_evidence':str(previous.relative_to(ROOT)),'status':'Original startup PreFrame and independent profile filesystem candidate pending'})
-    (stage/'ControllerAddressProbe.cs').unlink(missing_ok=True);(stage/'Resources/ControllerAddressProbe.json').unlink(missing_ok=True)
-    shutil.copy2(ROOT/'tools/unity/AudioAssetProbe.cs',stage/'AudioAssetProbe.cs')
-    shutil.copy2(ROOT/'tools/unity/StartupSegmentProbe.cs',stage/'StartupSegmentProbe.cs');write(stage/'Resources/StartupSegmentProbe.json',{'attempt':out.name,'loadingScene':loading_scene,'applicationAwake':application_awake})
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    for name in ['original-metadata.json','reflection-metadata.json']:shutil.copy2(WORK/'experiments/startup-boundary'/name,out/name)
-    write(out/'startup-contract.json',{'segment':'Original InitializeGameRoutine first MoveNext, then reviewed PreFrame enumerator only; Awake and later startup remain inactive','expected_targets':['FlashWindow.Init'],'predicted_boundary':'FlashWindow cctor calls kernel32 GetCurrentProcessId; establish actual device outcome without patching','profile':'Original Zio SubFileSystem under fresh owned persistent directory; read-only content view, no vanilla saves or global filesystem assignment','prior_art':'ProperSave filesystem policy separation; community-prior-art.md startup trace; actual original DLL IL rechecked'})
+
+    preflight()
+    checkpoint = read(
+        WORK
+        / "checkpoints"
+        / (
+            "LAST_KNOWN_GOOD_NGSS.json"
+            if integration
+            else "LAST_KNOWN_GOOD_VOLUME_ORDER.json"
+            if ngss
+            else "LAST_KNOWN_GOOD_VOLUME.json"
+            if volume_order
+            else "LAST_KNOWN_GOOD_FPS_QUEUE.json"
+            if volume
+            else "LAST_KNOWN_GOOD_INTERPOLATION.json"
+            if fps_queue
+            else "LAST_KNOWN_GOOD_GLOBAL_TEXTURES.json"
+            if interpolation
+            else "LAST_KNOWN_GOOD_APPLICATION_AWAKE.json"
+            if global_textures
+            else "LAST_KNOWN_GOOD_STARTUP_LOADING_SCENE.json"
+            if application_awake
+            else "LAST_KNOWN_GOOD_STARTUP_SEGMENT.json"
+            if loading_scene
+            else "LAST_KNOWN_GOOD_SKIN_APPLICATION.json"
+        )
+    )
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Archived original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    r.update(
+        {
+            "attempt": out.name,
+            "evidence": str(out.relative_to(ROOT)),
+            "stage": str(stage),
+            "startup": True,
+            "controller": False,
+            "skin": False,
+            "skin_apply": False,
+            "avatar": False,
+            "parent_evidence": str(previous.relative_to(ROOT)),
+            "status": "Original startup PreFrame and independent profile filesystem candidate pending",
+        }
+    )
+    (stage / "ControllerAddressProbe.cs").unlink(missing_ok=True)
+    (stage / "Resources/ControllerAddressProbe.json").unlink(missing_ok=True)
+    shutil.copy2(ROOT / "tools/unity/AudioAssetProbe.cs", stage / "AudioAssetProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/StartupSegmentProbe.cs", stage / "StartupSegmentProbe.cs")
+    write(stage / "Resources/StartupSegmentProbe.json", {"attempt": out.name, "loadingScene": loading_scene, "applicationAwake": application_awake})
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    for name in ["original-metadata.json", "reflection-metadata.json"]:
+        shutil.copy2(WORK / "experiments/startup-boundary" / name, out / name)
+    write(
+        out / "startup-contract.json",
+        {
+            "segment": "Original InitializeGameRoutine first MoveNext, then reviewed PreFrame enumerator only; Awake and later startup remain inactive",
+            "expected_targets": ["FlashWindow.Init"],
+            "predicted_boundary": "FlashWindow cctor calls kernel32 GetCurrentProcessId; establish actual device outcome without patching",
+            "profile": "Original Zio SubFileSystem under fresh owned persistent directory; read-only content view, no vanilla saves or global filesystem assignment",
+            "prior_art": "ProperSave filesystem policy separation; community-prior-art.md startup trace; actual original DLL IL rechecked",
+        },
+    )
     if loading_scene:
-        r['startup_loading_scene']=True;r['status']='Original recovered loading-scene handoff pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Original PreFrame then actual recovered loadingbasic and two original loading UI yields; stop before EnableBehaviours', 'predicted_boundary':'Recovered Canvas/percentage and enable-list identities; no new adapter'});write(out/'startup-contract.json',contract)
+        r["startup_loading_scene"] = True
+        r["status"] = "Original recovered loading-scene handoff pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Original PreFrame then actual recovered loadingbasic and two original loading UI yields; stop before EnableBehaviours",
+                "predicted_boundary": "Recovered Canvas/percentage and enable-list identities; no new adapter",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if application_awake:
-        r['startup_application_awake']=True;r['status']='Original recovered application Awake pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted loading UI then explicitly invoke original Awake on inactive recovered component; no automatic Start/Update', 'predicted_boundary':'Original loading flag prevents duplicate coroutine; real singleton, build ID and assembly types must match; entitlement subscriptions do not assert entitlement success'});write(out/'startup-contract.json',contract)
+        r["startup_application_awake"] = True
+        r["status"] = "Original recovered application Awake pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Accepted loading UI then explicitly invoke original Awake on inactive recovered component; no automatic Start/Update",
+                "predicted_boundary": "Original loading flag prevents duplicate coroutine; real singleton, build ID and assembly types must match; entitlement subscriptions do not assert entitlement success",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if global_textures:
         import struct
-        scene=(stage/'RoR2/Base/Scenes/loadingbasic/loadingbasic.unity').read_text()
-        block=re.search(r'^--- !u!114 &218\n.*?(?=^---|\Z)',scene,re.M|re.S).group(0)
-        pairs=[('warpRampTexture','warpRampShaderVariableName'),('eliteRampTexture','eliteRampShaderVariableName'),('snowMicrofacetTexture','snowMicrofacetNoiseVariableName')]
-        textures=[];identities=[]
-        for field,variable_field in pairs:
-            match=re.search(r'^  '+field+r': \{fileID: (\d+), guid: ([a-f0-9]+), type: 3\}',block,re.M)
-            if not match or match[1]!='2800000':raise RuntimeError('Unreviewed texture reference '+field)
-            guid=match[2];matches=[p for p in stage.rglob('*.png.meta') if 'guid: '+guid in p.read_text()]
-            if len(matches)!=1:raise RuntimeError('Ambiguous texture GUID '+guid)
-            source=Path(str(matches[0])[:-5]);data=source.read_bytes()
-            if data[:8]!=b'\x89PNG\r\n\x1a\n':raise RuntimeError('Expected PNG source')
-            width,height=struct.unpack('>II',data[16:24]);variable=re.search(r'^  '+variable_field+r': (.+)$',block,re.M)[1]
-            textures.append({'name':source.stem,'variable':variable,'width':width,'height':height})
-            identities.append({'field':field,'guid':guid,'fileID':match[1],'source':str(source.relative_to(stage)),'sha256':sha(source),'expected':textures[-1]})
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'globalTextures':True,'textures':textures});write(stage/'Resources/StartupSegmentProbe.json',cfg)
-        write(out/'texture-identities.json',identities);r['startup_global_textures']=True;r['status']='Original global texture Start pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted recovered Awake then original GlobalShaderTextures.Start on actual inactive component','assertions':'Three serialized GUID/PNG identities and globals; clear only measured globals before original invocation and restore previous values afterward; no rendering claim'});write(out/'startup-contract.json',contract)
+
+        scene = (stage / "RoR2/Base/Scenes/loadingbasic/loadingbasic.unity").read_text()
+        block = re.search(r"^--- !u!114 &218\n.*?(?=^---|\Z)", scene, re.M | re.S).group(0)
+        pairs = [
+            ("warpRampTexture", "warpRampShaderVariableName"),
+            ("eliteRampTexture", "eliteRampShaderVariableName"),
+            ("snowMicrofacetTexture", "snowMicrofacetNoiseVariableName"),
+        ]
+        textures = []
+        identities = []
+        for field, variable_field in pairs:
+            match = re.search(r"^  " + field + r": \{fileID: (\d+), guid: ([a-f0-9]+), type: 3\}", block, re.M)
+            if not match or match[1] != "2800000":
+                raise RuntimeError("Unreviewed texture reference " + field)
+            guid = match[2]
+            matches = [p for p in stage.rglob("*.png.meta") if "guid: " + guid in p.read_text()]
+            if len(matches) != 1:
+                raise RuntimeError("Ambiguous texture GUID " + guid)
+            source = Path(str(matches[0])[:-5])
+            data = source.read_bytes()
+            if data[:8] != b"\x89PNG\r\n\x1a\n":
+                raise RuntimeError("Expected PNG source")
+            width, height = struct.unpack(">II", data[16:24])
+            variable = re.search(r"^  " + variable_field + r": (.+)$", block, re.M)[1]
+            textures.append({"name": source.stem, "variable": variable, "width": width, "height": height})
+            identities.append(
+                {"field": field, "guid": guid, "fileID": match[1], "source": str(source.relative_to(stage)), "sha256": sha(source), "expected": textures[-1]}
+            )
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg.update({"globalTextures": True, "textures": textures})
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        write(out / "texture-identities.json", identities)
+        r["startup_global_textures"] = True
+        r["status"] = "Original global texture Start pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Accepted recovered Awake then original GlobalShaderTextures.Start on actual inactive component",
+                "assertions": "Three serialized GUID/PNG identities and globals; clear only measured globals before original invocation and restore previous values afterward; no rendering claim",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if interpolation:
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['interpolation']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-        r['startup_interpolation']=True;r['status']='Original interpolation methods pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted texture probe then original interpolation Start/FixedUpdate/Update under diagnostic scheduling','assertions':'Initial fallback, nine real fixed samples/eight independent render timing comparisons, two-sample history and previous-state restoration; no character motion or automatic lifecycle claim'});write(out/'startup-contract.json',contract)
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg["interpolation"] = True
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        r["startup_interpolation"] = True
+        r["status"] = "Original interpolation methods pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Accepted texture probe then original interpolation Start/FixedUpdate/Update under diagnostic scheduling",
+                "assertions": "Initial fallback, nine real fixed samples/eight independent render timing comparisons, two-sample history and previous-state restoration; no character motion or automatic lifecycle claim",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if fps_queue:
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['fpsQueue']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-        r['startup_fps_queue']=True;r['status']='Original FPSQueue callback pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Accepted component probes then original FPSQueue.Start and only its newly registered callback','assertions':'36 measured frame samples, rolling average/index/turn checks, wait-slot wrap and throttling decisions; restore original subscription/static state; never invoke unrelated subscribers'});write(out/'startup-contract.json',contract)
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg["fpsQueue"] = True
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        r["startup_fps_queue"] = True
+        r["status"] = "Original FPSQueue callback pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Accepted component probes then original FPSQueue.Start and only its newly registered callback",
+                "assertions": "36 measured frame samples, rolling average/index/turn checks, wait-slot wrap and throttling decisions; restore original subscription/static state; never invoke unrelated subscribers",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if volume:
-        scene=(stage/'RoR2/Base/Scenes/loadingbasic/loadingbasic.unity').read_text();profiles=[];identities=[]
-        for fid in [219,222]:
-            block=re.search(r'^--- !u!114 &'+str(fid)+r'\n.*?(?=^---|\Z)',scene,re.M|re.S)[0]
-            guid=re.search(r'sharedProfile: \{fileID: 11400000, guid: ([a-f0-9]+), type: 2\}',block)[1]
-            matches=[p for p in stage.rglob('*.asset.meta') if 'guid: '+guid in p.read_text()]
-            if len(matches)!=1:raise RuntimeError('Ambiguous volume profile '+guid)
-            source=Path(str(matches[0])[:-5]);text=source.read_text();blocks=dict(re.findall(r'^--- !u!114 &(\d+)\n(.*?)(?=^---|\Z)',text,re.M|re.S));root=blocks['11400000'];settings=[];refs=re.findall(r'^  - \{fileID: (\d+)\}',root,re.M)
+        scene = (stage / "RoR2/Base/Scenes/loadingbasic/loadingbasic.unity").read_text()
+        profiles = []
+        identities = []
+        for fid in [219, 222]:
+            block = re.search(r"^--- !u!114 &" + str(fid) + r"\n.*?(?=^---|\Z)", scene, re.M | re.S)[0]
+            guid = re.search(r"sharedProfile: \{fileID: 11400000, guid: ([a-f0-9]+), type: 2\}", block)[1]
+            matches = [p for p in stage.rglob("*.asset.meta") if "guid: " + guid in p.read_text()]
+            if len(matches) != 1:
+                raise RuntimeError("Ambiguous volume profile " + guid)
+            source = Path(str(matches[0])[:-5])
+            text = source.read_text()
+            blocks = dict(re.findall(r"^--- !u!114 &(\d+)\n(.*?)(?=^---|\Z)", text, re.M | re.S))
+            root = blocks["11400000"]
+            settings = []
+            refs = re.findall(r"^  - \{fileID: (\d+)\}", root, re.M)
             for ref in refs:
-                b=blocks[ref];settings.append({'name':re.search(r'^  m_Name: (.+)$',b,re.M)[1],'active':re.search(r'^  active: (\d+)$',b,re.M)[1]=='1','enabled':re.search(r'^  enabled:\n    overrideState: \d+\n    value: (\d+)',b,re.M)[1]=='1'})
-            profiles.append({'name':re.search(r'^  m_Name: (.+)$',root,re.M)[1],'priority':float(re.search(r'^  priority: (.+)$',block,re.M)[1]),'settings':settings});identities.append({'volume_fileID':fid,'profile_guid':guid,'source':str(source.relative_to(stage)),'sha256':sha(source),'setting_fileIDs':refs,'expected':profiles[-1]})
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'volume':True,'volumes':profiles});write(stage/'Resources/StartupSegmentProbe.json',cfg);write(out/'volume-identities.json',identities)
-        r['startup_volume']=True;r['status']='Original first postprocessing volume lifecycle pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Audit both recovered profiles, execute first volume OnEnable/Update/OnDisable only','assertions':'Exact profile/settings identity and balanced manager registrations; restore component fields; no renderer or second-volume lifecycle claim'});write(out/'startup-contract.json',contract)
+                b = blocks[ref]
+                settings.append(
+                    {
+                        "name": re.search(r"^  m_Name: (.+)$", b, re.M)[1],
+                        "active": re.search(r"^  active: (\d+)$", b, re.M)[1] == "1",
+                        "enabled": re.search(r"^  enabled:\n    overrideState: \d+\n    value: (\d+)", b, re.M)[1] == "1",
+                    }
+                )
+            profiles.append(
+                {
+                    "name": re.search(r"^  m_Name: (.+)$", root, re.M)[1],
+                    "priority": float(re.search(r"^  priority: (.+)$", block, re.M)[1]),
+                    "settings": settings,
+                }
+            )
+            identities.append(
+                {
+                    "volume_fileID": fid,
+                    "profile_guid": guid,
+                    "source": str(source.relative_to(stage)),
+                    "sha256": sha(source),
+                    "setting_fileIDs": refs,
+                    "expected": profiles[-1],
+                }
+            )
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg.update({"volume": True, "volumes": profiles})
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        write(out / "volume-identities.json", identities)
+        r["startup_volume"] = True
+        r["status"] = "Original first postprocessing volume lifecycle pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Audit both recovered profiles, execute first volume OnEnable/Update/OnDisable only",
+                "assertions": "Exact profile/settings identity and balanced manager registrations; restore component fields; no renderer or second-volume lifecycle claim",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if volume_order:
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['volumeOrder']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-        r['startup_volume_order']=True;r['status']='Original volume pair priority ordering pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Both original volume lifecycles registered in reverse priority order; original GrabVolumes query','assertions':'Original manager returns ascending priority for actual layer and excludes pair from zero mask; registrations and queried list return to baseline; component fields restored; no rendering claim'});write(out/'startup-contract.json',contract)
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg["volumeOrder"] = True
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        r["startup_volume_order"] = True
+        r["status"] = "Original volume pair priority ordering pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Both original volume lifecycles registered in reverse priority order; original GrabVolumes query",
+                "assertions": "Original manager returns ascending priority for actual layer and excludes pair from zero mask; registrations and queried list return to baseline; component fields restored; no rendering claim",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if ngss:
         import struct
-        source=stage/'Scripts/Assembly-CSharp/NGSS_Local.cs';expected=r['copied_source_hashes']['Assets/Scripts/Assembly-CSharp/NGSS_Local.cs']
-        if sha(source)!=expected:raise RuntimeError('Recovered NGSS source drift')
-        scene=(stage/'RoR2/Base/Scenes/loadingbasic/loadingbasic.unity').read_text();block=re.search(r'^--- !u!114 &225\n.*?(?=^---|\Z)',scene,re.M|re.S)[0]
-        guid=re.search(r'NGSS_NOISE_TEXTURE: \{fileID: 2800000, guid: ([a-f0-9]+), type: 3\}',block)[1];matches=[p for p in stage.rglob('*.png.meta') if 'guid: '+guid in p.read_text()]
-        if len(matches)!=1:raise RuntimeError('Ambiguous noise texture')
-        noise=Path(str(matches[0])[:-5]);width,height=struct.unpack('>II',noise.read_bytes()[16:24]);fields={k:float(v) for k,v in re.findall(r'^  (NGSS_\w+): (-?[\d.]+)$',block,re.M)}
-        values={'NGSS_TEST_SAMPLERS':max(4,min(fields['NGSS_SAMPLING_TEST'],fields['NGSS_SAMPLING_FILTER'])),'NGSS_PCSS_FILTER_LOCAL_MIN':fields['NGSS_PCSS_SOFTNESS_NEAR'],'NGSS_PCSS_FILTER_LOCAL_MAX':fields['NGSS_PCSS_SOFTNESS_FAR'],'NGSS_NOISE_TO_DITHERING_SCALE':fields['NGSS_NOISE_TO_DITHERING_SCALE'],'NGSS_FILTER_SAMPLERS':fields['NGSS_SAMPLING_FILTER'],'NGSS_GLOBAL_OPACITY':1-fields['NGSS_SHADOWS_OPACITY'],'NGSS_LOCAL_SAMPLING_DISTANCE':fields['NGSS_SAMPLING_DISTANCE'],'NGSS_LOCAL_NORMAL_BIAS':fields['NGSS_NORMAL_BIAS']*0.1}
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg.update({'ngss':True,'noise':{'name':noise.stem,'width':width,'height':height},'ngssGlobals':[{'name':k,'value':v} for k,v in values.items()]});write(stage/'Resources/StartupSegmentProbe.json',cfg)
-        write(out/'ngss-provenance.json',{'code':'Locally recompiled recovered source, NOT preserved original Assembly-CSharp DLL','source':str(source.relative_to(stage)),'source_sha256':expected,'noise_guid':guid,'noise_source':str(noise.relative_to(stage)),'noise_sha256':sha(noise),'serialized_fields':fields,'expected_globals':values})
-        r['startup_ngss']=True;r['status']='Recovered NGSS initialization pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Locally recompiled recovered NGSS OnEnable/Update/OnDisable, serialized noise path only','assertions':'Noise identity, eight shader globals, initialized/disabled state and previous-global restoration; no fallback-resource or rendered-shadow proof'});write(out/'startup-contract.json',contract)
+
+        source = stage / "Scripts/Assembly-CSharp/NGSS_Local.cs"
+        expected = r["copied_source_hashes"]["Assets/Scripts/Assembly-CSharp/NGSS_Local.cs"]
+        if sha(source) != expected:
+            raise RuntimeError("Recovered NGSS source drift")
+        scene = (stage / "RoR2/Base/Scenes/loadingbasic/loadingbasic.unity").read_text()
+        block = re.search(r"^--- !u!114 &225\n.*?(?=^---|\Z)", scene, re.M | re.S)[0]
+        guid = re.search(r"NGSS_NOISE_TEXTURE: \{fileID: 2800000, guid: ([a-f0-9]+), type: 3\}", block)[1]
+        matches = [p for p in stage.rglob("*.png.meta") if "guid: " + guid in p.read_text()]
+        if len(matches) != 1:
+            raise RuntimeError("Ambiguous noise texture")
+        noise = Path(str(matches[0])[:-5])
+        width, height = struct.unpack(">II", noise.read_bytes()[16:24])
+        fields = {k: float(v) for k, v in re.findall(r"^  (NGSS_\w+): (-?[\d.]+)$", block, re.M)}
+        values = {
+            "NGSS_TEST_SAMPLERS": max(4, min(fields["NGSS_SAMPLING_TEST"], fields["NGSS_SAMPLING_FILTER"])),
+            "NGSS_PCSS_FILTER_LOCAL_MIN": fields["NGSS_PCSS_SOFTNESS_NEAR"],
+            "NGSS_PCSS_FILTER_LOCAL_MAX": fields["NGSS_PCSS_SOFTNESS_FAR"],
+            "NGSS_NOISE_TO_DITHERING_SCALE": fields["NGSS_NOISE_TO_DITHERING_SCALE"],
+            "NGSS_FILTER_SAMPLERS": fields["NGSS_SAMPLING_FILTER"],
+            "NGSS_GLOBAL_OPACITY": 1 - fields["NGSS_SHADOWS_OPACITY"],
+            "NGSS_LOCAL_SAMPLING_DISTANCE": fields["NGSS_SAMPLING_DISTANCE"],
+            "NGSS_LOCAL_NORMAL_BIAS": fields["NGSS_NORMAL_BIAS"] * 0.1,
+        }
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg.update(
+            {"ngss": True, "noise": {"name": noise.stem, "width": width, "height": height}, "ngssGlobals": [{"name": k, "value": v} for k, v in values.items()]}
+        )
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        write(
+            out / "ngss-provenance.json",
+            {
+                "code": "Locally recompiled recovered source, NOT preserved original Assembly-CSharp DLL",
+                "source": str(source.relative_to(stage)),
+                "source_sha256": expected,
+                "noise_guid": guid,
+                "noise_source": str(noise.relative_to(stage)),
+                "noise_sha256": sha(noise),
+                "serialized_fields": fields,
+                "expected_globals": values,
+            },
+        )
+        r["startup_ngss"] = True
+        r["status"] = "Recovered NGSS initialization pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Locally recompiled recovered NGSS OnEnable/Update/OnDisable, serialized noise path only",
+                "assertions": "Noise identity, eight shader globals, initialized/disabled state and previous-global restoration; no fallback-resource or rendered-shadow proof",
+            }
+        )
+        write(out / "startup-contract.json", contract)
     if integration:
-        cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['integration']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-        r['startup_integration']=True;r['status']='Automatic recovered host startup before audio pending';write(out/'attempt.json',r)
-        contract=read(out/'startup-contract.json');contract.update({'segment':'Fresh actual recovered host owns original routine; its first yield establishes loading state, then Unity activation invokes automatic callbacks; advance through component enabling only','assertions':'Exact eight-MonoBehaviour closure including FontCleaner, automatic Start/Update/FixedUpdate/LateUpdate observations, six active enabled components, no new errors or filesystem assignment; next routine instruction is Wwise and is not executed'});write(out/'startup-contract.json',contract)
-    print(json.dumps({'evidence':str(out.relative_to(ROOT)),'scope':r['status']}))
+        cfg = read(stage / "Resources/StartupSegmentProbe.json")
+        cfg["integration"] = True
+        write(stage / "Resources/StartupSegmentProbe.json", cfg)
+        r["startup_integration"] = True
+        r["status"] = "Automatic recovered host startup before audio pending"
+        write(out / "attempt.json", r)
+        contract = read(out / "startup-contract.json")
+        contract.update(
+            {
+                "segment": "Fresh actual recovered host owns original routine; its first yield establishes loading state, then Unity activation invokes automatic callbacks; advance through component enabling only",
+                "assertions": "Exact eight-MonoBehaviour closure including FontCleaner, automatic Start/Update/FixedUpdate/LateUpdate observations, six active enabled components, no new errors or filesystem assignment; next routine instruction is Wwise and is not executed",
+            }
+        )
+        write(out / "startup-contract.json", contract)
+    print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": r["status"]}))
 
 
 def audio_assets_prepare(native_availability=False):
     """J51 measured prefab closure; asset loading only, no audio activation."""
     startup_prepare(integration=True)
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
-    audit=WORK/'experiments/audio-boundary/20260914T032612Z'
-    identities=read(audit/'identities.json')['rows']
-    if len(identities)!=8 or not all(x['resolved'] and not x['error'] for x in identities):raise RuntimeError('Audio identity gate failed')
-    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets'
-    closure=read(audit/'serialized-closure.json')
-    if closure['unresolved']:raise RuntimeError('Unresolved audio closure')
-    for row in closure['files']:
-        src=export/row['path']
-        if sha(src)!=row['sha256']:raise RuntimeError('Audio input drift '+row['path'])
-        if src.suffix=='.dll':continue
-        dst=stage/row['path'];dst.parent.mkdir(parents=True,exist_ok=True)
-        shutil.copy2(src,dst);shutil.copy2(Path(str(src)+'.meta'),Path(str(dst)+'.meta'))
-    names=['WwiseGlobal','AudioManager'];assets=['Assets/LabLoadingScene/RoR2/Base/Core/Audio/'+n+'.prefab' for n in names]
-    cfg={'names':names,'paths':['Prefabs/'+n for n in names],'keys':['8efd031dc149abb42a4ba4021856af9d','d42d5c95eee66a348a4c4abf71e0352b'],'assets':assets}
-    cfg['nativeAvailability']=native_availability
-    write(stage/'Resources/AudioAssetProbe.json',cfg);shutil.copy2(ROOT/'tools/unity/AudioAssetProbe.cs',stage/'AudioAssetProbe.cs')
-    build=read(WORK/'scene-probe-build.json');build['prefabAssets']+=assets;write(WORK/'scene-probe-build.json',build)
-    r['audio_assets']=True;write(out/'attempt.json',r);write(out/'audio-closure.json',closure);write(out/'audio-config.json',cfg)
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    stage = Path(r["stage"])
+    audit = WORK / "experiments/audio-boundary/20260914T032612Z"
+    identities = read(audit / "identities.json")["rows"]
+    if len(identities) != 8 or not all(x["resolved"] and not x["error"] for x in identities):
+        raise RuntimeError("Audio identity gate failed")
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0] / "Assets"
+    closure = read(audit / "serialized-closure.json")
+    if closure["unresolved"]:
+        raise RuntimeError("Unresolved audio closure")
+    for row in closure["files"]:
+        src = export / row["path"]
+        if sha(src) != row["sha256"]:
+            raise RuntimeError("Audio input drift " + row["path"])
+        if src.suffix == ".dll":
+            continue
+        dst = stage / row["path"]
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
+    names = ["WwiseGlobal", "AudioManager"]
+    assets = ["Assets/LabLoadingScene/RoR2/Base/Core/Audio/" + n + ".prefab" for n in names]
+    cfg = {
+        "names": names,
+        "paths": ["Prefabs/" + n for n in names],
+        "keys": ["8efd031dc149abb42a4ba4021856af9d", "d42d5c95eee66a348a4c4abf71e0352b"],
+        "assets": assets,
+    }
+    cfg["nativeAvailability"] = native_availability
+    write(stage / "Resources/AudioAssetProbe.json", cfg)
+    shutil.copy2(ROOT / "tools/unity/AudioAssetProbe.cs", stage / "AudioAssetProbe.cs")
+    build = read(WORK / "scene-probe-build.json")
+    build["prefabAssets"] += assets
+    write(WORK / "scene-probe-build.json", build)
+    r["audio_assets"] = True
+    write(out / "attempt.json", r)
+    write(out / "audio-closure.json", closure)
+    write(out / "audio-config.json", cfg)
 
 
 def audio_guard_prepare():
     from boundaries import probe_tool
+
     audio_assets_prepare(native_availability=True)
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
-    original=stage/'Plugins/RoR2.dll';candidate=out/'RoR2.audio-unavailable.dll'
-    command=probe_tool()
-    result=json.loads(run(command+['--audio-guard',original,candidate,r['original_assemblies']['RoR2.dll'],game()/'Risk of Rain 2_Data/Managed'],timeout=120).stdout)
-    write(out/'audio-guard-transformation.json',result);shutil.copy2(original,out/'RoR2.original.dll');shutil.copy2(candidate,original)
-    r['transformed_assemblies']={'RoR2.dll':result['output_sha256']};r['audio_guard']=True;write(out/'attempt.json',r)
-    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['audioGuard']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    stage = Path(r["stage"])
+    original = stage / "Plugins/RoR2.dll"
+    candidate = out / "RoR2.audio-unavailable.dll"
+    command = probe_tool()
+    result = json.loads(
+        run(command + ["--audio-guard", original, candidate, r["original_assemblies"]["RoR2.dll"], game() / "Risk of Rain 2_Data/Managed"], timeout=120).stdout
+    )
+    write(out / "audio-guard-transformation.json", result)
+    shutil.copy2(original, out / "RoR2.original.dll")
+    shutil.copy2(candidate, original)
+    r["transformed_assemblies"] = {"RoR2.dll": result["output_sha256"]}
+    r["audio_guard"] = True
+    write(out / "attempt.json", r)
+    cfg = read(stage / "Resources/StartupSegmentProbe.json")
+    cfg["audioGuard"] = True
+    write(stage / "Resources/StartupSegmentProbe.json", cfg)
 
 
 def profile_binding_prepare():
     audio_guard_prepare()
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
-    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['profileBinding']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-    r['profile_binding']=True;write(out/'attempt.json',r)
-    write(out/'profile-binding-contract.json',{'scope':'Temporary actual globals; original config writer/reader; no coroutine filesystem/platform continuation','app_data':'Writable Config and RunReports role; not read-only content','profiles':'Separate Android-only writable root; sentinel only, not vanilla profile','restore':'Both globals restored before return; unique owned temporary files removed'})
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    stage = Path(r["stage"])
+    cfg = read(stage / "Resources/StartupSegmentProbe.json")
+    cfg["profileBinding"] = True
+    write(stage / "Resources/StartupSegmentProbe.json", cfg)
+    r["profile_binding"] = True
+    write(out / "attempt.json", r)
+    write(
+        out / "profile-binding-contract.json",
+        {
+            "scope": "Temporary actual globals; original config writer/reader; no coroutine filesystem/platform continuation",
+            "app_data": "Writable Config and RunReports role; not read-only content",
+            "profiles": "Separate Android-only writable root; sentinel only, not vanilla profile",
+            "restore": "Both globals restored before return; unique owned temporary files removed",
+        },
+    )
 
 
 def steam_boundary_prepare():
     profile_binding_prepare()
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
-    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['steamBoundary']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-    r['steam_boundary']=True;write(out/'attempt.json',r)
-    write(out/'steam-boundary-contract.json',{'scope':'Original Init callback registration, load result and unload; no PlatformSystems.Init','expected':'Load returns false; no authenticated/owned state is manufactured','guards':'No existing app-id file or Steam/profile state; original callbacks restored','limitations':'Original catch hides failure cause; false alone does not identify which native or mandatory check failed'})
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    stage = Path(r["stage"])
+    cfg = read(stage / "Resources/StartupSegmentProbe.json")
+    cfg["steamBoundary"] = True
+    write(stage / "Resources/StartupSegmentProbe.json", cfg)
+    r["steam_boundary"] = True
+    write(out / "attempt.json", r)
+    write(
+        out / "steam-boundary-contract.json",
+        {
+            "scope": "Original Init callback registration, load result and unload; no PlatformSystems.Init",
+            "expected": "Load returns false; no authenticated/owned state is manufactured",
+            "guards": "No existing app-id file or Steam/profile state; original callbacks restored",
+            "limitations": "Original catch hides failure cause; false alone does not identify which native or mandatory check failed",
+        },
+    )
 
 
 def steam_exception_prepare():
     steam_boundary_prepare()
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];r=read(out/'attempt.json');stage=Path(r['stage'])
-    cfg=read(stage/'Resources/StartupSegmentProbe.json');cfg['steamException']=True;write(stage/'Resources/StartupSegmentProbe.json',cfg)
-    r['steam_exception']=True;write(out/'attempt.json',r)
-    write(out/'steam-exception-contract.json',{'scope':'Fresh process original private constructor before any load callback; observe first inner exception','assembly_changes':'No new transformation beyond accepted no-audio getter','pass':'No prior Facepunch singleton; original constructor exception recorded; no manager/cloud state','limits':'Original callback false is prior J58 evidence, not repeated in this mode; do not infer subscription check ran'})
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    r = read(out / "attempt.json")
+    stage = Path(r["stage"])
+    cfg = read(stage / "Resources/StartupSegmentProbe.json")
+    cfg["steamException"] = True
+    write(stage / "Resources/StartupSegmentProbe.json", cfg)
+    r["steam_exception"] = True
+    write(out / "attempt.json", r)
+    write(
+        out / "steam-exception-contract.json",
+        {
+            "scope": "Fresh process original private constructor before any load callback; observe first inner exception",
+            "assembly_changes": "No new transformation beyond accepted no-audio getter",
+            "pass": "No prior Facepunch singleton; original constructor exception recorded; no manager/cloud state",
+            "limits": "Original callback false is prior J58 evidence, not repeated in this mode; do not infer subscription check ran",
+        },
+    )
 
 
 def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
     from build import preflight
-    preflight();checkpoint=read(WORK/'checkpoints/LAST_KNOWN_GOOD_CHARACTER_DIRECTION.json')
-    if checkpoint['input_id']!=read(WORK/'inventory/files.json')['input_id']:raise RuntimeError('Accepted input differs')
-    previous=ROOT/checkpoint['evidence'];stage=WORK/'lab-project/Assets/LabLoadingScene'
-    if stage.exists():raise RuntimeError('Preserve previous stage first')
-    r=read(previous/'attempt.json')
-    for name,h in r['original_assemblies'].items():
-        if sha(previous/'stage/Plugins'/name)!=h:raise RuntimeError('Original assembly drift '+name)
-    out=WORK/'experiments/scene-runtime'/now();out.mkdir(parents=True);shutil.copytree(previous/'stage',stage)
-    for name in ['ControllerAddressProbe','EntityStateTickProbe','CharacterDirectionProbe']:
-        (stage/('Resources/'+name+'.json')).unlink()
-    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
+
+    preflight()
+    checkpoint = read(WORK / "checkpoints/LAST_KNOWN_GOOD_CHARACTER_DIRECTION.json")
+    if checkpoint["input_id"] != read(WORK / "inventory/files.json")["input_id"]:
+        raise RuntimeError("Accepted input differs")
+    previous = ROOT / checkpoint["evidence"]
+    stage = WORK / "lab-project/Assets/LabLoadingScene"
+    if stage.exists():
+        raise RuntimeError("Preserve previous stage first")
+    r = read(previous / "attempt.json")
+    for name, h in r["original_assemblies"].items():
+        if sha(previous / "stage/Plugins" / name) != h:
+            raise RuntimeError("Original assembly drift " + name)
+    out = WORK / "experiments/scene-runtime" / now()
+    out.mkdir(parents=True)
+    shutil.copytree(previous / "stage", stage)
+    for name in ["ControllerAddressProbe", "EntityStateTickProbe", "CharacterDirectionProbe"]:
+        (stage / ("Resources/" + name + ".json")).unlink()
+    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
     if not kinematic:
-        for helper in ['BodyCatalogBoundary','WholeCatalogComposed','SpawnStateBoundary','TeleportMaterialBoundary','AutomaticSpawnBoundary','AutomaticGroundBoundary','AutomaticHealthBoundary','AutomaticDirectionBoundary','AutomaticModelBoundary','AutomaticSkillBoundary','RewiredPlatformBoundary','BarrierEffectBoundary','NovaInputBoundary','NovaInputBridge','NovaDiagnosticDisplay','PrimaryFireBoundary']:shutil.copy2(ROOT/'tools/unity'/(helper+'.cs'),stage/(helper+'.cs'))
-    probe='KinematicBatchProbe' if kinematic else 'MovementBatchProbe'
-    write(stage/('Resources/'+probe+'.json'),{'attempt':out.name});shutil.copy2(ROOT/'tools/unity'/(probe+'.cs'),stage/(probe+'.cs'))
-    r.update({'attempt':out.name,'stage':str(stage),'evidence':str(out.relative_to(ROOT)),'movement_batch':True,'batch_ids':['integrated-free','integrated-wall','integrated-jump','integrated-land'] if integrated else ['free','wall','slide','ground','unground'] if kinematic else ['buttons','input','motor-output','motor-acceleration'],'parent_evidence':str(previous.relative_to(ROOT))})
-    if cases is not None:r['batch_ids']=cases
-    write(out/'attempt.json',r);write(out.parent/'current.json',{'path':str(out.relative_to(ROOT))});shutil.copy2(previous/'scene-probe-build.json',WORK/'scene-probe-build.json')
-    print(json.dumps({'evidence':str(out.relative_to(ROOT))}))
+        for helper in [
+            "BodyCatalogBoundary",
+            "WholeCatalogComposed",
+            "SpawnStateBoundary",
+            "TeleportMaterialBoundary",
+            "AutomaticSpawnBoundary",
+            "AutomaticGroundBoundary",
+            "AutomaticHealthBoundary",
+            "AutomaticDirectionBoundary",
+            "AutomaticModelBoundary",
+            "AutomaticSkillBoundary",
+            "RewiredPlatformBoundary",
+            "BarrierEffectBoundary",
+            "NovaInputBoundary",
+            "NovaInputBridge",
+            "NovaDiagnosticDisplay",
+            "PrimaryFireBoundary",
+        ]:
+            shutil.copy2(ROOT / "tools/unity" / (helper + ".cs"), stage / (helper + ".cs"))
+    probe = "KinematicBatchProbe" if kinematic else "MovementBatchProbe"
+    write(stage / ("Resources/" + probe + ".json"), {"attempt": out.name})
+    shutil.copy2(ROOT / "tools/unity" / (probe + ".cs"), stage / (probe + ".cs"))
+    r.update(
+        {
+            "attempt": out.name,
+            "stage": str(stage),
+            "evidence": str(out.relative_to(ROOT)),
+            "movement_batch": True,
+            "batch_ids": ["integrated-free", "integrated-wall", "integrated-jump", "integrated-land"]
+            if integrated
+            else ["free", "wall", "slide", "ground", "unground"]
+            if kinematic
+            else ["buttons", "input", "motor-output", "motor-acceleration"],
+            "parent_evidence": str(previous.relative_to(ROOT)),
+        }
+    )
+    if cases is not None:
+        r["batch_ids"] = cases
+    write(out / "attempt.json", r)
+    write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
+    shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
+    print(json.dumps({"evidence": str(out.relative_to(ROOT))}))
+
 
 def movement_batch_run(cases=None, retry=False, interactive=False, debug_options=None):
     from build import preflight
-    from device import Device,PACKAGE
+    from device import Device, PACKAGE
     import time
-    preflight();out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');b=read(WORK/'config/current-build.json');interactive=interactive or bool(a.get('playable_spine'))
+
+    preflight()
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    a = read(out / "attempt.json")
+    b = read(WORK / "config/current-build.json")
+    interactive = interactive or bool(a.get("playable_spine"))
     from debug_acceleration import load_options, acceptance_labels
-    options=load_options(debug_options) if debug_options else None
-    if options is not None and not a.get('integrated_world'):raise RuntimeError('Debug acceleration requires the composed integrated world')
-    if not a.get('movement_batch') or ((out/'batch-result.json').exists() and not retry):raise RuntimeError('Not a fresh batch')
-    terminal=WORK/'lab-build/result.json'
-    freshness=(out/'attempt.json').stat().st_mtime_ns
-    if a.get('configuration_sha256'):
-        configuration=Path(a['stage'])/'Resources/MovementBatchProbe.json'
-        if sha(configuration)!=a['configuration_sha256'] or read(configuration)['attempt']!=out.name:raise RuntimeError('Composed configuration differs from staged generation')
+
+    options = load_options(debug_options) if debug_options else None
+    if options is not None and not a.get("integrated_world"):
+        raise RuntimeError("Debug acceleration requires the composed integrated world")
+    if not a.get("movement_batch") or ((out / "batch-result.json").exists() and not retry):
+        raise RuntimeError("Not a fresh batch")
+    terminal = WORK / "lab-build/result.json"
+    freshness = (out / "attempt.json").stat().st_mtime_ns
+    if a.get("configuration_sha256"):
+        configuration = Path(a["stage"]) / "Resources/MovementBatchProbe.json"
+        if sha(configuration) != a["configuration_sha256"] or read(configuration)["attempt"] != out.name:
+            raise RuntimeError("Composed configuration differs from staged generation")
         # Placement/report metadata can change after compilation without changing
         # the APK. Attribute freshness to the receipted runtime configuration.
-        freshness=configuration.stat().st_mtime_ns
-        if a.get('input_id')!=b.get('input_id'):raise RuntimeError('Composed attempt and selected APK inputs differ')
-    if not terminal.exists() or terminal.stat().st_mtime_ns<freshness:raise RuntimeError('No completed forced build for this batch; wait for build completion')
-    finished=read(terminal)
-    if not finished.get('success') or sha(Path(finished['apk']))!=b.get('apk_sha256'):raise RuntimeError('Terminal build does not match selected APK')
-    if not b.get('success') or sha(Path(b['apk']))!=b['apk_sha256']:raise RuntimeError('Build not valid')
-    for name,h in a['original_assemblies'].items():
-        placement=a.get('assembly_paths',{}).get(name)
-        path=(WORK/'lab-project'/placement).resolve() if placement else Path(a['stage'])/'Plugins'/name
-        if placement and not path.is_relative_to((WORK/'lab-project/Assets').resolve()):raise RuntimeError('Runtime assembly placement escaped current project')
-        if sha(path)!=a.get('transformed_assemblies',{}).get(name,h):raise RuntimeError('Original assembly drift')
-    attempt_id=out.name
+        freshness = configuration.stat().st_mtime_ns
+        if a.get("input_id") != b.get("input_id"):
+            raise RuntimeError("Composed attempt and selected APK inputs differ")
+    if not terminal.exists() or terminal.stat().st_mtime_ns < freshness:
+        raise RuntimeError("No completed forced build for this batch; wait for build completion")
+    finished = read(terminal)
+    if not finished.get("success") or sha(Path(finished["apk"])) != b.get("apk_sha256"):
+        raise RuntimeError("Terminal build does not match selected APK")
+    if not b.get("success") or sha(Path(b["apk"])) != b["apk_sha256"]:
+        raise RuntimeError("Build not valid")
+    for name, h in a["original_assemblies"].items():
+        placement = a.get("assembly_paths", {}).get(name)
+        path = (WORK / "lab-project" / placement).resolve() if placement else Path(a["stage"]) / "Plugins" / name
+        if placement and not path.is_relative_to((WORK / "lab-project/Assets").resolve()):
+            raise RuntimeError("Runtime assembly placement escaped current project")
+        if sha(path) != a.get("transformed_assemblies", {}).get(name, h):
+            raise RuntimeError("Original assembly drift")
+    attempt_id = out.name
     if retry:
-        parent=out;out=parent/'verification'/now();out.mkdir(parents=True)
-        write(out/'retry.json',{'parent':str(parent.relative_to(ROOT)),'attempt':attempt_id,'cases':cases,'apk_sha256':b['apk_sha256']})
-    probes=cases or a.get('batch_ids',['buttons','input','motor-output','motor-acceleration'])
-    durations={probe:a.get('batch_seconds',{}).get(probe,25) for probe in probes}
-    max_seconds=5400 if a.get('integrated_world') and a.get('teleporter_loop') else 240 if a.get('integrated_world') else 180
-    if any(not isinstance(seconds,int) or not 25<=seconds<=max_seconds for seconds in durations.values()):raise RuntimeError('Invalid bounded probe survival interval')
-    d=Device();write(out/'install.json',d.install(b['apk']));d.launch();d.sync();runtime=read(WORK/'device/runtime.json')['persistentDataPath'];results={}
-    if a.get('playable_spine'):
-        mapping=read((ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'])/'nova-input-mapping.json')
-        if mapping['attempt']!=attempt_id or sha(ROOT/mapping['observation'])!=mapping['observation_sha256']:raise RuntimeError('Accepted spine mapping changed')
-        d.cmd('push',str((ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'])/'nova-input-mapping.json'),runtime+'/nova-input-mapping.json')
+        parent = out
+        out = parent / "verification" / now()
+        out.mkdir(parents=True)
+        write(out / "retry.json", {"parent": str(parent.relative_to(ROOT)), "attempt": attempt_id, "cases": cases, "apk_sha256": b["apk_sha256"]})
+    probes = cases or a.get("batch_ids", ["buttons", "input", "motor-output", "motor-acceleration"])
+    durations = {probe: a.get("batch_seconds", {}).get(probe, 25) for probe in probes}
+    max_seconds = 5400 if a.get("integrated_world") and a.get("teleporter_loop") else 240 if a.get("integrated_world") else 180
+    if any(not isinstance(seconds, int) or not 25 <= seconds <= max_seconds for seconds in durations.values()):
+        raise RuntimeError("Invalid bounded probe survival interval")
+    d = Device()
+    write(out / "install.json", d.install(b["apk"]))
+    d.launch()
+    d.sync()
+    runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+    results = {}
+    if a.get("playable_spine"):
+        mapping = read((ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]) / "nova-input-mapping.json")
+        if mapping["attempt"] != attempt_id or sha(ROOT / mapping["observation"]) != mapping["observation_sha256"]:
+            raise RuntimeError("Accepted spine mapping changed")
+        d.cmd(
+            "push",
+            str((ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]) / "nova-input-mapping.json"),
+            runtime + "/nova-input-mapping.json",
+        )
     for probe in probes:
-        attempt=out/probe;attempt.mkdir();selection={'attempt':attempt_id,'id':probe};write(attempt/'selection.json',selection)
-        if options is not None:selection['debugOptions']=options;write(attempt/'selection.json',selection)
-        result={'success':False,'probe':probe};pid=None
+        attempt = out / probe
+        attempt.mkdir()
+        selection = {"attempt": attempt_id, "id": probe}
+        write(attempt / "selection.json", selection)
+        if options is not None:
+            selection["debugOptions"] = options
+            write(attempt / "selection.json", selection)
+        result = {"success": False, "probe": probe}
+        pid = None
         try:
-            if probe=='body-state-ground-visual':
-                d.sh('rm','-f',runtime+'/recovered-motion-before.png',runtime+'/recovered-motion-after.png')
-            d.sh('am','force-stop',PACKAGE);d.cmd('push',str(attempt/'selection.json'),runtime+'/movement-batch-selection.json')
-            launch=d.launch();write(attempt/'launch.json',launch);pid=launch['pid'];start=time.monotonic();last_phase=None;captured=set();terminal_error_at=None
-            while time.monotonic()-start<durations[probe]:
-                if d.sh('pidof',PACKAGE,check=False).strip()!=pid:raise RuntimeError('Probe process died')
+            if probe == "body-state-ground-visual":
+                d.sh("rm", "-f", runtime + "/recovered-motion-before.png", runtime + "/recovered-motion-after.png")
+            d.sh("am", "force-stop", PACKAGE)
+            d.cmd("push", str(attempt / "selection.json"), runtime + "/movement-batch-selection.json")
+            launch = d.launch()
+            write(attempt / "launch.json", launch)
+            pid = launch["pid"]
+            start = time.monotonic()
+            last_phase = None
+            captured = set()
+            terminal_error_at = None
+            while time.monotonic() - start < durations[probe]:
+                if d.sh("pidof", PACKAGE, check=False).strip() != pid:
+                    raise RuntimeError("Probe process died")
                 if interactive:
-                    raw=d.sh('cat',runtime+'/movement-batch-'+probe+'.json',check=False)
-                    try:live=json.loads(raw)
-                    except ValueError:live=None
-                    if live and live.get('attempt')==attempt_id and str(live.get('pid'))==pid:
-                        write(attempt/'live-probe.json',live)
+                    raw = d.sh("cat", runtime + "/movement-batch-" + probe + ".json", check=False)
+                    try:
+                        live = json.loads(raw)
+                    except ValueError:
+                        live = None
+                    if live and live.get("attempt") == attempt_id and str(live.get("pid")) == pid:
+                        write(attempt / "live-probe.json", live)
                         # A caught terminal failure is already decisive. Allow the
                         # existing asynchronous cleanup to finish, then capture it.
-                        if live.get('error'):
-                            if terminal_error_at is None:terminal_error_at=time.monotonic()
-                            if time.monotonic()-terminal_error_at>=15:break
-                        if live.get('phase')!=last_phase:
-                            last_phase=live.get('phase');print(json.dumps({'probe':probe,'phase':last_phase,'evidence':str(attempt.relative_to(ROOT))}),flush=True)
-                        if a.get('automated_menu_start') and last_phase=='offline-start-menu' and 'menu-start' not in captured:
-                            hud=live.get('hud') or {};x=hud.get('menuStartX',0);y=hud.get('menuStartY',0)
-                            if not hud.get('menuVisible') or not 0<x<hud.get('screenWidth',0) or not 0<y<hud.get('screenHeight',0):
-                                raise RuntimeError('Current recovered-menu button geometry is unavailable')
-                            d.sh('input','tap',round(x),round(y));captured.add('menu-start')
-                            write(attempt/'automated-menu-start.json',dict(pid=pid,attempt=attempt_id,x=x,y=y,source='Current launch recovered-menu button geometry'))
-                        if last_phase=='integrated-world-playing' and 'world' not in captured:
-                            d.collect('screenshot',attempt/'visual-world');captured.add('world')
-                        if last_phase=='original-barrel-opening' and 'barrel' not in captured:
-                            d.collect('screenshot',attempt/'visual-barrel');captured.add('barrel')
-                        if last_phase=='original-interaction-selected' and 'selection' not in captured:
-                            d.collect('screenshot',attempt/'visual-selection');captured.add('selection')
-                        if last_phase=='original-chest-opening' and 'chest' not in captured:
-                            d.collect('screenshot',attempt/'visual-chest');captured.add('chest')
-                        if last_phase=='original-input-barrel-coin' and 'input-barrel' not in captured:
-                            d.collect('screenshot',attempt/'visual-input-barrel');captured.add('input-barrel')
-                        if last_phase=='original-client-coin-active' and 'client-coin' not in captured:
-                            d.collect('screenshot',attempt/'visual-client-coin');captured.add('client-coin')
-                        if last_phase=='active-local-client-owned' and 'client' not in captured:
-                            d.collect('screenshot',attempt/'visual-client');captured.add('client')
-                        if last_phase=='original-chest-ejection-visible' and 'chest-ejection' not in captured:
-                            d.collect('screenshot',attempt/'visual-chest-ejection');captured.add('chest-ejection')
-                        if last_phase=='original-default-pickup-visible' and 'default-pickup' not in captured:
-                            d.collect('screenshot',attempt/'visual-default-pickup');captured.add('default-pickup')
-                        if last_phase=='original-item-grant' and 'item' not in captured:
-                            d.collect('screenshot',attempt/'visual-item');captured.add('item')
+                        if live.get("error"):
+                            if terminal_error_at is None:
+                                terminal_error_at = time.monotonic()
+                            if time.monotonic() - terminal_error_at >= 15:
+                                break
+                        if live.get("phase") != last_phase:
+                            last_phase = live.get("phase")
+                            print(json.dumps({"probe": probe, "phase": last_phase, "evidence": str(attempt.relative_to(ROOT))}), flush=True)
+                        if a.get("automated_menu_start") and last_phase == "offline-start-menu" and "menu-start" not in captured:
+                            hud = live.get("hud") or {}
+                            x = hud.get("menuStartX", 0)
+                            y = hud.get("menuStartY", 0)
+                            if not hud.get("menuVisible") or not 0 < x < hud.get("screenWidth", 0) or not 0 < y < hud.get("screenHeight", 0):
+                                raise RuntimeError("Current recovered-menu button geometry is unavailable")
+                            d.sh("input", "tap", round(x), round(y))
+                            captured.add("menu-start")
+                            write(
+                                attempt / "automated-menu-start.json",
+                                dict(pid=pid, attempt=attempt_id, x=x, y=y, source="Current launch recovered-menu button geometry"),
+                            )
+                        if last_phase == "integrated-world-playing" and "world" not in captured:
+                            d.collect("screenshot", attempt / "visual-world")
+                            captured.add("world")
+                        if last_phase == "original-barrel-opening" and "barrel" not in captured:
+                            d.collect("screenshot", attempt / "visual-barrel")
+                            captured.add("barrel")
+                        if last_phase == "original-interaction-selected" and "selection" not in captured:
+                            d.collect("screenshot", attempt / "visual-selection")
+                            captured.add("selection")
+                        if last_phase == "original-chest-opening" and "chest" not in captured:
+                            d.collect("screenshot", attempt / "visual-chest")
+                            captured.add("chest")
+                        if last_phase == "original-input-barrel-coin" and "input-barrel" not in captured:
+                            d.collect("screenshot", attempt / "visual-input-barrel")
+                            captured.add("input-barrel")
+                        if last_phase == "original-client-coin-active" and "client-coin" not in captured:
+                            d.collect("screenshot", attempt / "visual-client-coin")
+                            captured.add("client-coin")
+                        if last_phase == "active-local-client-owned" and "client" not in captured:
+                            d.collect("screenshot", attempt / "visual-client")
+                            captured.add("client")
+                        if last_phase == "original-chest-ejection-visible" and "chest-ejection" not in captured:
+                            d.collect("screenshot", attempt / "visual-chest-ejection")
+                            captured.add("chest-ejection")
+                        if last_phase == "original-default-pickup-visible" and "default-pickup" not in captured:
+                            d.collect("screenshot", attempt / "visual-default-pickup")
+                            captured.add("default-pickup")
+                        if last_phase == "original-item-grant" and "item" not in captured:
+                            d.collect("screenshot", attempt / "visual-item")
+                            captured.add("item")
                         # The director probe needs a long deadline, not an idle display after completion.
-                        if probe in a.get('batch_stop_when_complete',[]) and live.get('id')==probe and last_phase=='complete' and time.monotonic()-start>=30:
+                        if (
+                            probe in a.get("batch_stop_when_complete", [])
+                            and live.get("id") == probe
+                            and last_phase == "complete"
+                            and time.monotonic() - start >= 30
+                        ):
                             break
-                        seconds=live.get('nova',{}).get('seconds',0) if live.get('nova') else 0
-                        if last_phase=='integrated-world-playing':
-                            progress=live.get('stageProgress') or {}
-                            stage_mark='stage-'+str(progress.get('transitions',0))
-                            if progress.get('transitions',0)>0 and 5<=seconds-progress.get('enteredAt',seconds)<25 and stage_mark not in captured:
-                                d.collect('screenshot',attempt/('visual-'+stage_mark));captured.add(stage_mark)
-                            for mark in [5,25,60,100]:
-                                if seconds>=mark and ('world-'+str(mark)) not in captured:
-                                    d.collect('screenshot',attempt/('visual-world-'+str(mark)));captured.add('world-'+str(mark))
-                        if (probe=='body-state-spawn-state-auto-nova-controls' or probe.startswith('body-state-spawn-state-auto-nova-spine')) and last_phase in ['nova-commando-ready','nova-spine-bringup']:
-                            for mark in ([1,5,15,35] if probe.endswith('-bringup') and a.get('director_batch') else [1,5,15] if probe.endswith('-bringup') and a.get('enemy_spine') else [5,15] if probe.endswith('-bringup') else [5,25,50,75]):
-                                if seconds>=mark and mark not in captured:
-                                    d.collect('screenshot',attempt/('visual-'+str(mark)));captured.add(mark)
+                        seconds = live.get("nova", {}).get("seconds", 0) if live.get("nova") else 0
+                        if last_phase == "integrated-world-playing":
+                            progress = live.get("stageProgress") or {}
+                            stage_mark = "stage-" + str(progress.get("transitions", 0))
+                            if progress.get("transitions", 0) > 0 and 5 <= seconds - progress.get("enteredAt", seconds) < 25 and stage_mark not in captured:
+                                d.collect("screenshot", attempt / ("visual-" + stage_mark))
+                                captured.add(stage_mark)
+                            for mark in [5, 25, 60, 100]:
+                                if seconds >= mark and ("world-" + str(mark)) not in captured:
+                                    d.collect("screenshot", attempt / ("visual-world-" + str(mark)))
+                                    captured.add("world-" + str(mark))
+                        if (
+                            probe == "body-state-spawn-state-auto-nova-controls" or probe.startswith("body-state-spawn-state-auto-nova-spine")
+                        ) and last_phase in ["nova-commando-ready", "nova-spine-bringup"]:
+                            for mark in (
+                                [1, 5, 15, 35]
+                                if probe.endswith("-bringup") and a.get("director_batch")
+                                else [1, 5, 15]
+                                if probe.endswith("-bringup") and a.get("enemy_spine")
+                                else [5, 15]
+                                if probe.endswith("-bringup")
+                                else [5, 25, 50, 75]
+                            ):
+                                if seconds >= mark and mark not in captured:
+                                    d.collect("screenshot", attempt / ("visual-" + str(mark)))
+                                    captured.add(mark)
                 time.sleep(1)
-            report=json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json'));write(attempt/'probe.json',report)
-            result.update({'success':report['success'] and report['phase']=='complete' and report['attempt']==attempt_id and report['id']==probe and str(report['pid'])==pid,'survival_seconds':time.monotonic()-start,'error':report.get('error')})
-            result.update(acceptance_labels(report,options))
+            report = json.loads(d.sh("cat", runtime + "/movement-batch-" + probe + ".json"))
+            write(attempt / "probe.json", report)
+            result.update(
+                {
+                    "success": report["success"]
+                    and report["phase"] == "complete"
+                    and report["attempt"] == attempt_id
+                    and report["id"] == probe
+                    and str(report["pid"]) == pid,
+                    "survival_seconds": time.monotonic() - start,
+                    "error": report.get("error"),
+                }
+            )
+            result.update(acceptance_labels(report, options))
         except Exception as e:
-            result['success']=False
-            if result.get('error'):result['secondary_error']=str(e)
-            else:result['error']=str(e)
+            result["success"] = False
+            if result.get("error"):
+                result["secondary_error"] = str(e)
+            else:
+                result["error"] = str(e)
         finally:
-            if not (attempt/'probe.json').exists():
-                try:write(attempt/'interrupted-probe.json',json.loads(d.sh('cat',runtime+'/movement-batch-'+probe+'.json')))
-                except Exception as e:result['report_recovery_error']=str(e)
-            if 'normal_game_acceptance_eligible' not in result:
-                result.update(run_kind='unclassified',normal_game_acceptance_eligible=False)
-                for name in ['probe.json','interrupted-probe.json']:
-                    if (attempt/name).exists():
-                        try:result.update(acceptance_labels(read(attempt/name),options))
-                        except Exception as e:result['debug_acceptance_error']=str(e);result['success']=False
+            if not (attempt / "probe.json").exists():
+                try:
+                    write(attempt / "interrupted-probe.json", json.loads(d.sh("cat", runtime + "/movement-batch-" + probe + ".json")))
+                except Exception as e:
+                    result["report_recovery_error"] = str(e)
+            if "normal_game_acceptance_eligible" not in result:
+                result.update(run_kind="unclassified", normal_game_acceptance_eligible=False)
+                for name in ["probe.json", "interrupted-probe.json"]:
+                    if (attempt / name).exists():
+                        try:
+                            result.update(acceptance_labels(read(attempt / name), options))
+                        except Exception as e:
+                            result["debug_acceptance_error"] = str(e)
+                            result["success"] = False
                         break
-            for name in ['probe.json','interrupted-probe.json']:
-                if (attempt/name).exists():
-                    try:preserve_input_trace(d,runtime,attempt,read(attempt/name),pid)
-                    except Exception as e:result['trace_capture_error']=str(e);result['success']=False
+            for name in ["probe.json", "interrupted-probe.json"]:
+                if (attempt / name).exists():
+                    try:
+                        preserve_input_trace(d, runtime, attempt, read(attempt / name), pid)
+                    except Exception as e:
+                        result["trace_capture_error"] = str(e)
+                        result["success"] = False
                     break
-            try:d.collect('all',attempt/'device')
-            except Exception as e:result['capture_error']=str(e);result['success']=False
-            log=attempt/'device/unity.log'
+            try:
+                d.collect("all", attempt / "device")
+            except Exception as e:
+                result["capture_error"] = str(e)
+                result["success"] = False
+            log = attempt / "device/unity.log"
             if log.exists() and pid:
-                missing=[line for line in log.read_text(errors='replace').splitlines() if re.search(r'\s'+re.escape(str(pid))+r'\s',line) and 'is not defined in this project' in line]
-                if missing:result['success']=False;result['error']='Required Unity layer missing; inspect current-process log'
+                missing = [
+                    line
+                    for line in log.read_text(errors="replace").splitlines()
+                    if re.search(r"\s" + re.escape(str(pid)) + r"\s", line) and "is not defined in this project" in line
+                ]
+                if missing:
+                    result["success"] = False
+                    result["error"] = "Required Unity layer missing; inspect current-process log"
                 if interactive:
                     from nova_bridge import current_errors
-                    errors=current_errors(log.read_text(errors='replace'),pid)
-                    if errors:result['success']=False;result['runtime_errors']=errors;result['error']=result.get('error') or 'Unexpected current-process runtime error'
-            if probe=='body-state-ground-visual':
+
+                    errors = current_errors(log.read_text(errors="replace"), pid)
+                    if errors:
+                        result["success"] = False
+                        result["runtime_errors"] = errors
+                        result["error"] = result.get("error") or "Unexpected current-process runtime error"
+            if probe == "body-state-ground-visual":
                 try:
-                    for name in ['recovered-motion-before.png','recovered-motion-after.png']:
-                        d.cmd('pull',runtime+'/'+name,str(attempt/name))
-                except Exception as e:result['capture_error']=str(e);result['success']=False
-            write(attempt/'result.json',result);results[probe]=result;print(json.dumps(result),flush=True)
-    d.sh('am','force-stop',PACKAGE);d.sh('rm',runtime+'/movement-batch-selection.json')
-    write(out/'batch-result.json',results)
-    if not all(r['success'] for r in results.values()):raise RuntimeError('Batch completed with failed probes; inspect individual results')
+                    for name in ["recovered-motion-before.png", "recovered-motion-after.png"]:
+                        d.cmd("pull", runtime + "/" + name, str(attempt / name))
+                except Exception as e:
+                    result["capture_error"] = str(e)
+                    result["success"] = False
+            write(attempt / "result.json", result)
+            results[probe] = result
+            print(json.dumps(result), flush=True)
+    d.sh("am", "force-stop", PACKAGE)
+    d.sh("rm", runtime + "/movement-batch-selection.json")
+    write(out / "batch-result.json", results)
+    if not all(r["success"] for r in results.values()):
+        raise RuntimeError("Batch completed with failed probes; inspect individual results")
 
 
-def landing_batch_prepare(cases=None, jump_items=False, body_lifecycle=False, adoption=False, stats=False, stat_buffs=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
-    if start_items and jump_items and not nova_input:raise RuntimeError("Combined start/jump item catalog is not measured")
-    movement_batch_prepare(integrated=True,cases=cases or ['global-lifecycle','artifact-catalog','artifact-manager','landing-context'])
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
-    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
+def landing_batch_prepare(
+    cases=None,
+    jump_items=False,
+    body_lifecycle=False,
+    adoption=False,
+    stats=False,
+    stat_buffs=False,
+    start_items=False,
+    spawn_states=False,
+    teleport_material=False,
+    barrier_effect=False,
+    nova_input=False,
+):
+    if start_items and jump_items and not nova_input:
+        raise RuntimeError("Combined start/jump item catalog is not measured")
+    movement_batch_prepare(integrated=True, cases=cases or ["global-lifecycle", "artifact-catalog", "artifact-manager", "landing-context"])
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    a = read(out / "attempt.json")
+    stage = Path(a["stage"])
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
     # Reuse the YAML GUID traversal used by scene_closure, bounded to this measured artifact.
-    root=export/'Assets/RoR2/Base/Artifacts/WeakAssKnees/WeakAssKnees.asset';index={}
-    for meta in (export/'Assets').rglob('*.meta'):
-        match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
-        if match:index[match[1]]=Path(str(meta)[:-5])
-    existing={}
-    for meta in stage.rglob('*.meta'):
-        match=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(errors='replace'),re.M)
-        if match:existing[match[1]]=Path(str(meta)[:-5])
-    roots={'artifactAsset':root}
+    root = export / "Assets/RoR2/Base/Artifacts/WeakAssKnees/WeakAssKnees.asset"
+    index = {}
+    for meta in (export / "Assets").rglob("*.meta"):
+        match = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+        if match:
+            index[match[1]] = Path(str(meta)[:-5])
+    existing = {}
+    for meta in stage.rglob("*.meta"):
+        match = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+        if match:
+            existing[match[1]] = Path(str(meta)[:-5])
+    roots = {"artifactAsset": root}
     if jump_items:
-        roots.update({'jumpBoostAsset':export/'Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset','jumpStrikeAsset':export/'Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset'})
-    if start_items:roots['gummyAsset']=export/'Assets/RoR2/DLC1/Equipment/GummyClone/GummyCloneIdentifier.asset'
-    if spawn_states:roots.update({'spawnConfigAsset':export/'Assets/RoR2/Base/Common/EntityStates.SpawnTeleporterState.asset','hiddenBuffAsset':export/'Assets/RoR2/Base/Common/Buffs/HiddenInvincibility/bdHiddenInvincibility.asset','intangibleBuffAsset':export/'Assets/RoR2/Base/Common/Buffs/Intangible/bdIntangible.asset','medkitBuffAsset':export/'Assets/RoR2/Base/Items/Medkit/bdMedkitHeal.asset','tonicBuffAsset':export/'Assets/RoR2/Base/Equipment/Tonic/bdTonicBuff.asset','soulBuffAsset':export/'Assets/RoR2/DLC2/Interactables/Shrines/ShrineColossusAccess/bdSoulCost.asset'})
-    if barrier_effect:roots['barrierEffectAsset']=export/'Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab'
-    if teleport_material:roots['teleportMaterialAsset']=export/'Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat'
-    if body_lifecycle:roots['masterAsset']=export/'Assets/RoR2/Base/Core/PlayerMaster.prefab'
-    if adoption:
-        for slot in ['Primary','Secondary','Utility','Special']:
-            name='Lunar'+slot+'Replacement'
-            roots['lunar'+slot+'Asset']=export/('Assets/RoR2/Base/Items/LunarSkillReplacements/'+name+'/'+name+'.asset')
-        roots['batteryAsset']=export/'Assets/RoR2/Base/Equipment/QuestVolatileBattery/QuestVolatileBattery.asset'
-    if stats:
-        roots.update({'glassAsset':export/'Assets/RoR2/Base/Artifacts/Glass/Glass.asset','voidEquipmentAsset':export/'Assets/RoR2/DLC1/Elites/EliteVoid/EliteVoidEquipment.asset','potionAsset':export/'Assets/RoR2/Base/Equipment/LunarPotion/LunarPotion.asset'})
-    if stat_buffs:
-        for key,name in [('knockBuffAsset','bdKnockUpHitEnemies'),('juggleBuffAsset','bdKnockUpHitEnemiesJuggleCount')]:
-            roots[key]=export/('Assets/RoR2/DLC2/Items/KnockBackHitEnemies/'+name+'.asset')
-    pending=list(roots.values());seen=set();rows=[];asset=None;root_assets={}
-    ui_remaps={row['from']:row['to'] for row in a.get('ui_remaps',[])};ui_edits=[]
-    while pending:
-        src=pending.pop()
-        if src in seen:continue
-        seen.add(src);meta=Path(str(src)+'.meta');guid=re.search(r'^guid: ([a-f0-9]{32})',meta.read_text(),re.M)[1]
-        if src.suffix=='.dll':
-            if src.name=='UnityEngine.UI.dll' and ui_remaps:continue
-            if guid not in existing:raise RuntimeError('Unprovided closure script assembly '+src.name)
-            continue
-        dst=existing.get(guid,stage/'LandingArtifactClosure'/src.relative_to(export/'Assets'))
-        if guid not in existing:
-            dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);shutil.copy2(meta,Path(str(dst)+'.meta'))
-        rows.append({'source':str(src.relative_to(export)),'sha256':sha(src),'staged':str(dst.relative_to(WORK/'lab-project')),'reused':guid in existing})
-        if src==root:asset=str(dst.relative_to(WORK/'lab-project'))
-        for key,value in roots.items():
-            if src==value:root_assets[key]=str(dst.relative_to(WORK/'lab-project'))
-        with src.open('rb') as f:prefix=f.read(5)
-        if prefix==b'%YAML':
-            text=src.read_text()
-            if guid not in existing:
-                for old,new in ui_remaps.items():
-                    count=text.count(old)
-                    if count:ui_edits.append({'staged':str(dst.relative_to(WORK/'lab-project')),'from':old,'to':new,'count':count});text=text.replace(old,new)
-                if 'guid: d3e719b59ab71ba3f6b398058c866280' in text:raise RuntimeError('Unmeasured Unity UI script identity in item closure')
-                dst.write_text(text)
-            for dependency in set(re.findall(r'guid: ([a-f0-9]{32})',src.read_text())):
-                if dependency.startswith('0000000000000000'):continue
-                if dependency not in index:raise RuntimeError('Unresolved artifact GUID')
-                pending.append(index[dependency])
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg.update({k:v.lower() for k,v in root_assets.items()})
+        roots.update(
+            {
+                "jumpBoostAsset": export / "Assets/RoR2/Base/Items/JumpBoost/JumpBoost.asset",
+                "jumpStrikeAsset": export / "Assets/RoR2/DLC3/Items/JumpDamageStrike/JumpDamageStrike.asset",
+            }
+        )
+    if start_items:
+        roots["gummyAsset"] = export / "Assets/RoR2/DLC1/Equipment/GummyClone/GummyCloneIdentifier.asset"
+    if spawn_states:
+        roots.update(
+            {
+                "spawnConfigAsset": export / "Assets/RoR2/Base/Common/EntityStates.SpawnTeleporterState.asset",
+                "hiddenBuffAsset": export / "Assets/RoR2/Base/Common/Buffs/HiddenInvincibility/bdHiddenInvincibility.asset",
+                "intangibleBuffAsset": export / "Assets/RoR2/Base/Common/Buffs/Intangible/bdIntangible.asset",
+                "medkitBuffAsset": export / "Assets/RoR2/Base/Items/Medkit/bdMedkitHeal.asset",
+                "tonicBuffAsset": export / "Assets/RoR2/Base/Equipment/Tonic/bdTonicBuff.asset",
+                "soulBuffAsset": export / "Assets/RoR2/DLC2/Interactables/Shrines/ShrineColossusAccess/bdSoulCost.asset",
+            }
+        )
+    if barrier_effect:
+        roots["barrierEffectAsset"] = export / "Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab"
+    if teleport_material:
+        roots["teleportMaterialAsset"] = export / "Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat"
     if body_lifecycle:
-        cfg['bodyAsset']=a['prefab'].lower()
-        master=WORK/'lab-project'/root_assets['masterAsset'];text=master.read_text();parts=re.split(r'(?=^--- !u!)',text,flags=re.M)
-        candidates=[i for i,b in enumerate(parts) if b.startswith('--- !u!1 ') and 'm_Name: PlayerMaster\n' in b]
-        if len(candidates)!=1 or 'm_IsActive: 1' not in parts[candidates[0]]:raise RuntimeError('Unexpected original PlayerMaster root')
-        before=sha(master);parts[candidates[0]]=parts[candidates[0]].replace('m_IsActive: 1','m_IsActive: 0');master.write_text(''.join(parts))
-        write(out/'master-isolation.json',{'source_sha256':before,'staged_sha256':sha(master),'scope':'Only original PlayerMaster root deactivated before import; lifecycle called selectively by diagnostic probe'})
-    cfg['statBuffs']=stat_buffs
-    write(stage/'Resources/MovementBatchProbe.json',cfg)
-    recipe=read(WORK/'scene-probe-build.json');recipe['prefabAssets'].extend(v for k,v in root_assets.items() if k not in ['teleportMaterialAsset','barrierEffectAsset'])
-    if teleport_material:recipe['teleportMaterial']=root_assets['teleportMaterialAsset']
-    if barrier_effect:recipe['barrierEffect']=root_assets['barrierEffectAsset']
-    write(WORK/'scene-probe-build.json',recipe)
-    write(out/'artifact-closure.json',{'rows':rows,'asset':asset,'roots':root_assets,'ui_remaps':ui_edits,'scope':'Measured original artifact/item definitions and serialized closure; diagnostic subset catalogs only'})
+        roots["masterAsset"] = export / "Assets/RoR2/Base/Core/PlayerMaster.prefab"
+    if adoption:
+        for slot in ["Primary", "Secondary", "Utility", "Special"]:
+            name = "Lunar" + slot + "Replacement"
+            roots["lunar" + slot + "Asset"] = export / ("Assets/RoR2/Base/Items/LunarSkillReplacements/" + name + "/" + name + ".asset")
+        roots["batteryAsset"] = export / "Assets/RoR2/Base/Equipment/QuestVolatileBattery/QuestVolatileBattery.asset"
+    if stats:
+        roots.update(
+            {
+                "glassAsset": export / "Assets/RoR2/Base/Artifacts/Glass/Glass.asset",
+                "voidEquipmentAsset": export / "Assets/RoR2/DLC1/Elites/EliteVoid/EliteVoidEquipment.asset",
+                "potionAsset": export / "Assets/RoR2/Base/Equipment/LunarPotion/LunarPotion.asset",
+            }
+        )
+    if stat_buffs:
+        for key, name in [("knockBuffAsset", "bdKnockUpHitEnemies"), ("juggleBuffAsset", "bdKnockUpHitEnemiesJuggleCount")]:
+            roots[key] = export / ("Assets/RoR2/DLC2/Items/KnockBackHitEnemies/" + name + ".asset")
+    pending = list(roots.values())
+    seen = set()
+    rows = []
+    asset = None
+    root_assets = {}
+    ui_remaps = {row["from"]: row["to"] for row in a.get("ui_remaps", [])}
+    ui_edits = []
+    while pending:
+        src = pending.pop()
+        if src in seen:
+            continue
+        seen.add(src)
+        meta = Path(str(src) + ".meta")
+        guid = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(), re.M)[1]
+        if src.suffix == ".dll":
+            if src.name == "UnityEngine.UI.dll" and ui_remaps:
+                continue
+            if guid not in existing:
+                raise RuntimeError("Unprovided closure script assembly " + src.name)
+            continue
+        dst = existing.get(guid, stage / "LandingArtifactClosure" / src.relative_to(export / "Assets"))
+        if guid not in existing:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            shutil.copy2(meta, Path(str(dst) + ".meta"))
+        rows.append(
+            {"source": str(src.relative_to(export)), "sha256": sha(src), "staged": str(dst.relative_to(WORK / "lab-project")), "reused": guid in existing}
+        )
+        if src == root:
+            asset = str(dst.relative_to(WORK / "lab-project"))
+        for key, value in roots.items():
+            if src == value:
+                root_assets[key] = str(dst.relative_to(WORK / "lab-project"))
+        with src.open("rb") as f:
+            prefix = f.read(5)
+        if prefix == b"%YAML":
+            text = src.read_text()
+            if guid not in existing:
+                for old, new in ui_remaps.items():
+                    count = text.count(old)
+                    if count:
+                        ui_edits.append({"staged": str(dst.relative_to(WORK / "lab-project")), "from": old, "to": new, "count": count})
+                        text = text.replace(old, new)
+                if "guid: d3e719b59ab71ba3f6b398058c866280" in text:
+                    raise RuntimeError("Unmeasured Unity UI script identity in item closure")
+                dst.write_text(text)
+            for dependency in set(re.findall(r"guid: ([a-f0-9]{32})", src.read_text())):
+                if dependency.startswith("0000000000000000"):
+                    continue
+                if dependency not in index:
+                    raise RuntimeError("Unresolved artifact GUID")
+                pending.append(index[dependency])
+    cfg = read(stage / "Resources/MovementBatchProbe.json")
+    cfg.update({k: v.lower() for k, v in root_assets.items()})
+    if body_lifecycle:
+        cfg["bodyAsset"] = a["prefab"].lower()
+        master = WORK / "lab-project" / root_assets["masterAsset"]
+        text = master.read_text()
+        parts = re.split(r"(?=^--- !u!)", text, flags=re.M)
+        candidates = [i for i, b in enumerate(parts) if b.startswith("--- !u!1 ") and "m_Name: PlayerMaster\n" in b]
+        if len(candidates) != 1 or "m_IsActive: 1" not in parts[candidates[0]]:
+            raise RuntimeError("Unexpected original PlayerMaster root")
+        before = sha(master)
+        parts[candidates[0]] = parts[candidates[0]].replace("m_IsActive: 1", "m_IsActive: 0")
+        master.write_text("".join(parts))
+        write(
+            out / "master-isolation.json",
+            {
+                "source_sha256": before,
+                "staged_sha256": sha(master),
+                "scope": "Only original PlayerMaster root deactivated before import; lifecycle called selectively by diagnostic probe",
+            },
+        )
+    cfg["statBuffs"] = stat_buffs
+    write(stage / "Resources/MovementBatchProbe.json", cfg)
+    recipe = read(WORK / "scene-probe-build.json")
+    recipe["prefabAssets"].extend(v for k, v in root_assets.items() if k not in ["teleportMaterialAsset", "barrierEffectAsset"])
+    if teleport_material:
+        recipe["teleportMaterial"] = root_assets["teleportMaterialAsset"]
+    if barrier_effect:
+        recipe["barrierEffect"] = root_assets["barrierEffectAsset"]
+    write(WORK / "scene-probe-build.json", recipe)
+    write(
+        out / "artifact-closure.json",
+        {
+            "rows": rows,
+            "asset": asset,
+            "roots": root_assets,
+            "ui_remaps": ui_edits,
+            "scope": "Measured original artifact/item definitions and serialized closure; diagnostic subset catalogs only",
+        },
+    )
 
-    tag=WORK/'lab-project/ProjectSettings/TagManager.asset';source=export/'ProjectSettings/TagManager.asset'
-    before=tag.read_text();original=source.read_text()
-    def layers(text):return text.split('  layers:\n',1)[1].split('  m_SortingLayers:',1)[0].splitlines()
-    current=layers(before);expected=layers(original)
-    if len(current)!=len(expected):raise RuntimeError('Layer array shape changed')
-    for slot,line in enumerate(expected):
-        if current[slot].strip() not in ['-',line.strip(),'']:raise RuntimeError('Conflicting existing layer slot '+str(slot))
-    current=expected
-    after=before.replace('  layers:\n'+'\n'.join(layers(before))+'\n','  layers:\n'+'\n'.join(current)+'\n')
-    (out/'TagManager-before.asset').write_text(before);tag.write_text(after)
-    write(out/'layer-repair.json',{'source_sha256':sha(source),'scope':'Complete original layer-name table; physics collision matrix unchanged','after_sha256':sha(tag)})
+    tag = WORK / "lab-project/ProjectSettings/TagManager.asset"
+    source = export / "ProjectSettings/TagManager.asset"
+    before = tag.read_text()
+    original = source.read_text()
+
+    def layers(text):
+        return text.split("  layers:\n", 1)[1].split("  m_SortingLayers:", 1)[0].splitlines()
+
+    current = layers(before)
+    expected = layers(original)
+    if len(current) != len(expected):
+        raise RuntimeError("Layer array shape changed")
+    for slot, line in enumerate(expected):
+        if current[slot].strip() not in ["-", line.strip(), ""]:
+            raise RuntimeError("Conflicting existing layer slot " + str(slot))
+    current = expected
+    after = before.replace("  layers:\n" + "\n".join(layers(before)) + "\n", "  layers:\n" + "\n".join(current) + "\n")
+    (out / "TagManager-before.asset").write_text(before)
+    tag.write_text(after)
+    write(
+        out / "layer-repair.json",
+        {"source_sha256": sha(source), "scope": "Complete original layer-name table; physics collision matrix unchanged", "after_sha256": sha(tag)},
+    )
 
 
-def grounded_state_prepare(jump_items=False, cases=None, recovered=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
-    landing_batch_prepare(body_lifecycle=recovered,adoption=recovered,stats=recovered,stat_buffs=recovered,jump_items=jump_items or nova_input,nova_input=nova_input,start_items=start_items,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or (['state-jump-items','state-jump-inventory','state-jump-event','state-jump-input'] if jump_items else ['gravity-source-jump','state-ground-motion','state-ground-reverse','state-ground-wall']))
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
-    export=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
-    source=export/'ProjectSettings/DynamicsManager.asset'
-    match=re.search(r'  m_Gravity: \{x: ([^,]+), y: ([^,]+), z: ([^}]+)\}',source.read_text())
-    if not match:raise RuntimeError('Missing original gravity setting')
-    gravity=[float(v) for v in match.groups()]
-    if gravity[0]!=0 or gravity[2]!=0 or gravity[1]>=0:raise RuntimeError('Unexpected gravity shape; review input')
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['sourceGravity']=gravity[1];write(stage/'Resources/MovementBatchProbe.json',cfg)
-    write(out/'physics-contract.json',{'source_sha256':sha(source),'gravity':gravity,'scope':'Only measured gravity supplied during each probe and restored; collision matrix/default material unchanged','prior_art':'Starstorm2 a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8 BorgMain calls original GenericCharacterMain base ticks and ProcessJump; actual current original paths inspected','limits':('Inactive recovered body with original computed stats and subset catalogs; no full lifecycle or physical input' if recovered else 'Inactive diagnostic body/stats/catalog; no normal character lifecycle or physical input')})
+def grounded_state_prepare(
+    jump_items=False, cases=None, recovered=False, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False
+):
+    landing_batch_prepare(
+        body_lifecycle=recovered,
+        adoption=recovered,
+        stats=recovered,
+        stat_buffs=recovered,
+        jump_items=jump_items or nova_input,
+        nova_input=nova_input,
+        start_items=start_items,
+        spawn_states=spawn_states,
+        teleport_material=teleport_material,
+        barrier_effect=barrier_effect,
+        cases=cases
+        or (
+            ["state-jump-items", "state-jump-inventory", "state-jump-event", "state-jump-input"]
+            if jump_items
+            else ["gravity-source-jump", "state-ground-motion", "state-ground-reverse", "state-ground-wall"]
+        ),
+    )
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    a = read(out / "attempt.json")
+    stage = Path(a["stage"])
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    source = export / "ProjectSettings/DynamicsManager.asset"
+    match = re.search(r"  m_Gravity: \{x: ([^,]+), y: ([^,]+), z: ([^}]+)\}", source.read_text())
+    if not match:
+        raise RuntimeError("Missing original gravity setting")
+    gravity = [float(v) for v in match.groups()]
+    if gravity[0] != 0 or gravity[2] != 0 or gravity[1] >= 0:
+        raise RuntimeError("Unexpected gravity shape; review input")
+    cfg = read(stage / "Resources/MovementBatchProbe.json")
+    cfg["sourceGravity"] = gravity[1]
+    write(stage / "Resources/MovementBatchProbe.json", cfg)
+    write(
+        out / "physics-contract.json",
+        {
+            "source_sha256": sha(source),
+            "gravity": gravity,
+            "scope": "Only measured gravity supplied during each probe and restored; collision matrix/default material unchanged",
+            "prior_art": "Starstorm2 a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8 BorgMain calls original GenericCharacterMain base ticks and ProcessJump; actual current original paths inspected",
+            "limits": (
+                "Inactive recovered body with original computed stats and subset catalogs; no full lifecycle or physical input"
+                if recovered
+                else "Inactive diagnostic body/stats/catalog; no normal character lifecycle or physical input"
+            ),
+        },
+    )
 
 
 def recovered_visual_prepare():
-    grounded_state_prepare(recovered=True,cases=['body-state-ground-visual'])
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['displayAssets']=read(WORK/'scene-probe-build.json')['prefabAssets'][:6];write(stage/'Resources/MovementBatchProbe.json',cfg)
-    shutil.copy2(ROOT/'tools/unity/CommandoMaterialPreview.cs',stage/'CommandoMaterialPreview.cs')
+    grounded_state_prepare(recovered=True, cases=["body-state-ground-visual"])
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    a = read(out / "attempt.json")
+    stage = Path(a["stage"])
+    cfg = read(stage / "Resources/MovementBatchProbe.json")
+    cfg["displayAssets"] = read(WORK / "scene-probe-build.json")["prefabAssets"][:6]
+    write(stage / "Resources/MovementBatchProbe.json", cfg)
+    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
 
 
 def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
     import UnityPy
-    grounded_state_prepare(recovered=True,start_items=start_items,nova_input=nova_input,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or ['body-state-spawn-awake'])
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];a=read(out/'attempt.json');stage=Path(a['stage'])
-    source=game()/'Risk of Rain 2_Data/globalgamemanagers.assets'
-    rows=[]
+
+    grounded_state_prepare(
+        recovered=True,
+        start_items=start_items,
+        nova_input=nova_input,
+        spawn_states=spawn_states,
+        teleport_material=teleport_material,
+        barrier_effect=barrier_effect,
+        cases=cases or ["body-state-spawn-awake"],
+    )
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    a = read(out / "attempt.json")
+    stage = Path(a["stage"])
+    source = game() / "Risk of Rain 2_Data/globalgamemanagers.assets"
+    rows = []
     for obj in UnityPy.load(str(source)).objects:
-        if obj.type.name!='MonoScript':continue
-        data=obj.read_typetree()
-        if data.get('m_AssemblyName')=='RoR2.dll' and data.get('m_Namespace')=='RoR2' and data.get('m_ClassName')=='CharacterMotor':
-            rows.append({'type':'RoR2.CharacterMotor','order':data['m_ExecutionOrder']})
-    if len(rows)!=1:raise RuntimeError('Expected one original CharacterMotor script metadata record')
-    write(out/'original-motor-order.json',{'source_sha256':sha(source),'input_id':read(WORK/'inventory/files.json')['input_id'],'rows':rows})
-    editor=stage/'Editor';editor.mkdir(exist_ok=True)
-    shutil.copy2(ROOT/'tools/unity/CharacterMotorOrderProbe.cs',editor/'CharacterMotorOrderProbe.cs')
-    write(editor/'character-motor-order.json',{'order':rows[0]['order']})
+        if obj.type.name != "MonoScript":
+            continue
+        data = obj.read_typetree()
+        if data.get("m_AssemblyName") == "RoR2.dll" and data.get("m_Namespace") == "RoR2" and data.get("m_ClassName") == "CharacterMotor":
+            rows.append({"type": "RoR2.CharacterMotor", "order": data["m_ExecutionOrder"]})
+    if len(rows) != 1:
+        raise RuntimeError("Expected one original CharacterMotor script metadata record")
+    write(out / "original-motor-order.json", {"source_sha256": sha(source), "input_id": read(WORK / "inventory/files.json")["input_id"], "rows": rows})
+    editor = stage / "Editor"
+    editor.mkdir(exist_ok=True)
+    shutil.copy2(ROOT / "tools/unity/CharacterMotorOrderProbe.cs", editor / "CharacterMotorOrderProbe.cs")
+    write(editor / "character-motor-order.json", {"order": rows[0]["order"]})
 
 
 def body_start_loadout_prepare(spawn_states=False, cases=None, teleport_material=False, barrier_effect=False, nova_input=False):
-    body_root_order_prepare(start_items=True,nova_input=nova_input,spawn_states=spawn_states,teleport_material=teleport_material,barrier_effect=barrier_effect,cases=cases or (['body-state-spawn-state-catalog','body-state-spawn-state-idle','body-state-spawn-state-entry','body-state-spawn-state-transition'] if spawn_states else ['body-state-spawn-loadout-catalog','body-state-spawn-body-start-catalog']))
-    out=ROOT/read(WORK/'experiments/scene-runtime/current.json')['path'];stage=Path(read(out/'attempt.json')['stage'])
-    cfg=read(stage/'Resources/MovementBatchProbe.json');cfg['initializeLoadoutTables']=True
+    body_root_order_prepare(
+        start_items=True,
+        nova_input=nova_input,
+        spawn_states=spawn_states,
+        teleport_material=teleport_material,
+        barrier_effect=barrier_effect,
+        cases=cases
+        or (
+            ["body-state-spawn-state-catalog", "body-state-spawn-state-idle", "body-state-spawn-state-entry", "body-state-spawn-state-transition"]
+            if spawn_states
+            else ["body-state-spawn-loadout-catalog", "body-state-spawn-body-start-catalog"]
+        ),
+    )
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    stage = Path(read(out / "attempt.json")["stage"])
+    cfg = read(stage / "Resources/MovementBatchProbe.json")
+    cfg["initializeLoadoutTables"] = True
     if spawn_states:
-        source=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets/RoR2/Base/Common/EntityStates.SpawnTeleporterState.asset'
-        text=source.read_text();cfg['sourceSpawnDelay']=float(re.search(r'fieldName: initialDelay\s+fieldValue:\s+stringValue: ([^\n]+)',text)[1]);cfg['sourceSpawnSound']=re.search(r'fieldName: soundString\s+fieldValue:\s+stringValue: ([^\n]+)',text)[1]
-        write(out/'spawn-state-source.json',{'sha256':sha(source),'delay':cfg['sourceSpawnDelay'],'sound':cfg['sourceSpawnSound'],'scope':'Actual state configuration staged unchanged; values independently parsed for runtime assertions'})
+        source = ROOT / read(WORK / "config/reconstruction.json")["projects"][0] / "Assets/RoR2/Base/Common/EntityStates.SpawnTeleporterState.asset"
+        text = source.read_text()
+        cfg["sourceSpawnDelay"] = float(re.search(r"fieldName: initialDelay\s+fieldValue:\s+stringValue: ([^\n]+)", text)[1])
+        cfg["sourceSpawnSound"] = re.search(r"fieldName: soundString\s+fieldValue:\s+stringValue: ([^\n]+)", text)[1]
+        write(
+            out / "spawn-state-source.json",
+            {
+                "sha256": sha(source),
+                "delay": cfg["sourceSpawnDelay"],
+                "sound": cfg["sourceSpawnSound"],
+                "scope": "Actual state configuration staged unchanged; values independently parsed for runtime assertions",
+            },
+        )
     if teleport_material:
-        source=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat'
-        export_guid=re.search(r'^guid: ([a-f0-9]{32})',Path(str(source)+'.meta').read_text(),re.M)[1]
-        query=read(WORK/'experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json')
-        locations=[x for x in query['locations'] if x['internalId']=='Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat' and x['type']=='UnityEngine.Material']
-        if len(locations)!=1 or not locations[0]['internalId'].endswith('/TeleportOutController/matTPInOut.mat'):raise RuntimeError('Teleport material catalog identity differs')
-        cfg['teleportMaterialKey']=locations[0]['key']
-        write(out/'teleport-material-contract.json',{'export_guid':export_guid,'source_sha256':sha(source),'key':cfg['teleportMaterialKey'],'catalog_query':'work/experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json','bundle':'teleport-material-lab','scope':'Actual material and serialized closure; separate original-provider ownership, exported dummy shader retained; no graphics parity claim','prior_art':'R2API AddressReferencedAsset synchronous/async handle and release semantics; community-prior-art.md original-provider candidate; accepted ControllerAddressProbe/AudioAssetProbe'})
+        source = ROOT / read(WORK / "config/reconstruction.json")["projects"][0] / "Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat"
+        export_guid = re.search(r"^guid: ([a-f0-9]{32})", Path(str(source) + ".meta").read_text(), re.M)[1]
+        query = read(WORK / "experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json")
+        locations = [
+            x
+            for x in query["locations"]
+            if x["internalId"] == "Assets/RoR2/Base/Common/TeleportOutController/matTPInOut.mat" and x["type"] == "UnityEngine.Material"
+        ]
+        if len(locations) != 1 or not locations[0]["internalId"].endswith("/TeleportOutController/matTPInOut.mat"):
+            raise RuntimeError("Teleport material catalog identity differs")
+        cfg["teleportMaterialKey"] = locations[0]["key"]
+        write(
+            out / "teleport-material-contract.json",
+            {
+                "export_guid": export_guid,
+                "source_sha256": sha(source),
+                "key": cfg["teleportMaterialKey"],
+                "catalog_query": "work/experiments/scene-runtime/20260930T202924.269738Z/teleport-catalog-query.json",
+                "bundle": "teleport-material-lab",
+                "scope": "Actual material and serialized closure; separate original-provider ownership, exported dummy shader retained; no graphics parity claim",
+                "prior_art": "R2API AddressReferencedAsset synchronous/async handle and release semantics; community-prior-art.md original-provider candidate; accepted ControllerAddressProbe/AudioAssetProbe",
+            },
+        )
     if barrier_effect:
-        query_out=ROOT/read(WORK/'experiments/barrier-effect-source/current.json')['path'];contract=read(query_out/'source.json');query=read(query_out/'catalog-query.json')
-        if contract['legacy_dll_sha256']!=sha(game()/'Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll'):raise RuntimeError('Barrier legacy input drift')
-        rows=[x for x in query['locations'] if x['key']==contract['key'] and x['type']=='UnityEngine.GameObject' and x['internalId']=='Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab']
-        if query.get('error') or len(rows)!=1:raise RuntimeError('Barrier catalog identity differs')
-        cfg['barrierEffectKey']=contract['key']
-        completion=contract['completion']
-        if completion['ror2_sha256']!=sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll'):raise RuntimeError('Barrier callback input drift')
-        cfg['barrierCompletionType']=completion['type'];cfg['barrierCompletionMethod']=completion['method']
-        source=ROOT/read(WORK/'config/reconstruction.json')['projects'][0]/'Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab'
-        write(out/'barrier-effect-contract.json',{'source_sha256':sha(source),'key':contract['key'],'catalog_query':str((query_out/'catalog-query.json').relative_to(ROOT)),'bundle':'barrier-effect-lab','scope':'One actual original temporary-effect prefab and serialized closure; original providers and dummy shaders, no graphics parity','prior_art':'R2API AddressReferencedAsset actual handle status/identity/release; accepted original material/audio providers; CharacterBody.Init and TemporaryVisualEffect source'})
-    write(stage/'Resources/MovementBatchProbe.json',cfg)
+        query_out = ROOT / read(WORK / "experiments/barrier-effect-source/current.json")["path"]
+        contract = read(query_out / "source.json")
+        query = read(query_out / "catalog-query.json")
+        if contract["legacy_dll_sha256"] != sha(game() / "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"):
+            raise RuntimeError("Barrier legacy input drift")
+        rows = [
+            x
+            for x in query["locations"]
+            if x["key"] == contract["key"] and x["type"] == "UnityEngine.GameObject" and x["internalId"] == "Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab"
+        ]
+        if query.get("error") or len(rows) != 1:
+            raise RuntimeError("Barrier catalog identity differs")
+        cfg["barrierEffectKey"] = contract["key"]
+        completion = contract["completion"]
+        if completion["ror2_sha256"] != sha(game() / "Risk of Rain 2_Data/Managed/RoR2.dll"):
+            raise RuntimeError("Barrier callback input drift")
+        cfg["barrierCompletionType"] = completion["type"]
+        cfg["barrierCompletionMethod"] = completion["method"]
+        source = ROOT / read(WORK / "config/reconstruction.json")["projects"][0] / "Assets/RoR2/Base/Common/VFX/BarrierEffect.prefab"
+        write(
+            out / "barrier-effect-contract.json",
+            {
+                "source_sha256": sha(source),
+                "key": contract["key"],
+                "catalog_query": str((query_out / "catalog-query.json").relative_to(ROOT)),
+                "bundle": "barrier-effect-lab",
+                "scope": "One actual original temporary-effect prefab and serialized closure; original providers and dummy shaders, no graphics parity",
+                "prior_art": "R2API AddressReferencedAsset actual handle status/identity/release; accepted original material/audio providers; CharacterBody.Init and TemporaryVisualEffect source",
+            },
+        )
+    write(stage / "Resources/MovementBatchProbe.json", cfg)

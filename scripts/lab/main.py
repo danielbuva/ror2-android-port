@@ -1,4 +1,5 @@
-import argparse, sys
+import argparse
+import sys
 from common import *
 
 p = argparse.ArgumentParser(description="Local RoR2 porting laboratory; generated evidence lives under ignored work/.")
