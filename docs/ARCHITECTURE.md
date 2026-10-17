@@ -25,11 +25,16 @@ synced content payload comes out. Everything game-derived stays under the ignore
 | 6 | Whole-catalog content | `whole-catalog-prepare` → `-host` → `-repair-bindings` (when recorded) → `-contracts` → `-host-providers` | `scripts/lab/whole_catalog.py`, `tools/catalog/` | `experiments/whole-catalog/<timestamp>/` |
 | 7 | Bundles, payload, APK | `whole-catalog-build`, or `whole-catalog-code-build` for a code-only change | `whole_catalog.py` → `build.py` → exact editor via MCP | APK + payload receipts |
 | 8 | Install and sync | done by `whole-catalog-run`; alone: `./dev install`, `./dev sync-data` | `scripts/lab/device.py` | placement receipt |
-| 9 | Run and collect | `whole-catalog-run`; captures: `./dev logs`, `crash`, `screenshot`, `perf` | `whole_catalog.run_integration` | `integration-<timestamp>/device-<timestamp>/` |
+| 9a | Catalog registration scan | `whole-catalog-run` | `whole_catalog.run_integration` | `integration-<timestamp>/device-<timestamp>/` |
+| 9b | Gameplay run | no tracked command: untracked runners in `work/experiments/whole-catalog/gameplay/` ([debt](#known-structural-debt) item 8); captures: `./dev logs`, `crash`, `screenshot`, `perf` | runner + `device.py` | `movement-batch-*.json` report, run folder |
 | 10 | Record | append a journal entry, `python3 scripts/journal-index.py`, replace `PORTING_STATE.md` | — | — |
 
-Steps 6–9 are the `./dev prototype --action whole-catalog-*` actions listed in
+Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+`whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
+which makes `MovementBatchProbe.Start` exit: it checks catalog registration
+(`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
+attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
@@ -51,8 +56,11 @@ Start-up, in order:
 2. `Start` (`:48`): exits if `whole-catalog-selection.json` exists in persistent data (the
    separate catalog bootstrap owns that run), then **waits 8 s**.
 3. Read the config. Without a `movement-batch-selection.json` override and with
-   `launchPlayableSlice` set, wait for the attempt-bound `nova-input-mapping.json` that
-   payload sync pushes last, then select case `body-state-spawn-state-auto-nova-spine`.
+   `launchPlayableSlice` set, wait for an attempt-bound `nova-input-mapping.json` in
+   persistent data, then select case `body-state-spawn-state-auto-nova-spine`. Payload sync
+   (`device.py`) does not push that mapping; only the historical `movement-batch-run`
+   (`scene_runtime.py:629–631`) and some untracked runners do. The menu reads it too
+   (`OfflineApplicationBoundary.cs:45`).
 4. Begin presentation (`AndroidMaterialPresentation.Begin`), collect garbage left by a
    previous session, `Save()` phase `started`.
 5. Catalog fixture: `RegisterBodyCatalog` (composed whole catalog), then
@@ -75,8 +83,11 @@ Teardown, in order, after `RunSelectedProbe` returns or throws:
    `ReclaimCompletedSessionResources` (only after a clean, successful integrated session) →
    `Save()` phase `complete` → `RestartWorldAfterCleanup`.
 
-Each step runs inside a copy of the same `MoveNext` exception wrapper; a failure sets
-`r.error`/`r.firstFailure` and the remaining steps still run. `Start` itself has no
+The enemy, world, model, teleport-material and barrier steps run inside copies of the same
+`MoveNext` exception wrapper, which records the failure and moves on. The reward,
+death-effect, geometry and reclaim steps, and the synchronous cleanup calls outside the
+`CleanupBodyCatalog` `try`, have no wrapper: an exception there stops the remaining
+release steps. `Start` itself has no
 enclosing `finally`, and `MovementBatchProbe` has no `OnDestroy` or `OnApplicationQuit`:
 an error during catalog preparation or the menu, or the app being killed, skips the
 post-run release sequence. Per-boundary teardown inside the session (the 17-step call
@@ -88,8 +99,9 @@ order and each `finally`) is in
 Most `*Boundary.cs` files are `partial class MovementBatchProbe`: their state is fields on
 the coordinator, not a separate owner. Only the types marked **own type** keep their own
 state. Host tests are in `tests/`; editor fixtures (`tools/catalog/*Host.cs`) run in the
-exact editor. Every subsystem's device check today is the whole-catalog run itself
-(`whole-catalog-run`, reported in `movement-batch-*.json` and the integration receipts).
+exact editor. There is no per-subsystem device check yet: catalog registration is checked
+by `whole-catalog-run`, and everything else by a gameplay runner's `movement-batch-*.json`
+report, read against the journal entry that defines what it must show.
 
 | Subsystem | Main files (`tools/unity/`) | State | Setup → teardown | Host test / editor fixture |
 | --- | --- | --- | --- | --- |

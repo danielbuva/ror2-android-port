@@ -13,7 +13,7 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` — built for J503, re-exercised unchanged in J504 |
-| Installed now | That same APK, package `dev.ror2lab.arm64`, adopted storage, app stopped, OLED asleep (receipt: `work/config/current-build.json`) |
+| Installed now | That same APK, package `dev.ror2lab.arm64`, adopted storage (install receipt: `work/device/installed.json`); app stopped and OLED asleep at the end of J504 |
 | Runtime source since that APK | Unchanged. Later commits touch docs, tests and CI only. |
 | Executable rollbacks | J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
