@@ -224,5 +224,20 @@ class BaselineCliTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
 
+class StageExitTransportTests(unittest.TestCase):
+    def test_mid_transport_report_is_not_an_unexpected_first_stage(self):
+        # Observed on device (J526): destination scene reported before the count increments.
+        report = {
+            "phase": "stage-geometry-load",
+            "stage": {"scene": "goolake"},
+            "stageProgress": {"transitions": 0, "requested": "goolake", "transporting": True, "current": "lakes"},
+        }
+        self.assertIsNone(baseline.stage_exit_stop(report))
+
+    def test_unexpected_scene_without_transport_still_fails(self):
+        report = {"phase": "integrated-world-playing", "stage": {"scene": "goolake"}, "stageProgress": {"transitions": 0}}
+        self.assertEqual(baseline.stage_exit_stop(report), "unexpected-first-stage")
+
+
 if __name__ == "__main__":
     unittest.main()

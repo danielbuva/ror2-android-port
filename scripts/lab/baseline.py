@@ -62,7 +62,8 @@ def stage_exit_stop(report):
         return "invalid-stage-progress"
     if transitions > 1:
         return "extra-stage-transition"
-    if transitions == 0 and scene and scene != FIRST_STAGE:
+    # During transport stage.scene already names the destination while the count is still 0.
+    if transitions == 0 and scene and scene != FIRST_STAGE and not progress.get("transporting"):
         return "unexpected-first-stage"
     if transitions == 1:
         # Fail already at a second exit request, rather than waiting for transport.
