@@ -5,8 +5,10 @@ p.add_argument('command',choices=['diagnostics','test','doctor','inspect','decom
 p.add_argument('--full',action='store_true');p.add_argument('--force',action='store_true');p.add_argument('--json',action='store_true');p.add_argument('--assembly');p.add_argument('--target',default='lab');p.add_argument('--action',default='inspect')
 p.add_argument('--subtree',default='');p.add_argument('--fields',action='store_true');p.add_argument('--disable',action='store_true')
 p.add_argument('--debug-options',help='Ignored local JSON for one integrated run; all acceleration defaults off')
+p.add_argument('--compare',nargs=2,metavar=('A','B'),help='Current: compare two project-manifest receipts')
 a=p.parse_args()
 if a.debug_options and (a.command!='prototype' or a.action not in ['movement-batch-run','movement-batch-retry']):p.error('--debug-options requires movement-batch-run or movement-batch-retry')
+if bool(a.compare)!=(a.command=='prototype' and a.action=='project-manifest-compare'):p.error('--compare A B requires prototype --action project-manifest-compare and vice versa')
 try:
  if a.command=='test':sys.exit(subprocess.call([sys.executable,'-m','unittest','discover','-s',str(ROOT/'tests'),'-v']))
  elif a.command=='doctor':
@@ -22,7 +24,16 @@ try:
   from graphics import graphics
   graphics()
  elif a.command=='prototype':
-  if a.action=='input-update-check':
+  # Current equivalence harness; receipts contain hashes and sizes only.
+  if a.action=='project-manifest-capture':
+   from project_manifest import capture
+   out=WORK/'receipts/project-manifest'/(now()+'.json')
+   write(out,capture(WORK/'lab-project'));print(out)
+  elif a.action=='project-manifest-compare':
+   from project_manifest import compare
+   result=compare(*(read(path) for path in a.compare))
+   print(json.dumps(result,indent=2));sys.exit(0 if result['equal'] else 1)
+  elif a.action=='input-update-check':
    from input_migration import check_update
    check_update()
   elif a.action=='composition-update-stage':

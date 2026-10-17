@@ -4878,3 +4878,15 @@ are byte-identical. No device run was needed and J506 stays installed;
 `work/config/current-build.json` now names the equivalent J509 build. Implemented by Codex
 (gpt-6.1-sol) and reviewed by Claude. Revisit when adding or removing a runtime source or a
 build-generated source.
+
+## J510 — Add the project input equivalence harness
+
+Commit 1 of the [migration removal plan](migration-removal-plan.md): `scripts/lab/project_manifest.py`
+with `project-manifest-capture` and `project-manifest-compare` actions (implemented by
+Codex, reviewed by Claude). A receipt lists every file under the generated project's
+`Assets/`, `Packages/` and `ProjectSettings/` with its SHA-256 and size, plus the external
+inputs `build.build_cache_key` hashes; no contents, timestamps or absolute paths. Symlinks
+and paths outside the project are refused. `build.py` is unchanged; a host test keeps the
+mirrored external-input selection in step with the cache key. 195 host tests pass. Two
+captures of the J509 project (91,839 files, both external inputs) compare equal; the first,
+`work/receipts/project-manifest/20261017T201134.104239Z.json`, is the baseline for the next plan commits. No build or device run: host tooling only.

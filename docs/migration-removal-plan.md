@@ -4,8 +4,9 @@ Phase 2 plan for the rebuild blockers in [LOCAL_STATE.md](LOCAL_STATE.md) (B1, B
 the Unity project directly from the accepted input, the export and audited
 [recipes](../recipe/README.md), instead of migrating a previous project. Analysis by Codex
 (gpt-6.1-sol), line references checked by Claude, 2026-10-17. Status: commit 2's
-source-membership half is done (`recipe/runtime-sources.json`, J509); its metadata and
-package/settings half and commits 1 and 3–9 are open. Line numbers drift; re-check before
+source-membership half is done (`recipe/runtime-sources.json`, J509); commit 1, the
+equivalence harness, is done (J510); commit 2's metadata and package/settings half and
+commits 3–9 are open. Line numbers drift; re-check before
 use.
 
 Read-only analysis, 2026-10-17. Tracked source, policy, architecture, LOCAL_STATE,

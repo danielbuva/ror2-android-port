@@ -38,6 +38,14 @@ attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
+Project equivalence harness (`scripts/lab/project_manifest.py`, current):
+`./dev prototype --action project-manifest-capture` writes an ignored receipt of every file
+under the generated project's `Assets/`, `Packages/` and `ProjectSettings/` (path, SHA-256,
+size) plus the build cache's external inputs; `--action project-manifest-compare --compare A B`
+reports added, removed and changed paths and exits non-zero on any difference. It never
+writes to the project. Each step of the [migration removal plan](migration-removal-plan.md)
+must compare equal against the previous receipt.
+
 Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` →
 `integration-latest.json` → build, device and composed receipts.
 `checkpoints/LAST_OBSERVED_WHOLE_CATALOG.json` pins the accepted scope.
@@ -193,7 +201,7 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    runner scripts in `work/experiments/whole-catalog/gameplay/`; `work/` also holds about 700
    loose one-off `.py` files.
 9. **Command sprawl.** `scripts/lab/main.py` dispatches about 165 historical `prototype`
-   actions from one `if/elif` chain next to the 10 current ones.
+   actions from one `if/elif` chain next to the 12 current ones.
 
 Safe order:
 
