@@ -1,5 +1,9 @@
 # Architecture file map
 
+> **Dated snapshot.** This is a static audit taken on 2026-10-16. Line numbers drift as code
+> changes; regenerate or re-audit it before relying on a specific `file:line`. The current
+> map is [ARCHITECTURE.md](ARCHITECTURE.md).
+
 Per-file evidence behind [ARCHITECTURE.md](ARCHITECTURE.md): a static source audit,
 2026-10-16, by Codex (gpt-6.1-sol), reviewed and corrected by Claude. No build,
 editor, device run or readiness claim is made.

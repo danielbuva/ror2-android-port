@@ -4810,3 +4810,16 @@ Revisit: if Unity changes its rooting rule or a new third-party assembly enters 
 build, compare a fresh-editor linker command against a full build's and extend
 `BUNDLE_ROOT_ASSEMBLIES` from that measurement. A full build still roots these
 assemblies through its own bundle build.
+
+## J507 — Track the standard Lakes check as `./dev check-baseline`
+
+The J505 runner moved into `scripts/lab/baseline.py` as `./dev check-baseline`. It builds its
+attempt-bound selection in code from the generated project's runtime config instead of
+copying one from a timestamped run folder. Its pass/fail decision is a pure function with
+host tests (164 pass). Its first device run on the installed J506 APK
+`cf26485e5b8e…` reached 35.2 s of Lakes play but failed one criterion: it compared the
+profile run count against the first report, which is written before the profile loads.
+After it compared against the first live-world report instead, the run passed with 35.2 s,
+no report error and 13 applied profile runs unchanged
+(`work/experiments/baseline/20261017T072219.644143Z`). App stopped; OLED asleep.
+The baseline is recorded in `docs/BASELINE.md`.

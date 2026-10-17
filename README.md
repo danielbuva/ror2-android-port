@@ -59,6 +59,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev test` | Host tests in the lab venv. |
 | `./dev doctor [--json]` | Toolchain, inventory and dependency-pin health. |
 | `./dev preflight` | Input acceptance and drift, tracked-file policy, toolchain pin, host and device storage. Run before every expensive build. |
+| `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](docs/BASELINE.md)). |
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |
 | `./dev build [--target vulkan] [--force]` | Instrumented IL2CPP ARM64 build through MCP with a content-addressed APK receipt. Rejects stale staged runtime sources. |
 | `./dev install` | Install on the configured, live-checked storage; rejects foreign pre-existing packages and records placement. |

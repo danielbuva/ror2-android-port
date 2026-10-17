@@ -1,7 +1,7 @@
 import argparse,sys
 from common import *
 p=argparse.ArgumentParser(description='Local RoR2 porting laboratory; generated evidence lives under ignored work/.')
-p.add_argument('command',choices=['diagnostics','test','doctor','inspect','decompile','export-project','preflight','build','install','sync-data','run','logs','crash','screenshot','reset','smoke','storage','perf','graphics','editor','prototype'])
+p.add_argument('command',choices=['diagnostics','test','doctor','inspect','decompile','export-project','preflight','check-baseline','build','install','sync-data','run','logs','crash','screenshot','reset','smoke','storage','perf','graphics','editor','prototype'])
 p.add_argument('--full',action='store_true');p.add_argument('--force',action='store_true');p.add_argument('--json',action='store_true');p.add_argument('--assembly');p.add_argument('--target',default='lab');p.add_argument('--action',default='inspect')
 p.add_argument('--subtree',default='');p.add_argument('--fields',action='store_true');p.add_argument('--disable',action='store_true')
 p.add_argument('--debug-options',help='Ignored local JSON for one integrated run; all acceleration defaults off')
@@ -488,6 +488,10 @@ try:
  elif a.command=='preflight':
   from build import preflight
   print(json.dumps(preflight(),indent=2))
+ elif a.command=='check-baseline':
+  from baseline import check_baseline
+  result=check_baseline();print(json.dumps(result,indent=2))
+  if not result['success']:sys.exit(1)
  elif a.command=='build':
   from build import build
   build(a.target,a.force)

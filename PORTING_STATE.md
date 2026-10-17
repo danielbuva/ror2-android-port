@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J506**. This page is the current snapshot only: replace its
+Last updated 2026-10-17 after **J507**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -61,7 +61,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 ## Next actions
 
 1. Fresh-editor code-only builds no longer depend on an earlier bundle build for their
-   linker roots (J506); keep using the Lakes check after each rebuild.
+   linker roots (J506); run `./dev check-baseline` after each rebuild
+   ([docs/BASELINE.md](docs/BASELINE.md)).
 2. Continue broad survivor and special-realm gameplay integration (J504 direction).
    60 FPS is the release target, not a gate for each batch; investigate large
    unexplained regressions only.

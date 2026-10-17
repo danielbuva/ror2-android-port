@@ -1,5 +1,9 @@
 # Local state dependency inventory
 
+> **Dated snapshot.** This is a static audit taken on 2026-10-16. Line numbers drift as code
+> changes; regenerate or re-audit it before relying on a specific `file:line`. The current
+> map is [ARCHITECTURE.md](ARCHITECTURE.md).
+
 Static audit of `scripts/`, `tools/` and `android/`, 2026-10-16. **Eight path families with no snapshot/recipe producer are reached by the current workflow**, including one conditional proof. They are the first table. This is an inventory, not a fresh-build or game-readiness acceptance.
 
 Only existence was checked in the workstation's `work/`; no file contents were read and nothing was modified. Paths below are logical `work/` paths, not private workstation locations. No builds, installs, runs or read traces were executed.
