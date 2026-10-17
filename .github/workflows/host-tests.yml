@@ -1,0 +1,27 @@
+# Host checks that need no game files, Unity editor or device.
+# Toolchain tests skip themselves here; device acceptance stays manual (see AGENTS.md).
+name: host-tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # journal index dates come from git blame
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"  # matches the workstation lab venv
+      - name: Install lab requirements
+        run: python -m pip install -r tools/lab-requirements.txt
+      - name: Public-repository audit
+        run: python scripts/audit-public.py
+      - name: Host tests (fresh clone, no work/)
+        run: python -m unittest discover -s tests -v
