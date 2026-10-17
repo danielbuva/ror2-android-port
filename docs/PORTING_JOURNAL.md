@@ -5067,3 +5067,20 @@ staged file was checked to contain the owner. Zero-error code-only build, APK `7
 runs unchanged (`work/experiments/baseline/20261017T220007.276298Z`). 39 of the 45 scalar `hud` report fields match the previous run; the
 other six are live gameplay values (frames, notification timing, health, level, money). App
 stopped; OLED asleep.
+
+## J525 — Extract the integrated results owner
+
+Phase 4 step 5, fifth owner (implemented by Codex, reviewed and fixed by Claude). 29 results
+fields (save-system swap, statistics process, ending template and controller, stage
+listeners, ending/report folders, key-item and item-group ownership) moved into a nested
+`IntegratedResultsSession : IDisposable` (`IntegratedResultsBoundary.cs`). `resultsSaveSystem`,
+`resultsLedger`, `resultsStats` and `resultsRunReport` stay on the coordinator because the
+profile owner and whole population use them; two static flags stay static inside the owner.
+The first exact-editor build failed: one moved line still read `r` without its
+`coordinator.` qualifier (CS0120 at line 148, which Codex could not compile). Its device run
+reused the previous APK and is discarded. After the one-word fix the build had zero errors,
+APK `ac674e4dd296678f3434d8a03e93b01ac8214a75c02539946db01717449f9003`, and the staged file was checked for the fix. `./dev check-baseline` passed with
+35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T221707.756983Z`); the fixed
+line ran (the startup collection path). The differing `results` fields are live values
+(memory, collection time, kills, damage). As for every owner so far, the check force-stops
+the app, so teardown order is verified by review only. App stopped; OLED asleep.
