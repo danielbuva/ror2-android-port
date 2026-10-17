@@ -172,14 +172,11 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
 5. **Hard-coded run folders.** `scene_runtime.py:59`, `:515` and `:883`, and
    `input_migration.py:90` read fixed timestamped evidence folders (all in historical
    actions).
-6. **Dormant text patches on authored C#.** `whole_catalog.py:1097`, `:1098` and `:1128`
-   inject code into `BodyCatalogBoundary.cs` and `MovementBatchProbe.Start` by exact-text
-   `.replace()`. The authored sources already contain that code and each patch first checks
-   for it, so today they do nothing; staged copies match the repo byte for byte. They still
-   pin the exact text of `Start`: reformatting it makes `:1128` raise "Accepted integration
-   entry point changed". (The other `.replace()` calls in `scripts/lab` remap GUIDs in
-   generated Unity YAML or fill a Python-held editor template; they are data transforms,
-   not source patches.)
+6. **Text patches on authored C# — resolved.** The build used to inject code into
+   `BodyCatalogBoundary.cs` and `MovementBatchProbe.Start` by exact-text `.replace()`. The
+   patches were dormant and are deleted (J505, J506); the hooks are authored, and host tests
+   check them without depending on whitespace. The remaining `.replace()` calls in
+   `scripts/lab` remap GUIDs in generated Unity YAML or fill a Python-held editor template.
 7. **Build membership depends on history.** A `tools/unity` file is staged if it already
    exists in the generated project (`build.py:78`, `whole_catalog.py:1090`); further file
    lists live in `build.py`, `nova_bridge.py:68` and `scene_runtime.py:584`.
@@ -191,8 +188,8 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
 
 Safe order:
 
-1. Delete the dormant C# text patches (Python only; verify staged sources stay
-   byte-identical). This unblocks C# formatting.
+1. ~~Delete the dormant C# text patches~~ — done (J505, J506). C# formatting is no longer
+   blocked by the build.
 2. Split `Result` into `SessionConfig` and `SessionReport`, keeping both JSON shapes.
 3. Give the game a `GameSession` entry point that `Start` calls directly; keep the old id as
    an alias for `nova_bridge.py`, `scene_runtime.py` and `IsPlayableSpine`.

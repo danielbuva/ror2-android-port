@@ -25,7 +25,6 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Merge `cleanup/remove-text-patches`, which deletes the build's dormant exact-text C# patches (binary-neutral, J505), once a rebuilt APK passes the Lakes check (prerequisite for C# formatting).
 - [ ] Split `MovementBatchProbe.Result` into session config and report.
 - [ ] Give the shipped game its own entry point instead of an experiment-switch case.
 - [ ] One runtime source manifest instead of "already present in the generated project".

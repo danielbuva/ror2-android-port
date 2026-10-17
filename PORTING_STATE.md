@@ -14,7 +14,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `cf26485e5b8e5bc270b7f3dd1b0a0e9e07e3229d7202bfeb05edb09bfde53d05` — J506 build of `cleanup/remove-text-patches` on the stripping fix; same code as J503's `f567e9f6…` |
 | Installed now | That same APK (also named by `work/config/current-build.json`), installed in place and checked on Lakes; package `dev.ror2lab.arm64`, adopted storage (install receipt: `work/device/installed.json`); app stopped, OLED asleep |
-| Runtime source since that APK | Unchanged. It was built from branch `cleanup/remove-text-patches` (rebased onto main's J506 fix, not merged); main differs only by the dead build code that branch deletes, and its own J506 build `928b9e60…` also passed |
+| Runtime source since that APK | Unchanged. That APK was built from `cleanup/remove-text-patches`, now fast-forwarded into `main` (`b97a058`); later commits touch docs only |
 | Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
 
@@ -60,9 +60,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 
 ## Next actions
 
-1. Fast-forward `main` to `cleanup/remove-text-patches` once reviewed; both passed the
-   Lakes check (J506). Fresh-editor code-only builds no longer depend on an earlier
-   bundle build for their linker roots.
+1. Fresh-editor code-only builds no longer depend on an earlier bundle build for their
+   linker roots (J506); keep using the Lakes check after each rebuild.
 2. Continue broad survivor and special-realm gameplay integration (J504 direction).
    60 FPS is the release target, not a gate for each batch; investigate large
    unexplained regressions only.
