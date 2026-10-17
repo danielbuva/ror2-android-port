@@ -40,8 +40,11 @@ p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--debug-options", help="Ignored local JSON for one integrated run; all acceleration defaults off")
+p.add_argument("--stage-exit", action="store_true", help="Current: check-baseline through one original stage exit and 10 s of next-stage play")
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
 a = p.parse_args()
+if a.stage_exit and a.command != "check-baseline":
+    p.error("--stage-exit requires check-baseline")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):
     p.error("--debug-options requires movement-batch-run or movement-batch-retry")
 if bool(a.compare) != (a.command == "prototype" and a.action == "project-manifest-compare"):
@@ -92,7 +95,7 @@ try:
     elif a.command == "check-baseline":
         from baseline import check_baseline
 
-        result = check_baseline()
+        result = check_baseline(stage_exit=a.stage_exit)
         print(json.dumps(result, indent=2))
         if not result["success"]:
             sys.exit(1)

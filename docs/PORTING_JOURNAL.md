@@ -5037,3 +5037,17 @@ project file was checked to contain the owner before installing. Zero-error code
 APK `a358fcc1307690ef71efaab2c5117b3a0790e0881e66acc6438fee08d0d90e5a`; `./dev check-baseline` (which enables invincibility) passed with 35.2 s on Lakes,
 no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T214337.782491Z`), and all 33 scalar
 `debugAcceleration` report fields match the previous run. App stopped; OLED asleep.
+
+## J523 — Add a one-exit stage check
+
+`./dev check-baseline --stage-exit` (implemented by Codex, reviewed by Claude) covers what the
+Lakes check does not reach: the teleporter, a genuine stage exit and stage transport. It adds
+high damage and fast charge to invincibility (still assisted; no permanent progression), uses
+the bring-up auto-input that drove J504's multi-stage runs, and stops at exactly one
+transition once the next stage has 10 s of live play on the runtime clock
+(`world.seconds - stageProgress.enteredAt`). It fails on an unexpected first stage, a second
+exit request, an extra transition, a report failure, a process exit or the deadline, and
+never selects a destination; the one-exit limit is a host polling guard, not a runtime
+interlock. Plain `check-baseline` is unchanged. 405 host tests pass. On the J522 APK it went
+Lakes → Goolake at 91.6 s, stopped after 10 s there with 13 kills, no report error and 13
+applied profile runs unchanged (`work/experiments/baseline/20261017T214812.290433Z`). App stopped; OLED asleep.
