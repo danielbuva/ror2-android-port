@@ -1,5 +1,5 @@
 // Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup NovaInputBoundary; teardown —.
+// Session phases: setup NovaRawBoundary, NovaInputBoundary (NovaInputSession); teardown input iterator finally; Dispose retains trace state.
 using System.Linq;
 using System;
 using System.Collections;
@@ -17,131 +17,147 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class NovaSample {public float seconds;public NovaInputBridge.Raw raw;public Vector3 input,aim,stateAim,velocity,position;public bool grounded,jump;public int jumpCount;}
  [Serializable] public class NovaReport {public bool originalAimAnimator,characterMatteApproximation;public float aimPitchCycle,aimYawCycle;public Vector3 modelForward;public bool novaOnly,originalInputConsumer,stopped,aimConsumed,rendersOriginalModel,diagnosticInput;public int samples,fixedTicks,jumpPresses,localJumpCallbacks,jumpTransitions,landings;public float seconds,pathLength,planarPathLength,maxRise,diagnosticReturnFireAt;public uint spawnedBodyId,masterId;public NovaInputBridge.Mapping mapping;public List<NovaSample> observations=new List<NovaSample>();}
  [Serializable] public class NovaTraceChunk {public string attempt,id;public int pid,session,firstSample;public NovaSample[] observations;}
- NovaReport novaTraceOwner;int novaTraceNextSample;float novaTraceNextWrite;
- void FlushNovaTrace(){
-  if(r==null||!r.integratedWorld||r.nova==null)return;
-  if(!ReferenceEquals(novaTraceOwner,r.nova)){novaTraceOwner=r.nova;novaTraceNextSample=0;novaTraceNextWrite=0;}
-  if(r.nova.samples<=novaTraceNextSample)return;
-  bool urgent=!string.IsNullOrEmpty(r.firstFailure)||!string.IsNullOrEmpty(r.error)||r.phase=="complete";
-  if(!urgent&&Time.realtimeSinceStartup<novaTraceNextWrite)return;
-  int first=r.nova.samples-r.nova.observations.Count;
-  if(novaTraceNextSample<first){r.firstFailure="Nova input trace lost an unflushed sample";r.firstFailurePhase=r.phase;throw new Exception(r.firstFailure);}
-  var samples=r.nova.observations.Skip(novaTraceNextSample-first).ToArray();
-  var chunk=new NovaTraceChunk{attempt=r.attempt,id=r.id,pid=r.pid,session=r.session,firstSample=novaTraceNextSample,observations=samples};
-  var path=System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+r.id+"-"+r.pid+"-"+r.session+"-input.jsonl");
-  File.AppendAllText(path,JsonUtility.ToJson(chunk,false)+"\n");
-  novaTraceNextSample=r.nova.samples;novaTraceNextWrite=Time.realtimeSinceStartup+5;
- }
+ NovaInputSession novaInputSession;
+ NovaInputSession GetNovaInputSession(){if(novaInputSession==null)novaInputSession=new NovaInputSession(this);return novaInputSession;}
+ void FlushNovaTrace(){GetNovaInputSession().FlushNovaTrace();}
+ IEnumerator NovaRawBoundary(){return GetNovaInputSession().NovaRawBoundary();}
+ IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){return GetNovaInputSession().NovaInputBoundary(body,machine,cfg);}
  void OnGUI(){DrawOfflineSettings();if(DrawOfflineStart())return;if(r!=null&&r.results!=null&&r.results.reportGenerated){DrawIntegratedResults();return;}if(r!=null&&r.integratedWorld&&r.world!=null&&r.world.ready){DrawIntegratedWorld();return;}if(r!=null)DrawItemPickupObservation();if(r!=null&&r.phase=="commando-defeated"){GUI.Label(new Rect(20,70,800,40),"Commando defeated. Close the test, then open Porting Lab again to retry.");if(GUI.Button(new Rect(20,115,200,40),"Close test"))Application.Quit();return;}if(r!=null&&IsPlayableSpine()&&r.primary!=null)GUI.Label(new Rect(20,70,850,100),"Commando | A: jump | X: primary | Y: secondary | LB: roll | RB: barrage | audio unavailable\nOriginal primary entries: "+r.primary.shots+" | stock: "+r.primary.stockAfter+(r.combat==null?"":"\nTarget HP: "+r.combat.healthAfter.ToString("F1")+" | damage: "+r.combat.damageDealt.ToString("F1")+" | secondary/roll/barrage: "+r.combat.secondaryEntries+"/"+r.combat.utilityEntries+"/"+r.combat.specialEntries)+(r.enemy==null?"":"\nBeetle HP: "+r.enemy.health.ToString("F1")+" | player HP: "+r.enemy.playerHealth.ToString("F1")+" | AI: "+r.enemy.aiState+" | attacks: "+r.enemy.headbutts));}
  bool IsNovaInput(){return IsPlayableSpine()||r.id=="body-state-spawn-state-auto-nova-controls";}
- IEnumerator NovaRawBoundary(){
-  NovaInputBridge.RequireNova();r.nova=new NovaReport{novaOnly=true};r.phase="nova-raw-ready";Save();float began=Time.realtimeSinceStartup,next=0;
-  while(Time.realtimeSinceStartup-began<120){
-   float elapsed=Time.realtimeSinceStartup-began;
-   if(elapsed>=next){r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw()});r.nova.samples++;r.nova.seconds=elapsed;next=elapsed+.05f;}
-   if(Time.frameCount%30==0)Save();yield return null;
+
+ // Create on first use: Save flushes traces before input setup and after teardown.
+ // Keep iterator-local mapping, landing and camera state with the unchanged loop;
+ // its finally owns cleanup. Retain trace state after Dispose for the final Save.
+ sealed class NovaInputSession : IDisposable {
+  readonly MovementBatchProbe coordinator;
+  public NovaInputSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  NovaReport novaTraceOwner;int novaTraceNextSample;float novaTraceNextWrite;
+  public void FlushNovaTrace(){
+   if(coordinator.r==null||!coordinator.r.integratedWorld||coordinator.r.nova==null)return;
+   if(!ReferenceEquals(novaTraceOwner,coordinator.r.nova)){novaTraceOwner=coordinator.r.nova;novaTraceNextSample=0;novaTraceNextWrite=0;}
+   if(coordinator.r.nova.samples<=novaTraceNextSample)return;
+   bool urgent=!string.IsNullOrEmpty(coordinator.r.firstFailure)||!string.IsNullOrEmpty(coordinator.r.error)||coordinator.r.phase=="complete";
+   if(!urgent&&Time.realtimeSinceStartup<novaTraceNextWrite)return;
+   int first=coordinator.r.nova.samples-coordinator.r.nova.observations.Count;
+   if(novaTraceNextSample<first){coordinator.r.firstFailure="Nova input trace lost an unflushed sample";coordinator.r.firstFailurePhase=coordinator.r.phase;throw new Exception(coordinator.r.firstFailure);}
+   var samples=coordinator.r.nova.observations.Skip(novaTraceNextSample-first).ToArray();
+   var chunk=new NovaTraceChunk{attempt=coordinator.r.attempt,id=coordinator.r.id,pid=coordinator.r.pid,session=coordinator.r.session,firstSample=novaTraceNextSample,observations=samples};
+   var path=System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-"+coordinator.r.id+"-"+coordinator.r.pid+"-"+coordinator.r.session+"-input.jsonl");
+   File.AppendAllText(path,JsonUtility.ToJson(chunk,false)+"\n");
+   novaTraceNextSample=coordinator.r.nova.samples;novaTraceNextWrite=Time.realtimeSinceStartup+5;
   }
-  Check(r.nova.samples>300,"Nova Unity raw capture incomplete");Save();
- }
- IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){
-  bool spine=IsPlayableSpine(),bringup=r.id.EndsWith("-bringup");r.integratedWorld=cfg.integratedWorld;r.teleporterLoop=cfg.teleporterLoop;NovaInputBridge.RequireNova();r.nova=new NovaReport{rendersOriginalModel=spine,diagnosticInput=bringup,novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
-  var mappingPath=System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json");
-  Check(File.Exists(mappingPath),"Measured Nova mapping required before physical Commando test");var mapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));mapping.Validate(r.attempt);Check(!mapping.enableSkills,"Ability execution is a separate probe");r.nova.mapping=mapping;
-  var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;var bank=body.inputBank;
-  Check(state is GenericCharacterMain&&body.master.GetBody()==body&&body.isServer&&motor.hasEffectiveAuthority,"Original spawned Commando input/authority contract");
-  Check(RoR2Content.Items.JumpBoost&&DLC3Content.Items.JumpDamageStrike&&DLC1Content.Items.GummyCloneIdentifier&&string.IsNullOrEmpty(body.GetComponent<SfxLocator>().jumpSound),"Combined original empty inventory/jump contract");
-  var priorTriggerQueries=Physics.queriesHitTriggers;var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;NovaInputBridge bridge=null;NovaDiagnosticDisplay display=null;int sleepTimeout=Screen.sleepTimeout,priorTargetFrameRate=Application.targetFrameRate;Screen.sleepTimeout=SleepTimeout.NeverSleep;
-  CharacterBody.JumpDelegate jumped=()=>{r.nova.localJumpCallbacks++;};CharacterMotor.HitGroundDelegate landed=(ref CharacterMotor.HitGroundInfo hit)=>{r.nova.landings++;};body.onJump+=jumped;motor.onHitGroundAuthority+=landed;
-  try{
-   if(cfg.automaticDirector){Check(!cfg.sourceQueriesHitTriggers,"Source placement trigger-query flag changed");Physics.queriesHitTriggers=cfg.sourceQueriesHitTriggers;}
-   if(!cfg.stageGeometry){obstacle=GameObject.CreatePrimitive(PrimitiveType.Cube);obstacle.name="Owned Nova floor";obstacle.layer=30;obstacle.transform.position=new Vector3(0,9,0);obstacle.transform.localScale=new Vector3(200,1,200);}
-   solver.StableGroundLayers=cfg.stageGeometry?(int)LayerIndex.world.mask:1<<30;solver.CollidableLayers=solver.StableGroundLayers;solver.SetGroundSolvingActivation(true);Physics.SyncTransforms();Physics.gravity=new Vector3(0,cfg.sourceGravity,0);
-   var deadline=Time.realtimeSinceStartup+3;while(!solver.GroundingStatus.IsStableOnGround&&Time.realtimeSinceStartup<deadline){yield return new WaitForEndOfFrame();ObserveAutomaticModelFollow(body);}
-   Check(solver.GroundingStatus.IsStableOnGround&&r.nova.landings==1&&body.healthComponent.health==body.maxHealth,"Original spawned body landing before physical input");
-   // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.
-   body.SetAimTimer(130);
-   display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,artifactBundle,cfg.displayAssets,obstacle,spine,cfg.originalAimPresentation?body:null,SelectedSourceSurvivor()?r.selectedSurvivor:null);r.framePacing=display.presentationCamera.report;
-   if(cfg.stageGeometry)display.camera.cullingMask|=LayerIndex.world.mask;
-   if(cfg.combatSpine)PrepareCombatScene(body,cfg);
-   if(cfg.originalRunClock){var sceneContext=PrepareRunSceneContext(cfg);while(sceneContext.MoveNext())yield return sceneContext.Current;}
-   if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
-   if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
-   if(cfg.integratedWorld){var world=PrepareIntegratedWorld(body,cfg);while(world.MoveNext())yield return world.Current;}
-   if(!cfg.integratedWorld)PrepareIntegratedResults(body,cfg);
-   if(cfg.teleporterLoop)display.camera.cullingMask|=LayerIndex.defaultLayer.mask;
-   if(cfg.integratedWorld){display.ConfigureThirdPerson(body);worldView=display.thirdPerson;r.world.camera=worldView.report;}
-   bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;bridge.thirdPerson=display.thirdPerson;r.nova.originalInputConsumer=true;worldEquipmentBridge=bridge;
-   if(cfg.integratedWorld)PrepareDebugAcceleration(body);
-   // Android's -1 default is 30 FPS, and the display can change from 60 to 120 Hz after startup.
-   // A high request removes the lab's 60 FPS limit; mobile presentation remains display-limited.
-   r.phase=cfg.integratedWorld?"integrated-world-playing":bringup?"nova-spine-bringup":"nova-commando-ready";if(cfg.integratedWorld){Application.targetFrameRate=300;r.performance=new PerformanceReport{targetFrameRate=priorTargetFrameRate,requestedFrameRate=Application.targetFrameRate,vSyncCount=QualitySettings.vSyncCount,displayRefreshRate=Screen.currentResolution.refreshRate};}Save();float began=Time.realtimeSinceStartup,next=0,nextReportSave=Time.realtimeSinceStartup+5,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
-   float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
-   while(r.freePlay||Time.realtimeSinceStartup-began<(cfg.integratedWorld?(cfg.teleporterLoop?(cfg.integratedRuntimeSeconds>0?cfg.integratedRuntimeSeconds:360):120):bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
-    yield return new WaitForEndOfFrame();
-    long performanceFrame=cfg.integratedWorld?System.Diagnostics.Stopwatch.GetTimestamp():0,performancePart=performanceFrame;
-    long allocatedFrameStart=cfg.integratedWorld&&Time.frameCount%30==0?GC.GetAllocatedBytesForCurrentThread():-1;
-    if(CompletedResultsReturn()||CompletedOfflineAbandon())yield break;
-    if((r.freePlay||cfg.integratedWorld)&&body&&!body.healthComponent.alive){var defeat=ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;if(restartRequested)yield break;Check(false,"Integrated diagnostic run ended by original player death before objective completion");}
-    if(cfg.integratedWorld)Check(string.IsNullOrEmpty(r.debugAcceleration.error),"Debug acceleration failure: "+r.debugAcceleration.error);
-    if(cfg.teleporterLoop){Check(r.stageProgress!=null&&string.IsNullOrEmpty(r.stageProgress.error),"Original stage callback failed: "+(r.stageProgress==null?"missing":r.stageProgress.error));if(!string.IsNullOrEmpty(pendingStage)){var transition=TransportIntegratedStage(bridge,began);while(transition.MoveNext())yield return transition.Current;previous=solver.TransientPosition;}}
-    if(offlineSettingsPaused){bridge.Neutral();continue;}ObserveAutomaticModelFollow(body);display.ObserveNativeAim(r.nova);TemporaryOverlayManager.OverlayUpdate();
-    Check(string.IsNullOrEmpty(bridge.error),"Nova bridge input failure: "+bridge.error);Check((cfg.combatSpine||machine.state==state)&&body.gameObject.activeInHierarchy&&body.master.GetBody()==body&&motor.hasEffectiveAuthority,"Original physical simulation state/link/authority changed");
-    float elapsed=Time.realtimeSinceStartup-began;var position=solver.TransientPosition;r.nova.pathLength+=Vector3.Distance(position,previous);var delta=position-previous;delta.y=0;r.nova.planarPathLength+=delta.magnitude;previous=position;if(motor.jumpCount>priorJumpCount)r.nova.jumpTransitions+=motor.jumpCount-priorJumpCount;priorJumpCount=motor.jumpCount;r.nova.maxRise=Mathf.Max(r.nova.maxRise,position.y-restingY);
-    var stateAim=machine.state is GenericCharacterMain?(Vector3)aimField.GetValue(machine.state):Vector3.zero;
-    if(bridge.aim.sqrMagnitude>.1f&&Vector3.Distance(stateAim,bank.aimDirection)<.001f)r.nova.aimConsumed=true;
-    if(r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)r.nova.stopped=true;
-    long observerPart=System.Diagnostics.Stopwatch.GetTimestamp();if(cfg.integratedWorld)r.performance.preObserversMs+=PerformanceMs(performancePart);
-    if(spine)ObserveSpinePrimary(body);if(cfg.integratedWorld){r.performance.primaryMs+=PerformanceMs(observerPart);observerPart=System.Diagnostics.Stopwatch.GetTimestamp();}
-    if(cfg.combatSpine)ObserveCombat(body,machine);if(cfg.integratedWorld){r.performance.combatMs+=PerformanceMs(observerPart);observerPart=System.Diagnostics.Stopwatch.GetTimestamp();}
-    if(cfg.enemySpine)ObserveEnemy();if(cfg.integratedWorld){r.performance.enemyMs+=PerformanceMs(observerPart);observerPart=System.Diagnostics.Stopwatch.GetTimestamp();}
-    ObserveOriginalRunClock();if(cfg.integratedWorld)r.performance.clockMs+=PerformanceMs(observerPart);
-    if(cfg.integratedWorld){r.performance.observersMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();long allocatedPart=allocatedFrameStart>=0?GC.GetAllocatedBytesForCurrentThread():0;ObserveIntegratedWorld(body,elapsed);ObserveIntegratedResults();if(allocatedFrameStart>=0)r.performance.worldAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-allocatedPart;r.performance.worldMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();allocatedPart=allocatedFrameStart>=0?GC.GetAllocatedBytesForCurrentThread():0;if(bringup&&!(r.results!=null&&r.results.persisted)){IntegratedWorldStimulus(body,bridge,elapsed);EarnedFeatherInput(body,bridge,elapsed);}if(allocatedFrameStart>=0)r.performance.stimulusAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-allocatedPart;r.performance.stimulusMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();}
-    if(bringup&&!cfg.integratedWorld){
-     bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
-     // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
-     if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&r.enemy.playerDamageEvents>0&&(!DirectorBatch()||r.director.actors.Count>=2)){combatBegan=elapsed;r.nova.diagnosticReturnFireAt=elapsed;}
-     float fireAge=cfg.enemySpine?(combatBegan<0?-1:elapsed-combatBegan+9):elapsed;
-     if(cfg.automaticDirector&&enemyBody&&fireAge>9&&fireAge<12){var enemyAimDelta=enemyBody.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(enemyAimDelta.x,enemyAimDelta.z).normalized;}bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
-     if(DirectorBatch()&&fireAge>18.5f){var target=DirectorReturnFireTarget();bridge.diagnosticPrimary=target;if(target){var batchAim=target.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(batchAim.x,batchAim.z).normalized;}}
-    }
-    if(bringup&&worldView!=null&&bridge.diagnosticInput){
-     var cameraDirection=bank.aimDirection;r.visualCaptureActive=false;
-     // A capture-only camera target never changes the original aim/input bank.
-     // Physical takeover disables this path with diagnosticInput.
-     if(cfg.integratedWorld&&r.stageProgress!=null&&r.stageProgress.current==cfg.visualCaptureStage&&objectiveHost&&!string.IsNullOrEmpty(cfg.visualCaptureRenderer)){
-      var views=objectiveHost.GetComponentsInChildren<Renderer>(true).Where(x=>x.enabled&&x.gameObject.activeInHierarchy&&x.name==cfg.visualCaptureRenderer).ToArray();
-      if(views.Length==1){var view=views[0];cameraDirection=view.bounds.center-bank.aimOrigin;r.visualCaptureActive=true;r.visualCapturePath=StageObjectPath(view.transform);r.visualCaptureCenter=view.bounds.center;}
+  public IEnumerator NovaRawBoundary(){
+   NovaInputBridge.RequireNova();coordinator.r.nova=new NovaReport{novaOnly=true};coordinator.r.phase="nova-raw-ready";coordinator.Save();float began=Time.realtimeSinceStartup,next=0;
+   while(Time.realtimeSinceStartup-began<120){
+    float elapsed=Time.realtimeSinceStartup-began;
+    if(elapsed>=next){coordinator.r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw()});coordinator.r.nova.samples++;coordinator.r.nova.seconds=elapsed;next=elapsed+.05f;}
+    if(Time.frameCount%30==0)coordinator.Save();yield return null;
+   }
+   coordinator.Check(coordinator.r.nova.samples>300,"Nova Unity raw capture incomplete");coordinator.Save();
+  }
+  public IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){
+   bool spine=coordinator.IsPlayableSpine(),bringup=coordinator.r.id.EndsWith("-bringup");coordinator.r.integratedWorld=cfg.integratedWorld;coordinator.r.teleporterLoop=cfg.teleporterLoop;NovaInputBridge.RequireNova();coordinator.r.nova=new NovaReport{rendersOriginalModel=spine,diagnosticInput=bringup,novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
+   var mappingPath=System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json");
+   coordinator.Check(File.Exists(mappingPath),"Measured Nova mapping required before physical Commando test");var mapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));mapping.Validate(coordinator.r.attempt);coordinator.Check(!mapping.enableSkills,"Ability execution is a separate probe");coordinator.r.nova.mapping=mapping;
+   var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;var bank=body.inputBank;
+   coordinator.Check(state is GenericCharacterMain&&body.master.GetBody()==body&&body.isServer&&motor.hasEffectiveAuthority,"Original spawned Commando input/authority contract");
+   coordinator.Check(RoR2Content.Items.JumpBoost&&DLC3Content.Items.JumpDamageStrike&&DLC1Content.Items.GummyCloneIdentifier&&string.IsNullOrEmpty(body.GetComponent<SfxLocator>().jumpSound),"Combined original empty inventory/jump contract");
+   var priorTriggerQueries=Physics.queriesHitTriggers;var gravity=Physics.gravity;var layers=solver.CollidableLayers;var stable=solver.StableGroundLayers;NovaInputBridge bridge=null;NovaDiagnosticDisplay display=null;int sleepTimeout=Screen.sleepTimeout,priorTargetFrameRate=Application.targetFrameRate;Screen.sleepTimeout=SleepTimeout.NeverSleep;
+   CharacterBody.JumpDelegate jumped=()=>{coordinator.r.nova.localJumpCallbacks++;};CharacterMotor.HitGroundDelegate landed=(ref CharacterMotor.HitGroundInfo hit)=>{coordinator.r.nova.landings++;};body.onJump+=jumped;motor.onHitGroundAuthority+=landed;
+   try{
+    if(cfg.automaticDirector){coordinator.Check(!cfg.sourceQueriesHitTriggers,"Source placement trigger-query flag changed");Physics.queriesHitTriggers=cfg.sourceQueriesHitTriggers;}
+    if(!cfg.stageGeometry){coordinator.obstacle=GameObject.CreatePrimitive(PrimitiveType.Cube);coordinator.obstacle.name="Owned Nova floor";coordinator.obstacle.layer=30;coordinator.obstacle.transform.position=new Vector3(0,9,0);coordinator.obstacle.transform.localScale=new Vector3(200,1,200);}
+    solver.StableGroundLayers=cfg.stageGeometry?(int)LayerIndex.world.mask:1<<30;solver.CollidableLayers=solver.StableGroundLayers;solver.SetGroundSolvingActivation(true);Physics.SyncTransforms();Physics.gravity=new Vector3(0,cfg.sourceGravity,0);
+    var deadline=Time.realtimeSinceStartup+3;while(!solver.GroundingStatus.IsStableOnGround&&Time.realtimeSinceStartup<deadline){yield return new WaitForEndOfFrame();coordinator.ObserveAutomaticModelFollow(body);}
+    coordinator.Check(solver.GroundingStatus.IsStableOnGround&&coordinator.r.nova.landings==1&&body.healthComponent.health==body.maxHealth,"Original spawned body landing before physical input");
+    // Diagnostic aim stance only; original state/direction still choose and turn toward bank aim.
+    body.SetAimTimer(130);
+    display=new NovaDiagnosticDisplay(body.modelLocator.modelTransform,coordinator.artifactBundle,cfg.displayAssets,coordinator.obstacle,spine,cfg.originalAimPresentation?body:null,coordinator.SelectedSourceSurvivor()?coordinator.r.selectedSurvivor:null);coordinator.r.framePacing=display.presentationCamera.report;
+    if(cfg.stageGeometry)display.camera.cullingMask|=LayerIndex.world.mask;
+    if(cfg.combatSpine)coordinator.PrepareCombatScene(body,cfg);
+    if(cfg.originalRunClock){var sceneContext=coordinator.PrepareRunSceneContext(cfg);while(sceneContext.MoveNext())yield return sceneContext.Current;}
+    if(!string.IsNullOrEmpty(cfg.playerDeathEffectAsset)){var defeatSetup=coordinator.PreparePlayerDefeat(body,cfg);while(defeatSetup.MoveNext())yield return defeatSetup.Current;}
+    if(cfg.enemySpine){foreach(var hurt in body.hurtBoxGroup.hurtBoxes){hurt.enabled=true;hurt.GetComponent<Collider>().enabled=true;}var enemyRoutine=coordinator.PrepareEnemy(body,cfg);while(enemyRoutine.MoveNext())yield return enemyRoutine.Current;}
+    if(cfg.integratedWorld){var world=coordinator.PrepareIntegratedWorld(body,cfg);while(world.MoveNext())yield return world.Current;}
+    if(!cfg.integratedWorld)coordinator.PrepareIntegratedResults(body,cfg);
+    if(cfg.teleporterLoop)display.camera.cullingMask|=LayerIndex.defaultLayer.mask;
+    if(cfg.integratedWorld){display.ConfigureThirdPerson(body);coordinator.worldView=display.thirdPerson;coordinator.r.world.camera=coordinator.worldView.report;}
+    bridge=body.gameObject.AddComponent<NovaInputBridge>();bridge.bank=bank;bridge.mapping=mapping;bridge.enablePrimary=spine;bridge.enableAllSkills=cfg.combatSpine;bridge.diagnosticInput=bringup;bridge.thirdPerson=display.thirdPerson;coordinator.r.nova.originalInputConsumer=true;coordinator.worldEquipmentBridge=bridge;
+    if(cfg.integratedWorld)coordinator.PrepareDebugAcceleration(body);
+    // Android's -1 default is 30 FPS, and the display can change from 60 to 120 Hz after startup.
+    // A high request removes the lab's 60 FPS limit; mobile presentation remains display-limited.
+    coordinator.r.phase=cfg.integratedWorld?"integrated-world-playing":bringup?"nova-spine-bringup":"nova-commando-ready";if(cfg.integratedWorld){Application.targetFrameRate=300;coordinator.r.performance=new PerformanceReport{targetFrameRate=priorTargetFrameRate,requestedFrameRate=Application.targetFrameRate,vSyncCount=QualitySettings.vSyncCount,displayRefreshRate=Screen.currentResolution.refreshRate};}coordinator.Save();float began=Time.realtimeSinceStartup,next=0,nextReportSave=Time.realtimeSinceStartup+5,restingY=solver.TransientPosition.y,combatBegan=-1;var previous=solver.TransientPosition;int priorJumpCount=motor.jumpCount;
+    float initialAge=SpawnedStateAge(state,"age"),initialFixed=SpawnedStateAge(state,"fixedAge");var aimField=typeof(GenericCharacterMain).GetField("aimDirection",BindingFlags.NonPublic|BindingFlags.Instance);
+    while(coordinator.r.freePlay||Time.realtimeSinceStartup-began<(cfg.integratedWorld?(cfg.teleporterLoop?(cfg.integratedRuntimeSeconds>0?cfg.integratedRuntimeSeconds:360):120):bringup?(cfg.automaticDirector?60:cfg.enemySpine?30:20):90)){
+     yield return new WaitForEndOfFrame();
+     long performanceFrame=cfg.integratedWorld?System.Diagnostics.Stopwatch.GetTimestamp():0,performancePart=performanceFrame;
+     long allocatedFrameStart=cfg.integratedWorld&&Time.frameCount%30==0?GC.GetAllocatedBytesForCurrentThread():-1;
+     if(coordinator.CompletedResultsReturn()||coordinator.CompletedOfflineAbandon())yield break;
+     if((coordinator.r.freePlay||cfg.integratedWorld)&&body&&!body.healthComponent.alive){var defeat=coordinator.ObservePlayerDefeat(body,machine,bridge);while(defeat.MoveNext())yield return defeat.Current;if(coordinator.restartRequested)yield break;coordinator.Check(false,"Integrated diagnostic run ended by original player death before objective completion");}
+     if(cfg.integratedWorld)coordinator.Check(string.IsNullOrEmpty(coordinator.r.debugAcceleration.error),"Debug acceleration failure: "+coordinator.r.debugAcceleration.error);
+     if(cfg.teleporterLoop){coordinator.Check(coordinator.r.stageProgress!=null&&string.IsNullOrEmpty(coordinator.r.stageProgress.error),"Original stage callback failed: "+(coordinator.r.stageProgress==null?"missing":coordinator.r.stageProgress.error));if(!string.IsNullOrEmpty(coordinator.pendingStage)){var transition=coordinator.TransportIntegratedStage(bridge,began);while(transition.MoveNext())yield return transition.Current;previous=solver.TransientPosition;}}
+     if(coordinator.offlineSettingsPaused){bridge.Neutral();continue;}coordinator.ObserveAutomaticModelFollow(body);display.ObserveNativeAim(coordinator.r.nova);TemporaryOverlayManager.OverlayUpdate();
+     coordinator.Check(string.IsNullOrEmpty(bridge.error),"Nova bridge input failure: "+bridge.error);coordinator.Check((cfg.combatSpine||machine.state==state)&&body.gameObject.activeInHierarchy&&body.master.GetBody()==body&&motor.hasEffectiveAuthority,"Original physical simulation state/link/authority changed");
+     float elapsed=Time.realtimeSinceStartup-began;var position=solver.TransientPosition;coordinator.r.nova.pathLength+=Vector3.Distance(position,previous);var delta=position-previous;delta.y=0;coordinator.r.nova.planarPathLength+=delta.magnitude;previous=position;if(motor.jumpCount>priorJumpCount)coordinator.r.nova.jumpTransitions+=motor.jumpCount-priorJumpCount;priorJumpCount=motor.jumpCount;coordinator.r.nova.maxRise=Mathf.Max(coordinator.r.nova.maxRise,position.y-restingY);
+     var stateAim=machine.state is GenericCharacterMain?(Vector3)aimField.GetValue(machine.state):Vector3.zero;
+     if(bridge.aim.sqrMagnitude>.1f&&Vector3.Distance(stateAim,bank.aimDirection)<.001f)coordinator.r.nova.aimConsumed=true;
+     if(coordinator.r.nova.planarPathLength>3&&elapsed>15&&bank.moveVector==Vector3.zero&&motor.velocity.sqrMagnitude<.0001f&&solver.GroundingStatus.IsStableOnGround)coordinator.r.nova.stopped=true;
+     long observerPart=System.Diagnostics.Stopwatch.GetTimestamp();if(cfg.integratedWorld)coordinator.r.performance.preObserversMs+=PerformanceMs(performancePart);
+     if(spine)coordinator.ObserveSpinePrimary(body);if(cfg.integratedWorld){coordinator.r.performance.primaryMs+=PerformanceMs(observerPart);observerPart=System.Diagnostics.Stopwatch.GetTimestamp();}
+     if(cfg.combatSpine)coordinator.ObserveCombat(body,machine);if(cfg.integratedWorld){coordinator.r.performance.combatMs+=PerformanceMs(observerPart);observerPart=System.Diagnostics.Stopwatch.GetTimestamp();}
+     if(cfg.enemySpine)coordinator.ObserveEnemy();if(cfg.integratedWorld){coordinator.r.performance.enemyMs+=PerformanceMs(observerPart);observerPart=System.Diagnostics.Stopwatch.GetTimestamp();}
+     coordinator.ObserveOriginalRunClock();if(cfg.integratedWorld)coordinator.r.performance.clockMs+=PerformanceMs(observerPart);
+     if(cfg.integratedWorld){coordinator.r.performance.observersMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();long allocatedPart=allocatedFrameStart>=0?GC.GetAllocatedBytesForCurrentThread():0;coordinator.ObserveIntegratedWorld(body,elapsed);coordinator.ObserveIntegratedResults();if(allocatedFrameStart>=0)coordinator.r.performance.worldAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-allocatedPart;coordinator.r.performance.worldMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();allocatedPart=allocatedFrameStart>=0?GC.GetAllocatedBytesForCurrentThread():0;if(bringup&&!(coordinator.r.results!=null&&coordinator.r.results.persisted)){coordinator.IntegratedWorldStimulus(body,bridge,elapsed);coordinator.EarnedFeatherInput(body,bridge,elapsed);}if(allocatedFrameStart>=0)coordinator.r.performance.stimulusAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-allocatedPart;coordinator.r.performance.stimulusMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();}
+     if(bringup&&!cfg.integratedWorld){
+      bridge.movement=elapsed<3?Vector2.right:elapsed<6?Vector2.left:Vector2.zero;bridge.aim=elapsed<6?Vector2.right:cfg.combatSpine?coordinator.CombatAim(body):Vector2.up;bridge.DiagnosticJump(elapsed>7&&elapsed<7.2f);
+      // Observe real melee before diagnostic return fire; wall-clock timing can knock the enemy away before contact.
+      if(cfg.enemySpine&&combatBegan<0&&elapsed>=9&&coordinator.r.enemy.playerDamageEvents>0&&(!coordinator.DirectorBatch()||coordinator.r.director.actors.Count>=2)){combatBegan=elapsed;coordinator.r.nova.diagnosticReturnFireAt=elapsed;}
+      float fireAge=cfg.enemySpine?(combatBegan<0?-1:elapsed-combatBegan+9):elapsed;
+      if(cfg.automaticDirector&&coordinator.enemyBody&&fireAge>9&&fireAge<12){var enemyAimDelta=coordinator.enemyBody.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(enemyAimDelta.x,enemyAimDelta.z).normalized;}bridge.diagnosticPrimary=fireAge>9&&fireAge<12;bridge.diagnosticSecondary=cfg.combatSpine&&fireAge>12.3f&&fireAge<12.5f;bridge.diagnosticUtility=cfg.combatSpine&&fireAge>14&&fireAge<14.2f;bridge.diagnosticSpecial=cfg.combatSpine&&fireAge>16&&fireAge<16.2f;
+      if(coordinator.DirectorBatch()&&fireAge>18.5f){var target=coordinator.DirectorReturnFireTarget();bridge.diagnosticPrimary=target;if(target){var batchAim=target.corePosition-body.inputBank.aimOrigin;bridge.aim=new Vector2(batchAim.x,batchAim.z).normalized;}}
      }
-     worldView.DiagnosticDirection(cameraDirection);
-    }display.Observe(position,bank.aimDirection);if(cfg.integratedWorld){r.performance.presentationMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();}
-    if(elapsed>=next){if((r.freePlay||cfg.integratedWorld)&&r.nova.observations.Count>=900)r.nova.observations.RemoveAt(0);r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});r.nova.samples++;next=elapsed+.1f;}
-    if(cfg.pauseBeforeMoon&&cfg.teleporterLoop&&r.stageProgress.transitions>=4&&elapsed-r.stageProgress.enteredAt>30){r.nova.seconds=elapsed;break;}
-    if(cfg.teleporterLoop&&r.stageProgress.transitions>=Mathf.Max(1,cfg.integratedTransitionTarget)&&elapsed-r.stageProgress.enteredAt>30&&(!cfg.moonMission||(r.moon!=null&&r.moon.gameOver&&(!cfg.integratedResults||(r.results!=null&&r.results.persisted))))){r.nova.seconds=elapsed;break;}
-    r.nova.seconds=elapsed;r.nova.fixedTicks=bridge.fixedTicks;r.nova.jumpPresses=bridge.jumpPresses;r.automaticFrames++;if(cfg.integratedWorld){r.performance.frames++;r.performance.fixedTicks=bridge.fixedTicks;
-     r.world.inputBridgeEnabled=bridge.enabled;r.world.inputBridgeActive=bridge.isActiveAndEnabled;r.world.inputControllerConnected=bridge.controllerConnected;r.world.inputControllerSuspensions=bridge.controllerSuspensions;r.world.inputControllerReconnections=bridge.controllerReconnections;r.world.playerObjectActive=body.gameObject.activeInHierarchy;r.world.playerMotorEnabled=motor.enabled;r.world.liveTimeScale=Time.timeScale;r.world.liveFixedDeltaTime=Time.fixedDeltaTime;r.world.pauseControllerPaused=PauseStopController.instance&&PauseStopController.instance.isPaused;
-    }if(cfg.integratedWorld?Time.realtimeSinceStartup>=nextReportSave:Time.frameCount%30==0){long saveStarted=System.Diagnostics.Stopwatch.GetTimestamp(),saveAllocatedStart=allocatedFrameStart>=0?GC.GetAllocatedBytesForCurrentThread():0;if(cfg.integratedWorld){r.performance.requestedFrameRate=Application.targetFrameRate;r.performance.displayRefreshRate=Screen.currentResolution.refreshRate;}Save();if(cfg.integratedWorld){nextReportSave=Time.realtimeSinceStartup+5;r.performance.saveMs+=PerformanceMs(saveStarted);if(allocatedFrameStart>=0)r.performance.saveAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-saveAllocatedStart;}}if(cfg.integratedWorld){r.performance.ownLoopMs+=PerformanceMs(performanceFrame);if(allocatedFrameStart>=0){r.performance.sampledAllocationFrames++;r.performance.ownLoopAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-allocatedFrameStart;}}
-   }
-   r.automaticSeconds=Time.realtimeSinceStartup-began;r.spawnedStateAge=SpawnedStateAge(state,"age")-initialAge;r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-initialFixed;
-   bridge.enabled=false;yield return new WaitForSeconds(.5f);
-   if(cfg.integratedWorld){
-    r.world.simulationSeconds=r.automaticSeconds;
-    Check(r.world.ready&&r.world.simulationSeconds>=120&&r.world.frames>1000,"Integrated world simulation incomplete");
-    if(!cfg.moonMission)Check(r.world.openedBarrels+(r.stageProgress==null?0:r.stageProgress.completedBarrels)>=3&&r.world.lootDomain==4&&r.world.openedChests+(r.stageProgress==null?0:r.stageProgress.completedChests)>=2&&r.world.pickupMessages>=2&&r.world.syringe+r.world.lightning+r.world.glasses+r.world.slug>=2&&r.world.kills>0&&r.world.coinMessages>0&&r.world.xpMessages>0,"Integrated world gameplay loop incomplete");
-    Check(r.world.authority&&body.healthComponent.alive&&(cfg.teleporterLoop||rewardDirector.enabled)&&r.director.actors.Count>3,"Integrated continuous combat/authority/survival incomplete");if(cfg.teleporterLoop)Check(r.stageProgress.transitions>=Mathf.Max(1,cfg.integratedTransitionTarget)&&r.stageProgress.stageClearCount>=Mathf.Max(1,cfg.integratedTransitionTarget),"Integrated original teleporter/boss/charge loop incomplete");if(cfg.moonMission&&!cfg.pauseBeforeMoon)Check(r.moon!=null&&r.moon.gameOver&&moonEscape.mainStateMachine.state is EscapeSequenceController.EscapeSequenceSuccessState,"Original Moon mission/escape/ending remains incomplete");if(cfg.integratedResults&&!cfg.pauseBeforeMoon)Check(r.results!=null&&r.results.reportGenerated&&r.results.clientEnding&&r.results.reportReloaded&&r.results.persisted,"Original ending report/persistence incomplete");Save();yield break;
-   }
-   Check(r.automaticSeconds>=(bringup?20:90)&&r.nova.fixedTicks>(bringup?300:1000)&&r.nova.samples>(bringup?100:300),"Physical Commando sustained callbacks");Check(r.nova.planarPathLength>5&&r.nova.stopped,"Physical movement and original stopping not observed");Check(r.nova.aimConsumed&&(bringup||bridge.aimTicks>10),"Physical right-stick aim not consumed by original state");if(spine)Check(r.primary.shots>0&&(cfg.combatSpine?body.skillLocator.primary.CanExecute():body.skillLocator.primary.stock==1),"Original primary firing/readiness not observed");Check(r.nova.jumpTransitions>0&&r.nova.jumpPresses>=r.nova.jumpTransitions&&r.nova.maxRise>.5f&&r.nova.landings>=2&&solver.GroundingStatus.IsStableOnGround&&motor.jumpCount==0,"Physical jump/original landing incomplete");Save();
-   if(cfg.combatSpine)Check(r.combat.secondaryEntries>0&&r.combat.utilityEntries>0&&r.combat.specialEntries>0&&r.combat.projectiles>0&&r.combat.damageEvents>0&&r.combat.healthAfter<r.combat.healthBefore,"Integrated original skills/projectile/target damage incomplete");
-  if(cfg.enemySpine)Check(r.enemy.graphReady&&r.enemy.linked&&r.enemy.authority&&r.enemy.targetFound&&r.enemy.planarBeforeDamage>4&&r.enemy.groundedBeforeDamage>100&&r.enemy.maxFallBeforeDamage<10,"Original grounded enemy chase before incoming damage not observed");
-  if(cfg.enemySpine&&bringup)Check(r.enemy.headbutts>0&&r.enemy.playerDamageEvents>0&&r.enemy.enemyDamageEvents>0&&r.enemy.dead,"Original enemy melee, return damage and death not observed");
-  if(cfg.enemySpine&&bringup)Check(r.enemy.deathGlobalEvents==1&&r.enemy.playerKillsAfter==r.enemy.playerKillsBefore+(DirectorBatch()?3:1)&&r.enemy.naturalBodyDestroyed&&r.enemy.naturalMasterDestroyed,"Original enemy death event/kill count/natural teardown incomplete");
-  if(cfg.automaticDirector&&bringup)Check(r.director.navigationTicks>500&&r.director.navigationNext&&r.director.navigationReachable&&r.director.navigationPathUpdate>0&&(DirectorBatch()?r.director.navigationAgentPeak>=2:r.director.navigationAgentPeak==1),"Original broad route output/scheduling not observed");
-  if(cfg.enemyRewards&&bringup){if(DirectorBatch())VerifyDirectorBatch();else VerifyEnemyRewardDelivery();}
-  if(cfg.originalRunClock&&bringup)VerifyOriginalRunClock();
-  if(cfg.barrelInteraction&&bringup){var interaction=ProbeOriginalBarrel(body,cfg);while(interaction.MoveNext())yield return interaction.Current;}
-  if(cfg.originalDefaultPickup&&bringup){var generic=PrepareOriginalDefaultPickup(cfg);while(generic.MoveNext())yield return generic.Current;}
-  if(cfg.originalItemPickup&&bringup){var pickup=ProbeOriginalItemPickup(body,cfg);while(pickup.MoveNext())yield return pickup.Current;}
-  if(cfg.originalMoneyCost&&bringup){var cost=ProbeOriginalMoneyCost(body,cfg);while(cost.MoveNext())yield return cost.Current;}
-  if(cfg.originalActiveClient&&bringup){var client=ProbeActiveBodyClient(body,cfg);while(client.MoveNext())yield return client.Current;}
-  }finally{if(cfg.integratedWorld){CleanupDebugAcceleration();CleanupIntegratedWorld();}CleanupActiveBodyClient();CleanupOriginalMoneyCost();CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&(bringup||cfg.integratedWorld))CleanupOriginalDefaultPickup();CleanupOriginalBarrel();CleanupRunClock();if(cfg.enemySpine)CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)CleanupCombatScene();if(display!=null)display.Dispose();if(!ReferenceEquals(body,null))body.onJump-=jumped;if(!ReferenceEquals(motor,null))motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;if(solver){solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}worldView=null;Application.targetFrameRate=priorTargetFrameRate;Screen.sleepTimeout=sleepTimeout;}
+     if(bringup&&coordinator.worldView!=null&&bridge.diagnosticInput){
+      var cameraDirection=bank.aimDirection;coordinator.r.visualCaptureActive=false;
+      // A capture-only camera target never changes the original aim/input bank.
+      // Physical takeover disables this path with diagnosticInput.
+      if(cfg.integratedWorld&&coordinator.r.stageProgress!=null&&coordinator.r.stageProgress.current==cfg.visualCaptureStage&&coordinator.objectiveHost&&!string.IsNullOrEmpty(cfg.visualCaptureRenderer)){
+       var views=coordinator.objectiveHost.GetComponentsInChildren<Renderer>(true).Where(x=>x.enabled&&x.gameObject.activeInHierarchy&&x.name==cfg.visualCaptureRenderer).ToArray();
+       if(views.Length==1){var view=views[0];cameraDirection=view.bounds.center-bank.aimOrigin;coordinator.r.visualCaptureActive=true;coordinator.r.visualCapturePath=StageObjectPath(view.transform);coordinator.r.visualCaptureCenter=view.bounds.center;}
+      }
+      coordinator.worldView.DiagnosticDirection(cameraDirection);
+     }display.Observe(position,bank.aimDirection);if(cfg.integratedWorld){coordinator.r.performance.presentationMs+=PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();}
+     if(elapsed>=next){if((coordinator.r.freePlay||cfg.integratedWorld)&&coordinator.r.nova.observations.Count>=900)coordinator.r.nova.observations.RemoveAt(0);coordinator.r.nova.observations.Add(new NovaSample{seconds=elapsed,raw=NovaInputBridge.ReadRaw(),input=bank.moveVector,aim=bank.aimDirection,stateAim=stateAim,velocity=motor.velocity,position=position,grounded=solver.GroundingStatus.IsStableOnGround,jump=bank.jump.down,jumpCount=motor.jumpCount});coordinator.r.nova.samples++;next=elapsed+.1f;}
+     if(cfg.pauseBeforeMoon&&cfg.teleporterLoop&&coordinator.r.stageProgress.transitions>=4&&elapsed-coordinator.r.stageProgress.enteredAt>30){coordinator.r.nova.seconds=elapsed;break;}
+     if(cfg.teleporterLoop&&coordinator.r.stageProgress.transitions>=Mathf.Max(1,cfg.integratedTransitionTarget)&&elapsed-coordinator.r.stageProgress.enteredAt>30&&(!cfg.moonMission||(coordinator.r.moon!=null&&coordinator.r.moon.gameOver&&(!cfg.integratedResults||(coordinator.r.results!=null&&coordinator.r.results.persisted))))){coordinator.r.nova.seconds=elapsed;break;}
+     coordinator.r.nova.seconds=elapsed;coordinator.r.nova.fixedTicks=bridge.fixedTicks;coordinator.r.nova.jumpPresses=bridge.jumpPresses;coordinator.r.automaticFrames++;if(cfg.integratedWorld){coordinator.r.performance.frames++;coordinator.r.performance.fixedTicks=bridge.fixedTicks;
+      coordinator.r.world.inputBridgeEnabled=bridge.enabled;coordinator.r.world.inputBridgeActive=bridge.isActiveAndEnabled;coordinator.r.world.inputControllerConnected=bridge.controllerConnected;coordinator.r.world.inputControllerSuspensions=bridge.controllerSuspensions;coordinator.r.world.inputControllerReconnections=bridge.controllerReconnections;coordinator.r.world.playerObjectActive=body.gameObject.activeInHierarchy;coordinator.r.world.playerMotorEnabled=motor.enabled;coordinator.r.world.liveTimeScale=Time.timeScale;coordinator.r.world.liveFixedDeltaTime=Time.fixedDeltaTime;coordinator.r.world.pauseControllerPaused=PauseStopController.instance&&PauseStopController.instance.isPaused;
+     }if(cfg.integratedWorld?Time.realtimeSinceStartup>=nextReportSave:Time.frameCount%30==0){long saveStarted=System.Diagnostics.Stopwatch.GetTimestamp(),saveAllocatedStart=allocatedFrameStart>=0?GC.GetAllocatedBytesForCurrentThread():0;if(cfg.integratedWorld){coordinator.r.performance.requestedFrameRate=Application.targetFrameRate;coordinator.r.performance.displayRefreshRate=Screen.currentResolution.refreshRate;}coordinator.Save();if(cfg.integratedWorld){nextReportSave=Time.realtimeSinceStartup+5;coordinator.r.performance.saveMs+=PerformanceMs(saveStarted);if(allocatedFrameStart>=0)coordinator.r.performance.saveAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-saveAllocatedStart;}}if(cfg.integratedWorld){coordinator.r.performance.ownLoopMs+=PerformanceMs(performanceFrame);if(allocatedFrameStart>=0){coordinator.r.performance.sampledAllocationFrames++;coordinator.r.performance.ownLoopAllocatedBytes+=GC.GetAllocatedBytesForCurrentThread()-allocatedFrameStart;}}
+    }
+    coordinator.r.automaticSeconds=Time.realtimeSinceStartup-began;coordinator.r.spawnedStateAge=SpawnedStateAge(state,"age")-initialAge;coordinator.r.spawnedFixedAge=SpawnedStateAge(state,"fixedAge")-initialFixed;
+    bridge.enabled=false;yield return new WaitForSeconds(.5f);
+    if(cfg.integratedWorld){
+     coordinator.r.world.simulationSeconds=coordinator.r.automaticSeconds;
+     coordinator.Check(coordinator.r.world.ready&&coordinator.r.world.simulationSeconds>=120&&coordinator.r.world.frames>1000,"Integrated world simulation incomplete");
+     if(!cfg.moonMission)coordinator.Check(coordinator.r.world.openedBarrels+(coordinator.r.stageProgress==null?0:coordinator.r.stageProgress.completedBarrels)>=3&&coordinator.r.world.lootDomain==4&&coordinator.r.world.openedChests+(coordinator.r.stageProgress==null?0:coordinator.r.stageProgress.completedChests)>=2&&coordinator.r.world.pickupMessages>=2&&coordinator.r.world.syringe+coordinator.r.world.lightning+coordinator.r.world.glasses+coordinator.r.world.slug>=2&&coordinator.r.world.kills>0&&coordinator.r.world.coinMessages>0&&coordinator.r.world.xpMessages>0,"Integrated world gameplay loop incomplete");
+     coordinator.Check(coordinator.r.world.authority&&body.healthComponent.alive&&(cfg.teleporterLoop||coordinator.rewardDirector.enabled)&&coordinator.r.director.actors.Count>3,"Integrated continuous combat/authority/survival incomplete");if(cfg.teleporterLoop)coordinator.Check(coordinator.r.stageProgress.transitions>=Mathf.Max(1,cfg.integratedTransitionTarget)&&coordinator.r.stageProgress.stageClearCount>=Mathf.Max(1,cfg.integratedTransitionTarget),"Integrated original teleporter/boss/charge loop incomplete");if(cfg.moonMission&&!cfg.pauseBeforeMoon)coordinator.Check(coordinator.r.moon!=null&&coordinator.r.moon.gameOver&&coordinator.moonEscape.mainStateMachine.state is EscapeSequenceController.EscapeSequenceSuccessState,"Original Moon mission/escape/ending remains incomplete");if(cfg.integratedResults&&!cfg.pauseBeforeMoon)coordinator.Check(coordinator.r.results!=null&&coordinator.r.results.reportGenerated&&coordinator.r.results.clientEnding&&coordinator.r.results.reportReloaded&&coordinator.r.results.persisted,"Original ending report/persistence incomplete");coordinator.Save();yield break;
+    }
+    coordinator.Check(coordinator.r.automaticSeconds>=(bringup?20:90)&&coordinator.r.nova.fixedTicks>(bringup?300:1000)&&coordinator.r.nova.samples>(bringup?100:300),"Physical Commando sustained callbacks");coordinator.Check(coordinator.r.nova.planarPathLength>5&&coordinator.r.nova.stopped,"Physical movement and original stopping not observed");coordinator.Check(coordinator.r.nova.aimConsumed&&(bringup||bridge.aimTicks>10),"Physical right-stick aim not consumed by original state");if(spine)coordinator.Check(coordinator.r.primary.shots>0&&(cfg.combatSpine?body.skillLocator.primary.CanExecute():body.skillLocator.primary.stock==1),"Original primary firing/readiness not observed");coordinator.Check(coordinator.r.nova.jumpTransitions>0&&coordinator.r.nova.jumpPresses>=coordinator.r.nova.jumpTransitions&&coordinator.r.nova.maxRise>.5f&&coordinator.r.nova.landings>=2&&solver.GroundingStatus.IsStableOnGround&&motor.jumpCount==0,"Physical jump/original landing incomplete");coordinator.Save();
+    if(cfg.combatSpine)coordinator.Check(coordinator.r.combat.secondaryEntries>0&&coordinator.r.combat.utilityEntries>0&&coordinator.r.combat.specialEntries>0&&coordinator.r.combat.projectiles>0&&coordinator.r.combat.damageEvents>0&&coordinator.r.combat.healthAfter<coordinator.r.combat.healthBefore,"Integrated original skills/projectile/target damage incomplete");
+   if(cfg.enemySpine)coordinator.Check(coordinator.r.enemy.graphReady&&coordinator.r.enemy.linked&&coordinator.r.enemy.authority&&coordinator.r.enemy.targetFound&&coordinator.r.enemy.planarBeforeDamage>4&&coordinator.r.enemy.groundedBeforeDamage>100&&coordinator.r.enemy.maxFallBeforeDamage<10,"Original grounded enemy chase before incoming damage not observed");
+   if(cfg.enemySpine&&bringup)coordinator.Check(coordinator.r.enemy.headbutts>0&&coordinator.r.enemy.playerDamageEvents>0&&coordinator.r.enemy.enemyDamageEvents>0&&coordinator.r.enemy.dead,"Original enemy melee, return damage and death not observed");
+   if(cfg.enemySpine&&bringup)coordinator.Check(coordinator.r.enemy.deathGlobalEvents==1&&coordinator.r.enemy.playerKillsAfter==coordinator.r.enemy.playerKillsBefore+(coordinator.DirectorBatch()?3:1)&&coordinator.r.enemy.naturalBodyDestroyed&&coordinator.r.enemy.naturalMasterDestroyed,"Original enemy death event/kill count/natural teardown incomplete");
+   if(cfg.automaticDirector&&bringup)coordinator.Check(coordinator.r.director.navigationTicks>500&&coordinator.r.director.navigationNext&&coordinator.r.director.navigationReachable&&coordinator.r.director.navigationPathUpdate>0&&(coordinator.DirectorBatch()?coordinator.r.director.navigationAgentPeak>=2:coordinator.r.director.navigationAgentPeak==1),"Original broad route output/scheduling not observed");
+   if(cfg.enemyRewards&&bringup){if(coordinator.DirectorBatch())coordinator.VerifyDirectorBatch();else coordinator.VerifyEnemyRewardDelivery();}
+   if(cfg.originalRunClock&&bringup)coordinator.VerifyOriginalRunClock();
+   if(cfg.barrelInteraction&&bringup){var interaction=coordinator.ProbeOriginalBarrel(body,cfg);while(interaction.MoveNext())yield return interaction.Current;}
+   if(cfg.originalDefaultPickup&&bringup){var generic=coordinator.PrepareOriginalDefaultPickup(cfg);while(generic.MoveNext())yield return generic.Current;}
+   if(cfg.originalItemPickup&&bringup){var pickup=coordinator.ProbeOriginalItemPickup(body,cfg);while(pickup.MoveNext())yield return pickup.Current;}
+   if(cfg.originalMoneyCost&&bringup){var cost=coordinator.ProbeOriginalMoneyCost(body,cfg);while(cost.MoveNext())yield return cost.Current;}
+   if(cfg.originalActiveClient&&bringup){var client=coordinator.ProbeActiveBodyClient(body,cfg);while(client.MoveNext())yield return client.Current;}
+   }finally{if(cfg.integratedWorld){coordinator.CleanupDebugAcceleration();coordinator.CleanupIntegratedWorld();}coordinator.CleanupActiveBodyClient();coordinator.CleanupOriginalMoneyCost();coordinator.CleanupOriginalItemPickup();if(cfg.originalDefaultPickup&&(bringup||cfg.integratedWorld))coordinator.CleanupOriginalDefaultPickup();coordinator.CleanupOriginalBarrel();coordinator.CleanupRunClock();if(cfg.enemySpine)coordinator.CleanupEnemy();if(bridge){bridge.enabled=false;Destroy(bridge);}if(cfg.combatSpine)coordinator.CleanupCombatScene();if(display!=null)display.Dispose();if(!ReferenceEquals(body,null))body.onJump-=jumped;if(!ReferenceEquals(motor,null))motor.onHitGroundAuthority-=landed;Physics.gravity=gravity;Physics.queriesHitTriggers=priorTriggerQueries;if(solver){solver.CollidableLayers=layers;solver.StableGroundLayers=stable;solver.SetGroundSolvingActivation(false);}coordinator.worldView=null;Application.targetFrameRate=priorTargetFrameRate;Screen.sleepTimeout=sleepTimeout;}
+  }
+  // The input iterator's finally releases its resources in the original order.
+  // Trace cursors must survive that cleanup; there is no additional release here.
+  public void Dispose(){}
  }
 }

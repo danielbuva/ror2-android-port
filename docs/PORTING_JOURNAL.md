@@ -5115,3 +5115,18 @@ build, APK `3f035ab0c0a40f0dca83c5e7d2580a637fdedcb64a353ac308edd7415432d250`, s
 report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T225327.456080Z`). Invincibility means the player
 never dies in the check, so it exercises the death-effect setup but not the defeat path, which
 is covered by review only. App stopped; OLED asleep.
+
+## J528 — Extract the Nova input owner
+
+Phase 4 step 5, eighth owner (implemented by Codex, reviewed by Claude). The Nova input
+session coroutine and its trace state (`novaTraceOwner`, `novaTraceNextSample`,
+`novaTraceNextWrite`) moved into a nested `NovaInputSession` (`NovaInputBoundary.cs`). The
+world view, equipment bridge and the other shared fields stay on the coordinator because other
+subsystems use them; `NovaInputBridge` and `AndroidPresentationCamera` were already own types.
+Mapping validation, landing wait, camera setup, the per-frame loop order and the `finally`
+cleanup are unchanged, and the three moved bodies are token-identical apart from
+`coordinator.` qualifiers; Codex's scan of the 132 nested-class lines found no unqualified
+coordinator access. Zero-error code-only build, APK `e8dd4289f2c97afe505e7eb275e979596572db8ef2b5b20f5a58f04b567ec658`, staged file checked.
+`./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261017T230116.034885Z`) and
+`--stage-exit` passed on the same APK (one genuine exit, 10 s of next-stage play,
+`work/experiments/baseline/20261017T230442.071597Z`). App stopped; OLED asleep.
