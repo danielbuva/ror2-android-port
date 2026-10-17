@@ -63,13 +63,13 @@ def first_sentence(body: str, limit: int = 160) -> str:
             continue
         end = match.end()
         # Include closing quotation marks, parentheses and Markdown emphasis.
-        while end < len(text) and text[end] in '\"\'”’)]}*_':
+        while end < len(text) and text[end] in "\"'”’)]}*_":
             end += 1
         if end == len(text) or text[end].isspace():
             text = text[:end]
             break
     if len(text) > limit:
-        return text[:limit - 1].rstrip() + "…"
+        return text[: limit - 1].rstrip() + "…"
     return text
 
 

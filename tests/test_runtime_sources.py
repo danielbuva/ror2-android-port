@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT/'scripts/lab'))
+sys.path.insert(0, str(ROOT / "scripts/lab"))
 import build
 import common
 from common import write
@@ -15,7 +15,7 @@ from common import write
 
 class RuntimeManifestTests(unittest.TestCase):
     def setUp(self):
-        self.names = json.loads((ROOT/'recipe/runtime-sources.json').read_text())
+        self.names = json.loads((ROOT / "recipe/runtime-sources.json").read_text())
 
     def test_manifest_is_sorted(self):
         self.assertTrue(self.names)
@@ -28,34 +28,33 @@ class RuntimeManifestTests(unittest.TestCase):
         for name in self.names:
             with self.subTest(source=name):
                 self.assertEqual(Path(name).name, name)
-                self.assertTrue(name.endswith('.cs'))
-                self.assertTrue((ROOT/'tools/unity'/name).is_file())
+                self.assertTrue(name.endswith(".cs"))
+                self.assertTrue((ROOT / "tools/unity" / name).is_file())
         self.assertEqual(build.runtime_sources(), self.names)
 
     def test_player_inputs_do_not_depend_on_work_at_import(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            empty = root/'empty'
+            empty = root / "empty"
             empty.mkdir()
-            populated = root/'populated'
-            stage = populated/'lab-project/Assets/LabLoadingScene'
+            populated = root / "populated"
+            stage = populated / "lab-project/Assets/LabLoadingScene"
             stage.mkdir(parents=True)
-            for source in (ROOT/'tools/unity').glob('*.cs'):
-                (stage/source.name).touch()
-            with patch.object(common, 'WORK', populated):
-                populated_inputs = runpy.run_path(str(ROOT/'scripts/lab/build.py'))['WHOLE_PLAYER_INPUTS']
-            with patch.object(common, 'WORK', empty):
-                empty_inputs = runpy.run_path(str(ROOT/'scripts/lab/build.py'))['WHOLE_PLAYER_INPUTS']
+            for source in (ROOT / "tools/unity").glob("*.cs"):
+                (stage / source.name).touch()
+            with patch.object(common, "WORK", populated):
+                populated_inputs = runpy.run_path(str(ROOT / "scripts/lab/build.py"))["WHOLE_PLAYER_INPUTS"]
+            with patch.object(common, "WORK", empty):
+                empty_inputs = runpy.run_path(str(ROOT / "scripts/lab/build.py"))["WHOLE_PLAYER_INPUTS"]
             self.assertEqual(populated_inputs, empty_inputs)
             self.assertEqual(empty_inputs, build.WHOLE_PLAYER_INPUTS)
 
     def test_authored_and_generated_sources_keep_their_meta_exemptions(self):
-        expected = set(self.names)|build.WHOLE_GENERATED_RUNTIME_SOURCES
-        actual = {Path(path).name for path in build.WHOLE_PLAYER_INPUTS
-                  if path.startswith('Assets/LabLoadingScene/') and path.endswith('.cs')}
+        expected = set(self.names) | build.WHOLE_GENERATED_RUNTIME_SOURCES
+        actual = {Path(path).name for path in build.WHOLE_PLAYER_INPUTS if path.startswith("Assets/LabLoadingScene/") and path.endswith(".cs")}
         self.assertEqual(actual, expected)
         for name in expected:
-            self.assertIn('Assets/LabLoadingScene/'+name+'.meta', build.WHOLE_PLAYER_INPUTS)
+            self.assertIn("Assets/LabLoadingScene/" + name + ".meta", build.WHOLE_PLAYER_INPUTS)
 
 
 class RuntimeMembershipTests(unittest.TestCase):
@@ -63,54 +62,54 @@ class RuntimeMembershipTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.work = self.root/'work'
-        self.project = self.work/'lab-project'
-        self.stage = self.project/'Assets/LabLoadingScene'
+        self.work = self.root / "work"
+        self.project = self.work / "lab-project"
+        self.stage = self.project / "Assets/LabLoadingScene"
         self.stage.mkdir(parents=True)
-        self.source = self.root/'tools/unity/Fixture.cs'
+        self.source = self.root / "tools/unity/Fixture.cs"
         self.source.parent.mkdir(parents=True)
-        self.source.write_text('authored fixture')
-        write(self.root/'recipe/runtime-sources.json', [self.source.name])
-        write(self.work/'whole-catalog-build.json', {})
-        for name, value in [('ROOT', self.root), ('RECIPE', self.root/'recipe'), ('WORK', self.work)]:
+        self.source.write_text("authored fixture")
+        write(self.root / "recipe/runtime-sources.json", [self.source.name])
+        write(self.work / "whole-catalog-build.json", {})
+        for name, value in [("ROOT", self.root), ("RECIPE", self.root / "recipe"), ("WORK", self.work)]:
             patcher = patch.object(build, name, value)
             patcher.start()
             self.addCleanup(patcher.stop)
 
     def test_missing_manifest_source_fails_before_staging(self):
         self.source.unlink()
-        with self.assertRaisesRegex(RuntimeError, 'missing from tools/unity: Fixture.cs'):
+        with self.assertRaisesRegex(RuntimeError, "missing from tools/unity: Fixture.cs"):
             build.validate_runtime_source_membership(self.project)
 
     def test_unlisted_staged_authored_source_is_rejected(self):
-        (self.source.parent/'Unlisted.cs').write_text('unselected authored source')
-        (self.stage/'Unlisted.cs').write_text('previously staged source')
-        with self.assertRaisesRegex(RuntimeError, 'Unlisted whole-catalog C# sources.*Unlisted.cs'):
+        (self.source.parent / "Unlisted.cs").write_text("unselected authored source")
+        (self.stage / "Unlisted.cs").write_text("previously staged source")
+        with self.assertRaisesRegex(RuntimeError, "Unlisted whole-catalog C# sources.*Unlisted.cs"):
             build.validate_staged_runtime_sources(self.project)
 
     def test_unlisted_nested_source_is_rejected(self):
-        nested = self.stage/'Nested/Unowned.cs'
+        nested = self.stage / "Nested/Unowned.cs"
         nested.parent.mkdir()
-        nested.write_text('fixture')
-        with self.assertRaisesRegex(RuntimeError, 'Unlisted whole-catalog C# sources.*Nested/Unowned.cs'):
+        nested.write_text("fixture")
+        with self.assertRaisesRegex(RuntimeError, "Unlisted whole-catalog C# sources.*Nested/Unowned.cs"):
             build.validate_runtime_source_membership(self.project)
 
     def test_generated_visual_maps_are_allowed(self):
         for name in build.WHOLE_GENERATED_RUNTIME_SOURCES:
-            (self.stage/name).write_text('generated fixture')
+            (self.stage / name).write_text("generated fixture")
         self.assertEqual(build.validate_runtime_source_membership(self.project), [self.source.name])
 
     def test_missing_staged_manifest_source_is_rejected(self):
-        with self.assertRaisesRegex(RuntimeError, 'not staged: Fixture.cs.*whole-catalog-code-build'):
+        with self.assertRaisesRegex(RuntimeError, "not staged: Fixture.cs.*whole-catalog-code-build"):
             build.validate_staged_runtime_sources(self.project)
 
     def test_manifest_reader_rejects_unsorted_duplicate_or_invalid_entries(self):
-        for names in [['Z.cs', 'A.cs'], ['Fixture.cs', 'Fixture.cs'], ['../Fixture.cs'], ['Fixture.shader'], {}]:
+        for names in [["Z.cs", "A.cs"], ["Fixture.cs", "Fixture.cs"], ["../Fixture.cs"], ["Fixture.shader"], {}]:
             with self.subTest(names=names):
-                write(self.root/'recipe/runtime-sources.json', names)
-                with self.assertRaisesRegex(RuntimeError, 'recipe/runtime-sources.json'):
+                write(self.root / "recipe/runtime-sources.json", names)
+                with self.assertRaisesRegex(RuntimeError, "recipe/runtime-sources.json"):
                     build.runtime_sources()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

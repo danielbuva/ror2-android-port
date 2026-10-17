@@ -21,15 +21,17 @@ SPEC.loader.exec_module(journal_index)
 def porcelain(lines: list[str], timestamp: int = 0, tz: str = "+0900") -> str:
     records = []
     for number, line in enumerate(lines, 1):
-        records.extend([
-            f"{'a' * 40} {number + 20} {number} 1",
-            "author Example",
-            f"author-time {timestamp + number * 86400}",
-            f"author-tz {tz}",
-            f"committer-time {timestamp + 30 * 86400}",
-            "filename docs/PORTING_JOURNAL.md",
-            "\t" + line,
-        ])
+        records.extend(
+            [
+                f"{'a' * 40} {number + 20} {number} 1",
+                "author Example",
+                f"author-time {timestamp + number * 86400}",
+                f"author-tz {tz}",
+                f"committer-time {timestamp + 30 * 86400}",
+                "filename docs/PORTING_JOURNAL.md",
+                "\t" + line,
+            ]
+        )
     return "\n".join(records) + "\n"
 
 
@@ -92,10 +94,7 @@ class JournalParsingTests(unittest.TestCase):
                 self.assertEqual(journal_index.github_slug(heading), expected)
 
     def test_duplicate_anchors_consider_other_heading_levels_and_collisions(self):
-        journal = (
-            "# J1 — Trial\n### Notes: J1 — Trial-1\n#### J1 — Trial-1\n"
-            "## J1 — Trial\nObserved.\n## J1 — Trial\nAgain.\n"
-        )
+        journal = "# J1 — Trial\n### Notes: J1 — Trial-1\n#### J1 — Trial-1\n## J1 — Trial\nObserved.\n## J1 — Trial\nAgain.\n"
         entries = journal_index.parse_journal(journal)
         self.assertEqual([entry.anchor for entry in entries], ["j1--trial-2", "j1--trial-3"])
 
@@ -135,13 +134,19 @@ class BlameAndCommandTests(unittest.TestCase):
 
     def test_blame_uses_final_line_numbers_author_time_and_one_call(self):
         dates = journal_index.blame_dates(self.root)
-        self.assertEqual(dates, {
-            1: "1970-01-02",
-            2: "1970-01-03",
-        })
+        self.assertEqual(
+            dates,
+            {
+                1: "1970-01-02",
+                2: "1970-01-03",
+            },
+        )
         self.git.assert_called_once_with(
             ["git", "blame", "--line-porcelain", "docs/PORTING_JOURNAL.md"],
-            cwd=self.root, text=True, encoding="utf-8", stderr=journal_index.subprocess.PIPE,
+            cwd=self.root,
+            text=True,
+            encoding="utf-8",
+            stderr=journal_index.subprocess.PIPE,
         )
 
     @unittest.skipUnless(hasattr(time, "tzset"), "requires local timezone switching")
