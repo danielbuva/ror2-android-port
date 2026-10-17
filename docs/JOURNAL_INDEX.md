@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J531](PORTING_JOURNAL.md#j531--extract-the-barrier-effect-owner) | 2026-10-17 | Extract the barrier-effect owner | Phase 4 step 5, eleventh owner (implemented by Codex, reviewed by Claude). |
 | [J530](PORTING_JOURNAL.md#j530--extract-the-teleport-material-owner) | 2026-10-17 | Extract the teleport-material owner | Phase 4 step 5, tenth owner (implemented by Codex, reviewed by Claude). |
 | [J529](PORTING_JOURNAL.md#j529--extract-the-offline-run-seed-owner) | 2026-10-17 | Extract the offline run-seed owner | Phase 4 step 5, ninth owner (implemented by Codex, reviewed by Claude). |
 | [J528](PORTING_JOURNAL.md#j528--extract-the-nova-input-owner) | 2026-10-17 | Extract the Nova input owner | Phase 4 step 5, eighth owner (implemented by Codex, reviewed by Claude). |

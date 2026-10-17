@@ -74,8 +74,8 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `90b64c8b9de654833c5fcb42c3fc4fef6299b738b86fe7b71e5f514e6885523e`, built in J530 from `main` with the teleport-material owner |
-| Check | passed: 35.2 s on Lakes, no report error, 13 applied profile runs unchanged (J530) |
+| APK | `709ce22a193e5e707824aeed57a6824a54d17c483065d55779ae8b4a1e14f23c`, built in J531 from `main` with the barrier-effect owner |
+| Check | passed: 35.2 s on Lakes, no report error, 13 applied profile runs unchanged (J531) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`, which has the same runtime code |
 | Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |

@@ -5158,3 +5158,15 @@ exits 1 and prints "Applied patch … with conflicts" for one file and "… clea
 Piping its output through `tail -1` hid both the exit code and the conflict line. Applies are
 now checked by exit code, conflict markers and a byte comparison with Codex's file before any
 build.
+
+## J531 — Extract the barrier-effect owner
+
+Phase 4 step 5, eleventh owner (implemented by Codex, reviewed by Claude). The barrier-effect
+state (its two constants, locator, async handle, prefab, effect-slot snapshots and owned
+material copies) moved into a nested `BarrierEffectSession : IDisposable`
+(`BarrierEffectBoundary.cs`); no other code used it. `PrepareBarrierEffect` and the
+`CleanupBarrierEffect` coroutine keep their places in `Start`. Zero-error code-only build, APK
+`709ce22a193e5e707824aeed57a6824a54d17c483065d55779ae8b4a1e14f23c`, staged file checked. `./dev check-baseline` passed with 35.2 s on Lakes, no report error
+and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T233149.739445Z`). The runtime config does not set
+`barrierEffectAsset`, so the barrier setup does not run in the check: this owner is verified by
+compile and review only. App stopped; OLED asleep.
