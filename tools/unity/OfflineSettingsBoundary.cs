@@ -1,5 +1,5 @@
 // Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup PrepareOfflineSettings, ShowOfflineSettings; teardown CleanupOfflineSettingsPause.
+// Session phases: setup PrepareOfflineSettings (OfflineSettingsSession.Prepare); teardown CleanupOfflineSettingsPause (Dispose).
 using System;
 using System.IO;
 using Path=System.IO.Path;
@@ -9,46 +9,63 @@ using UnityEngine;
 // Owned Android settings/pause screen around the composed local session.
 public sealed partial class MovementBatchProbe {
  [Serializable] public class OfflineSettingsReport {public bool ready,visible,paused,persisted,canEndRun,sessionAbandoned;public string recovery,error;public float deadzone,lookSensitivity,buttonX,buttonY,endRunButtonX,endRunButtonY,timeScale,runSeconds;public int fixedTicks,observations;public bool invertY;public int saves,pauses,resumes,controllerOpens,controllerCloses,controllerSaves;}
- AndroidOfflineSettings offlineSettings;bool offlineSettingsVisible,offlineSettingsPaused;float offlineSettingsTimeScale;
- void PrepareOfflineSettings(){
-  if(offlineSettings!=null)return;
-  offlineSettings=new AndroidOfflineSettings(Path.Combine(Application.persistentDataPath,"offline-settings-v1"));AndroidOfflineSettings.current=offlineSettings.values;offlineDifficulty=(DifficultyIndex)offlineSettings.values.offlineDifficulty;r.settings=new OfflineSettingsReport{ready=true,recovery=offlineSettings.recovery};ObserveOfflineSettings();
- }
- void ObserveOfflineSettings(){if(offlineSettings==null)return;var v=offlineSettings.values;r.settings.buttonX=Screen.width-112.5f;r.settings.buttonY=30;r.settings.deadzone=v.deadzone;r.settings.lookSensitivity=v.lookSensitivity;r.settings.invertY=v.invertY;r.settings.visible=offlineSettingsVisible;r.settings.paused=offlineSettingsPaused;r.settings.timeScale=Time.timeScale;r.settings.runSeconds=Run.instance?Run.instance.GetRunStopwatch():0;r.settings.fixedTicks=r.runClock==null?0:r.runClock.fixedTicks;}
- void ShowOfflineSettings(bool show){
-  if(offlineSettings==null)return;
-  if(show==offlineSettingsVisible)return;
-  if(show&&worldPause&&worldPlayer&&worldPlayer.healthComponent.alive){Check(PauseStopController.instance&&!PauseStopController.instance.isPaused&&Time.timeScale>0,"Unowned pause state");offlineSettingsTimeScale=Time.timeScale;PauseStopController.instance.NetworkisPaused=true;Time.timeScale=0;offlineSettingsPaused=true;r.settings.pauses++;var bridge=worldPlayer.GetComponent<NovaInputBridge>();if(bridge)bridge.Neutral();}
-  if(!show&&offlineSettingsPaused){Check(PauseStopController.instance&&PauseStopController.instance.isPaused&&Time.timeScale==0,"Owned pause context changed");PauseStopController.instance.NetworkisPaused=false;Time.timeScale=offlineSettingsTimeScale;offlineSettingsPaused=false;r.settings.resumes++;}
-  offlineSettingsVisible=show;ObserveOfflineSettings();Save();
- }
- void ObserveOfflineSettingsControllerInput(){
-  if(offlineSettings==null||r==null||!r.freePlay||!OfflineUiControllerPresent())return;
-  // J151 measured Xbox B as Unity slot-1 button 1. This is only the Nova
-  // adapter's menu/back action; it does not alter the original input bank.
-  if(UnityEngine.Input.GetKeyDown(KeyCode.Joystick1Button1)){
-   if(offlineSettingsVisible){r.settings.controllerCloses++;ShowOfflineSettings(false);}
-   else if(CanAbandonOfflineRun()){r.settings.controllerOpens++;ShowOfflineSettings(true);}
+ // Shared with menu difficulty, results input and Nova input, respectively.
+ AndroidOfflineSettings offlineSettings;bool offlineSettingsVisible,offlineSettingsPaused;
+ OfflineSettingsSession offlineSettingsSession;
+ void PrepareOfflineSettings(){if(offlineSettingsSession==null)offlineSettingsSession=new OfflineSettingsSession(this);offlineSettingsSession.Prepare();}
+ void ShowOfflineSettings(bool show){offlineSettingsSession?.Show(show);}
+ void ObserveOfflineSettingsControllerInput(){offlineSettingsSession?.ObserveControllerInput();}
+ void DrawOfflineSettings(){offlineSettingsSession?.Draw();}
+ void CleanupOfflineSettingsPause(){offlineSettingsSession?.Dispose();}
+
+ // Nested so the owner can use the coordinator's shared state and report without
+ // widening their visibility. It retains the same lifetime as the settings store.
+ sealed class OfflineSettingsSession : IDisposable {
+  readonly MovementBatchProbe coordinator;
+  float offlineSettingsTimeScale;
+  public OfflineSettingsSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public void Prepare(){
+   if(coordinator.offlineSettings!=null)return;
+   coordinator.offlineSettings=new AndroidOfflineSettings(Path.Combine(Application.persistentDataPath,"offline-settings-v1"));AndroidOfflineSettings.current=coordinator.offlineSettings.values;coordinator.offlineDifficulty=(DifficultyIndex)coordinator.offlineSettings.values.offlineDifficulty;coordinator.r.settings=new OfflineSettingsReport{ready=true,recovery=coordinator.offlineSettings.recovery};Observe();
   }
-  if(offlineSettingsVisible&&r.nova!=null&&r.nova.mapping!=null&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump))){
-   offlineSettings.Save();AndroidOfflineSettings.current=offlineSettings.values;r.settings.saves++;r.settings.controllerSaves++;r.settings.persisted=true;ShowOfflineSettings(false);
+  void Observe(){if(coordinator.offlineSettings==null)return;var v=coordinator.offlineSettings.values;coordinator.r.settings.buttonX=Screen.width-112.5f;coordinator.r.settings.buttonY=30;coordinator.r.settings.deadzone=v.deadzone;coordinator.r.settings.lookSensitivity=v.lookSensitivity;coordinator.r.settings.invertY=v.invertY;coordinator.r.settings.visible=coordinator.offlineSettingsVisible;coordinator.r.settings.paused=coordinator.offlineSettingsPaused;coordinator.r.settings.timeScale=Time.timeScale;coordinator.r.settings.runSeconds=Run.instance?Run.instance.GetRunStopwatch():0;coordinator.r.settings.fixedTicks=coordinator.r.runClock==null?0:coordinator.r.runClock.fixedTicks;}
+  public void Show(bool show){
+   if(coordinator.offlineSettings==null)return;
+   if(show==coordinator.offlineSettingsVisible)return;
+   if(show&&coordinator.worldPause&&coordinator.worldPlayer&&coordinator.worldPlayer.healthComponent.alive){coordinator.Check(PauseStopController.instance&&!PauseStopController.instance.isPaused&&Time.timeScale>0,"Unowned pause state");offlineSettingsTimeScale=Time.timeScale;PauseStopController.instance.NetworkisPaused=true;Time.timeScale=0;coordinator.offlineSettingsPaused=true;coordinator.r.settings.pauses++;var bridge=coordinator.worldPlayer.GetComponent<NovaInputBridge>();if(bridge)bridge.Neutral();}
+   if(!show&&coordinator.offlineSettingsPaused){coordinator.Check(PauseStopController.instance&&PauseStopController.instance.isPaused&&Time.timeScale==0,"Owned pause context changed");PauseStopController.instance.NetworkisPaused=false;Time.timeScale=offlineSettingsTimeScale;coordinator.offlineSettingsPaused=false;coordinator.r.settings.resumes++;}
+   coordinator.offlineSettingsVisible=show;Observe();coordinator.Save();
   }
+  public void ObserveControllerInput(){
+   if(coordinator.offlineSettings==null||coordinator.r==null||!coordinator.r.freePlay||!coordinator.OfflineUiControllerPresent())return;
+   // J151 measured Xbox B as Unity slot-1 button 1. This is only the Nova
+   // adapter's menu/back action; it does not alter the original input bank.
+   if(UnityEngine.Input.GetKeyDown(KeyCode.Joystick1Button1)){
+    if(coordinator.offlineSettingsVisible){coordinator.r.settings.controllerCloses++;Show(false);}
+    else if(coordinator.CanAbandonOfflineRun()){coordinator.r.settings.controllerOpens++;Show(true);}
+   }
+   if(coordinator.offlineSettingsVisible&&coordinator.r.nova!=null&&coordinator.r.nova.mapping!=null&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+coordinator.r.nova.mapping.jump))){
+    coordinator.offlineSettings.Save();AndroidOfflineSettings.current=coordinator.offlineSettings.values;coordinator.r.settings.saves++;coordinator.r.settings.controllerSaves++;coordinator.r.settings.persisted=true;Show(false);
+   }
+  }
+  public void Draw(){
+   if(coordinator.offlineSettings==null)return;
+   var button=new Rect(Screen.width-205,10,185,40);coordinator.r.settings.buttonX=button.center.x;coordinator.r.settings.buttonY=button.center.y;
+   if(GUI.Button(button,coordinator.offlineSettingsVisible?"Close settings":"Settings / pause"))Show(!coordinator.offlineSettingsVisible);
+   if(!coordinator.offlineSettingsVisible)return;
+   GUI.Box(new Rect(Screen.width*.5f-240,Screen.height*.5f-200,480,400),"Android offline input settings · B back · A save");var x=Screen.width*.5f-210;var y=Screen.height*.5f-155;
+   GUI.Label(new Rect(x,y,420,28),"Stick deadzone: "+coordinator.offlineSettings.values.deadzone.ToString("F2"));coordinator.offlineSettings.values.deadzone=GUI.HorizontalSlider(new Rect(x,y+35,420,25),coordinator.offlineSettings.values.deadzone,.05f,.4f);
+   GUI.Label(new Rect(x,y+68,420,28),"Camera sensitivity: "+coordinator.offlineSettings.values.lookSensitivity.ToString("F2"));coordinator.offlineSettings.values.lookSensitivity=GUI.HorizontalSlider(new Rect(x,y+103,420,25),coordinator.offlineSettings.values.lookSensitivity,.25f,3);
+   coordinator.offlineSettings.values.invertY=GUI.Toggle(new Rect(x,y+139,420,30),coordinator.offlineSettings.values.invertY,"Invert vertical camera");
+   if(GUI.Button(new Rect(x,y+180,200,45),"Save and close")){coordinator.offlineSettings.Save();AndroidOfflineSettings.current=coordinator.offlineSettings.values;coordinator.r.settings.saves++;coordinator.r.settings.persisted=true;Show(false);}
+   if(GUI.Button(new Rect(x+220,y+180,200,45),"Resume"))Show(false);
+   coordinator.r.settings.canEndRun=coordinator.CanAbandonOfflineRun();var end=new Rect(x,y+245,420,45);coordinator.r.settings.endRunButtonX=end.center.x;coordinator.r.settings.endRunButtonY=end.center.y;
+   if(coordinator.r.settings.canEndRun&&GUI.Button(end,"End run and return to menu"))coordinator.RequestAbandonOfflineRun();
+   if(coordinator.r.profile!=null&&coordinator.r.profile.ready)GUI.Label(new Rect(x,y+302,420,44),"Android profile · "+coordinator.r.profile.appliedRuns+" genuine results · "+coordinator.r.profile.kills+" kills\nSteam/cloud and Rewired maps unavailable");
+   Observe();if(coordinator.offlineSettingsPaused&&Event.current.type==EventType.Repaint&&Time.frameCount%30==0){coordinator.r.settings.observations++;coordinator.Save();}
+  }
+  // Cleanup may run between sessions. Only an owned pause is released; the
+  // store and an unpaused visible screen keep their existing lifetime.
+  public void Dispose(){if(coordinator.offlineSettingsPaused)Show(false);}
  }
- void DrawOfflineSettings(){
-  if(offlineSettings==null)return;
-  var button=new Rect(Screen.width-205,10,185,40);r.settings.buttonX=button.center.x;r.settings.buttonY=button.center.y;
-  if(GUI.Button(button,offlineSettingsVisible?"Close settings":"Settings / pause"))ShowOfflineSettings(!offlineSettingsVisible);
-  if(!offlineSettingsVisible)return;
-  GUI.Box(new Rect(Screen.width*.5f-240,Screen.height*.5f-200,480,400),"Android offline input settings · B back · A save");var x=Screen.width*.5f-210;var y=Screen.height*.5f-155;
-  GUI.Label(new Rect(x,y,420,28),"Stick deadzone: "+offlineSettings.values.deadzone.ToString("F2"));offlineSettings.values.deadzone=GUI.HorizontalSlider(new Rect(x,y+35,420,25),offlineSettings.values.deadzone,.05f,.4f);
-  GUI.Label(new Rect(x,y+68,420,28),"Camera sensitivity: "+offlineSettings.values.lookSensitivity.ToString("F2"));offlineSettings.values.lookSensitivity=GUI.HorizontalSlider(new Rect(x,y+103,420,25),offlineSettings.values.lookSensitivity,.25f,3);
-  offlineSettings.values.invertY=GUI.Toggle(new Rect(x,y+139,420,30),offlineSettings.values.invertY,"Invert vertical camera");
-  if(GUI.Button(new Rect(x,y+180,200,45),"Save and close")){offlineSettings.Save();AndroidOfflineSettings.current=offlineSettings.values;r.settings.saves++;r.settings.persisted=true;ShowOfflineSettings(false);}
-  if(GUI.Button(new Rect(x+220,y+180,200,45),"Resume"))ShowOfflineSettings(false);
-  r.settings.canEndRun=CanAbandonOfflineRun();var end=new Rect(x,y+245,420,45);r.settings.endRunButtonX=end.center.x;r.settings.endRunButtonY=end.center.y;
-  if(r.settings.canEndRun&&GUI.Button(end,"End run and return to menu"))RequestAbandonOfflineRun();
-  if(r.profile!=null&&r.profile.ready)GUI.Label(new Rect(x,y+302,420,44),"Android profile · "+r.profile.appliedRuns+" genuine results · "+r.profile.kills+" kills\nSteam/cloud and Rewired maps unavailable");
-  ObserveOfflineSettings();if(offlineSettingsPaused&&Event.current.type==EventType.Repaint&&Time.frameCount%30==0){r.settings.observations++;Save();}
- }
- void CleanupOfflineSettingsPause(){if(offlineSettingsPaused)ShowOfflineSettings(false);}
 }

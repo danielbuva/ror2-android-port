@@ -4980,3 +4980,18 @@ no report error and 13 applied profile runs unchanged (`work/experiments/baselin
 matches the previous run's except for one now non-empty list (an elite kill whose award was
 correctly blocked as assisted). App stopped; OLED asleep. Renaming `Result` to
 `SessionReport` is left for later.
+
+## J519 — Extract the offline settings owner
+
+Phase 4 step 5, first owner (implemented by Codex, reviewed by Claude). The settings screen's
+logic moved from coordinator methods into a nested `OfflineSettingsSession : IDisposable`
+(`OfflineSettingsBoundary.cs`) following `AndroidProgressionBoundary`: `Prepare`, `Show`,
+`ObserveControllerInput`, `Draw` and `Dispose`, called from the same places through thin
+coordinator forwarders. Only one field, `offlineSettingsTimeScale`, is private to settings;
+`offlineSettings`, `offlineSettingsVisible` and `offlineSettingsPaused` stay on the coordinator
+because the menu, results input and Nova input read them. Before `Prepare` the forwarders do
+nothing, as the original methods did when `offlineSettings` was null; the restart path does
+not carry settings across. Zero-error code-only build, APK `a906dd2f81b7577e0136f7383cef5a50159fe1bab335fde6a0c3c121a5e730a2`; `./dev check-baseline`
+passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T210744.936400Z`),
+and all 25 `settings` report fields match the previous run. The check does not open the
+settings screen, so its interactive paths are covered only by review. App stopped; OLED asleep.
