@@ -137,10 +137,8 @@ Build, device and safety tooling has its own tests: `test_build_identity.py`,
 `test_lab_safety.py`, `test_public_privacy.py`.
 
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
-`ruff check` on every Python file a change touches, limited to errors that are wrong in any
-style (undefined names, redefinitions, syntax), and `ruff format --check` on newly added
-files. The existing modules' style debt (4,765 style findings, 88 unformatted files at
-J514) waits for the per-module reformat.
+`ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
+`tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
 
 ## File status
 
