@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J520](PORTING_JOURNAL.md#j520--extract-the-android-profile-owner) | 2026-10-17 | Extract the Android profile owner | Phase 4 step 5, second owner (implemented by Codex, reviewed by Claude). |
 | [J519](PORTING_JOURNAL.md#j519--extract-the-offline-settings-owner) | 2026-10-17 | Extract the offline settings owner | Phase 4 step 5, first owner (implemented by Codex, reviewed by Claude). |
 | [J517](PORTING_JOURNAL.md#j517--parse-the-runtime-config-as-its-own-sessionconfig) | 2026-10-17 | Parse the runtime config as its own `SessionConfig` | Phase 4 step 2, first part (implemented by Codex, reviewed by Claude). |
 | [J516](PORTING_JOURNAL.md#j516--header-each-staged-runtime-file-with-its-subsystem-and-lifecycle) | 2026-10-17 | Header each staged runtime file with its subsystem and lifecycle | Phase 3's last item. |

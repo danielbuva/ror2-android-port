@@ -4995,3 +4995,18 @@ not carry settings across. Zero-error code-only build, APK `a906dd2f81b7577e0136
 passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T210744.936400Z`),
 and all 25 `settings` report fields match the previous run. The check does not open the
 settings screen, so its interactive paths are covered only by review. App stopped; OLED asleep.
+
+## J520 — Extract the Android profile owner
+
+Phase 4 step 5, second owner (implemented by Codex, reviewed by Claude). The profile session
+moved from 32 coordinator fields into a nested `AndroidProfileSession : IDisposable`
+(`AndroidProfileBoundary.cs`): loadout preview, the native event and discovery listeners,
+profile context and catalog restoration, and the redirect lease. Eleven fields stay on the
+coordinator because other subsystems read them (`androidProgression`, the results save
+system, ledger, statistics and run report, the shared player and teleporter, and the menu's
+loadout state). Coordinator forwarders keep every call site; the owner is created on first
+use and kept after `Dispose` (the old cleanup body), so preview-before-prepare and repeated
+cleanup behave as before. The 12 moved method bodies are token-identical apart from
+`coordinator.` qualifiers. Zero-error code-only build, APK `1f539b5f4f54779184ef2333dd9387b85a38ee6c8152794616fc6cdf0be6ddc7`; `./dev check-baseline`
+passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T212143.461373Z`),
+and all 34 scalar `profile` report fields match the previous run. App stopped; OLED asleep.
