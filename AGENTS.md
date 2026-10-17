@@ -47,7 +47,7 @@ A feature is done when it has an understandable place in the current system, not
 5. A new `./dev` action states in its help or in ARCHITECTURE whether it is current or historical.
 6. No new build step edits authored source by exact-text replacement.
 
-Historical storage follows the user's J427 cleanup authorization: only J425 and the paused J323 Moon candidate remain ready-to-use rollbacks. Superseded source trees have adjacent `.retired.json` markers and hash-verified compressed content under ignored `work/retired-storage`; restore only a specifically needed tree using `scripts/compact-history.py`. Obsolete APK/payload outputs may require rebuilding. Preserve findings and receipts; do not treat the retired source store as disposable cache. See `docs/history-retention.md` before using an older checkpoint.
+Historical storage follows the user's J427 cleanup authorization: of the older historical candidates, only J425 and the paused J323 Moon candidate remain ready-to-use rollbacks; the current executable rollbacks are listed in `PORTING_STATE.md`. Superseded source trees have adjacent `.retired.json` markers and hash-verified compressed content under ignored `work/retired-storage`; restore only a specifically needed tree using `scripts/compact-history.py`. Obsolete APK/payload outputs may require rebuilding. Preserve findings and receipts; do not treat the retired source store as disposable cache. See `docs/history-retention.md` before using an older checkpoint.
 
 
 ## Prior-art-first rule

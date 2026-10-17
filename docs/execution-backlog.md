@@ -17,7 +17,6 @@ result in the journal.
 
 ## Stability and performance
 
-- [ ] **Blocker:** new code-only builds strip the Addressables operation constructors (J505); attribute the cause and rebuild before any further APK.
 - [ ] Attribute managed-memory growth across repeated sessions.
 - [ ] Crowded later-stage frame time (main thread over budget); 60 FPS is release acceptance.
 
