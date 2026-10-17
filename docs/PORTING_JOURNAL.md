@@ -5141,3 +5141,20 @@ code-only build, APK `3ebff64d157f3a9f52254a9673849534cf7f448087f05dd0cd63f1e178
 Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T231459.009038Z`), and all four seed
 fields in the report match the previous run (the check pins `runSeedOverride`). App stopped;
 OLED asleep.
+
+## J530 — Extract the teleport-material owner
+
+Phase 4 step 5, tenth owner (implemented by Codex, reviewed by Claude). All five
+teleport-material fields moved into a nested `TeleportMaterialSession : IDisposable`
+(`TeleportMaterialBoundary.cs`); no other code used them. `PrepareTeleportMaterial` and the
+`CleanupTeleportMaterial` coroutine keep their places in `Start`'s setup and post-run release;
+the six moved bodies are token-identical apart from `coordinator.` qualifiers. The runtime
+config sets `teleportMaterialAsset`, so the check exercises the setup. Zero-error code-only
+build, APK `90b64c8b9de654833c5fcb42c3fc4fef6299b738b86fe7b71e5f514e6885523e`, staged file checked. `./dev check-baseline` passed with 36.6 s on Lakes, no
+report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T232328.061456Z`). App stopped; OLED asleep.
+
+J520's root cause, now reproduced: `git apply --3way` with a conflicting ARCHITECTURE row
+exits 1 and prints "Applied patch … with conflicts" for one file and "… cleanly" for the other.
+Piping its output through `tail -1` hid both the exit code and the conflict line. Applies are
+now checked by exit code, conflict markers and a byte comparison with Codex's file before any
+build.
