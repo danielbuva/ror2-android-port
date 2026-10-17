@@ -5010,3 +5010,17 @@ cleanup behave as before. The 12 moved method bodies are token-identical apart f
 `coordinator.` qualifiers. Zero-error code-only build, APK `1f539b5f4f54779184ef2333dd9387b85a38ee6c8152794616fc6cdf0be6ddc7`; `./dev check-baseline`
 passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T212143.461373Z`),
 and all 34 scalar `profile` report fields match the previous run. App stopped; OLED asleep.
+
+## J521 — Correction: land the profile owner that J520 described
+
+J520's commit (`2028004`) contains only its documentation: the `AndroidProfileBoundary.cs` and
+ARCHITECTURE changes were lost between applying Codex's patch and committing (the apply's
+output was truncated, so the exact cause is not recorded). Its build and device check
+therefore ran the old profile code, and J520's evidence does not test the extraction. Codex
+caught the mismatch while working from `main`. The same patch now applies cleanly and is
+committed with this entry; the staged project file was checked to contain
+`AndroidProfileSession` before installing. Zero-error code-only build, APK `fc3447306786d54c6af90041a6f2f0aaea2d902a73667b37d76a3a088124f3a7`;
+`./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile
+runs unchanged (`work/experiments/baseline/20261017T213549.608915Z`), and all 34 scalar `profile` report fields match J519's run on the old
+code. App stopped; OLED asleep. From now on each applied patch's file list is checked before
+building and again before committing.

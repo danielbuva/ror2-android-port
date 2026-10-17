@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J521](PORTING_JOURNAL.md#j521--correction-land-the-profile-owner-that-j520-described) | 2026-10-17 | Correction: land the profile owner that J520 described | J520's commit (`2028004`) contains only its documentation: the `AndroidProfileBoundary.cs` and ARCHITECTURE changes were lost between applying Codex's patch an… |
 | [J520](PORTING_JOURNAL.md#j520--extract-the-android-profile-owner) | 2026-10-17 | Extract the Android profile owner | Phase 4 step 5, second owner (implemented by Codex, reviewed by Claude). |
 | [J519](PORTING_JOURNAL.md#j519--extract-the-offline-settings-owner) | 2026-10-17 | Extract the offline settings owner | Phase 4 step 5, first owner (implemented by Codex, reviewed by Claude). |
 | [J517](PORTING_JOURNAL.md#j517--parse-the-runtime-config-as-its-own-sessionconfig) | 2026-10-17 | Parse the runtime config as its own `SessionConfig` | Phase 4 step 2, first part (implemented by Codex, reviewed by Claude). |
