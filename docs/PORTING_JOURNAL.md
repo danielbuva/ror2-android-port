@@ -4717,3 +4717,46 @@ All 141 host tests, input preflight and exact-editor ARM64 Vulkan build passed w
 ## J504 — Broaden original survivor execution without changing the APK
 
 On the unchanged J503 APK, a diagnostic-input Huntress run reached Sky Meadow through four original stage exits and stopped before Moon (`work/experiments/whole-catalog/gameplay/huntress-premoon-20261016T205741.387548Z`). Invincibility, high damage and fast charge were active, so this proves stage/body continuity rather than ordinary difficulty. A sequential locked-base-survivor batch then selected Bandit2 and Toolbot, and a corrected batch selected Engi and Loader; each reached 35 seconds of live Lakes play with original body identity, kills and no current-process managed exception (`base-survivor-breadth-20261016T212138.817770Z`, `base-survivor-breadth-20261016T213037.848031Z`). The first batch stopped before world play on `Engineer`: that display name was not the shipped `Engi` catalog key. Revisit only if a real `Engi` selection fails. All runs were explicitly assisted, preserved 13 applied profile runs, and did not exercise complete skill kits or normal unlock paths. Windows shader-bundle and known Unity import warnings remain; screenshots are visual approximations. Owned app stopped; OLED asleep.
+
+## J505 — Text-patch removal is binary-neutral; new builds now strip Addressables operations
+
+Hypothesis: deleting the dormant exact-text C# patches in `whole_catalog.build_integration`
+(branch `cleanup/remove-text-patches`) changes nothing in the built game, because the
+authored `BodyCatalogBoundary.cs` and `MovementBatchProbe.cs` already contain the injected
+code and the code-only build rejects staged sources that differ from `tools/unity`.
+
+Change: delete the two patch blocks; add whitespace-insensitive host tests for the authored
+hooks (159 host tests pass; the new tests fail on mutated copies). Preflight passed on
+adopted storage. The exact-editor code-only build succeeded with zero errors in 261 s,
+APK `20c6ba1534867bc6698ec5264fe592396fdcc56f8033b9472ce1b6a763e03212`; all 725 staged files
+under `LabLoadingScene` and `Editor` were byte-identical before and after.
+
+First failure: installed in place on adopted storage, that APK stopped 16 s after launch
+in phase `original-body-handling-presets` with `MissingMethodException`: no default
+constructor for `ProviderOperation<ResourceManagerRuntimeData>`
+(`work/experiments/whole-catalog/gameplay/baseline-text-patch-removal-20261017T055126.994172Z`).
+This is the J30–J32 reflected-allocation stripping failure, before any change-related
+code runs. Its `libil2cpp.so` is 3.0 MB and its metadata 0.83 MB smaller than J503's.
+
+Control: a code-only build of unmodified `main` (`f44580e`, patches present), APK
+`4be5810f426116cb3ad16508cd7f7e727ce306e721010cde65598d0ae46ae30d`, has a `libil2cpp.so`
+and `global-metadata.dat` byte-identical to the change's build. The patch removal is
+therefore binary-neutral; the regression belongs to building now, not to the change. The
+linker received the same descriptor set as the working 2026-10-12 builds, the generated
+`WholeCatalogPreservation/link.xml` inputs date from 2026-10-12, and content inputs match
+the frozen code-base receipt; neither descriptor names the four J33 operation types. The
+cause is not yet attributed. This session's editor was restarted once (SIGTERM, then
+reopened) after its MCP bridge started before the MCP server.
+
+Rollback: the J503 APK `f567e9f6…` from the build cache was reinstalled in place on adopted
+storage. The same diagnostic check (Commando from the ordinary menu choice, invincibility
+only) reached 35.2 s of live Lakes play with 4 kills, no report error, 13 applied profile
+runs unchanged and no exceptions in the captured Unity log
+(`baseline-text-patch-removal-20261017T055852.147568Z`). App stopped; OLED asleep.
+`work/config/current-build.json` still names the failing control build; the installed APK
+is recorded in `work/device/installed.json`.
+
+Revisit: before the next APK build, find which input made the linker drop the J33
+operation constructors since J503 (compare a fresh build's stripped `Unity.ResourceManager`
+against J33's measured roots, or rebuild after a clean editor start). If it is
+environmental, merge the branch only after a rebuilt APK passes this same check.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J505](PORTING_JOURNAL.md#j505--text-patch-removal-is-binary-neutral-new-builds-now-strip-addressables-operations) | 2026-10-16 | Text-patch removal is binary-neutral; new builds now strip Addressables operations | Hypothesis: deleting the dormant exact-text C# patches in `whole_catalog.build_integration` (branch `cleanup/remove-text-patches`) changes nothing in the built… |
 | [J504](PORTING_JOURNAL.md#j504--broaden-original-survivor-execution-without-changing-the-apk) | 2026-10-16 | Broaden original survivor execution without changing the APK | On the unchanged J503 APK, a diagnostic-input Huntress run reached Sky Meadow through four original stage exits and stopped before Moon (`work/experiments/whol… |
 | [J503](PORTING_JOURNAL.md#j503--extend-native-offline-achievement-coverage-at-original-events) | 2026-10-16 | Extend native offline achievement coverage at original events | Pinned Starstorm2 `FieldAcceleratorAchievement` confirms server death-event attribution must remain tied to the player's actual body; ProperSave's local-file b… |
 | [J502](PORTING_JOURNAL.md#j502--preserve-original-hurt-behavior-under-same-frame-blasts) | 2026-10-16 | Preserve original hurt behavior under same-frame blasts | The first composed same-seed replay (`diagnostic-result-route-20261016T201503.672976Z`) failed when `DelayBlast` hit a body whose original `SetStateOnHurt.Star… |
