@@ -1091,12 +1091,6 @@ def build_integration(code_only=False):
             copy_catalog_asset(source_file, runtime/source_file.name)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)
-    body_boundary=project/'Assets/LabLoadingScene/BodyCatalogBoundary.cs'
-    body_text=body_boundary.read_text()
-    if 'WholeCatalogComposed.Prepare' not in body_text:
-        body_text=body_text.replace(' IEnumerator RegisterBodyCatalog(){',' IEnumerator RegisterBodyCatalog(){\n  if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){var shared=WholeCatalogComposed.Prepare();while(shared.MoveNext())yield return shared.Current;}')
-        body_text=body_text.replace('ReleaseObjectiveBundlePreload();CleanupRecoveredText();','ReleaseObjectiveBundlePreload();CleanupRecoveredText();\n  if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.Release();')
-        body_boundary.write_text(body_text)
     # Bundle-only serialized components and reflected location types are invisible
     # to the APK linker. Preserve their measured contracts, not a tested whitelist.
     roots={}
@@ -1117,16 +1111,6 @@ def build_integration(code_only=False):
     link_path.parent.mkdir(exist_ok=True)
     link_path.write_text(preservation_descriptor(roots))
     copy_catalog_asset(ROOT/'tools/catalog/WholeCatalogBuild.cs', project/'Assets/Editor/WholeCatalogBuild.cs')
-    # Extend the accepted integration; no regeneration of its large stage snapshots.
-    runtime = project/'Assets/LabLoadingScene/MovementBatchProbe.cs'
-    text = runtime.read_text()
-    guard='  if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yield break;'
-    if guard not in text:
-        needle=' IEnumerator Start(){'
-        if text.count(needle)!=1:
-            raise RuntimeError('Accepted integration entry point changed')
-        text=text.replace(needle,needle+'\n'+guard)
-        runtime.write_text(text)
     closure = read(out/'reconciled-closure.json')
     if closure['input_id'] != manifest['input_id']:
         raise RuntimeError('Source preload evidence belongs to another accepted input')

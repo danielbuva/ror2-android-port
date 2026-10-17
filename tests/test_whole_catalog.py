@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -260,3 +261,30 @@ class PreservationDescriptorTests(unittest.TestCase):
         self.assertIsNone(assemblies['RoR2'].get('preserve'))
         self.assertEqual(sorted(n.get('fullname') for n in assemblies['RoR2']), ['RoR2.Achievements.*', 'RoR2.ItemDef'])
         self.assertEqual(list(assemblies), sorted(assemblies))
+
+
+class AuthoredIntegrationHookTests(unittest.TestCase):
+    """The build copies these sources unchanged, so the hooks must be authored in them."""
+
+    UNITY = Path(__file__).resolve().parents[1]/'tools/unity'
+
+    def compact(self, name):
+        return ''.join((self.UNITY/name).read_text().split())
+
+    def test_start_yields_to_the_catalog_scan_before_the_session_wait(self):
+        text = self.compact('MovementBatchProbe.cs')
+        start = text[text.index('IEnumeratorStart(){'):]
+        self.assertTrue(start.startswith('IEnumeratorStart(){if(File.Exists(System.IO.Path.Combine('
+                                          'Application.persistentDataPath,"whole-catalog-selection.json")))yieldbreak;'))
+        self.assertLess(start.index('yieldbreak;'), start.index('WaitForSeconds(8)'))
+
+    def test_body_catalog_prepares_and_releases_the_composed_catalog(self):
+        text = self.compact('BodyCatalogBoundary.cs')
+        register = text[text.index('IEnumeratorRegisterBodyCatalog(){'):]
+        self.assertIn('if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){varshared=WholeCatalogComposed.Prepare();'
+                      'while(shared.MoveNext())yieldreturnshared.Current;}', re.split(r'(?:void|IEnumerator|bool)[A-Z]\w*\(', register[1:], maxsplit=1)[0])
+        self.assertIn('ReleaseObjectiveBundlePreload();CleanupRecoveredText();'
+                      'if(Resources.Load<TextAsset>("WholeCatalogBootstrap"))WholeCatalogComposed.Release();', text)
+
+    def test_hooked_sources_are_compared_before_a_code_only_build(self):
+        self.assertIn('Assets/LabLoadingScene/BodyCatalogBoundary.cs', build.WHOLE_PLAYER_INPUTS)
