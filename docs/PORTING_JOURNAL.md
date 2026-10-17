@@ -5024,3 +5024,16 @@ committed with this entry; the staged project file was checked to contain
 runs unchanged (`work/experiments/baseline/20261017T213549.608915Z`), and all 34 scalar `profile` report fields match J519's run on the old
 code. App stopped; OLED asleep. From now on each applied patch's file list is checked before
 building and again before committing.
+
+## J522 — Extract the developer-controls owner
+
+Phase 4 step 5, third owner (implemented by Codex, reviewed by Claude). The debug-acceleration
+session state moved from six coordinator fields into a nested
+`DebugAccelerationSession : IDisposable` (`DebugAccelerationBoundary.cs`); `debugPanel` stays
+on the coordinator because IntegratedWorld's graphics button uses it. The 12 moved bodies are
+token-identical apart from `coordinator.` qualifiers, and the sticky assisted flags that keep a
+run out of permanent progression are unchanged (`test_debug_acceleration.py`). The staged
+project file was checked to contain the owner before installing. Zero-error code-only build,
+APK `a358fcc1307690ef71efaab2c5117b3a0790e0881e66acc6438fee08d0d90e5a`; `./dev check-baseline` (which enables invincibility) passed with 35.2 s on Lakes,
+no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T214337.782491Z`), and all 33 scalar
+`debugAcceleration` report fields match the previous run. App stopped; OLED asleep.
