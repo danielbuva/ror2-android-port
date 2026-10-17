@@ -24,7 +24,7 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Replace the build's exact-text source patches with real code (prerequisite for the rest).
+- [ ] Delete the build's dormant exact-text C# patches (`whole_catalog.py:1074`, `:1075`, `:1111`); the authored sources already contain that code (prerequisite for C# formatting).
 - [ ] Split `MovementBatchProbe.Result` into session config and report.
 - [ ] Give the shipped game its own entry point instead of an experiment-switch case.
 - [ ] One runtime source manifest instead of "already present in the generated project".
