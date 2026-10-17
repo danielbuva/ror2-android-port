@@ -1,6 +1,9 @@
 """Safety/closure tests with authored fixtures, never game input."""
 import hashlib,json,subprocess,sys,tempfile,unittest
 from pathlib import Path
+import os
+if 'UNITY_EDITOR' not in os.environ or not (Path.home()/'.local/share/dotnet/dotnet').exists():
+    raise unittest.SkipTest('toolchain test: needs the exact Unity editor (source scripts/env.sh) and the local .NET SDK')
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts/lab'))
 from common import ROOT,WORK
 from boundaries import probe_tool

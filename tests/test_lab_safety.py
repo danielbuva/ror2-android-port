@@ -25,7 +25,9 @@ class SafetyTests(unittest.TestCase):
    with self.assertRaisesRegex(RuntimeError,'Insufficient internal'):self.d.install(self.apk())
  def test_wrong_abi_blocks_before_install(self):
   self.d.exists=lambda:False;self.d.storage=lambda:{}
-  with self.assertRaisesRegex(RuntimeError,'only arm64-v8a'):self.d.install(self.apk('x86_64'))
+  # install() reads config() from common's own WORK; keep the real local.json out of the fixture.
+  with patch.object(device,'config',return_value={}):
+   with self.assertRaisesRegex(RuntimeError,'only arm64-v8a'):self.d.install(self.apk('x86_64'))
  def test_ownership_receipt_bound_to_device_and_placement(self):
   write(self.root/'device/installed.json',{'serial':'someone-else','package':device.PACKAGE,'package_path':'old'})
   with self.assertRaisesRegex(RuntimeError,'ownership changed'):self.d.owned()

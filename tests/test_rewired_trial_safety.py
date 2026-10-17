@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -22,7 +23,9 @@ class TrialSafetyTests(unittest.TestCase):
         write(self.out/'trial-build-result.json',{'success':True,'errors':0,'apk':str(self.apk)})
         self.patches=[patch.object(trial,'ROOT',self.root),patch.object(trial,'WORK',self.root/'work'),
             patch.object(trial,'attempt',return_value=self.out),patch.object(trial,'inventory',return_value={'static_probe_complete':True}),
-            patch.object(build,'preflight'),patch('sys.stdout',new=io.StringIO())]
+            patch.object(build,'preflight'),patch('sys.stdout',new=io.StringIO()),
+            # `run` is mocked where aapt is consulted; only the path string is needed off the workstation.
+            patch.dict(os.environ,{'UNITY_ANDROID_ROOT':os.environ.get('UNITY_ANDROID_ROOT','/unavailable-android-root')})]
         for item in self.patches:item.start()
     def tearDown(self):
         for item in reversed(self.patches):item.stop()

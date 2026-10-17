@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -7,7 +8,11 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts/lab'))
 import device
 
+# `run` is mocked, so the aapt location only has to exist as a string; keep the workstation's real value.
+ANDROID_ROOT = {'UNITY_ANDROID_ROOT': os.environ.get('UNITY_ANDROID_ROOT', '/unavailable-android-root')}
 
+
+@patch.dict(os.environ, ANDROID_ROOT)
 class ApkIdentityTests(unittest.TestCase):
     def test_wrong_or_missing_package_stops_before_device_mutation(self):
         android = device.Device.__new__(device.Device)
