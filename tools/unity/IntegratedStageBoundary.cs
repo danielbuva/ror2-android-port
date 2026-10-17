@@ -28,7 +28,7 @@ public sealed partial class MovementBatchProbe {
   var solver=motor.Motor;var collider=solver.GroundingStatus.GroundCollider;var point=solver.TransientPosition;
   r.stageProgress.entryObservations.Add(new StageEntryObservation{tag=tag,at=Time.realtimeSinceStartup,sourceBounds=Util.IsPositionWithinMapBounds(point),position=point,velocity=motor.velocity,queuedPosition=(bool)solver.GetType().GetField("_movePositionDirty",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(solver),queuedPositionTarget=(Vector3)solver.GetType().GetField("_movePositionTarget",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(solver),bodyPosition=worldPlayer.transform.position,footPosition=worldPlayer.footPosition,corePosition=worldPlayer.corePosition,stable=solver.GroundingStatus.IsStableOnGround,groundCollider=collider,groundEnabled=collider&&collider.enabled,motorEnabled=motor.enabled,solverEnabled=solver.enabled,colliderPath=collider?StageObjectPath(collider.transform):"none",colliderScene=collider?collider.gameObject.scene.name:"none",colliderLayer=collider?collider.gameObject.layer:-1,mapZones=stageGeometryScene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).Where(x=>x.gameObject.activeInHierarchy).Select(x=>x.name+"|"+x.triggerType+"|"+x.zoneType+"|layer="+x.gameObject.layer+"|inside="+x.IsPointInsideMapZone(point)).ToArray()});Save();
  }
- AndroidStageTransport worldTransport;GameObject worldTransportHost;Result integratedStageConfig;
+ AndroidStageTransport worldTransport;GameObject worldTransportHost;SessionConfig integratedStageConfig;
  string pendingStage;bool transportingStage;int stagePickupBaseline;float stageEnteredAt;
  HashSet<GameObject> stageStaticRoots=new HashSet<GameObject>();
  CursedBookSpellDef[] priorStageSpells;string[] priorStageSpellNames;ResourceAvailability priorStageSpellAvailability;bool ownsStageSpells;
@@ -102,7 +102,7 @@ public sealed partial class MovementBatchProbe {
   StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{Array.Empty<CursedBookSpellDef>()});
   ContentManager._cursedBookSpellDefs=priorStageSpells;CursedBookSpellCatalog.spellNames=priorStageSpellNames;CursedBookSpellCatalog.availability=priorStageSpellAvailability;ownsStageSpells=false;
  }
- void PrepareStageTransport(Result cfg){
+ void PrepareStageTransport(SessionConfig cfg){
   Check(!NetworkManager.singleton&&cfg.integratedStages!=null&&cfg.integratedStages.Length>0,"Unowned scene transport or missing converted stages");
   integratedStageConfig=cfg;r.stageProgress=new StageProgressReport{current=stageGeometryScene.name,bodyId=worldPlayer.netId.Value,masterId=worldPlayer.master.netId.Value,scope="Original Stage.Update, SceneExit and Run.AdvanceStage accounting; additive recovered scene/graph transport. Temporary continuous live-body/master/inventory adapter instead of stock network-user respawn. Stock startup, profiles, unsupported destinations and victory remain unavailable."};
   PrepareStageSpellCatalog();

@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 // Owned Android activation/visual/input boundary around recovered original mission callbacks.
 public sealed partial class MovementBatchProbe {
- ItemDef[] MoonItems(Result cfg){
+ ItemDef[] MoonItems(SessionConfig cfg){
   if(!cfg.moonMission)return new ItemDef[0];Check(cfg.moonCatalog!=null,"Original Moon metadata manifest missing");
   var names=new[]{"VoidMegaCrabItem","MasterCore","MasterBattery","ArtifactKey","PowerCube","PowerPyramid","PowerOrbSphere"};
   Check(cfg.moonCatalog.items.Length==names.Length,"Original Moon item metadata differs");var defs=new ItemDef[names.Length];
@@ -20,13 +20,13 @@ public sealed partial class MovementBatchProbe {
   }
   return defs; // Registration supplies indices, never inventory grants or unlocks.
  }
- BuffDef[] MoonBuffs(Result cfg){
+ BuffDef[] MoonBuffs(SessionConfig cfg){
   if(!cfg.moonMission)return new BuffDef[0];Check(cfg.moonCatalog!=null&&cfg.moonCatalog.buffs.Length==2,"Original Moon buff metadata differs");
   var names=new[]{"bdEliteLunar","bdCripple"};var fields=new[]{"AffixLunar","Cripple"};var defs=new BuffDef[2];
   for(int i=0;i<defs.Length;i++){defs[i]=artifactBundle.LoadAsset<BuffDef>(cfg.moonCatalog.buffs[i]);Check(defs[i]&&defs[i].name==names[i],"Original Moon BuffDef missing: "+names[i]);BindEnemyDefinition(typeof(RoR2Content.Buffs),fields[i],defs[i]);}
   return defs;
  }
- EquipmentDef[] MoonEquipment(Result cfg){
+ EquipmentDef[] MoonEquipment(SessionConfig cfg){
   if(!cfg.moonMission)return new EquipmentDef[0];Check(cfg.moonCatalog!=null&&cfg.moonCatalog.equipment.Length==1,"Original Lunar equipment metadata differs");
   var def=artifactBundle.LoadAsset<EquipmentDef>(cfg.moonCatalog.equipment[0]);Check(def&&def.name=="EliteLunarEquipment"&&def.passiveBuffDef==RoR2Content.Buffs.AffixLunar,"Original Lunar equipment/passive buff identity differs");
   BindEnemyDefinition(typeof(RoR2Content.Equipment),"AffixLunar",def);return new[]{def};
@@ -34,7 +34,7 @@ public sealed partial class MovementBatchProbe {
  GameObject moonLunarMissile,moonCrippleEffect,previousMoonCripple;System.Reflection.FieldInfo moonCrippleSlot;bool ownsMoonCripple;
  int moonHelperIndex=-1,moonHelperReferences;GameObject moonTeleportHelper;
  int moonStealerIndex=-1,moonStealerReferences;GameObject moonStealerSource,moonTransferEffect,priorMoonTransferEffect;System.Reflection.FieldInfo moonTransferSlot;
- void PrepareMoonSupport(Result cfg){
+ void PrepareMoonSupport(SessionConfig cfg){
   if(!cfg.moonMission)return;
   int missile=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Projectiles/LunarMissileProjectile"),cripple=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/TemporaryVisualEffects/CrippleEffect");
   Check(missile>=0&&cripple>=0,"Original Lunar support manifest missing");

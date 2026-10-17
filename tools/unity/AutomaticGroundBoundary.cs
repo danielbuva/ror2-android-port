@@ -9,7 +9,7 @@ using UnityEngine;
 
 // Reuse the measured floor/event contract; all state/motor/solver ticks remain original Unity callbacks.
 public sealed partial class MovementBatchProbe {
- IEnumerator AutomaticGroundBoundary(CharacterBody body,EntityStateMachine machine,Result cfg){
+ IEnumerator AutomaticGroundBoundary(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){
   bool floor=r.id!="body-state-spawn-state-auto-gravity",wall=r.id=="body-state-spawn-state-auto-ground-wall";
   bool scripted=r.id=="body-state-spawn-state-auto-ground-stop"||r.id=="body-state-spawn-state-auto-body-ground"||wall;
   var motor=body.characterMotor;var solver=motor.Motor;var input=body.inputBank;var state=machine.state;

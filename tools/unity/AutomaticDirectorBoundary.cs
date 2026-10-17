@@ -63,7 +63,7 @@ public sealed partial class MovementBatchProbe {
   if(r.director==null||navigationSystem==null)return;r.director.navigationAgents=NavigationAgentCount();r.director.navigationAgentPeak=Math.Max(r.director.navigationAgentPeak,r.director.navigationAgents);r.director.navigationTime=(float)typeof(BroadNavigationSystem).GetField("localTime",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(navigationSystem);Check(string.IsNullOrEmpty(r.director.navigationError),"Original navigation scheduler failed: "+r.director.navigationError);
   if(enemyAI){var output=enemyAI.broadNavigationAgent.output;r.director.navigationNext|=output.nextPosition.HasValue;r.director.navigationReachable|=output.targetReachable;r.director.navigationPathUpdate=output.lastPathUpdate;}
  }
- IEnumerator PrepareDirectorAssets(Result cfg,IResourceLocation bundle){
+ IEnumerator PrepareDirectorAssets(SessionConfig cfg,IResourceLocation bundle){
   Check(cfg.enemyDirectorTeamKeys.Length==2&&cfg.enemyDirectorTeamAssets.Length==2,"Measured director team asset count");
   var names=new[]{"Prefabs/Effects/LevelUpEffect","Prefabs/Effects/LevelUpEffectEnemy"};
   for(int i=0;i<2;i++){string key;Check(LegacyResourcesAPI.GetGuid(names[i],out key)&&key==cfg.enemyDirectorTeamKeys[i],"Original team effect legacy identity");rewardLocator.Add(key,new ResourceLocationBase(key,cfg.enemyDirectorTeamAssets[i],typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));}
@@ -80,7 +80,7 @@ public sealed partial class MovementBatchProbe {
   Check(directorTeamEffects.All(x=>x)&&directorTeamEffects[0].name=="LevelUpEffect"&&directorTeamEffects[1].name=="LevelUpEffectEnemy"&&monster.softCharacterLimit==40,"Original team limit/effect contracts missing");
   yield return null;
  }
- IEnumerator SpawnAutomaticEnemy(GameObject template,CharacterBody player,Result cfg){
+ IEnumerator SpawnAutomaticEnemy(GameObject template,CharacterBody player,SessionConfig cfg){
   int limit=cfg.integratedWorld?int.MaxValue:cfg.directorSpawnLimit==0?1:cfg.directorSpawnLimit;Check(cfg.integratedWorld||limit==1||limit==3,"Unmeasured director batch limit");r.director=new DirectorReport{automatic=true,spawnLimit=limit,monsterLimit=TeamCatalog.GetTeamDef(TeamIndex.Monster).softCharacterLimit,scope="Original enabled fast director; source timing/credits/target/team limit/approximate placement, one base Beetle card, bounded "+limit+" spawns; no connected user, full stage, elite or full wave acceptance"};if(cfg.integratedWorld)r.director.scope="Continuous original enabled fast director, one original base Beetle card and real team limit/credits/placement; no artificial spawn cutoff. Original Run clock with unavailable stock startup/user/profile/progression.";r.phase="automatic-director-context";Save();
   Check(RunArtifactManager.instance&&!RunArtifactManager.instance.IsArtifactEnabled(RoR2Content.Artifacts.eliteOnlyArtifactDef),"Original disabled Honor artifact missing");
   priorDirectorEliteTiers=RewardField(typeof(CombatDirector),"eliteTiers").GetValue(null);Check(priorDirectorEliteTiers==null,"Existing original elite tiers");StaticCall(typeof(CombatDirector),"Init");

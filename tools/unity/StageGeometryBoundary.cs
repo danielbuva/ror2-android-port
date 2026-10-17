@@ -54,7 +54,7 @@ public sealed partial class MovementBatchProbe {
  void DeactivateSourceSceneInfo(){if(sourceSceneInfoRoot){sourceSceneInfoRoot.SetActive(false);sourceSceneInfoRoot=null;}Check(!SceneInfo.instance&&!ClassicStageInfo.instance,"Original source scene context survived deactivation");DeactivateSourceGameManager();}
  MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
  IntegratedStageSpec firstStageSpec;string firstStageName;bool firstStagePolicyConsumed;float firstStageSelectionValue;
- IEnumerator PrepareStageGeometry(Result cfg){
+ IEnumerator PrepareStageGeometry(SessionConfig cfg){
   firstStageSpec=null;firstStageName="golemplains";firstStagePolicyConsumed=false;stageSourceNames=r.originalStageSceneNames??cfg.originalStageSceneNames??new string[0];
   if(cfg.integratedWorld&&cfg.teleporterLoop&&r.freePlay){
    // Run.Start is unavailable behind the stock platform boundary. Use its shipped

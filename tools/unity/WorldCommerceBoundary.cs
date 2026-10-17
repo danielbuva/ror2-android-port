@@ -36,7 +36,7 @@ public sealed partial class MovementBatchProbe {
   if(radius<=0||float.IsNaN(radius)||float.IsInfinity(radius))throw new InvalidOperationException("Original commerce model footprint invalid: "+source.name);
   return radius;
  }
- GameObject PrepareCommerceSupport(Result cfg){
+ GameObject PrepareCommerceSupport(SessionConfig cfg){
   if(cfg.worldCommerceAssets==null||cfg.worldCommerceAssets.Length==0)return null;
   commerceEffectIndex=Array.IndexOf(cfg.objectiveSupportPaths,"Prefabs/Effects/ShrineUseEffect");Check(commerceEffectIndex>=0,"Original shrine effect provider absent");
   var effect=objectiveSupportSources[commerceEffectIndex];Check(effect&&effect.GetComponent<EffectComponent>(),"Original shrine effect component missing");
@@ -92,7 +92,7 @@ public sealed partial class MovementBatchProbe {
    Check(context.activatorBody==worldPlayer&&context.purchaseInteraction==purchase,"Original commerce purchase context changed");r.commerce.purchases.Add(new CommercePurchase{at=r.world.seconds,source=purchase.name,family=CommerceSweepFamily(purchase),subtype=subtype,cost=context.cost,costType=purchase.costType.ToString(),moneyAfter=worldPlayer.master.money,healthAfter=worldPlayer.healthComponent.health,shieldAfter=worldPlayer.healthComponent.shield,debugAssisted=r.debugAcceleration!=null&&r.debugAcceleration.everAssisted});Save();
   };commerceListeners.Add(purchase,listener);purchase.onDetailedPurchaseServer.AddListener(listener);
  }
- void PrepareWorldCommerce(Result cfg,Vector3 origin){
+ void PrepareWorldCommerce(SessionConfig cfg,Vector3 origin){
   if(cfg.worldCommerceAssets==null||cfg.worldCommerceAssets.Length==0)return;
   Check((cfg.worldCommerceAssets.Length==4||cfg.worldCommerceAssets.Length==5||cfg.worldCommerceAssets.Length==7)&&commerceEffectIndex>=0,"Original world commerce contract incomplete");r.phase="integrated-world-commerce";Save();
   if(r.commerce==null){r.commerce=new CommerceReport{scope="Original multishop terminal generation/choice/closure, chance shrine RNG/failure/refresh/drops, blood shrine health cost/gold/refresh healing shrine native ward/radius/refresh, Mountain boss-stack and Order inventory-restack contracts. Authored near-entry layout/material adapter; no original SceneDirector placement, equipment, platform text-chat or normal health-cost acceptance under invincibility."};

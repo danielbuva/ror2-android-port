@@ -25,11 +25,11 @@ public sealed partial class MovementBatchProbe {
  readonly HashSet<CharacterBody> stageHeatOwners=new HashSet<CharacterBody>();
  readonly HashSet<GameObject> stageBossInstances=new HashSet<GameObject>();
  readonly HashSet<CharacterMaster> stageMiniInstances=new HashSet<CharacterMaster>();
- BuffDef[] StageBossBuffs(Result cfg){
+ BuffDef[] StageBossBuffs(SessionConfig cfg){
   if(string.IsNullOrEmpty(cfg.stageOverheatBuffAsset))return new BuffDef[0];
   var buff=artifactBundle.LoadAsset<BuffDef>(cfg.stageOverheatBuffAsset);Check(buff&&buff.name=="bdOverheat","Original overheat buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),"Overheat",buff);var armor=artifactBundle.LoadAsset<BuffDef>(cfg.stageBossArmorBuffAsset);Check(armor&&armor.name=="bdArmorBoost","Original Clay recovery armor buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),"ArmorBoost",armor);return new[]{buff,armor};
  }
- System.Collections.IEnumerator PrepareStageBossContent(Result cfg){
+ System.Collections.IEnumerator PrepareStageBossContent(SessionConfig cfg){
   if(string.IsNullOrEmpty(cfg.stageMiniCardAsset))yield break;
   if(r.stageBossContent==null)r.stageBossContent=new StageBossContentReport();
   string key;Check(LegacyResourcesAPI.GetGuid(cfg.stageMiniCardPath,out key)&&key==cfg.stageMiniCardKey,"Original Solus summon card identity changed");
@@ -57,7 +57,7 @@ public sealed partial class MovementBatchProbe {
   // explicit table is absent. Never create unusable items or change source tables.
   return true;
  }
- ItemDef[] ComposedBaseBossRewards(Result cfg){
+ ItemDef[] ComposedBaseBossRewards(SessionConfig cfg){
   if(!cfg.teleporterLoop)return new ItemDef[0];
   var tables=cfg.objectiveActors.Select(actor=>artifactBundle.LoadAsset<GameObject>(actor.body).GetComponent<DeathRewards>()).Where(rewards=>rewards).Select(rewards=>rewards.bossDropTable as ExplicitPickupDropTable).Where(table=>table);
   var items=tables.SelectMany(table=>table.pickupEntries).Select(entry=>entry.pickupDef as ItemDef).Where(item=>item&&ItemCatalog.GetItemDef(ItemCatalog.FindItemIndex(item.name))==item).Distinct().ToArray();

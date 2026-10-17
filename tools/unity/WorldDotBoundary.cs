@@ -22,7 +22,7 @@ public sealed partial class MovementBatchProbe {
  readonly Dictionary<FieldInfo,BurnEffectController.EffectParams> previousWorldBurnEffects=new Dictionary<FieldInfo,BurnEffectController.EffectParams>();
  DotController.OnDotInflictedServerGlobalDelegate worldDotInflicted;Action<DamageReport> worldDotDamage;
  readonly List<GameObject> worldDotPoolSources=new List<GameObject>();
- BuffDef[] WorldDotBuffs(Result cfg){
+ BuffDef[] WorldDotBuffs(SessionConfig cfg){
   if(cfg.worldDotBuffAssets==null||cfg.worldDotBuffAssets.Length==0)return new BuffDef[0];
   var names=new[]{"Bleeding","OnFire","Poisoned","Blight","SuperBleed","StrongerBurn","Fracture","lunarruin","Frost","Electrocuted"};
   var owners=new[]{typeof(RoR2Content.Buffs),typeof(RoR2Content.Buffs),typeof(RoR2Content.Buffs),typeof(RoR2Content.Buffs),typeof(RoR2Content.Buffs),typeof(DLC1Content.Buffs),typeof(DLC1Content.Buffs),typeof(DLC2Content.Buffs),typeof(DLC2Content.Buffs),typeof(DLC3Content.Buffs)};
@@ -44,7 +44,7 @@ public sealed partial class MovementBatchProbe {
   PresentCommerceModel(prefab.transform);worldDotPoolSources.Add(prefab);
   previousWorldBurnEffects.Add(field,null);field.SetValue(null,new BurnEffectController.EffectParams{overlayMaterial=copy,fireEffectPrefab=prefab});
  }
- GameObject[] PrepareWorldDotSupport(Result cfg){
+ GameObject[] PrepareWorldDotSupport(SessionConfig cfg){
   if(cfg.worldDotBuffAssets==null||cfg.worldDotBuffAssets.Length==0)return new GameObject[0];
   var field=typeof(DotController).GetField("dotDefs",BindingFlags.Static|BindingFlags.NonPublic);previousWorldDotDefs=field.GetValue(null);
   var burnFields=new[]{"normalEffect","helfireEffect","poisonEffect","blightEffect","strongerBurnEffect","lynxPoisonEffect"}.Select(name=>typeof(BurnEffectController).GetField(name,BindingFlags.Static|BindingFlags.Public)).ToArray();

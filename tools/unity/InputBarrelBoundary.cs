@@ -18,7 +18,7 @@ public sealed partial class MovementBatchProbe {
   public int interactions,xpMessages,coinReferencesBefore,coinReferencesAfter,orbInstancesBefore,orbInstancesAfter;public float goldEvents;
   public string xpSettingBefore,xpSettingDeclared,xpSettingActive,xpSettingRestored,scope;
  }
- IEnumerator ProbeOriginalInputBarrel(CharacterBody player,Result cfg){
+ IEnumerator ProbeOriginalInputBarrel(CharacterBody player,SessionConfig cfg){
   r.inputBarrel=new InputBarrelReport{source=new BarrelReport(),scope="Original automatic InteractionDriver selection/input/server dispatch/source cash-barrel rewards and genuine client messages. Diagnostic input/manual source placement; original optional XP cosmetics disabled, no native audio/physical interaction/normal placement/purchase/drop/profile/progression/full startup acceptance."};r.phase="original-input-barrel-prepare";Save();
   Check(r.clientCoin.cleaned&&r.interactionSelection.cleaned&&player.networkIdentity.hasAuthority&&activeBodyClient.isConnected&&NetworkServer.active&&!PauseStopController.instance,"Accepted coin/selection/local ownership required");
   var driver=player.GetComponent<InteractionDriver>();var bank=player.inputBank;Check(!driver.enabled&&!driver.currentInteractable&&!driver.interactableOverride&&!bank.interact.down,"Original neutral driver/input required");

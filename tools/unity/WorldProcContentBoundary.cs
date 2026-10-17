@@ -14,12 +14,12 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class ProcContentReport {public bool ready,cleaned;public int buffs,supportSources,warbannerWards,warbannerBuffEffects,deskPlants,deskplantWards,healNovaGenerators,healNovaPulses;public string scope="Original item/proc content and owned dependency bindings; registration is not individual proc acceptance.";}
  [Serializable] public class HealingWardObservation {public string shrine;public uint netId;public int purchases;public float radius,interval,healFraction,healPoints;public bool playerTeam,parentMatched,teardownRequested;}
  readonly Dictionary<GameObject,HealingWardObservation> commerceHealingWards=new Dictionary<GameObject,HealingWardObservation>();
- BuffDef[] WorldProcBuffs(Result cfg){
+ BuffDef[] WorldProcBuffs(SessionConfig cfg){
   if(cfg.worldProcBuffAssets==null||cfg.worldProcBuffAssets.Length==0)return new BuffDef[0];
   var names=new[]{"DeathMark","PulverizeBuildup","Pulverized"};if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains("WardOnLevel"))names=names.Concat(new[]{"Warbanner"}).ToArray();Check(cfg.worldProcBuffAssets.Length==names.Length,"Original proc buff closure differs");
   return cfg.worldProcBuffAssets.Select((path,i)=>{var def=artifactBundle.LoadAsset<BuffDef>(path);Check(def&&def.name=="bd"+names[i],"Original proc buff missing: "+names[i]);BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],def);return def;}).ToArray();
  }
- GameObject[] PrepareWorldProcSupport(Result cfg){
+ GameObject[] PrepareWorldProcSupport(SessionConfig cfg){
   if(cfg.worldProcSupportPaths==null||cfg.worldProcSupportPaths.Length==0)return new GameObject[0];
   Check(WorldProcSupportContract(cfg),"Original proc support closure differs");var effects=new List<GameObject>();
   foreach(var path in cfg.worldProcSupportPaths){
@@ -42,7 +42,7 @@ public sealed partial class MovementBatchProbe {
   }
   r.procContent=new ProcContentReport{ready=true,buffs=cfg.worldProcBuffAssets.Length,supportSources=cfg.worldProcSupportPaths.Length};return effects.Distinct().ToArray();
  }
- static bool WorldProcSupportContract(Result cfg){
+ static bool WorldProcSupportContract(SessionConfig cfg){
   var paths=cfg.worldProcSupportPaths;if(paths==null)return false;
   if(paths.Length==4||paths.Length==9||paths.Length==13)return true;
   bool population=(paths.Length==14||paths.Length==15)&&paths.Distinct().Count()==paths.Length&&

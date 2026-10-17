@@ -10,7 +10,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Original source stage populations and champion selection; unsupported cards stay explicit.
 public sealed partial class MovementBatchProbe {
- bool StagePopulationState(Type type,Result cfg){
+ bool StagePopulationState(Type type,SessionConfig cfg){
   if(cfg.stagePopulationFamilies==null)return false;
   var families=new[]{"Titan","Vagrant","Jellyfish","GreaterWisp","Bell","Bison","Imp","HermitCrab","MiniMushroom","ClayBruiser","LemurianBruiser","Parent","ImpBoss","ClayBoss","RoboBallBoss","RoboBallMini","Grandparent"};
   var namespaces=new[]{"TitanMonster","VagrantMonster","JellyfishMonster","GreaterWispMonster","Bell","Bison","ImpMonster","HermitCrab","MiniMushroom","ClayBruiserMonster","LemurianBruiserMonster","ParentMonster","ImpBossMonster","ClayBoss","RoboBallBoss","RoboBallMini","GrandParentBoss"};
@@ -21,7 +21,7 @@ public sealed partial class MovementBatchProbe {
    (type.Namespace=="EntityStates."+namespaces[i]||(type.Namespace??"").StartsWith("EntityStates."+namespaces[i]+".",StringComparison.Ordinal)))return true;
   return false;
  }
- void PrepareStageBossDeck(Result cfg){
+ void PrepareStageBossDeck(SessionConfig cfg){
   objectiveBossDeck=Instantiate(automaticDeck);
   var champions=objectiveBossDeck.categories.SelectMany(x=>x.cards).Where(x=>x.spawnCard&&
    x.spawnCard.prefab.GetComponent<CharacterMaster>().bodyPrefab.GetComponent<CharacterBody>().isChampion&&
@@ -37,7 +37,7 @@ public sealed partial class MovementBatchProbe {
    r.objective.eligibleBossCards=new[]{queen.name};r.objective.bossSelectionScope="Inherited Queen fallback; source stage champion closure unavailable";
   }
  }
- void PrepareStagePopulationSupport(Result cfg){
+ void PrepareStagePopulationSupport(SessionConfig cfg){
   if(string.IsNullOrEmpty(cfg.stageVagrantOverlayAsset))return;
   var source=objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<Material>(cfg.stageVagrantOverlayAsset);Check(source&&source.name=="matVagrantEnergized","Original Vagrant energized overlay absent");
   var key="Materials/matVagrantEnergized";string guid;Check(LegacyResourcesAPI.GetGuid(key,out guid)&&guid==cfg.stageVagrantOverlayKey,"Original Vagrant overlay legacy identity differs");

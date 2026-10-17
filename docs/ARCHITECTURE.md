@@ -52,16 +52,18 @@ Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` �
 
 ## Android runtime
 
-The shipped game is one experiment case inside the lab harness `MovementBatchProbe`
+The shipped game runs inside the lab harness `MovementBatchProbe`
 (`tools/unity/MovementBatchProbe.cs`, 70 `partial` files). The runtime configuration is the
-untracked `Resources/MovementBatchProbe.json` in the generated project; the same `Result`
-type is both that configuration and the report written back as `movement-batch-*.json`.
+untracked `Resources/MovementBatchProbe.json` in the generated project, parsed as the
+184-field `SessionConfig`. `Result` is the report written back as `movement-batch-*.json`
+(and the `movement-batch-selection.json` override); config values the report shows are
+copied into it explicitly (J517).
 
 Start-up, in order:
 
-1. `Init` (`MovementBatchProbe.cs:47`, `RuntimeInitializeOnLoad` after scene load): if the
+1. `Init` (`MovementBatchProbe.cs:83`, `RuntimeInitializeOnLoad` after scene load): if the
    `MovementBatchProbe` resource exists, create the harness object.
-2. `Start` (`:48`): exits if `whole-catalog-selection.json` exists in persistent data (the
+2. `Start` (`:84`): exits if `whole-catalog-selection.json` exists in persistent data (the
    separate catalog bootstrap owns that run), then **waits 8 s**.
 3. Read the config. Without a `movement-batch-selection.json` override and with
    `launchPlayableSlice` set, wait for an attempt-bound `nova-input-mapping.json` in
@@ -182,7 +184,8 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    still chosen by a string id, but the playable spine now has its own `GameSession()` entry
    (J513); the 116 historical experiment cases live in `LabExperiments.cs`.
 2. **One class holds everything.** 70 `tools/unity` files are `partial class
-   MovementBatchProbe`; config and report share one `Result` type. (The 9 copies of the
+   MovementBatchProbe`; the config is now its own `SessionConfig` (J517), but the report type is still
+   called `Result`. (The 9 copies of the
    `MoveNext` exception wrapper in `Start` are now one `RunGuarded` helper, J511.)
 3. **The recipe is untracked.** The runtime config (369 keys) and the content recipe
    `work/scene-probe-build.json` (4,184 prefabs) are not in Git. Tracked, audited recipes now go in
@@ -222,7 +225,8 @@ Safe order:
 
 1. ~~Delete the dormant C# text patches~~ — done (J505, J506). C# formatting is no longer
    blocked by the build.
-2. Split `Result` into `SessionConfig` and `SessionReport`, keeping both JSON shapes.
+2. ~~Split the config out of `Result`~~ — done (`SessionConfig`, J517); renaming `Result` to
+   `SessionReport` can follow with step 5.
 3. ~~Give the game a `GameSession` entry point~~ — done (J513); later, have `Start` call it
    directly; keep the old id as
    an alias for `nova_bridge.py`, `scene_runtime.py` and `IsPlayableSpine`.

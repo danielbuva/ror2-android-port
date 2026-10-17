@@ -6,7 +6,7 @@ using System.Globalization;
 // Supply offline entropy at the existing Run seed boundary, preserving native RNGs.
 public sealed partial class MovementBatchProbe {
  ulong? ownedRunSeed;int ownedRunSeedSession=-1;string ownedRunSeedSource;
- ulong SelectOwnedRunSeed(Result cfg){
+ ulong SelectOwnedRunSeed(SessionConfig cfg){
   if(ownedRunSeedSession==r.session&&ownedRunSeed.HasValue){if(r.rewards!=null)r.rewards.seedSource=ownedRunSeedSource;return ownedRunSeed.Value;}
   ulong selected;
   if(!string.IsNullOrEmpty(r.runSeedOverride)){

@@ -24,7 +24,7 @@ public sealed partial class MovementBatchProbe {
  static readonly FieldInfo[] worldEquipmentEffectFields=new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}.Select(name=>typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)).ToArray();
  readonly List<ChestBehavior> worldEquipmentChests=new List<ChestBehavior>();
  EquipmentDef[] worldEquipmentDefinitions;EquipmentSlot worldEquipmentSlot;float equipmentLastInput=-100;bool worldEquipmentTouch;NovaInputBridge worldEquipmentBridge;
- EquipmentDef[] WorldEquipmentDefs(Result cfg){
+ EquipmentDef[] WorldEquipmentDefs(SessionConfig cfg){
   if(cfg.worldEquipmentAssets==null||cfg.worldEquipmentAssets.Length==0)return new EquipmentDef[0];
   var names=new[]{"Fruit","CritOnUse","GainArmor","LifestealOnHit","GoldGat","PassiveHealing","CommandMissile","Saw","Blackhole","TeamWarCry","Jetpack","FireBallDash"};
   Check(cfg.worldEquipmentAssets.Length==names.Length,"Equipment source context differs");
@@ -32,7 +32,7 @@ public sealed partial class MovementBatchProbe {
   for(int i=0;i<names.Length;i++){var def=worldEquipmentDefinitions[i];Check(def&&def.name==names[i],"Original equipment definition missing: "+names[i]);BindEnemyDefinition(typeof(RoR2Content.Equipment),names[i],def);if(i<4||i>=6)Check(!def.unlockableDef&&!def.requiredExpansion&&def.canDrop&&!def.isLunar&&!def.isBoss,"Equipment requires unavailable ownership/profile: "+names[i]);}
   return worldEquipmentDefinitions;
  }
- BuffDef[] WorldEquipmentBuffs(Result cfg){
+ BuffDef[] WorldEquipmentBuffs(SessionConfig cfg){
   if(cfg.worldEquipmentBuffAssets==null||cfg.worldEquipmentBuffAssets.Length==0)return new BuffDef[0];
   var names=new[]{"FullCrit","ElephantArmorBoost","LifeSteal","TeamWarCry"};Check(cfg.worldEquipmentBuffAssets.Length==names.Length,"Equipment buff context differs");
   var defs=cfg.worldEquipmentBuffAssets.Select(x=>artifactBundle.LoadAsset<BuffDef>(x)).ToArray();
@@ -42,7 +42,7 @@ public sealed partial class MovementBatchProbe {
   if(Resources.Load<TextAsset>("WholeCatalogBootstrap")&&r.integratedWorld)return EquipmentCatalog.allEquipment.Select(index=>EquipmentCatalog.GetEquipmentDef(index)).Where(def=>def&&def.canDrop&&!def.requiredExpansion&&HasOwnedProfileUnlock(def.unlockableDef));
   return (worldEquipmentDefinitions??new EquipmentDef[0]).Where(x=>x.name!="GoldGat"&&x.name!="PassiveHealing");
  }
- GameObject[] PrepareWorldEquipmentSupport(Result cfg){
+ GameObject[] PrepareWorldEquipmentSupport(SessionConfig cfg){
   if(cfg.worldEquipmentSupportPaths==null||cfg.worldEquipmentSupportPaths.Length==0)return new GameObject[0];
   Check(cfg.worldEquipmentSupportPaths.Length==12,"Equipment/proc provider closure differs");var effects=new List<GameObject>();
   foreach(var path in cfg.worldEquipmentSupportPaths){
@@ -67,7 +67,7 @@ public sealed partial class MovementBatchProbe {
   foreach(var source in effects.Distinct()){Check(source.GetComponent<EffectComponent>(),"Equipment/proc effect identity absent");source.GetComponent<EffectComponent>().soundName=null;}
   return effects.Distinct().ToArray();
  }
- void PrepareWorldEquipment(CharacterBody player,Result cfg){
+ void PrepareWorldEquipment(CharacterBody player,SessionConfig cfg){
   if(worldEquipmentDefinitions==null)return;
   r.world.equipment=new WorldEquipmentReport{definitions=worldEquipmentDefinitions.Length,eligible=EligibleWorldEquipment().Count()};worldEquipmentSlot=player.equipmentSlot;
   Check(worldEquipmentSlot&&!worldEquipmentSlot.enabled&&worldEquipmentSlot.equipmentIndex==EquipmentIndex.None,"Unowned equipment scheduler");
@@ -98,7 +98,7 @@ public sealed partial class MovementBatchProbe {
   worldEquipmentFixed=null;worldEquipmentInventoryFixed=null;worldEquipmentTouch=false;worldEquipmentChests.Clear();equipmentLastInput=-100;
   if(worldEquipmentActivated!=null)EquipmentSlot.onServerEquipmentActivated-=worldEquipmentActivated;worldEquipmentActivated=null;worldEquipmentDefinitions=null;worldEquipmentSlot=null;worldEquipmentBridge=null;if(r.world!=null&&r.world.equipment!=null)r.world.equipment.cleaned=true;
  }
- void AddEquipmentBarrel(Result cfg,Vector3 origin){
+ void AddEquipmentBarrel(SessionConfig cfg,Vector3 origin){
   if(string.IsNullOrEmpty(cfg.worldEquipmentChestAsset))return;var source=artifactBundle.LoadAsset<GameObject>(cfg.worldEquipmentChestAsset);Check(source&&source.name=="EquipmentBarrel","Original equipment barrel absent");var chest=source.GetComponent<ChestBehavior>();Check(chest&&chest.dropTable&&Run.instance.availableEquipmentDropList.Count==EligibleWorldEquipment().Count(),"Original equipment loot domain absent");var table=chest.dropTable as BasicPickupDropTable;Check(table,"Equipment source drop table type differs");table.RegenerateDropTable(Run.instance);Check(chest.dropTable.GetPickupCount()==EligibleWorldEquipment().Count(),"Source equipment table mismatch");OwnChestAnimationSources(source.GetComponent<ModelLocator>().modelTransform,"EquipmentBarrelArmature|Open");foreach(var offset in new[]{new Vector3(-8,0,4),new Vector3(8,0,4)}){var obj=CreateWorldInteractable(source,origin+offset,true);if(obj){var owned=obj.GetComponent<ChestBehavior>();worldChests.Add(owned);worldEquipmentChests.Add(owned);}}
  }
  ChestBehavior NextAutomaticWorldChest(CharacterBody player){

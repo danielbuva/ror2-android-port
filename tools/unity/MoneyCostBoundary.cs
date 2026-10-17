@@ -15,7 +15,7 @@ public sealed partial class MovementBatchProbe {
   public string affordableMethod,payMethod,scope;
  }
  FieldInfo moneyCatalogField;object priorMoneyCatalog;bool ownsMoneyCatalog;
- IEnumerator ProbeOriginalMoneyCost(CharacterBody player,Result cfg){
+ IEnumerator ProbeOriginalMoneyCost(CharacterBody player,SessionConfig cfg){
   r.moneyCost=new MoneyCostReport{scope="Original Money CostTypeDef affordability/payment delegates with actual Commando/master/inventory and host-receipted unchanged source Chest1 cost. Explicit diagnostic funding through original GiveMoney; no PurchaseInteraction callbacks/chest opening/drops/profile/progression acceptance."};r.phase="original-money-cost";Save();
   Check(r.itemPickup.granted&&r.itemPickup.cleaned&&Run.instance&&NetworkServer.active&&player.master&&player.inventory.currentEquipmentIndex==EquipmentIndex.None,"Accepted pickup/server/player prerequisites changed");
   r.moneyCost.sourceReady=cfg.moneySourceCost==25&&cfg.moneySourceSha256!=null&&cfg.moneySourceSha256.Length==64;Check(r.moneyCost.sourceReady,"Host-receipted original Chest1 cost data missing");r.moneyCost.sourceCost=cfg.moneySourceCost;

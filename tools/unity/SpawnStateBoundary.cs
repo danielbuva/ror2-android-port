@@ -58,7 +58,7 @@ public sealed partial class MovementBatchProbe {
   if(r.liveCatalogs!=null)r.liveCatalogs.stateCleanup=EntityStateCatalog.entityStateCount==0;
  }
  bool ownsSpawnConfig;float priorSpawnDelay;string priorSpawnSound;
- IEnumerator PrepareSpawnStateCatalog(Result cfg){
+ IEnumerator PrepareSpawnStateCatalog(SessionConfig cfg){
   Check(!ownsStateCatalog,"Existing state catalog ownership");
   var types=new[]{typeof(Uninitialized),typeof(Idle),typeof(SpawnTeleporterState),typeof(GenericCharacterMain),typeof(GenericCharacterVehicleSeated)};
   var flags=BindingFlags.NonPublic|BindingFlags.Static;
@@ -90,7 +90,7 @@ public sealed partial class MovementBatchProbe {
   Check(SpawnTeleporterState.soundString==cfg.sourceSpawnSound,"Original configured spawn sound");
  }
  void CleanupSpawnConfig(){CleanupObjectiveConfigs();CleanupEnemyConfigs();CleanupSpineConfig();if(ownsSpawnConfig){SpawnTeleporterState.initialDelay=priorSpawnDelay;SpawnTeleporterState.soundString=priorSpawnSound;ownsSpawnConfig=false;}RestoreWholeStateOwnership();}
- void ProbeSpawnStates(CharacterBody body,Result cfg){
+ void ProbeSpawnStates(CharacterBody body,SessionConfig cfg){
   if(!ownsStateCatalog){var preparation=PrepareSpawnStateCatalog(cfg);while(preparation.MoveNext()){};}
   if(r.id=="body-state-spawn-state-overlay"){ProbeTeleportOverlay(body,cfg);return;}
   if(r.id=="body-state-spawn-state-buff-removal"){
@@ -133,7 +133,7 @@ public sealed partial class MovementBatchProbe {
  }
 
  static float SpawnedStateAge(EntityState state,string property){return (float)typeof(EntityState).GetProperty(property,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(state);}
- void ProbeSpawnedMain(CharacterBody body,EntityStateMachine machine,Result cfg){
+ void ProbeSpawnedMain(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){
   var motor=body.characterMotor;var solver=body.GetComponent<KinematicCharacterMotor>();var input=body.inputBank;
   r.spawnedMoveSpeed=body.moveSpeed;r.spawnedAcceleration=body.acceleration;
   Check(body.healthComponent.health==110&&body.moveSpeed==7&&body.acceleration==80&&body.jumpPower==15,"Actual spawned body original computed stats");

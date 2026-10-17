@@ -28,7 +28,7 @@ public sealed partial class MovementBatchProbe {
  EffectDef[] priorRewardEffects;bool ownsRewardEffects,observesRewardSummon;object priorCoinPrefab,priorLogPrefab,priorOrbPrefab;
  Xoroshiro128Plus priorStageRng,priorStageGenerator,priorRunRng,priorLoopRng,priorNextStageRng;ulong priorRunSeed;string[] priorRunLoopResetFlags;bool ownsRewardRunRng;ItemMask ownedRewardMask;Run rewardRun;TeamComponent rewardFixtureTeam;TeamIndex priorRewardFixtureTeam;readonly List<CharacterMaster> ownedRewardSummons=new List<CharacterMaster>();
  static FieldInfo RewardField(Type type,string name){return type.GetField(name,BindingFlags.NonPublic|BindingFlags.Static);}
- IEnumerator PrepareEnemyRewards(CharacterBody player,Result cfg){
+ IEnumerator PrepareEnemyRewards(CharacterBody player,SessionConfig cfg){
   r.rewards=new RewardReport{scope="Original directed spawn and server gold/timed XP; no sustained waves, connected-client effects, level-up, logbook/profile or full Run lifecycle",deathAt=-1,experienceAt=-1};r.phase="enemy-reward-provider";Save();
   Check(!ExperienceManager.instance&&!DirectorCore.instance&&CombatDirector.instancesList.Count==0,"Existing reward/director context");Check(NetworkServer.active&&!NetworkClient.active,"Measured server-only reward scope changed");
   priorCoinPrefab=RewardField(typeof(DeathRewards),"coinEffectPrefab").GetValue(null);priorLogPrefab=RewardField(typeof(DeathRewards),"logbookPrefab").GetValue(null);priorOrbPrefab=RewardField(typeof(ExperienceManager),"experienceOrbPrefab").GetValue(null);Check(priorCoinPrefab==null&&priorLogPrefab==null&&priorOrbPrefab==null,"Existing reward prefab references");
@@ -58,7 +58,7 @@ public sealed partial class MovementBatchProbe {
   InitializeRewardRunStreams(cfg);
   if(cfg.automaticDirector){var assets=PrepareDirectorAssets(cfg,bundle);while(assets.MoveNext())yield return assets.Current;}r.rewards.assetsReady=true;Save();
  }
- void InitializeRewardRunStreams(Result cfg){
+ void InitializeRewardRunStreams(SessionConfig cfg){
   priorStageGenerator=rewardRun.stageRngGenerator;priorStageRng=rewardRun.stageRng;priorRunRng=rewardRun.runRNG;priorLoopRng=rewardRun.loopRngGenerator;priorNextStageRng=rewardRun.nextStageRng;priorRunSeed=rewardRun.seed;
   Check(priorStageGenerator==null&&priorStageRng==null&&priorRunRng==null&&priorLoopRng==null&&priorNextStageRng==null,"Existing Run RNG context");ownsRewardRunRng=true;
   priorRunLoopResetFlags=rewardRun.EventFlagsToResetOnLoop;Check(!cfg.teleporterLoop||cfg.runEventFlagsToResetOnLoop!=null,"Original loop-reset settings absent");
@@ -76,7 +76,7 @@ public sealed partial class MovementBatchProbe {
  }
  void RewardGold(float amount){r.rewards.goldEvents+=amount;}
  void RewardSummon(MasterSummon.MasterSummonReport report){if(report.summonMasterInstance&&report.masterSummon.masterPrefab==rewardCard.prefab){if(IsWorldItemGhost(report.summonMasterInstance))return;r.rewards.summonEvents++;Check(report.masterSummon.useAmbientLevel==true&&report.summonMasterInstance.teamIndex==TeamIndex.Monster,"Original summon contract changed");}}
- IEnumerator SpawnRewardEnemy(GameObject bodyTemplate,Vector3 position,CharacterBody player,Result cfg){
+ IEnumerator SpawnRewardEnemy(GameObject bodyTemplate,Vector3 position,CharacterBody player,SessionConfig cfg){
   var source=artifactBundle.LoadAsset<CharacterSpawnCard>(cfg.enemySpawnCardAsset);Check(source&&source.name=="cscBeetle"&&source.directorCreditCost==8&&source.prefab.GetComponent<CharacterMaster>()&&source.sendOverNetwork&&!source.occupyPosition&&source.equipmentToGrant.Length==0&&source.itemsToGrant.Length==0&&(source.loadout==null||source.loadout.isEmpty),"Original cscBeetle contract changed");
   rewardCard=Instantiate(source);rewardCard.name=source.name;var template=Instantiate(artifactBundle.LoadAsset<GameObject>(cfg.enemyMasterAsset),enemyTemplates.transform);template.name=source.prefab.name;template.GetComponent<Inventory>().enabled=false;template.GetComponent<CharacterMaster>().bodyPrefab=bodyTemplate;template.SetActive(true);rewardCard.prefab=template;
   Check(ownsRewardRunRng&&rewardRun.stageRng!=null&&rewardRun.runRNG!=null,"Original Run RNG streams must precede source scene activation");

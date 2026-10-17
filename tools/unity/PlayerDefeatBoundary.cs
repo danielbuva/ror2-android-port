@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
  const string PlayerDeathPath="Prefabs/TemporaryVisualEffects/PlayerDeathEffect",PlayerDeathBundle="player-death-effect-lab";
  ResourceLocationMap playerDeathLocator;AsyncOperationHandle<GameObject> playerDeathHandle;GameObject playerDeathPrefab;
  readonly List<LocalCameraEffect> playerDeathEffects=new List<LocalCameraEffect>();CharacterBody observedDefeatBody;
- IEnumerator PreparePlayerDefeat(CharacterBody body,Result cfg){
+ IEnumerator PreparePlayerDefeat(CharacterBody body,SessionConfig cfg){
   r.playerDefeat=new PlayerDefeatReport();Check(!Resources.FindObjectsOfTypeAll<LocalCameraEffect>().Any(x=>x.gameObject.scene.IsValid()),"Existing local death camera effects");
   var index=EntityStateCatalog.GetStateIndex(typeof(EntityStates.Commando.DeathState));Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==typeof(EntityStates.Commando.DeathState),"Original player death state catalog identity missing");r.playerDefeat.stateIndex=(int)index;
   body.GetComponent<SfxLocator>().deathSound=""; // Original death explicitly skips an empty sound string; Android audio remains unavailable.

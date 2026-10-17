@@ -43,7 +43,7 @@ public sealed partial class MovementBatchProbe {
   }
   Check(r.nova.samples>300,"Nova Unity raw capture incomplete");Save();
  }
- IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,Result cfg){
+ IEnumerator NovaInputBoundary(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){
   bool spine=IsPlayableSpine(),bringup=r.id.EndsWith("-bringup");r.integratedWorld=cfg.integratedWorld;r.teleporterLoop=cfg.teleporterLoop;NovaInputBridge.RequireNova();r.nova=new NovaReport{rendersOriginalModel=spine,diagnosticInput=bringup,novaOnly=true,spawnedBodyId=body.netId.Value,masterId=body.master.netId.Value};
   var mappingPath=System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json");
   Check(File.Exists(mappingPath),"Measured Nova mapping required before physical Commando test");var mapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));mapping.Validate(r.attempt);Check(!mapping.enableSkills,"Ability execution is a separate probe");r.nova.mapping=mapping;

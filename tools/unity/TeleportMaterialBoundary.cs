@@ -23,7 +23,7 @@ public sealed partial class MovementBatchProbe {
  readonly List<TemporaryOverlayInstance> ownedTeleportOverlays=new List<TemporaryOverlayInstance>();
  readonly HashSet<TemporaryOverlayInstance> observedTeleportOverlays=new HashSet<TemporaryOverlayInstance>();
  int TeleportOverlayCount(){return (int)typeof(TemporaryOverlayManager).GetField("arraySize",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);}
- IEnumerator PrepareTeleportMaterial(Result cfg){
+ IEnumerator PrepareTeleportMaterial(SessionConfig cfg){
   Check(!AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==TeleportBundle),"Teleport bundle already has an owner");
   Check(TeleportOverlayCount()==0,"Existing overlays; refuse ownership");
   string key;Check(LegacyResourcesAPI.GetGuid("Materials/matTPInOut",out key)&&key==cfg.teleportMaterialKey,"Actual legacy material GUID");
@@ -43,13 +43,13 @@ public sealed partial class MovementBatchProbe {
   Check(teleportHandle.IsDone&&teleportHandle.Status==AsyncOperationStatus.Succeeded&&teleportHandle.Result==teleportMaterial,"Original async/sync material identity");
   Check(LegacyResourcesAPI.ActiveCount==0,"Legacy material callbacks not drained");
  }
- void AcceptTeleportMaterial(Material material,Result cfg){
+ void AcceptTeleportMaterial(Material material,SessionConfig cfg){
   Check(material&&material.name=="matTPInOut"&&material.shader,"Actual typed teleport material missing");
   Check(AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==TeleportBundle&&b.GetAllAssetNames().Contains(cfg.teleportMaterialAsset,StringComparer.OrdinalIgnoreCase)),"Provider did not load the separately owned material bundle");
   r.teleportMaterialLoaded=true;r.teleportMaterialName=material.name;r.teleportShader=material.shader.name;
  }
  void ObserveTeleportOverlays(CharacterBody body){
-  var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+  var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   var model=body.modelLocator.modelTransform.GetComponent<CharacterModel>();
   foreach(var overlay in model.temporaryOverlays){
    if(!observedTeleportOverlays.Add(overlay))continue;
@@ -59,7 +59,7 @@ public sealed partial class MovementBatchProbe {
    Check(overlay.initialized&&overlay.assignedCharacterModel==model&&overlay.materialInstance&&overlay.materialInstance!=overlay.originalMaterial&&overlay.materialInstance.shader==overlay.originalMaterial.shader,"Original overlay material copy/assignment");
   }
  }
- void ProbeTeleportOverlay(CharacterBody body,Result cfg){
+ void ProbeTeleportOverlay(CharacterBody body,SessionConfig cfg){
   var model=body.modelLocator.modelTransform.GetComponent<CharacterModel>();Check(model&&model.temporaryOverlays.Count==0,"Recovered model overlay baseline");
   r.phase="original-teleport-overlay-setup";Save();TeleportOutController.AddTPOutEffect(model,1f,0f,cfg.sourceSpawnDelay);ObserveTeleportOverlays(body);
   Check(r.teleportOverlays==1&&TeleportOverlayCount()==1,"Original overlay registration");var overlay=ownedTeleportOverlays.Single();

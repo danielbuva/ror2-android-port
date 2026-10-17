@@ -23,7 +23,7 @@ public sealed partial class MovementBatchProbe {
  readonly List<Material> barrelMaterials=new List<Material>();CharacterMaster barrelPlayer;bool observesBarrel,ownsBarrelCoinWitness,hasBarrelCoinBaseline;int barrelCoinBaseline;AsyncOperationHandle<GameObject> barrelCoinWitness;
  void BarrelGold(float amount){r.barrel.goldEvents+=amount;}
  void BarrelInteracted(Interactor interactor,IInteractable interactable,GameObject obj){if(obj==barrelObject){Check(interactor.GetComponent<CharacterBody>().master==barrelPlayer&&ReferenceEquals(interactable,barrelComponent),"Original barrel interaction event identity changed");r.barrel.interactions++;}}
- IEnumerator ProbeOriginalBarrel(CharacterBody player,Result cfg){
+ IEnumerator ProbeOriginalBarrel(CharacterBody player,SessionConfig cfg){
   r.barrel=new BarrelReport{scope="Original cash-barrel query/server interaction/Opening/Opened/gold/timed XP; manually placed owned source clone, explicit no audio/diagnostic materials. No original InteractionDriver/physical/client/purchase/item/drop-table/stage progression proof."};r.phase="original-barrel-prepare";Save();
   Check(NetworkServer.active&&!NetworkClient.active&&Run.instance&&r.runClock.cleaned==false&&ExperienceManager.instance,"Accepted server clock/reward context required");
   var setup=PrepareOriginalBarrelClone(player,cfg,r.barrel);while(setup.MoveNext())yield return setup.Current;
@@ -55,7 +55,7 @@ public sealed partial class MovementBatchProbe {
   Check(r.barrel.repeatRejected,"Opened barrel paid twice or remained interactable");CleanupOriginalBarrel();yield return null;yield return null;
   r.barrel.cleaned=!barrelObject&&!barrelTemplates&&!barrelModel&&!barrelPreview&&barrelMaterials.All(x=>!x);Check(r.barrel.cleaned,"Owned barrel/model/material teardown incomplete");Save();
  }
- IEnumerator PrepareOriginalBarrelClone(CharacterBody player,Result cfg,BarrelReport report){
+ IEnumerator PrepareOriginalBarrelClone(CharacterBody player,SessionConfig cfg,BarrelReport report){
   var source=artifactBundle.LoadAsset<GameObject>(cfg.barrelAsset);Check(source&&source.name=="Barrel1"&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original barrel prefab/reference contract missing");
   var original=source.GetComponent<BarrelInteraction>();Check(original&&original.goldReward==8&&original.expReward==4,"Original source barrel rewards changed");report.sourceGold=original.goldReward;report.sourceExperience=original.expReward;
   barrelTemplates=new GameObject("Owned inactive barrel staging");barrelTemplates.SetActive(false);barrelObject=Instantiate(source,barrelTemplates.transform);barrelObject.name=source.name;

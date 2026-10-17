@@ -14,7 +14,7 @@ public sealed partial class MovementBatchProbe {
  bool IsPlayableSpine(){return r.id.StartsWith("body-state-spawn-state-auto-nova-spine");}
  FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;
  EntityState lastSpineWeaponState;
- EntityStateConfiguration[] PrepareSpineConfigs(Result cfg,EntityStateConfiguration spawn){
+ EntityStateConfiguration[] PrepareSpineConfigs(SessionConfig cfg,EntityStateConfiguration spawn){
   spineFields=(cfg.combatSpine?new[]{typeof(FirePistol2),typeof(FireBarrage),typeof(EntityStates.Commando.DodgeState)}:new[]{typeof(FirePistol2)}).SelectMany(t=>t.GetFields(BindingFlags.Public|BindingFlags.Static|BindingFlags.DeclaredOnly)).ToArray();spinePrior=spineFields.Select(x=>x.GetValue(null)).ToArray();
   var fire=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryFireConfigAsset);
   var reload=artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryReloadConfigAsset);
@@ -51,7 +51,7 @@ public sealed partial class MovementBatchProbe {
   public bool scheduled,entered,firingAvailable,audioAvailable,silentFixture;public int shots,reloads;public float spreadAfter;
  }
  bool IsPrimaryFire(){return r.id.StartsWith("body-state-spawn-state-primary-");}
- void PrimaryFireBoundary(CharacterBody body,Result cfg){
+ void PrimaryFireBoundary(CharacterBody body,SessionConfig cfg){
   r.primary=new PrimaryFireReport();
   var report=r.primary;var weapon=EntityStateMachine.FindByCustomName(body.gameObject,"Weapon");
   var skill=body.skillLocator.primary;var def=skill.skillDef as SteppedSkillDef;

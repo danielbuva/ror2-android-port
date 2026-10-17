@@ -28,7 +28,7 @@ public sealed partial class MovementBatchProbe {
  GameObject ownedFMJ;CharacterBody targetBody;Material combatMaterial;Texture2D combatTexture;
  EntityState lastCombatBody,lastCombatWeapon;
  static readonly FieldInfo meleeAttackTicksField=typeof(BasicMeleeAttack).GetField("meleeAttackTicks",BindingFlags.Instance|BindingFlags.NonPublic);
- EntityStateConfiguration[] PrepareCombatConfigs(Result cfg){
+ EntityStateConfiguration[] PrepareCombatConfigs(SessionConfig cfg){
   r.combat=new CombatReport();SilentProjectileBoundary.prepared=0;
   foreach(var asset in new[]{cfg.secondaryConfigAsset,cfg.utilityConfigAsset,cfg.specialConfigAsset}){
    var original=artifactBundle.LoadAsset<EntityStateConfiguration>(asset);Check(original,"Original default skill configuration missing: "+asset);
@@ -61,7 +61,7 @@ public sealed partial class MovementBatchProbe {
   }
   return combatConfigs.ToArray();
  }
- void PrepareCombatScene(CharacterBody player,Result cfg){
+ void PrepareCombatScene(CharacterBody player,SessionConfig cfg){
   r.phase="integrated-combat-setup";Save();Check(!ProjectileManager.instance,"Existing projectile manager");
   projectileHost=new GameObject("Owned original projectile manager");projectileHost.AddComponent<ProjectileManager>();
   if(cfg.integratedWorld){GlobalEventManager.onServerDamageDealt+=ObserveCombatDamage;return;}

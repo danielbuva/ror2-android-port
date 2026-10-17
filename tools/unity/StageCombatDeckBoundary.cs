@@ -26,7 +26,7 @@ public sealed partial class MovementBatchProbe {
   inheritedStageWaves.Add(director,new InheritedStageWave{selected=previousCard,spawnCard=source,master=source.prefab,body=master.bodyPrefab});
  }
 
- void SelectStageCombatDeck(Result cfg,string stage){
+ void SelectStageCombatDeck(SessionConfig cfg,string stage){
   if(cfg.stageCombatDecks==null||cfg.stageCombatDecks.Length==0||stage=="moon2")return;
   var spec=cfg.stageCombatDecks.SingleOrDefault(x=>x.name==stage);Check(spec!=null,"Recovered stage combat deck absent: "+stage);
   inheritedStageWaves.Clear();

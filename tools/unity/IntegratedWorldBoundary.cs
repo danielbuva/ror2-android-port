@@ -157,10 +157,10 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
  static readonly FieldInfo[] worldBarrierEffectFields=new[]{"bucklerShieldTempEffectInstance","barrierTempEffectInstance"}.Select(name=>typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)).ToArray();
 
 
- ItemDef[] WorldTierOneLoot(Result cfg){
+ ItemDef[] WorldTierOneLoot(SessionConfig cfg){
   return WorldLoot(cfg).Where(x=>x.tier==ItemTier.Tier1).ToArray();
  }
- ItemDef[] WorldLoot(Result cfg){
+ ItemDef[] WorldLoot(SessionConfig cfg){
   if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap"))return ItemCatalog.allItemDefs.Where(item=>item&&!item.requiredExpansion&&HasOwnedProfileUnlock(item.unlockableDef)&&!item.hidden&&(item.tier==ItemTier.Tier1||item.tier==ItemTier.Tier2||item.tier==ItemTier.Tier3)&&item.DoesNotContainTag(ItemTag.IgnoreForDropList)&&item.DoesNotContainTag(ItemTag.WorldUnique)).ToArray();
   var loot=new List<ItemDef>{RoR2Content.Items.Syringe,RoR2Content.Items.CritGlasses,RoR2Content.Items.HealWhileSafe};
   // Receipted additions only. Older accepted configurations retain their original pool.
@@ -173,7 +173,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(loot.All(x=>x)&&loot.Distinct().Count()==loot.Count,"Duplicate or absent composed loot definition");
   return loot.ToArray();
  }
- BuffDef[] WorldLootBuffs(Result cfg){
+ BuffDef[] WorldLootBuffs(SessionConfig cfg){
   if(cfg.worldAdditionalLootItems==null||!cfg.worldAdditionalLootItems.Contains("SlowOnHit"))return new BuffDef[0];
   var def=artifactBundle.LoadAsset<BuffDef>(cfg.worldLootSlowBuffAsset);Check(def&&def.name=="bdSlow60","Original loot slow buff missing");
   BindEnemyDefinition(typeof(RoR2Content.Buffs),"Slow60",def);return new[]{def};
@@ -206,7 +206,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   Check(lease.Status==AsyncOperationStatus.Succeeded&&lease.Result&&lease.Result.GetComponent<RoR2.Projectile.ProjectileGhostController>()&&lease.Result.GetComponentsInChildren<Component>(true).All(component=>component),"Original projectile ghost address contract failed: "+controller.name);
   return lease.Result;
  }
- GameObject[] PrepareWorldLootSupport(Result cfg){
+ GameObject[] PrepareWorldLootSupport(SessionConfig cfg){
   if(cfg.worldLootSupportPaths==null||cfg.worldLootSupportPaths.Length==0)return new GameObject[0];
   Check(cfg.worldLootSupportPaths.Length==2||cfg.worldLootSupportPaths.Length==3||cfg.worldLootSupportPaths.Length==6||cfg.worldLootSupportPaths.Length==7||cfg.worldLootSupportPaths.Length==9||cfg.worldLootSupportPaths.Length==10||cfg.worldLootSupportPaths.Length==11,"Core loot support contract length changed");
   r.phase="integrated-core-loot-support";Save();var effects=new List<GameObject>();
@@ -277,7 +277,7 @@ Action<ItemIndex> unavailableItemHighlight;bool ownsWorldPresentation;
   foreach(var pair in worldLootSourceLayers)if(pair.Key)pair.Key.layer=pair.Value;worldLootSourceLayers.Clear();
   foreach(var lease in worldProjectileGhostLeases.Values)if(lease.IsValid())Addressables.Release(lease);worldProjectileGhostLeases.Clear();
  }
- IEnumerator PrepareIntegratedWorld(CharacterBody player,Result cfg){
+ IEnumerator PrepareIntegratedWorld(CharacterBody player,SessionConfig cfg){
   worldFeatherInputAt=-1;
   Check(((Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null)).Count==0,"Unowned effect pools before integrated world");ownsIntegratedPools=true;
   r.world=new WorldReport{scope="Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",feedbackCapability="Authored pickup HUD; original native-audio notification handler unavailable."};

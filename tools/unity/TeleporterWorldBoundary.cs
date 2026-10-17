@@ -58,13 +58,13 @@ public sealed partial class MovementBatchProbe {
   objectiveBundlePreload=Addressables.ResourceManager.ProvideResource<IAssetBundleResource>(objectiveBundleLocation);ownsObjectiveBundlePreload=true;yield return objectiveBundlePreload;
   Check(objectiveBundlePreload.Status==AsyncOperationStatus.Succeeded&&objectiveBundlePreload.Result!=null&&objectiveBundlePreload.Result.GetAssetBundle(),"Original shared-support bundle container failed before prefab deserialization");
   // Attribute the current Android-only binding failure before bulk shared-asset deserialization.
-  var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+  var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   var ward=objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<GameObject>(cfg.objectiveSupportAssets[1]);
   var missing=ward?ward.GetComponentsInChildren<Transform>(true).Where(child=>child.GetComponents<Component>().Any(component=>!component)).Select(child=>child.name).ToArray():new[]{"prefab absent"};
   Check(ward&&missing.Length==0,"Preloaded original ward script binding failed: "+string.Join(",",missing));
  }
  void ReleaseObjectiveBundlePreload(){if(ownsObjectiveBundlePreload){if(objectiveBundlePreload.IsValid())Addressables.Release(objectiveBundlePreload);ownsObjectiveBundlePreload=false;objectiveBundleLocation=null;}}
- EffectDef[] ObjectiveEffects(Result cfg){
+ EffectDef[] ObjectiveEffects(SessionConfig cfg){
   var shared=new HashSet<string>(cfg.objectiveSupportAssets??new string[0],StringComparer.OrdinalIgnoreCase);
   var effects=new HashSet<string>(cfg.objectiveEffectAssets,StringComparer.OrdinalIgnoreCase);
   deferredObjectiveEffectPaths=(cfg.objectiveSupportAssets??new string[0]).Where(effects.Contains).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -113,10 +113,10 @@ public sealed partial class MovementBatchProbe {
 
  GameObject objectiveOrbHost,objectiveProjectileTemplates;AsyncOperationHandle<GameObject>[] objectiveSupportLeases;GameObject[] objectiveSupportSources;bool ownsObjectiveOrbEffects;
  readonly List<GameObject> objectiveSupportInstances=new List<GameObject>();
- BuffDef[] ObjectiveBuffs(Result cfg){
+ BuffDef[] ObjectiveBuffs(SessionConfig cfg){
   if(!cfg.teleporterLoop)return new BuffDef[0];var def=artifactBundle.LoadAsset<BuffDef>(cfg.objectiveWardBuffAsset);Check(def&&def.name=="bdBeetleJuice","Original Queen ward buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),"BeetleJuice",def);return new[]{def};
  }
- IEnumerator PrepareObjectiveSupport(Result cfg){
+ IEnumerator PrepareObjectiveSupport(SessionConfig cfg){
   Check(!OrbManager.instance,"Unowned original orb manager");
   Check(ownsObjectiveBundlePreload&&objectiveBundleLocation!=null,"Shared-support bundle must be loaded before character assets");var bundle=objectiveBundleLocation;
   objectiveSupportLeases=new AsyncOperationHandle<GameObject>[cfg.objectiveSupportAssets.Length];objectiveSupportSources=new GameObject[cfg.objectiveSupportAssets.Length];
@@ -179,7 +179,7 @@ public sealed partial class MovementBatchProbe {
  }
  Collider objectiveBeacon;
 
- ArtifactDef[] ObjectiveArtifacts(Result cfg){
+ ArtifactDef[] ObjectiveArtifacts(SessionConfig cfg){
   if(!cfg.teleporterLoop)return new ArtifactDef[0];
   var holders=typeof(ArtifactDef).Assembly.GetTypes().Where(x=>x.Name=="Artifacts"&&x.DeclaringType!=null&&x.DeclaringType.Name.EndsWith("Content",StringComparison.Ordinal)).ToArray();
   var defs=cfg.objectiveArtifactAssets.Select(x=>artifactBundle.LoadAsset<ArtifactDef>(x)).ToArray();Check(defs.All(x=>x),"Original objective artifact definitions absent");
@@ -187,7 +187,7 @@ public sealed partial class MovementBatchProbe {
   return defs;
  }
 
- Type[] ObjectiveTypes(Result cfg){
+ Type[] ObjectiveTypes(SessionConfig cfg){
   if(!cfg.teleporterLoop)return new Type[0];
   var assembly=typeof(TeleporterInteraction).Assembly;
   return assembly.GetTypes().Where(t=>!t.IsAbstract&&typeof(EntityState).IsAssignableFrom(t)&&
@@ -197,7 +197,7 @@ public sealed partial class MovementBatchProbe {
     (cfg.worldAdditionalLootItems!=null&&((cfg.worldAdditionalLootItems.Contains("FallBoots")&&t.Namespace=="EntityStates.Headstompers")||(cfg.worldAdditionalLootItems.Contains("LaserTurbine")&&t.Namespace=="EntityStates.LaserTurbine")))||
     (cfg.moonMission&&(t==typeof(FlyState)||(t.Namespace??"").StartsWith("EntityStates.BrotherMonster",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarGolem",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarWisp",StringComparison.Ordinal)||(t.Namespace??"").StartsWith("EntityStates.LunarExploder",StringComparison.Ordinal)||t.Namespace=="EntityStates.Missions.Moon"||t.Namespace=="EntityStates.Missions.BrotherEncounter"||t.Namespace=="EntityStates.MoonElevator"||t.DeclaringType==typeof(EscapeSequenceController))))).ToArray();
  }
- EntityStateConfiguration[] PrepareObjectiveConfigs(Result cfg){
+ EntityStateConfiguration[] PrepareObjectiveConfigs(SessionConfig cfg){
   PrepareObjectivePresentationSources();
   foreach(var type in ObjectiveTypes(cfg))foreach(var field in type.GetFields(BindingFlags.Static|BindingFlags.Public|BindingFlags.DeclaredOnly))if(!field.IsLiteral&&!field.IsInitOnly)objectiveStaticFields[field]=field.GetValue(null);
   foreach(var path in cfg.objectiveConfigAssets){
@@ -223,7 +223,7 @@ public sealed partial class MovementBatchProbe {
   }
   return objectiveConfigs.ToArray();
  }
- void PrepareObjectiveActorTemplates(Result cfg){
+ void PrepareObjectiveActorTemplates(SessionConfig cfg){
   foreach(var spec in cfg.objectiveActors){
    r.phase="objective-template-"+spec.name;Save();
    var source=artifactBundle.LoadAsset<GameObject>(spec.body);Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original objective actor serialization missing: "+spec.name);
@@ -330,7 +330,7 @@ public sealed partial class MovementBatchProbe {
   Check(run.runRNG!=null&&run.loopRngGenerator!=null&&run.nextStageRng!=null&&run.bossRewardRng!=null,"Original Run random streams absent");r.objective.rules=true;r.objective.ruleCount=RuleCatalog.ruleCount;
  }
  static string objectiveRuleSignature;
- IEnumerator PrepareTeleporterWorld(Result cfg){
+ IEnumerator PrepareTeleporterWorld(SessionConfig cfg){
   r.phase="integrated-teleporter-context";Save();PrepareObjectiveRules();
   // Rules refresh the loaded profile's earned Run unlock sets before native
   // DirectorCard.IsAvailable filters this first stage's population. Do not reroll.
@@ -348,7 +348,7 @@ public sealed partial class MovementBatchProbe {
   if(!objectiveHoldoutInitialized){StaticCall(typeof(HoldoutZoneController),"Init");objectiveHoldoutInitialized=true;}
   PrepareStageTransport(cfg);EnableStageMapZones();var spawn=SpawnStageObjective(cfg);while(spawn.MoveNext())yield return spawn.Current;
  }
- IEnumerator SpawnStageObjective(Result cfg){
+ IEnumerator SpawnStageObjective(SessionConfig cfg){
   r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,difficulty=SelectedOfflineDifficulty().ToString(),scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."};objectiveState=null;objectiveRewardApproachAt=-1;
   Check(!Stage.instance,"Unowned stage lifecycle");objectiveStageHost=new GameObject("Owned Android stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();
   typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");Check(Stage.instance==objectiveStage,"Original stage singleton absent");

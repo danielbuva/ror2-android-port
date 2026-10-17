@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
  readonly Dictionary<FieldInfo,object> priorPickupFields=new Dictionary<FieldInfo,object>();IDictionary pickupNameMap,pickupTierMap;ResourceAvailability priorPickupAvailability;bool ownsPickupCatalog;
  GameObject pickupTemplates,pickupTemplate,pickupObject;GenericPickupController ownedPickup;ItemDef pickupSyringe;Texture pickupIcon;
  void DrawItemPickupObservation(){if(r.itemPickup==null||!r.itemPickup.catalogReady)return;GUI.Label(new Rect(20,185,800,30),"Original Syringe pickup | count: "+r.itemPickup.countAfter+" | attack speed: "+r.itemPickup.attackSpeedAfter.ToString("F2"));if(pickupIcon)GUI.DrawTexture(new Rect(20,220,64,64),pickupIcon,ScaleMode.ScaleToFit);}
- IEnumerator ProbeOriginalItemPickup(CharacterBody player,Result cfg){
+ IEnumerator ProbeOriginalItemPickup(CharacterBody player,SessionConfig cfg){
   r.itemPickup=new ItemPickupReport{scope="Original source-spawned base Syringe through original factory/delay/server interaction/grant/natural stats; diagnostic subset catalogs and source icon, owned PickupDisplay omitted. No chest/drop-table/progression/profile/client effects/original pickup model/physical interaction acceptance."};r.phase="original-item-catalog";Save();
   Check(Run.instance&&r.runClock.originalCallbacks&&r.barrel.cleaned&&NetworkServer.active&&!NetworkClient.active&&PickupCatalog.pickupCount==0,"Accepted clock/barrel/server or empty pickup catalog changed");
   pickupSyringe=artifactBundle.LoadAsset<ItemDef>(cfg.statItemAsset);var junk=artifactBundle.LoadAsset<ItemDef>(cfg.junkAsset);

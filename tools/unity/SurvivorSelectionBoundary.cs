@@ -71,7 +71,7 @@ public sealed partial class MovementBatchProbe {
   Check(definition&&definition.cachedName==name&&(!survivor.unlockableDef||survivor.unlockableDef==definition)&&HasOwnedProfileUnlock(definition),"Selected survivor lacks its original Android profile unlock");
  }
  bool SelectedSourceSurvivor(){return r!=null&&!string.IsNullOrEmpty(r.selectedSurvivor)&&r.selectedSurvivor!="Commando";}
- GameObject SelectedPlayerPrefab(Result cfg){
+ GameObject SelectedPlayerPrefab(SessionConfig cfg){
   if(string.IsNullOrEmpty(r.selectedSurvivor))r.selectedSurvivor="Commando";
   if(r.selectedSurvivor=="Commando")return artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset);
   Check(cfg.integratedWorld&&r.liveCatalogs!=null,"Unsupported offline survivor selection");

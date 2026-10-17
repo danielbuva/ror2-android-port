@@ -33,12 +33,12 @@ public sealed partial class MovementBatchProbe {
  ItemDef[] worldItemBehaviorDefinitions;
  bool ownsWorldItemBehaviors,ownsWorldMushroomBinding;object previousWorldMushroom;
  static FieldInfo MushroomPrefabField(){return typeof(MushroomBodyBehavior).GetField("mushroomWardPrefab",BindingFlags.NonPublic|BindingFlags.Static);}
- BuffDef[] WorldItemBehaviorBuffs(Result cfg){
+ BuffDef[] WorldItemBehaviorBuffs(SessionConfig cfg){
   if(cfg.worldItemBehaviorBuffAssets==null)return new BuffDef[0];
   var names=new[]{"Cloak","CloakSpeed"};if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains("LaserTurbine"))names=names.Concat(new[]{"LaserTurbineKillCharge"}).ToArray();Check(cfg.worldItemBehaviorBuffAssets.Length==names.Length,"Original item-behavior buff closure differs");
   return cfg.worldItemBehaviorBuffAssets.Select((path,i)=>{var def=artifactBundle.LoadAsset<BuffDef>(path);Check(def&&def.name=="bd"+names[i],"Original stealth buff missing");BindEnemyDefinition(typeof(RoR2Content.Buffs),names[i],def);return def;}).ToArray();
  }
- GameObject[] PrepareWorldItemBehaviorSupport(Result cfg){
+ GameObject[] PrepareWorldItemBehaviorSupport(SessionConfig cfg){
   if(cfg.worldItemBehaviorBuffAssets==null)return new GameObject[0];var effects=new List<GameObject>();
   foreach(var path in new[]{"Prefabs/NetworkedObjects/MushroomWard","Prefabs/Effects/ProcStealthkit"}){
    int i=Array.IndexOf(cfg.objectiveSupportPaths,path);Check(i>=0,"Original item-behavior provider absent: "+path);var source=objectiveSupportSources[i];Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Original item-behavior references absent");
@@ -53,7 +53,7 @@ public sealed partial class MovementBatchProbe {
  // These roots are already present in the accepted whole-content manifest. Own
  // their original LegacyResourcesAPI leases before native behavior execution;
  // no asset is copied into authored source or enabled by a synthetic grant.
- IEnumerator PrepareWholeItemBehaviorSupport(Result cfg){
+ IEnumerator PrepareWholeItemBehaviorSupport(SessionConfig cfg){
   if(!cfg.integratedWorld||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))yield break;
   Check(worldItemSupportLeases.Count==0&&RoR2Content.Buffs.WhipBoost&&RoR2Content.Items.SprintOutOfCombat&&RoR2Content.Items.NearbyDamageBonus&&RoR2Content.Items.SprintWisp,"Original whole-item source definitions absent");
   for(int i=0;i<wholeItemSupportPaths.Length;i++){
@@ -80,7 +80,7 @@ public sealed partial class MovementBatchProbe {
   if(worldItemSupportLeases.Count==0)return new GameObject[0];
   return wholeItemSupportPaths.Skip(1).Select(path=>worldItemSupportLeases[path].Result).ToArray();
  }
- void PrepareWorldItemBehaviors(Result cfg){
+ void PrepareWorldItemBehaviors(SessionConfig cfg){
   if(cfg.worldItemBehaviorBuffAssets==null)return;
   Check(NetworkServer.active,"Original item-behavior adapter requires active original server");
   var nativeBodies=(System.Collections.IDictionary)typeof(BaseItemBodyBehavior).GetField("bodyToItemBehaviors",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);

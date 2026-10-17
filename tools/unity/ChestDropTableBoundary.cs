@@ -16,7 +16,7 @@ public sealed partial class MovementBatchProbe {
   public int pickupCount,sourceCount,cloneCount,instancesBefore,instancesAfter;public float[] sourceWeights,effectiveWeights;public uint moneyBefore,moneyAfter;public ulong xpBefore,xpAfter;
   public string scope,itemPrerequisites;
  }
- IEnumerator ProbeOriginalChestDropTable(CharacterBody player,Result cfg){
+ IEnumerator ProbeOriginalChestDropTable(CharacterBody player,SessionConfig cfg){
   r.chestDropTable=new ChestDropTableReport{scope="Original recovered dtChest1, BasicPickupDropTable/WeightedSelection/UniquePickup/Xoroshiro generation on explicit diagnostic base tier1 Syringe/tier2 ChainLightning Run lists. Source weights/replacement policy unchanged; absent tier3/other domains are explicit. No chest/purchase/drop physics/item grant/full Run availability/progression/platform entitlement acceptance."};r.phase="original-chest-drop-table";Save();
   Check(r.inputBarrel.cleaned&&Run.instance&&PickupCatalog.pickupCount==0&&!ownsPickupCatalog,"Accepted input barrel/empty pickup catalog required");
   var first=RoR2Content.Items.Syringe;var second=RoR2Content.Items.ChainLightning;var replacement=DLC1Content.Items.RandomlyLunar;

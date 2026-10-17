@@ -12,11 +12,11 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldChestObservation {public string source,scene,table,costType;public uint netId;public int cost,domain,rolledPickup;public bool opened;}
  [Serializable] public class ChestBreadthReport {public int sourceVariants,placed,opened;public List<WorldChestObservation> objects=new List<WorldChestObservation>();public string scope="Original large/legendary/stealth/category chest selection, purchase, animation/ejection contracts; owned source tables and adapted placement. Registration/placement is not purchase/drop acceptance or original SceneDirector population.";}
  readonly Dictionary<ChestBehavior,WorldChestObservation> worldBreadthChests=new Dictionary<ChestBehavior,WorldChestObservation>();
- Type[] WorldChestTypes(Result cfg){
+ Type[] WorldChestTypes(SessionConfig cfg){
   if(cfg.worldChestBreadth==null)return new Type[0];
   return cfg.worldChestBreadth.SelectMany(spec=>{var source=artifactBundle.LoadAsset<GameObject>(spec.asset);Check(source,"Original chest state source absent");var chest=source.GetComponent<ChestBehavior>();return new[]{chest.openState.stateType,chest.closingState.stateType}.Concat(source.GetComponents<EntityStateMachine>().SelectMany(machine=>new[]{machine.initialStateType.stateType,machine.mainStateType.stateType}));}).Where(type=>type!=null).Distinct().ToArray();
  }
- void AddWorldChestBreadth(Result cfg,Vector3 origin){
+ void AddWorldChestBreadth(SessionConfig cfg,Vector3 origin){
   if(cfg.worldChestBreadth==null||cfg.worldChestBreadth.Length==0)return;
   if(r.chestBreadth==null)r.chestBreadth=new ChestBreadthReport();
   // Serialized inline reports may already exist before any live content is owned.

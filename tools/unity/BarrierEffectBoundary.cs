@@ -24,7 +24,7 @@ public sealed partial class MovementBatchProbe {
  readonly List<TemporaryVisualEffect> ownedBarrierEffects=new List<TemporaryVisualEffect>();
  FieldInfo BarrierSlot(){return typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField("barrierTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);}
  TemporaryVisualEffect BodyBarrier(CharacterBody body){return (TemporaryVisualEffect)typeof(CharacterBody).GetField("barrierTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);}
- IEnumerator PrepareBarrierEffect(Result cfg){
+ IEnumerator PrepareBarrierEffect(SessionConfig cfg){
   Check(!AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==BarrierBundle),"Barrier bundle already owned");
   string key;Check(LegacyResourcesAPI.GetGuid(BarrierPath,out key)&&key==cfg.barrierEffectKey,"Actual legacy barrier GUID");
   var providers=Addressables.ResourceManager.ResourceProviders;

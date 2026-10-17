@@ -51,7 +51,7 @@ public sealed partial class MovementBatchProbe {
   }
   yield return null;
  }
- IEnumerator ProbeActiveBodyClient(CharacterBody player,Result cfg){
+ IEnumerator ProbeActiveBodyClient(CharacterBody player,SessionConfig cfg){
   r.activeClient=new ActiveClientReport{scope="Actual loopback local HLAPI client, original active Commando/master mapping, raw client authority callbacks and neutral ticking/teardown. No NetworkUser/LocalUser/platform session/entitlement grant, InteractionDriver/client effects/remote peers/full startup acceptance."};r.phase="active-client-serializers";Save();
   Check(r.moneyCost.paid&&r.moneyCost.cleaned&&NetworkServer.active&&!NetworkClient.active&&NetworkClient.allClients.Count==0&&player.gameObject.activeInHierarchy&&player.master.hasBody&&player.master.GetBody()==player,"Accepted active actor/server context changed");
   var connect=ConnectActiveBodyClient(player);while(connect.MoveNext())yield return connect.Current;var identity=player.networkIdentity;

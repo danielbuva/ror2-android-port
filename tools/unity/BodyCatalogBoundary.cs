@@ -119,7 +119,7 @@ public sealed partial class MovementBatchProbe {
   Check(missing.IsDone&&missing.Status==AsyncOperationStatus.Failed&&missing.Result==null,"Missing portrait did not fail honestly");
   Check(missing.OperationException is InvalidKeyException,"Unexpected portrait failure class");Addressables.Release(missing);
   Check(LegacyResourcesAPI.ActiveCount==0,"Missing request callback not drained");
-  var cfg=JsonUtility.FromJson<Result>(Resources.Load<TextAsset>("MovementBatchProbe").text);
+  var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   artifactBundle=AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Body bundle missing");
   if(cfg.teleporterLoop){var preload=PreloadObjectiveBundle();while(preload.MoveNext())yield return preload.Current;}
   var prefab=artifactBundle.LoadAsset<GameObject>(cfg.bodyAsset);Check(prefab&&!prefab.activeSelf&&prefab.name=="CommandoBody","Unexpected body prefab");
@@ -200,7 +200,7 @@ public sealed partial class MovementBatchProbe {
   ((IDictionary)RewardField(typeof(EffectCatalog),"nameToEffectIndex").GetValue(null)).Clear();
   EffectCatalog.availability=priorComposedEffectAvailability;
  }
- BuffDef[] UpdatedComparisonBuffs(Result cfg){
+ BuffDef[] UpdatedComparisonBuffs(SessionConfig cfg){
   if(!cfg.integratedWorld||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return new BuffDef[0];
   var definitions=WholeCatalogComposed.BuffDefinitions();
   // The current original DLC4 provider maps Buffs fields to "bd" + field name.
@@ -211,7 +211,7 @@ public sealed partial class MovementBatchProbe {
   for(int i=0;i<fields.Length;i++)BindEnemyDefinition(typeof(DLC4Content.Buffs),fields[i].Name,selected[i]);
   return selected;
  }
- ItemDef[] UpdatedComparisonItems(Result cfg){
+ ItemDef[] UpdatedComparisonItems(SessionConfig cfg){
   if(!cfg.integratedWorld||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return new ItemDef[0];
   var definitions=WholeCatalogComposed.ItemDefinitions();
   var fields=typeof(DLC4Content.Items).GetFields(BindingFlags.Public|BindingFlags.Static);

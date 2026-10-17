@@ -116,7 +116,7 @@ public sealed partial class MovementBatchProbe {
   if(definition!=null)sheet.PushStatValue(definition,1uL);
   r.results.stagesCompletedStat=sheet.GetStatValueULong(StatDef.totalStagesCompleted);
  }
- void PrepareIntegratedResults(CharacterBody player,Result cfg){
+ void PrepareIntegratedResults(CharacterBody player,SessionConfig cfg){
   if(!cfg.integratedResults)return;
   r.results=new IntegratedResultsReport{scope="Original statistics, genuine Run.BeginGameOver/GameOverController/RunReport and client ending. Owned Android result presentation and run ledger; stock cutscene, Steam profiles, authentication, achievements and lunar awards unavailable."};r.phase="integrated-results-context";Save();
   Check(NetworkServer.active&&activeBodyClient.isConnected&&!GameOverController.instance&&PlayerStatsComponent.instancesList.Count==0,"Unowned results context");

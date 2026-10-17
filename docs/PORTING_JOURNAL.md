@@ -4964,3 +4964,19 @@ built `Lab.unity` scene) has the same size with 99 bytes different, consistent w
 per-script identity hashes, so the device decided: `./dev check-baseline` passed with
 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T204559.357766Z`, APK
 `e504e79891be4d1644c6f54f37334641e226f11ba83f2277e51c1e1d0a04e400`). App stopped; OLED asleep.
+
+## J517 — Parse the runtime config as its own `SessionConfig`
+
+Phase 4 step 2, first part (implemented by Codex, reviewed by Claude). `Result` was both the
+runtime config and the session report. A new `[Serializable] SessionConfig` holds exactly the
+184 fields the code reads from the config, with declarations identical to `Result`'s; all 11
+parses of the `MovementBatchProbe` resource and 105 parameters that carry it now use it.
+`Result` keeps all 380 fields, so the report JSON is unchanged; the selection override is
+still parsed as `Result`. Against the real 369-key config, 183 of the 184 fields are keys (the
+other, `detailedVisualDiagnostics`, keeps its default as before) and the other 185 keys are
+now ignored; a field still read through the config would not compile. 388 host tests pass;
+zero-error code-only build, APK `a6be4b0dd074415700b13b2e8373b4f798bcd4f73375c28a0c969cb38dd098d0`. `./dev check-baseline` passed with 35.2 s on Lakes,
+no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T205436.678825Z`). The report's nested key set
+matches the previous run's except for one now non-empty list (an elite kill whose award was
+correctly blocked as assisted). App stopped; OLED asleep. Renaming `Result` to
+`SessionReport` is left for later.

@@ -19,7 +19,7 @@ public sealed partial class MovementBatchProbe {
  Action ownedRunFixed,ownedRunFrame,ownedAsyncAssetFrame;bool ownsRunAsyncLifecycle;Run clockRun;Scene priorClockScene;SceneDef[] priorContentScenes;SceneDef clockSceneDef;SceneDef[] clockSceneDefs;
  readonly Dictionary<FieldInfo,object> clockSceneFields=new Dictionary<FieldInfo,object>();IDictionary clockSceneMap;ResourceAvailability priorSceneAvailability;
  FieldInfo clockFixedStamp,clockFrameStamp;object priorClockFixedStamp,priorClockFrameStamp;bool ownsRunSceneCatalog;
- IEnumerator PrepareRunSceneContext(Result cfg){
+ IEnumerator PrepareRunSceneContext(SessionConfig cfg){
   Check(SceneCatalog.sceneDefCount==0&&SceneCatalog.allStageSceneDefs.Length==0&&!SceneCatalog.mostRecentSceneDef,"Existing scene catalog; refuse replacement");
   r.runClock=new RunClockReport{scope="Original source stage metadata and Run Update/FixedUpdate on an inactive owned Run; converted geometry subset only, no full Run startup/menu/profile/stage progression"};r.phase="run-scene-catalog";Save();
   var flags=BindingFlags.NonPublic|BindingFlags.Static;foreach(var name in new[]{"indexToSceneDef","_stageSceneDefs","_baseSceneNames","currentSceneDef","<mostRecentSceneDef>k__BackingField"}){var field=typeof(SceneCatalog).GetField(name,flags);Check(field!=null,"Original scene catalog field missing: "+name);clockSceneFields[field]=field.GetValue(null);}

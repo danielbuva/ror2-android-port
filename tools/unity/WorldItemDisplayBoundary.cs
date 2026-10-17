@@ -13,7 +13,7 @@ public sealed partial class MovementBatchProbe {
  [Serializable] public class WorldItemDisplayReport {public bool ready,cleaned;public int groups,rules,itemInstances,equipmentInstances,updates;public string error,scope="Original eligible Commando display rules, attachment transforms and native item/equipment factories. Owned inventory callback and Android material copies; no exact PC pose/material parity or stock camera/highlight acceptance.";public List<ItemDisplayObservation> objects=new List<ItemDisplayObservation>();}
  CharacterBody worldDisplayBody;CharacterModel worldDisplayModel;ItemDisplayRuleSet worldDisplayRules,worldDisplayPriorRules;Action worldDisplayInventoryChanged;
  readonly HashSet<GameObject> worldDisplayInstances=new HashSet<GameObject>();
- void PrepareWorldItemDisplays(CharacterBody body,Result cfg){
+ void PrepareWorldItemDisplays(CharacterBody body,SessionConfig cfg){
   if(!cfg.worldItemDisplays)return;
   Check(!worldDisplayModel&&!worldDisplayRules&&worldDisplayInventoryChanged==null,"Existing owned item display context");
   worldDisplayBody=body;worldDisplayModel=body.modelLocator.modelTransform.GetComponent<CharacterModel>();

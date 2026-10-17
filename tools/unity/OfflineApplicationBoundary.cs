@@ -33,7 +33,7 @@ public sealed partial class MovementBatchProbe {
  void OnApplicationFocus(bool focused){if(!focused)offlineUiPresence?.Suspend();}
  void OnApplicationPause(bool paused){if(paused)offlineUiPresence?.Suspend();}
  static bool AllowsOfflineSessionMenu(Result session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
- IEnumerator AwaitOfflineRunStart(Result cfg){
+ IEnumerator AwaitOfflineRunStart(SessionConfig cfg){
   if(cfg.integratedWorld&&cfg.integratedResults)PrepareOfflineSettings();
   if(string.IsNullOrEmpty(r.selectedSurvivor))r.selectedSurvivor=pendingOfflineSurvivor;
   // A developer-only survivor override is never shown as an earned menu choice.
