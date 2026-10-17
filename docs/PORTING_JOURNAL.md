@@ -5104,3 +5104,14 @@ scene while transport is in progress; two host tests cover the observed shape (4
 re-run on the same APK passed: one genuine exit, 10 s of next-stage play, no report error, 13
 applied profile runs unchanged (`work/experiments/baseline/20261017T223953.557186Z`). App
 stopped; OLED asleep.
+
+## J527 — Extract the player-defeat owner
+
+Phase 4 step 5, seventh owner (implemented by Codex, reviewed by Claude). All five
+player-defeat fields (death-effect locator, handle and prefab, camera effects, observed body)
+moved into a nested `PlayerDefeatSession : IDisposable` (`PlayerDefeatBoundary.cs`); no other
+code used them. Codex's scan found no unqualified coordinator access. Zero-error code-only
+build, APK `3f035ab0c0a40f0dca83c5e7d2580a637fdedcb64a353ac308edd7415432d250`, staged file checked. `./dev check-baseline` passed with 35.2 s on Lakes, no
+report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T225327.456080Z`). Invincibility means the player
+never dies in the check, so it exercises the death-effect setup but not the defeat path, which
+is covered by review only. App stopped; OLED asleep.
