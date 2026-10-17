@@ -23,5 +23,7 @@ jobs:
         run: python -m pip install -r tools/lab-requirements.txt
       - name: Public-repository audit
         run: python scripts/audit-public.py
+      - name: Journal index is current
+        run: python scripts/journal-index.py --check
       - name: Host tests (fresh clone, no work/)
         run: python -m unittest discover -s tests -v
