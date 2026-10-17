@@ -4942,3 +4942,13 @@ deferred because `common.py`'s unused-looking imports are re-exported through
 `from common import *` and some unused variables hold the results of calls made for their
 side effects. The ten Python files added in this cleanup were formatted to pass the
 new-file rule; 381 host tests pass.
+
+## J515 — Write editor logs under `work/logs/<date>/`
+
+Phase 5 `work/` hygiene. `work/` holds 2,239 loose `.log` files; only the exact-editor log
+(`build.py`, 13 of them) comes from tracked code, and the rest are written by untracked
+one-off scripts under `work/`. New editor logs now go to `work/logs/<YYYYMMDD>/`; the path
+is still recorded in `work/editor/<target>-process.json`. The build-timeout message pointed
+at a `work/lab-editor.log` that never exists and now names that receipt instead. Existing
+files were not moved or deleted. Host tests pass; the new path applies from the next editor
+start.

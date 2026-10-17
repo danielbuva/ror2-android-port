@@ -57,7 +57,7 @@ def editor(target='lab',action='inspect'):
   commands=run(['/bin/ps','-axo','command']).stdout.decode().splitlines()
   if any(c.startswith(os.environ['UNITY_EDITOR']+' ') and ' -projectPath '+str(project)+' ' in c for c in commands):return 'Editor already open; inspect MCP connectivity with ./dev editor --target '+target
   env=os.environ.copy();env.update({'ANDROID_SDK_HOME':str(ROOT/'.local/android-user'),'ANDROID_USER_HOME':str(ROOT/'.local/android-user/.android'),'GRADLE_USER_HOME':str(ROOT/'.local/gradle')})
-  log=WORK/(target+'-editor-'+now()+'.log')
+  stamp=now();log=WORK/'logs'/stamp[:8]/(target+'-editor-'+stamp+'.log');log.parent.mkdir(parents=True,exist_ok=True)
   proc=subprocess.Popen([os.environ['UNITY_EDITOR'],'-batchmode','-projectPath',str(project),'-executeMethod','BootstrapMcp.Connect','-logFile',str(log)]+(['-buildTarget','Android'] if target=='lab' else []),cwd=ROOT,env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
   write(WORK/'editor'/(target+'-process.json'),{'pid':proc.pid,'project':str(project),'log':str(log)})
   return json.dumps({'started':True,'pid':proc.pid,'log':str(log),'next':'Wait for import/MCP connection, then ./dev editor --target '+target})
@@ -169,7 +169,7 @@ def build(api='gles',force=False,reuse_payload=False):
    break
   if time.monotonic()>dispatch_deadline and (not (WORK/'lab-build/started.json').exists() or read(WORK/'lab-build/started.json').get('request_id')!=request_id):raise RuntimeError('Queued build never started; inspect editor dispatch evidence')
   time.sleep(2)
- else:raise RuntimeError('Build timeout; inspect work/lab-editor.log; no cache stamp written')
+ else:raise RuntimeError('Build timeout; inspect the editor log named in work/editor/lab-process.json; no cache stamp written')
  r=read(result)
  if not r['success'] or r.get('errors',0)>0:raise RuntimeError(r['result']+'; build errors='+str(r.get('errors',0)))
  key=build_cache_key(project,api)
