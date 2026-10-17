@@ -5130,3 +5130,14 @@ coordinator access. Zero-error code-only build, APK `e8dd4289f2c97afe505e7eb275e
 `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261017T230116.034885Z`) and
 `--stage-exit` passed on the same APK (one genuine exit, 10 s of next-stage play,
 `work/experiments/baseline/20261017T230442.071597Z`). App stopped; OLED asleep.
+
+## J529 — Extract the offline run-seed owner
+
+Phase 4 step 5, ninth owner (implemented by Codex, reviewed by Claude). The three run-seed
+fields (`ownedRunSeed`, `ownedRunSeedSession`, `ownedRunSeedSource`) moved into a nested
+`OfflineRunSeedSession : IDisposable` (`OfflineRunSeedBoundary.cs`); no other code used them,
+and the moved body is token-identical apart from `coordinator.` qualifiers. Zero-error
+code-only build, APK `3ebff64d157f3a9f52254a9673849534cf7f448087f05dd0cd63f1e17827d27e`, staged file checked. `./dev check-baseline` passed with 35.2 s on
+Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T231459.009038Z`), and all four seed
+fields in the report match the previous run (the check pins `runSeedOverride`). App stopped;
+OLED asleep.

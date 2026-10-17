@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J529](PORTING_JOURNAL.md#j529--extract-the-offline-run-seed-owner) | 2026-10-17 | Extract the offline run-seed owner | Phase 4 step 5, ninth owner (implemented by Codex, reviewed by Claude). |
 | [J528](PORTING_JOURNAL.md#j528--extract-the-nova-input-owner) | 2026-10-17 | Extract the Nova input owner | Phase 4 step 5, eighth owner (implemented by Codex, reviewed by Claude). |
 | [J527](PORTING_JOURNAL.md#j527--extract-the-player-defeat-owner) | 2026-10-17 | Extract the player-defeat owner | Phase 4 step 5, seventh owner (implemented by Codex, reviewed by Claude). |
 | [J526](PORTING_JOURNAL.md#j526--extract-the-run-clock-owner-fix-the-stage-checks-transport-race) | 2026-10-17 | Extract the run-clock owner; fix the stage check's transport race | Phase 4 step 5, sixth owner (implemented by Codex, reviewed by Claude). |
