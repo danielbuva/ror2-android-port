@@ -140,7 +140,7 @@ action, is classified with its staging site and a runtime call site in
 | --- | ---: | ---: | ---: |
 | `tools/unity` + `tools/catalog` (135 files) | 94 | 26 | 15 |
 | `scripts/lab` (43 modules) | 9 | 24 | 10 |
-| `prototype` actions (175) | 10 | — | 165 |
+| Named `prototype` actions (177; default fallback excluded) | 12 | — | 165 |
 
 Historical `tools/unity` files (not staged by any current builder; none exists in the
 generated project): `AudioAssetProbe`, `CharacterMotorOrderProbe`,
@@ -160,7 +160,8 @@ The current `scripts/lab` modules are `build`, `composition_migration`, `device`
 `graphics`, `health`, `inventory`, `main`, `recovery` and `whole_catalog` (helpers such as
 `common` count as support); the
 current `prototype` actions are the ten in
-[whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
+[whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands)
+plus `project-manifest-capture` and `project-manifest-compare`.
 
 ## Known structural debt
 
@@ -200,8 +201,12 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
 8. **Experiment drivers outside Git.** Device gameplay runs are driven by about 89 untracked
    runner scripts in `work/experiments/whole-catalog/gameplay/`; `work/` also holds about 700
    loose one-off `.py` files.
-9. **Command sprawl.** `scripts/lab/main.py` dispatches about 165 historical `prototype`
-   actions from one `if/elif` chain next to the 12 current ones.
+9. **Command sprawl — registry in place.** `scripts/lab/actions.py` owns lazy dispatch,
+   call arguments, status and help for 177 named `prototype` actions (12 current,
+   165 historical), preserving the historical default/unknown-name fallback.
+   `./dev prototype --action list` shows current actions first. Mocked host tests cover
+   every action and its special output, timing-file and exit contracts; the historical
+   commands themselves remain available.
 
 Safe order:
 

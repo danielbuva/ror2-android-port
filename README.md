@@ -71,8 +71,10 @@ authentication is needed to inspect the supplied installation.
 | `./dev reset` | Uninstall only the locally receipted disposable lab package. |
 | `./dev inspect [--full]` · `decompile` · `export-project` · `graphics` | Input inventory and recovery stages (cached, receipted). |
 
-There are 165 further `./dev prototype --action …` experiment actions. The ones the
-current integration uses are below; the rest, with their original descriptions, are in
+There are 177 named `./dev prototype --action …` actions: 12 current and 165 historical,
+plus the historical default/unknown-name fallback. `./dev prototype --action list` lists
+them with help, current first. The current integration uses the commands below; historical
+actions, with their original descriptions, are in
 [docs/history/readme-commands-and-recipes.md](docs/history/readme-commands-and-recipes.md).
 
 ## Current integration loop

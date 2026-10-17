@@ -4902,3 +4902,15 @@ yields land on the same frames. The handlers are unchanged. 195 host tests pass;
 exact-editor code-only build had zero errors (APK `9f6652abd9bf574f4209d2a0aeae7b08ecdaa13e53afb35fc924e8bf1c41dbf6`). Installed in place on adopted
 storage; `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied
 profile runs unchanged (`work/experiments/baseline/20261017T201941.644312Z`). App stopped; OLED asleep.
+
+## J512 — Replace the prototype if/elif chain with an action registry
+
+Phase 5 CLI registry (implemented by Codex, reviewed by Claude). `scripts/lab/actions.py`
+holds one row per `prototype` action (module, function, arguments, current or historical,
+help), imports the target module only when the action runs, and keeps a few explicit
+handlers for actions with special output, timing-file or exit behaviour; `main.py` shrinks
+from ~540 to 69 lines. `./dev prototype --action list` prints current actions first. Codex's
+AST comparison against the old chain and Claude's independent one agree: 177 names, each
+calling the same module and function, plus the unchanged `prepare` fallback for unknown
+names; 12 are current. Mocked host tests dispatch every action (381 host tests pass). Host
+tooling only; no build or device run.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J512](PORTING_JOURNAL.md#j512--replace-the-prototype-ifelif-chain-with-an-action-registry) | 2026-10-17 | Replace the prototype if/elif chain with an action registry | Phase 5 CLI registry (implemented by Codex, reviewed by Claude). |
 | [J511](PORTING_JOURNAL.md#j511--collapse-the-session-step-exception-wrapper-into-runguarded) | 2026-10-17 | Collapse the session-step exception wrapper into `RunGuarded` | Phase 4 step 4. |
 | [J510](PORTING_JOURNAL.md#j510--add-the-project-input-equivalence-harness) | 2026-10-17 | Add the project input equivalence harness | Commit 1 of the [migration removal plan](migration-removal-plan.md): `scripts/lab/project_manifest.py` with `project-manifest-capture` and `project-manifest-co… |
 | [J509](PORTING_JOURNAL.md#j509--make-whole-catalog-runtime-source-membership-explicit) | 2026-10-17 | Make whole-catalog runtime source membership explicit | Hypothesis: replacing generated-project existence rules with an audited authored-source manifest preserves current whole-catalog membership while making future… |
