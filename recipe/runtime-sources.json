@@ -39,6 +39,7 @@
   "IntegratedWorldBoundary.cs",
   "InteractionSelectionBoundary.cs",
   "ItemPickupBoundary.cs",
+  "LabExperiments.cs",
   "MoneyCostBoundary.cs",
   "MoonEscapeBoundary.cs",
   "MoonMissionBoundary.cs",

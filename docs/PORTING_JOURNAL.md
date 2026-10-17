@@ -4914,3 +4914,18 @@ AST comparison against the old chain and Claude's independent one agree: 177 nam
 calling the same module and function, plus the unchanged `prepare` fallback for unknown
 names; 12 are current. Mocked host tests dispatch every action (381 host tests pass). Host
 tooling only; no build or device run.
+
+## J513 — Give the shipped game its own `GameSession` entry
+
+Phase 4 step 3. `RunSelectedProbe` now runs `GameSession()` (the original `BodyLifecycle()`)
+when `IsPlayableSpine()` matches, instead of reaching it through a case of the 118-label
+experiment switch. The switch, without its two spine labels, moved verbatim into
+`LabExperiment()` in the new `tools/unity/LabExperiments.cs`, added to
+`recipe/runtime-sources.json`; both run inside the unchanged `try`/`finally`. The switch had
+no `yield break` or `return`, so the move keeps its control flow. Both spine ids keep working
+(the alias the plan asks for is the existing prefix match). 381 host tests pass; zero-error
+code-only build, APK `aa94bad5ddaa1c3e33218364ff5ddc2d00b8353c5de93a2fedadf844937cc0ab`. Installed in place on adopted storage; `./dev check-baseline`
+passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged
+(`work/experiments/baseline/20261017T203151.192721Z`). The check uses the `-bringup` id; the shipped id takes the same `GameSession` route
+and was not launched separately. App stopped; OLED asleep. `Start` still waits 8 s and picks
+the session by id: having it call `GameSession` directly is the remaining part of this step.

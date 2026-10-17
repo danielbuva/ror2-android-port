@@ -75,10 +75,11 @@ Start-up, in order:
    `PrepareTeleportMaterial` and `PrepareBarrierEffect` when configured.
 6. `AwaitOfflineRunStart` (`OfflineApplicationBoundary.cs:34`): offline settings, the
    recovered survivor/difficulty/loadout menu, and the wait for Start.
-7. `RunSelectedProbe` (`:102`): a 118-label `switch` on the case id. The spine id shares a
-   case group that runs `BodyLifecycle()` (`:310`); `IsPlayableSpine()`
-   (`PrimaryFireBoundary.cs:12`, a prefix match) turns on the game path inside the
-   boundaries it calls.
+7. `RunSelectedProbe`: when `IsPlayableSpine()` (`PrimaryFireBoundary.cs:12`, a prefix
+   match on `body-state-spawn-state-auto-nova-spine`) it runs `GameSession()`, which runs
+   `BodyLifecycle()`; the same flag turns on the game path inside the boundaries it calls.
+   Any other id goes to `LabExperiment()` (`LabExperiments.cs`), the 116-label switch of
+   historical experiments. Both run inside the same `try`/`finally` (J513).
 
 Teardown, in order, after `RunSelectedProbe` returns or throws:
 
@@ -168,9 +169,9 @@ plus `project-manifest-capture` and `project-manifest-compare`.
 Verified against `af2e101`. The order at the end is the safe order to pay it down; each step
 is its own commit with host tests, a zero-error exact-editor build and a device check.
 
-1. **The shipped game is an experiment case.** `Start` waits 8 s, then `RunSelectedProbe`
-   dispatches on a string id; the game is `body-state-spawn-state-auto-nova-spine`, one of
-   118 case labels on a single 4,471-character line.
+1. **The shipped game runs through the lab harness.** `Start` waits 8 s and the session is
+   still chosen by a string id, but the playable spine now has its own `GameSession()` entry
+   (J513); the 116 historical experiment cases live in `LabExperiments.cs`.
 2. **One class holds everything.** 70 `tools/unity` files are `partial class
    MovementBatchProbe`; config and report share one `Result` type. (The 9 copies of the
    `MoveNext` exception wrapper in `Start` are now one `RunGuarded` helper, J511.)
@@ -213,7 +214,8 @@ Safe order:
 1. ~~Delete the dormant C# text patches~~ — done (J505, J506). C# formatting is no longer
    blocked by the build.
 2. Split `Result` into `SessionConfig` and `SessionReport`, keeping both JSON shapes.
-3. Give the game a `GameSession` entry point that `Start` calls directly; keep the old id as
+3. ~~Give the game a `GameSession` entry point~~ — done (J513); later, have `Start` call it
+   directly; keep the old id as
    an alias for `nova_bridge.py`, `scene_runtime.py` and `IsPlayableSpine`.
 4. Extract owners one at a time, least-coupled first, following
    `AndroidProgressionBoundary` (an `IDisposable` with explicit acquire/release and its own
