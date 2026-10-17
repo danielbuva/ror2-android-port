@@ -4823,3 +4823,21 @@ After it compared against the first live-world report instead, the run passed wi
 no report error and 13 applied profile runs unchanged
 (`work/experiments/baseline/20261017T072219.644143Z`). App stopped; OLED asleep.
 The baseline is recorded in `docs/BASELINE.md`.
+
+## J508 — Track the first public build recipe
+
+Policy (user decision, 2026-10-17): the lab should be reproducible from its public source, the
+documented toolchain and a legitimate installation, without the private experiment history.
+Recipes describing authored transformations, configuration and reproducible build steps are
+tracked in `recipe/` after an audit for provenance, privacy, licensing and sensitive
+content; generated game-derived content, private configuration and protected third-party
+material stay ignored. The rule is in AGENTS.md and `recipe/README.md`.
+
+First recipe: `recipe/hud-ui-remaps.json` (LOCAL_STATE blocker B2), byte-identical to the
+former `work/config/hud-ui-remaps.json`. Its 43 rows map only Unity's own uGUI script
+identities (precompiled `UnityEngine.UI.dll` references to public `com.unity.ugui` package
+GUIDs); no game content. Its six readers now use `RECIPE` and keep their `input_id` and
+`UnityEngine.UI.dll` hash checks. Host tests (167 pass) guard the audited shape and the
+audit record. Not rebuilt: the bytes the build reads are unchanged. Composition B1 and the
+migration-chain blockers B3–B8 remain; they need the migration chain replaced (plan step 4)
+rather than published.

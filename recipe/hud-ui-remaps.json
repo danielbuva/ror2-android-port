@@ -1,0 +1,265 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "rows": [
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/EventSystem.cs",
+      "from": "{fileID: -619905303, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}",
+      "type": "UnityEngine.EventSystems.EventSystem"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/EventTrigger.cs",
+      "from": "{fileID: -1862395651, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}",
+      "type": "UnityEngine.EventSystems.EventTrigger"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/InputModules/BaseInput.cs",
+      "from": "{fileID: 1327945023, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 1511ccae7919cfc46b603b9b337fdc94, type: 3}",
+      "type": "UnityEngine.EventSystems.BaseInput"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/InputModules/BaseInputModule.cs",
+      "from": "{fileID: -1837839079, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 1ea10891dd782154ca0fb67bce9e6f72, type: 3}",
+      "type": "UnityEngine.EventSystems.BaseInputModule"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/InputModules/PointerInputModule.cs",
+      "from": "{fileID: -1235632416, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: cbab8835092323a4389f2dc7d8f6c781, type: 3}",
+      "type": "UnityEngine.EventSystems.PointerInputModule"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/InputModules/StandaloneInputModule.cs",
+      "from": "{fileID: 1077351063, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}",
+      "type": "UnityEngine.EventSystems.StandaloneInputModule"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/InputModules/TouchInputModule.cs",
+      "from": "{fileID: 1997211142, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 2d49b7c1bcd2e07499844da127be038d, type: 3}",
+      "type": "UnityEngine.EventSystems.TouchInputModule"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/Raycasters/BaseRaycaster.cs",
+      "from": "{fileID: -1394661563, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 426106349a0ff964fa4e7178c1d3a4f5, type: 3}",
+      "type": "UnityEngine.EventSystems.BaseRaycaster"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/Raycasters/Physics2DRaycaster.cs",
+      "from": "{fileID: -1690312454, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 56666c5a40171f54783dd416a44f42bf, type: 3}",
+      "type": "UnityEngine.EventSystems.Physics2DRaycaster"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/Raycasters/PhysicsRaycaster.cs",
+      "from": "{fileID: -768656878, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: c49b4cc203aa6414fae5c798d1d0e7d6, type: 3}",
+      "type": "UnityEngine.EventSystems.PhysicsRaycaster"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/UIBehaviour.cs",
+      "from": "{fileID: 479328781, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 0aaa057ce5566e940b18a0ccd0344693, type: 3}",
+      "type": "UnityEngine.EventSystems.UIBehaviour"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/UIElements/PanelEventHandler.cs",
+      "from": "{fileID: -1610670888, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 8a410b213209442fb15a69799f0240a5, type: 3}",
+      "type": "UnityEngine.UIElements.PanelEventHandler"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/EventSystem/UIElements/PanelRaycaster.cs",
+      "from": "{fileID: -19100109, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 7a79c4e23d4d4b64bfa5fa9e6671a460, type: 3}",
+      "type": "UnityEngine.UIElements.PanelRaycaster"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Button.cs",
+      "from": "{fileID: 1392445389, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}",
+      "type": "UnityEngine.UI.Button"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Dropdown.cs",
+      "from": "{fileID: 853051423, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 0d0b652f32a2cc243917e4028fa0f046, type: 3}",
+      "type": "UnityEngine.UI.Dropdown"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Graphic.cs",
+      "from": "{fileID: 383007879, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: a6238e9452bfc704f82ff36791fe1a45, type: 3}",
+      "type": "UnityEngine.UI.Graphic"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/GraphicRaycaster.cs",
+      "from": "{fileID: 1301386320, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}",
+      "type": "UnityEngine.UI.GraphicRaycaster"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Image.cs",
+      "from": "{fileID: -765806418, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}",
+      "type": "UnityEngine.UI.Image"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/InputField.cs",
+      "from": "{fileID: 575553740, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: d199490a83bb2b844b9695cbf13b01ef, type: 3}",
+      "type": "UnityEngine.UI.InputField"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/AspectRatioFitter.cs",
+      "from": "{fileID: -1254083943, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}",
+      "type": "UnityEngine.UI.AspectRatioFitter"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/CanvasScaler.cs",
+      "from": "{fileID: 1980459831, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}",
+      "type": "UnityEngine.UI.CanvasScaler"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/ContentSizeFitter.cs",
+      "from": "{fileID: 1741964061, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}",
+      "type": "UnityEngine.UI.ContentSizeFitter"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/GridLayoutGroup.cs",
+      "from": "{fileID: -2095666955, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}",
+      "type": "UnityEngine.UI.GridLayoutGroup"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/HorizontalLayoutGroup.cs",
+      "from": "{fileID: -405508275, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}",
+      "type": "UnityEngine.UI.HorizontalLayoutGroup"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/HorizontalOrVerticalLayoutGroup.cs",
+      "from": "{fileID: 812294440, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: a5c214e5846a99242b348c37e49b2f59, type: 3}",
+      "type": "UnityEngine.UI.HorizontalOrVerticalLayoutGroup"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/LayoutElement.cs",
+      "from": "{fileID: 1679637790, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}",
+      "type": "UnityEngine.UI.LayoutElement"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/LayoutGroup.cs",
+      "from": "{fileID: -555945567, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: cb7c939a806f03341b682c180dc13f08, type: 3}",
+      "type": "UnityEngine.UI.LayoutGroup"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Layout/VerticalLayoutGroup.cs",
+      "from": "{fileID: 1297475563, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}",
+      "type": "UnityEngine.UI.VerticalLayoutGroup"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Mask.cs",
+      "from": "{fileID: -1200242548, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}",
+      "type": "UnityEngine.UI.Mask"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/MaskableGraphic.cs",
+      "from": "{fileID: -1493381411, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 976acc75bfafe594cb01142ba21947be, type: 3}",
+      "type": "UnityEngine.UI.MaskableGraphic"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/RawImage.cs",
+      "from": "{fileID: -98529514, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}",
+      "type": "UnityEngine.UI.RawImage"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/RectMask2D.cs",
+      "from": "{fileID: -146154839, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}",
+      "type": "UnityEngine.UI.RectMask2D"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Scrollbar.cs",
+      "from": "{fileID: -2061169968, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}",
+      "type": "UnityEngine.UI.Scrollbar"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/ScrollRect.cs",
+      "from": "{fileID: 1367256648, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}",
+      "type": "UnityEngine.UI.ScrollRect"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Selectable.cs",
+      "from": "{fileID: -234403039, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 7a98125502f715b4b83cfb77b434e436, type: 3}",
+      "type": "UnityEngine.UI.Selectable"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Slider.cs",
+      "from": "{fileID: -113659843, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}",
+      "type": "UnityEngine.UI.Slider"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Text.cs",
+      "from": "{fileID: 708705254, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}",
+      "type": "UnityEngine.UI.Text"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/Toggle.cs",
+      "from": "{fileID: 2109663825, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}",
+      "type": "UnityEngine.UI.Toggle"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/ToggleGroup.cs",
+      "from": "{fileID: -1184210157, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 2fafe2cfe61f6974895a912c3755e8f1, type: 3}",
+      "type": "UnityEngine.UI.ToggleGroup"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/VertexModifiers/BaseMeshEffect.cs",
+      "from": "{fileID: 1649306735, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 718966f960cb50643986195e5fe953ca, type: 3}",
+      "type": "UnityEngine.UI.BaseMeshEffect"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/VertexModifiers/Outline.cs",
+      "from": "{fileID: -900027084, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}",
+      "type": "UnityEngine.UI.Outline"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/VertexModifiers/PositionAsUV1.cs",
+      "from": "{fileID: 1849938685, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: 020ee4c1798a3d243a4b8cbfee6cac2d, type: 3}",
+      "type": "UnityEngine.UI.PositionAsUV1"
+    },
+    {
+      "canonical_path": "Packages/com.unity.ugui/Runtime/UI/Core/VertexModifiers/Shadow.cs",
+      "from": "{fileID: 1573420865, guid: d3e719b59ab71ba3f6b398058c866280, type: 3}",
+      "to": "{fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}",
+      "type": "UnityEngine.UI.Shadow"
+    }
+  ],
+  "source_UI_sha256": "bc497c474580b77c8f49aacebfe417b33af663dee6b297c18a35752f54388382",
+  "verification": "work/experiments/input-migration/toolchain-2021.3.45f2/ui-identity-revalidation.json"
+}

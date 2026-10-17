@@ -29,6 +29,7 @@ services, the Moon finale and PC visual parity are not done. See
 | `android/`, `smoke/` | The lab player's build/diagnostic harness and the bootstrap smoke project. |
 | `tests/` | Host tests (Python unittest). |
 | `docs/` | Current references at the top level; superseded material under `docs/history/`. |
+| `recipe/` | Audited, public build recipes: authored transformations and configuration the build reads ([recipe/README.md](recipe/README.md)). |
 | `environment/` | Reviewed, public toolchain pins and examples; raw captures stay ignored. |
 | `work/` (ignored) | All game-derived inputs, generated projects, builds, receipts and evidence. Never commit it. What the tooling expects to find there: [docs/LOCAL_STATE.md](docs/LOCAL_STATE.md). |
 

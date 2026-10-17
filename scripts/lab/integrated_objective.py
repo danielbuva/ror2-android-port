@@ -220,7 +220,7 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
     pending=list(roots.values()); seen=set(); rows=[]; paths={}; unrequested=[]
     remaps={x['from']:x['to'] for x in previous.get('ui_remaps',[])}
     if broader_ui:
-        ui_contract=read(WORK/'config/hud-ui-remaps.json')
+        ui_contract=read(RECIPE/'hud-ui-remaps.json')
         if ui_contract['input_id']!=read(WORK/'config/accepted-input.json')['input_id'] or ui_contract['source_UI_sha256']!=sha(export/'Assets/Plugins/UnityEngine.UI.dll'):
             raise RuntimeError('HUD UI script input changed; remeasure canonical identities')
         for row in ui_contract['rows']:

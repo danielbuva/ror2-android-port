@@ -428,7 +428,7 @@ def contracts():
     runtime = read(destination/'runtime-contracts.json')
     imported = {(row['guid'], str(row['fileId'])): row for row in runtime['scripts']}
     export = ROOT/read(WORK/'config/reconstruction.json')['projects'][0]
-    remaps = read(WORK/'config/hud-ui-remaps.json')
+    remaps = read(RECIPE/'hud-ui-remaps.json')
     if remaps['input_id'] != read(WORK/'config/accepted-input.json')['input_id'] or remaps['source_UI_sha256'] != sha(export/'Assets/Plugins/UnityEngine.UI.dll'):
         raise RuntimeError('Existing measured UI remaps do not belong to this input')
     ui_remaps = {row['from']: row for row in remaps['rows']}
@@ -742,7 +742,7 @@ def prepare_integration():
             if match[1] in owners:
                 raise RuntimeError('Duplicate imported GUID; refuse ambiguous whole-content ownership')
             owners[match[1]] = str(Path(str(meta)[:-5]).relative_to(project))
-    remaps = read(WORK/'config/hud-ui-remaps.json')
+    remaps = read(RECIPE/'hud-ui-remaps.json')
     if remaps['input_id'] != closure['input_id']:
         raise RuntimeError('UI remaps belong to different input')
     destination = out/('integration-'+now())

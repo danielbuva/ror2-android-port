@@ -162,9 +162,10 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    MovementBatchProbe`; config and report share one `Result` type; the `MoveNext`
    exception wrapper is copied 9 times in `Start`.
 3. **The recipe is untracked.** The runtime config (369 keys) and the content recipe
-   `work/scene-probe-build.json` (4,184 prefabs) are not in Git.
+   `work/scene-probe-build.json` (4,184 prefabs) are not in Git. Tracked, audited recipes now go in
+   `recipe/` ([recipe/README.md](../recipe/README.md)); the first is the uGUI remap table (J508).
 4. **No from-scratch build.** The current project is made by migrating a previous project
-   (`composition_migration.stage`). Eight path families it reads have no producer in the
+   (`composition_migration.stage`). Seven path families it reads (eight before J508) have no producer in the
    repo ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
    and no current command applies the AssemblyProbe transforms: the transformed
    `RoR2.dll` was produced by historical actions (`scene_runtime.py:542`,

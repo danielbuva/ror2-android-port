@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J508](PORTING_JOURNAL.md#j508--track-the-first-public-build-recipe) | 2026-10-17 | Track the first public build recipe | Policy (user decision, 2026-10-17): the lab should be reproducible from its public source, the documented toolchain and a legitimate installation, without the… |
 | [J507](PORTING_JOURNAL.md#j507--track-the-standard-lakes-check-as-dev-check-baseline) | 2026-10-17 | Track the standard Lakes check as `./dev check-baseline` | The J505 runner moved into `scripts/lab/baseline.py` as `./dev check-baseline`. |
 | [J506](PORTING_JOURNAL.md#j506--fresh-editor-builds-lost-bundle-rooted-assemblies-preserve-them-explicitly) | 2026-10-16 | Fresh-editor builds lost bundle-rooted assemblies; preserve them explicitly | Hypothesis: the J505 stripping regression comes from the linker command, not from the descriptors. |
 | [J505](PORTING_JOURNAL.md#j505--text-patch-removal-is-binary-neutral-new-builds-now-strip-addressables-operations) | 2026-10-16 | Text-patch removal is binary-neutral; new builds now strip Addressables operations | Hypothesis: deleting the dormant exact-text C# patches in `whole_catalog.build_integration` (branch `cleanup/remove-text-patches`) changes nothing in the built… |

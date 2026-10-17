@@ -4,7 +4,7 @@
 > changes; regenerate or re-audit it before relying on a specific `file:line`. The current
 > map is [ARCHITECTURE.md](ARCHITECTURE.md).
 
-Static audit of `scripts/`, `tools/` and `android/`, 2026-10-16. **Eight path families with no snapshot/recipe producer are reached by the current workflow**, including one conditional proof. They are the first table. This is an inventory, not a fresh-build or game-readiness acceptance.
+Static audit of `scripts/`, `tools/` and `android/`, 2026-10-16. **Seven path families (eight before J508) with no snapshot/recipe producer are reached by the current workflow**, including one conditional proof. They are the first table. This is an inventory, not a fresh-build or game-readiness acceptance.
 
 Only existence was checked in the workstation's `work/`; no file contents were read and nothing was modified. Paths below are logical `work/` paths, not private workstation locations. No builds, installs, runs or read traces were executed.
 
@@ -31,7 +31,7 @@ The current command set is the ten prototype actions in [Reusable fixes and comm
 | Path / family | Readers (file:line) | Producer in repo | Class | Current workflow reaches it | Present |
 | --- | --- | --- | --- | --- | --- |
 | `B1: work/config/composition-migration.json` | `scripts/lab/composition_migration.py:129`; `scripts/lab/composition_migration.py:184` | none found | required local state with no producer | yes — both composition actions | yes |
-| `B2: work/config/hud-ui-remaps.json` | `scripts/lab/composition_migration.py:131`; `scripts/lab/composition_migration.py:207`; `scripts/lab/integrated_objective.py:223`; `scripts/lab/whole_catalog.py:431`; +2 more | none found (the copy at `integrated_objective.py:228` is an output, not this config) | required local state with no producer | yes — composition, prepare, contracts | yes |
+| `B2: recipe/hud-ui-remaps.json` (was `work/config/`) | **Resolved 2026-10-17 (J508):** tracked as an audited recipe; see [recipe/README.md](../recipe/README.md) | — | tracked recipe | yes | yes |
 | `B3: work/<composition-evidence>/semantic-preview-result.json` | `scripts/lab/composition_migration.py:194` | none found | required local state with no producer | yes — composition stage | yes † |
 | `B4: work/<composition-evidence>/asset-analysis.json` | `scripts/lab/composition_migration.py:210` | none found | required local state with no producer | yes — composition stage | yes † |
 | `B5: work/<composition-evidence>/rebase-analysis.json` | `scripts/lab/composition_migration.py:212` | none found | required local state with no producer | yes — composition stage | yes † |
@@ -185,7 +185,7 @@ These are all four timestamp literals found in filesystem paths in the audited s
 Keep all game-derived bytes, raw evidence and operator configuration ignored. Any tracked recipe must contain only reviewed authored transformations and public-safe selectors.
 
 - B1 — Move the composition selection structure to a tracked recipe after privacy review, with operator-specific locations kept in local config.
-- B2 — Check in an input-gated UI remap generator that measures original/imported script identities and writes the ignored table.
+- B2 — Done (J508): tracked as `recipe/hud-ui-remaps.json`.
 - B3 — Check in a semantic-preview plan generator around `serialization_rebase.py`, including conflict and provenance validation.
 - B4 — Check in the asset-analysis generator that enumerates old/current owners and authored additions.
 - B5 — Check in the rebase-analysis/GUID-map generator and validate unique source owners.

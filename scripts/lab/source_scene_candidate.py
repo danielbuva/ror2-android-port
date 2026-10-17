@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-from common import ROOT, WORK, game, read, run, sha, write
+from common import RECIPE, ROOT, WORK, game, read, run, sha, write
 
 
 GLOBAL_OWNERS = frozenset({'RoR2Application', 'SceneInfo', 'Director', 'GameManager'})
@@ -104,7 +104,7 @@ def prepare(names=('lakes',)):
     recipe = read(recipe_path)
     config_path = project / 'Assets/LabLoadingScene/Resources/MovementBatchProbe.json'
     config = read(config_path)
-    remaps = {row['from']: row['to'] for row in read(WORK / 'config/hud-ui-remaps.json')['rows']}
+    remaps = {row['from']: row['to'] for row in read(RECIPE/'hud-ui-remaps.json')['rows']}
     staged = []
     for name in names:
         configured = {row['name'] for row in config['integratedStages']} | {'golemplains'}

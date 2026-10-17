@@ -3,6 +3,7 @@ import hashlib,json,os,subprocess,datetime
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 WORK=ROOT/'work'
+RECIPE=ROOT/'recipe'  # audited, tracked build recipes (recipe/README.md)
 def toolchain(): return read(ROOT/'environment/toolchain.json')
 def read(p): return json.loads(Path(p).read_text())
 def write(p,v):

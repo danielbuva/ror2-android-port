@@ -128,7 +128,7 @@ def stage_missing_sources():
     index=read(catalog/'source-guid-index.json');guids={path:guid for guid,path in index.items()}
     selection=read(WORK/'config/composition-migration.json')
     evidence=private_path(selection['evidence'])/('dependency-stage-'+now());evidence.mkdir()
-    remaps=read(WORK/'config/hud-ui-remaps.json')
+    remaps=read(RECIPE/'hud-ui-remaps.json')
     if selection['input_id']!=read(project/'.port-input.json')['input_id'] or remaps['input_id']!=selection['input_id']:
         raise RuntimeError('Composition dependency generation mismatch')
     owners={}
@@ -204,7 +204,7 @@ def stage():
             if match[1] in owners:
                 raise RuntimeError('Duplicate current GUID owner')
             owners[match[1]] = str(Path(str(meta)[:-5]).relative_to(project))
-    remaps = read(WORK/'config/hud-ui-remaps.json')
+    remaps = read(RECIPE/'hud-ui-remaps.json')
     if remaps['input_id'] != accepted:
         raise RuntimeError('UI bindings belong to a different input')
     analysis = read(evidence/'asset-analysis.json')['rows']
