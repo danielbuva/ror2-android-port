@@ -5170,3 +5170,16 @@ material copies) moved into a nested `BarrierEffectSession : IDisposable`
 and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T233149.739445Z`). The runtime config does not set
 `barrierEffectAsset`, so the barrier setup does not run in the check: this owner is verified by
 compile and review only. App stopped; OLED asleep.
+
+## J532 — Extract the original visual and common-asset owners
+
+Phase 4 step 5, batch 1 of Codex's owner ranking (implemented by Codex, reviewed by Claude).
+`OriginalBodyVisualBoundary.cs` and `OriginalGlobalCommonAssetsBoundary.cs` each gained a nested
+`IDisposable` owner (`OriginalBodyVisualSession`, `OriginalGlobalCommonAssetsSession`); all four
+of their fields were private. The four moved bodies are token-identical apart from
+`coordinator.` qualifiers, and Codex's scan found no unqualified coordinator access. Zero-error
+code-only build, APK `dfd74514747742878624f6f67e96cd6ef1feb29e4e01cc04db5e3eeeb282da37`, both owners checked in the staged project. `./dev check-baseline`
+passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T235351.250426Z`).
+App stopped; OLED asleep. Codex's ranking (batches of independent files, lowest risk first;
+23 files not worth extracting; Moon files deferred because neither check reaches them) sets
+the order for the remaining owners.
