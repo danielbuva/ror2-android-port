@@ -5051,3 +5051,19 @@ never selects a destination; the one-exit limit is a host polling guard, not a r
 interlock. Plain `check-baseline` is unchanged. 405 host tests pass. On the J522 APK it went
 Lakes → Goolake at 91.6 s, stopped after 10 s there with 13 kills, no report error and 13
 applied profile runs unchanged (`work/experiments/baseline/20261017T214812.290433Z`). App stopped; OLED asleep.
+
+## J524 — Extract the recovered HUD owner
+
+Phase 4 step 5, fourth owner (implemented by Codex, reviewed by Claude). Five HUD-private
+fields (menu events, reference diagnostics and prior rendering, the text-settings field and
+its prior value) moved into a nested `RecoveredHudSession : IDisposable`
+(`RecoveredHudBoundary.cs`); `recoveredHud`, `recoveredMenu`, `recoveredTextSettings` and
+`ownsRecoveredText` stay on the coordinator because defeat, world, menu, teleporter and
+developer-control code use them. The text, menu and HUD phases keep separate forwarders and
+call sites; `Dispose` is the old `CleanupRecoveredHud` body, which also ended with menu
+cleanup. The seven moved bodies are token-identical apart from `coordinator.` qualifiers. The
+staged file was checked to contain the owner. Zero-error code-only build, APK `74067d5d210a48c80e7acdf8576f9379c344667811aedd5b6b12f96d1fc72a96`;
+`./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile
+runs unchanged (`work/experiments/baseline/20261017T220007.276298Z`). 39 of the 45 scalar `hud` report fields match the previous run; the
+other six are live gameplay values (frames, notification timing, health, level, money). App
+stopped; OLED asleep.

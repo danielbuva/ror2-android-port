@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J523**. This page is the current snapshot only: replace its
+Last updated 2026-10-17 after **J524**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -12,7 +12,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Latest device-verified APK | `a358fcc1307690ef71efaab2c5117b3a0790e0881e66acc6438fee08d0d90e5a` — J522 build of `main` (developer-controls owner); passed `./dev check-baseline` |
+| Latest device-verified APK | `74067d5d210a48c80e7acdf8576f9379c344667811aedd5b6b12f96d1fc72a96` — J524 build of `main` (HUD owner); passed `./dev check-baseline` |
 | Installed now | That same APK, installed in place; package `dev.ror2lab.arm64`, adopted storage (install receipt: `work/device/installed.json`); app stopped, OLED asleep |
 | Runtime source since that APK | Unchanged |
 | Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
