@@ -16,6 +16,7 @@ Archived on 2026-10-16 during the documentation cleanup:
 | [development-plan-superseded.md](development-plan-superseded.md) | superseded plan sections |
 | [readme-commands-and-recipes.md](readme-commands-and-recipes.md) | README experiment recipes |
 | [subsystem-coverage-notes-2026-10-16.md](subsystem-coverage-notes-2026-10-16.md) | J391–J426 notes after the coverage table |
+| [rewritten-passages-2026-10-16.md](rewritten-passages-2026-10-16.md) | original paragraphs of README, AGENTS.md, ADR-001 and DEVELOPMENT_PLAN that were rewritten |
 
 [bootstrap/](bootstrap/) holds the September 2026 bootstrap inventories, which
 nothing current referenced: [inventory](bootstrap/inventory.md) (legitimate
