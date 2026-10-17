@@ -1,0 +1,13 @@
+# Initial gate (cleanup plan Phase 5). Existing code is semicolon-chained and uses
+# `from common import *`, so only errors that are wrong in any style are checked, and
+# only on files a change touches. F401/F841 wait for the per-module reformat: common.py's
+# unused-looking imports are re-exported through its star import.
+target-version = "py311"
+line-length = 160
+extend-exclude = ["work", ".local", "smoke", "android", "docs"]
+# CI passes explicit paths, which otherwise bypass directory exclusions.
+force-exclude = true
+
+[lint]
+select = ["F", "E9"]
+ignore = ["F401", "F403", "F405", "F841"]

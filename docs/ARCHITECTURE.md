@@ -131,6 +131,12 @@ Build, device and safety tooling has its own tests: `test_build_identity.py`,
 `test_build_snapshots.py`, `test_apk_identity.py`, `test_adb_target.py`,
 `test_lab_safety.py`, `test_public_privacy.py`.
 
+Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
+`ruff check` on every Python file a change touches, limited to errors that are wrong in any
+style (undefined names, redefinitions, syntax), and `ruff format --check` on newly added
+files. The existing modules' style debt (4,765 style findings, 88 unformatted files at
+J514) waits for the per-module reformat.
+
 ## File status
 
 Every file in `tools/unity`, `tools/catalog` and `scripts/lab`, and every `prototype`

@@ -4929,3 +4929,16 @@ passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchang
 (`work/experiments/baseline/20261017T203151.192721Z`). The check uses the `-bringup` id; the shipped id takes the same `GameSession` route
 and was not launched separately. App stopped; OLED asleep. `Start` still waits 8 s and picks
 the session by id: having it call `GameSession` directly is the remaining part of this step.
+
+## J514 — Add a Ruff gate to host CI
+
+Phase 5 "Python formatting", first part. Codex proposed a gate checking touched files with
+`F`, `E701`/`E702` and `ruff format --check`. Measured with the pinned ruff 0.11.13, that
+set reports 4,765 findings on today's code (2,354 `F405` star-import uses, 1,391 `E702`,
+942 `E701`) and 88 unformatted files, so any edit to an existing module would fail CI.
+The committed gate checks touched files for `F` and `E9` minus `F401`, `F403`, `F405` and
+`F841` (zero findings today), and format-checks only newly added files. `F401`/`F841` are
+deferred because `common.py`'s unused-looking imports are re-exported through
+`from common import *` and some unused variables hold the results of calls made for their
+side effects. The ten Python files added in this cleanup were formatted to pass the
+new-file rule; 381 host tests pass.

@@ -21,6 +21,34 @@ jobs:
           python-version: "3.14"  # matches the workstation lab venv
       - name: Install lab requirements
         run: python -m pip install -r tools/lab-requirements.txt
+      # Lint touched Python files and format-check new ones; existing style debt waits for
+      # the per-module reformat (ruff.toml explains the rule set).
+      - name: Ruff (changed Python files)
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          BEFORE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF_NAME" == "$DEFAULT_BRANCH" ]]; then
+            base="$BEFORE_SHA"
+            if [[ "$base" =~ ^0+$ ]]; then
+              base="$(git hash-object -t tree /dev/null)"
+            fi
+          else
+            base="$(git merge-base HEAD "origin/$DEFAULT_BRANCH")"
+          fi
+          git diff --name-only --diff-filter=ACMR -z "$base" HEAD -- '*.py' > "$RUNNER_TEMP/changed-python-files"
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < "$RUNNER_TEMP/changed-python-files"
+          if (( ${#files[@]} == 0 )); then
+            echo "No changed Python files."
+            exit 0
+          fi
+          ruff check -- "${files[@]}"
+          # Formatting is enforced on new files only until existing modules are reformatted.
+          git diff --name-only --diff-filter=A -z "$base" HEAD -- '*.py' | xargs -0 -r ruff format --check --
       - name: Public-repository audit
         run: python scripts/audit-public.py
       - name: Journal index is current

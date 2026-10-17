@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J514](PORTING_JOURNAL.md#j514--add-a-ruff-gate-to-host-ci) | 2026-10-17 | Add a Ruff gate to host CI | Phase 5 "Python formatting", first part. |
 | [J513](PORTING_JOURNAL.md#j513--give-the-shipped-game-its-own-gamesession-entry) | 2026-10-17 | Give the shipped game its own `GameSession` entry | Phase 4 step 3. |
 | [J512](PORTING_JOURNAL.md#j512--replace-the-prototype-ifelif-chain-with-an-action-registry) | 2026-10-17 | Replace the prototype if/elif chain with an action registry | Phase 5 CLI registry (implemented by Codex, reviewed by Claude). |
 | [J511](PORTING_JOURNAL.md#j511--collapse-the-session-step-exception-wrapper-into-runguarded) | 2026-10-17 | Collapse the session-step exception wrapper into `RunGuarded` | Phase 4 step 4. |
