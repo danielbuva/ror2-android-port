@@ -5084,3 +5084,23 @@ APK `ac674e4dd296678f3434d8a03e93b01ac8214a75c02539946db01717449f9003`, and the 
 line ran (the startup collection path). The differing `results` fields are live values
 (memory, collection time, kills, damage). As for every owner so far, the check force-stops
 the app, so teardown order is verified by review only. App stopped; OLED asleep.
+
+## J526 — Extract the run-clock owner; fix the stage check's transport race
+
+Phase 4 step 5, sixth owner (implemented by Codex, reviewed by Claude). 17 run-clock fields
+(owned Run fixed/frame callbacks, stage and native async release, the clock Run, the scene
+catalog and availability snapshots, clock stamps) moved into a nested
+`RunClockSession : IDisposable` (`RunClockBoundary.cs`); `clockSceneDefs` and `priorClockScene`
+stay on the coordinator for the results signature and stage transport. Codex's scan found no
+unqualified coordinator access inside the owner. Zero-error code-only build, APK `b62be74816e66f50db507b6e0672bc9fe1bb605606cc45777ca5b808bbcfdd05`,
+staged file checked. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs,
+`work/experiments/baseline/20261017T223041.636795Z`).
+
+The first `--stage-exit` run on that APK failed with `unexpected-first-stage`, but the cause was
+the check: polled mid-transport (`phase` `stage-geometry-load`, `transporting` true), the report
+already names the destination in `stage.scene` while `stageProgress.current` is still Lakes and
+the count is 0. J523's run had simply not been polled at that moment. The rule now ignores the
+scene while transport is in progress; two host tests cover the observed shape (407 pass). The
+re-run on the same APK passed: one genuine exit, 10 s of next-stage play, no report error, 13
+applied profile runs unchanged (`work/experiments/baseline/20261017T223953.557186Z`). App
+stopped; OLED asleep.
