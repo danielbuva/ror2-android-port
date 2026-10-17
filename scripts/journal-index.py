@@ -74,7 +74,11 @@ def first_sentence(body: str, limit: int = 160) -> str:
 
 
 def parse_journal(text: str) -> list[Entry]:
-    """Read H2 entries in source order and allocate anchors across all headings."""
+    """Read entries in source order and allocate anchors across all headings.
+
+    Entries are H2 headings plus J-numbered H3 headings: the journal writes 36
+    standalone entries (J169, J170, J402–J431) at H3. Other H3s stay in the body.
+    """
     lines = text.splitlines()
     headings = []
     used_anchors = set()
@@ -101,7 +105,7 @@ def parse_journal(text: str) -> list[Entry]:
             suffix += 1
             anchor = f"{base}-{suffix}"
         used_anchors.add(anchor)
-        if level == "##":
+        if level == "##" or (level == "###" and ENTRY_ID.fullmatch(heading)):
             headings.append((line_number, heading, anchor))
 
     entries = []

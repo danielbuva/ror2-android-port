@@ -37,15 +37,18 @@ class JournalParsingTests(unittest.TestCase):
     def test_headings_combined_ids_qualifiers_and_source_line_numbers(self):
         journal = (
             "# Porting journal\n\n## J361/J362 — Combined trial\n\nFirst trial. More.\n"
-            "### J363 — Nested observation\nDetails.\n"
+            "### Nested detail\nDetails.\n"
+            "### J363 — Entry written at H3\nThird trial.\n"
             "## J349 preparation — Paused trial\n\nSecond trial.\n"
         )
         entries = journal_index.parse_journal(journal)
-        self.assertEqual([entry.entry_id for entry in entries], ["J361/J362", "J349"])
-        self.assertEqual([entry.line_number for entry in entries], [3, 8])
+        self.assertEqual([entry.entry_id for entry in entries], ["J361/J362", "J363", "J349"])
+        self.assertEqual([entry.line_number for entry in entries], [3, 8, 10])
+        self.assertEqual(entries[2].summary, "Second trial.")
         self.assertEqual(entries[0].title, "Combined trial")
         self.assertEqual(entries[0].summary, "First trial.")
-        self.assertEqual(entries[1].title, "preparation — Paused trial")
+        self.assertEqual(entries[1].title, "Entry written at H3")
+        self.assertEqual(entries[2].title, "preparation — Paused trial")
         self.assertEqual(entries[0].anchor, "j361j362--combined-trial")
 
     def test_fenced_examples_are_not_entries(self):
@@ -90,7 +93,7 @@ class JournalParsingTests(unittest.TestCase):
 
     def test_duplicate_anchors_consider_other_heading_levels_and_collisions(self):
         journal = (
-            "# J1 — Trial\n### J1 — Trial-1\n"
+            "# J1 — Trial\n### Notes: J1 — Trial-1\n#### J1 — Trial-1\n"
             "## J1 — Trial\nObserved.\n## J1 — Trial\nAgain.\n"
         )
         entries = journal_index.parse_journal(journal)
