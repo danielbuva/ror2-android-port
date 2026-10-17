@@ -171,6 +171,7 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
 4. **No from-scratch build.** The current project is made by migrating a previous project
    (`composition_migration.stage`). Seven path families it reads (eight before J508) have no producer in the
    repo ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
+   (removal plan: [migration-removal-plan.md](migration-removal-plan.md)),
    and no current command applies the AssemblyProbe transforms: the transformed
    `RoR2.dll` was produced by historical actions (`scene_runtime.py:542`,
    `integrated_objective.py:56`) and is carried forward by hash.
