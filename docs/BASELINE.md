@@ -23,8 +23,8 @@ log and screenshot). It needs the configured device and the payload already sync
 
 | Item | Value |
 | --- | --- |
-| APK | `cf26485e5b8e5bc270b7f3dd1b0a0e9e07e3229d7202bfeb05edb09bfde53d05`, built in J506 from `main` with the text-patch removal and the linker-roots fix |
-| Check | passed: 35.2 s on Lakes, no report error, 13 applied profile runs unchanged (J507) |
+| APK | `9f6652abd9bf574f4209d2a0aeae7b08ecdaa13e53afb35fc924e8bf1c41dbf6`, built in J511 from `main` with the `RunGuarded` helper |
+| Check | passed: 35.2 s on Lakes, no report error, 13 applied profile runs unchanged (J511) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`, which has the same runtime code |
 | Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |

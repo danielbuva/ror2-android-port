@@ -66,14 +66,14 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   bool catalogOnly=r.id=="body-catalog-registration";bool catalogFixture=r.id.StartsWith("body-state-spawn-state-")||r.id=="body-state-spawn-loadout-catalog"||r.id=="body-state-spawn-body-start-catalog";
   if(catalogOnly||catalogFixture){
    var routine=RegisterBodyCatalog();
-   while(true){bool more=false;object current=null;try{more=routine.MoveNext();if(more)current=routine.Current;}catch(Exception e){r.error=e.ToString();break;}if(!more)break;yield return current;}
+   for(var step=RunGuarded(routine,e=>{r.error=e.ToString();});step.MoveNext();)yield return step.Current;
    if(string.IsNullOrEmpty(r.error)&&!string.IsNullOrEmpty(config.teleportMaterialAsset)){
     routine=PrepareTeleportMaterial(config);
-    while(true){bool more=false;object current=null;try{more=routine.MoveNext();if(more)current=routine.Current;}catch(Exception e){r.error=e.ToString();break;}if(!more)break;yield return current;}
+    for(var step=RunGuarded(routine,e=>{r.error=e.ToString();});step.MoveNext();)yield return step.Current;
    }
    if(string.IsNullOrEmpty(r.error)&&!string.IsNullOrEmpty(config.barrierEffectAsset)){
     routine=PrepareBarrierEffect(config);
-    while(true){bool more=false;object current=null;try{more=routine.MoveNext();if(more)current=routine.Current;}catch(Exception e){r.error=e.ToString();break;}if(!more)break;yield return current;}
+    for(var step=RunGuarded(routine,e=>{r.error=e.ToString();});step.MoveNext();)yield return step.Current;
    }
    if(catalogOnly||r.id=="body-state-spawn-state-barrier-asset"||r.id=="body-state-spawn-state-barrier-init"||r.id=="body-state-spawn-state-barrier-completion"||!string.IsNullOrEmpty(r.error)){
     r.success=string.IsNullOrEmpty(r.error);try{CleanupBodyCatalog();r.cleanup=true;}catch(Exception e){r.error+=" Catalog cleanup: "+e;r.success=false;}
@@ -82,22 +82,27 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   }
   var applicationStart=AwaitOfflineRunStart(config);while(applicationStart.MoveNext())yield return applicationStart.Current;
   var selected=RunSelectedProbe(catalogFixture);
-  while(true){bool more=false;object current=null;try{more=selected.MoveNext();if(more)current=selected.Current;}catch(Exception e){r.error=e.ToString();if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=e.GetBaseException().Message;r.firstFailurePhase=r.phase;}r.success=false;Save();break;}if(!more)break;yield return current;}
+  for(var step=RunGuarded(selected,e=>{r.error=e.ToString();if(string.IsNullOrEmpty(r.firstFailure)){r.firstFailure=e.GetBaseException().Message;r.firstFailurePhase=r.phase;}r.success=false;Save();});step.MoveNext();)yield return step.Current;
   if(catalogFixture){
    yield return null; // Let deferred owned clone/root destruction finish before releasing catalog assets.
-   var enemyRelease=VerifyEnemyCleanup();while(true){bool more=false;object current=null;try{more=enemyRelease.MoveNext();if(more)current=enemyRelease.Current;}catch(Exception e){r.error+=" Enemy cleanup: "+e;r.success=false;r.cleanup=false;break;}if(!more)break;yield return current;}
-   if(r.integratedWorld){var worldRelease=VerifyIntegratedWorldCleanup();while(true){bool more=false;object current=null;try{more=worldRelease.MoveNext();if(more)current=worldRelease.Current;}catch(Exception e){r.error+=" World cleanup: "+e;r.success=false;r.cleanup=false;break;}if(!more)break;yield return current;}}
-   var modelRelease=VerifyAutomaticModelDestruction();while(true){bool more=false;object current=null;try{more=modelRelease.MoveNext();if(more)current=modelRelease.Current;}catch(Exception e){r.error+=" Model cleanup: "+e;r.success=false;r.cleanup=false;break;}if(!more)break;yield return current;}
+   var enemyRelease=VerifyEnemyCleanup();for(var step=RunGuarded(enemyRelease,e=>{r.error+=" Enemy cleanup: "+e;r.success=false;r.cleanup=false;});step.MoveNext();)yield return step.Current;
+   if(r.integratedWorld){var worldRelease=VerifyIntegratedWorldCleanup();for(var step=RunGuarded(worldRelease,e=>{r.error+=" World cleanup: "+e;r.success=false;r.cleanup=false;});step.MoveNext();)yield return step.Current;}
+   var modelRelease=VerifyAutomaticModelDestruction();for(var step=RunGuarded(modelRelease,e=>{r.error+=" Model cleanup: "+e;r.success=false;r.cleanup=false;});step.MoveNext();)yield return step.Current;
    var rewardRelease=CleanupEnemyRewards();while(rewardRelease.MoveNext())yield return rewardRelease.Current;
    var deathRelease=CleanupPlayerDeathEffect();while(deathRelease.MoveNext())yield return deathRelease.Current;
    try{Check(!host,"Owned body root destruction pending");CleanupBodyCatalog();}catch(Exception e){r.error+=" Catalog cleanup: "+e;r.success=false;r.cleanup=false;}
-   var release=CleanupTeleportMaterial();while(true){bool more=false;object current=null;try{more=release.MoveNext();if(more)current=release.Current;}catch(Exception e){r.error+=" Material cleanup: "+e;r.success=false;r.cleanup=false;break;}if(!more)break;yield return current;}
-   release=CleanupBarrierEffect();while(true){bool more=false;object current=null;try{more=release.MoveNext();if(more)current=release.Current;}catch(Exception e){r.error+=" Effect cleanup: "+e;r.success=false;r.cleanup=false;break;}if(!more)break;yield return current;}
+   var release=CleanupTeleportMaterial();for(var step=RunGuarded(release,e=>{r.error+=" Material cleanup: "+e;r.success=false;r.cleanup=false;});step.MoveNext();)yield return step.Current;
+   release=CleanupBarrierEffect();for(var step=RunGuarded(release,e=>{r.error+=" Effect cleanup: "+e;r.success=false;r.cleanup=false;});step.MoveNext();)yield return step.Current;
    CleanupSpawnConfig();var geometryRelease=CleanupStageGeometry();while(geometryRelease.MoveNext())yield return geometryRelease.Current;AndroidMaterialPresentation.Finish();
    if(r.integratedWorld&&r.success&&r.cleanup){var reclaim=ReclaimCompletedSessionResources();while(reclaim.MoveNext())yield return reclaim.Current;}
    r.phase="complete";Save();
    RestartWorldAfterCleanup();
   }
+ }
+ // Runs one session step. An exception is passed to onError and ends that step only;
+ // the caller continues with the next step.
+ IEnumerator RunGuarded(IEnumerator routine,Action<Exception> onError){
+  while(true){bool more=false;object current=null;try{more=routine.MoveNext();if(more)current=routine.Current;}catch(Exception e){onError(e);yield break;}if(!more)yield break;yield return current;}
  }
  IEnumerator RunSelectedProbe(bool catalogFixture){
   try{

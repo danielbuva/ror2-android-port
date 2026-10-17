@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J511](PORTING_JOURNAL.md#j511--collapse-the-session-step-exception-wrapper-into-runguarded) | 2026-10-17 | Collapse the session-step exception wrapper into `RunGuarded` | Phase 4 step 4. |
 | [J510](PORTING_JOURNAL.md#j510--add-the-project-input-equivalence-harness) | 2026-10-17 | Add the project input equivalence harness | Commit 1 of the [migration removal plan](migration-removal-plan.md): `scripts/lab/project_manifest.py` with `project-manifest-capture` and `project-manifest-co… |
 | [J509](PORTING_JOURNAL.md#j509--make-whole-catalog-runtime-source-membership-explicit) | 2026-10-17 | Make whole-catalog runtime source membership explicit | Hypothesis: replacing generated-project existence rules with an audited authored-source manifest preserves current whole-catalog membership while making future… |
 | [J508](PORTING_JOURNAL.md#j508--track-the-first-public-build-recipe) | 2026-10-17 | Track the first public build recipe | Policy (user decision, 2026-10-17): the lab should be reproducible from its public source, the documented toolchain and a legitimate installation, without the… |

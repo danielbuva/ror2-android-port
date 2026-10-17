@@ -91,8 +91,8 @@ Teardown, in order, after `RunSelectedProbe` returns or throws:
    `ReclaimCompletedSessionResources` (only after a clean, successful integrated session) →
    `Save()` phase `complete` → `RestartWorldAfterCleanup`.
 
-The enemy, world, model, teleport-material and barrier steps run inside copies of the same
-`MoveNext` exception wrapper, which records the failure and moves on. The reward,
+The enemy, world, model, teleport-material and barrier steps run through `RunGuarded`
+(`MovementBatchProbe.cs`), which records the failure and moves on. The reward,
 death-effect, geometry and reclaim steps, and the synchronous cleanup calls outside the
 `CleanupBodyCatalog` `try`, have no wrapper: an exception there stops the remaining
 release steps. `Start` itself has no
@@ -171,8 +171,8 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    dispatches on a string id; the game is `body-state-spawn-state-auto-nova-spine`, one of
    118 case labels on a single 4,471-character line.
 2. **One class holds everything.** 70 `tools/unity` files are `partial class
-   MovementBatchProbe`; config and report share one `Result` type; the `MoveNext`
-   exception wrapper is copied 9 times in `Start`.
+   MovementBatchProbe`; config and report share one `Result` type. (The 9 copies of the
+   `MoveNext` exception wrapper in `Start` are now one `RunGuarded` helper, J511.)
 3. **The recipe is untracked.** The runtime config (369 keys) and the content recipe
    `work/scene-probe-build.json` (4,184 prefabs) are not in Git. Tracked, audited recipes now go in
    `recipe/` ([recipe/README.md](../recipe/README.md)); the first is the uGUI remap table (J508).

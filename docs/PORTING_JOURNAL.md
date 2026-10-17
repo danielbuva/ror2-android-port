@@ -4890,3 +4890,15 @@ and paths outside the project are refused. `build.py` is unchanged; a host test 
 mirrored external-input selection in step with the cache key. 195 host tests pass. Two
 captures of the J509 project (91,839 files, both external inputs) compare equal; the first,
 `work/receipts/project-manifest/20261017T201134.104239Z.json`, is the baseline for the next plan commits. No build or device run: host tooling only.
+
+## J511 — Collapse the session-step exception wrapper into `RunGuarded`
+
+Phase 4 step 4. `MovementBatchProbe.Start` held 9 copies of one `while(true){…MoveNext…}`
+exception wrapper, differing only in what each recorded on failure. They are now one
+`RunGuarded(IEnumerator, Action<Exception>)` helper: on an exception it calls the handler
+and ends that step, as before, and `Start` iterates it with the pass-through
+`for(var step=…;step.MoveNext();)yield return step.Current;` pattern it already used, so
+yields land on the same frames. The handlers are unchanged. 195 host tests pass; the
+exact-editor code-only build had zero errors (APK `9f6652abd9bf574f4209d2a0aeae7b08ecdaa13e53afb35fc924e8bf1c41dbf6`). Installed in place on adopted
+storage; `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied
+profile runs unchanged (`work/experiments/baseline/20261017T201941.644312Z`). App stopped; OLED asleep.
