@@ -14,6 +14,6 @@ VERIFIED from PE machine headers and import tables. The one x86 EOS SDK binary i
 | PartyXboxLive | 1.2.10 | Xbox identity bridge; no ARM64 Android binary in input. |
 | PlayFabMultiplayer Win/GDK | 1.3.0 | Windows/GDK networking; inventory does not establish it runs in solo play. |
 | XCurl | 2106.4.0.0 | Windows Xbox HTTP wrapper. |
-| xaudio2_9redist | 1.0.0.1 | Windows audio runtime; cannot load on Android. |
+| xaudio2_9 redist | 1.0.0.1 | Windows audio runtime; cannot load on Android. |
 
 Evidence: `work/inventory/native.json`, all P/Invokes in `managed.json`, version-return bytes and source hash in `middleware.json`. Native compatibility has not been inferred merely from a managed DLL compiling.

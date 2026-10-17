@@ -2,7 +2,7 @@
 
 **READY — verified 2026-09-12 PDT.** Unity ARM64 Android build, real-device launch/log/screenshot, adopted-volume installation, and Unity MCP editor exercise passed. No Risk of Rain 2 porting or wholesale decompilation was performed.
 
-Current toolchain supersedes the historical bootstrap below: user-approved Steam build25475991 uses Unity **2021.3.45f2 / 88f88f591b2e**, native ARM64, installed through official Unity Hub with Android support. Bundled JDK11.0.14.1, NDK21.3.6528147 and build-tools34.0.0 are selected through scripts/env.sh; API30 is installed in that SDK for the existing local player target. See environment/toolchain.json and PORTING_STATE.md. The original33f1 installation and accepted Android rollbacks remain available.
+Current toolchain supersedes the historical bootstrap below: user-approved Steam build 25475991 uses Unity **2021.3.45f2 / 88f88f591b2e**, native ARM64, installed through official Unity Hub with Android support. Bundled JDK11.0.14.1, NDK21.3.6528147 and build-tools 34.0.0 are selected through scripts/env.sh; API30 is installed in that SDK for the existing local player target. See environment/toolchain.json and PORTING_STATE.md. The original 33f1 installation and accepted Android rollbacks remain available.
 
 ## 1. Host summary
 
