@@ -4760,3 +4760,53 @@ Revisit: before the next APK build, find which input made the linker drop the J3
 operation constructors since J503 (compare a fresh build's stripped `Unity.ResourceManager`
 against J33's measured roots, or rebuild after a clean editor start). If it is
 environmental, merge the branch only after a rebuilt APK passes this same check.
+
+## J506 — Fresh-editor builds lost bundle-rooted assemblies; preserve them explicitly
+
+Hypothesis: the J505 stripping regression comes from the linker command, not from the
+descriptors. Comparing the last `UnityLinker` command of the J503 build
+(`work/lab-editor-20261012T051749.817522Z.log`) with J505's
+(`work/lab-editor-20261017T054200.839686Z.log`) confirmed it: the `--include-link-xml`
+sets match, but J503 passed 12 `--include-unity-root-assembly` entries and J505 only 4
+(`Assembly-CSharp`, `UnityEngine.UI`, `Unity.TextMeshPro`, `RoR2`). The missing 8 are
+`Unity.ResourceManager`, `KinematicCharacterController`, `Rewired_Core`,
+`Unity.Postprocessing.Runtime`, `GenericIK`, `AK.Wwise.Unity.API`,
+`AK.Wwise.Unity.API.WwiseTypes` and `com.unity.multiplayer-hlapi.Runtime`. Unity roots an
+assembly when it has seen that assembly's types serialized, and asset bundles built earlier
+in the same editor process count. Every earlier editor session ran `BuildAssetBundles`
+(`LabBuild.cs`) before its first player build, and later code-only builds in that session
+kept 12 or 13 roots. J505's restarted editor only ran code-only builds, which reuse the
+payload and skip `BuildAssetBundles`, so `Unity.ResourceManager` lost J33's reflected
+operation constructors. The cause was editor-process history, not a repository input.
+
+Change: `whole_catalog.preservation_descriptor` writes the whole-catalog `link.xml` and
+marks those 8 assemblies `preserve="all"`, reproducing J503's rooted set independent of
+editor history. That covers J33's four types (``ProviderOperation`1``, `GroupOperation`,
+``ChainOperation`2``, ``ResourceManager/CompletedOperation`1``). A host test checks the
+descriptor; 157 host tests and preflight passed. No prior-art entry covers player
+stripping; the mechanism is Unity's documented link.xml preservation, as in J31–J33.
+
+Evidence: the code-only build from main `6de5e57` in the same fresh editor (still 4 linker
+roots) produced APK `928b9e6031982c90d848f5ba5b444c2c3c71be9e76b24222abdc6678e43e4dea` with
+a `libil2cpp.so` byte-identical to J503's (96,823,840 B, CRC `f5d57613`). Its
+`global-metadata.dat` is 32 B larger. The only differences are 8 more referenced-assembly
+entries and the `BeforeFieldInit` flag on three `<PrivateImplementationDetails>` types;
+all other sections are byte-identical after the offset shift. Installed in place on adopted
+storage, the J505 check (Commando from the ordinary menu choice, invincibility only)
+reached 35.2 s of live Lakes play with 4 kills. The report had an empty error and
+firstFailure, the profile still held 13 applied runs, and the captured Unity log contained
+no exceptions (`work/experiments/whole-catalog/gameplay/baseline-text-patch-removal-20261017T063145.504062Z`).
+
+Branch: `cleanup/remove-text-patches` was rebased onto `6de5e57` (one test-file conflict,
+both classes kept; 160 host tests pass). The editor bridge refuses a second checkout's
+project path, so its `whole_catalog.py` (the only runtime-pipeline file it changes) was run
+against this checkout. APK `cf26485e5b8e5bc270b7f3dd1b0a0e9e07e3229d7202bfeb05edb09bfde53d05`
+has the same `libil2cpp.so` and `global-metadata.dat` as the main build. It passed the same
+check with 35.2 s of Lakes play, 5 kills, empty error and firstFailure, 13 applied runs and
+no log exceptions (`baseline-text-patch-removal-20261017T064122.877682Z`). That APK is
+installed now; app stopped, OLED asleep.
+
+Revisit: if Unity changes its rooting rule or a new third-party assembly enters the
+build, compare a fresh-editor linker command against a full build's and extend
+`BUNDLE_ROOT_ASSEMBLIES` from that measurement. A full build still roots these
+assemblies through its own bundle build.
