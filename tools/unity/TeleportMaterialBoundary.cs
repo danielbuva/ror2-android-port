@@ -1,3 +1,5 @@
+// Subsystem: catalog/resources (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareTeleportMaterial, ObserveTeleportOverlays; teardown CleanupTeleportMaterial.
 using System;
 using System.Collections;
 using System.Collections.Generic;

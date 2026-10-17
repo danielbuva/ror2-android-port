@@ -1,3 +1,5 @@
+// Subsystem: stage transport (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareMoonTimers, TickMoonTimers; teardown StopMoonTimers, CleanupMoonTimers.
 using System;
 using System.Collections.Generic;
 using System.Linq;

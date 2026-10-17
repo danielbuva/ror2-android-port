@@ -1,3 +1,5 @@
+// Subsystem: catalog/resources (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareSpawnStateCatalog; teardown CleanupSpawnConfig, RestoreWholeStateOwnership.
 using System;
 using System.Collections;
 using System.Collections.Generic;

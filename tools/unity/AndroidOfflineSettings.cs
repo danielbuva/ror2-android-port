@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup AndroidOfflineSettings, Save; teardown —.
 using System;
 using System.IO;
 using UnityEngine;

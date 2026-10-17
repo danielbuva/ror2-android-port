@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J516](PORTING_JOURNAL.md#j516--header-each-staged-runtime-file-with-its-subsystem-and-lifecycle) | 2026-10-17 | Header each staged runtime file with its subsystem and lifecycle | Phase 3's last item. |
 | [J515](PORTING_JOURNAL.md#j515--write-editor-logs-under-worklogs) | 2026-10-17 | Write editor logs under `work/logs/<date>/` | Phase 5 `work/` hygiene. |
 | [J514](PORTING_JOURNAL.md#j514--add-a-ruff-gate-to-host-ci) | 2026-10-17 | Add a Ruff gate to host CI | Phase 5 "Python formatting", first part. |
 | [J513](PORTING_JOURNAL.md#j513--give-the-shipped-game-its-own-gamesession-entry) | 2026-10-17 | Give the shipped game its own `GameSession` entry | Phase 4 step 3. |

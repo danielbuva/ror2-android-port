@@ -1,3 +1,5 @@
+// Subsystem: stage transport (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareMoonSupport, PrepareMoonWorld; teardown CleanupMoonMission, CleanupMoonSupport.
 using System;
 using System.Collections;
 using System.Collections.Generic;

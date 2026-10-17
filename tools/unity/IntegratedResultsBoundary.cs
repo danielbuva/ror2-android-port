@@ -1,3 +1,5 @@
+// Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareIntegratedResults; teardown CleanupIntegratedResults.
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -1,3 +1,5 @@
+// Subsystem: diagnostics (historical lab experiments, staged but not on the game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: none of its own; RunSelectedProbe runs LabExperiment for any non-spine id.
 using System;
 using System.Collections;
 using System.Collections.Generic;

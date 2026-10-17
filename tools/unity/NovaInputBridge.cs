@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup Update, FixedUpdate; teardown —.
 using System;
 using System.Linq;
 using RoR2;

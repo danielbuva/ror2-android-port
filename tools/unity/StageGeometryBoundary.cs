@@ -1,3 +1,5 @@
+// Subsystem: stage transport (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareStageGeometry, LoadStageGeometry; teardown DeactivateSourceGameManager, DeactivateSourceSceneInfo, CleanupStageGeometry.
 using System;
 using System.Collections;
 using System.Collections.Generic;

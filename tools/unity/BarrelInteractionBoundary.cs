@@ -1,3 +1,5 @@
+// Subsystem: commerce/pickups (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup —; teardown CleanupOriginalBarrel.
 using System;
 using System.Collections;
 using System.Collections.Generic;

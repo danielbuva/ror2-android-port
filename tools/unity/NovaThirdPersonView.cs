@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup NovaThirdPersonView; teardown —.
 using System;
 using RoR2;
 using UnityEngine;

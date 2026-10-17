@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup NovaInputBoundary; teardown —.
 using System.Linq;
 using System;
 using System.Collections;

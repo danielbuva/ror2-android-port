@@ -1,3 +1,5 @@
+// Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup SelectOwnedRunSeed; teardown —.
 using System;
 using System.Globalization;
 

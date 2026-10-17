@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareAutomaticModel, ObserveAutomaticModelFollow; teardown —.
 using System.Collections;
 using System.Reflection;
 using RoR2;

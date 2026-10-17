@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareWorldEquipmentSupport, PrepareWorldEquipment; teardown CleanupWorldEquipment.
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,3 +1,5 @@
+// Subsystem: progression (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup AndroidOfflineProfile, Save; teardown —.
 using System;
 using System.Collections.Generic;
 using System.IO;

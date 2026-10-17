@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareWholeDroneCatalog, PrepareWholeRunAvailability, PrepareWholeMasterTemplates, SelectWholeStagePool; teardown CleanupWholePopulation, CleanupWholeRunAvailability, CleanupWholeStagePool, CleanupWholePickups.
 using System;
 using System.Collections;
 using System.Collections.Generic;

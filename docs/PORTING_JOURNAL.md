@@ -4952,3 +4952,15 @@ is still recorded in `work/editor/<target>-process.json`. The build-timeout mess
 at a `work/lab-editor.log` that never exists and now names that receipt instead. Existing
 files were not moved or deleted. Host tests pass; the new path applies from the next editor
 start.
+
+## J516 — Header each staged runtime file with its subsystem and lifecycle
+
+Phase 3's last item. Each of the 92 files in `recipe/runtime-sources.json` now starts with
+two comment lines: its subsystem and whether it is on the game path, then its setup and
+teardown methods. These come from the reviewed tables in `docs/architecture-file-map.md`;
+files with no lifecycle of their own say so. Comments only. The code-only build had zero
+errors, and its `libil2cpp.so` and metadata are byte-identical to J513's. `level0` (the
+built `Lab.unity` scene) has the same size with 99 bytes different, consistent with
+per-script identity hashes, so the device decided: `./dev check-baseline` passed with
+35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261017T204559.357766Z`, APK
+`e504e79891be4d1644c6f54f37334641e226f11ba83f2277e51c1e1d0a04e400`). App stopped; OLED asleep.

@@ -1,3 +1,5 @@
+// Subsystem: HUD/UI (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareRecoveredText, PrepareRecoveredMenu, PrepareRecoveredHud; teardown CleanupRecoveredHud, CleanupRecoveredMenu, CleanupRecoveredText.
 using System;
 using System.Reflection;
 using UnityEngine;

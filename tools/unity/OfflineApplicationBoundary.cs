@@ -1,3 +1,5 @@
+// Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup AwaitOfflineRunStart; teardown —.
 using System.Collections;
 using System.IO;
 using System.Linq;

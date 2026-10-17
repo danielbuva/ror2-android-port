@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareCombatConfigs, PrepareCombatScene; teardown CleanupCombatScene, CleanupCombatConfigs.
 using System;
 using System.Collections.Generic;
 using System.Linq;

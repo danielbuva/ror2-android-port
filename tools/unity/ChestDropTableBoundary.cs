@@ -1,3 +1,5 @@
+// Subsystem: commerce/pickups (staged support, not on the game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: no setup or teardown of its own; called from its owner.
 using System;
 using System.Collections;
 using System.Collections.Generic;

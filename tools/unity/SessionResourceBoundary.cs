@@ -1,3 +1,5 @@
+// Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup CollectPriorSessionGarbage, ObserveSessionResources; teardown TrackCompletedSessionReferences, ReclaimCompletedSessionResources.
 using System;
 using System.Collections;
 using System.Linq;

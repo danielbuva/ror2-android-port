@@ -105,6 +105,9 @@ order and each `finally`) is in
 
 ## Ownership
 
+Each staged runtime file starts with a two-line header naming its subsystem, whether it is
+on the game path, and its setup and teardown methods (J516).
+
 Most `*Boundary.cs` files are `partial class MovementBatchProbe`: their state is fields on
 the coordinator, not a separate owner. Only the types marked **own type** keep their own
 state. Host tests are in `tests/`; editor fixtures (`tools/catalog/*Host.cs`) run in the

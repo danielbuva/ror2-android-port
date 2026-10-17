@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup IsPlayableSpine, PrepareSpineConfigs, ObserveSpinePrimary; teardown CleanupSpineConfig.
 using System;
 using System.Linq;
 using System.Reflection;

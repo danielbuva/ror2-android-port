@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareEnemyRewards, InitializeRewardRunStreams; teardown CleanupRewardHosts, CleanupEnemyRewards.
 using System;
 using System.Collections;
 using System.Linq;

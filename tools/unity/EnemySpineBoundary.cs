@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareEnemyConfigs, PrepareEnemy; teardown CleanupEnemy, CleanupEnemyConfigs, VerifyEnemyCleanup.
 using System;
 using System.Collections;
 using System.Collections.Generic;

@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup NovaDiagnosticDisplay, ConfigureThirdPerson; teardown Dispose.
 using System;
 using System.Collections.Generic;
 using System.Linq;

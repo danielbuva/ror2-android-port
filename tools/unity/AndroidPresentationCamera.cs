@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup Awake, OnEnable; teardown OnDestroy.
 using System;
 using System.Collections.Generic;
 using UnityEngine;

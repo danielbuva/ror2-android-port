@@ -1,3 +1,5 @@
+// Subsystem: HUD/UI (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup QueuePickup, PresentFeedback; teardown CleanupFeedback.
 using System;
 using System.Collections.Generic;
 using RoR2;

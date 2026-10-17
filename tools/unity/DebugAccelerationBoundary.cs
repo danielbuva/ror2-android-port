@@ -1,3 +1,5 @@
+// Subsystem: diagnostics (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareDebugAcceleration; teardown CleanupDebugAcceleration.
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup Awake; teardown —.
 using RoR2.Projectile;
 using UnityEngine;
 

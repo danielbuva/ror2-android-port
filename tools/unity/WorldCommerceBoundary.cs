@@ -1,3 +1,5 @@
+// Subsystem: commerce/pickups (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareWorldCommerce; teardown CleanupWorldCommerce.
 using System;
 using System.Collections.Generic;
 using System.Linq;

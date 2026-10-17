@@ -1,3 +1,5 @@
+// Subsystem: diagnostics (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup Init, Start, RunSelectedProbe; teardown —.
 using System;
 using System.Collections;
 using System.Collections.Generic;

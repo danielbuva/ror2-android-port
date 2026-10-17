@@ -1,3 +1,5 @@
+// Subsystem: world/director (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PreparePlayerDefeat, ObservePlayerDefeat; teardown CleanupPlayerDeathEffect.
 using System;
 using System.Collections;
 using System.Collections.Generic;

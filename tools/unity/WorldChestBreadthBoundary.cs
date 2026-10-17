@@ -1,3 +1,5 @@
+// Subsystem: commerce/pickups (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup WorldChestTypes, AddWorldChestBreadth; teardown —.
 using System;
 using System.Linq;
 using System.Collections.Generic;

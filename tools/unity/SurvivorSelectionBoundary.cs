@@ -1,3 +1,5 @@
+// Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup SelectedPlayerPrefab, OrdinarySurvivorChoices; teardown —.
 using System;
 using System.Collections.Generic;
 using System.Linq;

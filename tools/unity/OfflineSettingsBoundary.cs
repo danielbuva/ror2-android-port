@@ -1,3 +1,5 @@
+// Subsystem: input/camera (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup PrepareOfflineSettings, ShowOfflineSettings; teardown CleanupOfflineSettingsPause.
 using System;
 using System.IO;
 using Path=System.IO.Path;

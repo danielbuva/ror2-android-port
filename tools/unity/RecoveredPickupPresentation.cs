@@ -1,3 +1,5 @@
+// Subsystem: HUD/UI (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup Present; teardown —.
 using RoR2;
 using RoR2.UI;
 using TMPro;

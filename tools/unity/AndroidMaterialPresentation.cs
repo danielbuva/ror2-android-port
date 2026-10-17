@@ -1,3 +1,5 @@
+// Subsystem: shaders (game path). Owner map: docs/ARCHITECTURE.md#ownership.
+// Session phases: setup Begin, Apply; teardown Finish.
 using System;
 using System.Collections.Generic;
 using System.IO;
