@@ -10,12 +10,6 @@ Approved direction: Architecture C in ADR-001: exact-editor Android IL2CPP playe
 
 **Visual authority:** Reproduce the original PC build's authored appearance, including lighting, color, fog, outlines, material response, particles and gameplay readability. Prefer matching PC captures of the same stage/object/character and measured original scene/material data. A brighter or more polished Android image is not evidence of fidelity. Mark replacements as approximations, record unsupported features and keep parity open until comparative evidence supports it. Do not invent grading, atmosphere or lighting to hide missing source behavior. See [visual restoration](visual-restoration.md) for current comparisons and limits.
 
-## Immediate execution
-
-T01 → T02 → T05 → T06 → T07. T03/T04/T08/T10 are conditional support, not wholesale prerequisites. T01 is non-negotiable: `./dev doctor`, `./dev preflight`, `./dev test`, `./dev smoke --target vulkan`. Stop at the first failed prerequisite. Unknown input requires inventory/diff review and explicit local acceptance. Do not repeat unchanged failed Rewired builds or reconstructed Play Mode.
-
-T01 passed anew at work/runs/20260913T020341.114229Z-46130c90d7a1; screenshot visually verified and disposable package removed. Historical G2 remains utility execution/static geometry, not gameplay.
-
 ## Scientific contract
 
 Observation → hypothesis → smallest experiment → preflight → build/run → evidence → first-failure classification → state update → logical commit.
@@ -24,7 +18,7 @@ Before adding tooling, name the immediate experiment and concrete failure it pre
 
 Original installation is immutable. Proprietary binaries/assets/source, generated projects, middleware, raw logs and screenshots stay ignored under work/. Do not fabricate ownership, entitlement, authentication or service success. Keep the approved exact editor in environment/toolchain.json and its bundled toolchain (2021.3.45f2 for Steam build25475991; retain33f1 for old rollbacks), pinned MCP and canonical authorized-device adb workflow. Preserve local server/client/authority semantics while remote services are deferred.
 
-Each issue uses the full schema in execution-backlog.md. Preserve attempt evidence, update concise PORTING_STATE.md after meaningful progress, append failures and revisit conditions to PORTING_JOURNAL.md, update milestones/backlog at gates, review staged files and commit coherent changes. Split tasks that expand. A failed discriminating experiment can complete an issue without passing its milestone.
+Record results once, in the journal, and replace `PORTING_STATE.md` rather than appending to it; the documentation rules and definition of done are in `AGENTS.md`. Review staged files and commit coherent changes. Split tasks that expand. A failed discriminating experiment can complete an issue without passing its milestone.
 
 ## Ordered gates
 
@@ -33,26 +27,6 @@ L0–L2 baseline → L3 original managed execution → L4 first recovered scene 
 Supporting gates: L9 profile foundation before L5 and persistence alongside L8; L10 audio feasibility early and real audio when access/runtime permits; L11 minimum graphics with L4/L6/L7 and parity later; T10 before multi-GiB content. L12 sustained performance and L13 clean transformation follow a meaningful/stable run. See milestones.md for each objective, dependencies and acceptance.
 
 L4 audits required GUIDs, local fileIDs, scripts, subassets and catalogs; loadingbasic and a dependency-rich animated prefab must work on device. A scene container or editor hierarchy alone does not pass. L5 traces actual initialization; optional no-audio handling must cover observed lifecycle, callbacks and teardown, not report a fake initialized engine. Mandatory entitlement remains an independent gate. L6 introduces a complete original stage to the already proven character. L7 isolates enemy/damage, pickups/interactables, director and teleporter before normal stage completion. L8 requires normal victory/results, profile persistence and a second run before marking stable; no forced completion.
-
-## Independent constructive experiments (J64)
-
-Gate order controls formal acceptance, not every experiment. While J61 defers platform startup, bounded original simulation precursors may execute before L5 if their actual dependencies can be provided without faking or bypassing platform/ownership checks. Such a result must identify its diagnostic fixtures and cannot pass L5.5, replace its L5 prerequisite or unlock downstream gates. Do not fabricate Run, catalogs, master/body linkage or authority to claim a precursor pass. Retain original simulation/serialization semantics.
-
-Prefer new Android execution, rendering, simulation or persistence over another static audit. Static inspection is limited to bounding the chosen executable experiment. After one read-only review, another consecutive read-only task requires concrete reasons no constructive candidate can run. Do not prove all theoretical downstream lifecycles first; reuse existing harnesses and preserve first-failure discipline.
-
-J64 selects L11-a original skin material assignment and Vulkan rendering, defined in l11-commando-material-device-contract.md. Terra implements and runs it, then returns evidence to Astra. J61–J63 are accepted; no further expansion of those audits is requested.
-
-## L5.5 — original character simulation
-
-Prerequisite: L5. Use the smallest functioning recovered environment and original Commando prefab dependency closure. A diagnostic camera, simple collision surface, neutral lighting and replacement materials are allowed. Do not require a whole stage/director/full camera rig.
-
-Issue 1: spawn an original CharacterMaster/CharacterBody without input; assert linkage, components, local authority and stable original state-machine ticking.
-Issue 2: feed a recorded short sequence at the game's input boundary; assert original movement/stop, jump/landing where supported and corresponding state transitions. Never move the Transform directly to claim simulation success.
-Issue 3: inspect built-in handheld controls and bind them to the same proven boundary; verify manual movement and a state-changing action. Scripted input is not controller acceptance.
-
-Record master/body identity, authority, state, velocity/position, grounding and exceptions. Use existing build/install/run/capture; add a thin ./dev prototype --action character-simulation only when needed. Pass: three cold launches with ≥60 seconds stable simulation each, deterministic assertions, manual built-in input, structured and visual evidence, no unexplained required-component/authority failure.
-
-Failure order: prefab/reference → creation → authority → state initialization/tick → physics/movement → input. Roll back to L5 APK and payload. Sync only this closure after live storage checks. Complete stage, enemies, combat, full camera/audio/material parity are non-goals. Establish LAST_KNOWN_GOOD_SIMULATION and replan before L6.
 
 ## Acceptance defaults
 

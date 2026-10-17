@@ -1,6 +1,6 @@
 # Porting laboratory handoff
 
-Read `PORTING_STATE.md` first, then `environment/ENVIRONMENT_REPORT.md` and the relevant ADRs. Run `./dev doctor`. Read `docs/PORTING_JOURNAL.md` before repeating a failed experiment. This is a laboratory, not a working game port. Agent #3 should use the evidence to prepare a plan; do not infer game readiness from G2.
+Reading order: `PORTING_STATE.md` (current snapshot) → `docs/ARCHITECTURE.md` (pipeline, runtime, ownership) → the subsystem doc you need → search `docs/JOURNAL_INDEX.md` and read the matching `docs/PORTING_JOURNAL.md` entries before repeating any experiment. `environment/ENVIRONMENT_REPORT.md` and `docs/ADR-001-port-architecture.md` explain the toolchain and the chosen architecture. Run `./dev doctor`. This is a laboratory, not a finished port: never infer game readiness from a build, a host test or an assisted run.
 
 ## Non-negotiable boundaries
 
@@ -23,7 +23,29 @@ Keep offline single-player first unless evidence requires otherwise. Retain loca
 
 The real device is the final authority. Never declare success from compilation, a loaded bundle container, or an editor screenshot alone. Runtime diagnostics are instrumented only in the lab harness; actual RoR2 run/audio/network state remains to be integrated.
 
-After meaningful progress update concise PORTING_STATE.md, append failed experiments with evidence/revisit conditions to docs/PORTING_JOURNAL.md, and maintain milestones/backlog. Commit small logical changes after checking staged files for proprietary material. Avoid unrelated rewrites. Read ADR-001 before changing architecture.
+Commit small logical changes after checking staged files for proprietary material. Avoid unrelated rewrites. Read ADR-001 before changing architecture.
+
+## Documentation rules
+
+Each document has one job; record each result once and link to it elsewhere.
+
+- `docs/PORTING_JOURNAL.md`: the only place an experiment's full result is written (hypothesis, change, evidence paths, APK hash, first failure, revisit conditions). Append a `## J<n> — <title>` entry, then run `python3 scripts/journal-index.py` to refresh `docs/JOURNAL_INDEX.md`.
+- `PORTING_STATE.md`: a one-page snapshot. **Replace** its content after meaningful progress; never append history there. Keep "latest device-verified APK", "installed now" and "runtime source since that APK" as separate facts: Git history alone does not prove what is installed.
+- `docs/execution-backlog.md`: open work only. `docs/milestones.md`: gate definitions and current status. `docs/risk-register.md`: risks with links to evidence. None of them copies journal reports.
+- `docs/ARCHITECTURE.md`: update it when a file, owner or pipeline step is added, moved or retired.
+- Superseded material moves to `docs/history/`; nothing labelled "current" lives there.
+- Wrap prose at a readable width and put spaces between numbers and words.
+
+## Definition of done
+
+A feature is done when it has an understandable place in the current system, not only when its experiment passed:
+
+1. Device evidence is recorded once in the journal and the index is regenerated; `PORTING_STATE.md` is replaced, not appended.
+2. The behaviour lives in a named owner listed in `docs/ARCHITECTURE.md`, with its setup, teardown and state; shipped behaviour is not added as another case of the experiment switch in `MovementBatchProbe.RunSelectedProbe`.
+3. Any new file under `work/` that the build reads has a generator in the repo, or is listed in `docs/LOCAL_STATE.md` as required local state with its reason. No new code reads a timestamped run folder directly.
+4. A contract that can be checked off-device has a host test or an exact-editor fixture.
+5. A new `./dev` action states in its help or in ARCHITECTURE whether it is current or historical.
+6. No new build step edits authored source by exact-text replacement.
 
 Historical storage follows the user's J427 cleanup authorization: only J425 and the paused J323 Moon candidate remain ready-to-use rollbacks. Superseded source trees have adjacent `.retired.json` markers and hash-verified compressed content under ignored `work/retired-storage`; restore only a specifically needed tree using `scripts/compact-history.py`. Obsolete APK/payload outputs may require rebuilding. Preserve findings and receipts; do not treat the retired source store as disposable cache. See `docs/history-retention.md` before using an older checkpoint.
 
