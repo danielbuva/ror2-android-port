@@ -140,9 +140,13 @@ generated project): `AudioAssetProbe`, `CharacterMotorOrderProbe`,
 `LoadingSceneProbe`, `MetadataDispatchProbe`, `ReferenceIdentityProbe`, `RoR2SliceProbe`,
 `StartupSegmentProbe`, the three `RewiredTrial*` files, and `ControllerAddressLink.xml`
 and `TeleporterTimelineLink.xml`. `ReconstructionProbe.cs` is support: `./dev
-export-project` wires it into the exported project. Several current files are staged
-only because a copy already exists in the generated project (see
-[debt](#known-structural-debt) item 7).
+export-project` wires it into the exported project. Current whole-catalog C# source
+membership is the audited `recipe/runtime-sources.json` selection, read by `build.py`
+and staged by `whole_catalog.build_integration`. Existing Unity-owned `.meta` files
+are retained; source and metadata paths remain player-only payload exceptions.
+`build.py` declares the three generated visual maps separately and rejects missing
+authored sources or unlisted staged C# files. `test_runtime_sources.py` checks the
+selection and its independence from generated-project history.
 
 The current `scripts/lab` modules are `build`, `composition_migration`, `device`,
 `graphics`, `health`, `inventory`, `main`, `recovery` and `whole_catalog` (helpers such as
@@ -178,9 +182,12 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    patches were dormant and are deleted (J505, J506); the hooks are authored, and host tests
    check them without depending on whitespace. The remaining `.replace()` calls in
    `scripts/lab` remap GUIDs in generated Unity YAML or fill a Python-held editor template.
-7. **Build membership depends on history.** A `tools/unity` file is staged if it already
-   exists in the generated project (`build.py:78`, `whole_catalog.py:1090`); further file
-   lists live in `build.py`, `nova_bridge.py:68` and `scene_runtime.py:584`.
+7. **Build membership depends on history — resolved for whole-catalog builds.**
+   `recipe/runtime-sources.json` owns the 91 authored C# sources staged at
+   `Assets/LabLoadingScene`; `build.py` derives `WHOLE_PLAYER_INPUTS` from it without
+   probing `work/`. Generated sources remain explicit build-owned exceptions.
+   Historical lists in `nova_bridge.py:68` and `scene_runtime.py:584` retain their
+   existing behavior.
 8. **Experiment drivers outside Git.** Device gameplay runs are driven by about 89 untracked
    runner scripts in `work/experiments/whole-catalog/gameplay/`; `work/` also holds about 700
    loose one-off `.py` files.
@@ -200,5 +207,5 @@ Safe order:
 5. Rename `MovementBatchProbe` last, keeping `Resources.Load("MovementBatchProbe")` and the
    on-device file names or aliasing them.
 
-Recipe tracking (items 3–5) and a single runtime source manifest (item 7) can proceed in
-parallel with steps 2–5; they change the build, not the runtime.
+Recipe tracking (items 3–5) can proceed in parallel with steps 2–5; it changes the build,
+not the runtime. The single runtime source manifest (item 7) is in place (J509).

@@ -21,8 +21,10 @@ class BuildIdentityTests(unittest.TestCase):
             staged.parent.mkdir(parents=True)
             source.write_text('new offline award boundary')
             staged.write_text('previous offline award boundary')
+            write(root / 'recipe/runtime-sources.json', [source.name])
             write(work / 'whole-catalog-build.json', {'scope': 'test'})
-            with patch.object(build, 'ROOT', root), patch.object(build, 'WORK', work):
+            with patch.object(build, 'ROOT', root), patch.object(build, 'WORK', work), \
+                    patch.object(build, 'RECIPE', root / 'recipe'):
                 with self.assertRaisesRegex(RuntimeError, 'whole-catalog-code-build'):
                     build.validate_staged_runtime_sources(project)
                 staged.write_bytes(source.read_bytes())

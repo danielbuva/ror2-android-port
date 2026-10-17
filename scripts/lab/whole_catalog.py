@@ -1037,16 +1037,17 @@ def preservation_descriptor(roots):
 
 
 def build_integration(code_only=False):
-    from build import build, freeze_whole_payload, WHOLE_PLAYER_INPUTS
+    from build import build, freeze_whole_payload, validate_runtime_source_membership
     from animation_bindings import repair as repair_animation_bindings
     from body_visual_map import generate as generate_body_visual_map
     from common_assets_map import generate as generate_common_asset_map
+    project = WORK/'lab-project'
+    runtime_sources = validate_runtime_source_membership(project)
     out = ROOT/read(WORK/'experiments/whole-catalog/latest.json')['path']
     attempt = ROOT/read(out/'integration-latest.json')['path']
     if not read(attempt/'host-integration.json')['success']:
         raise RuntimeError('Whole roots must pass typed import before building')
     manifest = read(attempt/'manifest.json')
-    project = WORK/'lab-project'
     assembly_hash=sha(game()/'Risk of Rain 2_Data/Managed/RoR2.dll')
     decompile_key=digest(dict(input=assembly_hash,ilspy='11.0.0.9375',args='project-referencepath-csharp9-v2'))
     source=WORK/'decompiled/RoR2'/decompile_key[:16]/'RoR2/CharacterBody.cs'
@@ -1081,14 +1082,10 @@ def build_integration(code_only=False):
                 raise RuntimeError('Ambiguous stage pool serialized owner')
             pool_keys[guid]=row['primaryKey']
         write(project/'Assets/LabLoadingScene/Resources/WholeStageContexts.json',original_stage_contexts(export,stages,manifest['input_id'],pool_keys))
-    # A code-only build must compile every authored runtime source already in
-    # the project. The former hand-maintained list omitted DOT and debug-input
-    # fixes while still producing a successful but stale APK.
+    # Stage the tracked runtime selection; keep existing Unity-owned .meta files.
     runtime = project/'Assets/LabLoadingScene'
-    copy_catalog_asset(ROOT/'tools/unity/GoldshoresBoundary.cs', runtime/'GoldshoresBoundary.cs')
-    for source_file in sorted((ROOT/'tools/unity').glob('*.cs')):
-        if (runtime/source_file.name).is_file() or 'Assets/LabLoadingScene/'+source_file.name in WHOLE_PLAYER_INPUTS:
-            copy_catalog_asset(source_file, runtime/source_file.name)
+    for filename in runtime_sources:
+        copy_catalog_asset(ROOT/'tools/unity'/filename, runtime/filename)
     for filename in ['AndroidProgressionHost.cs','AndroidDiscoveryHost.cs']:
         copy_catalog_asset(ROOT/'tools/catalog'/filename, project/'Assets/Editor'/filename)
     # Bundle-only serialized components and reflected location types are invisible
@@ -1121,11 +1118,9 @@ def build_integration(code_only=False):
                missingSourcePreloadKeys=missing_preloads))
     write(WORK/'whole-catalog-build.json', dict(manifest=str(attempt/'manifest.json')))
     if code_only:
-        for rel in sorted(WHOLE_PLAYER_INPUTS):
-            if not rel.endswith('.cs'):
-                continue
-            source=ROOT/'tools/unity'/Path(rel).name
-            if source.is_file() and sha(source)!=sha(project/rel):
+        for filename in runtime_sources:
+            rel='Assets/LabLoadingScene/'+filename
+            if sha(ROOT/'tools/unity'/filename)!=sha(project/rel):
                 raise RuntimeError('Code-only source was not staged: '+rel)
     previous = attempt/'build.json'
     if previous.exists():

@@ -4841,3 +4841,40 @@ GUIDs); no game content. Its six readers now use `RECIPE` and keep their `input_
 audit record. Not rebuilt: the bytes the build reads are unchanged. Composition B1 and the
 migration-chain blockers B3–B8 remain; they need the migration chain replaced (plan step 4)
 rather than published.
+
+## J509 — Make whole-catalog runtime source membership explicit
+
+Hypothesis: replacing generated-project existence rules with an audited authored-source
+manifest preserves current whole-catalog membership while making future builds independent
+of staging history. This is build-tooling cleanup; no new runtime mechanism or game-derived
+recipe is introduced.
+
+Change: `recipe/runtime-sources.json` lists 91 sorted `tools/unity` C# filenames, selected by
+evaluating the previous `WHOLE_PLAYER_INPUTS` and copy-loop rules against the authorized
+shared generated project. Only filenames and existence were inspected there. `build.py`
+derives player-only inputs from the manifest; `whole_catalog.build_integration` copies the
+same selection. Existing Unity-owned `.meta` files stay in place and retain their payload
+exemptions. The three generated visual maps remain explicit build-owned exceptions.
+Missing manifest sources and unlisted staged C# files now fail clearly. Historical source
+lists in `nova_bridge.py` and `scene_runtime.py` are unchanged. The provenance/privacy audit
+is in `recipe/README.md`; ownership is in `ARCHITECTURE.md`, item 7.
+
+Evidence: ignored `.local/old-whole-player-inputs.py` preserves the previous membership
+expressions; `.local/check-runtime-sources.py` computes both old sets and compares them with
+the new readers. `WHOLE_PLAYER_INPUTS`: 196 old, 196 manifest-derived; copy-loop sources:
+91 old, 91 manifest-derived. Both differences are empty. All 94 staged C# paths have a
+manifest or generated owner; no membership decision is unresolved. No generated contents
+were read or copied, and the shared project was not modified.
+
+Validation: 178 host tests pass on the workstation; new contracts cover a sorted, unique,
+existing manifest, independence from populated versus empty `WORK`, metadata exemptions
+and missing/unlisted source errors. Claude re-ran the equivalence independently against
+`main`'s rules (196/196 and 91/91, identical; the 16 unlisted `tools/unity` files are the
+historical probes and two editor tools). An exact-editor code-only build then succeeded
+with zero errors (APK `5aa6f75173f98da2809dabb453c9f49b91466d178af6da7e909f6affb68f528b`).
+Of its 574 entries only the signature files, `unity_app_guid` and `globalgamemanagers` differ
+from the device-verified J506 APK `cf26485e…`; `libil2cpp.so`, metadata, scenes and resources
+are byte-identical. No device run was needed and J506 stays installed;
+`work/config/current-build.json` now names the equivalent J509 build. Implemented by Codex
+(gpt-6.1-sol) and reviewed by Claude. Revisit when adding or removing a runtime source or a
+build-generated source.

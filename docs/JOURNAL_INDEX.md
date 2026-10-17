@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J509](PORTING_JOURNAL.md#j509--make-whole-catalog-runtime-source-membership-explicit) | 2026-10-17 | Make whole-catalog runtime source membership explicit | Hypothesis: replacing generated-project existence rules with an audited authored-source manifest preserves current whole-catalog membership while making future… |
 | [J508](PORTING_JOURNAL.md#j508--track-the-first-public-build-recipe) | 2026-10-17 | Track the first public build recipe | Policy (user decision, 2026-10-17): the lab should be reproducible from its public source, the documented toolchain and a legitimate installation, without the… |
 | [J507](PORTING_JOURNAL.md#j507--track-the-standard-lakes-check-as-dev-check-baseline) | 2026-10-17 | Track the standard Lakes check as `./dev check-baseline` | The J505 runner moved into `scripts/lab/baseline.py` as `./dev check-baseline`. |
 | [J506](PORTING_JOURNAL.md#j506--fresh-editor-builds-lost-bundle-rooted-assemblies-preserve-them-explicitly) | 2026-10-16 | Fresh-editor builds lost bundle-rooted assemblies; preserve them explicitly | Hypothesis: the J505 stripping regression comes from the linker command, not from the descriptors. |

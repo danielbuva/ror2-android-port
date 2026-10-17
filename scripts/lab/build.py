@@ -64,20 +64,36 @@ def editor(target='lab',action='inspect'):
  if action=='minimal-build':preflight()
  return run([ROOT/'.local/tools/unity-mcp/Server/.venv/bin/python',ROOT/'scripts/lab/editor.py',target,action],timeout=200).stdout.decode()
 
-WHOLE_PLAYER_INPUTS={'Assets/LabDiagnostics.cs','Assets/Lab.unity','Assets/Lab.unity.meta',
- 'Assets/LabLoadingScene/WholeCatalogLoader.cs','Assets/LabLoadingScene/WholeCatalogBootstrap.cs',
- 'Assets/LabLoadingScene/BodyCatalogBoundary.cs','Assets/LabLoadingScene/WholeCatalogComposed.cs',
- 'Assets/LabLoadingScene/WholeCatalogComposed.cs.meta','Assets/LabLoadingScene/WholeCatalogPreservation.meta',
- 'Assets/LabLoadingScene/WholeCatalogPreservation/link.xml','Assets/LabLoadingScene/WholeCatalogPreservation/link.xml.meta'}
-# These sources/metadata are APK-only consumers of unchanged converted assets.
-WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+name+suffix
- for name in ['AutomaticDirectorBoundary.cs','AutomaticSpawnBoundary.cs','StageCombatDeckBoundary.cs',
-              'EnemySpineBoundary.cs','StageGeometryBoundary.cs','OfflineRunSeedBoundary.cs','MoonMissionBoundary.cs','GoldshoresBoundary.cs','WholePopulationBoundary.cs',
-              'Resources/WholeStageContexts.json','OriginalBodyVisualMap.cs','OriginalHealthVisualMap.cs','OriginalGlobalCommonAssetMap.cs','OriginalBodyVisualBoundary.cs','OriginalGlobalCommonAssetsBoundary.cs','RecoveredHudPresentation.cs','EnemyRewardBoundary.cs','IntegratedStageBoundary.cs','RunClockBoundary.cs','TeleporterWorldBoundary.cs','WholeInteractableBoundary.cs','MovementBatchProbe.cs','WorldCommerceBoundary.cs','WorldProcContentBoundary.cs','IntegratedWorldBoundary.cs','RecoveredPickupPresentation.cs','RecoveredHudFeedback.cs','IntegratedResultsBoundary.cs','WorldEquipmentBoundary.cs','WorldFlightEquipmentBoundary.cs','WorldHealingItemsBoundary.cs','WorldLegendaryItemsBoundary.cs','CombatSpineBoundary.cs','StageBossContentBoundary.cs','WorldItemBehaviorBoundary.cs','AutomaticModelBoundary.cs','DirectorActorBoundary.cs','AndroidPresentationCamera.cs','AndroidOfflineProfile.cs','AndroidProfileBoundary.cs','AndroidProgressionBoundary.cs','NovaInputBoundary.cs','NovaInputBridge.cs','NovaDiagnosticDisplay.cs','SurvivorSelectionBoundary.cs','SpawnStateBoundary.cs','WorldItemDisplayBoundary.cs','OfflineApplicationBoundary.cs','OfflineLoadoutBoundary.cs','OfflineSettingsBoundary.cs','SessionResourceBoundary.cs'] for suffix in ['', '.meta'])
-WHOLE_PLAYER_INPUTS.update('Assets/LabLoadingScene/'+source_file.name+suffix
- for source_file in (ROOT/'tools/unity').glob('*.cs')
- if (WORK/'lab-project/Assets/LabLoadingScene'/source_file.name).is_file()
- for suffix in ('', '.meta'))
+WHOLE_GENERATED_RUNTIME_SOURCES={'OriginalBodyVisualMap.cs','OriginalHealthVisualMap.cs','OriginalGlobalCommonAssetMap.cs'}
+
+def runtime_sources():
+ names=read(RECIPE/'runtime-sources.json')
+ if not isinstance(names,list) or any(not isinstance(name,str) or Path(name).name!=name or not name.endswith('.cs') for name in names):
+  raise RuntimeError('recipe/runtime-sources.json must list tools/unity C# filenames')
+ if names!=sorted(set(names)):raise RuntimeError('recipe/runtime-sources.json must be sorted and unique')
+ missing=[name for name in names if not (ROOT/'tools/unity'/name).is_file()]
+ if missing:raise RuntimeError('Runtime manifest sources missing from tools/unity: '+', '.join(missing))
+ return names
+
+def whole_player_inputs():
+ inputs={'Assets/LabDiagnostics.cs','Assets/Lab.unity','Assets/Lab.unity.meta',
+  'Assets/LabLoadingScene/WholeCatalogPreservation.meta','Assets/LabLoadingScene/WholeCatalogPreservation/link.xml',
+  'Assets/LabLoadingScene/WholeCatalogPreservation/link.xml.meta'}
+ # APK-only consumers of unchanged converted assets; retain Unity-owned metadata.
+ inputs.update('Assets/LabLoadingScene/'+name+suffix
+  for name in runtime_sources()+sorted(WHOLE_GENERATED_RUNTIME_SOURCES)+['Resources/WholeStageContexts.json']
+  for suffix in ('', '.meta'))
+ return inputs
+
+WHOLE_PLAYER_INPUTS=whole_player_inputs()
+
+def validate_runtime_source_membership(project):
+ names=runtime_sources();known=set(names)|WHOLE_GENERATED_RUNTIME_SOURCES
+ stage=Path(project)/'Assets/LabLoadingScene'
+ unexpected=sorted(str(source.relative_to(stage)) for source in stage.rglob('*.cs')
+                   if source.is_file() and str(source.relative_to(stage)) not in known)
+ if unexpected:raise RuntimeError('Unlisted whole-catalog C# sources in Assets/LabLoadingScene: '+', '.join(unexpected)+'; review recipe/runtime-sources.json or declare their build generator')
+ return names
 
 def whole_payload_inputs(project):
  return {str(p.relative_to(project)):sha(p) for folder in ['Assets','Packages','ProjectSettings'] for p in (project/folder).rglob('*') if p.is_file() and str(p.relative_to(project)) not in WHOLE_PLAYER_INPUTS and not str(p.relative_to(project)).startswith('Assets/Editor/')}
@@ -100,8 +116,8 @@ def validate_whole_payload_reuse(project):
 def validate_staged_runtime_sources(project):
  if not (WORK/'whole-catalog-build.json').exists():return
  stage=Path(project)/'Assets/LabLoadingScene'
- stale=[source.name for source in sorted((ROOT/'tools/unity').glob('*.cs'))
-        if (stage/source.name).is_file() and source.read_bytes()!=(stage/source.name).read_bytes()]
+ stale=[name for name in validate_runtime_source_membership(project)
+        if not (stage/name).is_file() or (ROOT/'tools/unity'/name).read_bytes()!=(stage/name).read_bytes()]
  if stale:raise RuntimeError('Whole-catalog runtime sources are not staged: '+', '.join(stale[:12])+'; run ./dev prototype --action whole-catalog-code-build')
 
 def build_cache_key(project,api):
