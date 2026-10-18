@@ -8,8 +8,10 @@ source-membership half is done (`recipe/runtime-sources.json`, J509); commit 1, 
 equivalence harness, is done (J510); commit 2's metadata and package half is done (J547;
 ProjectSettings stay inherited); commit 3's runtime/content recipes and build-entry
 generators are implemented (J549/J550 and the second-half generation change;
-host verification only for generation). Direct composition and commits 4–9 remain
-open. Line numbers drift; re-check before
+host verification only for generation). Commit 4's first cohort (28 SurfaceDefs) is
+implemented with host-only byte
+equivalence evidence in J552; the remaining cohorts, direct composition and
+commits 5–9 remain open. Line numbers drift; re-check before
 use.
 
 Read-only analysis, 2026-10-17. Tracked source, policy, architecture, LOCAL_STATE,

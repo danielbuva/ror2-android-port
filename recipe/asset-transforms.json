@@ -1,0 +1,762 @@
+{
+  "schema_version": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "assets": [
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/Beetle/sdBeetleWorker.asset",
+      "source_sha256": "c1b361fe7ffa67a2b576628d31efc7194b2288b1c03dfe1603dc356d922e749c",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/Beetle/sdBeetleWorker.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleGuard/sdBeetleGuard.asset",
+      "source_sha256": "e7626c50b9b2178bd37e9aeefbf19aba0a0d9b5124f04c21117bc3113752637f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleGuard/sdBeetleGuard.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleQueen/sdBeetleQueen.asset",
+      "source_sha256": "6885d5cd9b8c59606c6e4a115550829504be3a89f642e2a94ed90cce0732c900",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleQueen/sdBeetleQueen.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Bell/sdBell.asset",
+      "source_sha256": "40df1beb245d59b802803cd72f3c2d7b21b892645602be0f0bab839d0c32ab7a",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Bell/sdBell.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Bison/sdBison.asset",
+      "source_sha256": "3722e249bc425023ca3425cd2c7e9a4589cd722f487bc577ab2099056adec87d",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Bison/sdBison.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Brother/sdBrother.asset",
+      "source_sha256": "756044db1446a4d04491aa271244d31ca0ce4362cad58d5f4e17bfbba8dbbfe7",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Brother/sdBrother.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBoss/sdClayboss.asset",
+      "source_sha256": "4515a88b6c72b5e6eec47ac01852203fcfb4c9c4ce8c64efb8ff14fddd5ee6cd",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBoss/sdClayboss.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Golem/sdGolem.asset",
+      "source_sha256": "b1f4c65cbb8d0a494732460f2f5c943f1088146f9d178c481d632e2e3c078736",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Golem/sdGolem.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Grandparent/sdGrandparent.asset",
+      "source_sha256": "64af494fdb15aa2e5a6465a993e2244c9f697e26cd4bd7f1bc0839411986bc41",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Grandparent/sdGrandparent.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/GreaterWisp/sdGreaterWisp.asset",
+      "source_sha256": "9cf532dfa6129b9c20eea6eae7cbf97369010c7ab9c7aa85bcb173c46ebac06c",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/GreaterWisp/sdGreaterWisp.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/HermitCrab/sdHermitCrab.asset",
+      "source_sha256": "64b6b8429871dd7e8dc6afbf77e8a9d7ba7034413cc7085e3fe9bb5781bb227a",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/HermitCrab/sdHermitCrab.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Imp/sdImp.asset",
+      "source_sha256": "6aa7225d3f57132e20a21d6f667896a28ea52bf106a1c740c05622f6a1391e5a",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Imp/sdImp.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ImpBoss/sdImpBoss.asset",
+      "source_sha256": "7870fcc9266fe80c65723c69428831ed3eb28fc53958c25bbb441ef11103d5e1",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ImpBoss/sdImpBoss.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Lemurian/sdLemurian.asset",
+      "source_sha256": "60a49c6ddf7122d18a8e1edd16fc641dfdf7718c28c4d237ca95455cf1b3a23f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Lemurian/sdLemurian.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LemurianBruiser/sdLemurianBruiser.asset",
+      "source_sha256": "e03f7137880ead84c7766c58e98cada92553ce66b48cbaf8a9a436f06ce152d2",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LemurianBruiser/sdLemurianBruiser.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LunarWisp/sdLunarWisp.asset",
+      "source_sha256": "17d17be46689629f9aac418fff6111b1a6cc3189a3647ecbe6e3e72dc32af1ee",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LunarWisp/sdLunarWisp.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/MiniMushroom/sdMinimushroom.asset",
+      "source_sha256": "a98c0ff5f36215ed962a0bc429180dbcdb27daade8155b005ffbb9657fe965bd",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/MiniMushroom/sdMinimushroom.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Nullifier/sdNullifier.asset",
+      "source_sha256": "ad562cc4f6a8a2fa6341cea2c8098aec634ee09ae2f799867e3ea571c81b920f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Nullifier/sdNullifier.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/RoboBallBoss/sdRoboBall.asset",
+      "source_sha256": "667f72e7e846dc6d1859900ae7f812e47bcad22e8832b40e8daf7f1ab9aa689b",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/sdRoboBall.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Vagrant/sdVagrant.asset",
+      "source_sha256": "7d996c8bc90eda5ed248817ed07e776fe69fe8808ed6ba42e3759bf9dfe33155",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Vagrant/sdVagrant.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Wisp/sdWisp.asset",
+      "source_sha256": "44bc09b06755274b47320a959a36fc9b315e8ddfcfd315973b9b5f87855f0af6",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Wisp/sdWisp.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/SurfaceDefs/sdMetal.asset",
+      "source_sha256": "67eda58498a181f057aaed8d97d3cc0ec5584a4330490b2680db5b18be038430",
+      "output": "Assets/WholeGame/RoR2/Base/Common/SurfaceDefs/sdMetal.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/SurfaceDefs/sdStone.asset",
+      "source_sha256": "fb46e4b495633cdd7eabcaa438d3ba70d8ca4d87891b5b8e490a45ab30247ffa",
+      "output": "Assets/WholeGame/RoR2/Base/Common/SurfaceDefs/sdStone.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/SurfaceDefs/sdWater.asset",
+      "source_sha256": "9ed189d4c84888e69132dba663fc4cc6b15af5130a75edcef178cb635808693b",
+      "output": "Assets/WholeGame/RoR2/Base/Common/SurfaceDefs/sdWater.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/SurfaceDefs/sdWood.asset",
+      "source_sha256": "c0834eac8ad19d819655b5a55d9a5f4d7e05cab64174b7b9fbc02724d20af70d",
+      "output": "Assets/WholeGame/RoR2/Base/Common/SurfaceDefs/sdWood.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Characters/VoidBarnacle/sdVoidBarnacle.asset",
+      "source_sha256": "ee6427e622f13214b77d33bce85d87ff243a2fb03b8101961c5b72bbe00edc25",
+      "output": "Assets/WholeGame/RoR2/DLC1/Characters/VoidBarnacle/sdVoidBarnacle.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Characters/VoidJailer/sdVoidJailer.asset",
+      "source_sha256": "b3f88a2c11e9fc2ca42c53e93c3a2e7d1a7e9207df83b0d8b041b2014db8d80b",
+      "output": "Assets/WholeGame/RoR2/DLC1/Characters/VoidJailer/sdVoidJailer.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Characters/VoidMegaCrab/sdVoidMegaCrab.asset",
+      "source_sha256": "ba70869422b1ad07bf3ba18c1ce1a6399eb29b1dc2ef7e6b4fd90301f58d04bb",
+      "output": "Assets/WholeGame/RoR2/DLC1/Characters/VoidMegaCrab/sdVoidMegaCrab.asset",
+      "operations": [
+        {
+          "op": "clear_reference",
+          "field": "impactEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "clear_reference",
+          "field": "footstepEffectPrefab",
+          "value": null
+        },
+        {
+          "op": "set_field",
+          "field": "impactSoundString",
+          "value": ""
+        },
+        {
+          "op": "set_field",
+          "field": "materialSwitchString",
+          "value": ""
+        }
+      ]
+    }
+  ]
+}

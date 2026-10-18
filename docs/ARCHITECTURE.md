@@ -50,6 +50,20 @@ Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` â
 `integration-latest.json` â†’ build, device and composed receipts.
 `checkpoints/LAST_OBSERVED_WHOLE_CATALOG.json` pins the accepted scope.
 
+SurfaceDef transformations (`scripts/lab/asset_transforms.py`, current):
+`recipe/asset-transforms.json` selects 28 accepted-export assets, source hashes and
+ordered field-clearing operations. The generator returns text and export-derived
+metadata without writes; `integrated_objective` shares its field operation logic.
+`composition_migration.stage` prepares all 28 pairs before project writes, checks
+the existing provenance/output/conflict gates and metadata equality, then writes
+those pairs instead of copying preview assets. Other preview assets retain their
+existing path. Historical preview/previous hashes remain validation dependencies.
+There is no persistent generator state or teardown. The current read-only action
+`./dev prototype --action asset-transforms-check` compares all generated asset/meta
+bytes with `work/lab-project`, lists differences and exits nonzero on drift.
+This cohort's host equivalence evidence is recorded in J552; full composition and
+device acceptance remain separate gates.
+
 ## Android runtime
 
 The shipped game runs inside the lab harness `PortSession`
@@ -221,7 +235,8 @@ The current `scripts/lab` modules are `build`, `composition_migration`, `device`
 `common` count as support); the
 current `prototype` actions are the ten in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands)
-plus `project-manifest-capture` and `project-manifest-compare`.
+plus `project-manifest-capture`, `project-manifest-compare` and
+`asset-transforms-check` (owned by `asset_transforms`).
 
 ## Known structural debt
 

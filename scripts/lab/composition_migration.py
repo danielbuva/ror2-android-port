@@ -1,6 +1,7 @@
 """Stage an input-reviewed composition rebase without copying a Unity snapshot."""
 
 from common import *
+import hashlib
 import re
 import shutil
 
@@ -352,6 +353,10 @@ def stage():
         return text
 
     # Verify the entire patch plan before the first project write.
+    from asset_transforms import generate_asset, load_recipe
+
+    transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
+    transformed = {}
     for row in plan["rows"]:
         output = evidence / "preview" / row["target"]
         if (
@@ -363,6 +368,21 @@ def stage():
         target = project / row["target"]
         if target.exists() and sha(target) not in {row["target_before_sha256"], row["output_sha"]}:
             raise RuntimeError("Current project changed after the rebase: " + row["target"])
+        if row["target"] in transforms:
+            asset = transforms[row["target"]]
+            if asset["source"] != row["source"] or asset["source_sha256"] != row["current_source_sha256"]:
+                raise RuntimeError("Asset transform disagrees with composition provenance: " + row["target"])
+            data, meta_data = generate_asset(export, asset, guids[row["source"]])
+            if hashlib.sha256(data).hexdigest() != row["output_sha"]:
+                raise RuntimeError("Asset transform differs from composition oracle: " + row["target"])
+            meta = Path(str(target) + ".meta")
+            if meta.exists() and meta.read_bytes() != meta_data:
+                raise RuntimeError("Current metadata differs from export importer: " + row["target"])
+            if row["target"] in transformed:
+                raise RuntimeError("Duplicate transformed composition target")
+            transformed[row["target"]] = (data, meta_data)
+    if transformed.keys() != transforms.keys():
+        raise RuntimeError("Composition plan omits recipe asset transforms")
     staged = []
     for row in generated:
         source = previous / row["old"]
@@ -375,6 +395,12 @@ def stage():
     for row in plan["rows"]:
         target = project / row["target"]
         target.parent.mkdir(parents=True, exist_ok=True)
+        if row["target"] in transformed:
+            data, meta_data = transformed[row["target"]]
+            target.write_bytes(data)
+            Path(str(target) + ".meta").write_bytes(meta_data)
+            staged.append(row["target"])
+            continue
         shutil.copy2(evidence / "preview" / row["target"], target)
         meta = Path(str(target) + ".meta")
         if not meta.exists():

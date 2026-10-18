@@ -651,8 +651,10 @@ def sanitize_optional_content(stage, out, content_root=None):
                 silent_projectiles.append(object_id)
         surface = all(x in text for x in ["  impactEffectPrefab:", "  footstepEffectPrefab:", "  isSlippery:", "  impactSoundString:"])
         if surface:
-            generated = re.sub(r"^(  (?:impactEffectPrefab|footstepEffectPrefab):).*$", r"\1 {fileID: 0}", generated, flags=re.M)
-            generated = re.sub(r"^(  (?:impactSoundString|materialSwitchString):).*$", r"\1", generated, flags=re.M)
+            from asset_transforms import SURFACE_OPERATIONS, apply_surface_operation
+
+            for operation in SURFACE_OPERATIONS:
+                generated = apply_surface_operation(generated, operation, strict=False)
         if generated != text:
             src.write_text(generated)
             changes.append(

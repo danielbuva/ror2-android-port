@@ -5446,3 +5446,20 @@ recipes, and the payload sync transferred nothing (the bundles are identical).
 `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T051043.105146Z`) and
 `--stage-exit` passed (`work/experiments/baseline/20261018T051411.729949Z`). App stopped; OLED
 asleep. The runtime config and content recipe no longer depend on the previous project.
+
+## J552 — Regenerate the first adapted-asset cohort from the export
+
+Migration-removal plan commit 4, first cohort (implemented by Codex at medium reasoning, reviewed
+by Claude). Codex's read-only inventory of the 451 assets the migration adapts found 38 with field
+changes only, 178 structural, 229 new or generated and 6 identical. The 28 SurfaceDefs come first:
+`recipe/asset-transforms.json` records, per asset, the export source and its hash, the output path
+and four field operations (clear `impactEffectPrefab` and `footstepEffectPrefab`, empty
+`impactSoundString` and `materialSwitchString`), identifiers and field names only.
+`scripts/lab/asset_transforms.py` applies them, and `composition_migration.stage` now produces
+these 28 assets from the export instead of copying them from the private preview tree, keeping its
+hash and conflict checks. The shared sanitizer reuses the same operations; its only textual
+difference from the old regexes concerns CRLF line endings, and no export `.asset` file contains
+one. The new current action `asset-transforms-check` compares the generator's output with the
+generated project without writing: 28/28 assets and `.meta` files identical (run by Codex and again
+by Claude). 473 host tests pass. Host tooling only; the composition stage itself was not re-run and
+no APK changed. The remaining 423 adapted assets still come from the preview tree.

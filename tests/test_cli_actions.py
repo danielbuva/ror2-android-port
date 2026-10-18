@@ -122,6 +122,7 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
+                "asset-transforms-check",
                 "composition-update-stage",
                 "composition-update-dependencies",
                 "whole-catalog-prepare",

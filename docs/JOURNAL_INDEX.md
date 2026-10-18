@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J552](PORTING_JOURNAL.md#j552--regenerate-the-first-adapted-asset-cohort-from-the-export) | 2026-10-17 | Regenerate the first adapted-asset cohort from the export | Migration-removal plan commit 4, first cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J551](PORTING_JOURNAL.md#j551--generate-the-runtime-config-and-content-recipe-from-recipe) | 2026-10-17 | Generate the runtime config and content recipe from recipe/ | Migration-removal plan commit 3, second half (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J550](PORTING_JOURNAL.md#j550--track-the-content-recipe-as-a-public-recipe) | 2026-10-17 | Track the content recipe as a public recipe | The content recipe, under the J548 policy (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J549](PORTING_JOURNAL.md#j549--track-the-runtime-config-as-a-public-recipe) | 2026-10-17 | Track the runtime config as a public recipe | Migration-removal plan commit 3, first half (implemented by Codex at medium reasoning, reviewed by Claude), under the J548 policy. |

@@ -1,4 +1,5 @@
 {
+  "asset-transforms-check": {"calls": [{"module": "asset_transforms", "function": "check_action", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "project-manifest-capture": {"calls": [{"module": "project_manifest", "function": "capture", "args": ["/fixture-root/work/lab-project"], "kwargs": {}}], "effects": [["write", "/fixture-root/work/receipts/project-manifest/fixture-time.json", {"equal": true, "synthetic": "project_manifest.capture"}]], "stdout": "/fixture-root/work/receipts/project-manifest/fixture-time.json\n", "exit": null},
   "project-manifest-compare": {"calls": [{"module": "project_manifest", "function": "compare", "args": [{"receipt": "a.json"}, {"receipt": "b.json"}], "kwargs": {}}], "effects": [["read", "a.json"], ["read", "b.json"]], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"project_manifest.compare\"\n}\n", "exit": 0},
   "input-update-check": {"calls": [{"module": "input_migration", "function": "check_update", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},

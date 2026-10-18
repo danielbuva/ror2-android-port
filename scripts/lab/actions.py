@@ -79,6 +79,14 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "asset-transforms-check",
+        "asset_transforms",
+        "check_action",
+        {},
+        "current",
+        "Compare generated SurfaceDef asset/meta bytes with the project; read-only.",
+    ),
+    Action(
         "project-manifest-capture", "project_manifest", "capture", {}, "current", "Capture generated-project file hashes and external inputs.", handler=_capture
     ),
     Action(

@@ -84,6 +84,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action asset-transforms-check` | Compare generated SurfaceDef asset/meta bytes with the project; read-only. |
 | `./dev prototype --action project-manifest-capture` | Capture generated-project file hashes and external inputs. |
 | `./dev prototype --action project-manifest-compare` | Compare two receipts with --compare A B; exit 1 on differences. |
 | `./dev prototype --action composition-update-stage` | Stage the current project composition. |
