@@ -757,6 +757,346 @@
           "value": ""
         }
       ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Brother/FX/BrotherSwing1_ Kickup.prefab",
+      "source_sha256": "52ce7c3f1574c9b25e7c13ca902bd79f73ff9d764e1835014640caa0fe20e99b",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Brother/FX/BrotherSwing1_ Kickup.prefab",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/UI/TitleMenu.prefab",
+      "source_sha256": "ff2e9771a04411b1dc85d97890827f8d1d44534c05044efc6ab88eaa80ed1143",
+      "output": "Assets/WholeGame/RoR2/Base/UI/TitleMenu.prefab",
+      "operations": [
+        {
+          "op": "remap_references",
+          "recipe": "hud-ui-remaps.json",
+          "recipe_sha256": "dce1db3d0e90726937b78255660fd8ee2f52d531e0309481acbab13168ba9edc"
+        },
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "TitleMenu"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/UI/ItemIcon.prefab",
+      "source_sha256": "fe3ca08238249d1f72bd8c790f2df569ae89c050d5ee3d248b73997ae04201f7",
+      "output": "Assets/WholeGame/RoR2/Base/UI/ItemIcon.prefab",
+      "operations": [
+        {
+          "op": "remap_references",
+          "recipe": "hud-ui-remaps.json",
+          "recipe_sha256": "dce1db3d0e90726937b78255660fd8ee2f52d531e0309481acbab13168ba9edc"
+        },
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "ItemIcon"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleQueen/BeetleQueenMaster.prefab",
+      "source_sha256": "97be629962c8f115bbc27f50bab348166cd31468b007bf959cad0760a45bf6a9",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleQueen/BeetleQueenMaster.prefab",
+      "operations": [
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "BeetleQueenMaster"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleGuard/BeetleGuardBody.prefab",
+      "source_sha256": "2cd113d9be2f677a008c1ec78e27ba5f2d28c3c417c49d01f2a0685581242a5a",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleGuard/BeetleGuardBody.prefab",
+      "operations": [
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "BeetleGuardBody"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleGuard/BeetleGuardMaster.prefab",
+      "source_sha256": "aeac87b8eb9d3bdf6aa2248939202db70bf3d0d0f7cac4f282a2fb4a09eb6e6f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleGuard/BeetleGuardMaster.prefab",
+      "operations": [
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "BeetleGuardMaster"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/GameModes/ClassicRun/ClassicRunInfoHudPanel.prefab",
+      "source_sha256": "708240d96baeb5a6e891a2684c879386192f7774580a198d078de02ec6ddf9a4",
+      "output": "Assets/WholeGame/RoR2/Base/GameModes/ClassicRun/ClassicRunInfoHudPanel.prefab",
+      "operations": [
+        {
+          "op": "remap_references",
+          "recipe": "hud-ui-remaps.json",
+          "recipe_sha256": "dce1db3d0e90726937b78255660fd8ee2f52d531e0309481acbab13168ba9edc"
+        },
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "ClassicRunInfoHudPanel"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/UI/HUD/HUDSimple.prefab",
+      "source_sha256": "653163efc231df11f2ed2ec160b9c9ceb493d061bc592a17c5d3cec8cd532ae6",
+      "output": "Assets/WholeGame/RoR2/Base/UI/HUD/HUDSimple.prefab",
+      "operations": [
+        {
+          "op": "remap_references",
+          "recipe": "hud-ui-remaps.json",
+          "recipe_sha256": "dce1db3d0e90726937b78255660fd8ee2f52d531e0309481acbab13168ba9edc"
+        },
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "HUDSimple"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Core/PlayerMaster.prefab",
+      "source_sha256": "433db7d5c0e8aa2c6acd7723433320f8567de1ffd625b1bd1e4b57be189f5c36",
+      "output": "Assets/WholeGame/RoR2/Base/Core/PlayerMaster.prefab",
+      "operations": [
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "PlayerMaster"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Titan/Titan/Skills/LaserTitan.prefab",
+      "source_sha256": "cc7d80a704fc8e454dbbf767ccd79d8042ea06733d3019c829c396fd093390e1",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Titan/Titan/Skills/LaserTitan.prefab",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Titan/Titan/Skills/TitanRechargeRocksEffect.prefab",
+      "source_sha256": "9f5ded2456aed46532b354c445965dacf6a9728507c165332af348b0145489e7",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Titan/Titan/Skills/TitanRechargeRocksEffect.prefab",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/MiniMushroom/Skills/SporeGrenadeGhost.prefab",
+      "source_sha256": "6ebd7b0584b572e7cd718594172bb11b93c810d1eb3657df97c8487642134b92",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/MiniMushroom/Skills/SporeGrenadeGhost.prefab",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/Beetle/BeetleBody.prefab",
+      "source_sha256": "293ae563db69b000488063747586cf965b0cfa970a99bfa1454a17e968b0a983",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/Beetle/BeetleBody.prefab",
+      "operations": [
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "BeetleBody"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/Beetle/BeetleMaster.prefab",
+      "source_sha256": "ee22e0adec63a22981467302825978aa7078a8a3c49f30432811199c8cb58005",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/Beetle/BeetleMaster.prefab",
+      "operations": [
+        {
+          "op": "set_field",
+          "owner": {
+            "hierarchy_path": [
+              "BeetleMaster"
+            ],
+            "class_id": 1,
+            "script": null,
+            "occurrence": 0
+          },
+          "field_path": [
+            "m_IsActive"
+          ],
+          "value": {
+            "type": "int",
+            "value": 0
+          },
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/crtexVoidSunCaustics.renderTexture",
+      "source_sha256": "c4df258aa4c747930184c94b2c1ee3d22e5a01e7c051036199d6caed7c67472b",
+      "output": "Assets/WholeGame/RoR2/DLC1/GameModes/InfiniteTowerRun/ITAssets/crtexVoidSunCaustics.renderTexture",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Scenes/snowyforest/Assets/Materials/crtexSFSunCaustics.renderTexture",
+      "source_sha256": "05324e3a84335e5f6d53687e542b4dd9ca4452a292025c9fcac54f8aa72d527d",
+      "output": "Assets/WholeGame/RoR2/DLC1/Scenes/snowyforest/Assets/Materials/crtexSFSunCaustics.renderTexture",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ]
     }
   ]
 }

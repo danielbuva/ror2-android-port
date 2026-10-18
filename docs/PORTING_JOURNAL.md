@@ -5463,3 +5463,22 @@ one. The new current action `asset-transforms-check` compares the generator's ou
 generated project without writing: 28/28 assets and `.meta` files identical (run by Codex and again
 by Claude). 473 host tests pass. Host tooling only; the composition stage itself was not re-run and
 no APK changed. The remaining 423 adapted assets still come from the preview tree.
+
+## J553 — Regenerate the identity and field-only adapted assets
+
+Migration-removal plan commit 4, second cohort (implemented by Codex at medium reasoning, reviewed
+and corrected by Claude). The 6 identity copies (an `identity` operation with a source hash) and
+the 10 field-only prefabs (BeetleBody, BeetleGuardBody, BeetleGuardMaster, BeetleMaster,
+BeetleQueenMaster, ClassicRunInfoHudPanel, HUDSimple, ItemIcon, PlayerMaster, TitleMenu; a general
+`set_field` operation addressed by hierarchy path, component script identity, occurrence and
+field path, with an exact match count of 1) are now generated from the export in
+`composition_migration.stage` instead of copied from the preview tree. Codex's first check
+compared against the current project and reported 5 of 44 different, but those are assets that
+later current steps change: the optional-content sanitizer removes Wwise and decal components
+from three prefabs, and Unity re-serialises two render textures on import. Claude changed
+`asset-transforms-check` to compare against the migration stage's preview output, where these
+assets are produced, and to report later project changes separately; a host test covers both.
+Real data: 44/44 assets and `.meta` files identical at the stage, with the same 5 listed as
+changed later. 487 host tests pass. Host tooling only; no APK change. 60 adapted assets now come
+from the export plus the recipe; the remaining 391 (structural and generated) still come from
+the preview tree.

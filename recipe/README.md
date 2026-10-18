@@ -30,7 +30,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
-| `asset-transforms.json` | Preview copies for 28 SurfaceDefs (first cohort of migration-removal commit 4) | Accepted-input export selectors and SHA-256 preconditions; four ordered authored clearing operations per asset, shared with the existing sanitizer. | J548 minimal source/output identifiers, field names and empty/null values only. No YAML, original field values, importer bodies, private paths or historical locations. Audited 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares with the project without writing. |
+| `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets and ten field-only prefabs (migration-removal commit 4 cohorts) | Accepted-input export selectors and SHA-256 preconditions; authored clearing, identity and owner-selected typed field operations. Four UI prefabs reuse the existing hash-pinned uGUI mapping. | J548 minimal source/output and hierarchy/script identifiers, field paths and typed clearing/activation values only. No YAML blocks, original field payloads, importer bodies, private paths or historical locations. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares all recipe assets with the project without writing. |
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 92 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
@@ -356,3 +356,30 @@ No current reader requires a dropped field. Runtime readers and build field
 accesses are unchanged. Synthetic host generation fixtures include unrelated-file
 preservation, exact recipe output, strict validator compatibility, determinism,
 idempotence, missing/invalid recipes and both build entry paths.
+
+## Asset operation contract
+
+`identity` copies the hash-checked export bytes, including line endings, without
+normalization. Metadata remains governed by the existing export importer rule.
+`set_field` selects an owner by hierarchy path segments, class ID, external script
+reference (`null` for native classes) and zero-based occurrence among that owner's
+matching source records. A duplicate hierarchy path fails rather than selecting
+an arbitrary owner. `field_path` traverses named block mappings, and
+`expected_matches` must be the integer 1. Typed values support integers, finite
+floats, booleans, quoted strings and local/external reference identifiers. The
+runner preserves surrounding bytes, comments, whitespace and record order;
+arrays, inline subfields and multiline values are outside this operation's contract.
+
+The existing SurfaceDef operations retain their restricted four-field contract.
+`remap_references` names only the existing audited uGUI mapping recipe and its
+SHA-256, with accepted-input validation. It is explicit so activation field edits
+do not implicitly normalize unrelated references.
+
+Prior-art review for this extension reused the serialization-identity subsystem
+and `serialization_rebase` hierarchy/record helpers. The pinned ThunderKit
+`FileIdUtil.Compute` derives script file IDs from namespace/name, and AssetRipper
+`MonoScriptExtensions.IsFullNameEqual` distinguishes assembly/namespace/class.
+Those existing J430 clues support exact script-reference selection rather than
+component display names; native GameObject selectors use class ID 1 and no script.
+No community implementation or game serialization was copied into the recipe or
+runner. The real export and migration oracle govern the selected operations.

@@ -50,19 +50,26 @@ Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` â
 `integration-latest.json` â†’ build, device and composed receipts.
 `checkpoints/LAST_OBSERVED_WHOLE_CATALOG.json` pins the accepted scope.
 
-SurfaceDef transformations (`scripts/lab/asset_transforms.py`, current):
-`recipe/asset-transforms.json` selects 28 accepted-export assets, source hashes and
-ordered field-clearing operations. The generator returns text and export-derived
-metadata without writes; `integrated_objective` shares its field operation logic.
-`composition_migration.stage` prepares all 28 pairs before project writes, checks
-the existing provenance/output/conflict gates and metadata equality, then writes
-those pairs instead of copying preview assets. Other preview assets retain their
-existing path. Historical preview/previous hashes remain validation dependencies.
+Asset transformations (`scripts/lab/asset_transforms.py`, current):
+`recipe/asset-transforms.json` selects 44 accepted-export assets with source hashes:
+28 SurfaceDefs, six identity copies and ten activation-only prefabs. The generator
+returns bytes and export-derived metadata without writes; `integrated_objective`
+shares the SurfaceDef field operation logic. Identity copies preserve source bytes.
+General `set_field` operations select a GameObject hierarchy path, native class or
+external script identity, zero-based component occurrence and mapping field path.
+They require exactly one owner and field match and replace only the typed value;
+arrays and inline subfields are unsupported. Four UI prefabs first apply the existing
+uGUI mapping from the input-gated, hash-pinned `recipe/hud-ui-remaps.json`.
+`composition_migration.stage` prepares every recipe pair before project writes,
+checks the existing provenance/output/conflict gates and metadata equality, then
+writes those pairs instead of copying preview assets. Other preview assets retain
+their existing path. Historical preview/previous hashes remain validation dependencies.
 There is no persistent generator state or teardown. The current read-only action
-`./dev prototype --action asset-transforms-check` compares all generated asset/meta
-bytes with `work/lab-project`, lists differences and exits nonzero on drift.
-This cohort's host equivalence evidence is recorded in J552; full composition and
-device acceptance remain separate gates.
+`./dev prototype --action asset-transforms-check` compares every recipe asset/meta
+pair with `work/lab-project`, lists differences and exits nonzero on drift. Later
+project transformations can differ from the migration-stage oracle; the check
+reports those differences without rewriting either side. Host contracts are in
+`tests/test_asset_transforms.py`; composition and device acceptance are separate gates.
 
 ## Android runtime
 

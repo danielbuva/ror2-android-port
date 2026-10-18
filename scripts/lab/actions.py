@@ -84,7 +84,7 @@ _ENTRIES = (
         "check_action",
         {},
         "current",
-        "Compare generated SurfaceDef asset/meta bytes with the project; read-only.",
+        "Compare all recipe-generated asset/meta bytes with the project; read-only.",
     ),
     Action(
         "project-manifest-capture", "project_manifest", "capture", {}, "current", "Capture generated-project file hashes and external inputs.", handler=_capture
