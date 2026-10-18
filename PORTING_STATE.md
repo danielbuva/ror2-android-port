@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J556**. This page is the current snapshot only: replace its
+Last updated 2026-10-17 after **J557**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -68,8 +68,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    unexplained regressions only.
 3. Keep J503, J502, J425 and J323 executable; sleep the OLED whenever idle.
 4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done. Phase 2: the runtime
-   config and content recipe are generated from public recipes (J551), and 253 of the 451
-   adapted assets plus 15 additions are generated from the export (J552–J556).
+   config and content recipe are generated from public recipes (J551), and all 222 adapted
+   (non-addition) assets plus 15 of the 229 additions are generated without the previous
+   project (J552–J557).
    **Open question:** 168 of the 177 inherited shaders differ from what today's shader
    generators produce. Either regenerate them (changes shipped shaders; needs device and
    visual checks per family) or keep those outputs as documented local state. The remaining

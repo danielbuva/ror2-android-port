@@ -5528,3 +5528,12 @@ generators produce different bytes from the inherited files, so using them chang
 shaders and needs a device and visual check rather than a byte proof. EliteRamp differs from the
 current export. The 14 director decks need export-based constructors plus card-selection recipes.
 The 5 fonts need a pinned, authorised TextMesh Pro source.
+
+## J557 — Correction: adapted-asset counts in J554 and J555
+
+J554 said 160 of the 451 adapted assets were generated and J555 said 238. The check's own totals
+are 144 after J554 and 222 after J555: the 451 assets are 222 adapted ones (6 identity, 28
+SurfaceDefs, 10 field-only, 178 structural) plus 229 additions. After J556, all 222 adapted
+assets and 15 of the 229 additions are produced without the previous project; 214 additions
+remain. No code or evidence changed.
+
