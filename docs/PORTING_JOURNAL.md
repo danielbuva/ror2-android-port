@@ -5688,3 +5688,19 @@ transforms, and renders all 49 importers from `recipe/templates/original-assembl
 per-DLL GUIDs, timestamps and execution orders in `recipe/original-assemblies.json` (no DLL bytes
 in Git). Real data: 98/98 files identical, the working project untouched. 609 host tests pass. Host
 tooling only; no APK change.
+
+## J568 — Rebuild step R2: the composition stage into a fresh destination
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+Step `composition` runs the current composition staging with every write redirected into the
+rebuild destination (`composition_io.py`, scoped to the stage; the real `composition-update-stage`
+write path is unchanged and tested). It produces 84,009 export copies, 264 recipe transforms, 10
+generator outputs and 204 inherited-store files, plus the stage's own config and receipts. The
+export-copy membership follows the stage's and catalog closure's rules, except 128 export →
+project path pairs that the current logic cannot derive; they are recorded as identifiers in
+`recipe/composition-export-copies.json`. The J565 binding guard is deferred to a final
+`validate-bindings` step, registered but not yet runnable, since those bindings are later
+builders' outputs. Real data: 84,487/84,487 files identical in the destination (6.8 GB under
+`work/rebuild/`), and a project manifest taken before and after shows the working project
+unchanged. 628 host tests pass. Host tooling only; no APK change. With R1, 84,585 of 91,841
+project files are now rebuilt from public source, recipes and the installation.

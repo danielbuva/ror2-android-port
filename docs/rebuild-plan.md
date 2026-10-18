@@ -17,7 +17,7 @@ Steps:
 - **R3–R8:** the post-composition builders in the order below.
 - **R9:** Unity import and build of the destination, then both device checks.
 
-R0/R1 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
+R0–R2 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
 
 ```sh
 ./dev prototype --action rebuild-step --step assemblies
@@ -33,6 +33,24 @@ template renders the importer bytes. The coordinator validates complete map
 membership and generated hashes before placement, then compares actual project
 bytes. `--compare-only` reads an existing destination. Synthetic host coverage is
 in `tests/test_rebuild.py`; real-data step execution remains an operator check.
+R2 is `--step composition`, after R1 in the same destination. It owns 84,487
+current map paths: 84,009 export copies, 264 recipe transforms, 10 generator outputs
+and 204 inherited-store files (assembly paths remain R1). Canonical closure
+relocation plus the existing resolved-mesh membership supplies 83,881 export
+copies; the residual 128 are identifier-only
+pairs in `recipe/composition-export-copies.json`, audited in `recipe/README.md`.
+Composition uses the current stage with destination-backed `StageIO`, also
+retaining intermediate runtime config/project products for later builders and
+redirecting auxiliary outputs beneath `.rebuild/composition/`. It renders the
+package manifest from project-layout dependencies and initializes assembly
+generation identity from R1 recipes. Existing source/output/conflict gates remain.
+Dependency staging follows catalog import in the order below, rather than running
+inline during R2; the real stage action retains its inline dependency call.
+The removed/unowned binding guard is deferred only in the rebuild path; its
+unresolved identifiers are preserved. `validate-bindings` is registered last and
+not runnable until all later builders exist. Synthetic host tests cover staging
+and comparison; the operator must still run R2 against real data.
+
 The audit below describes the J566 snapshot before this implementation.
 
 
@@ -84,7 +102,7 @@ Column abbreviations follow the producer table order.
 
 This is the required dependency order, **not an already executable fresh-project
 coordinator**. Existing intermediate config, owner/GUID and frozen-payload dependencies
-must become explicit inputs. J565's 104 unresolved bindings remain a coordinator barrier.
+must become explicit inputs. J565's 104 unresolved bindings belong to the final `validate-bindings` gate.
 Before composition, the missing original-assembly initializer is another prerequisite: J430's
 ignored `stage-project.py` and `stage-project.json` prove 46 unchanged current DLL outputs,
 but no current repo producer places that closure or initializes its generation maps. These

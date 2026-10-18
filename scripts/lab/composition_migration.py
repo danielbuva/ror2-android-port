@@ -3,33 +3,37 @@
 from common import *
 import hashlib
 import re
-import shutil
+from composition_io import StageIO
 
 
-def private_path(value):
-    path = (ROOT / value).resolve()
-    if WORK.resolve() not in path.parents:
+def private_path(value, io=None):
+    io = io or StageIO()
+    path = io.resolve(value).resolve()
+    if io.work.resolve() not in path.parents:
         raise RuntimeError("Composition migration paths must remain ignored under work/")
     return path
 
 
-def assembly_paths(project, generation):
+def assembly_paths(project, generation, io=None):
+    io = io or StageIO()
     result = {}
     for name, original in generation["original_assemblies"].items():
-        matches = list((project / "Assets").rglob(name))
+        matches = io.glob(project / "Assets", "**/" + name)
         expected = generation.get("transformed_assemblies", {}).get(name, original)
-        if len(matches) != 1 or sha(matches[0]) != expected:
+        if len(matches) != 1 or io.sha(matches[0]) != expected:
             raise RuntimeError("Current runtime assembly placement/identity is ambiguous: " + name)
         result[name] = str(matches[0].relative_to(project))
     return result
 
 
-def restore_script_orders(project, source):
+def restore_script_orders(project, source, io=None):
     """Retain shipped nonzero MonoScript orders on the corresponding runtime DLLs."""
     import UnityPy
 
-    generation = read(project / ".port-input.json")
-    paths = assembly_paths(project, generation)
+    io = io or StageIO()
+
+    generation = io.read(project / ".port-input.json")
+    paths = assembly_paths(project, generation, io)
     selected = {}
     unavailable = []
     for obj in UnityPy.load(str(source)).objects:
@@ -51,7 +55,7 @@ def restore_script_orders(project, source):
     plan = []
     for assembly, orders in selected.items():
         meta = Path(str(project / paths[assembly]) + ".meta")
-        text = meta.read_text()
+        text = io.read_text(meta)
         match = re.search(r"^  executionOrder:(?: \{\})?\n(?:    .*\n)*", text, re.M)
         if not match:
             raise RuntimeError("Runtime plugin execution-order metadata missing: " + assembly)
@@ -61,11 +65,11 @@ def restore_script_orders(project, source):
             prior[name] = int(value)
         merged = dict(prior, **orders)
         block = "  executionOrder:\n" + "".join("    " + name + ": " + str(value) + "\n" for name, value in sorted(merged.items()))
-        plan.append((meta, text[: match.start()] + block + text[match.end() :], dict(assembly=assembly, orders=orders, before_sha256=sha(meta))))
+        plan.append((meta, text[: match.start()] + block + text[match.end() :], dict(assembly=assembly, orders=orders, before_sha256=io.sha(meta))))
     # Validate all owners before writing any importer.
     for meta, text, row in plan:
-        meta.write_text(text)
-        row["after_sha256"] = sha(meta)
+        io.apply(meta, text, reason="restore original MonoScript execution orders")
+        row["after_sha256"] = io.sha(meta)
     return dict(input_id=generation["input_id"], source_sha256=sha(source), restored=[row for _, _, row in plan], unavailable_assemblies=unavailable)
 
 
@@ -129,16 +133,17 @@ def scene_contract(source_text, staged_text):
     return header + "".join(rows.values()), counts, sorted(removed)
 
 
-def refresh_scene_contracts(project, export, configuration, recipe):
+def refresh_scene_contracts(project, export, configuration, recipe, io=None):
+    io = io or StageIO()
     observations = []
     stages = {row["scene"]: row for row in configuration["integratedStages"] if not row.get("moonMission")}
     for path in [recipe["stageScene"]] + [row["scene"] for row in configuration["integratedStages"] if not row.get("moonMission")]:
         staged = project / path
         source = export / ("Assets/" + path.removeprefix("Assets/WholeGame/"))
-        before = sha(staged)
-        text, counts, removed = scene_contract(source.read_text(), staged.read_text())
-        if text != staged.read_text():
-            staged.write_text(text)
+        before = io.sha(staged)
+        text, counts, removed = scene_contract(source.read_text(), io.read_text(staged))
+        if text != io.read_text(staged):
+            io.apply(staged, text, source="recipe transform", reason="reduced-scene callback contract")
         if path == recipe["stageScene"]:
             configuration.update(
                 stagePreviewCallbacks=counts["previewCallbacks"],
@@ -149,7 +154,7 @@ def refresh_scene_contracts(project, export, configuration, recipe):
         else:
             stages[path].update(counts)
         observations.append(
-            dict(scene=path, source_sha256=sha(source), before_sha256=before, after_sha256=sha(staged), removed_nonzone_network_components=removed, **counts)
+            dict(scene=path, source_sha256=sha(source), before_sha256=before, after_sha256=io.sha(staged), removed_nonzone_network_components=removed, **counts)
         )
     return observations
 
@@ -243,10 +248,11 @@ def stage_missing_sources():
     print(json.dumps(dict(missing_roots=len(missing), copied=len(copied), unresolved=len(unresolved), evidence=str(evidence.relative_to(ROOT)))))
 
 
-def prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids):
+def prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids, io=None):
     """Validate all stage rows before writes; recipe rows need no historical asset bytes."""
     from asset_transforms import generate_asset
 
+    io = io or StageIO()
     transformed = {}
     for row in plan["rows"]:
         if sha(export / row["source"]) != row["current_source_sha256"]:
@@ -256,7 +262,7 @@ def prepare_asset_transforms(plan, transforms, export, previous, evidence, proje
             if sha(output) != row["output_sha"] or sha(previous / row["old"]) != row["previous_adapted_sha256"]:
                 raise RuntimeError("Serialized rebase provenance drift: " + row["source"])
         target = project / row["target"]
-        if target.exists() and sha(target) not in {row["target_before_sha256"], row["output_sha"]}:
+        if io.is_file(target) and io.sha(target) not in {row["target_before_sha256"], row["output_sha"]}:
             raise RuntimeError("Current project changed after the rebase: " + row["target"])
         if row["target"] in transforms:
             asset = transforms[row["target"]]
@@ -266,7 +272,7 @@ def prepare_asset_transforms(plan, transforms, export, previous, evidence, proje
             if hashlib.sha256(data).hexdigest() != row["output_sha"]:
                 raise RuntimeError("Asset transform differs from composition oracle: " + row["target"])
             meta = Path(str(target) + ".meta")
-            if meta.exists() and meta.read_bytes() != meta_data:
+            if io.is_file(meta) and io.read_bytes(meta) != meta_data:
                 raise RuntimeError("Current metadata differs from export importer: " + row["target"])
             if row["target"] in transformed:
                 raise RuntimeError("Duplicate transformed composition target")
@@ -285,17 +291,17 @@ def normalize_addition(data, guidmap, remaps):
     return text.encode()
 
 
-def stage_addition(row, authored, previous, project, guidmap, remaps):
+def stage_addition(row, authored, previous, project, guidmap, remaps, io=None, source="generator"):
+    io = io or StageIO(work=project.parent)
     target = project / row["target"]
-    target.parent.mkdir(parents=True, exist_ok=True)
     if row["old"] in authored:
         data, meta_data = authored[row["old"]]
-        target.write_bytes(data)
-        Path(str(target) + ".meta").write_bytes(meta_data)
+        io.apply(target, data, source=source, reason="addition owner output")
+        io.apply(Path(str(target) + ".meta"), meta_data, source=source, reason="addition importer")
     else:
         source = previous / row["old"]
-        target.write_bytes(normalize_addition(source.read_bytes(), guidmap, remaps))
-        shutil.copy2(Path(str(source) + ".meta"), Path(str(target) + ".meta"))
+        io.apply(target, normalize_addition(source.read_bytes(), guidmap, remaps), reason="historical addition")
+        io.apply(Path(str(target) + ".meta"), copy=Path(str(source) + ".meta"))
 
 
 def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=None):
@@ -332,29 +338,28 @@ def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=No
     return prepared
 
 
-def stage():
-    from build import preflight
-
-    preflight()
-    selection = read(WORK / "config/composition-migration.json")
-    evidence = private_path(selection["evidence"])
-    previous = private_path(selection["previous_project"])
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
-    project = WORK / "lab-project"
-    accepted = read(WORK / "config/accepted-input.json")["input_id"]
-    if selection["input_id"] != accepted or read(project / ".port-input.json")["input_id"] != accepted:
+def stage(io=None):
+    io = io or StageIO()
+    io.preflight()
+    selection = read(io.work / "config/composition-migration.json")
+    evidence = private_path(selection["evidence"], io)
+    previous = private_path(selection["previous_project"], io)
+    export = io.resolve(read(io.work / "config/reconstruction.json")["projects"][0])
+    project = io.project
+    accepted = read(io.work / "config/accepted-input.json")["input_id"]
+    if selection["input_id"] != accepted or io.read(project / ".port-input.json")["input_id"] != accepted:
         raise RuntimeError("Composition rebase belongs to a different accepted input")
     if previous.resolve() == project.resolve():
         raise RuntimeError("Previous composition must remain a separate rollback")
     plan = read(evidence / "semantic-preview-result.json")
     if plan["conflicts"]:
         raise RuntimeError("Unresolved serialized rebase; refuse partial composition staging")
-    catalog = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
+    catalog = io.resolve(read(io.work / "experiments/whole-catalog/latest.json")["path"])
     index = read(catalog / "source-guid-index.json")
     guids = {path: guid for guid, path in index.items()}
     owners = {}
-    for meta in (project / "Assets").rglob("*.meta"):
-        match = re.search(r"^guid:\s*([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+    for meta in io.glob(project / "Assets", "**/*.meta"):
+        match = re.search(r"^guid:\s*([a-f0-9]{32})", io.read_text(meta, errors="replace"), re.M)
         if match:
             if match[1] in owners:
                 raise RuntimeError("Duplicate current GUID owner")
@@ -369,7 +374,7 @@ def stage():
     if removed:
         proof = read(evidence / "removed-state-types.json")
         present = {row["name"] for row in proof["contract"]["types"]}
-        if proof["contract"]["sha256"] != sha(game() / "Risk of Rain 2_Data/Managed/RoR2.dll"):
+        if proof["contract"]["sha256"] != sha(game(io.work) / "Risk of Rain 2_Data/Managed/RoR2.dll"):
             raise RuntimeError("Removed state proof belongs to another input")
         for path, type_name in removed.items():
             if proof["paths"].get(path) != type_name or type_name in present:
@@ -427,13 +432,18 @@ def stage():
         if costs != ["25"]:
             raise RuntimeError("Updated original Chest1 cost requires contract review")
         configuration["moneySourceSha256"] = sha(chest_source)
-    recipe = read(WORK / "scene-probe-build.json")
+    recipe = io.read(io.work / "scene-probe-build.json")
     # Removed original inputs are not incompatibility quarantines or fallbacks.
     recipe["prefabAssets"] = [path for path in recipe["prefabAssets"] if path.casefold() in assetmap]
     recipe = retarget(recipe)
     if missing_runtime:
-        write(evidence / "missing-runtime-bindings.json", sorted(set(missing_runtime)))
-        raise RuntimeError("Composition still references removed or unowned assets; inspect missing-runtime-bindings.json")
+        io.apply(
+            evidence / "missing-runtime-bindings.json",
+            value=sorted(set(missing_runtime)),
+            reason="unresolved runtime bindings from the current configuration/build recipe",
+        )
+        if not io.rebuilding:
+            raise RuntimeError("Composition still references removed or unowned assets; inspect missing-runtime-bindings.json")
 
     # Historical plan/identity checks remain until their contracts have replacements.
     from asset_transforms import load_recipe
@@ -441,19 +451,18 @@ def stage():
     transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
     if {row["target"] for row in plan["rows"]} != transforms.keys():
         raise RuntimeError("Current composition requires recipe coverage; historical preview fallback is disabled")
-    transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids)
-    authored = plan_additions(generated, export, accepted, guidmap, remaps)
+    transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids, io)
+    authored = plan_additions(generated, export, accepted, guidmap, remaps, work=io.work)
     staged = []
     for row in generated:
-        stage_addition(row, authored, None, project, guidmap, remaps)
+        stage_addition(row, authored, None, project, guidmap, remaps, io)
         staged.append(row["target"])
     for row in plan["rows"]:
         target = project / row["target"]
-        target.parent.mkdir(parents=True, exist_ok=True)
         if row["target"] in transformed:
             data, meta_data = transformed[row["target"]]
-            target.write_bytes(data)
-            Path(str(target) + ".meta").write_bytes(meta_data)
+            io.apply(target, data, source="recipe transform", reason="accepted serialized asset transform")
+            io.apply(Path(str(target) + ".meta"), meta_data, source="recipe transform", reason="export importer for transformed asset")
             staged.append(row["target"])
             continue
         raise RuntimeError("Composition asset has no current recipe owner")
@@ -465,7 +474,7 @@ def stage():
     reproducible_shaders = {a["path"] for a in cohort(load_ledger())}
     native_names = set()
     for directory in selection["shader_sources"]:
-        source = private_path(directory)
+        source = private_path(directory, io)
         receipt = read(source.parent / "receipt.json")
         if not receipt["success"]:
             raise RuntimeError("Current native binding generation failed")
@@ -481,13 +490,13 @@ def stage():
                     if file.read_bytes() != generated_pair[0]:
                         raise RuntimeError("Native source differs from regenerated shader pair")
                 else:
-                    shutil.copy2(file, target)
+                    io.apply(target, copy=file, source="generator", reason="verified native shader output")
                 native_names.add(file.name)
                 staged.append(str(target.relative_to(project)))
-    for path in (project / "Assets/LabLoadingScene/Resources").glob("AndroidNative*.shader"):
+    for path in io.glob(project / "Assets/LabLoadingScene/Resources", "AndroidNative*.shader"):
         if path.name not in native_names:
-            path.unlink()
-            Path(str(path) + ".meta").unlink(missing_ok=True)
+            io.apply(path, delete=True, reason="native shader absent from selected outputs")
+            io.apply(Path(str(path) + ".meta"), delete=True, missing_ok=True, reason="obsolete native shader importer")
     global_textures = []
     for row in selection.get("native_global_textures", []):
         source = export / row["source"]
@@ -496,49 +505,65 @@ def stage():
             raise RuntimeError("Current original global texture identity changed")
 
         def importer(path):
-            return re.sub(r"(?m)^(?:guid|timeCreated): .*\n", "", Path(str(path) + ".meta").read_text())
+            return re.sub(r"(?m)^(?:guid|timeCreated): .*\n", "", io.read_text(Path(str(path) + ".meta")))
 
         if importer(source) != importer(target):
             raise RuntimeError("Native global texture importer requires review")
-        before = sha(target)
-        shutil.copy2(source, target)
-        global_textures.append(dict(row, before_sha256=before, after_sha256=sha(target)))
-    from whole_catalog import copy_catalog_asset
-
-    copy_catalog_asset(
-        ROOT / "tools/unity/runtime/shaders/AndroidNativeDeferredPresentation.cs", project / "Assets/LabLoadingScene/AndroidNativeDeferredPresentation.cs"
+        before = io.sha(target)
+        io.apply(target, copy=source, source="export copy", reason="verified native global texture")
+        global_textures.append(dict(row, before_sha256=before, after_sha256=io.sha(target)))
+    io.apply(
+        project / "Assets/LabLoadingScene/AndroidNativeDeferredPresentation.cs",
+        copy=ROOT / "tools/unity/runtime/shaders/AndroidNativeDeferredPresentation.cs",
+        catalog=True,
+        source="generator",
+        reason="authored native presentation runtime",
     )
     configuration["attempt"] = evidence.name
     configuration["pauseBeforeMoon"] = True
-    write(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", configuration)
-    write(WORK / "scene-probe-build.json", recipe)
+    io.apply(
+        project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json",
+        value=configuration,
+        source="config",
+        reason="retargeted previous configuration and refreshed scene contracts",
+    )
+    io.apply(io.work / "scene-probe-build.json", value=recipe, source="config")
     # Reapply the accepted shared unavailable-presentation boundary as part of
     # importing the composed-only current dependencies.
-    stage_missing_sources()
-    scene_contracts = refresh_scene_contracts(project, export, configuration, recipe)
-    write(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", configuration)
-    write(evidence / "current-scene-contracts.json", scene_contracts)
+    if not io.rebuilding:
+        stage_missing_sources()
+    scene_contracts = refresh_scene_contracts(project, export, configuration, recipe, io)
+    io.apply(
+        project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json",
+        value=configuration,
+        source="config",
+        reason="retargeted previous configuration and refreshed scene contracts",
+    )
+    io.apply(evidence / "current-scene-contracts.json", value=scene_contracts)
     # A fresh attempt is necessary for existing build/run attribution. It is a
     # small receipt, never another project snapshot or inherited assembly proof.
-    generation = read(project / ".port-input.json")
-    write(evidence / "current-original-script-orders.json", restore_script_orders(project, game() / "Risk of Rain 2_Data/globalgamemanagers.assets"))
-    old_attempt = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    generation = io.read(project / ".port-input.json")
+    io.apply(
+        evidence / "current-original-script-orders.json",
+        value=restore_script_orders(project, game(io.work) / "Risk of Rain 2_Data/globalgamemanagers.assets", io),
+    )
+    old_attempt = io.resolve(io.read(io.work / "experiments/scene-runtime/current.json")["path"])
     mapping = read(old_attempt / "nova-input-mapping.json")
-    if sha(ROOT / mapping["observation"]) != mapping["observation_sha256"]:
+    if sha(io.resolve(mapping["observation"])) != mapping["observation_sha256"]:
         raise RuntimeError("Accepted physical mapping evidence changed")
     mapping["attempt"] = evidence.name
-    write(evidence / "nova-input-mapping.json", mapping)
+    io.apply(evidence / "nova-input-mapping.json", value=mapping)
     probe = "body-state-spawn-state-auto-nova-spine-bringup"
-    write(
+    io.apply(
         evidence / "attempt.json",
-        dict(
+        value=dict(
             attempt=evidence.name,
             input_id=accepted,
             stage=str(project / "Assets/LabLoadingScene"),
             original_assemblies=generation["original_assemblies"],
             transformed_assemblies=generation["transformed_assemblies"],
-            assembly_paths=assembly_paths(project, generation),
-            configuration_sha256=sha(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"),
+            assembly_paths=assembly_paths(project, generation, io),
+            configuration_sha256=io.sha(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"),
             movement_batch=True,
             playable_spine=True,
             integrated_world=True,
@@ -550,10 +575,10 @@ def stage():
             status="Updated composed generation staged; Android acceptance pending",
         ),
     )
-    write(WORK / "experiments/scene-runtime/current.json", dict(path=str(evidence.relative_to(ROOT))))
-    write(
+    io.apply(io.work / "experiments/scene-runtime/current.json", value=dict(path="work/" + str(evidence.relative_to(io.work))))
+    io.apply(
         evidence / "staging-result.json",
-        dict(
+        value=dict(
             input_id=accepted,
             staged=len(set(staged)),
             source_adaptations=len(plan["rows"]),
@@ -565,4 +590,4 @@ def stage():
             scope="Current ignored composition generation only; no Android or complete gameplay acceptance",
         ),
     )
-    print(json.dumps(read(evidence / "staging-result.json")))
+    print(json.dumps(io.read(evidence / "staging-result.json")))

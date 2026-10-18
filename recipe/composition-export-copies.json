@@ -1,0 +1,518 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "copies": [
+    [
+      "Assets/Editor/LabConnector/BootstrapMcp.cs",
+      "Assets/Editor/BootstrapMcp.cs"
+    ],
+    [
+      "Assets/RoR2/Base/Common/GlobalTextures/texRampElites.png",
+      "Assets/LabLoadingScene/Resources/AndroidNativeEliteRamp.png"
+    ],
+    [
+      "Assets/RoR2/Base/Common/GlobalTextures/texRampCompositeLight.png",
+      "Assets/LabLoadingScene/Resources/AndroidNativeWarpRamp.png"
+    ],
+    [
+      "Assets/Material/TextMeshPro_Sprite_5.mat",
+      "Assets/WholeGame/Material/TextMeshPro_Sprite_5.mat"
+    ],
+    [
+      "Assets/Material/TextMeshPro_Sprite_5.mat.meta",
+      "Assets/WholeGame/Material/TextMeshPro_Sprite_5.mat.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Characters/Commando/AltSkinLynx/Commando_Lynx_Low_0.asset",
+      "Assets/WholeGame/RoR2/Base/Characters/Commando/AltSkinLynx/Commando_Lynx_Low_0.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Characters/Commando/AltSkinLynx/Commando_Lynx_Low_0.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Characters/Commando/AltSkinLynx/Commando_Lynx_Low_0.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Elites/EliteFire/texAffixRedIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Elites/EliteFire/texAffixRedIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Elites/EliteFire/texAffixRedIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Elites/EliteFire/texAffixRedIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Elites/EliteHaunted/texAffixHauntedIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Elites/EliteHaunted/texAffixHauntedIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Elites/EliteHaunted/texAffixHauntedIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Elites/EliteHaunted/texAffixHauntedIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Elites/EliteLightning/texAffixBlueIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Elites/EliteLightning/texAffixBlueIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Elites/EliteLightning/texAffixBlueIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Elites/EliteLightning/texAffixBlueIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Equipment/FireBallDash/texEggIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Equipment/FireBallDash/texEggIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Equipment/FireBallDash/texEggIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Equipment/FireBallDash/texEggIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Equipment/Jetpack/texChrysalisIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Equipment/Jetpack/texChrysalisIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Equipment/Jetpack/texChrysalisIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Equipment/Jetpack/texChrysalisIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/BleedOnHitAndExplode/texBleedOnHitAndExplodeIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/BleedOnHitAndExplode/texBleedOnHitAndExplodeIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/BleedOnHitAndExplode/texBleedOnHitAndExplodeIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/BleedOnHitAndExplode/texBleedOnHitAndExplodeIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/ElementalRings/texFireRingIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/ElementalRings/texFireRingIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/ElementalRings/texFireRingIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/ElementalRings/texFireRingIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/ElementalRings/texIceRingIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/ElementalRings/texIceRingIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/ElementalRings/texIceRingIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/ElementalRings/texIceRingIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/GhostOnKill/texMaskIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/GhostOnKill/texMaskIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/GhostOnKill/texMaskIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/GhostOnKill/texMaskIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/HeadHunter/texSkullcrownIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/HeadHunter/texSkullcrownIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/HeadHunter/texSkullcrownIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/HeadHunter/texSkullcrownIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/Knurl/texKnurlIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/Knurl/texKnurlIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/Knurl/texKnurlIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/Knurl/texKnurlIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/NovaOnLowHealth/texJellyGutsIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/NovaOnLowHealth/texJellyGutsIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/NovaOnLowHealth/texJellyGutsIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/NovaOnLowHealth/texJellyGutsIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/ParentEgg/texParentEggIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/ParentEgg/texParentEggIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/ParentEgg/texParentEggIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/ParentEgg/texParentEggIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/RoboBallBuddy/texEmpathyChip.asset",
+      "Assets/WholeGame/RoR2/Base/Items/RoboBallBuddy/texEmpathyChip.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/RoboBallBuddy/texEmpathyChip.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/RoboBallBuddy/texEmpathyChip.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/SiphonOnLowHealth/texSiphonOnLowHealthIcon.asset",
+      "Assets/WholeGame/RoR2/Base/Items/SiphonOnLowHealth/texSiphonOnLowHealthIcon.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/SiphonOnLowHealth/texSiphonOnLowHealthIcon.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/SiphonOnLowHealth/texSiphonOnLowHealthIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Items/Squid/SquidTurret.asset",
+      "Assets/WholeGame/RoR2/Base/Items/Squid/SquidTurret.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Items/Squid/SquidTurret.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Items/Squid/SquidTurret.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/Scenes/skymeadow/Models/SMRockAngular_0.asset",
+      "Assets/WholeGame/RoR2/Base/Scenes/skymeadow/Models/SMRockAngular_0.asset"
+    ],
+    [
+      "Assets/RoR2/Base/Scenes/skymeadow/Models/SMRockAngular_0.asset.meta",
+      "Assets/WholeGame/RoR2/Base/Scenes/skymeadow/Models/SMRockAngular_0.asset.meta"
+    ],
+    [
+      "Assets/RoR2/Base/UI/TitleMenu.prefab.meta",
+      "Assets/WholeGame/RoR2/Base/UI/TitleMenu.prefab.meta"
+    ],
+    [
+      "Assets/RoR2/CU8/Artifacts/Devotion/texArtifactDevotionEnabled.asset",
+      "Assets/WholeGame/RoR2/CU8/Artifacts/Devotion/texArtifactDevotionEnabled.asset"
+    ],
+    [
+      "Assets/RoR2/CU8/Artifacts/Devotion/texArtifactDevotionEnabled.asset.meta",
+      "Assets/WholeGame/RoR2/CU8/Artifacts/Devotion/texArtifactDevotionEnabled.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup.003_1.asset",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup.003_1.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup.003_1.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup.003_1.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup.asset",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGupEyes.001_1.asset",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGupEyes.001_1.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGupEyes.001_1.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGupEyes.001_1.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup_0.asset",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup_0.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup_0.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup_0.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup_1.asset",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup_1.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Characters/Gup/mdlGup_1.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Characters/Gup/mdlGup_1.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteEarth/texAffixEarthIcon.asset",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteEarth/texAffixEarthIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteEarth/texAffixEarthIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteEarth/texAffixEarthIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixEyes.asset",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixEyes.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixEyes.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixEyes.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixFlesh.asset",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixFlesh.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixFlesh.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixFlesh.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixMetal.asset",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixMetal.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixMetal.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/VoidInfestor/mdlVoidAffixMetal.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/texAffixVoidIcon.asset",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/texAffixVoidIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/Elites/EliteVoid/texAffixVoidIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/Elites/EliteVoid/texAffixVoidIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC1/UI/texVoidExpansionIcon.asset",
+      "Assets/WholeGame/RoR2/DLC1/UI/texVoidExpansionIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC1/UI/texVoidExpansionIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC1/UI/texVoidExpansionIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC2/Elites/EliteBead/texAffixBeadIcon.asset",
+      "Assets/WholeGame/RoR2/DLC2/Elites/EliteBead/texAffixBeadIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC2/Elites/EliteBead/texAffixBeadIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC2/Elites/EliteBead/texAffixBeadIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC2/UI/texColossusExpansionIcon.asset",
+      "Assets/WholeGame/RoR2/DLC2/UI/texColossusExpansionIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC2/UI/texColossusExpansionIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC2/UI/texColossusExpansionIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/Drifter/AltSkin/meshBag_Alt.asset",
+      "Assets/WholeGame/RoR2/DLC3/Characters/Drifter/AltSkin/meshBag_Alt.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/Drifter/AltSkin/meshBag_Alt.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Characters/Drifter/AltSkin/meshBag_Alt.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/IronHauler/meshIronHauler_0.asset",
+      "Assets/WholeGame/RoR2/DLC3/Characters/IronHauler/meshIronHauler_0.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/IronHauler/meshIronHauler_0.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Characters/IronHauler/meshIronHauler_0.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/Vendor/meshCables.asset",
+      "Assets/WholeGame/RoR2/DLC3/Characters/Vendor/meshCables.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/Vendor/meshCables.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Characters/Vendor/meshCables.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/Vendor/meshCoreInner.asset",
+      "Assets/WholeGame/RoR2/DLC3/Characters/Vendor/meshCoreInner.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/Vendor/meshCoreInner.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Characters/Vendor/meshCoreInner.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/VultureHunter/Model/Backpack_Glow02_0.asset",
+      "Assets/WholeGame/RoR2/DLC3/Characters/VultureHunter/Model/Backpack_Glow02_0.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Characters/VultureHunter/Model/Backpack_Glow02_0.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Characters/VultureHunter/Model/Backpack_Glow02_0.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Elites/Collective/texAffixCollectIcon.asset",
+      "Assets/WholeGame/RoR2/DLC3/Elites/Collective/texAffixCollectIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Elites/Collective/texAffixCollectIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Elites/Collective/texAffixCollectIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Items/DestructibleSpawnerItem/texDestructibleSpawnerIcon.asset",
+      "Assets/WholeGame/RoR2/DLC3/Items/DestructibleSpawnerItem/texDestructibleSpawnerIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Items/DestructibleSpawnerItem/texDestructibleSpawnerIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Items/DestructibleSpawnerItem/texDestructibleSpawnerIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/Scenes/solutionalhaunt/Assets/Models/mshBase.asset",
+      "Assets/WholeGame/RoR2/DLC3/Scenes/solutionalhaunt/Assets/Models/mshBase.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/Scenes/solutionalhaunt/Assets/Models/mshBase.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/Scenes/solutionalhaunt/Assets/Models/mshBase.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC3/UI/texHardwareExpansionIcon.asset",
+      "Assets/WholeGame/RoR2/DLC3/UI/texHardwareExpansionIcon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC3/UI/texHardwareExpansionIcon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC3/UI/texHardwareExpansionIcon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC4/Characters/LynxAmbusher/Model/Ambusher_Weapon.asset",
+      "Assets/WholeGame/RoR2/DLC4/Characters/LynxAmbusher/Model/Ambusher_Weapon.asset"
+    ],
+    [
+      "Assets/RoR2/DLC4/Characters/LynxAmbusher/Model/Ambusher_Weapon.asset.meta",
+      "Assets/WholeGame/RoR2/DLC4/Characters/LynxAmbusher/Model/Ambusher_Weapon.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC4/Characters/Totem/Model/Shaman_Outfit.asset",
+      "Assets/WholeGame/RoR2/DLC4/Characters/Totem/Model/Shaman_Outfit.asset"
+    ],
+    [
+      "Assets/RoR2/DLC4/Characters/Totem/Model/Shaman_Outfit.asset.meta",
+      "Assets/WholeGame/RoR2/DLC4/Characters/Totem/Model/Shaman_Outfit.asset.meta"
+    ],
+    [
+      "Assets/RoR2/DLC4/Characters/Totem/Skills/Primary/Pillar/Model/mdlHRCrystalA.asset",
+      "Assets/WholeGame/RoR2/DLC4/Characters/Totem/Skills/Primary/Pillar/Model/mdlHRCrystalA.asset"
+    ],
+    [
+      "Assets/RoR2/DLC4/Characters/Totem/Skills/Primary/Pillar/Model/mdlHRCrystalA.asset.meta",
+      "Assets/WholeGame/RoR2/DLC4/Characters/Totem/Skills/Primary/Pillar/Model/mdlHRCrystalA.asset.meta"
+    ],
+    [
+      "Assets/SpeedTreeWindAsset/SpeedTreeWindAsset_1.asset",
+      "Assets/WholeGame/SpeedTreeWindAsset/SpeedTreeWindAsset_1.asset"
+    ],
+    [
+      "Assets/SpeedTreeWindAsset/SpeedTreeWindAsset_1.asset.meta",
+      "Assets/WholeGame/SpeedTreeWindAsset/SpeedTreeWindAsset_1.asset.meta"
+    ],
+    [
+      "Assets/SpeedTreeWindAsset/SpeedTreeWindAsset_127.asset",
+      "Assets/WholeGame/SpeedTreeWindAsset/SpeedTreeWindAsset_127.asset"
+    ],
+    [
+      "Assets/SpeedTreeWindAsset/SpeedTreeWindAsset_127.asset.meta",
+      "Assets/WholeGame/SpeedTreeWindAsset/SpeedTreeWindAsset_127.asset.meta"
+    ],
+    [
+      "Assets/SpeedTreeWindAsset/SpeedTreeWindAsset_3.asset",
+      "Assets/WholeGame/SpeedTreeWindAsset/SpeedTreeWindAsset_3.asset"
+    ],
+    [
+      "Assets/SpeedTreeWindAsset/SpeedTreeWindAsset_3.asset.meta",
+      "Assets/WholeGame/SpeedTreeWindAsset/SpeedTreeWindAsset_3.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/LineBreaking Following Characters.txt",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/LineBreaking Following Characters.txt"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/LineBreaking Following Characters.txt.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/LineBreaking Following Characters.txt.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/LineBreaking Leading Characters.txt",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/LineBreaking Leading Characters.txt"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/LineBreaking Leading Characters.txt.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/LineBreaking Leading Characters.txt.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites.png",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites.png"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites.png.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites.png.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_0.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_0.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_0.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_0.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_1.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_1.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_1.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_1.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_2.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_2.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_2.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_2.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_3.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_3.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_3.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_3.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_4.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_4.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_4.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_4.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_5.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_5.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_5.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_5.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_6.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_6.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_6.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/texInlineSprites_6.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/tmpsprDefault.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/tmpsprDefault.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/Sprite Assets/tmpsprDefault.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/Sprite Assets/tmpsprDefault.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/TMP Settings.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/TMP Settings.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/TMP Settings.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/TMP Settings.asset.meta"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/TMPStyleSheets/TMP Default Style Sheet.asset",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/TMPStyleSheets/TMP Default Style Sheet.asset"
+    ],
+    [
+      "Assets/TextMesh Pro/FormerResources/TMPStyleSheets/TMP Default Style Sheet.asset.meta",
+      "Assets/WholeGame/TextMesh Pro/FormerResources/TMPStyleSheets/TMP Default Style Sheet.asset.meta"
+    ],
+    [
+      "ProjectSettings/TagManager.asset",
+      "ProjectSettings/TagManager.asset"
+    ],
+    [
+      "Assets/StreamingAssets/Audio/GeneratedSoundBanks/Windows/DLC3_Stages_RemovingGrounds.txt",
+      "ProjectSettings/boot.config"
+    ]
+  ]
+}

@@ -59,6 +59,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `composition-export-copies.json` | Residual R2 export membership outside canonical catalog closure relocation | 128 export-path → project-path pairs and accepted input ID. | Asset identifiers only; no bodies, private roots, device/account identifiers or third-party source. Audited 2026-10-18. | `composition_io.export_membership`; all bytes come from the accepted export and are hash/size-gated against the local map. |
 | `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker, mage-platform-guard receipt and audio-boundary-v3 receipt. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Audited 2026-10-17. | Current `assembly_transforms.py` verifies in disposable `.local/` scratch. Its shared generator also supplies the three transformed DLLs to R1 below. |
 | `original-assemblies.json` | R1 installation assembly placement and importer initialization | Accepted Managed source hashes and project paths; retained GUIDs, creation times and execution orders. The tracked common importer template supplies fixed settings. | Identifiers/settings/hashes only; no DLL bytes, IL, decompiled source, private paths or account data. All 49 sources, including SimpleJSON, come from the legitimate installation. Audit above, 2026-10-18. | Current `rebuild.py` reconstructs 49 DLL/importer pairs under the isolated destination, applies J563, gates 98 output hashes/sizes and compares actual project bytes. |
 | `export-additions.json` | Inherited WarpRamp asset/meta pair | Hash-pinned accepted-export PNG and importer, identity operation, inherited GUID and importer creation-time parameter. | J548 identifiers, hashes and necessary importer parameters only. The creation time is an exporter field, not a device/account/session identifier. No PNG or importer body is tracked. Audited 2026-10-17. | `export_additions.py` returns the exact pair without history or filesystem writes; composition prepares it before staging. |
@@ -638,3 +639,38 @@ read-only inherited oracle check. `./dev doctor` was intentionally not invoked:
 it writes `work/doctor.json`, outside this task's authorised read-only work scope.
 Builds, editor mutations, device commands, Git index/commits, journal and state
 updates are outside this task.
+
+## Composition export membership audit (R2, 2026-10-18)
+
+`composition-export-copies.json` records only 128 export/project path identities.
+The canonical catalog membership rule maps each reconciled closure file and its
+importer from `Assets/` to `Assets/WholeGame/`, skipping DLLs and reusing existing
+GUID owners. Composition additionally stages explicit recipe/store pairs and
+selected native resources. R2 also reuses `whole_catalog.source_mesh_subobjects` to select uniquely resolved
+native mesh exports using the existing typed/native identity checks. These rules
+and the composition plan still do not identify the entire unchanged-export
+cohort: ambiguous native meshes, historical dependencies and relocated
+tool/settings files extend beyond resolved membership. R2 records that residual
+selection rather than running R3's native bundle recovery/conversions or
+discovering membership by searching the working project.
+The recipe includes relocated and retained identities; it does not copy any
+serialized asset content, importer content, hashes of private evidence, local
+paths, original code, binary data, credentials or account/device identifiers.
+The source paths are minimal identifiers required for local reconstruction from
+the user's legitimate export. They provide no substitute for that input.
+
+The local provenance map selects unchanged bytes among these candidates and
+supplies hash/size gates, never source identities. On the current map the canonical
+closure rule accounts for 83,385 files, resolved mesh expansion adds 496,
+and the residual recipe accounts for 128; R1 owns the
+other 42 export-identical assembly importers. Recipe transforms/importers, shader
+and package generators, inherited store normalization and their existing pins
+remain authoritative. No game-derived output was added to tracked files.
+
+Prior-art scope: read `docs/community-prior-art.md` and inspected pinned ThunderKit
+`Editor/Addressable/Config/ImportAddressableCatalog.cs` at
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`. Its `File.Copy` preserves selected
+catalog/settings artifacts but supplies neither this membership nor Android
+conversion. R2 reuses existing stage recipes and validates source identity; no
+community code or content was copied. Real-data execution remains an operator
+check. Doctor was not run because it writes outside the authorized destination.

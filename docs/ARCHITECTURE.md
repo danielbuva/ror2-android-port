@@ -52,7 +52,7 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0/R1):
+Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R2):
 `./dev prototype --action rebuild-step --step assemblies` reconstructs the assembly
 cohort, then compares every selected map path with the current project's actual
 bytes. The ordered `STEPS` table declares each step's producer categories, path
@@ -74,8 +74,37 @@ J563's shared `assembly_transforms.generate` builds an isolated tool copy and
 replays the pinned transforms, with tool intermediates, CLI home, package cache
 and temporary files beneath the destination. Scratch is removed on success or
 failure. The full 98-file cohort is validated before project files are placed;
-reruns overwrite only that cohort. No generation marker or other rebuild step is
-initialized yet.
+reruns overwrite only that cohort. R2 initializes a separate generation marker from these recipes after validating
+R1 assembly placement.
+
+Composition rebuild (`scripts/lab/composition_io.py`, current, R2):
+`rebuild-step --step composition` runs `composition_migration.stage` through
+`StageIO` against the isolated destination. The same owner keeps real-stage writes
+at their original paths when no destination is supplied. Export membership comes
+from canonical catalog closure/resolved-mesh relocation plus the identifier-only residual
+`recipe/composition-export-copies.json`; provenance gates each selected source's
+size/hash before placement. The package manifest is rendered from the public
+project-layout dependencies. Assembly identity comes from R1's public recipes,
+never the working project's marker. Host/input preflight gates remain active;
+device storage and preflight receipts belong to subsequent install/build work.
+
+Stage transforms, additions, selected shader outputs, scene contracts, script
+orders, runtime config and receipts use the same staging functions. Pending stage
+bytes are visible to later stage reads and checked against provenance before
+publication. Intermediate project products stay in the destination for subsequent
+builders; auxiliary config/receipt outputs go under `.rebuild/composition/`, with
+logical paths relative to the selected input work root. The comparison excludes
+only that coordinator namespace and `.port-input.json` outside its three mapped
+areas. Pending state is discarded on failure; copied exports and the generation
+marker remain available for inspection. There is no Unity/device operation.
+
+The dependency builder `stage_missing_sources` runs after complete catalog import
+in the rebuild order; it is unchanged and still called inline by the real stage
+action. Only the rebuild path defers J565's removed/unowned binding guard, retaining
+the diagnostic and original unresolved identifiers for later builders. The final
+`validate-bindings` step is registered last and refuses execution until R3–R8 are
+implemented. No successful R2 comparison establishes that final gate. Host
+contracts: `tests/test_composition_rebuild.py`, including the real-stage write path.
 
 `--compare-only` requires an existing destination and performs no writes or tool
 execution. Reports list identical, different, missing (which side), and extra

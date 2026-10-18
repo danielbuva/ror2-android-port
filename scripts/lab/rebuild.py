@@ -10,6 +10,7 @@ import tempfile
 from typing import Callable
 
 import assembly_transforms
+from composition_io import composition
 from common import RECIPE, ROOT, WORK, game, read, sha
 
 
@@ -95,6 +96,9 @@ class Step:
 # selects its subsystem paths; e.g. R1 must not claim all unknown assets.
 STEPS = {
     "assemblies": Step(("unknown", "export-copy", "repo-builder", "recipe-transform", "unity-generated"), assembly_path, assemblies),
+    "composition": Step(("export-copy", "recipe-transform", "generator", "inherited-store"), lambda path: not assembly_path(path), composition),
+    # Final gate after R3–R8 supply all runtime/build binding targets (J565).
+    "validate-bindings": Step((), lambda path: False, None),
 }
 
 
@@ -121,7 +125,7 @@ def safe_destination(destination, input_id, work):
     return resolved
 
 
-def compare(destination, project, expected, provenance, owns):
+def compare(destination, project, expected, provenance, owns, producers=None):
     result = {status: [] for status in ("identical", "different", "missing", "extra")}
     # Deep comparison reads actual bytes, never shallow stat/mtime equality.
     for path in sorted(expected):
@@ -136,7 +140,9 @@ def compare(destination, project, expected, provenance, owns):
     for target in sorted(destination.rglob("*")):
         if target.is_file():
             path = target.relative_to(destination).as_posix()
-            if path not in provenance or (owns(path) and path not in expected):
+            if path == ".port-input.json" or path.startswith(".rebuild/composition/"):
+                continue
+            if path not in provenance or (owns(path) and path not in expected and (producers is None or provenance[path]["producer"] in producers)):
                 result["extra"].append(path)
     result["counts"] = {status: len(result[status]) for status in ("identical", "different", "missing", "extra")}
     result["equal"] = not any(result[status] for status in ("different", "missing", "extra"))
@@ -147,6 +153,8 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
     work = Path(work or WORK).resolve()
     if step not in STEPS:
         raise RuntimeError("Unknown rebuild step: " + step)
+    if STEPS[step].build is None:
+        raise RuntimeError("validate-bindings is not runnable yet: requires all later builders R3–R8")
     input_id = read(work / "config/accepted-input.json")["input_id"]
     if not re.fullmatch("[0-9a-f]{64}", input_id):
         raise RuntimeError("Invalid accepted input ID")
@@ -167,7 +175,7 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
             raise RuntimeError("Destination overlaps the installation")
         destination.mkdir(parents=True, exist_ok=True)
         owner.build(destination, work, input_id, expected, provenance)
-    return compare(destination, work / "lab-project", expected, provenance, owner.owns)
+    return compare(destination, work / "lab-project", expected, provenance, owner.owns, owner.producers)
 
 
 def rebuild_action(step, dest=None, compare_only=False, work=None):
