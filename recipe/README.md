@@ -59,6 +59,8 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `shader-rebuild-inputs.json` | Explicit shader recovery/census/fallback dependencies and selections | Accepted input ID, work-relative hashes, output basenames and topology; no recovered content. | Private bodies remain ignored; no account/device data, credentials or new licensed code. Audited 2026-10-18. | `shader_rebuild` validates all 46 pins; retained recovery remains a blocker (63 retained records including R3–R8). |
+| `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 23 complete files. |
 | `build-entry-inputs.json` | Explicit R7/R8 retained decompilation, contract and bootstrap identity inputs | Accepted input ID, five work-relative paths and SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18. | `build_entry_rebuild.BuildEntryIO` gates all five inputs; these are blockers, not freshly generated analysis. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
 | `scene-rebuild-inputs.json` | Explicit temporary R5 frozen baseline and script identities | Accepted input ID, two work-relative paths and SHA-256 only. | No baseline contents, script implementation, private roots, binary or account/device data. Audited 2026-10-18. | `scene_rebuild.SceneIO` gates both inputs before scratch publication; removing these retained inputs remains a fresh-rebuild blocker. |
@@ -767,3 +769,35 @@ Prior-art scope: re-read `docs/community-prior-art.md` and pinned ThunderKit
 Its copy into `Assets/StreamingAssets/aa` supplies no Android reconstruction,
 serialization or linker solution. These steps reuse existing measured lab
 producers and introduce no community code or runtime loading mechanism.
+
+## Shader and project-input host replay audit (2026-10-18)
+
+`shader-rebuild-inputs.json` records accepted-input identity, work-relative hashes,
+selected analysis locations/output basenames and water topology. It contains no
+recovered tree, native program, final shader body or HLSL expression. Its retained
+inputs remain private rebuild debt; see the single detailed inventory and limits
+in [rebuild-plan.md](../docs/rebuild-plan.md#shader-prerequisite-and-remaining-project-inputs).
+Existing source/tool/binary and roundtrip gates remain. Pinned d3dasm CLI failure
+text and prior-art guidance were inspected; no community implementation is copied.
+The J558 store and ledger are unchanged; changed output bodies are never used as
+fallbacks or accepted on the basis of host generation.
+
+`project-inputs.json` names existing public smoke templates, original mesh bundle/
+object/hash identities and exact public historical editor source commits/paths.
+The three `templates/rebuild-editors/*.cs` are independently authored repository
+source taken from those Git blobs, byte for byte, to reproduce stale staged editor
+inputs without Git history at rebuild time. They are frozen templates, not new
+runtime code and not targets of the current C# formatter. The `ordered-script.meta`
+template contains only Unity importer structure and the authored -20000 order;
+its GUID comes from the already public project-layout recipe. Geometry is exported
+locally from the owned installation; no OBJ vertices are published. No private
+settings bodies or game-reflected association lists/XML are promoted to templates.
+
+Manual provenance/privacy review: these additions contain configuration, minimum
+identity selections/hashes and our own historical tooling only. No original game
+asset/body, decompiled implementation, proprietary middleware, account data,
+credential, signing material, device/storage/display identifier, private absolute
+path or personal email is included. No new licenses or dependency versions are
+introduced; UnityPy remains the existing pinned host exporter. Pattern scanning
+supplements this review. The provenance map is local and unchanged: no generator
+was found; corrections are reported in rebuild-plan rather than hand-editing it.

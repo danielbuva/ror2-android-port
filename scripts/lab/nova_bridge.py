@@ -15,24 +15,8 @@ def insert_axes(before, axes):
     return before[:index] + axes + before[index:]
 
 
-def prepare():
-    active = WORK / "lab-project/Assets/LabLoadingScene"
-    if (active / "Resources/MovementBatchProbe.json").exists() and read(active / "Resources/MovementBatchProbe.json").get("primaryFireConfigAsset"):
-        return prepare_spine()
-    from scene_runtime import body_start_loadout_prepare
-
-    body_start_loadout_prepare(spawn_states=True, teleport_material=True, nova_input=True, cases=[RAW])
-    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
-    a = read(out / "attempt.json")
-    stage = Path(a["stage"])
-    cfg = read(stage / "Resources/MovementBatchProbe.json")
-    cfg["displayAssets"] = [x.lower() for x in read(WORK / "scene-probe-build.json")["prefabAssets"][:6]]
-    write(stage / "Resources/MovementBatchProbe.json", cfg)
-    settings = WORK / "lab-project/ProjectSettings/InputManager.asset"
-    before = settings.read_text()
-    if "m_Name: NovaLabAxis" in before:
-        raise RuntimeError("Existing Nova axes must be reviewed/restored first")
-    (out / "InputManager-before.asset").write_text(before)
+def nova_axes():
+    """The original sixteen slot-1 axes, shared with host reconstruction."""
     axes = ""
     for i in range(16):
         axes += f"""  - serializedVersion: 3
@@ -52,6 +36,28 @@ def prepare():
     axis: {i}
     joyNum: 1
 """
+    return axes
+
+
+def prepare():
+    active = WORK / "lab-project/Assets/LabLoadingScene"
+    if (active / "Resources/MovementBatchProbe.json").exists() and read(active / "Resources/MovementBatchProbe.json").get("primaryFireConfigAsset"):
+        return prepare_spine()
+    from scene_runtime import body_start_loadout_prepare
+
+    body_start_loadout_prepare(spawn_states=True, teleport_material=True, nova_input=True, cases=[RAW])
+    out = ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]
+    a = read(out / "attempt.json")
+    stage = Path(a["stage"])
+    cfg = read(stage / "Resources/MovementBatchProbe.json")
+    cfg["displayAssets"] = [x.lower() for x in read(WORK / "scene-probe-build.json")["prefabAssets"][:6]]
+    write(stage / "Resources/MovementBatchProbe.json", cfg)
+    settings = WORK / "lab-project/ProjectSettings/InputManager.asset"
+    before = settings.read_text()
+    if "m_Name: NovaLabAxis" in before:
+        raise RuntimeError("Existing Nova axes must be reviewed/restored first")
+    (out / "InputManager-before.asset").write_text(before)
+    axes = nova_axes()
     settings.write_text(insert_axes(before, axes))
     request = stage / "Editor/character-motor-order.json"
     order = read(request)

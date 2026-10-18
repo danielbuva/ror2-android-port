@@ -112,6 +112,8 @@ class CompositionStageTests(unittest.TestCase):
         self.patches.enter_context(patch.object(composition, "ROOT", self.root))
         self.patches.enter_context(patch.object(composition_io, "WORK", self.work))
         self.patches.enter_context(patch.object(composition_io, "ROOT", self.root))
+        # This fixture has no shader cohort; prerequisite/refusal contracts have separate tests.
+        self.patches.enter_context(patch("shader_rebuild.composition_sources", return_value=[]))
         self.put(self.root / "tools/unity/runtime/shaders/AndroidNativeDeferredPresentation.cs", b"authored runtime\n")
         self.patches.enter_context(patch.object(composition, "game", return_value=self.work / "game"))
         self.patches.enter_context(patch("UnityPy.load", return_value=SimpleNamespace(objects=[])))

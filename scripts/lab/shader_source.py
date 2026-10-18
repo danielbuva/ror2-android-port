@@ -163,11 +163,22 @@ def bind_hlsl(source, layout, entry):
     return macros + "\n" + signature_text + "\n" + body, parameters, declarations, textures, used
 
 
-def generate():
-    selection = WORK / "config/shader-source-analysis.json"
-    if not selection.exists():
+def output_directory(kind, work, root, output=None):
+    """The real action publishes its pointer; isolated generation only writes output."""
+    out = Path(output) if output is not None else work / "experiments" / kind / now()
+    out.mkdir(parents=True, exist_ok=output is not None)
+    if output is None:
+        write(work / (kind + "-current.json"), {"path": str(out.relative_to(root))})
+    return out
+
+
+def generate(output=None, work=WORK, root=ROOT, selection=None):
+    """Keep the real action's paths; isolated callers never publish current pointers."""
+    WORK, ROOT = Path(work).resolve(), Path(root).resolve()
+    selection_file = WORK / "config/shader-source-analysis.json"
+    if selection is None and not selection_file.exists():
         raise RuntimeError("Select a receipted private Cloud analysis in work/config/shader-source-analysis.json")
-    source_analysis = ROOT / read(selection)["path"]
+    source_analysis = ROOT / (read(selection_file) if selection is None else selection)["path"]
     source_analysis = source_analysis.resolve()
     if WORK.resolve() not in source_analysis.parents:
         raise RuntimeError("Shader analysis must be private")
@@ -178,14 +189,17 @@ def generate():
     if read(WORK / "config/accepted-input.json")["input_id"] != inventory["input_id"]:
         raise RuntimeError("Shader input has not been accepted")
     expected = next(x["sha256"] for x in inventory["files"] if x["path"] == receipt["source_bundle"])
-    source_bundle = game() / receipt["source_bundle"]
+    source_bundle = game(WORK) / receipt["source_bundle"]
     if sha(source_bundle) != expected or receipt["source_sha256"] != expected:
         raise RuntimeError("Shader source drift")
     from shader_recovery import PINS
 
     tool = WORK / PINS["d3dasm"][0]
     pin = PINS["d3dasm"][1]
-    if run(["git", "-C", tool, "rev-parse", "HEAD"]).stdout.decode().strip() != pin or run(["git", "-C", tool, "diff", "HEAD", "--"]).stdout:
+    if (
+        run(["git", "--no-optional-locks", "-C", tool, "rev-parse", "HEAD"]).stdout.decode().strip() != pin
+        or run(["git", "--no-optional-locks", "-C", tool, "diff", "--no-ext-diff", "HEAD", "--"]).stdout
+    ):
         raise RuntimeError("d3dasm source pin changed")
     exe = tool / "target/release/d3dasm"
     if sha(exe) != receipt["tool_binary_hashes"][str(exe.relative_to(WORK))]:
@@ -201,9 +215,7 @@ def generate():
     if json.loads(json.dumps(actual)) != tree:
         raise RuntimeError("Private shader tree differs from the accepted source bundle")
     raw, records, programs = read_segments(tree, base64.b64decode(tree["compressedBlob"]))
-    out = WORK / "experiments/shader-bindings" / now()
-    out.mkdir(parents=True)
-    write(WORK / "shader-bindings-current.json", {"path": str(out.relative_to(ROOT))})
+    out = output_directory("shader-bindings", WORK, ROOT, output)
     result = {
         "success": False,
         "source_analysis": str(source_analysis.relative_to(ROOT)),
@@ -328,5 +340,5 @@ def generate():
         raise
     finally:
         write(out / "receipt.json", result)
-    print(json.dumps({"success": True, "evidence": str(out.relative_to(ROOT)), "device_rendering_verified": False}))
+    print(json.dumps({"success": True, "evidence": str(out.relative_to(ROOT)) if output is None else str(out), "device_rendering_verified": False}))
     return out

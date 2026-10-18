@@ -2,6 +2,11 @@ from common import *
 import shutil
 
 
+def export_geometry(mesh):
+    """Shared OBJ serializer; identity selection belongs to the caller's recipe."""
+    return mesh.export().encode("utf-8")
+
+
 def prepare():
     import UnityPy
 
@@ -44,7 +49,7 @@ def prepare():
                 continue
             obj = meshes[0]
             m = obj.read()
-            (recovered / "geometry.obj").write_text(m.export())
+            (recovered / "geometry.obj").write_bytes(export_geometry(m))
             write(
                 WORK / "inventory/geometry-provenance.json",
                 {

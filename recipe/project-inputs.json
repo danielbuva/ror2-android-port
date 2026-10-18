@@ -1,0 +1,53 @@
+{
+  "editors": [
+    {
+      "path": "Assets/Editor/CatalogAddressProbe.cs",
+      "sha256": "b5b3ae0df8563d8319819ae850d04fff84c54be4cbdcf63275c7179be799b068",
+      "source_commit": "ad519fc534c71b78fd5634b9f214ddec102714d0",
+      "source_path": "tools/unity/CatalogAddressProbe.cs",
+      "template": "templates/rebuild-editors/CatalogAddressProbe.cs"
+    },
+    {
+      "path": "Assets/Editor/RecoveredHudBuilder.cs",
+      "sha256": "f5668a921f0eed814e1b9753be7dca7d48fddd32703cd29e79edb1f11095fe62",
+      "source_commit": "df6df52b7187630d968389ac4c56aa73ea15bdaa",
+      "source_path": "tools/unity/RecoveredHudBuilder.cs",
+      "template": "templates/rebuild-editors/RecoveredHudBuilder.cs"
+    },
+    {
+      "path": "Assets/Editor/WholeCatalogHost.cs",
+      "sha256": "7b2e22abc539e309d4298b07aae875affa4fb51b6883281e939b4b33a9bc7e5f",
+      "source_commit": "7e4f63b2a62c8f48bf00596f2df8ffe4a65f7e09",
+      "source_path": "tools/catalog/WholeCatalogHost.cs",
+      "template": "templates/rebuild-editors/WholeCatalogHost.cs"
+    }
+  ],
+  "geometry": {
+    "bundle": "Risk of Rain 2_Data/StreamingAssets/aa/StandaloneWindows64/ror2-base-commando_assets_all_06ab662a2249647ee7e07e35cd2377d4.bundle",
+    "bundle_sha256": "6d0f800cebee3290bd15a295efc059c32d273741afbb2965e90bbe2741c9b95e",
+    "mesh_name": "CommandoVultureGrenadeMesh",
+    "output_sha256": "dc0fef70c15dfcd19a63b2ed050c3c12cc89d384238569fe548fe2be1212148b",
+    "path_id": -9169722528760581773
+  },
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "schema": 1,
+  "settings_templates": [
+    "ProjectSettings/AudioManager.asset",
+    "ProjectSettings/ClusterInputManager.asset",
+    "ProjectSettings/DynamicsManager.asset",
+    "ProjectSettings/EditorBuildSettings.asset",
+    "ProjectSettings/EditorSettings.asset",
+    "ProjectSettings/MemorySettings.asset",
+    "ProjectSettings/NavMeshAreas.asset",
+    "ProjectSettings/PackageManagerSettings.asset",
+    "ProjectSettings/Physics2DSettings.asset",
+    "ProjectSettings/PresetManager.asset",
+    "ProjectSettings/ProjectVersion.txt",
+    "ProjectSettings/QualitySettings.asset",
+    "ProjectSettings/SceneTemplateSettings.json",
+    "ProjectSettings/TimeManager.asset",
+    "ProjectSettings/UnityConnectSettings.asset",
+    "ProjectSettings/VFXManager.asset",
+    "ProjectSettings/VersionControlSettings.asset"
+  ]
+}

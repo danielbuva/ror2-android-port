@@ -2,7 +2,7 @@
 
 from common import *
 from shader_segments import read_segments, selected_layout
-from shader_source import bind_hlsl, properties
+from shader_source import bind_hlsl, properties, output_directory
 from shader_recovery import PINS
 import base64
 import re
@@ -141,16 +141,13 @@ def render_state(state, ui=False):
     return text
 
 
-def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None):
+def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None, selection=None):
     """Generate into private work by default, or an isolated caller-owned output without updating pointers."""
     WORK, ROOT = Path(work).resolve(), Path(root).resolve()
-    selection = read(WORK / "config/shader-deferred-analysis.json")
-    out = Path(output) if output is not None else WORK / "experiments/deferred-bindings" / now()
-    out.mkdir(parents=True, exist_ok=output is not None)
+    selection = read(WORK / "config/shader-deferred-analysis.json") if selection is None else selection
+    out = output_directory("deferred-bindings", WORK, ROOT, output)
     sources = out / "sources"
     sources.mkdir()
-    if output is None:
-        write(WORK / "deferred-bindings-current.json", {"path": str(out.relative_to(ROOT))})
     result = {"success": False, "semantic_equivalence_proven": False, "PC_draw_validation_performed": False, "selection": selection, "programs": []}
     try:
         standard = load_analysis(selection["standard"], -197252232775272061, "Hopoo Games/Deferred/Standard", WORK, ROOT)

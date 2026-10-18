@@ -4,7 +4,7 @@ from common import *
 from shader_deferred import load_analysis, render_state
 from shader_programs import NativePrograms, NativeVariantUnavailable
 from shader_tessellation import TessellationPrograms
-from shader_source import properties
+from shader_source import properties, output_directory
 from shader_recovery import PINS
 
 FAMILIES = {
@@ -89,16 +89,13 @@ def align_exported_subshader_tags(path, tree, evidence):
     }
 
 
-def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None):
+def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None, selection=None):
     """Generate into private work by default, or an isolated caller-owned output without updating pointers."""
     WORK, ROOT = Path(work).resolve(), Path(root).resolve()
-    selection = read(WORK / "config/shader-material-analysis.json")
-    out = Path(output) if output is not None else WORK / "experiments/material-bindings" / now()
-    out.mkdir(parents=True, exist_ok=output is not None)
+    selection = read(WORK / "config/shader-material-analysis.json") if selection is None else selection
+    out = output_directory("material-bindings", WORK, ROOT, output)
     sources = out / "sources"
     sources.mkdir()
-    if output is None:
-        write(WORK / "material-bindings-current.json", {"path": str(out.relative_to(ROOT))})
     result = {
         "success": False,
         "semantic_equivalence_proven": False,

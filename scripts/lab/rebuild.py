@@ -14,6 +14,8 @@ from composition_io import composition
 from catalog_rebuild import catalog_closure, dependencies
 from scene_rebuild import stage_variants, source_scenes
 from build_entry_rebuild import build_entries, runtime_sources, validate_bindings
+from project_input_rebuild import PROJECT_INPUT_PATHS, project_inputs
+from shader_rebuild import shader_pipeline
 from common import RECIPE, ROOT, WORK, game, read, sha
 
 
@@ -100,7 +102,14 @@ class Step:
 # selects its subsystem paths; e.g. R1 must not claim all unknown assets.
 STEPS = {
     "assemblies": Step(("unknown", "export-copy", "repo-builder", "recipe-transform", "unity-generated"), assembly_path, assemblies),
+    "shader-pipeline": Step(
+        ("repo-builder",),
+        lambda path: path.startswith("Assets/LabLoadingScene/Resources/"),
+        shader_pipeline,
+        ("shader_source.generate", "shader_deferred.generate", "shader_materials.generate"),
+    ),
     "composition": Step(("export-copy", "recipe-transform", "generator", "inherited-store"), lambda path: not assembly_path(path), composition),
+    "project-inputs": Step(("tool-owned", "unknown", "repo-builder"), lambda path: path in PROJECT_INPUT_PATHS, project_inputs),
     "catalog-closure": Step(("repo-builder",), lambda path: not assembly_path(path), catalog_closure, ("whole_catalog.prepare_integration",)),
     "dependencies": Step(
         ("repo-builder",),
@@ -233,8 +242,15 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
         if destination.is_relative_to(installation) or installation.is_relative_to(destination):
             raise RuntimeError("Destination overlaps the installation")
         destination.mkdir(parents=True, exist_ok=True)
-        owner.build(destination, work, input_id, expected, provenance)
-    return compare(destination, work / "lab-project", expected, provenance, (lambda path: path in expected) if owner.evidence else owner.owns, owner.producers)
+        build_result = owner.build(destination, work, input_id, expected, provenance)
+    result = compare(
+        destination, work / "lab-project", expected, provenance, (lambda path: path in expected) if owner.evidence else owner.owns, owner.producers
+    )
+    if not compare_only and build_result is not None:
+        result["replay"] = build_result
+        if build_result.get("blocked"):
+            result["equal"] = False
+    return result
 
 
 def rebuild_action(step, dest=None, compare_only=False, work=None):

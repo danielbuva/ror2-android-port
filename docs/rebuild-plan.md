@@ -33,7 +33,7 @@ template renders the importer bytes. The coordinator validates complete map
 membership and generated hashes before placement, then compares actual project
 bytes. `--compare-only` reads an existing destination. Synthetic host coverage is
 in `tests/test_rebuild.py`; real-data step execution remains an operator check.
-R2 is `--step composition`, after R1 in the same destination. It owns 84,487
+R2 is `--step composition`, after R1 and the shader prerequisite in the same destination. It owns 84,487
 current map paths: 84,009 export copies, 264 recipe transforms, 10 generator outputs
 and 204 inherited-store files (assembly paths remain R1). Canonical closure
 relocation plus the existing resolved-mesh membership supplies 83,881 export
@@ -171,33 +171,122 @@ ambiguous or malformed receipts fail closed. R5's graph receipt is required;
 are reported as R9 obligations without requiring their final imported hash.
 This checks file placement, not GUID/fileID resolution or runtime readiness.
 
-The map attributes R1–R8 **98, 84,487, 259, 1,238, 18, 46, 187, 100** files
-(**86,433** total). These are membership counts; R7/R8 await operator replay.
-`rebuild.provenance_coverage` lists every uncovered row with its producer and
-complete evidence, without changing attribution. **5,408** rows remain outside
-R1–R8 selection:
+The original R1–R8 cohorts cover **86,433** files (J571: all identical from an empty
+destination; final bindings pass). The new host cohorts below select **352 + 23**
+additional paths, for **86,808** selected paths and **5,033** unselected paths:
+5,028 `unity-generated` R9 obligations and five unresolved files. Selection describes
+implemented coverage, not a completed operator replay. No new real-data harness
+execution, Unity/device command, shared-work write, journal/state edit or Git
+mutation was performed for this change.
 
-| Producer | Files | Evidence / remaining obligation |
-| --- | ---: | --- |
-| repo-builder | 352 | `shader_source.generate` (1), `shader_deferred.generate` (129), `shader_materials.generate` (222); composition prerequisite products, not yet a selected comparison cohort. |
-| tool-owned | 17 | `prepare.prepare`: current smoke ProjectSettings template equality; not selected by these steps. |
-| unity-generated | 5,028 | Schema signatures, preserved GUIDs/editor headers and serialization field order; import/scaffold/package obligations require R9, not host equality assumptions. |
-| unknown | 11 | Listed individually below; no proved complete current producer. |
+## Shader prerequisite and remaining project inputs
 
-The 11 uncovered unknowns are `Assets/Editor/CatalogAddressProbe.cs`,
-`Assets/Editor/RecoveredHudBuilder.cs`, `Assets/Editor/WholeCatalogHost.cs`
-(stale staged bytes differ from current authored sources);
-`Assets/LabLoadingScene/NovaInputBridge.cs.meta` (Unity allocation plus script
-order, no complete reproduction proof);
-`Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml`
-(reflection callback, no full current-output proof);
-`Assets/Recovered/geometry.obj` (J08 exporter/provenance hash, no original-bundle
-replay); and `ProjectSettings/BurstAotSettings_Android.json`,
-`CommonBurstAotSettings.json`, `GraphicsSettings.asset`, `InputManager.asset`,
-`ProjectSettings.asset` (inherited settings differ from templates, constructor
-incomplete). Of the original 57 unknowns below, R1 now covers the 45 original
-DLLs and SimpleJSON; these 11 remain. Full path/evidence rows stay in the local
-coverage report because the map enumerates game asset identities.
+The current host order is R1 `assemblies` → `shader-pipeline` → R2 `composition`
+→ `project-inputs` → R3–R8 → `validate-bindings`. Use the existing rebuild-step
+command and `--work-dir`; only the operator runs the real destination replay.
+`--compare-only` compares actual bytes for either new cohort without generation.
+
+`shader_rebuild.py` runs the existing `shader_source.generate` (1 output),
+`shader_deferred.generate` (129) and `shader_materials.generate` (222). It never
+reads the retained final `sources/` bodies. Native program extraction, binding,
+roundtrip checks, feature selection and water topology remain in their existing
+owners. Scratch/native tool output stays beneath destination `.rebuild/`; final
+project placement is buffered through `StageIO`, with per-file map hash/size gates.
+Failures or different bytes are listed individually in
+`.rebuild/shader-pipeline-result.json` and are **not placed**. A blocked result
+fails the step even if an earlier destination happens to contain matching bytes.
+Composition requires a complete result bound to the current recipe hash, rechecks
+retained inputs and generated source/receipt hashes, then consumes those fresh
+sources. Real stage actions still use their historical selections and write paths.
+The shared `shader_source.output_directory` preserves all three real output/pointer
+paths; isolated calls publish no shared pointers. Synthetic tests exercise both
+modes and the refusal boundaries.
+
+**Recovery is still a blocker:** `shader_recovery.recover` requires the pinned
+native recovery tools and an already configured CrossOver bottle. It is not
+replayed by this host-only step. `recipe/shader-rebuild-inputs.json` pins **46**
+retained local files: 15 recovery receipts and 15 original-tree records, three
+selected generator receipts, one material census and 12 validated independent
+HLSL intermediates. The recipe records the selections, including original-vertex
+water topology, instead of reading mutable analysis config pointers. These are
+explicit retained inputs, not regenerated recovery evidence. All 46 hashes must
+pass before any generator runs. The same five tool revisions in
+`shader_recovery.PINS` remain; existing generators verify source pins and the
+native d3dasm binary hash recorded by recovery. Isolated fallback uses only the
+12 hash-pinned intermediates, never writes a Wine bottle, and refuses absent or
+changed programs. A missing host tool blocks the affected outputs individually.
+Removing these pins requires isolated recovery/toolchain/census producers.
+No J558 inherited body is used as a fallback, ledger status is unchanged and no
+inherited store file is retired. Device verification remains a later gate.
+
+Prior-art review: `community-prior-art.md` J364–J371 and pinned d3dasm
+`a292206a` `crates/d3dasm-cli/src/main.rs` were inspected. A successful process
+can emit `not decompiled` as text; the existing NativePrograms roundtrip and
+independently validated fallback contract must remain. EditorKit registration
+and dummy shader export do not reconstruct D3D11 program math. No new shader
+translation engine or community/game program text is published.
+
+`project_input_rebuild.py` selects **23** files: 17 existing smoke settings
+copies, three historical authored editor templates, the generated InputManager,
+the explicit Nova importer and regenerated geometry. It uses the shared
+`nova_bridge.nova_axes` / `insert_axes` and `prepare.export_geometry` serializers.
+The real actions retain their selected output paths. The entire 23-file cohort
+must pass map hash/size gates before any project file is flushed, followed by
+actual current-project comparison. Geometry uses a public identity/hash recipe
+and the legitimate installation, never the previous OBJ. The exact mesh must be
+unique and have the recorded name, and both bundle and output hashes must match.
+No retained geometry body or private receipt is a runtime input to this step.
+
+The following accounts for **each of the 28** settings-template/unknown files.
+Names in the first 18 rows are relative to `ProjectSettings/`.
+
+| File | Producer and disposition |
+| --- | --- |
+| AudioManager.asset | `prepare.prepare`, exact public smoke template; project-inputs. |
+| ClusterInputManager.asset | Same template copy owner; project-inputs. |
+| DynamicsManager.asset | Same template copy owner; project-inputs. |
+| EditorBuildSettings.asset | Same template copy owner; project-inputs. |
+| EditorSettings.asset | Same template copy owner; project-inputs. |
+| MemorySettings.asset | Same template copy owner; project-inputs. |
+| NavMeshAreas.asset | Same template copy owner; project-inputs. |
+| PackageManagerSettings.asset | Same template copy owner; project-inputs. |
+| Physics2DSettings.asset | Same template copy owner; project-inputs. |
+| PresetManager.asset | Same template copy owner; project-inputs. |
+| ProjectVersion.txt | Smoke pin copy, also explicitly copied by J430 stage script; project-inputs. |
+| QualitySettings.asset | `prepare.prepare`, exact smoke template; project-inputs. |
+| SceneTemplateSettings.json | Same template copy owner; project-inputs. |
+| TimeManager.asset | Same template copy owner; project-inputs. |
+| UnityConnectSettings.asset | Same template copy owner; project-inputs. |
+| VFXManager.asset | Same template copy owner; project-inputs. |
+| VersionControlSettings.asset | Same template copy owner; project-inputs. |
+| InputManager.asset | `nova_bridge.prepare`: 16 Nova slot-1 axes inserted into the smoke template. `work/experiments/scene-runtime/20261004T010614.329224Z/nova-contract.json` records the exact current hash; project-inputs shares that generator. |
+| ProjectSettings/BurstAotSettings_Android.json | **Unresolved:** package-generated v4 Burst settings; no complete tracked constructor or matching public template found. J430 local stage script only inherits the settings directory, without individual settings output hashes. Keep out of placement. |
+| ProjectSettings/CommonBurstAotSettings.json | **Unresolved:** package-generated v4 warning settings; same inherited-directory limitation, no tracked complete producer. |
+| ProjectSettings/GraphicsSettings.asset | **Unresolved:** smoke template plus three Android deferred/HDR tier overrides. No tracked tier-setting producer found. Runtime presentation requires linear/HDR but does not serialize these settings. |
+| ProjectSettings/ProjectSettings.asset | **Unresolved:** `android/Assets/Editor/LabBuild.cs` sets player/backend/API values only partially. Current bytes also include newer editor schema and linear color space; no complete host constructor. |
+| Assets/Editor/CatalogAddressProbe.cs | Exact public Git blob at `ad519fc534c71b78fd5634b9f214ddec102714d0:tools/unity/CatalogAddressProbe.cs`; J430 staging receipt `copied[8]` matches. Pinned authored template; project-inputs. |
+| Assets/Editor/RecoveredHudBuilder.cs | Exact public blob at `df6df52b7187630d968389ac4c56aa73ea15bdaa:tools/unity/RecoveredHudBuilder.cs`; J430 receipt `copied[0]` matches. Pinned authored template; project-inputs. |
+| Assets/Editor/WholeCatalogHost.cs | Exact public blob at `7e4f63b2a62c8f48bf00596f2df8ffe4a65f7e09:tools/catalog/WholeCatalogHost.cs`; current formatting differs. Pinned authored template; project-inputs. |
+| Assets/LabLoadingScene/NovaInputBridge.cs.meta | J430 receipt `copied[57]` proves the current importer. `CharacterMotorOrderProbe` sets -20000; project-layout supplies its GUID. New public ordered-script template renders every field; full map hash gate, project-inputs. |
+| Assets/Recovered/geometry.obj | `prepare.prepare` UnityPy Mesh.export, J08. `inventory/geometry-provenance.json` records the current accepted bundle hash, mesh path ID/name and exact output hash; project-inputs replays those identities. |
+| Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml | **Unresolved host replay:** `WholeItemBehaviorPreservation.OnPreprocessBuild` in `tools/catalog/WholeCatalogBuild.cs`, introduced at `be691df`, reflects association attributes and serializes XElement. J432 proves 84 association types but not this full file's output hash. Requires a host reflection/serialization replay or exact-editor fixture, not a copied type list/XML body. |
+
+The five unresolved files are listed in coverage with their original evidence.
+The smoke settings history is the public baseline at `da6d1e8`; no tracked later
+settings constructor was found. J430's ignored `stage-project.py` lines 13–15
+copy inherited ProjectSettings and replace ProjectVersion only. That directory
+copy is historical evidence, not a fresh producer. No full private settings file
+or reflected game type list is added to public templates.
+
+**Provenance corrections to apply when its generator is available:** the three
+editor sources and Nova importer can change `unknown` → `tool-owned`, with
+`project_input_rebuild.project_inputs` and the public template/commit identities;
+InputManager and geometry can change `unknown` → `repo-builder`, naming their
+shared original generators and the new coordinator. The 17 settings and 352
+shader attributions already name the correct original producers. No provenance-map
+generator was found in tracked scripts or the searched local Python tools; the
+local map is unchanged. Step membership supports both old and corrected categories.
+These six corrections do not authorize reclassifying the five unresolved files.
 
 The audit below describes the J566 snapshot before this implementation.
 

@@ -232,8 +232,10 @@ def initialize(io, input_id):
 
 def composition(destination, work, input_id, expected, provenance):
     from composition_migration import stage
+    from shader_rebuild import composition_sources
 
     io = StageIO(work, destination)
+    composition_sources(io, read(work / "config/composition-migration.json")["shader_sources"])
     reconstruction = read(work / "config/reconstruction.json")
     membership_recipe = read(RECIPE / "composition-export-copies.json")
     if reconstruction["input_id"] != input_id or membership_recipe["input_id"] != input_id or membership_recipe["schema"] != 1:

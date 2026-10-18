@@ -64,6 +64,26 @@ import or build runs here. `validate-bindings` is the final read-only host gate;
 its receipts, membership rules, remaining pins and uncovered provenance are in
 [rebuild-plan.md](rebuild-plan.md#r7r8-host-build-entries-and-sources).
 
+Host prerequisites (`shader_rebuild.py` and `project_input_rebuild.py`, current):
+R1 → `shader-pipeline` → R2 → `project-inputs` → R3–R8 → final bindings.
+Shader replay initializes R1's generation marker, validates the public retained-input
+recipe, runs existing generators into destination scratch, then places only
+map-matching outputs through `StageIO`. Its per-file blocked/result receipt owns
+completion state; composition requires it and rechecks generated source hashes.
+No shared pointers or Wine bottles are written. Native recovery remains a pinned
+local-input blocker. `shader_source.output_directory` shares unchanged real action
+paths and isolated pointer-free setup across all three generators.
+Project inputs own public smoke settings, archived independently authored editor
+versions, explicit Nova importer metadata, shared Nova-axis generation and the
+original-identity OBJ export. All outputs are buffered and gated before flush;
+the completion receipt lives under destination `.rebuild/`. No new runtime state
+or teardown is introduced. Setup is the accepted installation and public recipes;
+failed native scratch is retained and later operator reruns use a new attempt
+folder. No local input is retired. Exact membership, unresolved settings/linker
+obligations, provenance corrections and pin counts are maintained once in
+[rebuild-plan.md](rebuild-plan.md#shader-prerequisite-and-remaining-project-inputs).
+Host contracts: `test_shader_rebuild.py`, `test_project_input_rebuild.py`.
+
 `./dev prototype --action rebuild-step --step assemblies` reconstructs the assembly
 cohort, then compares every selected map path with the current project's actual
 bytes. The ordered `STEPS` table declares each step's producer categories, path

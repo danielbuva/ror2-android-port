@@ -306,6 +306,6 @@ class CatalogRebuildTests(unittest.TestCase):
         self.assertEqual(staging.read(self.work / "scene-probe-build.json")["prefabAssets"], [self.target])
 
     def test_coordinator_order_and_membership(self):
-        self.assertEqual(list(rebuild.STEPS)[:4], ["assemblies", "composition", "catalog-closure", "dependencies"])
+        self.assertEqual(list(rebuild.STEPS)[:6], ["assemblies", "shader-pipeline", "composition", "project-inputs", "catalog-closure", "dependencies"])
         self.assertEqual(rebuild.STEPS["catalog-closure"].evidence, ("whole_catalog.prepare_integration",))
         self.assertIn("whole_catalog.repair_support_source", rebuild.STEPS["dependencies"].evidence)

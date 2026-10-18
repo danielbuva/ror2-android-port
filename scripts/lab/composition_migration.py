@@ -487,8 +487,9 @@ def stage(io=None):
 
     reproducible_shaders = {a["path"] for a in cohort(load_ledger())}
     native_names = set()
-    for directory in selection["shader_sources"]:
-        source = private_path(directory, io)
+    from shader_rebuild import composition_sources
+
+    for source in composition_sources(io, selection["shader_sources"]):
         receipt = read(source.parent / "receipt.json")
         if not receipt["success"]:
             raise RuntimeError("Current native binding generation failed")
