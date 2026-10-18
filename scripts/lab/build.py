@@ -303,9 +303,11 @@ def validate_runtime_config(project):
     _validate_public_recipe("runtime-config.json", Path(project) / relative, "Runtime config", relative)
 
 
-def validate_content_recipe():
+def validate_content_recipe(work=None):
     """Check public bundle selectors against work without writing it or rejecting local extras."""
-    _validate_public_recipe("content.json", WORK / "scene-probe-build.json", "Content recipe", "work/scene-probe-build.json")
+    _validate_public_recipe(
+        "content.json", (Path(work) if work is not None else WORK) / "scene-probe-build.json", "Content recipe", "work/scene-probe-build.json"
+    )
 
 
 def _read_public_recipe(recipe_name):
@@ -349,8 +351,8 @@ def _validate_public_recipe(recipe_name, staged_path, label, relative):
         raise RuntimeError(label + " " + relative + " differs from recipe/" + recipe_name + "; " + "; ".join(differences))
 
 
-def validate_staged_runtime_sources(project):
-    if not (WORK / "whole-catalog-build.json").exists():
+def validate_staged_runtime_sources(project, work=None):
+    if not ((Path(work) if work is not None else WORK) / "whole-catalog-build.json").exists():
         return
     stage = Path(project) / "Assets/LabLoadingScene"
     stale = [
@@ -362,7 +364,7 @@ def validate_staged_runtime_sources(project):
         raise RuntimeError("Whole-catalog runtime sources are not staged: " + ", ".join(stale[:12]) + "; run ./dev prototype --action whole-catalog-code-build")
     validate_project_layout(project)
     validate_runtime_config(project)
-    validate_content_recipe()
+    validate_content_recipe(work=work)
 
 
 def build_cache_key(project, api):
@@ -397,11 +399,17 @@ def stage_android_assets(project, io=None):
                 io.apply(project / "Assets" / source.relative_to(ROOT / "android/Assets"), copy=source)
 
 
-def build(api="gles", force=False, reuse_payload=False):
+def build(api="gles", force=False, reuse_payload=False, destination=None, work=None):
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
     if api == "lab":
         api = "gles"
+    if destination is not None:
+        if reuse_payload:
+            raise RuntimeError("Destination builds require full content; payload reuse is forbidden")
+        from unity_rebuild import execute_build
+
+        return execute_build(Path(destination), Path(work or WORK), api)
     preflight()
     project = WORK / "lab-project"
     recipe = WORK / "scene-probe-build.json"

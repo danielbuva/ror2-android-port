@@ -52,7 +52,25 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R8):
+Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
+`unity_rebuild.py` owns R9 `unity-build` after `validate-bindings`: destination-only
+host preflight, an exclusive operation lock, exact-editor batch invocation through
+`whole_catalog.build_integration(destination=...)` → `build.build(destination=...)`
+→ `LabBuild.BuildDestination` → the existing full `LabBuild.Build`. The default
+project Library is destination-local. Per-attempt requests/logs/APKs/payload and
+Android/Gradle homes stay under `.rebuild/unity/`; the summary and hash comparisons
+are `.rebuild/unity-build.json`. Cleanup releases the R9 lock, preserving failed
+runs; Unity locks are never removed. Both destination and working-project editors
+must stay closed. The existing local debug signing key is copied read-only into
+the destination to preserve in-place install compatibility. Real build cache keys,
+paths, payload reuse and receipts keep their default behavior. `preflight --dest`
+uses the same read-only host/input/binding gates without live preflight receipts.
+`install --apk` and `sync-data --payload-dir` keep the existing `Device` safety
+checks; explicit device-action `--work-dir` selects the existing device receipt
+and config tree. Rebuild `--work-dir` is read-only. Comparison groups and exact
+operator/restore commands: [R9](rebuild-plan.md#r9-isolated-unity-importbuild-current-operator-device-gate-pending).
+Host contracts: `tests/test_unity_rebuild.py`; exact-editor/device execution pending.
+
 `build_entry_rebuild.py` owns host-only R7 `build-entries` and R8
 `runtime-sources`, after `scene_rebuild.py` supplies R5/R6. It uses destination
 `StageIO` buffers, explicit retained-input hash gates and completion markers;

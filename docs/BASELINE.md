@@ -74,8 +74,8 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `065ce179850f5239bec7b920d97c1d1297f8e9ce4f4d35ed4c72bae25f9ac9d5`, code build in J571 after the `build_integration` split; same runtime source and project inputs as J551 |
-| Check | passed: 35.2 s on Lakes and one genuine stage exit, no report error (J571) |
+| APK | `578015c2ecc1bee1aaabb1a52bb6635a38566c92645beb76c4f226d5a86888f1`, code build in J574 with the destination-capable `LabBuild.cs`; same runtime source as J551 |
+| Check | passed: 35.2 s on Lakes and one genuine stage exit, no report error (J574) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`, which has the same runtime code |
 | Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |

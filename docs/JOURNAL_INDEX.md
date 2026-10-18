@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J574](PORTING_JOURNAL.md#j574--r9-unity-build-harness-device-check-of-the-destination-capable-labbuild) | 2026-10-18 | R9 Unity-build harness; device check of the destination-capable LabBuild | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J573](PORTING_JOURNAL.md#j573--rebuild-settings-producers-r9-obligations-and-regenerated-store-files) | 2026-10-18 | Rebuild: settings producers, R9 obligations and regenerated store files | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
 | [J572](PORTING_JOURNAL.md#j572--rebuild-coverage-shader-pipeline-and-project-inputs) | 2026-10-18 | Rebuild coverage: shader pipeline and project inputs | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
 | [J571](PORTING_JOURNAL.md#j571--rebuild-steps-r7-and-r8-and-the-binding-gate-device-check-of-the-split-build-path) | 2026-10-18 | Rebuild steps R7 and R8 and the binding gate; device check of the split build path | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |

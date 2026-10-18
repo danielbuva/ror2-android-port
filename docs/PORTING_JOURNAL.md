@@ -5819,3 +5819,28 @@ not yet satisfied for the TMP mobile shader. Real data, from an empty destinatio
 steps identical (project-inputs 26/26), `validate-bindings` passed with two R9 obligations, and
 the working project manifest was unchanged. 86,811 of 91,841 files are now produced by host
 steps; 5,030 belong to R9. 712 host tests pass. Host tooling only; no APK change.
+
+## J574 — R9 Unity-build harness; device check of the destination-capable LabBuild
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed by Claude).
+`unity_rebuild.py` adds step `unity-build`: after `validate-bindings` it runs the exact editor in
+batch mode on the rebuild destination (`LabBuild.BuildDestination`, with a destination-local
+Library, scratch build root, payload and receipt), refusing while any Unity instance holds the
+destination or the working project. It copies the existing lab debug key so an in-place install
+keeps the app profile, and it never touches the working project, `current-build.json` or the
+install receipts. Afterwards it compares the R9 obligations, the 28 deferred graphs and every
+Unity-generated provenance row by hash, and compares the destination APK with the BASELINE APK
+entry by entry, classifying per-build differences. `./dev install --apk`, `sync-data
+--payload-dir` and `preflight --dest` support the device run. `LabBuild.Build` keeps its root when
+`-labWorkRoot` is absent. Claude narrowed the new empty-payload refusal in `device.sync` to the
+explicit `--payload-dir`.
+
+Because `LabBuild.cs` reaches the real build, a code build ran: zero errors, APK
+`578015c2ecc1bee1aaabb1a52bb6635a38566c92645beb76c4f226d5a86888f1`, installed in place on adopted
+storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
+exit). App stopped, OLED asleep. The provenance row for `Assets/Editor/LabBuild.cs` was refreshed
+to the new staged bytes, which equal the repo source; the previous map is kept beside it. A fresh
+default destination then passed R1–R8 with every count identical and `validate-bindings`.
+
+Not yet run: the R9 build itself. It needs the lab's isolated MCP editor on `work/lab-project`
+stopped first, and that stop needs the operator's go-ahead. 731 host tests pass.

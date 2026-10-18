@@ -97,8 +97,31 @@ public static class LabBuild {
   }
   File.WriteAllText(Path.Combine(output,"reflection-imports.json"),JsonUtility.ToJson(new ReflectionImports{textures=rows.ToArray()},true));
  }
+ static string BuildRoot(){
+  var args=Environment.GetCommandLineArgs();int index=Array.IndexOf(args,"-labWorkRoot");
+  if(index<0)return Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));
+  if(index+1>=args.Length)throw new InvalidOperationException("Missing isolated build root");
+  string root=Path.GetFullPath(args[index+1]);
+  string allowed=Path.GetFullPath(Path.Combine(Application.dataPath,"../.rebuild/unity"))+Path.DirectorySeparatorChar;
+  if(!root.StartsWith(allowed,StringComparison.Ordinal))throw new InvalidOperationException("Build root outside destination");
+  return root;
+ }
+ public static void BuildDestination(){
+  if(!Application.isBatchMode)throw new InvalidOperationException("Destination build requires batch mode");
+  string root=BuildRoot();
+  if(root==Path.GetFullPath(Path.Combine(Application.dataPath,"../..")))throw new InvalidOperationException("Destination root required");
+  if(UnityEditorInternal.InternalEditorUtility.GetFullUnityVersion()!="2021.3.45f2 (88f88f591b2e)")throw new InvalidOperationException("Exact editor revision required");
+  var request=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
+  if(string.IsNullOrEmpty(request.request_id)||request.reusePayload)throw new InvalidOperationException("Full destination build request required");
+  SessionState.SetString(RunningBuild,request.request_id);
+  PlayerSettings.colorSpace=ColorSpace.Linear;
+  Build();
+  AssetDatabase.SaveAssets();
+  var result=JsonUtility.FromJson<Result>(File.ReadAllText(Path.Combine(root,"lab-build/result.json")));
+  EditorApplication.Exit(result.success&&result.errors==0?0:1);
+ }
  public static void Build(){
-  string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../.."));string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};
+  string root=BuildRoot();string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};
   try{
    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android,"dev.ror2lab.arm64");PlayerSettings.companyName="PortingLab";PlayerSettings.productName="RoR2 Porting Lab";
    PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android,ScriptingImplementation.IL2CPP);PlayerSettings.Android.targetArchitectures=AndroidArchitecture.ARM64;

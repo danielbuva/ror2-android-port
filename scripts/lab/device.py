@@ -186,7 +186,7 @@ class Device:
             raise RuntimeError("Runtime checkpoint failed; inspect work/device/last-run.json and ./dev crash")
         return result
 
-    def sync(self):
+    def sync(self, payload_directory=None):
         self.owned()
         runtime = read(WORK / "device/runtime.json")
         path = runtime["persistentDataPath"]
@@ -200,7 +200,9 @@ class Device:
                 raise RuntimeError("Runtime payload path is not backed by the selected adopted volume")
         dest = path + "/payload"
         self.sh("mkdir", "-p", dest)
-        files = list((WORK / "generated-android-data").glob("*"))
+        files = list((Path(payload_directory) if payload_directory is not None else WORK / "generated-android-data").glob("*"))
+        if payload_directory is not None and not files:
+            raise RuntimeError("Payload directory is empty or missing")
         manifest = []
         for p in sorted(files):
             if not p.is_file() or p.suffix == ".manifest":

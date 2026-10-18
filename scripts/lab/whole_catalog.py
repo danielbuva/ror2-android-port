@@ -1342,10 +1342,13 @@ def generate_build_bootstrap(io, manifest, closure):
     )
 
 
-def build_integration(code_only=False):
+def build_integration(code_only=False, destination=None, work=None):
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
 
+    if destination is not None:
+        # R1–R8 already supplied the host products. Share the Unity half only.
+        return build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
     io = StageIO(WORK)
     project = io.project
     # Both build paths own their config inputs; never inherit migration or probe extras.

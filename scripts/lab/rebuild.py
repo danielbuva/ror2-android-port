@@ -219,6 +219,17 @@ def compare(destination, project, expected, provenance, owns, producers=None):
 
 def rebuild_step(step, dest=None, compare_only=False, work=None):
     work = Path(work or WORK).resolve()
+    if step == "unity-build":
+        from unity_rebuild import unity_build
+
+        input_id = read(work / "config/accepted-input.json")["input_id"]
+        if not re.fullmatch("[0-9a-f]{64}", input_id):
+            raise RuntimeError("Invalid accepted input ID")
+        destination = safe_destination(dest, input_id, work)
+        provenance = read(work / "receipts/provenance-map.json")
+        for path in provenance:
+            relative_path(path)
+        return unity_build(destination, work, input_id, provenance, compare_only)
     if step not in STEPS:
         raise RuntimeError("Unknown rebuild step: " + step)
     if STEPS[step].build is None:
