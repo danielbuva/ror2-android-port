@@ -80,6 +80,8 @@ class RuntimeMembershipTests(unittest.TestCase):
         write(self.project / "Packages/manifest.json", {"dependencies": {"com.unity.ugui": "1.0.0"}})
         write(self.root / "recipe/runtime-config.json", {"launchPlayableSlice": True})
         write(self.stage / "Resources/MovementBatchProbe.json", {"launchPlayableSlice": True})
+        write(self.root / "recipe/content.json", {"scene": "Assets/Fixture.unity"})
+        write(self.work / "scene-probe-build.json", {"scene": "Assets/Fixture.unity"})
         write(self.work / "whole-catalog-build.json", {})
         for name, value in [("ROOT", self.root), ("RECIPE", self.root / "recipe"), ("WORK", self.work)]:
             patcher = patch.object(build, name, value)

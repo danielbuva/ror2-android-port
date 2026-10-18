@@ -175,6 +175,12 @@ existing staging retains ownership of those writes until the direct composer lan
 them after layout validation, before cache lookup or editor invocation, without
 writing the config. Extra staged keys remain allowed. The absent
 `detailedVisualDiagnostics` field stays untracked until explicitly configured.
+`recipe/content.json` records the 14 present public bundle-selection fields
+(4,304 asset-path strings, including 4,184 `prefabAssets` entries; audit and complete
+reader/writer inventory in `recipe/README.md`). `build.py` validates the work
+`scene-probe-build.json` after runtime config with the same strict equality helper,
+before cache lookup or editor invocation. Extra work keys remain allowed; the
+validator never writes either input. Existing staging still owns generation.
 
 ## File status
 
@@ -225,9 +231,11 @@ Still open:
    source manifest, script GUIDs and packages), 3–9 are open.
 2. **Runtime recipe generation is unfinished.** `recipe/runtime-config.json` tracks and
    validates 183 present public fields of the 184-field `SessionConfig`; it does not yet
-   generate the local config (369 keys, including 186 outside `SessionConfig`). The content
-   recipe `work/scene-probe-build.json` (4,184 prefabs) remains untracked. See
-   [recipe audits](../recipe/README.md#runtime-config-audit-2026-10-17).
+   generate the local config (369 keys, including 186 outside `SessionConfig`).
+   `recipe/content.json` now tracks and validates the 14 present public content
+   fields (including 4,184 mixed asset selectors); generation of the local
+   `work/scene-probe-build.json` remains unfinished. See
+   [recipe audits](../recipe/README.md#content-recipe-audit-2026-10-17).
 3. **The session is still selected by id.** `Start` waits 8 s and picks the session from a
    string id; the playable spine runs `GameSession()` (J513) and the 116 historical cases live
    in `LabExperiments.cs`. Having `Start` call `GameSession` directly is the remaining step.

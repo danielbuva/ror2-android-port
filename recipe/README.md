@@ -34,6 +34,7 @@ produce the file from the input, prefer tracking the generator.
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 92 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
 | `runtime-config.json` | Public selection in ignored `Resources/MovementBatchProbe.json`; validation only, no staging replacement yet | The lab's runtime selection for the accepted input `6af7ed94…` (Steam build 25475991); 183 present `SessionConfig` keys, preserving values and JSON types. | Authored options and necessary identifiers/relationships only; no protected content. 45 authored fields (44 present), 139 selector fields, 0 private/content fields. Excluded: `detailedVisualDiagnostics` is absent locally, so no value is invented. Audit details below, 2026-10-17. | `build.py` checks recipe keys against staged config after layout validation; extra local/obsolete keys remain allowed. Read-only validation in the existing accepted-input-gated build path; no reconstruction reader yet. |
+| `content.json` | Public selection in ignored `work/scene-probe-build.json`; validation only | Accepted input `6af7ed94…` (Steam build 25475991); 14 current build fields, 4,304 path strings, values and array order unchanged. | J548 permits these minimal selectors; no asset bodies, private paths or device/storage identities. Includes 61 Wwise asset UUID filenames, not middleware or banks. All fields retained; audit below, 2026-10-17. | `build.py` validates after runtime config on the accepted-input-gated whole-catalog path, before cache lookup/editor invocation. Does not generate or replace the work file. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -206,3 +207,88 @@ Every field is assigned below; the absent authored flag remains in its class.
 | Game selector | `worldDotBurnMaterialAsset`, `worldEquipmentAssets`, `worldEquipmentBuffAssets`, `worldEquipmentChestAsset`, `worldEquipmentContextItemAsset` |
 | Game selector | `worldEquipmentSupportPaths`, `worldGlassesAsset`, `worldItemBehaviorBuffAssets`, `worldLootSlowBuffAsset`, `worldLootSupportPaths` |
 | Game selector | `worldLunarCoinAsset`, `worldProcBuffAssets`, `worldProcSupportPaths`, `worldSlugAsset` |
+
+## Content recipe audit (2026-10-17)
+
+`content.json` preserves exactly the 14 present fields consumed by the current
+whole-catalog build. Its 382,040 bytes are below the 5 MB extraction limit. Keys
+are sorted; string case, list order and duplicates are unchanged. Despite its
+name, `prefabAssets` contains 4,184 mixed asset selectors, not only prefabs.
+The source is the existing local bundle selection for Steam build 25475991;
+no assets or serialized asset bodies were extracted. This grants no rights to
+redistribute any selected asset. Local reconstruction still requires the user's
+legitimate installation and existing accepted-input preflight.
+
+Every leaf was reviewed as a project-relative `Assets/` path (case insensitive).
+No absolute/home paths, device/storage/account identifiers, run timestamps,
+credentials, URLs, serialized components, geometry, text payloads or middleware
+contents occur. **Excluded present fields: none.** The builder also declares and
+checks `barrierEffect` and `nextStageScene`, but neither is present locally; no
+value or default is invented for either. The file hash is a cache input, not a
+reason to publish additional fields in a future manifest.
+
+61 `prefabAssets` selectors have UUID filenames beneath
+`Assets/WholeGame/Wwise/ScriptableObjects/`: 58 Event and 3 Soundbank assets.
+These are asset identities allowed by J548, not device/storage UUIDs, audio data,
+Wwise banks or proprietary middleware. The broad UUID pattern in
+`scripts/audit-public.py` flags them; this is a documented manual classification,
+not a claim that the unmodified pattern scanner accepts this new file. No
+scanner rules were weakened. All other privacy patterns pass on the new recipe.
+
+Sizes below are UTF-8 bytes of each value serialized with
+`json.dumps(value, indent=2, sort_keys=True)` (excluding its field name and the
+outer object's additional indentation). All rows are allowed list/selector
+fields. Builder references are in `android/Assets/Editor/LabBuild.cs`.
+
+| Field | Path strings | Value bytes | Current bundle reader line(s) |
+| --- | ---: | ---: | --- |
+| `enemyRewardAssets` | 5 | 349 | 189–191 |
+| `genericPickup` | 1 | 56 | 185–187 |
+| `nextStageScenes` | 23 | 1,547 | 126–129 |
+| `objectiveSupportAssets` | 60 | 4,658 | 146–166 |
+| `objectiveTMPSettings` | 1 | 66 | 168–170 |
+| `pickupDroplet` | 1 | 56 | 181–183 |
+| `playerDeathEffect` | 1 | 60 | 176–178 |
+| `prefab` | 1 | 68 | 136–138 |
+| `prefabAssets` | 4,184 | 364,357 | 138 |
+| `scene` | 1 | 67 | 120–121 |
+| `sourceStageScenes` | 23 | 1,605 | 131–134 |
+| `stageScene` | 1 | 65 | 122–124 |
+| `teleportMaterial` | 1 | 72 | 140–142 |
+| `teleporterIndicator` | 1 | 97 | 172–174 |
+
+The bundle plan reads all 14 fields before the `reusePayload` decision; a normal
+whole-catalog build appends the catalog bundles to this plan at LabBuild.cs:200.
+`build.validate_runtime_support` separately reads `objectiveSupportAssets` and
+`prefabAssets` for provider ownership. `build_cache_key` hashes the entire work
+file as `bundle_recipe`; it does not interpret individual fields. The new
+validation compares recipe fields with strict JSON types, permits extra local
+keys, reports differing key names only and never writes either input.
+
+### Reader/writer inventory
+
+Paths below are relative to `scripts/lab/` unless otherwise qualified. Line
+numbers refer to this change. R = JSON read; W = JSON write; C = copy from a
+historical snapshot (reads source, writes work); H = full-file hash; E = existence
+check. Snapshot copies do not parse fields. The inventory includes support and
+historical paths as well as the current build. No `tools/` code opens or writes
+`scene-probe-build.json`: `tools/unity/experiments/LoadingSceneProbe.cs:15,136–143`
+uses `prefabAssets` from a separate runtime probe config, not this work manifest.
+
+| File | Readers | Writers |
+| --- | --- | --- |
+| `build.py` | R 298 (new equality check), R 384 (support ownership), H 361 | none |
+| `project_manifest.py` | H 15 | none |
+| `whole_catalog.py` | E 1272 | none |
+| `composition_migration.py` | R 191, 340 (recursive asset paths/retargeting) | W 427 |
+| `source_scene_candidate.py` | R 128 | W 231 (alias `recipe_path` at 127) |
+| `stage_variants.py` | R 87; byte reads 119, 226; H 247 | W 101, 233; rollback byte write 258 (alias at 85) |
+| `scene_runtime.py` | R 658 (snapshot), 1239, 1825, 1925 | W 309, 660, 1241, 1831; C 425, 475, 543, 734, 788, 828, 869, 947, 1399 |
+| `integrated_objective.py` | R 439, 671 | W 459, 680 |
+| `integrated_results.py` | R 65 | W 67 |
+| `primary_fire.py` | R 29 (rollback receipt), 95 | W 98 |
+| `nova_bridge.py` | R 29, 320, 565, 848, 903, 1202, 1341, 1500, 1514 | W 352, 567, 854, 905, 1214, 1343, 1502, 1519 |
+| `integrated_moon.py` | R 363 (reused for both writes) | W 389, 419 |
+| `android/Assets/Editor/LabBuild.cs` | R 68 (presentation-only), 117 (current build); schema 218 | none |
+
+Implementation/verification outcome: [J550](../docs/PORTING_JOURNAL.md#j550--track-the-content-selection-as-a-public-recipe).

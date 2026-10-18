@@ -5414,3 +5414,18 @@ the code no longer reads may still be present. Validation only, nothing is writt
 tests pass. A code-only build passed the check on the real project (APK `c7519084abcb50bdb79910917fe98882f3d53e1751bee5d0c43419c0d3dde6ac`), and
 `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile runs
 unchanged (`work/experiments/baseline/20261018T044126.269987Z`). App stopped; OLED asleep. Next: generate the config from the recipe.
+
+## J550 — Track the content recipe as a public recipe
+
+The content recipe, under the J548 policy (implemented by Codex at medium reasoning, reviewed by
+Claude). `recipe/content.json` (382 KB) tracks the 14 fields of `work/scene-probe-build.json`
+that the current build reads: the 4,184 `prefabAssets` paths plus stage scenes, objective
+support assets, rewards, pickups and the teleporter selections, values and order unchanged.
+Its readers and writers (12 `scripts/lab` modules) are listed in `recipe/README.md`. All 4,304
+strings are lower-case `assets/...` project paths; 61 contain UUID-like Wwise asset file names,
+identifiers rather than audio content. Claude's scan found no private paths, identifiers or
+URLs. The build now checks that `work/scene-probe-build.json` holds those fields with equal
+values; validation only. 453 host tests pass. A code-only build passed the check (APK
+`5f9355e2ae3241e762aae42665df01abd5a390c13e89c48a50ad01c73f528028`), and `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied
+profile runs unchanged (`work/experiments/baseline/20261018T045313.759519Z`). App stopped; OLED asleep. With J549 this means both untracked
+recipes from the debt list are now public and validated; generating them is next.

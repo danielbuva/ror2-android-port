@@ -289,19 +289,29 @@ def validate_project_layout(project):
 
 def validate_runtime_config(project):
     """Check the public runtime selection without writing config or rejecting local extras."""
-    try:
-        recipe = read(RECIPE / "runtime-config.json")
-    except (OSError, ValueError) as error:
-        raise RuntimeError("Cannot read recipe/runtime-config.json") from error
-    if not isinstance(recipe, dict) or not recipe:
-        raise RuntimeError("recipe/runtime-config.json must contain a nonempty object")
     relative = "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
+    _validate_public_recipe("runtime-config.json", Path(project) / relative, "Runtime config", relative)
+
+
+def validate_content_recipe():
+    """Check public bundle selectors against work without writing it or rejecting local extras."""
+    _validate_public_recipe("content.json", WORK / "scene-probe-build.json", "Content recipe", "work/scene-probe-build.json")
+
+
+def _validate_public_recipe(recipe_name, staged_path, label, relative):
+    """Compare selected fields with strict JSON types; diagnostics disclose keys only."""
     try:
-        staged = read(Path(project) / relative)
+        recipe = read(RECIPE / recipe_name)
     except (OSError, ValueError) as error:
-        raise RuntimeError("Runtime config cannot read " + relative) from error
+        raise RuntimeError("Cannot read recipe/" + recipe_name) from error
+    if not isinstance(recipe, dict) or not recipe:
+        raise RuntimeError("recipe/" + recipe_name + " must contain a nonempty object")
+    try:
+        staged = read(staged_path)
+    except (OSError, ValueError) as error:
+        raise RuntimeError(label + " cannot read " + relative) from error
     if not isinstance(staged, dict):
-        raise RuntimeError("Runtime config " + relative + " must contain an object")
+        raise RuntimeError(label + " " + relative + " must contain an object")
 
     def equal(expected, actual):
         if type(expected) is not type(actual):
@@ -321,7 +331,7 @@ def validate_runtime_config(project):
         differences.append("changed keys: " + ", ".join(changed))
     if differences:
         # Report names only: staged values may contain private local data.
-        raise RuntimeError("Runtime config " + relative + " differs from recipe/runtime-config.json; " + "; ".join(differences))
+        raise RuntimeError(label + " " + relative + " differs from recipe/" + recipe_name + "; " + "; ".join(differences))
 
 
 def validate_staged_runtime_sources(project):
@@ -337,6 +347,7 @@ def validate_staged_runtime_sources(project):
         raise RuntimeError("Whole-catalog runtime sources are not staged: " + ", ".join(stale[:12]) + "; run ./dev prototype --action whole-catalog-code-build")
     validate_project_layout(project)
     validate_runtime_config(project)
+    validate_content_recipe()
 
 
 def build_cache_key(project, api):
