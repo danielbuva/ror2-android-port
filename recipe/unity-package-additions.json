@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "package": {
+    "name": "com.unity.textmeshpro",
+    "version": "3.0.6",
+    "sha256": "1ce172027b906a30be33cefe7b2ee46e1c8d35f729359b8b9785fc120d57b637",
+    "resource": "package/Package Resources/TMP Essential Resources.unitypackage",
+    "resource_sha256": "b1b2848548e67592087fa906f90c4ca4102ccad75d64942053c1762b2c07a754"
+  },
+  "assets": [
+    {
+      "source": "Assets/TextMesh Pro/Shaders/TMPro_Properties.cginc",
+      "source_sha256": "26c70831a9bdd6a56a37ec1e2358929453d66a064d10a61da49a1d4b05280e06",
+      "output": "Assets/LabLoadingScene/Resources/RecoveredUI/FontShader/TMPro_Properties.cginc",
+      "guid": "51bc98e2e56654e96a3d4473845251e8"
+    }
+  ]
+}

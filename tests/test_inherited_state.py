@@ -113,7 +113,8 @@ class InheritedStateTests(unittest.TestCase):
         ]
         self.assertEqual(len(native), 177)
         self.assertEqual(sum(a["comparison"]["asset_matches"] for a in native), 9)
-        self.assertEqual(sum(a["status"] == "reproducible" for a in assets), 38)  # 15 authored + 9 shaders + 14 decks
+        self.assertEqual(sum(a["status"] == "reproducible" for a in assets), 40)  # 15 authored + 9 shaders + 14 decks + 2 non-shaders
+        self.assertEqual(sum(a["status"] == "inherited" for a in assets), 189)
         self.assertEqual(sum(a["status"] == "inherited" for a in native), 168)
         self.assertFalse(any(a["status"] == "retired" for a in assets))
         # Evidence contains only identifiers, hashes and authored classification, never asset programs.

@@ -42,11 +42,28 @@ Inherited-state ledger (`scripts/lab/inherited_state.py`, current):
 `./dev prototype --action inherited-state-check` verifies the inherited asset/meta
 pairs in `recipe/inherited-state.json` against the locally selected previous project,
 and regenerates the nine `generated_shader_pair` entries in isolated scratch,
+plus the WarpRamp identity and TMP properties include pairs,
 comparing both body and importer bytes with the previous project and ledger.
 `--work-dir PATH` selects a separate clone's local work tree. It reports status
 and static-use counts; lifecycle and comparison
 semantics are in [LOCAL_STATE.md](LOCAL_STATE.md#inherited-additions-ledger-j558).
 Host contracts: `tests/test_inherited_state.py`.
+
+Non-shader addition owners (`scripts/lab/export_additions.py` and
+`scripts/lab/unity_package_additions.py`, current): composition prepares the full
+asset/importer pairs before any staging writes, checking complete membership,
+target identity and both ledger hashes. WarpRamp uses the accepted export's
+hash-gated identity operation; its importer retains the export bytes except the
+explicit inherited GUID and creation-time field. The used TMP properties include
+comes from the hash-pinned TextMesh Pro 3.0.6 package bundled with the exact editor,
+read in memory with no package installation or assembly-provider change. Its
+importer uses `authored_additions.shader_importer` with the inherited GUID.
+These owners have no runtime state or teardown; they return bytes and retain no
+temporary output. Missing or drifting inputs fail before staging. Required local
+inputs are the existing accepted export and documented Unity toolchain; neither
+owner reads a timestamped run folder. Other non-shader additions remain inherited;
+their individual blockers and third-party source requirements are audited in
+`recipe/README.md`. Host contracts: `tests/test_nonshader_additions.py`.
 
 Generator-owned shader additions (`scripts/lab/shader_additions.py`, current):
 composition prepares all nine pairs before writing, using the existing deferred

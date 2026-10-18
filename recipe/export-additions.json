@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "assets": [
+    {
+      "source": "Assets/RoR2/Base/Common/GlobalTextures/texRampCompositeLight.png",
+      "source_sha256": "5022d478441805a7fd1cca345f75ce9bb893d53230fecf6a3f56ed1b7a886f98",
+      "source_meta_sha256": "c10c711b2219ae1daf0be69a3b6de095cff6bd2ad9c16ca3567cd4e057b8b628",
+      "output": "Assets/LabLoadingScene/Resources/AndroidNativeWarpRamp.png",
+      "guid": "8fcf78f7797fe0d5c953e7e545404135",
+      "operations": [
+        {
+          "op": "identity"
+        }
+      ],
+      "importer_time_created": 1789261090
+    }
+  ]
+}

@@ -84,6 +84,18 @@ def check(work=None, ledger=None):
 
     reproducible = cohort(ledger)
     pairs = generate_pairs(reproducible, work, verify=False) if reproducible else {}
+    from export_additions import cohort as export_cohort, generate_pairs as export_pairs
+
+    exports = export_cohort(ledger)
+    if exports:
+        pairs.update(export_pairs(exports, work, verify=False))
+        reproducible += exports
+    from unity_package_additions import cohort as package_cohort, generate_pairs as package_pairs
+
+    packages = package_cohort(ledger)
+    if packages:
+        pairs.update(package_pairs(packages, verify=False))
+        reproducible += packages
     for asset in reproducible:
         for (suffix, key), data in zip((("", "sha256"), (".meta", "meta_sha256")), pairs[asset["path"]]):
             path = previous / (asset["path"] + suffix)

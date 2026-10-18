@@ -30,8 +30,10 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `export-additions.json` | Inherited WarpRamp asset/meta pair | Hash-pinned accepted-export PNG and importer, identity operation, inherited GUID and importer creation-time parameter. | J548 identifiers, hashes and necessary importer parameters only. The creation time is an exporter field, not a device/account/session identifier. No PNG or importer body is tracked. Audited 2026-10-17. | `export_additions.py` returns the exact pair without history or filesystem writes; composition prepares it before staging. |
+| `unity-package-additions.json` | Used inherited TMP properties include pair | Unity's `com.unity.textmeshpro` 3.0.6 archive bundled with the pinned editor; outer archive, Essential Resources archive and selected include hashes; output GUID. | Package `LICENSE.md` identifies the Unity Companion License for Unity-dependent projects. The operator supplies the authorised installed package. Coordinates, hashes and selectors only; no third-party source, package, license text or importer body is tracked. Audited 2026-10-17. | `unity_package_additions.py` reads both archives in memory, selects one include and uses the existing authored importer generator. Composition stages the pair without installing TMP or changing assembly providers. |
 | `deck-transforms.json` | 14 inherited director-deck addition pairs | Seven hash-pinned accepted-export base-scene decks, category names, spawn-card GUID selections, stable output GUIDs and explicit field omissions. | J548 minimum identifiers/relationships only; no serialized cards, asset/importer bodies, protected content, private paths or device/account data. Input/source gates require the legitimate export. Audited 2026-10-17. | `asset_transforms.py` owns the `deck` constructor and read-only comparison; `composition_migration.stage` prepares all 14 before writes without reading their historical bytes. |
-| `inherited-state.json` | J558 local-state ledger, not replacement content | 229 addition paths, inherited asset/meta SHA-256 and GUIDs; current identities/hashes; generator input/output identifiers and static reference chains. | J548 minimal identifiers/relationships and hashes only. No shader programs, importer/asset bodies, private paths or device/account data. Read-only census of accepted input and existing local outputs; reviewed 2026-10-17. | Current `inherited_state.py` checks inherited pairs and regenerates the nine `generated_shader_pair` entries in scratch, comparing bodies and authored importers against the previous project and ledger after input gating. Selected receipts and generator input hashes remain pinned. This status update adds no content or identifiers; reviewed 2026-10-17. Usage/comparison fields are reviewed snapshots; see [LOCAL_STATE](../docs/LOCAL_STATE.md#inherited-additions-ledger-j558). |
+| `inherited-state.json` | J558 local-state ledger, not replacement content | 229 addition paths, inherited asset/meta SHA-256 and GUIDs; current identities/hashes; generator input/output identifiers and static reference chains. | J548 minimal identifiers/relationships, hashes and authored blocker classifications only. No shader programs, importer/asset bodies, private paths or device/account data. Reviewed 2026-10-17. | Current `inherited_state.py` checks inherited pairs and regenerates nine shader pairs plus WarpRamp and the TMP properties include, comparing complete pairs against the previous project and ledger after input gating. Selected receipts and generator input hashes remain pinned. Usage/comparison fields are reviewed snapshots; see [LOCAL_STATE](../docs/LOCAL_STATE.md#inherited-additions-ledger-j558). |
 | `authored-additions.json` | 15 inherited shader/include addition pairs | Existing tracked sources (14 shaders, one include), source hashes, output paths and stable lab GUIDs only. | No new shader content, importer bodies, game content or private identifiers. Importers use an authored minimal schema. This audits the selection/identities, not redistribution rights for unrelated recovered shader programs. Reviewed 2026-10-17. | `authored_additions.py` generates bytes without history; `composition_migration.stage` prepares the complete cohort before writes; `authored-additions-check` compares with the migration oracle read-only. Independent of game input; the oracle check gates composition/UI input IDs. |
 | `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets, ten field-only prefabs and all 178 structural prefabs/scenes (migration-removal commit 4 cohorts) | Accepted-export selectors/SHA-256; authored clearing, identity, typed field edits, explicit local-reference nulling, component/settings deletion and two typed adapter constructors. Four UI prefabs reuse the hash-pinned uGUI mapping. | J548 minimal source/output, hierarchy/script, removal/owner identifiers, field paths, reference preconditions, activation/reflection values and deterministic allocation namespaces only. No YAML blocks, original component bodies, importer bodies, private paths or historical asset reads. Constructor defaults are authored schemas matching the existing sanitizer; seed names preserve its IDs without reading the named location. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares the migration-stage oracle, reports exclusive structural cohorts and lists later project changes separately, without writing. |
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
@@ -495,3 +497,113 @@ The inherited ledger remains a historical census: this change does not relabel
 its device-verification status. Deck generation and comparison need the accepted
 export; only the comparison reads the previous-project oracle. No generated
 asset bodies belong in this directory.
+
+## Non-shader addition provenance audit (2026-10-17)
+
+The census has 22 inherited non-shader entries at J561: 19 used and three unused.
+Only complete inherited pairs qualify here. Matching the later current project is
+reported separately and does not replace an inherited hash. The two new owners
+supply exactly the inherited bytes, including importer whitespace and GUIDs;
+composition's existing `stage_addition` writes them without reading history.
+The ledger now has 40 reproducible, 189 inherited and zero retired additions.
+No shader entry is relabelled. These are host reconstruction claims only.
+
+`export-additions.json` uses the existing `asset_transforms.generate_asset`
+identity operation for WarpRamp. Both export files are hash-gated; the importer
+changes only GUID and `timeCreated`, with exactly one creation-time field required.
+The numeric importer parameter preserves a mechanical export field rather than
+tracking an importer body. EliteRamp's image differs, so importer similarity is
+insufficient to make it reproducible.
+
+`unity-package-additions.json` pins the editor-bundled
+`com.unity.textmeshpro-3.0.6.tgz` and its
+`package/Package Resources/TMP Essential Resources.unitypackage` member. Both archive
+hashes and the selected source hash are required. The package's own `LICENSE.md`
+identifies the Unity Companion License for Unity-dependent projects. The source
+is the operator's authorised Unity installation; it is not downloaded, extracted
+into this repository, installed as a Unity package or redistributed here. The
+reader rejects duplicate/nonregular members and ambiguous source selectors. The
+include's `.meta` is produced by the existing authored include-importer schema.
+`UNITY_EDITOR` may locate the installed editor; absent that environment setting,
+the default uses `environment/toolchain.json`'s editor version. A different archive
+fails its hash check regardless of its filename/version label.
+
+The same Essential Resources archive also matches the bodies of the three unused
+TMP includes, so a precise authorised recovery source is known for them. They are
+not selected for staging. Its mobile shader does **not** match the inherited
+mobile shader; this audit neither replaces that shader nor changes the shader
+reconstruction policy.
+
+All used entries are listed below. Paths without a prefix are under
+`Assets/LabLoadingScene/Resources/`; material and UI basenames are under
+`RecoveredUI/`. A blocked row remains inherited, even where current bytes match a
+current generator. An export search found no inherited body match except WarpRamp.
+
+| Entry | Complete inherited pair | Source or remaining requirement |
+| --- | --- | --- |
+| `EnemyClosure/FastDirector.prefab` (under `Assets/LabLoadingScene/`) | Blocked | Existing `nova_bridge.stage_enemy_spine` refuses the stale enemy catalog before output. Its fixed scene record IDs also resolve to unrelated accepted-export objects. Needs a reviewed catalog/source-identity rebase; the guard was retained. |
+| `AndroidNativeEliteRamp.png` | Blocked | Accepted-export image differs; importer-only GUID/time repair cannot reproduce it. |
+| `AndroidNativeWarpRamp.png` | Reproduced | Hash-pinned `texRampCompositeLight.png` identity plus explicit inherited importer parameters. |
+| `AndroidNativeMaterialFamilies.json` | Blocked | Full existing material generator succeeds in scratch and matches the current project body, but differs from the inherited body. |
+| `AndroidNativeStandardVariants.json` | Blocked | Full existing deferred generator succeeds in scratch and matches the current project body, but differs from the inherited body. |
+| `MovementBatchProbe.json` | Blocked | Runtime-config generation matches current bytes. Its 183-key recipe cannot reproduce the inherited 366-key object; 186 old keys are absent from the recipe. Existing current config generation remains authoritative. |
+| `FontMaterial0.mat` | Blocked | Unity material cloning/serialization; legitimate Bombardier `tmpBombDropshadow` font/atlas input and stable exact-editor pair fixture needed. |
+| `FontMaterial1.mat` | Blocked | Same serializer requirement; legitimate RiskofRain `RiskofRainFont` font/atlas input needed. |
+| `FontMaterial2.mat` | Blocked | Same serializer requirement; legitimate DLC3 SharedSuffering `tmpBombDropshadow` font/atlas and UI hologram input needed. |
+| `FontMaterial3.mat` | Blocked | Same serializer requirement; legitimate Noto `NotoSans-Regular` font/atlas input needed. |
+| `FontMaterial4.mat` | Blocked | Same serializer requirement; legitimate SquaresBold `tmpSquaresBold` font/atlas input needed. |
+| `NativeUiMaterial0.mat` | Blocked | Builder clones source UI material, binds Family6Variant0 and saves via AssetDatabase. No isolated stable pair generator. |
+| `NativeUiMaterial1.mat` | Blocked | Same serializer requirement, using its separate source UI material/texture inputs. |
+| `Hud.prefab` | Blocked | RecoveredHudBuilder requires source roots, an initialized exact-editor project and native font shader. PrefabUtility serialization/local object IDs are unproven in isolation. |
+| `Menu.prefab` | Blocked | Same exact-editor requirement, with source menu roots. |
+| `Owned full-rectangle texCrosshairNibBar.asset` | Blocked | Builder requires native sprite-contract data, `Sprite.Create` and AssetDatabase serialization with stable local identity. |
+| `Strings.json` | Blocked | Current legitimate English input has 5,578 tokens versus 4,677 inherited: 901 added and 14 changed values. Scratch comparison of the existing merge policy differs; no language text is tracked. |
+| `TMP Settings.asset` | Blocked | Builder clones source settings and rebinds the font using SerializedObject; source settings/font identities and exact-editor serialization remain unproven. |
+| `RecoveredUI/FontShader/TMPro_Properties.cginc` | Reproduced | Authorised local TextMesh Pro 3.0.6 Essential Resources source, archive/source hashes and inherited-GUID importer generator. |
+
+RecoveredHudBuilder has no host-only output-directory interface: it loads typed
+Unity assets, uses AssetDatabase/PrefabUtility and allocates serialized objects.
+It was inspected, not invoked against the live project. Running it requires an
+isolated exact-editor fixture with fully reconstructed dependencies and stable
+identities; merely retaining `.meta` GUIDs does not prove serialized body equality.
+No font binary is itself one of these 22 ledger entries. The materials/settings
+reference game-specific font assets/atlases, which must come from the accepted
+legitimate installation/export with exact input/source hashes; a similarly named
+public font or arbitrary TMP example cannot substitute. No font or third-party
+content is copied into tracked files.
+
+The five unused entries below each have zero references outside their own file
+in a conservative static search of current-project `Assets/` excluding `.meta`,
+tracked `tools/unity`, `recipe/content.json` and `recipe/runtime-config.json`.
+Search keys are the GUID, exact asset path and filename, plus the resource stem
+for shaders. The scan includes the current native resource manifests and shader
+includes. Namespace `TMPro` alone is not treated as a reference to `TMPro.cginc`.
+This scoped absence is evidence for a retirement review, not device verification
+or permission to delete historical state.
+
+| Unused entry | Recommendation | Recovery/reference evidence |
+| --- | --- | --- |
+| `AndroidNativeFamily8Variant0.shader` | Retire candidate; keep now | No static references or selected generator output; retain J558 rollback protection. |
+| `AndroidNativeFamily8Variant7.shader` | Retire candidate; keep now | No static references or selected generator output; retain J558 rollback protection. |
+| `RecoveredUI/FontShader/TMPro.cginc` | Retire candidate; keep now | No static references; matching authorised TMP 3.0.6 source identified. |
+| `RecoveredUI/FontShader/TMPro_Mobile.cginc` | Retire candidate; keep now | No static references; matching authorised TMP 3.0.6 source identified. |
+| `RecoveredUI/FontShader/TMPro_Surface.cginc` | Retire candidate; keep now | No static references; matching authorised TMP 3.0.6 source identified. |
+
+Prior-art scope is source-artifact identity/importer preservation. The review
+reused `docs/community-prior-art.md` and inspected pinned ThunderKit
+`Editor/Addressable/Config/ImportAddressableCatalog.cs` at
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`: its `File.Copy` operations preserve
+catalog/settings artifacts but provide no Android conversion or Unity serializer
+reproducibility. That distinction supports identity copying only after both bytes
+are proven. No community implementation, game serialization or third-party source
+was copied into the recipes or generators. Existing shader/material generators
+were run with explicit scratch output and their selected independent intermediates;
+their existing pins and contracts were retained.
+
+The new host fixtures cover both complete pairs, read-only source handling,
+source/importer/archive drift, stable GUIDs, missing/duplicate/relocated stage
+members, accepted-input gates, path/symlink escapes, archive ambiguity and the
+read-only inherited oracle check. `./dev doctor` was intentionally not invoked:
+it writes `work/doctor.json`, outside this task's authorised read-only work scope.
+Builds, editor mutations, device commands, Git index/commits, journal and state
+updates are outside this task.

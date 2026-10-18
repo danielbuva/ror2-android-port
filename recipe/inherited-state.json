@@ -406,6 +406,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "Existing stage_enemy_spine refuses the stale enemy catalog before output. Its fixed scene records 1655/3908/9121 also identify unrelated accepted-export objects; a reviewed source-identity rebase is needed."
       }
     },
     {
@@ -674,6 +678,10 @@
         "basis": "accepted_export_hash",
         "asset_matches": false,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "Accepted-export PNG differs from the inherited PNG. Importer differs only in GUID/timeCreated; identity cannot reproduce the body."
       }
     },
     {
@@ -4539,6 +4547,10 @@
         "basis": "selected_output_absent",
         "asset_matches": false,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "retire_candidate_preserved",
+        "reason": "Zero references outside its own file in current project Assets (excluding metadata), tracked tools/unity, content recipe and runtime config, by GUID, exact path and filename (plus resource stem for shaders). Static scope only; preserve until J558 retirement authorization and runtime verification."
       }
     },
     {
@@ -4840,6 +4852,10 @@
         "basis": "selected_output_absent",
         "asset_matches": false,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "retire_candidate_preserved",
+        "reason": "Zero references outside its own file in current project Assets (excluding metadata), tracked tools/unity, content recipe and runtime config, by GUID, exact path and filename (plus resource stem for shaders). Static scope only; preserve until J558 retirement authorization and runtime verification."
       }
     },
     {
@@ -5145,6 +5161,10 @@
         "basis": "selected_receipted_output",
         "asset_matches": false,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "Full shader_materials.generate in isolated scratch matches current_sha256 but not inherited sha256; selected receipted output has the same mismatch."
       }
     },
     {
@@ -8398,6 +8418,10 @@
         "basis": "selected_receipted_output",
         "asset_matches": false,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "Full shader_deferred.generate in isolated scratch matches current_sha256 but not inherited sha256; selected receipted output has the same mismatch."
       }
     },
     {
@@ -8407,7 +8431,7 @@
       "sha256": "5022d478441805a7fd1cca345f75ce9bb893d53230fecf6a3f56ed1b7a886f98",
       "meta_sha256": "0570660b022962e6e18fc1211f639d9242a59c4297c2e40ed57af6eb436dc1a3",
       "guid": "8fcf78f7797fe0d5c953e7e545404135",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -8420,8 +8444,12 @@
       "current_sha256": "5022d478441805a7fd1cca345f75ce9bb893d53230fecf6a3f56ed1b7a886f98",
       "current_meta_sha256": "0570660b022962e6e18fc1211f639d9242a59c4297c2e40ed57af6eb436dc1a3",
       "generator": {
-        "function": "scripts/lab/composition_migration.py:stage",
+        "function": "scripts/lab/export_additions.py:generate_pair",
         "inputs": [
+          {
+            "path": "recipe/export-additions.json",
+            "selector": "Assets/LabLoadingScene/Resources/AndroidNativeWarpRamp.png"
+          },
           {
             "path": "Assets/RoR2/Base/Common/GlobalTextures/texRampCompositeLight.png",
             "sha256": "5022d478441805a7fd1cca345f75ce9bb893d53230fecf6a3f56ed1b7a886f98"
@@ -8429,9 +8457,9 @@
         ]
       },
       "comparison": {
-        "basis": "accepted_export_hash",
+        "basis": "export_identity_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -8844,6 +8872,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "generate_runtime_config in scratch matches current_sha256, not the inherited 366-key object. The public recipe has 183 keys; recreating obsolete inherited configuration is not implied."
       }
     },
     {
@@ -8899,6 +8931,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones Bombardier/tmpBombDropshadow font material and assigns its native shader using Unity AssetDatabase serialization; a pinned legitimate font/atlas input and stable exact-editor pair fixture are needed."
       }
     },
     {
@@ -8954,6 +8990,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones RiskofRain/RiskofRainFont font material and assigns its native shader using Unity AssetDatabase serialization; a pinned legitimate font/atlas input and stable exact-editor pair fixture are needed."
       }
     },
     {
@@ -9009,6 +9049,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones DLC3/SharedSuffering/tmpBombDropshadow font material and assigns its native shader using Unity AssetDatabase serialization; a pinned legitimate font/atlas input and stable exact-editor pair fixture are needed."
       }
     },
     {
@@ -9064,6 +9108,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones Noto/NotoSans-Regular font material and assigns its native shader using Unity AssetDatabase serialization; a pinned legitimate font/atlas input and stable exact-editor pair fixture are needed."
       }
     },
     {
@@ -9119,6 +9167,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones SquaresBold/tmpSquaresBold font material and assigns its native shader using Unity AssetDatabase serialization; a pinned legitimate font/atlas input and stable exact-editor pair fixture are needed."
       }
     },
     {
@@ -9186,6 +9238,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "retire_candidate_preserved",
+        "reason": "Zero references outside its own file in current project Assets (excluding metadata), tracked tools/unity, content recipe and runtime config, by GUID, exact path and filename (plus resource stem for shaders). Static scope only; preserve until J558 retirement authorization and runtime verification."
       }
     },
     {
@@ -9215,6 +9271,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "retire_candidate_preserved",
+        "reason": "Zero references outside its own file in current project Assets (excluding metadata), tracked tools/unity, content recipe and runtime config, by GUID, exact path and filename (plus resource stem for shaders). Static scope only; preserve until J558 retirement authorization and runtime verification."
       }
     },
     {
@@ -9224,7 +9284,7 @@
       "sha256": "26c70831a9bdd6a56a37ec1e2358929453d66a064d10a61da49a1d4b05280e06",
       "meta_sha256": "ea676ecd8fc73d23118e133c935e3b715fb349253a8025d1e54193d6d98a8a6e",
       "guid": "51bc98e2e56654e96a3d4473845251e8",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -9253,11 +9313,19 @@
       ],
       "current_sha256": "26c70831a9bdd6a56a37ec1e2358929453d66a064d10a61da49a1d4b05280e06",
       "current_meta_sha256": "ea676ecd8fc73d23118e133c935e3b715fb349253a8025d1e54193d6d98a8a6e",
-      "generator": null,
+      "generator": {
+        "function": "scripts/lab/unity_package_additions.py:generate_pairs",
+        "inputs": [
+          {
+            "path": "recipe/unity-package-additions.json",
+            "selector": "Assets/LabLoadingScene/Resources/RecoveredUI/FontShader/TMPro_Properties.cginc"
+          }
+        ]
+      },
       "comparison": {
-        "basis": "not_run",
-        "asset_matches": null,
-        "meta_matches": null
+        "basis": "unity_package_pair",
+        "asset_matches": true,
+        "meta_matches": true
       }
     },
     {
@@ -9287,6 +9355,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "retire_candidate_preserved",
+        "reason": "Zero references outside its own file in current project Assets (excluding metadata), tracked tools/unity, content recipe and runtime config, by GUID, exact path and filename (plus resource stem for shaders). Static scope only; preserve until J558 retirement authorization and runtime verification."
       }
     },
     {
@@ -9336,6 +9408,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "RecoveredHudBuilder.Generate requires an initialized exact-editor project, source HUD roots and native font shader. PrefabUtility serialization and allocated local IDs have no isolated host pair generator."
       }
     },
     {
@@ -9385,6 +9461,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "RecoveredHudBuilder.Generate requires an initialized exact-editor project, source menu roots and native font shader. PrefabUtility serialization and allocated local IDs have no isolated host pair generator."
       }
     },
     {
@@ -9440,6 +9520,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones a source UI material, assigns AndroidNativeFamily6Variant0 and saves through AssetDatabase; stable exact-editor serialized output is unproven."
       }
     },
     {
@@ -9495,6 +9579,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "No accepted-export body matches. RecoveredHudBuilder clones a source UI material, assigns AndroidNativeFamily6Variant0 and saves through AssetDatabase; stable exact-editor serialized output is unproven."
       }
     },
     {
@@ -9550,6 +9638,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "RecoveredHudBuilder uses native sprite contract data, Sprite.Create and AssetDatabase.CreateAsset. No export body matches; exact-editor serialization and stable local identity remain unproven."
       }
     },
     {
@@ -9599,6 +9691,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "Current legitimate English input has 5578 tokens versus 4677 inherited, with 901 added and 14 changed values. A scratch comparison using the builder merge policy differs; no language content is tracked."
       }
     },
     {
@@ -9724,6 +9820,10 @@
         "basis": "not_run",
         "asset_matches": null,
         "meta_matches": null
+      },
+      "reconstruction": {
+        "result": "blocked",
+        "reason": "RecoveredHudBuilder clones source TMP settings and binds the recovered default font through SerializedObject. No accepted-export body matches; exact-editor serialization and source font identities remain unproven."
       }
     }
   ]

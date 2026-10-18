@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J562](PORTING_JOURNAL.md#j562--non-shader-inherited-additions-two-reproduced-the-rest-need-the-editor) | 2026-10-17 | Non-shader inherited additions: two reproduced, the rest need the editor | Inherited-state reduction (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J561](PORTING_JOURNAL.md#j561--generate-the-14-director-decks-from-the-export) | 2026-10-17 | Generate the 14 director decks from the export | Inherited-state reduction (implemented by Codex at medium reasoning, reviewed and merged by Claude). |
 | [J560](PORTING_JOURNAL.md#j560--generate-the-nine-shaders-whose-outputs-already-match) | 2026-10-17 | Generate the nine shaders whose outputs already match | Following J558 (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J559](PORTING_JOURNAL.md#j559--ledger-of-inherited-local-state) | 2026-10-17 | Ledger of inherited local state | Following J558 (implemented by Codex at medium reasoning, reviewed by Claude). |

@@ -5591,3 +5591,22 @@ Meadow deck (missing Champions weight, truncated Grandparent fields) is reproduc
 correcting it is gameplay work. `asset-transforms-check`: decks 14/14 identical, the 222 adapted
 assets unchanged. The ledger now lists 38 reproducible additions and 191 inherited (all verified
 unchanged). 562 host tests pass. Host tooling only; no APK change.
+
+## J562 — Non-shader inherited additions: two reproduced, the rest need the editor
+
+Inherited-state reduction (implemented by Codex at medium reasoning, reviewed by Claude). Of the
+non-shader inherited additions, two now reproduce in full: `AndroidNativeWarpRamp.png` (export
+identity plus its importer parameters, `recipe/export-additions.json`) and `TMPro_Properties.cginc`
+(from the hash-pinned TextMesh Pro 3.0.6 package bundled with the pinned editor,
+`recipe/unity-package-additions.json`; no third-party content tracked). Ledger: 40 reproducible,
+189 inherited, all verified unchanged. 574 host tests pass. Host tooling only; no APK change.
+
+The rest cannot be proven byte for byte outside Unity: five font materials, two native UI
+materials, the HUD and menu prefabs, a crosshair sprite and TMP Settings are serialised by the
+exact editor; EliteRamp differs from the current export; the two native shader JSON manifests and
+`Strings.json` match today's generators, not the inherited bytes; FastDirector depends on stale
+scene IDs. Five files (two shaders and three TMP includes) have no references in the current
+runtime and are candidates for retirement, but are preserved. Like the 166 used shaders that
+differ (J559), these need a new, device-verified contract rather than a byte proof: regenerate
+with today's generator or the editor, then verify on the Nova before retiring the inherited copy
+(J558).

@@ -405,6 +405,8 @@ def stage():
     from asset_transforms import load_recipe, prepare_decks
     from authored_additions import prepare as prepare_authored_additions
     from shader_additions import prepare as prepare_shader_additions
+    from export_additions import prepare as prepare_export_additions
+    from unity_package_additions import prepare as prepare_unity_package_additions
 
     transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
     transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids)
@@ -417,6 +419,14 @@ def stage():
     if authored.keys() & decks.keys():
         raise RuntimeError("Overlapping generated addition owners")
     authored.update(decks)
+    exports = prepare_export_additions(generated)
+    if authored.keys() & exports.keys():
+        raise RuntimeError("Overlapping generated addition owners")
+    authored.update(exports)
+    packages = prepare_unity_package_additions(generated)
+    if authored.keys() & packages.keys():
+        raise RuntimeError("Overlapping generated addition owners")
+    authored.update(packages)
     staged = []
     for row in generated:
         stage_addition(row, authored, previous, project, guidmap, remaps)
