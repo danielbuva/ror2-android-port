@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J546](PORTING_JOURNAL.md#j546--rename-toolsassemblyprobe-to-toolsassembly-transforms) | 2026-10-17 | Rename tools/AssemblyProbe to tools/assembly-transforms | Phase 5: the folder name now says what the tool does (it applies the bounded, input-gated assembly transforms such as `OptionalPresentationGuard` and `WwiseUna… |
 | [J545](PORTING_JOURNAL.md#j545--generate-the-readmes-command-table-from-the-action-registry) | 2026-10-17 | Generate the README's command table from the action registry | Phase 5 "Generated README table" (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J544](PORTING_JOURNAL.md#j544--format-the-c-sources-with-clang-format) | 2026-10-17 | Format the C# sources with clang-format | Phase 5 "C# formatting". |
 | [J543](PORTING_JOURNAL.md#j543--split-toolsunity-into-runtime-and-experiments-folders) | 2026-10-17 | Split tools/unity into runtime and experiments folders | Phase 5 "Folders" (implemented by Codex at medium reasoning, reviewed by Claude). |

@@ -151,7 +151,7 @@ def check_update():
         unchanged_optional_guards=sum(x["same_contract"] and x["same_body"] for x in guard_rows),
         optional_guards=len(guard_rows),
         editor_pin_matches=new_inventory["unity_versions"] == [toolchain()["unity_version"]],
-        tool_sources={p.name: sha(p) for p in [ROOT / "tools/AssemblyProbe/MigrationSurface.cs", Path(__file__)]},
+        tool_sources={p.name: sha(p) for p in [ROOT / "tools/assembly-transforms/MigrationSurface.cs", Path(__file__)]},
     )
     write(out / "result.json", summary)
     write(out.parent / "latest.json", dict(path=str(out.relative_to(ROOT)), success=True))

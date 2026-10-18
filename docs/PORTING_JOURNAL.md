@@ -5364,3 +5364,13 @@ from `scripts/lab/actions.py` (name and help, registry order) between two marker
 README.md; `--check` fails when README is stale and runs in host CI next to the journal-index
 check. Historical actions stay out of README; `./dev prototype --action list` shows them. 419
 host tests pass. Host tooling only; no build or device run.
+
+## J546 — Rename tools/AssemblyProbe to tools/assembly-transforms
+
+Phase 5: the folder name now says what the tool does (it applies the bounded, input-gated
+assembly transforms such as `OptionalPresentationGuard` and `WwiseUnavailable`, not only
+probes). The project and assembly keep the name `AssemblyProbe`, so the built `AssemblyProbe.dll`
+and receipts that hash its sources by file name are unchanged. Three code references
+(`boundaries.probe_tool`, `input_migration`) and the docs follow the move. The tool builds from
+the new path through `probe_tool()` and its read-only type inspection of the accepted
+`RoR2.dll` returns the expected fields. 419 host tests pass. Host tooling only; no APK change.

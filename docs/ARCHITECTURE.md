@@ -20,7 +20,7 @@ synced content payload comes out. Everything game-derived stays under the ignore
 | 1 | Accept input | `./dev inspect --full`, then record the ID in `config/accepted-input.json` by hand | `scripts/lab/inventory.py` | `inventory/` |
 | 2 | Check before building | `./dev preflight` (also run by `build`) | `scripts/lab/build.py` (`preflight`) | none (refuses on drift) |
 | 3 | Decompile and export | `./dev decompile`, `./dev export-project` | `scripts/lab/recovery.py` | `config/reconstruction.json`, exported project |
-| 4 | Assembly transforms | no current command; see [debt](#known-structural-debt) | `tools/AssemblyProbe/` (`OptionalPresentationGuard`, `WwiseUnavailable`, `AudioGuard`) | transformed `RoR2.dll`, recorded by hash |
+| 4 | Assembly transforms | no current command; see [debt](#known-structural-debt) | `tools/assembly-transforms/` (`OptionalPresentationGuard`, `WwiseUnavailable`, `AudioGuard`) | transformed `RoR2.dll`, recorded by hash |
 | 5 | Compose the project | `./dev prototype --action composition-update-stage`, then `composition-update-dependencies` | `scripts/lab/composition_migration.py` | `lab-project/` |
 | 6 | Whole-catalog content | `whole-catalog-prepare` → `-host` → `-repair-bindings` (when recorded) → `-contracts` → `-host-providers` | `scripts/lab/whole_catalog.py`, `tools/catalog/` | `experiments/whole-catalog/<timestamp>/` |
 | 7 | Bundles, payload, APK | `whole-catalog-build`, or `whole-catalog-code-build` for a code-only change | `whole_catalog.py` (writes the linker descriptor through `preservation_descriptor`, J506) → `build.py` → exact editor via MCP | APK + payload receipts |

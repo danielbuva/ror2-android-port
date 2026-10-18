@@ -12,7 +12,7 @@ def probe_tool():
         [
             Path.home() / ".local/share/dotnet/dotnet",
             "build",
-            ROOT / "tools/AssemblyProbe/AssemblyProbe.csproj",
+            ROOT / "tools/assembly-transforms/AssemblyProbe.csproj",
             "-o",
             out,
             "-p:CecilPath=" + str(CECIL),

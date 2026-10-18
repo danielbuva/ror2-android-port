@@ -25,7 +25,7 @@ services, the Moon finale and PC visual parity are not done. See
 | `scripts/lab/` | Host tooling: inventory, decompile/export, assembly and content transforms, project composition, build, install, device runs and evidence collection. |
 | `tools/unity/` | Authored C# and shaders staged into the generated Unity project; most of the Android runtime lives here (see ARCHITECTURE). |
 | `tools/catalog/` | Editor-side catalog build helpers and exact-editor host fixtures (`*Host.cs`). |
-| `tools/AssemblyProbe/` | .NET tool that reads original assemblies and applies the bounded, input-gated transforms. |
+| `tools/assembly-transforms/` | .NET tool (assembly `AssemblyProbe`) that reads original assemblies and applies the bounded, input-gated transforms. |
 | `android/`, `smoke/` | The lab player's build/diagnostic harness and the bootstrap smoke project. |
 | `tests/` | Host tests (Python unittest). |
 | `docs/` | Current references at the top level; superseded material under `docs/history/`. |
