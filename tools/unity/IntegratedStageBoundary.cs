@@ -1,5 +1,5 @@
 // Subsystem: stage transport (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup PrepareStageTransport, BeginOriginalStage, TransportIntegratedStage; teardown ReleaseObjectiveStage, CleanupStageTransport.
+// Session phases: setup PrepareStageTransport, BeginOriginalStage, TransportIntegratedStage (IntegratedStageSession); teardown ReleaseObjectiveStage, CleanupStageTransport (Dispose).
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,245 +24,274 @@ public sealed partial class MovementBatchProbe {
   public List<StageEntryObservation> entryObservations=new List<StageEntryObservation>();
  }
  [Serializable] public class StageEntryObservation {public float at;public Vector3 position,velocity,queuedPositionTarget,bodyPosition,footPosition,corePosition;public bool sourceBounds,stable,groundCollider,groundEnabled,motorEnabled,solverEnabled,queuedPosition;public string tag,colliderPath,colliderScene;public int colliderLayer;public string[] mapZones;}
- void ObserveStageEntry(CharacterMotor motor,string tag="settling"){
-  var solver=motor.Motor;var collider=solver.GroundingStatus.GroundCollider;var point=solver.TransientPosition;
-  r.stageProgress.entryObservations.Add(new StageEntryObservation{tag=tag,at=Time.realtimeSinceStartup,sourceBounds=Util.IsPositionWithinMapBounds(point),position=point,velocity=motor.velocity,queuedPosition=(bool)solver.GetType().GetField("_movePositionDirty",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(solver),queuedPositionTarget=(Vector3)solver.GetType().GetField("_movePositionTarget",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(solver),bodyPosition=worldPlayer.transform.position,footPosition=worldPlayer.footPosition,corePosition=worldPlayer.corePosition,stable=solver.GroundingStatus.IsStableOnGround,groundCollider=collider,groundEnabled=collider&&collider.enabled,motorEnabled=motor.enabled,solverEnabled=solver.enabled,colliderPath=collider?StageObjectPath(collider.transform):"none",colliderScene=collider?collider.gameObject.scene.name:"none",colliderLayer=collider?collider.gameObject.layer:-1,mapZones=stageGeometryScene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).Where(x=>x.gameObject.activeInHierarchy).Select(x=>x.name+"|"+x.triggerType+"|"+x.zoneType+"|layer="+x.gameObject.layer+"|inside="+x.IsPointInsideMapZone(point)).ToArray()});Save();
- }
- AndroidStageTransport worldTransport;GameObject worldTransportHost;SessionConfig integratedStageConfig;
- string pendingStage;bool transportingStage;int stagePickupBaseline;float stageEnteredAt;
+ // Shared with the other runtime boundaries.
+ string pendingStage;int stagePickupBaseline;float stageEnteredAt;
  HashSet<GameObject> stageStaticRoots=new HashSet<GameObject>();
- CursedBookSpellDef[] priorStageSpells;string[] priorStageSpellNames;ResourceAvailability priorStageSpellAvailability;bool ownsStageSpells;
- CraftableDef[] priorCraftableContent;object priorCraftableDefs,priorCraftableRecipes,priorIngredientTypes;ResourceAvailability priorCraftableAvailability,priorIngredientAvailability;bool ownsCraftableCatalog;
- SurfaceDef[] priorSurfaceContent;bool ownsSurfaceCatalog;
- static bool originalDamageMacrosReady;
- void PrepareOriginalSurfaceCatalog(){
-  if(r.liveCatalogs==null||!stageSourceObjects)return;
-  Check(!ownsSurfaceCatalog&&SurfaceDefCatalog.surfaceCount==0,"Unowned original surface definitions");
-  var definitions=WholeCatalogComposed.CategoryFamily(AddressablesLabels.surfaceDef,Array.Empty<SurfaceDef>());
-  // The Junk provider advertises four extra assets but its source ContentPack
-  // deliberately loads only item/equipment/buff/elite labels in an unmodded run.
-  Check(definitions.Length==72&&definitions.All(def=>def)&&definitions.Select(def=>def.name).Distinct().Count()==definitions.Length,"Original surface-definition family differs from accepted input");
-  priorSurfaceContent=ContentManager._surfaceDefs;
-  Check(priorSurfaceContent==null||priorSurfaceContent.Length==0,"Unowned surface-definition content array");
-  ContentManager._surfaceDefs=definitions;ownsSurfaceCatalog=true;
-  StaticCall(typeof(SurfaceDefCatalog),"Init");
-  Check(SurfaceDefCatalog.surfaceCount==definitions.Length&&definitions.All(def=>def.surfaceDefIndex!=SurfaceDefIndex.Invalid&&SurfaceDefCatalog.GetSurfaceDef(def.surfaceDefIndex)==def),"Original surface-definition indices differ");
- }
- void CleanupOriginalSurfaceCatalog(){
-  if(!ownsSurfaceCatalog)return;
-  StaticCall(typeof(SurfaceDefCatalog),"SetSurfaceDefs",new object[]{Array.Empty<SurfaceDef>()});
-  ContentManager._surfaceDefs=priorSurfaceContent;ownsSurfaceCatalog=false;
-  Check(SurfaceDefCatalog.surfaceCount==0,"Original surface-definition catalog outlived its owned bundle");
- }
- void PrepareOriginalDamageMacros(){
-  if(r.liveCatalogs==null||!stageSourceObjects)return;
-  var expected=new[]{"MidasTouch","ChefFireDamage","ChefBoostedFireDamage","ChefBoostedIceDamage","ChefIceDamage","VultureHunterLaser","EngiHealMechanical"};
-  if(!originalDamageMacrosReady){
-   Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count==0,"Unowned original damage-macro catalog");
-   // Original startup scans opted-in assemblies before SystemInitializer runs.
-   HG.Reflection.SearchableAttribute.ScanAssembly(typeof(DamageMacroCatalog).Assembly);
-   HG.Reflection.SearchableAttribute.ScanAssembly(typeof(EntityStates.Chef.Sear).Assembly);
-   var methods=HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
-   Check(methods!=null&&methods.Count==expected.Length&&methods.Cast<DamageMacroMethodAttribute>().All(method=>method.target is MethodInfo&&expected.Contains(method.searchableName)),"Original damage-macro searchable methods differ from accepted input");
-   StaticCall(typeof(DamageMacroCatalog),"Initialize");
-   originalDamageMacrosReady=true;
+ IntegratedStageSession integratedStageSession;
+ IntegratedStageSession GetIntegratedStageSession(){if(integratedStageSession==null)integratedStageSession=new IntegratedStageSession(this);return integratedStageSession;}
+ void ObserveStageEntry(CharacterMotor motor,string tag="settling"){GetIntegratedStageSession().ObserveStageEntry(motor,tag);}
+ void PrepareOriginalSurfaceCatalog(){GetIntegratedStageSession().PrepareOriginalSurfaceCatalog();}
+ void CleanupOriginalSurfaceCatalog(){GetIntegratedStageSession().CleanupOriginalSurfaceCatalog();}
+ void PrepareOriginalDamageMacros(){GetIntegratedStageSession().PrepareOriginalDamageMacros();}
+ void PrepareCraftableCatalog(){GetIntegratedStageSession().PrepareCraftableCatalog();}
+ void CleanupCraftableCatalog(){GetIntegratedStageSession().CleanupCraftableCatalog();}
+ void PrepareStageSpellCatalog(){GetIntegratedStageSession().PrepareStageSpellCatalog();}
+ void CleanupStageSpellCatalog(){GetIntegratedStageSession().CleanupStageSpellCatalog();}
+ void PrepareStageTransport(SessionConfig cfg){GetIntegratedStageSession().PrepareStageTransport(cfg);}
+ IEnumerator BeginOriginalStage(){return GetIntegratedStageSession().BeginOriginalStage();}
+ void ReleaseObjectiveStage(){GetIntegratedStageSession().ReleaseObjectiveStage();}
+ void TickOriginalStage(){GetIntegratedStageSession().TickOriginalStage();}
+ int IntegratedInventoryCount(){return GetIntegratedStageSession().IntegratedInventoryCount();}
+ ulong PendingStagePlayerExperience(out int count){return GetIntegratedStageSession().PendingStagePlayerExperience(out count);}
+ IEnumerator TransportIntegratedStage(NovaInputBridge bridge,float simulationBegan){return GetIntegratedStageSession().TransportIntegratedStage(bridge,simulationBegan);}
+ void ReturnIntegratedStageEffects(){GetIntegratedStageSession().ReturnIntegratedStageEffects();}
+ void CleanupStageTransport(){GetIntegratedStageSession().Dispose();}
+
+ // Create on first use and retain for partial setup, repeated cleanup and stage
+ // transport. Dispose preserves transport/catalog cleanup only; objective-stage
+ // release and every transport yield remain at their existing call sites.
+ sealed class IntegratedStageSession : IDisposable {
+  readonly MovementBatchProbe coordinator;
+  AndroidStageTransport worldTransport;GameObject worldTransportHost;SessionConfig integratedStageConfig;
+  bool transportingStage;
+  CursedBookSpellDef[] priorStageSpells;string[] priorStageSpellNames;ResourceAvailability priorStageSpellAvailability;bool ownsStageSpells;
+  CraftableDef[] priorCraftableContent;object priorCraftableDefs,priorCraftableRecipes,priorIngredientTypes;ResourceAvailability priorCraftableAvailability,priorIngredientAvailability;bool ownsCraftableCatalog;
+  SurfaceDef[] priorSurfaceContent;bool ownsSurfaceCatalog;
+  static bool originalDamageMacrosReady;
+  bool ownsOriginalStage;
+  public IntegratedStageSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public void ObserveStageEntry(CharacterMotor motor,string tag="settling"){
+   var solver=motor.Motor;var collider=solver.GroundingStatus.GroundCollider;var point=solver.TransientPosition;
+   coordinator.r.stageProgress.entryObservations.Add(new StageEntryObservation{tag=tag,at=Time.realtimeSinceStartup,sourceBounds=Util.IsPositionWithinMapBounds(point),position=point,velocity=motor.velocity,queuedPosition=(bool)solver.GetType().GetField("_movePositionDirty",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(solver),queuedPositionTarget=(Vector3)solver.GetType().GetField("_movePositionTarget",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(solver),bodyPosition=coordinator.worldPlayer.transform.position,footPosition=coordinator.worldPlayer.footPosition,corePosition=coordinator.worldPlayer.corePosition,stable=solver.GroundingStatus.IsStableOnGround,groundCollider=collider,groundEnabled=collider&&collider.enabled,motorEnabled=motor.enabled,solverEnabled=solver.enabled,colliderPath=collider?MovementBatchProbe.StageObjectPath(collider.transform):"none",colliderScene=collider?collider.gameObject.scene.name:"none",colliderLayer=collider?collider.gameObject.layer:-1,mapZones=coordinator.stageGeometryScene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<MapZone>(true)).Where(x=>x.gameObject.activeInHierarchy).Select(x=>x.name+"|"+x.triggerType+"|"+x.zoneType+"|layer="+x.gameObject.layer+"|inside="+x.IsPointInsideMapZone(point)).ToArray()});coordinator.Save();
   }
-  Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count==expected.Length&&expected.All(name=>DamageMacroCatalog.macroNameToIndexReadOnly.ContainsKey(name)),"Original damage-macro registration differs");
- }
- void PrepareCraftableCatalog(){
-  if(r.liveCatalogs==null||!stageSourceObjects)return;
-  Check(!ownsCraftableCatalog&&PickupCatalog.pickupCount>0&&IngredientTypeCatalog.ingredientTypeCount==0&&CraftableCatalog.recipeCount==0&&CraftableCatalog.pickupToIngredientSearchTable.Count==0&&CraftableCatalog.resultToRecipeSearchTable.Count==0,"Original crafting dependencies have unexpected owners");
-  var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<CraftableDef>());
-  Check(definitions.Length>0&&definitions.All(def=>def&&def.recipes!=null)&&definitions.Select(def=>def.name).Distinct().Count()==definitions.Length,"Original craftable definition closure is incomplete");
-  priorCraftableContent=ContentManager._craftableDefs;priorCraftableDefs=RewardField(typeof(CraftableCatalog),"craftableDefs").GetValue(null);priorCraftableRecipes=RewardField(typeof(CraftableCatalog),"allRecipes").GetValue(null);priorIngredientTypes=RewardField(typeof(IngredientTypeCatalog),"ingredientTypeDefs").GetValue(null);priorCraftableAvailability=CraftableCatalog.availability;priorIngredientAvailability=IngredientTypeCatalog.availability;
-  ownsCraftableCatalog=true;StaticCall(typeof(IngredientTypeCatalog),"Init");
-  Check(IngredientTypeCatalog.ingredientTypeCount==5,"Original ingredient type initialization differs");
-  ContentManager._craftableDefs=definitions;StaticCall(typeof(CraftableCatalog),"Init");
-  var recipes=(IList)RewardField(typeof(CraftableCatalog),"allRecipes").GetValue(null);
-  Check(CraftableCatalog.recipeCount==definitions.Length&&recipes.Count==definitions.Sum(def=>def.recipes.Length),"Original craftable recipe registration differs");
- }
- void CleanupCraftableCatalog(){
-  if(!ownsCraftableCatalog)return;
-  CraftableCatalog.pickupToIngredientSearchTable.Clear();CraftableCatalog.resultToRecipeSearchTable.Clear();
-  RewardField(typeof(CraftableCatalog),"craftableDefs").SetValue(null,priorCraftableDefs);RewardField(typeof(CraftableCatalog),"allRecipes").SetValue(null,priorCraftableRecipes);ContentManager._craftableDefs=priorCraftableContent;CraftableCatalog.availability=priorCraftableAvailability;
-  RewardField(typeof(IngredientTypeCatalog),"ingredientTypeDefs").SetValue(null,priorIngredientTypes);IngredientTypeCatalog.availability=priorIngredientAvailability;ownsCraftableCatalog=false;
- }
- void PrepareStageSpellCatalog(){
-  if(r.liveCatalogs==null||!stageSourceObjects)return;
-  Check(!ownsStageSpells&&CursedBookSpellCatalog.spellCount==0,"Unowned original Cursed Book spell catalog");
-  var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<CursedBookSpellDef>());
-  Check(definitions.Length>0&&definitions.All(spell=>spell&&spell.itemDef&&spell.consumedItemDef)&&definitions.Select(spell=>spell.name).Distinct().Count()==definitions.Length,"Original Cursed Book spell closure is incomplete");
-  priorStageSpells=ContentManager._cursedBookSpellDefs;priorStageSpellNames=CursedBookSpellCatalog.spellNames;priorStageSpellAvailability=CursedBookSpellCatalog.availability;
-  ContentManager._cursedBookSpellDefs=Array.Empty<CursedBookSpellDef>();ownsStageSpells=true;
-  StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{definitions});CursedBookSpellCatalog.availability.MakeAvailable();
-  Check(CursedBookSpellCatalog.spellCount==definitions.Length&&CursedBookSpellCatalog.allCursedBookSpellDefs.All(spell=>spell.itemDef.itemIndex!=ItemIndex.None&&spell.consumedItemDef.itemIndex!=ItemIndex.None),"Original Cursed Book spell registration differs");
- }
- void CleanupStageSpellCatalog(){
-  if(!ownsStageSpells)return;
-  StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{Array.Empty<CursedBookSpellDef>()});
-  ContentManager._cursedBookSpellDefs=priorStageSpells;CursedBookSpellCatalog.spellNames=priorStageSpellNames;CursedBookSpellCatalog.availability=priorStageSpellAvailability;ownsStageSpells=false;
- }
- void PrepareStageTransport(SessionConfig cfg){
-  Check(!NetworkManager.singleton&&cfg.integratedStages!=null&&cfg.integratedStages.Length>0,"Unowned scene transport or missing converted stages");
-  integratedStageConfig=cfg;r.stageProgress=new StageProgressReport{current=stageGeometryScene.name,bodyId=worldPlayer.netId.Value,masterId=worldPlayer.master.netId.Value,scope="Original Stage.Update, SceneExit and Run.AdvanceStage accounting; additive recovered scene/graph transport. Temporary continuous live-body/master/inventory adapter instead of stock network-user respawn. Stock startup, profiles, unsupported destinations and victory remain unavailable."};
-  PrepareStageSpellCatalog();
-  PrepareCraftableCatalog();
-  PrepareOriginalSurfaceCatalog();
-  PrepareOriginalDamageMacros();
-  worldTransportHost=new GameObject("Owned Android additive scene transport");worldTransport=worldTransportHost.AddComponent<AndroidStageTransport>();worldTransport.enabled=false;
-  Check(NetworkManager.singleton==worldTransport,"Original NetworkManager singleton registration missing");
-  var online=worldTransport.CanPlayOnline();Check(online.MoveNext()&&online.Current==RoR2.Networking.NetworkManagerSystem.CanPlayOnlineState.No,"Android transport must report online capability unavailable");
-  worldTransport.requested=name=>{Check(string.IsNullOrEmpty(pendingStage)&&!transportingStage,"Overlapping original stage requests");pendingStage=name;r.stageProgress.requested=name;r.stageProgress.stageClearCount=Run.instance.stageClearCount;Save();};
- }
- bool ownsOriginalStage;
- IEnumerator BeginOriginalStage(){
-  if(r.liveCatalogs==null||!stageSourceObjects)yield break;
-  Check(objectiveStage&&!objectiveStageHost.activeInHierarchy&&Stage.instance==objectiveStage&&NetworkServer.active&&Run.instance,"Temporary stage context missing before original handoff");
-  var spells=ContentManager.cursedBookSpellDefs;
-  Check(spells!=null,"Original Cursed Book spell array absent before Stage.Start");
-  foreach(var spell in spells)Check(spell&&spell.itemDef&&spell.consumedItemDef,"Original Cursed Book spell item references missing before Stage.Start: "+(spell?spell.name:"null spell")+" / item="+(spell&&(bool)spell.itemDef)+" / consumed="+(spell&&(bool)spell.consumedItemDef));
-  var source=WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Core/Network/Stage.prefab");
-  var sourceIdentity=source.GetComponent<NetworkIdentity>();
-  Check(source.name=="Stage"&&sourceIdentity&&source.GetComponent<Stage>()&&source.GetComponents<Component>().Length==3,"Original Stage prefab contract changed");
-  var prior=objectiveStageHost;Call(objectiveStage,"OnDisable");Check(!Stage.instance,"Temporary Stage singleton survived original handoff");Destroy(prior);
-  int begins=0;Action<Stage> onBegin=stage=>{if(stage==objectiveStage)begins++;};Stage.onServerStageBegin+=onBegin;
-  try{
-   Run.instance.OnServerSceneChanged(stageGeometryScene.name);
-   objectiveStage=Stage.instance;objectiveStageHost=objectiveStage?objectiveStage.gameObject:null;
-   var identity=objectiveStageHost?objectiveStageHost.GetComponent<NetworkIdentity>():null;
-   Check(objectiveStageHost&&objectiveStageHost.activeInHierarchy&&identity&&identity.netId.Value!=0&&identity.assetId.Equals(sourceIdentity.assetId),"Original Run did not spawn the source Stage prefab");
-   ownsOriginalStage=true;
-   yield return null;
-   Check(begins==1&&objectiveStage&&objectiveStage.sceneDef==SceneCatalog.GetSceneDefForCurrentScene(),"Original Stage.Start or server-begin callback did not complete");
-   r.stageProgress.originalStageBegins++;Save();
-  }finally{Stage.onServerStageBegin-=onBegin;}
- }
- void ReleaseObjectiveStage(){
-  if(!objectiveStage)return;
-  if(ownsOriginalStage){Check(NetworkServer.active,"Original Stage requires a live server for teardown");NetworkServer.Destroy(objectiveStageHost);ownsOriginalStage=false;}
-  else{Call(objectiveStage,"OnDisable");Destroy(objectiveStageHost);}
-  objectiveStage=null;objectiveStageHost=null;
- }
- void TickOriginalStage(){
-  if(ownsOriginalStage)return; // Active source prefab receives Unity's own Update.
-  if(r==null||!r.teleporterLoop||!objectiveStage||transportingStage||r.stageProgress==null||!string.IsNullOrEmpty(r.stageProgress.error))return;
-  try{Call(objectiveStage,"Update");}catch(Exception e){r.stageProgress.error=e.ToString();if(Run.instance)r.stageProgress.stageClearCount=Run.instance.stageClearCount;Save();}
- }
- int IntegratedInventoryCount(){return ItemCatalog.allItemDefs.Sum(x=>worldPlayer.inventory.GetItemCountPermanent(x.itemIndex));}
- ulong PendingStagePlayerExperience(out int count){
-  Check(rewardExperience&&ExperienceManager.instance==rewardExperience,"Original XP manager ownership changed before transport");
-  var field=typeof(ExperienceManager).GetField("pendingAwards",BindingFlags.NonPublic|BindingFlags.Instance);Check(field!=null,"Original timed XP queue field unavailable");var pending=(IList)field.GetValue(rewardExperience);Check(pending!=null,"Original timed XP queue unavailable");ulong amount=0;count=0;
-  foreach(var award in pending){var type=award.GetType();var recipient=type.GetField("recipient",BindingFlags.Public|BindingFlags.Instance);var value=type.GetField("awardAmount",BindingFlags.Public|BindingFlags.Instance);Check(recipient!=null&&value!=null,"Original timed XP award contract changed");if((TeamIndex)recipient.GetValue(award)!=TeamIndex.Player)continue;amount=checked(amount+(ulong)value.GetValue(award));count++;}
-  return amount;
- }
- IEnumerator TransportIntegratedStage(NovaInputBridge bridge,float simulationBegan){
-  if(string.IsNullOrEmpty(pendingStage))yield break;
-  var next=integratedStageConfig.integratedStages.SingleOrDefault(x=>x.name==pendingStage);
-  Check(next!=null,"Original next destination has no accepted converted content: "+pendingStage);
-  var report=r.stageProgress;var run=Run.instance;var body=worldPlayer;var master=body.master;
-  var leaving=SceneCatalog.GetSceneDefForCurrentScene();Check(leaving&&leaving.cachedName==stageGeometryScene.name,"Original departing scene definition changed");
-  bool leavingGold=leaving.cachedName=="goldshores";
-  if(leavingGold)Check(r.goldshores!=null&&r.goldshores.exitFinished&&objectiveStage.completed,"Original Gold Shores mission exit/completion missing before scene transport");
-  else Check(r.objective.bossDefeated&&r.objective.charged&&r.objective.exitFinished&&objectiveStage.completed,"Original stage boss/charge/exit/completion missing before scene transport");
-  if((leaving.sceneType==SceneType.Stage||leaving.sceneType==SceneType.UntimedStage)&&!leaving.preventStageAdvanceCounter)report.countedStages++;
-  report.completedBarrels+=r.world.openedBarrels;report.completedChests+=r.world.openedChests;
-  report.completed.Add(leavingGold?"goldshores|original-beacons|original-boss|original-exit":stageGeometryScene.name+"|boss-defeated|natural-charge|"+(r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");
-  report.completedObjectives.Add(r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
-  transportingStage=true;report.transporting=true;r.phase="integrated-stage-transition";Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
-  var beetleGland=body.GetComponent<RoR2.Items.BeetleGlandBodyBehavior>();bool resumeBeetleGland=beetleGland&&beetleGland.enabled;if(resumeBeetleGland)beetleGland.enabled=false;
-  if(sourceSlowDirector)sourceSlowDirector.enabled=false;if(rewardDirector)rewardDirector.enabled=false;
-  PauseStageMapZones();var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
-  CleanupStageBossInstances();
-  // The native item can summon a player-owned ally outside the stage director.
-  // Retire its body/master before replacing the source navigation graph; its
-  // original item behavior may naturally resummon after the new stage loads.
-  report.playerSummonsRemoved+=DestroyWholePlayerSummons();
-  // Old actors must release their original navigation agents before replacing source graphs.
-  CleanupDirectorActors();
-  foreach(var projectile in FindObjectsOfType<RoR2.Projectile.ProjectileController>())NetworkServer.Destroy(projectile.gameObject);
-  foreach(var instance in objectiveSupportInstances)if(instance)NetworkServer.Destroy(instance);objectiveSupportInstances.Clear();
-  foreach(var pickup in EjectionPickups().ToArray())NetworkServer.Destroy(pickup.gameObject);foreach(var droplet in EjectionDroplets().ToArray())NetworkServer.Destroy(droplet.gameObject);
-  CleanupWholeStageInteractables();CleanupWorldCommerce();foreach(var obj in worldObjects)if(obj)NetworkServer.Destroy(obj);worldObjects.Clear();worldBarrels.Clear();worldChests.Clear();
-  CleanupWholeStagePool();
-  if(objectiveHost)NetworkServer.Destroy(objectiveHost);if(objectiveBossDeck)Destroy(objectiveBossDeck);ReleaseObjectiveStage();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(enemySceneHost)Destroy(enemySceneHost);
-  yield return null;yield return null;
-  // Keep historical values in the plain report, but stop the persistent probe
-  // from retaining actor/component wrappers from every completed stage.
-  Check(directorActors.All(actor=>!actor.body&&!actor.master&&!actor.model),"Old stage actor observer retained a live source object");
-  foreach(var actor in directorActors)actor.report.cleaned=true;
-  report.retiredActorObservers+=directorActors.Count;directorActors.Clear();
-  report.retiredModelObservers+=worldModels.RemoveAll(model=>!model);
-  report.retiredCommerceObservers+=commerceOwned.RemoveAll(obj=>!obj);
-  Check(!SceneInfo.instance&&!ClassicStageInfo.instance&&!Stage.instance&&!TeleporterInteraction.instance&&NavigationAgentCount()==0,"Old original scene context survived transition: scene="+(bool)SceneInfo.instance+", stageInfo="+(bool)ClassicStageInfo.instance+", stage="+(bool)Stage.instance+", teleporter="+(bool)TeleporterInteraction.instance+", agents="+NavigationAgentCount());
-  // Earned XP can still be in the original timed queue after the exit. Let its
-  // normal FixedUpdate settle it before taking the strict transport baseline.
-  r.phase="integrated-stage-xp-settlement";report.experienceAtExit=TeamManager.instance.GetTeamExperience(TeamIndex.Player);int pendingCount;report.pendingExperienceAtExit=PendingStagePlayerExperience(out pendingCount);report.pendingExperienceAwardsAtExit=pendingCount;
-  float settlementBegan=Time.realtimeSinceStartup,settlementDeadline=settlementBegan+ExperienceManager.maxOrbTravelTime+1;
-  while(pendingCount>0&&Time.realtimeSinceStartup<settlementDeadline){yield return null;PendingStagePlayerExperience(out pendingCount);}
-  report.experienceSettlementSeconds=Time.realtimeSinceStartup-settlementBegan;Check(pendingCount==0,"Original queued XP did not settle before transport");
-  report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);Check(report.experienceBefore==checked(report.experienceAtExit+report.pendingExperienceAtExit),"Original queued XP settlement accounting failed");Save();
-  var old=stageGeometryScene;
-  ReturnIntegratedStageEffects(); // Original sceneUnloaded kills pools; release their live loans first.
-  ReleaseObjectiveOrbCache(); // Original sceneUnloaded clears its map without releasing leases.
-  foreach(var root in old.GetRootGameObjects())if(!stageStaticRoots.Contains(root))SceneManager.MoveGameObjectToScene(root,priorClockScene);
-  Check(SceneManager.SetActiveScene(priorClockScene),"Persistent adapter scene missing");
-  yield return SceneManager.UnloadSceneAsync(old);foreach(var mat in stageGeometryMaterials)if(mat)Destroy(mat);stageGeometryMaterials.Clear();
-  if(stageGeometryBundle){stageGeometryBundle.Unload(true);stageGeometryBundle=null;}
-  var geometry=LoadStageGeometry(next.bundle,next.previewCallbacks,next);while(geometry.MoveNext())yield return geometry.Current;
-  // Moon activates its original scene objects while loading, after selecting its
-  // scene. Unity returns false when reselecting the scene that is already active.
-  if(SceneManager.GetActiveScene()!=stageGeometryScene)Check(SceneManager.SetActiveScene(stageGeometryScene),"Actual next active scene selection failed");
-  var actualSceneDef=SceneCatalog.GetSceneDefForCurrentScene();report.actualScene=SceneManager.GetActiveScene().name;report.actualSceneDef=actualSceneDef?actualSceneDef.cachedName:"unavailable";report.activeSceneVerified=SceneManager.GetActiveScene()==stageGeometryScene;Save();
-  Check(report.activeSceneVerified&&actualSceneDef&&actualSceneDef.cachedName==next.name,"Actual next scene catalog/name mismatch");
-  SceneInfo info;
-  if(next.moonMission)info=SceneInfo.instance;
-  else if(stageSourceObjects)info=ActivateSourceSceneInfo();
-  else{enemySceneHost=new GameObject("Owned original next-stage SceneInfo");enemySceneHost.SetActive(false);SceneManager.MoveGameObjectToScene(enemySceneHost,stageGeometryScene);
-  info=enemySceneHost.AddComponent<SceneInfo>();typeof(SceneInfo).GetField("groundNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.groundGraph));typeof(SceneInfo).GetField("airNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,artifactBundle.LoadAsset<NodeGraph>(next.airGraph));enemySceneHost.SetActive(true);}yield return null;
-  Check(SceneInfo.instance==info&&info.groundNodes.GetNodeCount()>0&&info.airNodes.GetNodeCount()>0,"Recovered next-stage navigation missing");
-  if(stageSourceObjects){r.stage.sourceSceneInfoActive=true;r.stage.sourceStagePopulationActive=ClassicStageInfo.instance==sourceSceneInfoRoot.GetComponent<ClassicStageInfo>()&&ClassicStageInfo.instance.monsterSelection!=null;Check(r.stage.sourceStagePopulationActive,"Original source next-stage population did not initialize");}
-  // Explicit temporary entry placement; movement afterward is original motor/state/solver.
-  report.entryObservations.Clear();ObserveStageEntry(motor,"before-original-teleport");
-  TeleportHelper.TeleportGameObject(body.gameObject,r.stage.spawnPosition);solver.CollidableLayers=LayerIndex.world.mask;solver.StableGroundLayers=LayerIndex.world.mask;solver.SetGroundSolvingActivation(true);solver.ForceUnground();solver.enabled=true;Physics.SyncTransforms();
-  ObserveStageEntry(motor,"after-original-teleport");EnableStageMapZones();
-  yield return new WaitForFixedUpdate();yield return null;
-  float deadline=Time.realtimeSinceStartup+5,observedAt=Time.realtimeSinceStartup;while((!solver.GroundingStatus.IsStableOnGround||!solver.GroundingStatus.GroundCollider||solver.GroundingStatus.GroundCollider.gameObject.scene!=stageGeometryScene)&&Time.realtimeSinceStartup<deadline){if(Time.realtimeSinceStartup-observedAt>=.25f){ObserveStageEntry(motor);observedAt=Time.realtimeSinceStartup;}yield return null;}
-  ObserveStageEntry(motor,"settled-or-failed");
-  Check(solver.GroundingStatus.IsStableOnGround&&solver.GroundingStatus.GroundCollider&&solver.GroundingStatus.GroundCollider.gameObject.scene==stageGeometryScene,"Next-stage entry does not land on recovered geometry");
-  Check(Util.IsPositionWithinMapBounds(solver.TransientPosition),"Original source bounds reject grounded next-stage entry");
-  worldPathFollower.Reset();worldLocalNavigator.SetBody(null);worldNavigationBody=null;worldTerrainRecent.Clear();worldTerrainSelectedAt=worldTerrainRecoveryUntil=-100;
-  if(automaticDirectorHost)Destroy(automaticDirectorHost);yield return null;
-  sourceSlowDirector=null;SelectStageCombatDeck(integratedStageConfig,next.name);automaticDirectorHost=stageSourceObjects?SourceStageDirectorRoot(false):Instantiate(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));rewardDirector=automaticDirectorHost.GetComponent<CombatDirector>();rewardDirector.monsterCards=automaticDeck;
-  if(stageSourceObjects){sourceSlowDirector.monsterCards=automaticDeck;ObserveSourceSlowDirector(worldPlayer);}else automaticDirectorHost.AddComponent<DirectorCore>();
-  var spawningDirector=rewardDirector;spawningDirector.onSpawnedServer.AddListener(obj=>{RecordRewardSpawn(obj);if(currentStageCombatDeck!=null)RecordStageCombatSpawn(obj,worldPlayer,spawningDirector);else RecordDirectorActor(obj,worldPlayer);});automaticDirectorHost.SetActive(true);
-  Check(DirectorCore.instance==automaticDirectorHost.GetComponent<DirectorCore>()&&rewardDirector.enabled&&CombatDirector.instancesList.Contains(rewardDirector)&&(!stageSourceObjects||CombatDirector.instancesList.Contains(sourceSlowDirector)),"Next-stage original director missing");
-  worldObjective=0;stagePickupBaseline=r.world.pickupMessages;worldLastPress=-1;
-  var origin=solver.TransientPosition;var chestSource=artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);
-  if(r.liveCatalogs==null||next.moonMission){
-  foreach(var offset in new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)}){var obj=CreateWorldInteractable(artifactBundle.LoadAsset<GameObject>(integratedStageConfig.barrelAsset),origin+offset,false);if(obj)worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
-  foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=CreateWorldInteractable(chestSource,origin+offset,true);if(obj)worldChests.Add(obj.GetComponent<ChestBehavior>());}
-  AddEquipmentBarrel(integratedStageConfig,origin);if(!next.moonMission)AddWorldChestBreadth(integratedStageConfig,origin);Check(worldBarrels.Count>=3&&worldChests.Count>=2,"Recovered next-stage layout lacks walkable interactables");r.world.barrels=worldBarrels.Count;r.world.chests=worldChests.Count;
+  public void PrepareOriginalSurfaceCatalog(){
+   if(coordinator.r.liveCatalogs==null||!coordinator.stageSourceObjects)return;
+   coordinator.Check(!ownsSurfaceCatalog&&SurfaceDefCatalog.surfaceCount==0,"Unowned original surface definitions");
+   var definitions=WholeCatalogComposed.CategoryFamily(AddressablesLabels.surfaceDef,Array.Empty<SurfaceDef>());
+   // The Junk provider advertises four extra assets but its source ContentPack
+   // deliberately loads only item/equipment/buff/elite labels in an unmodded run.
+   coordinator.Check(definitions.Length==72&&definitions.All(def=>def)&&definitions.Select(def=>def.name).Distinct().Count()==definitions.Length,"Original surface-definition family differs from accepted input");
+   priorSurfaceContent=ContentManager._surfaceDefs;
+   coordinator.Check(priorSurfaceContent==null||priorSurfaceContent.Length==0,"Unowned surface-definition content array");
+   ContentManager._surfaceDefs=definitions;ownsSurfaceCatalog=true;
+   MovementBatchProbe.StaticCall(typeof(SurfaceDefCatalog),"Init");
+   coordinator.Check(SurfaceDefCatalog.surfaceCount==definitions.Length&&definitions.All(def=>def.surfaceDefIndex!=SurfaceDefIndex.Invalid&&SurfaceDefCatalog.GetSurfaceDef(def.surfaceDefIndex)==def),"Original surface-definition indices differ");
   }
-  if(next.moonMission){rewardDirector.enabled=false;var mission=PrepareMoonWorld();while(mission.MoveNext())yield return mission.Current;objectiveStageHost=new GameObject("Owned Moon stage coordinator");objectiveStageHost.SetActive(false);objectiveStageHost.AddComponent<NetworkIdentity>();objectiveStage=objectiveStageHost.AddComponent<Stage>();typeof(Stage).GetProperty("sceneDef").SetValue(objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());Call(objectiveStage,"OnEnable");}
-  else{
-   bool gold=next.name=="goldshores";
-   if(gold)PrepareGoldshoresStage();else{var objective=SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;PrepareWorldCommerce(integratedStageConfig,origin);}
-   var population=PopulateWholeStage();while(population.MoveNext())yield return population.Current;
-   var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;
-   if(gold){var goldMission=BeginGoldshoresMission();while(goldMission.MoveNext())yield return goldMission.Current;}
-   else PlaceGoldshoresDiagnosticShrine();
+  public void CleanupOriginalSurfaceCatalog(){
+   if(!ownsSurfaceCatalog)return;
+   MovementBatchProbe.StaticCall(typeof(SurfaceDefCatalog),"SetSurfaceDefs",new object[]{Array.Empty<SurfaceDef>()});
+   ContentManager._surfaceDefs=priorSurfaceContent;ownsSurfaceCatalog=false;
+   coordinator.Check(SurfaceDefCatalog.surfaceCount==0,"Original surface-definition catalog outlived its owned bundle");
   }
-  report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
-  Check(Run.instance==run&&worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.countedStages,"Original run/master/authority/inventory/XP/count continuity failed");
-  stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=stageEnteredAt;report.transporting=false;pendingStage=null;transportingStage=false;if(resumeBeetleGland&&beetleGland)beetleGland.enabled=true;bridge.enabled=true;r.phase="integrated-world-playing";Save();
+  public void PrepareOriginalDamageMacros(){
+   if(coordinator.r.liveCatalogs==null||!coordinator.stageSourceObjects)return;
+   var expected=new[]{"MidasTouch","ChefFireDamage","ChefBoostedFireDamage","ChefBoostedIceDamage","ChefIceDamage","VultureHunterLaser","EngiHealMechanical"};
+   if(!originalDamageMacrosReady){
+    coordinator.Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count==0,"Unowned original damage-macro catalog");
+    // Original startup scans opted-in assemblies before SystemInitializer runs.
+    HG.Reflection.SearchableAttribute.ScanAssembly(typeof(DamageMacroCatalog).Assembly);
+    HG.Reflection.SearchableAttribute.ScanAssembly(typeof(EntityStates.Chef.Sear).Assembly);
+    var methods=HG.Reflection.SearchableAttribute.GetInstances<DamageMacroMethodAttribute>();
+    coordinator.Check(methods!=null&&methods.Count==expected.Length&&methods.Cast<DamageMacroMethodAttribute>().All(method=>method.target is MethodInfo&&expected.Contains(method.searchableName)),"Original damage-macro searchable methods differ from accepted input");
+    MovementBatchProbe.StaticCall(typeof(DamageMacroCatalog),"Initialize");
+    originalDamageMacrosReady=true;
+   }
+   coordinator.Check(DamageMacroCatalog.macroNameToIndexReadOnly.Count==expected.Length&&expected.All(name=>DamageMacroCatalog.macroNameToIndexReadOnly.ContainsKey(name)),"Original damage-macro registration differs");
+  }
+  public void PrepareCraftableCatalog(){
+   if(coordinator.r.liveCatalogs==null||!coordinator.stageSourceObjects)return;
+   coordinator.Check(!ownsCraftableCatalog&&PickupCatalog.pickupCount>0&&IngredientTypeCatalog.ingredientTypeCount==0&&CraftableCatalog.recipeCount==0&&CraftableCatalog.pickupToIngredientSearchTable.Count==0&&CraftableCatalog.resultToRecipeSearchTable.Count==0,"Original crafting dependencies have unexpected owners");
+   var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<CraftableDef>());
+   coordinator.Check(definitions.Length>0&&definitions.All(def=>def&&def.recipes!=null)&&definitions.Select(def=>def.name).Distinct().Count()==definitions.Length,"Original craftable definition closure is incomplete");
+   priorCraftableContent=ContentManager._craftableDefs;priorCraftableDefs=MovementBatchProbe.RewardField(typeof(CraftableCatalog),"craftableDefs").GetValue(null);priorCraftableRecipes=MovementBatchProbe.RewardField(typeof(CraftableCatalog),"allRecipes").GetValue(null);priorIngredientTypes=MovementBatchProbe.RewardField(typeof(IngredientTypeCatalog),"ingredientTypeDefs").GetValue(null);priorCraftableAvailability=CraftableCatalog.availability;priorIngredientAvailability=IngredientTypeCatalog.availability;
+   ownsCraftableCatalog=true;MovementBatchProbe.StaticCall(typeof(IngredientTypeCatalog),"Init");
+   coordinator.Check(IngredientTypeCatalog.ingredientTypeCount==5,"Original ingredient type initialization differs");
+   ContentManager._craftableDefs=definitions;MovementBatchProbe.StaticCall(typeof(CraftableCatalog),"Init");
+   var recipes=(IList)MovementBatchProbe.RewardField(typeof(CraftableCatalog),"allRecipes").GetValue(null);
+   coordinator.Check(CraftableCatalog.recipeCount==definitions.Length&&recipes.Count==definitions.Sum(def=>def.recipes.Length),"Original craftable recipe registration differs");
+  }
+  public void CleanupCraftableCatalog(){
+   if(!ownsCraftableCatalog)return;
+   CraftableCatalog.pickupToIngredientSearchTable.Clear();CraftableCatalog.resultToRecipeSearchTable.Clear();
+   MovementBatchProbe.RewardField(typeof(CraftableCatalog),"craftableDefs").SetValue(null,priorCraftableDefs);MovementBatchProbe.RewardField(typeof(CraftableCatalog),"allRecipes").SetValue(null,priorCraftableRecipes);ContentManager._craftableDefs=priorCraftableContent;CraftableCatalog.availability=priorCraftableAvailability;
+   MovementBatchProbe.RewardField(typeof(IngredientTypeCatalog),"ingredientTypeDefs").SetValue(null,priorIngredientTypes);IngredientTypeCatalog.availability=priorIngredientAvailability;ownsCraftableCatalog=false;
+  }
+  public void PrepareStageSpellCatalog(){
+   if(coordinator.r.liveCatalogs==null||!coordinator.stageSourceObjects)return;
+   coordinator.Check(!ownsStageSpells&&CursedBookSpellCatalog.spellCount==0,"Unowned original Cursed Book spell catalog");
+   var definitions=WholeCatalogComposed.DefinitionFamily(Array.Empty<CursedBookSpellDef>());
+   coordinator.Check(definitions.Length>0&&definitions.All(spell=>spell&&spell.itemDef&&spell.consumedItemDef)&&definitions.Select(spell=>spell.name).Distinct().Count()==definitions.Length,"Original Cursed Book spell closure is incomplete");
+   priorStageSpells=ContentManager._cursedBookSpellDefs;priorStageSpellNames=CursedBookSpellCatalog.spellNames;priorStageSpellAvailability=CursedBookSpellCatalog.availability;
+   ContentManager._cursedBookSpellDefs=Array.Empty<CursedBookSpellDef>();ownsStageSpells=true;
+   MovementBatchProbe.StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{definitions});CursedBookSpellCatalog.availability.MakeAvailable();
+   coordinator.Check(CursedBookSpellCatalog.spellCount==definitions.Length&&CursedBookSpellCatalog.allCursedBookSpellDefs.All(spell=>spell.itemDef.itemIndex!=ItemIndex.None&&spell.consumedItemDef.itemIndex!=ItemIndex.None),"Original Cursed Book spell registration differs");
+  }
+  public void CleanupStageSpellCatalog(){
+   if(!ownsStageSpells)return;
+   MovementBatchProbe.StaticCall(typeof(CursedBookSpellCatalog),"SetCursedBookSpellDefs",new object[]{Array.Empty<CursedBookSpellDef>()});
+   ContentManager._cursedBookSpellDefs=priorStageSpells;CursedBookSpellCatalog.spellNames=priorStageSpellNames;CursedBookSpellCatalog.availability=priorStageSpellAvailability;ownsStageSpells=false;
+  }
+  public void PrepareStageTransport(SessionConfig cfg){
+   coordinator.Check(!NetworkManager.singleton&&cfg.integratedStages!=null&&cfg.integratedStages.Length>0,"Unowned scene transport or missing converted stages");
+   integratedStageConfig=cfg;coordinator.r.stageProgress=new StageProgressReport{current=coordinator.stageGeometryScene.name,bodyId=coordinator.worldPlayer.netId.Value,masterId=coordinator.worldPlayer.master.netId.Value,scope="Original Stage.Update, SceneExit and Run.AdvanceStage accounting; additive recovered scene/graph transport. Temporary continuous live-body/master/inventory adapter instead of stock network-user respawn. Stock startup, profiles, unsupported destinations and victory remain unavailable."};
+   PrepareStageSpellCatalog();
+   PrepareCraftableCatalog();
+   PrepareOriginalSurfaceCatalog();
+   PrepareOriginalDamageMacros();
+   worldTransportHost=new GameObject("Owned Android additive scene transport");worldTransport=worldTransportHost.AddComponent<AndroidStageTransport>();worldTransport.enabled=false;
+   coordinator.Check(NetworkManager.singleton==worldTransport,"Original NetworkManager singleton registration missing");
+   var online=worldTransport.CanPlayOnline();coordinator.Check(online.MoveNext()&&online.Current==RoR2.Networking.NetworkManagerSystem.CanPlayOnlineState.No,"Android transport must report online capability unavailable");
+   worldTransport.requested=name=>{coordinator.Check(string.IsNullOrEmpty(coordinator.pendingStage)&&!transportingStage,"Overlapping original stage requests");coordinator.pendingStage=name;coordinator.r.stageProgress.requested=name;coordinator.r.stageProgress.stageClearCount=Run.instance.stageClearCount;coordinator.Save();};
+  }
+  public IEnumerator BeginOriginalStage(){
+   if(coordinator.r.liveCatalogs==null||!coordinator.stageSourceObjects)yield break;
+   coordinator.Check(coordinator.objectiveStage&&!coordinator.objectiveStageHost.activeInHierarchy&&Stage.instance==coordinator.objectiveStage&&NetworkServer.active&&Run.instance,"Temporary stage context missing before original handoff");
+   var spells=ContentManager.cursedBookSpellDefs;
+   coordinator.Check(spells!=null,"Original Cursed Book spell array absent before Stage.Start");
+   foreach(var spell in spells)coordinator.Check(spell&&spell.itemDef&&spell.consumedItemDef,"Original Cursed Book spell item references missing before Stage.Start: "+(spell?spell.name:"null spell")+" / item="+(spell&&(bool)spell.itemDef)+" / consumed="+(spell&&(bool)spell.consumedItemDef));
+   var source=WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Core/Network/Stage.prefab");
+   var sourceIdentity=source.GetComponent<NetworkIdentity>();
+   coordinator.Check(source.name=="Stage"&&sourceIdentity&&source.GetComponent<Stage>()&&source.GetComponents<Component>().Length==3,"Original Stage prefab contract changed");
+   var prior=coordinator.objectiveStageHost;MovementBatchProbe.Call(coordinator.objectiveStage,"OnDisable");coordinator.Check(!Stage.instance,"Temporary Stage singleton survived original handoff");MovementBatchProbe.Destroy(prior);
+   int begins=0;Action<Stage> onBegin=stage=>{if(stage==coordinator.objectiveStage)begins++;};Stage.onServerStageBegin+=onBegin;
+   try{
+    Run.instance.OnServerSceneChanged(coordinator.stageGeometryScene.name);
+    coordinator.objectiveStage=Stage.instance;coordinator.objectiveStageHost=coordinator.objectiveStage?coordinator.objectiveStage.gameObject:null;
+    var identity=coordinator.objectiveStageHost?coordinator.objectiveStageHost.GetComponent<NetworkIdentity>():null;
+    coordinator.Check(coordinator.objectiveStageHost&&coordinator.objectiveStageHost.activeInHierarchy&&identity&&identity.netId.Value!=0&&identity.assetId.Equals(sourceIdentity.assetId),"Original Run did not spawn the source Stage prefab");
+    ownsOriginalStage=true;
+    yield return null;
+    coordinator.Check(begins==1&&coordinator.objectiveStage&&coordinator.objectiveStage.sceneDef==SceneCatalog.GetSceneDefForCurrentScene(),"Original Stage.Start or server-begin callback did not complete");
+    coordinator.r.stageProgress.originalStageBegins++;coordinator.Save();
+   }finally{Stage.onServerStageBegin-=onBegin;}
+  }
+  public void ReleaseObjectiveStage(){
+   if(!coordinator.objectiveStage)return;
+   if(ownsOriginalStage){coordinator.Check(NetworkServer.active,"Original Stage requires a live server for teardown");NetworkServer.Destroy(coordinator.objectiveStageHost);ownsOriginalStage=false;}
+   else{MovementBatchProbe.Call(coordinator.objectiveStage,"OnDisable");MovementBatchProbe.Destroy(coordinator.objectiveStageHost);}
+   coordinator.objectiveStage=null;coordinator.objectiveStageHost=null;
+  }
+  public void TickOriginalStage(){
+   if(ownsOriginalStage)return; // Active source prefab receives Unity's own Update.
+   if(coordinator.r==null||!coordinator.r.teleporterLoop||!coordinator.objectiveStage||transportingStage||coordinator.r.stageProgress==null||!string.IsNullOrEmpty(coordinator.r.stageProgress.error))return;
+   try{MovementBatchProbe.Call(coordinator.objectiveStage,"Update");}catch(Exception e){coordinator.r.stageProgress.error=e.ToString();if(Run.instance)coordinator.r.stageProgress.stageClearCount=Run.instance.stageClearCount;coordinator.Save();}
+  }
+  public int IntegratedInventoryCount(){return ItemCatalog.allItemDefs.Sum(x=>coordinator.worldPlayer.inventory.GetItemCountPermanent(x.itemIndex));}
+  public ulong PendingStagePlayerExperience(out int count){
+   coordinator.Check(coordinator.rewardExperience&&ExperienceManager.instance==coordinator.rewardExperience,"Original XP manager ownership changed before transport");
+   var field=typeof(ExperienceManager).GetField("pendingAwards",BindingFlags.NonPublic|BindingFlags.Instance);coordinator.Check(field!=null,"Original timed XP queue field unavailable");var pending=(IList)field.GetValue(coordinator.rewardExperience);coordinator.Check(pending!=null,"Original timed XP queue unavailable");ulong amount=0;count=0;
+   foreach(var award in pending){var type=award.GetType();var recipient=type.GetField("recipient",BindingFlags.Public|BindingFlags.Instance);var value=type.GetField("awardAmount",BindingFlags.Public|BindingFlags.Instance);coordinator.Check(recipient!=null&&value!=null,"Original timed XP award contract changed");if((TeamIndex)recipient.GetValue(award)!=TeamIndex.Player)continue;amount=checked(amount+(ulong)value.GetValue(award));count++;}
+   return amount;
+  }
+  public IEnumerator TransportIntegratedStage(NovaInputBridge bridge,float simulationBegan){
+   if(string.IsNullOrEmpty(coordinator.pendingStage))yield break;
+   var next=integratedStageConfig.integratedStages.SingleOrDefault(x=>x.name==coordinator.pendingStage);
+   coordinator.Check(next!=null,"Original next destination has no accepted converted content: "+coordinator.pendingStage);
+   var report=coordinator.r.stageProgress;var run=Run.instance;var body=coordinator.worldPlayer;var master=body.master;
+   var leaving=SceneCatalog.GetSceneDefForCurrentScene();coordinator.Check(leaving&&leaving.cachedName==coordinator.stageGeometryScene.name,"Original departing scene definition changed");
+   bool leavingGold=leaving.cachedName=="goldshores";
+   if(leavingGold)coordinator.Check(coordinator.r.goldshores!=null&&coordinator.r.goldshores.exitFinished&&coordinator.objectiveStage.completed,"Original Gold Shores mission exit/completion missing before scene transport");
+   else coordinator.Check(coordinator.r.objective.bossDefeated&&coordinator.r.objective.charged&&coordinator.r.objective.exitFinished&&coordinator.objectiveStage.completed,"Original stage boss/charge/exit/completion missing before scene transport");
+   if((leaving.sceneType==SceneType.Stage||leaving.sceneType==SceneType.UntimedStage)&&!leaving.preventStageAdvanceCounter)report.countedStages++;
+   report.completedBarrels+=coordinator.r.world.openedBarrels;report.completedChests+=coordinator.r.world.openedChests;
+   report.completed.Add(leavingGold?"goldshores|original-beacons|original-boss|original-exit":coordinator.stageGeometryScene.name+"|boss-defeated|natural-charge|"+(coordinator.r.objective.rewardCollected?"post-boss-pickup-collected":"reward-uncollected")+"|original-exit");
+   report.completedObjectives.Add(coordinator.r.objective);report.moneyBefore=master.money;report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsBefore=IntegratedInventoryCount();
+   transportingStage=true;report.transporting=true;coordinator.r.phase="integrated-stage-transition";coordinator.Save();bridge.enabled=false;body.inputBank.moveVector=Vector3.zero;
+   var beetleGland=body.GetComponent<RoR2.Items.BeetleGlandBodyBehavior>();bool resumeBeetleGland=beetleGland&&beetleGland.enabled;if(resumeBeetleGland)beetleGland.enabled=false;
+   if(coordinator.sourceSlowDirector)coordinator.sourceSlowDirector.enabled=false;if(coordinator.rewardDirector)coordinator.rewardDirector.enabled=false;
+   coordinator.PauseStageMapZones();var motor=body.characterMotor;var solver=motor.Motor;solver.enabled=false;motor.velocity=Vector3.zero;
+   coordinator.CleanupStageBossInstances();
+   // The native item can summon a player-owned ally outside the stage director.
+   // Retire its body/master before replacing the source navigation graph; its
+   // original item behavior may naturally resummon after the new stage loads.
+   report.playerSummonsRemoved+=coordinator.DestroyWholePlayerSummons();
+   // Old actors must release their original navigation agents before replacing source graphs.
+   coordinator.CleanupDirectorActors();
+   foreach(var projectile in MovementBatchProbe.FindObjectsOfType<RoR2.Projectile.ProjectileController>())NetworkServer.Destroy(projectile.gameObject);
+   foreach(var instance in coordinator.objectiveSupportInstances)if(instance)NetworkServer.Destroy(instance);coordinator.objectiveSupportInstances.Clear();
+   foreach(var pickup in coordinator.EjectionPickups().ToArray())NetworkServer.Destroy(pickup.gameObject);foreach(var droplet in coordinator.EjectionDroplets().ToArray())NetworkServer.Destroy(droplet.gameObject);
+   coordinator.CleanupWholeStageInteractables();coordinator.CleanupWorldCommerce();foreach(var obj in coordinator.worldObjects)if(obj)NetworkServer.Destroy(obj);coordinator.worldObjects.Clear();coordinator.worldBarrels.Clear();coordinator.worldChests.Clear();
+   coordinator.CleanupWholeStagePool();
+   if(coordinator.objectiveHost)NetworkServer.Destroy(coordinator.objectiveHost);if(coordinator.objectiveBossDeck)MovementBatchProbe.Destroy(coordinator.objectiveBossDeck);ReleaseObjectiveStage();if(coordinator.sourceSceneInfoRoot)coordinator.DeactivateSourceSceneInfo();if(coordinator.enemySceneHost)MovementBatchProbe.Destroy(coordinator.enemySceneHost);
+   yield return null;yield return null;
+   // Keep historical values in the plain report, but stop the persistent probe
+   // from retaining actor/component wrappers from every completed stage.
+   coordinator.Check(coordinator.directorActors.All(actor=>!actor.body&&!actor.master&&!actor.model),"Old stage actor observer retained a live source object");
+   foreach(var actor in coordinator.directorActors)actor.report.cleaned=true;
+   report.retiredActorObservers+=coordinator.directorActors.Count;coordinator.directorActors.Clear();
+   report.retiredModelObservers+=coordinator.worldModels.RemoveAll(model=>!model);
+   report.retiredCommerceObservers+=coordinator.commerceOwned.RemoveAll(obj=>!obj);
+   coordinator.Check(!SceneInfo.instance&&!ClassicStageInfo.instance&&!Stage.instance&&!TeleporterInteraction.instance&&coordinator.NavigationAgentCount()==0,"Old original scene context survived transition: scene="+(bool)SceneInfo.instance+", stageInfo="+(bool)ClassicStageInfo.instance+", stage="+(bool)Stage.instance+", teleporter="+(bool)TeleporterInteraction.instance+", agents="+coordinator.NavigationAgentCount());
+   // Earned XP can still be in the original timed queue after the exit. Let its
+   // normal FixedUpdate settle it before taking the strict transport baseline.
+   coordinator.r.phase="integrated-stage-xp-settlement";report.experienceAtExit=TeamManager.instance.GetTeamExperience(TeamIndex.Player);int pendingCount;report.pendingExperienceAtExit=PendingStagePlayerExperience(out pendingCount);report.pendingExperienceAwardsAtExit=pendingCount;
+   float settlementBegan=Time.realtimeSinceStartup,settlementDeadline=settlementBegan+ExperienceManager.maxOrbTravelTime+1;
+   while(pendingCount>0&&Time.realtimeSinceStartup<settlementDeadline){yield return null;PendingStagePlayerExperience(out pendingCount);}
+   report.experienceSettlementSeconds=Time.realtimeSinceStartup-settlementBegan;coordinator.Check(pendingCount==0,"Original queued XP did not settle before transport");
+   report.experienceBefore=TeamManager.instance.GetTeamExperience(TeamIndex.Player);coordinator.Check(report.experienceBefore==checked(report.experienceAtExit+report.pendingExperienceAtExit),"Original queued XP settlement accounting failed");coordinator.Save();
+   var old=coordinator.stageGeometryScene;
+   ReturnIntegratedStageEffects(); // Original sceneUnloaded kills pools; release their live loans first.
+   coordinator.ReleaseObjectiveOrbCache(); // Original sceneUnloaded clears its map without releasing leases.
+   foreach(var root in old.GetRootGameObjects())if(!coordinator.stageStaticRoots.Contains(root))SceneManager.MoveGameObjectToScene(root,coordinator.priorClockScene);
+   coordinator.Check(SceneManager.SetActiveScene(coordinator.priorClockScene),"Persistent adapter scene missing");
+   yield return SceneManager.UnloadSceneAsync(old);foreach(var mat in coordinator.stageGeometryMaterials)if(mat)MovementBatchProbe.Destroy(mat);coordinator.stageGeometryMaterials.Clear();
+   if(coordinator.stageGeometryBundle){coordinator.stageGeometryBundle.Unload(true);coordinator.stageGeometryBundle=null;}
+   var geometry=coordinator.LoadStageGeometry(next.bundle,next.previewCallbacks,next);while(geometry.MoveNext())yield return geometry.Current;
+   // Moon activates its original scene objects while loading, after selecting its
+   // scene. Unity returns false when reselecting the scene that is already active.
+   if(SceneManager.GetActiveScene()!=coordinator.stageGeometryScene)coordinator.Check(SceneManager.SetActiveScene(coordinator.stageGeometryScene),"Actual next active scene selection failed");
+   var actualSceneDef=SceneCatalog.GetSceneDefForCurrentScene();report.actualScene=SceneManager.GetActiveScene().name;report.actualSceneDef=actualSceneDef?actualSceneDef.cachedName:"unavailable";report.activeSceneVerified=SceneManager.GetActiveScene()==coordinator.stageGeometryScene;coordinator.Save();
+   coordinator.Check(report.activeSceneVerified&&actualSceneDef&&actualSceneDef.cachedName==next.name,"Actual next scene catalog/name mismatch");
+   SceneInfo info;
+   if(next.moonMission)info=SceneInfo.instance;
+   else if(coordinator.stageSourceObjects)info=coordinator.ActivateSourceSceneInfo();
+   else{coordinator.enemySceneHost=new GameObject("Owned original next-stage SceneInfo");coordinator.enemySceneHost.SetActive(false);SceneManager.MoveGameObjectToScene(coordinator.enemySceneHost,coordinator.stageGeometryScene);
+   info=coordinator.enemySceneHost.AddComponent<SceneInfo>();typeof(SceneInfo).GetField("groundNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,coordinator.artifactBundle.LoadAsset<NodeGraph>(next.groundGraph));typeof(SceneInfo).GetField("airNodesAsset",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(info,coordinator.artifactBundle.LoadAsset<NodeGraph>(next.airGraph));coordinator.enemySceneHost.SetActive(true);}yield return null;
+   coordinator.Check(SceneInfo.instance==info&&info.groundNodes.GetNodeCount()>0&&info.airNodes.GetNodeCount()>0,"Recovered next-stage navigation missing");
+   if(coordinator.stageSourceObjects){coordinator.r.stage.sourceSceneInfoActive=true;coordinator.r.stage.sourceStagePopulationActive=ClassicStageInfo.instance==coordinator.sourceSceneInfoRoot.GetComponent<ClassicStageInfo>()&&ClassicStageInfo.instance.monsterSelection!=null;coordinator.Check(coordinator.r.stage.sourceStagePopulationActive,"Original source next-stage population did not initialize");}
+   // Explicit temporary entry placement; movement afterward is original motor/state/solver.
+   report.entryObservations.Clear();ObserveStageEntry(motor,"before-original-teleport");
+   TeleportHelper.TeleportGameObject(body.gameObject,coordinator.r.stage.spawnPosition);solver.CollidableLayers=LayerIndex.world.mask;solver.StableGroundLayers=LayerIndex.world.mask;solver.SetGroundSolvingActivation(true);solver.ForceUnground();solver.enabled=true;Physics.SyncTransforms();
+   ObserveStageEntry(motor,"after-original-teleport");coordinator.EnableStageMapZones();
+   yield return new WaitForFixedUpdate();yield return null;
+   float deadline=Time.realtimeSinceStartup+5,observedAt=Time.realtimeSinceStartup;while((!solver.GroundingStatus.IsStableOnGround||!solver.GroundingStatus.GroundCollider||solver.GroundingStatus.GroundCollider.gameObject.scene!=coordinator.stageGeometryScene)&&Time.realtimeSinceStartup<deadline){if(Time.realtimeSinceStartup-observedAt>=.25f){ObserveStageEntry(motor);observedAt=Time.realtimeSinceStartup;}yield return null;}
+   ObserveStageEntry(motor,"settled-or-failed");
+   coordinator.Check(solver.GroundingStatus.IsStableOnGround&&solver.GroundingStatus.GroundCollider&&solver.GroundingStatus.GroundCollider.gameObject.scene==coordinator.stageGeometryScene,"Next-stage entry does not land on recovered geometry");
+   coordinator.Check(Util.IsPositionWithinMapBounds(solver.TransientPosition),"Original source bounds reject grounded next-stage entry");
+   coordinator.worldPathFollower.Reset();coordinator.worldLocalNavigator.SetBody(null);coordinator.worldNavigationBody=null;coordinator.worldTerrainRecent.Clear();coordinator.worldTerrainSelectedAt=coordinator.worldTerrainRecoveryUntil=-100;
+   if(coordinator.automaticDirectorHost)MovementBatchProbe.Destroy(coordinator.automaticDirectorHost);yield return null;
+   coordinator.sourceSlowDirector=null;coordinator.SelectStageCombatDeck(integratedStageConfig,next.name);coordinator.automaticDirectorHost=coordinator.stageSourceObjects?coordinator.SourceStageDirectorRoot(false):MovementBatchProbe.Instantiate(coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.enemyDirectorAsset));coordinator.rewardDirector=coordinator.automaticDirectorHost.GetComponent<CombatDirector>();coordinator.rewardDirector.monsterCards=coordinator.automaticDeck;
+   if(coordinator.stageSourceObjects){coordinator.sourceSlowDirector.monsterCards=coordinator.automaticDeck;coordinator.ObserveSourceSlowDirector(coordinator.worldPlayer);}else coordinator.automaticDirectorHost.AddComponent<DirectorCore>();
+   var spawningDirector=coordinator.rewardDirector;spawningDirector.onSpawnedServer.AddListener(obj=>{coordinator.RecordRewardSpawn(obj);if(coordinator.currentStageCombatDeck!=null)coordinator.RecordStageCombatSpawn(obj,coordinator.worldPlayer,spawningDirector);else coordinator.RecordDirectorActor(obj,coordinator.worldPlayer);});coordinator.automaticDirectorHost.SetActive(true);
+   coordinator.Check(DirectorCore.instance==coordinator.automaticDirectorHost.GetComponent<DirectorCore>()&&coordinator.rewardDirector.enabled&&CombatDirector.instancesList.Contains(coordinator.rewardDirector)&&(!coordinator.stageSourceObjects||CombatDirector.instancesList.Contains(coordinator.sourceSlowDirector)),"Next-stage original director missing");
+   coordinator.worldObjective=0;coordinator.stagePickupBaseline=coordinator.r.world.pickupMessages;coordinator.worldLastPress=-1;
+   var origin=solver.TransientPosition;var chestSource=coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.chestAsset);
+   if(coordinator.r.liveCatalogs==null||next.moonMission){
+   foreach(var offset in new[]{new Vector3(2,0,0),new Vector3(-2,0,0),new Vector3(0,0,3),new Vector3(4,0,3),new Vector3(-4,0,3),new Vector3(0,0,-3)}){var obj=coordinator.CreateWorldInteractable(coordinator.artifactBundle.LoadAsset<GameObject>(integratedStageConfig.barrelAsset),origin+offset,false);if(obj)coordinator.worldBarrels.Add(obj.GetComponent<BarrelInteraction>());}
+   foreach(var offset in new[]{new Vector3(5,0,0),new Vector3(-5,0,0),new Vector3(0,0,6),new Vector3(6,0,6)}){var obj=coordinator.CreateWorldInteractable(chestSource,origin+offset,true);if(obj)coordinator.worldChests.Add(obj.GetComponent<ChestBehavior>());}
+   coordinator.AddEquipmentBarrel(integratedStageConfig,origin);if(!next.moonMission)coordinator.AddWorldChestBreadth(integratedStageConfig,origin);coordinator.Check(coordinator.worldBarrels.Count>=3&&coordinator.worldChests.Count>=2,"Recovered next-stage layout lacks walkable interactables");coordinator.r.world.barrels=coordinator.worldBarrels.Count;coordinator.r.world.chests=coordinator.worldChests.Count;
+   }
+   if(next.moonMission){coordinator.rewardDirector.enabled=false;var mission=coordinator.PrepareMoonWorld();while(mission.MoveNext())yield return mission.Current;coordinator.objectiveStageHost=new GameObject("Owned Moon stage coordinator");coordinator.objectiveStageHost.SetActive(false);coordinator.objectiveStageHost.AddComponent<NetworkIdentity>();coordinator.objectiveStage=coordinator.objectiveStageHost.AddComponent<Stage>();typeof(Stage).GetProperty("sceneDef").SetValue(coordinator.objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());MovementBatchProbe.Call(coordinator.objectiveStage,"OnEnable");}
+   else{
+    bool gold=next.name=="goldshores";
+    if(gold)coordinator.PrepareGoldshoresStage();else{var objective=coordinator.SpawnStageObjective(integratedStageConfig);while(objective.MoveNext())yield return objective.Current;coordinator.PrepareWorldCommerce(integratedStageConfig,origin);}
+    var population=coordinator.PopulateWholeStage();while(population.MoveNext())yield return population.Current;
+    var stage=BeginOriginalStage();while(stage.MoveNext())yield return stage.Current;
+    if(gold){var goldMission=coordinator.BeginGoldshoresMission();while(goldMission.MoveNext())yield return goldMission.Current;}
+    else coordinator.PlaceGoldshoresDiagnosticShrine();
+   }
+   report.moneyAfter=master.money;report.experienceAfter=TeamManager.instance.GetTeamExperience(TeamIndex.Player);report.itemsAfter=IntegratedInventoryCount();
+   coordinator.Check(Run.instance==run&&coordinator.worldPlayer==body&&body.master==master&&master.GetBody()==body&&body.netId.Value==report.bodyId&&master.netId.Value==report.masterId&&body.hasEffectiveAuthority&&report.itemsAfter==report.itemsBefore&&report.experienceAfter==report.experienceBefore&&report.moneyAfter==report.moneyBefore&&run.stageClearCount==report.countedStages,"Original run/master/authority/inventory/XP/count continuity failed");
+   coordinator.stageEnteredAt=Time.realtimeSinceStartup-simulationBegan;report.current=next.name;report.transitions++;report.stageClearCount=run.stageClearCount;report.enteredAt=coordinator.stageEnteredAt;report.transporting=false;coordinator.pendingStage=null;transportingStage=false;if(resumeBeetleGland&&beetleGland)beetleGland.enabled=true;bridge.enabled=true;coordinator.r.phase="integrated-world-playing";coordinator.Save();
+  }
+  public void ReturnIntegratedStageEffects(){
+   coordinator.Check(coordinator.ownsIntegratedPools,"Stage effect pools have no integrated ownership baseline");
+   var pools=(Dictionary<GameObject,EffectPool>)MovementBatchProbe.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);
+   int loans=pools.Values.Sum(pool=>pool.InUseCount());
+   foreach(var pool in pools.Values.ToArray())foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);
+   if(coordinator.r.stageProgress!=null)coordinator.r.stageProgress.effectLoansReturned+=loans;
+   coordinator.Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
+  }
+  public void Dispose(){coordinator.PauseStageMapZones();coordinator.StopStageMapZoneObservations();if(coordinator.sourceSceneInfoRoot)coordinator.DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)MovementBatchProbe.Destroy(worldTransportHost);coordinator.CleanupOriginalGameModes();CleanupOriginalSurfaceCatalog();CleanupCraftableCatalog();CleanupStageSpellCatalog();coordinator.pendingStage=null;transportingStage=false;if(coordinator.r.stageProgress!=null)coordinator.r.stageProgress.cleaned=true;}
  }
- void ReturnIntegratedStageEffects(){
-  Check(ownsIntegratedPools,"Stage effect pools have no integrated ownership baseline");
-  var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);
-  int loans=pools.Values.Sum(pool=>pool.InUseCount());
-  foreach(var pool in pools.Values.ToArray())foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);
-  if(r.stageProgress!=null)r.stageProgress.effectLoansReturned+=loans;
-  Check(pools.Values.All(x=>x.InUseCount()==0),"Owned stage effect loans survived original return callbacks");
- }
- void CleanupStageTransport(){PauseStageMapZones();StopStageMapZoneObservations();if(sourceSceneInfoRoot)DeactivateSourceSceneInfo();if(worldTransport)worldTransport.requested=null;if(NetworkManager.singleton==worldTransport)NetworkManager.singleton=null;if(worldTransportHost)Destroy(worldTransportHost);CleanupOriginalGameModes();CleanupOriginalSurfaceCatalog();CleanupCraftableCatalog();CleanupStageSpellCatalog();pendingStage=null;transportingStage=false;if(r.stageProgress!=null)r.stageProgress.cleaned=true;}
 }

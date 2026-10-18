@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J539](PORTING_JOURNAL.md#j539--extract-the-application-interactable-population-stage-enemy-and-spawn-state-owners) | 2026-10-17 | Extract the application, interactable, population, stage, enemy and spawn-state owners | Phase 4 step 5, batches 10–12 together (implemented by Codex, reviewed by Claude). |
 | [J538](PORTING_JOURNAL.md#j538--extract-the-active-client-and-stage-geometry-owners) | 2026-10-17 | Extract the active-client and stage-geometry owners | Phase 4 step 5, batch 9 (implemented by Codex, reviewed and fixed by Claude). |
 | [J537](PORTING_JOURNAL.md#j537--extract-the-equipment-director-commerce-and-reward-owners) | 2026-10-17 | Extract the equipment, director, commerce and reward owners | Phase 4 step 5, batches 7 and 8 together (implemented by Codex, reviewed by Claude). |
 | [J536](PORTING_JOURNAL.md#j536--extract-the-primary-fire-chest-ejection-pickup-and-proc-content-owners) | 2026-10-17 | Extract the primary-fire, chest-ejection, pickup and proc-content owners | Phase 4 step 5, batches 5 and 6 together (implemented by Codex, reviewed by Claude), verified in one build because they touch different files. |

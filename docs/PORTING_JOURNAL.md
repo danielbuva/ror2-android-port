@@ -5257,3 +5257,17 @@ scanner gives a second opinion. After qualifying them: zero-error code-only buil
 fix checked in the staged project. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied
 profile runs, `work/experiments/baseline/20261018T010629.609038Z`) and `--stage-exit` passed on the same APK
 (`work/experiments/baseline/20261018T010955.281620Z`). App stopped; OLED asleep.
+
+## J539 — Extract the application, interactable, population, stage, enemy and spawn-state owners
+
+Phase 4 step 5, batches 10–12 together (implemented by Codex, reviewed by Claude). Six new
+nested `IDisposable` owners: `OfflineApplicationSession` and `WholeInteractableSession` (11
+fields moved; the offline-start fields the menu, results and input code read stay shared),
+`WholePopulationSession` and `IntegratedStageSession` (stage transport order unchanged; a static
+macro flag stays static), and `EnemySpineSession` and `SpawnStateSession` (15 fields moved, 7
+shared; spawn-state catalog build and enemy cleanup verification order unchanged). Moved bodies
+are token-identical apart from `coordinator.` qualifiers, and the build compiled first time.
+Zero-error code-only build, APK `282c7beccbae47da0cdda2f39fa67000e00350dea6ec1057637de3f1ef43e04c`, all six owners checked in the staged project.
+`./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T012014.643806Z`) and
+`--stage-exit` passed on the same APK (`work/experiments/baseline/20261018T012338.724019Z`).
+App stopped; OLED asleep.

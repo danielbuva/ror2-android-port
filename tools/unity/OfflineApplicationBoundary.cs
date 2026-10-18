@@ -1,5 +1,6 @@
 // Subsystem: session (game path). Owner map: docs/ARCHITECTURE.md#ownership.
-// Session phases: setup AwaitOfflineRunStart; teardown —.
+// Session phases: setup AwaitOfflineRunStart (OfflineApplicationSession); teardown — (Dispose is a no-op).
+using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
@@ -9,78 +10,105 @@ using UnityEngine;
 // Owned Android application flow around the original composed simulation.
 // This screen is not the stock menu and creates no platform user or stock profile.
 public sealed partial class MovementBatchProbe {
- bool offlineStartVisible,offlineStartSelected,returnToOfflineMenu,offlineSurvivorStickLatched,offlineDifficultyStickLatched;
+ // Shared with survivor/loadout UI, recovered HUD, settings and session restart.
+ bool offlineStartVisible,offlineStartSelected,returnToOfflineMenu;
  Vector2 offlineRosterScroll;
  SurvivorDef[] offlineMenuRoster,offlineMenuChoices;
  DifficultyIndex offlineDifficulty=DifficultyIndex.Easy;
- DifficultyIndex SelectedOfflineDifficulty(){Check(offlineDifficulty>=DifficultyIndex.Easy&&offlineDifficulty<=DifficultyIndex.Hard,"Unsupported original offline difficulty");return offlineDifficulty;}
- string OfflineDifficultyName(){switch(SelectedOfflineDifficulty()){case DifficultyIndex.Easy:return "Drizzle";case DifficultyIndex.Normal:return "Rainstorm";default:return "Monsoon";}}
- void CycleOfflineDifficulty(int direction=1){offlineDifficulty=direction<0?(offlineDifficulty==DifficultyIndex.Easy?DifficultyIndex.Hard:offlineDifficulty-1):(offlineDifficulty==DifficultyIndex.Hard?DifficultyIndex.Easy:offlineDifficulty+1);if(offlineSettings!=null){offlineSettings.values.offlineDifficulty=(int)offlineDifficulty;offlineSettings.Save();}if(r.hud!=null)r.hud.menuDifficulty=offlineDifficulty.ToString();Save();}
- string pendingOfflineSurvivor="Commando";
  public bool skipOfflineMenu;
- NovaInputBridge.Mapping offlineMenuMapping;
- NovaInputBridge.ControllerPresence offlineUiPresence;
- bool OfflineUiControllerPresent(){
-  var names=UnityEngine.Input.GetJoystickNames();
-  if(names.Length==0||string.IsNullOrEmpty(names[0])||names.Skip(1).Any(name=>!string.IsNullOrEmpty(name))){offlineUiPresence?.Suspend();return false;}
-  var map=offlineMenuMapping??(r!=null&&r.nova!=null?r.nova.mapping:null);
-  if(map==null)return false;
-  if(offlineUiPresence==null)offlineUiPresence=new NovaInputBridge.ControllerPresence(names[0]);
-  var raw=NovaInputBridge.ReadRaw();
-  bool neutral=raw.buttons.All(down=>!down)&&new[]{map.moveX,map.moveY,map.aimX,map.aimY}.All(axis=>Mathf.Abs(raw.axes[axis])<=AndroidOfflineSettings.current.deadzone);
-  return offlineUiPresence.Observe(names,neutral,Time.realtimeSinceStartup);
+ OfflineApplicationSession offlineApplicationSession;
+ OfflineApplicationSession GetOfflineApplicationSession(){if(offlineApplicationSession==null)offlineApplicationSession=new OfflineApplicationSession(this);return offlineApplicationSession;}
+ DifficultyIndex SelectedOfflineDifficulty(){return GetOfflineApplicationSession().SelectedOfflineDifficulty();}
+ string OfflineDifficultyName(){return GetOfflineApplicationSession().OfflineDifficultyName();}
+ void CycleOfflineDifficulty(int direction=1){GetOfflineApplicationSession().CycleOfflineDifficulty(direction);}
+ bool OfflineUiControllerPresent(){return GetOfflineApplicationSession().OfflineUiControllerPresent();}
+ void OnApplicationFocus(bool focused){GetOfflineApplicationSession().OnApplicationFocus(focused);}
+ void OnApplicationPause(bool paused){GetOfflineApplicationSession().OnApplicationPause(paused);}
+ static bool AllowsOfflineSessionMenu(Result session){return OfflineApplicationSession.AllowsOfflineSessionMenu(session);}
+ IEnumerator AwaitOfflineRunStart(SessionConfig cfg){return GetOfflineApplicationSession().AwaitOfflineRunStart(cfg);}
+ void ObserveOfflineApplicationInput(){GetOfflineApplicationSession().ObserveOfflineApplicationInput();}
+ bool DrawOfflineStart(){return GetOfflineApplicationSession().DrawOfflineStart();}
+ void RequestResultsMenu(){GetOfflineApplicationSession().RequestResultsMenu();}
+ bool CompletedResultsReturn(){return GetOfflineApplicationSession().CompletedResultsReturn();}
+ bool CanAbandonOfflineRun(){return GetOfflineApplicationSession().CanAbandonOfflineRun();}
+ void RequestAbandonOfflineRun(){GetOfflineApplicationSession().RequestAbandonOfflineRun();}
+ bool CompletedOfflineAbandon(){return GetOfflineApplicationSession().CompletedOfflineAbandon();}
+
+ // Retain the owner for menu input, focus/pause callbacks and result/restart
+ // queries. Menu cleanup stays in the iterator; Dispose does not reset flow state.
+ sealed class OfflineApplicationSession : IDisposable {
+  readonly MovementBatchProbe coordinator;
+  bool offlineSurvivorStickLatched,offlineDifficultyStickLatched;
+  string pendingOfflineSurvivor="Commando";
+  NovaInputBridge.Mapping offlineMenuMapping;
+  NovaInputBridge.ControllerPresence offlineUiPresence;
+  public OfflineApplicationSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public DifficultyIndex SelectedOfflineDifficulty(){coordinator.Check(coordinator.offlineDifficulty>=DifficultyIndex.Easy&&coordinator.offlineDifficulty<=DifficultyIndex.Hard,"Unsupported original offline difficulty");return coordinator.offlineDifficulty;}
+  public string OfflineDifficultyName(){switch(SelectedOfflineDifficulty()){case DifficultyIndex.Easy:return "Drizzle";case DifficultyIndex.Normal:return "Rainstorm";default:return "Monsoon";}}
+  public void CycleOfflineDifficulty(int direction=1){coordinator.offlineDifficulty=direction<0?(coordinator.offlineDifficulty==DifficultyIndex.Easy?DifficultyIndex.Hard:coordinator.offlineDifficulty-1):(coordinator.offlineDifficulty==DifficultyIndex.Hard?DifficultyIndex.Easy:coordinator.offlineDifficulty+1);if(coordinator.offlineSettings!=null){coordinator.offlineSettings.values.offlineDifficulty=(int)coordinator.offlineDifficulty;coordinator.offlineSettings.Save();}if(coordinator.r.hud!=null)coordinator.r.hud.menuDifficulty=coordinator.offlineDifficulty.ToString();coordinator.Save();}
+  public bool OfflineUiControllerPresent(){
+   var names=UnityEngine.Input.GetJoystickNames();
+   if(names.Length==0||string.IsNullOrEmpty(names[0])||names.Skip(1).Any(name=>!string.IsNullOrEmpty(name))){offlineUiPresence?.Suspend();return false;}
+   var map=offlineMenuMapping??(coordinator.r!=null&&coordinator.r.nova!=null?coordinator.r.nova.mapping:null);
+   if(map==null)return false;
+   if(offlineUiPresence==null)offlineUiPresence=new NovaInputBridge.ControllerPresence(names[0]);
+   var raw=NovaInputBridge.ReadRaw();
+   bool neutral=raw.buttons.All(down=>!down)&&new[]{map.moveX,map.moveY,map.aimX,map.aimY}.All(axis=>Mathf.Abs(raw.axes[axis])<=AndroidOfflineSettings.current.deadzone);
+   return offlineUiPresence.Observe(names,neutral,Time.realtimeSinceStartup);
+  }
+  public void OnApplicationFocus(bool focused){if(!focused)offlineUiPresence?.Suspend();}
+  public void OnApplicationPause(bool paused){if(paused)offlineUiPresence?.Suspend();}
+  public static bool AllowsOfflineSessionMenu(Result session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
+  public IEnumerator AwaitOfflineRunStart(SessionConfig cfg){
+   if(cfg.integratedWorld&&cfg.integratedResults)coordinator.PrepareOfflineSettings();
+   if(string.IsNullOrEmpty(coordinator.r.selectedSurvivor))coordinator.r.selectedSurvivor=pendingOfflineSurvivor;
+   // A developer-only survivor override is never shown as an earned menu choice.
+   if(!AllowsOfflineSessionMenu(coordinator.r)||!cfg.integratedWorld||!cfg.integratedResults||coordinator.skipOfflineMenu||coordinator.r.developerSurvivorOverride)yield break;
+   coordinator.offlineUnlockPreview=null;var choices=coordinator.OrdinarySurvivorChoices();var roster=coordinator.VisibleSurvivorRoster();
+   coordinator.Check(choices.All(roster.Contains),"Selectable survivor absent from original visible roster");
+   coordinator.offlineMenuRoster=roster;coordinator.offlineMenuChoices=choices;coordinator.offlineRosterScroll=Vector2.zero;offlineSurvivorStickLatched=false;offlineDifficultyStickLatched=false;
+   coordinator.offlinePendingLoadout=AndroidOfflineProfile.PreviewLoadout(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"));coordinator.offlineLoadoutEdited=false;coordinator.offlineLoadoutVisible=false;
+   if(coordinator.r.hud!=null){coordinator.r.hud.survivorRosterCount=roster.Length;coordinator.r.hud.survivorSelectableCount=choices.Length;coordinator.r.hud.menuDifficulty=coordinator.offlineDifficulty.ToString();}
+   if(!choices.Any(value=>value.cachedName==coordinator.r.selectedSurvivor))coordinator.r.selectedSurvivor=choices[0].cachedName;
+   offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
+   offlineMenuMapping.Validate(coordinator.r.attempt);coordinator.PrepareRecoveredMenu();coordinator.offlineStartVisible=true;coordinator.r.phase="offline-start-menu";coordinator.Save();
+   while(!coordinator.offlineStartSelected)yield return null;
+   coordinator.offlineStartVisible=false;coordinator.CleanupRecoveredMenu();coordinator.offlineMenuRoster=null;coordinator.offlineMenuChoices=null;coordinator.offlineLoadoutVisible=false;pendingOfflineSurvivor=coordinator.r.selectedSurvivor;coordinator.SelectedPlayerPrefab(cfg);coordinator.r.phase="started";coordinator.Save();
+  }
+  public void ObserveOfflineApplicationInput(){
+   if(coordinator.offlineStartVisible){if(OfflineUiControllerPresent()){var raw=NovaInputBridge.ReadRaw();var horizontal=raw.axes[offlineMenuMapping.moveX];if(Mathf.Abs(horizontal)<.3f)offlineSurvivorStickLatched=false;else if(!offlineSurvivorStickLatched&&Mathf.Abs(horizontal)>.65f){coordinator.CycleOrdinarySurvivor(horizontal>0?1:-1);offlineSurvivorStickLatched=true;}var difficulty=raw.axes[offlineMenuMapping.aimX];if(Mathf.Abs(difficulty)<.3f)offlineDifficultyStickLatched=false;else if(!offlineDifficultyStickLatched&&Mathf.Abs(difficulty)>.65f){CycleOfflineDifficulty(difficulty>0?1:-1);offlineDifficultyStickLatched=true;}if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+offlineMenuMapping.jump)))coordinator.offlineStartSelected=true;}else{offlineSurvivorStickLatched=false;offlineDifficultyStickLatched=false;}return;}
+   coordinator.ObserveOfflineSettingsControllerInput();
+   if(coordinator.r!=null&&coordinator.r.phase!="commando-defeated"&&coordinator.r.freePlay&&coordinator.r.results!=null&&coordinator.r.results.persisted&&coordinator.r.nova!=null&&!coordinator.offlineSettingsVisible&&OfflineUiControllerPresent()&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+coordinator.r.nova.mapping.jump)))RequestResultsMenu();
+  }
+  public bool DrawOfflineStart(){
+   if(!coordinator.offlineStartVisible)return false;
+   var selected=string.IsNullOrEmpty(coordinator.r.selectedSurvivor)?"Commando":coordinator.r.selectedSurvivor;
+   if(coordinator.recoveredMenu){if(!coordinator.offlineLoadoutVisible)coordinator.DrawOfflineSurvivorRoster(coordinator.offlineMenuRoster,coordinator.offlineMenuChoices);GUI.Box(new Rect(20,Screen.height-156,470,88),"Selected survivor · Android profile");if(GUI.Button(new Rect(40,Screen.height-127,430,48),selected+"  ◀  ▶"))coordinator.CycleOrdinarySurvivor(1);GUI.Box(new Rect(500,Screen.height-156,270,88),"Original difficulty rule");if(GUI.Button(new Rect(520,Screen.height-127,230,48),OfflineDifficultyName()+"  ◀  ▶"))CycleOfflineDifficulty();if(GUI.Button(new Rect(Screen.width-205,Screen.height-127,185,48),coordinator.offlineLoadoutVisible?"Close loadout":"Loadout"))coordinator.offlineLoadoutVisible=!coordinator.offlineLoadoutVisible;if(coordinator.offlineLoadoutVisible)coordinator.DrawOfflineLoadout();GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Left stick: survivor · Right stick: difficulty · A: start · audio/Steam profiles unavailable · roster/UI rendering approximation");return true;}
+   var style=new GUIStyle(GUI.skin.label){fontSize=30,wordWrap=true};
+   GUI.Box(new Rect(20,60,860,400),"Offline RoR2 composition");
+   GUI.Label(new Rect(45,100,800,220),selected+" · "+OfflineDifficultyName()+"\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nLeft stick: survivor · Right stick: difficulty · A: start.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",style);
+   if(GUI.Button(new Rect(45,270,370,55),"Survivor: "+selected+"  ◀  ▶"))coordinator.CycleOrdinarySurvivor(1);
+   if(GUI.Button(new Rect(440,270,370,55),"Difficulty: "+OfflineDifficultyName()+"  ◀  ▶"))CycleOfflineDifficulty();
+   if(GUI.Button(new Rect(45,340,370,65),"Start run (A)"))coordinator.offlineStartSelected=true;
+   if(GUI.Button(new Rect(440,340,370,65),"Quit"))Application.Quit();
+   if(GUI.Button(new Rect(45,415,370,45),coordinator.offlineLoadoutVisible?"Close loadout":"Loadout"))coordinator.offlineLoadoutVisible=!coordinator.offlineLoadoutVisible;
+   if(coordinator.offlineLoadoutVisible)coordinator.DrawOfflineLoadout();
+   return true;
+  }
+  public void RequestResultsMenu(){
+   if(coordinator.r==null||!coordinator.r.freePlay||coordinator.r.results==null||!coordinator.r.results.persisted)return;
+   coordinator.Check(coordinator.r.results.serverEnding&&coordinator.r.results.clientEnding&&coordinator.r.results.reportReloaded,"Return requested before original ending/report persistence");
+   coordinator.returnToOfflineMenu=true;coordinator.restartRequested=true;coordinator.r.phase="returning-to-offline-menu";coordinator.Save();
+  }
+  public bool CompletedResultsReturn(){return coordinator.returnToOfflineMenu&&coordinator.r.results!=null&&coordinator.r.results.persisted&&coordinator.r.results.clientEnding;}
+  public bool CanAbandonOfflineRun(){return AllowsOfflineSessionMenu(coordinator.r)&&coordinator.r.integratedWorld&&coordinator.r.world!=null&&coordinator.r.world.ready&&coordinator.worldPlayer&&coordinator.worldPlayer.healthComponent.alive&&coordinator.r.results!=null&&coordinator.r.results.ready&&!coordinator.r.results.serverEnding&&!coordinator.r.results.reportGenerated&&!coordinator.r.results.persisted&&!coordinator.restartRequested;}
+  public void RequestAbandonOfflineRun(){
+   if(!CanAbandonOfflineRun())return;
+   // Leaving a local session is not an original game ending or a saved result.
+   coordinator.Check(UnityEngine.Networking.NetworkServer.active&&Run.instance,"Live offline session ownership absent");
+   coordinator.ShowOfflineSettings(false);coordinator.r.settings.sessionAbandoned=true;coordinator.returnToOfflineMenu=true;coordinator.restartRequested=true;coordinator.r.phase="abandoning-offline-session";coordinator.Save();
+  }
+  public bool CompletedOfflineAbandon(){return coordinator.returnToOfflineMenu&&coordinator.r.settings!=null&&coordinator.r.settings.sessionAbandoned&&coordinator.r.results!=null&&!coordinator.r.results.serverEnding&&!coordinator.r.results.reportGenerated&&!coordinator.r.results.persisted;}
+  public void Dispose(){}
  }
- void OnApplicationFocus(bool focused){if(!focused)offlineUiPresence?.Suspend();}
- void OnApplicationPause(bool paused){if(paused)offlineUiPresence?.Suspend();}
- static bool AllowsOfflineSessionMenu(Result session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
- IEnumerator AwaitOfflineRunStart(SessionConfig cfg){
-  if(cfg.integratedWorld&&cfg.integratedResults)PrepareOfflineSettings();
-  if(string.IsNullOrEmpty(r.selectedSurvivor))r.selectedSurvivor=pendingOfflineSurvivor;
-  // A developer-only survivor override is never shown as an earned menu choice.
-  if(!AllowsOfflineSessionMenu(r)||!cfg.integratedWorld||!cfg.integratedResults||skipOfflineMenu||r.developerSurvivorOverride)yield break;
-  offlineUnlockPreview=null;var choices=OrdinarySurvivorChoices();var roster=VisibleSurvivorRoster();
-  Check(choices.All(roster.Contains),"Selectable survivor absent from original visible roster");
-  offlineMenuRoster=roster;offlineMenuChoices=choices;offlineRosterScroll=Vector2.zero;offlineSurvivorStickLatched=false;offlineDifficultyStickLatched=false;
-  offlinePendingLoadout=AndroidOfflineProfile.PreviewLoadout(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"));offlineLoadoutEdited=false;offlineLoadoutVisible=false;
-  if(r.hud!=null){r.hud.survivorRosterCount=roster.Length;r.hud.survivorSelectableCount=choices.Length;r.hud.menuDifficulty=offlineDifficulty.ToString();}
-  if(!choices.Any(value=>value.cachedName==r.selectedSurvivor))r.selectedSurvivor=choices[0].cachedName;
-  offlineMenuMapping=JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath,"nova-input-mapping.json")));
-  offlineMenuMapping.Validate(r.attempt);PrepareRecoveredMenu();offlineStartVisible=true;r.phase="offline-start-menu";Save();
-  while(!offlineStartSelected)yield return null;
-  offlineStartVisible=false;CleanupRecoveredMenu();offlineMenuRoster=null;offlineMenuChoices=null;offlineLoadoutVisible=false;pendingOfflineSurvivor=r.selectedSurvivor;SelectedPlayerPrefab(cfg);r.phase="started";Save();
- }
- void ObserveOfflineApplicationInput(){
-  if(offlineStartVisible){if(OfflineUiControllerPresent()){var raw=NovaInputBridge.ReadRaw();var horizontal=raw.axes[offlineMenuMapping.moveX];if(Mathf.Abs(horizontal)<.3f)offlineSurvivorStickLatched=false;else if(!offlineSurvivorStickLatched&&Mathf.Abs(horizontal)>.65f){CycleOrdinarySurvivor(horizontal>0?1:-1);offlineSurvivorStickLatched=true;}var difficulty=raw.axes[offlineMenuMapping.aimX];if(Mathf.Abs(difficulty)<.3f)offlineDifficultyStickLatched=false;else if(!offlineDifficultyStickLatched&&Mathf.Abs(difficulty)>.65f){CycleOfflineDifficulty(difficulty>0?1:-1);offlineDifficultyStickLatched=true;}if(UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+offlineMenuMapping.jump)))offlineStartSelected=true;}else{offlineSurvivorStickLatched=false;offlineDifficultyStickLatched=false;}return;}
-  ObserveOfflineSettingsControllerInput();
-  if(r!=null&&r.phase!="commando-defeated"&&r.freePlay&&r.results!=null&&r.results.persisted&&r.nova!=null&&!offlineSettingsVisible&&OfflineUiControllerPresent()&&UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0+r.nova.mapping.jump)))RequestResultsMenu();
- }
- bool DrawOfflineStart(){
-  if(!offlineStartVisible)return false;
-  var selected=string.IsNullOrEmpty(r.selectedSurvivor)?"Commando":r.selectedSurvivor;
-  if(recoveredMenu){if(!offlineLoadoutVisible)DrawOfflineSurvivorRoster(offlineMenuRoster,offlineMenuChoices);GUI.Box(new Rect(20,Screen.height-156,470,88),"Selected survivor · Android profile");if(GUI.Button(new Rect(40,Screen.height-127,430,48),selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);GUI.Box(new Rect(500,Screen.height-156,270,88),"Original difficulty rule");if(GUI.Button(new Rect(520,Screen.height-127,230,48),OfflineDifficultyName()+"  ◀  ▶"))CycleOfflineDifficulty();if(GUI.Button(new Rect(Screen.width-205,Screen.height-127,185,48),offlineLoadoutVisible?"Close loadout":"Loadout"))offlineLoadoutVisible=!offlineLoadoutVisible;if(offlineLoadoutVisible)DrawOfflineLoadout();GUI.Label(new Rect(20,Screen.height-58,Screen.width-40,55),"Left stick: survivor · Right stick: difficulty · A: start · audio/Steam profiles unavailable · roster/UI rendering approximation");return true;}
-  var style=new GUIStyle(GUI.skin.label){fontSize=30,wordWrap=true};
-  GUI.Box(new Rect(20,60,860,400),"Offline RoR2 composition");
-  GUI.Label(new Rect(45,100,800,220),selected+" · "+OfflineDifficultyName()+"\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nLeft stick: survivor · Right stick: difficulty · A: start.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",style);
-  if(GUI.Button(new Rect(45,270,370,55),"Survivor: "+selected+"  ◀  ▶"))CycleOrdinarySurvivor(1);
-  if(GUI.Button(new Rect(440,270,370,55),"Difficulty: "+OfflineDifficultyName()+"  ◀  ▶"))CycleOfflineDifficulty();
-  if(GUI.Button(new Rect(45,340,370,65),"Start run (A)"))offlineStartSelected=true;
-  if(GUI.Button(new Rect(440,340,370,65),"Quit"))Application.Quit();
-  if(GUI.Button(new Rect(45,415,370,45),offlineLoadoutVisible?"Close loadout":"Loadout"))offlineLoadoutVisible=!offlineLoadoutVisible;
-  if(offlineLoadoutVisible)DrawOfflineLoadout();
-  return true;
- }
- void RequestResultsMenu(){
-  if(r==null||!r.freePlay||r.results==null||!r.results.persisted)return;
-  Check(r.results.serverEnding&&r.results.clientEnding&&r.results.reportReloaded,"Return requested before original ending/report persistence");
-  returnToOfflineMenu=true;restartRequested=true;r.phase="returning-to-offline-menu";Save();
- }
- bool CompletedResultsReturn(){return returnToOfflineMenu&&r.results!=null&&r.results.persisted&&r.results.clientEnding;}
- bool CanAbandonOfflineRun(){return AllowsOfflineSessionMenu(r)&&r.integratedWorld&&r.world!=null&&r.world.ready&&worldPlayer&&worldPlayer.healthComponent.alive&&r.results!=null&&r.results.ready&&!r.results.serverEnding&&!r.results.reportGenerated&&!r.results.persisted&&!restartRequested;}
- void RequestAbandonOfflineRun(){
-  if(!CanAbandonOfflineRun())return;
-  // Leaving a local session is not an original game ending or a saved result.
-  Check(UnityEngine.Networking.NetworkServer.active&&Run.instance,"Live offline session ownership absent");
-  ShowOfflineSettings(false);r.settings.sessionAbandoned=true;returnToOfflineMenu=true;restartRequested=true;r.phase="abandoning-offline-session";Save();
- }
- bool CompletedOfflineAbandon(){return returnToOfflineMenu&&r.settings!=null&&r.settings.sessionAbandoned&&r.results!=null&&!r.results.serverEnding&&!r.results.reportGenerated&&!r.results.persisted;}
 }
