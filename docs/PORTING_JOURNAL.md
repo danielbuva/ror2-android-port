@@ -5194,3 +5194,14 @@ the scan of the 94 nested-class lines found no unqualified coordinator access. Z
 code-only build, APK `147a839f20453bc656308f32cced25abe12c0d9563f1e3aed1b1c61d0bb5baed`, both owners checked in the staged project. `./dev check-baseline`
 passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261018T000142.472485Z`).
 App stopped; OLED asleep.
+
+## J534 — Extract the item display, DOT and item-behaviour owners
+
+Phase 4 step 5, batch 3 (implemented by Codex, reviewed by Claude). `WorldItemDisplayBoundary.cs`,
+`WorldDotBoundary.cs` and `WorldItemBehaviorBoundary.cs` each gained a nested `IDisposable` owner
+(`WorldItemDisplaySession`, `WorldDotSession`, `WorldItemBehaviorSession`): 23 fields moved, two
+static arrays stay static, and the split DOT teardown keeps its two call sites. The 20 moved
+bodies are token-identical apart from `coordinator.` qualifiers, and the scan of all three
+owners found no unqualified coordinator access. Zero-error code-only build, APK `8b9d2347dd78580d6de05a2b234d6c74a7205247b131be3d96065ec22a37a54e`, all
+three owners checked in the staged project. `./dev check-baseline` passed with 35.2 s on Lakes,
+no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261018T001013.803207Z`). App stopped; OLED asleep.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J534](PORTING_JOURNAL.md#j534--extract-the-item-display-dot-and-item-behaviour-owners) | 2026-10-17 | Extract the item display, DOT and item-behaviour owners | Phase 4 step 5, batch 3 (implemented by Codex, reviewed by Claude). |
 | [J533](PORTING_JOURNAL.md#j533--extract-the-healing-and-legendary-item-owners) | 2026-10-17 | Extract the healing and legendary item owners | Phase 4 step 5, batch 2 (implemented by Codex, reviewed by Claude). |
 | [J532](PORTING_JOURNAL.md#j532--extract-the-original-visual-and-common-asset-owners) | 2026-10-17 | Extract the original visual and common-asset owners | Phase 4 step 5, batch 1 of Codex's owner ranking (implemented by Codex, reviewed by Claude). |
 | [J531](PORTING_JOURNAL.md#j531--extract-the-barrier-effect-owner) | 2026-10-17 | Extract the barrier-effect owner | Phase 4 step 5, eleventh owner (implemented by Codex, reviewed by Claude). |
