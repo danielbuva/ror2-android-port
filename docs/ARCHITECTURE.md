@@ -52,7 +52,7 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R2):
+Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R4):
 `./dev prototype --action rebuild-step --step assemblies` reconstructs the assembly
 cohort, then compares every selected map path with the current project's actual
 bytes. The ordered `STEPS` table declares each step's producer categories, path
@@ -64,6 +64,29 @@ installation configuration); the destination remains in **this clone's**
 project strictly beneath that rebuild root. Live-project destinations, redirects,
 nested symlinks and hard-linked output files are refused. No Unity or device
 operation is involved.
+
+After composition, `--step catalog-closure` uses `whole_catalog.prepare_integration`
+through `StageIO` and `catalog_rebuild.CatalogIO`; `--step dependencies` uses
+`composition_migration.stage_missing_sources`, the support alias repair and the
+optional-content sanitizer through that same boundary. R3 selects 259 map files;
+R4 selects 1,238. Membership uses the map's exact producer function evidence,
+since the broad `repo-builder` category also includes later steps. Each cohort is
+hash/size-gated before buffered project writes are flushed, then compared with
+the current project. R3 requires R2's destination config; R4 requires R3's completion marker and R2's
+destination build config. The real actions retain their original write paths.
+
+`recipe/catalog-rebuild-inputs.json` pins ten retained local analysis inputs; they
+are verified before being copied under `.rebuild/catalog-inputs/`. Catalog
+metadata export currently needs Unity, so audit/native-inventory/reconcile are
+**not regenerated** by this host-only replay. Regenerating these inputs is the
+next blocker. Destination GUID ownership, catalog manifests/import receipts,
+dependency receipts and optional-content receipts are regenerated. No current
+project owner map or historical output body is used as source. R3 buffers the
+closure import and UI remaps; R4 buffers dependency import, support repair and
+sanitization. Auxiliary R4 writes remain under `.rebuild/composition/`, and reads
+prefer R2's redirected config. Before R7 places its importer, sanitization obtains
+SilentProjectileBoundary's identity directly from `project-layout.json`. These buffers have no state after flush or failure.
+Synthetic contracts: `tests/test_catalog_rebuild.py`.
 
 `recipe/original-assemblies.json` pins 49 Managed source identities and importer
 parameters: 45 unchanged originals, installation-sourced SimpleJSON and three

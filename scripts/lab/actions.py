@@ -92,7 +92,7 @@ _ENTRIES = (
         "rebuild_action",
         {},
         "current",
-        "Rebuild --step assemblies under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination.",
+        "Rebuild --step assemblies|composition|catalog-closure|dependencies in order under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination.",
         handler=_rebuild_step,
     ),
     Action(

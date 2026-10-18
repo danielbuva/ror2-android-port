@@ -656,16 +656,27 @@ def native_inventory():
         raise RuntimeError("Original container inspection incomplete; preserve and inspect its first failure")
 
 
-def repair_support_source(export, mapped, project, destination):
+def repair_support_source(export, mapped, project, destination, io=None):
     """Resolve one observed decompiler ambiguity from the original field types."""
+    from composition_io import StageIO
+
+    io = io or StageIO()
     relative = "Assets/Scripts/Assembly-CSharp/AffixBeadProjectileSound.cs"
     if relative not in mapped:
         return
-    from boundaries import probe_tool
+    binary = game(io.work) / "Risk of Rain 2_Data/Managed/Assembly-CSharp.dll"
+    expected = next(
+        row["sha256"] for row in io.read(io.work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/Assembly-CSharp.dll"
+    )
+    if io.rebuilding:
+        record = io.read(io.catalog() / "support-source-alias.json")
+        if record["original_assembly_sha256"] != expected or sha(binary) != expected:
+            raise RuntimeError("Support source field contract input drift")
+        contract = dict(sha256=expected, types=[dict(fields=[dict(name=k, type=v) for k, v in record["fields"].items()])])
+    else:
+        from boundaries import probe_tool
 
-    binary = game() / "Risk of Rain 2_Data/Managed/Assembly-CSharp.dll"
-    expected = next(row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/Assembly-CSharp.dll")
-    contract = json.loads(run(probe_tool() + [binary, "AffixBeadProjectileSound"], timeout=120).stdout)
+        contract = json.loads(run(probe_tool() + [binary, "AffixBeadProjectileSound"], timeout=120).stdout)
     if contract["sha256"] != expected or len(contract["types"]) != 1:
         raise RuntimeError("Recovered support source requires the accepted original field contract")
     fields = {row["name"]: row["type"] for row in contract["types"][0]["fields"]}
@@ -675,16 +686,16 @@ def repair_support_source(export, mapped, project, destination):
     target = project / mapped[relative]
     text = source.read_text()
     corrected = "using Event = AK.Wwise.Event;\n" + text
-    if target.read_text() not in (text, corrected):
+    if io.read_text(target) not in (text, corrected):
         raise RuntimeError("Unexpected edits to recovered support source")
-    target.write_text(corrected)
-    write(
+    io.apply(target, corrected)
+    io.write(
         destination / "support-source-alias.json",
         dict(
             source=relative,
             target=mapped[relative],
             source_sha256=sha(source),
-            output_sha256=sha(target),
+            output_sha256=io.sha(target),
             original_assembly_sha256=expected,
             fields=fields,
             scope="Qualify the two original audio-event field types; original methods unchanged; no audio availability claim",
@@ -843,39 +854,47 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
     return resolved
 
 
-def prepare_integration():
+def prepare_integration(io=None):
     """Import the complete discovered closure, reusing existing GUID owners once."""
-    from build import preflight
+    from composition_io import StageIO
 
-    preflight()
-    out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
-    closure = read(out / "reconciled-closure.json")
-    if closure["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
+    io = io or StageIO()
+    io.preflight()
+    out = io.catalog()
+    export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
+    closure = io.read(out / "reconciled-closure.json")
+    if closure["input_id"] != io.read(io.work / "config/accepted-input.json")["input_id"]:
         raise RuntimeError("Whole catalog belongs to different input")
     metadata = read_catalog(catalog_path(out))
-    native = read(out / "native-conversions.json")
+    native = io.read(out / "native-conversions.json")
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
-    receipts = ROOT / read(out / "native-latest.json")["path"]
-    recovered = recover_ambiguous_mesh_subobjects(export, unresolved_mesh_subobjects, metadata, native, receipts, read(WORK / "inventory/files.json"))
-    mesh_subobjects.extend(recovered)
-    unresolved_mesh_subobjects = [row for row in unresolved_mesh_subobjects if row["key"] not in {entry["key"] for entry in recovered}]
-    index = read(out / "source-guid-index.json")
+    if io.rebuilding:
+        # Native signature recovery records are an explicit hash-pinned input until
+        # the catalog analysis can run without its Unity metadata exporter.
+        meshes = io.read(out / "mesh-subobjects.json")
+        mesh_subobjects = meshes["resolved"]
+        unresolved_mesh_subobjects = meshes["unresolved"]
+    else:
+        receipts = io.resolve(io.read(out / "native-latest.json")["path"])
+        recovered = recover_ambiguous_mesh_subobjects(export, unresolved_mesh_subobjects, metadata, native, receipts, io.read(io.work / "inventory/files.json"))
+        mesh_subobjects.extend(recovered)
+        unresolved_mesh_subobjects = [row for row in unresolved_mesh_subobjects if row["key"] not in {entry["key"] for entry in recovered}]
+    index = io.read(out / "source-guid-index.json")
     guids = {path: guid for guid, path in index.items()}
-    repairs = {row["source"]: row for row in read(out / "source-guid-repairs.json")} if (out / "source-guid-repairs.json").exists() else {}
-    project = WORK / "lab-project"
+    repairs = {row["source"]: row for row in io.read(out / "source-guid-repairs.json")} if (out / "source-guid-repairs.json").exists() else {}
+    project = io.project
     owners = {}
-    for meta in (project / "Assets").rglob("*.meta"):
-        match = re.search(r"^guid:\s*([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+    for meta in io.glob(project / "Assets", "**/*.meta"):
+        match = re.search(r"^guid:\s*([a-f0-9]{32})", io.read_text(meta, errors="replace"), re.M)
         if match:
             if match[1] in owners:
                 raise RuntimeError("Duplicate imported GUID; refuse ambiguous whole-content ownership")
             owners[match[1]] = str(Path(str(meta)[:-5]).relative_to(project))
-    remaps = read(RECIPE / "hud-ui-remaps.json")
+    remaps = io.read(RECIPE / "hud-ui-remaps.json")
     if remaps["input_id"] != closure["input_id"]:
         raise RuntimeError("UI remaps belong to different input")
     destination = out / ("integration-" + now())
-    destination.mkdir()
+    io.mkdir(destination)
     mapped = {}
     copies = []
     # Copy each original identity once. Do not overwrite the accepted composition.
@@ -885,24 +904,24 @@ def prepare_integration():
         if not guid or not source.is_file():
             raise RuntimeError("Missing discovered source identity: " + relative)
         existing = owners.get(guid)
-        if existing:
+        if existing and (not io.rebuilding or io.is_file(project / existing)):
             mapped[relative] = existing
             continue
         if source.suffix == ".dll":
             # Exporter DLLs are not the receipted original runtime plugin inputs.
             # Their references are already measured through the binding remap table.
             continue
-        target_relative = "Assets/WholeGame/" + relative.removeprefix("Assets/")
+        target_relative = existing or "Assets/WholeGame/" + relative.removeprefix("Assets/")
         target = project / target_relative
-        copy_catalog_asset(source, target)
-        copy_catalog_asset(Path(str(source) + ".meta"), Path(str(target) + ".meta"))
+        io.apply(target, copy=source, catalog=True)
+        io.apply(Path(str(target) + ".meta"), copy=Path(str(source) + ".meta"), catalog=True)
         if relative in repairs:
             repair = repairs[relative]
             meta = Path(str(target) + ".meta")
             original = "guid: " + repair["source_guid"]
-            if meta.read_text().count(original) != 1 or guid != repair["guid"]:
+            if io.read_text(meta).count(original) != 1 or guid != repair["guid"]:
                 raise RuntimeError("Measured scene GUID repair no longer matches export")
-            meta.write_text(meta.read_text().replace(original, "guid: " + guid))
+            io.apply(meta, io.read_text(meta).replace(original, "guid: " + guid))
         with source.open("rb") as stream:
             yaml = stream.read(5) == b"%YAML"
         if yaml:
@@ -910,13 +929,14 @@ def prepare_integration():
             for row in remaps["rows"]:
                 text = text.replace(row["from"], row["to"])
             if text != source.read_text():
-                target.write_text(text)
+                io.apply(target, text)
         mapped[relative] = target_relative
         owners[guid] = target_relative
-        copies.append(dict(source=relative, target=target_relative, sha256=sha(target), meta_sha256=sha(Path(str(target) + ".meta"))))
-    repair_support_source(export, mapped, project, destination)
+        copies.append(dict(source=relative, target=target_relative, sha256=io.sha(target), meta_sha256=io.sha(Path(str(target) + ".meta"))))
+    if not io.rebuilding:
+        repair_support_source(export, mapped, project, destination, io)
     for copied in copies:
-        copied["sha256"] = sha(project / copied["target"])
+        copied["sha256"] = io.sha(project / copied["target"])
     roots = set(closure["roots"]) | set(closure.get("runtime_roots", []))
     locations = []
     for row in metadata["locations"]:
@@ -945,8 +965,8 @@ def prepare_integration():
         runtime_roots=closure.get("runtime_roots", []),
         quarantine=[],
     )
-    write(destination / "manifest.json", manifest)
-    write(
+    io.write(destination / "manifest.json", manifest)
+    io.write(
         destination / "mesh-subobjects.json",
         dict(
             resolved=mesh_subobjects,
@@ -954,11 +974,12 @@ def prepare_integration():
             scope="Exact original serialized GUID/name/type and native container/export identity; unresolved refs stay explicit",
         ),
     )
-    write(destination / "import-receipt.json", dict(copied=copies, reused=len(mapped) - len(copies), files=len(mapped), roots=len(roots)))
-    write(out / "integration-latest.json", dict(path=str(destination.relative_to(ROOT))))
-    copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogLoader.cs", project / "Assets/LabLoadingScene/WholeCatalogLoader.cs")
-    copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogBootstrap.cs", project / "Assets/LabLoadingScene/WholeCatalogBootstrap.cs")
-    copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogHost.cs", project / "Assets/Editor/WholeCatalogHost.cs")
+    io.write(destination / "import-receipt.json", dict(copied=copies, reused=len(mapped) - len(copies), files=len(mapped), roots=len(roots)))
+    io.write(out / "integration-latest.json", dict(path=io.label(destination)))
+    if not io.rebuilding:
+        copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogLoader.cs", project / "Assets/LabLoadingScene/WholeCatalogLoader.cs")
+        copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogBootstrap.cs", project / "Assets/LabLoadingScene/WholeCatalogBootstrap.cs")
+        copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogHost.cs", project / "Assets/Editor/WholeCatalogHost.cs")
     print(
         json.dumps(
             dict(
@@ -966,7 +987,7 @@ def prepare_integration():
                 reused=len(mapped) - len(copies),
                 roots=len(roots),
                 mapped_locations=len(locations),
-                evidence=str(destination.relative_to(ROOT)),
+                evidence=io.label(destination),
             )
         )
     )

@@ -17,7 +17,7 @@ Steps:
 - **R3–R8:** the post-composition builders in the order below.
 - **R9:** Unity import and build of the destination, then both device checks.
 
-R0–R2 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
+R0–R4 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
 
 ```sh
 ./dev prototype --action rebuild-step --step assemblies
@@ -50,6 +50,45 @@ The removed/unowned binding guard is deferred only in the rebuild path; its
 unresolved identifiers are preserved. `validate-bindings` is registered last and
 not runnable until all later builders exist. Synthetic host tests cover staging
 and comparison; the operator must still run R2 against real data.
+
+R3 and R4 are now executable after R2 in that same destination:
+
+```sh
+./dev prototype --action rebuild-step --step catalog-closure --work-dir ../../../work
+./dev prototype --action rebuild-step --step dependencies --work-dir ../../../work
+```
+
+R3 owns the 259 non-export files attributed to `prepare_integration`. R4 owns
+1,237 sanitized bodies and the support source (1,238 files). The unchanged builders
+share the destination-aware I/O boundary with their real actions. Each step checks
+all selected output hashes/sizes before flushing project writes, then compares
+actual bytes against the current project; `--compare-only` also works for both.
+R4 requires R3's completion marker. The build selection names 23 generated source scenes
+that R6 produces; in the rebuild path only, R4 defers required paths whose provenance names a
+builder outside R3/R4 and lists them in its receipt (`deferred_to_later_steps`), and
+`validate-bindings` must find them once R5–R8 exist. The dependency walk starts only from missing
+`Assets/WholeGame/` roots, so the deferral cannot change a staged file. The real stage action
+keeps the unconditional refusal. Real data (J569): R3 259/259 and R4 1,238/1,238 identical.
+
+Regenerated: destination GUID owners, closure location manifest, import and
+mesh-output receipts, dependency walk/receipt, optional-content receipt and its
+updated build selection. R4 reads R2's destination build selection and staged
+runtime config, rather than the live project/config. The UI mapping is the public
+recipe; the public project-layout recipe also supplies SilentProjectileBoundary's
+GUID before R7 places its importer. Support repair checks the installed original assembly hash and pinned field
+contract. No probe-tool build or Unity process runs in the rebuild path.
+
+Temporary explicit blocker: `recipe/catalog-rebuild-inputs.json` hash-pins ten
+existing local analysis records: source catalog, original catalog contract,
+host/reconciled closures, source GUID index/repairs, native conversions, typed
+import corrections, resolved mesh records and support field-contract receipt.
+They are copied to destination scratch only after the entire hash gate passes.
+The host audit, native inventory and reconciliation outputs are retained inputs,
+not claimed as freshly generated. Native container receipts are not read: the
+recorded final mesh-resolution receipt supplies that boundary. Removing this debt
+requires a host replacement for the Unity catalog/contract export followed by
+native inventory/reconciliation replay. Source identities still come from the
+export, and every selected project product must match the map and current project.
 
 The audit below describes the J566 snapshot before this implementation.
 

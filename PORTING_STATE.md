@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J568**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J569**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -70,7 +70,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done. Phase 2: the runtime
    config and content recipe are generated from public recipes (J551); all 222 adapted assets,
    40 of 229 additions and the three transformed assemblies are reproducible (J552–J563); the 189
-   inherited files are in a hash-verified local store (J564). A rebuild from scratch still needs
-   the post-migration builders orchestrated after the composition stage (J565), and the 166 used
+   inherited files are in a hash-verified local store (J564). The from-scratch rebuild reproduces
+   steps R1–R4 byte-identically (86,082 files, J567–J569); R5–R8 (stage variants, source scenes,
+   build entries, linker roots) and the ten pinned catalog-analysis inputs remain, and the 166 used
    inherited shaders need device-verified regeneration (J558). The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

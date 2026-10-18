@@ -503,23 +503,26 @@ def stage_objective(stage, previous, out, broader_loot=False, broader_commerce=F
     )
 
 
-def sanitize_optional_content(stage, out, content_root=None):
+def sanitize_optional_content(stage, out, content_root=None, io=None):
     """Adapt optional presentation on generated Android prefabs.
 
     These files are owned ignored copies; script GUID identity is checked against the
     exact preserved Wwise MonoBehaviour assembly, never inferred from a component name.
     """
+    from composition_io import StageIO
+
+    io = io or StageIO()
     meta = stage / "Plugins/AK.Wwise.Unity.MonoBehaviour.dll.meta"
-    audio_guid = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(), re.M)[1]
+    audio_guid = re.search(r"^guid: ([a-f0-9]{32})", io.read_text(meta), re.M)[1]
     if audio_guid != "2b6c926553287666f24ffd5af5ba21cb":
         raise RuntimeError("Wwise component identity drift")
-    decal_guid = re.search(r"^guid: ([a-f0-9]{32})", (stage / "Plugins/Decalicious.dll.meta").read_text(), re.M)[1]
+    decal_guid = re.search(r"^guid: ([a-f0-9]{32})", io.read_text(stage / "Plugins/Decalicious.dll.meta"), re.M)[1]
     if decal_guid != "90eda32cd325c26600dacf144354b407":
         raise RuntimeError("Decalicious component identity drift")
     # J243: measured MonoScript metadata and actual OnEnable/OnWillRenderObject
     # require unavailable deferred shader programs. Keep gameplay/effect lifetime.
     decal_script = "m_Script: {fileID: -1252323107, guid: " + decal_guid + ", type: 3}"
-    game_guid = re.search(r"^guid: ([a-f0-9]{32})", (stage / "Plugins/RoR2.dll.meta").read_text(), re.M)[1]
+    game_guid = re.search(r"^guid: ([a-f0-9]{32})", io.read_text(stage / "Plugins/RoR2.dll.meta"), re.M)[1]
     if game_guid != "951ce57ad999ac1f040a4dceb5f8b763":
         raise RuntimeError("RoR2 component identity drift")
     # J288: exact-editor MonoScript metadata identifies the source OnDisable tail
@@ -534,19 +537,24 @@ def sanitize_optional_content(stage, out, content_root=None):
     effect_script = "m_Script: {fileID: 511512695, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     alpha_script = "m_Script: {fileID: -2051541306, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
     projectile_script = "m_Script: {fileID: -1848696948, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}"
-    silent_guid = re.search(r"^guid: ([a-f0-9]{32})", (stage / "SilentProjectileBoundary.cs.meta").read_text(), re.M)[1]
+    silent_meta = stage / "SilentProjectileBoundary.cs.meta"
+    if io.rebuilding and not io.is_file(silent_meta):
+        # R7 owns authored source/importer placement. Its public identity already
+        # exists, so sanitization does not need a live-project importer copy.
+        silent_guid = io.runtime_guid("SilentProjectileBoundary.cs")
+    else:
+        silent_guid = re.search(r"^guid: ([a-f0-9]{32})", io.read_text(silent_meta), re.M)[1]
     silent_script = "m_Script: {fileID: 11500000, guid: " + silent_guid + ", type: 3}"
     roots = [stage] if content_root is None else [stage, content_root]
-    for src in sorted({path for root in roots for path in root.rglob("*")}):
+    for src in sorted({path for root in roots for path in io.glob(root, "**/*")}):
         if src.suffix not in {".prefab", ".asset"}:
             continue
-        with src.open("rb") as stream:
-            if stream.read(5) != b"%YAML":
-                continue
-        text = src.read_text(errors="replace")
+        if io.read_bytes(src)[:5] != b"%YAML":
+            continue
+        text = io.read_text(src, errors="replace")
         if not text.startswith("%YAML"):
             continue
-        before = sha(src)
+        before = io.sha(src)
         removed = set()
         native_removed = set()
         decal_removed = set()
@@ -556,7 +564,7 @@ def sanitize_optional_content(stage, out, content_root=None):
         generated = text
         if src.suffix == ".prefab":
             if effect_script in text:
-                effects.append(str(src.relative_to(WORK / "lab-project")).lower())
+                effects.append(str(src.relative_to(io.project)).lower())
             blocks = re.split(r"(?=^--- !u!)", text, flags=re.M)
             kept = []
             for block in blocks:
@@ -595,7 +603,7 @@ def sanitize_optional_content(stage, out, content_root=None):
             }
             all_ids = {m[1] for m in re.finditer(r"^--- !u!\d+ &(-?\d+)", generated, re.M)}
             for object_id in sorted(alpha_objects - renderer_objects):
-                relative = src.relative_to(stage) if src.is_relative_to(stage) else src.relative_to(WORK / "lab-project")
+                relative = src.relative_to(stage) if src.is_relative_to(stage) else src.relative_to(io.project)
                 component_id = str(7000000000000000 + int(hashlib.sha256((str(relative) + "|" + object_id).encode()).hexdigest()[:12], 16))
                 while component_id in all_ids:
                     component_id = str(int(component_id) + 1)
@@ -624,7 +632,7 @@ def sanitize_optional_content(stage, out, content_root=None):
             hosts = {re.search(r"m_GameObject: \{fileID: (-?\d+)\}", b)[1] for b in blocks if projectile_script in b}
             prepared = {re.search(r"m_GameObject: \{fileID: (-?\d+)\}", b)[1] for b in blocks if silent_script in b}
             for object_id in sorted(hosts - prepared):
-                relative = src.relative_to(stage) if src.is_relative_to(stage) else src.relative_to(WORK / "lab-project")
+                relative = src.relative_to(stage) if src.is_relative_to(stage) else src.relative_to(io.project)
                 component_id = str(8000000000000000 + int(hashlib.sha256((str(relative) + "|silent|" + object_id).encode()).hexdigest()[:12], 16))
                 while component_id in all_ids:
                     component_id = str(int(component_id) + 1)
@@ -656,12 +664,12 @@ def sanitize_optional_content(stage, out, content_root=None):
             for operation in SURFACE_OPERATIONS:
                 generated = apply_surface_operation(generated, operation, strict=False)
         if generated != text:
-            src.write_text(generated)
+            io.apply(src, generated)
             changes.append(
                 dict(
-                    path=str(src.relative_to(WORK / "lab-project")),
+                    path=str(src.relative_to(io.project)),
                     before_sha256=before,
-                    after_sha256=sha(src),
+                    after_sha256=io.sha(src),
                     removed_native_components=len(native_removed),
                     removed_deferred_decals=len(decal_removed),
                     removed_particle_tail_detachers=len(detach_removed),
@@ -670,7 +678,7 @@ def sanitize_optional_content(stage, out, content_root=None):
                     silent_surface=surface,
                 )
             )
-    recipe = read(WORK / "scene-probe-build.json")
+    recipe = io.read(io.work / "scene-probe-build.json")
     separate = {
         recipe[k].casefold()
         for k in ["teleportMaterial", "barrierEffect", "playerDeathEffect", "pickupDroplet", "genericPickup", "teleporterIndicator", "objectiveTMPSettings"]
@@ -679,8 +687,8 @@ def sanitize_optional_content(stage, out, content_root=None):
     separate.update(x.casefold() for x in recipe.get("enemyRewardAssets", []) + recipe.get("objectiveSupportAssets", []))
     effects = [x for x in effects if x.casefold() not in separate]
     recipe["prefabAssets"] = list({x.casefold(): x for x in recipe["prefabAssets"] + effects}.values())
-    write(WORK / "scene-probe-build.json", recipe)
-    write(
+    io.write(io.work / "scene-probe-build.json", recipe)
+    io.write(
         out / "optional-content-transformation.json",
         dict(
             changes=changes,

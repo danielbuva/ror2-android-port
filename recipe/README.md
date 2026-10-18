@@ -59,6 +59,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `catalog-rebuild-inputs.json` | Explicit temporary R3/R4 local analysis dependencies | Accepted input ID, work-relative receipt/metadata paths and SHA-256 only; ten existing catalog-analysis, mesh and support-contract records. | No catalog bodies, source code, binaries, private roots or device/account identifiers. Hashes pin local input, not redistribution permission. Audited 2026-10-18. | `catalog_rebuild.CatalogIO` gates the complete cohort before copying into destination scratch; retained analysis is the next blocker to remove. |
 | `composition-export-copies.json` | Residual R2 export membership outside canonical catalog closure relocation | 128 export-path → project-path pairs and accepted input ID. | Asset identifiers only; no bodies, private roots, device/account identifiers or third-party source. Audited 2026-10-18. | `composition_io.export_membership`; all bytes come from the accepted export and are hash/size-gated against the local map. |
 | `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker, mage-platform-guard receipt and audio-boundary-v3 receipt. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Audited 2026-10-17. | Current `assembly_transforms.py` verifies in disposable `.local/` scratch. Its shared generator also supplies the three transformed DLLs to R1 below. |
 | `original-assemblies.json` | R1 installation assembly placement and importer initialization | Accepted Managed source hashes and project paths; retained GUIDs, creation times and execution orders. The tracked common importer template supplies fixed settings. | Identifiers/settings/hashes only; no DLL bytes, IL, decompiled source, private paths or account data. All 49 sources, including SimpleJSON, come from the legitimate installation. Audit above, 2026-10-18. | Current `rebuild.py` reconstructs 49 DLL/importer pairs under the isolated destination, applies J563, gates 98 output hashes/sizes and compares actual project bytes. |
@@ -674,3 +675,21 @@ catalog/settings artifacts but supplies neither this membership nor Android
 conversion. R2 reuses existing stage recipes and validates source identity; no
 community code or content was copied. Real-data execution remains an operator
 check. Doctor was not run because it writes outside the authorized destination.
+
+## R3/R4 retained-analysis audit (2026-10-18)
+
+`catalog-rebuild-inputs.json` records only ten work-relative paths, SHA-256 and
+the accepted input ID. The files themselves remain ignored and are copied only
+to destination scratch after validation. Catalog metadata/contracts, closure/GUID
+analysis and native conversion/mesh findings are retained local inputs because
+the existing metadata exporter requires Unity. The support receipt supplies only
+the verified original field-type contract; the source body comes from the export.
+These dependencies are explicit rebuild debt, not generators or a substitute for
+the legitimate installation. No protected bodies, middleware, private roots,
+credentials, account/device identifiers or binary content are added to the recipe.
+
+Prior art: re-read `docs/community-prior-art.md` and pinned ThunderKit
+`ImportAddressableCatalog.cs` at `95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`.
+Its desktop catalog/settings copy does not reconstruct Android content or supply
+a host catalog decoder. This replay reuses the lab's measured closure, owner and
+UI rules; no new content loader or community implementation is introduced.

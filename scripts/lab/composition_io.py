@@ -16,6 +16,29 @@ class StageIO:
         self.rebuilding = destination is not None
         self.project = Path(destination) if self.rebuilding else self.work / "lab-project"
         self.pending = {}
+        # Paths a later rebuild step produces; the real stage always has them already.
+        self.deferred = frozenset()
+
+    def catalog(self):
+        return self.resolve(self.read(self.work / "experiments/whole-catalog/latest.json")["path"])
+
+    def mkdir(self, path):
+        if not self.rebuilding:
+            self.output(path).mkdir()
+
+    def label(self, path):
+        return "work/" + str(Path(path).relative_to(self.work))
+
+    def write(self, path, value):
+        self.apply(path, value=value)
+
+    def physical(self, path):
+        path = Path(path)
+        if self.rebuilding and path.is_relative_to(self.work) and not path.is_relative_to(self.project):
+            redirected = self.output(path)
+            if redirected.exists():
+                return redirected
+        return path
 
     def resolve(self, value):
         path = Path(value)
@@ -29,7 +52,7 @@ class StageIO:
             if self.pending[path] is None:
                 raise FileNotFoundError(path)
             return self.pending[path]
-        return path.read_bytes()
+        return self.physical(path).read_bytes()
 
     def read_text(self, path, **kwargs):
         return self.read_bytes(path).decode(errors=kwargs.get("errors", "strict")).replace("\r\n", "\n").replace("\r", "\n")
@@ -42,7 +65,7 @@ class StageIO:
 
     def is_file(self, path):
         path = Path(path)
-        return self.pending[path] is not None if path in self.pending else path.is_file()
+        return self.pending[path] is not None if path in self.pending else self.physical(path).is_file()
 
     def glob(self, root, pattern):
         root = Path(root)

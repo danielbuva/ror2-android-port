@@ -11,6 +11,7 @@ from typing import Callable
 
 import assembly_transforms
 from composition_io import composition
+from catalog_rebuild import catalog_closure, dependencies
 from common import RECIPE, ROOT, WORK, game, read, sha
 
 
@@ -90,6 +91,7 @@ class Step:
     producers: tuple[str, ...]
     owns: Callable
     build: Callable
+    evidence: tuple[str, ...] = ()
 
 
 # In dependency order. Map producers are broad categories, so each step also
@@ -97,6 +99,13 @@ class Step:
 STEPS = {
     "assemblies": Step(("unknown", "export-copy", "repo-builder", "recipe-transform", "unity-generated"), assembly_path, assemblies),
     "composition": Step(("export-copy", "recipe-transform", "generator", "inherited-store"), lambda path: not assembly_path(path), composition),
+    "catalog-closure": Step(("repo-builder",), lambda path: not assembly_path(path), catalog_closure, ("whole_catalog.prepare_integration",)),
+    "dependencies": Step(
+        ("repo-builder",),
+        lambda path: not assembly_path(path),
+        dependencies,
+        ("integrated_objective.sanitize_optional_content", "whole_catalog.repair_support_source"),
+    ),
     # Final gate after R3–R8 supply all runtime/build binding targets (J565).
     "validate-bindings": Step((), lambda path: False, None),
 }
@@ -140,7 +149,7 @@ def compare(destination, project, expected, provenance, owns, producers=None):
     for target in sorted(destination.rglob("*")):
         if target.is_file():
             path = target.relative_to(destination).as_posix()
-            if path == ".port-input.json" or path.startswith(".rebuild/composition/"):
+            if path == ".port-input.json" or path.startswith(".rebuild/"):
                 continue
             if path not in provenance or (owns(path) and path not in expected and (producers is None or provenance[path]["producer"] in producers)):
                 result["extra"].append(path)
@@ -163,7 +172,13 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
     owner = STEPS[step]
     for path in provenance:
         relative_path(path)
-    expected = {path for path, row in provenance.items() if owner.owns(path) and row["producer"] in owner.producers}
+    expected = {
+        path
+        for path, row in provenance.items()
+        if owner.owns(path)
+        and row["producer"] in owner.producers
+        and (not owner.evidence or any(item.get("function") in owner.evidence for item in row.get("evidence", [])))
+    }
     if not expected:
         raise RuntimeError("No provenance paths for step: " + step)
     if compare_only:
@@ -175,7 +190,7 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
             raise RuntimeError("Destination overlaps the installation")
         destination.mkdir(parents=True, exist_ok=True)
         owner.build(destination, work, input_id, expected, provenance)
-    return compare(destination, work / "lab-project", expected, provenance, owner.owns, owner.producers)
+    return compare(destination, work / "lab-project", expected, provenance, (lambda path: path in expected) if owner.evidence else owner.owns, owner.producers)
 
 
 def rebuild_action(step, dest=None, compare_only=False, work=None):

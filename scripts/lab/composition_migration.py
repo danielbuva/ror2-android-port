@@ -159,27 +159,31 @@ def refresh_scene_contracts(project, export, configuration, recipe, io=None):
     return observations
 
 
-def stage_missing_sources():
+def stage_missing_sources(io=None):
     """Import current-source dependencies used only by the composed configuration."""
-    from whole_catalog import copy_catalog_asset, repair_support_source
+    from whole_catalog import repair_support_source
     from scene_closure import REFERENCE
-    from build import preflight
 
-    preflight()
-    project = WORK / "lab-project"
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
-    catalog = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
-    index = read(catalog / "source-guid-index.json")
+    io = io or StageIO()
+    io.preflight()
+    project = io.project
+    export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
+    catalog = io.catalog()
+    index = io.read(catalog / "source-guid-index.json")
     guids = {path: guid for guid, path in index.items()}
-    selection = read(WORK / "config/composition-migration.json")
-    evidence = private_path(selection["evidence"]) / ("dependency-stage-" + now())
-    evidence.mkdir()
+    selection = (
+        dict(input_id=io.read(project / ".port-input.json")["input_id"], evidence="work/rebuild-dependencies")
+        if io.rebuilding
+        else io.read(io.work / "config/composition-migration.json")
+    )
+    evidence = private_path(selection["evidence"], io) / ("dependency-stage-" + now())
+    io.mkdir(evidence)
     remaps = read(RECIPE / "hud-ui-remaps.json")
-    if selection["input_id"] != read(project / ".port-input.json")["input_id"] or remaps["input_id"] != selection["input_id"]:
+    if selection["input_id"] != io.read(project / ".port-input.json")["input_id"] or remaps["input_id"] != selection["input_id"]:
         raise RuntimeError("Composition dependency generation mismatch")
     owners = {}
-    for meta in (project / "Assets").rglob("*.meta"):
-        match = re.search(r"^guid:\s*([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+    for meta in io.glob(project / "Assets", "**/*.meta"):
+        match = re.search(r"^guid:\s*([a-f0-9]{32})", io.read_text(meta, errors="replace"), re.M)
         if match:
             if match[1] in owners:
                 raise RuntimeError("Duplicate imported GUID owner")
@@ -194,8 +198,10 @@ def stage_missing_sources():
             return set().union(*(paths(item) for item in value)) if value else set()
         return set()
 
-    required = paths(read(WORK / "scene-probe-build.json")) | paths(read(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"))
-    missing = sorted(path for path in required if not (project / path).is_file())
+    required = paths(io.read(io.work / "scene-probe-build.json")) | paths(io.read(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"))
+    deferred = sorted(path for path in required if path in io.deferred and not io.is_file(project / path))
+    required -= set(deferred)
+    missing = sorted(path for path in required if not io.is_file(project / path))
     if any(not path.startswith("Assets/WholeGame/") for path in missing):
         raise RuntimeError("Missing authored composition asset; refuse original-source substitution")
     pending = ["Assets/" + path.removeprefix("Assets/WholeGame/") for path in missing]
@@ -210,15 +216,16 @@ def stage_missing_sources():
         guid = guids.get(relative)
         if not guid or not source.is_file():
             raise RuntimeError("Composed current source missing: " + relative)
-        if guid in owners:
-            mapped[relative] = owners[guid]
+        existing = owners.get(guid)
+        if existing and (not io.rebuilding or io.is_file(project / existing)):
+            mapped[relative] = existing
             continue
         if source.suffix == ".dll":
             raise RuntimeError("Composed dependency needs an unprovided runtime assembly: " + relative)
-        target_relative = "Assets/WholeGame/" + relative.removeprefix("Assets/")
+        target_relative = existing or "Assets/WholeGame/" + relative.removeprefix("Assets/")
         target = project / target_relative
-        copy_catalog_asset(source, target)
-        copy_catalog_asset(Path(str(source) + ".meta"), Path(str(target) + ".meta"))
+        io.apply(target, copy=source, catalog=True)
+        io.apply(Path(str(target) + ".meta"), copy=Path(str(source) + ".meta"), catalog=True)
         mapped[relative] = target_relative
         owners[guid] = target_relative
         with source.open("rb") as stream:
@@ -229,7 +236,7 @@ def stage_missing_sources():
             for row in remaps["rows"]:
                 text = text.replace(row["from"], row["to"])
             if text != original:
-                target.write_text(text)
+                io.apply(target, text)
             for _, dependency, _ in REFERENCE.findall(original):
                 if not dependency or dependency.startswith("0000000000000000"):
                     continue
@@ -237,15 +244,22 @@ def stage_missing_sources():
                     pending.append(index[dependency])
                 else:
                     unresolved.append(dict(source=relative, guid=dependency))
-        copied.append(dict(source=relative, source_sha256=sha(source), target=target_relative, sha256=sha(target)))
-    repair_support_source(export, mapped, project, evidence)
+        copied.append(dict(source=relative, source_sha256=sha(source), target=target_relative, sha256=io.sha(target)))
+    if io.rebuilding:
+        support = "Assets/Scripts/Assembly-CSharp/AffixBeadProjectileSound.cs"
+        if guids.get(support) in owners:
+            mapped[support] = owners[guids[support]]
+    repair_support_source(export, mapped, project, evidence, io)
     from integrated_objective import sanitize_optional_content
 
-    sanitize_optional_content(project / "Assets/LabLoadingScene", evidence, project / "Assets/WholeGame")
-    if any(not (project / path).is_file() for path in required):
+    sanitize_optional_content(project / "Assets/LabLoadingScene", evidence, project / "Assets/WholeGame", io=io)
+    if any(not io.is_file(project / path) for path in required):
         raise RuntimeError("Composed paths remain missing after current dependency import")
-    write(evidence / "receipt.json", dict(input_id=selection["input_id"], missing_roots=missing, copied=copied, unresolved=unresolved))
-    print(json.dumps(dict(missing_roots=len(missing), copied=len(copied), unresolved=len(unresolved), evidence=str(evidence.relative_to(ROOT)))))
+    receipt = dict(input_id=selection["input_id"], missing_roots=missing, copied=copied, unresolved=unresolved)
+    if deferred:
+        receipt["deferred_to_later_steps"] = deferred
+    io.write(evidence / "receipt.json", receipt)
+    print(json.dumps(dict(missing_roots=len(missing), copied=len(copied), unresolved=len(unresolved), evidence=io.label(evidence))))
 
 
 def prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids, io=None):

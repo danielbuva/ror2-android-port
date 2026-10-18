@@ -5704,3 +5704,23 @@ builders' outputs. Real data: 84,487/84,487 files identical in the destination (
 `work/rebuild/`), and a project manifest taken before and after shows the working project
 unchanged. 628 host tests pass. Host tooling only; no APK change. With R1, 84,585 of 91,841
 project files are now rebuilt from public source, recipes and the installation.
+
+## J569 — Rebuild steps R3 and R4: catalog closure and dependency staging
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+Step `catalog-closure` runs `whole_catalog.prepare_integration` (owner import and UI remap) and
+step `dependencies` runs `composition_migration.stage_missing_sources` (export-GUID walk,
+support-source repair, optional-content sanitizing) through the same destination-backed
+`StageIO` as R2; the real actions' write paths are unchanged and tested. Each step checks every
+selected output against the provenance map before flushing, then compares bytes with the current
+project. First real-data run: R3 259/259 identical; R4 refused, because the build selection names
+the 23 source scenes that R6 (`source_scene_candidate.prepare`) generates later. Only in the
+rebuild path, R4 now defers required paths whose provenance names a builder outside R3/R4 and lists
+them in its receipt for `validate-bindings`; the walk starts only from missing `Assets/WholeGame/`
+roots, so this cannot change a staged file, and the real stage keeps its refusal. Then R4
+1,238/1,238 identical, and R1→R4 repeated from an empty destination gave 98, 84,487, 259 and 1,238
+identical files with the working project manifest unchanged. Temporary blocker: ten intermediate
+catalog-analysis records are read by recorded hash (`recipe/catalog-rebuild-inputs.json`) until
+they are regenerated. 652 host tests pass. Host tooling only; no APK change. 86,082 of 91,841
+project files are now rebuilt from public source, recipes, the installation and pinned local
+analysis.
