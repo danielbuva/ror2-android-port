@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J555](PORTING_JOURNAL.md#j555--regenerate-the-remaining-structural-adapted-assets) | 2026-10-17 | Regenerate the remaining structural adapted assets | Migration-removal plan commit 4, fourth cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J554](PORTING_JOURNAL.md#j554--regenerate-the-component-removal-cohort) | 2026-10-17 | Regenerate the component-removal cohort | Migration-removal plan commit 4, third cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J553](PORTING_JOURNAL.md#j553--regenerate-the-identity-and-field-only-adapted-assets) | 2026-10-17 | Regenerate the identity and field-only adapted assets | Migration-removal plan commit 4, second cohort (implemented by Codex at medium reasoning, reviewed and corrected by Claude). |
 | [J552](PORTING_JOURNAL.md#j552--regenerate-the-first-adapted-asset-cohort-from-the-export) | 2026-10-17 | Regenerate the first adapted-asset cohort from the export | Migration-removal plan commit 4, first cohort (implemented by Codex at medium reasoning, reviewed by Claude). |

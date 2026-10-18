@@ -5495,3 +5495,18 @@ copied from the preview tree. `asset-transforms-check` on the real data: 144/144
 `.meta` files identical at the migration stage, 11 listed as changed later in the project by
 current steps. 495 host tests pass. Host tooling only; no APK change. 160 of the 451 adapted
 assets now come from the export plus the recipe; 78 structural and 229 generated remain.
+
+## J555 — Regenerate the remaining structural adapted assets
+
+Migration-removal plan commit 4, fourth cohort (implemented by Codex at medium reasoning, reviewed
+by Claude). The other 78 structural assets (components added; removed and added; array or scalar
+references nulled; field edits; scene settings and reflection textures; one retained null
+membership slot) are now generated from the export. New recipe operations: `null_reference`,
+`null_array_element`, `remove_scene_settings` and `add_component`, which builds the lab's own
+components from named constructors (for example `silent_projectile`) using the existing
+sanitizer's deterministic fileID scheme. The recipe (868 KB) has no YAML fragments or serialised
+blocks; its longest string is 109 characters, and Claude's scan found no private paths, device
+identifiers or URLs. `asset-transforms-check` on the real data: 222/222 assets and `.meta` files
+identical at the migration stage (every structural sub-kind complete), 17 listed as changed later
+in the project. 521 host tests pass. Host tooling only; no APK change. 238 of the 451 adapted
+assets now come from the export plus the recipe; the 229 inherited additions remain.

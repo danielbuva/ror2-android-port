@@ -51,34 +51,51 @@ Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` â
 `checkpoints/LAST_OBSERVED_WHOLE_CATALOG.json` pins the accepted scope.
 
 Asset transformations (`scripts/lab/asset_transforms.py`, current):
-`recipe/asset-transforms.json` selects 144 accepted-export assets with source hashes:
-28 SurfaceDefs, six identity copies, ten activation-only prefabs and 100 prefabs
-that only remove components and their membership entries. The generator
-returns bytes and export-derived metadata without writes; `integrated_objective`
-shares the SurfaceDef field operation logic. Identity copies preserve source bytes.
-General `set_field` operations select a GameObject hierarchy path, native class or
-external script identity, zero-based component occurrence and mapping field path.
-They require exactly one owner and field match and replace only the typed value;
-arrays and inline subfields are unsupported. Four UI prefabs first apply the existing
-uGUI mapping from the input-gated, hash-pinned `recipe/hud-ui-remaps.json`.
-`remove_components` takes source fileIDs and an exact match count. It removes
-records and their single owner membership entries, retaining source IDs and order.
-Hierarchy deletion, missing/wrong membership and dangling local references fail;
-reference nulling and added records remain outside this operation's contract.
+`recipe/asset-transforms.json` selects 222 accepted-export assets with source hashes:
+28 SurfaceDefs, six identity copies, ten activation-only prefabs and all 178
+structural prefabs/scenes. The generator returns bytes and export-derived metadata
+without writes; `integrated_objective` shares the SurfaceDef field operation logic.
+Identity copies preserve source bytes. General `set_field` operations select a
+GameObject hierarchy path, native class or external script identity, zero-based
+component occurrence and mapping field path. Duplicate hierarchy paths require an
+explicit zero-based `hierarchy_occurrence` in source record order; otherwise they
+fail. Consecutive non-identity field edits share a per-generation selector index;
+renames, hierarchy/identity changes and structural operations flush it.
+Four UI prefabs first apply the existing input-gated, hash-pinned uGUI mapping.
+
+`remove_components` takes source fileIDs and an exact match count, preserving
+surviving IDs and record order. Each deleted component must have one correct owner
+membership. Explicit `retain_null_slots` identifiers replace selected memberships
+with null slots instead of deleting them. `null_reference` and
+`null_array_element` require an owner selector, a mapping/sequence field path,
+exactly one match and the expected nonzero local reference. Array indices are
+zero-based and retain entries; external references fail the nulling precondition.
+`remove_scene_settings` separately deletes explicit ownerless class 29/104/157/196
+records, with fileID/class/count checks. All deletion operations reject surviving
+local references; hierarchy deletion remains unsupported.
+
+`add_component` constructs the authored empty MeshRenderer and
+SilentProjectileBoundary schemas from typed fields. It selects a surviving owner
+by source fileID and allocates the sanitizer's SHA-256-derived IDs (renderer base
+7,000,000,000,000,000; silent base 8,000,000,000,000,000), incrementing collisions.
+The recipe's relative `id_seed_path` is an allocation namespace, never a path read
+from disk. Explicit first/last membership placement preserves the migration's
+ordering; records append in recipe order. Bodies are generated, never copied YAML.
+
 `composition_migration.stage` prepares every recipe pair before project writes,
 checks the existing provenance/output/conflict gates and metadata equality, then
-writes those pairs instead of copying preview assets. Other preview assets retain
-their existing path. `prepare_asset_transforms` validates recipe rows from export
-bytes and the plan's hashes without opening preview/previous asset files; other
-rows retain those historical validation dependencies. The surrounding migration
-still reads historical plans, mappings, configs and additions.
+writes those pairs instead of copying preview assets. `prepare_asset_transforms`
+validates these rows using export bytes and the plan's hashes without opening
+preview/previous asset files. The surrounding migration still reads historical
+plans, mappings, configs and the 229 selected additions.
 There is no persistent generator state or teardown. The current read-only action
 `./dev prototype --action asset-transforms-check` compares every recipe asset/meta
 pair with the migration preview oracle (or project when no preview exists), checks
-project metadata, lists differences and exits nonzero on drift. The removal cohort
-also reports its own asset equality and deleted-component counts. Later project
-transformations are reported separately without rewriting either side. Host contracts are in
-`tests/test_asset_transforms.py`; composition and device acceptance are separate gates.
+project metadata, lists differences and exits nonzero on drift. Exclusive
+structural cohorts report equality separately; the removal cohort also counts
+deleted components. Later project transformations are reported separately without
+rewriting either side. Host contracts are in `tests/test_asset_transforms.py` and
+`tests/test_asset_structural_operations.py`; device acceptance is a separate gate.
 
 ## Android runtime
 

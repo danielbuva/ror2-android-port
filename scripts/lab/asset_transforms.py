@@ -62,7 +62,10 @@ def validate_field_operation(operation):
     if type(operation["expected_matches"]) is not int or operation["expected_matches"] != 1:
         raise RuntimeError("set_field requires expected_matches exactly 1")
     owner = operation["owner"]
-    if not isinstance(owner, dict) or set(owner) != {"hierarchy_path", "class_id", "script", "occurrence"}:
+    if not isinstance(owner, dict) or set(owner) not in (
+        {"hierarchy_path", "class_id", "script", "occurrence"},
+        {"hierarchy_path", "class_id", "script", "occurrence", "hierarchy_occurrence"},
+    ):
         raise RuntimeError("Invalid field owner selector")
     if (
         not isinstance(owner["hierarchy_path"], list)
@@ -74,6 +77,8 @@ def validate_field_operation(operation):
         or owner["occurrence"] < 0
     ):
         raise RuntimeError("Invalid field owner selector")
+    if "hierarchy_occurrence" in owner and (type(owner["hierarchy_occurrence"]) is not int or owner["hierarchy_occurrence"] < 0):
+        raise RuntimeError("Invalid hierarchy occurrence")
     script = owner["script"]
     if owner["class_id"] == 114:
         typed_value({"type": "reference", "value": script})
@@ -109,26 +114,15 @@ def scalar_end(value):
     return len(value.rstrip())
 
 
-def apply_field_operation(text, operation):
+def apply_field_operation(text, operation, *, _context=None):
     """Select one owner/record and replace only the scalar's value span.
 
-    Hierarchy names are path segments; duplicate owner paths fail. Component
+    Hierarchy names are path segments; duplicates require hierarchy_occurrence. Component
     occurrence is zero-based in source record order for a class/script identity.
     Nested paths address block mappings; arrays/inline subfields are unsupported.
     """
     validate_field_operation(operation)
-    owner = operation["owner"]
-    header, rows = objects(text)
-    keys = hierarchy_keys({fid: block.replace("\r\n", "\n") for fid, block in rows.items()})
-    owners = [fid for fid, path in keys.items() if list(path) == owner["hierarchy_path"]]
-    if len(owners) != 1:
-        raise RuntimeError("Field owner must match exactly once")
-    script = None if owner["script"] is None else typed_value({"type": "reference", "value": owner["script"]})
-    candidates = [fid for fid, block in rows.items() if identity(block) == (str(owner["class_id"]), owners[0], script)] if owner["class_id"] != 1 else owners
-    index = owner["occurrence"]
-    if index >= len(candidates):
-        raise RuntimeError("Field component must match exactly once")
-    fid = candidates[index]
+    header, rows, fid = select_record(text, operation["owner"], _context)
     block = rows[fid]
     start, end = 0, len(block)
     for depth, key in enumerate(operation["field_path"], 1):
@@ -153,7 +147,280 @@ def apply_field_operation(text, operation):
             boundary = re.search(r"^ {0," + str(depth * 2) + r"}[^ \r\n]", block[start:end], re.M)
             if boundary:
                 end = start + boundary.start()
-    return header + "".join(rows.values())
+    return header + "".join(rows.values()) if _context is None else None
+
+
+def select_record(text, owner, context=None):
+    """Reuse the field selector contract, including component occurrence."""
+    probe = {"op": "set_field", "owner": owner, "field_path": ["unused"], "value": {"type": "int", "value": 0}, "expected_matches": 1}
+    validate_field_operation(probe)
+    header, rows, paths, components = context if context is not None else record_context(text)
+    owners = paths.get(tuple(owner["hierarchy_path"]), [])
+    if "hierarchy_occurrence" in owner:
+        occurrence = owner["hierarchy_occurrence"]
+        if occurrence >= len(owners):
+            raise RuntimeError("Hierarchy occurrence must match exactly once")
+        owners = [owners[occurrence]]
+    elif len(owners) != 1:
+        raise RuntimeError("Field owner must match exactly once")
+    script = None if owner["script"] is None else typed_value({"type": "reference", "value": owner["script"]})
+    candidates = components.get((str(owner["class_id"]), owners[0], script), []) if owner["class_id"] != 1 else owners
+    if owner["occurrence"] >= len(candidates):
+        raise RuntimeError("Field component must match exactly once")
+    return header, rows, candidates[owner["occurrence"]]
+
+
+def record_context(text):
+    """Index a single immutable hierarchy for consecutive non-identity field edits."""
+    header, rows = objects(text)
+    keys = hierarchy_keys({fid: block.replace("\r\n", "\n") for fid, block in rows.items()})
+    paths, components = {}, {}
+    for fid, path in keys.items():
+        paths.setdefault(tuple(path), []).append(fid)
+    for fid, block in rows.items():
+        components.setdefault(identity(block), []).append(fid)
+    return header, rows, paths, components
+
+
+def reference_span(block, path):
+    """Resolve block mapping keys and zero-based Unity block-sequence indices.
+
+    Unity uses indentless sequences. Sequence mapping entries expose their first
+    key on the dash line; offsets always address the original, unmodified bytes.
+    Inline mappings are leaves, never parsed as arbitrary YAML.
+    """
+    lines = block.splitlines(keepends=True)
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+    start, end, indent, entry = 2, len(lines), 2, False
+    for index, part in enumerate(path):
+        last = index == len(path) - 1
+        if type(part) is int:
+            # Accept Unity's indentless style and ordinary indented sequences.
+            nonempty = next((line for line in lines[start:end] if line.strip()), "")
+            seq = re.match(r"^( *)- ", nonempty)
+            if not seq or len(seq[1]) not in (indent, indent + 2):
+                raise RuntimeError("Field path requires a block sequence")
+            seq_indent = len(seq[1])
+            entries = [i for i in range(start, end) if re.match(r"^ {" + str(seq_indent) + r"}- ", lines[i])]
+            if part >= len(entries):
+                raise RuntimeError("Array element must match exactly once")
+            start = entries[part]
+            end = entries[part + 1] if part + 1 < len(entries) else end
+            indent, entry = seq_indent + 2, True
+            if last:
+                match = re.match(r"^ *- (?P<value>[^\r\n]*)", lines[start])
+                return offsets[start] + match.start("value"), offsets[start] + match.start("value") + scalar_end(match["value"])
+            continue
+        matches = []
+        for i in range(start, end):
+            line = lines[i]
+            if entry and i == start:
+                line = line[: indent - 2] + "  " + line[indent:]
+            match = re.match(r"^ {" + str(indent) + r"}" + re.escape(part) + r": *(?P<value>[^\r\n]*)", line)
+            if match:
+                matches.append((i, match))
+        if len(matches) != 1:
+            raise RuntimeError("Field path must match exactly once")
+        row, match = matches[0]
+        if last:
+            if not match["value"]:
+                raise RuntimeError("Reference must be an inline value")
+            return offsets[row] + match.start("value"), offsets[row] + match.start("value") + scalar_end(match["value"])
+        if match["value"]:
+            raise RuntimeError("Field path requires a block mapping or sequence")
+        start = row + 1
+        boundary = next(
+            (
+                i
+                for i in range(start, end)
+                if lines[i].strip() and len(lines[i]) - len(lines[i].lstrip()) <= indent and not re.match(r"^ {" + str(indent) + r"}- ", lines[i])
+            ),
+            end,
+        )
+        end = boundary
+        if type(path[index + 1]) is not int:
+            indent += 2
+        entry = False
+    raise RuntimeError("Empty field path")
+
+
+def validate_null_operation(operation):
+    if set(operation) != {"op", "owner", "field_path", "expected_reference", "expected_matches"} or operation["op"] not in {
+        "null_reference",
+        "null_array_element",
+    }:
+        raise RuntimeError("Invalid null reference operation")
+    path = operation["field_path"]
+    if (
+        not isinstance(path, list)
+        or not path
+        or any(not (isinstance(key, str) and re.fullmatch(r"[A-Za-z_]\w*", key) or type(key) is int and key >= 0) for key in path)
+    ):
+        raise RuntimeError("Invalid field path")
+    if any(type(key) is int for key in path) != (operation["op"] == "null_array_element"):
+        raise RuntimeError("Null operation must explicitly distinguish array elements")
+    validate_field_operation(
+        {
+            "op": "set_field",
+            "owner": operation["owner"],
+            "field_path": ["unused"],
+            "expected_matches": operation["expected_matches"],
+            "value": {"type": "reference", "value": operation["expected_reference"]},
+        }
+    )
+    if (
+        set(operation["expected_reference"]) != {"fileID"}
+        or operation["expected_reference"]["fileID"] == 0
+        or not -(2**63) <= operation["expected_reference"]["fileID"] < 2**63
+    ):
+        raise RuntimeError("Null operation requires a nonzero local reference")
+
+
+def apply_null_operation(text, operation, *, _context=None):
+    validate_null_operation(operation)
+    header, rows, fid = select_record(text, operation["owner"], _context)
+    block = rows[fid]
+    start, end = reference_span(block, operation["field_path"])
+    if block[start:end] != typed_value({"type": "reference", "value": operation["expected_reference"]}):
+        raise RuntimeError("Null reference precondition mismatch")
+    rows[fid] = block[:start] + "{fileID: 0}" + block[end:]
+    return header + "".join(rows.values()) if _context is None else None
+
+
+def component_fields(constructor, owner, script=None):
+    """Authored minimal adapter schemas; never load/copy a serialized record body."""
+    fields = [("m_ObjectHideFlags", "int", 0)]
+    fields += [(name, "reference", {"fileID": 0}) for name in ("m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset")]
+    fields.append(("m_GameObject", "reference", {"fileID": int(owner)}))
+    if constructor == "empty_mesh_renderer":
+        return (
+            23,
+            "MeshRenderer",
+            fields + [("m_Enabled", "int", 0), ("m_CastShadows", "int", 0), ("m_ReceiveShadows", "int", 0), ("m_Materials", "empty_array", None)],
+        )
+    return (
+        114,
+        "MonoBehaviour",
+        fields
+        + [
+            ("m_Enabled", "int", 1),
+            ("m_EditorHideFlags", "int", 0),
+            ("m_Script", "reference", script),
+            ("m_Name", "empty", None),
+            ("m_EditorClassIdentifier", "empty", None),
+        ],
+    )
+
+
+def validate_addition_operation(operation):
+    if (
+        set(operation) != {"op", "constructor", "owner_file_id", "id_seed_path", "script", "membership_position", "expected_matches"}
+        or operation["op"] != "add_component"
+    ):
+        raise RuntimeError("Invalid add_component operation")
+    if (
+        operation["constructor"] not in {"empty_mesh_renderer", "silent_projectile"}
+        or type(operation["expected_matches"]) is not int
+        or operation["expected_matches"] != 1
+    ):
+        raise RuntimeError("Unsupported component constructor or match count")
+    if operation["membership_position"] not in {"first", "last"}:
+        raise RuntimeError("Invalid component membership position")
+    owner = operation["owner_file_id"]
+    if type(owner) is not int or owner == 0 or not -(2**63) <= owner < 2**63:
+        raise RuntimeError("Invalid component owner fileID")
+    seed = operation["id_seed_path"]
+    if (
+        not isinstance(seed, str)
+        or not seed
+        or PurePosixPath(seed).is_absolute()
+        or ".." in PurePosixPath(seed).parts
+        or PurePosixPath(seed).as_posix() != seed
+        or "\\" in seed
+    ):
+        raise RuntimeError("Invalid deterministic ID seed path")
+    if operation["constructor"] == "silent_projectile":
+        # This constructor is only for our authored adapter, not arbitrary game scripts.
+        if operation["script"] != {"fileID": 11500000, "guid": "642bd7a5ccd344f9d95e182b094fb1f6", "type": 3}:
+            raise RuntimeError("Unexpected SilentProjectileBoundary script identity")
+    elif operation["script"] is not None:
+        raise RuntimeError("Native renderer requires null script")
+
+
+def apply_addition_operation(text, operation):
+    validate_addition_operation(operation)
+    header, rows = objects(text)
+    owner = str(operation["owner_file_id"])
+    if owner not in rows or identity(rows[owner])[0] != "1":
+        raise RuntimeError("Addition requires a surviving GameObject owner")
+    renderer = operation["constructor"] == "empty_mesh_renderer"
+    kind, name, fields = component_fields(operation["constructor"], owner, operation["script"])
+    if any(
+        identity(block) == (str(kind), owner, None if renderer else typed_value({"type": "reference", "value": operation["script"]})) for block in rows.values()
+    ):
+        raise RuntimeError("Component constructor already present")
+    seed = operation["id_seed_path"] + ("|" if renderer else "|silent|") + owner
+    fid = (7000000000000000 if renderer else 8000000000000000) + int(hashlib.sha256(seed.encode()).hexdigest()[:12], 16)
+    while str(fid) in rows:
+        fid += 1
+    newline = "\r\n" if "\r\n" in text else "\n"
+    marker = "  m_Component:" + newline
+    if rows[owner].count(marker) != 1:
+        raise RuntimeError("Addition component membership must match exactly once")
+    member = "  - component: {fileID: " + str(fid) + "}" + newline
+    members = list(re.finditer(r"^  - component: \{fileID: -?\d+\}\r?\n", rows[owner], re.M))
+    if not members:
+        raise RuntimeError("Addition requires existing component membership")
+    offset = rows[owner].index(marker) + len(marker) if operation["membership_position"] == "first" else members[-1].end()
+    rows[owner] = rows[owner][:offset] + member + rows[owner][offset:]
+    block = "--- !u!" + str(kind) + " &" + str(fid) + newline + name + ":" + newline
+    for field, value_type, value in fields:
+        rendered = "" if value_type == "empty" else "[]" if value_type == "empty_array" else typed_value({"type": value_type, "value": value})
+        block += "  " + field + ":" + (" " + rendered if rendered else "") + newline
+    if not text.endswith(newline):
+        raise RuntimeError("Component addition requires a terminated source record")
+    return header + "".join(rows.values()) + block
+
+
+def validate_scene_settings_operation(operation):
+    if set(operation) != {"op", "records", "expected_matches"} or operation["op"] != "remove_scene_settings":
+        raise RuntimeError("Invalid scene settings removal operation")
+    records = operation["records"]
+    if not isinstance(records, list) or not records or type(operation["expected_matches"]) is not int or operation["expected_matches"] != len(records):
+        raise RuntimeError("Invalid scene settings removal match count")
+    seen = set()
+    for record in records:
+        if not isinstance(record, dict) or set(record) != {"file_id", "class_id"}:
+            raise RuntimeError("Invalid scene settings record")
+        fid = record["file_id"]
+        if (
+            type(fid) is not int
+            or fid == 0
+            or not -(2**63) <= fid < 2**63
+            or fid in seen
+            or type(record["class_id"]) is not int
+            or record["class_id"] not in {29, 104, 157, 196}
+        ):
+            raise RuntimeError("Invalid scene settings identity")
+        seen.add(fid)
+
+
+def apply_scene_settings_operation(text, operation):
+    """Delete only explicitly selected ownerless settings; never hierarchy records."""
+    validate_scene_settings_operation(operation)
+    header, rows = objects(text)
+    for record in operation["records"]:
+        fid = str(record["file_id"])
+        if fid not in rows or identity(rows[fid]) != (str(record["class_id"]), None, None):
+            raise RuntimeError("Scene settings identity mismatch")
+        del rows[fid]
+    generated = header + "".join(rows.values())
+    removed = {str(record["file_id"]) for record in operation["records"]}
+    if any(match[1] in removed for match in re.finditer(r"\{fileID: (-?\d+)\}", generated)):
+        raise RuntimeError("Scene settings removal leaves a surviving local reference")
+    return generated
 
 
 def reference_remaps(operation):
@@ -166,7 +433,10 @@ def reference_remaps(operation):
 
 
 def validate_removal_operation(operation):
-    if set(operation) != {"op", "file_ids", "expected_matches"} or operation["op"] != "remove_components":
+    if (
+        set(operation) not in ({"op", "file_ids", "expected_matches"}, {"op", "file_ids", "expected_matches", "retain_null_slots"})
+        or operation["op"] != "remove_components"
+    ):
         raise RuntimeError("Invalid remove_components operation")
     ids = operation["file_ids"]
     if (
@@ -179,13 +449,17 @@ def validate_removal_operation(operation):
     ):
         raise RuntimeError("Invalid component removal identifiers or match count")
 
+    retained = operation.get("retain_null_slots", [])
+    if not isinstance(retained, list) or any(type(fid) is not int or fid not in ids for fid in retained) or len(set(retained)) != len(retained):
+        raise RuntimeError("Invalid retained null membership slots")
+
 
 def apply_removal_operation(text, operation):
     """Remove source components and membership entries, preserving all other bytes.
 
     This narrow operation rejects surviving references to deleted components.
-    Nulling references, retaining empty membership slots and deleting hierarchy
-    objects require separate, explicit operations; none is inferred here.
+    Explicit retain_null_slots keeps selected empty membership positions. Other
+    reference nulling requires its own operation; hierarchy deletion is forbidden.
     """
     validate_removal_operation(operation)
     header, rows = objects(text)
@@ -212,7 +486,7 @@ def apply_removal_operation(text, operation):
                 if memberships[component] != fid:
                     raise RuntimeError("Component membership has the wrong owner")
                 counts[component] += 1
-                return ""
+                return match[0].replace("{fileID: " + component + "}", "{fileID: 0}") if int(component) in operation.get("retain_null_slots", []) else ""
 
             rows[fid] = re.sub(r"^  - component: \{fileID: (-?\d+)\}\r?\n", remove_member, block, flags=re.M)
     if any(count != 1 for count in counts.values()):
@@ -239,6 +513,12 @@ def validate_operations(operations, accepted=None):
             validate_field_operation(operation)
         elif operation.get("op") == "remove_components":
             validate_removal_operation(operation)
+        elif operation.get("op") in {"null_reference", "null_array_element"}:
+            validate_null_operation(operation)
+        elif operation.get("op") == "add_component":
+            validate_addition_operation(operation)
+        elif operation.get("op") == "remove_scene_settings":
+            validate_scene_settings_operation(operation)
         else:
             raise RuntimeError("Unknown field or unsupported asset operations")
 
@@ -270,7 +550,7 @@ def load_recipe(accepted, path=None):
             raise RuntimeError("Invalid asset transform entry")
         for name, seen in (("source", sources), ("output", outputs)):
             asset_path(Path.cwd(), asset[name])
-            if PurePosixPath(asset[name]).suffix not in {".asset", ".prefab", ".renderTexture"} or asset[name].casefold() in seen:
+            if PurePosixPath(asset[name]).suffix not in {".asset", ".prefab", ".renderTexture", ".unity"} or asset[name].casefold() in seen:
                 raise RuntimeError("Duplicate or invalid asset transform selector")
             seen.add(asset[name].casefold())
         if not isinstance(asset["source_sha256"], str) or not re.fullmatch(r"[a-f0-9]{64}", asset["source_sha256"]):
@@ -296,14 +576,36 @@ def generate(source, asset):
         for operation in operations:
             text = apply_surface_operation(text, operation)
     else:
+        context = None
         for operation in operations:
-            if operation["op"] == "set_field":
+            name = operation["op"]
+            field_edit = name in {"set_field", "null_reference", "null_array_element"}
+            # Renames/reparenting/identity edits must rebuild the selector index.
+            indexed = field_edit and operation["field_path"][0] not in {"m_Name", "m_Father", "m_GameObject", "m_Script"}
+            if indexed:
+                if context is None:
+                    context = record_context(text)
+                function = apply_field_operation if name == "set_field" else apply_null_operation
+                function(text, operation, _context=context)
+                continue
+            if context is not None:
+                text = context[0] + "".join(context[1].values())
+                context = None
+            if name == "set_field":
                 text = apply_field_operation(text, operation)
-            elif operation["op"] == "remove_components":
+            elif name in {"null_reference", "null_array_element"}:
+                text = apply_null_operation(text, operation)
+            elif name == "remove_components":
                 text = apply_removal_operation(text, operation)
+            elif name == "add_component":
+                text = apply_addition_operation(text, operation)
+            elif name == "remove_scene_settings":
+                text = apply_scene_settings_operation(text, operation)
             else:
                 for row in reference_remaps(operation)["rows"]:
                     text = text.replace(row["from"], row["to"])
+        if context is not None:
+            text = context[0] + "".join(context[1].values())
 
     return text
 
@@ -329,6 +631,21 @@ def generate_asset(export, asset, guid=None):
     return data, meta
 
 
+def structural_kind(asset):
+    """Exclusive operation cohorts, derived from public recipes rather than local inventories."""
+    names = {operation["op"] for operation in asset["operations"]}
+    if "remove_scene_settings" in names:
+        return "scene_settings_and_references"
+    if any(operation.get("retain_null_slots") for operation in asset["operations"]):
+        return "retained_null_membership"
+    removed, added = "remove_components" in names, "add_component" in names
+    prefix = "remove_add" if removed and added else "remove" if removed else "add" if added else None
+    if prefix is None:
+        return None
+    suffix = "_null_array" if "null_array_element" in names else "_null_scalar" if "null_reference" in names else "_fields" if "set_field" in names else ""
+    return prefix + suffix
+
+
 def check(work=None, root=None):
     """Compare every generated asset with what the migration stage produces, without writing.
 
@@ -348,6 +665,7 @@ def check(work=None, root=None):
     preview = root / read(selection)["evidence"] / "preview" if selection.is_file() else None
     differences, later_changes, identical = [], [], 0
     removal_cohort = {"total": 0, "identical": 0, "components": 0}
+    structural_cohorts = {}
     for asset in recipe["assets"]:
         data, meta = generate_asset(export, asset)
         oracle = asset_path(preview, asset["output"]) if preview is not None else None
@@ -364,6 +682,11 @@ def check(work=None, root=None):
             later_changes.append(asset["output"])
         differences.extend(changed)
         identical += not changed
+        kind = structural_kind(asset)
+        if kind is not None:
+            cohort = structural_cohorts.setdefault(kind, {"total": 0, "identical": 0})
+            cohort["total"] += 1
+            cohort["identical"] += not changed
         removals = [operation for operation in asset["operations"] if operation["op"] == "remove_components"]
         if removals:
             removal_cohort["total"] += 1
@@ -372,6 +695,8 @@ def check(work=None, root=None):
     result = {"total": len(recipe["assets"]), "identical": identical, "differences": differences, "changed_later_in_project": later_changes}
     if removal_cohort["total"]:
         result["component_removal_cohort"] = removal_cohort
+    if structural_cohorts:
+        result["structural_cohorts"] = structural_cohorts
     return result
 
 
