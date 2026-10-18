@@ -345,7 +345,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
         return "".join((self.UNITY / name).read_text().split())
 
     def test_start_yields_to_the_catalog_scan_before_the_session_wait(self):
-        text = self.compact("PortSession.cs")
+        text = self.compact("runtime/session/PortSession.cs")
         start = text[text.index("IEnumeratorStart(){") :]
         self.assertTrue(
             start.startswith(
@@ -355,7 +355,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
         self.assertLess(start.index("yieldbreak;"), start.index("WaitForSeconds(8)"))
 
     def test_body_catalog_prepares_and_releases_the_composed_catalog(self):
-        text = self.compact("BodyCatalogBoundary.cs")
+        text = self.compact("runtime/catalog/BodyCatalogBoundary.cs")
         register = text[text.index("IEnumeratorRegisterBodyCatalog(){") :]
         self.assertIn(
             'if(Resources.Load<TextAsset>("WholeCatalogBootstrap")){varshared=WholeCatalogComposed.Prepare();'

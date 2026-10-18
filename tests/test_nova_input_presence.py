@@ -9,7 +9,7 @@ EDITOR = Path("/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents/Mon
 
 
 def controller_presence_source():
-    source = (ROOT / "tools/unity/NovaInputBridge.cs").read_text()
+    source = (ROOT / "tools/unity/runtime/input/NovaInputBridge.cs").read_text()
     start = source.index("public sealed class ControllerPresence")
     opening = source.index("{", start)
     depth = 0

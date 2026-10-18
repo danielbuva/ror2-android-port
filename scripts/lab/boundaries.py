@@ -121,7 +121,7 @@ def rewired_original():
         p = source / (name + ".dll")
         shutil.copy2(p, stage / p.name)
         inputs[name] = sha(p)
-    shutil.copy2(ROOT / "tools/unity/MetadataDispatchProbe.cs", stage / "MetadataDispatchProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/MetadataDispatchProbe.cs", stage / "MetadataDispatchProbe.cs")
     resources = stage / "Resources"
     resources.mkdir()
     cases = [
@@ -224,7 +224,7 @@ def collections_runtime():
     cfg = read(manifest)
     cfg["dependencies"].update({"com.unity.collections": "1.2.4", "com.unity.burst": "1.8.11", "com.unity.mathematics": "1.2.1"})
     write(manifest, cfg)
-    shutil.copy2(ROOT / "tools/unity/CollectionsRuntimeProbe.cs", stage / "CollectionsRuntimeProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/CollectionsRuntimeProbe.cs", stage / "CollectionsRuntimeProbe.cs")
     write(resources / "CollectionsRuntimeProbe.json", {"attempt": out.name})
     result = {
         "success": False,
@@ -329,7 +329,7 @@ def ror2_slice(full_original=False):
     write(out / "slice-provenance.json", provenance)
     resources = stage / "Resources"
     resources.mkdir()
-    shutil.copy2(ROOT / "tools/unity/RoR2SliceProbe.cs", stage / "RoR2SliceProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/RoR2SliceProbe.cs", stage / "RoR2SliceProbe.cs")
     write(resources / "RoR2SliceProbe.json", {"attempt": out.name, "inputHash": provenance["inputSha256"], "sliceHash": provenance["outputSha256"]})
     (stage / "link.xml").write_text('<linker><assembly fullname="RoR2" preserve="all" /></linker>\n')
     scope = (

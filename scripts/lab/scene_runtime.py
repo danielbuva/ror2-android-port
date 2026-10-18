@@ -113,7 +113,7 @@ def scene_prepare(include_prefab=False):
     write(out / "attempt.json", result)
     write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
     write(project / "Assets/LabReferenceQuery.json", {"attempt": out.name, "output": str(out / "ui-identities.json"), "queries": queries})
-    shutil.copy2(ROOT / "tools/unity/ReferenceIdentityProbe.cs", project / "Assets/Editor/ReferenceIdentityProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/ReferenceIdentityProbe.cs", project / "Assets/Editor/ReferenceIdentityProbe.cs")
     print(json.dumps({"evidence": result["evidence"], "ui_reference_edits": sum(e["count"] for e in edits), "status": result["status"]}, indent=2))
 
 
@@ -313,8 +313,8 @@ def scene_arm():
         resources / "LoadingSceneProbe.json",
         {"attempt": out.name, "bundle": "loadingbasic-lab", "scene": r["scene"], "prefab": r.get("prefab", ""), "prefabAssets": r.get("default_assets", [])},
     )
-    shutil.copy2(ROOT / "tools/unity/LoadingSceneProbe.cs", Path(r["stage"]) / "LoadingSceneProbe.cs")
-    shutil.copy2(ROOT / "tools/unity/CommandoPosePreview.cs", Path(r["stage"]) / "CommandoPosePreview.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/LoadingSceneProbe.cs", Path(r["stage"]) / "LoadingSceneProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/CommandoPosePreview.cs", Path(r["stage"]) / "CommandoPosePreview.cs")
     print(json.dumps({"armed": True, "evidence": str(out.relative_to(ROOT)), "scope": r["isolation"]["reason"]}))
 
 
@@ -419,9 +419,9 @@ def pose_prepare():
     cfg = read(stage / "Resources/LoadingSceneProbe.json")
     cfg.update({"attempt": out.name, "pose": True})
     write(stage / "Resources/LoadingSceneProbe.json", cfg)
-    for name in ["LoadingSceneProbe.cs", "CommandoPosePreview.cs"]:
-        shutil.copy2(ROOT / "tools/unity" / name, stage / name)
-    shutil.copy2(ROOT / "tools/unity/CommandoPreview.shader", stage / "Resources/CommandoPreview.shader")
+    for name in ["experiments/LoadingSceneProbe.cs", "experiments/CommandoPosePreview.cs"]:
+        shutil.copy2(ROOT / "tools/unity" / name, stage / Path(name).name)
+    shutil.copy2(ROOT / "tools/unity/runtime/shaders/CommandoPreview.shader", stage / "Resources/CommandoPreview.shader")
     shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
     print(json.dumps({"evidence": str(out.relative_to(ROOT)), "scope": "Transform/renderer-only preview; original gameplay remains inactive"}))
 
@@ -468,10 +468,10 @@ def controller_prepare():
         stage / "Resources/ControllerAddressProbe.json",
         {"attempt": out.name, "key": key, "bundle": "commando-prefab-lab", "asset": r["default_assets"][0].lower()},
     )
-    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
-    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
     (stage / "ControllerPreservation").mkdir()
-    shutil.copy2(ROOT / "tools/unity/ControllerAddressLink.xml", stage / "ControllerPreservation/link.xml")
+    shutil.copy2(ROOT / "tools/unity/experiments/ControllerAddressLink.xml", stage / "ControllerPreservation/link.xml")
     shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
     write(
         out / "prior-art.json",
@@ -538,8 +538,8 @@ def avatar_prepare():
             "bundle": "commando-prefab-lab",
         },
     )
-    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
-    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
     shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
     write(
         out / "avatar-identity.json",
@@ -653,8 +653,8 @@ def skin_prepare():
     }
     write(stage / "Resources/ControllerAddressProbe.json", cfg)
     write(out / "skin-contract.json", dict(cfg, root_key_provenance="Diagnostic root uses exported SkinDef GUID; deferred paramsKey is original game address"))
-    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
-    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
     recipe = read(previous / "scene-probe-build.json")
     recipe["prefabAssets"] += ["Assets/LabLoadingScene/" + str(relative), "Assets/LabLoadingScene/" + str(relative.with_name("skinCommandoDefault.asset"))]
     write(WORK / "scene-probe-build.json", recipe)
@@ -729,8 +729,8 @@ def skin_apply_prepare():
             material_scope="Renderer records only; material update and original model lifecycle inactive",
         ),
     )
-    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
-    shutil.copy2(ROOT / "tools/unity/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/ControllerAddressProbe.cs", stage / "ControllerAddressProbe.cs")
     shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
     print(json.dumps({"evidence": str(out.relative_to(ROOT)), "mesh_vertices": vertices, "scope": r["status"]}))
 
@@ -770,8 +770,13 @@ def material_render_prepare():
     write(out / "attempt.json", r)
     write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
     write(stage / "Resources/ControllerAddressProbe.json", cfg)
-    for name in ["ControllerAddressProbe.cs", "CommandoMaterialPreview.cs", "CommandoMaterialPreview.shader", "CommandoPreview.shader"]:
-        shutil.copy2(ROOT / "tools/unity" / name, stage / ("Resources/" + name if name.endswith(".shader") else name))
+    for name in [
+        "runtime/session/ControllerAddressProbe.cs",
+        "runtime/session/CommandoMaterialPreview.cs",
+        "runtime/shaders/CommandoMaterialPreview.shader",
+        "runtime/shaders/CommandoPreview.shader",
+    ]:
+        shutil.copy2(ROOT / "tools/unity" / name, stage / ("Resources/" + Path(name).name if name.endswith(".shader") else Path(name).name))
     write(
         out / "material-render-contract.json",
         {
@@ -817,7 +822,7 @@ def state_tick_prepare():
     cfg["attempt"] = out.name
     write(stage / "Resources/ControllerAddressProbe.json", cfg)
     write(stage / "Resources/EntityStateTickProbe.json", {"attempt": out.name})
-    shutil.copy2(ROOT / "tools/unity/EntityStateTickProbe.cs", stage / "EntityStateTickProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/EntityStateTickProbe.cs", stage / "EntityStateTickProbe.cs")
     write(out / "attempt.json", r)
     write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
     shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
@@ -858,7 +863,7 @@ def direction_prepare():
         cfg["attempt"] = out.name
         write(stage / ("Resources/" + name + ".json"), cfg)
     write(stage / "Resources/CharacterDirectionProbe.json", {"attempt": out.name})
-    shutil.copy2(ROOT / "tools/unity/CharacterDirectionProbe.cs", stage / "CharacterDirectionProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CharacterDirectionProbe.cs", stage / "CharacterDirectionProbe.cs")
     write(out / "attempt.json", r)
     write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
     shutil.copy2(previous / "scene-probe-build.json", WORK / "scene-probe-build.json")
@@ -934,8 +939,8 @@ def startup_prepare(
     )
     (stage / "ControllerAddressProbe.cs").unlink(missing_ok=True)
     (stage / "Resources/ControllerAddressProbe.json").unlink(missing_ok=True)
-    shutil.copy2(ROOT / "tools/unity/AudioAssetProbe.cs", stage / "AudioAssetProbe.cs")
-    shutil.copy2(ROOT / "tools/unity/StartupSegmentProbe.cs", stage / "StartupSegmentProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/AudioAssetProbe.cs", stage / "AudioAssetProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/StartupSegmentProbe.cs", stage / "StartupSegmentProbe.cs")
     write(stage / "Resources/StartupSegmentProbe.json", {"attempt": out.name, "loadingScene": loading_scene, "applicationAwake": application_awake})
     write(out / "attempt.json", r)
     write(out.parent / "current.json", {"path": str(out.relative_to(ROOT))})
@@ -1230,7 +1235,7 @@ def audio_assets_prepare(native_availability=False):
     }
     cfg["nativeAvailability"] = native_availability
     write(stage / "Resources/AudioAssetProbe.json", cfg)
-    shutil.copy2(ROOT / "tools/unity/AudioAssetProbe.cs", stage / "AudioAssetProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/AudioAssetProbe.cs", stage / "AudioAssetProbe.cs")
     build = read(WORK / "scene-probe-build.json")
     build["prefabAssets"] += assets
     write(WORK / "scene-probe-build.json", build)
@@ -1347,32 +1352,32 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
     shutil.copytree(previous / "stage", stage)
     for name in ["ControllerAddressProbe", "EntityStateTickProbe", "CharacterDirectionProbe"]:
         (stage / ("Resources/" + name + ".json")).unlink()
-    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
     if not kinematic:
         for helper in [
-            "BodyCatalogBoundary",
-            "WholeCatalogComposed",
-            "SpawnStateBoundary",
-            "TeleportMaterialBoundary",
-            "AutomaticSpawnBoundary",
-            "AutomaticGroundBoundary",
-            "AutomaticHealthBoundary",
-            "AutomaticDirectionBoundary",
-            "AutomaticModelBoundary",
-            "AutomaticSkillBoundary",
-            "RewiredPlatformBoundary",
-            "BarrierEffectBoundary",
-            "NovaInputBoundary",
-            "NovaInputBridge",
-            "NovaDiagnosticDisplay",
-            "PrimaryFireBoundary",
+            "runtime/catalog/BodyCatalogBoundary",
+            "runtime/catalog/WholeCatalogComposed",
+            "runtime/catalog/SpawnStateBoundary",
+            "runtime/catalog/TeleportMaterialBoundary",
+            "runtime/world/AutomaticSpawnBoundary",
+            "runtime/world/AutomaticGroundBoundary",
+            "runtime/world/AutomaticHealthBoundary",
+            "runtime/world/AutomaticDirectionBoundary",
+            "runtime/world/AutomaticModelBoundary",
+            "runtime/world/AutomaticSkillBoundary",
+            "runtime/session/RewiredPlatformBoundary",
+            "runtime/catalog/BarrierEffectBoundary",
+            "runtime/input/NovaInputBoundary",
+            "runtime/input/NovaInputBridge",
+            "runtime/input/NovaDiagnosticDisplay",
+            "runtime/world/PrimaryFireBoundary",
         ]:
-            shutil.copy2(ROOT / "tools/unity" / (helper + ".cs"), stage / (helper + ".cs"))
+            shutil.copy2(ROOT / "tools/unity" / (helper + ".cs"), stage / (Path(helper).name + ".cs"))
     source = "KinematicBatchProbe" if kinematic else "PortSession"
     # MovementBatchProbe is the unchanged resource/file name.
     resource = "KinematicBatchProbe" if kinematic else "MovementBatchProbe"
     write(stage / ("Resources/" + resource + ".json"), {"attempt": out.name})
-    shutil.copy2(ROOT / "tools/unity" / (source + ".cs"), stage / (source + ".cs"))
+    shutil.copy2(ROOT / "tools/unity" / ("experiments/KinematicBatchProbe.cs" if kinematic else "runtime/session/PortSession.cs"), stage / (source + ".cs"))
     r.update(
         {
             "attempt": out.name,
@@ -1919,7 +1924,7 @@ def recovered_visual_prepare():
     cfg = read(stage / "Resources/MovementBatchProbe.json")
     cfg["displayAssets"] = read(WORK / "scene-probe-build.json")["prefabAssets"][:6]
     write(stage / "Resources/MovementBatchProbe.json", cfg)
-    shutil.copy2(ROOT / "tools/unity/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
+    shutil.copy2(ROOT / "tools/unity/runtime/session/CommandoMaterialPreview.cs", stage / "CommandoMaterialPreview.cs")
 
 
 def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, teleport_material=False, barrier_effect=False, nova_input=False):
@@ -1950,7 +1955,7 @@ def body_root_order_prepare(cases=None, start_items=False, spawn_states=False, t
     write(out / "original-motor-order.json", {"source_sha256": sha(source), "input_id": read(WORK / "inventory/files.json")["input_id"], "rows": rows})
     editor = stage / "Editor"
     editor.mkdir(exist_ok=True)
-    shutil.copy2(ROOT / "tools/unity/CharacterMotorOrderProbe.cs", editor / "CharacterMotorOrderProbe.cs")
+    shutil.copy2(ROOT / "tools/unity/experiments/CharacterMotorOrderProbe.cs", editor / "CharacterMotorOrderProbe.cs")
     write(editor / "character-motor-order.json", {"order": rows[0]["order"]})
 
 

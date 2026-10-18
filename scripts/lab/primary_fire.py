@@ -96,8 +96,8 @@ def prepare():
     recipe["prefabAssets"] += list(paths.values())
     recipe["prefabAssets"] = list(dict.fromkeys(recipe["prefabAssets"]))
     write(WORK / "scene-probe-build.json", recipe)
-    for helper in ["PortSession", "PrimaryFireBoundary"]:
-        shutil.copy2(ROOT / "tools/unity" / (helper + ".cs"), stage / (helper + ".cs"))
+    for helper in ["runtime/session/PortSession", "runtime/world/PrimaryFireBoundary"]:
+        shutil.copy2(ROOT / "tools/unity" / (helper + ".cs"), stage / (Path(helper).name + ".cs"))
     a = dict(previous)
     a.update(
         {

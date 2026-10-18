@@ -15,13 +15,13 @@ class BuildIdentityTests(unittest.TestCase):
             root = Path(temporary)
             work = root / "work"
             project = work / "lab-project"
-            source = root / "tools/unity/AndroidProfileBoundary.cs"
+            source = root / "tools/unity/runtime/progression/AndroidProfileBoundary.cs"
             staged = project / "Assets/LabLoadingScene/AndroidProfileBoundary.cs"
             source.parent.mkdir(parents=True)
             staged.parent.mkdir(parents=True)
             source.write_text("new offline award boundary")
             staged.write_text("previous offline award boundary")
-            write(root / "recipe/runtime-sources.json", [source.name])
+            write(root / "recipe/runtime-sources.json", [source.relative_to(root / "tools/unity").as_posix()])
             write(work / "whole-catalog-build.json", {"scope": "test"})
             with patch.object(build, "ROOT", root), patch.object(build, "WORK", work), patch.object(build, "RECIPE", root / "recipe"):
                 with self.assertRaisesRegex(RuntimeError, "whole-catalog-code-build"):

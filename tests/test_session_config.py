@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PROBE = ROOT / "tools/unity/PortSession.cs"
+PROBE = ROOT / "tools/unity/runtime/session/PortSession.cs"
 TOKEN = re.compile(r'//[^\n]*|/\*[\s\S]*?\*/|@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|\w+|[^\s]')
 PAIRS = {"(": ")", "[": "]", "{": "}", "<": ">"}
 

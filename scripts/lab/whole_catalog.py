@@ -956,8 +956,8 @@ def prepare_integration():
     )
     write(destination / "import-receipt.json", dict(copied=copies, reused=len(mapped) - len(copies), files=len(mapped), roots=len(roots)))
     write(out / "integration-latest.json", dict(path=str(destination.relative_to(ROOT))))
-    copy_catalog_asset(ROOT / "tools/unity/WholeCatalogLoader.cs", project / "Assets/LabLoadingScene/WholeCatalogLoader.cs")
-    copy_catalog_asset(ROOT / "tools/unity/WholeCatalogBootstrap.cs", project / "Assets/LabLoadingScene/WholeCatalogBootstrap.cs")
+    copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogLoader.cs", project / "Assets/LabLoadingScene/WholeCatalogLoader.cs")
+    copy_catalog_asset(ROOT / "tools/unity/runtime/catalog/WholeCatalogBootstrap.cs", project / "Assets/LabLoadingScene/WholeCatalogBootstrap.cs")
     copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogHost.cs", project / "Assets/Editor/WholeCatalogHost.cs")
     print(
         json.dumps(
@@ -1288,7 +1288,7 @@ def build_integration(code_only=False):
     # Stage the tracked runtime selection; keep existing Unity-owned .meta files.
     runtime = project / "Assets/LabLoadingScene"
     for filename in runtime_sources:
-        copy_catalog_asset(ROOT / "tools/unity" / filename, runtime / filename)
+        copy_catalog_asset(ROOT / "tools/unity" / filename, runtime / Path(filename).name)
     # Exact-editor host fixtures; stage all four so none goes stale in the project.
     for filename in ["AndroidProgressionHost.cs", "AndroidDiscoveryHost.cs", "AndroidProfileHost.cs", "AndroidLifecycleHost.cs"]:
         copy_catalog_asset(ROOT / "tools/catalog" / filename, project / "Assets/Editor" / filename)
@@ -1329,7 +1329,7 @@ def build_integration(code_only=False):
     write(WORK / "whole-catalog-build.json", dict(manifest=str(attempt / "manifest.json")))
     if code_only:
         for filename in runtime_sources:
-            rel = "Assets/LabLoadingScene/" + filename
+            rel = "Assets/LabLoadingScene/" + Path(filename).name
             if sha(ROOT / "tools/unity" / filename) != sha(project / rel):
                 raise RuntimeError("Code-only source was not staged: " + rel)
     previous = attempt / "build.json"

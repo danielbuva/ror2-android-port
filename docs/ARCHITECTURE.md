@@ -53,7 +53,7 @@ Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` â
 ## Android runtime
 
 The shipped game runs inside the lab harness `PortSession`
-(`tools/unity/PortSession.cs`, 70 `partial` files). The runtime configuration is the
+(`tools/unity/runtime/session/PortSession.cs`, 70 `partial` files). The runtime configuration is the
 untracked `Resources/MovementBatchProbe.json` (unchanged resource/file name) in the
 generated project, parsed as the
 184-field `SessionConfig`. `SessionReport` is the report written back as `movement-batch-*.json`
@@ -140,6 +140,19 @@ Build, device and safety tooling has its own tests: `test_build_identity.py`,
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
+
+## Source folders
+
+`tools/unity/runtime/` groups authored sources by owner: `session` (including
+`PortSession.cs`), `catalog`, `commerce`, `input`, `presentation`, `progression`,
+`shaders`, `stage` and `world`. `tools/unity/experiments/` holds historical probes,
+linker descriptors and `LabExperiments.cs` (still selected for the current player).
+The detailed paths and status remain in [architecture-file-map.md](architecture-file-map.md).
+
+`recipe/runtime-sources.json` contains paths relative to `tools/unity`. Every builder
+stages sources by basename, preserving generated project paths and Unity-owned metadata.
+The reader rejects duplicate basenames, including collisions with generated sources;
+the strict staged C# membership and byte comparison checks remain in `build.py`.
 
 ## File status
 

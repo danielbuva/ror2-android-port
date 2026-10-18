@@ -147,7 +147,7 @@ def wire_reconstruction():
             write(manifest, data)
         dest = project / "Assets/Editor/LabConnector"
         dest.mkdir(parents=True, exist_ok=True)
-        for source in [ROOT / "android/Assets/Editor/BootstrapMcp.cs", ROOT / "tools/unity/ReconstructionProbe.cs"]:
+        for source in [ROOT / "android/Assets/Editor/BootstrapMcp.cs", ROOT / "tools/unity/runtime/session/ReconstructionProbe.cs"]:
             target = dest / source.name
             if not target.exists() or sha(source) != sha(target):
                 shutil.copy2(source, target)

@@ -418,7 +418,9 @@ def stage():
         global_textures.append(dict(row, before_sha256=before, after_sha256=sha(target)))
     from whole_catalog import copy_catalog_asset
 
-    copy_catalog_asset(ROOT / "tools/unity/AndroidNativeDeferredPresentation.cs", project / "Assets/LabLoadingScene/AndroidNativeDeferredPresentation.cs")
+    copy_catalog_asset(
+        ROOT / "tools/unity/runtime/shaders/AndroidNativeDeferredPresentation.cs", project / "Assets/LabLoadingScene/AndroidNativeDeferredPresentation.cs"
+    )
     configuration["attempt"] = evidence.name
     configuration["pauseBeforeMoon"] = True
     write(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", configuration)

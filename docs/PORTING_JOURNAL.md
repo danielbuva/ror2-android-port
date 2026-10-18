@@ -4920,7 +4920,7 @@ tooling only; no build or device run.
 Phase 4 step 3. `RunSelectedProbe` now runs `GameSession()` (the original `BodyLifecycle()`)
 when `IsPlayableSpine()` matches, instead of reaching it through a case of the 118-label
 experiment switch. The switch, without its two spine labels, moved verbatim into
-`LabExperiment()` in the new `tools/unity/LabExperiments.cs`, added to
+`LabExperiment()` in the new `tools/unity/experiments/LabExperiments.cs`, added to
 `recipe/runtime-sources.json`; both run inside the unchanged `try`/`finally`. The switch had
 no `yield break` or `return`, so the move keeps its control flow. Both spine ids keep working
 (the alias the plan asks for is the existing prefix match). 381 host tests pass; zero-error
@@ -5310,7 +5310,7 @@ run's. App stopped; OLED asleep.
 ## J542 — Rename the coordinator to PortSession
 
 Phase 4 step 6 (implemented by Codex at medium reasoning, reviewed by Claude): the coordinator
-class `MovementBatchProbe` is now `PortSession` (`tools/unity/PortSession.cs`, 71 partial
+class `MovementBatchProbe` is now `PortSession` (`tools/unity/runtime/session/PortSession.cs`, 71 partial
 declarations, 328 references). No scene, prefab or asset references the script's GUID (it is
 added at runtime by `Init`), and the staged project's `.cs`/`.meta` pair was moved together, so
 the GUID is unchanged. The 50 kept `MovementBatchProbe` strings are external names: the
@@ -5322,3 +5322,22 @@ to adopted storage. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied p
 `work/experiments/baseline/20261018T023327.160296Z`) and `--stage-exit` passed on the same APK
 (`work/experiments/baseline/20261018T023652.633930Z`); the report's nested key set matches the
 previous run. App stopped; OLED asleep.
+
+## J543 — Split tools/unity into runtime and experiments folders
+
+Phase 5 "Folders" (implemented by Codex at medium reasoning, reviewed by Claude). The flat
+`tools/unity` (126 files) is split into `runtime/{session,world,progression,presentation,input,
+shaders,catalog,commerce,stage}` and `experiments/` (the historical probes and
+`LabExperiments.cs`), by the file map's subsystem and status. Every file moved byte for byte.
+Staging still copies each file flat into `Assets/LabLoadingScene` under its basename:
+`recipe/runtime-sources.json` entries are now paths relative to `tools/unity`, and a new host
+test rejects missing entries and basename collisions. References in `scripts/lab` (including
+historical actions), tests, `tools/catalog` and the docs follow the new paths. 410 host tests
+pass. Equivalence: a project manifest captured before the split and one after a code-only build
+on it differ only in `Assets/Lab.unity`, which `LabBuild.cs` re-saves on every build; every
+staged source is identical. That build had zero errors, APK `ddbb36c64516aada36cca75441d7af040e7cab9bcab11d10302bbd0a87093ff7`. Its native code differs
+from J542's because J542 was a full build and this a code-only one, so the device decided:
+`./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T025133.995688Z`) and
+`--stage-exit` passed (`work/experiments/baseline/20261018T025459.868691Z`). App stopped; OLED
+asleep. `tools/AssemblyProbe` keeps its name for now: its build output path and receipts are
+referenced by tooling that would need its own change.

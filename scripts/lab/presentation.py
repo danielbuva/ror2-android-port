@@ -54,7 +54,7 @@ def build_payload(stages=False, recovered=False):
     for name in ["android-presentation-lab", "android-presentation-lab.manifest"]:
         shutil.copy2(WORK / "generated-android-data" / name, previous / name)
     for name in NAMES:
-        source = ROOT / "tools/unity" / (name + ".shader")
+        source = ROOT / "tools/unity/runtime/shaders" / (name + ".shader")
         if recovered and name == "AndroidIntersectionPresentation":
             source = recovered_sources / "sources" / source.name
             if sha(source) != recovery_receipt["source_sha256_by_file"][source.name]:
@@ -64,7 +64,7 @@ def build_payload(stages=False, recovered=False):
             shutil.copy2(existing, previous / source.name)
         shutil.copy2(source, sources / source.name)
         shutil.copy2(source, existing)
-    include = ROOT / "tools/unity/AndroidRecoveredReflections.cginc"
+    include = ROOT / "tools/unity/runtime/shaders/AndroidRecoveredReflections.cginc"
     shutil.copy2(include, sources / include.name)
     shutil.copy2(include, stage / include.name)
     bundles = ["android-presentation-lab"]

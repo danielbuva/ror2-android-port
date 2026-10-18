@@ -140,10 +140,21 @@ WHOLE_GENERATED_RUNTIME_SOURCES = {"OriginalBodyVisualMap.cs", "OriginalHealthVi
 
 def runtime_sources():
     names = read(RECIPE / "runtime-sources.json")
-    if not isinstance(names, list) or any(not isinstance(name, str) or Path(name).name != name or not name.endswith(".cs") for name in names):
-        raise RuntimeError("recipe/runtime-sources.json must list tools/unity C# filenames")
+    if not isinstance(names, list) or any(
+        not isinstance(name, str)
+        or Path(name).is_absolute()
+        or ".." in Path(name).parts
+        or "\\" in name
+        or Path(name).as_posix() != name
+        or not name.endswith(".cs")
+        for name in names
+    ):
+        raise RuntimeError("recipe/runtime-sources.json must list relative tools/unity C# paths")
     if names != sorted(set(names)):
         raise RuntimeError("recipe/runtime-sources.json must be sorted and unique")
+    basenames = [Path(name).name for name in names]
+    if len(basenames) != len(set(basenames)) or set(basenames) & WHOLE_GENERATED_RUNTIME_SOURCES:
+        raise RuntimeError("recipe/runtime-sources.json has a staging basename collision")
     missing = [name for name in names if not (ROOT / "tools/unity" / name).is_file()]
     if missing:
         raise RuntimeError("Runtime manifest sources missing from tools/unity: " + ", ".join(missing))
@@ -162,7 +173,7 @@ def whole_player_inputs():
     # APK-only consumers of unchanged converted assets; retain Unity-owned metadata.
     inputs.update(
         "Assets/LabLoadingScene/" + name + suffix
-        for name in runtime_sources() + sorted(WHOLE_GENERATED_RUNTIME_SOURCES) + ["Resources/WholeStageContexts.json"]
+        for name in [Path(source).name for source in runtime_sources()] + sorted(WHOLE_GENERATED_RUNTIME_SOURCES) + ["Resources/WholeStageContexts.json"]
         for suffix in ("", ".meta")
     )
     return inputs
@@ -173,7 +184,7 @@ WHOLE_PLAYER_INPUTS = whole_player_inputs()
 
 def validate_runtime_source_membership(project):
     names = runtime_sources()
-    known = set(names) | WHOLE_GENERATED_RUNTIME_SOURCES
+    known = {Path(name).name for name in names} | WHOLE_GENERATED_RUNTIME_SOURCES
     stage = Path(project) / "Assets/LabLoadingScene"
     unexpected = sorted(str(source.relative_to(stage)) for source in stage.rglob("*.cs") if source.is_file() and str(source.relative_to(stage)) not in known)
     if unexpected:
@@ -225,7 +236,7 @@ def validate_staged_runtime_sources(project):
     stale = [
         name
         for name in validate_runtime_source_membership(project)
-        if not (stage / name).is_file() or (ROOT / "tools/unity" / name).read_bytes() != (stage / name).read_bytes()
+        if not (stage / Path(name).name).is_file() or (ROOT / "tools/unity" / name).read_bytes() != (stage / Path(name).name).read_bytes()
     ]
     if stale:
         raise RuntimeError("Whole-catalog runtime sources are not staged: " + ", ".join(stale[:12]) + "; run ./dev prototype --action whole-catalog-code-build")
