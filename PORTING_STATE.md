@@ -67,7 +67,10 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    60 FPS is the release target, not a gate for each batch; investigate large
    unexplained regressions only.
 3. Keep J503, J502, J425 and J323 executable; sleep the OLED whenever idle.
-4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done; Phase 2 (reproducible
-   build) has its harness, source manifest and first recipes. Public recipes may contain the minimum game asset paths, GUIDs and catalog names needed for
-   local reconstruction (decision recorded in J548). The
-   remaining debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).
+4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done. Phase 2: the runtime
+   config and content recipe are generated from public recipes (J551), and 253 of the 451
+   adapted assets plus 15 additions are generated from the export (J552–J556).
+   **Open question:** 168 of the 177 inherited shaders differ from what today's shader
+   generators produce. Either regenerate them (changes shipped shaders; needs device and
+   visual checks per family) or keep those outputs as documented local state. The remaining
+   debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).
