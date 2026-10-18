@@ -404,10 +404,15 @@ def stage():
     # Verify the entire patch plan before the first project write.
     from asset_transforms import load_recipe
     from authored_additions import prepare as prepare_authored_additions
+    from shader_additions import prepare as prepare_shader_additions
 
     transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
     transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids)
     authored = prepare_authored_additions(generated)
+    shaders = prepare_shader_additions(generated)
+    if authored.keys() & shaders.keys():
+        raise RuntimeError("Overlapping generated addition owners")
+    authored.update(shaders)
     staged = []
     for row in generated:
         stage_addition(row, authored, previous, project, guidmap, remaps)
@@ -440,7 +445,12 @@ def stage():
                 if sha(file) != receipt["source_sha256_by_file"][file.name]:
                     raise RuntimeError("Native generated source drift")
                 target = project / "Assets/LabLoadingScene/Resources" / file.name
-                shutil.copy2(file, target)
+                generated_pair = shaders.get(str(target.relative_to(project)))
+                if generated_pair is not None:
+                    if file.read_bytes() != generated_pair[0]:
+                        raise RuntimeError("Native source differs from regenerated shader pair")
+                else:
+                    shutil.copy2(file, target)
                 native_names.add(file.name)
                 staged.append(str(target.relative_to(project)))
     for path in (project / "Assets/LabLoadingScene/Resources").glob("AndroidNative*.shader"):

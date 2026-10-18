@@ -567,7 +567,7 @@
       "sha256": "032358a56ebe5dd58a129adfbd03f9db8815ee20b4fbbd74b4756b5fdad59039",
       "meta_sha256": "8ff998de1ebe4c0129237daaf0fb018bcdd933efb92b1549433ad74e33b72c9f",
       "guid": "845cc5a9ce0f64f6b9e6cbea46866e06",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -596,9 +596,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -608,7 +608,7 @@
       "sha256": "d87b7a5e55ce743418a77800ab74f9dcc0ad9425335a88d31033aef44122c1e1",
       "meta_sha256": "476e749b66f85590a06ce86dcd653ca9b712a9650612cc62d4b39edacc072c95",
       "guid": "fa5d30c659b5d4c2497f0953216be75e",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -637,9 +637,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4203,7 +4203,7 @@
       "sha256": "1c1c11c86d687d43c9c17c02e1c2c5e8da9da2099abf0e1b07eb42a57c1fe7da",
       "meta_sha256": "36e1c73f8a3d8d7e7da78569d92eae2d26090198a5e61f824673a0520b48ff34",
       "guid": "7fdfbe776a74748af8714d33dd453831",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4235,9 +4235,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4247,7 +4247,7 @@
       "sha256": "9e88a2763ba51918b4c35caff329a8e8e3035a44287e5541f7385d4220103c89",
       "meta_sha256": "56c12f554d809ea2cf8c44180985ad2ae3d07ff859eb1054883878a531018d9a",
       "guid": "252006dc959054225993537ca99c5527",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4279,9 +4279,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4291,7 +4291,7 @@
       "sha256": "e2221927c3c13b3879989747061c947fa55f619f0c2ef736f0f80a34bbeb3676",
       "meta_sha256": "e77ac2dd529d3f854c7f6176b785a41e4bed9c9c15e88a7dec4face87e2a24a6",
       "guid": "24d1ba20aa41541c1ae3a2830fd2fa34",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4323,9 +4323,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4335,7 +4335,7 @@
       "sha256": "3cd35930e0e88e36ba7e5ddff03b9622a0fc1259be4d49f75861452ecec2d5cc",
       "meta_sha256": "b32b52a02bb4b604825a92b749d30ac8b7948663e4b0383cf1b885ff05ac6d53",
       "guid": "0ad6e8aee52b6441b97187951fa9730a",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4367,9 +4367,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4379,7 +4379,7 @@
       "sha256": "e6f71946e7b2ed4da5051d0b088893ece55c5f211d1b7934979f2d5f157578d2",
       "meta_sha256": "5d92d0373d3119bda0692641a0cdb6d990a68e0fd9113f88a63e2f96d8c75fe2",
       "guid": "111aa310821d74e19a9c4144bf25f8af",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4411,9 +4411,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4423,7 +4423,7 @@
       "sha256": "f9dc99974a67c54a266b1506273de80525ab32d3e91b7dee52c494a0e4e015b9",
       "meta_sha256": "7e8fb29142cf1fcf9a9c79bb57be94b91568015de063b2d179a7ad421274b883",
       "guid": "c6432d4977450415f9313b0d230056bf",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4455,9 +4455,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {
@@ -4467,7 +4467,7 @@
       "sha256": "d26b6c6879491b3251cec01b649f05071df4f373406e8f0955910ab9b1cee1ea",
       "meta_sha256": "445d53bdfe39cbc158e13ecdb0489923ba4844c957ebf77fee890560c75e25af",
       "guid": "5c6240d61fcd842ecacef07aad658e7d",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -4499,9 +4499,9 @@
         }
       },
       "comparison": {
-        "basis": "selected_receipted_output",
+        "basis": "generated_shader_pair",
         "asset_matches": true,
-        "meta_matches": null
+        "meta_matches": true
       }
     },
     {

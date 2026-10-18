@@ -88,7 +88,7 @@ _ENTRIES = (
         "check_action",
         {},
         "current",
-        "Verify inherited local asset/meta hashes from the ledger; read-only (--work-dir selects local work).",
+        "Verify inherited hashes and regenerate byte-proven shader pairs in scratch; work stays read-only (--work-dir selects local work).",
         handler=_inherited_check,
     ),
     Action(

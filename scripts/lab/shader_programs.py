@@ -26,7 +26,9 @@ def call(index, params, inputs="i", outputs="o"):
 
 
 class NativePrograms:
-    def __init__(self, out, result, exe):
+    def __init__(self, out, result, exe, allow_independent=True, independent=None):
+        self.independent = Path(independent) if independent is not None else None
+        self.allow_independent = allow_independent
         self.out = out
         self.result = result
         self.exe = exe
@@ -51,30 +53,49 @@ class NativePrograms:
             raise RuntimeError("Native roundtrip changed")
         origin = "d3dasm"
         if "not decompiled" in hlsl.read_text():
-            fallback = self.out / (stem + "-independent")
-            fallback.mkdir()
-            tool = WORK / PINS["hlsl"][0] / "RenderDoc_DXBC2HLSL_shader_view_files/v2"
-            for name in ["cmd_Decompiler.exe", "d3dcompiler_46.dll"]:
-                shutil.copy2(tool / name, fallback / name)
-            shutil.copy2(f, fallback / f.name)
-            env = os.environ.copy()
-            env["CX_BOTTLE_PATH"] = str(WORK / "toolchains/crossover-bottles")
-            wine = Path("/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine")
-            p = run(
-                [wine, "--bottle", "shader-recovery", "--no-gui", "--workdir", fallback, fallback / "cmd_Decompiler.exe", "-D", "-V", fallback / f.name],
-                env=env,
-                check=False,
-                timeout=120,
-            )
-            (fallback / "validation.stdout").write_bytes(p.stdout)
-            (fallback / "validation.stderr").write_bytes(p.stderr)
-            if p.returncode or b"Decompiler validation pass succeeded" not in p.stdout + p.stderr:
-                raise RuntimeError("Independent shadow-program HLSL validation failed: " + stem)
-            hlsl = fallback / (stem + ".hlsl")
-            origin = "HLSLDecompiler validated fallback; d3dasm sample-c instruction counterexample preserved"
+            if self.independent is not None:
+                # Reuse only a hash-verified, validated intermediate for this exact native program.
+                receipt = read(self.independent / "receipt.json")
+                matches = [p for p in receipt["programs"] if (p["shader"], p["index"]) == key]
+                hlsl = self.independent / (stem + "-independent") / (stem + ".hlsl")
+                if (
+                    len(matches) != 1
+                    or not matches[0]["native_roundtrip_identical"]
+                    or matches[0]["origin"] != "HLSLDecompiler validated fallback; d3dasm sample-c instruction counterexample preserved"
+                    or matches[0]["dxbc_sha256"] != sha(f)
+                    or matches[0]["hlsl_sha256"] != sha(hlsl)
+                ):
+                    raise RuntimeError("Independent intermediate drift")
+                origin = matches[0]["origin"]
+            elif not self.allow_independent:
+                raise RuntimeError("Independent decompiler requires a writable bottle; isolated generation refuses it")
+            else:
+                fallback = self.out / (stem + "-independent")
+                fallback.mkdir()
+                tool = WORK / PINS["hlsl"][0] / "RenderDoc_DXBC2HLSL_shader_view_files/v2"
+                for name in ["cmd_Decompiler.exe", "d3dcompiler_46.dll"]:
+                    shutil.copy2(tool / name, fallback / name)
+                shutil.copy2(f, fallback / f.name)
+                env = os.environ.copy()
+                env["CX_BOTTLE_PATH"] = str(WORK / "toolchains/crossover-bottles")
+                wine = Path("/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine")
+                p = run(
+                    [wine, "--bottle", "shader-recovery", "--no-gui", "--workdir", fallback, fallback / "cmd_Decompiler.exe", "-D", "-V", fallback / f.name],
+                    env=env,
+                    check=False,
+                    timeout=120,
+                )
+                (fallback / "validation.stdout").write_bytes(p.stdout)
+                (fallback / "validation.stderr").write_bytes(p.stderr)
+                if p.returncode or b"Decompiler validation pass succeeded" not in p.stdout + p.stderr:
+                    raise RuntimeError("Independent shadow-program HLSL validation failed: " + stem)
+                hlsl = fallback / (stem + ".hlsl")
+                origin = "HLSLDecompiler validated fallback; d3dasm sample-c instruction counterexample preserved"
         layout = selected_layout(tree, raw, records[index])
         write(self.out / (stem + "-layout.json"), layout)
         function, params, declarations, _, reads = bind_hlsl(hlsl.read_text(), layout, "native_" + str(index))
+        if self.independent is not None and origin != "d3dasm" and matches[0]["layout"] != layout:
+            raise RuntimeError("Independent bound layout drift")
         data = (function, params, declarations, layout["textures"])
         self.cache[key] = data
         self.result["programs"].append(

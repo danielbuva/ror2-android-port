@@ -5562,3 +5562,17 @@ are used by the current runtime (5 unused), including 190 of the 192 shaders, so
 them are priority under J558. Of the 177 generator-backed shaders, 9 bodies already match the
 generator, 166 differ and 2 generator outputs are absent; matching bodies stay inherited until
 the whole pair is proven and verified on device. 541 host tests pass. Host tooling only.
+
+## J560 — Generate the nine shaders whose outputs already match
+
+Following J558 (implemented by Codex at medium reasoning, reviewed by Claude). The 9
+generator-backed shaders whose generated bodies matched (AndroidNativeDeferredLighting,
+DeferredReflections and Family4–7 variants) also match in full: the generator reproduces body,
+`.meta` GUID and importer bytes. Composition staging now generates them (`shader_additions.py`)
+instead of copying them from the previous project, and the ledger marks them reproducible.
+DeferredLighting depends on one CrossOver-validated HLSL intermediate; the shader pipeline can now
+reuse such an intermediate when its receipt and hashes match exactly, instead of re-running the
+Wine decompiler. Without one, it runs the original decompiler path unchanged. `common.game()` gained
+an optional work-root argument with the same default. `inherited-state-check`: 9 generated pairs
+identical, 205 inherited pairs unchanged. Status now 24 reproducible, 205 inherited. 550 host tests
+pass. Host tooling only; no APK change, since the staged bytes are identical.

@@ -32,8 +32,9 @@ def config():
     return read(WORK / "config/local.json")
 
 
-def game():
-    p = Path(config()["game_path"]).expanduser().resolve()
+def game(work=None):
+    configuration = config() if work is None else read(Path(work) / "config/local.json")
+    p = Path(configuration["game_path"]).expanduser().resolve()
     if not (p / "Risk of Rain 2_Data/Managed/RoR2.dll").is_file():
         raise RuntimeError("Configured legitimate game installation missing RoR2.dll")
     if p == ROOT or ROOT in p.parents and WORK not in p.parents:

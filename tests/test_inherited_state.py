@@ -106,11 +106,15 @@ class InheritedStateTests(unittest.TestCase):
         assets = state.load_ledger()["assets"]
         self.assertEqual(len(assets), 229)
         self.assertEqual(sum(a["kind"] == "shader" for a in assets), 192)
-        native = [a for a in assets if a["kind"] == "shader" and a["comparison"]["basis"] in ("selected_receipted_output", "selected_output_absent")]
+        native = [
+            a
+            for a in assets
+            if a["kind"] == "shader" and a["comparison"]["basis"] in ("selected_receipted_output", "selected_output_absent", "generated_shader_pair")
+        ]
         self.assertEqual(len(native), 177)
         self.assertEqual(sum(a["comparison"]["asset_matches"] for a in native), 9)
-        self.assertEqual(sum(a["status"] == "reproducible" for a in assets), 15)
-        self.assertTrue(all(a["status"] == "inherited" for a in native))
+        self.assertEqual(sum(a["status"] == "reproducible" for a in assets), 24)
+        self.assertEqual(sum(a["status"] == "inherited" for a in native), 168)
         self.assertFalse(any(a["status"] == "retired" for a in assets))
         # Evidence contains only identifiers, hashes and authored classification, never asset programs.
         for asset in assets:

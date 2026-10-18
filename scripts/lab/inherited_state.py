@@ -1,6 +1,7 @@
 """Read-only integrity check for the J558 inherited local-state ledger."""
 
 from collections import Counter
+import hashlib
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -52,7 +53,7 @@ def load_ledger(path=None):
 
 
 def check(work=None, ledger=None):
-    """Verify inherited asset/meta pairs in the locally selected previous project; never stage or regenerate."""
+    """Check inherited hashes and regenerate byte-proven pairs in scratch; never write to work."""
     work = Path(work or WORK).resolve()
     ledger = load_ledger() if ledger is None else ledger
     selection = read(work / "config/composition-migration.json")
@@ -79,7 +80,21 @@ def check(work=None, ledger=None):
                 differences.append({"path": asset["path"] + suffix, "reason": "sha256"})
             elif suffix and re.findall(r"^guid:\s*([a-f0-9]{32})\s*$", path.read_text(), re.M) != [asset["guid"]]:
                 differences.append({"path": asset["path"] + suffix, "reason": "guid"})
+    from shader_additions import cohort, generate_pairs
+
+    reproducible = cohort(ledger)
+    pairs = generate_pairs(reproducible, work, verify=False) if reproducible else {}
+    for asset in reproducible:
+        for (suffix, key), data in zip((("", "sha256"), (".meta", "meta_sha256")), pairs[asset["path"]]):
+            path = previous / (asset["path"] + suffix)
+            if previous not in path.resolve().parents:
+                raise RuntimeError("Inherited file escapes previous project")
+            if not path.is_file():
+                differences.append({"path": asset["path"] + suffix, "reason": "missing"})
+            elif data != path.read_bytes() or hashlib.sha256(data).hexdigest() != asset[key]:
+                differences.append({"path": asset["path"] + suffix, "reason": "generated_pair"})
     return {
+        "checked_generated_pairs": len(reproducible),
         "total": len(ledger["assets"]),
         "by_status": {key: sum(a["status"] == key for a in ledger["assets"]) for key in ("inherited", "reproducible", "retired")},
         "by_usage": {key: sum(a["usage"] == key for a in ledger["assets"]) for key in ("used", "unused", "unclear")},

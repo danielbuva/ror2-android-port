@@ -39,17 +39,23 @@ def generate_asset(asset, root=None):
     data = source.read_bytes()
     if hashlib.sha256(data).hexdigest() != asset["source_sha256"]:
         raise RuntimeError("Authored addition source hash mismatch: " + asset["source"])
-    shader = source.suffix == ".shader"
+    return data, shader_importer(asset["guid"], source.suffix == ".shader")
+
+
+def shader_importer(guid, shader=True):
+    """Author a minimal importer while preserving the selected asset identity."""
+    if not re.fullmatch(r"[a-f0-9]{32}", guid):
+        raise RuntimeError("Invalid shader importer GUID")
     # Independently authored minimal Unity importer schema. Preserve significant trailing spaces.
     meta = (
         "fileFormatVersion: 2\nguid: "
-        + asset["guid"]
+        + guid
         + ("\nShaderImporter:\n" if shader else "\nShaderIncludeImporter:\n")
         + "  externalObjects: {}\n"
         + ("  defaultTextures: []\n  nonModifiableTextures: []\n  preprocessorOverride: 0\n" if shader else "")
         + "  userData: \n  assetBundleName: \n  assetBundleVariant: \n"
     ).encode()
-    return data, meta
+    return meta
 
 
 def prepare(rows, recipe=None, root=None):

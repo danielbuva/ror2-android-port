@@ -23,7 +23,8 @@ FEATURES = [
 ]
 
 
-def load_analysis(path, identity, shader):
+def load_analysis(path, identity, shader, work=WORK, root=ROOT):
+    WORK, ROOT = Path(work).resolve(), Path(root).resolve()
     path = (ROOT / path).resolve()
     if WORK.resolve() not in path.parents:
         raise RuntimeError("Recovery evidence must be private")
@@ -36,7 +37,7 @@ def load_analysis(path, identity, shader):
     inventory = read(WORK / "inventory/files.json")
     if read(WORK / "config/accepted-input.json")["input_id"] != inventory["input_id"]:
         raise RuntimeError("Shader input not accepted")
-    source = game() / receipt["source_bundle"]
+    source = game(WORK) / receipt["source_bundle"]
     expected = next(x["sha256"] for x in inventory["files"] if x["path"] == receipt["source_bundle"])
     if sha(source) != expected or receipt["source_sha256"] != expected:
         raise RuntimeError("Shader source drift")
@@ -140,21 +141,27 @@ def render_state(state, ui=False):
     return text
 
 
-def generate():
+def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None):
+    """Generate into private work by default, or an isolated caller-owned output without updating pointers."""
+    WORK, ROOT = Path(work).resolve(), Path(root).resolve()
     selection = read(WORK / "config/shader-deferred-analysis.json")
-    out = WORK / "experiments/deferred-bindings" / now()
-    out.mkdir(parents=True)
+    out = Path(output) if output is not None else WORK / "experiments/deferred-bindings" / now()
+    out.mkdir(parents=True, exist_ok=output is not None)
     sources = out / "sources"
     sources.mkdir()
-    write(WORK / "deferred-bindings-current.json", {"path": str(out.relative_to(ROOT))})
+    if output is None:
+        write(WORK / "deferred-bindings-current.json", {"path": str(out.relative_to(ROOT))})
     result = {"success": False, "semantic_equivalence_proven": False, "PC_draw_validation_performed": False, "selection": selection, "programs": []}
     try:
-        standard = load_analysis(selection["standard"], -197252232775272061, "Hopoo Games/Deferred/Standard")
-        lighting = load_analysis(selection["lighting"], 5, "Hidden/Internal-DeferredShading")
+        standard = load_analysis(selection["standard"], -197252232775272061, "Hopoo Games/Deferred/Standard", WORK, ROOT)
+        lighting = load_analysis(selection["lighting"], 5, "Hidden/Internal-DeferredShading", WORK, ROOT)
         for key in ["d3dasm", "hlsl"]:
             path, pin = PINS[key]
             tool = WORK / path
-            if run(["git", "-C", tool, "rev-parse", "HEAD"]).stdout.decode().strip() != pin or run(["git", "-C", tool, "diff", "HEAD", "--"]).stdout:
+            if (
+                run(["git", "--no-optional-locks", "-C", tool, "rev-parse", "HEAD"]).stdout.decode().strip() != pin
+                or run(["git", "--no-optional-locks", "-C", tool, "diff", "--no-ext-diff", "HEAD", "--"]).stdout
+            ):
                 raise RuntimeError("Recovery tool pin drift")
         exe = WORK / PINS["d3dasm"][0] / "target/release/d3dasm"
         if sha(exe) != standard[4]["tool_binary_hashes"][str(exe.relative_to(WORK))]:
@@ -169,7 +176,7 @@ def generate():
             raise RuntimeError("Unexpected native material closure")
         from shader_programs import NativePrograms
 
-        emitter = NativePrograms(out, result, exe)
+        emitter = NativePrograms(out, result, exe, allow_independent=output is None, independent=independent)
         bound = emitter.bound
         block = emitter.block
         pair = emitter.pair
@@ -179,6 +186,8 @@ def generate():
         shadow_features = set(k for r in standard[2] if r["kind"] == "program" and r["pass_index"] == 1 for k in r["keywords"]) & set(FEATURES)
         for i, features in enumerate(feature_sets):
             name = "AndroidNativeStandard" + str(i)
+            if resources is not None and name not in resources:
+                continue
             vi, fi = pair(standard, 0, set(features) | {"LIGHTPROBE_SH", "UNITY_HDR_ON"})
             shader = (
                 '// Private recovered candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
@@ -243,5 +252,5 @@ def generate():
         raise
     finally:
         write(out / "receipt.json", result)
-    print(json.dumps({"success": True, "evidence": str(out.relative_to(ROOT)), "variants": result["variant_count"]}))
+    print(json.dumps({"success": True, "evidence": str(out.relative_to(ROOT)) if output is None else str(out), "variants": result["variant_count"]}))
     return out

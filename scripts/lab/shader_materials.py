@@ -89,13 +89,16 @@ def align_exported_subshader_tags(path, tree, evidence):
     }
 
 
-def generate():
+def generate(output=None, resources=None, work=WORK, root=ROOT, independent=None):
+    """Generate into private work by default, or an isolated caller-owned output without updating pointers."""
+    WORK, ROOT = Path(work).resolve(), Path(root).resolve()
     selection = read(WORK / "config/shader-material-analysis.json")
-    out = WORK / "experiments/material-bindings" / now()
-    out.mkdir(parents=True)
+    out = Path(output) if output is not None else WORK / "experiments/material-bindings" / now()
+    out.mkdir(parents=True, exist_ok=output is not None)
     sources = out / "sources"
     sources.mkdir()
-    write(WORK / "material-bindings-current.json", {"path": str(out.relative_to(ROOT))})
+    if output is None:
+        write(WORK / "material-bindings-current.json", {"path": str(out.relative_to(ROOT))})
     result = {
         "success": False,
         "semantic_equivalence_proven": False,
@@ -106,7 +109,7 @@ def generate():
     }
     try:
         contexts = {
-            name: load_analysis(selection[name], identity, shader)
+            name: load_analysis(selection[name], identity, shader, WORK, ROOT)
             for name, (identity, shader) in FAMILIES.items()
             if name in selection or name not in ["water", "water-single"]
         }
@@ -117,11 +120,14 @@ def generate():
             raise RuntimeError("Unmeasured native water topology selection")
         result["water_topology"] = topology
         result["water_geometry_approximation"] = topology == "original-vertices"
-        reflection = load_analysis(selection["reflections"], 3, "Hidden/Internal-DeferredReflections")
+        reflection = load_analysis(selection["reflections"], 3, "Hidden/Internal-DeferredReflections", WORK, ROOT)
         for key in ["d3dasm", "hlsl"]:
             relative, pin = PINS[key]
             tool = WORK / relative
-            if run(["git", "-C", tool, "rev-parse", "HEAD"]).stdout.decode().strip() != pin or run(["git", "-C", tool, "diff", "HEAD", "--"]).stdout:
+            if (
+                run(["git", "--no-optional-locks", "-C", tool, "rev-parse", "HEAD"]).stdout.decode().strip() != pin
+                or run(["git", "--no-optional-locks", "-C", tool, "diff", "--no-ext-diff", "HEAD", "--"]).stdout
+            ):
                 raise RuntimeError("Recovery tool pin drift")
         exe = WORK / PINS["d3dasm"][0] / "target/release/d3dasm"
         for context in list(contexts.values()) + [reflection]:
@@ -131,7 +137,7 @@ def generate():
         if WORK.resolve() not in material_file.parents or sha(material_file) != selection["material_inventory_sha256"]:
             raise RuntimeError("Measured material inventory drift")
         rows = [x.split("|") for x in material_file.read_text().splitlines()]
-        emitter = TessellationPrograms(out, result, exe)
+        emitter = TessellationPrograms(out, result, exe, allow_independent=output is None, independent=independent)
         families = []
         for ordinal, (name, context) in enumerate(contexts.items()):
             tree = context[0]
@@ -152,6 +158,8 @@ def generate():
             for i, keys in enumerate(sets):
                 try:
                     resource = "AndroidNativeFamily" + str(ordinal) + "Variant" + str(i)
+                    if resources is not None and resource not in resources:
+                        continue
                     text = (
                         '// Private native candidate; PC draw/semantic parity unverified.\nShader "Porting Lab/'
                         + resource
@@ -359,5 +367,5 @@ def generate():
         raise
     finally:
         write(out / "receipt.json", result)
-    print(json.dumps({"success": True, "variants": result["variant_count"], "evidence": str(out.relative_to(ROOT))}))
+    print(json.dumps({"success": True, "variants": result["variant_count"], "evidence": str(out.relative_to(ROOT)) if output is None else str(out)}))
     return out

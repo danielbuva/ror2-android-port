@@ -41,10 +41,30 @@ mutation at a time. Device acceptance is always the real device, never the edito
 Inherited-state ledger (`scripts/lab/inherited_state.py`, current):
 `./dev prototype --action inherited-state-check` verifies the inherited asset/meta
 pairs in `recipe/inherited-state.json` against the locally selected previous project,
-without staging or generation. `--work-dir PATH` selects a separate clone's local
-work tree. It reports status and static-use counts; lifecycle and comparison
+and regenerates the nine `generated_shader_pair` entries in isolated scratch,
+comparing both body and importer bytes with the previous project and ledger.
+`--work-dir PATH` selects a separate clone's local work tree. It reports status
+and static-use counts; lifecycle and comparison
 semantics are in [LOCAL_STATE.md](LOCAL_STATE.md#inherited-additions-ledger-j558).
 Host contracts: `tests/test_inherited_state.py`.
+
+Generator-owned shader additions (`scripts/lab/shader_additions.py`, current):
+composition prepares all nine pairs before writing, using the existing deferred
+and material generators with selected resources and temporary output directories.
+The shared authored importer schema supplies each ledger GUID. Generator inputs,
+selected pipeline receipts and final body/importer hashes are gated; staging does
+not read the previous project for these pairs or overwrite them with selected
+source copies. Temporary output is deleted on success or failure. DeferredLighting
+reuses hash-verified, validated independent HLSL intermediates from the selected
+pipeline receipt; it never invokes Wine in this isolated mode. The native DXBC,
+HLSL and bound layout must agree with that receipt. The selected deferred pipeline's
+`program-*-independent/program-*.hlsl` files remain required local inputs produced
+by `shader_programs.NativePrograms.bound`; the composition selection locates them,
+with no timestamped directory encoded in source. Other selected programs run
+the pinned native decompiler and roundtrip check in scratch. No rendering or
+input-bootstrap reproducibility follows from this host byte comparison.
+Host contracts: `tests/test_shader_additions.py`,
+`tests/test_shader_independent_reuse.py`.
 
 Project equivalence harness (`scripts/lab/project_manifest.py`, current):
 `./dev prototype --action project-manifest-capture` writes an ignored receipt of every file

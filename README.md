@@ -84,7 +84,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
-| `./dev prototype --action inherited-state-check` | Verify inherited local asset/meta hashes from the ledger; read-only (--work-dir selects local work). |
+| `./dev prototype --action inherited-state-check` | Verify inherited hashes and regenerate byte-proven shader pairs in scratch; work stays read-only (--work-dir selects local work). |
 | `./dev prototype --action authored-additions-check` | Compare tracked shader addition and generated importer bytes with migration staging; read-only. |
 | `./dev prototype --action asset-transforms-check` | Compare all recipe-generated asset/meta bytes with the project; read-only. |
 | `./dev prototype --action project-manifest-capture` | Capture generated-project file hashes and external inputs. |
