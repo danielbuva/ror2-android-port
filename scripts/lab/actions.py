@@ -24,6 +24,10 @@ def _inherited_check(function, kwargs, args):
     return function(**(dict(kwargs, work=args.work_dir) if getattr(args, "work_dir", None) else kwargs))
 
 
+def _rebuild_step(function, kwargs, args):
+    return function(step=args.step, dest=args.dest, compare_only=args.compare_only, work=args.work_dir, **kwargs)
+
+
 def _capture(function, kwargs, args):
     from common import WORK, now, write
 
@@ -82,6 +86,15 @@ def _repair_reconstruction(function, kwargs, args):
 # arguments, result formatting, timing-file updates and exit codes where needed.
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
+    Action(
+        "rebuild-step",
+        "rebuild",
+        "rebuild_action",
+        {},
+        "current",
+        "Rebuild --step assemblies under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination.",
+        handler=_rebuild_step,
+    ),
     Action(
         "assembly-transforms-check",
         "assembly_transforms",

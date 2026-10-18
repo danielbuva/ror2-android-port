@@ -17,6 +17,24 @@ Steps:
 - **R3–R8:** the post-composition builders in the order below.
 - **R9:** Unity import and build of the destination, then both device checks.
 
+R0/R1 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
+
+```sh
+./dev prototype --action rebuild-step --step assemblies
+./dev prototype --action rebuild-step --step assemblies --compare-only
+```
+
+Use `--work-dir ../../../work` when this checkout reads the shared local inputs;
+all outputs still go beneath this checkout's `work/rebuild/`. `--dest DIR` selects
+another destination under that root. R1 owns 98 paths: 49 DLLs and 49 generated
+importers, including installation-sourced SimpleJSON and the three J563 transforms.
+The recipe retains only source identities, GUIDs and settings; the common tracked
+template renders the importer bytes. The coordinator validates complete map
+membership and generated hashes before placement, then compares actual project
+bytes. `--compare-only` reads an existing destination. Synthetic host coverage is
+in `tests/test_rebuild.py`; real-data step execution remains an operator check.
+The audit below describes the J566 snapshot before this implementation.
+
 
 Read-only audit of the shared lab project, accepted input and export, current repo recipes,
 and experiment receipts. No builds, editor/device commands, doctor (which writes `work/`),

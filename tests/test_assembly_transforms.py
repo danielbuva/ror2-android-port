@@ -67,13 +67,20 @@ class AssemblyTransformsTests(unittest.TestCase):
 
     def run_tool(self, command, **kwargs):
         self.calls.append(command)
-        self.assertEqual(kwargs, {"timeout": 120})
+        self.assertEqual(kwargs["timeout"], 120)
+        temporary = Path(kwargs["cwd"])
+        self.assertTrue(temporary.is_relative_to(self.root / ".local"))
+        for key in ("DOTNET_CLI_HOME", "NUGET_PACKAGES", "NUGET_HTTP_CACHE_PATH", "NUGET_PLUGINS_CACHE_PATH", "TMPDIR", "TMP", "TEMP"):
+            self.assertTrue(Path(kwargs["env"][key]).is_relative_to(temporary))
         if command[1] == "build":
             # The tool is built from an isolated source copy without the checkout's obj/ and bin/.
             source = Path(command[2]).parent
             self.assertNotEqual(source, self.root / "tools/assembly-transforms")
             self.assertTrue((source / "AssemblyProbe.csproj").is_file())
             self.assertFalse((source / "obj").exists())
+            config = "-p:RestoreConfigFile=" + str(temporary / "NuGet.Config")
+            self.assertIn(config, command)
+            self.assertIn("<clear />", (temporary / "NuGet.Config").read_text())
         else:
             if self.tool_failure:
                 raise RuntimeError("synthetic tool failure")

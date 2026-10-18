@@ -52,6 +52,37 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
+Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0/R1):
+`./dev prototype --action rebuild-step --step assemblies` reconstructs the assembly
+cohort, then compares every selected map path with the current project's actual
+bytes. The ordered `STEPS` table declares each step's producer categories, path
+selection and builder; categories alone are too broad to select a subsystem.
+The local `receipts/provenance-map.json` supplies comparison membership and output
+hashes. `--work-dir PATH` selects read-only local inputs (including the legitimate
+installation configuration); the destination remains in **this clone's**
+`work/rebuild/<input_id>/lab-project`. `--dest DIR` may select another isolated
+project strictly beneath that rebuild root. Live-project destinations, redirects,
+nested symlinks and hard-linked output files are refused. No Unity or device
+operation is involved.
+
+`recipe/original-assemblies.json` pins 49 Managed source identities and importer
+parameters: 45 unchanged originals, installation-sourced SimpleJSON and three
+originals transformed using J563. `recipe/templates/original-assembly.meta`
+supplies the common importer schema; GUIDs, creation times and execution orders
+reproduce the retained metadata without copying it from the project or export.
+J563's shared `assembly_transforms.generate` builds an isolated tool copy and
+replays the pinned transforms, with tool intermediates, CLI home, package cache
+and temporary files beneath the destination. Scratch is removed on success or
+failure. The full 98-file cohort is validated before project files are placed;
+reruns overwrite only that cohort. No generation marker or other rebuild step is
+initialized yet.
+
+`--compare-only` requires an existing destination and performs no writes or tool
+execution. Reports list identical, different, missing (which side), and extra
+paths, with counts and a nonzero exit on differences. Files owned by other map
+steps may coexist; files absent from the map are extra. Host contracts:
+`tests/test_rebuild.py`; this is reconstruction tooling, not device acceptance.
+
 Inherited-state store and ledger (`scripts/lab/inherited_state.py`, current):
 `./dev prototype --action inherited-store-capture` validates and copies exactly the
 189 inherited asset/meta pairs from the selected previous project into

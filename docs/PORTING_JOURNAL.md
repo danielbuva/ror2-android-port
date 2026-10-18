@@ -5674,3 +5674,17 @@ source scenes, build-entry generation, staging and the Unity build) and the rule
 builds into a separate destination project, proven against the current project for the files the
 map attributes to it. The map itself stays local because it lists every game asset path. Design
 only; no code or APK changed.
+
+## J567 — Rebuild steps R0 and R1: destination harness and assembly placement
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+`scripts/lab/rebuild.py` adds the current action `rebuild-step`: each step writes only into a
+destination project (default `work/rebuild/<input_id>/lab-project`, refused if it resolves to
+`work/lab-project` or outside `work/rebuild/`), then compares every file the provenance map
+attributes to that step with the current project. `--compare-only` re-checks an existing
+destination. Step R1 (`assemblies`) replaces the untracked J430 placement script: it copies the 45
+original DLLs and `SimpleJSON.dll` from the installation's Managed folder, applies the three J563
+transforms, and renders all 49 importers from `recipe/templates/original-assembly.meta` with the
+per-DLL GUIDs, timestamps and execution orders in `recipe/original-assemblies.json` (no DLL bytes
+in Git). Real data: 98/98 files identical, the working project untouched. 609 host tests pass. Host
+tooling only; no APK change.

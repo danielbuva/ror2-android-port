@@ -117,11 +117,13 @@ class PrototypeActionTests(unittest.TestCase):
         return code, output.getvalue(), errors.getvalue()
 
     def test_registry_names_and_current_status_match_documented_contract(self):
-        self.assertEqual(set(actions.ACTIONS), set(EXPECTED) - {"inspect"})
+        # New rebuild action has its own argument/dispatch contracts in test_rebuild.
+        self.assertEqual(set(actions.ACTIONS) - {"rebuild-step"}, set(EXPECTED) - {"inspect"})
         self.assertEqual(len(actions._ENTRIES), len(actions.ACTIONS))
         self.assertEqual(
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
+                "rebuild-step",
                 "assembly-transforms-check",
                 "asset-transforms-check",
                 "authored-additions-check",
@@ -147,6 +149,8 @@ class PrototypeActionTests(unittest.TestCase):
                 self.assertIn(entry.status, ("current", "historical"))
                 self.assertTrue(entry.help)
                 self.assertNotIn("\n", entry.help)
+                if name == "rebuild-step":
+                    continue
                 primary = EXPECTED[name]["calls"][0]
                 self.assertEqual((entry.module, entry.function, entry.kwargs), (primary["module"], primary["function"], primary["kwargs"]))
 

@@ -1,5 +1,34 @@
 # Build recipes
 
+## Original assembly placement audit (R1, 2026-10-18)
+
+`original-assemblies.json` records only source/project identities, source SHA-256,
+GUIDs and importer parameters for 49 DLLs. All sources, including SimpleJSON,
+are the user's accepted installation's Managed files; no package fallback is used.
+The cohort is 45 unchanged original DLLs, SimpleJSON, and the three J563 originals
+before transformation. No DLL bytes, game implementation, serialized game asset
+bodies, private paths or installation/device identifiers are included.
+`templates/original-assembly.meta` is the common authored Unity PluginImporter
+schema, with per-DLL GUID, timestamp and execution-order parameters. Its fixed
+platform flags and validation settings preserve current import behavior.
+
+Read-only inspection verified all 49 source hashes and all 49 generated importer
+byte streams against the local current project. R1 applies the existing pinned
+J563 transformation recipe on top of the originals and gates all 98 final output
+hashes/sizes against the local provenance map before placement. Real-data step
+execution and its 98-path byte comparison remain an operator action; synthetic
+fixtures exercise the coordinator and its failure boundaries.
+
+Prior art: reviewed `docs/community-prior-art.md` and pinned ThunderKit
+`Editor/Addressable/Config/ImportAddressableCatalog.cs` at
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`. Its `File.Copy` technique retains
+source artifact bytes but does not initialize Android assembly importers or
+prove transformations. R1 therefore preserves installation bytes by identity,
+generates importer settings explicitly, and reuses J563 rather than introducing
+new assembly transforms. No community implementation was copied.
+
+## Recipe boundaries
+
 Tracked, audited inputs that describe how the lab turns a legitimate game installation into
 the Android build: authored transformations, configuration and reproducible build steps. The
 goal is a build that needs only this repository, the documented toolchain and the user's own
@@ -30,7 +59,8 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
-| `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker, mage-platform-guard receipt and audio-boundary-v3 receipt. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Audited 2026-10-17. | Current `assembly_transforms.py` rebuilds in disposable `.local/` scratch and compares the recipe, generation marker and project plugins without writing to work or the installation. No importer or project initializer is supplied. |
+| `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker, mage-platform-guard receipt and audio-boundary-v3 receipt. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Audited 2026-10-17. | Current `assembly_transforms.py` verifies in disposable `.local/` scratch. Its shared generator also supplies the three transformed DLLs to R1 below. |
+| `original-assemblies.json` | R1 installation assembly placement and importer initialization | Accepted Managed source hashes and project paths; retained GUIDs, creation times and execution orders. The tracked common importer template supplies fixed settings. | Identifiers/settings/hashes only; no DLL bytes, IL, decompiled source, private paths or account data. All 49 sources, including SimpleJSON, come from the legitimate installation. Audit above, 2026-10-18. | Current `rebuild.py` reconstructs 49 DLL/importer pairs under the isolated destination, applies J563, gates 98 output hashes/sizes and compares actual project bytes. |
 | `export-additions.json` | Inherited WarpRamp asset/meta pair | Hash-pinned accepted-export PNG and importer, identity operation, inherited GUID and importer creation-time parameter. | J548 identifiers, hashes and necessary importer parameters only. The creation time is an exporter field, not a device/account/session identifier. No PNG or importer body is tracked. Audited 2026-10-17. | `export_additions.py` returns the exact pair without history or filesystem writes; composition prepares it before staging. |
 | `unity-package-additions.json` | Used inherited TMP properties include pair | Unity's `com.unity.textmeshpro` 3.0.6 archive bundled with the pinned editor; outer archive, Essential Resources archive and selected include hashes; output GUID. | Package `LICENSE.md` identifies the Unity Companion License for Unity-dependent projects. The operator supplies the authorised installed package. Coordinates, hashes and selectors only; no third-party source, package, license text or importer body is tracked. Audited 2026-10-17. | `unity_package_additions.py` reads both archives in memory, selects one include and uses the existing authored importer generator. Composition stages the pair without installing TMP or changing assembly providers. |
 | `deck-transforms.json` | 14 inherited director-deck addition pairs | Seven hash-pinned accepted-export base-scene decks, category names, spawn-card GUID selections, stable output GUIDs and explicit field omissions. | J548 minimum identifiers/relationships only; no serialized cards, asset/importer bodies, protected content, private paths or device/account data. Input/source gates require the legitimate export. Audited 2026-10-17. | `asset_transforms.py` owns the `deck` constructor and read-only comparison; `composition_migration.stage` prepares all 14 before writes without reading their historical bytes. |

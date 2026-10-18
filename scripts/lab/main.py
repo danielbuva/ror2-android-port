@@ -30,7 +30,10 @@ p.add_argument(
         "prototype",
     ],
 )
-p.add_argument("--work-dir", help="Current: read-only local work root for inherited-state-check or assembly-transforms-check (default: work/)")
+p.add_argument("--work-dir", help="Current: read-only local inputs for inherited-state-check, assembly-transforms-check or rebuild-step (default: work/)")
+p.add_argument("--step", help="Current: rebuild-step name (assemblies)")
+p.add_argument("--dest", help="Current: rebuild-step destination beneath this clone's work/rebuild/")
+p.add_argument("--compare-only", action="store_true", help="Current: compare an existing rebuild-step destination without writing")
 p.add_argument("--full", action="store_true")
 p.add_argument("--force", action="store_true")
 p.add_argument("--json", action="store_true")
@@ -44,8 +47,13 @@ p.add_argument("--debug-options", help="Ignored local JSON for one integrated ru
 p.add_argument("--stage-exit", action="store_true", help="Current: check-baseline through one original stage exit and 10 s of next-stage play")
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
 a = p.parse_args()
-if a.work_dir and (a.command != "prototype" or a.action not in {"inherited-state-check", "assembly-transforms-check"}):
-    p.error("--work-dir requires prototype --action inherited-state-check or assembly-transforms-check")
+if a.work_dir and (a.command != "prototype" or a.action not in {"inherited-state-check", "assembly-transforms-check", "rebuild-step"}):
+    p.error("--work-dir requires prototype --action inherited-state-check, assembly-transforms-check or rebuild-step")
+is_rebuild = a.command == "prototype" and a.action == "rebuild-step"
+if is_rebuild and not a.step:
+    p.error("rebuild-step requires --step NAME")
+if (a.step or a.dest or a.compare_only) and not is_rebuild:
+    p.error("--step, --dest and --compare-only require prototype --action rebuild-step")
 if a.stage_exit and a.command != "check-baseline":
     p.error("--stage-exit requires check-baseline")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):

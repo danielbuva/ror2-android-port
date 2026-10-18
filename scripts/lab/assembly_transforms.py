@@ -33,6 +33,80 @@ def load_recipe():
     return recipe
 
 
+class RebuiltAssemblyDrift(RuntimeError):
+    def __init__(self, name, expected, actual, checked):
+        super().__init__("Rebuilt assembly drift: " + name)
+        self.difference = {"assembly": name, "reason": "rebuilt_sha256", "expected": expected, "actual": actual}
+        self.checked = checked
+
+
+def generate(managed, temporary, recipe):
+    """Replay J563 into caller-owned scratch; never write inputs or checkout tool outputs."""
+    cecil = Path(os.environ["UNITY_EDITOR"]).parent.parent / "MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll"
+    if sha(cecil) != recipe["cecil_sha256"]:
+        raise RuntimeError("Mono.Cecil drift")
+    inputs = {name: value for step in recipe["steps"] for name, value in step["inputs"].items()}
+    original = temporary / "original"
+    original.mkdir()
+    for source in managed.glob("*.dll"):
+        shutil.copyfile(source, original / source.name)
+    for name, expected in inputs.items():
+        if sha(original / name) != expected:
+            raise RuntimeError("Copied original assembly drift: " + name)
+    dotnet = Path.home() / ".local/share/dotnet/dotnet"
+    tool = temporary / "tool"
+    # Build an isolated copy of the tool sources: the checkout may hold obj/ and bin/ from
+    # ordinary probe_tool builds, which MSBuild would otherwise compile alongside.
+    sources = temporary / "src"
+    shutil.copytree(ROOT / "tools/assembly-transforms", sources, ignore=shutil.ignore_patterns("obj", "bin"))
+    # This tool has no package references; keep restore configuration and caches
+    # local as well, without consulting or initializing a user's NuGet config.
+    nuget_config = temporary / "NuGet.Config"
+    nuget_config.write_text("<configuration><packageSources><clear /></packageSources></configuration>\n")
+    environment = dict(os.environ)
+    environment.update(
+        DOTNET_CLI_HOME=str(temporary / "dotnet-home"),
+        NUGET_PACKAGES=str(temporary / "nuget"),
+        NUGET_HTTP_CACHE_PATH=str(temporary / "nuget-http"),
+        NUGET_PLUGINS_CACHE_PATH=str(temporary / "nuget-plugins"),
+        TMPDIR=str(temporary),
+        TMP=str(temporary),
+        TEMP=str(temporary),
+        DOTNET_CLI_TELEMETRY_OPTOUT="1",
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE="1",
+        DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE="true",
+        MSBUILDDISABLENODEREUSE="1",
+        DOTNET_CLI_USE_MSBUILD_SERVER="0",
+    )
+    process = dict(timeout=120, cwd=temporary, env=environment)
+    run(
+        [
+            dotnet,
+            "build",
+            sources / "AssemblyProbe.csproj",
+            "-o",
+            tool,
+            "-p:CecilPath=" + str(cecil),
+            "-p:RestoreConfigFile=" + str(nuget_config),
+            "-p:UseSharedCompilation=false",
+            "--nologo",
+        ],
+        **process,
+    )
+    checked = 0
+    for step in recipe["steps"]:
+        tokens = {"{managed}": original}
+        for name, expected in step["inputs"].items():
+            tokens.update({"{original:" + name + "}": original / name, "{output:" + name + "}": temporary / name, "{sha256:" + name + "}": expected})
+        run([dotnet, tool / "AssemblyProbe.dll", step["mode"]] + [tokens[token] for token in step["arguments"]], **process)
+        for name, expected in step["outputs"].items():
+            actual = sha(temporary / name)
+            checked += 1
+            if actual != expected:
+                raise RebuiltAssemblyDrift(name, expected, actual, checked)
+    return {name: temporary / name for step in recipe["steps"] for name in step["outputs"]}
+
+
 def check(work=None):
     work = Path(work or WORK).resolve()
     recipe = load_recipe()
@@ -62,41 +136,11 @@ def check(work=None):
     checked = 0
     with tempfile.TemporaryDirectory(prefix="assembly-transforms-", dir=scratch) as directory:
         temporary = Path(directory)
-        original = temporary / "original"
-        original.mkdir()
-        for source in managed.glob("*.dll"):
-            shutil.copyfile(source, original / source.name)
-        for name, expected in inputs.items():
-            if sha(original / name) != expected:
-                raise RuntimeError("Copied original assembly drift: " + name)
-        dotnet = Path.home() / ".local/share/dotnet/dotnet"
-        tool = temporary / "tool"
-        # Build an isolated copy of the tool sources: the checkout may hold obj/ and bin/ from
-        # ordinary probe_tool builds, which MSBuild would otherwise compile alongside.
-        sources = temporary / "src"
-        shutil.copytree(ROOT / "tools/assembly-transforms", sources, ignore=shutil.ignore_patterns("obj", "bin"))
-        run(
-            [
-                dotnet,
-                "build",
-                sources / "AssemblyProbe.csproj",
-                "-o",
-                tool,
-                "-p:CecilPath=" + str(cecil),
-                "--nologo",
-            ],
-            timeout=120,
-        )
-        for step in recipe["steps"]:
-            tokens = {"{managed}": original}
-            for name, expected in step["inputs"].items():
-                tokens.update({"{original:" + name + "}": original / name, "{output:" + name + "}": temporary / name, "{sha256:" + name + "}": expected})
-            run([dotnet, tool / "AssemblyProbe.dll", step["mode"]] + [tokens[token] for token in step["arguments"]], timeout=120)
-            for name, expected in step["outputs"].items():
-                actual = sha(temporary / name)
-                checked += 1
-                if actual != expected:
-                    return {"checked": checked, "differences": [{"assembly": name, "reason": "rebuilt_sha256", "expected": expected, "actual": actual}]}
+        try:
+            generate(managed, temporary, recipe)
+        except RebuiltAssemblyDrift as error:
+            return {"checked": error.checked, "differences": [error.difference]}
+        checked = len(outputs)
         for name, expected in outputs.items():
             matches = list((project / "Assets").rglob(name))
             if len(matches) != 1:
