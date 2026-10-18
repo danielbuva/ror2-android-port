@@ -287,6 +287,16 @@ def validate_project_layout(project):
         raise RuntimeError("Project layout Packages/manifest.json differs from recipe/project-layout.json; " + "; ".join(differences))
 
 
+def generate_runtime_config(project):
+    """Replace the runtime resource with exactly the audited recipe, including JSON types."""
+    write(Path(project) / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", _read_public_recipe("runtime-config.json"))
+
+
+def generate_content_recipe():
+    """Replace the bundle selection with exactly the audited recipe; retain no local extras."""
+    write(WORK / "scene-probe-build.json", _read_public_recipe("content.json"))
+
+
 def validate_runtime_config(project):
     """Check the public runtime selection without writing config or rejecting local extras."""
     relative = "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
@@ -298,14 +308,19 @@ def validate_content_recipe():
     _validate_public_recipe("content.json", WORK / "scene-probe-build.json", "Content recipe", "work/scene-probe-build.json")
 
 
-def _validate_public_recipe(recipe_name, staged_path, label, relative):
-    """Compare selected fields with strict JSON types; diagnostics disclose keys only."""
+def _read_public_recipe(recipe_name):
     try:
         recipe = read(RECIPE / recipe_name)
     except (OSError, ValueError) as error:
         raise RuntimeError("Cannot read recipe/" + recipe_name) from error
     if not isinstance(recipe, dict) or not recipe:
         raise RuntimeError("recipe/" + recipe_name + " must contain a nonempty object")
+    return recipe
+
+
+def _validate_public_recipe(recipe_name, staged_path, label, relative):
+    """Compare selected fields with strict JSON types; diagnostics disclose keys only."""
+    recipe = _read_public_recipe(recipe_name)
     try:
         staged = read(staged_path)
     except (OSError, ValueError) as error:

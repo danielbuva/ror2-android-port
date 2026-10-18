@@ -33,8 +33,8 @@ produce the file from the input, prefer tracking the generator.
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 92 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
-| `runtime-config.json` | Public selection in ignored `Resources/MovementBatchProbe.json`; validation only, no staging replacement yet | The lab's runtime selection for the accepted input `6af7ed94…` (Steam build 25475991); 183 present `SessionConfig` keys, preserving values and JSON types. | Authored options and necessary identifiers/relationships only; no protected content. 45 authored fields (44 present), 139 selector fields, 0 private/content fields. Excluded: `detailedVisualDiagnostics` is absent locally, so no value is invented. Audit details below, 2026-10-17. | `build.py` checks recipe keys against staged config after layout validation; extra local/obsolete keys remain allowed. Read-only validation in the existing accepted-input-gated build path; no reconstruction reader yet. |
-| `content.json` | Public selection in ignored `work/scene-probe-build.json`; validation only | Accepted input `6af7ed94…` (Steam build 25475991); 14 current build fields, 4,304 path strings, values and array order unchanged. | J548 permits these minimal selectors; no asset bodies, private paths or device/storage identities. Includes 61 Wwise asset UUID filenames, not middleware or banks. All fields retained; audit below, 2026-10-17. | `build.py` validates after runtime config on the accepted-input-gated whole-catalog path, before cache lookup/editor invocation. Does not generate or replace the work file. |
+| `runtime-config.json` | Public selection in ignored `Resources/MovementBatchProbe.json`; generated at whole-catalog build entry | The lab's runtime selection for the accepted input `6af7ed94…` (Steam build 25475991); 183 present `SessionConfig` keys, preserving values and JSON types. | Authored options and necessary identifiers/relationships only; no protected content. 45 authored fields (44 present), 139 selector fields, 0 private/content fields. Excluded: `detailedVisualDiagnostics` is absent locally, so no value is invented. Audit details below, 2026-10-17. | `build.py` checks recipe keys against staged config after layout validation; extra local/obsolete keys remain allowed. Build-entry generation replaces the whole object before existing accepted-input-gated validation; no extra keys survive generation. |
+| `content.json` | Public selection in ignored `work/scene-probe-build.json`; generated at whole-catalog build entry | Accepted input `6af7ed94…` (Steam build 25475991); 14 current build fields, 4,304 path strings, values and array order unchanged. | J548 permits these minimal selectors; no asset bodies, private paths or device/storage identities. Includes 61 Wwise asset UUID filenames, not middleware or banks. All fields retained; audit below, 2026-10-17. | `build.py` validates after runtime config on the accepted-input-gated whole-catalog path, before cache lookup/editor invocation. Build-entry generation replaces the work file from this recipe before validation. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -163,8 +163,8 @@ No present field contains an absolute/home path, device/storage/account identity
 private-run timestamp or protected content. Game asset paths are project-relative;
 resource paths, GUIDs, catalog names and sound event names identify content that
 must still be reconstructed from the operator's legitimate input. No external
-`work/` file was changed. Configuration generation and the removal of obsolete
-local keys remain for the second half of migration-removal commit 3.
+`work/` file was changed during extraction. Build-entry generation and removal of
+obsolete local keys are now implemented; see [Config generation](#config-generation).
 
 Every field is assigned below; the absent authored flag remains in its class.
 
@@ -292,3 +292,66 @@ uses `prefabAssets` from a separate runtime probe config, not this work manifest
 | `android/Assets/Editor/LabBuild.cs` | R 68 (presentation-only), 117 (current build); schema 218 | none |
 
 Implementation/verification outcome: [J550](../docs/PORTING_JOURNAL.md#j550--track-the-content-selection-as-a-public-recipe).
+
+## Config generation
+
+Migration-removal commit 3, second half: `build.generate_runtime_config(project)`
+and `build.generate_content_recipe()` write exactly the audited recipe objects to
+`Assets/LabLoadingScene/Resources/MovementBatchProbe.json` in the generated project
+and `work/scene-probe-build.json`. No defaults, inherited keys or new selectors are
+added. The existing atomic JSON writer sorts object keys recursively, indents by
+two spaces and adds a final newline. Array order, duplicates, case and JSON types
+are preserved. Missing, invalid or empty recipes fail clearly before that target
+is written. No recipe contents or provenance changed in this step.
+
+Both full and code-only `whole_catalog.build_integration` calls generate before
+source validation/staging. The existing validators remain post-generation checks.
+The first build after this change requires a full `whole-catalog-build`, because
+`Resources/MovementBatchProbe.json` is a payload input. Host checks do not establish
+project equivalence or device acceptance.
+
+### Current writers and ordering
+
+- `build.generate_runtime_config` and `build.generate_content_recipe`: authoritative
+  replacements at build entry. No subsequent current build step writes either file.
+- `composition_migration.stage`: retained intermediate writes of the retargeted
+  previous-project runtime config (including attempt, pause, cost and refreshed
+  scene contracts), and retargeted content selection. Both are replaced at build
+  entry. The migration itself still depends on the previous project; this step
+  removes that dependency only for the final build configs.
+- `integrated_objective.sanitize_optional_content`, reached by
+  `composition_migration.stage_missing_sources`: retained `prefabAssets` update
+  during dependency staging, before build-entry generation. Its asset transforms
+  are unchanged. It is not reached after generation in either current build path.
+
+Historical writers are unchanged: `source_scene_candidate.prepare`,
+`stage_variants.stage` (including rollback), `scene_runtime` (staging, snapshot
+copies, probe/config updates), `nova_bridge`, `primary_fire`, `integrated_results`,
+`integrated_moon`, and `integrated_objective.stage_objective`. Their earlier
+reader/writer inventory above remains the historical reference. Neither
+`LabBuild.cs` nor `whole_catalog` writes these configs after generation.
+
+### Current content-field readers checked
+
+- `android/Assets/Editor/LabBuild.cs`, `Build`: all 14 recipe fields listed in the
+  audit table above. Also checks optional `barrierEffect` and `nextStageScene`,
+  which were already absent and remain absent/default; neither is dropped by
+  generation. `BuildPresentation` reads `stageScene` and `nextStageScenes`.
+- `build.build` → `validate_runtime_support`: `objectiveSupportAssets` and
+  `prefabAssets`. `validate_content_recipe` compares every public recipe key.
+- `composition_migration.stage_missing_sources`: recursively collects all string
+  asset paths, without requiring any other key. Its sanitizer reads
+  `teleportMaterial`, `barrierEffect`, `playerDeathEffect`, `pickupDroplet`,
+  `genericPickup`, `teleporterIndicator`, `objectiveTMPSettings`,
+  `enemyRewardAssets`, `objectiveSupportAssets`, and `prefabAssets`.
+- `composition_migration.stage`: `prefabAssets`, recursive retargeting, then
+  `refresh_scene_contracts` reads `stageScene`. These are migration intermediates
+  before authoritative generation.
+- `build.build_cache_key` and `project_manifest._external_inputs`: full-file hash,
+  no field interpretation. `whole_catalog.build_integration`: existence check,
+  no content-field reads.
+
+No current reader requires a dropped field. Runtime readers and build field
+accesses are unchanged. Synthetic host generation fixtures include unrelated-file
+preservation, exact recipe output, strict validator compatibility, determinism,
+idempotence, missing/invalid recipes and both build entry paths.

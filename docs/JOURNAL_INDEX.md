@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J551](PORTING_JOURNAL.md#j551--generate-the-runtime-config-and-content-recipe-from-recipe) | 2026-10-17 | Generate the runtime config and content recipe from recipe/ | Migration-removal plan commit 3, second half (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J550](PORTING_JOURNAL.md#j550--track-the-content-recipe-as-a-public-recipe) | 2026-10-17 | Track the content recipe as a public recipe | The content recipe, under the J548 policy (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J549](PORTING_JOURNAL.md#j549--track-the-runtime-config-as-a-public-recipe) | 2026-10-17 | Track the runtime config as a public recipe | Migration-removal plan commit 3, first half (implemented by Codex at medium reasoning, reviewed by Claude), under the J548 policy. |
 | [J548](PORTING_JOURNAL.md#j548--policy-minimal-game-identifiers-in-public-recipes) | 2026-10-17 | Policy: minimal game identifiers in public recipes | User decision, 2026-10-17: public recipes may contain the minimum game-derived identifiers and relationships needed to locate, transform and reconstruct conten… |

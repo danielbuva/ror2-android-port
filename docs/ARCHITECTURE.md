@@ -180,7 +180,15 @@ writing the config. Extra staged keys remain allowed. The absent
 reader/writer inventory in `recipe/README.md`). `build.py` validates the work
 `scene-probe-build.json` after runtime config with the same strict equality helper,
 before cache lookup or editor invocation. Extra work keys remain allowed; the
-validator never writes either input. Existing staging still owns generation.
+validator never writes either input. At the start of both full and code-only
+`whole_catalog.build_integration`, `build.generate_runtime_config(project)` and
+`build.generate_content_recipe()` replace these files from the public recipes
+before source validation or staging. They use sorted, two-space JSON plus a final
+newline, preserve values/types/list order, and retain no extra keys. No later
+current build step writes either file. Composition migration still writes its
+intermediate configs before this entry point; those writes are superseded here.
+The first build after this change must be a full `whole-catalog-build`: the runtime
+resource is a payload input. See the [generation audit](../recipe/README.md#config-generation).
 
 ## File status
 
@@ -229,13 +237,11 @@ Still open:
    `integrated_objective.py:56`) and is carried forward by hash. The removal plan is
    [migration-removal-plan.md](migration-removal-plan.md); commits 1–2 are done (harness,
    source manifest, script GUIDs and packages), 3–9 are open.
-2. **Runtime recipe generation is unfinished.** `recipe/runtime-config.json` tracks and
-   validates 183 present public fields of the 184-field `SessionConfig`; it does not yet
-   generate the local config (369 keys, including 186 outside `SessionConfig`).
-   `recipe/content.json` now tracks and validates the 14 present public content
-   fields (including 4,184 mixed asset selectors); generation of the local
-   `work/scene-probe-build.json` remains unfinished. See
-   [recipe audits](../recipe/README.md#content-recipe-audit-2026-10-17).
+2. **Direct composition remains unfinished.** The current build now generates both
+   runtime and content configs from recipes, without inherited extra keys. The
+   earlier composition migration still uses previous-project configs for its own
+   staging/contracts; removing that chain belongs to later steps of the
+   [migration removal plan](migration-removal-plan.md).
 3. **The session is still selected by id.** `Start` waits 8 s and picks the session from a
    string id; the playable spine runs `GameSession()` (J513) and the 116 historical cases live
    in `LabExperiments.cs`. Having `Start` call `GameSession` directly is the remaining step.

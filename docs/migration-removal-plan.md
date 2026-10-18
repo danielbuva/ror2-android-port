@@ -6,7 +6,10 @@ the Unity project directly from the accepted input, the export and audited
 (gpt-6.1-sol), line references checked by Claude, 2026-10-17. Status: commit 2's
 source-membership half is done (`recipe/runtime-sources.json`, J509); commit 1, the
 equivalence harness, is done (J510); commit 2's metadata and package half is done (J547;
-ProjectSettings stay inherited); commits 3–9 are open. Line numbers drift; re-check before
+ProjectSettings stay inherited); commit 3's runtime/content recipes and build-entry
+generators are implemented (J549/J550 and the second-half generation change;
+host verification only for generation). Direct composition and commits 4–9 remain
+open. Line numbers drift; re-check before
 use.
 
 Read-only analysis, 2026-10-17. Tracked source, policy, architecture, LOCAL_STATE,

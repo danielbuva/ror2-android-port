@@ -1227,12 +1227,15 @@ def preservation_descriptor(roots):
 
 
 def build_integration(code_only=False):
-    from build import build, freeze_whole_payload, validate_runtime_source_membership
+    from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from animation_bindings import repair as repair_animation_bindings
     from body_visual_map import generate as generate_body_visual_map
     from common_assets_map import generate as generate_common_asset_map
 
     project = WORK / "lab-project"
+    # Both build paths own their config inputs; never inherit migration or probe extras.
+    generate_runtime_config(project)
+    generate_content_recipe()
     runtime_sources = validate_runtime_source_membership(project)
     out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
     attempt = ROOT / read(out / "integration-latest.json")["path"]

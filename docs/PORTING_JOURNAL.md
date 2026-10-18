@@ -5429,3 +5429,20 @@ values; validation only. 453 host tests pass. A code-only build passed the check
 `5f9355e2ae3241e762aae42665df01abd5a390c13e89c48a50ad01c73f528028`), and `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied
 profile runs unchanged (`work/experiments/baseline/20261018T045313.759519Z`). App stopped; OLED asleep. With J549 this means both untracked
 recipes from the debt list are now public and validated; generating them is next.
+
+## J551 — Generate the runtime config and content recipe from recipe/
+
+Migration-removal plan commit 3, second half (implemented by Codex at medium reasoning, reviewed
+by Claude). Every whole-catalog build now writes the runtime config
+(`Resources/MovementBatchProbe.json`) from `recipe/runtime-config.json` and
+`work/scene-probe-build.json` from `recipe/content.json` before staging and validation, instead
+of inheriting both from the migrated project. Only the recipe keys are written (183 config keys,
+14 content fields); the 185 legacy config keys and content fields no current code reads are
+dropped. Codex checked every current reader (`LabBuild.Build` reads exactly the 14 fields);
+`composition_migration.stage`'s writes are now superseded by generation, and historical writers
+are untouched. 461 host tests pass. Because the config is a payload input, the first build was a
+full `whole-catalog-build`: zero errors in 150 s, APK `6d3e1526231ac6a60dc8b5d9cb8300a4eb4ce8d254259db135a7f2fad3b4e451`; the generated files equal the
+recipes, and the payload sync transferred nothing (the bundles are identical).
+`./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T051043.105146Z`) and
+`--stage-exit` passed (`work/experiments/baseline/20261018T051411.729949Z`). App stopped; OLED
+asleep. The runtime config and content recipe no longer depend on the previous project.
