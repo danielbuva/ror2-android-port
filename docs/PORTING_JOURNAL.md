@@ -5864,3 +5864,42 @@ minted GUIDs, failing on any reference. Also fixed: R9's editor guard refused on
 leaves behind after exit; it now refuses only when `lsof` shows a holder (`ede1d04`). Real data:
 `importer-identities` 286/286 identical, then `validate-bindings` and the R9 preflight passed.
 740 host tests pass. Host tooling only; no APK change.
+
+## J576 — First full R9 Unity build of the rebuilt destination; generation-identity mismatch
+
+Phase 2, from-scratch rebuild (run by Claude). Hypothesis: the R1–R8 destination, with the J575
+importers, builds in the exact editor into an APK that passes both device checks. The lab MCP
+editor on `work/lab-project` was stopped with the operator's approval and restarted afterwards.
+`unity-build` imported the fresh destination and ran the full content build in 40 minutes. Unity
+reported `Succeeded` and produced APK
+`c47d99602d40c6b7f71f30ec8f9269b3828c216f22b4bb0b033fe120c3897a14`, but `LabBuild` counted the
+build report's two errors, so R9 refused and wrote no official receipt. Both errors are
+`RoR2.UI.TimerText.OnValidate` logging "TimerText does not specify a target label" while the
+player build loads `RecoveredUI/Hud.prefab` (86 such messages in all), which is byte-identical
+to the working project's. A plausible reason is that a fresh Library reloads that object, while
+the working project's warm builds do not. The log also has 594 "Shader could not be loaded"
+exceptions (NGSS, Decalicious) from game `OnEnable` during asset-bundle builds; they are not
+counted errors. The gate was not loosened.
+
+R9's own comparison functions were then run by hand (`.rebuild/unity-build-manual.json`). Both
+R9 obligations (`ProjectSettings.asset`, item-behaviors `link.xml`) and all 28 deferred graphs
+are identical. Of the other Unity-generated files, 1,511 are identical, all 3,227 folder metas
+differ only by their minted GUID, and four differ: `Lab.unity` (re-saved every build) plus three
+importer/render-texture files whose fields Unity reordered. No file references a minted folder
+GUID (81,303 scanned). The APK is not equivalent: 545 entries identical, three signing, 2 build
+metadata, `libil2cpp.so` (+64 KB) and `global-metadata.dat` (+15 KB) differ, 13 data entries
+differ and 7 are missing.
+
+Device (installed in place, adopted storage, destination payload synced): both checks failed at
+the first report, `Composed APK/catalog generation mismatch` in
+`WholeCatalogComposed.ConfigureLocations`. Cause: R3 regenerated the catalog manifest with a new
+attempt (`integration-20261018T103835…`), which the destination payload carries, while R7 writes
+the bootstrap from the pinned historical attempt (`integration-20261014T050839…`) to stay
+byte-identical with the working project. The known-good APK `578015c2…` and the default payload
+were then reinstalled, and `./dev check-baseline` passed (35.2 s on Lakes). App stopped, OLED
+asleep. Evidence: `work/experiments/baseline/20261018T181858.597235Z` and `…181928.936528Z`.
+
+Revisit: give R3's regenerated manifest the pinned attempt identity in the rebuild path, so
+payload and bootstrap agree; then investigate the remaining code-size difference (stripping or
+assembly membership) and decide how R9 treats editor-only `OnValidate` errors that appear only
+with a fresh Library.

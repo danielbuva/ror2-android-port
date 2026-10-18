@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J576](PORTING_JOURNAL.md#j576--first-full-r9-unity-build-of-the-rebuilt-destination-generation-identity-mismatch) | 2026-10-18 | First full R9 Unity build of the rebuilt destination; generation-identity mismatch | Phase 2, from-scratch rebuild (run by Claude). |
 | [J575](PORTING_JOURNAL.md#j575--pre-import-importer-identities-folder-importers-left-to-unity) | 2026-10-18 | Pre-import importer identities; folder importers left to Unity | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
 | [J574](PORTING_JOURNAL.md#j574--r9-unity-build-harness-device-check-of-the-destination-capable-labbuild) | 2026-10-18 | R9 Unity-build harness; device check of the destination-capable LabBuild | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J573](PORTING_JOURNAL.md#j573--rebuild-settings-producers-r9-obligations-and-regenerated-store-files) | 2026-10-18 | Rebuild: settings producers, R9 obligations and regenerated store files | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
