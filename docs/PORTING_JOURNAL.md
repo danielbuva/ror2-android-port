@@ -5183,3 +5183,14 @@ passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchang
 App stopped; OLED asleep. Codex's ranking (batches of independent files, lowest risk first;
 23 files not worth extracting; Moon files deferred because neither check reaches them) sets
 the order for the remaining owners.
+
+## J533 — Extract the healing and legendary item owners
+
+Phase 4 step 5, batch 2 (implemented by Codex, reviewed by Claude). `WorldHealingItemsBoundary.cs`
+and `WorldLegendaryItemsBoundary.cs` each gained a nested `IDisposable` owner
+(`WorldHealingItemsSession`, `WorldLegendaryItemsSession`); all eight of their fields were
+private. The nine moved bodies are token-identical apart from `coordinator.` qualifiers, and
+the scan of the 94 nested-class lines found no unqualified coordinator access. Zero-error
+code-only build, APK `147a839f20453bc656308f32cced25abe12c0d9563f1e3aed1b1c61d0bb5baed`, both owners checked in the staged project. `./dev check-baseline`
+passed with 35.2 s on Lakes, no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261018T000142.472485Z`).
+App stopped; OLED asleep.
