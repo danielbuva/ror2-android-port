@@ -122,6 +122,7 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
+                "assembly-transforms-check",
                 "asset-transforms-check",
                 "authored-additions-check",
                 "inherited-state-check",

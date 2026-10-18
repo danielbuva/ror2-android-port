@@ -5610,3 +5610,20 @@ runtime and are candidates for retirement, but are preserved. Like the 166 used 
 differ (J559), these need a new, device-verified contract rather than a byte proof: regenerate
 with today's generator or the editor, then verify on the Nova before retiring the inherited copy
 (J558).
+
+## J563 — Reproduce the transformed plugin assemblies from the originals
+
+Migration-removal plan commit 7 (implemented by Codex at medium reasoning, reviewed and fixed by
+Claude). The three transformed assemblies the project carried forward by hash are reproducible:
+`--optional-presentation-guard` on the original `RoR2.dll`, and `--wwise-unavailable` on the
+original `AK.Wwise.Unity.API.dll` and `AK.Wwise.Unity.MonoBehaviour.dll`, each from the originals
+(the historical `AudioGuard` change is part of `OptionalPresentationGuard`). Outputs match the
+recorded `transformed_assemblies` hashes and the project's DLLs byte for byte.
+`recipe/assembly-transforms.json` records the ordered steps, arguments and hashes, and the current
+action `assembly-transforms-check` rebuilds the tool and the three assemblies in disposable scratch,
+reading the legitimate installation without modifying it, verifies them, and cleans up. On the real
+installation the first run failed to compile the tool: with its intermediate output moved, MSBuild
+also compiled the checkout's `obj/` from ordinary `probe_tool` builds (duplicate assembly
+attributes). Claude made the check build an isolated copy of the tool sources without `obj/` and
+`bin/`; a host test covers it. Result: 3/3 assemblies identical. 586 host tests pass. Host tooling
+only; no APK change.

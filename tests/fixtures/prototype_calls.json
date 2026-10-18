@@ -1,4 +1,5 @@
 {
+  "assembly-transforms-check": {"calls": [{"module": "assembly_transforms", "function": "check_action", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "inherited-state-check": {"calls": [{"args": [], "function": "check_action", "kwargs": {}, "module": "inherited_state"}], "effects": [], "exit": null, "stdout": ""},
   "authored-additions-check": {"calls": [{"args": [], "function": "check_action", "kwargs": {}, "module": "authored_additions"}], "effects": [], "exit": null, "stdout": ""},
   "asset-transforms-check": {"calls": [{"module": "asset_transforms", "function": "check_action", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},

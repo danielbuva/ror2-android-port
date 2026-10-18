@@ -83,6 +83,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "assembly-transforms-check",
+        "assembly_transforms",
+        "check_action",
+        {},
+        "current",
+        "Rebuild the three transformed plugins from originals in disposable .local scratch and verify hashes; --work-dir selects read-only local inputs.",
+        handler=_inherited_check,
+    ),
+    Action(
         "inherited-state-check",
         "inherited_state",
         "check_action",

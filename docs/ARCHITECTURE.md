@@ -20,7 +20,7 @@ synced content payload comes out. Everything game-derived stays under the ignore
 | 1 | Accept input | `./dev inspect --full`, then record the ID in `config/accepted-input.json` by hand | `scripts/lab/inventory.py` | `inventory/` |
 | 2 | Check before building | `./dev preflight` (also run by `build`) | `scripts/lab/build.py` (`preflight`) | none (refuses on drift) |
 | 3 | Decompile and export | `./dev decompile`, `./dev export-project` | `scripts/lab/recovery.py` | `config/reconstruction.json`, exported project |
-| 4 | Assembly transforms | no current command; see [debt](#known-structural-debt) | `tools/assembly-transforms/` (`OptionalPresentationGuard`, `WwiseUnavailable`, `AudioGuard`) | transformed `RoR2.dll`, recorded by hash |
+| 4 | Assembly transforms | `./dev prototype --action assembly-transforms-check` (verification only) | `scripts/lab/assembly_transforms.py` → `tools/assembly-transforms/` | none; verifies three transformed plugins in disposable `.local/` scratch |
 | 5 | Compose the project | `./dev prototype --action composition-update-stage`, then `composition-update-dependencies` | `scripts/lab/composition_migration.py` | `lab-project/` |
 | 6 | Whole-catalog content | `whole-catalog-prepare` → `-host` → `-repair-bindings` (when recorded) → `-contracts` → `-host-providers` | `scripts/lab/whole_catalog.py`, `tools/catalog/` | `experiments/whole-catalog/<timestamp>/` |
 | 7 | Bundles, payload, APK | `whole-catalog-build`, or `whole-catalog-code-build` for a code-only change | `whole_catalog.py` (writes the linker descriptor through `preservation_descriptor`, J506) → `build.py` → exact editor via MCP | APK + payload receipts |
@@ -37,6 +37,20 @@ which makes `PortSession.Start` exit: it checks catalog registration
 attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
+
+Assembly transform verification (`scripts/lab/assembly_transforms.py`, current):
+`recipe/assembly-transforms.json` pins the accepted input, AssemblyProbe sources,
+Mono.Cecil and ordered arguments/input/output hashes. The checker first applies
+`--optional-presentation-guard` to original `RoR2.dll`, then independently applies
+`--wwise-unavailable` to the original API/MonoBehaviour Wwise pair. `AudioGuard` is
+historical; the optional presentation transform already includes its getter change.
+The checker copies managed DLLs to scratch for resolution, builds the tool there,
+and compares rebuilt hashes with the recipe, generation marker and uniquely placed
+project plugins. Any drift fails. `--work-dir` selects read-only inputs in another
+local work tree. Temporary tool/intermediate/plugin files are removed on success
+or failure; there is no persistent state. This verifies plugin bytes only, not
+importers, script orders or project initialization. Host contracts:
+`tests/test_assembly_transforms.py`.
 
 Inherited-state ledger (`scripts/lab/inherited_state.py`, current):
 `./dev prototype --action inherited-state-check` verifies the inherited asset/meta
@@ -356,8 +370,9 @@ Still open:
 1. **No from-scratch build.** The project is still made by migrating a previous project
    (`composition_migration.stage`); seven path families it reads have no producer in the repo
    ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
-   and the transformed `RoR2.dll` was produced by historical actions (`scene_runtime.py:542`,
-   `integrated_objective.py:56`) and is carried forward by hash. The removal plan is
+   and the generation marker still lacks a full assembly-map initializer. The three
+   transformed plugins are now reproducible through `assembly-transforms-check`,
+   but composition still carries them forward by hash. The removal plan is
    [migration-removal-plan.md](migration-removal-plan.md); commits 1–2 are done (harness,
    source manifest, script GUIDs and packages), 3–9 are open.
 2. **Direct composition remains unfinished.** The current build now generates both

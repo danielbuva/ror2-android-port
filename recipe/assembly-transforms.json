@@ -1,0 +1,53 @@
+{
+  "cecil_sha256": "8b33668cd03b78b7bcaa96eac82488d88c7c89416f82037ecbe2b781ab9642f8",
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "schema": 1,
+  "steps": [
+    {
+      "arguments": [
+        "{original:RoR2.dll}",
+        "{output:RoR2.dll}",
+        "{sha256:RoR2.dll}",
+        "{managed}"
+      ],
+      "inputs": {
+        "RoR2.dll": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d"
+      },
+      "mode": "--optional-presentation-guard",
+      "outputs": {
+        "RoR2.dll": "f12f084c7730e39480202b37e65a4a1099e083604a37c5942317a4d1180ce7cf"
+      }
+    },
+    {
+      "arguments": [
+        "{original:AK.Wwise.Unity.API.dll}",
+        "{output:AK.Wwise.Unity.API.dll}",
+        "{sha256:AK.Wwise.Unity.API.dll}",
+        "{original:AK.Wwise.Unity.MonoBehaviour.dll}",
+        "{output:AK.Wwise.Unity.MonoBehaviour.dll}",
+        "{sha256:AK.Wwise.Unity.MonoBehaviour.dll}",
+        "{managed}"
+      ],
+      "inputs": {
+        "AK.Wwise.Unity.API.dll": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
+        "AK.Wwise.Unity.MonoBehaviour.dll": "f0449ab6ca73eb34d44fe2cf72f7e2f4bca5e35fd56ef7fa380787b738c66da7"
+      },
+      "mode": "--wwise-unavailable",
+      "outputs": {
+        "AK.Wwise.Unity.API.dll": "107295e478a58ef295a83228111f375c536861bc9081f482d638c59899bf495c",
+        "AK.Wwise.Unity.MonoBehaviour.dll": "c06f9ed168fd51bb064602ce9ca88a1868d62655192e20ae8d4e68b677cd0d89"
+      }
+    }
+  ],
+  "tool_sources": {
+    "tools/assembly-transforms/AssemblyProbe.csproj": "72af7a71d7476ab4633780e2f76b54de5aaacbc202e5b26dd0780633986f330e",
+    "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",
+    "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
+    "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
+    "tools/assembly-transforms/OptionalPresentationGuard.cs": "27e28313f22bfdba0ef1a25bed770be6848c6f16415d3d1aac505c1fdaceca49",
+    "tools/assembly-transforms/Program.cs": "adfc73412c86e7aa54839be1d95bd1b95d13567ab64fd7c13ca865831333be72",
+    "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",
+    "tools/assembly-transforms/Slice.cs": "6d25f9bf0c8f8f4107708d32d0275fb728ffe06de81ec1fdee7fcb32962bf494",
+    "tools/assembly-transforms/WwiseUnavailable.cs": "81ebaa69b8c40a19c2068dfcb856ceffe67a0b3d4be8852936ffcbedb8486ba3"
+  }
+}

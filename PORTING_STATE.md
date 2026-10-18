@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J562**. This page is the current snapshot only: replace its
+Last updated 2026-10-17 after **J563**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
