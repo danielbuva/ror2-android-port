@@ -64,6 +64,10 @@ R3 owns the 259 non-export files attributed to `prepare_integration`. R4 owns
 share the destination-aware I/O boundary with their real actions. Each step checks
 all selected output hashes/sizes before flushing project writes, then compares
 actual bytes against the current project; `--compare-only` also works for both.
+R3 validates the `bootstrap-identity.json` hash pin in `build-entry-inputs.json`
+and uses its attempt for both the regenerated integration directory and manifest.
+R7 requires that same identity and generates its bootstrap directly from R3's
+manifest. Ordinary `whole-catalog-prepare` retains timestamp naming.
 R4 requires R3's completion marker. The build selection names 23 generated source scenes
 that R6 produces; in the rebuild path only, R4 defers required paths whose provenance names a
 builder outside R3/R4 and lists them in its receipt (`deferred_to_later_steps`), and
@@ -159,7 +163,7 @@ progression roots. Existing importers are preserved, never allocated by R8.
 
 Explicit added blockers in `recipe/build-entry-inputs.json`: three decompiled
 source files, one imported-contract result and one manifest read **only** for
-the historical bootstrap attempt identity. Each is hash-pinned; none is claimed
+the historical R3/R7 attempt identity. Each is hash-pinned; none is claimed
 regenerated. Together with R3/R4's ten and R5's two, there are **17** retained
 local input records. `recipe/rebuild-binding-targets.json` is public identifier
 membership, not a retained content input. See the provenance/privacy audit in
@@ -505,6 +509,10 @@ but J547 supplies a checker rather than a complete initializer. No game readines
 ## R9: isolated Unity import/build (current; operator device gate pending)
 
 `unity-build` runs only after a passing `validate-bindings` on the same destination.
+Both R9 host preflight and the direct build entry refuse missing or mismatched
+destination manifest/bootstrap input or attempt identities before invoking Unity.
+Destinations generated before this check require R3 and R7 replay; changing only
+the bootstrap would leave the payload inconsistent.
 `scripts/lab/unity_rebuild.py` coordinates the read-only host preflight, exclusive R9
 lock, batch invocation and comparisons. It calls the destination parameter of
 `whole_catalog.build_integration` → `build.build` → `LabBuild.BuildDestination` →

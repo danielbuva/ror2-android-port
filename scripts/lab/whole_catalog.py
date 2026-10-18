@@ -854,11 +854,13 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
     return resolved
 
 
-def prepare_integration(io=None):
+def prepare_integration(io=None, *, attempt=None):
     """Import the complete discovered closure, reusing existing GUID owners once."""
     from composition_io import StageIO
 
     io = io or StageIO()
+    if attempt is not None and (not io.rebuilding or not re.fullmatch(r"integration-[A-Za-z0-9._-]+", attempt)):
+        raise RuntimeError("Pinned integration attempt requires destination rebuild")
     io.preflight()
     out = io.catalog()
     export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
@@ -893,7 +895,7 @@ def prepare_integration(io=None):
     remaps = io.read(RECIPE / "hud-ui-remaps.json")
     if remaps["input_id"] != closure["input_id"]:
         raise RuntimeError("UI remaps belong to different input")
-    destination = out / ("integration-" + now())
+    destination = out / (attempt if attempt is not None else "integration-" + now())
     io.mkdir(destination)
     mapped = {}
     copies = []

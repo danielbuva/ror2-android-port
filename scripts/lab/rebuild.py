@@ -195,6 +195,9 @@ def safe_destination(destination, input_id, work):
     return resolved
 
 
+UNITY_OWNED = frozenset(("Library", "Temp", "Logs", "UserSettings"))
+
+
 def compare(destination, project, expected, provenance, owns, producers=None):
     result = {status: [] for status in ("identical", "different", "missing", "extra")}
     # Deep comparison reads actual bytes, never shallow stat/mtime equality.
@@ -210,7 +213,8 @@ def compare(destination, project, expected, provenance, owns, producers=None):
     for target in sorted(destination.rglob("*")):
         if target.is_file():
             path = target.relative_to(destination).as_posix()
-            if path == ".port-input.json" or path.startswith(".rebuild/"):
+            # R9's editor caches are not project inputs and belong to no step.
+            if path == ".port-input.json" or path.startswith(".rebuild/") or path.split("/", 1)[0] in UNITY_OWNED:
                 continue
             if path not in provenance or (owns(path) and path not in expected and (producers is None or provenance[path]["producer"] in producers)):
                 result["extra"].append(path)

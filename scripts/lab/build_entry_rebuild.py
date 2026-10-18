@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from catalog_rebuild import CatalogIO
+from catalog_rebuild import CatalogIO, bootstrap_identity
 from common import RECIPE, game, read, sha
 from scene_rebuild import finish, require_step
 
@@ -52,6 +52,8 @@ def build_entries(destination, work, input_id, expected, provenance):
     io = BuildEntryIO(work, destination, input_id)
     io.preflight()
     manifest = io.manifest()
+    if manifest["attempt"] != bootstrap_identity(work, input_id):
+        raise RuntimeError("R3 manifest attempt differs from pinned bootstrap identity; rerun catalog-closure")
     contract = io.read(io.catalog() / "original-catalog-contract.json")
     if contract["input_sha256"] != sha(game(work) / "Risk of Rain 2_Data/Managed/RoR2.dll"):
         raise RuntimeError("Original visual references require accepted assembly")
@@ -66,12 +68,7 @@ def build_entries(destination, work, input_id, expected, provenance):
                 raise RuntimeError("Animation source escapes accepted export")
             io.apply(destination / path, copy=source)
     generate_build_maps(io, manifest, contract, io.inputs / "CharacterBody.cs")
-    # Only the historical attempt identity comes from this pinned record. Locations,
-    # keys, pool identities and closure are regenerated in the destination by R3.
-    identity = io.read(io.inputs / "bootstrap-identity.json")
-    if identity["input_id"] != input_id:
-        raise RuntimeError("Bootstrap identity input mismatch")
-    generate_build_bootstrap(io, dict(manifest, attempt=identity["attempt"]), io.read(io.catalog() / "reconciled-closure.json"))
+    generate_build_bootstrap(io, manifest, io.read(io.catalog() / "reconciled-closure.json"))
     finish(io, "build-entries", input_id, expected, provenance)
 
 

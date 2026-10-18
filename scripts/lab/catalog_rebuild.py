@@ -1,9 +1,28 @@
 """Host-only R3/R4 replay. Analysis requiring Unity remains an explicit pinned debt."""
 
 from pathlib import Path
+import re
 
 from common import RECIPE, read, sha
 from composition_io import StageIO
+
+
+def bootstrap_identity(work, input_id):
+    """Read the historical generation identity through its public hash pin only."""
+    from rebuild import relative_path
+
+    recipe = read(RECIPE / "build-entry-inputs.json")
+    if recipe["schema"] != 1 or recipe["input_id"] != input_id:
+        raise RuntimeError("Bootstrap identity requires accepted input")
+    row = recipe["files"]["bootstrap-identity.json"]
+    relative_path(row["path"])
+    source = Path(work) / row["path"]
+    if not source.resolve().is_relative_to(Path(work).resolve()) or sha(source) != row["sha256"]:
+        raise RuntimeError("Recorded build-entry input drift: bootstrap-identity.json")
+    identity = read(source)
+    if identity["input_id"] != input_id or not re.fullmatch(r"integration-[A-Za-z0-9._-]+", identity.get("attempt", "")):
+        raise RuntimeError("Invalid bootstrap identity")
+    return identity["attempt"]
 
 
 class CatalogIO(StageIO):
@@ -62,8 +81,9 @@ def catalog_closure(destination, work, input_id, expected, provenance):
     config = destination / ".rebuild/composition/scene-probe-build.json"
     if not config.is_file():
         raise RuntimeError("Catalog closure requires destination composition config from R2")
+    attempt = bootstrap_identity(work, input_id)
     io = CatalogIO(work, destination, input_id)
-    prepare_integration(io)
+    prepare_integration(io, attempt=attempt)
     verify_outputs(io, expected, provenance)
     io.write(destination / ".rebuild/catalog-closure-complete.json", dict(input_id=input_id))
     io.flush()

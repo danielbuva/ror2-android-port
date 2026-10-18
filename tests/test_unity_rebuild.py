@@ -42,7 +42,8 @@ class UnityRebuildTests(unittest.TestCase):
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text("protected")
         write(self.dest / ".rebuild/catalog-inputs/integration-latest.json", dict(path="destination/.rebuild/catalog-inputs/integration/one"))
-        write(self.dest / ".rebuild/catalog-inputs/integration/one/manifest.json", dict(input_id=self.input_id, locations=[]))
+        write(self.dest / ".rebuild/catalog-inputs/integration/one/manifest.json", dict(input_id=self.input_id, attempt="integration-pinned", locations=[]))
+        write(self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json", dict(input_id=self.input_id, attempt="integration-pinned"))
         write(self.dest / ".rebuild/composition/scene-probe-build.json", dict(scene="Assets/example"))
         baseline = self.root / "smoke/ProjectSettings/ProjectSettings.asset"
         baseline.parent.mkdir(parents=True)
@@ -75,7 +76,8 @@ class UnityRebuildTests(unittest.TestCase):
         scratch = Path(command[command.index("-labWorkRoot") + 1])
         self.assertTrue(scratch.is_relative_to(self.dest))
         self.assertTrue(Path(kwargs["env"]["GRADLE_USER_HOME"]).is_relative_to(scratch))
-        write(scratch / "generated-android-data/whole-catalog.json", {"bundles": {}})
+        manifest = read(scratch / "experiments/whole-catalog/manifest.json")
+        write(scratch / "generated-android-data/whole-catalog.json", dict(manifest, bundles={}))
         request = read(scratch / "build-request.json")
         self.assertEqual((Path(kwargs["env"]["ANDROID_USER_HOME"]) / "debug.keystore").read_bytes(), b"synthetic signing fixture")
         self.assertFalse(request["reusePayload"])
@@ -97,6 +99,9 @@ class UnityRebuildTests(unittest.TestCase):
             result = whole_catalog.build_integration(destination=self.dest, work=self.work)
         self.assertEqual(result["apk_sha256"], sha(result["apk"]))
         self.assertTrue(Path(result["payload_directory"]).is_relative_to(self.dest))
+        payload = read(Path(result["payload_directory"]) / "whole-catalog.json")
+        bootstrap = read(self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json")
+        self.assertEqual(payload["attempt"], bootstrap["attempt"])
         self.assertEqual(self.before, self.snapshot())
         self.assertFalse((self.dest / ".rebuild/unity-build.lock").exists())
         self.assertEqual((self.dest / "ProjectSettings/ProjectSettings.asset").read_text(), "public baseline")
@@ -106,6 +111,24 @@ class UnityRebuildTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "payload reuse"):
                 whole_catalog.build_integration(code_only=True, destination=self.dest, work=self.work)
             execute.assert_not_called()
+
+    def test_manifest_bootstrap_mismatch_fails_both_r9_entry_points_before_unity(self):
+        bootstrap = self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json"
+        for identity in (
+            dict(input_id=self.input_id, attempt="integration-stale"),
+            dict(input_id="wrong", attempt="integration-pinned"),
+            dict(input_id=self.input_id),
+        ):
+            write(bootstrap, identity)
+            with patch.object(r9, "run", return_value=SimpleNamespace(stdout=b"")) as run:
+                for invoke in (lambda: r9.preflight_destination(self.dest, self.work), lambda: r9.execute_build(self.dest, self.work, "vulkan")):
+                    with self.assertRaisesRegex(RuntimeError, "manifest/bootstrap"):
+                        invoke()
+                self.assertTrue(all(call.args[0][0] == "/bin/ps" for call in run.call_args_list))
+            self.assertFalse((self.dest / ".rebuild/unity").exists())
+        bootstrap.unlink()
+        with self.assertRaises(FileNotFoundError):
+            r9.destination_manifest(self.dest, self.input_id)
 
     def test_refuses_destination_and_working_editors_and_stale_project_locks(self):
         for project in (self.dest, self.work / "lab-project", self.root / "work/lab-project"):

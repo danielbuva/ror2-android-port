@@ -125,6 +125,10 @@ class RebuildTests(unittest.TestCase):
         (self.dest / (self.rows[1]["path"] + ".meta")).unlink()
         (self.project / self.rows[2]["path"]).unlink()
         (self.dest / "Assets/Plugins/Extra.dll").write_bytes(b"extra")
+        # Editor caches from R9 are not project files; a same-named Assets folder still counts.
+        for cache in ("Library/Artifacts/ab/cache.bin", "Temp/UnityLockfile", "Logs/editor.log", "UserSettings/Layouts.dwlt"):
+            (self.dest / cache).parent.mkdir(parents=True, exist_ok=True)
+            (self.dest / cache).write_bytes(b"cache")
         other = "Assets/Other.asset"
         self.provenance[other] = dict(producer="unknown", sha256="unused", size=1)
         (self.dest / other).write_bytes(b"x")

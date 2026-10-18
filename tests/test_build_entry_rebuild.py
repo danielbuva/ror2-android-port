@@ -36,7 +36,7 @@ class BuildEntryTests(unittest.TestCase):
         write(self.work / "config/reconstruction.json", dict(projects=[str(self.export)]))
         self.manifest = dict(
             input_id=self.input_id,
-            attempt="historical-attempt",
+            attempt="integration-historical",
             locations=[dict(type="Example.Type, Example", path="Assets/Example.asset")],
             keys=[dict(key="effect")],
         )
@@ -87,7 +87,7 @@ class BuildEntryTests(unittest.TestCase):
         write(self.dest / ".rebuild/composition/scene-probe-build.json", {})
         analysis = self.dest / ".rebuild/catalog-inputs"
         write(analysis / "integration-latest.json", dict(path="destination/.rebuild/catalog-inputs/integration-generated"))
-        write(analysis / "integration-generated/manifest.json", dict(self.manifest, attempt="integration-generated"))
+        write(analysis / "integration-generated/manifest.json", self.manifest)
         for module in (build, replay, catalog_rebuild):
             self.start(patch.object(module, "RECIPE", self.recipe))
         for module in (build, whole_catalog):
@@ -139,6 +139,12 @@ class BuildEntryTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot())
         self.assertEqual(read(self.dest / ".rebuild/composition/scene-probe-build.json"), read(self.recipe / "content.json"))
         self.assertIn('fullname="Example.Nested/Type"', (self.dest / "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml").read_text())
+
+    def test_r7_refuses_stale_r3_identity_instead_of_overriding_bootstrap(self):
+        write(self.dest / ".rebuild/catalog-inputs/integration-generated/manifest.json", dict(self.manifest, attempt="integration-new"))
+        with self.assertRaisesRegex(RuntimeError, "rerun catalog-closure"):
+            self.r7_run()
+        self.assertFalse((self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json").exists())
 
     def test_registered_steps_select_map_membership_and_compare_only_avoids_installation(self):
         for path in self.r7:

@@ -101,9 +101,32 @@ def preflight_destination(destination=None, work=None):
     bindings = validate_bindings(destination, work, input_id, provenance=provenance)
     if not bindings["equal"]:
         raise RuntimeError("R9 requires passing validate-bindings")
+    destination_manifest(destination, input_id)
     reference = reference_apk(work)
     debug_signing_key(work)
     return dict(success=True, destination=str(destination), reference_apk=str(reference), bindings=bindings)
+
+
+def destination_manifest(destination, input_id):
+    """Match the payload source and APK descriptor before any Unity invocation."""
+    from rebuild import relative_path
+
+    pointer = read(destination / ".rebuild/catalog-inputs/integration-latest.json")["path"]
+    if not pointer.startswith("destination/"):
+        raise RuntimeError("R9 requires regenerated R3 manifest")
+    relative = pointer.removeprefix("destination/")
+    relative_path(relative)
+    source = destination / relative / "manifest.json"
+    if not source.resolve().is_relative_to(destination / ".rebuild/catalog-inputs"):
+        raise RuntimeError("R3 manifest outside destination catalog inputs")
+    manifest = read(source)
+    bootstrap = read(destination / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json")
+    if manifest.get("input_id") != input_id or bootstrap.get("input_id") != input_id:
+        raise RuntimeError("R3 manifest/bootstrap input mismatch")
+    attempt = manifest.get("attempt")
+    if not isinstance(attempt, str) or not attempt or attempt != bootstrap.get("attempt"):
+        raise RuntimeError("R3 manifest/bootstrap attempt mismatch; rerun R3 and R7 before R9")
+    return manifest
 
 
 def execute_build(destination, work, api):
@@ -125,25 +148,13 @@ def execute_build(destination, work, api):
         bindings = validate_bindings(destination, work, input_id, provenance=read(work / "receipts/provenance-map.json"))
         if not bindings["equal"]:
             raise RuntimeError("R9 requires passing validate-bindings")
+        manifest = destination_manifest(destination, input_id)
         # R8 staged editor code can predate this checkout; refresh authored Android tools.
         stage_android_assets(destination, io=io)
         io.flush()
         scratch = destination / ".rebuild/unity" / now()
         scratch.mkdir(parents=True)
         # WholeCatalogBuild enforces this owned subtree for its manifest.
-        pointer = read(destination / ".rebuild/catalog-inputs/integration-latest.json")["path"]
-        if not pointer.startswith("destination/"):
-            raise RuntimeError("R9 requires regenerated R3 manifest")
-        from rebuild import relative_path
-
-        relative = pointer.removeprefix("destination/")
-        relative_path(relative)
-        source = destination / relative / "manifest.json"
-        if not source.resolve().is_relative_to(destination / ".rebuild/catalog-inputs"):
-            raise RuntimeError("R3 manifest outside destination catalog inputs")
-        manifest = read(source)
-        if manifest["input_id"] != input_id:
-            raise RuntimeError("R3 manifest input mismatch")
         target = scratch / "experiments/whole-catalog/manifest.json"
         write(target, manifest)
         write(scratch / "whole-catalog-build.json", dict(manifest=str(target)))

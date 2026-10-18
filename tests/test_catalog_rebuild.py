@@ -74,6 +74,11 @@ class CatalogRebuildTests(unittest.TestCase):
             self.put(self.root / "tools/unity/runtime/catalog" / name, "authored synthetic")
         self.put(self.root / "tools/catalog/WholeCatalogHost.cs", "authored synthetic")
         self.pin()
+        write(self.work / "identity.json", dict(input_id=self.input_id, attempt="integration-pinned"))
+        write(
+            self.recipes / "build-entry-inputs.json",
+            dict(schema=1, input_id=self.input_id, files={"bootstrap-identity.json": dict(path="identity.json", sha256=sha(self.work / "identity.json"))}),
+        )
         (self.work / "evidence").mkdir()
         stack = contextlib.ExitStack()
         self.addCleanup(stack.close)
@@ -182,11 +187,32 @@ class CatalogRebuildTests(unittest.TestCase):
             catalog_rebuild.CatalogIO(self.work, self.dest, "f" * 64)
 
     def test_real_prepare_preserves_original_paths(self):
-        whole_catalog.prepare_integration()
+        with patch.object(whole_catalog, "now", return_value="fresh-time"):
+            whole_catalog.prepare_integration()
+        self.assertEqual(read(self.catalog / "integration-fresh-time/manifest.json")["attempt"], "integration-fresh-time")
         self.assertIn("new-ui", (self.work / "lab-project" / self.target).read_text())
         self.assertTrue(list(self.catalog.glob("integration-*/import-receipt.json")))
         self.assertTrue((self.work / "lab-project/Assets/Editor/WholeCatalogHost.cs").is_file())
         self.assertFalse((self.work / "lab-project/.rebuild").exists())
+
+    def test_pinned_attempt_is_rebuild_only_and_rejects_path_escape(self):
+        for attempt in ("../escape", "integration-../../escape", ""):
+            with self.assertRaisesRegex(RuntimeError, "Pinned integration"):
+                whole_catalog.prepare_integration(self.staging(), attempt=attempt)
+        with self.assertRaisesRegex(RuntimeError, "Pinned integration"):
+            whole_catalog.prepare_integration(attempt="integration-pinned")
+
+    def test_identity_pin_drift_or_wrong_input_fails_before_catalog_write(self):
+        for identity in (dict(input_id="wrong", attempt="integration-pinned"), dict(input_id=self.input_id, attempt="../escape")):
+            write(self.work / "identity.json", identity)
+            with self.assertRaisesRegex(RuntimeError, "input drift"):
+                catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, set(), {})
+            recipe = read(self.recipes / "build-entry-inputs.json")
+            recipe["files"]["bootstrap-identity.json"]["sha256"] = sha(self.work / "identity.json")
+            write(self.recipes / "build-entry-inputs.json", recipe)
+            with self.assertRaisesRegex(RuntimeError, "Invalid bootstrap"):
+                catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, set(), {})
+        self.assertFalse((self.dest / ".rebuild/catalog-inputs").exists())
 
     def test_dependency_walk_sanitizes_pending_import(self):
         staging = self.staging()
@@ -243,6 +269,18 @@ class CatalogRebuildTests(unittest.TestCase):
         catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, {self.target}, provenance)
         self.assertEqual((self.dest / self.target).read_bytes(), content)
         self.assertEqual(read(self.dest / ".rebuild/catalog-closure-complete.json")["input_id"], self.input_id)
+        manifest = self.dest / ".rebuild/catalog-inputs/integration-pinned/manifest.json"
+        self.assertEqual(read(manifest)["attempt"], "integration-pinned")
+        before = manifest.read_bytes()
+        with patch.object(whole_catalog, "now", return_value="another-time"):
+            catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, {self.target}, provenance)
+        self.assertEqual(manifest.read_bytes(), before)
+        # R7 consumes this regenerated identity without replacing it. WholeCatalogBuild
+        # carries the same manifest fields into the payload when adding bundle receipts.
+        staging = self.staging()
+        whole_catalog.generate_build_bootstrap(staging, read(manifest), dict(input_id=self.input_id, runtime_key_edges=[]))
+        bootstrap = staging.read(self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json")
+        self.assertEqual(bootstrap["attempt"], read(manifest)["attempt"])
         result = rebuild.compare(
             self.dest,
             self.dest,
