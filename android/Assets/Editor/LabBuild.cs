@@ -106,6 +106,27 @@ public static class LabBuild {
   if(!root.StartsWith(allowed,StringComparison.Ordinal))throw new InvalidOperationException("Build root outside destination");
   return root;
  }
+ // Pass 1 of 2 (J577 follow-up): reimporting the managed DLLs recompiles their
+ // dependents, which cannot settle inside one -executeMethod call. Record the
+ // reimported set and exit; Unity recompiles when pass 2 starts.
+ public static void RepairDestinationPlugins(){
+  string root=null;int code=1;
+  try{
+   if(!Application.isBatchMode)throw new InvalidOperationException("Destination repair requires batch mode");
+   root=BuildRoot();
+   if(root==Path.GetFullPath(Path.Combine(Application.dataPath,"../..")))throw new InvalidOperationException("Destination root required");
+   var request=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
+   if(string.IsNullOrEmpty(request.request_id))throw new InvalidOperationException("Destination repair request required");
+   if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Destination scripts have not finished compiling/importing");
+   var plugins=ManagedPlugins();
+   var options=ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport;
+   foreach(string path in plugins)AssetDatabase.ImportAsset(path,options);
+   File.WriteAllText(Path.Combine(root,"plugin-reimport.json"),JsonUtility.ToJson(new PluginReimport{request_id=request.request_id,plugins=plugins},true));
+   code=0;
+  }catch(Exception e){Debug.LogException(e);}
+  EditorApplication.Exit(code);
+ }
+ [Serializable] class PluginReimport {public string request_id;public string[] plugins;}
  public static void BuildDestination(){
   if(!Application.isBatchMode)throw new InvalidOperationException("Destination build requires batch mode");
   string root=BuildRoot();
@@ -120,7 +141,9 @@ public static class LabBuild {
   try{
    if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Destination scripts have not finished compiling/importing");
    var selection=JsonUtility.FromJson<ScriptSelection>(File.ReadAllText(Path.Combine(root,"build-selection.json"))).assets;
-   var imports=ReimportDestinationPlugins(selection);
+   var repaired=JsonUtility.FromJson<PluginReimport>(File.ReadAllText(Path.Combine(root,"plugin-reimport.json")));
+   if(repaired.request_id!=request.request_id||repaired.plugins==null||!repaired.plugins.SequenceEqual(ManagedPlugins()))throw new InvalidOperationException("Destination plugin reimport pass missing or stale");
+   var imports=ReimportDestinationDependents(selection,repaired.plugins);
    string audit=InspectDestinationScripts(selection);
    File.WriteAllText(Path.Combine(outDir,"script-audit.json"),audit);
    File.WriteAllText(Path.Combine(outDir,"script-imports.json"),JsonUtility.ToJson(imports,true));
@@ -141,15 +164,18 @@ public static class LabBuild {
  }
  [Serializable] class ScriptSelection {public string[] assets;}
  [Serializable] class ScriptImports {public string[] plugins,dependents;}
- static ScriptImports ReimportDestinationPlugins(string[] selection){
+ static string[] ManagedPlugins(){
   // J576/task-720: original DLL import ran before package UI compilation. All
   // managed asset plugins are included, also those outside Assets/Plugins.
   var plugins=AssetDatabase.GetAllAssetPaths().Where(path=>path.StartsWith("Assets/",StringComparison.Ordinal)&&path.EndsWith(".dll",StringComparison.OrdinalIgnoreCase))
    .Where(path=>{var importer=AssetImporter.GetAtPath(path) as PluginImporter;return importer!=null&&!importer.isNativePlugin;}).OrderBy(path=>path,StringComparer.Ordinal).ToArray();
   if(plugins.Length==0)throw new InvalidOperationException("No destination managed plugins");
+  return plugins;
+ }
+ // Pass 2: scripts compiled at startup after pass 1's DLL reimport; reload dependents.
+ static ScriptImports ReimportDestinationDependents(string[] selection,string[] plugins){
+  if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Plugin reimport left pending compilation; refusing a build with unsettled scripts");
   var options=ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport;
-  foreach(string path in plugins)AssetDatabase.ImportAsset(path,options);
-  if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Plugin reimport triggered pending compilation; refusing a build with unsettled scripts");
   var pluginSet=new System.Collections.Generic.HashSet<string>(plugins,StringComparer.Ordinal);
   var closure=AssetDatabase.GetDependencies(selection,true);
   var dependents=closure.Where(path=>path.StartsWith("Assets/",StringComparison.Ordinal)&&!path.EndsWith(".cs",StringComparison.OrdinalIgnoreCase)&&!path.EndsWith(".dll",StringComparison.OrdinalIgnoreCase))

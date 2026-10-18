@@ -76,6 +76,17 @@ class UnityRebuildTests(unittest.TestCase):
         scratch = Path(command[command.index("-labWorkRoot") + 1])
         self.assertTrue(scratch.is_relative_to(self.dest))
         self.assertTrue(Path(kwargs["env"]["GRADLE_USER_HOME"]).is_relative_to(scratch))
+        method = command[command.index("-executeMethod") + 1]
+        self.methods = getattr(self, "methods", []) + [method]
+        if method == "LabBuild.RepairDestinationPlugins":
+            # Pass 1 only records the reimported plugins; pass 2 must follow in a new session.
+            if not getattr(self, "repair_fails", False):
+                write(
+                    scratch / "plugin-reimport.json", dict(request_id=read(scratch / "build-request.json")["request_id"], plugins=["Assets/Plugins/RoR2.dll"])
+                )
+            return SimpleNamespace(returncode=1 if getattr(self, "repair_fails", False) else 0)
+        self.assertEqual(method, "LabBuild.BuildDestination")
+        self.assertTrue((scratch / "plugin-reimport.json").is_file())
         manifest = read(scratch / "experiments/whole-catalog/manifest.json")
         write(scratch / "generated-android-data/whole-catalog.json", dict(manifest, bundles={}))
         request = read(scratch / "build-request.json")
@@ -102,6 +113,7 @@ class UnityRebuildTests(unittest.TestCase):
         with patch.object(r9, "run", side_effect=self.fake_run):
             result = whole_catalog.build_integration(destination=self.dest, work=self.work)
         self.assertEqual(result["apk_sha256"], sha(result["apk"]))
+        self.assertEqual(self.methods, ["LabBuild.RepairDestinationPlugins", "LabBuild.BuildDestination"])
         self.assertEqual(result["script_audit"]["missingScripts"], 4)
         self.assertEqual(result["script_audit"]["assets"][0]["missingScripts"], 4)
         self.assertTrue(Path(result["payload_directory"]).is_relative_to(self.dest))
@@ -112,12 +124,19 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertFalse((self.dest / ".rebuild/unity-build.lock").exists())
         self.assertEqual((self.dest / "ProjectSettings/ProjectSettings.asset").read_text(), "public baseline")
 
+    def test_failed_plugin_reimport_pass_stops_before_the_build_pass(self):
+        self.repair_fails = True
+        with patch.object(r9, "run", side_effect=self.fake_run), self.assertRaisesRegex(RuntimeError, "plugin reimport pass failed"):
+            whole_catalog.build_integration(destination=self.dest, work=self.work)
+        self.assertEqual(self.methods, ["LabBuild.RepairDestinationPlugins"])
+        self.assertEqual(self.before, self.snapshot())
+
     def test_failed_or_absent_script_audit_cannot_publish_a_success_receipt(self):
         for audit in (None, dict(schema=1, uiValid=False), dict(schema=0, uiValid=True)):
 
             def execute(command, **kwargs):
                 result = self.fake_run(command, **kwargs)
-                if "-labWorkRoot" in command:
+                if "LabBuild.BuildDestination" in command:
                     scratch = Path(command[command.index("-labWorkRoot") + 1])
                     path = scratch / "lab-build/script-audit.json"
                     if audit is None:
@@ -223,6 +242,8 @@ class UnityRebuildTests(unittest.TestCase):
         def fail(command, **kwargs):
             if command[0] == "/bin/ps":
                 return SimpleNamespace(stdout=b"")
+            if "LabBuild.RepairDestinationPlugins" in command:
+                return self.fake_run(command, **kwargs)
             return SimpleNamespace(returncode=1)
 
         with patch.object(r9, "run", side_effect=fail):
@@ -254,7 +275,7 @@ class UnityRebuildTests(unittest.TestCase):
 
             def invalid(command, **kwargs):
                 process = self.fake_run(command, **kwargs)
-                if command[0] != "/bin/ps":
+                if "LabBuild.BuildDestination" in command:
                     scratch = Path(command[command.index("-labWorkRoot") + 1])
                     path = scratch / "lab-build/result.json"
                     result = read(path)

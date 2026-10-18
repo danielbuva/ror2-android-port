@@ -183,22 +183,34 @@ def execute_build(destination, work, api):
         signing_copy.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(debug_signing_key(work), signing_copy)
         signing_copy.chmod(0o600)
-        command = [
-            os.environ["UNITY_EDITOR"],
-            "-batchmode",
-            "-quit",
-            "-projectPath",
-            str(destination),
-            "-buildTarget",
-            "Android",
-            "-executeMethod",
-            "LabBuild.BuildDestination",
-            "-labWorkRoot",
-            str(scratch),
-            "-logFile",
-            str(scratch / "editor.log"),
-        ]
-        write(scratch / "invocation.json", dict(command=command, input_id=input_id, request_id=request_id))
+
+        def editor(method, log):
+            return [
+                os.environ["UNITY_EDITOR"],
+                "-batchmode",
+                "-quit",
+                "-projectPath",
+                str(destination),
+                "-buildTarget",
+                "Android",
+                "-executeMethod",
+                method,
+                "-labWorkRoot",
+                str(scratch),
+                "-logFile",
+                str(scratch / log),
+            ]
+
+        # Pass 1 reimports the managed DLLs and exits, so the recompilation it triggers
+        # settles when pass 2 starts (J577 follow-up). Pass 2 gates and builds.
+        repair = editor("LabBuild.RepairDestinationPlugins", "editor-repair.log")
+        command = editor("LabBuild.BuildDestination", "editor.log")
+        write(scratch / "invocation.json", dict(commands=[repair, command], input_id=input_id, request_id=request_id))
+        refuse_open_editors(destination, work)
+        process = run(repair, cwd=destination, env=env, timeout=14400, check=False)
+        marker = scratch / "plugin-reimport.json"
+        if process.returncode or not marker.is_file() or read(marker).get("request_id") != request_id or not read(marker).get("plugins"):
+            raise RuntimeError("Destination plugin reimport pass failed; inspect " + str(scratch / "editor-repair.log"))
         refuse_open_editors(destination, work)
         process = run(command, cwd=destination, env=env, timeout=14400, check=False)
         result_path = scratch / "lab-build/result.json"

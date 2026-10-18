@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J578](PORTING_JOURNAL.md#j578--r9-plugin-reimport-split-into-two-editor-sessions) | 2026-10-18 | R9 plugin reimport split into two editor sessions | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J577](PORTING_JOURNAL.md#j577--destination-import-repair-and-script-gate-one-catalog-identity-new-baseline-apk) | 2026-10-18 | Destination import repair and script gate; one catalog identity; new baseline APK | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and corrected by Claude). |
 | [J576](PORTING_JOURNAL.md#j576--first-full-r9-unity-build-of-the-rebuilt-destination-generation-identity-mismatch) | 2026-10-18 | First full R9 Unity build of the rebuilt destination; generation-identity mismatch | Phase 2, from-scratch rebuild (run by Claude). |
 | [J575](PORTING_JOURNAL.md#j575--pre-import-importer-identities-folder-importers-left-to-unity) | 2026-10-18 | Pre-import importer identities; folder importers left to Unity | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |

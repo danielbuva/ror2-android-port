@@ -5940,3 +5940,21 @@ The corrected `LabBuild.cs` compiled in the exact editor: code build zero errors
 storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
 exit). App stopped, OLED asleep. The provenance row for `Assets/Editor/LabBuild.cs` was refreshed;
 the previous map is kept beside it. 754 host tests pass. The repaired R9 build has not run yet.
+
+## J578 — R9 plugin reimport split into two editor sessions
+
+Phase 2, from-scratch rebuild (run and fixed by Claude). From a fresh destination (all twelve host
+steps identical, `validate-bindings` passed), the J577 R9 run stopped after 78 seconds at its own
+guard: "Plugin reimport triggered pending compilation; refusing a build with unsettled scripts".
+Reimporting the managed DLLs recompiles their dependents, which cannot settle inside one batch-mode
+`-executeMethod` call. R9 now runs two editor sessions. Pass 1, `LabBuild.RepairDestinationPlugins`,
+force-reimports every managed DLL, records them with the request ID in `plugin-reimport.json` and
+exits; Unity recompiles when pass 2 starts. Pass 2, `LabBuild.BuildDestination`, requires that
+record (same request, same plugin set), refuses while compilation is pending, reimports the
+dependent assets dependency-first, then runs the script gate and the unchanged real `Build()`.
+`unity_rebuild.execute_build` runs the passes in order with separate logs and stops if pass 1
+fails. The edited `LabBuild.cs` compiled in the exact editor: code build zero errors, APK
+`341497250429940491099218ef0bdc2da5d1723c0fdd40abebd05c915344e1f2`, installed in place on adopted
+storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
+exit). App stopped, OLED asleep. The `LabBuild.cs` provenance row was refreshed again. 755 host
+tests pass. The two-pass R9 build has not run yet.

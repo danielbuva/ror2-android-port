@@ -93,13 +93,15 @@ class ScriptAuditTests(unittest.TestCase):
     def test_destination_gates_before_calling_unchanged_build_and_never_filters_messages(self):
         source = SOURCE.read_text()
         destination = source.split("public static void BuildDestination(){", 1)[1].split("[Serializable] class ScriptSelection", 1)[0]
-        self.assertLess(destination.index("ReimportDestinationPlugins(selection)"), destination.index("InspectDestinationScripts(selection)"))
+        self.assertLess(destination.index("plugin-reimport.json"), destination.index("ReimportDestinationDependents(selection"))
+        self.assertLess(destination.index("ReimportDestinationDependents(selection"), destination.index("InspectDestinationScripts(selection)"))
         self.assertLess(destination.index('gate["uiValid"]'), destination.index("\n   Build();"))
         self.assertIn("LogType.Error||type==LogType.Exception||type==LogType.Assert", destination)
         self.assertIn("result.errors+=importErrors", destination)
         self.assertNotIn("message.Contains", destination)
         real = source.split(" public static void Build(){", 1)[1]
-        self.assertNotIn("ReimportDestinationPlugins", real)
+        self.assertNotIn("ReimportDestinationDependents", real)
+        self.assertNotIn("ManagedPlugins", real)
         self.assertNotIn("InspectDestinationScripts", real)
 
 
@@ -121,7 +123,7 @@ class ScriptAuditHostTests(unittest.TestCase):
         methods = source.split(" [Serializable] class ScriptImports", 1)[1].split(" public static void Build(){", 1)[0]
         fixture = (ROOT / "tests/fixtures/destination_script_import_host.cs").read_text()
         fixture += "\npublic static class LabBuild { [Serializable] class ScriptImports" + methods
-        fixture += "public static void Repair(string[] selection){ReimportDestinationPlugins(selection);}\n}\n"
+        fixture += "public static void Repair(string[] selection){var plugins=ManagedPlugins();foreach(string path in plugins)UnityEditor.AssetDatabase.ImportAsset(path,UnityEditor.ImportAssetOptions.ForceUpdate|UnityEditor.ImportAssetOptions.ForceSynchronousImport);ReimportDestinationDependents(selection,plugins);}\n}\n"
         with tempfile.TemporaryDirectory() as directory:
             scratch = Path(directory)
             host = scratch / "Host.cs"
