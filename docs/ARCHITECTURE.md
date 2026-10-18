@@ -52,7 +52,7 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R4):
+Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R6):
 `./dev prototype --action rebuild-step --step assemblies` reconstructs the assembly
 cohort, then compares every selected map path with the current project's actual
 bytes. The ordered `STEPS` table declares each step's producer categories, path
@@ -87,6 +87,25 @@ sanitization. Auxiliary R4 writes remain under `.rebuild/composition/`, and read
 prefer R2's redirected config. Before R7 places its importer, sanitization obtains
 SilentProjectileBoundary's identity directly from `project-layout.json`. These buffers have no state after flush or failure.
 Synthetic contracts: `tests/test_catalog_rebuild.py`.
+
+R5/R6 replay (`scripts/lab/scene_rebuild.py`, current): `--step stage-variants`
+uses `stage_variants.stage`, the existing Nova geometry projection and
+`scene_contract`; `--step source-scenes` uses `source_scene_candidate.prepare`
+for all 23 scenes. R5 owns 18 map files (16 later reduced scenes and two final
+contracts); R6 owns 46 bodies/importers. Completion markers enforce order after
+R4, and both steps validate selected hashes/sizes before flushing `StageIO`,
+then compare actual bytes. The real actions keep their original paths. R6
+omits the separate audio action because R1 owns its DLL outputs.
+`scene-rebuild-inputs.json` pins the frozen graph baseline and MapZone script
+identity list as two additional retained-input blockers. Destination scene bytes
+determine pending variants even when R2 already supplies their config rows.
+R5 reuses R2/R3's imported closure, validates graph hashes/GUIDs, reads R3's
+regenerated manifest, and regenerates navigation/config/context receipts.
+Temporary projections remain buffered and are discarded after placement;
+auxiliary outputs stay under `.rebuild/`. R6 derives source-scene GUIDs/importers
+from input identity and source metadata. Buffers have no state after success or
+failure. R4 still defers later scene paths until the final binding gate, which
+remains disabled through R8. Host contracts: `tests/test_scene_rebuild.py`.
 
 `recipe/original-assemblies.json` pins 49 Managed source identities and importer
 parameters: 45 unchanged originals, installation-sourced SimpleJSON and three

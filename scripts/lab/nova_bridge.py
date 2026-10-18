@@ -587,12 +587,16 @@ def stage_first_stage_geometry(
     reflection_bindings=None,
     billboards=False,
     scene_root="Base",
+    io=None,
 ):
     """Recover source geometry; integrated runs additionally retain exact MapZone callbacks."""
     import shutil
     from scene_closure import REFERENCE
 
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    from composition_io import StageIO
+
+    io = io or StageIO()
+    export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
     source = export / ("Assets/RoR2/" + scene_root + "/Scenes/" + scene_name + "/" + scene_name + ".unity")
     text = source.read_text()
     header = text[: text.index("--- !u!")]
@@ -659,7 +663,9 @@ def stage_first_stage_geometry(
             raise RuntimeError("MapZone owner has unreviewed children")
     map_active.sort()
     map_network_script = "m_Script: {fileID: 372142912, guid: d382a022563c7517aadbc92ca1060016"
-    identities = {tuple(row.split("|")[:2]): row.split("|")[2] for row in (WORK / "moon-script-identities.txt").read_text().splitlines()} if map_owners else {}
+    identities = (
+        {tuple(row.split("|")[:2]): row.split("|")[2] for row in io.read_text(io.work / "moon-script-identities.txt").splitlines()} if map_owners else {}
+    )
     map_team_id = next((identity for identity, name in identities.items() if name == "RoR2.TeamFilter"), None)
     map_extra = []
     map_network_ids = [
@@ -705,7 +711,7 @@ def stage_first_stage_geometry(
         lod_refs = [ref for kind, _, block in kept if kind == 205 for ref in re.findall(r"renderer: \{fileID: (-?\d+)\}", block)]
         if any(ref != "0" and ref not in kept_ids for ref in lod_refs):
             raise RuntimeError("Nonempty source LOD renderer reference would be lost")
-        write(
+        io.write(
             out / (scene_name + "-billboard-LOD-contract.json"),
             {
                 "native_billboards": sum(kind == 227 for kind, _, _ in kept),
@@ -762,158 +768,172 @@ def stage_first_stage_geometry(
         updated.append(block)
     geometry = header + "".join(updated)
     dest = stage / "StageGeometry" / (scene_name + ".unity" if original_name else scene_name + "-spine.unity")
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if reflection_bindings is not None:
-        if len(reflection_bindings) != sum(kind == 215 for kind, _, _ in kept):
-            raise RuntimeError("Native reflection mapping count differs")
-        write(
-            out / (scene_name + "-reflection-binding-adapters.json"),
-            {
-                "source_mode": "Baked",
-                "android_mode": "Custom",
-                "same_original_cubemaps": True,
-                "no_new_bake": True,
-                "bindings": reflection_bindings,
-                "scope": "Serve original native baked textures omitted by export; all other probe parameters unchanged. Appearance parity unverified.",
-            },
-        )
-    other = dest.with_name(scene_name + "-spine.unity" if original_name else scene_name + ".unity")
-    if other.exists():
-        if Path(str(other) + ".meta").read_bytes() != Path(str(source) + ".meta").read_bytes():
-            raise RuntimeError("Refuse to remove an unowned alternate stage scene")
-        other.unlink()
-        Path(str(other) + ".meta").unlink()
-    dest.write_text(geometry)
-    shutil.copy2(Path(str(source) + ".meta"), Path(str(dest) + ".meta"))
-    scene_guid = re.search(r"^guid: ([a-f0-9]{32})", Path(str(source) + ".meta").read_text(), re.M)[1]
-    index = {}
-    existing = {}
-    for base, target in [(export / "Assets", index), (stage, existing)]:
-        for meta in base.rglob("*.meta"):
-            m = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
-            if m:
-                target[m[1]] = Path(str(meta)[:-5])
-    pending = [guid for _, guid, _ in REFERENCE.findall(geometry) if guid and not guid.startswith("0000000000000000")]
-    seen = set()
-    rows = []
-    while pending:
-        guid = pending.pop()
-        if guid in seen:
-            continue
-        seen.add(guid)
-        if guid not in index:
-            raise RuntimeError("Unresolved static stage dependency " + guid)
-        src = index[guid]
-        if presentation and guid == scene_guid:
-            # LightingData points back to this scene. Traverse the reduced scene already
-            # queued above, never the discarded source gameplay dependency graph.
-            if src != source:
-                catalog = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
-                owner = read(catalog / "source-guid-index.json").get(guid)
-                if owner != str(source.relative_to(export)):
-                    raise RuntimeError("Lighting data scene has no unique catalog owner")
-                src = source  # AssetRipper also exports blackbeachTest with this GUID.
-            if existing.get(guid) != dest:
-                raise RuntimeError("Lighting data scene identity differs from converted scene")
-            continue
-        if src.suffix == ".dll":
-            if src.name == "RoR2.dll" and guid in existing and existing[guid] == stage / "Plugins/RoR2.dll":
-                continue
-            if (
-                src.name == "com.unity.multiplayer-hlapi.Runtime.dll"
-                and guid in existing
-                and existing[guid] == stage / "Plugins" / src.name
-                and sha(existing[guid]) == sha(game() / "Risk of Rain 2_Data/Managed" / src.name)
-            ):
-                continue
-            raise RuntimeError("Unexpected managed dependency in static geometry " + src.name)
-        dst = existing.get(guid, stage / "StageGeometry/Assets" / src.relative_to(export / "Assets"))
-        if guid not in existing:
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
-            shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
-        with src.open("rb") as stream:
-            prefix = stream.read(5)
-        if prefix == b"%YAML":
-            pending.extend(g for _, g, _ in REFERENCE.findall(src.read_text()) if g and not g.startswith("0000000000000000"))
-        rows.append(
-            {
-                "source": str(src.relative_to(export)),
-                "source_sha256": sha(src),
-                "bytes": src.stat().st_size,
-                "staged": str(dst.relative_to(WORK / "lab-project")),
-                "reused": guid in existing,
-            }
-        )
-    recipe = read(WORK / "scene-probe-build.json")
-    if scene_name == "golemplains":
-        recipe["stageScene"] = str(dest.relative_to(WORK / "lab-project"))
+    if io.rebuilding:
+        # R2/R3 already own the imported closure. Generate only the reduced scene
+        # and derive navigation identities from the pinned source GUID index.
+        io.apply(dest, geometry)
+        index = io.read(io.catalog() / "source-guid-index.json")
+        graphs = {}
+        for kind in ("ground", "air"):
+            guid = re.search(r"^  " + kind + r"NodesAsset: \{fileID: -?\d+, guid: ([a-f0-9]{32})", text, re.M)[1]
+            relative = "Assets/WholeGame/" + index[guid].removeprefix("Assets/")
+            meta = io.read_text(io.project / (relative + ".meta"))
+            if not re.search(r"^guid: " + guid + r"$", meta, re.M):
+                raise RuntimeError("Imported stage graph GUID differs: " + scene_name + "/" + kind)
+            graphs[kind + "Graph"] = relative.lower()
     else:
-        recipe["nextStageScenes"] = list(dict.fromkeys(recipe.get("nextStageScenes", []) + [str(dest.relative_to(WORK / "lab-project"))]))
-        recipe.pop("nextStageScene", None)
-    write(WORK / "scene-probe-build.json", recipe)
-    write(
-        out / ("stage-geometry-contract.json" if scene_name == "golemplains" else scene_name + "-geometry-contract.json"),
-        {
-            "source": str(source.relative_to(export)),
-            "source_sha256": sha(source),
-            "generated_sha256": sha(dest),
-            "removed_classes": counts,
-            "kept_classes": sorted(keep | {114}),
-            "retained_components": {"DisableOnStart": preview_ids, "MapZone": map_ids, "MapZoneContext": map_extra},
-            "deferred_map_objects": sorted(map_owners),
-            "source_active_map_names": map_active,
-            "map_network_objects": map_network_ids,
-            "roots": len(root_objects),
-            "source_active_flags_preserved": not map_owners,
-            "closure": rows,
-            "bytes": sum(x["bytes"] for x in rows),
-            "scope": "Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.",
-            "prior_art": "Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.",
-        },
-    )
-    if presentation:
-        write(
-            out / (scene_name + "-source-presentation.json"),
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if reflection_bindings is not None:
+            if len(reflection_bindings) != sum(kind == 215 for kind, _, _ in kept):
+                raise RuntimeError("Native reflection mapping count differs")
+            io.write(
+                out / (scene_name + "-reflection-binding-adapters.json"),
+                {
+                    "source_mode": "Baked",
+                    "android_mode": "Custom",
+                    "same_original_cubemaps": True,
+                    "no_new_bake": True,
+                    "bindings": reflection_bindings,
+                    "scope": "Serve original native baked textures omitted by export; all other probe parameters unchanged. Appearance parity unverified.",
+                },
+            )
+        other = dest.with_name(scene_name + "-spine.unity" if original_name else scene_name + ".unity")
+        if other.exists():
+            if Path(str(other) + ".meta").read_bytes() != Path(str(source) + ".meta").read_bytes():
+                raise RuntimeError("Refuse to remove an unowned alternate stage scene")
+            other.unlink()
+            Path(str(other) + ".meta").unlink()
+        dest.write_text(geometry)
+        shutil.copy2(Path(str(source) + ".meta"), Path(str(dest) + ".meta"))
+        scene_guid = re.search(r"^guid: ([a-f0-9]{32})", Path(str(source) + ".meta").read_text(), re.M)[1]
+        index = {}
+        existing = {}
+        for base, target in [(export / "Assets", index), (stage, existing)]:
+            for meta in base.rglob("*.meta"):
+                m = re.search(r"^guid: ([a-f0-9]{32})", meta.read_text(errors="replace"), re.M)
+                if m:
+                    target[m[1]] = Path(str(meta)[:-5])
+        pending = [guid for _, guid, _ in REFERENCE.findall(geometry) if guid and not guid.startswith("0000000000000000")]
+        seen = set()
+        rows = []
+        while pending:
+            guid = pending.pop()
+            if guid in seen:
+                continue
+            seen.add(guid)
+            if guid not in index:
+                raise RuntimeError("Unresolved static stage dependency " + guid)
+            src = index[guid]
+            if presentation and guid == scene_guid:
+                # LightingData points back to this scene. Traverse the reduced scene already
+                # queued above, never the discarded source gameplay dependency graph.
+                if src != source:
+                    catalog = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
+                    owner = read(catalog / "source-guid-index.json").get(guid)
+                    if owner != str(source.relative_to(export)):
+                        raise RuntimeError("Lighting data scene has no unique catalog owner")
+                    src = source  # AssetRipper also exports blackbeachTest with this GUID.
+                if existing.get(guid) != dest:
+                    raise RuntimeError("Lighting data scene identity differs from converted scene")
+                continue
+            if src.suffix == ".dll":
+                if src.name == "RoR2.dll" and guid in existing and existing[guid] == stage / "Plugins/RoR2.dll":
+                    continue
+                if (
+                    src.name == "com.unity.multiplayer-hlapi.Runtime.dll"
+                    and guid in existing
+                    and existing[guid] == stage / "Plugins" / src.name
+                    and sha(existing[guid]) == sha(game() / "Risk of Rain 2_Data/Managed" / src.name)
+                ):
+                    continue
+                raise RuntimeError("Unexpected managed dependency in static geometry " + src.name)
+            dst = existing.get(guid, stage / "StageGeometry/Assets" / src.relative_to(export / "Assets"))
+            if guid not in existing:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
+            with src.open("rb") as stream:
+                prefix = stream.read(5)
+            if prefix == b"%YAML":
+                pending.extend(g for _, g, _ in REFERENCE.findall(src.read_text()) if g and not g.startswith("0000000000000000"))
+            rows.append(
+                {
+                    "source": str(src.relative_to(export)),
+                    "source_sha256": sha(src),
+                    "bytes": src.stat().st_size,
+                    "staged": str(dst.relative_to(WORK / "lab-project")),
+                    "reused": guid in existing,
+                }
+            )
+        recipe = read(WORK / "scene-probe-build.json")
+        if scene_name == "golemplains":
+            recipe["stageScene"] = str(dest.relative_to(WORK / "lab-project"))
+        else:
+            recipe["nextStageScenes"] = list(dict.fromkeys(recipe.get("nextStageScenes", []) + [str(dest.relative_to(WORK / "lab-project"))]))
+            recipe.pop("nextStageScene", None)
+        write(WORK / "scene-probe-build.json", recipe)
+        io.write(
+            out / ("stage-geometry-contract.json" if scene_name == "golemplains" else scene_name + "-geometry-contract.json"),
             {
+                "source": str(source.relative_to(export)),
                 "source_sha256": sha(source),
                 "generated_sha256": sha(dest),
-                "render_settings": [block for kind, _, block in kept if kind == 104],
-                "lights": [block for kind, _, block in kept if kind == 108],
-                "lighting_data": [block for kind, _, block in kept if kind == 157],
-                "reflection_probes": [block for kind, _, block in kept if kind == 215],
-                "particle_systems": [block for kind, _, block in kept if kind == 198],
-                "particle_renderers": [block for kind, _, block in kept if kind == 199],
-                "scene_guid": scene_guid,
-                "scope": "Exact original atmosphere, lighting references and native environment particle modules/renderer settings; no added gameplay callbacks or new bake. Android shader/camera/postprocessing parity unverified.",
+                "removed_classes": counts,
+                "kept_classes": sorted(keep | {114}),
+                "retained_components": {"DisableOnStart": preview_ids, "MapZone": map_ids, "MapZoneContext": map_extra},
+                "deferred_map_objects": sorted(map_owners),
+                "source_active_map_names": map_active,
+                "map_network_objects": map_network_ids,
+                "roots": len(root_objects),
+                "source_active_flags_preserved": not map_owners,
+                "closure": rows,
+                "bytes": sum(x["bytes"] for x in rows),
+                "scope": "Recovered geometry/LOD/collision and source preview callbacks; optional exact original MapZone volumes activate after owned runtime context/entry and pause during continuous-body transport. No full stock scene/director/lighting parity. Runtime materials remain diagnostic.",
+                "prior_art": "Pinned Starstorm2 a9a4badd SlateMines uses SceneAssetCollection/SceneDef; pinned R2API.Director hooks ClassicStageInfo.Start/SceneCatalog.Init and documents1.4.0 DCCS timing. Those lifecycle contracts are deliberately not claimed by static geometry. Existing closure algorithm reused; no community code copied.",
             },
         )
-    if scene_name == "golemplains":
-        return {"stageGeometry": True, "stageMapZoneCount": len(map_ids), "stageMapZoneActiveNames": map_active}
-    graphs = {}
-    for kind in ["ground", "air"]:
-        guid = re.search(r"^  " + kind + r"NodesAsset: \{fileID: -?\d+, guid: ([a-f0-9]{32})", text, re.M)[1]
-        src = index[guid]
-        dst = existing.get(guid, stage / "StageGeometry/Assets" / src.relative_to(export / "Assets"))
-        if not dst.exists():
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
-            shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
-        graphs[kind + "Graph"] = str(dst.relative_to(WORK / "lab-project")).lower()
-    recipe = read(WORK / "scene-probe-build.json")
-    recipe["prefabAssets"] = list(dict.fromkeys(recipe["prefabAssets"] + list(graphs.values())))
-    write(WORK / "scene-probe-build.json", recipe)
-    write(
-        out / (scene_name + "-navigation-contract.json"),
-        dict(
-            source_scene_sha256=sha(source),
-            graphs={
-                kind: dict(path=path, sha256=sha(next(p for p in stage.rglob("*.asset") if str(p.relative_to(WORK / "lab-project")).lower() == path)))
-                for kind, path in graphs.items()
-            },
-            scope="Actual source SceneInfo ground/air graph references; Android transport keeps original Run accounting and local authority, continuous-body adapter declared separately.",
-        ),
-    )
+        if presentation:
+            io.write(
+                out / (scene_name + "-source-presentation.json"),
+                {
+                    "source_sha256": sha(source),
+                    "generated_sha256": sha(dest),
+                    "render_settings": [block for kind, _, block in kept if kind == 104],
+                    "lights": [block for kind, _, block in kept if kind == 108],
+                    "lighting_data": [block for kind, _, block in kept if kind == 157],
+                    "reflection_probes": [block for kind, _, block in kept if kind == 215],
+                    "particle_systems": [block for kind, _, block in kept if kind == 198],
+                    "particle_renderers": [block for kind, _, block in kept if kind == 199],
+                    "scene_guid": scene_guid,
+                    "scope": "Exact original atmosphere, lighting references and native environment particle modules/renderer settings; no added gameplay callbacks or new bake. Android shader/camera/postprocessing parity unverified.",
+                },
+            )
+        if scene_name == "golemplains":
+            return {"stageGeometry": True, "stageMapZoneCount": len(map_ids), "stageMapZoneActiveNames": map_active}
+        graphs = {}
+        for kind in ["ground", "air"]:
+            guid = re.search(r"^  " + kind + r"NodesAsset: \{fileID: -?\d+, guid: ([a-f0-9]{32})", text, re.M)[1]
+            src = index[guid]
+            dst = existing.get(guid, stage / "StageGeometry/Assets" / src.relative_to(export / "Assets"))
+            if not dst.exists():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                shutil.copy2(Path(str(src) + ".meta"), Path(str(dst) + ".meta"))
+            graphs[kind + "Graph"] = str(dst.relative_to(WORK / "lab-project")).lower()
+        recipe = read(WORK / "scene-probe-build.json")
+        recipe["prefabAssets"] = list(dict.fromkeys(recipe["prefabAssets"] + list(graphs.values())))
+        write(WORK / "scene-probe-build.json", recipe)
+        io.write(
+            out / (scene_name + "-navigation-contract.json"),
+            dict(
+                source_scene_sha256=sha(source),
+                graphs={
+                    kind: dict(path=path, sha256=sha(next(p for p in stage.rglob("*.asset") if str(p.relative_to(WORK / "lab-project")).lower() == path)))
+                    for kind, path in graphs.items()
+                },
+                scope="Actual source SceneInfo ground/air graph references; Android transport keeps original Run accounting and local authority, continuous-body adapter declared separately.",
+            ),
+        )
     source_blocks = {fid: (kind, block) for kind, fid, block in kept}
     preview_names = []
     for fid in preview_ids:
@@ -966,7 +986,7 @@ def stage_first_stage_geometry(
         if kind in {33, 64, 137} and re.search(r"^  m_Mesh: \{fileID: 0\}$", block, re.M):
             go_id = re.search(r"m_GameObject: \{fileID: (-?\d+)\}", block)[1]
             empty.append(dict(component=fid, kind=kind, path=object_path(go_id)))
-    write(
+    io.write(
         out / (scene_name + "-source-empty-meshes.json"),
         dict(
             source_scene_sha256=sha(source),
@@ -977,7 +997,7 @@ def stage_first_stage_geometry(
     return dict(
         name=scene_name,
         bundle=scene_name + "-spine-lab",
-        scene=str(dest.relative_to(WORK / "lab-project")).lower(),
+        scene=str(dest.relative_to(io.project)).lower(),
         previewCallbacks=len(preview_ids),
         previewNames=preview_names,
         mapZoneCount=len(map_ids),

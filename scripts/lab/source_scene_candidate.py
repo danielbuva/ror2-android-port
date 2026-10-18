@@ -117,18 +117,21 @@ def stage_unavailable_audio():
     return receipt
 
 
-def prepare(names=("lakes",)):
-    project = WORK / "lab-project"
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
-    generation = read(project / ".port-input.json")
-    accepted = read(WORK / "config/accepted-input.json")
+def prepare(names=("lakes",), io=None):
+    from composition_io import StageIO
+
+    io = io or StageIO()
+    project = io.project
+    export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
+    generation = io.read(project / ".port-input.json")
+    accepted = io.read(io.work / "config/accepted-input.json")
     if generation["input_id"] != accepted["input_id"]:
         raise RuntimeError("Source scene input differs from the accepted generation")
-    recipe_path = WORK / "scene-probe-build.json"
-    recipe = read(recipe_path)
+    recipe_path = io.work / "scene-probe-build.json"
+    recipe = io.read(recipe_path)
     config_path = project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
-    config = read(config_path)
-    remaps = {row["from"]: row["to"] for row in read(RECIPE / "hud-ui-remaps.json")["rows"]}
+    config = io.read(config_path)
+    remaps = {row["from"]: row["to"] for row in io.read(RECIPE / "hud-ui-remaps.json")["rows"]}
     staged = []
     for name in names:
         configured = {row["name"] for row in config["integratedStages"]} | {"golemplains"}
@@ -196,30 +199,29 @@ def prepare(names=("lakes",)):
         if any(re.search(r"component: \{fileID: " + fid + r"\}", candidate) for fid in removed):
             raise RuntimeError("Removed null/audio component retains a GameObject reference")
         target = project / "Assets/LabLoadingScene/SourceScenes" / name / (name + ".unity")
-        target.parent.mkdir(parents=True, exist_ok=True)
         scene_guid = hashlib.sha256(("ror2-android-source-scene:" + name + ":" + generation["input_id"]).encode()).hexdigest()[:32]
         meta = Path(str(target) + ".meta")
         source_meta = Path(str(source) + ".meta").read_text()
         if not re.search(r"^guid: [a-f0-9]{32}$", source_meta, re.M):
             raise RuntimeError("Original scene metadata GUID unavailable")
         expected_meta = re.sub(r"^guid: [a-f0-9]{32}$", "guid: " + scene_guid, source_meta, count=1, flags=re.M)
-        if target.exists() and target.read_text() != candidate:
-            receipt = WORK / "experiments/source-scenes/candidate.json"
-            prior = read(receipt) if receipt.exists() else {}
+        if io.is_file(target) and io.read_text(target) != candidate:
+            receipt = io.output(io.work / "experiments/source-scenes/candidate.json")
+            prior = io.read(receipt) if receipt.exists() else {}
             accepted_prior = next((row["candidate_sha256"] for row in prior.get("staged", []) if row["name"] == name), None)
-            if not accepted_prior or sha(target) != accepted_prior or prior.get("input_id") != generation["input_id"]:
+            if not accepted_prior or io.sha(target) != accepted_prior or prior.get("input_id") != generation["input_id"]:
                 raise RuntimeError("Existing source-scene candidate differs from its owned receipt")
-        if meta.exists() and meta.read_text() != expected_meta:
+        if io.is_file(meta) and io.read_text(meta) != expected_meta:
             raise RuntimeError("Existing source-scene metadata differs; inspect before replacing")
-        target.write_text(candidate)
-        meta.write_text(expected_meta)
+        io.apply(target, candidate)
+        io.apply(meta, expected_meta)
         relative = str(target.relative_to(project))
         staged.append(
             {
                 "name": name,
                 "scene": relative,
                 "source_sha256": sha(source),
-                "candidate_sha256": sha(target),
+                "candidate_sha256": io.sha(target),
                 "omitted_unavailable_audio_components": len(removed_audio),
                 "omitted_source_null_scripts": len(source_null),
                 "disabled_unavailable_render_components": len(disabled_render),
@@ -228,15 +230,16 @@ def prepare(names=("lakes",)):
         )
     recipe["sourceStageScenes"] = sorted(set(recipe.get("sourceStageScenes", []) + [row["scene"] for row in staged]))
     config["originalStageSceneNames"] = sorted(set(config.get("originalStageSceneNames", []) + [row["name"] for row in staged]))
-    write(recipe_path, recipe)
-    write(config_path, config)
+    io.write(recipe_path, recipe)
+    io.write(config_path, config)
     result = {
         "success": True,
         "input_id": generation["input_id"],
         "staged": staged,
         "scope": "Original stage-local scene with duplicate global roots inactive; source-null scripts and measured unavailable native-audio components omitted, unsupported decal/shadow callbacks disabled. Current reduced scenes retained.",
     }
-    out = WORK / "experiments/source-scenes"
-    out.mkdir(parents=True, exist_ok=True)
-    write(out / "candidate.json", result)
+    out = io.work / "experiments/source-scenes"
+    if not io.rebuilding:
+        out.mkdir(parents=True, exist_ok=True)
+    io.write(out / "candidate.json", result)
     return result

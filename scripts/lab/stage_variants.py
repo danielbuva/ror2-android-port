@@ -45,7 +45,7 @@ def scene_root(name):
     return SCENES[name]
 
 
-def include_runtime_graph_roots(config, recipe, project, accepted_files):
+def include_runtime_graph_roots(config, recipe, project, accepted_files, io=None):
     """Keep each accepted stage graph in the bundle queried by transport."""
     accepted = {path.casefold(): (path, digest) for path, digest in accepted_files.items()}
     existing = {path.casefold() for path in recipe.get("prefabAssets", [])}
@@ -58,7 +58,7 @@ def include_runtime_graph_roots(config, recipe, project, accepted_files):
             if key not in accepted:
                 raise RuntimeError("Variant graph is absent from accepted inputs: " + stage["name"] + "/" + field)
             path, digest = accepted[key]
-            if sha(project / path) != digest:
+            if not (io.accepted(project / path, digest) if io else sha(project / path) == digest):
                 raise RuntimeError("Accepted variant graph changed: " + stage["name"] + "/" + field)
             if key not in existing:
                 recipe.setdefault("prefabAssets", []).append(path)
@@ -67,7 +67,12 @@ def include_runtime_graph_roots(config, recipe, project, accepted_files):
     return added
 
 
-def stage():
+def stage(io=None):
+    if io is not None and io.rebuilding:
+        from scene_rebuild import replay_variants
+
+        return replay_variants(io)
+
     from build import preflight
     from composition_migration import scene_contract
     from nova_bridge import stage_first_stage_geometry

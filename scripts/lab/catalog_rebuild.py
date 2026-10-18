@@ -79,7 +79,7 @@ def dependencies(destination, work, input_id, expected, provenance):
 
     io = CatalogIO(work, destination, input_id)
     # Required build entries that R5–R8 builders own cannot exist yet; validate-bindings checks them.
-    built = {function for step in STEPS.values() if step.evidence for function in step.evidence}
+    built = {function for name in ("catalog-closure", "dependencies") for function in STEPS[name].evidence}
     io.deferred = frozenset(
         path
         for path, row in provenance.items()
@@ -90,3 +90,5 @@ def dependencies(destination, work, input_id, expected, provenance):
         raise RuntimeError("Dependencies require destination composition config from R2")
     stage_missing_sources(io)
     verify_outputs(io, expected, provenance)
+    io.write(destination / ".rebuild/dependencies-complete.json", dict(input_id=input_id))
+    io.flush()

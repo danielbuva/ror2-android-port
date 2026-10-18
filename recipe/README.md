@@ -59,6 +59,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `scene-rebuild-inputs.json` | Explicit temporary R5 frozen baseline and script identities | Accepted input ID, two work-relative paths and SHA-256 only. | No baseline contents, script implementation, private roots, binary or account/device data. Audited 2026-10-18. | `scene_rebuild.SceneIO` gates both inputs before scratch publication; removing these retained inputs remains a fresh-rebuild blocker. |
 | `catalog-rebuild-inputs.json` | Explicit temporary R3/R4 local analysis dependencies | Accepted input ID, work-relative receipt/metadata paths and SHA-256 only; ten existing catalog-analysis, mesh and support-contract records. | No catalog bodies, source code, binaries, private roots or device/account identifiers. Hashes pin local input, not redistribution permission. Audited 2026-10-18. | `catalog_rebuild.CatalogIO` gates the complete cohort before copying into destination scratch; retained analysis is the next blocker to remove. |
 | `composition-export-copies.json` | Residual R2 export membership outside canonical catalog closure relocation | 128 export-path → project-path pairs and accepted input ID. | Asset identifiers only; no bodies, private roots, device/account identifiers or third-party source. Audited 2026-10-18. | `composition_io.export_membership`; all bytes come from the accepted export and are hash/size-gated against the local map. |
 | `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker, mage-platform-guard receipt and audio-boundary-v3 receipt. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Audited 2026-10-17. | Current `assembly_transforms.py` verifies in disposable `.local/` scratch. Its shared generator also supplies the three transformed DLLs to R1 below. |
@@ -693,3 +694,40 @@ Prior art: re-read `docs/community-prior-art.md` and pinned ThunderKit
 Its desktop catalog/settings copy does not reconstruct Android content or supply
 a host catalog decoder. This replay reuses the lab's measured closure, owner and
 UI rules; no new content loader or community implementation is introduced.
+
+## R5/R6 retained-input and replay audit (2026-10-18)
+
+`scene-rebuild-inputs.json` pins `whole-catalog-code-base.json` and
+`moon-script-identities.txt`. The baseline supplies accepted compact graph hashes;
+the script identity list supplies the measured MapZone TeamFilter identity used
+by the existing geometry projection. Neither is regenerated here. Both stay
+ignored, are validated together before catalog scratch is written, and are read
+through destination-backed `StageIO`. Removing these retained inputs, together
+with R3/R4's ten catalog-analysis inputs, remains an explicit fresh-rebuild
+blocker. The recipe contains only work-relative identities, SHA-256 and the
+accepted input ID: no game YAML, protected source, private roots, credentials,
+binary content or device/account identifiers. This pins local input and grants
+no redistribution rights.
+
+R5 reuses `stage_variants.stage`, `nova_bridge.stage_first_stage_geometry` and
+`composition_migration.scene_contract`. Pending scenes are determined from the
+destination's measured output hashes; composition's final config rows alone do
+not imply later scenes exist. R2/R3 already supply the imported closure; R5
+checks graph body hashes and original GUIDs rather than staging another closure.
+The regenerated R3 manifest supplies pool identities. Reduced bodies, the two
+final scene repairs, navigation selection and contexts are regenerated. R6
+reuses `source_scene_candidate.prepare` for all 23 scenes and derives importers
+from accepted source metadata and deterministic scene GUIDs. It does not invoke
+`stage_unavailable_audio`: R1 already owns both DLLs. No output body comes from
+the live project. Each selected cohort is gated before buffered writes flush,
+then compared against actual current-project bytes by the coordinator.
+
+Prior-art scope: read `docs/community-prior-art.md` and the pinned R2API.Director
+`DirectorAPIinternal.cs` at `f539511e` (see `reference/community-sources.json`).
+Its `ClassicStageInfo.Start` / `SceneCatalog.Init` hooks and 1.4.0 DCCS timing
+comment distinguish catalog identity from runtime scene population. This replay
+retains those existing validation boundaries and introduces no runtime scene
+loader or community code. Synthetic host checks cover the original real-action
+write paths as well as destination-only replay; real-data execution remains an
+operator action. Doctor was not run because it writes outside the authorized
+destination. No Unity/device commands, journal/state edits or commits were made.

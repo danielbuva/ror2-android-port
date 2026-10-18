@@ -63,6 +63,9 @@ class StageIO:
     def sha(self, path):
         return hashlib.sha256(self.read_bytes(path)).hexdigest()
 
+    def accepted(self, path, digest):
+        return self.sha(path) == digest
+
     def is_file(self, path):
         path = Path(path)
         return self.pending[path] is not None if path in self.pending else self.physical(path).is_file()

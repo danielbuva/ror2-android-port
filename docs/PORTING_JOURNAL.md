@@ -5724,3 +5724,24 @@ catalog-analysis records are read by recorded hash (`recipe/catalog-rebuild-inpu
 they are regenerated. 652 host tests pass. Host tooling only; no APK change. 86,082 of 91,841
 project files are now rebuilt from public source, recipes, the installation and pinned local
 analysis.
+
+## J570 — Rebuild steps R5 and R6: stage variants and source scenes
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+Step `stage-variants` regenerates the 16 later reduced scenes and the two final Sky Meadow / Ship
+Graveyard scene-contract repairs (18 files) through `scene_rebuild.replay_variants`, which uses
+`nova_bridge.stage_first_stage_geometry` and `scene_contract` with destination-backed `StageIO`.
+Step `source-scenes` runs `source_scene_candidate.prepare` for all 23 scenes (23 bodies, 23
+importers) and leaves the two Wwise DLLs to R1. The real actions keep their write paths and are
+tested. First real-data run: R5 refused at "Accepted variant graph changed". All 41 stage node
+graphs are `unity-generated` in the provenance map: the live project and the frozen
+`whole-catalog-code-base.json` hold the editor's re-serialized form, while an unimported
+destination holds R2's export copy. In the rebuild path R5 now accepts such a graph only when the
+destination bytes equal its single recorded export source, and lists it in its result
+(`unity_import_deferred`, 28 graphs) for R9; only graph paths feed R5's outputs. Then, from an
+empty destination, R1–R6 gave 98, 84,487, 259, 1,238, 18 and 46 identical files, and the working
+project manifest is unchanged. New temporary blockers: `whole-catalog-code-base.json` and
+`moon-script-identities.txt` are read by recorded hash (`recipe/scene-rebuild-inputs.json`).
+`replay_variants` duplicates `stage_variants.stage` for an empty destination; the final switch to
+the rebuild path should retire one of them. 671 host tests pass. Host tooling only; no APK change.
+86,146 of 91,841 project files are now rebuilt.

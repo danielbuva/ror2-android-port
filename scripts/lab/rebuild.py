@@ -12,6 +12,7 @@ from typing import Callable
 import assembly_transforms
 from composition_io import composition
 from catalog_rebuild import catalog_closure, dependencies
+from scene_rebuild import stage_variants, source_scenes
 from common import RECIPE, ROOT, WORK, game, read, sha
 
 
@@ -106,6 +107,13 @@ STEPS = {
         dependencies,
         ("integrated_objective.sanitize_optional_content", "whole_catalog.repair_support_source"),
     ),
+    "stage-variants": Step(
+        ("repo-builder",),
+        lambda path: not assembly_path(path),
+        stage_variants,
+        ("stage_variants.stage → nova_bridge.stage_first_stage_geometry", "composition_migration.refresh_scene_contracts → scene_contract"),
+    ),
+    "source-scenes": Step(("repo-builder",), lambda path: not assembly_path(path), source_scenes, ("source_scene_candidate.prepare",)),
     # Final gate after R3–R8 supply all runtime/build binding targets (J565).
     "validate-bindings": Step((), lambda path: False, None),
 }

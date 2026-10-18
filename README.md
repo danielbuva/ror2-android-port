@@ -84,7 +84,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
-| `./dev prototype --action rebuild-step` | Rebuild --step assemblies\|composition\|catalog-closure\|dependencies in order under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination. |
+| `./dev prototype --action rebuild-step` | Rebuild --step assemblies\|composition\|catalog-closure\|dependencies\|stage-variants\|source-scenes in order under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination. |
 | `./dev prototype --action assembly-transforms-check` | Rebuild the three transformed plugins from originals in disposable .local scratch and verify hashes; --work-dir selects read-only local inputs. |
 | `./dev prototype --action inherited-store-capture` | Capture exactly the ledger's inherited asset/meta pairs into work/inherited-store/<input_id>; refuse hash or identity drift. |
 | `./dev prototype --action inherited-state-check` | Verify inherited-store hashes and regenerate byte-proven pairs in scratch; work stays read-only (--work-dir selects local work). |

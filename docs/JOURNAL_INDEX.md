@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J570](PORTING_JOURNAL.md#j570--rebuild-steps-r5-and-r6-stage-variants-and-source-scenes) | 2026-10-18 | Rebuild steps R5 and R6: stage variants and source scenes | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
 | [J569](PORTING_JOURNAL.md#j569--rebuild-steps-r3-and-r4-catalog-closure-and-dependency-staging) | 2026-10-18 | Rebuild steps R3 and R4: catalog closure and dependency staging | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
 | [J568](PORTING_JOURNAL.md#j568--rebuild-step-r2-the-composition-stage-into-a-fresh-destination) | 2026-10-18 | Rebuild step R2: the composition stage into a fresh destination | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |
 | [J567](PORTING_JOURNAL.md#j567--rebuild-steps-r0-and-r1-destination-harness-and-assembly-placement) | 2026-10-18 | Rebuild steps R0 and R1: destination harness and assembly placement | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude). |

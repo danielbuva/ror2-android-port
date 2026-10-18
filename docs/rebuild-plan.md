@@ -17,7 +17,7 @@ Steps:
 - **R3–R8:** the post-composition builders in the order below.
 - **R9:** Unity import and build of the destination, then both device checks.
 
-R0–R4 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
+R0–R6 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
 
 ```sh
 ./dev prototype --action rebuild-step --step assemblies
@@ -89,6 +89,42 @@ recorded final mesh-resolution receipt supplies that boundary. Removing this deb
 requires a host replacement for the Unity catalog/contract export followed by
 native inventory/reconciliation replay. Source identities still come from the
 export, and every selected project product must match the map and current project.
+
+R5 and R6 are executable after R4, in the same destination:
+
+```sh
+./dev prototype --action rebuild-step --step stage-variants --work-dir ../../../work
+./dev prototype --action rebuild-step --step source-scenes --work-dir ../../../work
+```
+
+`scene_rebuild.py` owns this host replay. R5 selects 18 provenance paths: the
+16 later reduced scenes and the final Sky Meadow / Ship Graveyard contracts.
+R6 selects 46: 23 source-scene bodies and 23 deterministic importers. Each cohort
+is hash/size-gated before project writes flush, then compared to current-project
+bytes; `--compare-only` works for both. Completion markers enforce R4 → R5 → R6.
+R6 calls `prepare` for all scene names and leaves the two Wwise DLLs to R1.
+The real actions retain their write paths and separate audio action.
+
+R5 explicitly reads two more retained inputs by recorded hash in
+`recipe/scene-rebuild-inputs.json`: the frozen `whole-catalog-code-base.json`
+graph baseline and `moon-script-identities.txt` MapZone script identities.
+Neither is regenerated, and removing these pins remains a fresh-rebuild blocker.
+R3/R4's ten pinned analysis inputs remain unchanged. R5 regenerates projections,
+scene contracts, navigation roots, contexts and receipts from accepted source,
+destination configuration/imported graphs and R3's regenerated manifest. A config
+row without its measured destination scene remains pending; no live-project
+config or implicit baseline read supplies missing output. R6 regenerates full
+scene bodies/importers and destination config/receipts from accepted source and
+public UI remaps. R4 must still defer R5/R6 paths: they do not exist when it runs.
+The receipt retains those paths for the final `validate-bindings` gate, which
+remains unrunnable until R8. Synthetic contracts: `tests/test_scene_rebuild.py`.
+The 41 stage node graphs are `unity-generated`: the live project and the frozen baseline
+hold the editor's re-serialized form, while a destination before R9 holds R2's export copy.
+In the rebuild path R5 accepts such a graph only when the destination bytes equal its single
+recorded export source, and lists it as `unity_import_deferred` in its result; R9 must then
+reproduce the baseline hash. Only graph paths, never their bytes, feed R5's outputs.
+Real data (J570): from an empty destination, R1–R6 give 98, 84,487, 259, 1,238, 18 and 46
+identical files (28 graphs deferred to R9) with the working project unchanged.
 
 The audit below describes the J566 snapshot before this implementation.
 
