@@ -1,0 +1,10 @@
+# C# formatting for tools/unity (cleanup plan Phase 5). Whitespace only: string literals and
+# comments are never rewrapped, so removing all whitespace from a file gives the same text
+# before and after formatting.
+Language: CSharp
+BasedOnStyle: Microsoft
+ColumnLimit: 140
+IndentWidth: 4
+BreakStringLiterals: false
+ReflowComments: false
+SortIncludes: Never

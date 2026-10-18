@@ -5341,3 +5341,17 @@ from J542's because J542 was a full build and this a code-only one, so the devic
 `--stage-exit` passed (`work/experiments/baseline/20261018T025459.868691Z`). App stopped; OLED
 asleep. `tools/AssemblyProbe` keeps its name for now: its build output path and receipts are
 referenced by tooling that would need its own change.
+
+## J544 — Format the C# sources with clang-format
+
+Phase 5 "C# formatting". All 114 C# files under `tools/unity` and `tools/catalog` are formatted
+with clang-format 22.1.8 (`.clang-format`: C# mode, Microsoft base style, 140 columns, no
+string-literal breaking or comment reflow). Each file is identical to its previous version once
+all whitespace is removed, so only whitespace changed; none had to be reverted. The report and
+config classes now have one declaration per line (`PortSession.cs` went from 718 to 3,143 lines;
+the longest line in `tools/` is now 548 characters, an unbreakable literal, against more than
+9,000 before). 410 host tests pass. Zero-error code-only build, APK `07d07fcb157788c4b0e49857d1ab23e98836d4d3cbe2da1381fe4df225088b52`;
+`./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T030607.024001Z`) and
+`--stage-exit` passed on the same APK (`work/experiments/baseline/20261018T030930.895522Z`). App
+stopped; OLED asleep. CI does not enforce the format because other clang-format versions
+format C# differently; ARCHITECTURE describes the local check.

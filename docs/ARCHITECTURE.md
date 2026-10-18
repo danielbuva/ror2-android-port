@@ -62,9 +62,9 @@ copied into it explicitly (J517).
 
 Start-up, in order:
 
-1. `Init` (`PortSession.cs:84`, `RuntimeInitializeOnLoad` after scene load): if the
+1. `Init` (`PortSession.cs:402`, `RuntimeInitializeOnLoad` after scene load): if the
    `MovementBatchProbe` resource exists, create the harness object.
-2. `Start` (`:85`): exits if `whole-catalog-selection.json` exists in persistent data (the
+2. `Start` (`:407`): exits if `whole-catalog-selection.json` exists in persistent data (the
    separate catalog bootstrap owns that run), then **waits 8 s**.
 3. Read the config. Without a `movement-batch-selection.json` override and with
    `launchPlayableSlice` set, wait for an attempt-bound `nova-input-mapping.json` in
@@ -136,6 +136,11 @@ report, read against the journal entry that defines what it must show.
 Build, device and safety tooling has its own tests: `test_build_identity.py`,
 `test_build_snapshots.py`, `test_apk_identity.py`, `test_adb_target.py`,
 `test_lab_safety.py`, `test_public_privacy.py`.
+
+C# under `tools/` is formatted with `clang-format -i` using the repository's `.clang-format`
+(J544). It never rewraps string literals or comments, so a correct reformat leaves each file
+identical once whitespace is removed; check that before committing a reformat. CI does not
+enforce it, because other clang-format versions format C# differently.
 
 Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `ruff.toml`):
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and

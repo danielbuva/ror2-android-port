@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J544](PORTING_JOURNAL.md#j544--format-the-c-sources-with-clang-format) | 2026-10-17 | Format the C# sources with clang-format | Phase 5 "C# formatting". |
 | [J543](PORTING_JOURNAL.md#j543--split-toolsunity-into-runtime-and-experiments-folders) | 2026-10-17 | Split tools/unity into runtime and experiments folders | Phase 5 "Folders" (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J542](PORTING_JOURNAL.md#j542--rename-the-coordinator-to-portsession) | 2026-10-17 | Rename the coordinator to PortSession | Phase 4 step 6 (implemented by Codex at medium reasoning, reviewed by Claude): the coordinator class `MovementBatchProbe` is now `PortSession` (`tools/unity/ru… |
 | [J541](PORTING_JOURNAL.md#j541--rename-the-report-type-to-sessionreport) | 2026-10-17 | Rename the report type to SessionReport | Phase 4 step 2's deferred rename (implemented by Codex at medium reasoning, reviewed by Claude): the report type `MovementBatchProbe.Result` is now `SessionRep… |

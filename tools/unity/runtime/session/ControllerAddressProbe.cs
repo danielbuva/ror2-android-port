@@ -16,120 +16,392 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // A single original deferred request. No original application or body is activated.
-public class ControllerAddressProbe : MonoBehaviour {
- [Serializable] public class Config {public string attempt,key,asset,bundle,kind,subObjectName,runtimeKey,paramsKey,paramsAsset;public string[] rendererPaths,meshPaths,meshKeys;public string materialKey,materialAsset,materialName;public bool applySkin,materialRender;public string[] meshAssets,meshNames;public int[] meshVertices;}
- [Serializable] public class Report {public string attempt,phase,error,key,asset,bundlePath,provider,runtimeKey,assetName,assetType;public int pid,clips,callbacks;public bool success,initialized,shared,retained,released,reloaded,missingFailed,wrongTypeFailed,startupInactive,avatarValid,avatarHuman,bundleAssetPresent,skinBaked,paramsReleased,bakeIdempotent;public string[] rendererPaths,meshPaths,meshKeys;public int skinRenderers,skinMeshes,materialSlotsPopulated;public bool skinApplied,modelInactive,meshAssignmentsMatch,materialRecordsMatch,rendererAssignmentMatch,applicationReleased,materialPreview;public string[] appliedMeshNames;public int[] appliedMeshVertices;public string materialAssignmentScope="CharacterModel renderer records; live renderer update remains inactive";public string scheduler="Diagnostic calls to original manager Update; not game-loop acceptance";}
- Config cfg;Report report;MethodInfo tick;
- [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Init(){if(Resources.Load<TextAsset>("ControllerAddressProbe"))new GameObject("Original controller request probe").AddComponent<ControllerAddressProbe>();}
- IEnumerator Start(){
-  cfg=JsonUtility.FromJson<Config>(Resources.Load<TextAsset>("ControllerAddressProbe").text);report=new Report{attempt=cfg.attempt,key=cfg.key,asset=cfg.asset};
-#if UNITY_ANDROID && !UNITY_EDITOR
-  using(var process=new AndroidJavaClass("android.os.Process"))report.pid=process.CallStatic<int>("myPid");
-#endif
-  yield return new WaitForSeconds(6);
-  report.bundlePath=Path.Combine(Application.persistentDataPath,"payload",cfg.bundle);
-  if(!File.Exists(report.bundlePath))yield break; // first launch precedes owned payload synchronization
-  var routine=cfg.kind=="skin" ? Run<RoR2.SkinDef>(AcceptSkin) : cfg.kind=="avatar" ? Run<Avatar>(AcceptAvatar) : Run<RuntimeAnimatorController>(AcceptController);
-  while(true){bool more;object current=null;try{more=routine.MoveNext();if(more)current=routine.Current;}catch(Exception e){report.error=e.ToString();report.success=false;Save();yield break;}if(!more)break;yield return current;}
- }
- void Phase(string value){report.phase=value;Save();}
- static void Require(bool value,string error){if(!value)throw new Exception(error);}
- void Save(){File.WriteAllText(Path.Combine(Application.persistentDataPath,"controller-address-probe.json"),JsonUtility.ToJson(report,true));}
- AssetOrDirectReference<T> Wrapper<T>() where T:UnityEngine.Object {var w=new AssetOrDirectReference<T>{loadOnAssigned=false,unloadType=AsyncReferenceHandleUnloadType.AtWill};w.address=new AssetReferenceT<T>(cfg.key){SubObjectName=cfg.subObjectName};Require(w.address.RuntimeKeyIsValid(),"Invalid GUID-based wrapper reference");Require(w.address.RuntimeKey.ToString()==report.runtimeKey,"Original runtime key differs");w.onValidReferenceDiscovered+=x=>report.callbacks++;return w;}
- bool AcceptController(RuntimeAnimatorController value){if(!value)return false;report.clips=value.animationClips.Length;return report.clips==35&&value.animationClips.Any(c=>c.name=="CommandoArmature|RunForward");}
- static Mesh AssignedMesh(Transform target){var skin=target.GetComponent<SkinnedMeshRenderer>();if(skin)return skin.sharedMesh;var filter=target.GetComponent<MeshFilter>();return filter?filter.sharedMesh:null;}
- bool AcceptSkin(RoR2.SkinDef value){return value&&value.name=="skinCommandoDefault"&&value.rootObject&&value.baseSkins.Length==0;}
- bool AcceptAvatar(Avatar value){if(!value)return false;report.avatarValid=value.isValid;report.avatarHuman=value.isHuman;return value.name==cfg.subObjectName&&value.isValid;}
- IEnumerator Run<T>(Func<T,bool> accept) where T:UnityEngine.Object {
-  report.runtimeKey=string.IsNullOrEmpty(cfg.runtimeKey)?cfg.key:cfg.runtimeKey;report.assetType=typeof(T).FullName;
-  Phase("initialize");
-  Require(!AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==cfg.bundle),"Bundle already owned by another loader");
-  var directory=Path.Combine(Application.persistentDataPath,"controller-catalog");Directory.CreateDirectory(directory);
-  var catalogPath=Path.Combine(directory,"catalog.json");var settingsPath=Path.Combine(directory,"settings.json");
-  // Valid zero-entry serialized catalog; the typed local mapping is registered after real initialization.
-  File.WriteAllText(catalogPath,"{\"m_LocatorId\":\"controller-init\",\"m_ProviderIds\":[],\"m_InternalIds\":[],\"m_KeyDataString\":\"AAAAAA==\",\"m_BucketDataString\":\"AAAAAA==\",\"m_EntryDataString\":\"AAAAAA==\",\"m_ExtraDataString\":\"\",\"m_resourceTypes\":[]}");
-  var data=new ResourceManagerRuntimeData{BuildTarget="Android",DisableCatalogUpdateOnStartup=true,LogResourceManagerExceptions=true};
-  data.CatalogLocations.Add(new ResourceLocationData(new[]{ResourceManagerRuntimeData.kCatalogAddress},catalogPath,typeof(ContentCatalogProvider),typeof(ContentCatalogData)));
-  File.WriteAllText(settingsPath,JsonUtility.ToJson(data));
-  string defaultSettings=Addressables.RuntimePath+"/settings.json";
-  Addressables.InternalIdTransformFunc=location=>location.InternalId==defaultSettings?settingsPath:location.InternalId;
-  var init=Addressables.InitializeAsync();Addressables.ResourceManager.Acquire(init);while(!init.IsDone)yield return null;
-  Require(init.Status==AsyncOperationStatus.Succeeded,"Addressables initialization failed: "+init.OperationException);report.initialized=true;Addressables.Release(init);
-  Addressables.ResourceManager.ResourceProviders.Add(new AssetBundleProvider());Addressables.ResourceManager.ResourceProviders.Add(new BundledAssetProvider());
-  var bundleLocation=new ResourceLocationBase("controller-android-bundle",report.bundlePath,typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));
-  bundleLocation.Data=new AssetBundleRequestOptions{BundleName=cfg.bundle};
-  var location=new ResourceLocationBase(report.runtimeKey,cfg.asset,typeof(BundledAssetProvider).FullName,typeof(T),bundleLocation);
-  var locator=new ResourceLocationMap("controller-local");locator.Add(report.runtimeKey,location);if(cfg.kind=="skin")locator.Add(cfg.paramsKey,new ResourceLocationBase(cfg.paramsKey,cfg.paramsAsset,typeof(BundledAssetProvider).FullName,typeof(RoR2.SkinDefParams),bundleLocation));if(cfg.applySkin){locator.Add(cfg.materialKey,new ResourceLocationBase(cfg.materialKey,cfg.materialAsset,typeof(BundledAssetProvider).FullName,typeof(Material),bundleLocation));for(int m=0;m<cfg.meshKeys.Length;m++)locator.Add(cfg.meshKeys[m],new ResourceLocationBase(cfg.meshKeys[m],cfg.meshAssets[m],typeof(BundledAssetProvider).FullName,typeof(Mesh),bundleLocation));}Addressables.AddResourceLocator(locator);report.provider=location.ProviderId;
-  Phase("original-load");var first=Wrapper<T>();var second=Wrapper<T>();first.LoadAsync();second.LoadAsync();var handle=first.loadHandle;
-  while(!handle.IsDone)yield return null;yield return null;
-  Require(handle.Status==AsyncOperationStatus.Succeeded&&first.Result,"Original typed request failed: "+handle.OperationException);
-  report.assetName=first.Result.name;Require(accept(first.Result),"Recovered asset identity/validity failed");
-  report.bundleAssetPresent=AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==cfg.bundle&&b.GetAllAssetNames().Contains(cfg.asset));Require(report.bundleAssetPresent,"Mapped asset absent from loaded bundle names");
-  if(cfg.kind=="skin"){
-   Phase("skin-parameters");var skin=first.Result as RoR2.SkinDef;
-   Require(skin.runtimeSkin==null&&skin.skinDefParams==null&&skin.skinDefParamsAddress.RuntimeKey.ToString()==cfg.paramsKey,"Unexpected direct/prebaked skin parameters");
-   var witness=AssetAsyncReferenceManager<RoR2.SkinDefParams>.LoadAsset(skin.skinDefParamsAddress);while(!witness.IsDone)yield return null;
-   Require(witness.Status==AsyncOperationStatus.Succeeded&&witness.Result&&witness.Result.name=="skinCommandoDefault_params","Wrong skin parameter asset");
-   Require(witness.Result.rendererInfos.Length==3&&witness.Result.meshReplacements.Length==3,"Wrong parameter counts");
-   Phase("skin-bake");var bake=skin.BakeAsync();while(bake.MoveNext())yield return bake.Current;
-   var result=skin.runtimeSkin;Require(result!=null,"Original BakeAsync produced no runtime skin");
-   report.rendererPaths=result.rendererInfoTemplates.Select(x=>x.transformPath).ToArray();report.meshPaths=result.meshReplacementTemplates.Select(x=>x.transformPath).ToArray();report.meshKeys=result.meshReplacementTemplates.Select(x=>x.meshReference.address.RuntimeKey.ToString()).ToArray();
-   report.skinRenderers=result.rendererInfoTemplates.Length;report.skinMeshes=result.meshReplacementTemplates.Length;
-   Require(report.rendererPaths.SequenceEqual(cfg.rendererPaths)&&report.meshPaths.SequenceEqual(cfg.meshPaths)&&report.meshKeys.SequenceEqual(cfg.meshKeys),"Original baked template identity mismatch");
-   Require(result.rendererInfoTemplates.All(x=>x.materialReference.address.RuntimeKey.ToString()==cfg.materialKey),"Baked material key mismatch");
-   Require(result.gameObjectActivationTemplates.Length==0&&result.lightReplacementTemplates.Length==0&&result.ghostReplacementTemplates.Length==0&&result.minionSkinTemplates.Length==0,"Unexpected extra templates");
-   report.skinBaked=true;bake=skin.BakeAsync();while(bake.MoveNext())yield return bake.Current;report.bakeIdempotent=ReferenceEquals(result,skin.runtimeSkin);Require(report.bakeIdempotent,"Repeated bake changed cached result");
-   // Release only our witness owner; BakeAsync must have released its own acquisition.
-   AssetAsyncReferenceManager<RoR2.SkinDefParams>.UnloadAsset(skin.skinDefParamsAddress);
-   var paramsTick=typeof(AssetAsyncReferenceManager<RoR2.SkinDefParams>).GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Static);Require(paramsTick!=null,"Missing original params cleanup method");
-   float paramsDeadline=Time.time+12;while(Time.time<paramsDeadline){paramsTick.Invoke(null,null);yield return null;}
-   report.paramsReleased=!witness.IsValid();Require(report.paramsReleased,"Bake retained parameter ownership");
-   if(cfg.applySkin){
-    Phase("skin-application");var inactiveHost=new GameObject("Inactive original skin application");inactiveHost.SetActive(false);
-    var modelObject=Instantiate(skin.rootObject,inactiveHost.transform,false);var model=modelObject.GetComponent<RoR2.CharacterModel>();
-    Require(model&&!modelObject.activeInHierarchy,"Model activated or missing CharacterModel");
-    for(int m=0;m<cfg.meshPaths.Length;m++){var target=modelObject.transform.Find(cfg.meshPaths[m]);Require(target&&AssignedMesh(target)==null,"Missing target or mesh already assigned before application");}
-    var materials=new System.Collections.Generic.List<AssetReferenceT<Material>>();var meshes=new System.Collections.Generic.List<AssetReferenceT<Mesh>>();var objects=new System.Collections.Generic.List<AssetReferenceT<GameObject>>();
-    var apply=result.ApplyAsync(modelObject,materials,meshes,objects,AsyncReferenceHandleUnloadType.AtWill);while(apply.MoveNext())yield return apply.Current;
-    report.modelInactive=!modelObject.activeInHierarchy;Require(report.modelInactive,"Original application activated model");
-    Require(materials.Count==3&&meshes.Count==3&&objects.Count==0,"Unexpected application ownership records");
-    report.materialRecordsMatch=model.baseRendererInfos.Length==3&&model.baseRendererInfos.Select((x,i)=>x.renderer==modelObject.transform.Find(cfg.rendererPaths[i]).GetComponent<Renderer>()&&x.defaultMaterial&&x.defaultMaterial.name==cfg.materialName&&x.defaultMaterial==result.rendererInfoTemplates[i].materialReference.Result).All(x=>x);
-    Require(report.materialRecordsMatch,"Material renderer records differ");report.materialSlotsPopulated=model.baseRendererInfos.Count(x=>x.renderer.sharedMaterial);
-    report.appliedMeshNames=new string[3];report.appliedMeshVertices=new int[3];report.meshAssignmentsMatch=true;
-    for(int m=0;m<3;m++){var mesh=AssignedMesh(modelObject.transform.Find(cfg.meshPaths[m]));Require(mesh,"Original application left mesh absent");report.appliedMeshNames[m]=mesh.name;report.appliedMeshVertices[m]=mesh.vertexCount;report.meshAssignmentsMatch&=mesh==result.meshReplacementTemplates[m].meshReference.Result&&mesh.name==cfg.meshNames[m]&&mesh.vertexCount==cfg.meshVertices[m];}
-    Require(report.meshAssignmentsMatch,"Applied mesh identities differ");report.skinApplied=true;
-    if(cfg.materialRender){
-     Phase("original-renderer-assignment");Require(CommandoMaterialPreview.AssignOriginal(model),"Detached context restoration failed");var infos=model.baseRendererInfos;
-     report.rendererAssignmentMatch=infos.All(x=>x.renderer.sharedMaterials.Length==1&&x.renderer.sharedMaterial==x.defaultMaterial);Require(report.rendererAssignmentMatch,"Original renderer material identity mismatch");
-     bool complete=false;CommandoMaterialPreview.Begin(modelObject,infos.Select(x=>x.renderer).ToArray(),infos.Select(x=>x.defaultMaterial).ToArray(),cfg.attempt,x=>{report.materialPreview=x.success;complete=true;});while(!complete)yield return null;Require(report.materialPreview,"Converted material preview failed; inspect commando-material-probe.json");
+public class ControllerAddressProbe : MonoBehaviour
+{
+    [Serializable]
+    public class Config
+    {
+        public string attempt, key, asset, bundle, kind, subObjectName, runtimeKey, paramsKey, paramsAsset;
+        public string[] rendererPaths, meshPaths, meshKeys;
+        public string materialKey, materialAsset, materialName;
+        public bool applySkin, materialRender;
+        public string[] meshAssets, meshNames;
+        public int[] meshVertices;
     }
-    var materialHandles=result.rendererInfoTemplates.Select(x=>x.materialReference.loadHandle).ToArray();var meshHandles=result.meshReplacementTemplates.Select(x=>x.meshReference.loadHandle).ToArray();
-    Destroy(inactiveHost);yield return null;
-    // Follow original ModelSkinController ownership-list cleanup, without activating its lifecycle.
-    foreach(var reference in materials)AssetAsyncReferenceManager<Material>.UnloadAsset(reference);foreach(var reference in meshes)AssetAsyncReferenceManager<Mesh>.UnloadAsset(reference);
-    var materialTick=typeof(AssetAsyncReferenceManager<Material>).GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Static);var meshTick=typeof(AssetAsyncReferenceManager<Mesh>).GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Static);Require(materialTick!=null&&meshTick!=null,"Missing original material/mesh cleanup");
-    float releaseDeadline=Time.time+12;while(Time.time<releaseDeadline){materialTick.Invoke(null,null);meshTick.Invoke(null,null);yield return null;}
-    report.applicationReleased=materialHandles.All(x=>!x.IsValid())&&meshHandles.All(x=>!x.IsValid());Require(report.applicationReleased,"Applied asset ownership retained");
-   }
-  }
-  report.shared=handle.Equals(second.loadHandle)&&first.Result==second.Result;Require(report.shared,"Original manager did not share handle");
-  first.Reset();report.retained=second.loadHandle.IsValid()&&second.Result;Require(report.retained,"First reset invalidated other owner");
-  Phase("delayed-release");second.Reset();
-  tick=typeof(AssetAsyncReferenceManager<T>).GetMethod("Update",BindingFlags.Static|BindingFlags.NonPublic);Require(tick!=null,"Missing original cleanup method");
-  float deadline=Time.time+12;while(Time.time<deadline){tick.Invoke(null,null);yield return null;}
-  report.released=!handle.IsValid()&&!AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==cfg.bundle);Require(report.released,"Original deferred release did not release handle/bundle");
-  Phase("reload");var third=Wrapper<T>();third.LoadAsync();while(!third.loadHandle.IsDone)yield return null;
-  report.reloaded=third.loadHandle.Status==AsyncOperationStatus.Succeeded&&third.Result&&accept(third.Result);Require(report.reloaded,"Reload failed");
-  Phase("negative-controls");var missing=Addressables.LoadAssetAsync<T>(cfg.kind=="avatar"?cfg.key+"[lab-missing-avatar]":"lab-missing-controller");while(!missing.IsDone)yield return null;
-  report.missingFailed=missing.Status==AsyncOperationStatus.Failed&&!missing.Result;Addressables.Release(missing);
-  var wrong=Addressables.LoadAssetAsync<Texture2D>(report.runtimeKey);while(!wrong.IsDone)yield return null;
-  report.wrongTypeFailed=wrong.Status==AsyncOperationStatus.Failed&&!wrong.Result;Addressables.Release(wrong);
-  Require(report.missingFailed&&report.wrongTypeFailed,"Invalid request unexpectedly succeeded");
-  third.Reset();deadline=Time.time+12;while(Time.time<deadline){tick.Invoke(null,null);yield return null;}
-  Require(!AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==cfg.bundle),"Reload bundle still retained");
-  Addressables.RemoveResourceLocator(locator);
-  report.startupInactive=RoR2.RoR2Application.instance==null&&RoR2.RoR2Application.fileSystem==null&&RoR2.RoR2Application.cloudStorage==null;
-  Require(report.startupInactive,"Unexpected original startup/filesystem initialization");Require(report.callbacks>=3,"Completion callbacks missing");
-  report.success=true;Phase("complete");Debug.Log(cfg.applySkin?"LAB_SKIN_APPLY_PASS":cfg.kind=="skin"?"LAB_SKIN_BAKE_PASS":cfg.kind=="avatar"?"LAB_AVATAR_ADDRESS_PASS":"LAB_CONTROLLER_ADDRESS_PASS");
- }
+    [Serializable]
+    public class Report
+    {
+        public string attempt, phase, error, key, asset, bundlePath, provider, runtimeKey, assetName, assetType;
+        public int pid, clips, callbacks;
+        public bool success, initialized, shared, retained, released, reloaded, missingFailed, wrongTypeFailed, startupInactive,
+            avatarValid, avatarHuman, bundleAssetPresent, skinBaked, paramsReleased, bakeIdempotent;
+        public string[] rendererPaths, meshPaths, meshKeys;
+        public int skinRenderers, skinMeshes, materialSlotsPopulated;
+        public bool skinApplied, modelInactive, meshAssignmentsMatch, materialRecordsMatch, rendererAssignmentMatch, applicationReleased,
+            materialPreview;
+        public string[] appliedMeshNames;
+        public int[] appliedMeshVertices;
+        public string materialAssignmentScope = "CharacterModel renderer records; live renderer update remains inactive";
+        public string scheduler = "Diagnostic calls to original manager Update; not game-loop acceptance";
+    }
+    Config cfg;
+    Report report;
+    MethodInfo tick;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Init()
+    {
+        if (Resources.Load<TextAsset>("ControllerAddressProbe"))
+            new GameObject("Original controller request probe").AddComponent<ControllerAddressProbe>();
+    }
+    IEnumerator Start()
+    {
+        cfg = JsonUtility.FromJson<Config>(Resources.Load<TextAsset>("ControllerAddressProbe").text);
+        report = new Report { attempt = cfg.attempt, key = cfg.key, asset = cfg.asset };
+#if UNITY_ANDROID && !UNITY_EDITOR
+        using (var process = new AndroidJavaClass("android.os.Process")) report.pid = process.CallStatic<int>("myPid");
+#endif
+        yield return new WaitForSeconds(6);
+        report.bundlePath = Path.Combine(Application.persistentDataPath, "payload", cfg.bundle);
+        if (!File.Exists(report.bundlePath))
+            yield break; // first launch precedes owned payload synchronization
+        var routine = cfg.kind == "skin"     ? Run<RoR2.SkinDef>(AcceptSkin)
+                      : cfg.kind == "avatar" ? Run<Avatar>(AcceptAvatar)
+                                             : Run<RuntimeAnimatorController>(AcceptController);
+        while (true)
+        {
+            bool more;
+            object current = null;
+            try
+            {
+                more = routine.MoveNext();
+                if (more)
+                    current = routine.Current;
+            }
+            catch (Exception e)
+            {
+                report.error = e.ToString();
+                report.success = false;
+                Save();
+                yield break;
+            }
+            if (!more)
+                break;
+            yield return current;
+        }
+    }
+    void Phase(string value)
+    {
+        report.phase = value;
+        Save();
+    }
+    static void Require(bool value, string error)
+    {
+        if (!value)
+            throw new Exception(error);
+    }
+    void Save()
+    {
+        File.WriteAllText(Path.Combine(Application.persistentDataPath, "controller-address-probe.json"), JsonUtility.ToJson(report, true));
+    }
+    AssetOrDirectReference<T> Wrapper<T>()
+        where T : UnityEngine.Object
+    {
+        var w = new AssetOrDirectReference<T> { loadOnAssigned = false, unloadType = AsyncReferenceHandleUnloadType.AtWill };
+        w.address = new AssetReferenceT<T>(cfg.key) { SubObjectName = cfg.subObjectName };
+        Require(w.address.RuntimeKeyIsValid(), "Invalid GUID-based wrapper reference");
+        Require(w.address.RuntimeKey.ToString() == report.runtimeKey, "Original runtime key differs");
+        w.onValidReferenceDiscovered += x => report.callbacks++;
+        return w;
+    }
+    bool AcceptController(RuntimeAnimatorController value)
+    {
+        if (!value)
+            return false;
+        report.clips = value.animationClips.Length;
+        return report.clips == 35 && value.animationClips.Any(c => c.name == "CommandoArmature|RunForward");
+    }
+    static Mesh AssignedMesh(Transform target)
+    {
+        var skin = target.GetComponent<SkinnedMeshRenderer>();
+        if (skin)
+            return skin.sharedMesh;
+        var filter = target.GetComponent<MeshFilter>();
+        return filter ? filter.sharedMesh : null;
+    }
+    bool AcceptSkin(RoR2.SkinDef value)
+    {
+        return value && value.name == "skinCommandoDefault" && value.rootObject && value.baseSkins.Length == 0;
+    }
+    bool AcceptAvatar(Avatar value)
+    {
+        if (!value)
+            return false;
+        report.avatarValid = value.isValid;
+        report.avatarHuman = value.isHuman;
+        return value.name == cfg.subObjectName && value.isValid;
+    }
+    IEnumerator Run<T>(Func<T, bool> accept)
+        where T : UnityEngine.Object
+    {
+        report.runtimeKey = string.IsNullOrEmpty(cfg.runtimeKey) ? cfg.key : cfg.runtimeKey;
+        report.assetType = typeof(T).FullName;
+        Phase("initialize");
+        Require(!AssetBundle.GetAllLoadedAssetBundles().Any(b => b.name == cfg.bundle), "Bundle already owned by another loader");
+        var directory = Path.Combine(Application.persistentDataPath, "controller-catalog");
+        Directory.CreateDirectory(directory);
+        var catalogPath = Path.Combine(directory, "catalog.json");
+        var settingsPath = Path.Combine(directory, "settings.json");
+        // Valid zero-entry serialized catalog; the typed local mapping is registered after real initialization.
+        File.WriteAllText(
+            catalogPath,
+            "{\"m_LocatorId\":\"controller-init\",\"m_ProviderIds\":[],\"m_InternalIds\":[],\"m_KeyDataString\":\"AAAAAA==\",\"m_BucketDataString\":\"AAAAAA==\",\"m_EntryDataString\":\"AAAAAA==\",\"m_ExtraDataString\":\"\",\"m_resourceTypes\":[]}");
+        var data = new ResourceManagerRuntimeData { BuildTarget = "Android", DisableCatalogUpdateOnStartup = true,
+                                                    LogResourceManagerExceptions = true };
+        data.CatalogLocations.Add(new ResourceLocationData(new[] { ResourceManagerRuntimeData.kCatalogAddress }, catalogPath,
+                                                           typeof(ContentCatalogProvider), typeof(ContentCatalogData)));
+        File.WriteAllText(settingsPath, JsonUtility.ToJson(data));
+        string defaultSettings = Addressables.RuntimePath + "/settings.json";
+        Addressables.InternalIdTransformFunc = location => location.InternalId == defaultSettings ? settingsPath : location.InternalId;
+        var init = Addressables.InitializeAsync();
+        Addressables.ResourceManager.Acquire(init);
+        while (!init.IsDone)
+            yield return null;
+        Require(init.Status == AsyncOperationStatus.Succeeded, "Addressables initialization failed: " + init.OperationException);
+        report.initialized = true;
+        Addressables.Release(init);
+        Addressables.ResourceManager.ResourceProviders.Add(new AssetBundleProvider());
+        Addressables.ResourceManager.ResourceProviders.Add(new BundledAssetProvider());
+        var bundleLocation = new ResourceLocationBase("controller-android-bundle", report.bundlePath, typeof(AssetBundleProvider).FullName,
+                                                      typeof(IAssetBundleResource));
+        bundleLocation.Data = new AssetBundleRequestOptions { BundleName = cfg.bundle };
+        var location =
+            new ResourceLocationBase(report.runtimeKey, cfg.asset, typeof(BundledAssetProvider).FullName, typeof(T), bundleLocation);
+        var locator = new ResourceLocationMap("controller-local");
+        locator.Add(report.runtimeKey, location);
+        if (cfg.kind == "skin")
+            locator.Add(cfg.paramsKey, new ResourceLocationBase(cfg.paramsKey, cfg.paramsAsset, typeof(BundledAssetProvider).FullName,
+                                                                typeof(RoR2.SkinDefParams), bundleLocation));
+        if (cfg.applySkin)
+        {
+            locator.Add(cfg.materialKey, new ResourceLocationBase(cfg.materialKey, cfg.materialAsset, typeof(BundledAssetProvider).FullName,
+                                                                  typeof(Material), bundleLocation));
+            for (int m = 0; m < cfg.meshKeys.Length; m++)
+                locator.Add(cfg.meshKeys[m], new ResourceLocationBase(cfg.meshKeys[m], cfg.meshAssets[m],
+                                                                      typeof(BundledAssetProvider).FullName, typeof(Mesh), bundleLocation));
+        }
+        Addressables.AddResourceLocator(locator);
+        report.provider = location.ProviderId;
+        Phase("original-load");
+        var first = Wrapper<T>();
+        var second = Wrapper<T>();
+        first.LoadAsync();
+        second.LoadAsync();
+        var handle = first.loadHandle;
+        while (!handle.IsDone)
+            yield return null;
+        yield return null;
+        Require(handle.Status == AsyncOperationStatus.Succeeded && first.Result,
+                "Original typed request failed: " + handle.OperationException);
+        report.assetName = first.Result.name;
+        Require(accept(first.Result), "Recovered asset identity/validity failed");
+        report.bundleAssetPresent =
+            AssetBundle.GetAllLoadedAssetBundles().Any(b => b.name == cfg.bundle && b.GetAllAssetNames().Contains(cfg.asset));
+        Require(report.bundleAssetPresent, "Mapped asset absent from loaded bundle names");
+        if (cfg.kind == "skin")
+        {
+            Phase("skin-parameters");
+            var skin = first.Result as RoR2.SkinDef;
+            Require(skin.runtimeSkin == null && skin.skinDefParams == null &&
+                        skin.skinDefParamsAddress.RuntimeKey.ToString() == cfg.paramsKey,
+                    "Unexpected direct/prebaked skin parameters");
+            var witness = AssetAsyncReferenceManager<RoR2.SkinDefParams>.LoadAsset(skin.skinDefParamsAddress);
+            while (!witness.IsDone)
+                yield return null;
+            Require(witness.Status == AsyncOperationStatus.Succeeded && witness.Result &&
+                        witness.Result.name == "skinCommandoDefault_params",
+                    "Wrong skin parameter asset");
+            Require(witness.Result.rendererInfos.Length == 3 && witness.Result.meshReplacements.Length == 3, "Wrong parameter counts");
+            Phase("skin-bake");
+            var bake = skin.BakeAsync();
+            while (bake.MoveNext())
+                yield return bake.Current;
+            var result = skin.runtimeSkin;
+            Require(result != null, "Original BakeAsync produced no runtime skin");
+            report.rendererPaths = result.rendererInfoTemplates.Select(x => x.transformPath).ToArray();
+            report.meshPaths = result.meshReplacementTemplates.Select(x => x.transformPath).ToArray();
+            report.meshKeys = result.meshReplacementTemplates.Select(x => x.meshReference.address.RuntimeKey.ToString()).ToArray();
+            report.skinRenderers = result.rendererInfoTemplates.Length;
+            report.skinMeshes = result.meshReplacementTemplates.Length;
+            Require(report.rendererPaths.SequenceEqual(cfg.rendererPaths) && report.meshPaths.SequenceEqual(cfg.meshPaths) &&
+                        report.meshKeys.SequenceEqual(cfg.meshKeys),
+                    "Original baked template identity mismatch");
+            Require(result.rendererInfoTemplates.All(x => x.materialReference.address.RuntimeKey.ToString() == cfg.materialKey),
+                    "Baked material key mismatch");
+            Require(result.gameObjectActivationTemplates.Length == 0 && result.lightReplacementTemplates.Length == 0 &&
+                        result.ghostReplacementTemplates.Length == 0 && result.minionSkinTemplates.Length == 0,
+                    "Unexpected extra templates");
+            report.skinBaked = true;
+            bake = skin.BakeAsync();
+            while (bake.MoveNext())
+                yield return bake.Current;
+            report.bakeIdempotent = ReferenceEquals(result, skin.runtimeSkin);
+            Require(report.bakeIdempotent, "Repeated bake changed cached result");
+            // Release only our witness owner; BakeAsync must have released its own acquisition.
+            AssetAsyncReferenceManager<RoR2.SkinDefParams>.UnloadAsset(skin.skinDefParamsAddress);
+            var paramsTick =
+                typeof(AssetAsyncReferenceManager<RoR2.SkinDefParams>).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Static);
+            Require(paramsTick != null, "Missing original params cleanup method");
+            float paramsDeadline = Time.time + 12;
+            while (Time.time < paramsDeadline)
+            {
+                paramsTick.Invoke(null, null);
+                yield return null;
+            }
+            report.paramsReleased = !witness.IsValid();
+            Require(report.paramsReleased, "Bake retained parameter ownership");
+            if (cfg.applySkin)
+            {
+                Phase("skin-application");
+                var inactiveHost = new GameObject("Inactive original skin application");
+                inactiveHost.SetActive(false);
+                var modelObject = Instantiate(skin.rootObject, inactiveHost.transform, false);
+                var model = modelObject.GetComponent<RoR2.CharacterModel>();
+                Require(model && !modelObject.activeInHierarchy, "Model activated or missing CharacterModel");
+                for (int m = 0; m < cfg.meshPaths.Length; m++)
+                {
+                    var target = modelObject.transform.Find(cfg.meshPaths[m]);
+                    Require(target && AssignedMesh(target) == null, "Missing target or mesh already assigned before application");
+                }
+                var materials = new System.Collections.Generic.List<AssetReferenceT<Material>>();
+                var meshes = new System.Collections.Generic.List<AssetReferenceT<Mesh>>();
+                var objects = new System.Collections.Generic.List<AssetReferenceT<GameObject>>();
+                var apply = result.ApplyAsync(modelObject, materials, meshes, objects, AsyncReferenceHandleUnloadType.AtWill);
+                while (apply.MoveNext())
+                    yield return apply.Current;
+                report.modelInactive = !modelObject.activeInHierarchy;
+                Require(report.modelInactive, "Original application activated model");
+                Require(materials.Count == 3 && meshes.Count == 3 && objects.Count == 0, "Unexpected application ownership records");
+                report.materialRecordsMatch =
+                    model.baseRendererInfos.Length == 3 &&
+                    model.baseRendererInfos
+                        .Select((x, i) => x.renderer == modelObject.transform.Find(cfg.rendererPaths[i]).GetComponent<Renderer>() &&
+                                          x.defaultMaterial && x.defaultMaterial.name == cfg.materialName &&
+                                          x.defaultMaterial == result.rendererInfoTemplates[i].materialReference.Result)
+                        .All(x => x);
+                Require(report.materialRecordsMatch, "Material renderer records differ");
+                report.materialSlotsPopulated = model.baseRendererInfos.Count(x => x.renderer.sharedMaterial);
+                report.appliedMeshNames = new string[3];
+                report.appliedMeshVertices = new int[3];
+                report.meshAssignmentsMatch = true;
+                for (int m = 0; m < 3; m++)
+                {
+                    var mesh = AssignedMesh(modelObject.transform.Find(cfg.meshPaths[m]));
+                    Require(mesh, "Original application left mesh absent");
+                    report.appliedMeshNames[m] = mesh.name;
+                    report.appliedMeshVertices[m] = mesh.vertexCount;
+                    report.meshAssignmentsMatch &= mesh == result.meshReplacementTemplates[m].meshReference.Result &&
+                                                   mesh.name == cfg.meshNames[m] && mesh.vertexCount == cfg.meshVertices[m];
+                }
+                Require(report.meshAssignmentsMatch, "Applied mesh identities differ");
+                report.skinApplied = true;
+                if (cfg.materialRender)
+                {
+                    Phase("original-renderer-assignment");
+                    Require(CommandoMaterialPreview.AssignOriginal(model), "Detached context restoration failed");
+                    var infos = model.baseRendererInfos;
+                    report.rendererAssignmentMatch =
+                        infos.All(x => x.renderer.sharedMaterials.Length == 1 && x.renderer.sharedMaterial == x.defaultMaterial);
+                    Require(report.rendererAssignmentMatch, "Original renderer material identity mismatch");
+                    bool complete = false;
+                    CommandoMaterialPreview.Begin(modelObject, infos.Select(x => x.renderer).ToArray(),
+                                                  infos.Select(x => x.defaultMaterial).ToArray(), cfg.attempt,
+                                                  x =>
+                                                  {
+                                                      report.materialPreview = x.success;
+                                                      complete = true;
+                                                  });
+                    while (!complete)
+                        yield return null;
+                    Require(report.materialPreview, "Converted material preview failed; inspect commando-material-probe.json");
+                }
+                var materialHandles = result.rendererInfoTemplates.Select(x => x.materialReference.loadHandle).ToArray();
+                var meshHandles = result.meshReplacementTemplates.Select(x => x.meshReference.loadHandle).ToArray();
+                Destroy(inactiveHost);
+                yield return null;
+                // Follow original ModelSkinController ownership-list cleanup, without activating its lifecycle.
+                foreach (var reference in materials)
+                    AssetAsyncReferenceManager<Material>.UnloadAsset(reference);
+                foreach (var reference in meshes)
+                    AssetAsyncReferenceManager<Mesh>.UnloadAsset(reference);
+                var materialTick =
+                    typeof(AssetAsyncReferenceManager<Material>).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Static);
+                var meshTick = typeof(AssetAsyncReferenceManager<Mesh>).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Static);
+                Require(materialTick != null && meshTick != null, "Missing original material/mesh cleanup");
+                float releaseDeadline = Time.time + 12;
+                while (Time.time < releaseDeadline)
+                {
+                    materialTick.Invoke(null, null);
+                    meshTick.Invoke(null, null);
+                    yield return null;
+                }
+                report.applicationReleased = materialHandles.All(x => !x.IsValid()) && meshHandles.All(x => !x.IsValid());
+                Require(report.applicationReleased, "Applied asset ownership retained");
+            }
+        }
+        report.shared = handle.Equals(second.loadHandle) && first.Result == second.Result;
+        Require(report.shared, "Original manager did not share handle");
+        first.Reset();
+        report.retained = second.loadHandle.IsValid() && second.Result;
+        Require(report.retained, "First reset invalidated other owner");
+        Phase("delayed-release");
+        second.Reset();
+        tick = typeof(AssetAsyncReferenceManager<T>).GetMethod("Update", BindingFlags.Static | BindingFlags.NonPublic);
+        Require(tick != null, "Missing original cleanup method");
+        float deadline = Time.time + 12;
+        while (Time.time < deadline)
+        {
+            tick.Invoke(null, null);
+            yield return null;
+        }
+        report.released = !handle.IsValid() && !AssetBundle.GetAllLoadedAssetBundles().Any(b => b.name == cfg.bundle);
+        Require(report.released, "Original deferred release did not release handle/bundle");
+        Phase("reload");
+        var third = Wrapper<T>();
+        third.LoadAsync();
+        while (!third.loadHandle.IsDone)
+            yield return null;
+        report.reloaded = third.loadHandle.Status == AsyncOperationStatus.Succeeded && third.Result && accept(third.Result);
+        Require(report.reloaded, "Reload failed");
+        Phase("negative-controls");
+        var missing = Addressables.LoadAssetAsync<T>(cfg.kind == "avatar" ? cfg.key + "[lab-missing-avatar]" : "lab-missing-controller");
+        while (!missing.IsDone)
+            yield return null;
+        report.missingFailed = missing.Status == AsyncOperationStatus.Failed && !missing.Result;
+        Addressables.Release(missing);
+        var wrong = Addressables.LoadAssetAsync<Texture2D>(report.runtimeKey);
+        while (!wrong.IsDone)
+            yield return null;
+        report.wrongTypeFailed = wrong.Status == AsyncOperationStatus.Failed && !wrong.Result;
+        Addressables.Release(wrong);
+        Require(report.missingFailed && report.wrongTypeFailed, "Invalid request unexpectedly succeeded");
+        third.Reset();
+        deadline = Time.time + 12;
+        while (Time.time < deadline)
+        {
+            tick.Invoke(null, null);
+            yield return null;
+        }
+        Require(!AssetBundle.GetAllLoadedAssetBundles().Any(b => b.name == cfg.bundle), "Reload bundle still retained");
+        Addressables.RemoveResourceLocator(locator);
+        report.startupInactive =
+            RoR2.RoR2Application.instance == null && RoR2.RoR2Application.fileSystem == null && RoR2.RoR2Application.cloudStorage == null;
+        Require(report.startupInactive, "Unexpected original startup/filesystem initialization");
+        Require(report.callbacks >= 3, "Completion callbacks missing");
+        report.success = true;
+        Phase("complete");
+        Debug.Log(cfg.applySkin          ? "LAB_SKIN_APPLY_PASS"
+                  : cfg.kind == "skin"   ? "LAB_SKIN_BAKE_PASS"
+                  : cfg.kind == "avatar" ? "LAB_AVATAR_ADDRESS_PASS"
+                                         : "LAB_CONTROLLER_ADDRESS_PASS");
+    }
 }

@@ -10,82 +10,400 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Read-only witnesses around the source animation, droplet and effect factories.
-public sealed partial class PortSession {
- [Serializable] public class ChestEjectionReport {
-  public ChestPurchaseReport purchase;
-  public bool sourceEvents,sourceEffects,caches,groundMeasured,animationMoving,originalInfo,sourcePhysics,collided,pickupCreated,earlyDisabled,available,modelCreated,effectsReturned,actorWithdrawn,conserved,cleaned;
-  public int rolledPickup,collisions,effectInstances,modelVertices,prePurchaseEffects;public string prePurchaseAnimatorState;public uint dropletId,pickupId;
-  public float ejectionSeconds,collisionSeconds,waitSeconds,actorDisplacement,boneDegrees,modelSpinDegrees;public Vector3 actorStart,actorEnd,spawn,firstVelocity,collisionPosition;public string modelName,scope;
-  public string[] eventNames,effectNames,effectDetails;public float[] eventTimes;
- }
- float chestEjectionBegan;
- ChestEjectionSession chestEjectionSession;
- ChestEjectionSession GetChestEjectionSession(){if(chestEjectionSession==null)chestEjectionSession=new ChestEjectionSession(this);return chestEjectionSession;}
- IEnumerable<PickupDropletController> EjectionDroplets(){return GetChestEjectionSession().EjectionDroplets();}
- IEnumerable<GenericPickupController> EjectionPickups(){return GetChestEjectionSession().EjectionPickups();}
- void OwnChestAnimationSources(Transform model,string openingClip="chestArmature|Open"){GetChestEjectionSession().OwnChestAnimationSources(model,openingClip);}
- void PrepareChestEjection(CharacterBody player,ChestBehavior chest,Transform model,int rolled){GetChestEjectionSession().PrepareChestEjection(player,chest,model,rolled);}
- void ObserveChestEjection(CharacterBody player,ChestBehavior chest){GetChestEjectionSession().ObserveChestEjection(player,chest);}
- IEnumerator FinishChestEjection(CharacterBody player,ChestBehavior chest,Transform model,SessionConfig cfg){return GetChestEjectionSession().FinishChestEjection(player,chest,model,cfg);}
- void CleanupChestEjection(){GetChestEjectionSession().Dispose();}
- void CheckChestEjectionCleanup(){GetChestEjectionSession().CheckChestEjectionCleanup();}
+public sealed partial class PortSession
+{
+    [Serializable]
+    public class ChestEjectionReport
+    {
+        public ChestPurchaseReport purchase;
+        public bool sourceEvents, sourceEffects, caches, groundMeasured, animationMoving, originalInfo, sourcePhysics, collided,
+            pickupCreated, earlyDisabled, available, modelCreated, effectsReturned, actorWithdrawn, conserved, cleaned;
+        public int rolledPickup, collisions, effectInstances, modelVertices, prePurchaseEffects;
+        public string prePurchaseAnimatorState;
+        public uint dropletId, pickupId;
+        public float ejectionSeconds, collisionSeconds, waitSeconds, actorDisplacement, boneDegrees, modelSpinDegrees;
+        public Vector3 actorStart, actorEnd, spawn, firstVelocity, collisionPosition;
+        public string modelName, scope;
+        public string[] eventNames, effectNames, effectDetails;
+        public float[] eventTimes;
+    }
+    float chestEjectionBegan;
+    ChestEjectionSession chestEjectionSession;
+    ChestEjectionSession GetChestEjectionSession()
+    {
+        if (chestEjectionSession == null)
+            chestEjectionSession = new ChestEjectionSession(this);
+        return chestEjectionSession;
+    }
+    IEnumerable<PickupDropletController> EjectionDroplets()
+    {
+        return GetChestEjectionSession().EjectionDroplets();
+    }
+    IEnumerable<GenericPickupController> EjectionPickups()
+    {
+        return GetChestEjectionSession().EjectionPickups();
+    }
+    void OwnChestAnimationSources(Transform model, string openingClip = "chestArmature|Open")
+    {
+        GetChestEjectionSession().OwnChestAnimationSources(model, openingClip);
+    }
+    void PrepareChestEjection(CharacterBody player, ChestBehavior chest, Transform model, int rolled)
+    {
+        GetChestEjectionSession().PrepareChestEjection(player, chest, model, rolled);
+    }
+    void ObserveChestEjection(CharacterBody player, ChestBehavior chest)
+    {
+        GetChestEjectionSession().ObserveChestEjection(player, chest);
+    }
+    IEnumerator FinishChestEjection(CharacterBody player, ChestBehavior chest, Transform model, SessionConfig cfg)
+    {
+        return GetChestEjectionSession().FinishChestEjection(player, chest, model, cfg);
+    }
+    void CleanupChestEjection()
+    {
+        GetChestEjectionSession().Dispose();
+    }
+    void CheckChestEjectionCleanup()
+    {
+        GetChestEjectionSession().CheckChestEjectionCleanup();
+    }
 
- // Retain the owner for partial setup, repeated cleanup and later observations.
- // Dispose keeps droplet destruction before source effect pools and materials.
- sealed class ChestEjectionSession : IDisposable {
-  readonly PortSession coordinator;
-  bool ownsChestAnimationSources;Animator chestEjectionAnimator;Transform[] chestEjectionBones;Quaternion[] chestEjectionRotations;
-  GameObject[] chestEjectionSources;Dictionary<GameObject,EffectPool> chestEjectionPools;Dictionary<GameObject,bool> chestEjectionCache;
-  readonly List<EffectManagerHelper> chestEjectionEffects=new List<EffectManagerHelper>();readonly List<ClientCoinReturnObservation> chestEjectionReturns=new List<ClientCoinReturnObservation>();readonly List<Material> chestEjectionMaterials=new List<Material>();
-  GameObject chestEjectionDroplet,chestEjectionModel;PickupDropletController chestEjectionController;
-  public ChestEjectionSession(PortSession coordinator){this.coordinator=coordinator;}
-  public IEnumerable<PickupDropletController> EjectionDroplets(){return Resources.FindObjectsOfTypeAll<PickupDropletController>().Where(x=>x.gameObject.scene.IsValid());}
-  public IEnumerable<GenericPickupController> EjectionPickups(){return Resources.FindObjectsOfTypeAll<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()&&x.gameObject.activeInHierarchy);}
-  public void OwnChestAnimationSources(Transform model,string openingClip="chestArmature|Open"){
-   var animator=model.GetComponent<Animator>();coordinator.Check(animator&&animator.runtimeAnimatorController,"Original interactable animator absent");var clips=animator.runtimeAnimatorController.animationClips.Where(x=>x.name==openingClip).Distinct().ToArray();coordinator.Check(clips.Length>0,"Original interactable opening clip absent: "+openingClip);
-   var sources=clips.SelectMany(x=>x.events).Where(x=>x.functionName=="CreatePrefab").Select(x=>x.objectReferenceParameter as GameObject).Distinct().ToArray();var previous=chestEjectionSources??new GameObject[0];
-   var pools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);var cache=(Dictionary<GameObject,bool>)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
-   coordinator.Check(!ownsChestAnimationSources||ReferenceEquals(pools,chestEjectionPools)&&ReferenceEquals(cache,chestEjectionCache),"Original chest effect context changed");
-   coordinator.Check(sources.All(x=>x&&(previous.Contains(x)||!pools.ContainsKey(x)&&!cache.ContainsKey(x))),"Unowned effect pool/cache before source interactable activation");
-   chestEjectionSources=previous.Concat(sources).Distinct().ToArray();chestEjectionPools=pools;chestEjectionCache=cache;ownsChestAnimationSources=true;
-  }
-  public void PrepareChestEjection(CharacterBody player,ChestBehavior chest,Transform model,int rolled){
-   var report=coordinator.r.chestEjection;report.rolledPickup=rolled;report.purchase.scope=report.scope;coordinator.Check(coordinator.r.defaultPickup.callbackMatched&&coordinator.r.pickupDropletCollision.cleaned&&!EjectionDroplets().Any()&&!EjectionPickups().Any(),"Accepted original source leases and empty loot context required");
-   chestEjectionAnimator=model.GetComponent<Animator>();var events=model.GetComponent<AnimationEvents>();coordinator.Check(chestEjectionAnimator&&events&&events.enabled&&chestEjectionAnimator.enabled&&chestEjectionAnimator.cullingMode==AnimatorCullingMode.AlwaysAnimate,"Original active chest animation components missing");
-   var clip=chestEjectionAnimator.runtimeAnimatorController.animationClips.First(x=>x.name=="chestArmature|Open");var entries=clip.events;report.eventNames=entries.Select(x=>x.functionName).ToArray();report.eventTimes=entries.Select(x=>x.time).ToArray();report.sourceEvents=report.eventNames.SequenceEqual(new[]{"CreatePrefab","CreatePrefab","CreatePrefab","ItemDrop"})&&Mathf.Abs(entries[3].time-.8252819f)<.0001f;coordinator.Check(report.sourceEvents,"Original chest event contract changed");
-   report.caches=ReferenceEquals(typeof(AnimationEvents).GetField("childLocator",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(events),model.GetComponent<ChildLocator>())&&ReferenceEquals(typeof(AnimationEvents).GetField("entityLocator",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(events),model.GetComponent<EntityLocator>())&&model.GetComponent<EntityLocator>().entity==chest.gameObject;coordinator.Check(report.caches,"Original natural animation-event caches/linkage missing");
-   chestEjectionSources=entries.Where(x=>x.functionName=="CreatePrefab").Select(x=>x.objectReferenceParameter as GameObject).Distinct().ToArray();report.effectNames=chestEjectionSources.Select(x=>x?x.name:"MISSING").ToArray();chestEjectionPools=(Dictionary<GameObject,EffectPool>)RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);chestEjectionCache=(Dictionary<GameObject,bool>)RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
-   report.effectDetails=chestEjectionSources.Select(x=>x.name+"|noData="+x.GetComponent<EffectComponent>().noEffectData+"|sound="+x.GetComponent<EffectComponent>().soundName+"|noPool="+x.GetComponent<VFXAttributes>().DoNotPool+"|pool="+chestEjectionPools.ContainsKey(x)+"|cache="+chestEjectionCache.ContainsKey(x)+"|components="+string.Join(",",x.GetComponentsInChildren<MonoBehaviour>(true).Select(c=>c?c.GetType().FullName:"MISSING"))).ToArray();coordinator.Save();
-   report.sourceEffects=report.effectNames.SequenceEqual(new[]{"ChestUnzip","Chest1Starburst"})&&chestEjectionSources.All(x=>x&&x.GetComponent<EffectComponent>().noEffectData&&string.IsNullOrEmpty(x.GetComponent<EffectComponent>().soundName)&&!x.GetComponent<VFXAttributes>().DoNotPool&&x.GetComponentsInChildren<MonoBehaviour>(true).All(c=>c&&!c.GetType().Name.StartsWith("Ak",StringComparison.Ordinal)));coordinator.Check(report.sourceEffects,"Original silent pooled chest effects or ownership differs");coordinator.Check(chestEjectionSources[0].GetComponent<DestroyOnTimer>().duration==.75f&&chestEjectionSources[1].GetComponent<DestroyOnTimer>().duration==1,"Original chest effect timers changed");
-   report.prePurchaseEffects=chestEjectionSources.Sum(x=>chestEjectionPools.ContainsKey(x)?chestEjectionPools[x].InUseCount():0);var state=chestEjectionAnimator.GetCurrentAnimatorStateInfo(0);report.prePurchaseAnimatorState="idle="+state.IsName("Idle")+"|opening="+state.IsName("Opening")+"|normalized="+state.normalizedTime;
-   report.actorStart=player.characterMotor.Motor.TransientPosition;report.groundMeasured=true;for(int i=1;i<=7;i++){RaycastHit hit;report.groundMeasured&=Physics.Raycast(report.actorStart+Vector3.left*i+Vector3.up*10,Vector3.down,out hit,30,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)&&hit.collider.gameObject.scene==coordinator.stageGeometryScene&&hit.normal.y>.9f&&Mathf.Abs(hit.point.y-report.actorStart.y)<2;}coordinator.Check(report.groundMeasured,"No measured flat withdrawal corridor");
-   chestEjectionBones=model.GetComponentsInChildren<Transform>(true);chestEjectionRotations=chestEjectionBones.Select(x=>x.localRotation).ToArray();coordinator.Save();
-  }
-  public void ObserveChestEjection(CharacterBody player,ChestBehavior chest){
-   var report=coordinator.r.chestEjection;if(Time.realtimeSinceStartup-coordinator.chestEjectionBegan>=.8f)player.inputBank.moveVector=Vector3.zero;
-   for(int i=0;i<chestEjectionBones.Length;i++)report.boneDegrees=Mathf.Max(report.boneDegrees,Quaternion.Angle(chestEjectionRotations[i],chestEjectionBones[i].localRotation));report.animationMoving=report.boneDegrees>1;
-   foreach(var source in chestEjectionSources){EffectPool pool;if(!chestEjectionPools.TryGetValue(source,out pool))continue;foreach(var effect in pool.InUse.ToArray()){if(chestEjectionEffects.Contains(effect))continue;chestEjectionEffects.Add(effect);chestEjectionReturns.Add(effect.gameObject.AddComponent<ClientCoinReturnObservation>());}}
-   report.effectInstances=chestEjectionEffects.Count;
-   if(!chestEjectionController){var all=EjectionDroplets().ToArray();if(all.Length>0){coordinator.Check(all.Length==1&&report.dropletId==0,"Original source chest duplicated droplet");chestEjectionController=all[0];chestEjectionDroplet=chestEjectionController.gameObject;report.dropletId=chestEjectionDroplet.GetComponent<NetworkIdentity>().netId.Value;report.ejectionSeconds=Time.realtimeSinceStartup-coordinator.chestEjectionBegan;
-    var info=(GenericPickupController.CreatePickupInfo)typeof(PickupDropletController).GetField("createPickupInfo",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(chestEjectionController);report.spawn=info.position;report.originalInfo=info.chest==chest&&!info.prefabOverride&&info.pickup.pickupIndex.value==report.rolledPickup&&info.artifactFlag==GenericPickupController.PickupArtifactFlag.NONE&&!info.duplicated&&!info.recycled&&Vector3.Distance(info.position,chest.dropTransform.position+Vector3.up*1.5f)<.001f;coordinator.Check(report.originalInfo&&report.dropletId!=0,"Original chest droplet info/default factory/network identity differs");
-    var rigid=chestEjectionDroplet.GetComponent<Rigidbody>();var force=chestEjectionDroplet.GetComponent<ConstantForce>();var sphere=chestEjectionDroplet.GetComponent<SphereCollider>();report.firstVelocity=rigid.velocity;report.sourcePhysics=rigid.useGravity&&!rigid.isKinematic&&rigid.mass==1&&Mathf.Abs(rigid.drag-.1f)<.0001f&&force.enabled&&force.force==new Vector3(0,-15,0)&&sphere.enabled&&!sphere.isTrigger&&Mathf.Abs(sphere.radius-.5f)<.0001f;coordinator.Check(report.sourcePhysics,"Source chest droplet physics changed");
-    var witness=chestEjectionDroplet.AddComponent<PickupDropletCollisionObservation>();witness.observe=collision=>{report.collisions++;if(report.collisions!=1)return;report.collided=collision.collider.gameObject.scene==coordinator.stageGeometryScene&&collision.collider.gameObject.layer==LayerIndex.world.intVal;report.collisionSeconds=Time.realtimeSinceStartup-coordinator.chestEjectionBegan;report.collisionPosition=chestEjectionDroplet.transform.position;};}}
-   coordinator.Save();
-  }
-  public IEnumerator FinishChestEjection(CharacterBody player,ChestBehavior chest,Transform model,SessionConfig cfg){
-   var report=coordinator.r.chestEjection;coordinator.Check(report.animationMoving&&report.originalInfo&&chest.currentPickup==UniquePickup.none&&chest.NetworkisChestOpened,"Original animation did not eject/consume the chest roll");float deadline=Time.realtimeSinceStartup+5;while(!EjectionPickups().Any()&&Time.realtimeSinceStartup<deadline){yield return new WaitForEndOfFrame();Call(coordinator.activeBodyClient,"Update");ObserveChestEjection(player,chest);}
-   var all=EjectionPickups().ToArray();coordinator.Check(all.Length==1&&report.collided&&report.collisions>=1,"Native source chest droplet did not create one terrain pickup");coordinator.ownedPickup=all[0];coordinator.pickupObject=coordinator.ownedPickup.gameObject;report.pickupId=coordinator.pickupObject.GetComponent<NetworkIdentity>().netId.Value;
-   report.pickupCreated=coordinator.ownedPickup.pickup.pickupIndex.value==report.rolledPickup&&coordinator.ownedPickup.chestGeneratedFrom==chest&&!coordinator.ownedPickup.Duplicated&&!coordinator.ownedPickup.Recycled&&coordinator.ownedPickup.pickupDisplay&&coordinator.ownedPickup.pickupDisplay.enabled&&coordinator.ownedPickup.waitDuration==.5f&&coordinator.pickupObject.name==coordinator.defaultPickupSource.name+"(Clone)"&&report.pickupId!=0&&NetworkServer.FindLocalObject(new NetworkInstanceId(report.pickupId))==coordinator.pickupObject;coordinator.Check(report.pickupCreated,"Original default chest pickup identity/display/server map differs");
-   yield return null;Call(coordinator.activeBodyClient,"Update");coordinator.Check(!chestEjectionDroplet&&!EjectionDroplets().Any()&&!NetworkServer.FindLocalObject(new NetworkInstanceId(report.dropletId))&&!ClientScene.FindLocalObject(new NetworkInstanceId(report.dropletId))&&ClientScene.FindLocalObject(new NetworkInstanceId(report.pickupId))==coordinator.pickupObject,"Original chest droplet destruction/client maps differ");
-   var item=ItemCatalog.GetItemDef(PickupCatalog.GetPickupDef(coordinator.ownedPickup.pickup.pickupIndex).itemIndex);chestEjectionModel=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(coordinator.ownedPickup.pickupDisplay);report.modelName=chestEjectionModel?chestEjectionModel.name:"MISSING";report.modelCreated=item&&item.pickupModelPrefab&&string.IsNullOrEmpty(item.pickupModelReference.RuntimeKey.ToString())&&chestEjectionModel&&chestEjectionModel.name==item.pickupModelPrefab.name+"(Clone)"&&coordinator.ownedPickup.pickupDisplay.modelRenderer;coordinator.Check(report.modelCreated,"Original chest pickup direct model missing");report.modelVertices=chestEjectionModel.GetComponentsInChildren<MeshFilter>(true).Sum(x=>x.sharedMesh?x.sharedMesh.vertexCount:0);coordinator.Check(report.modelVertices>50,"Original chest pickup mesh absent");
-   var shader=Resources.Load<Shader>("StageSurfacePreview");coordinator.Check(shader&&shader.isSupported,"Accepted chest pickup preview shader missing");foreach(var renderer in chestEjectionModel.GetComponentsInChildren<Renderer>(true)){renderer.gameObject.layer=30;renderer.sharedMaterials=renderer.sharedMaterials.Select(original=>{coordinator.Check(original,"Original chest pickup material missing");var copy=new Material(original);copy.shader=shader;chestEjectionMaterials.Add(copy);return copy;}).ToArray();}
-   var stamp=(Run.FixedTimeStamp)typeof(GenericPickupController).GetField("waitStartTime",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(coordinator.ownedPickup);var interactor=player.GetComponent<Interactor>();report.earlyDisabled=stamp.timeSince<.5f&&coordinator.ownedPickup.GetInteractability(interactor)==Interactability.Disabled;coordinator.Check(report.earlyDisabled,"Original chest pickup initial delay absent");deadline=Time.realtimeSinceStartup+2;while(stamp.timeSince<.5f&&Time.realtimeSinceStartup<deadline){yield return new WaitForEndOfFrame();Call(coordinator.activeBodyClient,"Update");ObserveChestEjection(player,chest);coordinator.Check(coordinator.pickupObject,"Chest pickup disappeared before availability");}report.waitSeconds=stamp.timeSince;report.available=coordinator.ownedPickup.GetInteractability(interactor)==Interactability.Available&&report.waitSeconds>=.5f&&report.waitSeconds<.7f;coordinator.Check(report.available,"Original chest pickup delay/permission failed");
-   report.actorEnd=player.characterMotor.Motor.TransientPosition;report.actorDisplacement=Vector3.Distance(report.actorStart,report.actorEnd);report.actorWithdrawn=report.actorDisplacement>4&&player.characterMotor.isGrounded&&player.inputBank.moveVector==Vector3.zero&&Vector3.Distance(player.corePosition,coordinator.pickupObject.transform.position)>4;coordinator.Check(report.actorWithdrawn,"Original input withdrawal did not safely separate actor/loot");coordinator.r.phase="original-chest-ejection-visible";coordinator.Save();var rotation=chestEjectionModel.transform.localRotation;yield return new WaitForSeconds(2);Call(coordinator.activeBodyClient,"Update");ObserveChestEjection(player,chest);report.modelSpinDegrees=Quaternion.Angle(rotation,chestEjectionModel.transform.localRotation);coordinator.Check(report.modelSpinDegrees>20,"Original chest pickup automatic display motion missing");
-   report.effectsReturned=report.effectInstances==3&&chestEjectionReturns.All(x=>x&&x.disabled)&&chestEjectionEffects.All(x=>x&&!x.gameObject.activeInHierarchy)&&chestEjectionSources.All(x=>chestEjectionPools.ContainsKey(x)&&chestEjectionPools[x].InUseCount()==0);coordinator.Check(report.effectsReturned,"Original chest event effects did not naturally return");report.conserved=player.master.money==0&&TeamManager.instance.GetTeamExperience(TeamIndex.Player)==report.purchase.xpBefore&&player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe)==1&&player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning)==0&&EjectionPickups().Count()==1;coordinator.Check(report.conserved,"Chest chain granted/duplicated loot or changed funds/XP");coordinator.Save();
-  }
-  public void Dispose(){
-   if(chestEjectionDroplet)NetworkServer.Destroy(chestEjectionDroplet);if(ownsChestAnimationSources&&chestEjectionSources!=null)foreach(var source in chestEjectionSources){EffectPool pool;if(chestEjectionPools.TryGetValue(source,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(source);pool.Kill();}chestEjectionCache.Remove(source);}foreach(var material in chestEjectionMaterials)if(material)Destroy(material);
-  }
-  public void CheckChestEjectionCleanup(){var report=coordinator.r.chestEjection;report.cleaned=!chestEjectionDroplet&&!chestEjectionModel&&!EjectionDroplets().Any()&&!EjectionPickups().Any()&&chestEjectionEffects.All(x=>!x)&&chestEjectionMaterials.All(x=>!x)&&chestEjectionSources.All(x=>!chestEjectionPools.ContainsKey(x)&&!chestEjectionCache.ContainsKey(x))&&!NetworkServer.FindLocalObject(new NetworkInstanceId(report.pickupId))&&!ClientScene.FindLocalObject(new NetworkInstanceId(report.pickupId));coordinator.Check(report.cleaned,"Owned chest ejection loot/effect/model/material/maps retained");coordinator.Save();}
- }
+    // Retain the owner for partial setup, repeated cleanup and later observations.
+    // Dispose keeps droplet destruction before source effect pools and materials.
+    sealed class ChestEjectionSession : IDisposable
+    {
+        readonly PortSession coordinator;
+        bool ownsChestAnimationSources;
+        Animator chestEjectionAnimator;
+        Transform[] chestEjectionBones;
+        Quaternion[] chestEjectionRotations;
+        GameObject[] chestEjectionSources;
+        Dictionary<GameObject, EffectPool> chestEjectionPools;
+        Dictionary<GameObject, bool> chestEjectionCache;
+        readonly List<EffectManagerHelper> chestEjectionEffects = new List<EffectManagerHelper>();
+        readonly List<ClientCoinReturnObservation> chestEjectionReturns = new List<ClientCoinReturnObservation>();
+        readonly List<Material> chestEjectionMaterials = new List<Material>();
+        GameObject chestEjectionDroplet, chestEjectionModel;
+        PickupDropletController chestEjectionController;
+        public ChestEjectionSession(PortSession coordinator)
+        {
+            this.coordinator = coordinator;
+        }
+        public IEnumerable<PickupDropletController> EjectionDroplets()
+        {
+            return Resources.FindObjectsOfTypeAll<PickupDropletController>().Where(x => x.gameObject.scene.IsValid());
+        }
+        public IEnumerable<GenericPickupController> EjectionPickups()
+        {
+            return Resources.FindObjectsOfTypeAll<GenericPickupController>().Where(x => x.gameObject.scene.IsValid() &&
+                                                                                        x.gameObject.activeInHierarchy);
+        }
+        public void OwnChestAnimationSources(Transform model, string openingClip = "chestArmature|Open")
+        {
+            var animator = model.GetComponent<Animator>();
+            coordinator.Check(animator && animator.runtimeAnimatorController, "Original interactable animator absent");
+            var clips = animator.runtimeAnimatorController.animationClips.Where(x => x.name == openingClip).Distinct().ToArray();
+            coordinator.Check(clips.Length > 0, "Original interactable opening clip absent: " + openingClip);
+            var sources = clips.SelectMany(x => x.events)
+                              .Where(x => x.functionName == "CreatePrefab")
+                              .Select(x => x.objectReferenceParameter as GameObject)
+                              .Distinct()
+                              .ToArray();
+            var previous = chestEjectionSources ?? new GameObject[0];
+            var pools = (Dictionary<GameObject, EffectPool>)RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null);
+            var cache = (Dictionary<GameObject, bool>)RewardField(typeof(EffectManager), "_ShouldUsePooledEffectMap").GetValue(null);
+            coordinator.Check(!ownsChestAnimationSources ||
+                                  ReferenceEquals(pools, chestEjectionPools) && ReferenceEquals(cache, chestEjectionCache),
+                              "Original chest effect context changed");
+            coordinator.Check(sources.All(x => x && (previous.Contains(x) || !pools.ContainsKey(x) && !cache.ContainsKey(x))),
+                              "Unowned effect pool/cache before source interactable activation");
+            chestEjectionSources = previous.Concat(sources).Distinct().ToArray();
+            chestEjectionPools = pools;
+            chestEjectionCache = cache;
+            ownsChestAnimationSources = true;
+        }
+        public void PrepareChestEjection(CharacterBody player, ChestBehavior chest, Transform model, int rolled)
+        {
+            var report = coordinator.r.chestEjection;
+            report.rolledPickup = rolled;
+            report.purchase.scope = report.scope;
+            coordinator.Check(coordinator.r.defaultPickup.callbackMatched && coordinator.r.pickupDropletCollision.cleaned &&
+                                  !EjectionDroplets().Any() && !EjectionPickups().Any(),
+                              "Accepted original source leases and empty loot context required");
+            chestEjectionAnimator = model.GetComponent<Animator>();
+            var events = model.GetComponent<AnimationEvents>();
+            coordinator.Check(chestEjectionAnimator && events && events.enabled && chestEjectionAnimator.enabled &&
+                                  chestEjectionAnimator.cullingMode == AnimatorCullingMode.AlwaysAnimate,
+                              "Original active chest animation components missing");
+            var clip = chestEjectionAnimator.runtimeAnimatorController.animationClips.First(x => x.name == "chestArmature|Open");
+            var entries = clip.events;
+            report.eventNames = entries.Select(x => x.functionName).ToArray();
+            report.eventTimes = entries.Select(x => x.time).ToArray();
+            report.sourceEvents = report.eventNames.SequenceEqual(new[] { "CreatePrefab", "CreatePrefab", "CreatePrefab", "ItemDrop" }) &&
+                                  Mathf.Abs(entries[3].time - .8252819f) < .0001f;
+            coordinator.Check(report.sourceEvents, "Original chest event contract changed");
+            report.caches =
+                ReferenceEquals(
+                    typeof(AnimationEvents).GetField("childLocator", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(events),
+                    model.GetComponent<ChildLocator>()) &&
+                ReferenceEquals(
+                    typeof(AnimationEvents).GetField("entityLocator", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(events),
+                    model.GetComponent<EntityLocator>()) &&
+                model.GetComponent<EntityLocator>().entity == chest.gameObject;
+            coordinator.Check(report.caches, "Original natural animation-event caches/linkage missing");
+            chestEjectionSources = entries.Where(x => x.functionName == "CreatePrefab")
+                                       .Select(x => x.objectReferenceParameter as GameObject)
+                                       .Distinct()
+                                       .ToArray();
+            report.effectNames = chestEjectionSources.Select(x => x ? x.name : "MISSING").ToArray();
+            chestEjectionPools = (Dictionary<GameObject, EffectPool>)RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null);
+            chestEjectionCache =
+                (Dictionary<GameObject, bool>)RewardField(typeof(EffectManager), "_ShouldUsePooledEffectMap").GetValue(null);
+            report.effectDetails =
+                chestEjectionSources
+                    .Select(x => x.name + "|noData=" + x.GetComponent<EffectComponent>().noEffectData +
+                                 "|sound=" + x.GetComponent<EffectComponent>().soundName +
+                                 "|noPool=" + x.GetComponent<VFXAttributes>().DoNotPool + "|pool=" + chestEjectionPools.ContainsKey(x) +
+                                 "|cache=" + chestEjectionCache.ContainsKey(x) + "|components=" +
+                                 string.Join(
+                                     ",", x.GetComponentsInChildren<MonoBehaviour>(true).Select(c => c ? c.GetType().FullName : "MISSING")))
+                    .ToArray();
+            coordinator.Save();
+            report.sourceEffects =
+                report.effectNames.SequenceEqual(new[] { "ChestUnzip", "Chest1Starburst" }) &&
+                chestEjectionSources.All(x => x && x.GetComponent<EffectComponent>().noEffectData &&
+                                              string.IsNullOrEmpty(x.GetComponent<EffectComponent>().soundName) &&
+                                              !x.GetComponent<VFXAttributes>().DoNotPool &&
+                                              x.GetComponentsInChildren<MonoBehaviour>(true).All(
+                                                  c => c && !c.GetType().Name.StartsWith("Ak", StringComparison.Ordinal)));
+            coordinator.Check(report.sourceEffects, "Original silent pooled chest effects or ownership differs");
+            coordinator.Check(chestEjectionSources[0].GetComponent<DestroyOnTimer>().duration == .75f &&
+                                  chestEjectionSources[1].GetComponent<DestroyOnTimer>().duration == 1,
+                              "Original chest effect timers changed");
+            report.prePurchaseEffects =
+                chestEjectionSources.Sum(x => chestEjectionPools.ContainsKey(x) ? chestEjectionPools[x].InUseCount() : 0);
+            var state = chestEjectionAnimator.GetCurrentAnimatorStateInfo(0);
+            report.prePurchaseAnimatorState =
+                "idle=" + state.IsName("Idle") + "|opening=" + state.IsName("Opening") + "|normalized=" + state.normalizedTime;
+            report.actorStart = player.characterMotor.Motor.TransientPosition;
+            report.groundMeasured = true;
+            for (int i = 1; i <= 7; i++)
+            {
+                RaycastHit hit;
+                report.groundMeasured &= Physics.Raycast(report.actorStart + Vector3.left * i + Vector3.up * 10, Vector3.down, out hit, 30,
+                                                         LayerIndex.world.mask, QueryTriggerInteraction.Ignore) &&
+                                         hit.collider.gameObject.scene == coordinator.stageGeometryScene && hit.normal.y > .9f &&
+                                         Mathf.Abs(hit.point.y - report.actorStart.y) < 2;
+            }
+            coordinator.Check(report.groundMeasured, "No measured flat withdrawal corridor");
+            chestEjectionBones = model.GetComponentsInChildren<Transform>(true);
+            chestEjectionRotations = chestEjectionBones.Select(x => x.localRotation).ToArray();
+            coordinator.Save();
+        }
+        public void ObserveChestEjection(CharacterBody player, ChestBehavior chest)
+        {
+            var report = coordinator.r.chestEjection;
+            if (Time.realtimeSinceStartup - coordinator.chestEjectionBegan >= .8f)
+                player.inputBank.moveVector = Vector3.zero;
+            for (int i = 0; i < chestEjectionBones.Length; i++)
+                report.boneDegrees =
+                    Mathf.Max(report.boneDegrees, Quaternion.Angle(chestEjectionRotations[i], chestEjectionBones[i].localRotation));
+            report.animationMoving = report.boneDegrees > 1;
+            foreach (var source in chestEjectionSources)
+            {
+                EffectPool pool;
+                if (!chestEjectionPools.TryGetValue(source, out pool))
+                    continue;
+                foreach (var effect in pool.InUse.ToArray())
+                {
+                    if (chestEjectionEffects.Contains(effect))
+                        continue;
+                    chestEjectionEffects.Add(effect);
+                    chestEjectionReturns.Add(effect.gameObject.AddComponent<ClientCoinReturnObservation>());
+                }
+            }
+            report.effectInstances = chestEjectionEffects.Count;
+            if (!chestEjectionController)
+            {
+                var all = EjectionDroplets().ToArray();
+                if (all.Length > 0)
+                {
+                    coordinator.Check(all.Length == 1 && report.dropletId == 0, "Original source chest duplicated droplet");
+                    chestEjectionController = all[0];
+                    chestEjectionDroplet = chestEjectionController.gameObject;
+                    report.dropletId = chestEjectionDroplet.GetComponent<NetworkIdentity>().netId.Value;
+                    report.ejectionSeconds = Time.realtimeSinceStartup - coordinator.chestEjectionBegan;
+                    var info = (GenericPickupController.CreatePickupInfo) typeof(PickupDropletController)
+                                   .GetField("createPickupInfo", BindingFlags.Instance | BindingFlags.NonPublic)
+                                   .GetValue(chestEjectionController);
+                    report.spawn = info.position;
+                    report.originalInfo =
+                        info.chest == chest && !info.prefabOverride && info.pickup.pickupIndex.value == report.rolledPickup &&
+                        info.artifactFlag == GenericPickupController.PickupArtifactFlag.NONE && !info.duplicated && !info.recycled &&
+                        Vector3.Distance(info.position, chest.dropTransform.position + Vector3.up * 1.5f) < .001f;
+                    coordinator.Check(report.originalInfo && report.dropletId != 0,
+                                      "Original chest droplet info/default factory/network identity differs");
+                    var rigid = chestEjectionDroplet.GetComponent<Rigidbody>();
+                    var force = chestEjectionDroplet.GetComponent<ConstantForce>();
+                    var sphere = chestEjectionDroplet.GetComponent<SphereCollider>();
+                    report.firstVelocity = rigid.velocity;
+                    report.sourcePhysics = rigid.useGravity && !rigid.isKinematic && rigid.mass == 1 &&
+                                           Mathf.Abs(rigid.drag - .1f) < .0001f && force.enabled && force.force == new Vector3(0, -15, 0) &&
+                                           sphere.enabled && !sphere.isTrigger && Mathf.Abs(sphere.radius - .5f) < .0001f;
+                    coordinator.Check(report.sourcePhysics, "Source chest droplet physics changed");
+                    var witness = chestEjectionDroplet.AddComponent<PickupDropletCollisionObservation>();
+                    witness.observe = collision =>
+                    {
+                        report.collisions++;
+                        if (report.collisions != 1)
+                            return;
+                        report.collided = collision.collider.gameObject.scene == coordinator.stageGeometryScene &&
+                                          collision.collider.gameObject.layer == LayerIndex.world.intVal;
+                        report.collisionSeconds = Time.realtimeSinceStartup - coordinator.chestEjectionBegan;
+                        report.collisionPosition = chestEjectionDroplet.transform.position;
+                    };
+                }
+            }
+            coordinator.Save();
+        }
+        public IEnumerator FinishChestEjection(CharacterBody player, ChestBehavior chest, Transform model, SessionConfig cfg)
+        {
+            var report = coordinator.r.chestEjection;
+            coordinator.Check(report.animationMoving && report.originalInfo && chest.currentPickup == UniquePickup.none &&
+                                  chest.NetworkisChestOpened,
+                              "Original animation did not eject/consume the chest roll");
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (!EjectionPickups().Any() && Time.realtimeSinceStartup < deadline)
+            {
+                yield return new WaitForEndOfFrame();
+                Call(coordinator.activeBodyClient, "Update");
+                ObserveChestEjection(player, chest);
+            }
+            var all = EjectionPickups().ToArray();
+            coordinator.Check(all.Length == 1 && report.collided && report.collisions >= 1,
+                              "Native source chest droplet did not create one terrain pickup");
+            coordinator.ownedPickup = all[0];
+            coordinator.pickupObject = coordinator.ownedPickup.gameObject;
+            report.pickupId = coordinator.pickupObject.GetComponent<NetworkIdentity>().netId.Value;
+            report.pickupCreated = coordinator.ownedPickup.pickup.pickupIndex.value == report.rolledPickup &&
+                                   coordinator.ownedPickup.chestGeneratedFrom == chest && !coordinator.ownedPickup.Duplicated &&
+                                   !coordinator.ownedPickup.Recycled && coordinator.ownedPickup.pickupDisplay &&
+                                   coordinator.ownedPickup.pickupDisplay.enabled && coordinator.ownedPickup.waitDuration == .5f &&
+                                   coordinator.pickupObject.name == coordinator.defaultPickupSource.name + "(Clone)" &&
+                                   report.pickupId != 0 &&
+                                   NetworkServer.FindLocalObject(new NetworkInstanceId(report.pickupId)) == coordinator.pickupObject;
+            coordinator.Check(report.pickupCreated, "Original default chest pickup identity/display/server map differs");
+            yield return null;
+            Call(coordinator.activeBodyClient, "Update");
+            coordinator.Check(!chestEjectionDroplet && !EjectionDroplets().Any() &&
+                                  !NetworkServer.FindLocalObject(new NetworkInstanceId(report.dropletId)) &&
+                                  !ClientScene.FindLocalObject(new NetworkInstanceId(report.dropletId)) &&
+                                  ClientScene.FindLocalObject(new NetworkInstanceId(report.pickupId)) == coordinator.pickupObject,
+                              "Original chest droplet destruction/client maps differ");
+            var item = ItemCatalog.GetItemDef(PickupCatalog.GetPickupDef(coordinator.ownedPickup.pickup.pickupIndex).itemIndex);
+            chestEjectionModel = (GameObject) typeof(PickupDisplay)
+                                     .GetField("modelObject", BindingFlags.Instance | BindingFlags.NonPublic)
+                                     .GetValue(coordinator.ownedPickup.pickupDisplay);
+            report.modelName = chestEjectionModel ? chestEjectionModel.name : "MISSING";
+            report.modelCreated = item && item.pickupModelPrefab && string.IsNullOrEmpty(item.pickupModelReference.RuntimeKey.ToString()) &&
+                                  chestEjectionModel && chestEjectionModel.name == item.pickupModelPrefab.name + "(Clone)" &&
+                                  coordinator.ownedPickup.pickupDisplay.modelRenderer;
+            coordinator.Check(report.modelCreated, "Original chest pickup direct model missing");
+            report.modelVertices =
+                chestEjectionModel.GetComponentsInChildren<MeshFilter>(true).Sum(x => x.sharedMesh ? x.sharedMesh.vertexCount : 0);
+            coordinator.Check(report.modelVertices > 50, "Original chest pickup mesh absent");
+            var shader = Resources.Load<Shader>("StageSurfacePreview");
+            coordinator.Check(shader && shader.isSupported, "Accepted chest pickup preview shader missing");
+            foreach (var renderer in chestEjectionModel.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.gameObject.layer = 30;
+                renderer.sharedMaterials = renderer.sharedMaterials
+                                               .Select(original =>
+                                                       {
+                                                           coordinator.Check(original, "Original chest pickup material missing");
+                                                           var copy = new Material(original);
+                                                           copy.shader = shader;
+                                                           chestEjectionMaterials.Add(copy);
+                                                           return copy;
+                                                       })
+                                               .ToArray();
+            }
+            var stamp = (Run.FixedTimeStamp) typeof(GenericPickupController)
+                            .GetField("waitStartTime", BindingFlags.Instance | BindingFlags.NonPublic)
+                            .GetValue(coordinator.ownedPickup);
+            var interactor = player.GetComponent<Interactor>();
+            report.earlyDisabled =
+                stamp.timeSince < .5f && coordinator.ownedPickup.GetInteractability(interactor) == Interactability.Disabled;
+            coordinator.Check(report.earlyDisabled, "Original chest pickup initial delay absent");
+            deadline = Time.realtimeSinceStartup + 2;
+            while (stamp.timeSince < .5f && Time.realtimeSinceStartup < deadline)
+            {
+                yield return new WaitForEndOfFrame();
+                Call(coordinator.activeBodyClient, "Update");
+                ObserveChestEjection(player, chest);
+                coordinator.Check(coordinator.pickupObject, "Chest pickup disappeared before availability");
+            }
+            report.waitSeconds = stamp.timeSince;
+            report.available = coordinator.ownedPickup.GetInteractability(interactor) == Interactability.Available &&
+                               report.waitSeconds >= .5f && report.waitSeconds < .7f;
+            coordinator.Check(report.available, "Original chest pickup delay/permission failed");
+            report.actorEnd = player.characterMotor.Motor.TransientPosition;
+            report.actorDisplacement = Vector3.Distance(report.actorStart, report.actorEnd);
+            report.actorWithdrawn = report.actorDisplacement > 4 && player.characterMotor.isGrounded &&
+                                    player.inputBank.moveVector == Vector3.zero &&
+                                    Vector3.Distance(player.corePosition, coordinator.pickupObject.transform.position) > 4;
+            coordinator.Check(report.actorWithdrawn, "Original input withdrawal did not safely separate actor/loot");
+            coordinator.r.phase = "original-chest-ejection-visible";
+            coordinator.Save();
+            var rotation = chestEjectionModel.transform.localRotation;
+            yield return new WaitForSeconds(2);
+            Call(coordinator.activeBodyClient, "Update");
+            ObserveChestEjection(player, chest);
+            report.modelSpinDegrees = Quaternion.Angle(rotation, chestEjectionModel.transform.localRotation);
+            coordinator.Check(report.modelSpinDegrees > 20, "Original chest pickup automatic display motion missing");
+            report.effectsReturned =
+                report.effectInstances == 3 && chestEjectionReturns.All(x => x && x.disabled) &&
+                chestEjectionEffects.All(x => x && !x.gameObject.activeInHierarchy) &&
+                chestEjectionSources.All(x => chestEjectionPools.ContainsKey(x) && chestEjectionPools[x].InUseCount() == 0);
+            coordinator.Check(report.effectsReturned, "Original chest event effects did not naturally return");
+            report.conserved =
+                player.master.money == 0 && TeamManager.instance.GetTeamExperience(TeamIndex.Player) == report.purchase.xpBefore &&
+                player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe) == 1 &&
+                player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning) == 0 && EjectionPickups().Count() == 1;
+            coordinator.Check(report.conserved, "Chest chain granted/duplicated loot or changed funds/XP");
+            coordinator.Save();
+        }
+        public void Dispose()
+        {
+            if (chestEjectionDroplet)
+                NetworkServer.Destroy(chestEjectionDroplet);
+            if (ownsChestAnimationSources && chestEjectionSources != null)
+                foreach (var source in chestEjectionSources)
+                {
+                    EffectPool pool;
+                    if (chestEjectionPools.TryGetValue(source, out pool))
+                    {
+                        foreach (var effect in pool.InUse.ToArray())
+                            pool.ReturnObject(effect);
+                        EffectManager.ClearPool(source);
+                        pool.Kill();
+                    }
+                    chestEjectionCache.Remove(source);
+                }
+            foreach (var material in chestEjectionMaterials)
+                if (material)
+                    Destroy(material);
+        }
+        public void CheckChestEjectionCleanup()
+        {
+            var report = coordinator.r.chestEjection;
+            report.cleaned = !chestEjectionDroplet && !chestEjectionModel && !EjectionDroplets().Any() && !EjectionPickups().Any() &&
+                             chestEjectionEffects.All(x => !x) && chestEjectionMaterials.All(x => !x) &&
+                             chestEjectionSources.All(x => !chestEjectionPools.ContainsKey(x) && !chestEjectionCache.ContainsKey(x)) &&
+                             !NetworkServer.FindLocalObject(new NetworkInstanceId(report.pickupId)) &&
+                             !ClientScene.FindLocalObject(new NetworkInstanceId(report.pickupId));
+            coordinator.Check(report.cleaned, "Owned chest ejection loot/effect/model/material/maps retained");
+            coordinator.Save();
+        }
+    }
 }
