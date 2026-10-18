@@ -74,8 +74,8 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `bc993cd558373326cb613dab22ddcdbd2f9e48a565df91fc37a4ab0e5a33d899`, built in J536 from `main` with the batch-5 and batch-6 owners |
-| Check | passed: 35.2 s on Lakes, no report error, 13 applied profile runs unchanged (J536) |
+| APK | `04896cf43cac58d3b4835f853919125a6e4a4401cb1dbc18b778a2a4b4466275`, built in J537 from `main` with the batch-7 and batch-8 owners |
+| Check | passed: 35.2 s on Lakes, no report error, 13 applied profile runs unchanged (J537) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`, which has the same runtime code |
 | Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |

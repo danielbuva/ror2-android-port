@@ -5230,3 +5230,16 @@ token-identical apart from `coordinator.` qualifiers. Zero-error code-only build
 on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T003122.214440Z`) and `--stage-exit` passed on the same APK
 (`work/experiments/baseline/20261018T003445.914207Z`). Neither check opens a chest, so the
 chest-ejection path is covered by review only. App stopped; OLED asleep.
+
+## J537 — Extract the equipment, director, commerce and reward owners
+
+Phase 4 step 5, batches 7 and 8 together (implemented by Codex, reviewed by Claude). New nested
+`IDisposable` owners: `WorldEquipmentSession` and `AutomaticDirectorSession` (equipment slot,
+touch and chest lists stay shared with flight equipment, the world and interactables; the
+director's FixedUpdate order is unchanged), `WorldCommerceSession` (5 fields moved, 7 shared
+with purchase and shop code) and `EnemyRewardSession` (23 moved, 8 shared with the director
+and results; reward release after the Run keeps its place in `Start`). Moved bodies are
+token-identical apart from `coordinator.` qualifiers. Zero-error code-only build, APK `04896cf43cac58d3b4835f853919125a6e4a4401cb1dbc18b778a2a4b4466275`,
+all four owners checked in the staged project. `./dev check-baseline` passed (35.2 s on Lakes,
+13 applied profile runs, `work/experiments/baseline/20261018T005040.191614Z`) and `--stage-exit` passed on the same APK
+(`work/experiments/baseline/20261018T005403.945864Z`). App stopped; OLED asleep.
