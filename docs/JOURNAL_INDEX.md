@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J540](PORTING_JOURNAL.md#j540--extract-the-flight-equipment-teleporter-body-catalog-and-integrated-world-owners) | 2026-10-17 | Extract the flight-equipment, teleporter, body-catalog and integrated-world owners | Phase 4 step 5, batches 13 and 14, the last of Codex's ranking (implemented by Codex, reviewed by Claude). |
 | [J539](PORTING_JOURNAL.md#j539--extract-the-application-interactable-population-stage-enemy-and-spawn-state-owners) | 2026-10-17 | Extract the application, interactable, population, stage, enemy and spawn-state owners | Phase 4 step 5, batches 10–12 together (implemented by Codex, reviewed by Claude). |
 | [J538](PORTING_JOURNAL.md#j538--extract-the-active-client-and-stage-geometry-owners) | 2026-10-17 | Extract the active-client and stage-geometry owners | Phase 4 step 5, batch 9 (implemented by Codex, reviewed and fixed by Claude). |
 | [J537](PORTING_JOURNAL.md#j537--extract-the-equipment-director-commerce-and-reward-owners) | 2026-10-17 | Extract the equipment, director, commerce and reward owners | Phase 4 step 5, batches 7 and 8 together (implemented by Codex, reviewed by Claude). |

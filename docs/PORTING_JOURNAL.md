@@ -5271,3 +5271,21 @@ Zero-error code-only build, APK `282c7beccbae47da0cdda2f39fa67000e00350dea6ec105
 `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T012014.643806Z`) and
 `--stage-exit` passed on the same APK (`work/experiments/baseline/20261018T012338.724019Z`).
 App stopped; OLED asleep.
+
+## J540 — Extract the flight-equipment, teleporter, body-catalog and integrated-world owners
+
+Phase 4 step 5, batches 13 and 14, the last of Codex's ranking (implemented by Codex, reviewed by
+Claude). New nested `IDisposable` owners for `WorldFlightEquipmentBoundary.cs`,
+`TeleporterWorldBoundary.cs` (44 moved bodies; teleporter setup, objective preload and cleanup
+order unchanged), `BodyCatalogBoundary.cs` and `IntegratedWorldBoundary.cs` (the most coupled
+files; body availability and catalog templates stay on the coordinator, and the authored
+`WholeCatalogComposed.Prepare`/`Release` hooks stay where `test_whole_catalog.py` expects them).
+Codex's scan of 1,101 owner lines found no unqualified coordinator access, and the build
+compiled first time. Zero-error code-only build, APK `15405d173d3d3bcf4167b8313bc0176cde7e45fa3f6b78038620a9a56e25f024`, all four owners checked in the
+staged project. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs,
+`work/experiments/baseline/20261018T014303.773611Z`) and `--stage-exit` passed on the same APK
+(`work/experiments/baseline/20261018T014629.691079Z`). App stopped; OLED asleep.
+
+With this, every boundary file in the ranking that has private state has its own owner. Left
+on purpose: 23 files with no private fields or where an owner would only add indirection, and
+the three Moon files, which neither check reaches.
