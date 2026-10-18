@@ -243,6 +243,39 @@ def stage_missing_sources():
     print(json.dumps(dict(missing_roots=len(missing), copied=len(copied), unresolved=len(unresolved), evidence=str(evidence.relative_to(ROOT)))))
 
 
+def prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids):
+    """Validate all stage rows before writes; recipe rows need no historical asset bytes."""
+    from asset_transforms import generate_asset
+
+    transformed = {}
+    for row in plan["rows"]:
+        if sha(export / row["source"]) != row["current_source_sha256"]:
+            raise RuntimeError("Serialized rebase provenance drift: " + row["source"])
+        if row["target"] not in transforms:
+            output = evidence / "preview" / row["target"]
+            if sha(output) != row["output_sha"] or sha(previous / row["old"]) != row["previous_adapted_sha256"]:
+                raise RuntimeError("Serialized rebase provenance drift: " + row["source"])
+        target = project / row["target"]
+        if target.exists() and sha(target) not in {row["target_before_sha256"], row["output_sha"]}:
+            raise RuntimeError("Current project changed after the rebase: " + row["target"])
+        if row["target"] in transforms:
+            asset = transforms[row["target"]]
+            if asset["source"] != row["source"] or asset["source_sha256"] != row["current_source_sha256"]:
+                raise RuntimeError("Asset transform disagrees with composition provenance: " + row["target"])
+            data, meta_data = generate_asset(export, asset, guids[row["source"]])
+            if hashlib.sha256(data).hexdigest() != row["output_sha"]:
+                raise RuntimeError("Asset transform differs from composition oracle: " + row["target"])
+            meta = Path(str(target) + ".meta")
+            if meta.exists() and meta.read_bytes() != meta_data:
+                raise RuntimeError("Current metadata differs from export importer: " + row["target"])
+            if row["target"] in transformed:
+                raise RuntimeError("Duplicate transformed composition target")
+            transformed[row["target"]] = (data, meta_data)
+    if transformed.keys() != transforms.keys():
+        raise RuntimeError("Composition plan omits recipe asset transforms")
+    return transformed
+
+
 def stage():
     from build import preflight
 
@@ -353,36 +386,10 @@ def stage():
         return text
 
     # Verify the entire patch plan before the first project write.
-    from asset_transforms import generate_asset, load_recipe
+    from asset_transforms import load_recipe
 
     transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
-    transformed = {}
-    for row in plan["rows"]:
-        output = evidence / "preview" / row["target"]
-        if (
-            sha(output) != row["output_sha"]
-            or sha(export / row["source"]) != row["current_source_sha256"]
-            or sha(previous / row["old"]) != row["previous_adapted_sha256"]
-        ):
-            raise RuntimeError("Serialized rebase provenance drift: " + row["source"])
-        target = project / row["target"]
-        if target.exists() and sha(target) not in {row["target_before_sha256"], row["output_sha"]}:
-            raise RuntimeError("Current project changed after the rebase: " + row["target"])
-        if row["target"] in transforms:
-            asset = transforms[row["target"]]
-            if asset["source"] != row["source"] or asset["source_sha256"] != row["current_source_sha256"]:
-                raise RuntimeError("Asset transform disagrees with composition provenance: " + row["target"])
-            data, meta_data = generate_asset(export, asset, guids[row["source"]])
-            if hashlib.sha256(data).hexdigest() != row["output_sha"]:
-                raise RuntimeError("Asset transform differs from composition oracle: " + row["target"])
-            meta = Path(str(target) + ".meta")
-            if meta.exists() and meta.read_bytes() != meta_data:
-                raise RuntimeError("Current metadata differs from export importer: " + row["target"])
-            if row["target"] in transformed:
-                raise RuntimeError("Duplicate transformed composition target")
-            transformed[row["target"]] = (data, meta_data)
-    if transformed.keys() != transforms.keys():
-        raise RuntimeError("Composition plan omits recipe asset transforms")
+    transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids)
     staged = []
     for row in generated:
         source = previous / row["old"]

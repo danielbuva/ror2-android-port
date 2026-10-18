@@ -5482,3 +5482,16 @@ Real data: 44/44 assets and `.meta` files identical at the stage, with the same 
 changed later. 487 host tests pass. Host tooling only; no APK change. 60 adapted assets now come
 from the export plus the recipe; the remaining 391 (structural and generated) still come from
 the preview tree.
+
+## J554 — Regenerate the component-removal cohort
+
+Migration-removal plan commit 4, third cohort (implemented by Codex at medium reasoning, reviewed
+by Claude). Codex split the 178 structural assets by exact edit: 100 only remove components and
+their membership entries; the other 78 also add components, null array or scalar references,
+edit fields, or assign scene reflection textures, and no GameObjects are added or removed. The 100
+prefabs (208 components removed) are now generated from the export with a `remove_components`
+operation in `recipe/asset-transforms.json` (82 KB; identifiers only, no YAML blocks) instead of
+copied from the preview tree. `asset-transforms-check` on the real data: 144/144 assets and
+`.meta` files identical at the migration stage, 11 listed as changed later in the project by
+current steps. 495 host tests pass. Host tooling only; no APK change. 160 of the 451 adapted
+assets now come from the export plus the recipe; 78 structural and 229 generated remain.

@@ -1097,6 +1097,1514 @@
           "op": "identity"
         }
       ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LunarWisp/LunarWispBombChargeUp.prefab",
+      "source_sha256": "365962ba71414337bae5976a1aebe4c120e61d0a78f0d4d338b655f33052309e",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LunarWisp/LunarWispBombChargeUp.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114372920208702427
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LunarWisp/LunarWispBody.prefab",
+      "source_sha256": "ec93ae940cc870aefcc4e70b889d9f1af7589925bbf2c8e7f4ab08181fdd941e",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LunarWisp/LunarWispBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114384403120170545
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LunarGolem/LunarGolemBody.prefab",
+      "source_sha256": "3ebb76b3fd7afc714c959fc9730fef3b67879d56ddd6d9c4a58c390a04e5e359",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LunarGolem/LunarGolemBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114880619614767448
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Golem/GolemBody.prefab",
+      "source_sha256": "1c7ae0cf4268cd29a021ea831ef410af830cf53311bfbb68fc482722afb6960f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Golem/GolemBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114325787665662832,
+            114784622213810434
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Titan/Titan/TitanBody.prefab",
+      "source_sha256": "a672042b58a3b2684107b8ba0f5333a6185cbb58d65ff2a7903148c9897e118f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Titan/Titan/TitanBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114689010887986514,
+            114901155395665742,
+            114911997548769506
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Drones/Drone2/Drone2Body.prefab",
+      "source_sha256": "7b6cb318048c238cea25aecd34b6c5182304caabd28032c2930b2ecd8eed9099",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Drones/Drone2/Drone2Body.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114672306508523268,
+            114900271049623953
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Drones/Drone2/Drone2BodyRemoteOp.prefab",
+      "source_sha256": "d6892c7b4028873b8e1d19f68130d4e39fec0f8f1b169e89297de5f4e93a8e04",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Drones/Drone2/Drone2BodyRemoteOp.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114672306508523268,
+            114900271049623953
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Drones/Turret1/Turret1Body.prefab",
+      "source_sha256": "9f51e63a78829331dcbd7f682a2c4060b6d36c85a612dcdccb69f8bb95a4d616",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Drones/Turret1/Turret1Body.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114045458335737618,
+            114722951815217645
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LunarWisp/Skills/TracerLunarWispMinigun.prefab",
+      "source_sha256": "e5ba5a8d5c5bdd4c5d73d4914a5bdc63e6fba45da2a7ceaefdf71c259eade12b",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LunarWisp/Skills/TracerLunarWispMinigun.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114632457200066912,
+            114634108722742392
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LunarWisp/Skills/LunarWispTrackingBombGhost.prefab",
+      "source_sha256": "bcb7ab8cf2638bc6b9123e0e01a746cd69feb2bc8198e862af0f71a415538f89",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LunarWisp/Skills/LunarWispTrackingBombGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114709867586078768
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Brother/Brother/BrotherBody.prefab",
+      "source_sha256": "a15a9f2bed0f9bfac8572468ba6c113485547d156ce51c8312adf6b1564898d4",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Brother/Brother/BrotherBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114401429660297866,
+            114952320105404285
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Brother/BrotherHurt/BrotherHurtBody.prefab",
+      "source_sha256": "e7678c65a66b18c6bdd4b7ada2140a693ff9d4af0407a7c43256990cf84377a8",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Brother/BrotherHurt/BrotherHurtBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114000342987746139,
+            114222568209840903
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Brother/FX/ChargeBrotherFist.prefab",
+      "source_sha256": "a6327002e2ee76f334fe5652233691cdbf3ae7e7526d679c54b67002046e4c46",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Brother/FX/ChargeBrotherFist.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114709867586078768
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/ArtifactKey/PickupArtifactKey.prefab",
+      "source_sha256": "1471997c326787e9aeaaa604436a6977fc6da3e93606a830a20dc40ed7174a5a",
+      "output": "Assets/WholeGame/RoR2/Base/Items/ArtifactKey/PickupArtifactKey.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114099118695303065,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/Buffs/Cripple/CrippleEffect.prefab",
+      "source_sha256": "a0e64f35ce9c20e6d4738de670c8348e588a8e38456e054e6c2c2a6930995262",
+      "output": "Assets/WholeGame/RoR2/Base/Common/Buffs/Cripple/CrippleEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114372920208702427
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/Scrapper/Scrapper.prefab",
+      "source_sha256": "031588382ad9266f16f04c8539b9412791a5d596356c44e287a8311bcaa7ebc9",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/Scrapper/Scrapper.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114733206282342372
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/RadarTower/ActivateRadarTowerEffect.prefab",
+      "source_sha256": "35e00fb8268004622f03af70e6ed5dac7ab3b7e49956bd758bde56dcdd941a0c",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/RadarTower/ActivateRadarTowerEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114709867586078768
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/MultiShopLargeTerminal/MultiShopLargeTerminal.prefab",
+      "source_sha256": "0835db62fe95ead8b538a9fbcac47a004d145301df750291178f2fd47b7af4ef",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/MultiShopLargeTerminal/MultiShopLargeTerminal.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114256069497284392
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/MultiShopTerminal/MultiShopTerminal.prefab",
+      "source_sha256": "7ebf0b126a11d9ace03707b9c453302fd22823e67ef3e760b6f26546479b65e2",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/MultiShopTerminal/MultiShopTerminal.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114256069497284392
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/Shrines/ShrineBlood/ShrineBlood.prefab",
+      "source_sha256": "bf40ef54b3d8268c36b3813014cb046a9b8f8819eb69f484e46f9494a635e86e",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/Shrines/ShrineBlood/ShrineBlood.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114642988549198181
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/moon2/MoonBatteries/MoonBatteryDesign/MoonBatteryDesignPulse.prefab",
+      "source_sha256": "174503cba95f8741a105b069234bdc0b896a9f88d28ef7761ecf5b099e801620",
+      "output": "Assets/WholeGame/RoR2/Base/Scenes/moon2/MoonBatteries/MoonBatteryDesign/MoonBatteryDesignPulse.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114589667821646929
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Characters/VoidJailer/VoidJailerBody.prefab",
+      "source_sha256": "c4c0b74813ec4ba8ced9dfd4c01458f37e487a19c173e8ef63f1d0c458850705",
+      "output": "Assets/WholeGame/RoR2/DLC1/Characters/VoidJailer/VoidJailerBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114056248600188076
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Characters/VoidBarnacle/VoidBarnacleBody.prefab",
+      "source_sha256": "f1d64cb6124c7e364396d3eb40ea8c10be9ed8cec6192db7bd1aec44b3fc9018",
+      "output": "Assets/WholeGame/RoR2/DLC1/Characters/VoidBarnacle/VoidBarnacleBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114386943702330414
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Characters/VoidMegaCrab/VoidMegaCrabBody.prefab",
+      "source_sha256": "234bc34a125ef7c11d589bb398d64fbd48ec2edab8f1e4e9461915d7f64987de",
+      "output": "Assets/WholeGame/RoR2/DLC1/Characters/VoidMegaCrab/VoidMegaCrabBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114633296557590524
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Interactables/VoidCamp/VoidCamp.prefab",
+      "source_sha256": "fa54b4ad39c95f03bab85f5c0b37ed2ad4bccf818811373bc104cabc7150c12b",
+      "output": "Assets/WholeGame/RoR2/DLC1/Interactables/VoidCamp/VoidCamp.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114356319167443197
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleWard/BeetleWard.prefab",
+      "source_sha256": "9625b17501a8488aa1eb7ece6cc0d36e3bd3bf06ebf49c30941706f54d3e1d18",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleWard/BeetleWard.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114043919389829319,
+            114689364072382846,
+            114743393880019028
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleGuard/Skills/SunderGhost.prefab",
+      "source_sha256": "965bb178f7527077e2dbd78b98c4a1d70551701b9074238fbca020935247c02c",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleGuard/Skills/SunderGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/BeetleGroup/BeetleQueen/Skills/BeetleQueenSpitGhost.prefab",
+      "source_sha256": "2d3f0d00b24f787f24f83afd385074ad41fc58799aeef54dfd4c18102cb7b4c0",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/BeetleGroup/BeetleQueen/Skills/BeetleQueenSpitGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/ExplodeOnDeath/WilloWispDelay.prefab",
+      "source_sha256": "c21194d4089dc6ceb99195593595d8a53ede70e3331b16b42b8eb7d0af4f25f7",
+      "output": "Assets/WholeGame/RoR2/Base/Items/ExplodeOnDeath/WilloWispDelay.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114709867586078768
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Feather/FeatherEffect.prefab",
+      "source_sha256": "8e12a16c7d503dc1d05b07c03b6c15b3e9120d079388856560a993b2690ec480",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Feather/FeatherEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Tooth/HealPack.prefab",
+      "source_sha256": "28d9310a52403b28c0a15572d52a7c4366071c848f68e34891373821fa351247",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Tooth/HealPack.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114336590748365959,
+            114977153420339851
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/SprintArmor/BucklerDefense.prefab",
+      "source_sha256": "7c7b562a2218c8eba92e5a3fe9c16cdbd7e589edc5673447cff07a0f557a4e29",
+      "output": "Assets/WholeGame/RoR2/Base/Items/SprintArmor/BucklerDefense.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114589667821646929
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/BonusGoldPackOnKill/MoneyPackPickupEffect.prefab",
+      "source_sha256": "178391d9193c8a9ff58649b3b44e01173fa3af175c300d69505f6f4cda058c10",
+      "output": "Assets/WholeGame/RoR2/Base/Items/BonusGoldPackOnKill/MoneyPackPickupEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/BonusGoldPackOnKill/BonusMoneyPack.prefab",
+      "source_sha256": "642bc268457da1f387a5dcd50467d22e2b717065ae3017066ce0545ebab94a22",
+      "output": "Assets/WholeGame/RoR2/Base/Items/BonusGoldPackOnKill/BonusMoneyPack.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114372920208702427,
+            114589667821646929
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/ChainLightning/ChainLightningOrbEffect.prefab",
+      "source_sha256": "32e1c838d0046db1e0b1b37cf9ba457aa1a77fbbafc5cb86b7b3c9a46e5eb1c4",
+      "output": "Assets/WholeGame/RoR2/Base/Items/ChainLightning/ChainLightningOrbEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114099118695303065
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/SlowOnHit/SlowDownTime.prefab",
+      "source_sha256": "df99beb1a5a28f0f17e86398f3ecc3f3c7026cd04f7d30e85e43166c317df95e",
+      "output": "Assets/WholeGame/RoR2/Base/Items/SlowOnHit/SlowDownTime.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250,
+            114709867586078768
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/Teleporters/LunarTeleporter/LunarTeleporterProngs.prefab",
+      "source_sha256": "1fec7f0a7cac603404f21544cc0b7879ebbacfe5eb62361779bbb4dfbcc3ed94",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/Teleporters/LunarTeleporter/LunarTeleporterProngs.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114291632710222552,
+            114695600491528212,
+            114992816746925483
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC2/Interactables/Portals/PortalColossus/PortalColossus.prefab",
+      "source_sha256": "4fa30616c2a093bdf8bc0476e6f330249c761ac7473ab6234ee31e3c23662f2f",
+      "output": "Assets/WholeGame/RoR2/DLC2/Interactables/Portals/PortalColossus/PortalColossus.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114372920208702427,
+            114705390221481576,
+            114977153420339851
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Equipment/Jetpack/DisplayBugWings.prefab",
+      "source_sha256": "7498bddfc9c3bcb06c808fee31dc2829965464bdfaf57c0ff817a9bcfc92d016",
+      "output": "Assets/WholeGame/RoR2/Base/Equipment/Jetpack/DisplayBugWings.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114470112387431263
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Equipment/CritOnUse/DisplayNeuralImplant.prefab",
+      "source_sha256": "81016b1db0815992c0344bf855c3abcb10d3c0568ee0d69f631ca14874a6bf51",
+      "output": "Assets/WholeGame/RoR2/Base/Equipment/CritOnUse/DisplayNeuralImplant.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114436073260064126,
+            114719342369648492,
+            114726790013014859
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Equipment/BFG/ChargeBFG.prefab",
+      "source_sha256": "4af651a421cddb6c72adbfa6b68dfa2be4c7f64af06ba164aa9c82d40c279c18",
+      "output": "Assets/WholeGame/RoR2/Base/Equipment/BFG/ChargeBFG.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114709867586078768
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Tooth/DisplayToothNecklaceDecal.prefab",
+      "source_sha256": "aada30b4870e0100eab690050e0dca691b05dc95c9720d27d446830993725c2a",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Tooth/DisplayToothNecklaceDecal.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114703437598541787
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Clover/CloverEffect.prefab",
+      "source_sha256": "41b3cf7f8b1f426d23600ac0701c7c9306233b0f3f6353d14be938d100747c64",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Clover/CloverEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114243736805655561,
+            114709867586078768
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/ShockNearby/DisplayTeslaCoil.prefab",
+      "source_sha256": "b12a3350eff63c4863a953e5a02e9d561a557455db31253bf12ae28086c093d9",
+      "output": "Assets/WholeGame/RoR2/Base/Items/ShockNearby/DisplayTeslaCoil.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114256069497284392,
+            114336590748365959,
+            114705390221481576,
+            114985305603660343
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Interactables/Vehicles/SurvivorPod/SurvivorPod.prefab",
+      "source_sha256": "7ac1f3c7ccce068a9a04d396eee363bd62284c04f28e635320bc652110c2024c",
+      "output": "Assets/WholeGame/RoR2/Base/Interactables/Vehicles/SurvivorPod/SurvivorPod.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114149520701623706
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC2/Elites/EliteAurelionite/DisplayEliteAurelioniteEquipment.prefab",
+      "source_sha256": "514b9ad299aa2607d04820500e3a69fbbcd80de47b0449ea28b07768ab1b72f6",
+      "output": "Assets/WholeGame/RoR2/DLC2/Elites/EliteAurelionite/DisplayEliteAurelioniteEquipment.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114703437598541787,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/PowerCube/DisplayPowerCubeFollower.prefab",
+      "source_sha256": "8963cf9fd29c08d9f67b4c56a6659815a7845754a457a3bbb1a401bfabc0a803",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/PowerCube/DisplayPowerCubeFollower.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114243736805655561,
+            114587765826080250
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/PowerPyramid/DisplayPowerPyramidFollower.prefab",
+      "source_sha256": "34530489a6e80a68ce99df9f598803e59647ffaab63fd0c314e1ccfdc18002a1",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/PowerPyramid/DisplayPowerPyramidFollower.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114243736805655561,
+            114587765826080250
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/SharedSuffering/SharedSufferingDamageEffect.prefab",
+      "source_sha256": "5220264ef5eb22ce4ca05557ff688be9dc8bd1fda19a62b3430d2a609ad81043",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/SharedSuffering/SharedSufferingDamageEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114985305603660343
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/MasterBattery/DisplayPowerOrbSphereFollower.prefab",
+      "source_sha256": "f5f959fdabd099b02e8bcb9704685e48d06435dc73b4fc8820c43e7a9ba2c5dd",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/MasterBattery/DisplayPowerOrbSphereFollower.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114243736805655561,
+            114587765826080250
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC1/Items/CloverVoid/CloverVoidEffect.prefab",
+      "source_sha256": "1091976cac3e64beac4f7fdc931c724fb35dc1753d32592879b2ef3bc2ea4b71",
+      "output": "Assets/WholeGame/RoR2/DLC1/Items/CloverVoid/CloverVoidEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114243736805655561,
+            114709867586078768
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Equipment/FireBallDash/FireballVehicle.prefab",
+      "source_sha256": "9956a7ea704d84c3bea02e18e92422978cc13b4e5cce84b1fbfab325712f05d2",
+      "output": "Assets/WholeGame/RoR2/Base/Equipment/FireBallDash/FireballVehicle.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114302127217294661,
+            114634108722742392,
+            114969106005120503
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Equipment/Jetpack/JetpackController.prefab",
+      "source_sha256": "9591b941228e22a8e62144b72365a84e0cceb4570e249e239b8a48d0f18686f0",
+      "output": "Assets/WholeGame/RoR2/Base/Equipment/Jetpack/JetpackController.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114099118695303065,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Equipment/Blackhole/GravSphereTether.prefab",
+      "source_sha256": "c3585c5fe658c560200ac64625f36bec7138112b37e510f4b91451cdd932c84a",
+      "output": "Assets/WholeGame/RoR2/Base/Equipment/Blackhole/GravSphereTether.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114243736805655561
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/RoboBallBoss/EyeBeamRoboBallMini.prefab",
+      "source_sha256": "acc7088343f1f0617c75455d241c303cd8f64f3d00702daf97bf2d08fbfc8cff",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/EyeBeamRoboBallMini.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114336590748365959,
+            114705390221481576,
+            114985305603660343
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/RoboBallBoss/RoboBallBossBody.prefab",
+      "source_sha256": "8af068b5ecf4071947652d7b0a1d7a914b31c4a62e11095d0aabe8c35b73dc86",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/RoboBallBossBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114085275382694935,
+            114264357844037074,
+            114499726237547504,
+            114704330047573733
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/RoboBallBoss/RoboBallBossPreDeath.prefab",
+      "source_sha256": "e455e2b5484086d5af26121efbfcd84058fb2335a5a026f4092cd209fe9892be",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/RoboBallBossPreDeath.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114372920208702427,
+            114705390221481576
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBoss/TarTether.prefab",
+      "source_sha256": "159ea50af9c8ffef965d6731d1879ebbc9e76680ff314a62dbd784fd7bf83f20",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBoss/TarTether.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114372920208702427,
+            114709867586078768
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBoss/ClayBossBody.prefab",
+      "source_sha256": "37cf82166b2a7fc6133f9da025b83cbfaac8d0586707d94a17e746708a058867",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBoss/ClayBossBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114085275382694935,
+            114194081240383615,
+            114220697728379336,
+            114231814100211528,
+            114354824845356902
+          ],
+          "expected_matches": 5
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBruiser/ClayBruiserBody.prefab",
+      "source_sha256": "fc83d9b3d430cd102c2ad61367c3018eac07708001994596549ec91a3ec46346",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBruiser/ClayBruiserBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114274303670636188
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBruiser/ChargeClayBruiserMinigun.prefab",
+      "source_sha256": "87d0c354b96bdac1c9a62cdd0aaf647c9a95e1962c29cdeb486212591e8d4a77",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBruiser/ChargeClayBruiserMinigun.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Vagrant/VagrantDeathExplosion.prefab",
+      "source_sha256": "11ae27577d8005943122e450cc015dffef3d50c7e08365b41ceb43cf9545b389",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Vagrant/VagrantDeathExplosion.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114017892387517381,
+            114190181876552715,
+            114829625606037309
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Vagrant/VagrantBody.prefab",
+      "source_sha256": "515735829913d83aa9dc8a9115f5ed31d576a64769d86004cab80fc96eb263fb",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Vagrant/VagrantBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114571878917323452,
+            114574190619683098,
+            114799762105739359,
+            114829625606037309
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ImpBoss/ImpBossBody.prefab",
+      "source_sha256": "7001ffe50ea04c5410904ee2fadd380260f16e39ff6a74886600729a0f93237c",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ImpBoss/ImpBossBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114067212629291419,
+            114119337346424409,
+            114562080017223558
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/MiniMushroom/MiniMushroomWard.prefab",
+      "source_sha256": "777424e2cc3684dec3bee7d012e4e7d5586ba7e691060471f161df79068e1299",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/MiniMushroom/MiniMushroomWard.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Bell/PreppedBellBall.prefab",
+      "source_sha256": "3ffa6956353e9fef677148f699dcb38feea58dde79e6c859c799a9be7b268bec",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Bell/PreppedBellBall.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114099118695303065,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Titan/TitanRockController.prefab",
+      "source_sha256": "cdf49c8cbc577e113e8f825447b60c5704ca84d723174f42de565fb5b6f8e308",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Titan/TitanRockController.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114044625135789424,
+            114372920208702427,
+            114589667821646929,
+            114977153420339851,
+            114985305603660343
+          ],
+          "expected_matches": 6
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Lemurian/ChargeMegaFireball.prefab",
+      "source_sha256": "fbf869253abecb4b7122dea1175a1d39c1d8911ab53bd6036815f0e12e392045",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Lemurian/ChargeMegaFireball.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Grandparent/GrandparentDeathEffect.prefab",
+      "source_sha256": "2ebce1c3221f3e7f7cef74ca2c10f9d5b79f6da57b6084efc0ca142bb032ca3f",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Grandparent/GrandparentDeathEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114094320201520353
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Grandparent/OverheatTemporaryVisualEffect.prefab",
+      "source_sha256": "a5562c00ce5f4799b6e76406c4e3fa465f762f07d6f99a86926119d1da874d25",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Grandparent/OverheatTemporaryVisualEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114099118695303065,
+            114243736805655561,
+            114884547391421755
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Grandparent/GrandParentBody.prefab",
+      "source_sha256": "597352d7be4167416651ea729dbbfef0b581a027cdb6ab050f8a24f434fbfd1d",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Grandparent/GrandParentBody.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114294885792020211
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Grandparent/Skills/GrandparentGravSphereTether.prefab",
+      "source_sha256": "4d7119d12ec5ef7b7aed499f43bb55ec9404892b8d3a64aee58cca7c4efe543d",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Grandparent/Skills/GrandparentGravSphereTether.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114243736805655561
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Grandparent/GrandParentSun/GrandParentSun.prefab",
+      "source_sha256": "66eb44b95729c737bdb01a4d6e6a171febce7afa09fd60319bc8d6d511f59912",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Grandparent/GrandParentSun/GrandParentSun.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587397909062814,
+            114918264173551851,
+            114946936116752871
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Lemurian/Skills/FireballGhost.prefab",
+      "source_sha256": "4f7b3943342ff5d5650757331ca4c12d3a46b9c69e92f22fb044e1338f8e8cce",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Lemurian/Skills/FireballGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114243736805655561
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/HermitCrab/Skills/HermitCrabBombGhost.prefab",
+      "source_sha256": "6e791d45cf18039a8ac22e5dabd3e0704344c56c9a1b93f082a2c5924a558c4b",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/HermitCrab/Skills/HermitCrabBombGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/LemurianBruiser/Skills/MegaFireballGhost.prefab",
+      "source_sha256": "dce6455fa0e5cef7caa36d1041e0960a62d36b8c274fd303730cace239e22746",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/LemurianBruiser/Skills/MegaFireballGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/Vagrant/Skills/VagrantCannonGhost.prefab",
+      "source_sha256": "489ac7cd5ab6d456b5826c653199f416fd5ce5c266b60401673cd4b3ee1ddb4d",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/Vagrant/Skills/VagrantCannonGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114243736805655561
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBruiser/Skills/TracerClayBruiserMinigun.prefab",
+      "source_sha256": "32957df92d004a095edd31081a61680a32bc4246ad4fbb3c88c9b34c291bed51",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBruiser/Skills/TracerClayBruiserMinigun.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114256069497284392,
+            114336590748365959
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBoss/Skills/ClayBossMulcher.prefab",
+      "source_sha256": "199effbe02556d2e057ef0b0c89eeef63fd55c06143465e7705f62280ebf6809",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBoss/Skills/ClayBossMulcher.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114372920208702427,
+            114589667821646929,
+            114705390221481576,
+            114977153420339851
+          ],
+          "expected_matches": 5
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/ClayBoss/Skills/ChargeClayBossBombardment.prefab",
+      "source_sha256": "12bacfa8911945a2791ba3784ebb1fda56db6d9718cb642b74420b41bcb7d5d7",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/ClayBoss/Skills/ChargeClayBossBombardment.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114099118695303065,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/RoboBallBoss/Skills/RoboBallProjectileGhost.prefab",
+      "source_sha256": "4617a7bf0645e7f7db624daa8d4b8cab67eac2f930f8a1d407f7299c1e150477",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/Skills/RoboBallProjectileGhost.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Characters/RoboBallBoss/Skills/MuzzleflashRoboBall.prefab",
+      "source_sha256": "04602c0b91edb26d0818eed8a33e53f4dfdf2c264d284d46f773692826e8882e",
+      "output": "Assets/WholeGame/RoR2/Base/Characters/RoboBallBoss/Skills/MuzzleflashRoboBall.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Mushroom/MushroomWard.prefab",
+      "source_sha256": "fb566501f9e5290c59791c14c2df93de8abc4e91a74ab155ffef76d468e9957f",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Mushroom/MushroomWard.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114372920208702427
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Plant/InterstellarDeskPlant.prefab",
+      "source_sha256": "800390bb5c7c9eb3b2f4cb669220c1c9911c8de7aa99d18fff3c9eb6b03561e2",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Plant/InterstellarDeskPlant.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114256069497284392,
+            114372920208702427
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Plant/DeskplantWard.prefab",
+      "source_sha256": "22e5912822d36f1777374c2bec90d0a2e985163b356dd27e7b10e44aa8eb1ee3",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Plant/DeskplantWard.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114372920208702427,
+            114709867586078768
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/WardOnLevel/WarbannerWard.prefab",
+      "source_sha256": "dc152acee18f1eceb42b18321c8fe282ea08859af4431a1f133f8a7e01a04e59",
+      "output": "Assets/WholeGame/RoR2/Base/Items/WardOnLevel/WarbannerWard.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114589667821646929,
+            114709867586078768
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/WardOnLevel/WarbannerBuffEffect.prefab",
+      "source_sha256": "b55a75cff9b3f79064c49cfbcc763777054281b8bac2930b09346f0629ef8fd7",
+      "output": "Assets/WholeGame/RoR2/Base/Items/WardOnLevel/WarbannerBuffEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Phasing/ProcStealthkit.prefab",
+      "source_sha256": "c40ccd0ea140e14ddea973f773e91d97b9f54ced9ba8717665b8e74370e41453",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Phasing/ProcStealthkit.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114061268324235159
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/LaserTurbine/LaserTurbineBombExplosion.prefab",
+      "source_sha256": "f3b7a742fcaf4702caa3630e858afa68484c760e706f67e5f3204d2028874a0e",
+      "output": "Assets/WholeGame/RoR2/Base/Items/LaserTurbine/LaserTurbineBombExplosion.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114344419225485095
+          ],
+          "expected_matches": 1
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Bandolier/AmmoPack.prefab",
+      "source_sha256": "af818444067797c95f0b3e63ff32f7ba6457d1f2f499a06f746c740c1b3dfa11",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Bandolier/AmmoPack.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114256069497284392,
+            114336590748365959,
+            114705390221481576,
+            114977153420339851
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/DeathMark/DeathMarkEffect.prefab",
+      "source_sha256": "d1522bbf2a9a1196f797bc92480877a97d13b09e93c3e35c727c4ec7f67eaac6",
+      "output": "Assets/WholeGame/RoR2/Base/Items/DeathMark/DeathMarkEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114044625135789424,
+            114589667821646929
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/LaserTurbine/LaserTurbineController/LaserTurbineController.prefab",
+      "source_sha256": "c646edba126d974fe03259841620e053d369958d54cb28da569df8b00919a212",
+      "output": "Assets/WholeGame/RoR2/Base/Items/LaserTurbine/LaserTurbineController/LaserTurbineController.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114161607090078389,
+            114256069497284392,
+            114336590748365959
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/TPHealingNova/TeleporterHealNovaPulse/ChargeTPHealingNova.prefab",
+      "source_sha256": "12a73ee7554ae122b285b6dfb59928218db7c63f2036e4cafe369a5fc5aab83b",
+      "output": "Assets/WholeGame/RoR2/Base/Items/TPHealingNova/TeleporterHealNovaPulse/ChargeTPHealingNova.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114061268324235159,
+            114587765826080250
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/VFX/DoTs/BleedEffect.prefab",
+      "source_sha256": "ff3d5b292fff4f0324c742513812db18a87bcf905017e663720224c5ed56e639",
+      "output": "Assets/WholeGame/RoR2/Base/Common/VFX/DoTs/BleedEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114099118695303065,
+            114243736805655561,
+            114884547391421755
+          ],
+          "expected_matches": 3
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/MiscPickups/LunarCoin/PickupLunarCoin.prefab",
+      "source_sha256": "9db97f1d773bea52d8afeff103bddd0b22b64be647a2de422d29e8243eb29d4a",
+      "output": "Assets/WholeGame/RoR2/Base/MiscPickups/LunarCoin/PickupLunarCoin.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114703437598541787,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Items/Bandolier/AmmoPackPickupEffect.prefab",
+      "source_sha256": "f199abf255f2eabdd10dd8196f6c2eac41581dd8ed6baee08d64346e834e7ff9",
+      "output": "Assets/WholeGame/RoR2/Base/Items/Bandolier/AmmoPackPickupEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/Junk/JunkPickupEffect.prefab",
+      "source_sha256": "ad443252641d560aa73145ba720715c000a1f1dcb96d52bf74ec34ab8ec00126",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/Junk/JunkPickupEffect.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114587765826080250,
+            114884547391421755
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/Junk/PickupJunk.prefab",
+      "source_sha256": "b7cde9773b1f79e428cdab606e2f459deb31b62b27bb7bd4552e39364ffafd1b",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/Junk/PickupJunk.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114336590748365959,
+            114705390221481576,
+            114977153420339851,
+            114985305603660343
+          ],
+          "expected_matches": 4
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/DLC3/Items/SpeedOnPickup/SpeedOnPickupSalvage.prefab",
+      "source_sha256": "a440bb3ddc2e8b8a7b8256ffbcbe6fbab6f5b5bc6be95bb493606ed0664c1d04",
+      "output": "Assets/WholeGame/RoR2/DLC3/Items/SpeedOnPickup/SpeedOnPickupSalvage.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114256069497284392,
+            114336590748365959
+          ],
+          "expected_matches": 2
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Common/LogPickup/LogPickup.prefab",
+      "source_sha256": "53bee9e312fbb4384c25b46b9d527ce55f87070cb3fa21dba20f1a30b764c80e",
+      "output": "Assets/WholeGame/RoR2/Base/Common/LogPickup/LogPickup.prefab",
+      "operations": [
+        {
+          "op": "remove_components",
+          "file_ids": [
+            114025901758691103,
+            114372920208702427,
+            114589667821646929
+          ],
+          "expected_matches": 3
+        }
+      ]
     }
   ]
 }

@@ -165,6 +165,64 @@ def reference_remaps(operation):
     return json.loads(data)
 
 
+def validate_removal_operation(operation):
+    if set(operation) != {"op", "file_ids", "expected_matches"} or operation["op"] != "remove_components":
+        raise RuntimeError("Invalid remove_components operation")
+    ids = operation["file_ids"]
+    if (
+        not isinstance(ids, list)
+        or not ids
+        or any(type(fid) is not int or fid == 0 or not -(2**63) <= fid < 2**63 for fid in ids)
+        or len(set(ids)) != len(ids)
+        or type(operation["expected_matches"]) is not int
+        or operation["expected_matches"] != len(ids)
+    ):
+        raise RuntimeError("Invalid component removal identifiers or match count")
+
+
+def apply_removal_operation(text, operation):
+    """Remove source components and membership entries, preserving all other bytes.
+
+    This narrow operation rejects surviving references to deleted components.
+    Nulling references, retaining empty membership slots and deleting hierarchy
+    objects require separate, explicit operations; none is inferred here.
+    """
+    validate_removal_operation(operation)
+    header, rows = objects(text)
+    removed = {str(fid) for fid in operation["file_ids"]}
+    memberships = {}
+    for fid in removed:
+        if fid not in rows:
+            raise RuntimeError("Component removal must match exactly once: " + fid)
+        kind, owner, _ = identity(rows[fid])
+        if kind in {"1", "4", "224"} or owner not in rows or identity(rows[owner])[0] != "1":
+            raise RuntimeError("Removal requires a component with a surviving GameObject owner")
+        memberships[fid] = owner
+    counts = dict.fromkeys(removed, 0)
+    for fid, block in list(rows.items()):
+        if fid in removed:
+            del rows[fid]
+            continue
+        if identity(block)[0] == "1":
+
+            def remove_member(match):
+                component = match[1]
+                if component not in removed:
+                    return match[0]
+                if memberships[component] != fid:
+                    raise RuntimeError("Component membership has the wrong owner")
+                counts[component] += 1
+                return ""
+
+            rows[fid] = re.sub(r"^  - component: \{fileID: (-?\d+)\}\r?\n", remove_member, block, flags=re.M)
+    if any(count != 1 for count in counts.values()):
+        raise RuntimeError("Removed component membership must match exactly once")
+    generated = header + "".join(rows.values())
+    if any(match[1] in removed for match in re.finditer(r"\{fileID: (-?\d+)\}", generated)):
+        raise RuntimeError("Component removal leaves a surviving local reference")
+    return generated
+
+
 def validate_operations(operations, accepted=None):
     if operations == list(SURFACE_OPERATIONS) or operations == [{"op": "identity"}]:
         return
@@ -179,6 +237,8 @@ def validate_operations(operations, accepted=None):
                 raise RuntimeError("Reference remapping belongs to a different accepted input")
         elif operation.get("op") == "set_field" and "owner" in operation:
             validate_field_operation(operation)
+        elif operation.get("op") == "remove_components":
+            validate_removal_operation(operation)
         else:
             raise RuntimeError("Unknown field or unsupported asset operations")
 
@@ -239,6 +299,8 @@ def generate(source, asset):
         for operation in operations:
             if operation["op"] == "set_field":
                 text = apply_field_operation(text, operation)
+            elif operation["op"] == "remove_components":
+                text = apply_removal_operation(text, operation)
             else:
                 for row in reference_remaps(operation)["rows"]:
                     text = text.replace(row["from"], row["to"])
@@ -285,6 +347,7 @@ def check(work=None, root=None):
     selection = work / "config/composition-migration.json"
     preview = root / read(selection)["evidence"] / "preview" if selection.is_file() else None
     differences, later_changes, identical = [], [], 0
+    removal_cohort = {"total": 0, "identical": 0, "components": 0}
     for asset in recipe["assets"]:
         data, meta = generate_asset(export, asset)
         oracle = asset_path(preview, asset["output"]) if preview is not None else None
@@ -301,7 +364,15 @@ def check(work=None, root=None):
             later_changes.append(asset["output"])
         differences.extend(changed)
         identical += not changed
-    return {"total": len(recipe["assets"]), "identical": identical, "differences": differences, "changed_later_in_project": later_changes}
+        removals = [operation for operation in asset["operations"] if operation["op"] == "remove_components"]
+        if removals:
+            removal_cohort["total"] += 1
+            removal_cohort["identical"] += not changed
+            removal_cohort["components"] += sum(len(operation["file_ids"]) for operation in removals)
+    result = {"total": len(recipe["assets"]), "identical": identical, "differences": differences, "changed_later_in_project": later_changes}
+    if removal_cohort["total"]:
+        result["component_removal_cohort"] = removal_cohort
+    return result
 
 
 def check_action():

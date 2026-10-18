@@ -363,5 +363,153 @@ class GeneralAssetOperationTests(unittest.TestCase):
                 transforms.generate(PREFAB, asset)
 
 
+REMOVAL_SOURCE = PREFAB.replace(
+    b"  m_Name: SyntheticRoot\n", b"  m_Component:\n  - component: {fileID: 2}\n  - component: {fileID: 3}\n  m_Name: SyntheticRoot\n"
+)
+
+
+def removal_operation(*ids):
+    return {"op": "remove_components", "file_ids": list(ids or (3,)), "expected_matches": len(ids or (3,))}
+
+
+class ComponentRemovalTests(unittest.TestCase):
+    def test_removes_only_records_and_memberships_preserving_line_endings(self):
+        for source in (REMOVAL_SOURCE, REMOVAL_SOURCE.replace(b"\n", b"\r\n")):
+            newline = b"\r\n" if b"\r" in source else b"\n"
+            asset = prefab_entry(source, [removal_operation()])
+            expected = source[: source.index(b"--- !u!114")].replace(b"  - component: {fileID: 3}" + newline, b"")
+            before = copy.deepcopy(asset)
+            self.assertEqual(transforms.generate(source, asset).encode(), expected)
+            self.assertEqual(transforms.generate(source, asset).encode(), expected)
+            self.assertEqual(asset, before)
+
+    def test_rejects_invalid_identifiers_counts_and_payloads(self):
+        for update in (
+            {"file_ids": []},
+            {"file_ids": [3, 3], "expected_matches": 2},
+            {"file_ids": [True]},
+            {"file_ids": [0]},
+            {"file_ids": [2**63]},
+            {"file_ids": ["3"]},
+            {"expected_matches": 0},
+            {"expected_matches": True},
+            {"yaml": "unreviewed"},
+        ):
+            with self.subTest(update=update), self.assertRaises(RuntimeError):
+                transforms.generate(REMOVAL_SOURCE, prefab_entry(REMOVAL_SOURCE, [dict(removal_operation(), **update)]))
+
+    def test_rejects_absent_records_hierarchy_objects_and_scene_settings(self):
+        for fid in (99, 1, 2, 4):
+            source = REMOVAL_SOURCE + b"--- !u!29 &4\nOcclusionCullingSettings:\n  serializedVersion: 2\n"
+            with self.subTest(fid=fid), self.assertRaises(RuntimeError):
+                transforms.generate(source, prefab_entry(source, [removal_operation(fid)]))
+
+    def test_requires_one_membership_with_correct_owner(self):
+        member = b"  - component: {fileID: 3}\n"
+        for source in (
+            REMOVAL_SOURCE.replace(member, b""),
+            REMOVAL_SOURCE.replace(member, member * 2),
+            REMOVAL_SOURCE.replace(b"  m_GameObject: {fileID: 1}\n  m_Script", b"  m_GameObject: {fileID: 99}\n  m_Script"),
+            REMOVAL_SOURCE + b"--- !u!1 &4\nGameObject:\n  m_Component:\n" + member,
+        ):
+            with self.subTest(source=source), self.assertRaises(RuntimeError):
+                transforms.generate(source, prefab_entry(source, [removal_operation()]))
+
+    def test_dangling_local_references_fail_but_external_file_ids_are_untouched(self):
+        for reference in (b"{fileID: 3}", b"{fileID: 3, guid: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, type: 3}"):
+            source = REMOVAL_SOURCE.replace(b"  m_IsActive: 1", b"  reference: " + reference + b"\n  m_IsActive: 1")
+            asset = prefab_entry(source, [removal_operation()])
+            if b"guid:" in reference:
+                self.assertIn(reference, transforms.generate(source, asset).encode())
+            else:
+                with self.assertRaisesRegex(RuntimeError, "surviving local reference"):
+                    transforms.generate(source, asset)
+
+    def test_removed_components_may_reference_each_other(self):
+        source = REMOVAL_SOURCE.replace(b"  - component: {fileID: 3}\n", b"  - component: {fileID: 3}\n  - component: {fileID: 4}\n")
+        duplicate = source[source.index(b"--- !u!114") :].replace(b"&3", b"&4") + b"  peer: {fileID: 3}\n"
+        source += duplicate
+        asset = prefab_entry(source, [removal_operation(3, 4)])
+        result = transforms.generate(source, asset)
+        self.assertNotIn("MonoBehaviour:", result)
+        self.assertIn("  - component: {fileID: 2}\n", result)
+
+    def test_check_reports_removal_cohort_and_stage_preparation_needs_no_history(self):
+        import composition_migration
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            work, export, project = root / "work", root / "work/export", root / "work/lab-project"
+            recipe = root / "recipe"
+            asset = prefab_entry(REMOVAL_SOURCE, [removal_operation()])
+            source = transforms.asset_path(export, asset["source"])
+            source.parent.mkdir(parents=True)
+            source.write_bytes(REMOVAL_SOURCE)
+            Path(str(source) + ".meta").write_bytes(META)
+            data, meta = transforms.generate_asset(export, asset)
+            row = dict(
+                source=asset["source"],
+                target=asset["output"],
+                current_source_sha256=asset["source_sha256"],
+                output_sha=hashlib.sha256(data).hexdigest(),
+                target_before_sha256=asset["source_sha256"],
+            )
+            args = ({"rows": [row]}, {asset["output"]: asset}, export, root / "absent-previous", root / "absent-preview", project, {asset["source"]: "b" * 32})
+            with patch.object(Path, "write_bytes", side_effect=AssertionError("must not write")):
+                self.assertEqual(composition_migration.prepare_asset_transforms(*args), {asset["output"]: (data, meta)})
+            for update in (
+                {"output_sha": "a" * 64},
+                {"current_source_sha256": "a" * 64},
+                {"source": "Assets/Missing.prefab"},
+            ):
+                bad_args = ({"rows": [dict(row, **update)]}, *args[1:])
+                with self.subTest(update=update), self.assertRaises((RuntimeError, FileNotFoundError)):
+                    composition_migration.prepare_asset_transforms(*bad_args)
+            with self.assertRaisesRegex(RuntimeError, "omits recipe"):
+                composition_migration.prepare_asset_transforms({"rows": []}, *args[1:])
+            with self.assertRaisesRegex(RuntimeError, "Duplicate transformed"):
+                composition_migration.prepare_asset_transforms({"rows": [row, row]}, *args[1:])
+            target = transforms.asset_path(project, asset["output"])
+            target.parent.mkdir(parents=True)
+            target.write_bytes(data)
+            Path(str(target) + ".meta").write_bytes(meta)
+            write(work / "config/accepted-input.json", {"input_id": "synthetic-input"})
+            write(work / "config/reconstruction.json", {"input_id": "synthetic-input", "projects": ["work/export"]})
+            write(project / ".port-input.json", {"input_id": "synthetic-input"})
+            write(recipe / "asset-transforms.json", {"schema_version": 1, "input_id": "synthetic-input", "assets": [asset]})
+            with patch.object(transforms, "RECIPE", recipe):
+                self.assertEqual(transforms.check(work, root)["component_removal_cohort"], {"total": 1, "identical": 1, "components": 1})
+                target.write_bytes(b"drift")
+                self.assertEqual(transforms.check(work, root)["component_removal_cohort"]["identical"], 0)
+
+    def test_unconverted_stage_rows_still_require_both_historical_assets(self):
+        import composition_migration
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "Assets/Synthetic.prefab"
+            source.parent.mkdir()
+            source.write_bytes(REMOVAL_SOURCE)
+            row = dict(
+                source="Assets/Synthetic.prefab",
+                target="Assets/WholeGame/Synthetic.prefab",
+                old="Assets/Previous.prefab",
+                current_source_sha256=hashlib.sha256(REMOVAL_SOURCE).hexdigest(),
+                output_sha="a" * 64,
+                previous_adapted_sha256="b" * 64,
+            )
+            args = ({"rows": [row]}, {}, root, root / "previous", root / "evidence", root / "project", {})
+            with self.assertRaises(FileNotFoundError):
+                composition_migration.prepare_asset_transforms(*args)
+            preview = root / "evidence/preview" / row["target"]
+            preview.parent.mkdir(parents=True)
+            preview.write_bytes(b"wrong output")
+            with self.assertRaisesRegex(RuntimeError, "provenance drift"):
+                composition_migration.prepare_asset_transforms(*args)
+            row["output_sha"] = hashlib.sha256(preview.read_bytes()).hexdigest()
+            with self.assertRaises(FileNotFoundError):
+                composition_migration.prepare_asset_transforms(*args)
+
+
 if __name__ == "__main__":
     unittest.main()

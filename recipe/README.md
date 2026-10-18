@@ -30,7 +30,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
-| `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets and ten field-only prefabs (migration-removal commit 4 cohorts) | Accepted-input export selectors and SHA-256 preconditions; authored clearing, identity and owner-selected typed field operations. Four UI prefabs reuse the existing hash-pinned uGUI mapping. | J548 minimal source/output and hierarchy/script identifiers, field paths and typed clearing/activation values only. No YAML blocks, original field payloads, importer bodies, private paths or historical locations. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares all recipe assets with the project without writing. |
+| `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets, ten field-only prefabs and 100 component-removal prefabs (migration-removal commit 4 cohorts) | Accepted-input export selectors and SHA-256 preconditions; authored clearing, identity, owner-selected typed fields and component deletion by source fileID. Four UI prefabs reuse the existing hash-pinned uGUI mapping. | J548 minimal source/output, hierarchy/script identifiers, deletion identifiers, field paths and typed clearing/activation values only. No YAML blocks, original field payloads, importer bodies, private paths or historical locations. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares against the migration-stage oracle and reports later project changes separately, without writing. |
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 92 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
@@ -383,3 +383,26 @@ Those existing J430 clues support exact script-reference selection rather than
 component display names; native GameObject selectors use class ID 1 and no script.
 No community implementation or game serialization was copied into the recipe or
 runner. The real export and migration oracle govern the selected operations.
+
+`remove_components` contains only the source component fileIDs and an integer
+`expected_matches` equal to their count. The source SHA-256 gates those identifiers;
+no Unity allocation is involved. Each selected record must have a surviving
+GameObject owner and exactly one membership entry on that owner. GameObjects,
+Transforms, RectTransforms and ownerless scene settings cannot be removed. The
+runner deletes records and membership lines, preserving other bytes and rejecting
+surviving local references to deleted records. External references with the same
+fileID are preserved. Reference nulling, empty component slots, array filtering,
+scene settings deletion and component creation need separate operations.
+
+The removal cohort's provenance audit covers 100 current export prefabs and 208
+deletion identifiers. Its source/output paths, source hashes and removal lists are
+the only new recipe data; they describe relationships needed to reconstruct local
+outputs and contain no serialized record bodies or substitute game content.
+The serialization prior-art review again inspected pinned ThunderKit
+`FileIdUtil.Compute` (namespace/name-derived script IDs) and AssetRipper
+`MonoScriptExtensions.IsFullNameEqual` (assembly/namespace/class identity).
+These distinguish script identities from component object IDs; deletions here
+use exact hash-gated source object IDs, never a display-name guess. Existing
+`integrated_objective.sanitize_optional_content` supplies the deletion/membership
+technique; its broader nulling and component-addition policies are not implicit
+in this operation. No third-party implementation was copied.
