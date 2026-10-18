@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J564**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J565**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -68,10 +68,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    unexplained regressions only.
 3. Keep J503, J502, J425 and J323 executable; sleep the OLED whenever idle.
 4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done. Phase 2: the runtime
-   config and content recipe are generated from public recipes (J551), and all 222 adapted
-   (non-addition) assets plus 15 of the 229 additions are generated without the previous
-   project (J552–J557).
-   Decision (J558): inherited shader outputs are kept as documented local state for now; the
-   shaders the current runtime uses are made reproducible first, each verified on device, and
-   inherited state is retired only after that verification. The remaining
+   config and content recipe are generated from public recipes (J551); all 222 adapted assets,
+   40 of 229 additions and the three transformed assemblies are reproducible (J552–J563); the 189
+   inherited files are in a hash-verified local store (J564). A rebuild from scratch still needs
+   the post-migration builders orchestrated after the composition stage (J565), and the 166 used
+   inherited shaders need device-verified regeneration (J558). The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

@@ -5641,3 +5641,20 @@ location), B3–B6 drift guards and path/GUID mappings, the previous runtime con
 (superseded at build time by J551 generation), and the old input-mapping observation chain.
 `docs/LOCAL_STATE.md` lists these. 591 host tests pass. Host tooling only; the stage itself was not
 re-run and no APK changed.
+
+## J565 — The composition stage alone no longer describes today's project
+
+Migration-removal plan commit 8, second part (dry run by Codex at medium reasoning, investigated by
+Claude). Codex added a dry run of `composition-update-stage` that routes every write through an
+in-memory overlay and compares it with the project. On the real data it stops before project staging:
+the stage's own guard rejects 104 unresolved bindings (23 `SourceScenes/…` scenes and 81 whole-game
+paths, written to `missing-runtime-bindings.json`). Claude re-ran it with the pre-J551
+`scene-probe-build.json` and runtime config temporarily restored: the same 104 bindings fail, so the
+J551 recipe generation did not cause it. (The current files were restored and verified equal to the
+recipes.) The unresolved assets come from builders that ran after the J431 migration (source scenes
+from J459 on, whole-catalog preparation). The stage is a migration step from the previous project,
+not the full recipe for today's project, so making it independent of the previous project is
+necessary but not enough. A rebuild from scratch needs an orchestrated sequence of the current
+builders after the stage, each with its own equivalence proof. The dry-run refactor touches the
+build and staging write paths and could not be validated against real data, so it is not merged;
+it is kept as a local patch for that orchestration work.
