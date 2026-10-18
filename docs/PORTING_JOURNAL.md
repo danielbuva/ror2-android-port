@@ -5216,3 +5216,17 @@ checked in the staged project. `./dev check-baseline` passed (35.2 s on Lakes, 1
 profile runs, `work/experiments/baseline/20261018T001749.835621Z`) and, since boss content belongs to the teleporter event, `--stage-exit`
 passed on the same APK (`work/experiments/baseline/20261018T002131.817137Z`). App stopped; OLED
 asleep.
+
+## J536 — Extract the primary-fire, chest-ejection, pickup and proc-content owners
+
+Phase 4 step 5, batches 5 and 6 together (implemented by Codex, reviewed by Claude), verified
+in one build because they touch different files. New nested `IDisposable` owners:
+`PrimaryFireSession` and `ChestEjectionSession` (17 fields moved; `IsPlayableSpine` and
+`chestEjectionBegan` stay on the coordinator because GameSession, other boundaries and chest
+purchase use them), and `GenericPickupSession` and `WorldProcContentSession`
+(`defaultPickupSource` stays shared because chest ejection reads it). Moved bodies are
+token-identical apart from `coordinator.` qualifiers. Zero-error code-only build, APK
+`bc993cd558373326cb613dab22ddcdbd2f9e48a565df91fc37a4ab0e5a33d899`, all four owners checked in the staged project. `./dev check-baseline` passed (35.2 s
+on Lakes, 13 applied profile runs, `work/experiments/baseline/20261018T003122.214440Z`) and `--stage-exit` passed on the same APK
+(`work/experiments/baseline/20261018T003445.914207Z`). Neither check opens a chest, so the
+chest-ejection path is covered by review only. App stopped; OLED asleep.

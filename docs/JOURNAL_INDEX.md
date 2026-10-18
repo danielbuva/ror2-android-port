@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J536](PORTING_JOURNAL.md#j536--extract-the-primary-fire-chest-ejection-pickup-and-proc-content-owners) | 2026-10-17 | Extract the primary-fire, chest-ejection, pickup and proc-content owners | Phase 4 step 5, batches 5 and 6 together (implemented by Codex, reviewed by Claude), verified in one build because they touch different files. |
 | [J535](PORTING_JOURNAL.md#j535--extract-the-combat-spine-and-stage-boss-owners) | 2026-10-17 | Extract the combat-spine and stage-boss owners | Phase 4 step 5, batch 4 (implemented by Codex, reviewed by Claude). |
 | [J534](PORTING_JOURNAL.md#j534--extract-the-item-display-dot-and-item-behaviour-owners) | 2026-10-17 | Extract the item display, DOT and item-behaviour owners | Phase 4 step 5, batch 3 (implemented by Codex, reviewed by Claude). |
 | [J533](PORTING_JOURNAL.md#j533--extract-the-healing-and-legendary-item-owners) | 2026-10-17 | Extract the healing and legendary item owners | Phase 4 step 5, batch 2 (implemented by Codex, reviewed by Claude). |
