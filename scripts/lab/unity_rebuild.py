@@ -159,6 +159,9 @@ def execute_build(destination, work, api):
         write(target, manifest)
         write(scratch / "whole-catalog-build.json", dict(manifest=str(target)))
         shutil.copyfile(destination / ".rebuild/composition/scene-probe-build.json", scratch / "scene-probe-build.json")
+        from script_audit import build_selection
+
+        write(scratch / "build-selection.json", dict(assets=build_selection(manifest, read(scratch / "scene-probe-build.json"))))
         from build import validate_runtime_support
 
         validate_staged_runtime_sources(destination, work=scratch)
@@ -204,6 +207,10 @@ def execute_build(destination, work, api):
         result = read(result_path)
         if process.returncode or result.get("request_id") != request_id or not result.get("success") or result.get("errors", 0):
             raise RuntimeError("Destination Unity build failed; inspect " + str(result_path))
+        audit = read(scratch / "lab-build/script-audit.json")
+        if audit.get("schema") != 1 or not audit.get("uiValid"):
+            raise RuntimeError("Destination script audit missing or failed")
+        result["script_audit"] = audit
         apk = Path(result["apk"])
         if not apk.resolve().is_relative_to(scratch) or not apk.is_file():
             raise RuntimeError("Unity APK outside destination run or missing")

@@ -85,6 +85,10 @@ class UnityRebuildTests(unittest.TestCase):
         apk = scratch / "lab-build/lab-vulkan.apk"
         self.zip(apk, {"assets/bin/Data/level0": b"fresh"})
         write(scratch / "lab-build/result.json", dict(success=True, errors=0, request_id=request["request_id"], apk=str(apk)))
+        write(
+            scratch / "lab-build/script-audit.json",
+            dict(schema=1, uiValid=True, missingScripts=4, assets=[dict(path="Assets/example.prefab", missingScripts=4)]),
+        )
         return SimpleNamespace(returncode=0)
 
     @staticmethod
@@ -98,6 +102,8 @@ class UnityRebuildTests(unittest.TestCase):
         with patch.object(r9, "run", side_effect=self.fake_run):
             result = whole_catalog.build_integration(destination=self.dest, work=self.work)
         self.assertEqual(result["apk_sha256"], sha(result["apk"]))
+        self.assertEqual(result["script_audit"]["missingScripts"], 4)
+        self.assertEqual(result["script_audit"]["assets"][0]["missingScripts"], 4)
         self.assertTrue(Path(result["payload_directory"]).is_relative_to(self.dest))
         payload = read(Path(result["payload_directory"]) / "whole-catalog.json")
         bootstrap = read(self.dest / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json")
@@ -105,6 +111,26 @@ class UnityRebuildTests(unittest.TestCase):
         self.assertEqual(self.before, self.snapshot())
         self.assertFalse((self.dest / ".rebuild/unity-build.lock").exists())
         self.assertEqual((self.dest / "ProjectSettings/ProjectSettings.asset").read_text(), "public baseline")
+
+    def test_failed_or_absent_script_audit_cannot_publish_a_success_receipt(self):
+        for audit in (None, dict(schema=1, uiValid=False), dict(schema=0, uiValid=True)):
+
+            def execute(command, **kwargs):
+                result = self.fake_run(command, **kwargs)
+                if "-labWorkRoot" in command:
+                    scratch = Path(command[command.index("-labWorkRoot") + 1])
+                    path = scratch / "lab-build/script-audit.json"
+                    if audit is None:
+                        path.unlink()
+                    else:
+                        write(path, audit)
+                return result
+
+            with self.subTest(audit=audit), patch.object(r9, "run", side_effect=execute):
+                with self.assertRaises((FileNotFoundError, RuntimeError)):
+                    build.build("vulkan", destination=self.dest, work=self.work)
+            self.assertFalse(list((self.dest / ".rebuild/unity").glob("*/result.json")))
+            self.assertEqual(self.before, self.snapshot())
 
     def test_destination_rejects_code_only_before_any_mutation(self):
         with patch.object(r9, "execute_build") as execute:

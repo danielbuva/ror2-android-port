@@ -56,8 +56,17 @@ Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
 `unity_rebuild.py` owns R9 `unity-build` after `validate-bindings`: destination-only
 host preflight, an exclusive operation lock, exact-editor batch invocation through
 `whole_catalog.build_integration(destination=...)` → `build.build(destination=...)`
-→ `LabBuild.BuildDestination` → the existing full `LabBuild.Build`. The default
-project Library is destination-local. Per-attempt requests/logs/APKs/payload and
+→ `LabBuild.BuildDestination` → the existing full `LabBuild.Build`. Destination-only
+setup force-reimports managed asset plugins after compilation, then their selected
+asset dependents in dependency order. Its read-only script gate checks recovered
+HUD/Menu components and TimerText targets before entering the unchanged real build.
+Per-asset missing-script counts and MonoScript identities live in the run's
+`lab-build/script-audit.json` and successful destination receipt. `script_audit.py`
+owns selection generation, working-editor MCP payload generation and comparison;
+it never invokes an editor or stages working-project files. Preview scenes close
+in `finally`; the destination error listener detaches before the real build and
+on failure. Operator commands: [script gate](rebuild-plan.md#destination-script-import-gate).
+The default project Library is destination-local. Per-attempt requests/logs/APKs/payload and
 Android/Gradle homes stay under `.rebuild/unity/`; the summary and hash comparisons
 are `.rebuild/unity-build.json`. Cleanup releases the R9 lock, preserving failed
 runs; Unity locks are never removed. Both destination and working-project editors

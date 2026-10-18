@@ -5903,3 +5903,40 @@ Revisit: give R3's regenerated manifest the pinned attempt identity in the rebui
 payload and bootstrap agree; then investigate the remaining code-size difference (stripping or
 assembly membership) and decide how R9 treats editor-only `OnValidate` errors that appear only
 with a fresh Library.
+
+## J577 — Destination import repair and script gate; one catalog identity; new baseline APK
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and corrected
+by Claude). Follow-up to J576. Codex's investigation of the R9 APK found two separate
+differences. First, the destination omits 33 UI MonoScript identities (`TextMeshProUGUI`,
+`HGTextMeshProUGUI` and others): 114 text components in `RecoveredUI/Hud.prefab` become
+invalid-script shells, and three TMP fonts, three materials and `texUIHologram` drop out of the
+APK. The fresh import loaded the original plugin DLLs before Unity compiled the package UI
+assemblies they depend on. The two `TimerText` errors J576 counted are symptoms of this damage,
+so no message allowance was added. Second, `Unity.Timeline.dll` becomes an extra linker root in
+the destination, which accounts for the larger `libil2cpp.so` and `global-metadata.dat`; why is
+still open.
+
+Changes. (1) In the rebuild path, R3 names its manifest with the pinned bootstrap attempt, R7
+writes the bootstrap from that manifest, and R9 refuses before Unity if the two differ; the real
+actions keep timestamp naming (`e7a5d97`). The rebuild comparison now skips Unity's own
+`Library`, `Temp`, `Logs` and `UserSettings` folders. (2) `LabBuild.BuildDestination` only (the
+real `Build()` is unchanged) force-reimports every managed DLL after compilation, then
+reimports dependent assets dependency-first. A gate before the player build fails on any missing
+script in the HUD or menu, or a null `TimerText` target, and writes per-asset missing-script
+counts plus every MonoScript identity to `lab-build/script-audit.json`. `script_audit.py` runs
+the same read-only audit in the working editor for comparison.
+
+Correction: Codex's audit opened scenes with `EditorSceneManager.OpenPreviewScene(path)`. Its C#
+test double defined that method, so the host test passed, but the exact editor rejected it
+(CS0117: not accessible in 2021.3). The real code build staged the file and left the working
+editor with a compile error until Claude restored the committed `LabBuild.cs` and refreshed the
+editor. Scenes are now audited from their text instead: every `m_Script` reference must name a
+MonoScript with a loadable class. Opening scenes would also have changed the working editor's
+state. A test double cannot prove a Unity API exists; only the exact editor can.
+
+The corrected `LabBuild.cs` compiled in the exact editor: code build zero errors, APK
+`3cabed7de4bd4c2eeb28a0b8c7d7a127f3b7dca4bc45509c470c9096054289f1`, installed in place on adopted
+storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
+exit). App stopped, OLED asleep. The provenance row for `Assets/Editor/LabBuild.cs` was refreshed;
+the previous map is kept beside it. 754 host tests pass. The repaired R9 build has not run yet.

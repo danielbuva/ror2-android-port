@@ -645,6 +645,70 @@ No uninstall, storage changes or receipt swapping is needed. Device acceptance,
 including restore validation, remains the operator's responsibility. Host tests
 with mocked Unity/subprocess are in `tests/test_unity_rebuild.py`.
 
+
+### Destination script import gate
+
+`LabBuild.BuildDestination` alone owns the post-compilation plugin reimport.
+All managed DLL assets are included, covering `Assets/Plugins`, the original
+plugins under `Assets/LabLoadingScene/Plugins`, and alternate managed-plugin
+locations. Native DLLs are excluded. Selected dependency consumers are imported
+in dependency order after the DLLs; no Library reset or working-project mutation
+is involved. An unsettled compilation/import refuses the build. This is the
+narrow import-order hypothesis from J576/task-720; exact-editor verification
+remains for the operator.
+
+Before any call to the unchanged `LabBuild.Build`, the gate loads the recovered
+HUD/Menu, including inactive children, and rejects missing scripts or a null
+TimerText `targetLabel`. HUD must contain a TimerText. It also counts missing
+scripts for every selected prefab/scene and their transitive dependencies;
+non-UI counts remain comparison evidence rather than an assumed zero baseline.
+Unreadable assets fail. Scenes use preview scenes and close even on failure;
+prefabs are read as assets without instantiation or saving.
+
+The destination run contains `build-selection.json`, `lab-build/script-imports.json`
+and `lab-build/script-audit.json`. The audit includes zero-count rows, total
+missing components, TimerText counts/targets, errors, and every imported
+MonoScript's GUID/local ID and resolved assembly-qualified type (including
+package scripts). The successful destination `result.json` includes this full
+audit as `script_audit`. Failed attempts retain their available receipts. Error,
+exception and assertion messages during repair/audit are counted without message
+allowances; the real build retains its original report-error handling.
+
+To compare the working editor without staging files there, generate MCP arguments
+from the **same destination run selection**:
+
+```sh
+../../lab-venv/bin/python scripts/lab/script_audit.py --selection "$RUN/build-selection.json"
+```
+
+Pass that JSON object to the lab MCP editor's `execute_code` tool. It executes the
+exact shared audit body in memory, without reimport, save, refresh, or file writes.
+Save the raw JSON string returned as `data.result` to a local `working-script-audit.json`
+outside the working project, then compare:
+
+```sh
+../../lab-venv/bin/python scripts/lab/script_audit.py --compare working-script-audit.json "$RUN/lab-build/script-audit.json"
+```
+
+`RUN` is the destination attempt directory beneath `.rebuild/unity/`. Comparison
+requires identical selections, reports per-asset count differences even when
+totals match, and fails for every resolved working MonoScript whose GUID/local ID
+is absent, unresolved, or bound to a different type in the destination. The
+working editor does not need an updated LabBuild source. Run the comparison after
+R9 has exited; existing R9 editor-lock rules still apply.
+
+Prior art consulted for this change: the pinned RoR2ImportExtensions
+[`AssemblyBlacklist`](https://github.com/risk-of-thunder/RoR2ImportExtensions/blob/477ad9b52e66e59080049fc3a65645ddb4db2cef/Editor/AssemblyBlacklist.cs)
+shows package-dependent exclusion of duplicate providers; retain our accepted
+providers and import them after package compilation. The pinned EditorKit
+[`AddressablesPathDictionaryCache`](https://github.com/risk-of-thunder/RoR2EditorKit/blob/4128710f74ffbd90bfebc523812e7155fa7bdee3/Editor/RoR2/AddressablePathDictionary/AddressablesPathDictionaryCache.cs)
+uses loaded component inspection for typed queries. That supports checking actual
+Unity objects rather than accepting serialized reference presence alone. Neither
+source establishes that this reimport repairs Android reconstruction; the new
+gate and operator comparison measure that contract. Host coverage:
+`tests/test_script_audit.py`, its authored Unity doubles, and
+`tests/test_unity_rebuild.py` (mocked subprocesses).
+
 ## Pre-import importer identities (current)
 
 The first operator R9 attempt stopped before Unity at the missing

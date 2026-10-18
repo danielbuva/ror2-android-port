@@ -113,13 +113,108 @@ public static class LabBuild {
   if(UnityEditorInternal.InternalEditorUtility.GetFullUnityVersion()!="2021.3.45f2 (88f88f591b2e)")throw new InvalidOperationException("Exact editor revision required");
   var request=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
   if(string.IsNullOrEmpty(request.request_id)||request.reusePayload)throw new InvalidOperationException("Full destination build request required");
-  SessionState.SetString(RunningBuild,request.request_id);
-  PlayerSettings.colorSpace=ColorSpace.Linear;
-  Build();
-  AssetDatabase.SaveAssets();
-  var result=JsonUtility.FromJson<Result>(File.ReadAllText(Path.Combine(root,"lab-build/result.json")));
-  EditorApplication.Exit(result.success&&result.errors==0?0:1);
+  string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);
+  var start=DateTime.UtcNow;int importErrors=0;Result result=null;
+  Application.LogCallback countErrors=(message,stack,type)=>{if(type==LogType.Error||type==LogType.Exception||type==LogType.Assert)importErrors++;};
+  Application.logMessageReceived+=countErrors;
+  try{
+   if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Destination scripts have not finished compiling/importing");
+   var selection=JsonUtility.FromJson<ScriptSelection>(File.ReadAllText(Path.Combine(root,"build-selection.json"))).assets;
+   var imports=ReimportDestinationPlugins(selection);
+   string audit=InspectDestinationScripts(selection);
+   File.WriteAllText(Path.Combine(outDir,"script-audit.json"),audit);
+   File.WriteAllText(Path.Combine(outDir,"script-imports.json"),JsonUtility.ToJson(imports,true));
+   var gate=Newtonsoft.Json.Linq.JObject.Parse(audit);
+   if(!(bool)gate["uiValid"]||importErrors!=0)throw new InvalidOperationException("Destination script gate failed; inspect script-audit.json and editor.log");
+   SessionState.SetString(RunningBuild,request.request_id);
+   PlayerSettings.colorSpace=ColorSpace.Linear;
+   // Build remains the unchanged real build path. Count its errors from its report.
+   Application.logMessageReceived-=countErrors;
+   Build();
+   result=JsonUtility.FromJson<Result>(File.ReadAllText(Path.Combine(outDir,"result.json")));
+   AssetDatabase.SaveAssets();
+  }catch(Exception e){result=new Result{request_id=request.request_id,result=e.ToString(),seconds=(DateTime.UtcNow-start).TotalSeconds};Debug.LogException(e);}
+  finally{Application.logMessageReceived-=countErrors;SessionState.SetString(RunningBuild,"");}
+  result.errors+=importErrors;result.success=result.success&&result.errors==0;
+  File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));
+  EditorApplication.Exit(result.success?0:1);
  }
+ [Serializable] class ScriptSelection {public string[] assets;}
+ [Serializable] class ScriptImports {public string[] plugins,dependents;}
+ static ScriptImports ReimportDestinationPlugins(string[] selection){
+  // J576/task-720: original DLL import ran before package UI compilation. All
+  // managed asset plugins are included, also those outside Assets/Plugins.
+  var plugins=AssetDatabase.GetAllAssetPaths().Where(path=>path.StartsWith("Assets/",StringComparison.Ordinal)&&path.EndsWith(".dll",StringComparison.OrdinalIgnoreCase))
+   .Where(path=>{var importer=AssetImporter.GetAtPath(path) as PluginImporter;return importer!=null&&!importer.isNativePlugin;}).OrderBy(path=>path,StringComparer.Ordinal).ToArray();
+  if(plugins.Length==0)throw new InvalidOperationException("No destination managed plugins");
+  var options=ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport;
+  foreach(string path in plugins)AssetDatabase.ImportAsset(path,options);
+  if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Plugin reimport triggered pending compilation; refusing a build with unsettled scripts");
+  var pluginSet=new System.Collections.Generic.HashSet<string>(plugins,StringComparer.Ordinal);
+  var closure=AssetDatabase.GetDependencies(selection,true);
+  var dependents=closure.Where(path=>path.StartsWith("Assets/",StringComparison.Ordinal)&&!path.EndsWith(".cs",StringComparison.OrdinalIgnoreCase)&&!path.EndsWith(".dll",StringComparison.OrdinalIgnoreCase))
+   .Where(path=>AssetDatabase.GetDependencies(path,true).Any(pluginSet.Contains)).OrderBy(path=>path,StringComparer.Ordinal).ToArray();
+  // Dependency-first import reloads fonts/other ScriptableObjects before their
+  // prefab consumers. Cycles are visited once. No Refresh or broad cache reset.
+  var affected=new System.Collections.Generic.HashSet<string>(dependents,StringComparer.Ordinal);
+  var visited=new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+  Action<string> import=null;
+  import=path=>{if(!visited.Add(path))return;foreach(string dependency in AssetDatabase.GetDependencies(path,false).Where(affected.Contains).OrderBy(x=>x,StringComparer.Ordinal))import(dependency);AssetDatabase.ImportAsset(path,options);};
+  foreach(string path in dependents)import(path);
+  return new ScriptImports{plugins=plugins,dependents=dependents};
+ }
+ // This method body is also emitted by scripts/lab/script_audit.py for in-memory
+ // MCP execution in an unchanged working editor. Keep it self-contained/read-only.
+ public static string InspectDestinationScripts(string[] selection){
+  // SCRIPT_AUDIT_BEGIN
+  if(UnityEditor.EditorApplication.isCompiling||UnityEditor.EditorApplication.isUpdating||UnityEditor.EditorApplication.isPlaying)
+   throw new System.InvalidOperationException("Script audit requires an idle edit-mode editor");
+  var uiPaths=new[]{"Assets/LabLoadingScene/Resources/RecoveredUI/Hud.prefab","Assets/LabLoadingScene/Resources/RecoveredUI/Menu.prefab"};
+  var roots=selection.Concat(uiPaths).Distinct(System.StringComparer.Ordinal).OrderBy(x=>x,System.StringComparer.Ordinal).ToArray();
+  if(roots.Any(path=>!path.StartsWith("Assets/",System.StringComparison.Ordinal)||!System.IO.File.Exists(path)))throw new System.InvalidOperationException("Script audit selection contains missing/non-asset paths");
+  var paths=UnityEditor.AssetDatabase.GetDependencies(roots,true).Concat(roots).Distinct(System.StringComparer.Ordinal)
+   .Where(path=>path.EndsWith(".prefab",System.StringComparison.OrdinalIgnoreCase)||path.EndsWith(".unity",System.StringComparison.OrdinalIgnoreCase)).OrderBy(x=>x,System.StringComparer.Ordinal).ToArray();
+  var resolved=new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
+  // Include exact importer GUID/local IDs and resolved class identities so the
+  // working report can prove the destination retains every resolved MonoScript.
+  var scripts=new Newtonsoft.Json.Linq.JArray();
+  foreach(string path in UnityEditor.AssetDatabase.GetAllAssetPaths().Where(path=>(path.StartsWith("Assets/",System.StringComparison.Ordinal)||path.StartsWith("Packages/",System.StringComparison.Ordinal))&&(path.EndsWith(".dll",System.StringComparison.OrdinalIgnoreCase)||path.EndsWith(".cs",System.StringComparison.OrdinalIgnoreCase))).OrderBy(x=>x,System.StringComparer.Ordinal)){
+   foreach(var script in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path).OfType<UnityEditor.MonoScript>()){
+    string guid;long localId;if(!UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(script,out guid,out localId))throw new System.InvalidOperationException("MonoScript identity unavailable: "+path);
+    var type=script.GetClass();if(type!=null)resolved.Add(guid+":"+localId);var entry=new Newtonsoft.Json.Linq.JObject();entry["path"]=path;entry["guid"]=guid;entry["localId"]=localId;entry["name"]=script.name;entry["type"]=type==null?null:type.AssemblyQualifiedName;scripts.Add(entry);
+   }
+  }
+  var rows=new Newtonsoft.Json.Linq.JArray();int total=0;bool uiValid=true;
+  foreach(string path in paths){
+   var row=new Newtonsoft.Json.Linq.JObject();row["path"]=path;
+   int missing=0,timers=0,nullTargets=0;string error=null;
+   try{
+    if(path.EndsWith(".unity",System.StringComparison.OrdinalIgnoreCase)){
+     // Scenes are not opened (the 2021.3 preview-scene loader is internal, and opening
+     // would change editor state): every m_Script reference must name a resolved MonoScript.
+     foreach(System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(System.IO.File.ReadAllText(path),@"m_Script: \{fileID: (-?\d+)(?:, guid: ([0-9a-f]{32}), type: \d)?\}"))
+      if(!resolved.Contains(match.Groups[2].Value+":"+match.Groups[1].Value))missing++;
+    }else{
+     var prefab=UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(path);
+     if(prefab==null)throw new System.InvalidOperationException("Prefab could not be loaded");
+    foreach(var transform in prefab.GetComponentsInChildren<UnityEngine.Transform>(true)){
+     missing+=UnityEditor.GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(transform.gameObject);
+     foreach(var component in transform.GetComponents<UnityEngine.Component>()){
+      if(component==null||component.GetType().FullName!="RoR2.UI.TimerText")continue;
+      timers++;var serialized=new UnityEditor.SerializedObject(component);var target=serialized.FindProperty("targetLabel");
+      if(target==null||target.objectReferenceValue==null)nullTargets++;
+     }
+    }
+    }
+   }catch(System.Exception exception){error=exception.ToString();}
+   row["missingScripts"]=missing;row["timerTexts"]=timers;row["nullTimerTargets"]=nullTargets;row["error"]=error;rows.Add(row);total+=missing;
+   if(error!=null||uiPaths.Contains(path)&&(missing!=0||nullTargets!=0||path==uiPaths[0]&&timers==0))uiValid=false;
+  }
+  var report=new Newtonsoft.Json.Linq.JObject();report["schema"]=1;report["selection"]=new Newtonsoft.Json.Linq.JArray(roots);report["assets"]=rows;report["missingScripts"]=total;report["uiValid"]=uiValid;report["monoScripts"]=scripts;
+  return report.ToString(Newtonsoft.Json.Formatting.Indented);
+  // SCRIPT_AUDIT_END
+ }
+
  public static void Build(){
   string root=BuildRoot();string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};
   try{
