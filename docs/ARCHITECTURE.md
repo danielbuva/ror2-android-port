@@ -146,6 +146,12 @@ Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `r
 `ruff check` and `ruff format --check` on every Python file a change touches. `scripts/` and
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
 
+`scripts/readme-actions.py` (support) generates the marked current-action table in
+`README.md` from `scripts/lab/actions.py`, preserving registry order and excluding
+historical actions. Run it after changing registry names, status or help; host CI runs
+`python scripts/readme-actions.py --check` beside the journal-index freshness check.
+`tests/test_readme_actions.py` covers rendering, idempotence and freshness checks.
+
 ## Source folders
 
 `tools/unity/runtime/` groups authored sources by owner: `session` (including

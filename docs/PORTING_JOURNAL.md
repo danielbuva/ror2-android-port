@@ -5355,3 +5355,12 @@ the longest line in `tools/` is now 548 characters, an unbreakable literal, agai
 `--stage-exit` passed on the same APK (`work/experiments/baseline/20261018T030930.895522Z`). App
 stopped; OLED asleep. CI does not enforce the format because other clang-format versions
 format C# differently; ARCHITECTURE describes the local check.
+
+## J545 — Generate the README's command table from the action registry
+
+Phase 5 "Generated README table" (implemented by Codex at medium reasoning, reviewed by
+Claude). `scripts/readme-actions.py` renders the current `./dev prototype --action` commands
+from `scripts/lab/actions.py` (name and help, registry order) between two markers in
+README.md; `--check` fails when README is stale and runs in host CI next to the journal-index
+check. Historical actions stay out of README; `./dev prototype --action list` shows them. 419
+host tests pass. Host tooling only; no build or device run.

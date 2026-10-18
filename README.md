@@ -71,11 +71,33 @@ authentication is needed to inspect the supplied installation.
 | `./dev reset` | Uninstall only the locally receipted disposable lab package. |
 | `./dev inspect [--full]` · `decompile` · `export-project` · `graphics` | Input inventory and recovery stages (cached, receipted). |
 
-There are 177 named `./dev prototype --action …` actions: 12 current and 165 historical,
-plus the historical default/unknown-name fallback. `./dev prototype --action list` lists
-them with help, current first. The current integration uses the commands below; historical
-actions, with their original descriptions, are in
+`./dev prototype --action list` lists all actions with help, current first, including
+historical actions and the historical default/unknown-name fallback. Historical
+descriptions are also in
 [docs/history/readme-commands-and-recipes.md](docs/history/readme-commands-and-recipes.md).
+
+Current actions below are generated from `scripts/lab/actions.py`; do not edit the table
+by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshness with
+`python3 scripts/readme-actions.py --check`.
+
+<!-- prototype-actions:start -->
+
+| Command | What it does |
+| --- | --- |
+| `./dev prototype --action project-manifest-capture` | Capture generated-project file hashes and external inputs. |
+| `./dev prototype --action project-manifest-compare` | Compare two receipts with --compare A B; exit 1 on differences. |
+| `./dev prototype --action composition-update-stage` | Stage the current project composition. |
+| `./dev prototype --action composition-update-dependencies` | Stage missing source dependencies for the composition. |
+| `./dev prototype --action whole-catalog-contracts` | Check whole-catalog resource and serialization contracts. |
+| `./dev prototype --action whole-catalog-prepare` | Prepare the whole-catalog integration. |
+| `./dev prototype --action whole-catalog-host` | Run the whole-catalog editor host fixture. |
+| `./dev prototype --action whole-catalog-host-providers` | Run the whole-catalog native-provider host fixture. |
+| `./dev prototype --action whole-catalog-repair-bindings` | Repair recorded whole-catalog root bindings. |
+| `./dev prototype --action whole-catalog-build` | Compose content and build the whole-catalog player. |
+| `./dev prototype --action whole-catalog-code-build` | Build player code while verifying and reusing the frozen payload. |
+| `./dev prototype --action whole-catalog-run` | Install, sync and run the catalog-registration check. |
+
+<!-- prototype-actions:end -->
 
 ## Current integration loop
 

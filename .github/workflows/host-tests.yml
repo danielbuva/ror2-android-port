@@ -51,5 +51,7 @@ jobs:
         run: python scripts/audit-public.py
       - name: Journal index is current
         run: python scripts/journal-index.py --check
+      - name: README actions are current
+        run: python scripts/readme-actions.py --check
       - name: Host tests (fresh clone, no work/)
         run: python -m unittest discover -s tests -v
