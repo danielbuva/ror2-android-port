@@ -137,12 +137,14 @@ class UnityRebuildTests(unittest.TestCase):
     def test_reimport_errors_must_already_occur_in_the_fresh_import(self):
         with patch.object(r9, "run", side_effect=self.fake_run):
             result = whole_catalog.build_integration(destination=self.dest, work=self.work)
-        self.assertEqual(result["reimport_errors"], dict(count=1, distinct=1, all_in_fresh_import=True))
+        self.assertEqual(result["reimport_errors"], dict(count=1, distinct=1, new=[], all_in_fresh_import=True))
         for messages in (["NullReferenceException: Object reference not set to an instance of an object"], [""]):
             self.reimport_messages = messages
             with self.subTest(messages=messages), patch.object(r9, "run", side_effect=self.fake_run):
-                with self.assertRaisesRegex(RuntimeError, "absent from the fresh import"):
-                    whole_catalog.build_integration(destination=self.dest, work=self.work)
+                # A new reimport error still yields an APK for device evidence, but is reported.
+                result = whole_catalog.build_integration(destination=self.dest, work=self.work)
+                self.assertFalse(result["reimport_errors"]["all_in_fresh_import"])
+                self.assertEqual(result["reimport_errors"]["new"], messages)
 
     def test_failed_or_absent_script_audit_cannot_publish_a_success_receipt(self):
         for audit in (None, dict(schema=1, uiValid=False), dict(schema=0, uiValid=True)):
@@ -366,6 +368,24 @@ class UnityRebuildTests(unittest.TestCase):
             r9.unity_build(self.dest, self.work, self.input_id, provenance, compare_only=True)
             execute.assert_not_called()
             self.assertEqual((self.dest / ".rebuild/unity-build.json").read_bytes(), before)
+
+    def test_new_reimport_errors_make_r9_unequal_even_when_every_file_matches(self):
+        apk = self.dest / "output.apk"
+        self.zip(apk, {"same": b"same"})
+        bindings = dict(equal=True, r9_obligations={}, unity_import_deferred=[])
+        identical = dict(rows=[], counts=dict(identical=0, folder_guid_minted=0, empty_folder_absent=0, different=0))
+        for record, expected in ((dict(new=[], all_in_fresh_import=True), True), (dict(new=["NullReferenceException"], all_in_fresh_import=False), False)):
+            built = dict(apk=str(apk), apk_sha256=sha(apk), input_id=self.input_id, reimport_errors=record)
+            with (
+                self.subTest(record=record),
+                patch.object(build_entry_rebuild, "validate_bindings", return_value=bindings),
+                patch.object(r9, "reference_apk", return_value=apk),
+                patch.object(r9, "preflight_destination"),
+                patch.object(r9, "compare_files", return_value=identical),
+                patch.object(r9, "minted_folder_references", return_value=dict(references=[])),
+                patch.object(whole_catalog, "build_integration", return_value=built),
+            ):
+                self.assertEqual(r9.unity_build(self.dest, self.work, self.input_id, {})["equal"], expected)
 
     def test_binding_failure_prevents_unity_and_receipts(self):
         with (

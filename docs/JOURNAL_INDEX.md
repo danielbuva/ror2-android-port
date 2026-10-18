@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J581](PORTING_JOURNAL.md#j581--tmp-settings-are-null-in-any-batch-editor-r9-gate-split) | 2026-10-18 | TMP settings are null in any batch editor; R9 gate split | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J580](PORTING_JOURNAL.md#j580--r9-hud-repaired-differential-reimport-error-gate) | 2026-10-18 | R9 HUD repaired; differential reimport-error gate | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J579](PORTING_JOURNAL.md#j579--r9-dependent-reimport-batched) | 2026-10-18 | R9 dependent reimport batched | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J578](PORTING_JOURNAL.md#j578--r9-plugin-reimport-split-into-two-editor-sessions) | 2026-10-18 | R9 plugin reimport split into two editor sessions | Phase 2, from-scratch rebuild (run and fixed by Claude). |

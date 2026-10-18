@@ -130,15 +130,15 @@ def destination_manifest(destination, input_id):
 
 
 def reimport_errors(scratch):
-    """Errors logged while pass 2 reimports dependents must already occur in pass 1's fresh import."""
+    """Classify errors logged while pass 2 reimported dependents against pass 1's fresh import.
+
+    Any error absent from the fresh import makes R9 unequal; it is reported, never hidden."""
     errors = read(scratch / "lab-build/script-imports.json").get("errors")
     if not isinstance(errors, list) or any(not isinstance(error, str) for error in errors):
         raise RuntimeError("Destination reimport error record missing")
     fresh = (scratch / "editor-repair.log").read_text(errors="replace")
     new = sorted({error for error in errors if not error or error not in fresh})
-    if new:
-        raise RuntimeError("Dependent reimport logged errors absent from the fresh import: " + "; ".join(new[:5]))
-    return dict(count=len(errors), distinct=len(set(errors)), all_in_fresh_import=True)
+    return dict(count=len(errors), distinct=len(set(errors)), new=new, all_in_fresh_import=not new)
 
 
 def execute_build(destination, work, api):
@@ -458,7 +458,11 @@ def unity_build(destination, work, input_id, provenance, compare_only=False):
         folder_guid_references=minted_folder_references(destination),
         scope="Project hashes gate R9; APK differences require operator review and both device checks.",
     )
-    result["equal"] = all(group["counts"]["different"] == 0 for group in groups.values()) and not result["folder_guid_references"]["references"]
+    result["equal"] = (
+        all(group["counts"]["different"] == 0 for group in groups.values())
+        and not result["folder_guid_references"]["references"]
+        and build.get("reimport_errors", {}).get("all_in_fresh_import", False)
+    )
     if not compare_only:
         write(receipt, result)
     return result

@@ -154,9 +154,10 @@ public static class LabBuild {
    File.WriteAllText(Path.Combine(outDir,"script-audit.json"),audit);
    File.WriteAllText(Path.Combine(outDir,"script-imports.json"),JsonUtility.ToJson(imports,true));
    var gate=Newtonsoft.Json.Linq.JObject.Parse(audit);
-   string freshLog=File.ReadAllText(Path.Combine(root,"editor-repair.log"));
-   var newErrors=imports.errors.Where(error=>error.Length==0||!freshLog.Contains(error)).ToArray();
-   if(!(bool)gate["uiValid"]||importErrors!=0||newErrors.Length!=0)throw new InvalidOperationException("Destination script gate failed; inspect script-audit.json, script-imports.json and editor.log");
+   // Script damage and any error outside the dependent reimport stop the build here.
+   // Reimport errors absent from pass 1's fresh import are judged by R9 after the build
+   // (unity_rebuild.reimport_errors): they fail R9 but leave an APK for device evidence.
+   if(!(bool)gate["uiValid"]||importErrors!=0)throw new InvalidOperationException("Destination script gate failed; inspect script-audit.json and editor.log");
    SessionState.SetString(RunningBuild,request.request_id);
    PlayerSettings.colorSpace=ColorSpace.Linear;
    // Build remains the unchanged real build path. Count its errors from its report.
@@ -197,12 +198,12 @@ public static class LabBuild {
   foreach(string path in dependents)visit(path);
   // J578: one forced synchronous import per asset cost a full refresh each, growing
   // to over ten minutes apiece. Queue every forced import into one batch instead.
-  // J579: inside the batch, TimerText.OnValidate reached TMP settings before they loaded
-  // (NullReferenceException). Import and load them first, outside the batch.
+  // J579: inside the batch, TimerText.OnValidate reached TMP settings before they were
+  // imported. Import them first, outside the batch. (TMP_Settings.instance itself is null
+  // in any batch editor, the working one included: the game's TMP loads it through
+  // Addressables, J580.)
   const string tmpSettings="Assets/LabLoadingScene/Resources/TMP Settings.asset";
   if(File.Exists(tmpSettings))AssetDatabase.ImportAsset(tmpSettings,ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
-  var settingsType=Type.GetType("TMPro.TMP_Settings, Unity.TextMeshPro");
-  if(settingsType!=null&&settingsType.GetProperty("instance")?.GetValue(null)==null)throw new InvalidOperationException("TMP settings unavailable before dependent reimport");
   AssetDatabase.StartAssetEditing();
   try{foreach(string path in ordered.Where(path=>path!=tmpSettings))AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);}
   finally{AssetDatabase.StopAssetEditing();}

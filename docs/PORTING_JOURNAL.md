@@ -6001,3 +6001,28 @@ the exact editor: code build zero errors, APK
 storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
 exit). App stopped, OLED asleep. The `LabBuild.cs` provenance row was refreshed. 756 host tests
 pass.
+
+## J581 — TMP settings are null in any batch editor; R9 gate split
+
+Phase 2, from-scratch rebuild (run and fixed by Claude). The J580 R9 run stopped at J580's own new
+check, "TMP settings unavailable before dependent reimport". The game's TextMesh Pro
+(`Unity.TextMeshPro.dll`, one of the original assemblies) loads `TMP_Settings.instance` through
+`RoR2.LegacyResourcesAPI`, which uses Addressables, and Addressables is not initialised in a batch
+editor. Through the lab's pinned MCP bridge, the working editor gives the same result: the instance
+is null while `TMP Settings.asset` itself loads as `TMPro.TMP_Settings`. So the check could never
+pass, and was wrong; it is removed, and `TMP Settings.asset` is still imported before the batch.
+The same bridge showed a forced reimport of `RecoveredUI/Hud.prefab` in the working editor logs no
+errors, so the TMP `NullReferenceException` the destination's batched reimport logged (J580) is
+not explained as normal editor behaviour, and is still open.
+
+The gate is now split. Script damage (a missing HUD/menu script or a null `TimerText` target) and
+any error outside the dependent reimport still stop the build before it starts. An error logged
+during the reimport that pass 1's fresh import never logged no longer blocks the build: R9 records
+it (`reimport_errors.new`) and reports `equal: false`, so R9 still fails but leaves an APK for
+device evidence. The working-project script-audit payload now reads its selection from the file:
+inlined, a real build selection exceeded the bridge's 50,000-character code limit. The edited
+`LabBuild.cs` compiled in the exact editor: code build zero errors, APK
+`5f0520d28df56154acdfc7ee216d22ea800f65e4e20d16a82d5820ff8f0f87e0`, installed in place on adopted
+storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
+exit). App stopped, OLED asleep. 757 host tests pass. Working-editor evidence:
+`work/receipts/J580-working-hud-reimport-errors.json`.

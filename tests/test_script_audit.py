@@ -37,8 +37,11 @@ class ScriptAuditTests(unittest.TestCase):
         )
 
     def test_payload_reuses_exact_auditor_and_does_not_import_save_or_write(self):
-        payload = script_audit.mcp_payload(list(script_audit.UI_PREFABS))
+        payload = script_audit.mcp_payload("/synthetic run/build-selection.json")
         self.assertEqual(payload["action"], "execute")
+        # The selection is read in the editor, so the payload stays small for any build.
+        self.assertIn('ReadAllText("/synthetic run/build-selection.json")', payload["code"])
+        self.assertLess(len(payload["code"]), 50000)
         source = SOURCE.read_text()
         shared = source.split("// SCRIPT_AUDIT_BEGIN\n")[1].split("// SCRIPT_AUDIT_END")[0]
         self.assertTrue(payload["code"].endswith(shared))
@@ -98,8 +101,8 @@ class ScriptAuditTests(unittest.TestCase):
         self.assertLess(destination.index('gate["uiValid"]'), destination.index("\n   Build();"))
         self.assertIn("type!=LogType.Error&&type!=LogType.Exception&&type!=LogType.Assert", destination)
         self.assertIn("result.errors+=importErrors", destination)
-        self.assertIn("editor-repair.log", destination)
-        self.assertIn("newErrors.Length!=0", destination)
+        self.assertIn("reimportErrors", destination)
+        self.assertIn("imports.errors=reimportErrors.ToArray()", destination)
         self.assertNotIn("message.Contains", destination)
         real = source.split(" public static void Build(){", 1)[1]
         self.assertNotIn("ReimportDestinationDependents", real)

@@ -29,11 +29,15 @@ def build_selection(manifest, scene_config):
     return sorted(set(paths(scene_config)) | {row["path"] for row in manifest["locations"]} | set(UI_PREFABS) | {"Assets/Recovered/geometry.obj"})
 
 
-def mcp_payload(selection):
-    """Execute the exact shared read-only method body without staging a C# file."""
+def mcp_payload(selection_file):
+    """Execute the exact shared read-only method body without staging a C# file.
+
+    The editor reads the selection from its file: inlined, a real build selection
+    exceeds the MCP bridge's 50,000-character code limit (J580)."""
     source = (ROOT / "android/Assets/Editor/LabBuild.cs").read_text()
     body = source.split("// SCRIPT_AUDIT_BEGIN\n", 1)[1].split("// SCRIPT_AUDIT_END", 1)[0]
-    declaration = "var selection=new string[]{" + ",".join(json.dumps(path, ensure_ascii=True) for path in selection) + "};\n"
+    path = json.dumps(str(Path(selection_file).resolve()), ensure_ascii=True)
+    declaration = "var selection=Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(" + path + '))["assets"].ToObject<string[]>();\n'
     return dict(action="execute", code=declaration + body, compiler="auto")
 
 
@@ -66,7 +70,7 @@ def main():
     mode.add_argument("--selection", type=Path, help="Emit execute_code arguments for the lab MCP editor; reads the destination build-selection.json")
     mode.add_argument("--compare", nargs=2, type=Path, metavar=("WORKING_AUDIT", "DESTINATION_AUDIT"), help="Compare saved raw audit JSON reports")
     args = parser.parse_args()
-    result = mcp_payload(read(args.selection)["assets"]) if args.selection else compare(*(read(path) for path in args.compare))
+    result = mcp_payload(args.selection) if args.selection else compare(*(read(path) for path in args.compare))
     print(json.dumps(result, indent=2))
     return 0 if args.selection or result["equal"] else 1
 
