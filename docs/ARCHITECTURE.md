@@ -38,6 +38,14 @@ attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
+Inherited-state ledger (`scripts/lab/inherited_state.py`, current):
+`./dev prototype --action inherited-state-check` verifies the inherited asset/meta
+pairs in `recipe/inherited-state.json` against the locally selected previous project,
+without staging or generation. `--work-dir PATH` selects a separate clone's local
+work tree. It reports status and static-use counts; lifecycle and comparison
+semantics are in [LOCAL_STATE.md](LOCAL_STATE.md#inherited-additions-ledger-j558).
+Host contracts: `tests/test_inherited_state.py`.
+
 Project equivalence harness (`scripts/lab/project_manifest.py`, current):
 `./dev prototype --action project-manifest-capture` writes an ignored receipt of every file
 under the generated project's `Assets/`, `Packages/` and `ProjectSettings/` (path, SHA-256,
@@ -283,7 +291,8 @@ current `prototype` actions are the ten in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands)
 plus `project-manifest-capture`, `project-manifest-compare`,
 `asset-transforms-check` (owned by `asset_transforms`) and
-`authored-additions-check` (owned by `authored_additions`).
+`authored-additions-check` (owned by `authored_additions`), plus
+`inherited-state-check` (owned by `inherited_state`).
 
 ## Known structural debt
 

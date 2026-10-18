@@ -20,6 +20,10 @@ class Action:
     handler: Callable | None = None
 
 
+def _inherited_check(function, kwargs, args):
+    return function(**(dict(kwargs, work=args.work_dir) if getattr(args, "work_dir", None) else kwargs))
+
+
 def _capture(function, kwargs, args):
     from common import WORK, now, write
 
@@ -78,6 +82,15 @@ def _repair_reconstruction(function, kwargs, args):
 # arguments, result formatting, timing-file updates and exit codes where needed.
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
+    Action(
+        "inherited-state-check",
+        "inherited_state",
+        "check_action",
+        {},
+        "current",
+        "Verify inherited local asset/meta hashes from the ledger; read-only (--work-dir selects local work).",
+        handler=_inherited_check,
+    ),
     Action(
         "authored-additions-check",
         "authored_additions",

@@ -5548,3 +5548,17 @@ are not reconstructed ahead of gameplay work; and inherited local state is retir
 replacement is verified. Next: a tracked ledger of the inherited shaders (hash, runtime use,
 status) and a check that the local files still match it.
 
+
+## J559 — Ledger of inherited local state
+
+Following J558 (implemented by Codex at medium reasoning, reviewed by Claude).
+`recipe/inherited-state.json` lists all 229 additions with their project path, inherited-file
+hash, `.meta` GUID, the generator that should produce them, whether that generator's current
+output matches, whether the current runtime uses them (with the referencing asset or code as
+evidence), and a status: 15 reproducible, 214 inherited, 0 retired. Identifiers and hashes only;
+no shader text. The new current action `inherited-state-check` verifies that every inherited file
+still has its recorded hash: 214/214 pairs unchanged on the real project. Usage: 224 of the 229
+are used by the current runtime (5 unused), including 190 of the 192 shaders, so almost all of
+them are priority under J558. Of the 177 generator-backed shaders, 9 bodies already match the
+generator, 166 differ and 2 generator outputs are absent; matching bodies stay inherited until
+the whole pair is proven and verified on device. 541 host tests pass. Host tooling only.

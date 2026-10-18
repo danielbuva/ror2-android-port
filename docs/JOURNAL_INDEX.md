@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J559](PORTING_JOURNAL.md#j559--ledger-of-inherited-local-state) | 2026-10-17 | Ledger of inherited local state | Following J558 (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J558](PORTING_JOURNAL.md#j558--decision-preserve-inherited-shaders-make-the-used-ones-reproducible-first) | 2026-10-17 | Decision: preserve inherited shaders, make the used ones reproducible first | User decision, 2026-10-17. |
 | [J557](PORTING_JOURNAL.md#j557--correction-adapted-asset-counts-in-j554-and-j555) | 2026-10-17 | Correction: adapted-asset counts in J554 and J555 | J554 said 160 of the 451 adapted assets were generated and J555 said 238. |
 | [J556](PORTING_JOURNAL.md#j556--stage-the-tracked-source-additions-without-the-previous-project) | 2026-10-17 | Stage the tracked-source additions without the previous project | Migration-removal plan commit 5, first cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
