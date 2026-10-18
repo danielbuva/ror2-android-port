@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J557**. This page is the current snapshot only: replace its
+Last updated 2026-10-17 after **J558**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -71,7 +71,7 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    config and content recipe are generated from public recipes (J551), and all 222 adapted
    (non-addition) assets plus 15 of the 229 additions are generated without the previous
    project (J552–J557).
-   **Open question:** 168 of the 177 inherited shaders differ from what today's shader
-   generators produce. Either regenerate them (changes shipped shaders; needs device and
-   visual checks per family) or keep those outputs as documented local state. The remaining
+   Decision (J558): inherited shader outputs are kept as documented local state for now; the
+   shaders the current runtime uses are made reproducible first, each verified on device, and
+   inherited state is retired only after that verification. The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

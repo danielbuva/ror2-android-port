@@ -5537,3 +5537,14 @@ SurfaceDefs, 10 field-only, 178 structural) plus 229 additions. After J556, all 
 assets and 15 of the 229 additions are produced without the previous project; 214 additions
 remain. No code or evidence changed.
 
+## J558 — Decision: preserve inherited shaders, make the used ones reproducible first
+
+User decision, 2026-10-17. The long-term goal is public source + public recipes + a legitimate
+installation → a reproducible Android port, so the 168 inherited shader outputs that today's
+generators no longer reproduce must not stay permanent, unexplained workstation dependencies. For
+now they are preserved as documented local state; the shaders the current runtime actually uses
+are made reproducible first, each verified on device; historical shaders the runtime does not use
+are not reconstructed ahead of gameplay work; and inherited local state is retired only after the
+replacement is verified. Next: a tracked ledger of the inherited shaders (hash, runtime use,
+status) and a check that the local files still match it.
+
