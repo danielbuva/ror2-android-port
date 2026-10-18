@@ -24,9 +24,10 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Split `MovementBatchProbe.Result` into session config and report.
-- [ ] Give the shipped game its own entry point instead of an experiment-switch case.
-- [ ] One runtime source manifest instead of "already present in the generated project".
-- [ ] Remove the rebuild blockers listed in [LOCAL_STATE.md](LOCAL_STATE.md), including the
-      untracked device runner scripts.
-- [ ] Register `./dev` actions as current or historical.
+- [ ] Decide whether game asset paths and catalog names may appear in public recipes (blocks the
+      runtime-config and content recipes and migration-removal commits 3–9).
+- [ ] Migration-removal commits 3–9 ([plan](migration-removal-plan.md)), then `./dev rebuild` into
+      an empty work folder.
+- [ ] Have `Start` call `GameSession` directly instead of selecting the session by id.
+- [ ] Replace the hard-coded run folders in historical actions with named receipts, or retire
+      those actions.

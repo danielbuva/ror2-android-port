@@ -67,6 +67,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    60 FPS is the release target, not a gate for each batch; investigate large
    unexplained regressions only.
 3. Keep J503, J502, J425 and J323 executable; sleep the OLED whenever idle.
-4. Structural cleanup continues; whole-catalog source membership is now the tracked
-   `recipe/runtime-sources.json` (J509). The known debt and its order are in
-   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).
+4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done; Phase 2 (reproducible
+   build) has its harness, source manifest and first recipes. **Open question:** may public
+   recipes contain game asset paths and catalog names (needed to track the runtime config
+   and content recipe), or must those selectors stay in ignored, locally generated files? The
+   remaining debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

@@ -206,69 +206,42 @@ plus `project-manifest-capture` and `project-manifest-compare`.
 
 ## Known structural debt
 
-Verified against `af2e101`. The order at the end is the safe order to pay it down; each step
-is its own commit with host tests, a zero-error exact-editor build and a device check.
+First verified against `af2e101`; status updated after J547. Each step was its own commit with
+host tests, a zero-error exact-editor build and a device check.
 
-1. **The shipped game runs through the lab harness.** `Start` waits 8 s and the session is
-   still chosen by a string id, but the playable spine now has its own `GameSession()` entry
-   (J513); the 116 historical experiment cases live in `LabExperiments.cs`.
-2. **One class holds everything.** 70 `tools/unity` files are `partial class
-   PortSession`; the config is now its own `SessionConfig` (J517), and the report type is now
-   called `SessionReport`. (The 9 copies of the
-   `MoveNext` exception wrapper in `Start` are now one `RunGuarded` helper, J511.)
-3. **The recipe is untracked.** The runtime config (369 keys) and the content recipe
-   `work/scene-probe-build.json` (4,184 prefabs) are not in Git. Tracked, audited recipes now go in
-   `recipe/` ([recipe/README.md](../recipe/README.md)); the first is the uGUI remap table (J508).
-4. **No from-scratch build.** The current project is made by migrating a previous project
-   (`composition_migration.stage`). Seven path families it reads (eight before J508) have no producer in the
-   repo ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
-   (removal plan: [migration-removal-plan.md](migration-removal-plan.md)),
-   and no current command applies the AssemblyProbe transforms: the transformed
-   `RoR2.dll` was produced by historical actions (`scene_runtime.py:542`,
-   `integrated_objective.py:56`) and is carried forward by hash.
+Still open:
+
+1. **No from-scratch build.** The project is still made by migrating a previous project
+   (`composition_migration.stage`); seven path families it reads have no producer in the repo
+   ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
+   and the transformed `RoR2.dll` was produced by historical actions (`scene_runtime.py:542`,
+   `integrated_objective.py:56`) and is carried forward by hash. The removal plan is
+   [migration-removal-plan.md](migration-removal-plan.md); commits 1–2 are done (harness,
+   source manifest, script GUIDs and packages), 3–9 are open.
+2. **Most of the runtime recipe is untracked.** The runtime config (369 keys, 184 read by the
+   code as `SessionConfig`) and the content recipe `work/scene-probe-build.json` (4,184
+   prefabs) are not in Git. Tracking them means publishing game asset paths and catalog names;
+   see the open question in PORTING_STATE.md.
+3. **The session is still selected by id.** `Start` waits 8 s and picks the session from a
+   string id; the playable spine runs `GameSession()` (J513) and the 116 historical cases live
+   in `LabExperiments.cs`. Having `Start` call `GameSession` directly is the remaining step.
+4. **Shared coordinator state.** 40 owners hold their subsystems' private state (J519–J540),
+   but fields that several subsystems read (player, teleporter, results save system, HUD and
+   menu roots, settings visibility and others) still live on `PortSession`. 23 boundary files
+   have no private state worth an owner, and the three Moon files were deferred because
+   neither standard check reaches them.
 5. **Hard-coded run folders.** `scene_runtime.py:59`, `:515` and `:883`, and
-   `input_migration.py:90` read fixed timestamped evidence folders (all in historical
-   actions).
-6. **Text patches on authored C# — resolved.** The build used to inject code into
-   `BodyCatalogBoundary.cs` and `PortSession.Start` by exact-text `.replace()`. The
-   patches were dormant and are deleted (J505, J506); the hooks are authored, and host tests
-   check them without depending on whitespace. The remaining `.replace()` calls in
-   `scripts/lab` remap GUIDs in generated Unity YAML or fill a Python-held editor template.
-7. **Build membership depends on history — resolved for whole-catalog builds.**
-   `recipe/runtime-sources.json` owns the 92 authored C# sources staged at
-   `Assets/LabLoadingScene`; `build.py` derives `WHOLE_PLAYER_INPUTS` from it without
-   probing `work/`. Generated sources remain explicit build-owned exceptions.
-   Historical lists in `nova_bridge.py:68` and `scene_runtime.py:584` retain their
-   existing behavior.
-8. **Experiment drivers outside Git.** Device gameplay runs are driven by about 89 untracked
-   runner scripts in `work/experiments/whole-catalog/gameplay/`; `work/` also holds about 700
-   loose one-off `.py` files.
-9. **Command sprawl — registry in place.** `scripts/lab/actions.py` owns lazy dispatch,
-   call arguments, status and help for 177 named `prototype` actions (12 current,
-   165 historical), preserving the historical default/unknown-name fallback.
-   `./dev prototype --action list` shows current actions first. Mocked host tests cover
-   every action and its special output, timing-file and exit contracts; the historical
-   commands themselves remain available.
+   `input_migration.py:90` read fixed timestamped evidence folders (all in historical actions).
+6. **Experiment drivers outside Git.** Broader gameplay runs still use about 89 untracked
+   runner scripts in `work/experiments/whole-catalog/gameplay/`; the standard checks are
+   tracked as `./dev check-baseline` and `--stage-exit` ([BASELINE.md](BASELINE.md)).
+7. **Names.** Four staged diagnostic probes and six game-path shaders keep "Probe"/"Preview"
+   names; renaming shaders changes names that code and materials look up, for no functional
+   gain.
 
-Safe order:
-
-1. ~~Delete the dormant C# text patches~~ — done (J505, J506). C# formatting is no longer
-   blocked by the build.
-2. ~~Split the config out of the report~~ — done (`SessionConfig`, J517); the deferred
-   report rename to `SessionReport` is complete. The harness source rename is implemented in step 5.
-3. ~~Give the game a `GameSession` entry point~~ — done (J513); later, have `Start` call it
-   directly; keep the old id as
-   an alias for `nova_bridge.py`, `scene_runtime.py` and `IsPlayableSpine`.
-4. Extract owners one at a time, least-coupled first, following
-   `AndroidProgressionBoundary` (an `IDisposable` with explicit acquire/release and its own
-   state).
-5. The coordinator source is now `PortSession` (`PortSession.cs`); external resource and
-   on-device file names remain unchanged. Before staging membership validation, move
-   `Assets/LabLoadingScene/MovementBatchProbe.cs` and its `.meta` to `PortSession.cs` and
-   `PortSession.cs.meta` in that same directory, preserving the GUID and leaving no old
-   source or orphan metadata. Then stage authored sources and use a full build: the
-   removed player-input paths invalidate the existing code-only payload reuse receipt.
-   Exact-editor and device verification of this rename remain pending.
-
-Recipe tracking (items 3–5) can proceed in parallel with steps 2–5; it changes the build,
-not the runtime. The single runtime source manifest (item 7) is in place (J509).
+Resolved during the cleanup: dormant text patches on authored C# (J505/J506); build membership
+by history (`recipe/runtime-sources.json`, J509, paths after the folder split J543); the 9
+copies of the exception wrapper (`RunGuarded`, J511); config and report sharing one type
+(`SessionConfig` J517, `SessionReport` J541); the coordinator name (`PortSession`, J542);
+command sprawl (`scripts/lab/actions.py`, J512, README table generated J545); Python and C#
+formatting (J518, J544); the flat `tools/unity` folder (J543).
