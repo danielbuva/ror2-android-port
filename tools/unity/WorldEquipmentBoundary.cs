@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 // Supplies eligible shipped equipment content and input/lifecycle scheduling.
 // Original grants, activation dispatch, buffs, healing and cooldowns execute unchanged.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class EquipmentActionObservation {public string equipment;public float seconds,health,armor,crit;public int stock;}
  [Serializable] public class WorldEquipmentReport {
   public bool ready,cleaned;public string equipment,error,scope="Original equipment pickup/activation/cooldown; owned input/scheduling, source presentation approximation, no stock profile unlocks.";
@@ -41,11 +41,11 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Dispose keeps flight cleanup before scheduler and callback reset.
  sealed class WorldEquipmentSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   Action worldEquipmentFixed,worldEquipmentInventoryFixed;Action<EquipmentSlot,EquipmentIndex> worldEquipmentActivated;
   static readonly FieldInfo[] worldEquipmentEffectFields=new[]{"elephantDefenseEffectInstance","lifestealOnHitEffectInstance","teamWarCryEffectInstance"}.Select(name=>typeof(CharacterBody).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic)).ToArray();
   EquipmentDef[] worldEquipmentDefinitions;float equipmentLastInput=-100;
-  public WorldEquipmentSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldEquipmentSession(PortSession coordinator){this.coordinator=coordinator;}
   public EquipmentDef[] WorldEquipmentDefs(SessionConfig cfg){
    if(cfg.worldEquipmentAssets==null||cfg.worldEquipmentAssets.Length==0)return new EquipmentDef[0];
    var names=new[]{"Fruit","CritOnUse","GainArmor","LifestealOnHit","GoldGat","PassiveHealing","CommandMissile","Saw","Blackhole","TeamWarCry","Jetpack","FireBallDash"};

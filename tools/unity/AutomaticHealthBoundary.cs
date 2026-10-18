@@ -8,7 +8,7 @@ using RoR2;
 using UnityEngine;
 
 // Observe original fixed callbacks after accepted body Start; no replacement health simulation.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  IEnumerator AutomaticHealthBoundary(CharacterBody body,EntityStateMachine machine){
   var health=body.healthComponent;bool barrier=r.id=="body-state-spawn-state-auto-barrier";
   Check(health&&health.body==body&&!health.enabled&&health.health==110&&health.barrier==0&&body.regen>0,"Original automatic health starting contract");

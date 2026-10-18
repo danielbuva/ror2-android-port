@@ -8,7 +8,7 @@ using RoR2;
 using UnityEngine;
 
 // Reuse the measured floor/event contract; all state/motor/solver ticks remain original Unity callbacks.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  IEnumerator AutomaticGroundBoundary(CharacterBody body,EntityStateMachine machine,SessionConfig cfg){
   bool floor=r.id!="body-state-spawn-state-auto-gravity",wall=r.id=="body-state-spawn-state-auto-ground-wall";
   bool scripted=r.id=="body-state-spawn-state-auto-ground-stop"||r.id=="body-state-spawn-state-auto-body-ground"||wall;

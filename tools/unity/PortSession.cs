@@ -12,7 +12,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Each experiment runs in a fresh process. Automatic probes enable only their measured callbacks.
-public sealed partial class MovementBatchProbe : MonoBehaviour {
+public sealed partial class PortSession : MonoBehaviour {
  // Required Moon metadata is separate from the earned-item/drop domain.
  // These exact definitions register identities; original eligibility remains authoritative.
  [Serializable] public class MoonCatalogSpec {public string[] items,buffs,equipment;}
@@ -80,10 +80,12 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   }finally{if(fullTrace!=null)r.nova.observations=fullTrace;}
   FlushNovaTrace();
  }
- [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Init(){if(Resources.Load<TextAsset>("MovementBatchProbe"))new GameObject("Isolated movement batch").AddComponent<MovementBatchProbe>();}
+ // MovementBatchProbe is the unchanged resource/file name.
+ [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)] static void Init(){if(Resources.Load<TextAsset>("MovementBatchProbe"))new GameObject("Isolated movement batch").AddComponent<PortSession>();}
  IEnumerator Start(){
   if(File.Exists(System.IO.Path.Combine(Application.persistentDataPath,"whole-catalog-selection.json")))yield break;
   yield return new WaitForSeconds(8);
+  // MovementBatchProbe is the unchanged resource/file name.
   var path=System.IO.Path.Combine(Application.persistentDataPath,"movement-batch-selection.json");var config=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   if(File.Exists(path)){r=JsonUtility.FromJson<SessionReport>(File.ReadAllText(path));if(r.attempt!=config.attempt)yield break;}
   else{
@@ -229,6 +231,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    eventHost=new GameObject("Owned event context");eventHost.SetActive(false);var manager=eventHost.AddComponent<GlobalEventManager>();Call(manager,"OnEnable");Check(GlobalEventManager.instance==manager,"Original event singleton assignment failed");
    if(r.id=="global-lifecycle"){Call(manager,"OnDisable");Check(!GlobalEventManager.instance,"Original event singleton release failed");return;}
   }
+  // MovementBatchProbe is the unchanged resource/file name.
   var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   artifactBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Artifact bundle missing");
   var artifact=artifactBundle.LoadAsset<ArtifactDef>(cfg.artifactAsset);Check(artifact&&artifact.cachedName=="WeakAssKnees"&&artifact.nameToken=="ARTIFACT_WEAKASSKNEES_NAME","Wrong recovered artifact");
@@ -259,6 +262,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
   if(r.id.StartsWith("state-ground-")){GroundedState(motor,k);return;}
   if(r.id.StartsWith("gravity-")){
    var savedGravity=Physics.gravity;try{
+   // MovementBatchProbe is the unchanged resource/file name.
    if(r.id=="gravity-source-jump"){var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);Check(cfg.sourceGravity<0,"Missing measured source gravity");Physics.gravity=new Vector3(0,cfg.sourceGravity,0);}
    motor.gravityParameters=new CharacterGravityParameters{environmentalAntiGravityGranterCount=1};Check(!motor.useGravity,"Antigravity setter");motor.gravityParameters=new CharacterGravityParameters();Check(motor.useGravity,"Gravity setter did not enable original gravity");r.gravity=Physics.gravity.y;Check(r.gravity<0,"Expected downward gravity");motor.moveDirection=Vector3.zero;
    if(r.id=="gravity-fall"){
@@ -286,6 +290,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  void GroundedState(CharacterMotor motor,KinematicCharacterMotor k){
   var savedGravity=Physics.gravity;EntityStateMachine machine=null;
   try{
+   // MovementBatchProbe is the unchanged resource/file name.
    var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);Check(cfg.sourceGravity<0,"Missing source gravity");Physics.gravity=new Vector3(0,cfg.sourceGravity,0);r.gravity=Physics.gravity.y;
    motor.gravityParameters=new CharacterGravityParameters{environmentalAntiGravityGranterCount=1};motor.gravityParameters=new CharacterGravityParameters();Check(motor.useGravity,"Original gravity not active");motor.moveDirection=Vector3.zero;
    obstacle=new GameObject("Owned grounded state floor");obstacle.layer=30;obstacle.transform.position=new Vector3(0,9.5f,0);obstacle.AddComponent<BoxCollider>().size=new Vector3(40,1,40);
@@ -311,6 +316,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    body.onJump+=CountJump;try{body.TriggerJumpEventGlobally();Check(r.jumpEvents==1,"Original authority jump event missing");}finally{body.onJump-=CountJump;}
    Check(!NetworkClient.active,"Unexpected client; server-only dispatch fixture");return;
   }
+  // MovementBatchProbe is the unchanged resource/file name.
   var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
   var boost=artifactBundle.LoadAsset<ItemDef>(cfg.jumpBoostAsset);var strike=artifactBundle.LoadAsset<ItemDef>(cfg.jumpStrikeAsset);
   Check(boost&&strike&&boost.name=="JumpBoost"&&strike.name=="JumpDamageStrike","Wrong recovered jump items");
@@ -366,6 +372,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
    StaticCall(typeof(BuffCatalog),"SetBuffDefs",new object[]{new BuffDef[0]});Check(BuffCatalog.buffCount==0,"Empty diagnostic buff catalog initialization");
    var first=BuffCatalog.GetPerBuffBuffer<int>();var second=BuffCatalog.GetPerBuffBuffer<int>();Check(first.Length==0&&second.Length==0&&!ReferenceEquals(first,second),"Original buff buffer allocation");
    if(r.id!="body-buff-storage"){
+    // MovementBatchProbe is the unchanged resource/file name.
     var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);if(!artifactBundle)artifactBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Body bundle missing");var prefab=SelectedPlayerPrefab(cfg);Check(prefab&&(SelectedSourceSurvivor()||!prefab.activeSelf),"Recovered body root not isolated");
     if(cfg.statBuffs&&r.id!="body-awake"){
      Check(!oldKnock&&!oldJuggle,"Existing knockback buff bindings");knockBuff=artifactBundle.LoadAsset<BuffDef>(cfg.knockBuffAsset);juggleBuff=artifactBundle.LoadAsset<BuffDef>(cfg.juggleBuffAsset);Check(knockBuff&&juggleBuff&&knockBuff.name=="bdKnockUpHitEnemies"&&juggleBuff.name=="bdKnockUpHitEnemiesJuggleCount","Recovered buff identities");var diagnosticBuffDefs=string.IsNullOrEmpty(cfg.hiddenBuffAsset)?new[]{knockBuff,juggleBuff}:new[]{knockBuff,juggleBuff,hiddenBuff=artifactBundle.LoadAsset<BuffDef>(cfg.hiddenBuffAsset),intangibleBuff=artifactBundle.LoadAsset<BuffDef>(cfg.intangibleBuffAsset),medkitBuff=artifactBundle.LoadAsset<BuffDef>(cfg.medkitBuffAsset),tonicBuff=artifactBundle.LoadAsset<BuffDef>(cfg.tonicBuffAsset),soulBuff=artifactBundle.LoadAsset<BuffDef>(cfg.soulBuffAsset)}.Concat(EnemyDeathBuffs(cfg)).Concat(ChestPurchaseBuffs(cfg)).Concat(ObjectiveBuffs(cfg)).Concat(MoonBuffs(cfg)).Concat(WorldLootBuffs(cfg)).Concat(WorldProcBuffs(cfg)).Concat(WorldDotBuffs(cfg)).Concat(WorldItemBehaviorBuffs(cfg)).Concat(WorldEquipmentBuffs(cfg)).Concat(StageBossBuffs(cfg)).Concat(UpdatedComparisonBuffs(cfg)).Concat(ComposedEliteBuffs(cfg)).Distinct().ToArray();if(cfg.integratedWorld&&Resources.Load<TextAsset>("WholeCatalogBootstrap"))diagnosticBuffDefs=WholeCatalogComposed.DefinitionFamily(diagnosticBuffDefs);Check(diagnosticBuffDefs.All(x=>x)&&diagnosticBuffDefs.Distinct().Count()==diagnosticBuffDefs.Length,"Duplicate or missing original diagnostic buff definition");StaticCall(typeof(BuffCatalog),"SetBuffDefs",new object[]{diagnosticBuffDefs});if(hiddenBuff){Check(!oldHidden&&hiddenBuff.name=="bdHiddenInvincibility","Actual hidden buff identity/context");RoR2Content.Buffs.HiddenInvincibility=hiddenBuff;Check(!oldIntangible&&intangibleBuff&&intangibleBuff.name=="bdIntangible","Actual Intangible buff identity/context");RoR2Content.Buffs.Intangible=intangibleBuff;Check(!oldMedkit&&!oldTonic&&!oldSoul&&medkitBuff&&tonicBuff&&soulBuff&&medkitBuff.name=="bdMedkitHeal"&&tonicBuff.name=="bdTonicBuff"&&soulBuff.name=="bdSoulCost","Complete original removal-definition context");RoR2Content.Buffs.MedkitHeal=medkitBuff;RoR2Content.Buffs.TonicBuff=tonicBuff;DLC2Content.Buffs.SoulCost=soulBuff;}DLC2Content.Buffs.KnockUpHitEnemies=knockBuff;DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount=juggleBuff;
@@ -599,6 +606,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
     input.moveVector=Vector3.right;input.aimDirection=Vector3.forward;input.jump.PushState(true);Call(state,"GatherInputs");var flags=BindingFlags.NonPublic|BindingFlags.Instance;Check((Vector3)typeof(EntityStates.GenericCharacterMain).GetField("moveVector",flags).GetValue(state)==Vector3.right,"Recovered state movement input");Check((bool)typeof(EntityStates.GenericCharacterMain).GetField("jumpInputReceived",flags).GetValue(state),"Recovered state jump edge");input.jump.hasPressBeenClaimed=true;Call(state,"GatherInputs");Check(!(bool)typeof(EntityStates.GenericCharacterMain).GetField("jumpInputReceived",flags).GetValue(state),"Recovered state claimed jump");
    }
    if(r.id=="body-state-start"||r.id=="body-state-gravity"||IsRecoveredLanding()){
+    // MovementBatchProbe is the unchanged resource/file name.
     var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);Check(cfg.sourceGravity<0,"Missing source gravity");Physics.gravity=new Vector3(0,cfg.sourceGravity,0);r.gravity=Physics.gravity.y;Action<CharacterBody> started=b=>{if(b==body)r.motorStartEvents++;};motor.onMotorStart+=started;try{Call(motor,"Start");}finally{motor.onMotorStart-=started;}Check(r.motorStartEvents==1&&motor.useGravity&&motor.hasEffectiveAuthority&&motor.Motor==solver,"Original motor Start contract");
     if(r.id!="body-state-start"){
      solver.SetGroundSolvingActivation(IsRecoveredLanding());solver.CollidableLayers=IsRecoveredLanding()?1<<30:0;solver.StableGroundLayers=1<<30;solver.SetPosition(new Vector3(0,IsRecoveredLanding()?12:10,0));motor.velocity=Vector3.zero;input.moveVector=Vector3.zero;
@@ -691,6 +699,7 @@ public sealed partial class MovementBatchProbe : MonoBehaviour {
  }
 
  void MasterLifecycle(){
+  // MovementBatchProbe is the unchanged resource/file name.
   var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);artifactBundle=AssetBundle.LoadFromFile(System.IO.Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));Check(artifactBundle,"Master bundle missing");var prefab=artifactBundle.LoadAsset<GameObject>(cfg.masterAsset);Check(prefab&&!prefab.activeSelf,"Recovered master root not isolated");host=Instantiate(prefab);var master=host.GetComponent<CharacterMaster>();var inventory=host.GetComponent<Inventory>();Check(master&&inventory&&!host.activeInHierarchy,"Original master components missing or active");foreach(var c in host.GetComponentsInChildren<Component>(true))Check(c,"Missing recovered master script");
   bool inventoryAwake=false,masterAwake=false,registered=false;
   try{

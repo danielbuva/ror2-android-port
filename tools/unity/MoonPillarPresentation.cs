@@ -8,7 +8,7 @@ using UnityEngine;
 
 // Read original selected batteries and FX activation. Presentation never writes
 // charge, selection, mission state, collider/layer, interaction or player motion.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class MoonPillarMarker {
   public string name,state;public Vector3 position;public float charge,distance;public bool complete;
  }

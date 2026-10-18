@@ -8,7 +8,7 @@ using UnityEngine;
 
 // Temporary, default-off development controls. Never change mission progress or
 // remove enemies: original attacks, holdout occupancy and ending code still run.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class DebugAccelerationOptions {
   public bool invincibility,highDamage,fastCharge,movementBoost,jumpBoost;
   public string purpose;
@@ -52,11 +52,11 @@ public sealed partial class MovementBatchProbe {
  // Create on first use, including diagnostic input before Prepare, and retain
  // after Dispose so repeated cleanup and later calls keep the original state.
  sealed class DebugAccelerationSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   CharacterBody debugBody;bool debugPriorGodMode,ownsDebugAcceleration;float debugNextZoneScan;
   readonly HashSet<HoldoutZoneController> debugChargeZones=new HashSet<HoldoutZoneController>();
   Inventory debugGrantInventory;
-  public DebugAccelerationSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public DebugAccelerationSession(PortSession coordinator){this.coordinator=coordinator;}
   public void Prepare(CharacterBody body){
    // Unity can create an empty inline report while reading the launch selection.
    // Serialized presence is not ownership of live body fields or callbacks.

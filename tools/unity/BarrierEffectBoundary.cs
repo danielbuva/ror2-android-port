@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // One measured original prefab location; original initialization owns its completion callback.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  BarrierEffectSession barrierEffectSession;
  BarrierEffectSession GetBarrierEffectSession(){if(barrierEffectSession==null)barrierEffectSession=new BarrierEffectSession(this);return barrierEffectSession;}
  FieldInfo BarrierSlot(){return GetBarrierEffectSession().BarrierSlot();}
@@ -28,7 +28,7 @@ public sealed partial class MovementBatchProbe {
  // calls. All release stays in the awaited coroutine with its original yields;
  // synchronous Dispose does not advance or replace that teardown.
  sealed class BarrierEffectSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   const string BarrierBundle="barrier-effect-lab",BarrierPath="Prefabs/TemporaryVisualEffects/BarrierEffect";
   ResourceLocationMap barrierLocator;
   AsyncOperationHandle<GameObject> barrierHandle;
@@ -36,7 +36,7 @@ public sealed partial class MovementBatchProbe {
   readonly Dictionary<FieldInfo,GameObject> priorEffectSlots=new Dictionary<FieldInfo,GameObject>();
   readonly List<Material> ownedBarrierMaterials=new List<Material>();
   readonly List<TemporaryVisualEffect> ownedBarrierEffects=new List<TemporaryVisualEffect>();
-  public BarrierEffectSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public BarrierEffectSession(PortSession coordinator){this.coordinator=coordinator;}
   public FieldInfo BarrierSlot(){return typeof(CharacterBody).GetNestedType("AssetReferences",BindingFlags.NonPublic).GetField("barrierTempEffectPrefab",BindingFlags.Public|BindingFlags.Static);}
   public TemporaryVisualEffect BodyBarrier(CharacterBody body){return (TemporaryVisualEffect)typeof(CharacterBody).GetField("barrierTempEffectInstance",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(body);}
   public IEnumerator PrepareBarrierEffect(SessionConfig cfg){

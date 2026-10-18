@@ -13,7 +13,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Bind the original CharacterBody and HealthComponent visual references from
 // their exact shipped initializer field/path pairs. Handles stay session-owned.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  OriginalBodyVisualSession originalBodyVisualSession;
  OriginalBodyVisualSession GetOriginalBodyVisualSession(){if(originalBodyVisualSession==null)originalBodyVisualSession=new OriginalBodyVisualSession(this);return originalBodyVisualSession;}
  IEnumerator PrepareOriginalBodyVisualReferences(){return GetOriginalBodyVisualSession().PrepareOriginalBodyVisualReferences();}
@@ -22,10 +22,10 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner after Dispose so partial setup, repeated cleanup and cleanup
  // without setup keep the original slot, handle and report behavior.
  sealed class OriginalBodyVisualSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<FieldInfo,GameObject> priorOriginalVisualSlots=new Dictionary<FieldInfo,GameObject>();
   readonly List<AsyncOperationHandle<GameObject>> ownedOriginalVisualHandles=new List<AsyncOperationHandle<GameObject>>();
-  public OriginalBodyVisualSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public OriginalBodyVisualSession(PortSession coordinator){this.coordinator=coordinator;}
   public IEnumerator PrepareOriginalBodyVisualReferences(){
    var descriptor=JObject.Parse(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);
    var input=(string)descriptor["input_id"];

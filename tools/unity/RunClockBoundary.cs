@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Schedules unchanged original clock callbacks on the owned inactive Run, without its startup.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class RunClockReport {
   public bool catalogReady,originalCallbacks,stopwatchRunning,cleaned,asyncAssetsReleased;public string scene,error,scope;public int sceneIndex,sceneDefs,convertedDestinations,selectedDifficulty,fixedTicks,frameTicks,asyncAssetTicks,endRunEffectLoansReturned;public float beganFixed,beganStopwatch,fixedTime,frameTime,stampTime,stopwatch,difficulty,compensatedDifficulty,ambient;public bool paused;
  }
@@ -31,12 +31,12 @@ public sealed partial class MovementBatchProbe {
  // Create on first use, including Unity ticks before setup. Retain after Dispose:
  // final async release runs later, after actor and original Run teardown.
  sealed class RunClockSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   Action<SceneExitController> ownedStageAsyncRelease,nativeStageAsyncRelease;
   Action ownedRunFixed,ownedRunFrame,ownedAsyncAssetFrame;bool ownsRunAsyncLifecycle;Run clockRun;SceneDef[] priorContentScenes;SceneDef clockSceneDef;
   readonly Dictionary<FieldInfo,object> clockSceneFields=new Dictionary<FieldInfo,object>();IDictionary clockSceneMap;ResourceAvailability priorSceneAvailability;
   FieldInfo clockFixedStamp,clockFrameStamp;object priorClockFixedStamp,priorClockFrameStamp;bool ownsRunSceneCatalog;
-  public RunClockSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public RunClockSession(PortSession coordinator){this.coordinator=coordinator;}
   public IEnumerator PrepareRunSceneContext(SessionConfig cfg){
    coordinator.Check(SceneCatalog.sceneDefCount==0&&SceneCatalog.allStageSceneDefs.Length==0&&!SceneCatalog.mostRecentSceneDef,"Existing scene catalog; refuse replacement");
    coordinator.r.runClock=new RunClockReport{scope="Original source stage metadata and Run Update/FixedUpdate on an inactive owned Run; converted geometry subset only, no full Run startup/menu/profile/stage progression"};coordinator.r.phase="run-scene-catalog";coordinator.Save();

@@ -9,7 +9,7 @@ using UnityEngine;
 
 // Owned Android application flow around the original composed simulation.
 // This screen is not the stock menu and creates no platform user or stock profile.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  // Shared with survivor/loadout UI, recovered HUD, settings and session restart.
  bool offlineStartVisible,offlineStartSelected,returnToOfflineMenu;
  Vector2 offlineRosterScroll;
@@ -37,12 +37,12 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for menu input, focus/pause callbacks and result/restart
  // queries. Menu cleanup stays in the iterator; Dispose does not reset flow state.
  sealed class OfflineApplicationSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   bool offlineSurvivorStickLatched,offlineDifficultyStickLatched;
   string pendingOfflineSurvivor="Commando";
   NovaInputBridge.Mapping offlineMenuMapping;
   NovaInputBridge.ControllerPresence offlineUiPresence;
-  public OfflineApplicationSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public OfflineApplicationSession(PortSession coordinator){this.coordinator=coordinator;}
   public DifficultyIndex SelectedOfflineDifficulty(){coordinator.Check(coordinator.offlineDifficulty>=DifficultyIndex.Easy&&coordinator.offlineDifficulty<=DifficultyIndex.Hard,"Unsupported original offline difficulty");return coordinator.offlineDifficulty;}
   public string OfflineDifficultyName(){switch(SelectedOfflineDifficulty()){case DifficultyIndex.Easy:return "Drizzle";case DifficultyIndex.Normal:return "Rainstorm";default:return "Monsoon";}}
   public void CycleOfflineDifficulty(int direction=1){coordinator.offlineDifficulty=direction<0?(coordinator.offlineDifficulty==DifficultyIndex.Easy?DifficultyIndex.Hard:coordinator.offlineDifficulty-1):(coordinator.offlineDifficulty==DifficultyIndex.Hard?DifficultyIndex.Easy:coordinator.offlineDifficulty+1);if(coordinator.offlineSettings!=null){coordinator.offlineSettings.values.offlineDifficulty=(int)coordinator.offlineDifficulty;coordinator.offlineSettings.Save();}if(coordinator.r.hud!=null)coordinator.r.hud.menuDifficulty=coordinator.offlineDifficulty.ToString();coordinator.Save();}

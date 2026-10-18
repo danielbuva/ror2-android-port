@@ -8,7 +8,7 @@ using UnityEngine;
 
 // The menu edits only choices the original prefab exposes and the verified
 // Android profile has earned. The native Loadout remains the serialization owner.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  Loadout offlinePendingLoadout;
  bool offlineLoadoutEdited,offlineLoadoutVisible;
  void ResetOfflineLoadoutSelection(){offlinePendingLoadout=AndroidOfflineProfile.PreviewLoadout(System.IO.Path.Combine(Application.persistentDataPath,"android-profile-v1"));offlineLoadoutEdited=false;}

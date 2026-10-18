@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 
 // Original equipment factories, flight providers and vehicle simulation remain unchanged.
 // Own only Android presentation, observed objects and the explicit developer selection.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class FlightEquipmentObservation {
   public string source;public uint netId;public int samples,flightProviderPeak,antiGravityPeak;
   public float seconds,maxSpeed,maxRise,maxVehicleSpeed;public bool passengerObserved,naturallyDestroyed;
@@ -33,7 +33,7 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Dispose preserves flight teardown; verification stays separate.
  sealed class WorldFlightEquipmentSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<GameObject,FlightEquipmentObservation> worldFlightObjects=new Dictionary<GameObject,FlightEquipmentObservation>();
   readonly Dictionary<JetpackController,CharacterMaster> worldFlightDeathOwners=new Dictionary<JetpackController,CharacterMaster>();
   float worldFlightDiscoveryNext;
@@ -43,7 +43,7 @@ public sealed partial class MovementBatchProbe {
   int developerEquipmentCursor;
   float developerEquipmentChangedAt,developerEquipmentNextAt=4;
   bool developerEquipmentValidated;
-  public WorldFlightEquipmentSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldFlightEquipmentSession(PortSession coordinator){this.coordinator=coordinator;}
   public void PrepareFlightEquipmentSource(GameObject source,List<GameObject> effects){
    coordinator.Check(source.GetComponent<NetworkIdentity>(),"Original flight equipment network identity absent");
    if(source.name=="JetpackController")coordinator.Check(source.GetComponent<JetpackController>()&&source.GetComponent<NetworkedBodyAttachment>(),"Original flight attachment/controller absent");

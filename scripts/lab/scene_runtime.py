@@ -1368,9 +1368,11 @@ def movement_batch_prepare(kinematic=False, integrated=False, cases=None):
             "PrimaryFireBoundary",
         ]:
             shutil.copy2(ROOT / "tools/unity" / (helper + ".cs"), stage / (helper + ".cs"))
-    probe = "KinematicBatchProbe" if kinematic else "MovementBatchProbe"
-    write(stage / ("Resources/" + probe + ".json"), {"attempt": out.name})
-    shutil.copy2(ROOT / "tools/unity" / (probe + ".cs"), stage / (probe + ".cs"))
+    source = "KinematicBatchProbe" if kinematic else "PortSession"
+    # MovementBatchProbe is the unchanged resource/file name.
+    resource = "KinematicBatchProbe" if kinematic else "MovementBatchProbe"
+    write(stage / ("Resources/" + resource + ".json"), {"attempt": out.name})
+    shutil.copy2(ROOT / "tools/unity" / (source + ".cs"), stage / (source + ".cs"))
     r.update(
         {
             "attempt": out.name,

@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Actual local HLAPI client and original authority callbacks, with no platform/user session.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ActiveClientReport {
   public bool grounded,serializers,ready,bodyMapped,masterMapped,localAuthority,ownerMatched,effectiveAuthority,skillsAuthority,removed,cleaned,clientSceneCleaned;
   public bool masterAuthorityBefore,masterLocalPlayerAuthority,masterLocalAuthority,masterOwnerMatched,masterAuthorityRemoved;
@@ -30,9 +30,9 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain across cleanup. Dispose removes authority and
  // stops the client only; scene cleanup stays after the coordinator's server shutdown.
  sealed class ActiveClientSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   NetworkIdentity activeOwnedBody,activeOwnedMaster;bool ownsActiveClientScene;
-  public ActiveClientSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public ActiveClientSession(PortSession coordinator){this.coordinator=coordinator;}
   public void CheckActiveClientSerializers(){
    coordinator.Check(RoR2.EntitlementManagement.EntitlementCatalog.entitlementDefs.Length==0&&LocalUserManager.readOnlyLocalUsersList.Count==0,"Diagnostic absent-user/catalog scope changed");
    foreach(var identity in NetworkServer.objects.Values.Where(x=>x).ToArray()){

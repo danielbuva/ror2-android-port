@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Supplies source dependencies and schedules the native overheat callback.
 // Boss AI, summoning, tether healing, sun damage and heat decay remain original.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class StageBossContentReport {
   public bool ready,cleaned,cardRestored,heatEmpty;public int ticks,heatTargetsPeak,heatStacksPeak,suns,tethers,minions;
   public List<string> unavailableBossRewardItems=new List<string>();
@@ -38,13 +38,13 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Dispose preserves instance cleanup before card/lease restoration.
  sealed class StageBossContentSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   Action stageHeatFixed;object stageHeatEntries;PropertyInfo stageHeatCount,stageHeatItem;
   AsyncOperationHandle<SpawnCard> stageMiniCardLease;SpawnCard stageMiniCard;GameObject priorStageMiniPrefab;
   readonly HashSet<CharacterBody> stageHeatOwners=new HashSet<CharacterBody>();
   readonly HashSet<GameObject> stageBossInstances=new HashSet<GameObject>();
   readonly HashSet<CharacterMaster> stageMiniInstances=new HashSet<CharacterMaster>();
-  public StageBossContentSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public StageBossContentSession(PortSession coordinator){this.coordinator=coordinator;}
   public BuffDef[] StageBossBuffs(SessionConfig cfg){
    if(string.IsNullOrEmpty(cfg.stageOverheatBuffAsset))return new BuffDef[0];
    var buff=coordinator.artifactBundle.LoadAsset<BuffDef>(cfg.stageOverheatBuffAsset);coordinator.Check(buff&&buff.name=="bdOverheat","Original overheat buff missing");coordinator.BindEnemyDefinition(typeof(RoR2Content.Buffs),"Overheat",buff);var armor=coordinator.artifactBundle.LoadAsset<BuffDef>(cfg.stageBossArmorBuffAsset);coordinator.Check(armor&&armor.name=="bdArmorBoost","Original Clay recovery armor buff missing");coordinator.BindEnemyDefinition(typeof(RoR2Content.Buffs),"ArmorBoost",armor);return new[]{buff,armor};

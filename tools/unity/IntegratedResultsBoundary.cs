@@ -15,7 +15,7 @@ using UnityEngine.Profiling;
 using UnityEngine.Networking;
 
 // Original statistics/report generation; owned Android presentation and local run ledger.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class IntegratedResultsReport {
   public bool ready,statsRegistered,serverEnding,clientEnding,reportGenerated,reportReloaded,persisted,cleaned;
   public string scope,error,ending,reportFile,ledgerRecovery,ledgerRecoveryError,ledgerRejectedPrimary,initializationStep;public int players,items,stageClearCount,statFields,priorRuns,itemGroupTypes,itemGroupProviders,itemGroups,itemRelationshipTypes,itemRelationshipProviders,itemRelationshipPairs;
@@ -39,7 +39,7 @@ public sealed partial class MovementBatchProbe {
  // Key-item setup may precede Prepare; retain the owner after Dispose for partial
  // setup, repeated cleanup and later sessions. Static serializer guards stay static.
  sealed class IntegratedResultsSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   SaveSystem previousResultsSaveSystem;bool ownsResultsSaveSystem;
   static string resultsStatsSignature;static bool resultsSerializersReady;
   readonly Dictionary<FieldInfo,object> resultsEventContext=new Dictionary<FieldInfo,object>();
@@ -51,7 +51,7 @@ public sealed partial class MovementBatchProbe {
   KeyItemDef[] priorResultsKeyItems;string[] priorResultsKeyItemNames;bool ownsResultsKeyItems;
   bool ownsResultsItemGroups;
   bool ownsResultsItemRelationships;ItemRelationshipType[] priorResultsRelationshipTypes;ItemRelationshipProvider[] priorResultsRelationshipProviders;
-  public IntegratedResultsSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public IntegratedResultsSession(PortSession coordinator){this.coordinator=coordinator;}
   public void PrepareResultsKeyItems(){
    if(!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;
    if(ownsResultsKeyItems){coordinator.Check(KeyItemCatalog.keyItemCount==WholeCatalogComposed.KeyItemDefinitions().Length,"Owned key-item catalog changed");return;}

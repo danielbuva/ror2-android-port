@@ -32,7 +32,7 @@ synced content payload comes out. Everything game-derived stays under the ignore
 Steps 6–9a are the `./dev prototype --action whole-catalog-*` actions listed in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands).
 `whole-catalog-run` installs, syncs and launches, but it pushes `whole-catalog-selection.json`,
-which makes `MovementBatchProbe.Start` exit: it checks catalog registration
+which makes `PortSession.Start` exit: it checks catalog registration
 (`whole-catalog-result.json`), not gameplay. Gameplay is launched by a runner that pushes an
 attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
@@ -52,18 +52,19 @@ Pointer chain for the latest evidence: `experiments/whole-catalog/latest.json` �
 
 ## Android runtime
 
-The shipped game runs inside the lab harness `MovementBatchProbe`
-(`tools/unity/MovementBatchProbe.cs`, 70 `partial` files). The runtime configuration is the
-untracked `Resources/MovementBatchProbe.json` in the generated project, parsed as the
+The shipped game runs inside the lab harness `PortSession`
+(`tools/unity/PortSession.cs`, 70 `partial` files). The runtime configuration is the
+untracked `Resources/MovementBatchProbe.json` (unchanged resource/file name) in the
+generated project, parsed as the
 184-field `SessionConfig`. `SessionReport` is the report written back as `movement-batch-*.json`
 (and the `movement-batch-selection.json` override); config values the report shows are
 copied into it explicitly (J517).
 
 Start-up, in order:
 
-1. `Init` (`MovementBatchProbe.cs:83`, `RuntimeInitializeOnLoad` after scene load): if the
+1. `Init` (`PortSession.cs:84`, `RuntimeInitializeOnLoad` after scene load): if the
    `MovementBatchProbe` resource exists, create the harness object.
-2. `Start` (`:84`): exits if `whole-catalog-selection.json` exists in persistent data (the
+2. `Start` (`:85`): exits if `whole-catalog-selection.json` exists in persistent data (the
    separate catalog bootstrap owns that run), then **waits 8 s**.
 3. Read the config. Without a `movement-batch-selection.json` override and with
    `launchPlayableSlice` set, wait for an attempt-bound `nova-input-mapping.json` in
@@ -95,11 +96,11 @@ Teardown, in order, after `RunSelectedProbe` returns or throws:
    `Save()` phase `complete` → `RestartWorldAfterCleanup`.
 
 The enemy, world, model, teleport-material and barrier steps run through `RunGuarded`
-(`MovementBatchProbe.cs`), which records the failure and moves on. The reward,
+(`PortSession.cs`), which records the failure and moves on. The reward,
 death-effect, geometry and reclaim steps, and the synchronous cleanup calls outside the
 `CleanupBodyCatalog` `try`, have no wrapper: an exception there stops the remaining
 release steps. `Start` itself has no
-enclosing `finally`, and `MovementBatchProbe` has no `OnDestroy` or `OnApplicationQuit`:
+enclosing `finally`, and `PortSession` has no `OnDestroy` or `OnApplicationQuit`:
 an error during catalog preparation or the menu, or the app being killed, skips the
 post-run release sequence. Per-boundary teardown inside the session (the 17-step call
 order and each `finally`) is in
@@ -110,7 +111,7 @@ order and each `finally`) is in
 Each staged runtime file starts with a two-line header naming its subsystem, whether it is
 on the game path, and its setup and teardown methods (J516).
 
-Most `*Boundary.cs` files are `partial class MovementBatchProbe`: their state is fields on
+Most `*Boundary.cs` files are `partial class PortSession`: their state is fields on
 the coordinator, not a separate owner. Only the types marked **own type** keep their own
 state. Host tests are in `tests/`; editor fixtures (`tools/catalog/*Host.cs`) run in the
 exact editor. There is no per-subsystem device check yet: catalog registration is checked
@@ -119,7 +120,7 @@ report, read against the journal entry that defines what it must show.
 
 | Subsystem | Main files (`tools/unity/`) | State | Setup → teardown | Host test / editor fixture |
 | --- | --- | --- | --- | --- |
-| Session and entry | `MovementBatchProbe`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) **own types** hold their files' private state | `Start` → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
+| Session and entry | `PortSession`, `OfflineApplicationBoundary`, `SessionResourceBoundary`, `ActiveClientBoundary`, `OfflineRunSeedBoundary`, `SurvivorSelectionBoundary` | nested `OfflineRunSeedSession` (`IDisposable`) **own type** holds the cached seed, session id and source; nested `ActiveClientSession` (`IDisposable`) **own type** holds the owned body/master authority identities and client-scene ownership flag; `activeBodyClient`, `activeBodyOwner`, remaining state and `SessionReport r` (including `r.activeClient` and `r.rewards.seedSource`) stay on the coordinator; nested `OfflineApplicationSession` (`IDisposable`) **own types** hold their files' private state | `Start` → `AwaitOfflineRunStart` → `RunSelectedProbe`; `ConnectActiveBodyClient` → `CleanupActiveBodyClient` (calls `Dispose`: remove master then body authority, disconnect then shut down client) → coordinator server shutdown → `FinishActiveClientSceneCleanup`; active-client owner created on first use and retained after cleanup; `CollectPriorSessionGarbage` → `ReclaimCompletedSessionResources`; `SelectOwnedRunSeed` calls session `SelectOwnedRunSeed` (owner created on first use and retained; session id controls refresh; `Dispose` is a no-op with no teardown call) | `AndroidLifecycleHost.cs` |
 | Catalog and resources | `BodyCatalogBoundary`, `WholeCatalogComposed`, `WholeCatalogLoader`, `SpawnStateBoundary`, `OriginalBodyVisualBoundary`, `OriginalGlobalCommonAssetsBoundary`, `TeleportMaterialBoundary`, `BarrierEffectBoundary` | `WholeCatalogComposed` **own type** (static); nested `TeleportMaterialSession` and `BarrierEffectSession` (`IDisposable`) **own types** hold the teleport material (locator, async handle, material, overlays) and the barrier effect (constants, locator, async handle, prefab, effect-slot snapshots, owned material copies); nested `OriginalBodyVisualSession` and `OriginalGlobalCommonAssetsSession` (`IDisposable`) **own types** each hold their native slot snapshots and async handle lists; nested `SpawnStateSession` (`IDisposable`) **own type** holds native state/preload snapshots and spawn delay/sound restoration; `ownsStateCatalog` stays shared on the coordinator; teleport, `r.barrier*` and `r.world` report fields remain coordinator observations; the rest coordinator fields; nested `BodyCatalogSession` (`IDisposable`) **own types** hold their files' private state | `RegisterBodyCatalog` (calls `WholeCatalogComposed.Prepare`) → `CleanupBodyCatalog` (calls `Release`); `PrepareBarrierEffect` → `ObserveBarrierEffect` / `ProbeBarrierEffectLifecycle` → `CleanupBarrierEffect` (awaited coroutine, preserving Start's setup and release order; `Dispose` is a no-op because release requires the coroutine's frame yields); `PrepareOriginalBodyVisualReferences` → `PrepareOriginalGlobalCommonAssets` → `CleanupOriginalGlobalCommonAssets` → `CleanupOriginalBodyVisualReferences` (each cleanup calls its owner's `Dispose`: restore slots, clear snapshots, release handles, clear handles, mark the coordinator report); `PrepareSpawnStateCatalog` forwards to `SpawnStateSession` without changing catalog/config/preload construction order; later `CleanupSpawnConfig` calls `Dispose` (objective, enemy and spine config cleanup, then spawn delay/sound restoration, then `RestoreWholeStateOwnership`); owners created on first use and retained after cleanup | `test_whole_catalog.py`, `test_composed_support.py`, `test_body_visual_map.py`, `test_common_assets_map.py`, `test_stage_variant_graph_roots.py`; `WholeCatalogHost.cs` |
 | Input and camera | `NovaInputBoundary`, `NovaInputBridge`, `NovaThirdPersonView`, `AndroidPresentationCamera`, `NovaDiagnosticDisplay` | nested `NovaInputSession` (`IDisposable`) **own type** holds trace cursors and the input iterators with local mapping, landing, camera and loop state; `NovaThirdPersonView` keeps its own camera/orbit state; `worldView` and `worldEquipmentBridge` stay shared on the coordinator; `NovaInputBridge`, `AndroidPresentationCamera` and `NovaDiagnosticDisplay` remain **own types**; reports remain coordinator observations | `NovaRawBoundary` / `NovaInputBoundary` forward to the session; input teardown stays in its iterator `finally` in the same order; `NovaInputBridge.OnDisable` neutralises input; owner created on first use and retained after its no-op `Dispose` so final `Save` can flush traces | `test_nova_input_presence.py`, `test_nova_bridge_evidence.py`, `test_input_migration.py` |
 | Settings | `AndroidOfflineSettings`, `OfflineSettingsBoundary` | `AndroidOfflineSettings` **own type**, kept across sessions; nested `OfflineSettingsSession` (`IDisposable`) **own type** holds the saved pause time scale; store reference, visibility and pause flags stay on the coordinator for menu/Nova input | `PrepareOfflineSettings` (calls `OfflineSettingsSession.Prepare`) → `CleanupOfflineSettingsPause` (calls `Dispose`, releases an owned pause only) | — |
@@ -182,7 +183,7 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    still chosen by a string id, but the playable spine now has its own `GameSession()` entry
    (J513); the 116 historical experiment cases live in `LabExperiments.cs`.
 2. **One class holds everything.** 70 `tools/unity` files are `partial class
-   MovementBatchProbe`; the config is now its own `SessionConfig` (J517), and the report type is now
+   PortSession`; the config is now its own `SessionConfig` (J517), and the report type is now
    called `SessionReport`. (The 9 copies of the
    `MoveNext` exception wrapper in `Start` are now one `RunGuarded` helper, J511.)
 3. **The recipe is untracked.** The runtime config (369 keys) and the content recipe
@@ -199,12 +200,12 @@ is its own commit with host tests, a zero-error exact-editor build and a device 
    `input_migration.py:90` read fixed timestamped evidence folders (all in historical
    actions).
 6. **Text patches on authored C# — resolved.** The build used to inject code into
-   `BodyCatalogBoundary.cs` and `MovementBatchProbe.Start` by exact-text `.replace()`. The
+   `BodyCatalogBoundary.cs` and `PortSession.Start` by exact-text `.replace()`. The
    patches were dormant and are deleted (J505, J506); the hooks are authored, and host tests
    check them without depending on whitespace. The remaining `.replace()` calls in
    `scripts/lab` remap GUIDs in generated Unity YAML or fill a Python-held editor template.
 7. **Build membership depends on history — resolved for whole-catalog builds.**
-   `recipe/runtime-sources.json` owns the 91 authored C# sources staged at
+   `recipe/runtime-sources.json` owns the 92 authored C# sources staged at
    `Assets/LabLoadingScene`; `build.py` derives `WHOLE_PLAYER_INPUTS` from it without
    probing `work/`. Generated sources remain explicit build-owned exceptions.
    Historical lists in `nova_bridge.py:68` and `scene_runtime.py:584` retain their
@@ -224,15 +225,20 @@ Safe order:
 1. ~~Delete the dormant C# text patches~~ — done (J505, J506). C# formatting is no longer
    blocked by the build.
 2. ~~Split the config out of the report~~ — done (`SessionConfig`, J517); the deferred
-   report rename to `SessionReport` is complete. The harness rename remains step 5.
+   report rename to `SessionReport` is complete. The harness source rename is implemented in step 5.
 3. ~~Give the game a `GameSession` entry point~~ — done (J513); later, have `Start` call it
    directly; keep the old id as
    an alias for `nova_bridge.py`, `scene_runtime.py` and `IsPlayableSpine`.
 4. Extract owners one at a time, least-coupled first, following
    `AndroidProgressionBoundary` (an `IDisposable` with explicit acquire/release and its own
    state).
-5. Rename `MovementBatchProbe` last, keeping `Resources.Load("MovementBatchProbe")` and the
-   on-device file names or aliasing them.
+5. The coordinator source is now `PortSession` (`PortSession.cs`); external resource and
+   on-device file names remain unchanged. Before staging membership validation, move
+   `Assets/LabLoadingScene/MovementBatchProbe.cs` and its `.meta` to `PortSession.cs` and
+   `PortSession.cs.meta` in that same directory, preserving the GUID and leaving no old
+   source or orphan metadata. Then stage authored sources and use a full build: the
+   removed player-input paths invalidate the existing code-only payload reuse receipt.
+   Exact-editor and device verification of this rename remain pending.
 
 Recipe tracking (items 3–5) can proceed in parallel with steps 2–5; it changes the build,
 not the runtime. The single runtime source manifest (item 7) is in place (J509).

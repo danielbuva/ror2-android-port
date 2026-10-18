@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Supplies measured source contexts; original enabled callbacks select, fund and place the NPC.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class DirectorReport {
   public bool automatic,sourceSettings,playerRegistered,originalTarget,preloaded,creditConserved,placement,stopped,cleaned,navigationNext,navigationReachable;public int navigationTicks,navigationAgents,navigationAgentPeak;public float navigationTime,navigationPathUpdate;public string navigationError;
   public int participatingPlayers,livingPlayers,creditSteps,monsterLimit,masterIndex,selectedCardWeight;public float seconds,fixedSeconds,scheduledCreditSeconds,creditPeak,creditAfter,spent,spawnDistance,minDistance,maxDistance;public Vector3 position;
@@ -44,12 +44,12 @@ public sealed partial class MovementBatchProbe {
  // Create on first use, including Unity ticks before setup, and retain after
  // Dispose: director cleanup precedes the separate asset release at its call site.
  sealed class AutomaticDirectorSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   bool directorPlayerRegistered;GameObject[] directorTeamEffects;object priorDirectorEliteTiers;
   readonly Dictionary<FieldInfo,object> directorMasterFields=new Dictionary<FieldInfo,object>();IDictionary directorMasterMap;
   float automaticDirectorFixedBegan;
   Action ownedNavigationTick;BroadNavigationSystem navigationSystem;
-  public AutomaticDirectorSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public AutomaticDirectorSession(PortSession coordinator){this.coordinator=coordinator;}
   public GameObject SourceStageDirectorRoot(bool holdSlow){
    var roots=coordinator.stageGeometryScene.GetRootGameObjects().Where(root=>root.name=="Director").ToArray();
    coordinator.Check(coordinator.stageSourceObjects&&roots.Length==1&&!roots[0].activeSelf,"Original source Director root unavailable");

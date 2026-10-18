@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Required source content for native item procs; no proc/damage/ward algorithms here.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ProcContentReport {public bool ready,cleaned;public int buffs,supportSources,warbannerWards,warbannerBuffEffects,deskPlants,deskplantWards,healNovaGenerators,healNovaPulses;public string scope="Original item/proc content and owned dependency bindings; registration is not individual proc acceptance.";}
  [Serializable] public class HealingWardObservation {public string shrine;public uint netId;public int purchases;public float radius,interval,healFraction,healPoints;public bool playerTeam,parentMatched,teardownRequested;}
  WorldProcContentSession worldProcContentSession;
@@ -25,9 +25,9 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for partial setup, repeated cleanup and later observations.
  // Commerce ward teardown stays separate from Dispose's proc cleanup dispatch.
  sealed class WorldProcContentSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<GameObject,HealingWardObservation> commerceHealingWards=new Dictionary<GameObject,HealingWardObservation>();
-  public WorldProcContentSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldProcContentSession(PortSession coordinator){this.coordinator=coordinator;}
   public BuffDef[] WorldProcBuffs(SessionConfig cfg){
    if(cfg.worldProcBuffAssets==null||cfg.worldProcBuffAssets.Length==0)return new BuffDef[0];
    var names=new[]{"DeathMark","PulverizeBuildup","Pulverized"};if(cfg.worldAdditionalLootItems!=null&&cfg.worldAdditionalLootItems.Contains("WardOnLevel"))names=names.Concat(new[]{"Warbanner"}).ToArray();coordinator.Check(cfg.worldProcBuffAssets.Length==names.Length,"Original proc buff closure differs");

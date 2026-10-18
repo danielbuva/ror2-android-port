@@ -8,7 +8,7 @@ using RoR2;
 using UnityEngine;
 
 // Schedule the original fixed-time queue while the composed app keeps startup inactive.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  bool ownsMoonTimers;TimerQueue moonTimerQueue;FieldInfo moonTimerCount,moonTimerArray;
  void PrepareMoonTimers(){
   Check(!ownsMoonTimers&&FindObjectsOfType<RoR2Application>().Length==0,"Original application already schedules its timers");

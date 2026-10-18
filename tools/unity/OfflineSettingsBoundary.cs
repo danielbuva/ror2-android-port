@@ -7,7 +7,7 @@ using RoR2;
 using UnityEngine;
 
 // Owned Android settings/pause screen around the composed local session.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class OfflineSettingsReport {public bool ready,visible,paused,persisted,canEndRun,sessionAbandoned;public string recovery,error;public float deadzone,lookSensitivity,buttonX,buttonY,endRunButtonX,endRunButtonY,timeScale,runSeconds;public int fixedTicks,observations;public bool invertY;public int saves,pauses,resumes,controllerOpens,controllerCloses,controllerSaves;}
  // Shared with menu difficulty, results input and Nova input, respectively.
  AndroidOfflineSettings offlineSettings;bool offlineSettingsVisible,offlineSettingsPaused;
@@ -21,9 +21,9 @@ public sealed partial class MovementBatchProbe {
  // Nested so the owner can use the coordinator's shared state and report without
  // widening their visibility. It retains the same lifetime as the settings store.
  sealed class OfflineSettingsSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   float offlineSettingsTimeScale;
-  public OfflineSettingsSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public OfflineSettingsSession(PortSession coordinator){this.coordinator=coordinator;}
   public void Prepare(){
    if(coordinator.offlineSettings!=null)return;
    coordinator.offlineSettings=new AndroidOfflineSettings(Path.Combine(Application.persistentDataPath,"offline-settings-v1"));AndroidOfflineSettings.current=coordinator.offlineSettings.values;coordinator.offlineDifficulty=(DifficultyIndex)coordinator.offlineSettings.values.offlineDifficulty;coordinator.r.settings=new OfflineSettingsReport{ready=true,recovery=coordinator.offlineSettings.recovery};Observe();

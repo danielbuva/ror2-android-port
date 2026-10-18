@@ -13,7 +13,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Configures/observes an owned source prefab; all query, interaction, state and reward code is original.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class BarrelReport {
   public bool diagnosticRendererCopy,sourceReady,queryMatched,serverDispatched,opening,opened,repeatRejected,cleaned;
   public int sourceGold,goldExpected,interactions,stateIndex,renderers,colliders,pendingAwards,coinReferencesBefore,coinReferencesAfter;public uint sourceExperience,experienceExpected,moneyBefore,moneyAfter,netId;

@@ -9,7 +9,7 @@ using UnityEngine;
 
 // Ordinary selection follows the original survivor contract and the owned
 // Android profile. Developer-only selections remain assisted.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class SourceAnimationEventReport {public string model;public float seconds;public bool componentEnabled,modelActive,characterBodyMatched,locatorPresent,cachedLocator,cachedBody;public bool[] airstrikeMuzzles;}
  float nextSourceAnimationObservation;
  GameObject selectedBodyStaging;

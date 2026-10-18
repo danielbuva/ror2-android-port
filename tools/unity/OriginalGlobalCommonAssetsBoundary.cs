@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 // Retain the shipped GlobalEventManager's common proc dependencies while the
 // Android session owns its imported catalog. The source initializer is the
 // field/path/type authority; generated rows are tied to the accepted input.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  OriginalGlobalCommonAssetsSession originalGlobalCommonAssetsSession;
  OriginalGlobalCommonAssetsSession GetOriginalGlobalCommonAssetsSession(){if(originalGlobalCommonAssetsSession==null)originalGlobalCommonAssetsSession=new OriginalGlobalCommonAssetsSession(this);return originalGlobalCommonAssetsSession;}
  IEnumerator PrepareOriginalGlobalCommonAssets(){return GetOriginalGlobalCommonAssetsSession().PrepareOriginalGlobalCommonAssets();}
@@ -23,10 +23,10 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner after Dispose so partial setup, repeated cleanup and cleanup
  // without setup keep the original slot, handle and report behavior.
  sealed class OriginalGlobalCommonAssetsSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<FieldInfo,object> priorGlobalCommonAssets=new Dictionary<FieldInfo,object>();
   readonly List<AsyncOperationHandle> ownedGlobalCommonHandles=new List<AsyncOperationHandle>();
-  public OriginalGlobalCommonAssetsSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public OriginalGlobalCommonAssetsSession(PortSession coordinator){this.coordinator=coordinator;}
   public IEnumerator PrepareOriginalGlobalCommonAssets(){
    var descriptor=JObject.Parse(Resources.Load<TextAsset>("WholeCatalogBootstrap").text);
    coordinator.Check(OriginalGlobalCommonAssetMap.InputId==(string)descriptor["input_id"],"Original global common assets belong to another input");

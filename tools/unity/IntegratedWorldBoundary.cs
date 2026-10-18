@@ -19,7 +19,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Persistent local gameplay composition. Original simulation, purchases, loot and rewards
 // remain in the preserved assemblies. The shell supplies content/context and unavailable audio UI.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class WorldPickupObservation {public string item,interactability;public Vector3 position,aimTarget;public float aimDistance;public bool selected,collider,interactableLayer;}
  [Serializable] public class WorldPickupMessageObservation {public float at;public bool resolvedMaster,playerMaster,knownPickup;public uint masterId,quantity;public int pickupIndex;public string item;}
  [Serializable] public class WorldItemObservation {public string item,tier;public int count;}
@@ -134,8 +134,8 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain after Dispose. World teardown stays separate
  // from catalog release, deferred verification and the coordinator restart.
  sealed class IntegratedWorldSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
-  public IntegratedWorldSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  readonly PortSession coordinator;
+  public IntegratedWorldSession(PortSession coordinator){this.coordinator=coordinator;}
   float nextWorldPickupSnapshot;
   string worldPickupRegistryStage;
   bool worldPickupRegistryFallback;
@@ -346,7 +346,7 @@ public sealed partial class MovementBatchProbe {
    foreach(var pair in coordinator.worldNativeLootLeaseBaselines){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(coordinator.objectiveSupportLeases[pair.Key])-pair.Value;coordinator.Check(extra>=0,"Original native loot provider ownership changed");for(int i=0;i<extra;i++)Addressables.Release(coordinator.objectiveSupportSources[pair.Key]);}coordinator.worldNativeLootLeaseBaselines.Clear();coordinator.worldNativeLootObjects.Clear();worldWispEffectEligible=false;if(coordinator.r.world!=null)coordinator.r.world.nativeLootProvidersCleaned=true;
    if(worldFeatherJumped!=null){if(!ReferenceEquals(coordinator.worldPlayer,null))coordinator.worldPlayer.onJump-=worldFeatherJumped;worldFeatherJumped=null;}
    if(worldFeatherEffectIndex>=0){for(int i=0;i<coordinator.r.world.featherEffectLoads;i++)Addressables.Release(coordinator.objectiveSupportSources[worldFeatherEffectIndex]);worldFeatherEffectIndex=-1;coordinator.r.world.featherEffectCleaned=true;}
-   foreach(var effect in coordinator.worldLootTemporaryEffects)if(effect)MovementBatchProbe.Destroy(effect);
+   foreach(var effect in coordinator.worldLootTemporaryEffects)if(effect)PortSession.Destroy(effect);
    foreach(var pair in coordinator.worldLootEffectSlots)pair.Key.SetValue(null,pair.Value);coordinator.worldLootEffectSlots.Clear();
    foreach(var pair in coordinator.worldLootSourceMaterials)if(pair.Key)pair.Key.sharedMaterials=pair.Value;coordinator.worldLootSourceMaterials.Clear();
    foreach(var pair in coordinator.worldLootSourceLayers)if(pair.Key)pair.Key.layer=pair.Value;coordinator.worldLootSourceLayers.Clear();
@@ -354,7 +354,7 @@ public sealed partial class MovementBatchProbe {
   }
   public IEnumerator PrepareIntegratedWorld(CharacterBody player,SessionConfig cfg){
    worldFeatherInputAt=-1;
-   coordinator.Check(((Dictionary<GameObject,EffectPool>)MovementBatchProbe.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null)).Count==0,"Unowned effect pools before integrated world");coordinator.ownsIntegratedPools=true;
+   coordinator.Check(((Dictionary<GameObject,EffectPool>)PortSession.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null)).Count==0,"Unowned effect pools before integrated world");coordinator.ownsIntegratedPools=true;
    coordinator.r.world=new WorldReport{scope="Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",feedbackCapability="Authored pickup HUD; original native-audio notification handler unavailable."};
    coordinator.worldPlayer=player;PrepareEarlyHurtCaches(player);PrepareUnavailableWorldPresentation(player);coordinator.r.phase="integrated-world-client";coordinator.Save();
    var connect=coordinator.ConnectActiveBodyClient(player);while(connect.MoveNext())yield return connect.Current;
@@ -373,10 +373,10 @@ public sealed partial class MovementBatchProbe {
    coordinator.Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Unowned integrated misc catalog");
    worldLunarCoin=coordinator.artifactBundle.LoadAsset<LunarCoinDef>(cfg.worldLunarCoinAsset);
    coordinator.Check(worldLunarCoin&&worldLunarCoin.name=="LunarCoin"&&worldLunarCoin.coinValue==1&&(worldLunarCoin.displayPrefab||worldLunarCoin.pickupModelReference!=null&&worldLunarCoin.pickupModelReference.RuntimeKeyIsValid())&&worldLunarCoin.dropletDisplayPrefab,"Original lunar coin definition/display missing");
-   previousWorldMiscContent=RoR2.ContentManagement.ContentManager._miscPickupDefs;previousWorldMiscCatalog=MovementBatchProbe.RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").GetValue(null);previousWorldMiscAvailability=MiscPickupCatalog.availability;ownsWorldMisc=true;
+   previousWorldMiscContent=RoR2.ContentManagement.ContentManager._miscPickupDefs;previousWorldMiscCatalog=PortSession.RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").GetValue(null);previousWorldMiscAvailability=MiscPickupCatalog.availability;ownsWorldMisc=true;
    var miscDefinitions=coordinator.r.liveCatalogs!=null?WholeCatalogComposed.DefinitionFamily<MiscPickupDef>(new[]{worldLunarCoin}):new MiscPickupDef[]{worldLunarCoin};
    if(coordinator.r.liveCatalogs!=null)foreach(var def in miscDefinitions)priorWholeMiscIndices.Add(def,def.miscPickupIndex);
-   RoR2.ContentManagement.ContentManager._miscPickupDefs=miscDefinitions;if(coordinator.r.liveCatalogs==null)RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;MovementBatchProbe.StaticCall(typeof(MiscPickupCatalog),"Init");
+   RoR2.ContentManagement.ContentManager._miscPickupDefs=miscDefinitions;if(coordinator.r.liveCatalogs==null)RoR2Content.MiscPickups.LunarCoin=worldLunarCoin;PortSession.StaticCall(typeof(MiscPickupCatalog),"Init");
    if(coordinator.r.liveCatalogs!=null)WholeCatalogComposed.PopulateDefinitionFields("MiscPickups",miscDefinitions);
    var lunarPickup=worldLunarCoin.CreatePickupDef();
    var moonEquipmentPickups=cfg.moonMission?new[]{RoR2Content.Equipment.AffixLunar.CreatePickupDef()}:new PickupDef[0];
@@ -412,17 +412,17 @@ public sealed partial class MovementBatchProbe {
    coordinator.r.world.lootTier1=Run.instance.availableTier1DropList.Count;coordinator.r.world.lootTier2=Run.instance.availableTier2DropList.Count;coordinator.r.world.lootTier3=Run.instance.availableTier3DropList.Count;
    coordinator.Check(coordinator.r.world.lootTier1+coordinator.r.world.lootTier2+coordinator.r.world.lootTier3==coordinator.worldLootDefinitions.Length,"Original composed drop lists differ from eligible item domain");
    coordinator.moneyCatalogField=typeof(CostTypeCatalog).GetField("costTypeDefs",flags);coordinator.priorMoneyCatalog=coordinator.moneyCatalogField.GetValue(null);
-   coordinator.Check((coordinator.priorMoneyCatalog==null||((Array)coordinator.priorMoneyCatalog).Length==0)&&!coordinator.ownsMoneyCatalog,"Unowned integrated cost catalog");coordinator.ownsMoneyCatalog=true;MovementBatchProbe.StaticCall(typeof(CostTypeCatalog),"Init");
+   coordinator.Check((coordinator.priorMoneyCatalog==null||((Array)coordinator.priorMoneyCatalog).Length==0)&&!coordinator.ownsMoneyCatalog,"Unowned integrated cost catalog");coordinator.ownsMoneyCatalog=true;PortSession.StaticCall(typeof(CostTypeCatalog),"Init");
    coordinator.Check(CostTypeCatalog.costTypeCount==(int)CostTypeIndex.Count&&CostTypeCatalog.GetCostTypeDef(CostTypeIndex.Money).name=="Money","Original integrated cost catalog initialization differs");
    var generic=coordinator.PrepareOriginalDefaultPickup(cfg);while(generic.MoveNext())yield return generic.Current;
    coordinator.r.phase="integrated-world-loot";coordinator.Save();
-   worldDropletField=MovementBatchProbe.RewardField(typeof(PickupDropletController),"pickupDropletPrefab");priorWorldDroplet=worldDropletField.GetValue(null);
+   worldDropletField=PortSession.RewardField(typeof(PickupDropletController),"pickupDropletPrefab");priorWorldDroplet=worldDropletField.GetValue(null);
    coordinator.Check(priorWorldDroplet==null,"Unowned integrated droplet source");
    var bundle=new ResourceLocationBase("pickup-droplet-lab",System.IO.Path.Combine(Application.persistentDataPath,"payload","pickup-droplet-lab"),typeof(AssetBundleProvider).FullName,typeof(IAssetBundleResource));
    bundle.Data=new AssetBundleRequestOptions{BundleName="pickup-droplet-lab"};
    worldDropletLocator=new ResourceLocationMap("integrated-world-droplet");
    worldDropletLocator.Add(cfg.pickupDropletKey,new ResourceLocationBase(cfg.pickupDropletKey,cfg.pickupDropletAsset,typeof(BundledAssetProvider).FullName,typeof(GameObject),bundle));Addressables.AddResourceLocator(worldDropletLocator);
-   MovementBatchProbe.StaticCall(typeof(PickupDropletController),"Init");float deadline=Time.realtimeSinceStartup+8;
+   PortSession.StaticCall(typeof(PickupDropletController),"Init");float deadline=Time.realtimeSinceStartup+8;
    while(worldDropletField.GetValue(null)==null&&Time.realtimeSinceStartup<deadline)yield return null;
    worldDropletSource=(GameObject)worldDropletField.GetValue(null);ownsWorldDroplet=worldDropletSource;
    coordinator.Check(worldDropletSource&&worldDropletSource.name=="PickupDroplet"&&LegacyResourcesAPI.ActiveCount==0,"Integrated original droplet Init failed");
@@ -435,9 +435,9 @@ public sealed partial class MovementBatchProbe {
    coordinator.worldPause=new GameObject("Offline gameplay pause context");coordinator.worldPause.SetActive(false);coordinator.worldPause.AddComponent<NetworkIdentity>();coordinator.worldPause.AddComponent<PauseStopController>();coordinator.worldPause.SetActive(true);
    yield return null;coordinator.Check(PauseStopController.instance&&!PauseStopController.instance.isPaused,"Integrated unpaused context missing");
    coordinator.worldDriver=player.GetComponent<InteractionDriver>();coordinator.Check(coordinator.worldDriver&&(!coordinator.worldDriver||!coordinator.worldDriver.enabled)&&!coordinator.worldDriver.interactableOverride,"Unowned integrated interaction driver");
-   if(!player.equipmentSlot.characterBody)MovementBatchProbe.Call(player.equipmentSlot,"Start");MovementBatchProbe.Call(player.equipmentSlot,"UpdateInventory");
+   if(!player.equipmentSlot.characterBody)PortSession.Call(player.equipmentSlot,"Start");PortSession.Call(player.equipmentSlot,"UpdateInventory");
    coordinator.Check(player.equipmentSlot.equipmentIndex==EquipmentIndex.None&&!player.equipmentSlot.enabled,"Integrated equipment must start empty/ungranted");coordinator.PrepareWorldEquipment(player,cfg);coordinator.PrepareWorldItemDisplays(player,cfg);
-   if(MovementBatchProbe.DriverField(coordinator.worldDriver,"networkIdentity")==null)MovementBatchProbe.Call(coordinator.worldDriver,"Awake");
+   if(PortSession.DriverField(coordinator.worldDriver,"networkIdentity")==null)PortSession.Call(coordinator.worldDriver,"Awake");
    coordinator.worldStaging=new GameObject("Inactive offline content staging");coordinator.worldStaging.SetActive(false);
    var chestSource=coordinator.artifactBundle.LoadAsset<GameObject>(cfg.chestAsset);coordinator.OwnChestAnimationSources(chestSource.GetComponent<ModelLocator>().modelTransform);
    var origin=player.characterMotor.Motor.TransientPosition;
@@ -450,8 +450,8 @@ public sealed partial class MovementBatchProbe {
    }
    coordinator.r.world.barrels=coordinator.worldBarrels.Count;coordinator.r.world.chests=coordinator.worldChests.Count;coordinator.r.world.lootReady=true;
    worldInteraction=(actor,component,obj)=>{if(actor!=coordinator.worldDriver.interactor)return;if(coordinator.worldObjects.Contains(obj))coordinator.r.world.target=obj.name;};GlobalEventManager.OnInteractionsGlobal+=worldInteraction;
-   coordinator.worldDriver.enabled=true;yield return null;MovementBatchProbe.Call(coordinator.activeBodyClient,"Update");
-   coordinator.r.world.interactionReady=coordinator.worldDriver.enabled&&ReferenceEquals(MovementBatchProbe.DriverField(coordinator.worldDriver,"inputBank"),player.inputBank);
+   coordinator.worldDriver.enabled=true;yield return null;PortSession.Call(coordinator.activeBodyClient,"Update");
+   coordinator.r.world.interactionReady=coordinator.worldDriver.enabled&&ReferenceEquals(PortSession.DriverField(coordinator.worldDriver,"inputBank"),player.inputBank);
    coordinator.r.world.start=origin;coordinator.r.world.ready=coordinator.r.world.authority&&coordinator.r.world.lootReady&&coordinator.r.world.interactionReady&&coordinator.rewardDirector.enabled;
    if(cfg.teleporterLoop){var objective=coordinator.PrepareTeleporterWorld(cfg);while(objective.MoveNext())yield return objective.Current;}
    if(coordinator.r.liveCatalogs!=null){var visuals=coordinator.PrepareOriginalBodyVisualReferences();while(visuals.MoveNext())yield return visuals.Current;var common=coordinator.PrepareOriginalGlobalCommonAssets();while(common.MoveNext())yield return common.Current;}
@@ -479,7 +479,7 @@ public sealed partial class MovementBatchProbe {
    coordinator.Check(listeners==null||!listeners.GetInvocationList().Contains(worldTransmutationRunStart),"Unowned original transmutation callback");
    ownsWorldTransmutation=true;coordinator.r.phase="original-pickup-transmutation";coordinator.Save();
    var init=PickupTransmutationManager.Init();while(init.MoveNext())yield return init.Current;
-   MovementBatchProbe.StaticCall(type,"RebuildAvailablePickupGroups",Run.instance);
+   PortSession.StaticCall(type,"RebuildAvailablePickupGroups",Run.instance);
    var sourceGroups=(PickupIndex[][])groups.GetValue(null);var sourceMap=(PickupIndex[][])groupMap.GetValue(null);
    coordinator.Check(sourceGroups.Length==16&&sourceMap.Length==PickupCatalog.pickupCount,"Original transmutation group shape differs");
    int mapped=0;
@@ -510,7 +510,7 @@ public sealed partial class MovementBatchProbe {
    unavailableAmbientSound=(Action<Run>)Delegate.CreateDelegate(typeof(Action<Run>),type.GetMethod("OnRunAmbientLevelUp",flags));
    unavailableLevelEffect=(Action<CharacterBody>)Delegate.CreateDelegate(typeof(Action<CharacterBody>),type.GetMethod("OnCharacterLevelUp",flags));
    unavailableItemHighlight=(Action<ItemIndex>)Delegate.CreateDelegate(typeof(Action<ItemIndex>),player.master,typeof(CharacterMaster).GetMethod("OnItemAddedClient",BindingFlags.Instance|BindingFlags.NonPublic));
-   var teamListeners=(Delegate)MovementBatchProbe.RewardField(typeof(GlobalEventManager),"onTeamLevelUp").GetValue(null);var ambientListeners=(Delegate)MovementBatchProbe.RewardField(typeof(Run),"onRunAmbientLevelUp").GetValue(null);var effectListeners=(Delegate)MovementBatchProbe.RewardField(typeof(GlobalEventManager),"onCharacterLevelUp").GetValue(null);var highlightListeners=(Delegate)typeof(Inventory).GetField("onItemAddedClient",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic).GetValue(player.inventory);
+   var teamListeners=(Delegate)PortSession.RewardField(typeof(GlobalEventManager),"onTeamLevelUp").GetValue(null);var ambientListeners=(Delegate)PortSession.RewardField(typeof(Run),"onRunAmbientLevelUp").GetValue(null);var effectListeners=(Delegate)PortSession.RewardField(typeof(GlobalEventManager),"onCharacterLevelUp").GetValue(null);var highlightListeners=(Delegate)typeof(Inventory).GetField("onItemAddedClient",BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic).GetValue(player.inventory);
    coordinator.Check(teamListeners!=null&&ambientListeners!=null&&effectListeners!=null&&highlightListeners!=null&&teamListeners.GetInvocationList().Count(x=>x.Equals(unavailableTeamLevelSound))==1&&ambientListeners.GetInvocationList().Count(x=>x.Equals(unavailableAmbientSound))==1&&effectListeners.GetInvocationList().Count(x=>x.Equals(unavailableLevelEffect))==1&&highlightListeners.GetInvocationList().Count(x=>x.Equals(unavailableItemHighlight))==1,"Original optional presentation listener ownership changed");
    GlobalEventManager.onTeamLevelUp-=unavailableTeamLevelSound;Run.onRunAmbientLevelUp-=unavailableAmbientSound;GlobalEventManager.onCharacterLevelUp-=unavailableLevelEffect;
    player.inventory.onItemAddedClient-=unavailableItemHighlight;ownsWorldPresentation=true;
@@ -518,7 +518,7 @@ public sealed partial class MovementBatchProbe {
   }
   public void PrepareWorldMessages(){
    coordinator.Check(!coordinator.activeBodyClient.handlers.ContainsKey(52)&&!coordinator.activeBodyClient.handlers.ContainsKey(55)&&!coordinator.activeBodyClient.handlers.ContainsKey(57)&&!coordinator.activeBodyClient.handlers.ContainsKey(68)&&!NetworkServer.handlers.ContainsKey(68),"Unowned integrated presentation/teleport handlers");
-   worldVfxOption=(RoR2.ConVar.IntConVar)MovementBatchProbe.RewardField(typeof(VFXBudget),"mediumPriorityCostThreshold").GetValue(null);priorWorldVfx=worldVfxOption.GetString();worldVfxOption.AttemptSetString(worldVfxOption.defaultValue);
+   worldVfxOption=(RoR2.ConVar.IntConVar)PortSession.RewardField(typeof(VFXBudget),"mediumPriorityCostThreshold").GetValue(null);priorWorldVfx=worldVfxOption.GetString();worldVfxOption.AttemptSetString(worldVfxOption.defaultValue);
    priorWorldXp=SettingsConVars.cvExpAndMoneyEffects.GetString();SettingsConVars.cvExpAndMoneyEffects.AttemptSetString("0");
    var effects=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(EffectManager).GetMethod("HandleEffectClient",BindingFlags.Static|BindingFlags.NonPublic));
    var xp=(NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate),typeof(ExperienceManager).GetMethod("HandleCreateExpEffect",BindingFlags.Static|BindingFlags.NonPublic));
@@ -633,10 +633,10 @@ public sealed partial class MovementBatchProbe {
   public GameObject CreateWorldInteractable(GameObject source,Vector3 candidate,bool chest,PickupDropTable dropOverride=null){
    RaycastHit hit;if(!Physics.Raycast(candidate+Vector3.up*20,Vector3.down,out hit,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)||hit.normal.y<.9f||Mathf.Abs(hit.point.y-coordinator.worldPlayer.characterMotor.Motor.TransientPosition.y)>2)return null;
    coordinator.Check(source&&source.GetComponentsInChildren<Component>(true).All(x=>x),"Integrated source interactable reference missing");
-   var obj=MovementBatchProbe.Instantiate(source,coordinator.worldStaging.transform);obj.name=source.name;coordinator.worldObjects.Add(obj);
+   var obj=PortSession.Instantiate(source,coordinator.worldStaging.transform);obj.name=source.name;coordinator.worldObjects.Add(obj);
    var allowed=new[]{typeof(NetworkIdentity),typeof(NetworkStateMachine),typeof(EntityStateMachine),typeof(BarrelInteraction),typeof(ChestBehavior),typeof(PurchaseInteraction),typeof(DelusionChestController),typeof(ModelLocator),typeof(EntityLocator),typeof(ChildLocator),typeof(PingInfoProvider),typeof(AnimationEvents)};
    foreach(var behaviour in obj.GetComponentsInChildren<MonoBehaviour>(true))behaviour.enabled=allowed.Contains(behaviour.GetType());
-   var sound=obj.GetComponent<SfxLocator>();if(sound)MovementBatchProbe.DestroyImmediate(sound);
+   var sound=obj.GetComponent<SfxLocator>();if(sound)PortSession.DestroyImmediate(sound);
    foreach(var animator in obj.GetComponentsInChildren<Animator>(true)){animator.enabled=chest;animator.cullingMode=AnimatorCullingMode.AlwaysAnimate;}
    var model=obj.GetComponent<ModelLocator>().modelTransform;coordinator.worldModels.Add(model);PresentWorldModel(model,true);
    foreach(var collider in obj.GetComponentsInChildren<Collider>(true))collider.enabled=true;
@@ -662,21 +662,21 @@ public sealed partial class MovementBatchProbe {
   public void ObserveIntegratedWorld(CharacterBody player,float elapsed){
    coordinator.ObserveSourceAnimationEvents(player,elapsed);
    long performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   if(worldClientUpdate==null)worldClientUpdate=(Action)Delegate.CreateDelegate(typeof(Action),coordinator.activeBodyClient,coordinator.activeBodyClient.GetType().GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));worldClientUpdate();coordinator.r.performance.clientUpdateMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();coordinator.Check(coordinator.activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==coordinator.activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
-   long objectiveStart=performancePart;coordinator.ObserveTeleporterWorld();coordinator.r.performance.teleporterMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();coordinator.ObserveMoonMission();coordinator.ObserveGoldshoresMission();coordinator.r.performance.moonMs+=MovementBatchProbe.PerformanceMs(performancePart);coordinator.r.performance.objectiveMs+=MovementBatchProbe.PerformanceMs(objectiveStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();var world=coordinator.r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
+   if(worldClientUpdate==null)worldClientUpdate=(Action)Delegate.CreateDelegate(typeof(Action),coordinator.activeBodyClient,coordinator.activeBodyClient.GetType().GetMethod("Update",BindingFlags.NonPublic|BindingFlags.Instance));worldClientUpdate();coordinator.r.performance.clientUpdateMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();coordinator.Check(coordinator.activeBodyClient.isConnected&&player.networkIdentity.hasAuthority&&player.networkIdentity.clientAuthorityOwner==coordinator.activeBodyOwner&&LocalUserManager.readOnlyLocalUsersList.Count==0&&!player.master.playerCharacterMasterController.networkUser,"Integrated authority/unavailable-user scope changed");
+   long objectiveStart=performancePart;coordinator.ObserveTeleporterWorld();coordinator.r.performance.teleporterMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();coordinator.ObserveMoonMission();coordinator.ObserveGoldshoresMission();coordinator.r.performance.moonMs+=PortSession.PerformanceMs(performancePart);coordinator.r.performance.objectiveMs+=PortSession.PerformanceMs(objectiveStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();var world=coordinator.r.world;world.frames++;world.seconds=elapsed;world.position=player.characterMotor.Motor.TransientPosition;world.distance=Vector3.Distance(world.start,world.position);world.health=player.healthComponent.health;world.maxHealth=player.maxHealth;world.level=player.level;world.attackSpeed=player.attackSpeed;world.money=player.master.money;world.experience=TeamManager.instance.GetTeamExperience(TeamIndex.Player);world.kills=player.killCountServer;world.difficulty=Run.instance.difficultyCoefficient;
    if(!fireTrailDiagnosisRecorded&&!string.IsNullOrEmpty(coordinator.r.runSeedOverride)&&Time.frameCount%30==0&&NetworkServer.objects.Values.Any(identity=>{var body=identity?identity.GetComponent<CharacterBody>():null;return body&&body.HasBuff(RoR2Content.Buffs.AffixRed);})){fireTrailDiagnosisRecorded=true;try{world.fireTrailDiagnostic=WholeCatalogComposed.DiagnoseFireTrail();}catch(Exception error){world.fireTrailDiagnostic=error.GetBaseException().ToString();}coordinator.Save();}
-   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?MovementBatchProbe.StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
+   var motor=player.characterMotor;var grounding=motor.Motor.GroundingStatus;world.motorGrounded=motor.isGrounded;world.motorStable=grounding.IsStableOnGround;world.motorGroundPoint=grounding.GroundPoint;world.motorGroundCollider=grounding.GroundCollider?PortSession.StageObjectPath(grounding.GroundCollider.transform):"";world.motorVelocity=motor.velocity;world.motorJumpCount=motor.jumpCount;world.motorMaxJumpCount=player.maxJumpCount;
    world.jumpDown=player.inputBank.jump.down;world.jumpPressed=player.inputBank.jump.justPressed;world.jumpClaimed=player.inputBank.jump.hasPressBeenClaimed;var bodyMachine=player.GetComponents<EntityStateMachine>().FirstOrDefault(x=>x.customName=="Body");world.movementState=bodyMachine&&bodyMachine.state!=null?bodyMachine.state.GetType().FullName:"unavailable";
    world.syringe=player.inventory.GetItemCountPermanent(RoR2Content.Items.Syringe);world.lightning=player.inventory.GetItemCountPermanent(RoR2Content.Items.ChainLightning);world.glasses=player.inventory.GetItemCountPermanent(RoR2Content.Items.CritGlasses);world.slug=player.inventory.GetItemCountPermanent(RoR2Content.Items.HealWhileSafe);world.crit=player.crit;world.regen=player.regen;world.moveSpeed=player.moveSpeed;
    long lootStart=performancePart;world.shield=player.healthComponent.shield;world.maxShield=player.maxShield;world.armor=player.armor;for(int i=0;i<coordinator.worldLootDefinitions.Length;i++)world.itemStacks[i].count=player.inventory.GetItemCountPermanent(coordinator.worldLootDefinitions[i]);
-   if(Time.frameCount%6==0){ObserveWorldLootSupport(player);ObserveLightningStakes();}coordinator.r.performance.lootSupportMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.ObserveWorldEquipment();coordinator.r.performance.equipmentMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.ObserveWorldItemBehaviors();coordinator.r.performance.itemBehaviorsMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.ObserveWorldHealingItems();coordinator.r.performance.healingMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.ObserveStageBossContent();coordinator.r.performance.bossMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.ObserveWorldLegendaryItems();coordinator.r.performance.legendaryMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.ObserveWorldItemDisplays();coordinator.r.performance.itemDisplayMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   coordinator.r.performance.lootMs+=MovementBatchProbe.PerformanceMs(lootStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   if(Time.frameCount%6==0){ObserveWorldLootSupport(player);ObserveLightningStakes();}coordinator.r.performance.lootSupportMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.ObserveWorldEquipment();coordinator.r.performance.equipmentMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.ObserveWorldItemBehaviors();coordinator.r.performance.itemBehaviorsMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.ObserveWorldHealingItems();coordinator.r.performance.healingMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.ObserveStageBossContent();coordinator.r.performance.bossMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.ObserveWorldLegendaryItems();coordinator.r.performance.legendaryMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.ObserveWorldItemDisplays();coordinator.r.performance.itemDisplayMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   coordinator.r.performance.lootMs+=PortSession.PerformanceMs(lootStart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
    if(world.lootDomain>4){world.drink=player.inventory.GetItemCountPermanent(RoR2Content.Items.SprintBonus);world.steak=player.inventory.GetItemCountPermanent(RoR2Content.Items.FlatHealth);}
    world.openedBarrels=coordinator.worldBarrels.Count(x=>x&&x.Networkopened);world.openedChests=coordinator.worldChests.Count(x=>x&&x.NetworkisChestOpened);world.liveEnemies=coordinator.directorActors.Count(x=>x.body&&x.body.healthComponent.alive&&x.master.teamIndex!=TeamIndex.Player);coordinator.ObserveWorldChestBreadth();
    // These are live-world observations. The broad Resources API also walks the
@@ -702,8 +702,8 @@ public sealed partial class MovementBatchProbe {
     foreach(var pickup in pickups){if(!pickup.pickupDisplay)continue;var model=(GameObject)typeof(PickupDisplay).GetField("modelObject",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(pickup.pickupDisplay);if(model)PresentWorldModel(model.transform,false);}
    }
    world.secondary=coordinator.r.combat.secondaryEntries;world.roll=coordinator.r.combat.utilityEntries;world.barrage=coordinator.r.combat.specialEntries;
-   coordinator.r.performance.pickupMs+=MovementBatchProbe.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
-   world.target=coordinator.worldDriver.currentInteractable?coordinator.worldDriver.currentInteractable.name:"";coordinator.ObserveWorldCommerce();coordinator.ObserveRecoveredHud();coordinator.r.performance.commerceHudMs+=MovementBatchProbe.PerformanceMs(performancePart);
+   coordinator.r.performance.pickupMs+=PortSession.PerformanceMs(performancePart);performancePart=System.Diagnostics.Stopwatch.GetTimestamp();
+   world.target=coordinator.worldDriver.currentInteractable?coordinator.worldDriver.currentInteractable.name:"";coordinator.ObserveWorldCommerce();coordinator.ObserveRecoveredHud();coordinator.r.performance.commerceHudMs+=PortSession.PerformanceMs(performancePart);
   }
   public void IntegratedWorldStimulus(CharacterBody player,NovaInputBridge bridge,float elapsed){
    // Explicit automation for integrated validation only; direct app launches use physical controls.
@@ -989,7 +989,7 @@ public sealed partial class MovementBatchProbe {
   public void RestartWorldAfterCleanup(){
    if(!coordinator.restartRequested)return;coordinator.Check(coordinator.r.success&&coordinator.r.cleanup&&coordinator.r.world.cleaned&&coordinator.r.modelDestroyed&&!Run.instance&&!SceneInfo.instance&&!NetworkServer.active&&!NetworkClient.active,"Defeated world not clean enough to restart");
    System.IO.File.WriteAllText(System.IO.Path.Combine(Application.persistentDataPath,"movement-completed-session-"+coordinator.sessionIndex+".json"),JsonUtility.ToJson(coordinator.r,true));
-   coordinator.TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<MovementBatchProbe>();next.sessionIndex=coordinator.sessionIndex+1;next.skipOfflineMenu=!coordinator.returnToOfflineMenu;MovementBatchProbe.Destroy(coordinator.gameObject);
+   coordinator.TrackCompletedSessionReferences();var next=new GameObject("Persistent offline gameplay session").AddComponent<PortSession>();next.sessionIndex=coordinator.sessionIndex+1;next.skipOfflineMenu=!coordinator.returnToOfflineMenu;PortSession.Destroy(coordinator.gameObject);
   }
   public void CleanupIntegratedWorld(){coordinator.CleanupRecoveredHud();coordinator.CleanupIntegratedResults();coordinator.CleanupWorldCommerce(true);CleanupWorldTransmutation();coordinator.CleanupTeleporterWorld();coordinator.CleanupOriginalGlobalCommonAssets();coordinator.CleanupOriginalBodyVisualReferences();
    if(earlyHurtCacheHandler!=null){CharacterBody.onBodyAwakeGlobal-=earlyHurtCacheHandler;earlyHurtCacheHandler=null;}
@@ -1000,9 +1000,9 @@ public sealed partial class MovementBatchProbe {
    if(worldInteraction!=null)GlobalEventManager.OnInteractionsGlobal-=worldInteraction;if(coordinator.worldDriver)coordinator.worldDriver.enabled=false;
    if(coordinator.worldPlayer)coordinator.worldPlayer.inputBank.interact.PushState(false);
    foreach(var pickup in coordinator.EjectionPickups().ToArray())NetworkServer.Destroy(pickup.gameObject);foreach(var droplet in coordinator.EjectionDroplets().ToArray())NetworkServer.Destroy(droplet.gameObject);
-   foreach(var obj in coordinator.worldObjects)if(obj)NetworkServer.Destroy(obj);if(coordinator.worldStaging)MovementBatchProbe.Destroy(coordinator.worldStaging);if(coordinator.worldPause)NetworkServer.Destroy(coordinator.worldPause);
+   foreach(var obj in coordinator.worldObjects)if(obj)NetworkServer.Destroy(obj);if(coordinator.worldStaging)PortSession.Destroy(coordinator.worldStaging);if(coordinator.worldPause)NetworkServer.Destroy(coordinator.worldPause);
    coordinator.CleanupChestEjection();
-   if(coordinator.rewardPrefabs!=null){var prefab=coordinator.rewardPrefabs[0];var pools=(Dictionary<GameObject,EffectPool>)MovementBatchProbe.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);EffectPool pool;if(pools.TryGetValue(prefab,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(prefab);pool.Kill();}((IDictionary)MovementBatchProbe.RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null)).Remove(prefab);}
+   if(coordinator.rewardPrefabs!=null){var prefab=coordinator.rewardPrefabs[0];var pools=(Dictionary<GameObject,EffectPool>)PortSession.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);EffectPool pool;if(pools.TryGetValue(prefab,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(prefab);pool.Kill();}((IDictionary)PortSession.RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null)).Remove(prefab);}
    if(ownsWorldCoinLease&&worldCoinLease.IsValid()){int extra=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(worldCoinLease)-worldCoinBaseline;coordinator.Check(extra>=0&&extra<=coordinator.worldBarrelConsumers,"Unattributed integrated barrel coin leases");for(int i=0;i<extra;i++)Addressables.Release(worldCoinLease.Result);Addressables.Release(worldCoinLease);ownsWorldCoinLease=false;}
    RestoreWorldHandlers(false);RestoreWorldHandlers(true);if(coordinator.activeBodyClient!=null)foreach(short id in new short[]{52,55,57})coordinator.activeBodyClient.UnregisterHandler(id);if(ownsWorldTeleportHandler){if(coordinator.activeBodyClient!=null)coordinator.activeBodyClient.UnregisterHandler(68);if(NetworkServer.active)NetworkServer.UnregisterHandler(68);ownsWorldTeleportHandler=false;}
    if(coordinator.activeBodyClient!=null)foreach(var id in coordinator.worldSourceClientHandlerIds)coordinator.activeBodyClient.UnregisterHandler(id);coordinator.worldSourceClientHandlerIds.Clear();
@@ -1013,9 +1013,9 @@ public sealed partial class MovementBatchProbe {
     else{Run.instance.availableTier1DropList.Clear();Run.instance.availableTier2DropList.Clear();Run.instance.availableTier3DropList.Clear();}
     if(coordinator.worldChestTable)coordinator.worldChestTable.RegenerateDropTable(Run.instance);coordinator.Check(Run.instance.availableTier1DropList.Count==0&&Run.instance.availableTier2DropList.Count==0&&Run.instance.availableTier3DropList.Count==0&&(!coordinator.worldChestTable||coordinator.worldChestTable.GetPickupCount()==0),"Integrated loot list/table restore failed");ownsWorldLists=false;
    }
-   if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;foreach(var entry in priorWholeMiscIndices)entry.Key.miscPickupIndex=entry.Value;priorWholeMiscIndices.Clear();RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;MovementBatchProbe.RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;coordinator.Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}
+   if(ownsWorldMisc){RoR2Content.MiscPickups.LunarCoin=null;worldLunarCoin.miscPickupIndex=MiscPickupIndex.None;foreach(var entry in priorWholeMiscIndices)entry.Key.miscPickupIndex=entry.Value;priorWholeMiscIndices.Clear();RoR2.ContentManagement.ContentManager._miscPickupDefs=previousWorldMiscContent;PortSession.RewardField(typeof(MiscPickupCatalog),"_miscPickupDefs").SetValue(null,previousWorldMiscCatalog);MiscPickupCatalog.availability=previousWorldMiscAvailability;ownsWorldMisc=false;coordinator.Check(MiscPickupCatalog.pickupCount==0&&!RoR2Content.MiscPickups.LunarCoin,"Owned lunar definition/catalog restore failed");}
    if(worldDropletField!=null)worldDropletField.SetValue(null,priorWorldDroplet);if(ownsWorldDroplet&&worldDropletSource){Addressables.Release(worldDropletSource);ownsWorldDroplet=false;}if(worldDropletLocator!=null){Addressables.RemoveResourceLocator(worldDropletLocator);worldDropletLocator=null;}
-   foreach(var material in coordinator.worldMaterials)if(material)MovementBatchProbe.Destroy(material);
+   foreach(var material in coordinator.worldMaterials)if(material)PortSession.Destroy(material);
    coordinator.Save();
   }
   public void Dispose(){CleanupIntegratedWorld();}

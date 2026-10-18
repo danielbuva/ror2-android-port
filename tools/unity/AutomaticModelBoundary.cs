@@ -6,7 +6,7 @@ using RoR2;
 using UnityEngine;
 
 // Observe original detachment/following/destruction; never move or turn the model in the harness.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  GameObject ownedDetachedModel;
  bool IsAutomaticModel(){return IsNovaInput()||IsAutomaticSkill()||r.id.StartsWith("body-state-spawn-state-auto-model-");}
  void PrepareAutomaticModel(CharacterBody body){

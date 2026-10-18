@@ -10,7 +10,7 @@ using RoR2;
 using UnityEngine;
 
 // Original Unity callbacks; the harness only observes and supplies diagnostic input.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  IEnumerator AutomaticSpawnBoundary(CharacterBody body,SessionConfig cfg){
   if(!ownsStateCatalog){var preparation=PrepareSpawnStateCatalog(cfg);while(preparation.MoveNext())yield return preparation.Current;}
   var machine=EntityStateMachine.FindByCustomName(body.gameObject,"Body");

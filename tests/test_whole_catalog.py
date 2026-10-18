@@ -345,7 +345,7 @@ class AuthoredIntegrationHookTests(unittest.TestCase):
         return "".join((self.UNITY / name).read_text().split())
 
     def test_start_yields_to_the_catalog_scan_before_the_session_wait(self):
-        text = self.compact("MovementBatchProbe.cs")
+        text = self.compact("PortSession.cs")
         start = text[text.index("IEnumeratorStart(){") :]
         self.assertTrue(
             start.startswith(

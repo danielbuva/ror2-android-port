@@ -16,7 +16,7 @@ public sealed class ClientCoinReturnObservation : MonoBehaviour {
 }
 
 // Observes the original message handler, effect factory, coin Start and pooled timer.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ClientCoinReport {
   public bool originalDefaultInitialized,sourceReady,handlerRegistered,received,spawned,burstsMatched,naturallyReturned,conserved,rewardsMatched,cleaned;
   public int messages,requestedCount,originalCount,effectIndex,budgetBefore,budgetAfter,poolCount,particlePeak;public int[] tierValues,burstCounts;public string factoryObservation;public string[] factoryInstances,burstModes;public float[] burstConstants,burstMinimums,burstMaximums,burstTimes;

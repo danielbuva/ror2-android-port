@@ -6,7 +6,7 @@ using Rewired;
 using UnityEngine;
 
 // Invoke original detector methods on an inactive owned component; never initialize ReInput.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  void RewiredPlatformBoundary(){
   r.rewiredReadyBefore=ReInput.isReady;Check(!r.rewiredReadyBefore,"ReInput already initialized");
   host=new GameObject("Inactive original Rewired platform fixture");host.SetActive(false);

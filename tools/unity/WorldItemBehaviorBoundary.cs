@@ -14,7 +14,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Scoped startup adapter; component assignment, stack refresh and simulation are native.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ItemBehaviorReport {
   public bool ready,cleaned,sourceSupport;public int bodies,assignments,refreshes,mushroomWards,cloakObservations,whipBuffSamples,nearbyIndicators,wispOrbsPeak;
   public string[] definitions,normalLoot,bossRewards,requestedDeveloperGrants;public float whipPeakMoveSpeed;
@@ -37,7 +37,7 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain after Dispose for partial support setup,
  // repeated cleanup and later calls. Static provider paths and keys stay static.
  sealed class WorldItemBehaviorSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<CharacterBody,BaseItemBodyBehavior[]> worldItemBehaviors=new Dictionary<CharacterBody,BaseItemBodyBehavior[]>();
   readonly HashSet<GameObject> worldMushroomWards=new HashSet<GameObject>();
   readonly HashSet<GameObject> worldNearbyIndicators=new HashSet<GameObject>();
@@ -49,7 +49,7 @@ public sealed partial class MovementBatchProbe {
   Type[] worldItemBehaviorTypes={typeof(MushroomBodyBehavior),typeof(PhasingBodyBehavior)};
   ItemDef[] worldItemBehaviorDefinitions;
   bool ownsWorldItemBehaviors,ownsWorldMushroomBinding;object previousWorldMushroom;
-  public WorldItemBehaviorSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldItemBehaviorSession(PortSession coordinator){this.coordinator=coordinator;}
   public static FieldInfo MushroomPrefabField(){return typeof(MushroomBodyBehavior).GetField("mushroomWardPrefab",BindingFlags.NonPublic|BindingFlags.Static);}
   public BuffDef[] WorldItemBehaviorBuffs(SessionConfig cfg){
    if(cfg.worldItemBehaviorBuffAssets==null)return new BuffDef[0];

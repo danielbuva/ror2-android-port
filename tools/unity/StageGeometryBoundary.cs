@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Networking;
 
 // Recovered geometry and original out-of-bounds volumes; owned Android entry/material boundary.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class StageGeometryReport {
   public string scene,spawnMarker,groundColliderPath,groundColliderScene;public bool loaded,cleaned,groundHit,originalStageObjects,sourceSceneInfoActive,sourceStagePopulationActive;
   public bool mapZonesReady;public int mapZoneNetworkObjects,mapZoneIdentityComponents,mapZoneEmptySceneIds,mapZoneCount,mapZoneEntries,mapZoneExits,mapZoneTeleports;public string lastMapZone;
@@ -43,11 +43,11 @@ public sealed partial class MovementBatchProbe {
  // Retain across stage handoffs and partial setup. All release stays in the
  // awaited cleanup coroutine at its existing call sites; Dispose does not run it.
  sealed class StageGeometrySession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly List<BillboardAsset> stageGeometryBillboards=new List<BillboardAsset>();
   bool stageMoonVolumes;int stageZoneNetworkObjects;string[] stageZoneActiveNames,stageSourceNames=new string[0];
   MapZone[] stageMapZones=new MapZone[0];Action<CharacterBody,MapZone> stageZoneEntered,stageZoneLeft;Action<CharacterBody> stageZoneTeleported;bool ownsStageMapZoneObservations;
-  public StageGeometrySession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public StageGeometrySession(PortSession coordinator){this.coordinator=coordinator;}
   public void ActivateSourceGameManager(){
    var previous=coordinator.eventHost?coordinator.eventHost.GetComponent<GlobalEventManager>():null;
    coordinator.Check(coordinator.stageSourceObjects&&!coordinator.sourceGameManagerRoot&&previous&&GlobalEventManager.instance==previous,"Original source event owner requires the existing local event context");

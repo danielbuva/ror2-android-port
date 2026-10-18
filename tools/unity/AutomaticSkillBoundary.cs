@@ -7,7 +7,7 @@ using RoR2.Skills;
 using UnityEngine;
 
 // Public stock stimulus and observations only; original Unity/SkillDef callbacks recharge stocks.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  GenericSkill[] automaticSkills;
  GenericSkill rechargeSkill;
  float rechargeBegan;

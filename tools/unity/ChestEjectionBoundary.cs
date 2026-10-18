@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Read-only witnesses around the source animation, droplet and effect factories.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ChestEjectionReport {
   public ChestPurchaseReport purchase;
   public bool sourceEvents,sourceEffects,caches,groundMeasured,animationMoving,originalInfo,sourcePhysics,collided,pickupCreated,earlyDisabled,available,modelCreated,effectsReturned,actorWithdrawn,conserved,cleaned;
@@ -33,12 +33,12 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for partial setup, repeated cleanup and later observations.
  // Dispose keeps droplet destruction before source effect pools and materials.
  sealed class ChestEjectionSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   bool ownsChestAnimationSources;Animator chestEjectionAnimator;Transform[] chestEjectionBones;Quaternion[] chestEjectionRotations;
   GameObject[] chestEjectionSources;Dictionary<GameObject,EffectPool> chestEjectionPools;Dictionary<GameObject,bool> chestEjectionCache;
   readonly List<EffectManagerHelper> chestEjectionEffects=new List<EffectManagerHelper>();readonly List<ClientCoinReturnObservation> chestEjectionReturns=new List<ClientCoinReturnObservation>();readonly List<Material> chestEjectionMaterials=new List<Material>();
   GameObject chestEjectionDroplet,chestEjectionModel;PickupDropletController chestEjectionController;
-  public ChestEjectionSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public ChestEjectionSession(PortSession coordinator){this.coordinator=coordinator;}
   public IEnumerable<PickupDropletController> EjectionDroplets(){return Resources.FindObjectsOfTypeAll<PickupDropletController>().Where(x=>x.gameObject.scene.IsValid());}
   public IEnumerable<GenericPickupController> EjectionPickups(){return Resources.FindObjectsOfTypeAll<GenericPickupController>().Where(x=>x.gameObject.scene.IsValid()&&x.gameObject.activeInHierarchy);}
   public void OwnChestAnimationSources(Transform model,string openingClip="chestArmature|Open"){

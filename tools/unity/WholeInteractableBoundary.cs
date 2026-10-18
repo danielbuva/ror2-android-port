@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Native SceneDirector owns selection, credits, caps, placement and initial map spawns.
 // Android owns inactive templates, explicit no-audio presentation and paired resources.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  // Shared with the Gold Shores mission and native stage-context selection.
  SceneDirector wholeSceneDirector;JObject wholeStageContext;
  WholeInteractableSession wholeInteractableSession;
@@ -30,20 +30,20 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner across stage turnover and repeated/partial cleanup.
  // Stage teardown keeps the spawn-point lease until the full Dispose boundary.
  sealed class WholeInteractableSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<GameObject,GameObject> wholeInteractableTemplates=new Dictionary<GameObject,GameObject>();
   readonly Dictionary<SpawnCard,SpawnCard> wholeInteractableCards=new Dictionary<SpawnCard,SpawnCard>();
   readonly List<GameObject> wholePlayerSpawnPoints=new List<GameObject>();
   GameObject priorSpawnPointPrefab;
   AsyncOperationHandle<GameObject> wholeSpawnPointLease;bool ownsSpawnPointPrefab;
-  public WholeInteractableSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WholeInteractableSession(PortSession coordinator){this.coordinator=coordinator;}
   public GameObject WholeInteractableTemplate(GameObject source){
    GameObject owned;if(wholeInteractableTemplates.TryGetValue(source,out owned))return owned;
    coordinator.Check(source&&coordinator.worldStaging&&!coordinator.worldStaging.activeInHierarchy,"Original interactable staging unavailable");
-   owned=MovementBatchProbe.Instantiate(source,coordinator.worldStaging.transform);owned.name=source.name;owned.SetActive(true);wholeInteractableTemplates.Add(source,owned);
+   owned=PortSession.Instantiate(source,coordinator.worldStaging.transform);owned.name=source.name;owned.SetActive(true);wholeInteractableTemplates.Add(source,owned);
    coordinator.Check(owned.GetComponentsInChildren<Component>(true).All(value=>value),"Original interactable has a missing component: "+source.name);
    foreach(var behaviour in owned.GetComponentsInChildren<MonoBehaviour>(true)){
-    if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal)){MovementBatchProbe.DestroyImmediate(behaviour);continue;}
+    if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal)){PortSession.DestroyImmediate(behaviour);continue;}
     foreach(var field in behaviour.GetType().GetFields(BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic)){
      if(field.IsInitOnly||(!field.IsPublic&&!Attribute.IsDefined(field,typeof(SerializeField))))continue;
      var table=field.GetValue(behaviour) as PickupDropTable;
@@ -61,16 +61,16 @@ public sealed partial class MovementBatchProbe {
   public SpawnCard WholeInteractableCard(SpawnCard source){
    SpawnCard owned;if(wholeInteractableCards.TryGetValue(source,out owned))return owned;
    coordinator.Check(source is InteractableSpawnCard&&source.prefab,"Original stage has an invalid interactable spawn card");
-   owned=MovementBatchProbe.Instantiate(source);owned.name=source.name;owned.prefab=WholeInteractableTemplate(source.prefab);wholeInteractableCards.Add(source,owned);return owned;
+   owned=PortSession.Instantiate(source);owned.name=source.name;owned.prefab=WholeInteractableTemplate(source.prefab);wholeInteractableCards.Add(source,owned);return owned;
   }
   public void AdaptWholeInteractableSelection(SceneDirector director,DirectorCardCategorySelection selection){
    if(director!=coordinator.wholeSceneDirector)return;
    // Native CopyFrom clones arrays but shares DirectorCard instances with source pools.
    // Unity's serialized clone separates those instances before Android substitutions.
-   var owned=MovementBatchProbe.Instantiate(selection);
+   var owned=PortSession.Instantiate(selection);
    try{foreach(var card in owned.categories.SelectMany(category=>category.cards)){
     card.spawnCard=WholeInteractableCard(card.GetSpawnCard());card.spawnCardReference=new AssetReferenceT<SpawnCard>("");
-   }selection.categories=owned.categories;}finally{MovementBatchProbe.DestroyImmediate(owned);}
+   }selection.categories=owned.categories;}finally{PortSession.DestroyImmediate(owned);}
   }
   public void ObserveWholeInteractable(SceneDirector director,GameObject obj,DirectorCard card){
    if(director!=coordinator.wholeSceneDirector)return;
@@ -102,7 +102,7 @@ public sealed partial class MovementBatchProbe {
     coordinator.Check(coordinator.wholeSceneDirector&&!coordinator.wholeSceneDirector.enabled&&mapDirectors.Length==2&&mapDirectors[0]==coordinator.rewardDirector&&mapDirectors[1]==coordinator.sourceSlowDirector,"Original source Director component contract changed");
     foreach(var property in ((JObject)coordinator.wholeStageContext["director_fields"]).Properties()){
      var field=typeof(SceneDirector).GetField(property.Name,BindingFlags.Public|BindingFlags.Instance);
-     coordinator.Check(field!=null&&MovementBatchProbe.Equals(field.GetValue(coordinator.wholeSceneDirector),property.Value.ToObject(field.FieldType)),"Original source Director field drift: "+property.Name);
+     coordinator.Check(field!=null&&PortSession.Equals(field.GetValue(coordinator.wholeSceneDirector),property.Value.ToObject(field.FieldType)),"Original source Director field drift: "+property.Name);
     }
     coordinator.Check(DirectorCore.instance==roots[0].GetComponent<DirectorCore>()&&CombatDirector.instancesList.Contains(mapDirectors[0])&&CombatDirector.instancesList.Contains(mapDirectors[1]),"Original source continuous directors are not running");
     coordinator.Check(coordinator.sourceGameManagerRoot&&GlobalEventManager.instance==coordinator.sourceGameManagerRoot.GetComponent<GlobalEventManager>(),"Original source stage event owner is not running");
@@ -117,7 +117,7 @@ public sealed partial class MovementBatchProbe {
    // Ordinary stages reuse the accepted native teleporter; Gold Shores has none.
    coordinator.wholeSceneDirector.teleporterInstance=coordinator.worldTeleporter?coordinator.worldTeleporter.gameObject:null;
    var sourceBonuses=((JArray)coordinator.wholeStageContext["bonus_credits"]).Select(row=>{
-    var matches=coordinator.stageGeometryScene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<Transform>(true)).Where(value=>MovementBatchProbe.StageObjectPath(value)==(string)row["path"]).ToArray();
+    var matches=coordinator.stageGeometryScene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<Transform>(true)).Where(value=>PortSession.StageObjectPath(value)==(string)row["path"]).ToArray();
     coordinator.Check(matches.Length==1,"Original stage bonus-credit object is ambiguous: "+row["path"]);
     return new ClassicStageInfo.BonusInteractibleCreditObject{objectThatGrantsPointsIfEnabled=matches[0].gameObject,points=(int)row["points"]};
    }).ToArray();
@@ -132,16 +132,16 @@ public sealed partial class MovementBatchProbe {
    coordinator.currentStageCombatDeck.pickupDefinitions=PickupCatalog.pickupCount;coordinator.currentStageCombatDeck.lunarLoot=Run.instance.availableLunarCombinedDropList.Count;
    var priorPoints=new HashSet<SpawnPoint>(SpawnPoint.readOnlyInstancesList);
    SceneDirector.onGenerateInteractableCardSelection+=AdaptWholeInteractableSelection;SceneDirector.onSpawnInteractableServer+=ObserveWholeInteractable;
-   try{MovementBatchProbe.Call(coordinator.wholeSceneDirector,"Start");coordinator.currentStageCombatDeck.nativeScenePopulation=true;coordinator.currentStageCombatDeck.remainingInteractableCredits=coordinator.wholeSceneDirector.interactableCredit;}
+   try{PortSession.Call(coordinator.wholeSceneDirector,"Start");coordinator.currentStageCombatDeck.nativeScenePopulation=true;coordinator.currentStageCombatDeck.remainingInteractableCredits=coordinator.wholeSceneDirector.interactableCredit;}
    finally{SceneDirector.onGenerateInteractableCardSelection-=AdaptWholeInteractableSelection;SceneDirector.onSpawnInteractableServer-=ObserveWholeInteractable;foreach(var point in SpawnPoint.readOnlyInstancesList)if(!priorPoints.Contains(point))wholePlayerSpawnPoints.Add(point.gameObject);}
    coordinator.currentStageCombatDeck.playerSpawnPoints=wholePlayerSpawnPoints.Count;
    coordinator.r.world.barrels=coordinator.worldBarrels.Count;coordinator.r.world.chests=coordinator.worldChests.Count;coordinator.Save();yield return null;
   }
   public void CleanupWholeStageInteractables(){
-   if(coordinator.wholeSceneDirector){if(coordinator.stageSourceObjects)coordinator.wholeSceneDirector.teleporterInstance=null;else MovementBatchProbe.Destroy(coordinator.wholeSceneDirector);}coordinator.wholeSceneDirector=null;
-   foreach(var point in wholePlayerSpawnPoints)if(point)MovementBatchProbe.Destroy(point);wholePlayerSpawnPoints.Clear();
-   foreach(var card in wholeInteractableCards.Values)if(card)MovementBatchProbe.Destroy(card);wholeInteractableCards.Clear();
-   foreach(var template in wholeInteractableTemplates.Values)if(template)MovementBatchProbe.Destroy(template);wholeInteractableTemplates.Clear();
+   if(coordinator.wholeSceneDirector){if(coordinator.stageSourceObjects)coordinator.wholeSceneDirector.teleporterInstance=null;else PortSession.Destroy(coordinator.wholeSceneDirector);}coordinator.wholeSceneDirector=null;
+   foreach(var point in wholePlayerSpawnPoints)if(point)PortSession.Destroy(point);wholePlayerSpawnPoints.Clear();
+   foreach(var card in wholeInteractableCards.Values)if(card)PortSession.Destroy(card);wholeInteractableCards.Clear();
+   foreach(var template in wholeInteractableTemplates.Values)if(template)PortSession.Destroy(template);wholeInteractableTemplates.Clear();
   }
   public void Dispose(){
    CleanupWholeStageInteractables();if(ownsSpawnPointPrefab){typeof(SpawnPoint).GetField("prefab",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,priorSpawnPointPrefab);if(wholeSpawnPointLease.IsValid())Addressables.Release(wholeSpawnPointLease);ownsSpawnPointPrefab=false;}

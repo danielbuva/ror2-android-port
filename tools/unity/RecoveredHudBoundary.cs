@@ -4,7 +4,7 @@ using System;
 using System.Reflection;
 using UnityEngine;
 
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  // Shared with world/developer UI, the offline menu and teleporter text setup.
  RecoveredHudPresentation recoveredHud,recoveredMenu;
  TMPro.TMP_Settings recoveredTextSettings;bool ownsRecoveredText;
@@ -22,11 +22,11 @@ public sealed partial class MovementBatchProbe {
  // Dispose for partial setup, repeated cleanup and later sessions. HUD/menu
  // disposal does not release text: catalog teardown owns that later phase.
  sealed class RecoveredHudSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   GameObject recoveredMenuEvents;
   LabDiagnostics recoveredReferenceDiagnostics;bool priorRecoveredReferenceRendering;
   FieldInfo recoveredTextField;object priorRecoveredText;
-  public RecoveredHudSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public RecoveredHudSession(PortSession coordinator){this.coordinator=coordinator;}
   public void PrepareRecoveredText(){
    if(!coordinator.r.recoveredHudEnabled||coordinator.ownsRecoveredText)return;
    recoveredTextField=typeof(TMPro.TMP_Settings).GetField("s_Instance",BindingFlags.Static|BindingFlags.NonPublic);priorRecoveredText=recoveredTextField.GetValue(null);coordinator.Check(priorRecoveredText==null,"Unowned early text settings");

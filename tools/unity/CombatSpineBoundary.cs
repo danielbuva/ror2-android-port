@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Integrated original skills and damage. Owned visuals/audio exclusions do not replace simulation.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class CombatReport {
   public int secondaryEntries,utilityEntries,specialEntries,projectiles,projectileSoundGuards,damageEvents;
   public float healthBefore,healthAfter,damageDealt,lastDamage;
@@ -35,14 +35,14 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Scene cleanup stays separate; Dispose releases configs only.
  sealed class CombatSpineSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly List<EntityStateConfiguration> combatConfigs=new List<EntityStateConfiguration>();
   readonly HashSet<int> observedProjectiles=new HashSet<int>();
   GameObject projectileTemplateHost,projectileHost,targetHost,targetVisual;
   GameObject ownedFMJ;CharacterBody targetBody;Material combatMaterial;Texture2D combatTexture;
   EntityState lastCombatBody,lastCombatWeapon;
   static readonly FieldInfo meleeAttackTicksField=typeof(BasicMeleeAttack).GetField("meleeAttackTicks",BindingFlags.Instance|BindingFlags.NonPublic);
-  public CombatSpineSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public CombatSpineSession(PortSession coordinator){this.coordinator=coordinator;}
   public EntityStateConfiguration[] PrepareCombatConfigs(SessionConfig cfg){
    coordinator.r.combat=new CombatReport();SilentProjectileBoundary.prepared=0;
    foreach(var asset in new[]{cfg.secondaryConfigAsset,cfg.utilityConfigAsset,cfg.specialConfigAsset}){

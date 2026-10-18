@@ -7,7 +7,7 @@ using RoR2;
 using UnityEngine;
 
 // Only diagnostic input and observations; original main-state and direction callbacks turn the model base.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  bool IsAutomaticDirection(){return IsAutomaticModel()||r.id.StartsWith("body-state-spawn-state-auto-direction-");}
  IEnumerator AutomaticDirectionBoundary(CharacterBody body,EntityStateMachine machine){
   var direction=body.GetComponent<CharacterDirection>();var input=body.inputBank;var motor=body.characterMotor;var solver=motor.Motor;var state=machine.state;

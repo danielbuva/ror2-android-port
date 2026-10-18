@@ -12,7 +12,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Diagnostic factory arguments and read-only motion observations; source callbacks/native physics do the work.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class DropletFlightSample {public int ticks;public float seconds;public Vector3 position,velocity,serverPosition;public bool alive,authority;}
  [Serializable] public class PickupDropletFlightReport {
   public bool commandDisabled,catalogReady,noDisplay,factory,infoMatched,serverMapped,clientMapped,sourceCallbacks,authority,physicsMatched,networkAdvanced,noCollision,conserved,cleaned;

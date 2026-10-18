@@ -11,7 +11,7 @@ using UnityEngine.Profiling;
 
 // Measurements and reclamation only at an already completed owned session.
 // No gameplay pools, live content, process caches or unrelated files are cleared.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class SessionResourceSample {
   public string phase;public float seconds;public long allocated,reserved,managed;
   public long managedTotal;public int collections;public string gcMode;public bool incremental;public float collectionSeconds;

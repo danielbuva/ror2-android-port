@@ -133,7 +133,7 @@ def prepare_spine(
     )
     shutil.copy2(ROOT / checkpoint["evidence"] / "original-motor-order.json", out / "original-motor-order.json")
     for name in [
-        "MovementBatchProbe",
+        "PortSession",
         "DebugAccelerationBoundary",
         "OfflineApplicationBoundary",
         "OfflineLoadoutBoundary",

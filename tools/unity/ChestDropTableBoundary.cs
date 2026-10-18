@@ -9,7 +9,7 @@ using RoR2;
 using UnityEngine;
 
 // Original source table and RNG on an explicit two-item diagnostic Run list; no chest/grant.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ChestDropTableReport {
   public bool sourceReady,catalogReady,weightsMatched,reproducible,distinctMatched,loopMatched,conserved,cleaned;
   public int[] allowed,sequence,repeat,otherSeed,distinct,loop,withoutLoop,histogram;

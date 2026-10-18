@@ -5306,3 +5306,19 @@ Zero-error code-only build, APK `305b9c5948918ef130b52015dc3d0b8e9d674859fdd21e6
 `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile runs
 unchanged (`work/experiments/baseline/20261018T015907.228546Z`), and the report's nested key set (2,530 keys) is identical to the previous
 run's. App stopped; OLED asleep.
+
+## J542 — Rename the coordinator to PortSession
+
+Phase 4 step 6 (implemented by Codex at medium reasoning, reviewed by Claude): the coordinator
+class `MovementBatchProbe` is now `PortSession` (`tools/unity/PortSession.cs`, 71 partial
+declarations, 328 references). No scene, prefab or asset references the script's GUID (it is
+added at runtime by `Init`), and the staged project's `.cs`/`.meta` pair was moved together, so
+the GUID is unchanged. The 50 kept `MovementBatchProbe` strings are external names: the
+`Resources.Load("MovementBatchProbe")` config resource, the on-device `movement-batch-*.json`
+report and selection files, CLI action names and receipts. The file rename changes the
+code-only allow-list, which the payload-reuse guard correctly rejects, so this needed a full
+whole-catalog build: zero errors in 1,417 s, APK `0d9d054ef6aae219d57b80a6896c5db79888de1fe30efec80c5376ed444d7648`, 34 payload files (1.38 GB) re-synced
+to adopted storage. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profile runs,
+`work/experiments/baseline/20261018T023327.160296Z`) and `--stage-exit` passed on the same APK
+(`work/experiments/baseline/20261018T023652.633930Z`); the report's nested key set matches the
+previous run. App stopped; OLED asleep.

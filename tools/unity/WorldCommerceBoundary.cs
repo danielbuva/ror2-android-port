@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 using UnityEngine.AddressableAssets;
 
 // Original purchase/selection/shrine code; owned layout, presentation and observations.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class CommerceObservation {public string source,item,costType;public uint netId;public int cost,purchases;public bool available,hidden,purchased;}
  [Serializable] public class CommercePurchase {public float at,healthAfter,shieldAfter;public string source,family,subtype,costType;public int cost;public uint moneyAfter;public bool debugAssisted;}
  [Serializable] public class CommercePlacement {public string source,scene;public Vector3 position,sourceScale,placedScale;public float radius,spawnDistance,requiredDistance;}
@@ -45,12 +45,12 @@ public sealed partial class MovementBatchProbe {
  // observations. The cleanup forwarder preserves its final flag; Dispose uses
  // that same final cleanup without moving the coordinator's release call sites.
  sealed class WorldCommerceSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly List<GameObject> commerceTemplates=new List<GameObject>();
   readonly HashSet<int> commercePresentedPickupModels=new HashSet<int>();
   static readonly FieldInfo commercePickupModelField=typeof(PickupDisplay).GetField("modelObject",BindingFlags.NonPublic|BindingFlags.Instance);
   int commerceEffectBaseline,commerceDirectShrineEffectLoads;
-  public WorldCommerceSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldCommerceSession(PortSession coordinator){this.coordinator=coordinator;}
   public static float CommerceRadius(GameObject source){
    float radius=0;var center=source.transform.position;
    foreach(var renderer in source.GetComponentsInChildren<Renderer>(true)){
@@ -140,10 +140,10 @@ public sealed partial class MovementBatchProbe {
      if(placed.Any(x=>Vector3.ProjectOnPlane(x.position-ground.point,Vector3.up).magnitude<x.radius+radius+1))continue;
      found=true;start=(start+i+1)%directions.Length;break;
     }
-    if(!found)continue;var obj=MovementBatchProbe.Instantiate(source,coordinator.worldStaging.transform);obj.name=source.name;coordinator.worldObjects.Add(obj);coordinator.commerceOwned.Add(obj);ConfigureCommerceObject(obj);PrepareCommerceSymbols(obj);obj.transform.position=ground.point+Vector3.up*.4f;
+    if(!found)continue;var obj=PortSession.Instantiate(source,coordinator.worldStaging.transform);obj.name=source.name;coordinator.worldObjects.Add(obj);coordinator.commerceOwned.Add(obj);ConfigureCommerceObject(obj);PrepareCommerceSymbols(obj);obj.transform.position=ground.point+Vector3.up*.4f;
     var placement=new CommercePlacement{source=source.name,scene=coordinator.r.stageProgress.current,position=obj.transform.position,radius=radius,spawnDistance=Vector3.ProjectOnPlane(obj.transform.position-origin,Vector3.up).magnitude,requiredDistance=required,sourceScale=source.transform.localScale,placedScale=obj.transform.localScale};
     coordinator.Check(placement.spawnDistance>=required-.1f&&placement.sourceScale==placement.placedScale,"Commerce spawn/camera clearance changed source scale");placed.Add(placement);coordinator.r.commerce.placements.Add(placement);
-    var shop=obj.GetComponent<MultiShopController>();if(shop){coordinator.Check(!shop.doEquipmentInstead&&!shop.isTripleDroneVendor&&shop.terminalPositions.Length==3,"Original item-only multishop contract differs");var template=MovementBatchProbe.Instantiate(shop.terminalPrefab,coordinator.worldStaging.transform);commerceTemplates.Add(template);coordinator.commerceOwned.Add(template);ConfigureCommerceObject(template);var terminal=template.GetComponent<ShopTerminalBehavior>();coordinator.Check(terminal&&terminal.selfGeneratePickup&&terminal.dropTable is BasicPickupDropTable,"Original self-generating item terminal contract differs");terminal.dropTable=coordinator.ObjectiveDropTable(terminal.dropTable);((BasicPickupDropTable)terminal.dropTable).RegenerateDropTable(Run.instance);coordinator.Check(terminal.dropTable.GetPickupCount()>0,"Original terminal selector empty");shop.terminalPrefab=template;}
+    var shop=obj.GetComponent<MultiShopController>();if(shop){coordinator.Check(!shop.doEquipmentInstead&&!shop.isTripleDroneVendor&&shop.terminalPositions.Length==3,"Original item-only multishop contract differs");var template=PortSession.Instantiate(shop.terminalPrefab,coordinator.worldStaging.transform);commerceTemplates.Add(template);coordinator.commerceOwned.Add(template);ConfigureCommerceObject(template);var terminal=template.GetComponent<ShopTerminalBehavior>();coordinator.Check(terminal&&terminal.selfGeneratePickup&&terminal.dropTable is BasicPickupDropTable,"Original self-generating item terminal contract differs");terminal.dropTable=coordinator.ObjectiveDropTable(terminal.dropTable);((BasicPickupDropTable)terminal.dropTable).RegenerateDropTable(Run.instance);coordinator.Check(terminal.dropTable.GetPickupCount()>0,"Original terminal selector empty");shop.terminalPrefab=template;}
     var chance=obj.GetComponent<ShrineChanceBehavior>();if(chance){coordinator.Check(chance.dropTable,"Original chance shrine drop table absent");coordinator.Check(chance.effectPrefabShrineRewardNormal,"Original chance shrine normal effect absent");chance.dropTable=coordinator.ObjectiveDropTable(chance.dropTable);var table=chance.dropTable as BasicPickupDropTable;coordinator.Check(table,"Original chance shrine table type changed");table.RegenerateDropTable(Run.instance);coordinator.Check(table.GetPickupCount()>0,"Original chance shrine source selector empty");}
     obj.transform.SetParent(null,true);obj.SetActive(true);NetworkServer.Spawn(obj);
     if(shop){coordinator.commerceShops.Add(shop);foreach(var terminal in shop.terminalGameObjectsList){coordinator.Check(terminal&&terminal.GetComponent<ShopTerminalBehavior>()&&terminal.GetComponent<NetworkIdentity>().netId.Value!=0,"Original multishop terminal factory/network identity failed");coordinator.commerceOwned.Add(terminal);coordinator.worldObjects.Add(terminal);PresentCommerceModel(terminal.transform);WatchCommercePurchase(terminal.GetComponent<PurchaseInteraction>());}coordinator.r.commerce.shops++;}
@@ -163,7 +163,7 @@ public sealed partial class MovementBatchProbe {
   public void CleanupWorldCommerce(bool final=false){
    coordinator.ObserveWorldChestBreadth();coordinator.worldBreadthChests.Clear();coordinator.CleanupHealingCommerceWards();
    foreach(var pair in coordinator.commerceListeners)if(pair.Key)pair.Key.onDetailedPurchaseServer.RemoveListener(pair.Value);coordinator.commerceListeners.Clear();coordinator.commercePurchases.Clear();coordinator.commercePurchaseCounts.Clear();coordinator.commerceShops.Clear();commercePresentedPickupModels.Clear();
-   foreach(var template in commerceTemplates)if(template)MovementBatchProbe.Destroy(template);commerceTemplates.Clear();
+   foreach(var template in commerceTemplates)if(template)PortSession.Destroy(template);commerceTemplates.Clear();
    if(!final)return;
    if(coordinator.ownsCommerceMessages&&coordinator.activeBodyClient!=null){coordinator.activeBodyClient.UnregisterHandler(59);coordinator.ownsCommerceMessages=false;}
    if(coordinator.commerceEffectIndex>=0){var lease=coordinator.objectiveSupportLeases[coordinator.commerceEffectIndex];int extra=(int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(lease)-commerceEffectBaseline;coordinator.Check(extra==commerceDirectShrineEffectLoads,"Unattributed original blood/healing shrine effect loads");for(int i=0;i<extra;i++)Addressables.Release(lease.Result);coordinator.commerceEffectIndex=-1;}

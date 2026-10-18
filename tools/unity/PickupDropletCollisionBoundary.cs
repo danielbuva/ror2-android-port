@@ -15,7 +15,7 @@ public sealed class PickupDropletCollisionObservation : MonoBehaviour {
 }
 
 // Native collisions call the original droplet/factory; this observer never dispatches them.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class PickupDropletCollisionReport {
   public bool groundMeasured,sourcePhysics,factory,infoMatched,collided,pickupCreated,dropletRemoved,earlyDisabled,available,conserved,cleaned,sourceName,pickupIdentity,originalFlags,displayOmitted,originalDelay,serverMapped,clientMapped,sourceConsumed,transformMatched,factoryObserved;
   public int collisions,pickupIndex,ticks,instancesBefore,instancesAfter,pickupsBefore,pickupsAfter,contactLayer;public uint dropletId,pickupId,moneyBefore,moneyAfter;public ulong xpBefore,xpAfter;

@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Original automatic target selection; diagnostic aim, no interaction input or effect dispatch.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class InteractionSelectionReport {
   public bool slotCacheInitialized,itemLocked,pauseReady,cacheReady,selected,automatic,ungranted,conserved,selectionReleased,targetRemoved,cleaned;
   public byte[] slotEquipmentSet,inventoryEquipmentSet;public int equipmentBefore,equipmentAfter,inventoryEquipment,frames,fixedTicks;public uint targetId,moneyBefore,moneyAfter;public ulong xpBefore,xpAfter;

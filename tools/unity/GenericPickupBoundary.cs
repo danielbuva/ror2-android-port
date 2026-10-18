@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class DefaultPickupReport {
   public bool syncLoaded,asyncMatched,callbackMatched,pendingBalanced,sourceMatched,factory,modelCreated,modelMoving,earlyDisabled,available,conserved,objectCleaned,leasesCleaned;
   public int referencesBefore,referencesAfter,locatorsBefore,locatorsAfter,pendingBefore,pendingAfter,vertices,renderers,instancesBefore,instancesAfter;public uint netId,moneyBefore,moneyAfter;public ulong xpBefore,xpAfter;
@@ -32,9 +32,9 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for partial setup, repeated cleanup and later calls. Dispose
  // preserves the native field restoration, three releases and locator removal.
  sealed class GenericPickupSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   ResourceLocationMap defaultPickupLocator;AsyncOperationHandle<GameObject> defaultPickupHandle;FieldInfo defaultPickupField;object previousDefaultPickup;bool ownsDefaultSync,ownsDefaultAsync,ownsDefaultInit;
-  public GenericPickupSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public GenericPickupSession(PortSession coordinator){this.coordinator=coordinator;}
   public GameObject GenericPickupSource(SessionConfig cfg){return cfg.originalDefaultPickup?coordinator.defaultPickupSource:coordinator.artifactBundle.LoadAsset<GameObject>(cfg.pickupAsset);}
   public IEnumerator PrepareOriginalDefaultPickup(SessionConfig cfg){
    coordinator.r.defaultPickup=new DefaultPickupReport{scope="Original sync/async/GenericPickup Init/default factory with original active PickupDisplay and direct Syringe model; diagnostic placement/material/view layer. No prefab override/display omission/manual simulation/item grant/chest ejection/native audio/full startup acceptance."};var report=coordinator.r.defaultPickup;coordinator.r.phase="original-default-pickup-load";coordinator.Save();

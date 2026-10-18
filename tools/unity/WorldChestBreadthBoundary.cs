@@ -7,7 +7,7 @@ using RoR2;
 using UnityEngine;
 
 // Original chest tables, state/animation events and factories; adapted near-entry placement.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class WorldChestSpec {public string name,asset,openingClip;}
  [Serializable] public class WorldChestObservation {public string source,scene,table,costType;public uint netId;public int cost,domain,rolledPickup;public bool opened;}
  [Serializable] public class ChestBreadthReport {public int sourceVariants,placed,opened;public List<WorldChestObservation> objects=new List<WorldChestObservation>();public string scope="Original large/legendary/stealth/category chest selection, purchase, animation/ejection contracts; owned source tables and adapted placement. Registration/placement is not purchase/drop acceptance or original SceneDirector population.";}

@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Observes source purchase callbacks and states; original payment/roll/input implementations remain intact.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ChestPurchaseReport {
   public bool sourceReady,callbacks,rolled,secondaryUnavailable,selected,unaffordableRejected,paid,opening,opened,repeatRejected,selectionReleased,conserved,cleaned;
   public int cost,pickup,dropCount,interactions,detailedPurchases,globalPurchases,renderers,colliders,tableBefore,tableAfter;public uint moneyBefore,funding,moneyFunded,moneyAfter,netId;public ulong xpBefore,xpAfter;

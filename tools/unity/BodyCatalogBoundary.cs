@@ -17,7 +17,7 @@ using UnityEngine.AddressableAssets.ResourceProviders;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  bool ownsBodyAvailability;
  ResourceAvailability priorBodyAvailability;
  readonly Dictionary<int,GameObject> priorCatalogBodyTemplates=new Dictionary<int,GameObject>();
@@ -58,8 +58,8 @@ public sealed partial class MovementBatchProbe {
  // Retain this owner after cleanup. The coordinator preserves the catalog and
  // composed-hook order; Dispose releases loadout tables at their existing step.
  sealed class BodyCatalogSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
-  public BodyCatalogSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  readonly PortSession coordinator;
+  public BodyCatalogSession(PortSession coordinator){this.coordinator=coordinator;}
   bool ownsLoadoutTables,ownsSkillCatalog;
   bool ownsSkinCatalog;
   ResourceAvailability priorSkinAvailability;
@@ -113,13 +113,13 @@ public sealed partial class MovementBatchProbe {
    var selectedDefs=families.SelectMany(x=>x.variants.Select(v=>v.skillDef)).Where(x=>x).Distinct().ToArray();
    var defs=complete?WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.skillDef,selectedDefs):selectedDefs;
    if(complete){coordinator.r.liveCatalogs.skills=defs.Length;coordinator.r.liveCatalogs.skillFamilies=families.Length;coordinator.r.liveCatalogs.emptySkillVariants=families.Sum(family=>family.variants.Count(variant=>!variant.skillDef));}
-   ownsSkillCatalog=true;MovementBatchProbe.StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)defs);MovementBatchProbe.StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)families);
+   ownsSkillCatalog=true;PortSession.StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)defs);PortSession.StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)families);
    foreach(var family in families)coordinator.Check(SkillCatalog.GetSkillFamily(family.catalogIndex)==family,"Original family catalog identity");
    foreach(var def in defs)coordinator.Check(SkillCatalog.GetSkillDef(def.skillIndex)==def,"Original skill catalog identity");
    coordinator.Check(SurvivorCatalog.GetSurvivorIndexFromBodyIndex(prefab.GetComponent<CharacterBody>().bodyIndex)==SurvivorIndex.None,"Unexpected survivor-specific viewable context");
    var map=(IDictionary)ViewableField("fullNameToNodeMap").GetValue(null);foreach(DictionaryEntry entry in map)priorViewables.Add(entry.Key,entry.Value);
    var root=(ViewablesCatalog.Node)ViewableField("rootNode").GetValue(null);foreach(var child in root.children)priorViewableChildren.Add(child);
-   ownsLoadoutTables=true;coordinator.r.phase="original-loadout-initialize";coordinator.Save();MovementBatchProbe.StaticCall(typeof(Loadout.BodyLoadoutManager),"Init");
+   ownsLoadoutTables=true;coordinator.r.phase="original-loadout-initialize";coordinator.Save();PortSession.StaticCall(typeof(Loadout.BodyLoadoutManager),"Init");
    var body=prefab.GetComponent<CharacterBody>();var defaults=(Array)LoadoutField("defaultBodyLoadouts").GetValue(null);
    coordinator.Check(defaults!=null&&defaults.Length==BodyCatalog.bodyCount,"Original default body loadout missing");var loadout=new Loadout();coordinator.Check(loadout.bodyLoadoutManager.GetSkinIndex(body.bodyIndex)==0,"Original default skin");
    for(int i=0;i<slots.Length;i++)coordinator.Check(loadout.bodyLoadoutManager.GetSkillVariant(body.bodyIndex,i)==slots[i].skillFamily.defaultVariantIndex,"Original default skill variant");
@@ -130,7 +130,7 @@ public sealed partial class MovementBatchProbe {
     var root=(ViewablesCatalog.Node)ViewableField("rootNode").GetValue(null);foreach(var child in root.children.ToArray())if(!priorViewableChildren.Contains(child))child.SetParent(null);
     var map=(IDictionary)ViewableField("fullNameToNodeMap").GetValue(null);map.Clear();foreach(var pair in priorViewables)map.Add(pair.Key,pair.Value);ownsLoadoutTables=false;
    }
-   if(ownsSkillCatalog){MovementBatchProbe.StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)new SkillFamily[0]);MovementBatchProbe.StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)new SkillDef[0]);ownsSkillCatalog=false;}
+   if(ownsSkillCatalog){PortSession.StaticCall(typeof(SkillCatalog),"SetSkillFamilies",(object)new SkillFamily[0]);PortSession.StaticCall(typeof(SkillCatalog),"SetSkillDefs",(object)new SkillDef[0]);ownsSkillCatalog=false;}
   }
   public IEnumerator RegisterBodyCatalog(){
    // Current original SpawnBody requires the game's PreSplash preset table.
@@ -161,6 +161,7 @@ public sealed partial class MovementBatchProbe {
    coordinator.Check(missing.IsDone&&missing.Status==AsyncOperationStatus.Failed&&missing.Result==null,"Missing portrait did not fail honestly");
    coordinator.Check(missing.OperationException is InvalidKeyException,"Unexpected portrait failure class");Addressables.Release(missing);
    coordinator.Check(LegacyResourcesAPI.ActiveCount==0,"Missing request callback not drained");
+   // MovementBatchProbe is the unchanged resource/file name.
    var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
    coordinator.artifactBundle=AssetBundle.LoadFromFile(Path.Combine(Application.persistentDataPath,"payload","commando-prefab-lab"));coordinator.Check(coordinator.artifactBundle,"Body bundle missing");
    if(cfg.teleporterLoop){var preload=coordinator.PreloadObjectiveBundle();while(preload.MoveNext())yield return preload.Current;}
@@ -174,7 +175,7 @@ public sealed partial class MovementBatchProbe {
     coordinator.r.liveCatalogs=new LiveCatalogReport{bodies=bodies.Length};
 
    }
-   coordinator.ownsBodyCatalog=true;MovementBatchProbe.StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)bodies);
+   coordinator.ownsBodyCatalog=true;PortSession.StaticCall(typeof(BodyCatalog),"SetBodyPrefabs",(object)bodies);
    deadline=Time.realtimeSinceStartup+3;while(LegacyResourcesAPI.ActiveCount!=0&&Time.realtimeSinceStartup<deadline)yield return null;
    yield return null;yield return null;
    coordinator.Check(LegacyResourcesAPI.ActiveCount==0,"Catalog portrait callback still pending");
@@ -201,10 +202,10 @@ public sealed partial class MovementBatchProbe {
    if(coordinator.r.rewards!=null)coordinator.r.rewards.unavailableEffectSounds=priorComposedEffectSounds.Count;
   }
   public void SetCatalogBodyTemplate(int index,GameObject template){
-   ((GameObject[])MovementBatchProbe.RewardField(typeof(BodyCatalog),"bodyPrefabs").GetValue(null))[index]=template;
-   ((CharacterBody[])MovementBatchProbe.RewardField(typeof(BodyCatalog),"bodyPrefabBodyComponents").GetValue(null))[index]=template.GetComponent<CharacterBody>();
-   ((Component[][])MovementBatchProbe.RewardField(typeof(BodyCatalog),"bodyComponents").GetValue(null))[index]=template.GetComponents<Component>();
-   ((GenericSkill[][])MovementBatchProbe.RewardField(typeof(BodyCatalog),"skillSlots").GetValue(null))[index]=template.GetComponents<GenericSkill>();
+   ((GameObject[])PortSession.RewardField(typeof(BodyCatalog),"bodyPrefabs").GetValue(null))[index]=template;
+   ((CharacterBody[])PortSession.RewardField(typeof(BodyCatalog),"bodyPrefabBodyComponents").GetValue(null))[index]=template.GetComponent<CharacterBody>();
+   ((Component[][])PortSession.RewardField(typeof(BodyCatalog),"bodyComponents").GetValue(null))[index]=template.GetComponents<Component>();
+   ((GenericSkill[][])PortSession.RewardField(typeof(BodyCatalog),"skillSlots").GetValue(null))[index]=template.GetComponents<GenericSkill>();
   }
   public void BindCatalogBodyTemplate(GameObject template){
    var body=template.GetComponent<CharacterBody>();int index=(int)body.bodyIndex;
@@ -221,10 +222,10 @@ public sealed partial class MovementBatchProbe {
    EffectCatalog.SetEntries(Array.Empty<EffectDef>());EffectCatalog.availability.MakeAvailable();
    coordinator.Check(EffectCatalog.effectCount>0,"Original baked effect catalog unavailable");
    RegisterComposedEffects(definitions);
-   foreach(var definition in (EffectDef[])MovementBatchProbe.RewardField(typeof(EffectCatalog),"entries").GetValue(null))AdaptComposedEffectAudio(definition);
+   foreach(var definition in (EffectDef[])PortSession.RewardField(typeof(EffectCatalog),"entries").GetValue(null))AdaptComposedEffectAudio(definition);
   }
   public void RegisterComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions){
-   var entries=(EffectDef[])MovementBatchProbe.RewardField(typeof(EffectCatalog),"entries").GetValue(null);
+   var entries=(EffectDef[])PortSession.RewardField(typeof(EffectCatalog),"entries").GetValue(null);
    foreach(var definition in definitions){
     var index=EffectCatalog.FindEffectIndex(definition.prefabName);
     coordinator.Check(index!=EffectIndex.Invalid&&definition.prefabEffectComponent,"Original baked effect identity absent: "+definition.prefabName);
@@ -233,12 +234,12 @@ public sealed partial class MovementBatchProbe {
    }
   }
   public void RestoreComposedEffects(EffectDef[] previous){
-   var entries=(EffectDef[])MovementBatchProbe.RewardField(typeof(EffectCatalog),"entries").GetValue(null);
+   var entries=(EffectDef[])PortSession.RewardField(typeof(EffectCatalog),"entries").GetValue(null);
    foreach(var definition in entries)if(definition.prefabEffectComponent)definition.prefabEffectComponent.effectIndex=EffectIndex.Invalid;
    foreach(var pair in priorComposedEffectSounds)typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key,pair.Value,null);priorComposedEffectSounds.Clear();
    if(coordinator.r.rewards!=null)coordinator.r.rewards.effectSoundMetadataRestored=true;
-   MovementBatchProbe.RewardField(typeof(EffectCatalog),"entries").SetValue(null,previous);
-   ((IDictionary)MovementBatchProbe.RewardField(typeof(EffectCatalog),"nameToEffectIndex").GetValue(null)).Clear();
+   PortSession.RewardField(typeof(EffectCatalog),"entries").SetValue(null,previous);
+   ((IDictionary)PortSession.RewardField(typeof(EffectCatalog),"nameToEffectIndex").GetValue(null)).Clear();
    EffectCatalog.availability=priorComposedEffectAvailability;
   }
   public BuffDef[] UpdatedComparisonBuffs(SessionConfig cfg){

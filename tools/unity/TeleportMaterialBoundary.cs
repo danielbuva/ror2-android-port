@@ -15,7 +15,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // A single measured legacy Material location. The prefab bundle keeps its existing owner.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  const string TeleportBundle="teleport-material-lab";
  TeleportMaterialSession teleportMaterialSession;
  TeleportMaterialSession GetTeleportMaterialSession(){if(teleportMaterialSession==null)teleportMaterialSession=new TeleportMaterialSession(this);return teleportMaterialSession;}
@@ -30,13 +30,13 @@ public sealed partial class MovementBatchProbe {
  // release must await the coroutine's original frame yields and release order;
  // Dispose leaves that state intact, including when setup was skipped.
  sealed class TeleportMaterialSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   ResourceLocationMap teleportLocator;
   AsyncOperationHandle<Material> teleportHandle;
   Material teleportMaterial;
   readonly List<TemporaryOverlayInstance> ownedTeleportOverlays=new List<TemporaryOverlayInstance>();
   readonly HashSet<TemporaryOverlayInstance> observedTeleportOverlays=new HashSet<TemporaryOverlayInstance>();
-  public TeleportMaterialSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public TeleportMaterialSession(PortSession coordinator){this.coordinator=coordinator;}
   public int TeleportOverlayCount(){return (int)typeof(TemporaryOverlayManager).GetField("arraySize",BindingFlags.NonPublic|BindingFlags.Static).GetValue(null);}
   public IEnumerator PrepareTeleportMaterial(SessionConfig cfg){
    coordinator.Check(!AssetBundle.GetAllLoadedAssetBundles().Any(b=>b.name==TeleportBundle),"Teleport bundle already has an owner");
@@ -64,6 +64,7 @@ public sealed partial class MovementBatchProbe {
    coordinator.r.teleportMaterialLoaded=true;coordinator.r.teleportMaterialName=material.name;coordinator.r.teleportShader=material.shader.name;
   }
   public void ObserveTeleportOverlays(CharacterBody body){
+   // MovementBatchProbe is the unchanged resource/file name.
    var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
    var model=body.modelLocator.modelTransform.GetComponent<CharacterModel>();
    foreach(var overlay in model.temporaryOverlays){

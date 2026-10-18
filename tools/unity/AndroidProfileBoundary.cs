@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Zio;
 
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public sealed class AndroidProfileReport {public bool ready,created,roundTrip,cleaned,resultApplied,assistedExcluded,loadoutAppliedBeforeSpawn,loadoutVerified,loadoutMenuCommitted,threeStageEligible,threeStageAssistedExcluded,threeStageAwarded;public string recovery,scope,error;public int saveFields,statFields,survivors,appliedRuns,baselineRuns,reconciledRuns,unlockables,achievements,persistentStatAchievements,earnedUnlocks,availableEarnedUnlocks,discoverySlots,discoveredPickups,assistedDiscoveriesExcluded,threeStageChargedEvents;public uint selectedSkin;public int[] selectedSkillVariants;public string[] earnedLoot;public AndroidProgressionBoundary.AwardReport awards;public AndroidProgressionBoundary.DiscoveryReport discovery;public AndroidProgressionBoundary.ThreeStageReport threeStageAward;public List<AndroidProgressionBoundary.EventAwardReport> eventAwards=new List<AndroidProgressionBoundary.EventAwardReport>();public uint earnedCoins;public ulong kills,firstTeleporterCompletedStat;}
  sealed class AndroidProfileSaveSystem:SaveSystem {
   public AndroidOfflineProfile local;
@@ -41,8 +41,8 @@ public sealed partial class MovementBatchProbe {
  // Nested to keep shared coordinator state private. Dispose retains the existing
  // partial-prepare and repeated-cleanup behaviour; a later session may Prepare.
  sealed class AndroidProfileSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
-  public AndroidProfileSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  readonly PortSession coordinator;
+  public AndroidProfileSession(PortSession coordinator){this.coordinator=coordinator;}
   BodyIndex previewLoadoutBody=BodyIndex.None;uint previewLoadoutSkin;int[] previewLoadoutSkills;
   public void ApplyLoadoutBeforeSpawn(CharacterMaster master,GameObject prefab){
    if(coordinator.r.liveCatalogs==null||!Resources.Load<TextAsset>("WholeCatalogBootstrap"))return;

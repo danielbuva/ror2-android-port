@@ -9,7 +9,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Original source stage populations and champion selection; unsupported cards stay explicit.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  bool StagePopulationState(Type type,SessionConfig cfg){
   if(cfg.stagePopulationFamilies==null)return false;
   var families=new[]{"Titan","Vagrant","Jellyfish","GreaterWisp","Bell","Bison","Imp","HermitCrab","MiniMushroom","ClayBruiser","LemurianBruiser","Parent","ImpBoss","ClayBoss","RoboBallBoss","RoboBallMini","Grandparent"};

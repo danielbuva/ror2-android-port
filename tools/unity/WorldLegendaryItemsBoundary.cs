@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 
 // Original controllers and state/configuration data provide gameplay. This owns
 // the Android provider/material boundary and records actual native instances.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class LegendaryItemObservation {public string source;public uint netId;public string[] states;public int samples,maxIcicles;public float maxCharge,maxVisualSpin;public bool forceHostAuthority,localPlayerAuthority,hasAuthority;}
  WorldLegendaryItemsSession worldLegendaryItemsSession;
  WorldLegendaryItemsSession GetWorldLegendaryItemsSession(){if(worldLegendaryItemsSession==null)worldLegendaryItemsSession=new WorldLegendaryItemsSession(this);return worldLegendaryItemsSession;}
@@ -23,12 +23,12 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Dispose preserves instance teardown before source restoration.
  sealed class WorldLegendaryItemsSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<GameObject,LegendaryItemObservation> worldLegendaryItemInstances=new Dictionary<GameObject,LegendaryItemObservation>();
   readonly Dictionary<Behaviour,bool> worldLegendaryRemoteTransforms=new Dictionary<Behaviour,bool>();
   readonly Dictionary<NetworkedBodyAttachment,bool> worldLegendaryHostAuthority=new Dictionary<NetworkedBodyAttachment,bool>();
   static readonly string[] worldLegendaryControllers={"HeadstompersController","IcicleAura","LaserTurbineController","VagrantNovaItemBodyAttachment"};
-  public WorldLegendaryItemsSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldLegendaryItemsSession(PortSession coordinator){this.coordinator=coordinator;}
   public bool IsWorldLegendaryItemSource(string path){return path=="Prefabs/Effects/ImpactEffects/BootShockwave"||path=="Prefabs/NetworkedObjects/BodyAttachments/VagrantNovaItemBodyAttachment"||worldLegendaryControllers.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
   public bool PrepareWorldLegendaryItemSource(string path,GameObject source,int index){
    bool effect=path=="Prefabs/Effects/ImpactEffects/BootShockwave";coordinator.Check(effect?(bool)source.GetComponent<EffectComponent>():(bool)source.GetComponent<NetworkIdentity>(),"Original legendary provider identity missing: "+path);

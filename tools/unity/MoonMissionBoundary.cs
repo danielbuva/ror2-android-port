@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Owned Android activation/visual/input boundary around recovered original mission callbacks.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  ItemDef[] MoonItems(SessionConfig cfg){
   if(!cfg.moonMission)return new ItemDef[0];Check(cfg.moonCatalog!=null,"Original Moon metadata manifest missing");
   var names=new[]{"VoidMegaCrabItem","MasterCore","MasterBattery","ArtifactKey","PowerCube","PowerPyramid","PowerOrbSphere"};

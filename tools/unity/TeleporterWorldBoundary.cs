@@ -20,7 +20,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Composed original objective. This shell owns content/context, observation and Android view.
 // Original interaction/FSM/director/boss squad/holdout/rewards/exit perform gameplay.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ObjectiveVisualBinding {public string path,mesh,material;}
  [Serializable] public class ObjectiveVisualActivation {public string path;public bool active;}
  [Serializable] public class ObjectiveActorSpec {public string name,body,master,card,avatar,controller,material,mesh;public bool recoveredMaterials;public ObjectiveVisualBinding[] bindings;public ObjectiveVisualActivation[] activations;}
@@ -96,7 +96,7 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Dispose preserves teleporter teardown; preload/config releases stay separate.
  sealed class TeleporterWorldSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly List<EntityStateConfiguration> objectiveConfigs=new List<EntityStateConfiguration>();
   readonly Dictionary<FieldInfo,object> objectiveStaticFields=new Dictionary<FieldInfo,object>();
   TMPro.TMP_Settings objectiveTMPSettings;
@@ -127,7 +127,7 @@ public sealed partial class MovementBatchProbe {
   ResourceAvailability priorGameModeAvailability;
   bool ownsGameModeCatalog;
   static string objectiveRuleSignature;
-  public TeleporterWorldSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public TeleporterWorldSession(PortSession coordinator){this.coordinator=coordinator;}
   public IEnumerator PreloadObjectiveBundle(){
    coordinator.Check(!ownsObjectiveBundlePreload,"Unowned objective bundle preload");
    var providers=Addressables.ResourceManager.ResourceProviders;if(!providers.Any(x=>x is AssetBundleProvider))providers.Add(new AssetBundleProvider());
@@ -135,6 +135,7 @@ public sealed partial class MovementBatchProbe {
    coordinator.objectiveBundlePreload=Addressables.ResourceManager.ProvideResource<IAssetBundleResource>(coordinator.objectiveBundleLocation);ownsObjectiveBundlePreload=true;yield return coordinator.objectiveBundlePreload;
    coordinator.Check(coordinator.objectiveBundlePreload.Status==AsyncOperationStatus.Succeeded&&coordinator.objectiveBundlePreload.Result!=null&&coordinator.objectiveBundlePreload.Result.GetAssetBundle(),"Original shared-support bundle container failed before prefab deserialization");
    // Attribute the current Android-only binding failure before bulk shared-asset deserialization.
+   // MovementBatchProbe is the unchanged resource/file name.
    var cfg=JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
    var ward=coordinator.objectiveBundlePreload.Result.GetAssetBundle().LoadAsset<GameObject>(cfg.objectiveSupportAssets[1]);
    var missing=ward?ward.GetComponentsInChildren<Transform>(true).Where(child=>child.GetComponents<Component>().Any(component=>!component)).Select(child=>child.name).ToArray():new[]{"prefab absent"};
@@ -154,7 +155,7 @@ public sealed partial class MovementBatchProbe {
   public void PresentRegisteredNativeEffects(){
    // Only registered, owned effect sources are adapted before their native pool
    // instantiates them. Retain the original arrays for existing scoped teardown.
-   var entries=(EffectDef[])MovementBatchProbe.RewardField(typeof(EffectCatalog),"entries").GetValue(null);
+   var entries=(EffectDef[])PortSession.RewardField(typeof(EffectCatalog),"entries").GetValue(null);
    foreach(var renderer in entries.Where(x=>x!=null&&x.prefabEffectComponent&&x.prefab).SelectMany(x=>x.prefab.GetComponentsInChildren<Renderer>(true)).Distinct()){
     if(coordinator.worldLootSourceMaterials.ContainsKey(renderer))continue;
     var originals=renderer.sharedMaterials;var copies=(Material[])originals.Clone();bool changed=false;
@@ -167,7 +168,7 @@ public sealed partial class MovementBatchProbe {
    }
   }
   public void CleanupObjectiveEffects(){
-   if(objectiveEffectSources==null)return;var pools=(Dictionary<GameObject,EffectPool>)MovementBatchProbe.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);var cache=(IDictionary)MovementBatchProbe.RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
+   if(objectiveEffectSources==null)return;var pools=(Dictionary<GameObject,EffectPool>)PortSession.RewardField(typeof(EffectManager),"_EffectPrefabMap").GetValue(null);var cache=(IDictionary)PortSession.RewardField(typeof(EffectManager),"_ShouldUsePooledEffectMap").GetValue(null);
    foreach(var source in objectiveEffectSources.Where(x=>x)){EffectPool pool;if(pools.TryGetValue(source,out pool)){foreach(var effect in pool.InUse.ToArray())pool.ReturnObject(effect);EffectManager.ClearPool(source);pool.Kill();}cache.Remove(source);}
   }
   public void QueueObjectiveDirectorActor(GameObject obj){var master=obj.GetComponent<CharacterMaster>();if(master)objectiveDirectorActors.Add(master);}
@@ -345,8 +346,8 @@ public sealed partial class MovementBatchProbe {
     // KarmaManager.Init would also start unrelated prefab/Run lifecycle work.
     var priorKarmaUnlocks=KarmaManager.startingKarmaUnlockables;
     try{
-     if(coordinator.androidProgression!=null){coordinator.Check(priorKarmaUnlocks!=null&&priorKarmaUnlocks.Count==0,"Unowned Karma unlock metadata");KarmaManager.startingKarmaUnlockables=new List<UnlockableDef>();MovementBatchProbe.StaticCall(typeof(KarmaManager),"GatherStartingKarmaUnlockables");coordinator.Check(KarmaManager.startingKarmaUnlockables.All(def=>!def||UnlockableCatalog.GetUnlockableDef(def.cachedName)==def),"Original Karma rule unlock metadata identity differs");}
-     MovementBatchProbe.StaticCall(typeof(RuleCatalog),"Init");MovementBatchProbe.StaticCall(typeof(RuleBook),"Init");objectiveRuleSignature=signature;
+     if(coordinator.androidProgression!=null){coordinator.Check(priorKarmaUnlocks!=null&&priorKarmaUnlocks.Count==0,"Unowned Karma unlock metadata");KarmaManager.startingKarmaUnlockables=new List<UnlockableDef>();PortSession.StaticCall(typeof(KarmaManager),"GatherStartingKarmaUnlockables");coordinator.Check(KarmaManager.startingKarmaUnlockables.All(def=>!def||UnlockableCatalog.GetUnlockableDef(def.cachedName)==def),"Original Karma rule unlock metadata identity differs");}
+     PortSession.StaticCall(typeof(RuleCatalog),"Init");PortSession.StaticCall(typeof(RuleBook),"Init");objectiveRuleSignature=signature;
     }finally{KarmaManager.startingKarmaUnlockables=priorKarmaUnlocks;}
    }
    coordinator.Check(objectiveRuleSignature==signature&&RuleCatalog.FindRuleDef("Misc.StageOrder")!=null,"Restart rule catalog input changed");
@@ -360,20 +361,20 @@ public sealed partial class MovementBatchProbe {
    priorGameModeContent=ContentManager._gameModePrefabs;priorGameModeAvailability=GameModeCatalog.availability;
    coordinator.Check(priorGameModeContent==null||priorGameModeContent.Length==0,"Unowned game-mode content array");
    ContentManager._gameModePrefabs=modes;ownsGameModeCatalog=true;
-   MovementBatchProbe.StaticCall(typeof(GameModeCatalog),"LoadGameModes");
+   PortSession.StaticCall(typeof(GameModeCatalog),"LoadGameModes");
    var classic=GameModeCatalog.FindGameModePrefabComponent("ClassicRun");
    coordinator.Check(GameModeCatalog.gameModeCount==modes.Length&&classic&&classic.gameObject==modes.Single(mode=>mode.name=="ClassicRun")&&classic!=Run.instance,"Original ClassicRun catalog identity differs");
   }
   public void CleanupOriginalGameModes(){
    if(!ownsGameModeCatalog)return;
-   MovementBatchProbe.StaticCall(typeof(GameModeCatalog),"SetGameModes",new object[]{Array.Empty<Run>()});
+   PortSession.StaticCall(typeof(GameModeCatalog),"SetGameModes",new object[]{Array.Empty<Run>()});
    ContentManager._gameModePrefabs=priorGameModeContent;GameModeCatalog.availability=priorGameModeAvailability;ownsGameModeCatalog=false;
    coordinator.Check(GameModeCatalog.gameModeCount==0&&!GameModeCatalog.FindGameModePrefabComponent("ClassicRun"),"Original game-mode catalog outlived its owned bundle");
   }
   public void PrepareObjectiveRules(){
    PrepareObjectiveRuleCatalog();
    var run=Run.instance;var networkBook=run.GetComponent<NetworkRuleBook>();coordinator.Check(networkBook,"Original Run rule component absent");
-   if(networkBook.ruleBook==null)MovementBatchProbe.Call(networkBook,"Awake");
+   if(networkBook.ruleBook==null)PortSession.Call(networkBook,"Awake");
    typeof(Run).GetField("networkRuleBookComponent",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(run,networkBook);
    var selected=coordinator.SelectedOfflineDifficulty();var rule=RuleCatalog.FindChoiceDef("Difficulty."+selected);coordinator.Check(rule!=null,"Selected original difficulty rule missing: "+selected);run.ruleBook.ApplyChoice(rule);coordinator.Check(run.ruleBook.FindDifficulty()==selected&&run.selectedDifficulty==selected,"Original chosen difficulty mismatch");coordinator.r.objective.difficulty=selected.ToString();
    coordinator.Check(run.ruleBook.stageOrder==StageOrder.Normal&&!run.ruleBook.keepMoneyBetweenStages,"Original default stage-order/money rules changed");
@@ -408,13 +409,13 @@ public sealed partial class MovementBatchProbe {
    var support=PrepareObjectiveSupport(cfg);while(support.MoveNext())yield return support.Current;
    // Recover the source indicator through the original provider before TeleporterInteraction.Awake.
    objectiveIndicatorLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/PositionIndicators/TeleporterChargingPositionIndicator");coordinator.ownsObjectiveIndicator=true;yield return objectiveIndicatorLease;objectiveIndicatorSource=objectiveIndicatorLease.Result;coordinator.Check(objectiveIndicatorSource,"Original charging indicator source absent");foreach(var text in objectiveIndicatorSource.GetComponentsInChildren<TMPro.TMP_Text>(true))text.enabled=false;objectiveIndicatorReferences=(int)typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(objectiveIndicatorLease);
-   if(!objectiveHoldoutInitialized){MovementBatchProbe.StaticCall(typeof(HoldoutZoneController),"Init");objectiveHoldoutInitialized=true;}
+   if(!objectiveHoldoutInitialized){PortSession.StaticCall(typeof(HoldoutZoneController),"Init");objectiveHoldoutInitialized=true;}
    coordinator.PrepareStageTransport(cfg);coordinator.EnableStageMapZones();var spawn=SpawnStageObjective(cfg);while(spawn.MoveNext())yield return spawn.Current;
   }
   public IEnumerator SpawnStageObjective(SessionConfig cfg){
    coordinator.r.objective=new ObjectiveReport{rules=true,ruleCount=RuleCatalog.ruleCount,difficulty=coordinator.SelectedOfflineDifficulty().ToString(),scope="Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."};objectiveState=null;objectiveRewardApproachAt=-1;
    coordinator.Check(!Stage.instance,"Unowned stage lifecycle");coordinator.objectiveStageHost=new GameObject("Owned Android stage coordinator");coordinator.objectiveStageHost.SetActive(false);coordinator.objectiveStageHost.AddComponent<NetworkIdentity>();coordinator.objectiveStage=coordinator.objectiveStageHost.AddComponent<Stage>();
-   typeof(Stage).GetProperty("sceneDef").SetValue(coordinator.objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());MovementBatchProbe.Call(coordinator.objectiveStage,"OnEnable");coordinator.Check(Stage.instance==coordinator.objectiveStage,"Original stage singleton absent");
+   typeof(Stage).GetProperty("sceneDef").SetValue(coordinator.objectiveStage,SceneCatalog.GetSceneDefForCurrentScene());PortSession.Call(coordinator.objectiveStage,"OnEnable");coordinator.Check(Stage.instance==coordinator.objectiveStage,"Original stage singleton absent");
    var origin=coordinator.worldPlayer.characterMotor.Motor.TransientPosition;RaycastHit hit;coordinator.Check(Physics.Raycast(origin+Vector3.forward*10+Vector3.up*20,Vector3.down,out hit,50,LayerIndex.world.mask,QueryTriggerInteraction.Ignore),"Objective placement has no source floor");
    var primordial=SceneCatalog.GetSceneDefForCurrentScene().cachedName=="skymeadow";var objectiveSource=coordinator.artifactBundle.LoadAsset<GameObject>(primordial?cfg.lunarTeleporterAsset:cfg.teleporterAsset);coordinator.Check(objectiveSource,"Original stage teleporter source missing");coordinator.objectiveHost=Instantiate(objectiveSource,coordinator.worldStaging.transform);coordinator.objectiveHost.name=objectiveSource.name;
    coordinator.Check(coordinator.objectiveHost.GetComponentsInChildren<Component>(true).All(x=>x),"Original teleporter serialized component missing");
@@ -426,7 +427,7 @@ public sealed partial class MovementBatchProbe {
    coordinator.worldTeleporter=coordinator.objectiveHost.GetComponent<TeleporterInteraction>();coordinator.Check(coordinator.worldTeleporter&&!coordinator.worldTeleporter.skipCombat&&coordinator.worldTeleporter.bossDirector&&coordinator.worldTeleporter.bonusDirector,"Original objective combat contract absent");
    var rewardGroup=coordinator.objectiveHost.GetComponent<BossGroup>();coordinator.Check(rewardGroup,"Original objective BossGroup component absent");
    rewardGroup.dropTable=ObjectiveDropTable(rewardGroup.dropTable);
-   foreach(var table in objectiveDropTables.Values)MovementBatchProbe.Call(table,"Regenerate",Run.instance);
+   foreach(var table in objectiveDropTables.Values)PortSession.Call(table,"Regenerate",Run.instance);
    coordinator.r.objective.rewardTables=objectiveDropTables.Values.Select(x=>x.name+"|"+x.GetPickupCount()).ToArray();
    coordinator.Save();coordinator.Check(rewardGroup.dropTable&&rewardGroup.dropTable.GetPickupCount()>0&&objectiveDropTables.Values.All(x=>x.GetPickupCount()>0),"Original objective reward tables have no available pickups: "+string.Join(",",coordinator.r.objective.rewardTables));
    coordinator.PrepareStageBossDeck(cfg);
@@ -479,7 +480,7 @@ public sealed partial class MovementBatchProbe {
     // Keep the first short-lived native Queen effect observation across stage
     // reports; it may disappear before the host's next sampling interval.
     if(coordinator.r.world.nativeEffectViews==null){
-     var effects=visible.Where(x=>x.GetComponentInParent<EffectComponent>()&&MovementBatchProbe.StageObjectPath(x.transform).StartsWith("BeetleQueenBurrow",StringComparison.Ordinal)&&x.sharedMaterials.Any(m=>m&&m.shader&&m.shader.name.StartsWith("Porting Lab/AndroidNativeFamily1Variant",StringComparison.Ordinal))).Select(ObserveOwnedSurface).ToArray();
+     var effects=visible.Where(x=>x.GetComponentInParent<EffectComponent>()&&PortSession.StageObjectPath(x.transform).StartsWith("BeetleQueenBurrow",StringComparison.Ordinal)&&x.sharedMaterials.Any(m=>m&&m.shader&&m.shader.name.StartsWith("Porting Lab/AndroidNativeFamily1Variant",StringComparison.Ordinal))).Select(ObserveOwnedSurface).ToArray();
      if(effects.Length>0)coordinator.r.world.nativeEffectViews=effects;
     }
     coordinator.r.objective.ownedSurfaceCount=owned.Length;coordinator.r.objective.ownedSurfaceViews=owned.Take(64).ToArray();
@@ -500,7 +501,7 @@ public sealed partial class MovementBatchProbe {
    float area=inFront?Mathf.Max(0,Mathf.Min(Screen.width,hi.x)-Mathf.Max(0,lo.x))*Mathf.Max(0,Mathf.Min(Screen.height,hi.y)-Mathf.Max(0,lo.y))/(Screen.width*(float)Screen.height):0;var particle=renderer.GetComponent<ParticleSystem>();
    var particleRenderer=renderer as ParticleSystemRenderer;var streams=new List<ParticleSystemVertexStream>();if(particleRenderer)particleRenderer.GetActiveVertexStreams(streams);
    bool detailed=particleRenderer||renderer.name=="Water"||renderer.name.IndexOf("AreaIndicator",StringComparison.Ordinal)>=0;
-   return new ObjectiveRendererObservation{unityFrame=Time.frameCount,particleRenderMode=particleRenderer?particleRenderer.renderMode.ToString():null,particleAlignment=particleRenderer?particleRenderer.alignment.ToString():null,vertexStreams=particleRenderer?streams.Select(x=>x.ToString()).ToArray():null,materialState=detailed?materials.Select(ObserveSurfaceMaterial).ToArray():null,path=MovementBatchProbe.StageObjectPath(renderer.transform),kind=renderer.GetType().Name,materials=materials.Select(m=>m?m.name:"missing").ToArray(),shaders=materials.Select(m=>m&&m.shader?m.shader.name:"missing").ToArray(),queues=materials.Select(m=>m?m.renderQueue:-1).ToArray(),enabled=renderer.enabled,active=renderer.gameObject.activeInHierarchy,visible=renderer.isVisible,worldOwned=coordinator.worldPresented.Contains(renderer.GetInstanceID())||materials.Any(m=>m&&coordinator.worldMaterials.Contains(m)),center=bounds.center,size=bounds.size,particles=particle?particle.particleCount:0,projectedBoundsFraction=area};
+   return new ObjectiveRendererObservation{unityFrame=Time.frameCount,particleRenderMode=particleRenderer?particleRenderer.renderMode.ToString():null,particleAlignment=particleRenderer?particleRenderer.alignment.ToString():null,vertexStreams=particleRenderer?streams.Select(x=>x.ToString()).ToArray():null,materialState=detailed?materials.Select(ObserveSurfaceMaterial).ToArray():null,path=PortSession.StageObjectPath(renderer.transform),kind=renderer.GetType().Name,materials=materials.Select(m=>m?m.name:"missing").ToArray(),shaders=materials.Select(m=>m&&m.shader?m.shader.name:"missing").ToArray(),queues=materials.Select(m=>m?m.renderQueue:-1).ToArray(),enabled=renderer.enabled,active=renderer.gameObject.activeInHierarchy,visible=renderer.isVisible,worldOwned=coordinator.worldPresented.Contains(renderer.GetInstanceID())||materials.Any(m=>m&&coordinator.worldMaterials.Contains(m)),center=bounds.center,size=bounds.size,particles=particle?particle.particleCount:0,projectedBoundsFraction=area};
   }
   public SurfaceMaterialObservation ObserveSurfaceMaterial(Material material){
    if(!material||!material.shader)return null;var shader=material.shader;var properties=new List<SurfacePropertyObservation>();

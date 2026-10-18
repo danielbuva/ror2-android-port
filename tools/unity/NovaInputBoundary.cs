@@ -11,7 +11,7 @@ using KinematicCharacterController;
 using RoR2;
 using UnityEngine;
 
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class PerformanceReport {public int frames,fixedTicks,targetFrameRate,requestedFrameRate,vSyncCount,displayRefreshRate,sampledAllocationFrames;public long ownLoopAllocatedBytes,worldAllocatedBytes,stimulusAllocatedBytes,saveAllocatedBytes;public double ownLoopMs,observersMs,preObserversMs,primaryMs,combatMs,enemyMs,clockMs,worldMs,clientUpdateMs,stimulusMs,presentationMs,saveMs,objectiveMs,teleporterMs,moonMs,lootMs,pickupMs,commerceHudMs,lootSupportMs,equipmentMs,equipmentStateMs,temporaryEffectMs,flightMs,ammoMs,itemBehaviorsMs,healingMs,bossMs,legendaryMs,itemDisplayMs;}
  static double PerformanceMs(long began){return (System.Diagnostics.Stopwatch.GetTimestamp()-began)*1000.0/System.Diagnostics.Stopwatch.Frequency;}
  [Serializable] public class NovaSample {public float seconds;public NovaInputBridge.Raw raw;public Vector3 input,aim,stateAim,velocity,position;public bool grounded,jump;public int jumpCount;}
@@ -29,8 +29,8 @@ public sealed partial class MovementBatchProbe {
  // Keep iterator-local mapping, landing and camera state with the unchanged loop;
  // its finally owns cleanup. Retain trace state after Dispose for the final Save.
  sealed class NovaInputSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
-  public NovaInputSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  readonly PortSession coordinator;
+  public NovaInputSession(PortSession coordinator){this.coordinator=coordinator;}
   NovaReport novaTraceOwner;int novaTraceNextSample;float novaTraceNextWrite;
   public void FlushNovaTrace(){
    if(coordinator.r==null||!coordinator.r.integratedWorld||coordinator.r.nova==null)return;

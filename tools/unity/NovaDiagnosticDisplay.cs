@@ -14,7 +14,7 @@ public sealed class NovaDiagnosticDisplay : IDisposable {
  public NovaThirdPersonView thirdPerson;
  public AndroidPresentationCamera presentationCamera;
  RoR2.AimAnimator nativeAim;Animator nativeAnimator;
- public void ObserveNativeAim(MovementBatchProbe.NovaReport report){
+ public void ObserveNativeAim(PortSession.NovaReport report){
   if(!nativeAim)return;
   report.originalAimAnimator=nativeAim.isActiveAndEnabled;report.aimPitchCycle=nativeAnimator.GetFloat("aimPitchCycle");report.aimYawCycle=nativeAnimator.GetFloat("aimYawCycle");
   report.modelForward=source.forward;report.characterMatteApproximation=!AndroidNativeDeferredPresentation.report.available;

@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // Observe original fatal damage/death/ragdoll/lifetime; the lab provides content and a stopped-input screen.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class PlayerDefeatReport {public bool prefabLoaded,ragdollStarted,deathEntered,effectTargetMatched,effectDestroyed,bodyDestroyed,masterRetained,corpseObserved;public int deathEvents,effects,ragdollBodies,stateIndex;public float health,seconds,holdSeconds;public string state;}
  const string PlayerDeathPath="Prefabs/TemporaryVisualEffects/PlayerDeathEffect",PlayerDeathBundle="player-death-effect-lab";
  PlayerDefeatSession playerDefeatSession;
@@ -28,10 +28,10 @@ public sealed partial class MovementBatchProbe {
  // only detaches the listener; effect/asset release must await the coroutine's
  // original frame yields and release order, including when setup was skipped.
  sealed class PlayerDefeatSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   ResourceLocationMap playerDeathLocator;AsyncOperationHandle<GameObject> playerDeathHandle;GameObject playerDeathPrefab;
   readonly List<LocalCameraEffect> playerDeathEffects=new List<LocalCameraEffect>();CharacterBody observedDefeatBody;
-  public PlayerDefeatSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public PlayerDefeatSession(PortSession coordinator){this.coordinator=coordinator;}
   public IEnumerator PreparePlayerDefeat(CharacterBody body,SessionConfig cfg){
    coordinator.r.playerDefeat=new PlayerDefeatReport();coordinator.Check(!Resources.FindObjectsOfTypeAll<LocalCameraEffect>().Any(x=>x.gameObject.scene.IsValid()),"Existing local death camera effects");
    var index=EntityStateCatalog.GetStateIndex(typeof(EntityStates.Commando.DeathState));coordinator.Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==typeof(EntityStates.Commando.DeathState),"Original player death state catalog identity missing");coordinator.r.playerDefeat.stateIndex=(int)index;

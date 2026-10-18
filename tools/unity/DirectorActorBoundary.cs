@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Per-actor observations and ownership; original callbacks retain all simulation/reward logic.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class DirectorActorReport {
   public int ambientItems,expectedAmbientItems,equipmentIndex,inventoryTypes,boostHp,boostDamage;public float cost,sourceCost;public string origin,aiState,bodyState;public uint masterId,bodyId,gold,experience;public float spawnedAt,spawnDistance,levelBeforeStart,levelAfterStart,health,pathBeforeDamage,maxFallBeforeDamage,damageReceived,damageToPlayer,deathAt;
   public bool itemGhost;public string team,bodyName,masterName;public bool started,linked,authority,target,route,reachable,dead,bodyDestroyed,masterDestroyed,corpse,cleaned;public int groundedBeforeDamage,damageEvents,deathEvents;public Vector3 spawnPosition,position;

@@ -13,12 +13,12 @@ using UnityEngine.SceneManagement;
 public static class AndroidLifecycleHost {
  const BindingFlags Instance=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
  sealed class Counter {public int calls;public void Hit(){calls++;}}
- static FieldInfo ProbeField(string name){return typeof(MovementBatchProbe).GetField(name,Instance)??throw new MissingFieldException(name);}
+ static FieldInfo ProbeField(string name){return typeof(PortSession).GetField(name,Instance)??throw new MissingFieldException(name);}
  static Delegate BodyEvent(CharacterBody body,string name){return (Delegate)(typeof(CharacterBody).GetField(name,Instance)??throw new MissingFieldException(name)).GetValue(body);}
  static void Require(bool condition,string message){if(!condition)throw new Exception(message);}
  static void ContainsExactly(Delegate callbacks,params Delegate[] expected){Require(callbacks!=null&&callbacks.GetInvocationList().SequenceEqual(expected),"Owned callback or sentinel identity differs");}
- static void Cleanup(MovementBatchProbe probe,string method){
-  try{(typeof(MovementBatchProbe).GetMethod(method,Instance)??throw new MissingMethodException(method)).Invoke(probe,null);}
+ static void Cleanup(PortSession probe,string method){
+  try{(typeof(PortSession).GetMethod(method,Instance)??throw new MissingMethodException(method)).Invoke(probe,null);}
   catch(TargetInvocationException error){System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error.InnerException??error).Throw();}
  }
  public static object Run(){
@@ -28,8 +28,8 @@ public static class AndroidLifecycleHost {
   Action ownedInventory=owned.Hit,sentinelInventory=sentinel.Hit;
   CharacterBody.JumpDelegate ownedJump=owned.Hit,sentinelJump=sentinel.Hit;
   try{
-   probeRoot=new GameObject("Owned lifecycle host fixture");probeRoot.SetActive(false);SceneManager.MoveGameObjectToScene(probeRoot,scene);var probe=probeRoot.AddComponent<MovementBatchProbe>();
-   ProbeField("r").SetValue(probe,new MovementBatchProbe.SessionReport{itemDisplays=new MovementBatchProbe.WorldItemDisplayReport()});
+   probeRoot=new GameObject("Owned lifecycle host fixture");probeRoot.SetActive(false);SceneManager.MoveGameObjectToScene(probeRoot,scene);var probe=probeRoot.AddComponent<PortSession>();
+   ProbeField("r").SetValue(probe,new PortSession.SessionReport{itemDisplays=new PortSession.WorldItemDisplayReport()});
    bodyRoot=new GameObject("Owned inactive body fixture");bodyRoot.SetActive(false);SceneManager.MoveGameObjectToScene(bodyRoot,scene);body=bodyRoot.AddComponent<CharacterBody>();
    body.onInventoryChanged+=sentinelInventory;body.onInventoryChanged+=ownedInventory;body.onJump+=sentinelJump;body.onJump+=ownedJump;
    ProbeField("worldDisplayBody").SetValue(probe,body);ProbeField("worldDisplayInventoryChanged").SetValue(probe,ownedInventory);

@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Source providers and native callbacks only; no ward, pulse or plant algorithms.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  WorldHealingItemsSession worldHealingItemsSession;
  WorldHealingItemsSession GetWorldHealingItemsSession(){if(worldHealingItemsSession==null)worldHealingItemsSession=new WorldHealingItemsSession(this);return worldHealingItemsSession;}
  bool IsWorldHealingItemSource(string path){return GetWorldHealingItemsSession().IsWorldHealingItemSource(path);}
@@ -21,12 +21,12 @@ public sealed partial class MovementBatchProbe {
  // Create on first use and retain for partial setup, repeated cleanup and later
  // observations. Dispose keeps native callback removal before instance teardown.
  sealed class WorldHealingItemsSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   static readonly string[] worldHealingItemNames={"WarbannerWard","InterstellarDeskPlant","DeskplantWard","TeleporterHealNovaGenerator","TeleporterHealNovaPulse"};
   static readonly FieldInfo worldWarbannerEffectField=typeof(CharacterBody).GetField("warbannerEffectInstance",BindingFlags.NonPublic|BindingFlags.Instance);
   readonly HashSet<GameObject> worldHealingItemInstances=new HashSet<GameObject>();
   Action<CharacterBody> worldWarbannerLevel;
-  public WorldHealingItemsSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldHealingItemsSession(PortSession coordinator){this.coordinator=coordinator;}
   public bool IsWorldHealingItemSource(string path){return path=="Prefabs/TemporaryVisualEffects/WarbannerBuffEffect"||worldHealingItemNames.Any(name=>path=="Prefabs/NetworkedObjects/"+name);}
   public void PrepareWorldHealingItemSource(string path,GameObject source){
    if(path=="Prefabs/TemporaryVisualEffects/WarbannerBuffEffect"){

@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Original input-driven interaction and real reward messages; no direct interaction/reward calls.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class InputBarrelReport {
   public BarrelReport source;public ClientCoinReport coin;
   public bool selected,pressed,released,opening,opened,xpDecoded,xpCosmeticsUnavailable,rewards,repeatRejected,selectionReleased,cleaned;

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PROBE = ROOT / "tools/unity/MovementBatchProbe.cs"
+PROBE = ROOT / "tools/unity/PortSession.cs"
 TOKEN = re.compile(r'//[^\n]*|/\*[\s\S]*?\*/|@"(?:""|[^"])*"|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|\w+|[^\s]')
 PAIRS = {"(": ")", "[": "]", "{": "}", "<": ">"}
 
@@ -83,7 +83,7 @@ class SessionConfigTests(unittest.TestCase):
         cls.config = fields(cls.source, "SessionConfig")
         cls.report = fields(cls.source, "SessionReport")
         cls.sources = {path: path.read_text() for directory in ("tools", "android") for path in sorted((ROOT / directory).rglob("*.cs"))}
-        cls.partials = {path: source for path, source in cls.sources.items() if "partial class MovementBatchProbe" in source}
+        cls.partials = {path: source for path, source in cls.sources.items() if "partial class PortSession" in source}
 
     def test_config_is_serializable_sealed_and_independent(self):
         self.assertRegex(self.source, r"\[Serializable\]\s+public\s+sealed\s+class\s+SessionConfig\s*\{")
@@ -105,6 +105,7 @@ class SessionConfigTests(unittest.TestCase):
 
     def test_runtime_resource_parses_use_session_config(self):
         parses = []
+        # MovementBatchProbe is the unchanged resource/file name.
         pattern = re.compile(
             r'JsonUtility\s*\.\s*FromJson\s*<\s*(\w+)\s*>\s*\(\s*Resources\s*\.\s*Load\s*<\s*TextAsset\s*>\s*\(\s*"MovementBatchProbe"\s*\)\s*\.\s*text\s*\)'
         )
@@ -123,7 +124,7 @@ class SessionConfigTests(unittest.TestCase):
                     continue
                 end_type = closing(parts, index + 3)
                 type_name = parts[index + 4 : end_type]
-                if type_name != ["MovementBatchProbe", ".", "SessionReport"] and not (path in self.partials and type_name == ["SessionReport"]):
+                if type_name != ["PortSession", ".", "SessionReport"] and not (path in self.partials and type_name == ["SessionReport"]):
                     continue
                 opening = end_type + 1
                 self.assertEqual(parts[opening], "(")

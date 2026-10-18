@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Bind shipped DOT content; original catalog, stacks, ticks and damage stay native.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class DotObservation {public string type;public int inflictions,damageEvents;public float damage;}
  [Serializable] public class WorldDotReport {
   public bool ready,cleaned;public int definitions,daggerSpawns,peakControllers;
@@ -32,12 +32,12 @@ public sealed partial class MovementBatchProbe {
  // Retain after Dispose: native stacks and bindings are released first; pool
  // cleanup stays at its later coordinator call site after the original yields.
  sealed class WorldDotSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   object previousWorldDotDefs;
   readonly Dictionary<FieldInfo,BurnEffectController.EffectParams> previousWorldBurnEffects=new Dictionary<FieldInfo,BurnEffectController.EffectParams>();
   DotController.OnDotInflictedServerGlobalDelegate worldDotInflicted;Action<DamageReport> worldDotDamage;
   readonly List<GameObject> worldDotPoolSources=new List<GameObject>();
-  public WorldDotSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldDotSession(PortSession coordinator){this.coordinator=coordinator;}
   public BuffDef[] WorldDotBuffs(SessionConfig cfg){
    if(cfg.worldDotBuffAssets==null||cfg.worldDotBuffAssets.Length==0)return new BuffDef[0];
    var names=new[]{"Bleeding","OnFire","Poisoned","Blight","SuperBleed","StrongerBurn","Fracture","lunarruin","Frost","Electrocuted"};

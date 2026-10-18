@@ -13,7 +13,7 @@ using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 // Original pools choose content. Android owns template activation and unavailable audio.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  // Shared with the other runtime boundaries.
  readonly Dictionary<string,GameObject> wholeMasterTemplates=new Dictionary<string,GameObject>(StringComparer.Ordinal);
  readonly Dictionary<CharacterSpawnCard,CharacterSpawnCard> wholeSpawnCards=new Dictionary<CharacterSpawnCard,CharacterSpawnCard>();
@@ -40,7 +40,7 @@ public sealed partial class MovementBatchProbe {
  // turnover. Dispose keeps summon removal before interactables, stage pools,
  // availability masks and template/card registries; their forwarders stay separate.
  sealed class WholePopulationSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly HashSet<ItemDisplayRuleSet> wholeModelDisplayRules=new HashSet<ItemDisplayRuleSet>();
   CharacterSpawnCard wholeBeetleAllyCard;GameObject priorBeetleAllyMaster;bool observesWholePlayerSummons;
   readonly List<AsyncOperationHandle> wholeStageLeases=new List<AsyncOperationHandle>();
@@ -49,7 +49,7 @@ public sealed partial class MovementBatchProbe {
   readonly Dictionary<DroneDef,object[]> priorWholeDroneDefinitions=new Dictionary<DroneDef,object[]>();
   Run wholeAvailabilityRun;DroneMask wholeAvailableDrones,wholeLockedDrones;KeyItemMask wholeAvailableKeyItems,wholeLockedKeyItems;
   AsyncOperationHandle<GameObject> wholeEquipmentOrbLease;GameObject priorWholeEquipmentOrb;int wholeEquipmentOrbReferences;bool ownsWholePickupOrb;
-  public WholePopulationSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WholePopulationSession(PortSession coordinator){this.coordinator=coordinator;}
   public System.Collections.IEnumerator PrepareWholePickups(){
    priorWholeEquipmentOrb=EquipmentDef.dropletDisplayPrefab;wholeEquipmentOrbLease=LegacyResourcesAPI.LoadAsync<GameObject>("Prefabs/ItemPickups/EquipmentOrb");ownsWholePickupOrb=true;yield return wholeEquipmentOrbLease;
    coordinator.Check(wholeEquipmentOrbLease.Status==AsyncOperationStatus.Succeeded&&wholeEquipmentOrbLease.Result,"Original equipment pickup presentation unavailable");
@@ -71,7 +71,7 @@ public sealed partial class MovementBatchProbe {
    foreach(var field in fields)if(!field.IsLiteral&&(field.FieldType.IsArray||field.FieldType==typeof(global::ResourceAvailability)))priorWholeDroneFields.Add(field,field.GetValue(null));
    var definitions=WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.droneDef,new DroneDef[0]);
    foreach(var def in definitions)priorWholeDroneDefinitions.Add(def,new object[]{def.droneIndex,def.requiredExpansion});
-   MovementBatchProbe.StaticCall(typeof(DroneCatalog),"SetDroneDefs",new object[]{definitions});DroneCatalog.availability.MakeAvailable();
+   PortSession.StaticCall(typeof(DroneCatalog),"SetDroneDefs",new object[]{definitions});DroneCatalog.availability.MakeAvailable();
    WholeCatalogComposed.PopulateDefinitionFields("DroneDefs",definitions);
    coordinator.Check(definitions.All(def=>DroneCatalog.GetDroneDef(def.droneIndex)==def&&DroneCatalog.GetBodyIndexFromDroneIndex(def.droneIndex)!=BodyIndex.None),"Original drone catalog identity differs");
   }
@@ -102,7 +102,7 @@ public sealed partial class MovementBatchProbe {
    if(wholeAvailabilityRun){wholeAvailabilityRun.availableDrones=null;wholeAvailabilityRun.expansionLockedDrones=null;wholeAvailabilityRun.availableKeyItems=null;wholeAvailabilityRun.expansionLockedKeyItems=null;wholeAvailabilityRun=null;}
    if(wholeAvailableDrones!=null)DroneMask.Return(wholeAvailableDrones);if(wholeLockedDrones!=null)DroneMask.Return(wholeLockedDrones);if(wholeAvailableKeyItems!=null)KeyItemMask.Return(wholeAvailableKeyItems);if(wholeLockedKeyItems!=null)KeyItemMask.Return(wholeLockedKeyItems);
    wholeAvailableDrones=null;wholeLockedDrones=null;wholeAvailableKeyItems=null;wholeLockedKeyItems=null;
-   if(priorWholeDroneFields.Count>0){MovementBatchProbe.StaticCall(typeof(DroneCatalog),"SetDroneDefs",new object[]{Array.Empty<DroneDef>()});foreach(var entry in priorWholeDroneDefinitions){entry.Key.droneIndex=(DroneIndex)entry.Value[0];entry.Key.requiredExpansion=(RoR2.ExpansionManagement.ExpansionDef)entry.Value[1];}foreach(var entry in priorWholeDroneFields)entry.Key.SetValue(null,entry.Value);priorWholeDroneDefinitions.Clear();priorWholeDroneFields.Clear();}
+   if(priorWholeDroneFields.Count>0){PortSession.StaticCall(typeof(DroneCatalog),"SetDroneDefs",new object[]{Array.Empty<DroneDef>()});foreach(var entry in priorWholeDroneDefinitions){entry.Key.droneIndex=(DroneIndex)entry.Value[0];entry.Key.requiredExpansion=(RoR2.ExpansionManagement.ExpansionDef)entry.Value[1];}foreach(var entry in priorWholeDroneFields)entry.Key.SetValue(null,entry.Value);priorWholeDroneDefinitions.Clear();priorWholeDroneFields.Clear();}
   }
   public GameObject[] PrepareWholeMasterTemplates(GameObject[] originals,GameObject[] adapted){
    foreach(var value in adapted)coordinator.wholeMasterTemplates.Add(value.name,value);
@@ -113,18 +113,18 @@ public sealed partial class MovementBatchProbe {
     if(!originalBody){coordinator.wholeMasterTemplates.Add(source.name,source);continue;}
     var index=originalBody.GetComponent<CharacterBody>().bodyIndex;var bodyObject=BodyCatalog.GetBodyPrefab(index);
     if(!coordinator.priorCatalogBodyTemplates.ContainsKey((int)index)){
-     bodyObject=MovementBatchProbe.Instantiate(originalBody,coordinator.enemyTemplates.transform);bodyObject.name=originalBody.name;bodyObject.SetActive(true);coordinator.objectiveTemplates.Add(bodyObject);
+     bodyObject=PortSession.Instantiate(originalBody,coordinator.enemyTemplates.transform);bodyObject.name=originalBody.name;bodyObject.SetActive(true);coordinator.objectiveTemplates.Add(bodyObject);
      coordinator.Check(bodyObject.GetComponentsInChildren<Component>(true).All(value=>value),"Whole actor has a missing serialized component: "+source.name);
      foreach(var behaviour in bodyObject.GetComponentsInChildren<MonoBehaviour>(true)){
-      if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal)){MovementBatchProbe.DestroyImmediate(behaviour);continue;}
+      if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal)){PortSession.DestroyImmediate(behaviour);continue;}
       if(behaviour is RoR2.Networking.CharacterNetworkTransform||behaviour is InteractionDriver)behaviour.enabled=false;
      }
      foreach(var sfx in bodyObject.GetComponentsInChildren<SfxLocator>(true))foreach(var field in typeof(SfxLocator).GetFields(BindingFlags.Public|BindingFlags.Instance))if(field.FieldType==typeof(string))field.SetValue(sfx,null);
      coordinator.BindCatalogBodyTemplate(bodyObject);
     }
-    var masterObject=MovementBatchProbe.Instantiate(source,coordinator.enemyTemplates.transform);masterObject.name=source.name;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;
+    var masterObject=PortSession.Instantiate(source,coordinator.enemyTemplates.transform);masterObject.name=source.name;masterObject.GetComponent<CharacterMaster>().bodyPrefab=bodyObject;
     var inventory=masterObject.GetComponent<Inventory>();if(inventory)inventory.enabled=false;
-    foreach(var behaviour in masterObject.GetComponentsInChildren<MonoBehaviour>(true))if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal))MovementBatchProbe.DestroyImmediate(behaviour);
+    foreach(var behaviour in masterObject.GetComponentsInChildren<MonoBehaviour>(true))if(behaviour.GetType().Name.StartsWith("Ak",StringComparison.Ordinal))PortSession.DestroyImmediate(behaviour);
     masterObject.SetActive(true);coordinator.objectiveTemplates.Add(masterObject);coordinator.wholeMasterTemplates.Add(source.name,masterObject);
    }
    // The original Beetle Gland behavior loads this card by legacy key each time
@@ -168,7 +168,7 @@ public sealed partial class MovementBatchProbe {
   public CharacterSpawnCard WholeSpawnCard(CharacterSpawnCard source){
    CharacterSpawnCard copy;if(coordinator.wholeSpawnCards.TryGetValue(source,out copy))return copy;
    GameObject master;coordinator.Check(source.prefab&&coordinator.wholeMasterTemplates.TryGetValue(source.prefab.name,out master),"Original spawn card master missing from complete catalog: "+source.name);
-   copy=MovementBatchProbe.Instantiate(source);copy.name=source.name;copy.prefab=coordinator.wholeMasterTemplates[source.prefab.name];coordinator.wholeSpawnCards.Add(source,copy);return copy;
+   copy=PortSession.Instantiate(source);copy.name=source.name;copy.prefab=coordinator.wholeMasterTemplates[source.prefab.name];coordinator.wholeSpawnCards.Add(source,copy);return copy;
   }
   public DirectorCardCategorySelection SelectWholeStagePool(string stage){
    CleanupWholeStagePool();var text=Resources.Load<TextAsset>("WholeStageContexts");coordinator.Check(text,"Original stage context metadata absent");
@@ -186,7 +186,7 @@ public sealed partial class MovementBatchProbe {
     wholeStageInfoSerialized=false;
     coordinator.Check(!info.GetComponent<ClassicStageInfo>()&&!ClassicStageInfo.instance,"Stage context has a foreign population owner");
     // Reduced-scene rollback still reconstructs the measured source fields.
-    coordinator.wholeStageInfo=info.gameObject.AddComponent<ClassicStageInfo>();coordinator.wholeStageInfo.enabled=false;MovementBatchProbe.Call(coordinator.wholeStageInfo,"OnEnable");
+    coordinator.wholeStageInfo=info.gameObject.AddComponent<ClassicStageInfo>();coordinator.wholeStageInfo.enabled=false;PortSession.Call(coordinator.wholeStageInfo,"OnEnable");
     foreach(var name in new[]{"monsterDccsPool","interactableDccsPool"}){
      var handle=Addressables.LoadAssetAsync<DccsPool>((string)source[name]);wholeStageLeases.Add(handle);var pool=handle.WaitForCompletion();coordinator.Check(handle.Status==AsyncOperationStatus.Succeeded&&pool,"Original stage pool unavailable: "+stage+"/"+name);
      typeof(ClassicStageInfo).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).SetValue(coordinator.wholeStageInfo,pool);
@@ -195,10 +195,10 @@ public sealed partial class MovementBatchProbe {
      var field=typeof(ClassicStageInfo).GetField(property.Name,BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic);coordinator.Check(field!=null,"Original population field absent: "+property.Name);
      field.SetValue(coordinator.wholeStageInfo,property.Value.ToObject(field.FieldType));
     }
-    MovementBatchProbe.Call(coordinator.wholeStageInfo,"RebuildCards",new object[]{null,null});
+    PortSession.Call(coordinator.wholeStageInfo,"RebuildCards",new object[]{null,null});
    }
    var selected=(DirectorCardCategorySelection)typeof(ClassicStageInfo).GetField("modifiableMonsterCategories",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(coordinator.wholeStageInfo);coordinator.Check(selected,"Original population selection returned no deck: "+stage);
-   var deck=MovementBatchProbe.Instantiate(selected);
+   var deck=PortSession.Instantiate(selected);
    var sourceCards=selected.categories.SelectMany(category=>category.cards).ToArray();
    var ownedCards=deck.categories.SelectMany(category=>category.cards).ToArray();
    var replacements=new Dictionary<DirectorCard,DirectorCard>();
@@ -219,9 +219,9 @@ public sealed partial class MovementBatchProbe {
   public void CleanupWholeStagePool(){
    if(coordinator.wholeStageInfo){
     bool serialized=wholeStageInfoSerialized;
-    if(coordinator.wholeStageInfo.interactableCategories){MovementBatchProbe.Destroy(coordinator.wholeStageInfo.interactableCategories);coordinator.wholeStageInfo.interactableCategories=null;}
+    if(coordinator.wholeStageInfo.interactableCategories){PortSession.Destroy(coordinator.wholeStageInfo.interactableCategories);coordinator.wholeStageInfo.interactableCategories=null;}
     if(serialized)coordinator.wholeStageInfo.enabled=false;
-    else{MovementBatchProbe.Call(coordinator.wholeStageInfo,"OnDisable");MovementBatchProbe.Call(coordinator.wholeStageInfo,"OnDestroy");MovementBatchProbe.Destroy(coordinator.wholeStageInfo);}
+    else{PortSession.Call(coordinator.wholeStageInfo,"OnDisable");PortSession.Call(coordinator.wholeStageInfo,"OnDestroy");PortSession.Destroy(coordinator.wholeStageInfo);}
     coordinator.wholeStageInfo=null;
    }
    wholeStageInfoSerialized=false;
@@ -231,7 +231,7 @@ public sealed partial class MovementBatchProbe {
    if(observesWholePlayerSummons){MasterSummon.onServerMasterSummonGlobal-=ObserveWholePlayerSummon;observesWholePlayerSummons=false;}
    DestroyWholePlayerSummons();
    if(wholeBeetleAllyCard){coordinator.Check(wholeBeetleAllyCard.prefab==coordinator.wholeMasterTemplates[priorBeetleAllyMaster.name],"Owned Beetle Gland card changed");wholeBeetleAllyCard.prefab=priorBeetleAllyMaster;wholeBeetleAllyCard=null;priorBeetleAllyMaster=null;}
-   coordinator.CleanupWholeInteractables();CleanupWholeStagePool();CleanupWholeRunAvailability();foreach(var card in coordinator.wholeSpawnCards.Values)if(card)MovementBatchProbe.Destroy(card);coordinator.wholeSpawnCards.Clear();coordinator.wholeMasterTemplates.Clear();wholeModelDisplayRules.Clear();
+   coordinator.CleanupWholeInteractables();CleanupWholeStagePool();CleanupWholeRunAvailability();foreach(var card in coordinator.wholeSpawnCards.Values)if(card)PortSession.Destroy(card);coordinator.wholeSpawnCards.Clear();coordinator.wholeMasterTemplates.Clear();wholeModelDisplayRules.Clear();
   }
  }
 }

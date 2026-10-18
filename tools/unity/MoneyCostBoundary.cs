@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Calls the original money-cost delegates with the actual original player. Not chest progression.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class MoneyCostReport {
   public bool sourceReady,catalogReady,initiallyUnaffordable,affordable,paid,unaffordableAfter,cleaned;
   public int sourceCost,catalogCount,shopEquipmentIndex;public uint moneyBefore,funding,moneyFunded,moneyAfter;

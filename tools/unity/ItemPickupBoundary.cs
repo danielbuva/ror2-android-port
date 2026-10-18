@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Diagnostic source-spawned pickup; original catalog, wait, permission, grant and stats remain in charge.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ItemPickupReport {
   public bool catalogReady,factory,earlyDisabled,available,granted,destroyed,statsChanged,cleaned,iconLoaded;
   public int catalogCount,itemIndex,pickupIndex,countBefore,countAfter,acquisitionsBefore,acquisitionsAfter;public uint netId;

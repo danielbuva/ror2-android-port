@@ -10,7 +10,7 @@ using RoR2.Skills;
 using UnityEngine;
 
 // Diagnostic scheduling isolates the original skill factory/activation from its first native consumer.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class PrimaryFireReport {
   public string skill,state,firstFailure,audioException,weaponInitialState,definitionType;
   public bool weaponEnabled,slotWeaponMatched,rootActive;
@@ -31,10 +31,10 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for partial setup, repeated cleanup and later observations.
  // Dispose keeps combat cleanup before primary static restoration and clone release.
  sealed class PrimaryFireSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   FieldInfo[] spineFields;object[] spinePrior;EntityStateConfiguration spineReload;
   EntityState lastSpineWeaponState;
-  public PrimaryFireSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public PrimaryFireSession(PortSession coordinator){this.coordinator=coordinator;}
   public EntityStateConfiguration[] PrepareSpineConfigs(SessionConfig cfg,EntityStateConfiguration spawn){
    spineFields=(cfg.combatSpine?new[]{typeof(FirePistol2),typeof(FireBarrage),typeof(EntityStates.Commando.DodgeState)}:new[]{typeof(FirePistol2)}).SelectMany(t=>t.GetFields(BindingFlags.Public|BindingFlags.Static|BindingFlags.DeclaredOnly)).ToArray();spinePrior=spineFields.Select(x=>x.GetValue(null)).ToArray();
    var fire=coordinator.artifactBundle.LoadAsset<EntityStateConfiguration>(cfg.primaryFireConfigAsset);

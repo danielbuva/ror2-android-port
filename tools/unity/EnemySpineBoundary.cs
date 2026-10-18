@@ -14,7 +14,7 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
 // Original actor/AI/input/state/physics. Only owned audio/visual binding and diagnostic placement.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class EnemyReport {
   public bool graphReady,spawned,linked,authority,targetFound,dead,cleaned,naturalBodyDestroyed,naturalMasterDestroyed,preservedCorpseObserved;
   public int groundNodes,airNodes,aiFrames,headbutts,enemyDamageEvents,playerDamageEvents,groundedFrames,groundedBeforeDamage,collisionMask,stableMask,deathGlobalEvents,playerKillsBefore,playerKillsAfter;
@@ -47,18 +47,18 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for partial setup, repeated cleanup and later verification.
  // Actor destruction and awaited verification stay separate; Dispose restores configs.
  sealed class EnemySpineSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   Material enemyMaterial;SurfaceDef enemySurface;EntityState priorEnemyState;Vector3 priorEnemyPosition;GameObject enemyDetachedModel;
   readonly List<EntityStateConfiguration> enemyConfigs=new List<EntityStateConfiguration>();
   readonly Dictionary<FieldInfo,object> enemyStaticFields=new Dictionary<FieldInfo,object>();
   EliteDef[] priorEnemyElites;EliteIndex[] priorEnemyEliteList;bool ownsEnemyElites;
-  public EnemySpineSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public EnemySpineSession(PortSession coordinator){this.coordinator=coordinator;}
   public void BindEnemyDefinition(Type holder,string name,UnityEngine.Object value){var field=holder.GetField(name);coordinator.Check(field!=null&&field.GetValue(null)==null&&value,"Existing or missing enemy death definition "+name);enemyStaticFields[field]=null;field.SetValue(null,value);}
   public ArtifactDef[] EnemyArtifacts(SessionConfig cfg,ArtifactDef fall){if(!cfg.enemySpine)return new[]{fall};var wisp=coordinator.artifactBundle.LoadAsset<ArtifactDef>(cfg.enemyWispArtifactAsset);coordinator.Check(wisp&&wisp.cachedName=="WispOnDeath","Original death artifact missing");BindEnemyDefinition(typeof(RoR2Content.Artifacts),"WispOnDeath",wisp);if(!cfg.automaticDirector)return new[]{fall,wisp};var honor=coordinator.artifactBundle.LoadAsset<ArtifactDef>(cfg.enemyHonorArtifactAsset);coordinator.Check(honor&&honor.cachedName=="EliteOnly","Original Honor artifact missing");BindEnemyDefinition(typeof(RoR2Content.Artifacts),"EliteOnly",honor);return new[]{fall,wisp,honor};}
   public void PrepareEnemyElites(SessionConfig cfg){
    var field=typeof(EliteCatalog).GetField("eliteDefs",BindingFlags.NonPublic|BindingFlags.Static);priorEnemyElites=(EliteDef[])field.GetValue(null);priorEnemyEliteList=EliteCatalog.eliteList.ToArray();coordinator.Check((priorEnemyElites==null||priorEnemyElites.Length==0)&&priorEnemyEliteList.Length==0,"Existing elite catalog");
    var names=new[]{"Poison","Haunted","Lunar","Void"};var defs=cfg.enemyEliteAssets.Select(x=>coordinator.artifactBundle.LoadAsset<EliteDef>(x)).ToArray();coordinator.Check(defs.Length==4,"Measured death elite definitions missing");for(int i=0;i<4;i++){coordinator.Check(defs[i]&&defs[i].name=="ed"+names[i],"Original elite identity");BindEnemyDefinition(i==3?typeof(DLC1Content.Elites):typeof(RoR2Content.Elites),names[i],defs[i]);}
-   var all=ComposedEliteDefinitions(cfg);ownsEnemyElites=true;MovementBatchProbe.StaticCall(typeof(EliteCatalog),"SetEliteDefs",new object[]{all});foreach(var def in all)coordinator.Check(def.eliteIndex!=EliteIndex.None&&EliteCatalog.GetEliteDef(def.eliteIndex)==def,"Original elite catalog identity");
+   var all=ComposedEliteDefinitions(cfg);ownsEnemyElites=true;PortSession.StaticCall(typeof(EliteCatalog),"SetEliteDefs",new object[]{all});foreach(var def in all)coordinator.Check(def.eliteIndex!=EliteIndex.None&&EliteCatalog.GetEliteDef(def.eliteIndex)==def,"Original elite catalog identity");
    if(coordinator.r.liveCatalogs!=null)WholeCatalogComposed.PopulateDefinitionFields("Elites",all,"ed");
   }
   public EliteDef[] ComposedEliteDefinitions(SessionConfig cfg){

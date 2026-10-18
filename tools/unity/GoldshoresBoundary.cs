@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 // The original scene, mission FSM, beacon purchases, boss and return portal own
 // the gameplay. This boundary supplies the existing additive-stage context and
 // optional unattended input through the same player controls used elsewhere.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class GoldshoresMissionReport {
   public string scope,state,returnScene;
   public bool diagnosticShrineSpawned,shrinePurchased,entryPortalUsed,sceneEntered,missionActive,bossDefeated,exitBegan,exitFinished;

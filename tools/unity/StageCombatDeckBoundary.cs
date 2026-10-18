@@ -8,7 +8,7 @@ using UnityEngine;
 
 // Original native stage pools in whole-catalog mode; legacy filtered decks remain a rollback path.
 // Card/category weights, availability and placement fields remain original; excluded content is explicit.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class StageCombatDeckSpec {public string name,asset;public int cards,categories,excluded;}
  [Serializable] public class StageCombatSpawn {public string card,director,master,body;public int count,directorInstanceId,spawnCardInstanceId;public bool inheritedWave;}
  [Serializable] public class StageCombatDeckReport {public string stage;public string[] cards;public int excluded;public bool nativePool,nativeScenePopulation,sourceSceneDirector,sourceGameManager;public int sourceContinuousDirectors,initialInteractableCredits,remainingInteractableCredits,playerSpawnPoints,droneDefinitions,availableDrones,pickupDefinitions,lunarLoot;public List<string> placedInteractables=new List<string>();public string[] interactableCards;public List<StageCombatSpawn> spawned=new List<StageCombatSpawn>();}

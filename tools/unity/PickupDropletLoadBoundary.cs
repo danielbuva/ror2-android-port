@@ -14,7 +14,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 // One untouched source asset and genuine startup callback; no droplet instantiation or motion.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class PickupDropletLoadReport {
   public bool syncLoaded,asyncMatched,sourceMatched,callbackMatched,pendingBalanced,noInstances,conserved,cleaned;
   public int components,instancesBefore,instancesAfter,pendingBefore,pendingAfter,referencesBeforeInit,referencesAfterInit,initCalls,locatorsBefore,locatorsAfter;

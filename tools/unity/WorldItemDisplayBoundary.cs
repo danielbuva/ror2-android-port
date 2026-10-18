@@ -8,7 +8,7 @@ using RoR2;
 using UnityEngine;
 
 // Source attachment rules and original CharacterModel factories; owned Android lifecycle/materials.
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class ItemDisplayObservation {public string item,parent;public int instances;public Vector3 localPosition,localScale;}
  [Serializable] public class WorldItemDisplayReport {public bool ready,cleaned;public int groups,rules,itemInstances,equipmentInstances,updates;public string error,scope="Original eligible Commando display rules, attachment transforms and native item/equipment factories. Owned inventory callback and Android material copies; no exact PC pose/material parity or stock camera/highlight acceptance.";public List<ItemDisplayObservation> objects=new List<ItemDisplayObservation>();}
  // Shared with flight equipment and the destroyed-body lifecycle fixture.
@@ -23,10 +23,10 @@ public sealed partial class MovementBatchProbe {
  // Create on first use, including fixture cleanup before setup. Retain after
  // Dispose for partial setup, repeated cleanup and later calls.
  sealed class WorldItemDisplaySession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   ItemDisplayRuleSet worldDisplayRules,worldDisplayPriorRules;
   readonly HashSet<GameObject> worldDisplayInstances=new HashSet<GameObject>();
-  public WorldItemDisplaySession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public WorldItemDisplaySession(PortSession coordinator){this.coordinator=coordinator;}
   public void PrepareWorldItemDisplays(CharacterBody body,SessionConfig cfg){
    if(!cfg.worldItemDisplays)return;
    coordinator.Check(!coordinator.worldDisplayModel&&!worldDisplayRules&&coordinator.worldDisplayInventoryChanged==null,"Existing owned item display context");

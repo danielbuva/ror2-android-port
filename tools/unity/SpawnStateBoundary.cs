@@ -10,7 +10,7 @@ using KinematicCharacterController;
 using RoR2;
 using UnityEngine;
 
-public sealed partial class MovementBatchProbe {
+public sealed partial class PortSession {
  [Serializable] public class LiveCatalogReport {
   public int emptyPreloadKeys,projectiles,bodies,masters,adaptedMasters,skills,skillFamilies,emptySkillVariants,stateTypes,stateConfigurations,adaptedStateConfigurations,staticStateFields,preloadGUIDs;
   public string[] missingSourcePreloadKeys;
@@ -30,10 +30,10 @@ public sealed partial class MovementBatchProbe {
  // Retain the owner for partial setup, repeated cleanup and later observations.
  // Dispose preserves cross-owner cleanup before spawn and native preload restoration.
  sealed class SpawnStateSession : IDisposable {
-  readonly MovementBatchProbe coordinator;
+  readonly PortSession coordinator;
   readonly Dictionary<FieldInfo,object> wholeStateFields=new Dictionary<FieldInfo,object>();
   readonly Dictionary<FieldInfo,object> wholePreloadFields=new Dictionary<FieldInfo,object>();
-  public SpawnStateSession(MovementBatchProbe coordinator){this.coordinator=coordinator;}
+  public SpawnStateSession(PortSession coordinator){this.coordinator=coordinator;}
   public void CaptureWholeStateOwnership(EntityStateConfiguration[] configs){
    coordinator.Check(wholeStateFields.Count==0&&wholePreloadFields.Count==0,"Whole state fields already owned");
    foreach(var config in configs){var type=(Type)config.targetType;if(type==null)continue;foreach(var value in config.serializedFieldsCollection.serializedFields){
@@ -95,10 +95,10 @@ public sealed partial class MovementBatchProbe {
    var selectedTypes=types;
    if(originals!=null){types=originals.Select(value=>(Type)value.targetType).Where(value=>value!=null).Concat(types).Distinct().ToArray();coordinator.r.liveCatalogs.stateTypes=types.Length;coordinator.r.liveCatalogs.stateConfigurations=originals.Length;coordinator.r.liveCatalogs.adaptedStateConfigurations=configs.Length;coordinator.r.liveCatalogs.staticStateFields=wholeStateFields.Count;}
    coordinator.ownsStateCatalog=true;coordinator.r.phase="original-spawn-state-catalog";coordinator.Save();
-   var initialize=MovementBatchProbe.BuildStateCatalogRoutine(types,originals??configs);while(initialize.MoveNext())yield return initialize.Current;
+   var initialize=PortSession.BuildStateCatalogRoutine(types,originals??configs);while(initialize.MoveNext())yield return initialize.Current;
    // Retain the accepted bounded configuration adaptations without changing the
    // native full configuration/preload ordering or replacing original programs.
-   if(originals!=null){coordinator.r.liveCatalogs.emptyPreloadKeys=RemoveEmptyStatePreloadKeys();foreach(var selected in configs)MovementBatchProbe.StaticCall(typeof(EntityStateCatalog),"ApplyEntityStateConfiguration",selected);coordinator.r.liveCatalogs.preloadGUIDs=((string[])typeof(EntityStatePreloadCatalog).GetField("preloadGUIDs",flags).GetValue(null)).Length;}
+   if(originals!=null){coordinator.r.liveCatalogs.emptyPreloadKeys=RemoveEmptyStatePreloadKeys();foreach(var selected in configs)PortSession.StaticCall(typeof(EntityStateCatalog),"ApplyEntityStateConfiguration",selected);coordinator.r.liveCatalogs.preloadGUIDs=((string[])typeof(EntityStatePreloadCatalog).GetField("preloadGUIDs",flags).GetValue(null)).Length;}
    if(coordinator.IsPlayableSpine())coordinator.ApplySpineExclusions();if(cfg.enemySpine)coordinator.EnemyExclusions();if(cfg.teleporterLoop){StunState.stunVfxPrefab=coordinator.artifactBundle.LoadAsset<GameObject>(cfg.objectiveStunAsset);coordinator.Check(StunState.stunVfxPrefab,"Original composed stun presentation missing");}
    foreach(var type in types){var index=EntityStateCatalog.GetStateIndex(type);coordinator.Check(index!=EntityStateIndex.Invalid&&EntityStateCatalog.GetStateType(index)==type,"Original complete state identity round trip");}
    foreach(var type in selectedTypes){var index=EntityStateCatalog.GetStateIndex(type);coordinator.Check(EntityStateCatalog.InstantiateState(index).GetType()==type,"Original live state constructor identity");}
@@ -126,11 +126,11 @@ public sealed partial class MovementBatchProbe {
      coordinator.Check(stateMachine.state is Uninitialized&&stateMachine.networker==body.GetComponent<NetworkStateMachine>(),"Automatic state Awake/network cache");
      if(coordinator.r.id=="body-state-spawn-state-idle"){
       coordinator.Check(stateMachine.initialStateType.stateType==typeof(Idle)&&stateMachine.mainStateType.stateType==typeof(Idle),"Original Idle machine types");
-      coordinator.r.phase="original-idle-start:"+stateMachine.customName;coordinator.Save();MovementBatchProbe.Call(stateMachine,"Start");coordinator.Check(stateMachine.state is Idle,"Original Idle Start entry");coordinator.r.idleStarts++;
+      coordinator.r.phase="original-idle-start:"+stateMachine.customName;coordinator.Save();PortSession.Call(stateMachine,"Start");coordinator.Check(stateMachine.state is Idle,"Original Idle Start entry");coordinator.r.idleStarts++;
      }else{
       var model=body.modelLocator.modelTransform.GetComponent<CharacterModel>();coordinator.Check(model,"Original model component");var priorInvisible=model.invisibilityCount;
       coordinator.Check(RoR2Content.Buffs.HiddenInvincibility&&RoR2Content.Buffs.HiddenInvincibility.buffIndex!=BuffIndex.None&&body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility)==0,"Original hidden buff context");
-      coordinator.r.phase="original-spawn-state-start";coordinator.Save();MovementBatchProbe.Call(stateMachine,"Start");coordinator.r.spawnState=stateMachine.state.GetType().FullName;coordinator.r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);
+      coordinator.r.phase="original-spawn-state-start";coordinator.Save();PortSession.Call(stateMachine,"Start");coordinator.r.spawnState=stateMachine.state.GetType().FullName;coordinator.r.hiddenBuffCount=body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility);
       coordinator.Check(stateMachine.state is SpawnTeleporterState&&coordinator.r.hiddenBuffCount==1&&model.invisibilityCount==priorInvisible+1,"Original spawn OnEnter and buff/model effects");coordinator.r.spawnStateEntries++;
       if(coordinator.r.id=="body-state-spawn-state-transition"||coordinator.r.id.StartsWith("body-state-spawn-state-main-")){
        coordinator.r.phase="original-spawn-state-ticks";coordinator.Save();int limit=Mathf.CeilToInt(cfg.sourceSpawnDelay/Time.fixedDeltaTime)+5;
@@ -143,7 +143,7 @@ public sealed partial class MovementBatchProbe {
    }catch(Exception e){failure=e;}
    try{if(!string.IsNullOrEmpty(cfg.teleportMaterialAsset))coordinator.ObserveTeleportOverlays(body);}catch(Exception e){failure=failure==null?e:new AggregateException(failure,e);}
    // Original destruction exits selected states while their actual catalog/buff dependencies still exist.
-   foreach(var stateMachine in selected){try{MovementBatchProbe.Call(stateMachine,"OnDestroy");}catch(Exception e){failure=failure==null?e:new AggregateException(failure,e);}}
+   foreach(var stateMachine in selected){try{PortSession.Call(stateMachine,"OnDestroy");}catch(Exception e){failure=failure==null?e:new AggregateException(failure,e);}}
    if(failure!=null)throw failure;
    coordinator.Check(selected.All(x=>x.state==null),"Original selected state teardown");
   }
@@ -156,7 +156,7 @@ public sealed partial class MovementBatchProbe {
    coordinator.Check(motor&&solver&&input&&motor.Motor==solver&&!body.gameObject.activeInHierarchy,"Actual spawned motor/input isolation");
    if(coordinator.r.id!="body-state-spawn-state-main-neutral"){
     coordinator.r.phase="original-spawned-motor-start";coordinator.Save();Action<CharacterBody> observed=b=>{if(b==body)coordinator.r.motorStartEvents++;};motor.onMotorStart+=observed;
-    try{MovementBatchProbe.Call(motor,"Start");}finally{motor.onMotorStart-=observed;}
+    try{PortSession.Call(motor,"Start");}finally{motor.onMotorStart-=observed;}
     coordinator.r.rawAuthority=body.hasAuthority;coordinator.r.effectiveAuthority=RoR2.Util.HasEffectiveAuthority(body.gameObject);
     coordinator.Check(coordinator.r.motorStartEvents==1&&motor.hasEffectiveAuthority&&coordinator.r.effectiveAuthority&&!coordinator.r.rawAuthority&&motor.useGravity,"Original spawned motor Start/event/server authority");
     coordinator.Check(solver.MaxStableSlopeAngle==70&&solver.MaxStableDenivelationAngle==55&&motor.capsuleHeight==body.GetComponent<CapsuleCollider>().height,"Original spawned motor parameters");
@@ -174,11 +174,11 @@ public sealed partial class MovementBatchProbe {
    try{
     coordinator.r.phase="original-spawned-main-motion";coordinator.Save();Physics.gravity=Vector3.zero;solver.SetGroundSolvingActivation(false);solver.CollidableLayers=0;motor.velocity=Vector3.zero;
     input.moveVector=Vector3.right;input.aimDirection=Vector3.right;
-    for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);MovementBatchProbe.Step(solver,1);coordinator.r.spawnedMainTicks++;}
+    for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);PortSession.Step(solver,1);coordinator.r.spawnedMainTicks++;}
     coordinator.r.x=solver.TransientPosition.x-origin.x;coordinator.r.y=solver.TransientPosition.y-origin.y;
     coordinator.Check(coordinator.r.x>5&&coordinator.r.x<7&&Mathf.Abs(coordinator.r.y)<.001f&&Mathf.Abs(motor.velocity.x-body.moveSpeed)<.001f,"Original spawned main/motor/solver displacement");
     input.moveVector=Vector3.zero;
-    for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);MovementBatchProbe.Step(solver,1);coordinator.r.spawnedMainTicks++;}
+    for(int i=0;i<50;i++){machine.ManagedFixedUpdate(.02f);PortSession.Step(solver,1);coordinator.r.spawnedMainTicks++;}
     coordinator.r.z=solver.TransientPosition.x-origin.x;
     coordinator.Check(coordinator.r.z>=coordinator.r.x&&coordinator.r.z<coordinator.r.x+2&&motor.velocity.sqrMagnitude<.000001f&&motor.moveDirection==Vector3.zero,"Original spawned main braking");
     coordinator.Check(machine.state==state&&!body.gameObject.activeInHierarchy,"Spawned main state identity/isolation changed");
