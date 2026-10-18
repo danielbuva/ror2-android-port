@@ -5243,3 +5243,17 @@ token-identical apart from `coordinator.` qualifiers. Zero-error code-only build
 all four owners checked in the staged project. `./dev check-baseline` passed (35.2 s on Lakes,
 13 applied profile runs, `work/experiments/baseline/20261018T005040.191614Z`) and `--stage-exit` passed on the same APK
 (`work/experiments/baseline/20261018T005403.945864Z`). App stopped; OLED asleep.
+
+## J538 — Extract the active-client and stage-geometry owners
+
+Phase 4 step 5, batch 9 (implemented by Codex, reviewed and fixed by Claude). New nested
+`IDisposable` owners for `ActiveClientBoundary.cs` and `StageGeometryBoundary.cs`; network
+client/server shutdown order and `CleanupStageGeometry`'s place in `Start` are unchanged, and
+the 18 moved bodies are token-identical apart from `coordinator.` qualifiers. The first
+exact-editor build failed with CS0120 on two continuation lines of one multi-line expression in
+the stage-geometry owner (`stageSourceObjects` and `r` without `coordinator.`); Codex's
+self-scan misses identifiers at the start of a line, so its prompt now says so, and a local
+scanner gives a second opinion. After qualifying them: zero-error code-only build, APK `6ee1b54b3dedf4e398b8b5e32dc09a6e91c92586d0f206f0ec90dc3ec24495cf`,
+fix checked in the staged project. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied
+profile runs, `work/experiments/baseline/20261018T010629.609038Z`) and `--stage-exit` passed on the same APK
+(`work/experiments/baseline/20261018T010955.281620Z`). App stopped; OLED asleep.
