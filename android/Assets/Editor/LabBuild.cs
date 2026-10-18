@@ -136,19 +136,27 @@ public static class LabBuild {
   if(string.IsNullOrEmpty(request.request_id)||request.reusePayload)throw new InvalidOperationException("Full destination build request required");
   string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);
   var start=DateTime.UtcNow;int importErrors=0;Result result=null;
-  Application.LogCallback countErrors=(message,stack,type)=>{if(type==LogType.Error||type==LogType.Exception||type==LogType.Assert)importErrors++;};
+  // Errors during the dependent reimport are recorded, not counted here: R9 requires each
+  // to appear already in pass 1's fresh-import log (a pre-existing content diagnostic).
+  // Any other error before the build fails the gate.
+  bool reimporting=false;var reimportErrors=new System.Collections.Generic.List<string>();
+  Application.LogCallback countErrors=(message,stack,type)=>{if(type!=LogType.Error&&type!=LogType.Exception&&type!=LogType.Assert)return;if(reimporting)reimportErrors.Add((message??"").Split('\n')[0].Trim());else importErrors++;};
   Application.logMessageReceived+=countErrors;
   try{
    if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Destination scripts have not finished compiling/importing");
    var selection=JsonUtility.FromJson<ScriptSelection>(File.ReadAllText(Path.Combine(root,"build-selection.json"))).assets;
    var repaired=JsonUtility.FromJson<PluginReimport>(File.ReadAllText(Path.Combine(root,"plugin-reimport.json")));
    if(repaired.request_id!=request.request_id||repaired.plugins==null||!repaired.plugins.SequenceEqual(ManagedPlugins()))throw new InvalidOperationException("Destination plugin reimport pass missing or stale");
-   var imports=ReimportDestinationDependents(selection,repaired.plugins);
+   reimporting=true;ScriptImports imports;
+   try{imports=ReimportDestinationDependents(selection,repaired.plugins);}finally{reimporting=false;}
+   imports.errors=reimportErrors.ToArray();
    string audit=InspectDestinationScripts(selection);
    File.WriteAllText(Path.Combine(outDir,"script-audit.json"),audit);
    File.WriteAllText(Path.Combine(outDir,"script-imports.json"),JsonUtility.ToJson(imports,true));
    var gate=Newtonsoft.Json.Linq.JObject.Parse(audit);
-   if(!(bool)gate["uiValid"]||importErrors!=0)throw new InvalidOperationException("Destination script gate failed; inspect script-audit.json and editor.log");
+   string freshLog=File.ReadAllText(Path.Combine(root,"editor-repair.log"));
+   var newErrors=imports.errors.Where(error=>error.Length==0||!freshLog.Contains(error)).ToArray();
+   if(!(bool)gate["uiValid"]||importErrors!=0||newErrors.Length!=0)throw new InvalidOperationException("Destination script gate failed; inspect script-audit.json, script-imports.json and editor.log");
    SessionState.SetString(RunningBuild,request.request_id);
    PlayerSettings.colorSpace=ColorSpace.Linear;
    // Build remains the unchanged real build path. Count its errors from its report.
@@ -163,7 +171,7 @@ public static class LabBuild {
   EditorApplication.Exit(result.success?0:1);
  }
  [Serializable] class ScriptSelection {public string[] assets;}
- [Serializable] class ScriptImports {public string[] plugins,dependents;}
+ [Serializable] class ScriptImports {public string[] plugins,dependents,errors;}
  static string[] ManagedPlugins(){
   // J576/task-720: original DLL import ran before package UI compilation. All
   // managed asset plugins are included, also those outside Assets/Plugins.
@@ -189,8 +197,14 @@ public static class LabBuild {
   foreach(string path in dependents)visit(path);
   // J578: one forced synchronous import per asset cost a full refresh each, growing
   // to over ten minutes apiece. Queue every forced import into one batch instead.
+  // J579: inside the batch, TimerText.OnValidate reached TMP settings before they loaded
+  // (NullReferenceException). Import and load them first, outside the batch.
+  const string tmpSettings="Assets/LabLoadingScene/Resources/TMP Settings.asset";
+  if(File.Exists(tmpSettings))AssetDatabase.ImportAsset(tmpSettings,ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
+  var settingsType=Type.GetType("TMPro.TMP_Settings, Unity.TextMeshPro");
+  if(settingsType!=null&&settingsType.GetProperty("instance")?.GetValue(null)==null)throw new InvalidOperationException("TMP settings unavailable before dependent reimport");
   AssetDatabase.StartAssetEditing();
-  try{foreach(string path in ordered)AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);}
+  try{foreach(string path in ordered.Where(path=>path!=tmpSettings))AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);}
   finally{AssetDatabase.StopAssetEditing();}
   if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Dependent reimport left pending compilation or import");
   return new ScriptImports{plugins=plugins,dependents=dependents};

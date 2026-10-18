@@ -5976,3 +5976,28 @@ errors, APK `d482d9b7663bb817be013817b8832552db550c9da0751cc8a182e32569e37518`, 
 on adopted storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one
 genuine exit). App stopped, OLED asleep. The `LabBuild.cs` provenance row was refreshed. 755 host
 tests pass.
+
+## J580 — R9 HUD repaired; differential reimport-error gate
+
+Phase 2, from-scratch rebuild (run and fixed by Claude). The batched R9 (J579) ran from a fresh
+destination Library in 22 minutes. Pass 1 reimported all 49 managed DLLs. Pass 2's script audit
+then showed the J576/J577 defect repaired: `RecoveredUI/Hud.prefab` and `Menu.prefab` have no
+missing scripts and `TimerText` has its target label. The gate still refused, because five errors
+were logged during the dependent reimport. All the content-import messages among them (clip names
+that differ from their file names, an animator parameter that does not exist, a director-asset
+field) also appear in pass 1's fresh-import log; they are diagnostics any fresh import of this
+content prints. One was new: a TextMesh Pro `NullReferenceException` in
+`TMP_Settings.get_defaultStyleSheet`, raised by `TimerText.OnValidate` when the batched reimport
+reached the HUD before `TMP Settings.asset` had loaded.
+
+Changes, with no message allowance. Pass 2 now imports `TMP Settings.asset` synchronously and
+loads TMP's settings instance before the batch, refusing to continue if they are unavailable.
+Errors logged during the dependent reimport are recorded in `lab-build/script-imports.json`; each
+must already appear in pass 1's fresh-import log (`editor-repair.log`), or the gate fails before
+the build, and `unity_rebuild.reimport_errors` re-checks this afterwards. Any other error before
+the build, including during the audit, still fails outright. The edited `LabBuild.cs` compiled in
+the exact editor: code build zero errors, APK
+`fc7b8eb218d576f27991207579836aebac4795064b7c87c28b8e370d738a3abe`, installed in place on adopted
+storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
+exit). App stopped, OLED asleep. The `LabBuild.cs` provenance row was refreshed. 756 host tests
+pass.

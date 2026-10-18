@@ -129,6 +129,18 @@ def destination_manifest(destination, input_id):
     return manifest
 
 
+def reimport_errors(scratch):
+    """Errors logged while pass 2 reimports dependents must already occur in pass 1's fresh import."""
+    errors = read(scratch / "lab-build/script-imports.json").get("errors")
+    if not isinstance(errors, list) or any(not isinstance(error, str) for error in errors):
+        raise RuntimeError("Destination reimport error record missing")
+    fresh = (scratch / "editor-repair.log").read_text(errors="replace")
+    new = sorted({error for error in errors if not error or error not in fresh})
+    if new:
+        raise RuntimeError("Dependent reimport logged errors absent from the fresh import: " + "; ".join(new[:5]))
+    return dict(count=len(errors), distinct=len(set(errors)), all_in_fresh_import=True)
+
+
 def execute_build(destination, work, api):
     """Unity half of build.build; no live preflight, payload/cache or pointer writes."""
     from build import stage_android_assets, validate_staged_runtime_sources
@@ -223,6 +235,7 @@ def execute_build(destination, work, api):
         if audit.get("schema") != 1 or not audit.get("uiValid"):
             raise RuntimeError("Destination script audit missing or failed")
         result["script_audit"] = audit
+        result["reimport_errors"] = reimport_errors(scratch)
         apk = Path(result["apk"])
         if not apk.resolve().is_relative_to(scratch) or not apk.is_file():
             raise RuntimeError("Unity APK outside destination run or missing")

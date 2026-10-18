@@ -84,6 +84,7 @@ class UnityRebuildTests(unittest.TestCase):
                 write(
                     scratch / "plugin-reimport.json", dict(request_id=read(scratch / "build-request.json")["request_id"], plugins=["Assets/Plugins/RoR2.dll"])
                 )
+                (scratch / "editor-repair.log").write_text("Main Object Name 'Clip, A' does not match filename 'Clip_ A'\n")
             return SimpleNamespace(returncode=1 if getattr(self, "repair_fails", False) else 0)
         self.assertEqual(method, "LabBuild.BuildDestination")
         self.assertTrue((scratch / "plugin-reimport.json").is_file())
@@ -96,6 +97,8 @@ class UnityRebuildTests(unittest.TestCase):
         apk = scratch / "lab-build/lab-vulkan.apk"
         self.zip(apk, {"assets/bin/Data/level0": b"fresh"})
         write(scratch / "lab-build/result.json", dict(success=True, errors=0, request_id=request["request_id"], apk=str(apk)))
+        imports = dict(plugins=[], dependents=[], errors=getattr(self, "reimport_messages", ["Main Object Name 'Clip, A' does not match filename 'Clip_ A'"]))
+        write(scratch / "lab-build/script-imports.json", imports)
         write(
             scratch / "lab-build/script-audit.json",
             dict(schema=1, uiValid=True, missingScripts=4, assets=[dict(path="Assets/example.prefab", missingScripts=4)]),
@@ -130,6 +133,16 @@ class UnityRebuildTests(unittest.TestCase):
             whole_catalog.build_integration(destination=self.dest, work=self.work)
         self.assertEqual(self.methods, ["LabBuild.RepairDestinationPlugins"])
         self.assertEqual(self.before, self.snapshot())
+
+    def test_reimport_errors_must_already_occur_in_the_fresh_import(self):
+        with patch.object(r9, "run", side_effect=self.fake_run):
+            result = whole_catalog.build_integration(destination=self.dest, work=self.work)
+        self.assertEqual(result["reimport_errors"], dict(count=1, distinct=1, all_in_fresh_import=True))
+        for messages in (["NullReferenceException: Object reference not set to an instance of an object"], [""]):
+            self.reimport_messages = messages
+            with self.subTest(messages=messages), patch.object(r9, "run", side_effect=self.fake_run):
+                with self.assertRaisesRegex(RuntimeError, "absent from the fresh import"):
+                    whole_catalog.build_integration(destination=self.dest, work=self.work)
 
     def test_failed_or_absent_script_audit_cannot_publish_a_success_receipt(self):
         for audit in (None, dict(schema=1, uiValid=False), dict(schema=0, uiValid=True)):

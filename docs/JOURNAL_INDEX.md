@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J580](PORTING_JOURNAL.md#j580--r9-hud-repaired-differential-reimport-error-gate) | 2026-10-18 | R9 HUD repaired; differential reimport-error gate | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J579](PORTING_JOURNAL.md#j579--r9-dependent-reimport-batched) | 2026-10-18 | R9 dependent reimport batched | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J578](PORTING_JOURNAL.md#j578--r9-plugin-reimport-split-into-two-editor-sessions) | 2026-10-18 | R9 plugin reimport split into two editor sessions | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J577](PORTING_JOURNAL.md#j577--destination-import-repair-and-script-gate-one-catalog-identity-new-baseline-apk) | 2026-10-18 | Destination import repair and script gate; one catalog identity; new baseline APK | Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and corrected by Claude). |

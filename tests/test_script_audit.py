@@ -96,8 +96,10 @@ class ScriptAuditTests(unittest.TestCase):
         self.assertLess(destination.index("plugin-reimport.json"), destination.index("ReimportDestinationDependents(selection"))
         self.assertLess(destination.index("ReimportDestinationDependents(selection"), destination.index("InspectDestinationScripts(selection)"))
         self.assertLess(destination.index('gate["uiValid"]'), destination.index("\n   Build();"))
-        self.assertIn("LogType.Error||type==LogType.Exception||type==LogType.Assert", destination)
+        self.assertIn("type!=LogType.Error&&type!=LogType.Exception&&type!=LogType.Assert", destination)
         self.assertIn("result.errors+=importErrors", destination)
+        self.assertIn("editor-repair.log", destination)
+        self.assertIn("newErrors.Length!=0", destination)
         self.assertNotIn("message.Contains", destination)
         real = source.split(" public static void Build(){", 1)[1]
         self.assertNotIn("ReimportDestinationDependents", real)
