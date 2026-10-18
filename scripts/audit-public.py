@@ -25,6 +25,9 @@ PUBLIC_ENVIRONMENT = {
 PRIVATE_SUFFIXES = {".apk", ".aab", ".dll", ".exe", ".bundle", ".assets", ".bank", ".wem", ".so", ".dylib", ".keystore", ".jks", ".log", ".png"}
 
 
+WWISE_ASSET_NAME = re.compile(rb"(?i)Wwise/ScriptableObjects/[A-Za-z]+/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.asset")
+
+
 def violations(path, data):
     found = []
     if path.startswith(("work/", ".local/", "logs/", "screenshots/")):
@@ -33,6 +36,10 @@ def violations(path, data):
         found.append("unreviewed environment capture")
     if Path(path).suffix.lower() in PRIVATE_SUFFIXES:
         found.append("binary, middleware, or raw capture")
+    if path.startswith("recipe/"):
+        # Wwise ScriptableObject assets are named by their event or bank GUID. Those file
+        # names are game asset identifiers (J548), not storage UUIDs; every other UUID still fails.
+        data = WWISE_ASSET_NAME.sub(b"Wwise/ScriptableObjects/WWISE-ASSET.asset", data)
     for label, pattern in PATTERNS.items():
         if re.search(pattern, data):
             found.append(label)

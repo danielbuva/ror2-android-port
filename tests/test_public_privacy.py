@@ -24,3 +24,10 @@ class PublicPrivacyTests(unittest.TestCase):
 
     def test_game_payload_cannot_hide_in_source_directory(self):
         self.assertTrue(audit.violations("tools/example.bank", b"data"))
+
+    def test_wwise_asset_names_are_allowed_only_in_recipes(self):
+        uuid = "-".join(["39891821", "b817", "447b", "9247", "1063138c9b9c"]).encode()
+        asset = b'"assets/wholegame/wwise/scriptableobjects/event/' + uuid + b'.asset"'
+        self.assertEqual([], audit.violations("recipe/content.json", asset))
+        self.assertIn("UUID", audit.violations("recipe/content.json", b'"' + uuid + b'"'))
+        self.assertIn("UUID", audit.violations("docs/example.md", asset))
