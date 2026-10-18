@@ -1289,7 +1289,8 @@ def build_integration(code_only=False):
     runtime = project / "Assets/LabLoadingScene"
     for filename in runtime_sources:
         copy_catalog_asset(ROOT / "tools/unity" / filename, runtime / filename)
-    for filename in ["AndroidProgressionHost.cs", "AndroidDiscoveryHost.cs"]:
+    # Exact-editor host fixtures; stage all four so none goes stale in the project.
+    for filename in ["AndroidProgressionHost.cs", "AndroidDiscoveryHost.cs", "AndroidProfileHost.cs", "AndroidLifecycleHost.cs"]:
         copy_catalog_asset(ROOT / "tools/catalog" / filename, project / "Assets/Editor" / filename)
     # Bundle-only serialized components and reflected location types are invisible
     # to the APK linker. Preserve their measured contracts, not a tested whitelist.
