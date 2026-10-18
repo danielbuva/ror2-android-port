@@ -44,8 +44,13 @@ namespace UnityEditor {
    visit=path=>{string[] children;if(!deps.TryGetValue(path,out children))return;foreach(string child in children)if(result.Add(child)&&recursive)visit(child);};
    foreach(string path in paths)visit(path);return result.ToArray();
   }
+  public static int editing;
+  public static void StartAssetEditing(){editing++;}
+  public static void StopAssetEditing(){Host.Check(editing>0,"balanced asset editing");editing--;}
   public static void ImportAsset(string path,ImportAssetOptions options){
-   Host.Check(options==(ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport),"forced synchronous import");
+   // Plugins: forced synchronous, outside a batch (pass 1). Dependents: forced, batched (pass 2).
+   if(path.EndsWith(".dll"))Host.Check(options==(ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport)&&editing==0,"forced synchronous plugin import");
+   else Host.Check(options==ImportAssetOptions.ForceUpdate&&editing==1,"batched forced dependent import");
    imports.Add(path);if(path.EndsWith(".dll"))Host.imported=true;
    else Host.Check(Host.imported,"plugins imported before assets");
   }
@@ -83,6 +88,7 @@ public static class Host {
   Check(audit["assets"].Any(row=>(string)row["path"]==scene&&(int)row["missingScripts"]==2),"scene counts");
   Check(audit["monoScripts"].All(row=>row["type"].Type==JTokenType.String),"resolved plugin identities");
   Check(count==AssetDatabase.imports.Count,"audit performs no imports");
+  Check(AssetDatabase.editing==0,"asset editing batch closed");
   timer.targetLabel=null;audit=JObject.Parse(LabBuild.InspectDestinationScripts(selection));Check(!(bool)audit["uiValid"],"null TimerText blocks");
   timer.targetLabel=new UnityEngine.Object();hudRoot.missing=114;audit=JObject.Parse(LabBuild.InspectDestinationScripts(selection));Check(!(bool)audit["uiValid"],"HUD missing scripts block");hudRoot.missing=0;
   AssetDatabase.prefabs[menu].missing=1;audit=JObject.Parse(LabBuild.InspectDestinationScripts(selection));Check(!(bool)audit["uiValid"],"Menu missing scripts block");AssetDatabase.prefabs[menu].missing=0;

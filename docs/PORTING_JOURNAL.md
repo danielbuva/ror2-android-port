@@ -5958,3 +5958,21 @@ fails. The edited `LabBuild.cs` compiled in the exact editor: code build zero er
 storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
 exit). App stopped, OLED asleep. The `LabBuild.cs` provenance row was refreshed again. 755 host
 tests pass. The two-pass R9 build has not run yet.
+
+## J579 — R9 dependent reimport batched
+
+Phase 2, from-scratch rebuild (run and fixed by Claude). The two-pass R9 (J578) ran from a fresh
+destination Library. Pass 1 reimported all 49 managed DLLs and exited cleanly. Pass 2 then forced
+a synchronous reimport of each dependent asset in turn, and each import triggered a full asset
+pipeline refresh. Refreshes grew from about 0.35 s to 650–760 s apiece, so after 13,156 imports in
+about 90 minutes the pass could not finish within its four-hour limit. Claude stopped that build
+process; R9 released its lock, and the run folder keeps both editor logs. Pass 2 now computes the
+same dependency-first order but queues every forced import (`ForceUpdate`, no
+`ForceSynchronousImport`) inside one `AssetDatabase.StartAssetEditing()`/`StopAssetEditing()`
+batch, and refuses to continue if compilation or import is still pending afterwards. Plugin
+reimports in pass 1 stay forced and synchronous. The C# test double now checks that split and
+that the batch is closed. The edited `LabBuild.cs` compiled in the exact editor: code build zero
+errors, APK `d482d9b7663bb817be013817b8832552db550c9da0751cc8a182e32569e37518`, installed in place
+on adopted storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one
+genuine exit). App stopped, OLED asleep. The `LabBuild.cs` provenance row was refreshed. 755 host
+tests pass.

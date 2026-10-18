@@ -175,18 +175,24 @@ public static class LabBuild {
  // Pass 2: scripts compiled at startup after pass 1's DLL reimport; reload dependents.
  static ScriptImports ReimportDestinationDependents(string[] selection,string[] plugins){
   if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Plugin reimport left pending compilation; refusing a build with unsettled scripts");
-  var options=ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport;
   var pluginSet=new System.Collections.Generic.HashSet<string>(plugins,StringComparer.Ordinal);
   var closure=AssetDatabase.GetDependencies(selection,true);
   var dependents=closure.Where(path=>path.StartsWith("Assets/",StringComparison.Ordinal)&&!path.EndsWith(".cs",StringComparison.OrdinalIgnoreCase)&&!path.EndsWith(".dll",StringComparison.OrdinalIgnoreCase))
    .Where(path=>AssetDatabase.GetDependencies(path,true).Any(pluginSet.Contains)).OrderBy(path=>path,StringComparer.Ordinal).ToArray();
-  // Dependency-first import reloads fonts/other ScriptableObjects before their
+  // Dependency-first order reloads fonts/other ScriptableObjects before their
   // prefab consumers. Cycles are visited once. No Refresh or broad cache reset.
   var affected=new System.Collections.Generic.HashSet<string>(dependents,StringComparer.Ordinal);
   var visited=new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
-  Action<string> import=null;
-  import=path=>{if(!visited.Add(path))return;foreach(string dependency in AssetDatabase.GetDependencies(path,false).Where(affected.Contains).OrderBy(x=>x,StringComparer.Ordinal))import(dependency);AssetDatabase.ImportAsset(path,options);};
-  foreach(string path in dependents)import(path);
+  var ordered=new System.Collections.Generic.List<string>();
+  Action<string> visit=null;
+  visit=path=>{if(!visited.Add(path))return;foreach(string dependency in AssetDatabase.GetDependencies(path,false).Where(affected.Contains).OrderBy(x=>x,StringComparer.Ordinal))visit(dependency);ordered.Add(path);};
+  foreach(string path in dependents)visit(path);
+  // J578: one forced synchronous import per asset cost a full refresh each, growing
+  // to over ten minutes apiece. Queue every forced import into one batch instead.
+  AssetDatabase.StartAssetEditing();
+  try{foreach(string path in ordered)AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);}
+  finally{AssetDatabase.StopAssetEditing();}
+  if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Dependent reimport left pending compilation or import");
   return new ScriptImports{plugins=plugins,dependents=dependents};
  }
  // This method body is also emitted by scripts/lab/script_audit.py for in-memory
