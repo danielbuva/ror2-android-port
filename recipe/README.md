@@ -79,6 +79,7 @@ produce the file from the input, prefer tracking the generator.
 | `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets, ten field-only prefabs and all 178 structural prefabs/scenes (migration-removal commit 4 cohorts) | Accepted-export selectors/SHA-256; authored clearing, identity, typed field edits, explicit local-reference nulling, component/settings deletion and two typed adapter constructors. Four UI prefabs reuse the hash-pinned uGUI mapping. | J548 minimal source/output, hierarchy/script, removal/owner identifiers, field paths, reference preconditions, activation/reflection values and deterministic allocation namespaces only. No YAML blocks, original component bodies, importer bodies, private paths or historical asset reads. Constructor defaults are authored schemas matching the existing sanitizer; seed names preserve its IDs without reading the named location. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares the migration-stage oracle, reports exclusive structural cohorts and lists later project changes separately, without writing. |
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
+| `importer-identities.json` | Pre-import host importer identity placement | 105 script selections (91 reuse project-layout GUIDs; 14 extra authored script GUIDs), 175 lab shader GUIDs and six lab asset GUID/template selections. | J548 minimum output identities for exact reconstruction; public importer schemas only, no game bodies, private paths or account/device data. | `importer_rebuild.py` renders public templates, gates the complete cohort against local provenance and compares via the rebuild coordinator. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 92 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
 | `runtime-config.json` | Public selection in ignored `Resources/MovementBatchProbe.json`; generated at whole-catalog build entry | The lab's runtime selection for the accepted input `6af7ed94…` (Steam build 25475991); 183 present `SessionConfig` keys, preserving values and JSON types. | Authored options and necessary identifiers/relationships only; no protected content. 45 authored fields (44 present), 139 selector fields, 0 private/content fields. Excluded: `detailedVisualDiagnostics` is absent locally, so no value is invented. Audit details below, 2026-10-17. | `build.py` checks recipe keys against staged config after layout validation; extra local/obsolete keys remain allowed. Build-entry generation replaces the whole object before existing accepted-input-gated validation; no extra keys survive generation. |
 | `content.json` | Public selection in ignored `work/scene-probe-build.json`; generated at whole-catalog build entry | Accepted input `6af7ed94…` (Steam build 25475991); 14 current build fields, 4,304 path strings, values and array order unchanged. | J548 permits these minimal selectors; no asset bodies, private paths or device/storage identities. Includes 61 Wwise asset UUID filenames, not middleware or banks. All fields retained; audit below, 2026-10-17. | `build.py` validates after runtime config on the accepted-input-gated whole-catalog path, before cache lookup/editor invocation. Build-entry generation replaces the work file from this recipe before validation. |
@@ -763,7 +764,7 @@ still runs config generation, membership validation, maps/animation/context,
 source/linker staging, bootstrap generation and `build` in that order. The
 Android asset copy remains after staged-source validation inside `build`.
 Destination replay buffers these same writes through `StageIO`, hash/size-gates
-all selected products, and leaves Unity import/metadata allocation to R9.
+all selected products, and leaves remaining Unity import/metadata allocation to R9.
 Synthetic host tests cover replay and production placement/order; no real-data
 execution, editor, build or device claim is made.
 
@@ -840,3 +841,41 @@ No new dependency version, native recovery run or retained local-analysis pin is
 introduced. No Unity/device action, harness execution, journal/state edit or Git
 mutation is part of this host-only change. Doctor is omitted because it writes
 outside the authorized harness destination.
+
+## Pre-import importer identity audit (2026-10-18)
+
+`importer-identities.json` and the five `templates/*-importer.meta` schemas move
+286 importers from editor allocation to host placement. Script identities reuse
+`project-layout.json` wherever present. The 14 additional identities belong to ten
+authored editor tools, three generated visual-map scripts and LabDiagnostics.
+The selected 105 script importers all have execution order 0; the existing
+`ordered-script.meta` and project-inputs owner retain NovaInputBridge's -20000.
+The shader template records the measured empty texture maps and preprocessor
+setting. Default/text/model templates retain lab scene, JSON, XML and OBJ
+importer settings; the model schema has no vertices, named subobjects, hierarchy
+or game material data. None of these GUIDs grants access to game content.
+
+Folder identities are **not published** (Claude's review, J575). Codex first
+recorded all 3,227 folder path/GUID pairs here, about 328 KB, mostly the complete
+WholeGame folder tree, which mirrors the game's asset layout. A scan of 77,788
+destination files (33,773 serialized assets) found no reference to any folder GUID,
+so these identities are not necessary to reconstruct anything; they would only make
+unused metadata byte-identical. J548 permits the *minimum* necessary identifiers, so
+the folder group was removed: Unity mints folder importers at R9, which classifies
+them (only the GUID line may differ, or the folder is empty and absent) and re-runs
+the reference scan on the minted GUIDs, failing on any reference. Script, shader and
+other asset GUIDs stay, because serialized assets reference them.
+No new file under `work/` is required as input. Destination receipts are generated
+by `importer_rebuild.importer_identities` and never loaded from a historical run.
+
+Prior-art scope: read `docs/community-prior-art.md` and inspected pinned ThunderKit
+`Editor/Addressable/Config/ImportAddressableCatalog.cs` at
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`. Its selected catalog/settings File.Copy
+preserves bytes, but supplies no pre-import Android script/shader identity replay.
+This is authored importer-schema reconstruction; no community implementation,
+original game content, third-party code, credential or private capture is copied.
+The working project is only a read-only comparison oracle during verification;
+public templates and recorded IDs are the generator's only output inputs.
+Doctor is omitted because it writes outside the authorized harness destination.
+No Unity, build, device, shared-work mutation, Git write, journal or state action
+is authorized in this host-only change.

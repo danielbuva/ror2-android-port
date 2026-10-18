@@ -128,6 +128,39 @@ class UnityRebuildTests(unittest.TestCase):
             self.assertTrue(lock.exists())
             lock.unlink()
 
+    def test_folder_importers_differ_only_by_minted_guid_or_absent_empty_folder(self):
+        project = self.work / "lab-project"
+        body = "fileFormatVersion: 2\nguid: {}\nfolderAsset: yes\nDefaultImporter:\n  userData: \n"
+        for root, guid in ((project, "1" * 32), (self.dest, "2" * 32)):
+            (root / "Assets/Kept").mkdir(parents=True, exist_ok=True)
+            (root / "Assets/Kept/file.txt").write_text("x")
+            (root / "Assets/Kept.meta").write_text(body.format(guid))
+        (project / "Assets/Empty").mkdir()
+        (project / "Assets/Empty.meta").write_text(body.format("3" * 32))
+        (project / "Assets/Full").mkdir()
+        (project / "Assets/Full/file.txt").write_text("x")
+        (project / "Assets/Full.meta").write_text(body.format("4" * 32))
+        (self.dest / "Assets/Edited").mkdir()
+        (project / "Assets/Edited").mkdir()
+        (project / "Assets/Edited/file.txt").write_text("x")
+        (project / "Assets/Edited.meta").write_text(body.format("5" * 32))
+        (self.dest / "Assets/Edited.meta").write_text(body.format("6" * 32).replace("yes", "no"))
+        paths = {"Assets/Kept.meta", "Assets/Empty.meta", "Assets/Full.meta", "Assets/Edited.meta"}
+        rows = {row["path"]: row["status"] for row in r9.compare_files(self.dest, project, paths, {p: dict(sha256="0" * 64) for p in paths})["rows"]}
+        self.assertEqual(
+            rows,
+            {
+                "Assets/Kept.meta": "folder_guid_minted",
+                "Assets/Empty.meta": "empty_folder_absent",
+                "Assets/Full.meta": "different",
+                "Assets/Edited.meta": "different",
+            },
+        )
+        references = r9.minted_folder_references(self.dest)
+        self.assertEqual(references["referencing_files"], 0)
+        (self.dest / "Assets/Ref.prefab").write_text("%YAML 1.1\nfolder: {guid: " + "2" * 32 + "}\n")
+        self.assertEqual(r9.minted_folder_references(self.dest)["referencing_files"], 1)
+
     def test_lock_excludes_second_r9_and_is_removed_after_failure(self):
         with self.assertRaisesRegex(RuntimeError, "fixture"):
             with r9.build_lock(self.dest):
@@ -209,7 +242,7 @@ class UnityRebuildTests(unittest.TestCase):
         (project / "changed").write_bytes(b"old")
         rows = {name: dict(sha256="f" * 64) for name in ("same", "changed", "missing")}
         result = r9.compare_files(self.dest, project, rows, rows)
-        self.assertEqual(result["counts"], dict(identical=1, different=2))
+        self.assertEqual(result["counts"], dict(identical=1, folder_guid_minted=0, empty_folder_absent=0, different=2))
         self.assertFalse(result["rows"][-1]["provenance_matches"])
 
     def test_apk_comparison_reports_all_entries_and_metadata_without_normalization(self):
@@ -228,6 +261,8 @@ class UnityRebuildTests(unittest.TestCase):
     def test_coordinator_compares_all_three_groups_and_saves_destination_receipt(self):
         paths = ["settings", "link", "graph", "generated"]
         provenance = {p: dict(producer="unity-generated" if p in paths[2:] else "unknown", sha256="f" * 64) for p in paths}
+        importer = next(iter(rebuild.IMPORTER_PATHS))
+        provenance[importer] = dict(producer="unity-generated", sha256="f" * 64)
         apk = self.dest / "output.apk"
         self.zip(apk, {"same": b"same"})
         bindings = dict(equal=True, r9_obligations={p: {} for p in paths[:2]}, unity_import_deferred=["graph"])

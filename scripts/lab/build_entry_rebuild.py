@@ -92,6 +92,7 @@ def validate_bindings(destination, work, input_id, expected=None, provenance=Non
     from rebuild import relative_path
 
     require_step(destination, "runtime-sources", input_id)
+    require_step(destination, "importer-identities", input_id)
     composition = destination / ".rebuild/composition"
     missing_records = list(composition.rglob("missing-runtime-bindings.json"))
     dependency_records = list(composition.rglob("dependency-stage-*/receipt.json"))

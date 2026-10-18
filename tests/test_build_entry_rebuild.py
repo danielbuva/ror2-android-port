@@ -265,6 +265,7 @@ class BuildEntryTests(unittest.TestCase):
             self.provenance[path] = dict(producer="unknown", sha256="f" * 64, size=42)
         self.r7_run()
         self.r8_run()
+        write(self.dest / ".rebuild/importer-identities-complete.json", dict(input_id=self.input_id))
         write(self.recipe / "rebuild-binding-targets.json", dict(schema=1, input_id=self.input_id, targets=[self.runtime]))
         write(self.dest / ".rebuild/composition/evidence/missing-runtime-bindings.json", [self.runtime])
         write(self.dest / ".rebuild/composition/evidence/dependency-stage-test/receipt.json", dict(input_id=self.input_id, deferred_to_later_steps=[self.clip]))
@@ -299,6 +300,12 @@ class BuildEntryTests(unittest.TestCase):
                 self.validate()
         receipt.unlink()
         with self.assertRaisesRegex(RuntimeError, "unique regenerated"):
+            self.validate()
+
+    def test_binding_gate_requires_importer_identity_completion(self):
+        self.binding_setup()
+        (self.dest / ".rebuild/importer-identities-complete.json").unlink()
+        with self.assertRaisesRegex(RuntimeError, "importer-identities"):
             self.validate()
 
     def test_binding_validation_is_read_only(self):

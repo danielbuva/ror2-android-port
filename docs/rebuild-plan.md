@@ -49,7 +49,7 @@ generation identity from R1 recipes. Existing source/output/conflict gates remai
 Dependency staging follows catalog import in the order below, rather than running
 inline during R2; the real stage action retains its inline dependency call.
 The removed/unowned binding guard is deferred only in the rebuild path; its
-unresolved identifiers are preserved. `validate-bindings` runs last, after R8. Synthetic host tests cover staging
+unresolved identifiers are preserved. `validate-bindings` runs last, after R8 and `importer-identities`. Synthetic host tests cover staging
 and comparison; the operator must still run R2 against real data.
 
 R3 and R4 are now executable after R2 in that same destination:
@@ -134,6 +134,7 @@ After R6, in the same destination:
 ```sh
 ./dev prototype --action rebuild-step --step build-entries --work-dir ../../../work
 ./dev prototype --action rebuild-step --step runtime-sources --work-dir ../../../work
+./dev prototype --action rebuild-step --step importer-identities --work-dir ../../../work
 ./dev prototype --action rebuild-step --step validate-bindings --work-dir ../../../work
 ```
 
@@ -164,7 +165,7 @@ local input records. `recipe/rebuild-binding-targets.json` is public identifier
 membership, not a retained content input. See the provenance/privacy audit in
 [recipe/README.md](../recipe/README.md#r7r8-host-replay-audit-2026-10-18).
 
-Final validation requires the R8 completion marker, unique regenerated R2/R4
+Final validation requires the R8 and importer-identities completion markers, unique regenerated R2/R4
 receipts, accepted input identities, all 104 J565 targets in the R2 receipt and
 the destination, and every R4 `deferred_to_later_steps` target. Paths must be safe
 and present in the provenance map. Missing targets fail the action; missing,
@@ -185,7 +186,7 @@ mutation was performed for this change.
 ## Shader prerequisite and remaining project inputs
 
 The current host order is R1 `assemblies` → `shader-pipeline` → R2 `composition`
-→ `project-inputs` → R3–R8 → `validate-bindings`. Use the existing rebuild-step
+→ `project-inputs` → R3–R8 → `importer-identities` → `validate-bindings`. Use the existing rebuild-step
 command and `--work-dir`; only the operator runs the real destination replay.
 `--compare-only` compares actual bytes for either new cohort without generation.
 
@@ -635,3 +636,57 @@ Restore the current device-verified APK **and original payload** afterwards:
 No uninstall, storage changes or receipt swapping is needed. Device acceptance,
 including restore validation, remains the operator's responsibility. Host tests
 with mocked Unity/subprocess are in `tests/test_unity_rebuild.py`.
+
+## Pre-import importer identities (current)
+
+The first operator R9 attempt stopped before Unity at the missing
+`Assets/LabLoadingScene/LabExperiments.cs.meta` layout check. The host order now
+includes `--step importer-identities` after R8 `runtime-sources`, before
+`validate-bindings` and `unity-build`. It requires R8's accepted-input completion
+marker and existing script/shader bodies. Other lab asset metas may precede their
+R9-generated bodies (Lab scene and item-behaviour XML). Folder importers are not
+placed (J575): Unity mints them at import, and R9 classifies each folder meta as
+`folder_guid_minted` (only its GUID line differs) or `empty_folder_absent` (the
+working-project folder holds no files), and re-runs the folder-GUID reference
+scan on the minted GUIDs; any reference fails R9.
+The coordinator retains its byte comparison against the current project and
+supports `--compare-only`; only the operator executes the real destination step.
+
+Public `recipe/importer-identities.json` supplies complete cohort membership.
+The 91 selected runtime script identities use project-layout GUIDs; 14 additional
+script identities are recorded explicitly. All 105 selected scripts have order 0;
+NovaInputBridge's already placed -20000 importer remains owned by project-inputs.
+Six shared public schemas render all settings without reading the working project
+as generator input. Provenance remains unchanged on disk: step membership assigns
+these 286 originally `unity-generated` rows to host reconstruction, and R9's
+remaining editor comparison subtracts exactly that selected membership.
+The identity/privacy decision is audited in
+[recipe/README.md](../recipe/README.md#pre-import-importer-identity-audit-2026-10-18).
+
+Read-only real-data checks rendered 3,227 folder, 105 script, 175 shader and six
+other asset importers (one scene, two JSON, two XML, one OBJ). All **3,513/3,513**
+match the current project byte-for-byte and the local provenance SHA-256/size.
+The folder group was then removed from the public recipe (J575, below), leaving 286.
+A temporary host overlay of these importers, the destination's existing ordered
+Nova importer and its manifest passes `build.validate_project_layout`. This is
+not destination placement: the actual harness remains an operator action.
+
+The read-only folder-GUID scan measured **zero referencing files** among 77,788
+YAML/importer/JSON/XML or serialized files under destination `Assets/`, including
+33,773 serialized assets and zero binary serialized assets. Importers' own
+`guid:` declaration lines are excluded; external importer references are included.
+Every selected body is scanned for text GUID tokens; binary serialized files, if
+present on a later replay, also get conservative raw GUID byte/word-order scans.
+The step regenerates this measurement in its destination result receipt. The
+scan establishes the measured absence of references, rather than authorizing
+new identities or dropping original GUIDs.
+
+Host membership increases from 86,811 to **90,324** rows. R9 retains **1,515**
+`unity-generated` rows: 1,299 other asset importers, 200 native `.asset` files,
+14 custom render textures, `Assets/Lab.unity` and `Packages/packages-lock.json`.
+The two explicit R9 obligations (`ProjectSettings.asset` and the item-behaviour
+linker XML) remain separate, giving **1,517** total editor-owned rows. The 41
+R5 graph reserializations remain inside that native-asset cohort. No Unity result,
+APK, runtime readiness or device acceptance follows from these host checks.
+The destination's absent Lab scene, item-behaviour XML and package lock are still
+left to R9, rather than copied from the old project.

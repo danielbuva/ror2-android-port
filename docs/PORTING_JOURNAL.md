@@ -5844,3 +5844,23 @@ default destination then passed R1–R8 with every count identical and `validate
 
 Not yet run: the R9 build itself. It needs the lab's isolated MCP editor on `work/lab-project`
 stopped first, and that stop needs the operator's go-ahead. 731 host tests pass.
+
+## J575 — Pre-import importer identities; folder importers left to Unity
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+The first R9 attempt (after J574) stopped before Unity started: `validate_project_layout` found
+no `Assets/LabLoadingScene/LabExperiments.cs.meta`. 3,513 importers that Unity generated in the
+working project were absent from the destination: 3,227 folders, 175 shaders, 105 scripts and six
+other assets. Earlier steps compare only files they own, so nothing reported them. Script and
+shader GUIDs are referenced by serialized assets and must exist before import. New step
+`importer-identities` (after `runtime-sources`) renders them from
+`recipe/importer-identities.json` and five public importer templates, gating every hash and size
+before placement. Codex also recorded all 3,227 folder path/GUID pairs (about 328 KB, the complete
+WholeGame folder tree). A scan of 77,788 destination files, 33,773 of them serialized assets,
+found no reference to any folder GUID, so under J548's minimum-identifier rule Claude removed the
+folder group: Unity mints folder importers at R9, which classifies each as `folder_guid_minted`
+(only its GUID line differs) or `empty_folder_absent`, and re-runs the reference scan on the
+minted GUIDs, failing on any reference. Also fixed: R9's editor guard refused on a lock file Unity
+leaves behind after exit; it now refuses only when `lsof` shows a holder (`ede1d04`). Real data:
+`importer-identities` 286/286 identical, then `validate-bindings` and the R9 preflight passed.
+740 host tests pass. Host tooling only; no APK change.

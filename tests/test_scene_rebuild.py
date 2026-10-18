@@ -256,7 +256,10 @@ class SceneRebuildTests(unittest.TestCase):
             parent.assert_not_called()
 
     def test_membership_order_and_validate_bindings_is_registered(self):
-        self.assertEqual(list(rebuild.STEPS)[5:], ["dependencies", "stage-variants", "source-scenes", "build-entries", "runtime-sources", "validate-bindings"])
+        self.assertEqual(
+            list(rebuild.STEPS)[5:],
+            ["dependencies", "stage-variants", "source-scenes", "build-entries", "runtime-sources", "importer-identities", "validate-bindings"],
+        )
         self.assertEqual(len(source_scene_candidate.SCENES), 23)
         self.assertEqual(len(stage_variants.VARIANTS), 16)
         self.assertIsNotNone(rebuild.STEPS["validate-bindings"].build)

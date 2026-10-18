@@ -36,7 +36,7 @@ p.add_argument(
 )
 p.add_argument(
     "--step",
-    help="Current: rebuild-step name (assemblies, shader-pipeline, composition, project-inputs, catalog-closure, dependencies, stage-variants, source-scenes, build-entries, runtime-sources, validate-bindings, unity-build)",
+    help="Current: rebuild-step name (assemblies, shader-pipeline, composition, project-inputs, catalog-closure, dependencies, stage-variants, source-scenes, build-entries, runtime-sources, importer-identities, validate-bindings, unity-build)",
 )
 p.add_argument("--dest", help="Current: rebuild-step or isolated preflight destination beneath this clone's work/rebuild/")
 p.add_argument("--compare-only", action="store_true", help="Current: compare an existing rebuild-step destination without writing")

@@ -1,0 +1,524 @@
+{
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "other": {
+    "Assets/Lab.unity.meta": {
+      "guid": "aebaff4380ee74dff8c397d26f903789",
+      "template": "default"
+    },
+    "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json.meta": {
+      "guid": "1a65bcd77dc4a4ea1b339b04cfa6b11c",
+      "template": "text"
+    },
+    "Assets/LabLoadingScene/Resources/WholeStageContexts.json.meta": {
+      "guid": "2be99f2f55a9941d98f7de611a7b9288",
+      "template": "text"
+    },
+    "Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml.meta": {
+      "guid": "44badcc4c2b54440fb2703f5ca08a5b0",
+      "template": "text"
+    },
+    "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml.meta": {
+      "guid": "46178be6ebc7b4faca7f28c5fc64c5e6",
+      "template": "text"
+    },
+    "Assets/Recovered/geometry.obj.meta": {
+      "guid": "0a7a11b66c2c149a18a71990785baa9f",
+      "template": "model"
+    }
+  },
+  "schema": 1,
+  "scripts": {
+    "Assets/Editor/AndroidDiscoveryHost.cs.meta": {
+      "guid": "4e98ca2ce9702428595cff02c59ff0c5"
+    },
+    "Assets/Editor/AndroidLifecycleHost.cs.meta": {
+      "guid": "faf1a065f4a7d431a95fb934bff805f6"
+    },
+    "Assets/Editor/AndroidProfileHost.cs.meta": {
+      "guid": "fd61905afdcb148f891ead13b4e38127"
+    },
+    "Assets/Editor/AndroidProgressionHost.cs.meta": {
+      "guid": "13669c1344a7e48d4960048c484b630c"
+    },
+    "Assets/Editor/BootstrapMcp.cs.meta": {
+      "guid": "71506e4c335b04a37b8d10a2cc234297"
+    },
+    "Assets/Editor/CatalogAddressProbe.cs.meta": {
+      "guid": "830afde22503742b49bb2f0cc24c47c9"
+    },
+    "Assets/Editor/LabBuild.cs.meta": {
+      "guid": "16af7e7674eb7459a854afd32a56f522"
+    },
+    "Assets/Editor/RecoveredHudBuilder.cs.meta": {
+      "guid": "ef14363eb2105433f99f53ac9d5407bd"
+    },
+    "Assets/Editor/WholeCatalogBuild.cs.meta": {
+      "guid": "53b0cfcd5d2ee47738bb7e58a2966087"
+    },
+    "Assets/Editor/WholeCatalogHost.cs.meta": {
+      "guid": "2ba17cf7ee9c74b2db878d76cb3fb65a"
+    },
+    "Assets/LabDiagnostics.cs.meta": {
+      "guid": "4ed0cc7b100774886921e834e953588f"
+    },
+    "Assets/LabLoadingScene/ActiveClientBoundary.cs.meta": {
+      "runtime_source": "runtime/session/ActiveClientBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AndroidMaterialPresentation.cs.meta": {
+      "runtime_source": "runtime/shaders/AndroidMaterialPresentation.cs"
+    },
+    "Assets/LabLoadingScene/AndroidNativeDeferredPresentation.cs.meta": {
+      "runtime_source": "runtime/shaders/AndroidNativeDeferredPresentation.cs"
+    },
+    "Assets/LabLoadingScene/AndroidOfflineProfile.cs.meta": {
+      "runtime_source": "runtime/progression/AndroidOfflineProfile.cs"
+    },
+    "Assets/LabLoadingScene/AndroidOfflineSettings.cs.meta": {
+      "runtime_source": "runtime/input/AndroidOfflineSettings.cs"
+    },
+    "Assets/LabLoadingScene/AndroidPresentationCamera.cs.meta": {
+      "runtime_source": "runtime/input/AndroidPresentationCamera.cs"
+    },
+    "Assets/LabLoadingScene/AndroidProfileBoundary.cs.meta": {
+      "runtime_source": "runtime/progression/AndroidProfileBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AndroidProgressionBoundary.cs.meta": {
+      "runtime_source": "runtime/progression/AndroidProgressionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AndroidStageTransport.cs.meta": {
+      "runtime_source": "runtime/stage/AndroidStageTransport.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticDirectionBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticDirectionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticDirectorBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticDirectorBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticGroundBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticGroundBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticHealthBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticHealthBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticModelBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticModelBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticSkillBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticSkillBoundary.cs"
+    },
+    "Assets/LabLoadingScene/AutomaticSpawnBoundary.cs.meta": {
+      "runtime_source": "runtime/world/AutomaticSpawnBoundary.cs"
+    },
+    "Assets/LabLoadingScene/BarrelInteractionBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/BarrelInteractionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/BarrierEffectBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/BarrierEffectBoundary.cs"
+    },
+    "Assets/LabLoadingScene/BodyCatalogBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/BodyCatalogBoundary.cs"
+    },
+    "Assets/LabLoadingScene/CharacterDirectionProbe.cs.meta": {
+      "runtime_source": "runtime/session/CharacterDirectionProbe.cs"
+    },
+    "Assets/LabLoadingScene/ChestDropTableBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/ChestDropTableBoundary.cs"
+    },
+    "Assets/LabLoadingScene/ChestEjectionBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/ChestEjectionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/ChestPurchaseBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/ChestPurchaseBoundary.cs"
+    },
+    "Assets/LabLoadingScene/ClientCoinBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/ClientCoinBoundary.cs"
+    },
+    "Assets/LabLoadingScene/CombatSpineBoundary.cs.meta": {
+      "runtime_source": "runtime/world/CombatSpineBoundary.cs"
+    },
+    "Assets/LabLoadingScene/CommandoMaterialPreview.cs.meta": {
+      "runtime_source": "runtime/session/CommandoMaterialPreview.cs"
+    },
+    "Assets/LabLoadingScene/ControllerAddressProbe.cs.meta": {
+      "runtime_source": "runtime/session/ControllerAddressProbe.cs"
+    },
+    "Assets/LabLoadingScene/DebugAccelerationBoundary.cs.meta": {
+      "runtime_source": "runtime/session/DebugAccelerationBoundary.cs"
+    },
+    "Assets/LabLoadingScene/DirectorActorBoundary.cs.meta": {
+      "runtime_source": "runtime/world/DirectorActorBoundary.cs"
+    },
+    "Assets/LabLoadingScene/EnemyRewardBoundary.cs.meta": {
+      "runtime_source": "runtime/world/EnemyRewardBoundary.cs"
+    },
+    "Assets/LabLoadingScene/EnemySpineBoundary.cs.meta": {
+      "runtime_source": "runtime/world/EnemySpineBoundary.cs"
+    },
+    "Assets/LabLoadingScene/EntityStateTickProbe.cs.meta": {
+      "runtime_source": "runtime/session/EntityStateTickProbe.cs"
+    },
+    "Assets/LabLoadingScene/GenericPickupBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/GenericPickupBoundary.cs"
+    },
+    "Assets/LabLoadingScene/GoldshoresBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/GoldshoresBoundary.cs"
+    },
+    "Assets/LabLoadingScene/InputBarrelBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/InputBarrelBoundary.cs"
+    },
+    "Assets/LabLoadingScene/IntegratedResultsBoundary.cs.meta": {
+      "runtime_source": "runtime/progression/IntegratedResultsBoundary.cs"
+    },
+    "Assets/LabLoadingScene/IntegratedStageBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/IntegratedStageBoundary.cs"
+    },
+    "Assets/LabLoadingScene/IntegratedWorldBoundary.cs.meta": {
+      "runtime_source": "runtime/world/IntegratedWorldBoundary.cs"
+    },
+    "Assets/LabLoadingScene/InteractionSelectionBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/InteractionSelectionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/ItemPickupBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/ItemPickupBoundary.cs"
+    },
+    "Assets/LabLoadingScene/LabExperiments.cs.meta": {
+      "runtime_source": "experiments/LabExperiments.cs"
+    },
+    "Assets/LabLoadingScene/MoneyCostBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/MoneyCostBoundary.cs"
+    },
+    "Assets/LabLoadingScene/MoonEscapeBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/MoonEscapeBoundary.cs"
+    },
+    "Assets/LabLoadingScene/MoonMissionBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/MoonMissionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/MoonPillarPresentation.cs.meta": {
+      "runtime_source": "runtime/presentation/MoonPillarPresentation.cs"
+    },
+    "Assets/LabLoadingScene/NovaDiagnosticDisplay.cs.meta": {
+      "runtime_source": "runtime/input/NovaDiagnosticDisplay.cs"
+    },
+    "Assets/LabLoadingScene/NovaInputBoundary.cs.meta": {
+      "runtime_source": "runtime/input/NovaInputBoundary.cs"
+    },
+    "Assets/LabLoadingScene/NovaThirdPersonView.cs.meta": {
+      "runtime_source": "runtime/input/NovaThirdPersonView.cs"
+    },
+    "Assets/LabLoadingScene/OfflineApplicationBoundary.cs.meta": {
+      "runtime_source": "runtime/session/OfflineApplicationBoundary.cs"
+    },
+    "Assets/LabLoadingScene/OfflineLoadoutBoundary.cs.meta": {
+      "runtime_source": "runtime/progression/OfflineLoadoutBoundary.cs"
+    },
+    "Assets/LabLoadingScene/OfflineRunSeedBoundary.cs.meta": {
+      "runtime_source": "runtime/session/OfflineRunSeedBoundary.cs"
+    },
+    "Assets/LabLoadingScene/OfflineSettingsBoundary.cs.meta": {
+      "runtime_source": "runtime/input/OfflineSettingsBoundary.cs"
+    },
+    "Assets/LabLoadingScene/OriginalBodyVisualBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/OriginalBodyVisualBoundary.cs"
+    },
+    "Assets/LabLoadingScene/OriginalBodyVisualMap.cs.meta": {
+      "guid": "3dfa98c48e8ed46c29597757ba539210"
+    },
+    "Assets/LabLoadingScene/OriginalGlobalCommonAssetMap.cs.meta": {
+      "guid": "836bc2496b77f46dfa404b3182161f45"
+    },
+    "Assets/LabLoadingScene/OriginalGlobalCommonAssetsBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/OriginalGlobalCommonAssetsBoundary.cs"
+    },
+    "Assets/LabLoadingScene/OriginalHealthVisualMap.cs.meta": {
+      "guid": "8734f5323eed146d4a1269839d535211"
+    },
+    "Assets/LabLoadingScene/PickupDropletCollisionBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/PickupDropletCollisionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/PickupDropletFlightBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/PickupDropletFlightBoundary.cs"
+    },
+    "Assets/LabLoadingScene/PickupDropletLoadBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/PickupDropletLoadBoundary.cs"
+    },
+    "Assets/LabLoadingScene/PlayerDefeatBoundary.cs.meta": {
+      "runtime_source": "runtime/world/PlayerDefeatBoundary.cs"
+    },
+    "Assets/LabLoadingScene/PortSession.cs.meta": {
+      "runtime_source": "runtime/session/PortSession.cs"
+    },
+    "Assets/LabLoadingScene/PrimaryFireBoundary.cs.meta": {
+      "runtime_source": "runtime/world/PrimaryFireBoundary.cs"
+    },
+    "Assets/LabLoadingScene/RecoveredHudBoundary.cs.meta": {
+      "runtime_source": "runtime/presentation/RecoveredHudBoundary.cs"
+    },
+    "Assets/LabLoadingScene/RecoveredHudFeedback.cs.meta": {
+      "runtime_source": "runtime/presentation/RecoveredHudFeedback.cs"
+    },
+    "Assets/LabLoadingScene/RecoveredHudPresentation.cs.meta": {
+      "runtime_source": "runtime/presentation/RecoveredHudPresentation.cs"
+    },
+    "Assets/LabLoadingScene/RecoveredPickupPresentation.cs.meta": {
+      "runtime_source": "runtime/presentation/RecoveredPickupPresentation.cs"
+    },
+    "Assets/LabLoadingScene/RewiredPlatformBoundary.cs.meta": {
+      "runtime_source": "runtime/session/RewiredPlatformBoundary.cs"
+    },
+    "Assets/LabLoadingScene/RunClockBoundary.cs.meta": {
+      "runtime_source": "runtime/world/RunClockBoundary.cs"
+    },
+    "Assets/LabLoadingScene/SessionResourceBoundary.cs.meta": {
+      "runtime_source": "runtime/session/SessionResourceBoundary.cs"
+    },
+    "Assets/LabLoadingScene/SilentProjectileBoundary.cs.meta": {
+      "runtime_source": "runtime/world/SilentProjectileBoundary.cs"
+    },
+    "Assets/LabLoadingScene/SpawnStateBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/SpawnStateBoundary.cs"
+    },
+    "Assets/LabLoadingScene/StageBossContentBoundary.cs.meta": {
+      "runtime_source": "runtime/world/StageBossContentBoundary.cs"
+    },
+    "Assets/LabLoadingScene/StageCombatDeckBoundary.cs.meta": {
+      "runtime_source": "runtime/world/StageCombatDeckBoundary.cs"
+    },
+    "Assets/LabLoadingScene/StageGeometryBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/StageGeometryBoundary.cs"
+    },
+    "Assets/LabLoadingScene/StagePopulationBoundary.cs.meta": {
+      "runtime_source": "runtime/world/StagePopulationBoundary.cs"
+    },
+    "Assets/LabLoadingScene/SurvivorSelectionBoundary.cs.meta": {
+      "runtime_source": "runtime/session/SurvivorSelectionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/TeleportMaterialBoundary.cs.meta": {
+      "runtime_source": "runtime/catalog/TeleportMaterialBoundary.cs"
+    },
+    "Assets/LabLoadingScene/TeleporterWorldBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/TeleporterWorldBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WholeCatalogBootstrap.cs.meta": {
+      "runtime_source": "runtime/catalog/WholeCatalogBootstrap.cs"
+    },
+    "Assets/LabLoadingScene/WholeCatalogComposed.cs.meta": {
+      "runtime_source": "runtime/catalog/WholeCatalogComposed.cs"
+    },
+    "Assets/LabLoadingScene/WholeCatalogLoader.cs.meta": {
+      "runtime_source": "runtime/catalog/WholeCatalogLoader.cs"
+    },
+    "Assets/LabLoadingScene/WholeInteractableBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WholeInteractableBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WholePopulationBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WholePopulationBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldChestBreadthBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/WorldChestBreadthBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldCommerceBoundary.cs.meta": {
+      "runtime_source": "runtime/commerce/WorldCommerceBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldDotBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldDotBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldEquipmentBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldEquipmentBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldFlightEquipmentBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldFlightEquipmentBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldHealingItemsBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldHealingItemsBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldItemBehaviorBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldItemBehaviorBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldItemDisplayBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldItemDisplayBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldLegendaryItemsBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldLegendaryItemsBoundary.cs"
+    },
+    "Assets/LabLoadingScene/WorldProcContentBoundary.cs.meta": {
+      "runtime_source": "runtime/world/WorldProcContentBoundary.cs"
+    }
+  },
+  "shaders": {
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant100.shader.meta": "868d4263759dc417fbc02f626802d3f0",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant101.shader.meta": "afb97d0dc680b4d4d806ce4b2caab0a6",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant102.shader.meta": "ebe2cfdf2157b438a936de2b14f9962c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant103.shader.meta": "3bfe6782b0b424764ad7f60b1c847726",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant104.shader.meta": "2dcb5ca4ace0b415d8048bbfabd65a16",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant105.shader.meta": "00a81f1a92cdc4f8e91dd727e6c7f8a8",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant106.shader.meta": "b50412bc462084c41a7fd13150b7424b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant107.shader.meta": "fcd961048e09947639c638ebabfa3f38",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant108.shader.meta": "ea6bb986e35f44a5389c6dec61b1154f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant109.shader.meta": "4990fa92346444b30ac01672bbccdece",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant110.shader.meta": "30fd15c5b175a4e399861c5143d12f8c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant111.shader.meta": "84b06ada5ccb345c7b4ba22dca3f942b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant112.shader.meta": "4de6ed5e5abc446009951106a363bdf0",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant48.shader.meta": "54b4def4d19a24969beb76050be57415",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant49.shader.meta": "e13e906b4b9f446d6a5c1359f6522af5",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant50.shader.meta": "7c44b702698574235ace33fd3f53621b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant51.shader.meta": "7ccee6d48c80e4ed5add602288e5b476",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant52.shader.meta": "b126ebedfd63b40598dab1e3b984354f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant53.shader.meta": "f9c393e6a6a56489493cda88ddcdc415",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant54.shader.meta": "8fcf8353b0ed346fbac8d5af1d6ba9ab",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant55.shader.meta": "3749cec5072a84f67ae3339db734401a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant56.shader.meta": "0839c78eb457b415bb4a51dc56c7bbcf",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant57.shader.meta": "3a9fe9cd5420b461bb3c999b3762c394",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant58.shader.meta": "63495ca1b639b4a739ae168b81f48b47",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant59.shader.meta": "02f7ec2ecc1374580bec8e8b2a9f99b9",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant60.shader.meta": "6606d47b0309f439cb9caa92e0fe5fda",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant61.shader.meta": "ce4f0053b404a4cbe9d41c7bb716c768",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant62.shader.meta": "cf2aa3b64ee3f4e2ea77cb9c642bf809",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant63.shader.meta": "f722564c609aa496b9fafae084a400ca",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant64.shader.meta": "b21176ea692e54700ba5cdabd91e996f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant65.shader.meta": "afbed81f20a3c4dd28d16d8c405c1745",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant66.shader.meta": "eda4abd942c424f989435082b7fe3ae9",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant67.shader.meta": "679d60eebaaf74c5aab986d7ca89fb69",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant68.shader.meta": "ac791b6e4ed7342ec835ab29f0e859ea",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant69.shader.meta": "a84fd0e84c9f24eddb2587c7a1dd75df",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant70.shader.meta": "ccd16be8f56a44b5ead9211e0a14f66d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant71.shader.meta": "2667d1fd5d12e409baac8acd2a1ee8f4",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant72.shader.meta": "96c6c34e7570142558afc07d5f125a22",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant73.shader.meta": "f83e54b8aa3d04d2fa974b44eab6bdd7",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant74.shader.meta": "6500417560c924980bf76d894de1f295",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant75.shader.meta": "821f97e6ef7f14062b2d12ca05c418c2",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant76.shader.meta": "692797e0703dc41feaa3ed271958aefc",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant77.shader.meta": "c3c61c4e2ffaf45beb6b37f8501a53e4",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant78.shader.meta": "72e312523244447e48e8926dba2b9996",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant79.shader.meta": "59d2854d3348f4c759cf2a3aa890ab5b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant80.shader.meta": "927455dad485a4ca79cfe1257d0dedfa",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant81.shader.meta": "484f01690d0a7481bb02d08145ffc3a2",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant82.shader.meta": "9a18ece2f7d3640b1980d78831c6c57e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant83.shader.meta": "4c74063bd07454f3db882444ae46f70b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant84.shader.meta": "5116014e8ab0748a6924b8c70d3cc691",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant85.shader.meta": "e1b0d132f857645cc903f8123740313f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant86.shader.meta": "baa551a7349fe4e738b073a12e8e8de1",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant87.shader.meta": "913d8ee30324443b1812d2e2b71d948a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant88.shader.meta": "683b8de347cda4f68b13ad233e63f8d5",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant89.shader.meta": "0ba06e6b055d242969d99be8a0c1031b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant90.shader.meta": "350b33eff16894026b4e1bd1e923d4bd",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant91.shader.meta": "7dcfdbf635cc946f19b4b3358a808584",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant92.shader.meta": "c1ac73ec0f2c446f3acecbc62c8e6761",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant93.shader.meta": "c43536fd5fffe4bd2b64d82d5770cf2f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant94.shader.meta": "59b673589afa9454aa0685b72ec94e54",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant95.shader.meta": "453dc315125994b41b71208d0cda942e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant96.shader.meta": "3191bf34d1b7346bc8f8849262be88fa",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant97.shader.meta": "abc95fc9da79d4efc94a8a451cb53a85",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant98.shader.meta": "d6d1568fed12347ec86734bd483be13c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily0Variant99.shader.meta": "135217496716540ba88988e9e690f89b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily10Variant1.shader.meta": "e03c04b8d62d4463589a318e5dbcce72",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily10Variant2.shader.meta": "64536000d075e47178180345b20e88c5",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily10Variant3.shader.meta": "8ea6782f2f9d04d1ebc67ddd99fcd441",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant10.shader.meta": "018b1616576e84d15a917fbae551ba6d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant11.shader.meta": "558f4fdd920154620abcea8237e3e767",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant12.shader.meta": "16aa17c4d79c34a3ca271ccac2093612",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant3.shader.meta": "786426db99c38498a96af6d8d7925e4d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant4.shader.meta": "feee866e233d34e018a95ca160e167f6",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant5.shader.meta": "93762aeaf0db34abe9b36815efdc2f54",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant6.shader.meta": "472c686a49f0841b5a7bd7235ebc104c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant7.shader.meta": "3a6db5ad1ef1c4f9d9676b23592d807e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant8.shader.meta": "20abb59a51dac4fba9f8fa03c92ad3cc",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily1Variant9.shader.meta": "0e5189eb1aab8413ab8cd2780c9f2ec0",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant17.shader.meta": "c43df4be3741a4a8db6a182dc42fcce4",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant18.shader.meta": "b0b873217495c43f38cb6b5d3556d43f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant19.shader.meta": "414a12bbb701c4247944b69f7cfd0804",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant20.shader.meta": "ddad5f7330aa5410094815375c5b4141",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant21.shader.meta": "217de29b9eb7b42938ab140576d7588d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant22.shader.meta": "ac4cffb15ddcd4bcf96ebf524ee1d0f7",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant23.shader.meta": "2f5f111d1b632468b9ce0cdd3055dc33",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant24.shader.meta": "b96853e6feb994045b4219b3d2aa961d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant25.shader.meta": "71d4d958c3872475dbef26d13f1d970e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant26.shader.meta": "c677edd297cf4440b831682bb9c4e126",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant27.shader.meta": "0f198faba8b8a42ceba0d3bb007bad2a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant28.shader.meta": "af7ca8043cb6649eb8027746855eb8f3",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant29.shader.meta": "6377a03bb5eb945feac54d37ed3c9a11",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant30.shader.meta": "63f7c8d3d4b624de9a3b070a82ea4ee9",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant31.shader.meta": "40297214462a24a49bf097f87ce1beb9",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant32.shader.meta": "364b895105ebc4befaaaad0c2a28215c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily2Variant33.shader.meta": "c1a24e3cf84ae474a89fea0bd808460a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant11.shader.meta": "cb896b1ff3b254095b822ce855288213",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant12.shader.meta": "a4d5129bc61994e578d68a1426c301a9",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant13.shader.meta": "50cc1fa0edc32450d85a786546bb1fb8",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant14.shader.meta": "91cb7e616a0854233955bc6b3227db15",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant15.shader.meta": "b2ead6019340e429e87aa14d4e52739b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant16.shader.meta": "08a536a80ca2649cb9556ad0fc4c897d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant17.shader.meta": "78676463c93f94ee8939555e7749504a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant18.shader.meta": "c0aa7875e795b43c3a44f13726458a84",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant19.shader.meta": "b33d189c16a24471ba6a335156c5d62e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant20.shader.meta": "60bf984a1f1bc4c05a5d29cf754d7222",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily3Variant21.shader.meta": "7007a614db5e04a33ae070efc63a9f3d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant10.shader.meta": "319c7615ca0e742fbaa521215b19645e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant11.shader.meta": "2b913970107e2494897eaab0b6c4c0bf",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant12.shader.meta": "9691509e0280c4b8b9a2625c702050cd",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant13.shader.meta": "d88c9c3bc65724db6b61ef0e2e95b249",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant14.shader.meta": "95a030a6360f24e889f8ce5010d80f1c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant15.shader.meta": "143308e5368ad45a493386e984e85f20",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily8Variant9.shader.meta": "37cdc1bb2524e479090aff88a0c56b8f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant10.shader.meta": "22f30a5266a2b449b8a6966791f77eed",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant11.shader.meta": "08e076ab777fd4c088f70d3084dbd94d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant12.shader.meta": "9b23a918d61c44b6aa29829974cfc29d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant5.shader.meta": "15930305d0b79429ca82946ad6c0ea35",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant6.shader.meta": "b5585d1715a6a4bd095706ba86198b13",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant7.shader.meta": "ac0f46febff3842019545f70df745373",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant8.shader.meta": "f89a490ff62384210bd0084d1a38ff36",
+    "Assets/LabLoadingScene/Resources/AndroidNativeFamily9Variant9.shader.meta": "68142ccb0dbfe490ea3322393a6e0a7a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard100.shader.meta": "4b583f604006749b395e476e3892b931",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard101.shader.meta": "008c06186e6fb4e13be6b78b2706616a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard102.shader.meta": "8c5d23e2e76074604a53f459262bdbdf",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard103.shader.meta": "e007d24454eee431e89ad8cd9385b7f2",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard104.shader.meta": "08cd4bfc88ea948c6a6ada98d14b6fce",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard105.shader.meta": "daeda05d8ce6442c7bdaea634f2ac6ae",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard106.shader.meta": "3d780584a8ab14de1935622866139255",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard107.shader.meta": "5ae73f2880e6a4a198fc11470838280b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard108.shader.meta": "536ac6531b47e4b0f95126686ea977bd",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard109.shader.meta": "311e375097bf24d76b81e7743af39c02",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard110.shader.meta": "2b8490e2d3fc147b0afe71e36911a78c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard111.shader.meta": "07cc411bc2ea54410959c68157a56619",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard112.shader.meta": "bc3b05fdffcdc404d8734bfebb1400f7",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard113.shader.meta": "7338dce90f3184b60a1b244fe417335d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard114.shader.meta": "ef9446d075bd8484785f73dd433c682b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard115.shader.meta": "7d6d9016cf27941eb9e39172ebc1a407",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard116.shader.meta": "7db98ad2ca034448ab9f6e6ee8f3824a",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard117.shader.meta": "99288439c4e25402da060aa2d36974f3",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard118.shader.meta": "aa871d433275c416284138782f7a6a2d",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard119.shader.meta": "6000c2e759f3e4cdca4fa0b3cb160d20",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard120.shader.meta": "9c1c4cea48d9f4c4786a4e1e460c4595",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard121.shader.meta": "d52a87b8440b8430199b00b067d80a00",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard122.shader.meta": "6f9c177cd99bb4a23ac28a10783a7391",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard123.shader.meta": "ff4d5c8e519a04c2ea9967cd182dc856",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard124.shader.meta": "1c08966cab6064cc8985d0f1d1084b00",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard125.shader.meta": "58f81721390304c0aa929af80d96f67e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard126.shader.meta": "a9cb0c256bd384e2ba1ce7a56bc895d5",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard73.shader.meta": "ecfdfe57a80b54f73bd9dc58841a7fdd",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard74.shader.meta": "f8a082d1ad62443c8961c017fc4c9fb7",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard75.shader.meta": "302a2f2b4da8c454e926ac563d117866",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard76.shader.meta": "ba8c4babfd6b344db8d86753e15fa9a6",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard77.shader.meta": "863a9602ffaa845fba8a6b9bf54b1bc5",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard78.shader.meta": "a30b92a597c3b4f6aa76f18885d8071c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard79.shader.meta": "e2c00a5f9c5c141209790d238e8d6786",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard80.shader.meta": "6af9bdf4ed2284532b041d603a802b8f",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard81.shader.meta": "2c87cc974a4864e3e8843c01aab87225",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard82.shader.meta": "adc588f3956284ffd8a256f58d3b1bb6",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard83.shader.meta": "1db1ee2c4f38342cd8e0c8440f0899e2",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard84.shader.meta": "0cd7a6bb129ad4d219acaec4ce96f56b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard85.shader.meta": "1cf78d91ba2474b4392e27925dbb971c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard86.shader.meta": "ca7d10f3c2ec944bcac9e87fe9380990",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard87.shader.meta": "13750cb6119db4e6daaa2877a8dd4cfd",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard88.shader.meta": "b0d5f05daec5d41298796afd89ef6a06",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard89.shader.meta": "36a315e721a384cf69d483111026e04e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard90.shader.meta": "50419c72a99c146af92a020b87c2889e",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard91.shader.meta": "837609165902346ca932d7ec954eb1c6",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard92.shader.meta": "987169c7b85ed49a3932447886b9c538",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard93.shader.meta": "173881d94fc9240bd8bf55b9f05fe2dc",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard94.shader.meta": "bc3a88707654944cc98b3b8618af7e43",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard95.shader.meta": "520185c3b5ce84a988de950068d077dc",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard96.shader.meta": "6a693b3e8b2fd4a96ac9f860e20ab294",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard97.shader.meta": "3ac9220620ca8486b944ae2eed14d71b",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard98.shader.meta": "0a17d922cfb4441189d7ab855e8a234c",
+    "Assets/LabLoadingScene/Resources/AndroidNativeStandard99.shader.meta": "6c4a6853b3d6a4f3b944aeaccc7ceae9"
+  }
+}

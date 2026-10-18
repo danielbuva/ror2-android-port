@@ -15,6 +15,7 @@ from catalog_rebuild import catalog_closure, dependencies
 from scene_rebuild import stage_variants, source_scenes
 from build_entry_rebuild import build_entries, runtime_sources, validate_bindings
 from project_input_rebuild import PROJECT_INPUT_PATHS, project_inputs
+from importer_rebuild import IMPORTER_PATHS, importer_identities
 from shader_rebuild import shader_pipeline
 from common import RECIPE, ROOT, WORK, game, read, sha
 
@@ -143,6 +144,7 @@ STEPS = {
         runtime_sources,
         ("whole_catalog.preservation_descriptor via build_integration", "build.py / whole_catalog.build_integration source staging"),
     ),
+    "importer-identities": Step(("unity-generated",), lambda path: path in IMPORTER_PATHS, importer_identities),
     # Final gate after R3–R8 supply all runtime/build binding targets (J565).
     "validate-bindings": Step((), lambda path: False, validate_bindings),
 }

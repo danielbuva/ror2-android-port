@@ -82,8 +82,21 @@ import or build runs here. `validate-bindings` is the final read-only host gate;
 its receipts, membership rules, remaining pins and uncovered provenance are in
 [rebuild-plan.md](rebuild-plan.md#r7r8-host-build-entries-and-sources).
 
+`importer_rebuild.py` owns current host step `importer-identities`, after
+`runtime-sources` and before `validate-bindings`/R9. It renders recorded public
+GUIDs and shared importer schemas from `recipe/importer-identities.json`, checks
+all selected hashes/sizes before placement and records
+`.rebuild/importer-identities-result.json` plus its completion marker. Folder
+importers are left to Unity at R9 (J575); R9 classifies them and rescans the
+minted folder GUIDs for references. These receipts have
+no process lifetime or cleanup requirement; reruns replace them only after the
+cohort gates pass. `validate-bindings` requires the completion marker; R9 removes
+this step's membership from its remaining `unity-generated` comparison. No local
+provenance map is edited. Host contracts: `tests/test_importer_rebuild.py`;
+[scope and operator usage](rebuild-plan.md#pre-import-importer-identities-current).
+
 Host prerequisites (`shader_rebuild.py` and `project_input_rebuild.py`, current):
-R1 → `shader-pipeline` → R2 → `project-inputs` → R3–R8 → final bindings.
+R1 → `shader-pipeline` → R2 → `project-inputs` → R3–R8 → `importer-identities` → final bindings.
 Shader replay initializes R1's generation marker, validates the public retained-input
 recipe, runs existing generators into destination scratch, then places only
 map-matching outputs through `StageIO`. Its per-file blocked/result receipt owns

@@ -210,23 +210,53 @@ def execute_build(destination, work, api):
         return result
 
 
+GUID_LINE = re.compile(rb"(?m)^guid: [0-9a-f]{32}\r?\n")
+
+
+def folder_status(target, current):
+    """Unity mints folder importers at import; only their GUID line may differ (J575)."""
+    if not current.is_file() or not current.with_suffix("").is_dir():
+        return None
+    folder = target.with_suffix("")
+    if folder.is_dir() and target.is_file() and GUID_LINE.sub(b"", target.read_bytes()) == GUID_LINE.sub(b"", current.read_bytes()):
+        return "folder_guid_minted"
+    if not folder.exists() and not any(path.is_file() for path in current.with_suffix("").rglob("*")):
+        return "empty_folder_absent"
+    return None
+
+
 def compare_files(destination, project, paths, provenance):
     rows = []
     for path in sorted(paths):
         target, current = destination / path, project / path
         actual = sha(target) if target.is_file() else None
         expected = sha(current) if current.is_file() else None
+        status = "identical" if actual is not None and actual == expected else (path.endswith(".meta") and folder_status(target, current)) or "different"
         rows.append(
             dict(
                 path=path,
                 destination_sha256=actual,
                 current_sha256=expected,
                 provenance_sha256=provenance[path]["sha256"],
-                status="identical" if actual is not None and actual == expected else "different",
+                status=status,
                 provenance_matches=actual == provenance[path]["sha256"],
             )
         )
-    return dict(rows=rows, counts={status: sum(row["status"] == status for row in rows) for status in ("identical", "different")})
+    statuses = ("identical", "folder_guid_minted", "empty_folder_absent", "different")
+    return dict(rows=rows, counts={status: sum(row["status"] == status for row in rows) for status in statuses})
+
+
+def minted_folder_references(destination):
+    """Re-measure J575 on the GUIDs Unity actually minted in the destination."""
+    from importer_rebuild import folder_references
+
+    folders = {}
+    for meta in (destination / "Assets").rglob("*.meta"):
+        if meta.with_suffix("").is_dir():
+            match = GUID_LINE.search(meta.read_bytes())
+            if match:
+                folders[meta.relative_to(destination).as_posix()] = match[0].split()[1].decode()
+    return folder_references(destination, folders)
 
 
 def apk_entries(path):
@@ -353,6 +383,7 @@ def compare_apks(destination, reference):
 def unity_build(destination, work, input_id, provenance, compare_only=False):
     from build_entry_rebuild import validate_bindings
     from whole_catalog import build_integration
+    from rebuild import STEPS, selected_paths
 
     bindings = validate_bindings(destination, work, input_id, provenance=provenance)
     if not bindings["equal"]:
@@ -370,7 +401,10 @@ def unity_build(destination, work, input_id, provenance, compare_only=False):
         r9_obligations=compare_files(destination, work / "lab-project", bindings["r9_obligations"], provenance),
         unity_import_deferred=compare_files(destination, work / "lab-project", bindings["unity_import_deferred"], provenance),
         unity_generated=compare_files(
-            destination, work / "lab-project", {path for path, row in provenance.items() if row["producer"] == "unity-generated"}, provenance
+            destination,
+            work / "lab-project",
+            {path for path, row in provenance.items() if row["producer"] == "unity-generated"} - selected_paths(STEPS["importer-identities"], provenance),
+            provenance,
         ),
     )
     result = dict(
@@ -378,9 +412,10 @@ def unity_build(destination, work, input_id, provenance, compare_only=False):
         reference_apk=str(reference),
         groups=groups,
         apk=compare_apks(Path(build["apk"]), reference),
-        equal=all(group["counts"]["different"] == 0 for group in groups.values()),
+        folder_guid_references=minted_folder_references(destination),
         scope="Project hashes gate R9; APK differences require operator review and both device checks.",
     )
+    result["equal"] = all(group["counts"]["different"] == 0 for group in groups.values()) and not result["folder_guid_references"]["references"]
     if not compare_only:
         write(receipt, result)
     return result
