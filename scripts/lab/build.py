@@ -1,4 +1,5 @@
 from common import *
+import re
 import shutil
 import time
 import zipfile
@@ -229,6 +230,63 @@ def validate_whole_payload_reuse(project):
         write(WORK / "whole-catalog-code-base.json", dict(receipt, files=current, allowed=sorted(WHOLE_PLAYER_INPUTS)))
 
 
+def validate_project_layout(project):
+    """Check authored Unity identities and direct dependency pins without repairing them."""
+    recipe_path = RECIPE / "project-layout.json"
+    try:
+        layout = read(recipe_path)
+    except (OSError, ValueError) as error:
+        raise RuntimeError("Cannot read recipe/project-layout.json") from error
+    guids = layout.get("runtime_source_guids") if isinstance(layout, dict) else None
+    dependencies = layout.get("dependencies") if isinstance(layout, dict) else None
+    if not isinstance(guids, dict) or set(guids) != set(runtime_sources()):
+        raise RuntimeError("recipe/project-layout.json runtime_source_guids must match recipe/runtime-sources.json exactly")
+    # null marks a new source that Unity has not imported yet; record its GUID after the first build.
+    known = [guid for guid in guids.values() if guid is not None]
+    if any(not isinstance(guid, str) or not re.fullmatch(r"[0-9a-f]{32}", guid) for guid in known) or len(set(known)) != len(known):
+        raise RuntimeError("recipe/project-layout.json must contain unique 32-character lowercase hex GUIDs")
+    if (
+        not isinstance(dependencies, dict)
+        or not dependencies
+        or any(not isinstance(name, str) or not name or not isinstance(version, str) or not version for name, version in dependencies.items())
+    ):
+        raise RuntimeError("recipe/project-layout.json dependencies must map package names to nonempty version or URL strings")
+    project = Path(project)
+    for source, expected in sorted(guids.items()):
+        if expected is None:
+            continue
+        relative = "Assets/LabLoadingScene/" + Path(source).name + ".meta"
+        meta = project / relative
+        if not meta.is_file():
+            raise RuntimeError("Project layout missing staged .meta: " + relative)
+        with meta.open() as stream:
+            guid_lines = [line.rstrip("\r\n") for line in stream if line.startswith("guid:")]
+        if len(guid_lines) != 1 or not re.fullmatch(r"guid: [0-9a-f]{32}", guid_lines[0]):
+            raise RuntimeError("Project layout invalid staged .meta GUID: " + relative)
+        actual = guid_lines[0].split()[1]
+        if actual != expected:
+            raise RuntimeError(f"Project layout GUID mismatch: {relative}; expected {expected}, found {actual}; review recipe/project-layout.json")
+    try:
+        manifest = read(project / "Packages/manifest.json")
+    except (OSError, ValueError) as error:
+        raise RuntimeError("Project layout cannot read Packages/manifest.json") from error
+    actual = manifest.get("dependencies") if isinstance(manifest, dict) else None
+    if not isinstance(actual, dict):
+        raise RuntimeError("Project layout Packages/manifest.json must contain a dependencies object")
+    missing = sorted(set(dependencies) - set(actual))
+    extra = sorted(set(actual) - set(dependencies))
+    changed = sorted(name for name in set(actual) & set(dependencies) if actual[name] != dependencies[name])
+    differences = []
+    if missing:
+        differences.append("missing packages: " + ", ".join(missing))
+    if extra:
+        differences.append("extra packages: " + ", ".join(extra))
+    if changed:
+        differences.append("changed packages: " + ", ".join(changed))
+    if differences:
+        raise RuntimeError("Project layout Packages/manifest.json differs from recipe/project-layout.json; " + "; ".join(differences))
+
+
 def validate_staged_runtime_sources(project):
     if not (WORK / "whole-catalog-build.json").exists():
         return
@@ -240,6 +298,7 @@ def validate_staged_runtime_sources(project):
     ]
     if stale:
         raise RuntimeError("Whole-catalog runtime sources are not staged: " + ", ".join(stale[:12]) + "; run ./dev prototype --action whole-catalog-code-build")
+    validate_project_layout(project)
 
 
 def build_cache_key(project, api):

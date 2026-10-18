@@ -164,6 +164,12 @@ The detailed paths and status remain in [architecture-file-map.md](architecture-
 stages sources by basename, preserving generated project paths and Unity-owned metadata.
 The reader rejects duplicate basenames, including collisions with generated sources;
 the strict staged C# membership and byte comparison checks remain in `build.py`.
+`recipe/project-layout.json` owns those 92 authored script GUIDs and the 36 direct
+package dependency pins, audited in `recipe/README.md`. `build.py` checks staged
+`.meta` GUIDs and `Packages/manifest.json` dependencies after source validation on
+the current whole-catalog build path, before cache lookup or editor invocation.
+The check is read-only: it neither generates metadata nor installs packages;
+existing staging retains ownership of those writes until the direct composer lands.
 
 ## File status
 

@@ -5374,3 +5374,19 @@ and receipts that hash its sources by file name are unchanged. Three code refere
 (`boundaries.probe_tool`, `input_migration`) and the docs follow the move. The tool builds from
 the new path through `probe_tool()` and its read-only type inspection of the accepted
 `RoR2.dll` returns the expected fields. 419 host tests pass. Host tooling only; no APK change.
+
+## J547 — Record the authored script GUIDs and package set as a recipe
+
+Migration-removal plan commit 2, second half (implemented by Codex at medium reasoning, reviewed
+and adjusted by Claude). `recipe/project-layout.json` records the Unity GUID of every runtime
+source in `recipe/runtime-sources.json` (92; asset bundles reference authored scripts by GUID,
+so they must stay stable) and the 36 direct package dependencies, each audited in
+`recipe/README.md` (unity-mcp v10.2.0 under MIT; Burst, Collections, Mathematics, uGUI and the
+31 built-in modules under Unity's licences). The build's staged-source check now also fails
+clearly when a staged `.meta` GUID or the package manifest differs from the recipe; it only
+validates and writes nothing. Claude added one rule: a `null` GUID marks a new source that
+Unity has not imported yet, so adding a file does not block its own first build. 432 host tests
+pass. A code-only build passed the validation against the real project (APK `a449ef5976c488681160005301e939acb6528d8534c45663243ed4275bd700bc`), and
+`./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile runs
+unchanged (`work/experiments/baseline/20261018T032347.690788Z`). App stopped; OLED asleep. Generating the `.meta` files and manifest from
+the recipe is left to a later plan commit.

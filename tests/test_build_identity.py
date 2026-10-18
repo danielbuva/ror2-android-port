@@ -21,7 +21,12 @@ class BuildIdentityTests(unittest.TestCase):
             staged.parent.mkdir(parents=True)
             source.write_text("new offline award boundary")
             staged.write_text("previous offline award boundary")
-            write(root / "recipe/runtime-sources.json", [source.relative_to(root / "tools/unity").as_posix()])
+            source_name = source.relative_to(root / "tools/unity").as_posix()
+            write(root / "recipe/runtime-sources.json", [source_name])
+            dependencies = {"com.unity.ugui": "1.0.0"}
+            write(root / "recipe/project-layout.json", {"runtime_source_guids": {source_name: "a" * 32}, "dependencies": dependencies})
+            staged.with_suffix(".cs.meta").write_text("guid: " + "a" * 32 + "\n")
+            write(project / "Packages/manifest.json", {"dependencies": dependencies})
             write(work / "whole-catalog-build.json", {"scope": "test"})
             with patch.object(build, "ROOT", root), patch.object(build, "WORK", work), patch.object(build, "RECIPE", root / "recipe"):
                 with self.assertRaisesRegex(RuntimeError, "whole-catalog-code-build"):

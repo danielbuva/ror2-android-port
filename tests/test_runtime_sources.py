@@ -72,6 +72,12 @@ class RuntimeMembershipTests(unittest.TestCase):
         self.relative_source = self.source.relative_to(self.root / "tools/unity").as_posix()
         self.source.write_text("authored fixture")
         write(self.root / "recipe/runtime-sources.json", [self.relative_source])
+        write(
+            self.root / "recipe/project-layout.json",
+            {"runtime_source_guids": {self.relative_source: "a" * 32}, "dependencies": {"com.unity.ugui": "1.0.0"}},
+        )
+        (self.stage / "Fixture.cs.meta").write_text("guid: " + "a" * 32 + "\n")
+        write(self.project / "Packages/manifest.json", {"dependencies": {"com.unity.ugui": "1.0.0"}})
         write(self.work / "whole-catalog-build.json", {})
         for name, value in [("ROOT", self.root), ("RECIPE", self.root / "recipe"), ("WORK", self.work)]:
             patcher = patch.object(build, name, value)
@@ -108,7 +114,7 @@ class RuntimeMembershipTests(unittest.TestCase):
         write(self.root / "recipe/runtime-sources.json", sorted([self.relative_source, "runtime/world/Fixture.cs"]))
         with self.assertRaisesRegex(RuntimeError, "basename collision"):
             build.validate_runtime_source_membership(self.project)
-        self.assertEqual(list(self.stage.iterdir()), [])
+        self.assertEqual(list(self.stage.glob("*.cs")), [])
 
     def test_generated_source_basename_collision_is_rejected(self):
         write(self.root / "recipe/runtime-sources.json", ["runtime/session/OriginalBodyVisualMap.cs"])
