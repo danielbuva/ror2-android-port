@@ -13,10 +13,12 @@ from common import RECIPE, ROOT, now, read, run, sha, write
 
 
 def refuse_open_editors(destination, work):
-    """Unity owns its project lock; never delete it, including a possibly stale lock."""
+    """Unity owns its project lock; never delete it. A lock left behind after the editor
+    exited is stale only when no process holds it open."""
     projects = {destination.resolve(), (work / "lab-project").resolve(), (ROOT / "work/lab-project").resolve()}
-    if any((project / "Temp/UnityLockfile").exists() for project in projects):
-        raise RuntimeError("Close the destination and working-project Unity editors (UnityLockfile present)")
+    for lock in (project / "Temp/UnityLockfile" for project in projects):
+        if lock.exists() and run(["/usr/sbin/lsof", "-t", str(lock)], check=False).stdout.strip():
+            raise RuntimeError("Close the destination and working-project Unity editors (UnityLockfile held)")
     for command in run(["/bin/ps", "-axo", "command"]).stdout.decode().splitlines():
         # ps does not preserve quoting around paths with spaces. Match both spellings.
         if re.search(r"(?:^|/)Unity(?:\s|$)", command) and any(

@@ -116,8 +116,16 @@ class UnityRebuildTests(unittest.TestCase):
             lock = project / "Temp/UnityLockfile"
             lock.parent.mkdir(parents=True, exist_ok=True)
             lock.touch()
-            with self.assertRaisesRegex(RuntimeError, "UnityLockfile"):
+
+            def holder(pids):
+                return lambda command, **kwargs: SimpleNamespace(stdout=pids if command[0] == "/usr/sbin/lsof" else b"", returncode=0)
+
+            with patch.object(r9, "run", side_effect=holder(b"4242\n")), self.assertRaisesRegex(RuntimeError, "UnityLockfile held"):
                 r9.refuse_open_editors(self.dest, self.work)
+            # A lock no process holds is left in place and does not block.
+            with patch.object(r9, "run", side_effect=holder(b"")):
+                r9.refuse_open_editors(self.dest, self.work)
+            self.assertTrue(lock.exists())
             lock.unlink()
 
     def test_lock_excludes_second_r9_and_is_removed_after_failure(self):
