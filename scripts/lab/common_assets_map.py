@@ -33,8 +33,8 @@ def extract(source: str):
     return rows
 
 
-def generate(source: Path, destination: Path, input_id: str, legacy_aliases: dict, manifest: dict, expected_missing: set):
-    rows = extract(source.read_text())
+def generate(source: Path, destination: Path, input_id: str, legacy_aliases: dict, manifest: dict, expected_missing: set, io=None):
+    rows = extract(io.read_text(source) if io else source.read_text())
     keys = {entry["key"] for entry in manifest["keys"] if isinstance(entry["key"], str)}
     available = []
     missing = []
@@ -53,6 +53,9 @@ def generate(source: Path, destination: Path, input_id: str, legacy_aliases: dic
         " public const string InputId = " + json.dumps(input_id) + ";\n"
         " public static readonly string[][] Rows = new string[][] {\n" + source_rows + "\n };\n}\n"
     )
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(code)
+    if io is None:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(code)
+    else:
+        io.apply(destination, code)
     return {"rows": len(rows), "unlocated_fields": missing}

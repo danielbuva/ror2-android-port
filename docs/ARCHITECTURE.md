@@ -52,7 +52,18 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R6):
+Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R8):
+`build_entry_rebuild.py` owns host-only R7 `build-entries` and R8
+`runtime-sources`, after `scene_rebuild.py` supplies R5/R6. It uses destination
+`StageIO` buffers, explicit retained-input hash gates and completion markers;
+`finish` verifies selected output hashes/sizes before flushing. It shares
+`whole_catalog.generate_build_maps`, `stage_build_sources` and
+`generate_build_bootstrap` with the real build. `build.stage_android_assets`
+retains the real copytree and provides buffered destination placement. No Unity
+import or build runs here. `validate-bindings` is the final read-only host gate;
+its receipts, membership rules, remaining pins and uncovered provenance are in
+[rebuild-plan.md](rebuild-plan.md#r7r8-host-build-entries-and-sources).
+
 `./dev prototype --action rebuild-step --step assemblies` reconstructs the assembly
 cohort, then compares every selected map path with the current project's actual
 bytes. The ordered `STEPS` table declares each step's producer categories, path

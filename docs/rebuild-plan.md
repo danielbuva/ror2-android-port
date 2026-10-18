@@ -17,7 +17,7 @@ Steps:
 - **R3–R8:** the post-composition builders in the order below.
 - **R9:** Unity import and build of the destination, then both device checks.
 
-R0–R6 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
+R0–R8 now have a current host-only coordinator in `scripts/lab/rebuild.py`:
 
 ```sh
 ./dev prototype --action rebuild-step --step assemblies
@@ -47,8 +47,7 @@ generation identity from R1 recipes. Existing source/output/conflict gates remai
 Dependency staging follows catalog import in the order below, rather than running
 inline during R2; the real stage action retains its inline dependency call.
 The removed/unowned binding guard is deferred only in the rebuild path; its
-unresolved identifiers are preserved. `validate-bindings` is registered last and
-not runnable until all later builders exist. Synthetic host tests cover staging
+unresolved identifiers are preserved. `validate-bindings` runs last, after R8. Synthetic host tests cover staging
 and comparison; the operator must still run R2 against real data.
 
 R3 and R4 are now executable after R2 in that same destination:
@@ -117,7 +116,7 @@ config or implicit baseline read supplies missing output. R6 regenerates full
 scene bodies/importers and destination config/receipts from accepted source and
 public UI remaps. R4 must still defer R5/R6 paths: they do not exist when it runs.
 The receipt retains those paths for the final `validate-bindings` gate, which
-remains unrunnable until R8. Synthetic contracts: `tests/test_scene_rebuild.py`.
+runs after R8. Synthetic contracts: `tests/test_scene_rebuild.py`.
 The 41 stage node graphs are `unity-generated`: the live project and the frozen baseline
 hold the editor's re-serialized form, while a destination before R9 holds R2's export copy.
 In the rebuild path R5 accepts such a graph only when the destination bytes equal its single
@@ -125,6 +124,80 @@ recorded export source, and lists it as `unity_import_deferred` in its result; R
 reproduce the baseline hash. Only graph paths, never their bytes, feed R5's outputs.
 Real data (J570): from an empty destination, R1–R6 give 98, 84,487, 259, 1,238, 18 and 46
 identical files (28 graphs deferred to R9) with the working project unchanged.
+
+## R7/R8 host build entries and sources
+
+After R6, in the same destination:
+
+```sh
+./dev prototype --action rebuild-step --step build-entries --work-dir ../../../work
+./dev prototype --action rebuild-step --step runtime-sources --work-dir ../../../work
+./dev prototype --action rebuild-step --step validate-bindings --work-dir ../../../work
+```
+
+`build_entry_rebuild.py` owns these host steps. R7 selects **187** map paths:
+one runtime config, three C# maps, 181 repaired animation clips, stage contexts
+and bootstrap JSON. The content recipe is a regenerated build-external product.
+R8 selects **100**: 92 declared runtime sources, four editor fixtures,
+`WholeCatalogBuild.cs`, two `android/Assets` files and the preservation descriptor.
+Both have preflight and predecessor gates, buffered destination writes, complete
+output hash/size gates before flush, actual byte comparison and `--compare-only`.
+The real build retains its config → membership → maps/animation/context →
+sources/linker → bootstrap → build order. Its Android copy remains in `build`
+after staged-source validation. No editor or build operation is extracted.
+
+Regenerated inputs/products: public runtime/content recipes; visual maps using
+accepted source/aliases and R3's regenerated manifest; clips from accepted export
+and destination controller CRC names; original stage contexts from accepted
+scene fields and destination pool GUIDs; bootstrap preload keys from the pinned
+R3 closure; sources/fixtures and Android assets from public tracked files;
+linker roots from regenerated locations, retained contracts and authored
+progression roots. Existing importers are preserved, never allocated by R8.
+
+Explicit added blockers in `recipe/build-entry-inputs.json`: three decompiled
+source files, one imported-contract result and one manifest read **only** for
+the historical bootstrap attempt identity. Each is hash-pinned; none is claimed
+regenerated. Together with R3/R4's ten and R5's two, there are **17** retained
+local input records. `recipe/rebuild-binding-targets.json` is public identifier
+membership, not a retained content input. See the provenance/privacy audit in
+[recipe/README.md](../recipe/README.md#r7r8-host-replay-audit-2026-10-18).
+
+Final validation requires the R8 completion marker, unique regenerated R2/R4
+receipts, accepted input identities, all 104 J565 targets in the R2 receipt and
+the destination, and every R4 `deferred_to_later_steps` target. Paths must be safe
+and present in the provenance map. Missing targets fail the action; missing,
+ambiguous or malformed receipts fail closed. R5's graph receipt is required;
+`unity_import_deferred` entries must still exist and be `unity-generated`, but
+are reported as R9 obligations without requiring their final imported hash.
+This checks file placement, not GUID/fileID resolution or runtime readiness.
+
+The map attributes R1–R8 **98, 84,487, 259, 1,238, 18, 46, 187, 100** files
+(**86,433** total). These are membership counts; R7/R8 await operator replay.
+`rebuild.provenance_coverage` lists every uncovered row with its producer and
+complete evidence, without changing attribution. **5,408** rows remain outside
+R1–R8 selection:
+
+| Producer | Files | Evidence / remaining obligation |
+| --- | ---: | --- |
+| repo-builder | 352 | `shader_source.generate` (1), `shader_deferred.generate` (129), `shader_materials.generate` (222); composition prerequisite products, not yet a selected comparison cohort. |
+| tool-owned | 17 | `prepare.prepare`: current smoke ProjectSettings template equality; not selected by these steps. |
+| unity-generated | 5,028 | Schema signatures, preserved GUIDs/editor headers and serialization field order; import/scaffold/package obligations require R9, not host equality assumptions. |
+| unknown | 11 | Listed individually below; no proved complete current producer. |
+
+The 11 uncovered unknowns are `Assets/Editor/CatalogAddressProbe.cs`,
+`Assets/Editor/RecoveredHudBuilder.cs`, `Assets/Editor/WholeCatalogHost.cs`
+(stale staged bytes differ from current authored sources);
+`Assets/LabLoadingScene/NovaInputBridge.cs.meta` (Unity allocation plus script
+order, no complete reproduction proof);
+`Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml`
+(reflection callback, no full current-output proof);
+`Assets/Recovered/geometry.obj` (J08 exporter/provenance hash, no original-bundle
+replay); and `ProjectSettings/BurstAotSettings_Android.json`,
+`CommonBurstAotSettings.json`, `GraphicsSettings.asset`, `InputManager.asset`,
+`ProjectSettings.asset` (inherited settings differ from templates, constructor
+incomplete). Of the original 57 unknowns below, R1 now covers the 45 original
+DLLs and SimpleJSON; these 11 remain. Full path/evidence rows stay in the local
+coverage report because the map enumerates game asset identities.
 
 The audit below describes the J566 snapshot before this implementation.
 

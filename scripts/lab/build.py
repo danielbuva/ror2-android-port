@@ -287,14 +287,14 @@ def validate_project_layout(project):
         raise RuntimeError("Project layout Packages/manifest.json differs from recipe/project-layout.json; " + "; ".join(differences))
 
 
-def generate_runtime_config(project):
+def generate_runtime_config(project, io=None):
     """Replace the runtime resource with exactly the audited recipe, including JSON types."""
-    write(Path(project) / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", _read_public_recipe("runtime-config.json"))
+    (io.write if io else write)(Path(project) / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", _read_public_recipe("runtime-config.json"))
 
 
-def generate_content_recipe():
+def generate_content_recipe(io=None):
     """Replace the bundle selection with exactly the audited recipe; retain no local extras."""
-    write(WORK / "scene-probe-build.json", _read_public_recipe("content.json"))
+    (io.write if io else write)((io.work if io else WORK) / "scene-probe-build.json", _read_public_recipe("content.json"))
 
 
 def validate_runtime_config(project):
@@ -387,6 +387,16 @@ def build_cache_key(project, api):
     )
 
 
+def stage_android_assets(project, io=None):
+    """Place Android assets without starting Unity; the real copytree contract stays intact."""
+    if io is None:
+        shutil.copytree(ROOT / "android/Assets", project / "Assets", dirs_exist_ok=True)
+    else:
+        for source in sorted((ROOT / "android/Assets").rglob("*")):
+            if source.is_file():
+                io.apply(project / "Assets" / source.relative_to(ROOT / "android/Assets"), copy=source)
+
+
 def build(api="gles", force=False, reuse_payload=False):
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
@@ -399,7 +409,7 @@ def build(api="gles", force=False, reuse_payload=False):
         validate_runtime_support(project, read(recipe))
     validate_staged_runtime_sources(project)
     # Copy changed tool-owned sources only. Never reset project settings during an incremental build.
-    shutil.copytree(ROOT / "android/Assets", project / "Assets", dirs_exist_ok=True)
+    stage_android_assets(project)
     if reuse_payload:
         validate_whole_payload_reuse(project)
     key = build_cache_key(project, api)

@@ -1247,34 +1247,18 @@ def preservation_descriptor(roots):
     return ET.tostring(linker, encoding="unicode")
 
 
-def build_integration(code_only=False):
-    from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
+def generate_build_maps(io, manifest, contract, source, code_only=False):
     from animation_bindings import repair as repair_animation_bindings
     from body_visual_map import generate as generate_body_visual_map
     from common_assets_map import generate as generate_common_asset_map
 
-    project = WORK / "lab-project"
-    # Both build paths own their config inputs; never inherit migration or probe extras.
-    generate_runtime_config(project)
-    generate_content_recipe()
-    runtime_sources = validate_runtime_source_membership(project)
-    out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
-    attempt = ROOT / read(out / "integration-latest.json")["path"]
-    if not read(attempt / "host-integration.json")["success"]:
-        raise RuntimeError("Whole roots must pass typed import before building")
-    manifest = read(attempt / "manifest.json")
-    assembly_hash = sha(game() / "Risk of Rain 2_Data/Managed/RoR2.dll")
-    decompile_key = digest(dict(input=assembly_hash, ilspy="11.0.0.9375", args="project-referencepath-csharp9-v2"))
-    source = WORK / "decompiled/RoR2" / decompile_key[:16] / "RoR2/CharacterBody.cs"
-    contract = read(out / "original-catalog-contract.json")
-    if contract["input_sha256"] != assembly_hash or manifest["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
-        raise RuntimeError("Original body visual references belong to another accepted input")
+    project = io.project
     visual_map = generate_body_visual_map(
-        source, project / "Assets/LabLoadingScene/OriginalBodyVisualMap.cs", manifest["input_id"], contract["legacyAliases"], manifest
+        source, project / "Assets/LabLoadingScene/OriginalBodyVisualMap.cs", manifest["input_id"], contract["legacyAliases"], manifest, io=io
     )
     health_source = source.with_name("HealthComponent.cs")
     health_visual_map = generate_body_visual_map(
-        health_source, project / "Assets/LabLoadingScene/OriginalHealthVisualMap.cs", manifest["input_id"], contract["legacyAliases"], manifest
+        health_source, project / "Assets/LabLoadingScene/OriginalHealthVisualMap.cs", manifest["input_id"], contract["legacyAliases"], manifest, io=io
     )
     if health_visual_map["unlocated_fields"]:
         raise RuntimeError("Original health visual references are absent from the accepted content closure")
@@ -1285,45 +1269,49 @@ def build_integration(code_only=False):
         contract["legacyAliases"],
         manifest,
         {"groundOnHitPrefab", "hollowPack"},
+        io=io,
     )
-    write(WORK / "body-visual-map-latest.json", dict(body=visual_map, health=health_visual_map))
-    write(WORK / "global-common-map-latest.json", common_map)
-    animation_bindings = repair_animation_bindings(project)
+    io.write(io.work / "body-visual-map-latest.json", dict(body=visual_map, health=health_visual_map))
+    io.write(io.work / "global-common-map-latest.json", common_map)
+    animation_bindings = repair_animation_bindings(project, io=io)
     if code_only and animation_bindings["repaired"]:
         raise RuntimeError("Original animation curves changed; a content build is required")
     if animation_bindings["repaired"] or animation_bindings["unresolved"]:
-        write(WORK / "animation-bindings-latest.json", animation_bindings)
-    if (WORK / "scene-probe-build.json").exists() and not (project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json").is_file():
+        io.write(io.work / "animation-bindings-latest.json", animation_bindings)
+    if io.is_file(io.work / "scene-probe-build.json") and not io.is_file(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"):
         raise RuntimeError("Composed session is not staged for this generation; migrate it before building against an old scene recipe")
     stage_config = project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
-    if stage_config.exists():
-        stages = [row["name"] for row in read(stage_config).get("stageCombatDecks", [])]
-        export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    if io.is_file(stage_config):
+        stages = [row["name"] for row in io.read(stage_config).get("stageCombatDecks", [])]
+        export = io.resolve(io.read(io.work / "config/reconstruction.json")["projects"][0])
         pool_keys = {}
         for row in manifest["locations"]:
             if not row["type"].startswith("RoR2.DccsPool,"):
                 continue
-            meta = (project / (row["path"] + ".meta")).read_text()
+            meta = io.read_text(project / (row["path"] + ".meta"))
             guid = re.search(r"^guid: ([a-f0-9]{32})$", meta, re.M)[1]
             if guid in pool_keys and pool_keys[guid] != row["primaryKey"]:
                 raise RuntimeError("Ambiguous stage pool serialized owner")
             pool_keys[guid] = row["primaryKey"]
-        write(project / "Assets/LabLoadingScene/Resources/WholeStageContexts.json", original_stage_contexts(export, stages, manifest["input_id"], pool_keys))
+        io.write(project / "Assets/LabLoadingScene/Resources/WholeStageContexts.json", original_stage_contexts(export, stages, manifest["input_id"], pool_keys))
+
+
+def stage_build_sources(io, runtime_sources, manifest, contracts):
+    project = io.project
     # Stage the tracked runtime selection; keep existing Unity-owned .meta files.
     runtime = project / "Assets/LabLoadingScene"
     for filename in runtime_sources:
-        copy_catalog_asset(ROOT / "tools/unity" / filename, runtime / Path(filename).name)
+        io.apply(runtime / Path(filename).name, copy=ROOT / "tools/unity" / filename, catalog=True)
     # Exact-editor host fixtures; stage all four so none goes stale in the project.
     for filename in ["AndroidProgressionHost.cs", "AndroidDiscoveryHost.cs", "AndroidProfileHost.cs", "AndroidLifecycleHost.cs"]:
-        copy_catalog_asset(ROOT / "tools/catalog" / filename, project / "Assets/Editor" / filename)
+        io.apply(project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
     # Bundle-only serialized components and reflected location types are invisible
     # to the APK linker. Preserve their measured contracts, not a tested whitelist.
     roots = {}
     for row in manifest["locations"]:
         type_name, assembly = row["type"].split(",")[:2]
         roots.setdefault(assembly.strip(), set()).add(type_name)
-    contract_dir = ROOT / read(out / "contracts-latest.json")["path"]
-    for row in read(contract_dir / "result.json")["contracts"]:
+    for row in contracts["contracts"]:
         bound = row.get("target_imported") or row.get("imported")
         if bound and bound["type"]:
             roots.setdefault(bound["assembly"], set()).add(bound["type"])
@@ -1339,17 +1327,46 @@ def build_integration(code_only=False):
     }
     roots.setdefault("RoR2", set()).update(progression)
     link_path = project / "Assets/LabLoadingScene/WholeCatalogPreservation/link.xml"
-    link_path.parent.mkdir(exist_ok=True)
-    link_path.write_text(preservation_descriptor(roots))
-    copy_catalog_asset(ROOT / "tools/catalog/WholeCatalogBuild.cs", project / "Assets/Editor/WholeCatalogBuild.cs")
-    closure = read(out / "reconciled-closure.json")
+    io.apply(link_path, preservation_descriptor(roots))
+    io.apply(project / "Assets/Editor/WholeCatalogBuild.cs", copy=ROOT / "tools/catalog/WholeCatalogBuild.cs", catalog=True)
+
+
+def generate_build_bootstrap(io, manifest, closure):
+    project = io.project
     if closure["input_id"] != manifest["input_id"]:
         raise RuntimeError("Source preload evidence belongs to another accepted input")
     missing_preloads = sorted({row["key"] for row in closure["runtime_key_edges"] if row.get("field") == "preloadGUIDReferences" and not row.get("locations")})
-    write(
+    io.write(
         project / "Assets/LabLoadingScene/Resources/WholeCatalogBootstrap.json",
         dict(attempt=manifest["attempt"], input_id=manifest["input_id"], missingSourcePreloadKeys=missing_preloads),
     )
+
+
+def build_integration(code_only=False):
+    from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
+    from composition_io import StageIO
+
+    io = StageIO(WORK)
+    project = io.project
+    # Both build paths own their config inputs; never inherit migration or probe extras.
+    generate_runtime_config(project)
+    generate_content_recipe()
+    runtime_sources = validate_runtime_source_membership(project)
+    out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
+    attempt = ROOT / read(out / "integration-latest.json")["path"]
+    if not read(attempt / "host-integration.json")["success"]:
+        raise RuntimeError("Whole roots must pass typed import before building")
+    manifest = read(attempt / "manifest.json")
+    assembly_hash = sha(game() / "Risk of Rain 2_Data/Managed/RoR2.dll")
+    decompile_key = digest(dict(input=assembly_hash, ilspy="11.0.0.9375", args="project-referencepath-csharp9-v2"))
+    source = WORK / "decompiled/RoR2" / decompile_key[:16] / "RoR2/CharacterBody.cs"
+    contract = read(out / "original-catalog-contract.json")
+    if contract["input_sha256"] != assembly_hash or manifest["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
+        raise RuntimeError("Original body visual references belong to another accepted input")
+    generate_build_maps(io, manifest, contract, source, code_only)
+    contract_dir = ROOT / read(out / "contracts-latest.json")["path"]
+    stage_build_sources(io, runtime_sources, manifest, read(contract_dir / "result.json"))
+    generate_build_bootstrap(io, manifest, read(out / "reconciled-closure.json"))
     write(WORK / "whole-catalog-build.json", dict(manifest=str(attempt / "manifest.json")))
     if code_only:
         for filename in runtime_sources:

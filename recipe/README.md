@@ -59,6 +59,8 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `build-entry-inputs.json` | Explicit R7/R8 retained decompilation, contract and bootstrap identity inputs | Accepted input ID, five work-relative paths and SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18. | `build_entry_rebuild.BuildEntryIO` gates all five inputs; these are blockers, not freshly generated analysis. |
+| `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
 | `scene-rebuild-inputs.json` | Explicit temporary R5 frozen baseline and script identities | Accepted input ID, two work-relative paths and SHA-256 only. | No baseline contents, script implementation, private roots, binary or account/device data. Audited 2026-10-18. | `scene_rebuild.SceneIO` gates both inputs before scratch publication; removing these retained inputs remains a fresh-rebuild blocker. |
 | `catalog-rebuild-inputs.json` | Explicit temporary R3/R4 local analysis dependencies | Accepted input ID, work-relative receipt/metadata paths and SHA-256 only; ten existing catalog-analysis, mesh and support-contract records. | No catalog bodies, source code, binaries, private roots or device/account identifiers. Hashes pin local input, not redistribution permission. Audited 2026-10-18. | `catalog_rebuild.CatalogIO` gates the complete cohort before copying into destination scratch; retained analysis is the next blocker to remove. |
 | `composition-export-copies.json` | Residual R2 export membership outside canonical catalog closure relocation | 128 export-path → project-path pairs and accepted input ID. | Asset identifiers only; no bodies, private roots, device/account identifiers or third-party source. Audited 2026-10-18. | `composition_io.export_membership`; all bytes come from the accepted export and are hash/size-gated against the local map. |
@@ -731,3 +733,37 @@ loader or community code. Synthetic host checks cover the original real-action
 write paths as well as destination-only replay; real-data execution remains an
 operator action. Doctor was not run because it writes outside the authorized
 destination. No Unity/device commands, journal/state edits or commits were made.
+
+## R7/R8 host replay audit (2026-10-18)
+
+`build-entry-inputs.json` pins three accepted decompilation files, the imported
+runtime-contract result and the original manifest used only for its bootstrap
+attempt identity. All five are validated before any new scratch publication.
+They remain explicit fresh-rebuild blockers: decompilation has not been replayed
+here, the contract exporter requires Unity, and an arbitrary newly generated
+attempt name cannot reproduce the current bootstrap bytes. The regenerated R3
+manifest supplies every location, key and stage pool identity; it never falls
+back to the live manifest. R3's ten and R5's two earlier pins remain blockers.
+Only identities/hashes enter this recipe, never protected input contents.
+
+`rebuild-binding-targets.json` retains the minimum 104 project identities reported
+by the destination R2 guard (23 source scenes and 81 whole-game paths), matching
+J565. Validation checks that the regenerated guard still includes that complete
+set, then requires those files and every R4 deferred target in the destination.
+No historical binding report is an implicit input.
+
+The extracted `whole_catalog.generate_build_maps`, `stage_build_sources` and
+`generate_build_bootstrap` keep their real-action write paths. The real build
+still runs config generation, membership validation, maps/animation/context,
+source/linker staging, bootstrap generation and `build` in that order. The
+Android asset copy remains after staged-source validation inside `build`.
+Destination replay buffers these same writes through `StageIO`, hash/size-gates
+all selected products, and leaves Unity import/metadata allocation to R9.
+Synthetic host tests cover replay and production placement/order; no real-data
+execution, editor, build or device claim is made.
+
+Prior-art scope: re-read `docs/community-prior-art.md` and pinned ThunderKit
+`ImportAddressableCatalog.cs` at `95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`.
+Its copy into `Assets/StreamingAssets/aa` supplies no Android reconstruction,
+serialization or linker solution. These steps reuse existing measured lab
+producers and introduce no community code or runtime loading mechanism.

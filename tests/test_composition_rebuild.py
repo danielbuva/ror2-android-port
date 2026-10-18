@@ -178,8 +178,7 @@ class CompositionStageTests(unittest.TestCase):
         staging = self.run_stage(isolated=True)
         self.assertEqual(staging.read(self.evidence / "missing-runtime-bindings.json"), ["Assets/SourceScenes/Later.unity"])
         self.assertEqual(staging.read(self.work / "scene-probe-build.json")["later"], "Assets/SourceScenes/Later.unity")
-        with self.assertRaisesRegex(RuntimeError, "not runnable yet"):
-            rebuild.rebuild_step("validate-bindings", work=self.work)
+        self.assertIsNotNone(rebuild.STEPS["validate-bindings"].build)
 
     def test_conflict_guard_stops_before_stage_writes(self):
         self.plan["conflicts"] = ["synthetic"]

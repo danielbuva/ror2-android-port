@@ -15,17 +15,22 @@ PARAMETER = re.compile(r"^  - m_Name: (.+)$", re.M)
 PLACEHOLDER = re.compile(r"^(    attribute: )typetree_0x([0-9A-Fa-f]+)_[^\r\n]+$", re.M)
 
 
-def repair(project: Path):
+def repair(project: Path, io=None):
+    from composition_io import StageIO
+
+    if io is None:
+        io = StageIO(project)
+        io.project = project
     root = project / "Assets/WholeGame"
     names = defaultdict(set)
-    for controller in root.rglob("*.controller"):
-        for name in PARAMETER.findall(controller.read_text(errors="replace")):
+    for controller in io.glob(root, "**/*.controller"):
+        for name in PARAMETER.findall(io.read_text(controller, errors="replace")):
             names[zlib.crc32(name.encode("utf-8"))].add(name)
 
     changed = []
     unresolved = []
-    for clip in root.rglob("*.anim"):
-        source = clip.read_text(errors="replace")
+    for clip in io.glob(root, "**/*.anim"):
+        source = io.read_text(clip, errors="replace")
 
         def replace(match):
             original_hash = int(match[2], 16)
@@ -42,5 +47,5 @@ def repair(project: Path):
 
         repaired = PLACEHOLDER.sub(replace, source)
         if repaired != source:
-            clip.write_text(repaired)
+            io.apply(clip, repaired)
     return {"repaired": changed, "unresolved": unresolved}

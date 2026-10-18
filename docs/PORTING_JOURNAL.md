@@ -5745,3 +5745,29 @@ project manifest is unchanged. New temporary blockers: `whole-catalog-code-base.
 `replay_variants` duplicates `stage_variants.stage` for an empty destination; the final switch to
 the rebuild path should retire one of them. 671 host tests pass. Host tooling only; no APK change.
 86,146 of 91,841 project files are now rebuilt.
+
+## J571 — Rebuild steps R7 and R8 and the binding gate; device check of the split build path
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+`whole_catalog.build_integration` is split into `generate_build_maps`, `stage_build_sources`
+and `generate_build_bootstrap`, called in the same order through `StageIO`; `build.py` gains
+`stage_android_assets`. The generators take an optional `io`; without it they write exactly as
+before. Step `build-entries` (187 files: runtime config, content recipe, the three C# maps,
+animation-curve repairs, stage contexts, bootstrap JSON) and step `runtime-sources` (100 files:
+declared runtime sources, editor fixtures, linker roots, `android/Assets`) run in
+`build_entry_rebuild.py` without Unity. `validate-bindings` is now runnable: it requires the
+regenerated R2/R4 binding receipts, all 104 J565 targets (`recipe/rebuild-binding-targets.json`)
+and the 23 R4-deferred paths in the destination, and reports R5's graphs as R9 obligations.
+Real data, from an empty destination: R1–R8 gave 98, 84,487, 259, 1,238, 18, 46, 187 and 100
+identical files (86,433), `validate-bindings` passed (104 checked, 0 missing, 28 graphs for R9),
+and the working project manifest was unchanged. Still uncovered: 5,028 Unity-generated files,
+352 shader-pipeline outputs, 17 settings templates and 11 unknowns. Five more inputs are read by
+recorded hash (`recipe/build-entry-inputs.json`: three decompiled sources, the runtime contracts
+record and the bootstrap attempt identity), 17 pinned inputs in all.
+
+Because the real build path changed, a code build (`whole-catalog-code-build`) ran on the working
+project: zero errors, APK `065ce179850f5239bec7b920d97c1d1297f8e9ce4f4d35ed4c72bae25f9ac9d5`. A
+manifest before and after the build differs only in `Assets/Lab.unity`, which `LabBuild.Build`
+re-saves on every build (its hash changed across every earlier build too). Installed in place on
+adopted storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one
+genuine exit, 150.9 s world time). App stopped, OLED asleep. 680 host tests pass.

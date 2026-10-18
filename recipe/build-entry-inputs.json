@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "files": {
+    "CharacterBody.cs": {
+      "path": "decompiled/RoR2/e544a320e0b943df/RoR2/CharacterBody.cs",
+      "sha256": "c8aa73d4ebc85a7f55fb3849412b8f38b24887a14debc70c0861c14c62b8dbb9"
+    },
+    "HealthComponent.cs": {
+      "path": "decompiled/RoR2/e544a320e0b943df/RoR2/HealthComponent.cs",
+      "sha256": "ba4e510cf96fe0a62a114477bc3bd0972347c0888eb2bf60c20b49157276b7e1"
+    },
+    "GlobalEventManager.cs": {
+      "path": "decompiled/RoR2/e544a320e0b943df/RoR2/GlobalEventManager.cs",
+      "sha256": "9f6ca4ea16933c444f61f4c6715f08ef77f3137376f8883a84e5a3f6d24db5ce"
+    },
+    "contracts.json": {
+      "path": "experiments/whole-catalog/20261012T052308.866868Z/runtime-contracts-20261012T060726.910275Z/result.json",
+      "sha256": "db9cd9322dfc97184877bbb4958350faaa5799afd2c78df8659f152c7b792133"
+    },
+    "bootstrap-identity.json": {
+      "path": "experiments/whole-catalog/20261012T052308.866868Z/integration-20261014T050839.201013Z/manifest.json",
+      "sha256": "e297567e592479503e99f547f0aaaadec9cb1fbda78e4e1eb944c3da4eb55859"
+    }
+  }
+}

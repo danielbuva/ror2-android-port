@@ -13,6 +13,7 @@ import assembly_transforms
 from composition_io import composition
 from catalog_rebuild import catalog_closure, dependencies
 from scene_rebuild import stage_variants, source_scenes
+from build_entry_rebuild import build_entries, runtime_sources, validate_bindings
 from common import RECIPE, ROOT, WORK, game, read, sha
 
 
@@ -114,9 +115,48 @@ STEPS = {
         ("stage_variants.stage → nova_bridge.stage_first_stage_geometry", "composition_migration.refresh_scene_contracts → scene_contract"),
     ),
     "source-scenes": Step(("repo-builder",), lambda path: not assembly_path(path), source_scenes, ("source_scene_candidate.prepare",)),
+    "build-entries": Step(
+        ("repo-builder", "tool-owned"),
+        lambda path: not assembly_path(path),
+        build_entries,
+        (
+            "build.generate_runtime_config",
+            "body_visual_map.generate via whole_catalog.build_integration",
+            "common_assets_map.generate via whole_catalog.build_integration",
+            "animation_bindings.repair via whole_catalog.build_integration",
+            "whole_catalog.original_stage_contexts",
+            "whole_catalog.build_integration",
+        ),
+    ),
+    "runtime-sources": Step(
+        ("repo-builder", "tool-owned"),
+        lambda path: not assembly_path(path),
+        runtime_sources,
+        ("whole_catalog.preservation_descriptor via build_integration", "build.py / whole_catalog.build_integration source staging"),
+    ),
     # Final gate after R3–R8 supply all runtime/build binding targets (J565).
-    "validate-bindings": Step((), lambda path: False, None),
+    "validate-bindings": Step((), lambda path: False, validate_bindings),
 }
+
+
+def selected_paths(owner, provenance):
+    return {
+        path
+        for path, row in provenance.items()
+        if owner.owns(path)
+        and row["producer"] in owner.producers
+        and (not owner.evidence or any(item.get("function") in owner.evidence or item.get("owner") in owner.evidence for item in row.get("evidence", [])))
+    }
+
+
+def provenance_coverage(provenance):
+    """Map attribution only, not evidence of a completed replay or runtime readiness."""
+    membership = {name: selected_paths(owner, provenance) for name, owner in STEPS.items() if name != "validate-bindings"}
+    covered = set().union(*membership.values())
+    return dict(
+        counts={name: len(paths) for name, paths in membership.items()},
+        uncovered={path: row for path, row in provenance.items() if path not in covered},
+    )
 
 
 def safe_destination(destination, input_id, work):
@@ -180,13 +220,9 @@ def rebuild_step(step, dest=None, compare_only=False, work=None):
     owner = STEPS[step]
     for path in provenance:
         relative_path(path)
-    expected = {
-        path
-        for path, row in provenance.items()
-        if owner.owns(path)
-        and row["producer"] in owner.producers
-        and (not owner.evidence or any(item.get("function") in owner.evidence for item in row.get("evidence", [])))
-    }
+    expected = selected_paths(owner, provenance)
+    if step == "validate-bindings":
+        return validate_bindings(destination, work, input_id, provenance=provenance)
     if not expected:
         raise RuntimeError("No provenance paths for step: " + step)
     if compare_only:

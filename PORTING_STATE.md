@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J570**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J571**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -12,7 +12,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Latest device-verified APK | `6d3e1526231ac6a60dc8b5d9cb8300a4eb4ce8d254259db135a7f2fad3b4e451` — J551 build of `main` (generated recipes, full build); passed both `./dev check-baseline` modes |
+| Latest device-verified APK | `065ce179850f5239bec7b920d97c1d1297f8e9ce4f4d35ed4c72bae25f9ac9d5` — J571 code build of `main` after the `build_integration` split (project inputs equal to J551's); passed both `./dev check-baseline` modes |
 | Installed now | That same APK, installed in place; package `dev.ror2lab.arm64`, adopted storage (install receipt: `work/device/installed.json`); app stopped, OLED asleep |
 | Runtime source since that APK | Unchanged |
 | Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
@@ -71,7 +71,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    config and content recipe are generated from public recipes (J551); all 222 adapted assets,
    40 of 229 additions and the three transformed assemblies are reproducible (J552–J563); the 189
    inherited files are in a hash-verified local store (J564). The from-scratch rebuild reproduces
-   steps R1–R6 byte-identically (86,146 files, J567–J570); R7–R8 (build entries, linker roots),
-   the R9 Unity import and twelve hash-pinned local analysis inputs remain, and the 166 used
+   steps R1–R8 byte-identically (86,433 files) and its binding gate passes (J567–J571); the
+   R9 Unity import of the destination, the 352 shader-pipeline outputs, 11 unknown files and
+   17 hash-pinned local analysis inputs remain, and the 166 used
    inherited shaders need device-verified regeneration (J558). The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

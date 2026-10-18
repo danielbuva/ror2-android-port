@@ -33,7 +33,7 @@ p.add_argument(
 p.add_argument("--work-dir", help="Current: read-only local inputs for inherited-state-check, assembly-transforms-check or rebuild-step (default: work/)")
 p.add_argument(
     "--step",
-    help="Current: rebuild-step name (assemblies, composition, catalog-closure, dependencies, stage-variants, source-scenes; validate-bindings reserved)",
+    help="Current: rebuild-step name (assemblies, composition, catalog-closure, dependencies, stage-variants, source-scenes, build-entries, runtime-sources, validate-bindings)",
 )
 p.add_argument("--dest", help="Current: rebuild-step destination beneath this clone's work/rebuild/")
 p.add_argument("--compare-only", action="store_true", help="Current: compare an existing rebuild-step destination without writing")
