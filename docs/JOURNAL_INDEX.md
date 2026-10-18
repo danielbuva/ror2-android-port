@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J548](PORTING_JOURNAL.md#j548--policy-minimal-game-identifiers-in-public-recipes) | 2026-10-17 | Policy: minimal game identifiers in public recipes | User decision, 2026-10-17: public recipes may contain the minimum game-derived identifiers and relationships needed to locate, transform and reconstruct conten… |
 | [J547](PORTING_JOURNAL.md#j547--record-the-authored-script-guids-and-package-set-as-a-recipe) | 2026-10-17 | Record the authored script GUIDs and package set as a recipe | Migration-removal plan commit 2, second half (implemented by Codex at medium reasoning, reviewed and adjusted by Claude). |
 | [J546](PORTING_JOURNAL.md#j546--rename-toolsassemblyprobe-to-toolsassembly-transforms) | 2026-10-17 | Rename tools/AssemblyProbe to tools/assembly-transforms | Phase 5: the folder name now says what the tool does (it applies the bounded, input-gated assembly transforms such as `OptionalPresentationGuard` and `WwiseUna… |
 | [J545](PORTING_JOURNAL.md#j545--generate-the-readmes-command-table-from-the-action-registry) | 2026-10-17 | Generate the README's command table from the action registry | Phase 5 "Generated README table" (implemented by Codex at medium reasoning, reviewed by Claude). |

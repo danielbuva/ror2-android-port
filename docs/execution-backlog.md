@@ -24,8 +24,6 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Decide whether game asset paths and catalog names may appear in public recipes (blocks the
-      runtime-config and content recipes and migration-removal commits 3–9).
 - [ ] Migration-removal commits 3–9 ([plan](migration-removal-plan.md)), then `./dev rebuild` into
       an empty work folder.
 - [ ] Have `Start` call `GameSession` directly instead of selecting the session by id.

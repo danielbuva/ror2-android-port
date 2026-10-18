@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-17 after **J547**. This page is the current snapshot only: replace its
+Last updated 2026-10-17 after **J548**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -68,7 +68,6 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    unexplained regressions only.
 3. Keep J503, J502, J425 and J323 executable; sleep the OLED whenever idle.
 4. Structural cleanup: Phases 0, 1 and 3–5 of the cleanup plan are done; Phase 2 (reproducible
-   build) has its harness, source manifest and first recipes. **Open question:** may public
-   recipes contain game asset paths and catalog names (needed to track the runtime config
-   and content recipe), or must those selectors stay in ignored, locally generated files? The
+   build) has its harness, source manifest and first recipes. Public recipes may contain the minimum game asset paths, GUIDs and catalog names needed for
+   local reconstruction (decision recorded in J548). The
    remaining debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

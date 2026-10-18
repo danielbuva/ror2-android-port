@@ -10,6 +10,11 @@ What belongs here, and what does not:
 - **Tracked:** independently authored transformations, selections and configuration;
   identifiers and hashes needed to apply them; measured mappings between public
   identities (for example Unity package GUIDs).
+- **Tracked when needed (user decision, 2026-10-17):** the minimum game-derived identifiers and
+  relationships needed to locate, transform and reconstruct content from the user's own
+  installation, such as ordinary asset paths, GUIDs, catalog names and keys. A recipe must
+  enable local reconstruction, never substitute for owning the game: it must not reproduce
+  protected content or circumvent access controls.
 - **Never tracked:** generated game-derived content (assets, decompiled source, bundles,
   catalogs), private configuration (`work/config/local.json`, device or storage
   identifiers, home paths) and protected third-party material.

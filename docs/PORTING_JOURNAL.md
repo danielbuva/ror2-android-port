@@ -5390,3 +5390,13 @@ pass. A code-only build passed the validation against the real project (APK `a44
 `./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile runs
 unchanged (`work/experiments/baseline/20261018T032347.690788Z`). App stopped; OLED asleep. Generating the `.meta` files and manifest from
 the recipe is left to a later plan commit.
+
+## J548 — Policy: minimal game identifiers in public recipes
+
+User decision, 2026-10-17: public recipes may contain the minimum game-derived identifiers and
+relationships needed to locate, transform and reconstruct content from a user's legitimate
+installation (ordinary asset paths, GUIDs, catalog names), provided they do not reproduce
+protected content or circumvent access controls. A recipe should enable local reconstruction,
+not substitute for owning the game. Recorded in `recipe/README.md` and AGENTS.md; this unblocks
+the runtime-config and content recipes and migration-removal commits 3–9.
+
