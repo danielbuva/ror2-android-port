@@ -30,6 +30,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `deck-transforms.json` | 14 inherited director-deck addition pairs | Seven hash-pinned accepted-export base-scene decks, category names, spawn-card GUID selections, stable output GUIDs and explicit field omissions. | J548 minimum identifiers/relationships only; no serialized cards, asset/importer bodies, protected content, private paths or device/account data. Input/source gates require the legitimate export. Audited 2026-10-17. | `asset_transforms.py` owns the `deck` constructor and read-only comparison; `composition_migration.stage` prepares all 14 before writes without reading their historical bytes. |
 | `inherited-state.json` | J558 local-state ledger, not replacement content | 229 addition paths, inherited asset/meta SHA-256 and GUIDs; current identities/hashes; generator input/output identifiers and static reference chains. | J548 minimal identifiers/relationships and hashes only. No shader programs, importer/asset bodies, private paths or device/account data. Read-only census of accepted input and existing local outputs; reviewed 2026-10-17. | Current `inherited_state.py` checks inherited pairs and regenerates the nine `generated_shader_pair` entries in scratch, comparing bodies and authored importers against the previous project and ledger after input gating. Selected receipts and generator input hashes remain pinned. This status update adds no content or identifiers; reviewed 2026-10-17. Usage/comparison fields are reviewed snapshots; see [LOCAL_STATE](../docs/LOCAL_STATE.md#inherited-additions-ledger-j558). |
 | `authored-additions.json` | 15 inherited shader/include addition pairs | Existing tracked sources (14 shaders, one include), source hashes, output paths and stable lab GUIDs only. | No new shader content, importer bodies, game content or private identifiers. Importers use an authored minimal schema. This audits the selection/identities, not redistribution rights for unrelated recovered shader programs. Reviewed 2026-10-17. | `authored_additions.py` generates bytes without history; `composition_migration.stage` prepares the complete cohort before writes; `authored-additions-check` compares with the migration oracle read-only. Independent of game input; the oracle check gates composition/UI input IDs. |
 | `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets, ten field-only prefabs and all 178 structural prefabs/scenes (migration-removal commit 4 cohorts) | Accepted-export selectors/SHA-256; authored clearing, identity, typed field edits, explicit local-reference nulling, component/settings deletion and two typed adapter constructors. Four UI prefabs reuse the hash-pinned uGUI mapping. | J548 minimal source/output, hierarchy/script, removal/owner identifiers, field paths, reference preconditions, activation/reflection values and deterministic allocation namespaces only. No YAML blocks, original component bodies, importer bodies, private paths or historical asset reads. Constructor defaults are authored schemas matching the existing sanitizer; seed names preserve its IDs without reading the named location. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares the migration-stage oracle, reports exclusive structural cohorts and lists later project changes separately, without writing. |
@@ -426,3 +427,71 @@ use exact hash-gated source object IDs, never a display-name guess. Existing
 `integrated_objective.sanitize_optional_content` supplies the deletion/membership
 technique; its broader nulling and component-addition policies are not implicit
 in this operation. No third-party implementation was copied.
+
+## Director deck constructor audit (2026-10-17)
+
+`deck-transforms.json` describes the 14 `Director-*.asset` additions under
+`Assets/LabLoadingScene/CompletenessClosure/`. Each derives from exactly one
+accepted-export deck under `Assets/RoR2/Base/Scenes/`; no merging or new cards is
+needed. Source names and hashes gate reconstruction; category names and spawn-card
+GUIDs select source spans. The tables below use spawn-card basenames for readability
+(the `csc` prefix is omitted). C = Champions, M = Minibosses, B = Basic Monsters.
+Only the listed cards/categories survive, in recipe order; all other source cards
+and categories are dropped. Every deck drops Special / `cscScav`.
+
+| Output suffix (ordinary `Director-`) | Export source (`Scenes/`) | C kept | M kept | B kept |
+| --- | --- | --- | --- | --- |
+| dampcavesimple | `dampcave/dccsDampCaveMonsters.asset` | none | none | Lemurian |
+| foggyswamp | `foggyswamp/dccsFoggySwampMonsters.asset` | BeetleQueen | Golem | Lemurian, LesserWisp, Beetle |
+| frozenwall | `frozenwall/dccsFrozenWallMonsters.asset` | none | none | Lemurian, LesserWisp |
+| golemplains | `golemplains/dccsGolemplainsMonsters.asset` | BeetleQueen | Golem | Lemurian, Beetle, LesserWisp |
+| shipgraveyard | `shipgraveyard/dccsShipgraveyardMonsters.asset` | none | none | Beetle |
+| skymeadow | `skymeadow/dccsSkyMeadowMonsters.asset` | none | none | LesserWisp |
+| wispgraveyard | `wispgraveyard/dccsWispGraveyardMonsters.asset` | none | BeetleGuard | Beetle, LesserWisp |
+
+The seven `Director-Breadth-` outputs use those same respective export decks:
+
+| Output suffix (`Director-Breadth-`) | C kept | M kept | B kept | Additional cards dropped (besides Scav) |
+| --- | --- | --- | --- | --- |
+| dampcavesimple | ImpBoss | GreaterWisp, LemurianBruiser, Bell | Lemurian, Imp, HermitCrab | TitanDampCave, MagmaWorm, ElectricWorm |
+| foggyswamp | BeetleQueen, Vagrant | Golem, Bell | Lemurian, LesserWisp, Jellyfish, Beetle | TitanBlackBeach |
+| frozenwall | ClayBoss, ImpBoss | GreaterWisp, Bison | Lemurian, LesserWisp, Imp | MagmaWorm, ElectricWorm, GolemSnowy, Nullifier |
+| golemplains | TitanGolemPlains, BeetleQueen, Vagrant | Golem, GreaterWisp | Lemurian, Beetle, Jellyfish, HermitCrab, LesserWisp | none |
+| shipgraveyard | RoboBallBoss, Vagrant | Bell, GreaterWisp, LemurianBruiser | Beetle, Jellyfish | MagmaWorm, Nullifier, Vulture |
+| skymeadow | RoboBallBoss, Grandparent | GreaterWisp, Parent, LemurianBruiser | LesserWisp, MiniMushroom, Bell | MagmaWorm, ElectricWorm, Nullifier |
+| wispgraveyard | ClayBoss, ImpBoss | BeetleGuard, GreaterWisp, ClayBruiser | Beetle, LesserWisp, Imp | Gravekeeper, Vulture |
+
+For all 14, the name gains `Android supported ` and the retained cards omit the
+newer `isExclusivelyElite` and `eliteDef` fields. The constructor requires those
+source fields to be default (`0` and a null reference), preventing silent loss of
+an elite restriction. Retained category weights, card weights, spawn-card
+references, spawn distances, overhead flags, minimum-stage requirements and
+unlockable restrictions otherwise remain unchanged. In particular, Golemplains
+Breadth retains Jellyfish's distance 2 / minimum stage 1 / overhead 1 and
+HermitCrab's distance 2 / minimum stage 1 / overhead 0.
+
+The sole sparse exception is inherited `Director-Breadth-skymeadow`: its Champions
+category lacks `selectionWeight`; Grandparent retains only its spawn-card reference
+and card `selectionWeight: 2`, omitting distance, overhead, minimum stage and both
+unlockable strings/references. These are explicit `omit_weight` / `omit_fields`
+selectors. This preserves an existing anomaly, without claiming it is correct at
+runtime. No source weight is changed or invented. No Unity-allocated IDs are
+required: the standalone export record and generated native importer use fileID
+11400000; the recipe supplies each existing lab GUID. The importer is an authored
+minimal schema and carries no source timestamp or bundle membership.
+
+Prior-art review: pinned R2API.Director `DirectorAPIinternal.cs` at
+`f539511eabf87f02afddb5a83cafd2f4704c85ad`,
+`GetDirectorCardHoldersFromDCCS`, distinguishes category/card selection and
+`MonsterCategoryWeightsPerDccs` preserves category weights separately. This agrees
+with the director observations in `docs/community-prior-art.md`; it does not
+provide Android reconstruction or byte-stable serialization. The constructor
+therefore reuses hash-gated export spans, never community/game implementations or
+serialized payloads in a public recipe. The synthetic fixtures exercise source
+restrictions, selection, default-only elite omission, the sparse exception,
+metadata, complete stage membership and read-only oracle comparison.
+
+The inherited ledger remains a historical census: this change does not relabel
+its device-verification status. Deck generation and comparison need the accepted
+export; only the comparison reads the previous-project oracle. No generated
+asset bodies belong in this directory.

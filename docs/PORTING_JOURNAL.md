@@ -5576,3 +5576,18 @@ Wine decompiler. Without one, it runs the original decompiler path unchanged. `c
 an optional work-root argument with the same default. `inherited-state-check`: 9 generated pairs
 identical, 205 inherited pairs unchanged. Status now 24 reproducible, 205 inherited. 550 host tests
 pass. Host tooling only; no APK change, since the staged bytes are identical.
+
+## J561 — Generate the 14 director decks from the export
+
+Inherited-state reduction (implemented by Codex at medium reasoning, reviewed and merged by Claude).
+Each of the 14 inherited director decks (an ordinary and a Breadth deck for seven stages) derives
+from its stage's export `dccs…Monsters` deck: Special/Scav is dropped, the ordinary deck keeps a
+listed set of cards, the Breadth deck drops a listed set, and categories, weights, spawn references
+and restrictions are unchanged. `recipe/deck-transforms.json` records this as card and category
+identifiers only, and a `deck` constructor in `asset_transforms.py` builds them; composition
+staging now generates them next to the J560 shaders (a merge conflict in that staging step was
+resolved to keep both generators with one overlap check). One inherited anomaly in the Breadth Sky
+Meadow deck (missing Champions weight, truncated Grandparent fields) is reproduced on purpose;
+correcting it is gameplay work. `asset-transforms-check`: decks 14/14 identical, the 222 adapted
+assets unchanged. The ledger now lists 38 reproducible additions and 191 inherited (all verified
+unchanged). 562 host tests pass. Host tooling only; no APK change.

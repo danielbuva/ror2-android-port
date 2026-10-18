@@ -13,7 +13,7 @@
       "sha256": "6c7334911397e78b6be9475ce682f016dd1acf3363eba292daede60ebe94d5f6",
       "meta_sha256": "3fb2ba56a8fb31ec93110e98d1837db9da14f8a6115f137fc6d0d956f5f33eb4",
       "guid": "84688610d576c2c5af6e85e1a07f3e55",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -25,7 +25,7 @@
       ],
       "current_sha256": "a25dfb2e04b20656a837a4c140e785175edefee58b30c4b8185b941ca48800d2",
       "current_meta_sha256": "3fb2ba56a8fb31ec93110e98d1837db9da14f8a6115f137fc6d0d956f5f33eb4",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -39,7 +39,7 @@
       "sha256": "e0bea0b35833e8c29352626644b79b4a8bb91f6c7e3b6b577448af207179a878",
       "meta_sha256": "e9130aa41aeeb5e395f4904fbecbc5ce7ff2b6195ef35ee9f4bd076c54561f8b",
       "guid": "fd19a6ddcd47756af73ec60b66db571c",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -51,7 +51,7 @@
       ],
       "current_sha256": "4b6a998c3f69476828cbe6e59b8c9b8e755ca0a8d333f95070538f3e6712a04d",
       "current_meta_sha256": "e9130aa41aeeb5e395f4904fbecbc5ce7ff2b6195ef35ee9f4bd076c54561f8b",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -65,7 +65,7 @@
       "sha256": "ec0797c1f48ac6299f744f65860b367ff9271a641a4ed16b2fb19dcd12505c35",
       "meta_sha256": "d780bfc3c0dcd838a645dfe540decad968f9c1d8c26b76ee4cd8615e7966fd24",
       "guid": "3d1a87a352d64bf2709d977b78ec98b7",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -77,7 +77,7 @@
       ],
       "current_sha256": "0fd41d38fec6b63286439ba86dd14809c90bed823bdb4a123f14c08d5f23a0c6",
       "current_meta_sha256": "d780bfc3c0dcd838a645dfe540decad968f9c1d8c26b76ee4cd8615e7966fd24",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -91,7 +91,7 @@
       "sha256": "109b3825a41b6064f0877fdfa4870a67dcca045bf1a32fa0784ecb9386e5a652",
       "meta_sha256": "283fc701b825fed462a2435cb0b80a98584bdd3e3f7316b7d4c9dfd85ec8e49a",
       "guid": "0d44400a9136a35ebd7c087f0b4b0d55",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -103,7 +103,7 @@
       ],
       "current_sha256": "e5357d09882dbd59258fc051aed47b0bcfd842de1584f6b0c16763e5ed6a665e",
       "current_meta_sha256": "283fc701b825fed462a2435cb0b80a98584bdd3e3f7316b7d4c9dfd85ec8e49a",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -117,7 +117,7 @@
       "sha256": "090c358369eee945ab59b4f840256d16da5e2c857c6534b2b3ab1779a9c59a7e",
       "meta_sha256": "3f0a037b16112806b84de6037542691e176cb3d06620899378e59e03170a73ac",
       "guid": "588023aedcd4bb35e1ef42df45f4f135",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -129,7 +129,7 @@
       ],
       "current_sha256": "2a1f72dfddaa2083f1a879cf6e10b68ba97241fae7e43fa3317fc60cb5693cf1",
       "current_meta_sha256": "3f0a037b16112806b84de6037542691e176cb3d06620899378e59e03170a73ac",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -143,7 +143,7 @@
       "sha256": "32d76e9721b757222ba8bd65d90b3548cde1d0cc89bb62096ea033efc4bd0f56",
       "meta_sha256": "0166414ef6f57dbe5c7b84ffc5137453ec9f4bce86d9f7c766c895d3bcc0f86d",
       "guid": "930199943f01e37a1d7164a7de18c542",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -155,7 +155,7 @@
       ],
       "current_sha256": "ebd7547fbaef050acd8d8ffe6dbdd0d1301fbbbd3b4f62dd0a510ce4eff38dd4",
       "current_meta_sha256": "0166414ef6f57dbe5c7b84ffc5137453ec9f4bce86d9f7c766c895d3bcc0f86d",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -169,7 +169,7 @@
       "sha256": "912674312805baf6d9b33a753335b3b3d9e9ecf5da37614800c83d33ce990788",
       "meta_sha256": "8df15de0a9439da214b324279a6554e7a2d8a45f28d7bba9dc1f9bcdbb4ea406",
       "guid": "7040e1e2e8ee77a8470c7130e6e51dfc",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -181,7 +181,7 @@
       ],
       "current_sha256": "878a502770170ef0c3ad460c9f30c26e40d59333ec25a8bb8651ced9690254e0",
       "current_meta_sha256": "8df15de0a9439da214b324279a6554e7a2d8a45f28d7bba9dc1f9bcdbb4ea406",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -195,7 +195,7 @@
       "sha256": "339a1ea97373f0db699feeffb716b96735881111387a19c567b2509eb1a5b376",
       "meta_sha256": "a5b77c06bc00430773508ae7a62415d4487d6270af3b621787e89c64bab2257d",
       "guid": "20df42405947c7c6bd6b0b89ca48a055",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -207,7 +207,7 @@
       ],
       "current_sha256": "12ad5f3336e4ba1442f11bd5d3e3d2c37475e9c4488ab71ecf464ba43c8833e2",
       "current_meta_sha256": "a5b77c06bc00430773508ae7a62415d4487d6270af3b621787e89c64bab2257d",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -221,7 +221,7 @@
       "sha256": "e311b738d8df36e8af85154db2469c0513c2799cc4fc9bb08ffa439a9bd54e45",
       "meta_sha256": "009e90775d9b9901ebbde7799ef128324838689845df294890f192c3cb68cfd0",
       "guid": "9025ca127329de1d3862e31cd7a24c9f",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -233,7 +233,7 @@
       ],
       "current_sha256": "1855b66efbfb99442e711df789616092765add951ec819477115b1380f133d8d",
       "current_meta_sha256": "009e90775d9b9901ebbde7799ef128324838689845df294890f192c3cb68cfd0",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -247,7 +247,7 @@
       "sha256": "318aea2ddc80fdf65af88d2a4c3fbf50eb31f0da72fe5dd46f41ccbcabbe57a9",
       "meta_sha256": "4d4ffd220359d90b2e9c741a8c356822bb95c2c083c638c91999d230b755ef10",
       "guid": "217fab0e8300e50144faf52cdc9f2b57",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -259,7 +259,7 @@
       ],
       "current_sha256": "c1a960cf4384d69b2db9aa545bf6d6fa56908249bbc924c003b040d96ddb591e",
       "current_meta_sha256": "4d4ffd220359d90b2e9c741a8c356822bb95c2c083c638c91999d230b755ef10",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -273,7 +273,7 @@
       "sha256": "4f5ce3651b9a8f887e6434a1080aa6b4aa52384aeadac0b52a9484661a007434",
       "meta_sha256": "26873871a22aabdfc4cea00a95b31c79872909993c2f9c69c45c99caca766ddc",
       "guid": "3bff72a6f2d204ade078a2912947eab8",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -285,7 +285,7 @@
       ],
       "current_sha256": "b7ba57bf2eef902ddb8bf127a3dfad300d9ea1cc8393b8dbb88d1ea0718f2e7c",
       "current_meta_sha256": "26873871a22aabdfc4cea00a95b31c79872909993c2f9c69c45c99caca766ddc",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -299,7 +299,7 @@
       "sha256": "dc13d617ae1d9df695bc45344afd875ae2aa4294b56ae32077fb3a08bb8621f5",
       "meta_sha256": "9bf0c5e6e15eccf43def1d6cdb88c6f0cbdcfa406582a3057cebc605a321e8c2",
       "guid": "ec70bb86a749d60a8e26f7123d86a16d",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -311,7 +311,7 @@
       ],
       "current_sha256": "4915f7f8c83a67e1f45f56b56ca30635422de862f1b3ea1380b120460f9a0d67",
       "current_meta_sha256": "9bf0c5e6e15eccf43def1d6cdb88c6f0cbdcfa406582a3057cebc605a321e8c2",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -325,7 +325,7 @@
       "sha256": "981f0c0caa6ce19136ad382e55b3679c49b30e20aec6286180f633f73b7e6388",
       "meta_sha256": "6b08786c493d1e0f4660af69e2cf5eee9b9862362e9006dcc5c0d1b945f6c664",
       "guid": "660bfcd055c14548a46e1e7eb35caae9",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -337,7 +337,7 @@
       ],
       "current_sha256": "06dc16bf2191f5e37cfe89cb1331c1317b213132851bd3260fcc5b3061bfcf7f",
       "current_meta_sha256": "6b08786c493d1e0f4660af69e2cf5eee9b9862362e9006dcc5c0d1b945f6c664",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,
@@ -351,7 +351,7 @@
       "sha256": "4fdaab053a4cc274c18079978387fd45e9e90ce7a1831781bca94f8c66ee8313",
       "meta_sha256": "26c53db6aed5cf9f5fa8caff1027953fa3e9f9ebe214bd3b74824036af18efdb",
       "guid": "6b36665ea50ea4ff71fbfded965d00ee",
-      "status": "inherited",
+      "status": "reproducible",
       "usage": "used",
       "usage_evidence": [
         {
@@ -363,7 +363,7 @@
       ],
       "current_sha256": "798b21bd0a38194db468c73b871d08bc29aafcf386c74fefd4ee4a1b668eaabe",
       "current_meta_sha256": "26c53db6aed5cf9f5fa8caff1027953fa3e9f9ebe214bd3b74824036af18efdb",
-      "generator": null,
+      "generator": "asset_transforms.prepare_decks (recipe/deck-transforms.json)",
       "comparison": {
         "basis": "not_run",
         "asset_matches": null,

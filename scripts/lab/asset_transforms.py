@@ -646,6 +646,198 @@ def structural_kind(asset):
     return prefix + suffix
 
 
+# The inherited decks predate these two serialized DirectorCard fields. Only their
+# default values may be omitted; an elite restriction must never disappear silently.
+DECK_ELITE_DEFAULTS = {"isExclusivelyElite": "0", "eliteDef": "{fileID: 0}"}
+DECK_OMIT_FIELDS = {
+    "spawnDistance",
+    "preventOverhead",
+    "minimumStageCompletions",
+    "requiredUnlockable",
+    "forbiddenUnlockable",
+    "requiredUnlockableDef",
+    "forbiddenUnlockableDef",
+}
+
+
+def load_deck_recipe(accepted, path=None):
+    recipe = read(path or RECIPE / "deck-transforms.json")
+    if set(recipe) != {"schema_version", "input_id", "assets"} or type(recipe["schema_version"]) is not int or recipe["schema_version"] != 1:
+        raise RuntimeError("Invalid deck recipe schema")
+    if recipe["input_id"] != accepted:
+        raise RuntimeError("Deck transforms belong to a different accepted input")
+    if not isinstance(recipe["assets"], list) or not recipe["assets"]:
+        raise RuntimeError("Deck recipe requires assets")
+    outputs, guids = set(), set()
+    for asset in recipe["assets"]:
+        validate_deck(asset)
+        if asset["output"].casefold() in outputs or asset["guid"] in guids:
+            raise RuntimeError("Duplicate deck output or GUID")
+        outputs.add(asset["output"].casefold())
+        guids.add(asset["guid"])
+    return recipe
+
+
+def validate_deck(asset):
+    if set(asset) != {"source", "source_sha256", "output", "guid", "constructor", "categories"} or asset["constructor"] != "deck":
+        raise RuntimeError("Invalid deck constructor")
+    for key in ("source", "output"):
+        asset_path(Path.cwd(), asset[key])
+        if PurePosixPath(asset[key]).suffix != ".asset":
+            raise RuntimeError("Deck selector must be an asset")
+    for key, length in (("source_sha256", 64), ("guid", 32)):
+        if not isinstance(asset[key], str) or not re.fullmatch(r"[a-f0-9]{" + str(length) + "}", asset[key]):
+            raise RuntimeError("Invalid deck identity")
+    if not isinstance(asset["categories"], list) or not asset["categories"]:
+        raise RuntimeError("Deck requires selected categories")
+    names = set()
+    for category in asset["categories"]:
+        if set(category) != {"name", "cards", "omit_weight"} or type(category["omit_weight"]) is not bool:
+            raise RuntimeError("Invalid deck category")
+        name = category["name"]
+        if not isinstance(name, str) or not name or "\n" in name or "\r" in name or name in names:
+            raise RuntimeError("Duplicate or invalid deck category")
+        names.add(name)
+        if not isinstance(category["cards"], list) or not category["cards"]:
+            raise RuntimeError("Deck category requires cards")
+        cards = set()
+        for card in category["cards"]:
+            if set(card) != {"spawn_card", "omit_fields"} or not isinstance(card["spawn_card"], str) or not re.fullmatch(r"[a-f0-9]{32}", card["spawn_card"]):
+                raise RuntimeError("Invalid deck card identity")
+            omitted = card["omit_fields"]
+            if (
+                not isinstance(omitted, list)
+                or any(not isinstance(field, str) or field not in DECK_OMIT_FIELDS for field in omitted)
+                or len(omitted) != len(set(omitted))
+            ):
+                raise RuntimeError("Invalid deck card field omission")
+            if card["spawn_card"] in cards:
+                raise RuntimeError("Duplicate deck card")
+            cards.add(card["spawn_card"])
+
+
+def deck_parts(text):
+    """Index the bounded Unity DCCS layout, retaining source spans and card order."""
+    if len(re.findall(r"^--- !u!", text, re.M)) != 1 or not re.search(r"^--- !u!114 &11400000$", text, re.M):
+        raise RuntimeError("Deck requires one standalone MonoBehaviour")
+    if text.count("  categories:\n") != 1:
+        raise RuntimeError("Deck categories missing or ambiguous")
+    header, tail = text.split("  categories:\n")
+    categories = {}
+    for block in re.split(r"(?=^  - name: )", tail, flags=re.M):
+        if not block:
+            continue
+        match = re.fullmatch(r"  - name: ([^\r\n]+)\n    cards:\n(.*)    selectionWeight: ([^\r\n]+)\n", block, re.S)
+        if not match or match[1] in categories:
+            raise RuntimeError("Unsupported or duplicate source deck category")
+        cards = {}
+        for card in re.split(r"(?=^    - spawnCardReference:)", match[2], flags=re.M):
+            if not card:
+                continue
+            refs = re.findall(r"^      spawnCard: \{fileID: 11400000, guid: ([a-f0-9]{32}), type: 2\}$", card, re.M)
+            if len(refs) != 1 or refs[0] in cards or not card.startswith("    - spawnCardReference:\n"):
+                raise RuntimeError("Unsupported or ambiguous source deck card")
+            cards[refs[0]] = card
+        if not cards:
+            raise RuntimeError("Source deck category requires cards")
+        categories[match[1]] = (block[: block.index("    - spawnCardReference:")], cards, "    selectionWeight: " + match[3] + "\n")
+    return header, categories
+
+
+def generate_deck(source, asset):
+    """Construct a deck by selecting export spans; no inherited content is read."""
+    validate_deck(asset)
+    if hashlib.sha256(source).hexdigest() != asset["source_sha256"]:
+        raise RuntimeError("Deck source hash mismatch: " + asset["source"])
+    header, categories = deck_parts(source.decode("utf-8"))
+    header, count = re.subn(r"^(  m_Name: )([^\r\n]+)$", r"\1Android supported \2", header, flags=re.M)
+    if count != 1:
+        raise RuntimeError("Deck name missing or ambiguous")
+    result = [header, "  categories:\n"]
+    for selection in asset["categories"]:
+        if selection["name"] not in categories:
+            raise RuntimeError("Selected deck category missing")
+        prefix, cards, weight = categories[selection["name"]]
+        result.append(prefix)
+        for selected in selection["cards"]:
+            if selected["spawn_card"] not in cards:
+                raise RuntimeError("Selected deck card missing")
+            card = cards[selected["spawn_card"]]
+            for field, default in DECK_ELITE_DEFAULTS.items():
+                card, count = re.subn(r"^      " + field + ": " + re.escape(default) + r"\n", "", card, flags=re.M)
+                if count != 1:
+                    raise RuntimeError("Deck elite field is nondefault, missing or ambiguous")
+            for field in selected["omit_fields"]:
+                card, count = re.subn(r"^      " + field + r":[^\r\n]*\n", "", card, flags=re.M)
+                if count != 1:
+                    raise RuntimeError("Omitted deck card field missing or ambiguous")
+            result.append(card)
+        if not selection["omit_weight"]:
+            result.append(weight)
+    return "".join(result).encode()
+
+
+def generate_deck_asset(export, asset):
+    data = generate_deck(asset_path(export, asset["source"]).read_bytes(), asset)
+    # Authored minimal importer; stable lab GUID, no export bundle membership or timestamps.
+    meta = (
+        "fileFormatVersion: 2\nguid: " + asset["guid"] + "\nNativeFormatImporter:\n  externalObjects: {}\n"
+        "  mainObjectFileID: 11400000\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n"
+    ).encode()
+    return data, meta
+
+
+def prepare_decks(rows, export, accepted, recipe=None):
+    """Prepare every deck before stage writes, checking the composition identities."""
+    recipe = load_deck_recipe(accepted) if recipe is None else load_deck_recipe(accepted, recipe)
+    assets = {asset["output"]: asset for asset in recipe["assets"]}
+    prepared = {}
+    for row in rows:
+        asset = assets.get(row["old"])
+        if asset is None:
+            continue
+        if row["old"] in prepared or row["guid"] != asset["guid"]:
+            raise RuntimeError("Deck disagrees with composition identity")
+        prepared[row["old"]] = generate_deck_asset(export, asset)
+    if prepared.keys() != assets.keys():
+        raise RuntimeError("Composition omits recipe decks")
+    return prepared
+
+
+def check_decks(work=None, root=None):
+    """Compare pairs with normalized migration additions, read-only; report current drift."""
+    from composition_migration import normalize_addition
+
+    work, root = Path(work or WORK), Path(root or ROOT)
+    accepted = read(work / "config/accepted-input.json")["input_id"]
+    selection = read(work / "config/composition-migration.json")
+    reconstruction = read(work / "config/reconstruction.json")
+    if selection["input_id"] != accepted or reconstruction["input_id"] != accepted:
+        raise RuntimeError("Deck oracle/export belongs to a different accepted input")
+    remaps = read(RECIPE / "hud-ui-remaps.json")
+    if remaps["input_id"] != accepted:
+        raise RuntimeError("Deck UI remaps belong to a different accepted input")
+    guidmap = read(root / selection["evidence"] / "rebase-analysis.json")["guidmap"]
+    export = root / reconstruction["projects"][0]
+    recipe = load_deck_recipe(accepted)
+    differences, later_changes, identical = [], [], 0
+    for asset in recipe["assets"]:
+        data, meta = generate_deck_asset(export, asset)
+        source = asset_path(root / selection["previous_project"], asset["output"])
+        changed = []
+        if data != normalize_addition(source.read_bytes(), guidmap, remaps):
+            changed.append(asset["output"])
+        if meta != Path(str(source) + ".meta").read_bytes():
+            changed.append(asset["output"] + ".meta")
+        differences.extend(changed)
+        identical += not changed
+        current = asset_path(work / "lab-project", asset["output"])
+        current_meta = Path(str(current) + ".meta")
+        if not changed and (not current.is_file() or current.read_bytes() != data or not current_meta.is_file() or current_meta.read_bytes() != meta):
+            later_changes.append(asset["output"])
+    return {"total": len(recipe["assets"]), "identical": identical, "differences": differences, "changed_later_in_project": later_changes}
+
+
 def check(work=None, root=None):
     """Compare every generated asset with what the migration stage produces, without writing.
 
@@ -702,6 +894,7 @@ def check(work=None, root=None):
 
 def check_action():
     result = check()
+    result["deck_cohort"] = check_decks()
     print(json.dumps(result, indent=2))
-    if result["differences"]:
+    if result["differences"] or result["deck_cohort"]["differences"]:
         raise SystemExit(1)

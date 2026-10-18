@@ -1,0 +1,630 @@
+{
+  "schema_version": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "assets": [
+    {
+      "source": "Assets/RoR2/Base/Scenes/dampcave/dccsDampCaveMonsters.asset",
+      "source_sha256": "6019968ebd4acff6dfbc51f672fe73b57ec93372d40f42a68736a449b421d94b",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-dampcavesimple.asset",
+      "guid": "84688610d576c2c5af6e85e1a07f3e55",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "e9fcce02910861b43a918fe62fe49898",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "1941ec644ee08b640aacffc3d5c36e22",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "082f39aadbc408840b8515e6dbc8bfce",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "b63f687f10c05ef43bb64db29e3db155",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "fd65c1f2c631358468158cfb68801d16",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "050e1b3d7ef01e54d9a44e28fa210b4d",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/foggyswamp/dccsFoggySwampMonsters.asset",
+      "source_sha256": "01c903c4953107935ac65ec88f67b79ab5156ddb95a11ef3e44c55b996b2f1ee",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-foggyswamp.asset",
+      "guid": "fd19a6ddcd47756af73ec60b66db571c",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "09b81da61ea7c4243983271e2c1148c9",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "484f89449e6b2ef4fbe88f184570315b",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "5aeee630d39db5543a2b08e56eef493d",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "b63f687f10c05ef43bb64db29e3db155",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "02cf022800caa4440b15e2582c84225d",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/frozenwall/dccsFrozenWallMonsters.asset",
+      "source_sha256": "24be1edc49f5a50da1ce79adf80fb74c62105922a5b8eefdb87e67f508ca38fb",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-frozenwall.asset",
+      "guid": "3d1a87a352d64bf2709d977b78ec98b7",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "12f773fa1d972d24d8abea2ca1f26a39",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "e9fcce02910861b43a918fe62fe49898",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "1941ec644ee08b640aacffc3d5c36e22",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "932e431184644e14c9bf45b110d649b2",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "fd65c1f2c631358468158cfb68801d16",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/golemplains/dccsGolemplainsMonsters.asset",
+      "source_sha256": "b6476a59312296c131bd718136ac7ec481b8e64f405f09093c83d1d4d9092aa2",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-golemplains.asset",
+      "guid": "0d44400a9136a35ebd7c087f0b4b0d55",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "13837b6e1df8e6e40aca788b018f041b",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "09b81da61ea7c4243983271e2c1148c9",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "484f89449e6b2ef4fbe88f184570315b",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "5aeee630d39db5543a2b08e56eef493d",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "1941ec644ee08b640aacffc3d5c36e22",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "02cf022800caa4440b15e2582c84225d",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "050e1b3d7ef01e54d9a44e28fa210b4d",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/shipgraveyard/dccsShipgraveyardMonsters.asset",
+      "source_sha256": "cf85c2e7674b5435c35653a6d58c2c48c9f246a5b85c6353dc1ae09e6ec8d496",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-shipgraveyard.asset",
+      "guid": "588023aedcd4bb35e1ef42df45f4f135",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "9d202da9b7f08ee48a6be18ba3eaf169",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "484f89449e6b2ef4fbe88f184570315b",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "b63f687f10c05ef43bb64db29e3db155",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "1941ec644ee08b640aacffc3d5c36e22",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "082f39aadbc408840b8515e6dbc8bfce",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "02cf022800caa4440b15e2582c84225d",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/skymeadow/dccsSkyMeadowMonsters.asset",
+      "source_sha256": "5747ea2185f32198dc5c3c8cd57c6fc0b6523c4c19aa1d80b8aa4dde5f9381c2",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-skymeadow.asset",
+      "guid": "930199943f01e37a1d7164a7de18c542",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "9d202da9b7f08ee48a6be18ba3eaf169",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "4c1b1d43a05c7444da2387e0f8e9e72f",
+              "omit_fields": [
+                "spawnDistance",
+                "preventOverhead",
+                "minimumStageCompletions",
+                "requiredUnlockable",
+                "forbiddenUnlockable",
+                "requiredUnlockableDef",
+                "forbiddenUnlockableDef"
+              ]
+            }
+          ],
+          "omit_weight": true
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "1941ec644ee08b640aacffc3d5c36e22",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "ed29a6d6b77a6784aa5f5948be1af56a",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "082f39aadbc408840b8515e6dbc8bfce",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "033cd86bb6f246a48b91bb9e00d0b550",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "b63f687f10c05ef43bb64db29e3db155",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/wispgraveyard/dccsWispGraveyardMonsters.asset",
+      "source_sha256": "e56a67f4073cea0bf6d017a730b1eee990d95f2527bb05dae641606d6dca1bc2",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-Breadth-wispgraveyard.asset",
+      "guid": "7040e1e2e8ee77a8470c7130e6e51dfc",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "12f773fa1d972d24d8abea2ca1f26a39",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "e9fcce02910861b43a918fe62fe49898",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "b1fdc8befb501e4458b5e659ba94d2bb",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "1941ec644ee08b640aacffc3d5c36e22",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "4b2e9385b9a08504387fb10e3534bfdd",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "fd65c1f2c631358468158cfb68801d16",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/dampcave/dccsDampCaveMonsters.asset",
+      "source_sha256": "6019968ebd4acff6dfbc51f672fe73b57ec93372d40f42a68736a449b421d94b",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-dampcavesimple.asset",
+      "guid": "20df42405947c7c6bd6b0b89ca48a055",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/foggyswamp/dccsFoggySwampMonsters.asset",
+      "source_sha256": "01c903c4953107935ac65ec88f67b79ab5156ddb95a11ef3e44c55b996b2f1ee",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-foggyswamp.asset",
+      "guid": "9025ca127329de1d3862e31cd7a24c9f",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "09b81da61ea7c4243983271e2c1148c9",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "5aeee630d39db5543a2b08e56eef493d",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/frozenwall/dccsFrozenWallMonsters.asset",
+      "source_sha256": "24be1edc49f5a50da1ce79adf80fb74c62105922a5b8eefdb87e67f508ca38fb",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-frozenwall.asset",
+      "guid": "217fab0e8300e50144faf52cdc9f2b57",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/golemplains/dccsGolemplainsMonsters.asset",
+      "source_sha256": "b6476a59312296c131bd718136ac7ec481b8e64f405f09093c83d1d4d9092aa2",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-golemplains.asset",
+      "guid": "3bff72a6f2d204ade078a2912947eab8",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Champions",
+          "cards": [
+            {
+              "spawn_card": "09b81da61ea7c4243983271e2c1148c9",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "5aeee630d39db5543a2b08e56eef493d",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "28a7a86170dfc3a4494d46d073f5bcfe",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/shipgraveyard/dccsShipgraveyardMonsters.asset",
+      "source_sha256": "cf85c2e7674b5435c35653a6d58c2c48c9f246a5b85c6353dc1ae09e6ec8d496",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-shipgraveyard.asset",
+      "guid": "ec70bb86a749d60a8e26f7123d86a16d",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/skymeadow/dccsSkyMeadowMonsters.asset",
+      "source_sha256": "5747ea2185f32198dc5c3c8cd57c6fc0b6523c4c19aa1d80b8aa4dde5f9381c2",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-skymeadow.asset",
+      "guid": "660bfcd055c14548a46e1e7eb35caae9",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    },
+    {
+      "source": "Assets/RoR2/Base/Scenes/wispgraveyard/dccsWispGraveyardMonsters.asset",
+      "source_sha256": "e56a67f4073cea0bf6d017a730b1eee990d95f2527bb05dae641606d6dca1bc2",
+      "output": "Assets/LabLoadingScene/CompletenessClosure/Director-wispgraveyard.asset",
+      "guid": "6b36665ea50ea4ff71fbfded965d00ee",
+      "constructor": "deck",
+      "categories": [
+        {
+          "name": "Minibosses",
+          "cards": [
+            {
+              "spawn_card": "b1fdc8befb501e4458b5e659ba94d2bb",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        },
+        {
+          "name": "Basic Monsters",
+          "cards": [
+            {
+              "spawn_card": "6b30e5f999a0c0e41a99e9682bc9df92",
+              "omit_fields": []
+            },
+            {
+              "spawn_card": "7f24f6b9acc7d18479e42956095cc6bb",
+              "omit_fields": []
+            }
+          ],
+          "omit_weight": false
+        }
+      ]
+    }
+  ]
+}

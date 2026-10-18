@@ -190,7 +190,11 @@ class AssetTransformsTests(unittest.TestCase):
         self.assertEqual(action.status, "current")
         for differences in ([], ["Assets/SyntheticSurface.asset"]):
             result = {"total": 1, "identical": int(not differences), "differences": differences}
-            with patch.object(transforms, "check", return_value=result), contextlib.redirect_stdout(io.StringIO()) as output:
+            with (
+                patch.object(transforms, "check", return_value=result),
+                patch.object(transforms, "check_decks", return_value={"differences": []}),
+                contextlib.redirect_stdout(io.StringIO()) as output,
+            ):
                 if differences:
                     with self.assertRaises(SystemExit) as failure:
                         transforms.check_action()

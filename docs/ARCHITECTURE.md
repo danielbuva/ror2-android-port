@@ -116,7 +116,8 @@ checks the existing provenance/output/conflict gates and metadata equality, then
 writes those pairs instead of copying preview assets. `prepare_asset_transforms`
 validates these rows using export bytes and the plan's hashes without opening
 preview/previous asset files. The surrounding migration still reads historical
-plans, mappings, configs and 214 additions; the other 15 now use tracked sources.
+plans, mappings, configs and 200 additions; 15 use tracked sources and 14 use
+export-based deck constructors.
 There is no persistent generator state or teardown. The current read-only action
 `./dev prototype --action asset-transforms-check` compares every recipe asset/meta
 pair with the migration preview oracle (or project when no preview exists), checks
@@ -125,6 +126,20 @@ structural cohorts report equality separately; the removal cohort also counts
 deleted components. Later project transformations are reported separately without
 rewriting either side. Host contracts are in `tests/test_asset_transforms.py` and
 `tests/test_asset_structural_operations.py`; device acceptance is a separate gate.
+
+The same owner constructs the 14 director-deck additions selected by
+`recipe/deck-transforms.json`. `generate_deck` selects category/card spans from
+seven hash-pinned export decks, preserves retained fields and order, prefixes the
+name, and omits default elite fields from the older serialization schema. Explicit
+field/weight omissions preserve the inherited sparse Sky Meadow champion card;
+they do not repair its gameplay. `generate_deck_asset` supplies a minimal native
+importer with the stable lab GUID. `prepare_decks` requires complete composition
+membership and matching identities before any writes; staging retains target
+relocation and uses the existing addition writer. No persistent state or teardown
+is needed. The current `asset-transforms-check` also reports `deck_cohort` against
+the normalized previous-project addition oracle, compares metadata, fails on pair
+drift and lists current-project changes separately. Host contracts live in
+`tests/test_deck_transforms.py`; the recipe audit explains selections and prior art.
 
 Authored additions (`scripts/lab/authored_additions.py`, current) owns
 `recipe/authored-additions.json`: 14 tracked shader sources and one include, their

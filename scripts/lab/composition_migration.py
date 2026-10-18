@@ -402,7 +402,7 @@ def stage():
         raise RuntimeError("Composition still references removed or unowned assets; inspect missing-runtime-bindings.json")
 
     # Verify the entire patch plan before the first project write.
-    from asset_transforms import load_recipe
+    from asset_transforms import load_recipe, prepare_decks
     from authored_additions import prepare as prepare_authored_additions
     from shader_additions import prepare as prepare_shader_additions
 
@@ -413,6 +413,10 @@ def stage():
     if authored.keys() & shaders.keys():
         raise RuntimeError("Overlapping generated addition owners")
     authored.update(shaders)
+    decks = prepare_decks(generated, export, accepted)
+    if authored.keys() & decks.keys():
+        raise RuntimeError("Overlapping generated addition owners")
+    authored.update(decks)
     staged = []
     for row in generated:
         stage_addition(row, authored, previous, project, guidmap, remaps)
