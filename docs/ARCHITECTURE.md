@@ -372,7 +372,7 @@ host tests, a zero-error exact-editor build and a device check.
 
 Still open:
 
-1. **No from-scratch build.** The project is still made by migrating a previous project
+1. **No from-scratch build** (design: [rebuild-plan.md](rebuild-plan.md)). The project is still made by migrating a previous project
    (`composition_migration.stage`); seven path families it reads have no producer in the repo
    ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
    and the generation marker still lacks a full assembly-map initializer. The three

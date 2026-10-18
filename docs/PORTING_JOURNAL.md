@@ -5658,3 +5658,19 @@ necessary but not enough. A rebuild from scratch needs an orchestrated sequence 
 builders after the stage, each with its own equivalence proof. The dry-run refactor touches the
 build and staging write paths and could not be validated against real data, so it is not merged;
 it is kept as a local patch for that orchestration work.
+
+## J566 — Provenance map and rebuild design
+
+Phase 2, from-scratch rebuild (map by Codex at medium reasoning, design reviewed by Claude). Every
+file of the generated project (91,841 under Assets, Packages and ProjectSettings) was assigned one
+producer: 84,051 unchanged export copies, 267 recipe transforms, 10 generator outputs, 204 from the
+inherited store, 2,107 from named repo builders (proven by their receipts or by read-only
+regeneration), 5,028 Unity-generated (mostly importers), 117 tool-owned, and 57 unknown. 45 of the
+unknown are original DLLs placed in the project by an untracked J430 script (their source hashes
+match the installation); the rest are five settings files, three editor sources, an OBJ, an
+importer and a linker file. `docs/rebuild-plan.md` sets out the order (assembly placement,
+composition stage, catalog import closure, dependency adaptation, reduced stage variants, the 23
+source scenes, build-entry generation, staging and the Unity build) and the rule that each step
+builds into a separate destination project, proven against the current project for the files the
+map attributes to it. The map itself stays local because it lists every game asset path. Design
+only; no code or APK changed.

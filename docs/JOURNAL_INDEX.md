@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J566](PORTING_JOURNAL.md#j566--provenance-map-and-rebuild-design) | 2026-10-18 | Provenance map and rebuild design | Phase 2, from-scratch rebuild (map by Codex at medium reasoning, design reviewed by Claude). |
 | [J565](PORTING_JOURNAL.md#j565--the-composition-stage-alone-no-longer-describes-todays-project) | 2026-10-18 | The composition stage alone no longer describes today's project | Migration-removal plan commit 8, second part (dry run by Codex at medium reasoning, investigated by Claude). |
 | [J564](PORTING_JOURNAL.md#j564--stage-inherited-files-from-a-named-hash-verified-store) | 2026-10-18 | Stage inherited files from a named, hash-verified store | Migration-removal plan commit 8, first part (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J563](PORTING_JOURNAL.md#j563--reproduce-the-transformed-plugin-assemblies-from-the-originals) | 2026-10-17 | Reproduce the transformed plugin assemblies from the originals | Migration-removal plan commit 7 (implemented by Codex at medium reasoning, reviewed and fixed by Claude). |
