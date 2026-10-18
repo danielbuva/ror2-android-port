@@ -78,6 +78,8 @@ class RuntimeMembershipTests(unittest.TestCase):
         )
         (self.stage / "Fixture.cs.meta").write_text("guid: " + "a" * 32 + "\n")
         write(self.project / "Packages/manifest.json", {"dependencies": {"com.unity.ugui": "1.0.0"}})
+        write(self.root / "recipe/runtime-config.json", {"launchPlayableSlice": True})
+        write(self.stage / "Resources/MovementBatchProbe.json", {"launchPlayableSlice": True})
         write(self.work / "whole-catalog-build.json", {})
         for name, value in [("ROOT", self.root), ("RECIPE", self.root / "recipe"), ("WORK", self.work)]:
             patcher = patch.object(build, name, value)

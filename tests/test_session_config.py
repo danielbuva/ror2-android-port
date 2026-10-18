@@ -131,10 +131,6 @@ class SessionConfigTests(unittest.TestCase):
                 parses.append((path.name, parts[opening + 1 : closing(parts, opening)]))
         self.assertEqual(parses, [(PROBE.name, ["File", ".", "ReadAllText", "(", "path", ")"])])
 
-    @unittest.skip("Runtime JSON keys inherit ignored work/ state; the clone has no authoritative tracked key inventory")
-    def test_runtime_json_keys_cover_session_config(self):
-        pass
-
 
 class FieldParserTests(unittest.TestCase):
     def test_grouped_fields_attributes_nested_types_and_initializers(self):

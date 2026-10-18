@@ -170,6 +170,11 @@ package dependency pins, audited in `recipe/README.md`. `build.py` checks staged
 the current whole-catalog build path, before cache lookup or editor invocation.
 The check is read-only: it neither generates metadata nor installs packages;
 existing staging retains ownership of those writes until the direct composer lands.
+`recipe/runtime-config.json` records the 183 present public `SessionConfig` fields
+(options and content identifiers; audit in `recipe/README.md`). `build.py` validates
+them after layout validation, before cache lookup or editor invocation, without
+writing the config. Extra staged keys remain allowed. The absent
+`detailedVisualDiagnostics` field stays untracked until explicitly configured.
 
 ## File status
 
@@ -218,10 +223,11 @@ Still open:
    `integrated_objective.py:56`) and is carried forward by hash. The removal plan is
    [migration-removal-plan.md](migration-removal-plan.md); commits 1–2 are done (harness,
    source manifest, script GUIDs and packages), 3–9 are open.
-2. **Most of the runtime recipe is untracked.** The runtime config (369 keys, 184 read by the
-   code as `SessionConfig`) and the content recipe `work/scene-probe-build.json` (4,184
-   prefabs) are not in Git. Tracking them means publishing game asset paths and catalog names;
-   see the open question in PORTING_STATE.md.
+2. **Runtime recipe generation is unfinished.** `recipe/runtime-config.json` tracks and
+   validates 183 present public fields of the 184-field `SessionConfig`; it does not yet
+   generate the local config (369 keys, including 186 outside `SessionConfig`). The content
+   recipe `work/scene-probe-build.json` (4,184 prefabs) remains untracked. See
+   [recipe audits](../recipe/README.md#runtime-config-audit-2026-10-17).
 3. **The session is still selected by id.** `Start` waits 8 s and picks the session from a
    string id; the playable spine runs `GameSession()` (J513) and the 116 historical cases live
    in `LabExperiments.cs`. Having `Start` call `GameSession` directly is the remaining step.

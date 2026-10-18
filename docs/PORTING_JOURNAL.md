@@ -5400,3 +5400,17 @@ protected content or circumvent access controls. A recipe should enable local re
 not substitute for owning the game. Recorded in `recipe/README.md` and AGENTS.md; this unblocks
 the runtime-config and content recipes and migration-removal commits 3–9.
 
+## J549 — Track the runtime config as a public recipe
+
+Migration-removal plan commit 3, first half (implemented by Codex at medium reasoning, reviewed
+by Claude), under the J548 policy. `recipe/runtime-config.json` tracks the current values of
+183 of the 184 `SessionConfig` fields (44 authored options, 139 game selectors: asset paths,
+names and keys, GUIDs and hashes, scene-hierarchy paths); `detailedVisualDiagnostics` is absent
+from the config and stays at its default. Codex's audit found no private or protected values,
+and Claude's own scan of all 2,392 strings found no private paths, device identifiers, URLs or
+content. The build's staged-source check now also requires the project's
+`Resources/MovementBatchProbe.json` to hold every recipe key with an equal value; the 185 keys
+the code no longer reads may still be present. Validation only, nothing is written. 441 host
+tests pass. A code-only build passed the check on the real project (APK `c7519084abcb50bdb79910917fe98882f3d53e1751bee5d0c43419c0d3dde6ac`), and
+`./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile runs
+unchanged (`work/experiments/baseline/20261018T044126.269987Z`). App stopped; OLED asleep. Next: generate the config from the recipe.

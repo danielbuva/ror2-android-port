@@ -287,6 +287,43 @@ def validate_project_layout(project):
         raise RuntimeError("Project layout Packages/manifest.json differs from recipe/project-layout.json; " + "; ".join(differences))
 
 
+def validate_runtime_config(project):
+    """Check the public runtime selection without writing config or rejecting local extras."""
+    try:
+        recipe = read(RECIPE / "runtime-config.json")
+    except (OSError, ValueError) as error:
+        raise RuntimeError("Cannot read recipe/runtime-config.json") from error
+    if not isinstance(recipe, dict) or not recipe:
+        raise RuntimeError("recipe/runtime-config.json must contain a nonempty object")
+    relative = "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
+    try:
+        staged = read(Path(project) / relative)
+    except (OSError, ValueError) as error:
+        raise RuntimeError("Runtime config cannot read " + relative) from error
+    if not isinstance(staged, dict):
+        raise RuntimeError("Runtime config " + relative + " must contain an object")
+
+    def equal(expected, actual):
+        if type(expected) is not type(actual):
+            return False
+        if isinstance(expected, dict):
+            return expected.keys() == actual.keys() and all(equal(value, actual[key]) for key, value in expected.items())
+        if isinstance(expected, list):
+            return len(expected) == len(actual) and all(equal(a, b) for a, b in zip(expected, actual))
+        return expected == actual
+
+    missing = sorted(recipe.keys() - staged.keys())
+    changed = sorted(key for key in recipe.keys() & staged.keys() if not equal(recipe[key], staged[key]))
+    differences = []
+    if missing:
+        differences.append("missing keys: " + ", ".join(missing))
+    if changed:
+        differences.append("changed keys: " + ", ".join(changed))
+    if differences:
+        # Report names only: staged values may contain private local data.
+        raise RuntimeError("Runtime config " + relative + " differs from recipe/runtime-config.json; " + "; ".join(differences))
+
+
 def validate_staged_runtime_sources(project):
     if not (WORK / "whole-catalog-build.json").exists():
         return
@@ -299,6 +336,7 @@ def validate_staged_runtime_sources(project):
     if stale:
         raise RuntimeError("Whole-catalog runtime sources are not staged: " + ", ".join(stale[:12]) + "; run ./dev prototype --action whole-catalog-code-build")
     validate_project_layout(project)
+    validate_runtime_config(project)
 
 
 def build_cache_key(project, api):

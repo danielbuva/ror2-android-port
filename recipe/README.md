@@ -33,6 +33,7 @@ produce the file from the input, prefer tracking the generator.
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
 | `project-layout.json` | Inherited authored script identities and package dependency selection | 92 GUID lines for authored sources in `runtime-sources.json`; 36 public direct dependency pins. | Identifiers and public package coordinates only; no importer bodies, game-derived content or private URLs. Per-package audit below, 2026-10-17. | `build.py` validates staged identities and manifest dependencies without writing them. No game input dependency. |
+| `runtime-config.json` | Public selection in ignored `Resources/MovementBatchProbe.json`; validation only, no staging replacement yet | The lab's runtime selection for the accepted input `6af7ed94…` (Steam build 25475991); 183 present `SessionConfig` keys, preserving values and JSON types. | Authored options and necessary identifiers/relationships only; no protected content. 45 authored fields (44 present), 139 selector fields, 0 private/content fields. Excluded: `detailedVisualDiagnostics` is absent locally, so no value is invented. Audit details below, 2026-10-17. | `build.py` checks recipe keys against staged config after layout validation; extra local/obsolete keys remain allowed. Read-only validation in the existing accepted-input-gated build path; no reconstruction reader yet. |
 
 `runtime-sources.json` lists paths relative to `tools/unity`, staged at
 `Assets/LabLoadingScene` by basename. Basename collisions (including generated sources)
@@ -119,3 +120,89 @@ Built-in modules remain under the operator's applicable Unity Software license
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.
+
+## Runtime config audit (2026-10-17)
+
+All 184 `SessionConfig` fields were reviewed against the current local runtime
+selection, including nested array/object leaves. Of these, 183 are present; the
+369-key local config also has 186 keys outside `SessionConfig` (not 185, because
+one current field is absent). Those extra keys were not extracted. The recipe
+contains exactly the 183 present public fields, sorted recursively; array order,
+empty selectors, scalar types and nested relationships are preserved.
+
+Classification is by top-level field: 45 authored options (44 present), 139 game
+selectors, and 0 private/content fields. Selector records may include lab flags
+and numeric contract counts alongside their identifiers. These counts, delays,
+gravity and cost are lab configuration/contract values, not serialized asset
+payloads. This audit grants no redistribution rights to the assets they locate.
+
+Excluded/doubtful-key review:
+
+- `detailedVisualDiagnostics`: authored flag absent from the local JSON. Excluded;
+  no `null`, default or inferred value is published or required by validation.
+- `attempt`: retained as an authored label for the accepted build, not a timestamp,
+  private run directory or device identity.
+- `moneySourceSha256`: retained as a source identity precondition (a hash only),
+  not source code or a payload.
+- `objectiveActors`: retained; body/card/avatar/controller/mesh/material selectors,
+  renderer paths and activation relationships only, with lab booleans. No mesh,
+  animation or material contents.
+- `integratedStages`: retained; scene/bundle/graph identifiers, hierarchy selectors,
+  activation/omission relationships and numeric contract counts only. No scene
+  serialization, geometry or component payloads.
+- `stageCombatDecks`: retained; stage/deck identifiers and contract counts only,
+  without spawn-card/category payloads.
+- `worldChestBreadth`: retained; prefab and animation-clip identifiers only,
+  without animation contents.
+- `visualCaptureStage`, `visualCaptureRenderer`, `barrierCompletionType`,
+  `barrierCompletionMethod`, `barrierEffectAsset`, `barrierEffectKey`: retained as
+  empty selector strings; no capture location or content is present.
+
+No present field contains an absolute/home path, device/storage/account identity,
+private-run timestamp or protected content. Game asset paths are project-relative;
+resource paths, GUIDs, catalog names and sound event names identify content that
+must still be reconstructed from the operator's legitimate input. No external
+`work/` file was changed. Configuration generation and the removal of obsolete
+local keys remain for the second half of migration-removal commit 3.
+
+Every field is assigned below; the absent authored flag remains in its class.
+
+| Class | Fields |
+| --- | --- |
+| Authored option | `attempt`, `automaticDirector`, `barrelInteraction`, `combatSpine`, `detailedVisualDiagnostics` |
+| Authored option | `directorSpawnLimit`, `enemyRewards`, `enemySpine`, `enhancedPresentation`, `freshRunSeed` |
+| Authored option | `initializeLoadoutTables`, `integratedResults`, `integratedRuntimeSeconds`, `integratedTransitionTarget`, `integratedWorld` |
+| Authored option | `launchPlayableSlice`, `moneySourceCost`, `moonMission`, `originalActiveClient`, `originalAimPresentation` |
+| Authored option | `originalChestDropTable`, `originalChestEjection`, `originalChestPurchase`, `originalClientCoin`, `originalDefaultPickup` |
+| Authored option | `originalInputBarrel`, `originalInteractionSelection`, `originalItemPickup`, `originalMoneyCost`, `originalPickupDropletCollision` |
+| Authored option | `originalPickupDropletFlight`, `originalPickupDropletLoad`, `originalRunClock`, `pauseBeforeMoon`, `recoveredHudEnabled` |
+| Authored option | `sourceGravity`, `sourceQueriesHitTriggers`, `sourceSpawnDelay`, `sourceStageBossDeck`, `stageGeometry` |
+| Authored option | `stageMapZoneCount`, `stagePreviewCallbacks`, `statBuffs`, `teleporterLoop`, `worldItemDisplays` |
+| Game selector | `artifactAsset`, `barrelAsset`, `barrierCompletionMethod`, `barrierCompletionType`, `barrierEffectAsset` |
+| Game selector | `barrierEffectKey`, `batteryAsset`, `bodyAsset`, `chestAsset`, `chestDropTableAsset` |
+| Game selector | `chestLootItemAsset`, `commandArtifactAsset`, `delusionArtifactAsset`, `displayAssets`, `enemyAirGraphAsset` |
+| Game selector | `enemyAttackConfigAsset`, `enemyAvatarAsset`, `enemyBodyAsset`, `enemyControllerAsset`, `enemyDeathBuffAsset` |
+| Game selector | `enemyDeathEquipment`, `enemyDeathItems`, `enemyDirectorAsset`, `enemyDirectorDeckAsset`, `enemyDirectorTeamAssets` |
+| Game selector | `enemyDirectorTeamKeys`, `enemyEliteAssets`, `enemyGroundGraphAsset`, `enemyHonorArtifactAsset`, `enemyMasterAsset` |
+| Game selector | `enemyMaterialAsset`, `enemyRewardAssets`, `enemyRewardKeys`, `enemySleepConfigAsset`, `enemySpawnCardAsset` |
+| Game selector | `enemySpawnConfigAsset`, `enemySpawnItems`, `enemyWispArtifactAsset`, `freeUnlockBuffAsset`, `genericPickupKey` |
+| Game selector | `glassAsset`, `gummyAsset`, `hiddenBuffAsset`, `intangibleBuffAsset`, `integratedStages` |
+| Game selector | `juggleBuffAsset`, `jumpBoostAsset`, `jumpStrikeAsset`, `junkAsset`, `knockBuffAsset` |
+| Game selector | `lowerPricedChestsAsset`, `lowerPricedConsumedAsset`, `lunarPrimaryAsset`, `lunarSecondaryAsset`, `lunarSpecialAsset` |
+| Game selector | `lunarTeleporterAsset`, `lunarUtilityAsset`, `masterAsset`, `medkitBuffAsset`, `moneySourceSha256` |
+| Game selector | `moonCatalog`, `multiShopCardAsset`, `objectiveActors`, `objectiveArtifactAssets`, `objectiveConfigAssets` |
+| Game selector | `objectiveEffectAssets`, `objectiveItemAssets`, `objectiveItemNames`, `objectiveStunAsset`, `objectiveSupportAssets` |
+| Game selector | `objectiveSupportKeys`, `objectiveSupportPaths`, `objectiveTMPSettingsAsset`, `objectiveTMPSettingsKey`, `objectiveWardBuffAsset` |
+| Game selector | `objectiveWardVisualAssets`, `originalStageSceneNames`, `pickupAsset`, `pickupDropletAsset`, `pickupDropletKey` |
+| Game selector | `playerDeathEffectAsset`, `playerDeathEffectKey`, `potionAsset`, `primaryFireConfigAsset`, `primaryItemAsset` |
+| Game selector | `primaryReloadConfigAsset`, `randomlyLunarAsset`, `recycleAsset`, `resultsEndingAssets`, `runEventFlagsToResetOnLoop` |
+| Game selector | `runSceneDefAsset`, `runSceneDefAssets`, `secondaryConfigAsset`, `soulBuffAsset`, `sourceSpawnSound` |
+| Game selector | `spawnConfigAsset`, `specialConfigAsset`, `stageBossArmorBuffAsset`, `stageCombatDecks`, `stageGrandparentSunAsset` |
+| Game selector | `stageMapZoneActiveNames`, `stageMiniCardAsset`, `stageMiniCardKey`, `stageMiniCardPath`, `stageOverheatBuffAsset` |
+| Game selector | `stageOverheatVisualAsset`, `stagePopulationFamilies`, `stagePreviewNames`, `stageVagrantOverlayAsset`, `stageVagrantOverlayKey` |
+| Game selector | `statItemAsset`, `teleportMaterialAsset`, `teleportMaterialKey`, `teleporterAsset`, `teleporterIndicatorAsset` |
+| Game selector | `teleporterIndicatorKey`, `tonicBuffAsset`, `utilityConfigAsset`, `visualCaptureRenderer`, `visualCaptureStage` |
+| Game selector | `voidEquipmentAsset`, `worldAdditionalLootItems`, `worldChestBreadth`, `worldCommerceAssets`, `worldDotBuffAssets` |
+| Game selector | `worldDotBurnMaterialAsset`, `worldEquipmentAssets`, `worldEquipmentBuffAssets`, `worldEquipmentChestAsset`, `worldEquipmentContextItemAsset` |
+| Game selector | `worldEquipmentSupportPaths`, `worldGlassesAsset`, `worldItemBehaviorBuffAssets`, `worldLootSlowBuffAsset`, `worldLootSupportPaths` |
+| Game selector | `worldLunarCoinAsset`, `worldProcBuffAssets`, `worldProcSupportPaths`, `worldSlugAsset` |

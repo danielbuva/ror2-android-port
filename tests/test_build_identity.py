@@ -27,6 +27,8 @@ class BuildIdentityTests(unittest.TestCase):
             write(root / "recipe/project-layout.json", {"runtime_source_guids": {source_name: "a" * 32}, "dependencies": dependencies})
             staged.with_suffix(".cs.meta").write_text("guid: " + "a" * 32 + "\n")
             write(project / "Packages/manifest.json", {"dependencies": dependencies})
+            write(root / "recipe/runtime-config.json", {"launchPlayableSlice": True})
+            write(project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json", {"launchPlayableSlice": True})
             write(work / "whole-catalog-build.json", {"scope": "test"})
             with patch.object(build, "ROOT", root), patch.object(build, "WORK", work), patch.object(build, "RECIPE", root / "recipe"):
                 with self.assertRaisesRegex(RuntimeError, "whole-catalog-code-build"):
