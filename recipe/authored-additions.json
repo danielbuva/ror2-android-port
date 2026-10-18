@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "assets": [
+    {
+      "source": "tools/unity/runtime/shaders/AndroidBillboardPresentation.shader",
+      "source_sha256": "fb78c2e3cc299dd9933479b7952b635fa6062453364fa1c42f3aac6b055d2f4d",
+      "output": "Assets/LabLoadingScene/Resources/AndroidBillboardPresentation.shader",
+      "guid": "6ab11681e3dc94b8ba9bdb4d2e00e496"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidColorGrade.shader",
+      "source_sha256": "1613f49bc1bcd392b26d11275ebbe1d5f0b48316d00fa59604b2d5dec390e19c",
+      "output": "Assets/LabLoadingScene/Resources/AndroidColorGrade.shader",
+      "guid": "19e91578880954efeab1111b405232b9"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidDistortionPresentation.shader",
+      "source_sha256": "21fc0955f7caf0aa99c893affc95ce1a31e017618d00158a4f1af600583a0071",
+      "output": "Assets/LabLoadingScene/Resources/AndroidDistortionPresentation.shader",
+      "guid": "2a429ea9e4edb4e15a2756ca05616eee"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidOpaqueParticlePresentation.shader",
+      "source_sha256": "529b6cc912f3827cf88c3e2eac5e00f4ac0d71dd4b927a2ab3afc6fa22aecf99",
+      "output": "Assets/LabLoadingScene/Resources/AndroidOpaqueParticlePresentation.shader",
+      "guid": "30774eb570b3e4ad49ebfaf092e10289"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidParticlePresentation.shader",
+      "source_sha256": "aed64c8c961b5834f9d00d4f8331d2fe09d0fc2f12e08b29fd37a80908733596",
+      "output": "Assets/LabLoadingScene/Resources/AndroidParticlePresentation.shader",
+      "guid": "daae5771644804e21a6d31c4af5e379f"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidRecoveredReflections.cginc",
+      "source_sha256": "f4284aa2137512f44ed1142fddae70e49b301e2f12e81964b8d73f68661156c9",
+      "output": "Assets/LabLoadingScene/Resources/AndroidRecoveredReflections.cginc",
+      "guid": "279a95cdb42d64333a8afc28ea091107"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidSurfacePresentation.shader",
+      "source_sha256": "358afda650a7eb9eb079bb6b55046a5a0c1d8d4ae5d972b1da7811551357e309",
+      "output": "Assets/LabLoadingScene/Resources/AndroidSurfacePresentation.shader",
+      "guid": "5e1d8cd964f20469395ea73f82583280"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidTerrainPresentation.shader",
+      "source_sha256": "a4e7defedb85196b86c8c3794a1b6c4c0ff339ccf0859b8dbc562c7d25b4ddf8",
+      "output": "Assets/LabLoadingScene/Resources/AndroidTerrainPresentation.shader",
+      "guid": "691e6ba70478f4c8fbb4a0ba129431ed"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/AndroidWaterPresentation.shader",
+      "source_sha256": "20c238b540554e6cbc45d7be43731ce6bcf8d5c62146009e1edfc80f6e5b6820",
+      "output": "Assets/LabLoadingScene/Resources/AndroidWaterPresentation.shader",
+      "guid": "b2a87e61dc94e4221907b115e9d8c60f"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/CommandoMaterialPreview.shader",
+      "source_sha256": "a0d79ca77733182f4ef3ab08415edd561041b39996e26cb02729be0bafc95b99",
+      "output": "Assets/LabLoadingScene/Resources/CommandoMaterialPreview.shader",
+      "guid": "95401c496311c41d88e5c3f490444838"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/CommandoPreview.shader",
+      "source_sha256": "d6cd24df6845a9dc1940f085c4689018fcaaa56d544debae4daf2c378d49a8df",
+      "output": "Assets/LabLoadingScene/Resources/CommandoPreview.shader",
+      "guid": "2b3b24a29a5564b38a4640b20012bc4f"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/MoonPillarBeaconPreview.shader",
+      "source_sha256": "5b214ded54203129e6283a33c9073b30792b99c38edb6cc76191e82bdf12b0bc",
+      "output": "Assets/LabLoadingScene/Resources/MoonPillarBeaconPreview.shader",
+      "guid": "25346ec2465c244a0b4757833c1b7ffb"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/MoonPillarBeamPreview.shader",
+      "source_sha256": "43728d3a807973ecaf42d0906ce6271488f84380449858b0ecc6caa72dee1ab8",
+      "output": "Assets/LabLoadingScene/Resources/MoonPillarBeamPreview.shader",
+      "guid": "a64cd6eb27f5b41f0b8fd35fb109c753"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/StageSurfacePreview.shader",
+      "source_sha256": "ebff1420ec896525b0fe058c8989f2eaf52fa749fcc02c14265e43a46d714e92",
+      "output": "Assets/LabLoadingScene/Resources/StageSurfacePreview.shader",
+      "guid": "a855c2ac6b11443848e0414d94271fd6"
+    },
+    {
+      "source": "tools/unity/runtime/shaders/StageTerrainPreview.shader",
+      "source_sha256": "97176b709d4f14820c2ce86eb46ec60c9e1868f42c5f36b6f201be24db2c91f8",
+      "output": "Assets/LabLoadingScene/Resources/StageTerrainPreview.shader",
+      "guid": "f841c3cf2a0cb4036aef85eae3b43fae"
+    }
+  ]
+}

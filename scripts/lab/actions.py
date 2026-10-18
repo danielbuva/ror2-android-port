@@ -79,6 +79,14 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "authored-additions-check",
+        "authored_additions",
+        "check_action",
+        {},
+        "current",
+        "Compare tracked shader addition and generated importer bytes with migration staging; read-only.",
+    ),
+    Action(
         "asset-transforms-check",
         "asset_transforms",
         "check_action",

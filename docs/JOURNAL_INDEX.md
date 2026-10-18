@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J556](PORTING_JOURNAL.md#j556--stage-the-tracked-source-additions-without-the-previous-project) | 2026-10-17 | Stage the tracked-source additions without the previous project | Migration-removal plan commit 5, first cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J555](PORTING_JOURNAL.md#j555--regenerate-the-remaining-structural-adapted-assets) | 2026-10-17 | Regenerate the remaining structural adapted assets | Migration-removal plan commit 4, fourth cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J554](PORTING_JOURNAL.md#j554--regenerate-the-component-removal-cohort) | 2026-10-17 | Regenerate the component-removal cohort | Migration-removal plan commit 4, third cohort (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J553](PORTING_JOURNAL.md#j553--regenerate-the-identity-and-field-only-adapted-assets) | 2026-10-17 | Regenerate the identity and field-only adapted assets | Migration-removal plan commit 4, second cohort (implemented by Codex at medium reasoning, reviewed and corrected by Claude). |

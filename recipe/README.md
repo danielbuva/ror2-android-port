@@ -30,6 +30,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `authored-additions.json` | 15 inherited shader/include addition pairs | Existing tracked sources (14 shaders, one include), source hashes, output paths and stable lab GUIDs only. | No new shader content, importer bodies, game content or private identifiers. Importers use an authored minimal schema. This audits the selection/identities, not redistribution rights for unrelated recovered shader programs. Reviewed 2026-10-17. | `authored_additions.py` generates bytes without history; `composition_migration.stage` prepares the complete cohort before writes; `authored-additions-check` compares with the migration oracle read-only. Independent of game input; the oracle check gates composition/UI input IDs. |
 | `asset-transforms.json` | Preview copies for 28 SurfaceDefs, six identity assets, ten field-only prefabs and all 178 structural prefabs/scenes (migration-removal commit 4 cohorts) | Accepted-export selectors/SHA-256; authored clearing, identity, typed field edits, explicit local-reference nulling, component/settings deletion and two typed adapter constructors. Four UI prefabs reuse the hash-pinned uGUI mapping. | J548 minimal source/output, hierarchy/script, removal/owner identifiers, field paths, reference preconditions, activation/reflection values and deterministic allocation namespaces only. No YAML blocks, original component bodies, importer bodies, private paths or historical asset reads. Constructor defaults are authored schemas matching the existing sanitizer; seed names preserve its IDs without reading the named location. Provenance/privacy/licensing audit extended 2026-10-17. | `asset_transforms.py` gates input/source hashes and returns asset/meta bytes; `composition_migration.stage` verifies them against the existing plan before writing. Current `asset-transforms-check` compares the migration-stage oracle, reports exclusive structural cohorts and lists later project changes separately, without writing. |
 | `hud-ui-remaps.json` | `work/config/hud-ui-remaps.json` (LOCAL_STATE blocker B2) | 43 rows mapping Unity's own uGUI script identities: the precompiled `UnityEngine.UI.dll` reference in exported scenes (`from`) to the public `com.unity.ugui` package script GUID (`to`), with the type name and package path. Measured for input `6af7ed94…`; re-verified for the 2021.3.45f2 toolchain. | No game content, names or assets; identifiers and hashes only. One repo-relative evidence path. Audited 2026-10-17. | `composition_migration.py`, `whole_catalog.py`, `source_scene_candidate.py`, `integrated_objective.py`; each checks `input_id`, two also the `UnityEngine.UI.dll` hash |
 | `runtime-sources.json` | Explicit and existing-file membership in `build.py` and the `whole_catalog.build_integration` copy loop | Authored file list: 92 sorted C# paths relative to `tools/unity`; coordinator entry renamed to `PortSession.cs` (source name only). Initial selection reproduces the old rules using generated-project filenames and existence only. | No game content, generated source, private paths or identifiers; repository-authored source names only. Audited 2026-10-17. | `build.py` derives player-only source and `.meta` inputs; `whole_catalog.py` stages the same selection. No game input dependency. |
@@ -358,6 +359,24 @@ preservation, exact recipe output, strict validator compatibility, determinism,
 idempotence, missing/invalid recipes and both build entry paths.
 
 ## Asset operation contract
+
+`authored-additions.json` is a separate, repository-authored source cohort. Its
+source hashes intentionally reject unreviewed source drift. Its GUIDs preserve
+serialized references and its importer constructor preserves the pinned editor's
+empty-field whitespace. No historical importer body is stored. The generator
+returns asset/meta bytes; composition owns writing and target relocation, after
+checking exact selection membership and GUID identity. It does not initialize a
+Unity project or infer GUIDs from names. Remaining additions still use the existing
+historical path. The sibling current action `authored-additions-check` compares
+both bytes against the migration-stage copy rule, not later shader replacement.
+
+Prior-art scope: the existing extraction/reconstruction guidance in
+`docs/community-prior-art.md` and pinned ThunderKit
+`Editor/Addressable/Config/ImportAddressableCatalog.cs` (commit
+`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`) distinguish copying source artifacts
+from converting target-platform content. This cohort only stages existing authored
+source text with stable Unity identities; it introduces no new shader recovery,
+catalog conversion or gameplay mechanism. No community implementation was copied.
 
 `identity` copies the hash-checked export bytes, including line endings, without
 normalization. Metadata remains governed by the existing export importer rule.

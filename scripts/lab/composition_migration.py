@@ -276,6 +276,28 @@ def prepare_asset_transforms(plan, transforms, export, previous, evidence, proje
     return transformed
 
 
+def normalize_addition(data, guidmap, remaps):
+    if not data.startswith(b"%YAML"):
+        return data
+    text = re.sub(r"(?<=guid: )[a-f0-9]{32}", lambda match: guidmap.get(match[0], match[0]), data.decode())
+    for row in remaps["rows"]:
+        text = text.replace(row["from"], row["to"])
+    return text.encode()
+
+
+def stage_addition(row, authored, previous, project, guidmap, remaps):
+    target = project / row["target"]
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if row["old"] in authored:
+        data, meta_data = authored[row["old"]]
+        target.write_bytes(data)
+        Path(str(target) + ".meta").write_bytes(meta_data)
+    else:
+        source = previous / row["old"]
+        target.write_bytes(normalize_addition(source.read_bytes(), guidmap, remaps))
+        shutil.copy2(Path(str(source) + ".meta"), Path(str(target) + ".meta"))
+
+
 def stage():
     from build import preflight
 
@@ -379,25 +401,16 @@ def stage():
         write(evidence / "missing-runtime-bindings.json", sorted(set(missing_runtime)))
         raise RuntimeError("Composition still references removed or unowned assets; inspect missing-runtime-bindings.json")
 
-    def normalize(text):
-        text = re.sub(r"(?<=guid: )[a-f0-9]{32}", lambda m: guidmap.get(m[0], m[0]), text)
-        for row in remaps["rows"]:
-            text = text.replace(row["from"], row["to"])
-        return text
-
     # Verify the entire patch plan before the first project write.
     from asset_transforms import load_recipe
+    from authored_additions import prepare as prepare_authored_additions
 
     transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
     transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids)
+    authored = prepare_authored_additions(generated)
     staged = []
     for row in generated:
-        source = previous / row["old"]
-        target = project / row["target"]
-        target.parent.mkdir(parents=True, exist_ok=True)
-        data = source.read_bytes()
-        target.write_bytes(normalize(data.decode()).encode() if data.startswith(b"%YAML") else data)
-        shutil.copy2(Path(str(source) + ".meta"), Path(str(target) + ".meta"))
+        stage_addition(row, authored, previous, project, guidmap, remaps)
         staged.append(row["target"])
     for row in plan["rows"]:
         target = project / row["target"]

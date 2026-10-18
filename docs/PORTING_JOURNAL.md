@@ -5510,3 +5510,21 @@ identifiers or URLs. `asset-transforms-check` on the real data: 222/222 assets a
 identical at the migration stage (every structural sub-kind complete), 17 listed as changed later
 in the project. 521 host tests pass. Host tooling only; no APK change. 238 of the 451 adapted
 assets now come from the export plus the recipe; the 229 inherited additions remain.
+
+## J556 — Stage the tracked-source additions without the previous project
+
+Migration-removal plan commit 5, first cohort (implemented by Codex at medium reasoning, reviewed
+by Claude). Codex classified the 229 additions `composition_migration.stage` copies from the
+previous project: 15 have tracked source in the repo (14 shaders and one other file), 193 have an
+existing generator (177 shaders, materials, three prefabs, a ScriptableObject, others), 2 are
+export texture aliases, and 19 have no tracked source or generator (14 director decks, 5 font
+files). The 15 tracked-source additions are now staged from the repo via
+`recipe/authored-additions.json` (source hashes, stable GUIDs, generated importers);
+`authored-additions-check` reports 15/15 asset and `.meta` pairs identical, and the 222
+transformed assets stay identical. 531 host tests pass. Host tooling only; no APK change.
+
+What blocks the other 214: for 168 of the 177 generator-backed shaders, the current shader
+generators produce different bytes from the inherited files, so using them changes the shipped
+shaders and needs a device and visual check rather than a byte proof. EliteRamp differs from the
+current export. The 14 director decks need export-based constructors plus card-selection recipes.
+The 5 fonts need a pinned, authorised TextMesh Pro source.

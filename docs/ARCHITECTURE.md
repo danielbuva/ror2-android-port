@@ -55,6 +55,7 @@ Asset transformations (`scripts/lab/asset_transforms.py`, current):
 28 SurfaceDefs, six identity copies, ten activation-only prefabs and all 178
 structural prefabs/scenes. The generator returns bytes and export-derived metadata
 without writes; `integrated_objective` shares the SurfaceDef field operation logic.
+
 Identity copies preserve source bytes. General `set_field` operations select a
 GameObject hierarchy path, native class or external script identity, zero-based
 component occurrence and mapping field path. Duplicate hierarchy paths require an
@@ -87,7 +88,7 @@ checks the existing provenance/output/conflict gates and metadata equality, then
 writes those pairs instead of copying preview assets. `prepare_asset_transforms`
 validates these rows using export bytes and the plan's hashes without opening
 preview/previous asset files. The surrounding migration still reads historical
-plans, mappings, configs and the 229 selected additions.
+plans, mappings, configs and 214 additions; the other 15 now use tracked sources.
 There is no persistent generator state or teardown. The current read-only action
 `./dev prototype --action asset-transforms-check` compares every recipe asset/meta
 pair with the migration preview oracle (or project when no preview exists), checks
@@ -96,6 +97,18 @@ structural cohorts report equality separately; the removal cohort also counts
 deleted components. Later project transformations are reported separately without
 rewriting either side. Host contracts are in `tests/test_asset_transforms.py` and
 `tests/test_asset_structural_operations.py`; device acceptance is a separate gate.
+
+Authored additions (`scripts/lab/authored_additions.py`, current) owns
+`recipe/authored-additions.json`: 14 tracked shader sources and one include, their
+source hashes and stable lab GUIDs. Its pure generator returns source/importer
+bytes; `composition_migration.stage` prepares the entire cohort before project
+writes and retains ownership of writing/target relocation. There is no persistent
+generator state or teardown. Missing membership, GUID mismatch and source drift
+fail closed. Other additions still inherit the previous project. The current
+`./dev prototype --action authored-additions-check` is a read-only comparison of
+asset and metadata bytes against the migration copy rule. It does not compare
+later shader replacements or run Unity. Host contracts are in
+`tests/test_authored_additions.py`; provenance is in `recipe/README.md`.
 
 ## Android runtime
 
@@ -268,8 +281,9 @@ The current `scripts/lab` modules are `build`, `composition_migration`, `device`
 `common` count as support); the
 current `prototype` actions are the ten in
 [whole-catalog-integration.md](whole-catalog-integration.md#reusable-fixes-and-commands)
-plus `project-manifest-capture`, `project-manifest-compare` and
-`asset-transforms-check` (owned by `asset_transforms`).
+plus `project-manifest-capture`, `project-manifest-compare`,
+`asset-transforms-check` (owned by `asset_transforms`) and
+`authored-additions-check` (owned by `authored_additions`).
 
 ## Known structural debt
 
