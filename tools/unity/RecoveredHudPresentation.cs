@@ -62,7 +62,7 @@ public sealed partial class RecoveredHudPresentation : MonoBehaviour {
   ValidateFeedback();
  }
  public void BindMenu(Action start){Validate();startButton.onClick=new Button.ButtonClickedEvent();quitButton.onClick=new Button.ButtonClickedEvent();startButton.onClick.AddListener(()=>start());quitButton.onClick.AddListener(()=>Application.Quit());}
- public void Present(CharacterBody body,MovementBatchProbe.Result run,Observation report){
+ public void Present(CharacterBody body,MovementBatchProbe.SessionReport run,Observation report){
   if(!body||!body.master||!body.healthComponent)return;
   var health=body.healthComponent;float maximum=Mathf.Max(1,health.fullCombinedHealth);
   currentHealth.text=Mathf.CeilToInt(Mathf.Max(0,health.combinedHealth)).ToString();fullHealth.text=Mathf.CeilToInt(health.fullCombinedHealth).ToString();

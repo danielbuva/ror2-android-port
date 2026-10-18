@@ -29,7 +29,7 @@ public static class AndroidLifecycleHost {
   CharacterBody.JumpDelegate ownedJump=owned.Hit,sentinelJump=sentinel.Hit;
   try{
    probeRoot=new GameObject("Owned lifecycle host fixture");probeRoot.SetActive(false);SceneManager.MoveGameObjectToScene(probeRoot,scene);var probe=probeRoot.AddComponent<MovementBatchProbe>();
-   ProbeField("r").SetValue(probe,new MovementBatchProbe.Result{itemDisplays=new MovementBatchProbe.WorldItemDisplayReport()});
+   ProbeField("r").SetValue(probe,new MovementBatchProbe.SessionReport{itemDisplays=new MovementBatchProbe.WorldItemDisplayReport()});
    bodyRoot=new GameObject("Owned inactive body fixture");bodyRoot.SetActive(false);SceneManager.MoveGameObjectToScene(bodyRoot,scene);body=bodyRoot.AddComponent<CharacterBody>();
    body.onInventoryChanged+=sentinelInventory;body.onInventoryChanged+=ownedInventory;body.onJump+=sentinelJump;body.onJump+=ownedJump;
    ProbeField("worldDisplayBody").SetValue(probe,body);ProbeField("worldDisplayInventoryChanged").SetValue(probe,ownedInventory);

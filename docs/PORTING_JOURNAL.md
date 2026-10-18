@@ -5289,3 +5289,20 @@ staged project. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied profi
 With this, every boundary file in the ranking that has private state has its own owner. Left
 on purpose: 23 files with no private fields or where an owner would only add indirection, and
 the three Moon files, which neither check reaches.
+
+## J541 — Rename the report type to SessionReport
+
+Phase 4 step 2's deferred rename (implemented by Codex at medium reasoning, reviewed by Claude):
+the report type `MovementBatchProbe.Result` is now `SessionReport`. Eight type references
+changed across `MovementBatchProbe.cs`, `OfflineApplicationBoundary.cs`,
+`RecoveredHudPresentation.cs` and the `AndroidLifecycleHost.cs` editor fixture; the 87 other
+`Result` tokens belong to unrelated types and properties. JsonUtility serialises by field
+name, so the JSON is unchanged.
+
+Applying it exposed a staging gap: `AndroidProfileHost.cs` and `AndroidLifecycleHost.cs` were
+in the generated project with no tracked copy step, so the project kept the old fixture and
+would have failed the editor compile. `build_integration` now stages all four host fixtures.
+Zero-error code-only build, APK `305b9c5948918ef130b52015dc3d0b8e9d674859fdd21e610bd0e3cfc25cabc7`, the updated fixture checked in the project.
+`./dev check-baseline` passed with 35.2 s on Lakes, no report error and 13 applied profile runs
+unchanged (`work/experiments/baseline/20261018T015907.228546Z`), and the report's nested key set (2,530 keys) is identical to the previous
+run's. App stopped; OLED asleep.

@@ -81,7 +81,7 @@ class SessionConfigTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = PROBE.read_text()
         cls.config = fields(cls.source, "SessionConfig")
-        cls.report = fields(cls.source, "Result")
+        cls.report = fields(cls.source, "SessionReport")
         cls.sources = {path: path.read_text() for directory in ("tools", "android") for path in sorted((ROOT / directory).rglob("*.cs"))}
         cls.partials = {path: source for path, source in cls.sources.items() if "partial class MovementBatchProbe" in source}
 
@@ -90,7 +90,7 @@ class SessionConfigTests(unittest.TestCase):
 
     def test_fields_have_identical_attributes_types_and_initializers(self):
         self.assertEqual(len(self.config), 184)
-        self.assertFalse(self.config.keys() - self.report.keys(), "Config contains a field absent from Result")
+        self.assertFalse(self.config.keys() - self.report.keys(), "Config contains a field absent from SessionReport")
         for name, declaration in self.config.items():
             with self.subTest(field=name):
                 self.assertEqual(declaration, self.report[name])
@@ -100,7 +100,7 @@ class SessionConfigTests(unittest.TestCase):
         reads = set()
         for source in self.partials.values():
             reads.update(re.findall(r"\b(?:cfg|config|integratedStageConfig)\s*\.\s*(\w+)", source))
-        # EntityStateConfiguration locals also use cfg, for fields absent from Result.
+        # EntityStateConfiguration locals also use cfg, for fields absent from SessionReport.
         self.assertEqual(set(self.config), reads & self.report.keys())
 
     def test_runtime_resource_parses_use_session_config(self):
@@ -114,7 +114,7 @@ class SessionConfigTests(unittest.TestCase):
         self.assertEqual({type_name for _, type_name in parses}, {"SessionConfig"})
 
     def test_only_selection_json_is_parsed_as_result(self):
-        # Restrict every Result parse, also catching resource reads through aliases.
+        # Restrict every SessionReport parse, also catching resource reads through aliases.
         parses = []
         for path, source in self.sources.items():
             parts = tokens(source)
@@ -123,7 +123,7 @@ class SessionConfigTests(unittest.TestCase):
                     continue
                 end_type = closing(parts, index + 3)
                 type_name = parts[index + 4 : end_type]
-                if type_name != ["MovementBatchProbe", ".", "Result"] and not (path in self.partials and type_name == ["Result"]):
+                if type_name != ["MovementBatchProbe", ".", "SessionReport"] and not (path in self.partials and type_name == ["SessionReport"]):
                     continue
                 opening = end_type + 1
                 self.assertEqual(parts[opening], "(")

@@ -24,7 +24,7 @@ public sealed partial class MovementBatchProbe {
  bool OfflineUiControllerPresent(){return GetOfflineApplicationSession().OfflineUiControllerPresent();}
  void OnApplicationFocus(bool focused){GetOfflineApplicationSession().OnApplicationFocus(focused);}
  void OnApplicationPause(bool paused){GetOfflineApplicationSession().OnApplicationPause(paused);}
- static bool AllowsOfflineSessionMenu(Result session){return OfflineApplicationSession.AllowsOfflineSessionMenu(session);}
+ static bool AllowsOfflineSessionMenu(SessionReport session){return OfflineApplicationSession.AllowsOfflineSessionMenu(session);}
  IEnumerator AwaitOfflineRunStart(SessionConfig cfg){return GetOfflineApplicationSession().AwaitOfflineRunStart(cfg);}
  void ObserveOfflineApplicationInput(){GetOfflineApplicationSession().ObserveOfflineApplicationInput();}
  bool DrawOfflineStart(){return GetOfflineApplicationSession().DrawOfflineStart();}
@@ -58,7 +58,7 @@ public sealed partial class MovementBatchProbe {
   }
   public void OnApplicationFocus(bool focused){if(!focused)offlineUiPresence?.Suspend();}
   public void OnApplicationPause(bool paused){if(paused)offlineUiPresence?.Suspend();}
-  public static bool AllowsOfflineSessionMenu(Result session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
+  public static bool AllowsOfflineSessionMenu(SessionReport session){return session!=null&&(session.freePlay||session.recoveredHudEnabled&&session.id!=null&&session.id.EndsWith("-bringup",System.StringComparison.Ordinal));}
   public IEnumerator AwaitOfflineRunStart(SessionConfig cfg){
    if(cfg.integratedWorld&&cfg.integratedResults)coordinator.PrepareOfflineSettings();
    if(string.IsNullOrEmpty(coordinator.r.selectedSurvivor))coordinator.r.selectedSurvivor=pendingOfflineSurvivor;
