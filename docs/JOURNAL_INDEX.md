@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J564](PORTING_JOURNAL.md#j564--stage-inherited-files-from-a-named-hash-verified-store) | 2026-10-17 | Stage inherited files from a named, hash-verified store | Migration-removal plan commit 8, first part (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J563](PORTING_JOURNAL.md#j563--reproduce-the-transformed-plugin-assemblies-from-the-originals) | 2026-10-17 | Reproduce the transformed plugin assemblies from the originals | Migration-removal plan commit 7 (implemented by Codex at medium reasoning, reviewed and fixed by Claude). |
 | [J562](PORTING_JOURNAL.md#j562--non-shader-inherited-additions-two-reproduced-the-rest-need-the-editor) | 2026-10-17 | Non-shader inherited additions: two reproduced, the rest need the editor | Inherited-state reduction (implemented by Codex at medium reasoning, reviewed by Claude). |
 | [J561](PORTING_JOURNAL.md#j561--generate-the-14-director-decks-from-the-export) | 2026-10-17 | Generate the 14 director decks from the export | Inherited-state reduction (implemented by Codex at medium reasoning, reviewed and merged by Claude). |

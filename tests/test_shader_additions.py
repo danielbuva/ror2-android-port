@@ -90,7 +90,7 @@ class ShaderAdditionsTests(unittest.TestCase):
             with self.subTest(asset=asset), self.assertRaises(RuntimeError):
                 additions.generate_pairs([asset], self.work)
 
-    def test_check_proves_both_bytes_against_previous_and_ledger(self):
+    def test_check_proves_both_bytes_against_ledger_without_previous(self):
         target = self.work / "previous" / self.asset["path"]
         target.parent.mkdir(parents=True)
         target.write_bytes(self.data)
@@ -102,12 +102,13 @@ class ShaderAdditionsTests(unittest.TestCase):
         self.assertEqual(result["differences"], [])
         target.write_bytes(b"drift")
         meta.write_bytes(b"drift")
+        self.assertEqual(inherited_state.check(self.work, self.ledger)["differences"], [])
+        ledger = copy.deepcopy(self.ledger)
+        ledger["assets"][0].update(sha256="0" * 64, meta_sha256="0" * 64)
         self.assertEqual(
-            inherited_state.check(self.work, self.ledger)["differences"],
+            inherited_state.check(self.work, ledger)["differences"],
             [{"path": self.asset["path"], "reason": "generated_pair"}, {"path": self.asset["path"] + ".meta", "reason": "generated_pair"}],
         )
-        target.write_bytes(self.data)
-        meta.write_bytes(self.meta)
         ledger = copy.deepcopy(self.ledger)
         ledger["assets"][0]["meta_sha256"] = "0" * 64
         self.assertEqual(inherited_state.check(self.work, ledger)["differences"], [{"path": self.asset["path"] + ".meta", "reason": "generated_pair"}])
@@ -122,8 +123,7 @@ class ShaderAdditionsTests(unittest.TestCase):
         target = self.work / "previous" / self.asset["path"]
         target.parent.mkdir(parents=True)
         target.symlink_to(self.root / "outside")
-        with self.assertRaisesRegex(RuntimeError, "escapes"):
-            inherited_state.check(self.work, self.ledger)
+        self.assertEqual(inherited_state.check(self.work, self.ledger)["differences"], [])
 
     def test_only_proven_pairs_are_generator_owned(self):
         assets = additions.cohort(inherited_state.load_ledger())

@@ -5627,3 +5627,17 @@ also compiled the checkout's `obj/` from ordinary `probe_tool` builds (duplicate
 attributes). Claude made the check build an isolated copy of the tool sources without `obj/` and
 `bin/`; a host test covers it. Result: 3/3 assemblies identical. 586 host tests pass. Host tooling
 only; no APK change.
+
+## J564 — Stage inherited files from a named, hash-verified store
+
+Migration-removal plan commit 8, first part (implemented by Codex at medium reasoning, reviewed by
+Claude). The 189 inherited ledger entries are no longer read from the previous project tree: the new
+current action `inherited-store-capture` copies exactly their 378 asset and `.meta` files into the
+ignored `work/inherited-store/<input_id>/` (11 MB), refusing any hash mismatch, and composition
+staging reads them from there, hash- and GUID-verified. `inherited-state-check` verifies the store:
+189/189 pairs, no differences. The preview tree and the previous project's adapted bodies are gone
+from the current staging path. Still read: the B1 selection (identity, selections, output
+location), B3–B6 drift guards and path/GUID mappings, the previous runtime config inside the stage
+(superseded at build time by J551 generation), and the old input-mapping observation chain.
+`docs/LOCAL_STATE.md` lists these. 591 host tests pass. Host tooling only; the stage itself was not
+re-run and no APK changed.

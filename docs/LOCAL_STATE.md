@@ -22,14 +22,14 @@ asset and importer hashes/GUIDs, current project paths/hashes, generator functio
 and inputs, comparison basis, and current-use evidence. It contains identifiers
 and hashes, never shader programs or serialized asset bodies.
 
-Status `reproducible` means an existing host generator reproduces the complete
-inherited asset/importer pair (15 tracked-source additions). The remaining 214
-are `inherited`; none is `retired`. Among the 177 generator-backed shaders,
-9 selected output bodies match, 166 differ and 2 have no current selected output.
-These are read-only comparisons against receipted outputs, not fresh generator
-runs or proof of complete input/bootstrap/importer reproducibility. A matching
-body alone does not change status. Retire state only after device verification,
-per J558.
+Current status is **40 reproducible / 189 inherited / 0 retired** (J563).
+`reproducible` means a host generator reproduces the complete pair under its
+recorded comparison basis: 15 authored additions, 9 native shaders, 14 decks and
+2 non-shader additions. Deck hashes use the normalized migration-stage basis;
+the ledger's original inherited body hashes remain provenance. Among the 177
+native generator-backed shaders, 9 pairs reproduce, 166 bodies differ and 2 have
+no current selected output. Matching bodies alone do not change status. Retire
+state only after device verification, per J558.
 
 Usage is a static identity-level census: 224 used, 5 unused, 0 unclear (shaders:
 190 used, 2 unused). `used` means reachable through the current content recipe's
@@ -48,13 +48,78 @@ project materials and manifests, not the previous project's reference graph.
 
 Current read-only check: `./dev prototype --action inherited-state-check`.
 A separate clone can select its authorized local tree with `--work-dir PATH`.
-The check gates the accepted input and local composition selection, verifies all
-214 inherited asset/importer pairs at `previous_project`, and reports status,
-usage and cross-tabulated counts. Reproducible/retired entries are counted without
-requiring their historical copies. Missing files, hash drift or GUID mismatches
-fail; no project files, selection, receipt or cache are written. Usage and
-comparison evidence are a reviewed snapshot, not recomputed by this integrity
-check. Review the census after changing content, manifests or runtime loads.
+It gates acceptance, checks all 189 inherited pairs in the named store below,
+and regenerates the shader/export/package cohorts in scratch against ledger
+hashes. Missing files, hash drift or GUID mismatches fail; no project files,
+selection, receipt or cache are written. Reproducible/retired entries do not
+require historical copies. Status, usage and cross-tabulated counts are reported;
+usage evidence remains a reviewed census, not recomputed by the integrity check.
+Review it after changing content, manifests or runtime loads.
+
+## Named inherited store (current)
+
+`work/inherited-store/<input_id>/Assets/LabLoadingScene/**` is the **one required
+local store for inherited addition bytes**. Its producer is the current
+`./dev prototype --action inherited-store-capture` (`inherited_state.capture`).
+Run it before the next composition stage. It reads the selected rollback only
+for capture and copies exactly the ledger's 189 `inherited` asset/importer pairs
+(378 files), with their original relative paths. The 40 reproducible entries are
+excluded. Every body hash, importer hash and importer GUID must match the ledger;
+all inputs are validated before publishing a temporary store by directory rename.
+An existing store must have exactly the expected membership and matching bytes;
+it is never repaired or overwritten on drift. A failed capture leaves no partial
+published store. No private paths or game content are added to tracked files.
+The ledger's `source` field remains capture provenance, not a staging location.
+
+`inherited_state.prepare` reads and verifies that store before project writes.
+`composition_migration.plan_additions` combines it with the five existing generator
+owners, rejects omissions, duplicates and overlapping owners, and retains the
+existing YAML GUID/UI normalization for inherited bodies. Importers are copied
+byte for byte. Shader-source and native-texture replacement steps still run
+later in their existing order. `inherited-state-check` checks store hashes/GUIDs
+and compares regenerated shader/export/package pairs against the ledger, without
+reading historical copies. Its `--work-dir` remains read-only. Capture intentionally
+has no alternate-work-root option. Retain the store until device-verified
+replacements justify changing the ledger; this change retires no entries.
+
+### Composition read inventory and remaining blockers
+
+Read-only re-audit against J563 and the locally selected inputs; no builds, device
+commands or staging ran. This supersedes the B1/B3–B8 reachability claims below.
+The store is the sole inherited-addition store, **not** the sole prerequisite for
+the entire migration coordinator. Full denied-history staging remains blocked by
+the reads explicitly retained here; substituting the current build recipes would
+not establish identical migration-stage bytes.
+
+| Read | Current classification / disposition |
+| --- | --- |
+| B1 `config/composition-migration.json` | Still read by both actions: accepted-input identity, evidence output location; stage also uses source-path overrides, removed-state selectors, shader-source selections and native textures. No byte-equivalent replacement for the entire selection contract. `previous_project` is now used only for the config below (and capture); the separate rollback safety check remains. |
+| B3 `semantic-preview-result.json` | Retained: 222 rows provide source/output hashes, conflicts and allowed pre-stage target hashes. All 222 have recipe generators, but the recipe does not contain output or allowed prior-target hashes. Removing this validation would weaken drift refusal. |
+| B4 `asset-analysis.json` | Retained: 33,016 identity rows, 32,626 with old-source associations, construct old-to-current path mappings, absent-input reporting, addition selection and GUID-owner placement. The ledger covers only the 229 additions, not this mapping census. |
+| B5 `rebase-analysis.json` | Retained: 53,683 GUID translations normalize inherited YAML and construct current asset mappings. The asset analysis has only 33,016 distinct old GUIDs; it is not a complete replacement. No new GUID map is published or inferred. |
+| B6 `removed-state-types.json` | Retained conditionally: the four selected removed bindings require exact original assembly hash and TypeDef-absence evidence. No equivalent current absence-proof producer is wired into composition. |
+| B7 `preview/<asset>` | Removed from the current path: all 222 adaptation targets must have recipe owners before writes. There is no current preview-copy fallback. `prepare_asset_transforms` retains its historical fallback contract for independent callers, unreachable from current `stage`. |
+| B8 previous adapted asset bodies | Unused by current stage: the same full-coverage guard makes the old adapted-hash fallback unreachable. Export hashes, plan output hashes and current-target checks remain. |
+| B8 previous addition bodies/importers | Removed from current stage: 15 authored shader/include pairs, 9 generated shader pairs, 14 export-derived decks, WarpRamp and TMP properties include use generators; the other 189 pairs use the named store. Inherited kinds: 169 shaders, 7 materials, 3 prefabs, 1 texture, 1 ScriptableObject and 8 other files. No unclassified addition is allowed. |
+| B8 previous `Resources/MovementBatchProbe.json` | **Retained blocker:** recursive retargeting reads all 366 old keys. The public runtime recipe has 183 keys, with 186 old-only keys and 109 unequal shared values before retargeting. It supersedes the config at the later whole-catalog build entry, not at this intermediate stage. No byte-equivalent intermediate constructor is available. |
+| Evidence dependency subdirectory | `stage_missing_sources` only creates outputs here; it reads no B3–B8 content and no previous project. It still needs B1 for identity/output selection, current staged configs and the export/GUID index. |
+| Other evidence access | Stage writes diagnostics, scene contracts, script orders, input mapping, attempt and staging receipts; its final `staging-result.json` read is readback of its own output, not inherited input. |
+
+Outside B1/B3–B8, stage still reads the current project/generation marker and
+metadata owners, acceptance, reconstruction/export, catalog GUID index, UI recipe,
+existing content config, selected shader sources plus receipts, exported textures
+and existing target importers, legitimate assembly/native metadata, and authored
+presentation source. The old scene-runtime pointer → input mapping → hashed
+observation chain also remains: it has no named replacement receipt yet.
+`stage_missing_sources` reads current project metadata, both staged configs,
+export closure and UI remaps, then runs support-source repair and optional-content
+sanitization. None of those reads is an additional inherited addition.
+
+The synthetic denied-history test covers the **addition planner**, store integrity
+and normalized staged bytes. Existing transform fixtures cover adaptation generation
+with absent history. It does not claim a successful full `stage` with B3–B6 or the
+previous config absent. Those reads are intentionally stopped at their unresolved
+contracts under the requested byte-preservation constraint. The older blocker table below remains historical audit context.
 
 ## Reachability and pointer chains
 

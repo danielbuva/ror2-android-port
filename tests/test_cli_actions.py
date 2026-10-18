@@ -126,6 +126,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "asset-transforms-check",
                 "authored-additions-check",
                 "inherited-state-check",
+                "inherited-store-capture",
                 "composition-update-stage",
                 "composition-update-dependencies",
                 "whole-catalog-prepare",

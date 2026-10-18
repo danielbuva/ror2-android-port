@@ -52,16 +52,21 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
-Inherited-state ledger (`scripts/lab/inherited_state.py`, current):
-`./dev prototype --action inherited-state-check` verifies the inherited asset/meta
-pairs in `recipe/inherited-state.json` against the locally selected previous project,
-and regenerates the nine `generated_shader_pair` entries in isolated scratch,
-plus the WarpRamp identity and TMP properties include pairs,
-comparing both body and importer bytes with the previous project and ledger.
-`--work-dir PATH` selects a separate clone's local work tree. It reports status
-and static-use counts; lifecycle and comparison
-semantics are in [LOCAL_STATE.md](LOCAL_STATE.md#inherited-additions-ledger-j558).
-Host contracts: `tests/test_inherited_state.py`.
+Inherited-state store and ledger (`scripts/lab/inherited_state.py`, current):
+`./dev prototype --action inherited-store-capture` validates and copies exactly the
+189 inherited asset/meta pairs from the selected previous project into
+`work/inherited-store/<input_id>/`, publishing only a complete hash/GUID-verified
+store. An existing store must match exactly; capture never repairs drift.
+`composition_migration.plan_additions` verifies that store and combines its pairs
+with the 40 recipe-generated additions before any project writes, preserving
+inherited YAML normalization. No addition is copied from the previous project by
+current stage. `inherited-state-check` verifies the store and regenerates the
+shader/export/package cohorts against ledger hashes in scratch, without historical
+copies; `--work-dir PATH` selects read-only inputs. Store lifecycle and remaining
+coordinator blockers are in [LOCAL_STATE.md](LOCAL_STATE.md#named-inherited-store-current).
+Host contracts: `tests/test_inherited_state.py`. The full migration coordinator
+still reads historical config/identity/provenance contracts listed there; addition
+planner independence does not establish full direct composition.
 
 Non-shader addition owners (`scripts/lab/export_additions.py` and
 `scripts/lab/unity_package_additions.py`, current): composition prepares the full
@@ -358,7 +363,7 @@ current `prototype` actions are the ten in
 plus `project-manifest-capture`, `project-manifest-compare`,
 `asset-transforms-check` (owned by `asset_transforms`) and
 `authored-additions-check` (owned by `authored_additions`), plus
-`inherited-state-check` (owned by `inherited_state`).
+`inherited-state-check` and `inherited-store-capture` (owned by `inherited_state`).
 
 ## Known structural debt
 

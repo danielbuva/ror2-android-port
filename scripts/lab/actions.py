@@ -92,12 +92,20 @@ _ENTRIES = (
         handler=_inherited_check,
     ),
     Action(
+        "inherited-store-capture",
+        "inherited_state",
+        "capture_action",
+        {},
+        "current",
+        "Capture exactly the ledger's inherited asset/meta pairs into work/inherited-store/<input_id>; refuse hash or identity drift.",
+    ),
+    Action(
         "inherited-state-check",
         "inherited_state",
         "check_action",
         {},
         "current",
-        "Verify inherited hashes and regenerate byte-proven shader pairs in scratch; work stays read-only (--work-dir selects local work).",
+        "Verify inherited-store hashes and regenerate byte-proven pairs in scratch; work stays read-only (--work-dir selects local work).",
         handler=_inherited_check,
     ),
     Action(

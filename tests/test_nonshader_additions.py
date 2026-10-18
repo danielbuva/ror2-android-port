@@ -202,7 +202,7 @@ class NonshaderAdditionsTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Unsupported"):
             exports.load_recipe(self.ledger["input_id"])
 
-    def test_inherited_check_compares_both_pairs_with_ledger_and_oracle(self):
+    def test_inherited_check_compares_generated_pairs_with_ledger_without_history(self):
         before = self.snapshot()
         pairs = exports.generate_pairs([self.texture], self.work)
         pairs.update(packages.generate_pairs([self.include]))
@@ -218,9 +218,14 @@ class NonshaderAdditionsTests(unittest.TestCase):
         self.assertEqual(before, self.snapshot())
         target.write_bytes(b"drift")
         Path(str(target) + ".meta").unlink()
+        self.assertEqual(inherited_state.check(self.work, self.ledger)["differences"], [])
+        ledger = copy.deepcopy(self.ledger)
+        for asset in ledger["assets"]:
+            if asset["path"] == self.include["path"]:
+                asset.update(sha256="0" * 64, meta_sha256="0" * 64)
         self.assertEqual(
-            inherited_state.check(self.work, self.ledger)["differences"],
-            [{"path": self.include["path"], "reason": "generated_pair"}, {"path": self.include["path"] + ".meta", "reason": "missing"}],
+            inherited_state.check(self.work, ledger)["differences"],
+            [{"path": self.include["path"], "reason": "generated_pair"}, {"path": self.include["path"] + ".meta", "reason": "generated_pair"}],
         )
 
     def test_tracked_recipes_only_claim_proven_used_pairs(self):

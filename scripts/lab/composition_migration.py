@@ -298,6 +298,40 @@ def stage_addition(row, authored, previous, project, guidmap, remaps):
         shutil.copy2(Path(str(source) + ".meta"), Path(str(target) + ".meta"))
 
 
+def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=None):
+    """Plan every addition without reading previous_project or composition evidence.
+
+    GUID translation is still supplied by the migration coordinator; this planner does
+    not claim that the full coordinator's configuration/provenance reads are retired.
+    """
+    from asset_transforms import prepare_decks
+    from authored_additions import prepare as authored_pairs
+    from shader_additions import prepare as shader_pairs
+    from export_additions import prepare as export_pairs
+    from unity_package_additions import prepare as package_pairs
+    from inherited_state import prepare as inherited_pairs
+
+    prepared = {}
+    groups = (
+        authored_pairs(rows),
+        shader_pairs(rows, work=work, ledger=ledger),
+        prepare_decks(rows, export, accepted),
+        export_pairs(rows, work=work, ledger=ledger),
+        package_pairs(rows, work=work, ledger=ledger),
+    )
+    for pairs in groups:
+        if prepared.keys() & pairs.keys():
+            raise RuntimeError("Overlapping generated addition owners")
+        prepared.update(pairs)
+    inherited = inherited_pairs(rows, work=work, ledger=ledger)
+    if prepared.keys() & inherited.keys():
+        raise RuntimeError("Overlapping inherited addition owners")
+    prepared.update({path: (normalize_addition(data, guidmap, remaps), meta) for path, (data, meta) in inherited.items()})
+    if len({row["old"] for row in rows}) != len(rows) or prepared.keys() != {row["old"] for row in rows}:
+        raise RuntimeError("Composition additions lack exactly one recipe/store owner")
+    return prepared
+
+
 def stage():
     from build import preflight
 
@@ -401,35 +435,17 @@ def stage():
         write(evidence / "missing-runtime-bindings.json", sorted(set(missing_runtime)))
         raise RuntimeError("Composition still references removed or unowned assets; inspect missing-runtime-bindings.json")
 
-    # Verify the entire patch plan before the first project write.
-    from asset_transforms import load_recipe, prepare_decks
-    from authored_additions import prepare as prepare_authored_additions
-    from shader_additions import prepare as prepare_shader_additions
-    from export_additions import prepare as prepare_export_additions
-    from unity_package_additions import prepare as prepare_unity_package_additions
+    # Historical plan/identity checks remain until their contracts have replacements.
+    from asset_transforms import load_recipe
 
     transforms = {asset["output"]: asset for asset in load_recipe(accepted)["assets"]}
+    if {row["target"] for row in plan["rows"]} != transforms.keys():
+        raise RuntimeError("Current composition requires recipe coverage; historical preview fallback is disabled")
     transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids)
-    authored = prepare_authored_additions(generated)
-    shaders = prepare_shader_additions(generated)
-    if authored.keys() & shaders.keys():
-        raise RuntimeError("Overlapping generated addition owners")
-    authored.update(shaders)
-    decks = prepare_decks(generated, export, accepted)
-    if authored.keys() & decks.keys():
-        raise RuntimeError("Overlapping generated addition owners")
-    authored.update(decks)
-    exports = prepare_export_additions(generated)
-    if authored.keys() & exports.keys():
-        raise RuntimeError("Overlapping generated addition owners")
-    authored.update(exports)
-    packages = prepare_unity_package_additions(generated)
-    if authored.keys() & packages.keys():
-        raise RuntimeError("Overlapping generated addition owners")
-    authored.update(packages)
+    authored = plan_additions(generated, export, accepted, guidmap, remaps)
     staged = []
     for row in generated:
-        stage_addition(row, authored, previous, project, guidmap, remaps)
+        stage_addition(row, authored, None, project, guidmap, remaps)
         staged.append(row["target"])
     for row in plan["rows"]:
         target = project / row["target"]
@@ -440,14 +456,13 @@ def stage():
             Path(str(target) + ".meta").write_bytes(meta_data)
             staged.append(row["target"])
             continue
-        shutil.copy2(evidence / "preview" / row["target"], target)
-        meta = Path(str(target) + ".meta")
-        if not meta.exists():
-            text = Path(str(export / row["source"]) + ".meta").read_text()
-            meta.write_text(re.sub(r"(?<=guid: )[a-f0-9]{32}", guids[row["source"]], text, count=1))
-        staged.append(row["target"])
+        raise RuntimeError("Composition asset has no current recipe owner")
     # Native source outputs replace the old recovered resources by name. Their
     # current binary/tool receipts remain local; this does not assert PC parity.
+    from inherited_state import load_ledger
+    from shader_additions import cohort
+
+    reproducible_shaders = {a["path"] for a in cohort(load_ledger())}
     native_names = set()
     for directory in selection["shader_sources"]:
         source = private_path(directory)
@@ -459,7 +474,9 @@ def stage():
                 if sha(file) != receipt["source_sha256_by_file"][file.name]:
                     raise RuntimeError("Native generated source drift")
                 target = project / "Assets/LabLoadingScene/Resources" / file.name
-                generated_pair = shaders.get(str(target.relative_to(project)))
+                generated_pair = authored.get(str(target.relative_to(project)))
+                if generated_pair is not None and str(target.relative_to(project)) not in reproducible_shaders:
+                    generated_pair = None
                 if generated_pair is not None:
                     if file.read_bytes() != generated_pair[0]:
                         raise RuntimeError("Native source differs from regenerated shader pair")
