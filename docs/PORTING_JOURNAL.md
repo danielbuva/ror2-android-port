@@ -5205,3 +5205,14 @@ bodies are token-identical apart from `coordinator.` qualifiers, and the scan of
 owners found no unqualified coordinator access. Zero-error code-only build, APK `8b9d2347dd78580d6de05a2b234d6c74a7205247b131be3d96065ec22a37a54e`, all
 three owners checked in the staged project. `./dev check-baseline` passed with 35.2 s on Lakes,
 no report error and 13 applied profile runs unchanged (`work/experiments/baseline/20261018T001013.803207Z`). App stopped; OLED asleep.
+
+## J535 — Extract the combat-spine and stage-boss owners
+
+Phase 4 step 5, batch 4 (implemented by Codex, reviewed by Claude). `CombatSpineBoundary.cs` and
+`StageBossContentBoundary.cs` each gained a nested `IDisposable` owner (`CombatSpineSession`,
+`StageBossContentSession`); every field was private. The 19 moved bodies are token-identical
+apart from `coordinator.` qualifiers. Zero-error code-only build, APK `63c871c1a53feb71e7318c9075e2c6cd285e53b77a252e1994a270b1c98610ec`, both owners
+checked in the staged project. `./dev check-baseline` passed (35.2 s on Lakes, 13 applied
+profile runs, `work/experiments/baseline/20261018T001749.835621Z`) and, since boss content belongs to the teleporter event, `--stage-exit`
+passed on the same APK (`work/experiments/baseline/20261018T002131.817137Z`). App stopped; OLED
+asleep.
