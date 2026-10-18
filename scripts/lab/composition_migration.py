@@ -318,7 +318,7 @@ def stage_addition(row, authored, previous, project, guidmap, remaps, io=None, s
         io.apply(Path(str(target) + ".meta"), copy=Path(str(source) + ".meta"))
 
 
-def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=None):
+def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=None, io=None):
     """Plan every addition without reading previous_project or composition evidence.
 
     GUID translation is still supplied by the migration coordinator; this planner does
@@ -343,7 +343,15 @@ def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=No
         if prepared.keys() & pairs.keys():
             raise RuntimeError("Overlapping generated addition owners")
         prepared.update(pairs)
-    inherited = inherited_pairs(rows, work=work, ledger=ledger)
+    replay = {}
+    origins = None
+    if io is not None and io.rebuilding:
+        from inherited_rebuild import replacements
+        from inherited_state import load_ledger
+
+        replay = replacements(io, ledger or load_ledger())
+        io.inherited_origins = origins = {}
+    inherited = inherited_pairs(rows, work=work, ledger=ledger, regenerated=replay, origins=origins)
     if prepared.keys() & inherited.keys():
         raise RuntimeError("Overlapping inherited addition owners")
     prepared.update({path: (normalize_addition(data, guidmap, remaps), meta) for path, (data, meta) in inherited.items()})
@@ -466,7 +474,7 @@ def stage(io=None):
     if {row["target"] for row in plan["rows"]} != transforms.keys():
         raise RuntimeError("Current composition requires recipe coverage; historical preview fallback is disabled")
     transformed = prepare_asset_transforms(plan, transforms, export, previous, evidence, project, guids, io)
-    authored = plan_additions(generated, export, accepted, guidmap, remaps, work=io.work)
+    authored = plan_additions(generated, export, accepted, guidmap, remaps, work=io.work, io=io)
     staged = []
     for row in generated:
         stage_addition(row, authored, None, project, guidmap, remaps, io)

@@ -283,4 +283,9 @@ def composition(destination, work, input_id, expected, provenance):
         row = provenance[path]
         if not io.is_file(target) or io.sha(target) != row["sha256"] or len(io.read_bytes(target)) != row["size"]:
             raise RuntimeError("Composition output differs from provenance: " + path)
+    from inherited_rebuild import report
+
+    result = report(io, expected, provenance)
+    io.write(destination / ".rebuild/inherited-rebuild-result.json", result)
     io.flush()
+    return result

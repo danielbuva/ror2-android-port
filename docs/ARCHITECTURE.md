@@ -73,13 +73,22 @@ completion state; composition requires it and rechecks generated source hashes.
 No shared pointers or Wine bottles are written. Native recovery remains a pinned
 local-input blocker. `shader_source.output_directory` shares unchanged real action
 paths and isolated pointer-free setup across all three generators.
-Project inputs own public smoke settings, archived independently authored editor
+`inherited_rebuild.py` owns per-file R2 host candidates: minimal importers from
+ledger identities, one hash-gated accepted-export texture importer and three
+includes through the existing pinned Unity package reader. Destination-only setup
+passes candidates to `inherited_state.prepare`; it retains original hash/GUID
+checks and store fallback for unregenerated files. Per-file origins and reasons
+live in `.rebuild/inherited-rebuild-result.json`; transient buffers disappear
+on flush/failure. The real stage's store placement paths remain unchanged.
+
+Project inputs own public smoke settings, Burst default JSON, J369 Android graphics
+tiers, archived independently authored editor
 versions, explicit Nova importer metadata, shared Nova-axis generation and the
 original-identity OBJ export. All outputs are buffered and gated before flush;
 the completion receipt lives under destination `.rebuild/`. No new runtime state
 or teardown is introduced. Setup is the accepted installation and public recipes;
 failed native scratch is retained and later operator reruns use a new attempt
-folder. No local input is retired. Exact membership, unresolved settings/linker
+folder. No local input is retired. Exact membership, explicit R9 PlayerSettings/linker
 obligations, provenance corrections and pin counts are maintained once in
 [rebuild-plan.md](rebuild-plan.md#shader-prerequisite-and-remaining-project-inputs).
 Host contracts: `test_shader_rebuild.py`, `test_project_input_rebuild.py`.

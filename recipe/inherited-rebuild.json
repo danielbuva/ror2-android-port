@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "texture_importers": {
+    "Assets/LabLoadingScene/Resources/AndroidNativeEliteRamp.png.meta": {
+      "source": "Assets/RoR2/Base/Common/GlobalTextures/texRampElites.png.meta",
+      "source_sha256": "5f246717c6aecb97fbda7c2a606360a2323797a0345a46d220bd37668b05ee42",
+      "guid": "c2840ff9013a7f9050da8e307379470b",
+      "time_created": 1789261090
+    }
+  }
+}

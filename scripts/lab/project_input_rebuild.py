@@ -1,5 +1,7 @@
 """Public settings, historical authored editors, explicit importer and original OBJ replay."""
 
+import hashlib
+import json
 from pathlib import Path
 
 from common import RECIPE, ROOT, game, read, sha
@@ -9,6 +11,8 @@ from composition_io import StageIO
 def membership(recipe):
     return (
         set(recipe["settings_templates"])
+        | set(recipe.get("burst_defaults", {}))
+        | ({"ProjectSettings/GraphicsSettings.asset"} if "graphics_template_sha256" in recipe else set())
         | {row["path"] for row in recipe["editors"]}
         | {
             "ProjectSettings/InputManager.asset",
@@ -16,6 +20,37 @@ def membership(recipe):
             "Assets/Recovered/geometry.obj",
         }
     )
+
+
+def graphics_settings(template, expected_hash):
+    """Render J369's authored Android tiers over the hash-pinned public smoke baseline."""
+    if hashlib.sha256(template).hexdigest() != expected_hash:
+        raise RuntimeError("Graphics settings template drift")
+    lines = template.decode().splitlines(keepends=True)
+    positions = [i for i, line in enumerate(lines) if line.startswith("  m_TierSettings:")]
+    if len(positions) != 1 or lines[positions[0]].strip() != "m_TierSettings: []":
+        raise RuntimeError("Graphics settings require an empty tier baseline")
+    tiers = ["  m_TierSettings:\n"]
+    for tier, quality in enumerate((0, 1, 1)):
+        tiers.extend(["  - serializedVersion: 5\n", "    m_BuildTarget: 7\n", f"    m_Tier: {tier}\n", "    m_Settings:\n"])
+        settings = dict(
+            standardShaderQuality=quality,
+            renderingPath=3,
+            hdrMode=1,
+            realtimeGICPUUsage=25,
+            useReflectionProbeBoxProjection=0,
+            useReflectionProbeBlending=0,
+            useHDR=1,
+            useDetailNormalMap=0,
+            useCascadedShadowMaps=0,
+            prefer32BitShadowMaps=0,
+            enableLPPV=0,
+            useDitherMaskForAlphaBlendedShadows=0,
+        )
+        tiers.extend(f"      {key}: {value}\n" for key, value in settings.items())
+        tiers.append("    m_Automatic: 0\n")
+    lines[positions[0] : positions[0] + 1] = tiers
+    return "".join(lines).encode()
 
 
 PROJECT_INPUT_PATHS = frozenset(membership(read(RECIPE / "project-inputs.json")))
@@ -39,6 +74,13 @@ def project_inputs(destination, work, input_id, expected, provenance):
         if Path(path).parent.as_posix() != "ProjectSettings":
             raise RuntimeError("Unexpected settings template")
         io.apply(destination / path, copy=ROOT / "smoke" / path)
+    for path, fields in recipe.get("burst_defaults", {}).items():
+        if path not in ("ProjectSettings/BurstAotSettings_Android.json", "ProjectSettings/CommonBurstAotSettings.json"):
+            raise RuntimeError("Unexpected Burst settings path")
+        io.apply(destination / path, json.dumps({"MonoBehaviour": fields}, indent=2) + "\n")
+    if "graphics_template_sha256" in recipe:
+        path = "ProjectSettings/GraphicsSettings.asset"
+        io.apply(destination / path, graphics_settings((ROOT / "smoke" / path).read_bytes(), recipe["graphics_template_sha256"]))
     for row in recipe["editors"]:
         relative_path(row["template"])
         relative_path(row["path"])

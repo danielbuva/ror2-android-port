@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J572**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J573**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -71,9 +71,10 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    config and content recipe are generated from public recipes (J551); all 222 adapted assets,
    40 of 229 additions and the three transformed assemblies are reproducible (J552–J563); the 189
    inherited files are in a hash-verified local store (J564). The from-scratch rebuild reproduces
-   86,808 of 91,841 files byte-identically, including all 352 current shader outputs
-   regenerated rather than inherited, and its binding gate passes (J567–J572); the R9 Unity
-   import of the destination, five unknown files and 63 hash-pinned local analysis inputs
-   remain, and the 166 used shaders R2 still takes from the inherited store need
-   device-verified regeneration (J558). The remaining
+   86,811 of 91,841 files byte-identically on the host, including all 352 shader outputs,
+   and 190 of the 204 inherited-store files are regenerated; its binding gate passes
+   (J567–J573). Remaining: the R9 Unity import of the destination (5,028 Unity-generated files
+   plus `ProjectSettings.asset` and one linker file), 14 store files (11 editor-built HUD
+   assets, FastDirector, `Strings.json`, the TMP mobile shader, so J558 is still open) and 63
+   hash-pinned local analysis inputs. The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

@@ -259,6 +259,10 @@ class BuildEntryTests(unittest.TestCase):
         self.assertEqual(read(attempt / "build.json"), dict(host_fixture=True))
 
     def binding_setup(self):
+        r9 = read(Path(__file__).resolve().parents[1] / "recipe/rebuild-r9-obligations.json")
+        write(self.recipe / "rebuild-r9-obligations.json", r9)
+        for path in r9["files"]:
+            self.provenance[path] = dict(producer="unknown", sha256="f" * 64, size=42)
         self.r7_run()
         self.r8_run()
         write(self.recipe / "rebuild-binding-targets.json", dict(schema=1, input_id=self.input_id, targets=[self.runtime]))
@@ -276,6 +280,12 @@ class BuildEntryTests(unittest.TestCase):
         result = self.validate()
         self.assertTrue(result["equal"])
         self.assertEqual(result["checked"], 2)
+        self.assertEqual(len(result["r9_obligations"]), 2)
+        for path, row in result["r9_obligations"].items():
+            self.assertEqual(row["sha256"], "f" * 64)
+            self.assertFalse((self.dest / path).exists())
+            self.assertIn("producer", row)
+            self.assertIn("setup", row)
         self.assertEqual(result["unity_import_deferred"], ["Assets/graph.asset"])
         (self.dest / self.clip).unlink()
         self.assertEqual(self.validate()["missing"], [self.clip])

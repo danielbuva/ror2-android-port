@@ -123,4 +123,21 @@ def validate_bindings(destination, work, input_id, expected=None, provenance=Non
         relative_path(path)
         if provenance.get(path, {}).get("producer") != "unity-generated" or not (destination / path).is_file():
             raise RuntimeError("Invalid R9 graph obligation: " + path)
-    return dict(equal=not missing, checked=len(required), r2_bindings=len(bindings), r4_deferred=len(deferred), missing=missing, unity_import_deferred=graphs)
+    obligations = read(RECIPE / "rebuild-r9-obligations.json")
+    if obligations["schema"] != 1:
+        raise RuntimeError("Invalid R9 obligation schema")
+    r9 = {}
+    for path, row in obligations["files"].items():
+        relative_path(path)
+        if path not in provenance:
+            raise RuntimeError("R9 obligation has no provenance: " + path)
+        r9[path] = dict(row, sha256=provenance[path]["sha256"], size=provenance[path]["size"])
+    return dict(
+        r9_obligations=r9,
+        equal=not missing,
+        checked=len(required),
+        r2_bindings=len(bindings),
+        r4_deferred=len(deferred),
+        missing=missing,
+        unity_import_deferred=graphs,
+    )

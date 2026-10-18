@@ -77,7 +77,9 @@ class ProjectInputRebuildTests(unittest.TestCase):
         path.write_bytes(data)
 
     def save(self):
-        write(self.recipe_root / "project-inputs.json", self.recipe)
+        import json
+
+        (self.recipe_root / "project-inputs.json").write_text(json.dumps(self.recipe, indent=2) + "\n")
 
     def run_step(self):
         replay.project_inputs(self.dest, self.work, self.input_id, set(self.payload), self.provenance)
@@ -142,16 +144,44 @@ class ProjectInputRebuildTests(unittest.TestCase):
     def test_public_membership_counts_and_unresolved_files_are_not_claimed(self):
         public = read(RECIPE / "project-inputs.json")
         self.assertEqual(len(public["settings_templates"]), 17)
-        self.assertEqual(len(replay.membership(public)), 23)
+        self.assertEqual(len(replay.membership(public)), 26)
         owner = rebuild.STEPS["project-inputs"]
         for path in (
-            "ProjectSettings/GraphicsSettings.asset",
             "ProjectSettings/ProjectSettings.asset",
-            "ProjectSettings/BurstAotSettings_Android.json",
-            "ProjectSettings/CommonBurstAotSettings.json",
             "Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml",
         ):
             self.assertFalse(owner.owns(path))
+        for path in (*public["burst_defaults"], "ProjectSettings/GraphicsSettings.asset"):
+            self.assertTrue(owner.owns(path))
+
+    def test_burst_defaults_and_graphics_are_compared_as_complete_outputs(self):
+        import json
+
+        path = "ProjectSettings/CommonBurstAotSettings.json"
+        self.recipe["burst_defaults"] = {path: dict(Version=4, DisabledWarnings="")}
+        self.payload[path] = (json.dumps({"MonoBehaviour": self.recipe["burst_defaults"][path]}, indent=2) + "\n").encode()
+        graphics = "ProjectSettings/GraphicsSettings.asset"
+        template = b"%YAML 1.1\nGraphicsSettings:\n  m_TierSettings: []\n  m_Keep: 1\n"
+        self.put(self.root / "smoke" / graphics, template)
+        self.recipe["graphics_template_sha256"] = hashlib.sha256(template).hexdigest()
+        self.payload[graphics] = replay.graphics_settings(template, self.recipe["graphics_template_sha256"])
+        self.provenance.update({p: dict(sha256=hashlib.sha256(data).hexdigest(), size=len(data)) for p, data in self.payload.items()})
+        self.save()
+        self.run_step()
+        for p, data in self.payload.items():
+            self.assertEqual((self.dest / p).read_bytes(), data)
+        text = (self.dest / graphics).read_text()
+        self.assertEqual(text.count("renderingPath: 3"), 3)
+        self.assertEqual(text.count("hdrMode: 1"), 3)
+        self.assertIn("  m_Keep: 1\n", text)
+
+    def test_graphics_template_drift_and_nonempty_tiers_are_rejected(self):
+        data = b"  m_TierSettings: []\n"
+        with self.assertRaisesRegex(RuntimeError, "template drift"):
+            replay.graphics_settings(data, "f" * 64)
+        for data in (b"", b"  m_TierSettings: []\n  m_TierSettings: []\n", b"  m_TierSettings:\n"):
+            with self.assertRaisesRegex(RuntimeError, "empty tier"):
+                replay.graphics_settings(data, hashlib.sha256(data).hexdigest())
 
 
 if __name__ == "__main__":

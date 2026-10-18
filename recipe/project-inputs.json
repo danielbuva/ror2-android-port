@@ -49,5 +49,27 @@
     "ProjectSettings/UnityConnectSettings.asset",
     "ProjectSettings/VFXManager.asset",
     "ProjectSettings/VersionControlSettings.asset"
-  ]
+  ],
+  "burst_defaults": {
+    "ProjectSettings/BurstAotSettings_Android.json": {
+      "Version": 4,
+      "EnableBurstCompilation": true,
+      "EnableOptimisations": true,
+      "EnableSafetyChecks": false,
+      "EnableDebugInAllBuilds": false,
+      "DebugDataKind": 1,
+      "EnableArmv9SecurityFeatures": false,
+      "CpuMinTargetX32": 0,
+      "CpuMaxTargetX32": 0,
+      "CpuMinTargetX64": 0,
+      "CpuMaxTargetX64": 0,
+      "CpuTargetsArm64": 512,
+      "OptimizeFor": 0
+    },
+    "ProjectSettings/CommonBurstAotSettings.json": {
+      "Version": 4,
+      "DisabledWarnings": ""
+    }
+  },
+  "graphics_template_sha256": "7e7101091125a933bbbaaed9ba2f9b3c7e69a38222c2554a29af9c9490b8687b"
 }

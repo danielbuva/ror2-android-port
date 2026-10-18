@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "files": {
+    "ProjectSettings/ProjectSettings.asset": {
+      "producer": "android/Assets/Editor/LabBuild.cs:Build; Unity PlayerSettings serializer",
+      "setup": "Import the smoke PlayerSettings baseline in the exact editor; restore J367 Linear color space, then LabBuild sets identity, IL2CPP ARM64, API 23/30, automatic placement, no custom keystore, engine stripping off, Low managed stripping, Vulkan and frame timing. Exact-editor schema migration must reproduce the target hash."
+    },
+    "Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml": {
+      "producer": "tools/catalog/WholeCatalogBuild.cs:WholeItemBehaviorPreservation.OnPreprocessBuild",
+      "setup": "After R8 stages WholeCatalogBuild.cs and the preservation directory, build with the accepted RoR2 assembly. Reflect ItemDefAssociationAttribute methods, include behaviorTypeOverride, distinct/sort full names, replace nested + with / and serialize XElement.ToString without a final newline. Do not pin a reflected type list or XML body."
+    }
+  }
+}

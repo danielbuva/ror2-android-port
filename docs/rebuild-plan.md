@@ -35,7 +35,9 @@ bytes. `--compare-only` reads an existing destination. Synthetic host coverage i
 in `tests/test_rebuild.py`; real-data step execution remains an operator check.
 R2 is `--step composition`, after R1 and the shader prerequisite in the same destination. It owns 84,487
 current map paths: 84,009 export copies, 264 recipe transforms, 10 generator outputs
-and 204 inherited-store files (assembly paths remain R1). Canonical closure
+and 204 store-attributed paths (assembly paths remain R1). The host replay now
+regenerates 190 of those paths and retains 14 store bodies; see the per-file
+accounting below. Canonical closure
 relocation plus the existing resolved-mesh membership supplies 83,881 export
 copies; the residual 128 are identifier-only
 pairs in `recipe/composition-export-copies.json`, audited in `recipe/README.md`.
@@ -173,8 +175,9 @@ This checks file placement, not GUID/fileID resolution or runtime readiness.
 
 The original R1–R8 cohorts cover **86,433** files (J571: all identical from an empty
 destination; final bindings pass). The new host cohorts below select **352 + 23**
-additional paths, for **86,808** selected paths and **5,033** unselected paths:
-5,028 `unity-generated` R9 obligations and five unresolved files. Selection describes
+additional paths at J572. The project-inputs extension below adds three more:
+**86,811** selected paths and **5,030** R9 obligations (5,028 originally classified
+`unity-generated` plus two now assigned explicit editor producers). Selection describes
 implemented coverage, not a completed operator replay. No new real-data harness
 execution, Unity/device command, shared-work write, journal/state edit or Git
 mutation was performed for this change.
@@ -230,7 +233,7 @@ translation engine or community/game program text is published.
 copies, three historical authored editor templates, the generated InputManager,
 the explicit Nova importer and regenerated geometry. It uses the shared
 `nova_bridge.nova_axes` / `insert_axes` and `prepare.export_geometry` serializers.
-The real actions retain their selected output paths. The entire 23-file cohort
+The real actions retain their selected output paths. The entire 26-file cohort
 must pass map hash/size gates before any project file is flushed, followed by
 actual current-project comparison. Geometry uses a public identity/hash recipe
 and the legitimate installation, never the previous OBJ. The exact mesh must be
@@ -260,23 +263,42 @@ Names in the first 18 rows are relative to `ProjectSettings/`.
 | VFXManager.asset | Same template copy owner; project-inputs. |
 | VersionControlSettings.asset | Same template copy owner; project-inputs. |
 | InputManager.asset | `nova_bridge.prepare`: 16 Nova slot-1 axes inserted into the smoke template. `work/experiments/scene-runtime/20261004T010614.329224Z/nova-contract.json` records the exact current hash; project-inputs shares that generator. |
-| ProjectSettings/BurstAotSettings_Android.json | **Unresolved:** package-generated v4 Burst settings; no complete tracked constructor or matching public template found. J430 local stage script only inherits the settings directory, without individual settings output hashes. Keep out of placement. |
-| ProjectSettings/CommonBurstAotSettings.json | **Unresolved:** package-generated v4 warning settings; same inherited-directory limitation, no tracked complete producer. |
-| ProjectSettings/GraphicsSettings.asset | **Unresolved:** smoke template plus three Android deferred/HDR tier overrides. No tracked tier-setting producer found. Runtime presentation requires linear/HDR but does not serialize these settings. |
-| ProjectSettings/ProjectSettings.asset | **Unresolved:** `android/Assets/Editor/LabBuild.cs` sets player/backend/API values only partially. Current bytes also include newer editor schema and linear color space; no complete host constructor. |
+| ProjectSettings/BurstAotSettings_Android.json | Burst 1.8.11 `Editor/BurstPlatformAotSettings.cs`: `InitialiseDefaults`, Android `ShouldSerialiseOut`, ordered `SerialiseOut` and `Save`. Host JSON from public default field settings in project-inputs; complete-byte gate. |
+| ProjectSettings/CommonBurstAotSettings.json | Same Burst producer: common serialization selects Version and DisabledWarnings. Host JSON, complete-byte gate. |
+| ProjectSettings/GraphicsSettings.asset | Public smoke baseline plus J369's Android tier settings: HDR, FP16 and DeferredShading for all three tiers. Host renderer with baseline SHA-256 and complete-byte gate. |
+| ProjectSettings/ProjectSettings.asset | **R9:** Unity PlayerSettings serialization/schema migration plus `android/Assets/Editor/LabBuild.cs:Build`; J367 Linear setting is an explicit prerequisite. Exact-editor output must match the provenance hash; no private settings template. |
 | Assets/Editor/CatalogAddressProbe.cs | Exact public Git blob at `ad519fc534c71b78fd5634b9f214ddec102714d0:tools/unity/CatalogAddressProbe.cs`; J430 staging receipt `copied[8]` matches. Pinned authored template; project-inputs. |
 | Assets/Editor/RecoveredHudBuilder.cs | Exact public blob at `df6df52b7187630d968389ac4c56aa73ea15bdaa:tools/unity/RecoveredHudBuilder.cs`; J430 receipt `copied[0]` matches. Pinned authored template; project-inputs. |
 | Assets/Editor/WholeCatalogHost.cs | Exact public blob at `7e4f63b2a62c8f48bf00596f2df8ffe4a65f7e09:tools/catalog/WholeCatalogHost.cs`; current formatting differs. Pinned authored template; project-inputs. |
 | Assets/LabLoadingScene/NovaInputBridge.cs.meta | J430 receipt `copied[57]` proves the current importer. `CharacterMotorOrderProbe` sets -20000; project-layout supplies its GUID. New public ordered-script template renders every field; full map hash gate, project-inputs. |
 | Assets/Recovered/geometry.obj | `prepare.prepare` UnityPy Mesh.export, J08. `inventory/geometry-provenance.json` records the current accepted bundle hash, mesh path ID/name and exact output hash; project-inputs replays those identities. |
-| Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml | **Unresolved host replay:** `WholeItemBehaviorPreservation.OnPreprocessBuild` in `tools/catalog/WholeCatalogBuild.cs`, introduced at `be691df`, reflects association attributes and serializes XElement. J432 proves 84 association types but not this full file's output hash. Requires a host reflection/serialization replay or exact-editor fixture, not a copied type list/XML body. |
+| Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml | **R9:** `WholeItemBehaviorPreservation.OnPreprocessBuild` in `tools/catalog/WholeCatalogBuild.cs`, introduced at `be691df`, reflects association attributes and serializes XElement. J432 observes associations; accepted-assembly reflection and exact output hash remain editor obligations, without a copied type list/XML body. |
 
-The five unresolved files are listed in coverage with their original evidence.
-The smoke settings history is the public baseline at `da6d1e8`; no tracked later
-settings constructor was found. J430's ignored `stage-project.py` lines 13–15
-copy inherited ProjectSettings and replace ProjectVersion only. That directory
-copy is historical evidence, not a fresh producer. No full private settings file
-or reflected game type list is added to public templates.
+The two explicit R9 obligations are in `recipe/rebuild-r9-obligations.json`.
+`validate-bindings` reports each path, producer, setup and map SHA-256/size without
+requiring it before import/build. Coverage reports them separately from unknowns;
+the private provenance map remains unchanged. Neither classification is an R9 pass.
+Burst's existing 1.8.11 package pin is retained; the host JSON fields are defaults,
+not a copied private settings file. The package writer uses two-space indentation,
+field declaration order and a final newline, so no Unity serializer is required.
+
+Graphics producer evidence: J369 and ignored `work/j369-settings.py` call
+`EditorGraphicsSettings.GetTierSettings` / `SetTierSettings` for Android Tier1–3,
+setting HDR, FP16 and DeferredShading. Its readback is in
+`work/experiments/scene-runtime/20261007T122200.963649Z/android-tier-settings.json`.
+The host renderer retains public smoke settings outside that tier node and the
+measured defaults within it (quality 0/1/1, GI usage 25, optional flags off).
+It checks the smoke baseline hash and empty tier membership before rendering.
+No authored C# source is edited by text substitution.
+
+PlayerSettings producer evidence: `LabBuild.cs` lines 103–110 set identity,
+IL2CPP/ARM64, SDK levels, automatic install location, keystore/stripping, graphics
+API and timing. J367 supplies Linear color space. Compared with smoke, the current
+file also adds newer-editor fields (`androidAutoRotationBehavior`,
+`useCustomGradleSettingsTemplate`, `syncCapabilities`) and removes AndroidMinifyWithR8.
+Those are native editor schema migration, not an authored host constructor.
+R9 must import the public baseline, apply the stated settings and prove the full
+hash; this host change does not promise that import alone supplies Linear.
 
 **Provenance corrections to apply when its generator is available:** the three
 editor sources and Nova importer can change `unknown` → `tool-owned`, with
@@ -286,7 +308,8 @@ shared original generators and the new coordinator. The 17 settings and 352
 shader attributions already name the correct original producers. No provenance-map
 generator was found in tracked scripts or the searched local Python tools; the
 local map is unchanged. Step membership supports both old and corrected categories.
-These six corrections do not authorize reclassifying the five unresolved files.
+The three newly host-owned settings and two explicit R9 producers supersede the
+five earlier unresolved classifications without modifying the private map.
 
 The audit below describes the J566 snapshot before this implementation.
 
@@ -387,7 +410,7 @@ DLLs separately; the old `scene_runtime.scene_prepare` cannot initialize this ge
    92 declared runtime sources and editor fixtures; `preservation_descriptor` (J506) uses
    manifest/contracts/progression roots, scratch-compared equal. `build.build` copies
    `android/Assets`. `WholeItemBehaviorPreservation.OnPreprocessBuild` derives the separate
-   item-behavior linker file: its current complete output remains unknown below.
+   item-behavior linker file: its current complete output is an explicit R9 obligation above.
    `LabBuild.Build` serializes the scaffold scene/settings; Unity resolves packages/imports.
    Build/payload receipts prove builds, not deterministic reserialization of every input.
 
@@ -401,7 +424,55 @@ historical payload variants; it is not a required second invocation after the fu
 The 204 store-attributed current files are hash-verified and normalized where necessary;
 other retained store bodies are overwritten by selected current shader outputs.
 
-## Unknowns and limits
+## R2 inherited-file host replay
+
+`inherited_rebuild.py` supplies per-file candidates only during destination replay.
+`inherited_state.prepare` still requires the complete ledger selection and validates
+every chosen byte stream against its original ledger hash and every importer GUID.
+A generated matching file replaces only that file's store read; all remaining
+files retain the existing store/path/hash/GUID gates. `read_pair`, capture and the
+store integrity check are unchanged. The production stage keeps its original
+store placement and later shader replacement order.
+
+Of the **204 store-attributed current paths**, **187 are importers and 17 are
+bodies**. In particular, the 166 used native shaders in J558 contribute importers
+here; their current bodies are already among the 352 shader-pipeline outputs and
+differ from the inherited ledger bodies. Regenerating importers does not establish
+byte reproduction of those older shader bodies or satisfy J558's device gate.
+
+| Group | Regenerated | Still inherited | Reason/owner |
+| --- | ---: | ---: | --- |
+| Shader importers | 167 | 0 | Existing `authored_additions.shader_importer`, original public ledger GUID/hash. Includes the recovered TMP mobile shader importer alongside the 166 used native shader importers. |
+| TMP include importers | 3 | 0 | Same existing include-importer schema. |
+| Text importers | 4 | 0 | Authored TextScriptImporter schema and ledger identity. |
+| Material importers | 7 | 0 | Authored NativeFormatImporter schema, mainObjectFileID 2100000. |
+| Prefab importers | 3 | 0 | Authored PrefabImporter schema; FastDirector retains its original empty-field whitespace. |
+| Sprite/settings importers | 2 | 0 | Authored NativeFormatImporter schema, IDs 21300000 / 11400000. |
+| Elite ramp importer | 1 | 0 | Accepted export texRampElites.png.meta, pinned source hash, inherited GUID and creation-time parameters only. |
+| TMP include bodies | 3 | 0 | Existing hash-gated TMP 3.0.6 Essential Resources archive reader; no package content tracked. |
+| FastDirector.prefab | 0 | 1 | Existing stage_enemy_spine rejects stale catalog/scene record identities; needs reviewed rebase (J562). |
+| FontMaterial0–4.mat; NativeUiMaterial0–1.mat | 0 | 7 | RecoveredHudBuilder uses Unity material cloning/AssetDatabase serialization; exact-editor fixture needed. |
+| Hud.prefab; Menu.prefab | 0 | 2 | Same builder, PrefabUtility serialization/local object IDs. |
+| Owned full-rectangle texCrosshairNibBar.asset; TMP Settings.asset | 0 | 2 | Same builder, Sprite.Create / SerializedObject and AssetDatabase identities. |
+| Strings.json | 0 | 1 | Current accepted English merge differs from inherited bytes (J562). |
+| TMP_SDF-Mobile.shader | 0 | 1 | Pinned TMP package shader differs from inherited bytes (J562). |
+| **Total** | **190** | **14** | No ledger entry retired or relabelled. |
+
+The destination `.rebuild/inherited-rebuild-result.json` and composition replay
+result list each regenerated path, each retained path/reason and both counts.
+Candidates with different hashes remain inherited. The 352 shader outputs retain
+their native-recovery/CrossOver limitation: shader recovery itself still requires
+a native tool run and the existing 46 hash-pinned shader inputs. This extension
+adds **zero retained local analysis records** (63 remain), one accepted-export
+importer identity/hash, the public smoke GraphicsSettings baseline hash and three
+TMP source selectors/hashes under the **existing** package/archive pins.
+It does not run native recovery, Unity, devices or the real-data harness.
+
+## Original provenance-map unknowns and limits
+
+This table records the original J566 classification, not the current replay
+coverage. The producer/disposition table above supersedes its settings/editor/OBJ
+hypotheses; R1 supplies the original assemblies. The private map is unchanged.
 
 | Folder | Files | Bytes | Files |
 | --- | ---: | ---: | --- |

@@ -101,8 +101,13 @@ class CompositionStageTests(unittest.TestCase):
         self.ledger = dict(input_id=self.accepted, assets=[asset])
         for suffix in ("", ".meta"):
             self.put(self.work / "inherited-store" / self.accepted / (self.inherited + suffix), (self.project / (self.inherited + suffix)).read_bytes())
+        self.replay_recipe = self.root / "replay-recipe"
+        write(self.replay_recipe / "inherited-rebuild.json", dict(schema=1, input_id=self.accepted, texture_importers={}))
+        write(self.replay_recipe / "inherited-rebuild-package.json", dict(assets=[]))
         self.patches = contextlib.ExitStack()
         self.addCleanup(self.patches.close)
+        self.patches.enter_context(patch("inherited_rebuild.RECIPE", self.replay_recipe))
+        self.patches.enter_context(patch("unity_package_additions.generate_pairs", return_value={}))
         # Only external inputs and generation cohorts are synthetic; stage, store validation,
         # dependencies, sanitizer, scene contracts, ordering and receipts run normally.
         self.preflight = self.patches.enter_context(patch("build.preflight"))
@@ -242,6 +247,11 @@ class CompositionStageTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             staging.apply(link, b"bad")
 
+    def test_real_stage_does_not_invoke_rebuild_replacement_selector(self):
+        with patch("inherited_rebuild.replacements", side_effect=AssertionError("destination replay only")):
+            self.run_stage()
+        self.assertEqual((self.project / self.inherited).read_bytes(), b"inherited\n")
+
     def prepare_coordinator(self):
         self.recipe_dir = self.root / "recipe"
         write(self.recipe_dir / "composition-export-copies.json", dict(schema=1, input_id=self.accepted, copies=[]))
@@ -279,6 +289,8 @@ class CompositionStageTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             result = rebuild.rebuild_step("composition", dest=self.destination, work=self.work)
         self.assertTrue(result["equal"], result)
+        self.assertEqual(result["replay"]["counts"], dict(regenerated=0, still_inherited=1))
+        self.assertIn(self.inherited, result["replay"]["still_inherited"])
         self.assertEqual(result["counts"], dict(identical=7, different=0, missing=0, extra=0))
         for path, value in before.items():
             self.assertEqual((self.work / path).read_bytes(), value[0], path)

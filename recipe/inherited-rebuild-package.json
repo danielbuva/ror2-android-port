@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "package": {
+    "name": "com.unity.textmeshpro",
+    "version": "3.0.6",
+    "sha256": "1ce172027b906a30be33cefe7b2ee46e1c8d35f729359b8b9785fc120d57b637",
+    "resource": "package/Package Resources/TMP Essential Resources.unitypackage",
+    "resource_sha256": "b1b2848548e67592087fa906f90c4ca4102ccad75d64942053c1762b2c07a754"
+  },
+  "assets": [
+    {
+      "source": "Assets/TextMesh Pro/Shaders/TMPro.cginc",
+      "source_sha256": "14edb7d7b88caf2b82cae68200abe895e5b5b3474c3fffbf0e9b4b09a4e2467e",
+      "output": "Assets/LabLoadingScene/Resources/RecoveredUI/FontShader/TMPro.cginc",
+      "guid": "8754d3b41271f4d94b9fd1cfbb47ad30"
+    },
+    {
+      "source": "Assets/TextMesh Pro/Shaders/TMPro_Mobile.cginc",
+      "source_sha256": "31aa22debdf974d1dc73e90b7feadf7f2e37ad60cf6f9f9e54a6adc71cd792b5",
+      "output": "Assets/LabLoadingScene/Resources/RecoveredUI/FontShader/TMPro_Mobile.cginc",
+      "guid": "fa15998c65dd74abab0ce03fcd7af00b"
+    },
+    {
+      "source": "Assets/TextMesh Pro/Shaders/TMPro_Surface.cginc",
+      "source_sha256": "434adb97dfcd9d5772fc11bb3a76f36af13614a664aca840ebcbf635e6e2df24",
+      "output": "Assets/LabLoadingScene/Resources/RecoveredUI/FontShader/TMPro_Surface.cginc",
+      "guid": "893010f1418934db691b9cd46c762d02"
+    }
+  ]
+}

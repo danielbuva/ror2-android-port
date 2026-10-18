@@ -129,7 +129,7 @@ def capture_action():
     print(json.dumps(capture(), indent=2))
 
 
-def prepare(rows, work=None, ledger=None):
+def prepare(rows, work=None, ledger=None, regenerated=None, origins=None):
     """Validate the complete inherited selection and store before staging any project bytes."""
     work = Path(work or WORK).resolve()
     ledger = load_ledger() if ledger is None else ledger
@@ -143,7 +143,19 @@ def prepare(rows, work=None, ledger=None):
             continue
         if row["old"] in pairs or row["guid"] != asset["guid"] or row["target"] != asset["project_path"]:
             raise RuntimeError("Inherited addition disagrees with ledger identity")
-        pairs[row["old"]] = read_pair(store, asset)
+        pair = []
+        for suffix, key in (("", "sha256"), (".meta", "meta_sha256")):
+            path = asset["path"] + suffix
+            replacement = (regenerated or {}).get(path)
+            data = replacement if replacement is not None else pair_path(store, path).read_bytes()
+            if hashlib.sha256(data).hexdigest() != asset[key]:
+                raise RuntimeError("Inherited pair hash mismatch: " + path)
+            if suffix and re.findall(rb"^guid:\s*([a-f0-9]{32})\s*$", data, re.M) != [asset["guid"].encode()]:
+                raise RuntimeError("Inherited pair GUID mismatch: " + asset["path"])
+            pair.append(data)
+            if origins is not None:
+                origins[path] = "regenerated" if replacement is not None else "store"
+        pairs[row["old"]] = tuple(pair)
     if pairs.keys() != assets.keys():
         raise RuntimeError("Composition omits inherited additions")
     return pairs

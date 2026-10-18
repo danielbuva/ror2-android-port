@@ -162,9 +162,11 @@ def provenance_coverage(provenance):
     """Map attribution only, not evidence of a completed replay or runtime readiness."""
     membership = {name: selected_paths(owner, provenance) for name, owner in STEPS.items() if name != "validate-bindings"}
     covered = set().union(*membership.values())
+    r9 = read(RECIPE / "rebuild-r9-obligations.json")["files"]
     return dict(
+        r9_obligations={path: dict(row, **r9[path]) for path, row in provenance.items() if path in r9},
         counts={name: len(paths) for name, paths in membership.items()},
-        uncovered={path: row for path, row in provenance.items() if path not in covered},
+        uncovered={path: row for path, row in provenance.items() if path not in covered and path not in r9},
     )
 
 

@@ -5797,3 +5797,25 @@ Unity-generated files (R9) and five unknowns (both Burst AOT settings, GraphicsS
 ProjectSettings and the item-behaviors `link.xml`). Native shader recovery (`shader_recovery.recover`,
 which needs the CrossOver bottle) is still represented by its pinned records. 701 host tests pass.
 Host tooling only; no APK change.
+
+## J573 — Rebuild: settings producers, R9 obligations and regenerated store files
+
+Phase 2, from-scratch rebuild (implemented by Codex at medium reasoning, reviewed and run by Claude).
+Three of the five unknown files now have host producers in `project-inputs`: both Burst AOT
+settings files (Burst 1.8.11 defaults) and `GraphicsSettings.asset` (the smoke template plus
+J369's Android HDR/FP16/deferred tiers). The other two are produced only by Unity during a build
+and are recorded as R9 obligations in `recipe/rebuild-r9-obligations.json`, listed by
+`validate-bindings`: `ProjectSettings.asset` (PlayerSettings serialization in `LabBuild.Build`)
+and the item-behaviors `link.xml` (`WholeItemBehaviorPreservation.OnPreprocessBuild`). In the
+rebuild path, R2 now takes an inherited-store file from a regenerated source when one exists,
+under the same ledger hash and GUID checks (`inherited_state.prepare`; the real stage reads the
+store exactly as before). Regenerated: 187 importers (including those of the 166 used native
+shaders, whose bodies already come from shader-pipeline, J572) and three TMP includes from the
+pinned TextMesh Pro 3.0.6 package (`recipe/inherited-rebuild-package.json`). Still inherited
+(14): eleven HUD materials, prefabs and settings that need `RecoveredHudBuilder` in the editor;
+`FastDirector.prefab`, blocked by stale catalog identities; and two bodies that differ from
+their current generators, `Strings.json` and `TMP_SDF-Mobile.shader` (J562). J558 is therefore
+not yet satisfied for the TMP mobile shader. Real data, from an empty destination: all eleven
+steps identical (project-inputs 26/26), `validate-bindings` passed with two R9 obligations, and
+the working project manifest was unchanged. 86,811 of 91,841 files are now produced by host
+steps; 5,030 belong to R9. 712 host tests pass. Host tooling only; no APK change.

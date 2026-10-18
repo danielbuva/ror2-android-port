@@ -59,8 +59,11 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `inherited-rebuild.json` | One texture-importer host input | Accepted input, minimum export metadata identity/hash, inherited GUID and creation-time parameter. | No texture/importer body or private identifiers; accepted local export only. | `inherited_rebuild` gates source and final ledger hashes. |
+| `inherited-rebuild-package.json` | Three remaining TMP include bodies | Existing TMP 3.0.6 package/archive pins, three source selectors/hashes and inherited GUIDs. | Unity Companion License, authorized local editor package; no third-party bytes tracked. | Existing `unity_package_additions.generate_pairs`, isolated R2 replay only. |
+| `rebuild-r9-obligations.json` | Two previously unknown producers | Public PlayerSettings/editor callback identities and authored setup notes. | No private settings, reflected game type lists or XML content. | Coverage and validate-bindings report explicit editor obligations with local target hashes. |
 | `shader-rebuild-inputs.json` | Explicit shader recovery/census/fallback dependencies and selections | Accepted input ID, work-relative hashes, output basenames and topology; no recovered content. | Private bodies remain ignored; no account/device data, credentials or new licensed code. Audited 2026-10-18. | `shader_rebuild` validates all 46 pins; retained recovery remains a blocker (63 retained records including R3–R8). |
-| `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 23 complete files. |
+| `project-inputs.json` | Remaining independently authored project inputs and original geometry identity | Public smoke/editor source identities, exact public Git commits, original bundle/mesh/hash identities. | No original geometry or private settings bodies; archived templates are our own public source. Audited 2026-10-18. | `project_input_rebuild` renders/stages/exports and hash-gates 26 complete files, including Burst defaults and authored Android graphics tiers. |
 | `build-entry-inputs.json` | Explicit R7/R8 retained decompilation, contract and bootstrap identity inputs | Accepted input ID, five work-relative paths and SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18. | `build_entry_rebuild.BuildEntryIO` gates all five inputs; these are blockers, not freshly generated analysis. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
 | `scene-rebuild-inputs.json` | Explicit temporary R5 frozen baseline and script identities | Accepted input ID, two work-relative paths and SHA-256 only. | No baseline contents, script implementation, private roots, binary or account/device data. Audited 2026-10-18. | `scene_rebuild.SceneIO` gates both inputs before scratch publication; removing these retained inputs remains a fresh-rebuild blocker. |
@@ -801,3 +804,39 @@ path or personal email is included. No new licenses or dependency versions are
 introduced; UnityPy remains the existing pinned host exporter. Pattern scanning
 supplements this review. The provenance map is local and unchanged: no generator
 was found; corrections are reported in rebuild-plan rather than hand-editing it.
+
+## Remaining-input and inherited-file replay audit (2026-10-18)
+
+The implementation and per-group inventory are in
+[rebuild-plan.md](../docs/rebuild-plan.md#r2-inherited-file-host-replay).
+`project-inputs.json` now includes only authored/public Burst default fields and
+a hash of the public smoke graphics baseline. Burst 1.8.11's
+`Editor/BurstPlatformAotSettings.cs` was inspected locally: InitialiseDefaults,
+ShouldSerialiseOut and SerialiseOut establish values, membership and ordered JSON
+format. No package implementation was copied. Graphics tier settings come from
+J369's authored API calls/readback; the new renderer is independently authored.
+No private PlayerSettings body or reflected association list is published.
+
+`inherited-rebuild.json` pins one accepted-export importer source hash and
+GUID/time parameters. `inherited-rebuild-package.json` reuses existing package and
+nested-resource archive hashes with three additional source selectors/hashes.
+The package reader enforces its existing archive/member/source/complete-pair
+checks. Generated importers use public ledger GUIDs, minimal schemas and standard
+Unity main-object IDs; each final stream must match the ledger hash.
+No body is recovered from a timestamped run or current project. No inherited
+ledger status, usage, comparison, capture or integrity-check policy is changed.
+The real composition stage retains its existing store read/write paths; only
+isolated rebuild replay selects new per-file candidates before placement.
+
+Prior art: inspected pinned ThunderKit ImportAddressableCatalog.cs
+(`95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`) and RoR2ImportExtensions
+Editor/SetDeferredShading.cs (`477ad9b52e66e59080049fc3a65645ddb4db2cef`).
+The former preserves bytes by copying; the latter sets desktop tier rendering
+path using GetTierSettings/SetTierSettings, but supplies no Android settings or
+serializer proof. J369's measured Android contract therefore remains authoritative.
+No community implementation, original game content, package source, account data,
+credentials, private absolute path, device/storage identity or binary is tracked.
+No new dependency version, native recovery run or retained local-analysis pin is
+introduced. No Unity/device action, harness execution, journal/state edit or Git
+mutation is part of this host-only change. Doctor is omitted because it writes
+outside the authorized harness destination.
