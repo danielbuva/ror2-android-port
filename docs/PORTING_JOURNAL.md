@@ -10434,3 +10434,76 @@ selectors, stops and sleeps OLED. Full alternate UI-abandon/restart is now
 active on these unchanged bytes. J682/J683's separate code build is active;
 this result is not retroactively assigned to that newer source. No original
 input, extra device, receipt hand edit, data move or storage change occurs.
+
+## J686 — Engineer's full alternate loadout cleans up and restarts in process
+
+Hypothesis: the current all-four native alternate loadout can retire its world,
+source shield-template lease and observers, then start a healthy new session
+without the earlier missing charge dependency or an ownership leak. APK is
+still e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+Evidence: work/device/<serial>/experiments/session-cleanup/
+20261019T155121.285155Z/; bounded reading:
+work/coordination/engineer-full-alternate-e099-triage/cleanup-findings.md.
+
+Existing HUD settings/end-run UI abandons the live Engineer session at
+65.599197 world seconds. Completed session cleanup succeeds and session 2
+reaches 5.000976 s of healthy play in the same PID. Strict live native
+family/variant/definition contracts match all four overrides in both sessions.
+This case does not require every callback again: session 1 records 27/5/0/2
+and the short restart 3/0/0/0. J685 separately covers all four activation
+callbacks; this result proves teardown/restart with the chosen loadout.
+
+The generic combat observer is attached, then detached/cleaned, then freshly
+attached. The Engineer shield-template guard is released and freshly prepared.
+All five gameplay debug accelerations are off, but developer survivor/variant
+choice and automatic diagnostic input remain assistance. Profile runs/earned/
+available unlocks remain 13/1/1 across all phases; no native result, profile
+award or loadout commit is applied. Native source lifecycle/recovery flags
+are false, so this does not execute J681/J683's source-identity cleanup.
+
+This case admits three LightningStake identities and keeps 18 finite samples,
+six per identity, attributed to a blue-elite Wisp. No first-invalid transition
+or later admission/retirement is proved. It is another bounded finite window,
+not a fix or a successful reproduction of J667's intermittent error.
+
+First failure: none; the collector reports no unexpected current-process
+errors and finally removes selectors, stops and sleeps OLED. The unrelated
+metadata/reset build has finished, but these results retain the old APK's
+provenance. Full Laser Cutter/Harpoon/Walker/Spider Mine semantics and ordinary
+eligibility remain open. No source change, original input, additional-device
+action, receipt hand edit, existing data move or storage change occurs.
+
+## J687 — Build and install receipt-bound identities with native reset repair
+
+Hypothesis: J682's metadata consumer and J683's retained-ID reset correction
+can ship together while reusing the accepted full content. Explicit selected
+preflight passes; the configured-device doctor also passes after the initial
+selector-free doctor correctly refuses to guess among attached devices.
+
+Code-only build request 20261019T155151.389187Z succeeds in 108.693343 s with
+zero errors, producing APK
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+Root freezes the APK, build receipt, all 105 runtime/two recipe/producer/fixture
+hashes and host/editor/preflight/build outputs at
+work/experiments/source-identity-reset/candidate-20261019T155151.389187Z/.
+Source hashes remain unchanged through the build. All 266 payload hashes
+exactly match J677's repaired content; no content rebuild or cache purge is
+used. The prior accepted e09920fd… remains an executable rollback.
+
+Host packaged-resource proof:
+work/coordination/base-stage-identity-audit/apk-55dee318-proof/.
+The verifier hashes one APK byte snapshot, parses that same snapshot with
+UnityPy and finds exactly one WholeStageContexts TextAsset. Its raw hash and
+JSON equal the generated project resource: schema 1, 23 contexts, 14 identity
+blocks. Every block equals current public-reader output bound to its exact
+source receipt. This is packaged-data verification, not runtime acceptance.
+
+After J686 releases the device, live adopted-storage/free-space checks,
+in-place installation and payload sync pass on the configured Nova. The plain
+default control is active. Native startup/identity teardown/restart and the
+default exit remain pending; accepted baseline stays e09920fd… until both new
+default modes pass. Runtime source equals the new built candidate, with no
+newer runtime integrated. First failure: none in build/install/sync. No reset,
+Phase 2 output, input acceptance, extra-device action, receipt hand edit,
+existing data move or storage reconfiguration occurs. Replay needs remain in
+J682/J683; Moon is untouched.
