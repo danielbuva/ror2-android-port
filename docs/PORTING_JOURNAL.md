@@ -12930,3 +12930,77 @@ managed Unity initialization remains an independent fixture gate. Original
 media conversion has not been established as necessary. Audio remains
 unavailable in the port. All banks/native libraries/SDK material stay ignored;
 this documentation checkpoint changes no game runtime or rebuild input.
+
+
+## J737 — Accept Mercenary effect ownership fix with cleanup and restart
+
+Hypothesis: J733's deferred effect ledger closes the missing ownership path
+without changing content or the ordinary controls. Freeze reviewed source
+4827f16's 243 authored inputs against Git objects, build code-only, then repeat
+both defaults, Mercenary alternates and source UI End Run/restart. The independent
+host source review finds no actionable correctness issue; the actual-owner
+exact-editor contracts remain J733. Current host suite is J735's 1,020 passing
+tests, including the separately strengthened live alternate identity gate.
+
+APK 12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8
+builds IL2CPP ARM64 Vulkan in 192.277552 seconds with zero errors and 105 runtime
+sources. All 266 content payload records equal f0546585 and accepted 885ea294.
+Frozen source/build/payload equality receipts:
+work/experiments/composed-late-effects/candidate-20261019T205441.164631Z/.
+The configured device's in-place install and payload sync pass after fresh
+adopted-volume/free-space checks; storage configuration and existing data stay
+unchanged.
+
+Both default controls pass with empty report/current-process log errors. Plain
+Lakes reaches 35.205246 live seconds at
+work/experiments/baseline/20261019T205932.861007Z/. One genuine exit reaches
+Goolake for 10.118134 next-stage seconds (total world 157.707581) at
+work/experiments/baseline/20261019T210330.798383Z/. Native first-stage diagnostic
+and recovery remain false; operation witnesses are empty, pauseBeforeMoon true,
+automatic hold false/zero, and all four isolated-window counters zero. Profile
+appliedRuns remains 13. Both modes stop through the existing cleanup and sleep
+the display.
+
+The same Mercenary Uppercut/Focused Assault/EvisProjectile diagnostic loadout
+passes 60.455780 live seconds with authority/server callbacks 44/8/1/1. The
+final post-spawn live inventory matches requested native identities, and report,
+collector and current-process errors are empty. One player-body-owned native
+EvisOverlapProjectile (catalog 127) is observed. Thirteen retained damage facts
+are attributed to the player body, with no player-owned projectile damage in
+this case; buffers are unwrapped and the observer has no error. J733's earlier
+f054 case recorded three mapped Evis hits, but that earlier result is not
+substituted for damage evidence on this APK. No rejected finisher lookup
+recurs. Evidence: work/experiments/survivor-check/20261019T211046.988023Z/Merc/;
+root result: work/coordination/codex-merc-12d-alternate.stdout. This remains a
+bounded assisted callback/output check, not complete ability semantics.
+
+The same requested loadout then passes source UI End Run after 67.237961 live
+seconds and starts a healthy second session in the same process, observed at
+5.004181 live seconds. The completed report has cleanup=true, empty errors,
+no source recovery, and a cleaned/detached combat-output observer; the restart
+has a fresh attached healthy observer. Required callback-root and stat-queue
+cleanup contracts pass. Loadout evidence is the post-spawn setup snapshot,
+not a continuous monitor. Applied runs/earned unlocks/available earned unlocks
+stay 13/1/1 at first-live, completion and restart; resultApplied=false and
+permanent event awards remain blocked for the developer-assisted selection.
+Gameplay debug assists are off in this abandonment check. Native first-stage
+lifecycle diagnostic remains false, so this does not extend J730's separate
+experimental native-first-stage path.
+
+UI cleanup/restart evidence:
+work/device/<serial>/experiments/session-cleanup/20261019T211551.188597Z/;
+root result: work/coordination/codex-merc-12d-abandon-restart-v2.stdout.
+The initial host invocation used an unsupported argument and was rejected before
+device access; the dedicated session-abandon-check action is the actual run.
+The final collector reports same-process-restart, success=true, empty failures
+and current-process errors. Selector removal, force-stop and OLED sleep pass.
+No full-resource-zero, long-session memory, normal-difficulty, permanent unlock,
+audio or visual-parity acceptance is inferred. First runtime failure: none.
+
+Accept 12d79359 as the new baseline and installed APK; retain 885ea294 as a
+ready rollback and f054 as preserved diagnostic evidence. Update BASELINE and
+the current snapshot accordingly. The already-committed runtime/fixture changes
+affect R8 source staging; J735's later host assessment change adds no game
+runtime difference. Audio remains disabled in the game; J736's separate native
+fixture failure is not part of this APK. Original input, extra devices and the
+manual Moon boundary are unchanged.

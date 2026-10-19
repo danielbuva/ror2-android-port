@@ -74,14 +74,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715`, J728 acceptance of J726's 105-source ordering fix; all 266 payload hashes equal J724. Retains J665's repaired content, J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.18 s on Lakes and one genuine stage exit to Goolake with 10.14 s next-stage play, no unexpected report or current-process log error (J728) |
+| APK | `12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8`, J737 acceptance of the 105-source Mercenary impact/deferred-effect ownership fixes; all 266 payload hashes equal J728. Retains J665's repaired content, J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.21 s on Lakes and one genuine stage exit to Goolake with 10.12 s next-stage play, no unexpected report or current-process log error (J737). Mercenary alternates and source UI-abandon/same-process restart also pass. |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J728), with the native diagnostic flag off. The separate
+baseline passed it (J737), with the native diagnostic flag off. The separate
 native source path previously reaches genuine Stage-begin and passes J697's
 source-table restoration, then refuses at the effect-reference attribution guard
 (J702/J710). J726 identifies a premature baseline-support release and moves reconciliation
@@ -89,6 +89,10 @@ ahead of support retirement after source-table restoration. This APK contains
 that ordering fix and retains J716's read-only operation witness and J703's exact
 failure operands; both diagnostics remain inactive in default controls. Its
 native UI-abandon/restart retry passes on device in J730.
+J731/J733 add the owned Mercenary Evis impact effect and deferred registration
+ledger; the current APK passes Mercenary alternate callbacks/projectile
+occurrence and source UI-abandon/restart with that loadout in J737. Complete
+ability semantics, projectile damage on this APK and visual parity remain open.
 J730 accepts completed native first-stage UI abandonment and a healthy same-process
 restart, with the exact shrine loan returned and no recovery required. Native
 loss cleanup and stage transport remain unaccepted. Prior
