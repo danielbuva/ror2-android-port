@@ -8289,3 +8289,87 @@ explicit Engineer UI attempt on the unchanged receipt-backed APK; preserve the
 first failure. Loader is separately replaying while this host fix is reviewed.
 Both baseline modes remain pending and J620 stays accepted. This changes no
 APK, runtime, recipe, payload, local build input, device receipt or Phase 2 output.
+
+## J634 — Loader passes a replay while two elite stakes remain mutually attached and finite
+
+On unchanged J631 APK
+03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648,
+Loader completes 60.37 s with four valid canonical skill components and native
+authority/server callback counts 26/3/1/2. Current-process logs contain zero
+unexpected errors. Evidence:
+work/experiments/survivor-check/20261019T110326.533560Z/Loader/.
+Developer selection, invincibility and automatic diagnostic input make this an
+assisted observation; applied profile runs remain 13 and resultApplied=false.
+
+The bounded source-backed observer records three LightningStake identities,
+all owned by the same electric-elite Wisp. Eighteen snapshots across about
+1.29 s remain finite; no first-nonfinite transition is captured. Two stakes
+reference each other as native stick victims. A first stuck sample has no
+resolved stuck transform, which resolves at the next sample. A finite aggregate
+flag alone does not prove that transform exists. These are elite proc outputs,
+not LoaderPylon attribution or complete Loader kit acceptance.
+
+Accepted-input ProjectileStickOnImpact checks a HurtBox-resolved target for
+stick cycles before its non-HurtBox collider fallback. That fallback can bypass
+the earlier cycle check; native sticking subsequently follows victim pose.
+The observed mutual reference is a useful lead, not proof of J499/J623's
+intermittent nonfinite origin. No position clamp, projectile suppression,
+exception hiding or native algorithm replacement is justified by this finite
+replay. Keep the corruption issue open and preserve the failed earlier runs.
+Source review: work/coordination/loader-native-stake-trace-review.md. This uses
+the prior-art/source review and observer owner recorded in J626; no new native
+mechanism is introduced. Finalization removes the selector, stops the app and
+sleeps the OLED. No APK, payload, receipt, recipe or Phase 2 output changes.
+
+## J635 — Engineer UI abandon reaches teardown and exposes native skill-response cleanup
+
+Retry J633's corrected living-world host gate on unchanged J631 APK
+03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648.
+Both intended settings/end-run UI taps are dispatched after the required living
+interval. At about 66.34 world seconds, the first current-process runtime error
+is NullReferenceException in RoR2.SkillResponseBehavior.OnDestroy. Evidence:
+work/device/<serial>/experiments/session-cleanup/20261019T110833.586711Z/.
+
+The saved current report has phase=complete, cleanup=true, world.cleaned=true
+and the Engineer shield template lease both prepared and released. The objective
+records actual native host teardown and its captured death/summon listeners
+return from one each to zero. These positive cleanup witnesses do not make the
+case pass: the native error remains unsuppressed, no accepted completed-session
+report exists, and no ready same-process restart is observed before the runner
+stops on that error. Do not infer a separate restart bug from a run stopped at
+its first cleanup failure. Applied profile runs and earned unlocks remain 13
+and one; no assisted progression result is applied. Finalization stops the app,
+removes its selector and sleeps the display. An explicit software CPU capture
+attempt overlaps the early live interval and refuses as recorded in J636.
+
+Accepted-input SkillResponseBehavior.Start initializes its skill array before
+subscribing to skill-change events; OnDestroy dereferences that array to remove
+those handlers without checking whether Start ran. An owned inactive enemy
+body-template path can legitimately be destroyed without Start. Its exact
+component identity is not in the device stack, so attribution to that template
+is a candidate only. The smallest proposed fix is an exact-input entry null
+check, retaining original cleanup when an array exists. Review and a synthetic
+exact-editor lifecycle contract must precede the next APK; device acceptance
+then requires another actual UI attempt and both baseline modes. No transform,
+project plugin, APK, payload, receipt or Phase 2 output is changed by this result.
+
+## J636 — Android refuses explicit app-scoped software profiling on adopted storage
+
+During J635's living Engineer interval, dispatch J628's explicit app-scoped CPU
+capture once, using task-clock software sampling and the installed system
+simpleperf. The frozen target is the owned package process set, not exact PID
+attribution. APK is
+03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648.
+Android's run-as helper refuses at raw-profile-record because the adopted mount
+has the wrong owner for its permission check. Evidence:
+work/device/<serial>/performance/cpu-20261019T111130.871543Z-bc6a5b22b0-engi-ui-abandon/.
+The saved receipt has success=false and pid_attribution_exact=false; no usable
+raw software call graph is produced.
+
+This is separate from J610's hardware cpu-cycles permission refusal. Preserve
+the refusal without changing mount ownership, permissions, security settings,
+package placement, storage configuration or device data. Do not retry or claim
+that another capture scope succeeded. A future explicitly authorized internal
+storage device may behave differently, but no extra serial is allowlisted or
+queried in this experiment. The app's enclosing runner owns stop/OLED cleanup.
+No APK, runtime, public recipe, device receipt or Phase 2 output changes.
