@@ -8620,3 +8620,37 @@ runs and inspect its error/partial fields; neither compilation nor sightings
 certify full kits or ordinary unlocks. R8/runtime-source replay must include this
 new source/fixture. No generated content, middleware, new required local input,
 device receipt, profile grant or Phase 2 output is introduced.
+
+## J643 — Engineer UI abandon releases the shield lease and restarts in the same process
+
+On J641 APK
+118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717,
+repeat the concrete Engineer UI-abandon/restart case that failed J635. Both
+settings/end-run taps are sent after the required living interval, with all
+gameplay debug assists disabled. The completed session records 66.65 world
+seconds, health/maxHealth 130/130, cleanup=true and world.cleaned=true. The
+Engineer shield template lease is prepared and released. Actual native objective
+host teardown is synchronous while the server is active; captured death and
+summon listeners each return from one to zero. Current-process runtime errors
+are empty, as are report error/firstFailure.
+
+The saved completed-session identity is session 1; session 2 reaches five seconds
+of healthy integrated world in the same process. Its new Engineer guard is
+prepared and unreleased while live. This proves fresh setup after the observed
+first teardown; the force-stopped second session does not prove another complete
+teardown. Applied profile runs and earned/available earned unlock counts remain
+13/1/1 before completion and after restart. Automatic diagnostic input and locked
+developer selection make this assisted despite all gameplay debug assists being
+off. No permanent result, fake ending, forced death or native state transition
+is granted. Evidence:
+work/device/<serial>/experiments/session-cleanup/20261019T114138.712235Z/.
+
+This closes J635's observed skill-response cleanup failure for this actual case
+and APK, with the exact-input guard and synthetic lifecycle contract recorded
+in J638. It does not identify the destroyed culprit object or prove which guard
+branch every instance took, all alternate kits, ordinary unlocks, long-session
+memory stability or full game readiness. Both baseline modes remain separately
+required and are running next; J637 03339547… stays accepted until they pass.
+Runner finalization removes only its selector, stops the app and sleeps the
+OLED. The J642 observer source is not in this APK. No extra device, data/storage
+change, recipe change, device-receipt hand edit or Phase 2 output is introduced.

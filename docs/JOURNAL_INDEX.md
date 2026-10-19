@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J643](PORTING_JOURNAL.md#j643--engineer-ui-abandon-releases-the-shield-lease-and-restarts-in-the-same-process) | 2026-10-19 | Engineer UI abandon releases the shield lease and restarts in the same process | On J641 APK 118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717, repeat the concrete Engineer UI-abandon/restart case that failed J635. |
 | [J642](PORTING_JOURNAL.md#j642--observe-survivor-combat-outputs-with-bounded-native-ownership-facts) | 2026-10-19 | Observe survivor combat outputs with bounded native ownership facts | Four canonical callbacks do not establish skill output or damage. |
 | [J641](PORTING_JOURNAL.md#j641--rebuild-the-reviewed-cleanup-plugin-with-the-normal-content-pipeline) | 2026-10-19 | Rebuild the reviewed cleanup plugin with the normal content pipeline | Selected-device preflight passes before building J632 exit telemetry, J638's native skill-response cleanup guard and J639's context helpers. |
 | [J640](PORTING_JOURNAL.md#j640--bank-defaults-narrow-the-ui-audio-fallback-uncertainty-without-resolving-routing) | 2026-10-19 | Bank defaults narrow the UI audio fallback uncertainty without resolving routing | Continue J627's strict static-UI fallback review offline against the accepted J588 247-bank, version-150 parser receipt. |
