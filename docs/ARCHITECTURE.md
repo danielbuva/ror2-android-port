@@ -1055,6 +1055,14 @@ local NetworkUser, so server-begin does not prove Stage.Start's client
 continuation or `onStageStartGlobal`. Unknown/platform global scene-change
 subscribers refuse; no event queue is cleared to force progress.
 
+`WholeInteractableSession` captures a binding label and component/GameObject
+instance IDs with each native source table lease. Its restore guard records
+independent requested/bound/active scene and live component/owner predicates
+before the existing exact field restore. `NativeSourceBindingWitnessFormatter`
+is a stateless helper in the same authored file; a failed guard retains every
+lease/context as before. No optional consumer or missing owner is silently
+skipped. The host formatter fixture does not simulate Unity object lifetime.
+
 Source identity retirement verifies the captured server mapping and current
 ID mapping are absent after owned `UnSpawn`, then invokes native `Reset` for
 the exact retained captured ID even when host-mode `OnNetworkDestroy` already

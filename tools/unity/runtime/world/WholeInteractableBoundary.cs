@@ -95,10 +95,14 @@ public sealed partial class PortSession
         sealed class NativeSourceDropTableBinding
         {
             public Component component;
+            public int componentInstanceId;
+            public int gameObjectInstanceId;
+            public string bindingName;
             public NativeBorrowedFieldLease<BasicPickupDropTable> lease;
             public Scene scene;
         }
-        internal sealed class NativeBorrowedFieldLease<T> where T : class
+        internal sealed class NativeBorrowedFieldLease<T>
+            where T : class
         {
             readonly Func<T> read;
             readonly Action<T> write;
@@ -110,54 +114,65 @@ public sealed partial class PortSession
                 this.write = write ?? throw new ArgumentNullException("write");
                 this.original = original ?? throw new ArgumentNullException("original");
                 this.owned = owned ?? throw new ArgumentNullException("owned");
-                if (ReferenceEquals(original, owned)) throw new ArgumentException("Borrowed and owned values must differ");
+                if (ReferenceEquals(original, owned))
+                    throw new ArgumentException("Borrowed and owned values must differ");
             }
             public void Bind()
             {
-                if (!ReferenceEquals(read(), original)) throw new InvalidOperationException("Borrowed field changed before bind");
+                if (!ReferenceEquals(read(), original))
+                    throw new InvalidOperationException("Borrowed field changed before bind");
                 write(owned);
-                if (!ReferenceEquals(read(), owned)) throw new InvalidOperationException("Owned field bind did not take effect");
+                if (!ReferenceEquals(read(), owned))
+                    throw new InvalidOperationException("Owned field bind did not take effect");
             }
             public void Restore()
             {
                 var current = read();
-                if (ReferenceEquals(current, owned)) write(original);
-                else if (!ReferenceEquals(current, original)) throw new InvalidOperationException("Foreign replacement blocks borrowed field restore");
-                if (!ReferenceEquals(read(), original)) throw new InvalidOperationException("Borrowed field restore did not take effect");
+                if (ReferenceEquals(current, owned))
+                    write(original);
+                else if (!ReferenceEquals(current, original))
+                    throw new InvalidOperationException("Foreign replacement blocks borrowed field restore");
+                if (!ReferenceEquals(read(), original))
+                    throw new InvalidOperationException("Borrowed field restore did not take effect");
             }
         }
-        public void PrepareNativeSourceInteractableTables(Scene scene, NetworkIdentity[] sourceIdentities,
-                                                        GameObject[] toggleTargets)
+        public void PrepareNativeSourceInteractableTables(Scene scene, NetworkIdentity[] sourceIdentities, GameObject[] toggleTargets)
         {
-            coordinator.Check(coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && scene.IsValid() &&
-                                  scene.isLoaded && SceneManager.GetActiveScene() == scene &&
-                                  (scene.name == "golemplains" || scene.name == "lakes") &&
-                                  !nativeSourceInteractablePrepareAttempted && nativeSourceDropTableBindings.Count == 0 &&
-                                  sourceIdentities != null && sourceIdentities.Length == (scene.name == "lakes" ? 8 : 5) &&
-                                  sourceIdentities.All(identity => identity && identity.gameObject.scene == scene &&
-                                                                       !identity.sceneId.IsEmpty()) &&
-                                  sourceIdentities.Select(identity => identity.sceneId.Value).Distinct().Count() == sourceIdentities.Length &&
-                                  toggleTargets != null && toggleTargets.Length == (scene.name == "lakes" ? 21 : 3) &&
-                                  toggleTargets.All(target => target && target.scene == scene) &&
-                                  toggleTargets.Distinct().Count() == toggleTargets.Length,
-                              "Native source interactable table preparation is out of scope or was repeated");
+            coordinator.Check(
+                coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && scene.IsValid() && scene.isLoaded &&
+                    SceneManager.GetActiveScene() == scene && (scene.name == "golemplains" || scene.name == "lakes") &&
+                    !nativeSourceInteractablePrepareAttempted && nativeSourceDropTableBindings.Count == 0 && sourceIdentities != null &&
+                    sourceIdentities.Length == (scene.name == "lakes" ? 8 : 5) &&
+                    sourceIdentities.All(identity => identity && identity.gameObject.scene == scene && !identity.sceneId.IsEmpty()) &&
+                    sourceIdentities.Select(identity => identity.sceneId.Value).Distinct().Count() == sourceIdentities.Length &&
+                    toggleTargets != null && toggleTargets.Length == (scene.name == "lakes" ? 21 : 3) &&
+                    toggleTargets.All(target => target && target.scene == scene) &&
+                    toggleTargets.Distinct().Count() == toggleTargets.Length,
+                "Native source interactable table preparation is out of scope or was repeated");
             nativeSourceInteractablePrepareAttempted = true;
             var chestConsumers = sourceIdentities.SelectMany(identity => identity.GetComponentsInChildren<ChestBehavior>(true))
-                                    .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<ChestBehavior>(true)))
-                                    .Where(component => component && component.gameObject.scene == scene).Distinct().ToArray();
+                                     .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<ChestBehavior>(true)))
+                                     .Where(component => component && component.gameObject.scene == scene)
+                                     .Distinct()
+                                     .ToArray();
             if (scene.name == "golemplains")
             {
                 var wakeConsumers = sourceIdentities.SelectMany(identity => identity.GetComponentsInChildren<WakeController>(true))
-                                    .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<WakeController>(true)))
-                                    .Where(component => component && component.gameObject.scene == scene).Distinct().ToArray();
+                                        .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<WakeController>(true)))
+                                        .Where(component => component && component.gameObject.scene == scene)
+                                        .Distinct()
+                                        .ToArray();
                 coordinator.Check(chestConsumers.Length == 0 && wakeConsumers.Length == 0,
                                   "Golemplains source cohort introduced an unsupported chest or Wake reward consumer");
                 return;
             }
 
-            var targets = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+            var targets = scene.GetRootGameObjects()
+                              .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
                               .Where(value => value && value.gameObject.scene == scene && value.name == "Chest2")
-                              .Select(value => value.gameObject).Distinct().ToArray();
+                              .Select(value => value.gameObject)
+                              .Distinct()
+                              .ToArray();
             coordinator.Check(targets.Length == 1 && !targets[0].activeSelf &&
                                   toggleTargets.Any(value => ReferenceEquals(value, targets[0])),
                               "Exact inactive Lakes Chest2 target is missing or ambiguous");
@@ -165,70 +180,81 @@ public sealed partial class PortSession
             var chestIdentity = chestObject.GetComponent<NetworkIdentity>();
             var chests = chestObject.GetComponents<ChestBehavior>();
             coordinator.Check(chestIdentity && chestIdentity.gameObject == chestObject && chestIdentity.sceneId.Value == 1 &&
-                                  chests.Length == 1 && chests[0] && chests[0].gameObject == chestObject &&
-                                  chestConsumers.Length == 1 && ReferenceEquals(chestConsumers[0], chests[0]),
+                                  chests.Length == 1 && chests[0] && chests[0].gameObject == chestObject && chestConsumers.Length == 1 &&
+                                  ReferenceEquals(chestConsumers[0], chests[0]),
                               "Lakes source identity cohort contains an unknown ChestBehavior.Roll consumer");
             var chest = chests[0];
             var chestSource = chest.dropTable as BasicPickupDropTable;
-            coordinator.Check(chest.dropTable && IsSupportedNativeBasicTable(chestSource, "dtChest2") &&
-                                  Run.instance && Run.instance.availableTier1DropList != null &&
-                                  Run.instance.availableTier2DropList != null && Run.instance.availableTier3DropList != null,
+            coordinator.Check(chest.dropTable && IsSupportedNativeBasicTable(chestSource, "dtChest2") && Run.instance &&
+                                  Run.instance.availableTier1DropList != null && Run.instance.availableTier2DropList != null &&
+                                  Run.instance.availableTier3DropList != null,
                               "Lakes Chest2 source table or prepared Run lists changed");
-            var wakeRoots = sourceIdentities.Where(identity => identity.sceneId.Value == 8 &&
-                                                               identity.gameObject.name == "WakeStageEvent").ToArray();
+            var wakeRoots =
+                sourceIdentities.Where(identity => identity.sceneId.Value == 8 && identity.gameObject.name == "WakeStageEvent").ToArray();
             var wakes = wakeRoots.SelectMany(identity => identity.GetComponentsInChildren<WakeController>(true))
-                                 .Where(component => component && component.gameObject.scene == scene).Distinct().ToArray();
+                            .Where(component => component && component.gameObject.scene == scene)
+                            .Distinct()
+                            .ToArray();
             var allWakeConsumers = sourceIdentities.SelectMany(identity => identity.GetComponentsInChildren<WakeController>(true))
-                                                   .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<WakeController>(true)))
-                                                   .Where(component => component && component.gameObject.scene == scene).Distinct().ToArray();
+                                       .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<WakeController>(true)))
+                                       .Where(component => component && component.gameObject.scene == scene)
+                                       .Distinct()
+                                       .ToArray();
             coordinator.Check(wakeRoots.Length == 1 && wakes.Length == 1 && allWakeConsumers.Length == 1 &&
                                   ReferenceEquals(wakes[0], allWakeConsumers[0]) && wakes[0].gameObject.name == "WakeAltar" &&
                                   wakes[0].shamanPickupCreator && wakes[0].shamanPickupCreator.gameObject.name == "ShamanPickupCreator" &&
                                   wakes[0].shamanPickupCreator.gameObject.scene == scene &&
-                                  wakes[0].shamanPickupCreator.sourceDropTable == null &&
-                                  wakes[0].goldDropTable && wakes[0].silverDropTable && wakes[0].bronzeDropTable &&
+                                  wakes[0].shamanPickupCreator.sourceDropTable == null && wakes[0].goldDropTable &&
+                                  wakes[0].silverDropTable && wakes[0].bronzeDropTable &&
                                   wakes[0].goldDropTable.GetType() == typeof(BasicPickupDropTable) &&
                                   wakes[0].silverDropTable.GetType() == typeof(BasicPickupDropTable) &&
                                   wakes[0].bronzeDropTable.GetType() == typeof(BasicPickupDropTable) &&
-                                  wakes[0].goldDropTable.name == "dtCursedItemTable" &&
-                                  wakes[0].silverDropTable.name == "dtTier2Item" &&
+                                  wakes[0].goldDropTable.name == "dtCursedItemTable" && wakes[0].silverDropTable.name == "dtTier2Item" &&
                                   wakes[0].bronzeDropTable.name == "dtTier1Item",
                               "Lakes WakeStageEvent reward source fields differ from the audited cohort");
             var wake = wakes[0];
             var pickers = sourceIdentities.SelectMany(identity => identity.GetComponentsInChildren<PickupPickerController>(true))
-                               .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<PickupPickerController>(true)))
-                               .Where(component => component && component.gameObject.scene == scene).Distinct().ToArray();
-            coordinator.Check(pickers.Length == 2 &&
-                                  pickers.Count(component => component.gameObject.name == "Chest2" &&
-                                      !component.excludedItemsDropTable && !component.includedItemsDropTable) == 1 &&
-                                  pickers.Count(component => component.gameObject.name == "Scrapper" &&
-                                      component.excludedItemsDropTable &&
-                                      component.excludedItemsDropTable.GetType() == typeof(ExplicitPickupDropTable) &&
-                                      component.excludedItemsDropTable.name == "pdtUnscrappableItems" &&
-                                      !component.includedItemsDropTable) == 1,
-                              "Lakes Scrapper/Chest2 picker exclusion-table inventory changed");
-            var pickupCreators = sourceIdentities.SelectMany(identity => identity.GetComponentsInChildren<CreatePickupsFromDropTable>(true))
-                                     .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<CreatePickupsFromDropTable>(true)))
-                                     .Where(component => component && component.gameObject.scene == scene).Distinct().ToArray();
+                              .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<PickupPickerController>(true)))
+                              .Where(component => component && component.gameObject.scene == scene)
+                              .Distinct()
+                              .ToArray();
+            coordinator.Check(
+                pickers.Length == 2 &&
+                    pickers.Count(component => component.gameObject.name == "Chest2" && !component.excludedItemsDropTable &&
+                                               !component.includedItemsDropTable) == 1 &&
+                    pickers.Count(component => component.gameObject.name == "Scrapper" && component.excludedItemsDropTable &&
+                                               component.excludedItemsDropTable.GetType() == typeof(ExplicitPickupDropTable) &&
+                                               component.excludedItemsDropTable.name == "pdtUnscrappableItems" &&
+                                               !component.includedItemsDropTable) == 1,
+                "Lakes Scrapper/Chest2 picker exclusion-table inventory changed");
+            var pickupCreators =
+                sourceIdentities.SelectMany(identity => identity.GetComponentsInChildren<CreatePickupsFromDropTable>(true))
+                    .Concat(toggleTargets.SelectMany(target => target.GetComponentsInChildren<CreatePickupsFromDropTable>(true)))
+                    .Where(component => component && component.gameObject.scene == scene)
+                    .Distinct()
+                    .ToArray();
             coordinator.Check(pickupCreators.Length == 1 && ReferenceEquals(pickupCreators[0], wake.shamanPickupCreator) &&
                                   pickupCreators[0].sourceDropTable == null,
                               "Lakes Wake reward creator field is not the audited late-bound null slot");
-            PrepareNativeBasicTable(scene, chest, chestSource, "dtChest2", () => chest.dropTable as BasicPickupDropTable,
-                                    value => chest.dropTable = value);
-            PrepareNativeBasicTable(scene, wake, (BasicPickupDropTable)wake.goldDropTable, "dtCursedItemTable", () => wake.goldDropTable as BasicPickupDropTable,
+            PrepareNativeBasicTable(scene, chest, chestSource, "dtChest2", "Chest2.ChestBehavior.dropTable",
+                                    () => chest.dropTable as BasicPickupDropTable, value => chest.dropTable = value);
+            PrepareNativeBasicTable(scene, wake, (BasicPickupDropTable)wake.goldDropTable, "dtCursedItemTable",
+                                    "WakeAltar.WakeController.goldDropTable", () => wake.goldDropTable as BasicPickupDropTable,
                                     value => wake.goldDropTable = value);
-            PrepareNativeBasicTable(scene, wake, (BasicPickupDropTable)wake.silverDropTable, "dtTier2Item", () => wake.silverDropTable as BasicPickupDropTable,
+            PrepareNativeBasicTable(scene, wake, (BasicPickupDropTable)wake.silverDropTable, "dtTier2Item",
+                                    "WakeAltar.WakeController.silverDropTable", () => wake.silverDropTable as BasicPickupDropTable,
                                     value => wake.silverDropTable = value);
-            PrepareNativeBasicTable(scene, wake, (BasicPickupDropTable)wake.bronzeDropTable, "dtTier1Item", () => wake.bronzeDropTable as BasicPickupDropTable,
+            PrepareNativeBasicTable(scene, wake, (BasicPickupDropTable)wake.bronzeDropTable, "dtTier1Item",
+                                    "WakeAltar.WakeController.bronzeDropTable", () => wake.bronzeDropTable as BasicPickupDropTable,
                                     value => wake.bronzeDropTable = value);
             coordinator.Check(nativeSourceDropTableBindings.Count == 4,
                               "Lakes native Chest2/Wake table ownership did not prepare exactly four bindings");
         }
-        void PrepareNativeBasicTable(Scene scene, Component component, BasicPickupDropTable source, string expectedName,
+        void PrepareNativeBasicTable(Scene scene, Component component, BasicPickupDropTable source, string expectedName, string bindingName,
                                      Func<BasicPickupDropTable> read, Action<BasicPickupDropTable> write)
         {
-            coordinator.Check(component && component.gameObject.scene == scene && source &&
-                                  ReferenceEquals(read(), source) && IsSupportedNativeBasicTable(source, expectedName),
+            coordinator.Check(component && component.gameObject.scene == scene && source && ReferenceEquals(read(), source) &&
+                                  IsSupportedNativeBasicTable(source, expectedName),
                               "Native source table field changed before cloning");
             string originalConfiguration = JsonUtility.ToJson(source);
             var owned = coordinator.ObjectiveDropTable(source) as BasicPickupDropTable;
@@ -239,15 +265,16 @@ public sealed partial class PortSession
             coordinator.Check(expectedChoices >= 0 && (expectedName != "dtChest2" || expectedChoices > 0),
                               "Native source table references a missing Run list or Chest2 has no eligible choices");
             owned.RegenerateDropTable(Run.instance);
-            coordinator.Check(owned.GetPickupCount() == expectedChoices &&
-                                  JsonUtility.ToJson(source) == originalConfiguration && ReferenceEquals(read(), source),
+            coordinator.Check(owned.GetPickupCount() == expectedChoices && JsonUtility.ToJson(source) == originalConfiguration &&
+                                  ReferenceEquals(read(), source),
                               "Owned native source table selector differs from current native availability or changed its borrowed source");
-            var binding = new NativeSourceDropTableBinding
-            {
-                component = component,
-                scene = scene,
-                lease = new NativeBorrowedFieldLease<BasicPickupDropTable>(read, write, source, owned)
-            };
+            var binding =
+                new NativeSourceDropTableBinding { component = component,
+                                                   componentInstanceId = component.GetInstanceID(),
+                                                   gameObjectInstanceId = component.gameObject.GetInstanceID(),
+                                                   bindingName = bindingName,
+                                                   scene = scene,
+                                                   lease = new NativeBorrowedFieldLease<BasicPickupDropTable>(read, write, source, owned) };
             // Publish the recovery handle before changing the borrowed field.
             nativeSourceDropTableBindings.Add(binding);
             binding.lease.Bind();
@@ -268,31 +295,51 @@ public sealed partial class PortSession
         }
         static int ExpectedNativeBasicChoices(BasicPickupDropTable table, Run run)
         {
-            if (!table || !run) return -1;
+            if (!table || !run)
+                return -1;
             int count = 0;
-            if (!AddNativeAvailableChoices(ref count, run.availableTier1DropList, table.tier1Weight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableTier2DropList, table.tier2Weight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableTier3DropList, table.tier3Weight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableBossDropList, table.bossWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableLunarEquipmentDropList, table.lunarEquipmentWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableLunarItemDropList, table.lunarItemWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableLunarCombinedDropList, table.lunarCombinedWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableEquipmentDropList, table.equipmentWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableVoidTier1DropList, table.voidTier1Weight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableVoidTier2DropList, table.voidTier2Weight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableVoidTier3DropList, table.voidTier3Weight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableVoidBossDropList, table.voidBossWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableFoodTierDropList, table.foodTierWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availablePowerShapeItemsDropList, table.powerShapesWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableCursedTierDropList, table.cursedWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availableHexTierDropList, table.hexWeight)) return -1;
-            if (!AddNativeAvailableChoices(ref count, run.availablePageTierDropList, table.pageWeight)) return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableTier1DropList, table.tier1Weight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableTier2DropList, table.tier2Weight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableTier3DropList, table.tier3Weight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableBossDropList, table.bossWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableLunarEquipmentDropList, table.lunarEquipmentWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableLunarItemDropList, table.lunarItemWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableLunarCombinedDropList, table.lunarCombinedWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableEquipmentDropList, table.equipmentWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableVoidTier1DropList, table.voidTier1Weight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableVoidTier2DropList, table.voidTier2Weight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableVoidTier3DropList, table.voidTier3Weight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableVoidBossDropList, table.voidBossWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableFoodTierDropList, table.foodTierWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availablePowerShapeItemsDropList, table.powerShapesWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableCursedTierDropList, table.cursedWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availableHexTierDropList, table.hexWeight))
+                return -1;
+            if (!AddNativeAvailableChoices(ref count, run.availablePageTierDropList, table.pageWeight))
+                return -1;
             return count;
         }
         static bool AddNativeAvailableChoices(ref int count, List<PickupIndex> list, float weight)
         {
-            if (weight <= 0f) return true;
-            if (list == null) return false;
+            if (weight <= 0f)
+                return true;
+            if (list == null)
+                return false;
             count += list.Count;
             return true;
         }
@@ -301,10 +348,30 @@ public sealed partial class PortSession
             for (int i = nativeSourceDropTableBindings.Count - 1; i >= 0; i--)
             {
                 var binding = nativeSourceDropTableBindings[i];
-                coordinator.Check(scene == binding.scene && scene.IsValid() && scene.isLoaded &&
-                                      SceneManager.GetActiveScene() == scene && binding.component &&
-                                      binding.component.gameObject.scene == scene,
-                                  "Borrowed native source table owner lost its exact scene component");
+                bool requestedMatchesBound = scene == binding.scene;
+                bool requestedSceneValid = scene.IsValid();
+                bool requestedSceneLoaded = requestedSceneValid && scene.isLoaded;
+                Scene activeScene = SceneManager.GetActiveScene();
+                bool activeSceneMatchesRequested = activeScene == scene;
+                Component liveComponent = binding.component;
+                bool componentAlive = liveComponent;
+                GameObject liveOwner = componentAlive ? liveComponent.gameObject : null;
+                bool ownerAlive = liveOwner;
+                bool ownerSceneMatchesRequested = ownerAlive && liveOwner.scene == scene;
+                bool exactOriginalGuard = requestedMatchesBound && requestedSceneValid && requestedSceneLoaded &&
+                                          activeSceneMatchesRequested && componentAlive && ownerSceneMatchesRequested;
+                int currentComponentId = componentAlive ? liveComponent.GetInstanceID() : 0;
+                int currentGameObjectId = ownerAlive ? liveOwner.GetInstanceID() : 0;
+                string requestedSceneName = requestedSceneValid ? scene.name : "<invalid>";
+                string boundSceneName = binding.scene.IsValid() ? binding.scene.name : "<invalid>";
+                string activeSceneName = activeScene.IsValid() ? activeScene.name : "<invalid>";
+                string ownerSceneName = ownerAlive && liveOwner.scene.IsValid() ? liveOwner.scene.name : "<unavailable>";
+                coordinator.Check(exactOriginalGuard,
+                                  NativeSourceBindingWitnessFormatter.Format(
+                                      binding.bindingName, binding.componentInstanceId, binding.gameObjectInstanceId, currentComponentId,
+                                      currentGameObjectId, requestedMatchesBound, requestedSceneValid, requestedSceneLoaded,
+                                      activeSceneMatchesRequested, componentAlive, ownerAlive, ownerSceneMatchesRequested,
+                                      requestedSceneName, boundSceneName, activeSceneName, ownerSceneName));
                 binding.lease.Restore();
             }
             nativeSourceDropTableBindings.Clear();
@@ -775,5 +842,31 @@ public sealed partial class PortSession
                 ownsSpawnPointPrefab = false;
             }
         }
+    }
+}
+
+// Pure formatter for the read-only rollback witness. It does not inspect Unity
+// objects or alter the lease/restore decision.
+internal static class NativeSourceBindingWitnessFormatter
+{
+    internal static string Format(string bindingName, int boundComponentId, int boundGameObjectId, int currentComponentId,
+                                  int currentGameObjectId, bool requestedMatchesBound, bool requestedSceneValid, bool requestedSceneLoaded,
+                                  bool activeSceneMatchesRequested, bool componentAlive, bool ownerAlive, bool ownerSceneMatchesRequested,
+                                  string requestedSceneName, string boundSceneName, string activeSceneName, string ownerSceneName)
+    {
+        return string.Format(
+            "Borrowed native source table owner lost its exact scene component; binding={0}; " +
+                "componentId={1}/{2}; gameObjectId={3}/{4}; requestedMatchesBound={5}; " +
+                "requestedSceneValid={6}; requestedSceneLoaded={7}; " +
+                "activeSceneMatchesRequested={8}; componentAlive={9}; ownerAlive={10}; " +
+                "ownerSceneMatchesRequested={11}; requestedScene={12}; boundScene={13}; " + "activeScene={14}; ownerScene={15}",
+            Safe(bindingName), boundComponentId, currentComponentId, boundGameObjectId, currentGameObjectId, requestedMatchesBound,
+            requestedSceneValid, requestedSceneLoaded, activeSceneMatchesRequested, componentAlive, ownerAlive, ownerSceneMatchesRequested,
+            Safe(requestedSceneName), Safe(boundSceneName), Safe(activeSceneName), Safe(ownerSceneName));
+    }
+
+    static string Safe(string value)
+    {
+        return value ?? "<unavailable>";
     }
 }

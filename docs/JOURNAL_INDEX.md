@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J691](PORTING_JOURNAL.md#j691--identify-the-exact-failed-native-source-table-restore-predicate) | 2026-10-19 | Identify the exact failed native source-table restore predicate | Hypothesis: J688's combined guard message must separate scene mismatch from Unity object liveness before a lease or retirement rule changes. |
 | [J690](PORTING_JOURNAL.md#j690--preserve-native-body-catalog-names-in-bounded-damage-facts) | 2026-10-19 | Preserve native body catalog names in bounded damage facts | Hypothesis: future output evidence should identify its native attacker/victim catalog entries directly. |
 | [J689](PORTING_JOURNAL.md#j689--accept-receipt-bound-metadata-candidate-on-both-default-controls) | 2026-10-19 | Accept receipt-bound metadata candidate on both default controls | Hypothesis: J687's metadata/reset candidate retains ordinary transport despite J688's separate opt-in cleanup refusal. |
 | [J688](PORTING_JOURNAL.md#j688--metadata-stage-starts-native-teardown-reaches-the-source-table-guard) | 2026-10-19 | Metadata stage starts; native teardown reaches the source-table guard | Hypothesis: J682/J683's packaged source bindings and corrected native Reset can complete the first-stage lifecycle on J687's APK 55dee31826b7ecd545488d601490ba… |

@@ -10616,3 +10616,47 @@ A new device fact with native catalog names remains required. Native field
 restoration diagnostics and opt-in isolated skill input are separate pending
 work. No original input, Phase 2 output, extra device, receipt hand edit,
 data move, storage reconfiguration or permanent progression occurs.
+
+## J691 — Identify the exact failed native source-table restore predicate
+
+Hypothesis: J688's combined guard message must separate scene mismatch from
+Unity object liveness before a lease or retirement rule changes. Independent
+source review confirms the existing conjunction; no safe behavioral correction
+is established by the generic message alone.
+
+WholeInteractableSession now captures each binding's label and component/
+GameObject instance IDs during preparation. At restore it computes the same
+requested/bound/valid/loaded/active-scene and live-owner scene conjunction and
+reports each value, captured/current IDs and scene labels. Unity object access
+is gated by Unity liveness; scene names require valid scenes. The old guard,
+field restore order and recovery retention are unchanged. No missing target is
+accepted, no clone is released early and no native gameplay/expansion behavior
+is changed. The stateless formatter lives in the existing owner file, keeping
+105 runtime sources and existing GUID/membership recipes.
+
+Prior art remains J675's owned table/cloning seam and the exact accepted HLAPI,
+WakeSpawner and WakeController lifecycle. Source hierarchy inspection now
+matches enabled WakeSpawner on Lakes scene identity 8 to its source MonoScript
+and proves WakeAltar is beneath that root. Native WakeSpawner.Start always
+schedules its own GameObject's destruction after its optional activation query.
+This supports a retirement hypothesis; it does not establish which predicate
+failed in the earlier run or justify skipping field restoration. Actual live
+StageEventController/expansion context remains unmeasured.
+
+Root's 970 host tests pass with one existing skip. The production formatter is
+extracted from its actual owner file and compiled/executed with authored cases
+for healthy, fake-null, changed/invalid/unloaded and inactive scene contexts.
+Those test formatting, not Unity destruction. Exact-editor compilation and
+existing stage/variant/Director/stake/transform/catalog-name API contracts pass:
+work/experiments/first-stage-native-lifecycle/
+catalog-names-editor-20261019T162347.677337Z/. Independent patch review:
+work/coordination/native-source-table-teardown-review/witness-patch-review.md;
+private source draft: native-source-table-teardown-triage/public/.
+
+First failure: none in these host/editor contracts. The witness and J690 names
+are unbuilt; accepted/installed APK stays J689
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+Build them together and repeat native UI abandon to classify the actual target.
+R8 must replay the changed owner; no new local build input, Phase 2 output,
+original input, device receipt hand edit, storage change or extra-device action
+occurs. Native restoration/restart remains unaccepted.
