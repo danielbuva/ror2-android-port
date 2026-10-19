@@ -7312,3 +7312,37 @@ no Android fix is accepted yet. Revisit through both baseline modes and the
 genuine loss/cleanup/restart action. This changes authored R8/build-entry inputs
 and adds one support fixture, with no new runtime GUID or content input. Phase 2
 replay remains the parallel session's track.
+
+## J608 — Accept the overlay/input-coverage APK baseline
+
+Hypothesis: J606's opt-in diagnostic input owner and J607's exact overlay
+cleanup can coexist without regressing the two standard game checks. Their
+API/prior-art and exact-editor evidence remain in those entries. Baseline
+force-stop does not prove native final cleanup or opt-in skill execution.
+
+Host preflight passed. The pinned editor built the code-only ARM64 Vulkan
+candidate in 91.48 s with zero errors, request 20261019T080614.313248Z.
+Frozen build/preflight logs, receipt and source hashes:
+work/experiments/teleport-overlay-lifetime/candidate-20261019T080614.313248Z/.
+APK SHA-256:
+41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14.
+Live storage preflight and in-place adopted-storage installation passed on the
+configured Nova; no extra device was queried.
+
+Both unchanged baseline modes passed on this hash. First-stage evidence at
+work/experiments/baseline/20261019T080856.221152Z/ records 35.21 s of Lakes
+play. One-exit evidence at
+work/experiments/baseline/20261019T081224.385807Z/ records exactly one original
+exit to Goolake, with 13.36 s of next-stage play (130.93 s total world age).
+Both failure lists and report errors/first failures are empty; applied profile
+runs stayed 13. Each check removed its selector, stopped the app and slept the
+OLED before the next action.
+
+The installed and latest device-verified baseline are now this APK. The separate
+genuine loss → cleanup → same-process restart check is running on the same
+frozen candidate; J605's prior failure remains the regression to revisit, not
+a result of this new check. Opt-in skill input and the remaining roster await
+their own runs. These baseline results do not certify full skill behavior,
+Siren's mission, normal difficulty, memory stability or performance. No later
+runtime source is staged. R8/build-entry replay implications remain J606/J607;
+the parallel Phase 2 track was untouched.
