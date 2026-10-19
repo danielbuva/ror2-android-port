@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "name": "wwise-init-android-output-metadata",
+  "scope": "isolated Android native fixture metadata only; not approval for retained-game runtime integration or controller-output fidelity",
+  "input_relative_path": "Risk of Rain 2_Data/StreamingAssets/Audio/GeneratedSoundBanks/Windows/Init.bnk",
+  "bank_size_bytes": 6319,
+  "format_version": 150,
+  "bank_id": 1355168291,
+  "expected_chunk_order": ["BKHD", "INIT", "STMG", "HIRC", "ENVS", "PLAT"],
+  "plugin_entries": [
+    {"id": 6881283, "library_name": "AkParametricEQ"},
+    {"id": 7208963, "library_name": "AkPeakLimiter"},
+    {"id": 7733251, "library_name": "AkRoomVerb"},
+    {"id": 8257539, "library_name": "AkGuitarDistortion"},
+    {"id": 8454147, "library_name": "AkSoundEngineDLL"},
+    {"id": 8847363, "library_name": "AkStereoDelay"},
+    {"id": 9043971, "library_name": "AkHarmonizer"},
+    {"id": 11403271, "library_name": ""},
+    {"id": 11730951, "library_name": ""},
+    {"id": 11862023, "library_name": ""}
+  ],
+  "audio_device_plugin_ids": {
+    "2317455096": 11862023,
+    "3859886410": 11403271,
+    "4129766362": 11403271,
+    "568423566": 11730951,
+    "1334442663": 11730951
+  },
+  "system_device_id": 3859886410,
+  "remove_plugin_id": 11730951,
+  "remove_audio_device_ids": [568423566, 1334442663],
+  "top_level_bus_device_ids": {
+    "3803692087": 3859886410,
+    "48433064": 4129766362,
+    "805203703": 3859886410,
+    "1290445532": 568423566,
+    "1803403060": 1334442663
+  },
+  "controller_bus_to_system": {
+    "1290445532": 568423566,
+    "1803403060": 1334442663
+  }
+}

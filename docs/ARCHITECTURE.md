@@ -184,6 +184,19 @@ Their setup/input boundaries are listed in
 acceptance and limits are recorded once in J740/J742. Neither diagnostic owner
 changes the default assembly transforms or the current game build pipeline.
 
+`scripts/lab/wwise_init_platform.py` is a current, explicitly invoked support
+tool for those isolated diagnostics, with its metadata contract in
+`recipe/wwise-init-android.json`. It requires the configured legitimate source,
+a full inventory matching the accepted input and an explicit source hash. It
+hashes and transforms one byte snapshot, removes only the checked unsupported
+Controller Speaker metadata and retargets the two checked root buses to the
+existing System device. It creates a new bank and receipt exclusively under
+ignored `work/`; original inputs and the default game payload are untouched.
+There is no persistent engine state or `./dev` action. Synthetic structural,
+input-binding and path/refusal contracts are in
+`tests/test_wwise_init_platform.py`. Native acceptance remains scoped to
+J740/J742; this generator does not establish full-bank or controller fidelity.
+
 The updated-input transform also guards native `SkillResponseBehavior.OnDestroy`
 when its skill array was never initialized by `Start` (J638). An absent array
 returns without event work; an existing array executes the original cleanup IL.

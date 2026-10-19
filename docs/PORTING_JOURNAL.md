@@ -13242,3 +13242,106 @@ authorized SDK/integration and private fixture inputs needed to reproduce
 these isolated experiments; proprietary bytes, raw evidence and keys remain
 ignored. Promote reviewed authored producers before making them a normal
 build dependency.
+
+## J743 — Fresh Unity Wwise Java-first player maps the library but refuses readiness
+
+Hypothesis: the retained managed Wwise API candidate can initialize and shut
+down the official Android ARM64 integration from a fresh Unity player, with
+an app-owned Java class loading the native library first. This is the missing
+managed gate after J742's separate native SDK result; neither result enables
+composed-game audio. Prior art remains the installed matching Integration's
+Android loading/lifecycle contracts and pinned R2API.Sound's Init-first bank
+lifetime. Java-first and DllImport-first require independent fresh processes.
+
+Build a disposable Unity 2021.3.45f2 IL2CPP ARM64/GLES3 player with the accepted
+managed reference closure, official Profile libAkSoundEngine, unchanged original
+Init and a disabled fixture enabled only after preflight. The first exact-editor
+compile refuses obsolete minimum API 21; the authored generator now uses API 22.
+Native importer preload is disabled through the actual public property. The
+asynchronous editor build holds the host mutex from frozen inputs through the
+terminal build receipt and verifies all 32 frozen inputs afterward. It takes
+131.580354 seconds, with zero errors and one warning. APK:
+bea34f3a4b67cdaa72aeb6624124bbac02cf1d4ad02e207b8976ad7bee3f628e.
+The owner, managed ABI candidate, native plugin and unchanged bank remain
+private hash-pinned inputs; the current game project is not changed.
+
+The fresh package installs on the configured Nova's adopted storage. The
+current-process report observes the library initially unmapped, then mapped
+after the app-owned Java load, and verifies Unity's current Activity. The
+fixture fails: fixtureCompleted=false, ownedCleanupComplete=true, status
+failed_or_incomplete_owner_cleanup. Its only captured exception text is
+InvalidOperationException. The original fixture discards the exception message
+and stack, so the first failing prerequisite or native operation is unknown.
+CleanupComplete can follow an early refusal or rollback; it is not an Init or
+bank-load witness. No native initialization, bank compatibility, JNI lifecycle
+or managed ABI success follows from the mapping observation.
+
+The runner requires the live PID's report event, exact installed APK bytes and
+observed persistent output location. It checks fresh storage, placement and
+runtime backing, then removes only the exact owned fresh package and sleeps
+the OLED. Removal succeeds, no Android fatal is observed and cleanup errors
+are empty. Root's nine fake-device runner contracts pass after adding OEM
+keyguard dismissal and PID-qualified fatal-log classification.
+
+Evidence: work/device/<serial>/experiments/wwise-managed-fixture/
+20261019T215520.894943Z/. Frozen build inputs and receipts:
+work/coordination/wwise-unity-managed-fixture-generator/project-java-first/
+build-output/52c0abb704f44bacb47f90647299439a/.
+Root result: work/coordination/codex-wwise-managed-java-first-device-v1.stdout;
+host triage: work/coordination/wwise-managed-first-failure-triage/findings.md.
+
+Do not repeat this candidate unchanged. Add factual phase, returned AKRESULT
+and exception details in diagnostic-only copies without relaxing startup,
+cleanup or pass gates, then retry a fresh process/package. No default game
+audio guard, bank input, rebuild input or accepted main baseline is changed
+by this failed audio experiment. All protected inputs and raw evidence remain
+ignored and listed through LOCAL_STATE's isolated Wwise boundary.
+
+## J744 — Reproduce the tested Android Init metadata through public authored tooling
+
+Hypothesis: J740/J742's exact fixture metadata variant can be reconstructed
+from the legitimate accepted input using a small audited public recipe and an
+authored parser/rewriter, without retaining a private generator as its only
+producer. This promotes one support tool, not the SDK fixture builders, managed
+owner or game audio. Pinned wwiser's CAkBus parser identifies the top-level
+idDeviceShareset field, and its audio-device parser gives the versioned record
+layout; it remains research-only prior art with no code vendoring. Pinned
+R2API.Sound preserves the separate Init-before-bank lifecycle requirement.
+
+Add scripts/lab/wwise_init_platform.py, recipe/wwise-init-android.json and a
+synthetic host contract. The recipe holds only the minimum input path,
+format/identity/size, plugin IDs/names and device/bus relationships required
+to reproduce the adaptation. No bank bytes, accepted private hash, SDK code,
+raw capture, personal path or device/storage identifier is published. The
+recipe provenance/privacy audit is recorded in recipe/README.md.
+
+The current support CLI requires an explicit source, expected hash, destination
+and receipt. It binds the source to the configured legitimate game and a full
+inventory with the locally accepted input ID, checks exact size/hash/structure,
+and creates distinct new outputs exclusively inside ignored work. Existing
+files, source collisions, symlinks and output escapes refuse. It hashes and
+rewrites one byte snapshot. Independent review found the earlier double-read
+gap; the integrated change and a deterministic source-replacement regression
+test resolve it. The structural core matches the exercised private generator.
+
+Root passes all twelve synthetic tests, covering preserved opaque records and
+chunks, precise plugin/device removal, root-bus rewrites, malformed/ambiguous
+metadata, accepted input binding and output refusal. The first real invocation
+correctly refuses the old cached inventory before producing either output.
+A fresh ./dev inspect --full then matches the accepted input with no changed,
+added or removed files. The next invocation produces 6,264 bytes with SHA-256
+618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90,
+exactly equal to J740/J742's device-tested variant; original input hash is
+unchanged before/after. Evidence:
+work/coordination/wwise-init-public-root-reproduction-v1/ (refusal),
+work/coordination/wwise-init-public-root-reproduction-v2/ (bank/receipt), and
+work/coordination/codex-wwise-init-public-full-inspect.*.
+
+ARCHITECTURE names the generator and test; LOCAL_STATE distinguishes it from
+the frozen historical fixture receipts, which still bind their original
+private producer. No new ./dev action, current game build dependency, engine
+owner or rebuild-stage input is added. No APK/device replay is needed for
+byte-identical output reproduction; runtime acceptance remains J740/J742's
+specific native results, and J743's managed readiness failure remains open.
+All protected outputs stay ignored. Revisit the contract on accepted-input
+or required platform-output changes; never silently apply it to drifted banks.

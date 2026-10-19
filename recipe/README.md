@@ -1167,3 +1167,32 @@ bodies can expose different motor implementations. Original assets and the
 read-only component-layout receipt stay ignored. Spawn, damage, native event
 dispatch and entitlement behavior are unchanged. The runtime source is staged
 through R8; no new ignored production input or build step is introduced.
+
+### Android Init output-metadata fixture recipe (J744)
+
+This authored script describes one explicitly scoped Android sink-metadata
+experiment. The JSON names the minimum bank path, format/version identity,
+plugin registrations, audio-device IDs and top-level bus relationships needed
+to recognize the accepted source structure; it contains no bank bytes, serialized
+parameter blocks, SDK code, game implementation, or locally generated receipt.
+The transformer accepts the configured game's source path only when its bytes
+match both the operator-supplied SHA-256 and the matching entry in a full local
+inventory whose input ID is currently accepted. It writes only new output and
+receipt files under Git-ignored `work/`.
+
+Prior art is the pinned wwiser Wwise-150 graph parser as an observation aid, the
+installed SDK's `SetBusDevice`/sink-registration contracts, and R2API.Sound's
+Init-first bank lifetime. The transform itself is authored parsing and
+serialization code; no parser implementation or middleware binary is vendored.
+An isolated Android native run has passed for the specific accepted input and
+Global UI event, but that does not establish controller-output fidelity, every
+bank path, or the retained Unity/Wwise managed lifecycle. Do not make this a
+normal game-build dependency or claim it is a completed audio port.
+
+Provenance/licensing/privacy review covers the small metadata identifiers,
+minimum source-bank path and authored algorithm above. Independent review and
+Root's integration review confirm the action still requires the user's accepted
+legitimate installation; twelve synthetic contracts and a byte-identical local
+reproduction pass. The generated bank, operator-supplied input hash,
+receipt, SDK, native binaries, device evidence and absolute local paths remain
+local ignored state.
