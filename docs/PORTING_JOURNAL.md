@@ -8532,3 +8532,39 @@ Audio remains unavailable, with authorized Android Wwise runtime/bank/plugin
 compatibility still open. No media is decoded or played, no engine behavior is
 claimed, and no asset, runtime, recipe, payload, device receipt, storage setting
 or Phase 2 output changes. J636's profiling refusal is separate evidence.
+
+## J641 — Rebuild the reviewed cleanup plugin with the normal content pipeline
+
+Selected-device preflight passes before building J632 exit telemetry, J638's
+native skill-response cleanup guard and J639's context helpers. Code-only reuse
+correctly refuses because the working RoR2 plugin hash differs from the frozen
+content inputs. Root compares the full content fingerprint: that plugin is the
+only changed content file. Preserve the previous baseline receipt/payload and
+use the normal whole-catalog-build action without bypassing the hash gate or
+clearing caches. Evidence:
+work/experiments/skill-response-cleanup/content-build-preparation/.
+
+The normal build succeeds in 187.71 s with zero build errors, request
+20261019T113602.101077Z. Frozen APK:
+118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717.
+It contains the reviewed 100-file runtime cohort at 36a1884 and transformed
+RoR2 plugin 3124a2ed… from the public generator. APK, build receipt and authored
+source hashes are preserved at
+work/experiments/skill-response-cleanup/candidate-20261019T113602.101077Z/.
+The full build's 266 payload hashes equal the preceding baseline payload;
+regeneration establishes this equality rather than assuming it from unchanged
+serialization identity.
+
+The configured Nova accepts the APK in place in 4.74 s. Live storage queries and
+placement verification retain adopted storage, with no configuration or data
+moves. Selected-device sync verifies 134 runtime payload files and transfers
+zero changed files; its backing query passes. Host evidence:
+work/coordination/codex-skill-cleanup-install.json and
+work/coordination/codex-skill-cleanup-sync.json.
+The separate actual Engineer UI cleanup/restart case and both baseline modes
+are now running/pending, so J637 03339547… remains the accepted baseline.
+Installation, compilation and matching bundles do not accept the native teardown
+fix or full game readiness. The next survivor-combat observer source is not in
+this frozen APK. No additional device, device-receipt hand edit, storage change,
+original-input mutation or Phase 2 output is used. Replay obligations remain
+J638 R1 and J639 R8; no new content producer is introduced.
