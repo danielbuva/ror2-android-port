@@ -679,15 +679,20 @@ captured native filter. Processor identity, owner/collider liveness and callback
 ownership are checked; missing or destroyed targets remain visible failures.
 The first guarded world hit per instance emits a bounded lab log marker.
 
-Each instance restores only its still-owned callback at destruction and clears
-references. `VerifyIntegratedWorldCleanup`, after server shutdown and two frame
+At host destruction, each instance withdraws only its still-owned callback via
+the native HurtBox setter, including a destroyed managed wrapper whose inactive
+Collision child never received OnDisable. Foreign replacements remain untouched.
+Explicit live component detach restores the captured native callback first;
+template release uses this separate path. Both paths clear owned references.
+`VerifyIntegratedWorldCleanup`, after server shutdown and two frame
 yields, requires scene guard clones to be gone before restoring/removing only
 the template component. The existing catalog owner retains asset lifetime.
 `r.world.engiShieldGuardPrepared/Released` records the lease boundaries.
 `EngiShieldHitGuardHost` is a genuine Play Mode native-filter/clone fixture;
 it manually activates the source Collision child and does not certify native
 deployment timing or a bundle-template mutation on Android. J614 records its
-evidence; native skill/device acceptance remains separate.
+evidence; J617 adds exact native rejector-list identity checks for inactive
+destruction and explicit detach. Native skill/device acceptance remains separate.
 
 `TeleportMaterialSession` also owns final overlay/material release.
 `TeleportOverlayRegistryOwnership`, in the same authored file, reads the native

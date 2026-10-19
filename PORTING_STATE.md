@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J616** (both baselines pass; Engineer setup predicate refuses).
+Last updated 2026-10-19 after **J617** (Engineer identity/cleanup fixes pass editor gates).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -15,7 +15,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `16f21f5e1156cb3a817f7ac1877d362853b627e02488f011c8c31e59f35cbc09` — J616 both baseline modes. Engineer stops at its new setup predicate; its shield fix remains unaccepted. J609 cleanup/restart evidence belongs to the earlier 41ecca66… APK. |
 | Installed now | J616 APK `16f21f5e…`, installed in place on current Nova adopted storage. Merc diagnostic callback case running after Engineer setup refusal. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since verified APK | Engineer setup predicate correction and inactive-shield owned callback withdrawal in progress; editor lifecycle evidence passes, next build pending. The installed APK includes J606 input coverage, J607 overlay cleanup and the blocked J614 Engineer guard. |
+| Runtime source since verified APK | J617 Engineer setup predicate correction and inactive-shield owned callback withdrawal pass editor lifecycle evidence and 900 host tests; next build pending. The installed APK includes J606 input coverage, J607 overlay cleanup and the blocked J614 Engineer guard. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |

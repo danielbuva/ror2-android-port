@@ -960,8 +960,12 @@ public sealed partial class PortSession
             coordinator.worldPlayer = player;
             if (coordinator.r.selectedSurvivor == "Engi")
             {
-                coordinator.Check(engiShieldGuard == null && player.master &&
-                                      player.master.bodyPrefab == BodyCatalog.FindBodyPrefab("EngiBody"),
+                // Population setup may replace a catalog template with its
+                // owned adaptation after the player has spawned. Native body
+                // index and reciprocal master linkage survive that replacement.
+                var engiIndex = BodyCatalog.FindBodyIndex("EngiBody");
+                coordinator.Check(engiShieldGuard == null && engiIndex != BodyIndex.None && player.bodyIndex == engiIndex &&
+                                      player.master && player.master.GetBody() == player,
                                   "Engineer shield compatibility requires the selected original body");
                 var template = WholeCatalogComposed.LoadOwnedContent<GameObject>(
                     "Assets/WholeGame/RoR2/Base/Characters/Engi/Projectiles/EngiBubbleShield/EngiBubbleShield.prefab");

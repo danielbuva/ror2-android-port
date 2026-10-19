@@ -23,6 +23,26 @@ public static class EngiShieldHitGuardHost
             throw new InvalidOperationException(message);
     }
 
+    static int RejectorMembershipCount(HurtBox expected)
+    {
+        var count = 0;
+        var rejectors = HurtBox.readOnlyAttackRejectorsList;
+        for (var i = 0; i < rejectors.Count; i++)
+            if (ReferenceEquals(rejectors[i], expected))
+                count++;
+        return count;
+    }
+
+    static void RequireOneRejector(HurtBox expected, string context)
+    {
+        Require(RejectorMembershipCount(expected) == 1, context + ": expected exact HurtBox reference once in native rejector list");
+    }
+
+    static void RequireNoRejector(HurtBox expected, string context)
+    {
+        Require(RejectorMembershipCount(expected) == 0, context + ": exact HurtBox reference remains in native rejector list");
+    }
+
     static bool GuardOwns(EngiShieldHitGuard guard, HurtBox target)
     {
         var method = typeof(EngiShieldHitGuard).GetMethod("OwnsFilterOn", PrivateInstance);
@@ -114,7 +134,8 @@ public static class EngiShieldHitGuardHost
 
         var scene = SceneManager.GetActiveScene();
         Require(scene.IsValid() && scene.isLoaded, "Require a loaded exact-editor scene for owned fixture objects");
-        GameObject plain = null, template = null, guardedClone = null, foreignClone = null, targetOutside = null, targetInside = null;
+        GameObject plain = null, plainInactive = null, template = null, guardedClone = null, guardedInactiveClone = null,
+                   foreignClone = null, foreignDestructionClone = null, targetOutside = null, targetInside = null;
         EngiShieldHitGuardTemplateLease lease = null;
         Exception primaryError = null;
         try
@@ -130,10 +151,25 @@ public static class EngiShieldHitGuardHost
                         plainNative.Method.Name == "RejectionFilter" &&
                         plainNative.Method.DeclaringType.Assembly == typeof(BetterBlockingEnablerSphere).Assembly,
                     "Unmodified source prefab did not bind the native sphere rejection method");
+            RequireOneRejector(plainHurtBox, "Unmodified source prefab after native blocker Awake");
             ActivateSourceCollisionChild(plain, plainHurtBox);
             NativeWorldHitThrows(plainHurtBox);
             UnityEngine.Object.DestroyImmediate(plain);
+            RequireNoRejector(plainHurtBox, "Unmodified active child destruction");
             plain = null;
+
+            // Original unguarded root with never-activated Collision isolates the native list cleanup path.
+            plainInactive = Instantiate(source, scene);
+            var plainInactiveHurtBox = ConfiguredHurtBox(plainInactive, plainInactive.GetComponent<BetterBlockingEnablerSphere>());
+            Require(!plainInactiveHurtBox.gameObject.activeSelf, "Original unguarded Collision unexpectedly began active");
+            RequireOneRejector(plainInactiveHurtBox, "Unmodified inactive source prefab after native blocker Awake");
+            UnityEngine.Object.DestroyImmediate(plainInactive);
+            // Control: native OnDisable never runs for this never-active child.
+            RequireOneRejector(plainInactiveHurtBox, "Native inactive-child retention control");
+            // The native managed setter can retire this fixture-owned destroyed wrapper.
+            plainInactiveHurtBox.attackHitRejectionFilter = null;
+            RequireNoRejector(plainInactiveHurtBox, "Fixture-owned native control withdrawal");
+            plainInactive = null;
 
             // Runtime uses a non-scene bundle template. This Play Mode clone is only a fixture stand-in;
             // Awake runs normally on it and the lease exercises ownership against actual native callbacks.
@@ -147,6 +183,20 @@ public static class EngiShieldHitGuardHost
             Require(templateGuard && GuardOwns(templateGuard, originalHurtBox) &&
                         ReferenceEquals(originalHurtBox.attackHitRejectionFilter.Target, templateGuard),
                     "Template lease did not wrap only the original template's native callback");
+            RequireOneRejector(originalHurtBox, "Scene template after guard lease acquisition");
+
+            // Guarded root whose Collision never activates: destruction should remove only this exact list entry.
+            guardedInactiveClone = Instantiate(template, scene);
+            var guardedInactiveHurtBox =
+                ConfiguredHurtBox(guardedInactiveClone, guardedInactiveClone.GetComponent<BetterBlockingEnablerSphere>());
+            Require(!guardedInactiveHurtBox.gameObject.activeSelf, "Guarded inactive Collision unexpectedly began active");
+            Require(GuardOwns(guardedInactiveClone.GetComponent<EngiShieldHitGuard>(), guardedInactiveHurtBox),
+                    "Never-activated clone did not retain its native guard ownership");
+            RequireOneRejector(guardedInactiveHurtBox, "Guarded inactive clone after native blocker Awake");
+            UnityEngine.Object.DestroyImmediate(guardedInactiveClone);
+            RequireNoRejector(guardedInactiveHurtBox, "Guarded inactive clone destruction");
+            RequireOneRejector(originalHurtBox, "Unrelated native template entry preserved during owned clone withdrawal");
+            guardedInactiveClone = null;
 
             guardedClone = Instantiate(template, scene);
             var cloneBlocker = guardedClone.GetComponent<BetterBlockingEnablerSphere>();
@@ -214,7 +264,13 @@ public static class EngiShieldHitGuardHost
             Require(ReferenceEquals(cloneHurtBox.attackHitRejectionFilter, cloneNative) && !GuardOwns(cloneGuard, cloneHurtBox),
                     "Guard did not restore its captured native delegate");
             InvokeAndRequireOwnershipRefusal(ownedCallback, worldArgs, cloneHurtBox);
+            RequireOneRejector(cloneHurtBox, "Guarded active clone after owned callback restoration");
+            UnityEngine.Object.DestroyImmediate(cloneGuard);
+            Require(guardedClone && ReferenceEquals(cloneHurtBox.attackHitRejectionFilter, cloneNative),
+                    "Explicit component detach withdrew a live shield's native callback");
+            RequireOneRejector(cloneHurtBox, "Live clone native callback survives explicit guard component removal");
             UnityEngine.Object.DestroyImmediate(guardedClone);
+            RequireNoRejector(cloneHurtBox, "Guarded active clone destruction");
             guardedClone = null;
 
             // Foreign replacement: restoration must leave a later producer's callback untouched.
@@ -223,6 +279,8 @@ public static class EngiShieldHitGuardHost
             var foreignHurtBox = ConfiguredHurtBox(foreignClone, foreignBlocker);
             var foreignGuard = foreignClone.GetComponent<EngiShieldHitGuard>();
             Require(foreignGuard && GuardOwns(foreignGuard, foreignHurtBox), "Foreign replacement fixture guard did not install");
+            Require(!foreignHurtBox.gameObject.activeSelf, "Foreign replacement Collision unexpectedly began active");
+            RequireOneRejector(foreignHurtBox, "Foreign replacement clone before callback replacement");
             var foreignSavedWrapper = foreignHurtBox.attackHitRejectionFilter;
             Func<HurtBox.HurtBoxAttackHitProcessorArgs, HurtBox, bool> foreign = (args, box) => true;
             foreignHurtBox.attackHitRejectionFilter = foreign;
@@ -230,8 +288,29 @@ public static class EngiShieldHitGuardHost
             RestoreGuard(foreignGuard);
             Require(ReferenceEquals(foreignHurtBox.attackHitRejectionFilter, foreign),
                     "Guard restoration overwrote a foreign replacement filter");
+            RequireOneRejector(foreignHurtBox, "Foreign replacement clone after owned guard teardown");
             UnityEngine.Object.DestroyImmediate(foreignClone);
+            RequireOneRejector(foreignHurtBox, "Foreign native filter remains outside guard ownership after destruction");
+            foreignHurtBox.attackHitRejectionFilter = null;
+            RequireNoRejector(foreignHurtBox, "Fixture-owned foreign filter withdrawal");
             foreignClone = null;
+
+            // The guard retains captured references, but this later producer
+            // owns the slot. Host destruction must leave the foreign slot alone.
+            foreignDestructionClone = Instantiate(template, scene);
+            var foreignDestructionHurtBox =
+                ConfiguredHurtBox(foreignDestructionClone, foreignDestructionClone.GetComponent<BetterBlockingEnablerSphere>());
+            Require(GuardOwns(foreignDestructionClone.GetComponent<EngiShieldHitGuard>(), foreignDestructionHurtBox),
+                    "Foreign destruction guard did not initially own its slot");
+            foreignDestructionHurtBox.attackHitRejectionFilter = foreign;
+            UnityEngine.Object.DestroyImmediate(foreignDestructionClone);
+            Require(ReferenceEquals(foreignDestructionHurtBox.attackHitRejectionFilter, foreign),
+                    "Host destruction overwrote a foreign filter replacement");
+            RequireOneRejector(foreignDestructionHurtBox, "Foreign destruction callback membership preserved");
+            foreignDestructionHurtBox.attackHitRejectionFilter = null;
+            RequireNoRejector(foreignDestructionHurtBox, "Fixture-owned foreign destruction callback withdrawal");
+            RequireOneRejector(originalHurtBox, "Unrelated template entry preserved after foreign destruction");
+            foreignDestructionClone = null;
 
             // Template release runs after all shield clones. It restores then removes only the added guard.
             var blockerAfter = template.GetComponent<BetterBlockingEnablerSphere>();
@@ -240,7 +319,11 @@ public static class EngiShieldHitGuardHost
             Require(!template.GetComponent<EngiShieldHitGuard>() && template.GetComponent<BetterBlockingEnablerSphere>() == blockerAfter &&
                         ReferenceEquals(originalHurtBox.attackHitRejectionFilter, originalNative),
                     "Template lease changed the native component or failed to remove only its guard");
+            RequireOneRejector(originalHurtBox, "Scene template after guard lease release");
             UnityEngine.Object.DestroyImmediate(template);
+            RequireOneRejector(originalHurtBox, "Released inactive native template retention control");
+            originalHurtBox.attackHitRejectionFilter = null;
+            RequireNoRejector(originalHurtBox, "Fixture-owned released native template withdrawal");
             template = null;
 
             return new { success = true,
@@ -253,6 +336,10 @@ public static class EngiShieldHitGuardHost
                          foreignReplacementPreserved = true,
                          staleCallbackRefused = true,
                          sourceCollisionActivationInitializesNativeHurtBox = true,
+                         nativeInactiveInstanceRetentionReproduced = true,
+                         rejectorMembershipRemovedForGuardedInactiveInstance = true,
+                         foreignFilterOwnershipPreservedOnDestruction = true,
+                         templateExplicitDetachPreservesNativeFilter = true,
                          originalNativeSphereFilterPreserved = true };
         }
         catch (Exception error)
@@ -263,7 +350,8 @@ public static class EngiShieldHitGuardHost
         finally
         {
             var cleanupErrors = new List<Exception>();
-            foreach (var instance in new[] { guardedClone, foreignClone, plain })
+            foreach (var instance in new[] { guardedClone, guardedInactiveClone, foreignClone, foreignDestructionClone, plainInactive,
+                                             plain })
                 if (instance)
                     try
                     {

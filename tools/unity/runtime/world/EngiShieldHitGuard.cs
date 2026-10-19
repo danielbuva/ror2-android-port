@@ -106,7 +106,17 @@ public sealed class EngiShieldHitGuard : MonoBehaviour
 
     void OnDestroy()
     {
-        RestoreOwnedFilter();
+        // Scene guards share their shield host's lifetime. A never-activated
+        // Collision child does not receive native OnDisable, even on destruction.
+        // The native managed setter retires this exact rejector-list entry.
+        // Keep CLR identity here: Unity may already consider the child destroyed.
+        var target = targetHurtBox;
+        var owned = ownedFilter;
+        if (!ReferenceEquals(target, null) && owned != null && ReferenceEquals(target.attackHitRejectionFilter, owned))
+            target.attackHitRejectionFilter = null;
+        ClearReferences();
+        // Live component-only removal must call RestoreOwnedFilter first, as
+        // template release does. That explicit detach clears these references.
     }
 
     void ClearReferences()

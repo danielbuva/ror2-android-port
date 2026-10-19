@@ -223,6 +223,15 @@ Mode fixture uses the accepted imported prefab privately and publishes only
 contract results. Audited 2026-10-19; Android acceptance and R8 source/importer/
 provenance replay remain separate gates.
 
+J617 changes the same authored guard's destruction boundary after exact-editor
+native inactive-child retention evidence. It uses only the existing public
+HurtBox callback setter for its exact still-owned slot; it does not copy or
+replace a native list algorithm. The fixture publishes authored contracts,
+including foreign callback preservation, without proprietary source or content.
+The survivor check uses native body index/master linkage after owned catalog
+template replacement. No new path, asset identity or required local input is
+added. Audited 2026-10-19; device evidence and rebuild replay remain separate.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

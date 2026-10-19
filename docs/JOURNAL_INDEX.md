@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J617](PORTING_JOURNAL.md#j617--retire-owned-inactive-shield-rejectors-and-use-stable-player-identity) | 2026-10-19 | Retire owned inactive shield rejectors and use stable player identity | Hypothesis: a shield destroyed before its Collision child first activates can retain its HurtBox in the original rejector list because that child's OnDisable n… |
 | [J616](PORTING_JOURNAL.md#j616--engineer-guard-build-passes-both-baselines-then-refuses-body-identity) | 2026-10-19 | Engineer guard build passes both baselines, then refuses body identity | J614 source at c9e80aa builds a code-only Vulkan ARM64 candidate in 85.55 s with zero errors, request 20261019T090205.852490Z. |
 | [J615](PORTING_JOURNAL.md#j615--select-a-base-survivor-for-native-cleanup-acceptance) | 2026-10-19 | Select a base survivor for native cleanup acceptance | Hypothesis: the current cleanup observer can validate Engineer's template release and same-process restart through the ordinary native loss flow, once its surv… |
 | [J614](PORTING_JOURNAL.md#j614--guard-the-engineer-shields-native-null-world-hit-boundary) | 2026-10-19 | Guard the Engineer shield's native null-world-hit boundary | Hypothesis: J611's exception is the current native filter receiving a legitimate world BulletHit with no HurtBox, rather than a broken collider import. |

@@ -7625,3 +7625,50 @@ index and reciprocal live master linkage remain valid. Follow-up should check
 those stable native identities, preserve this failed APK, and repeat Engineer
 on the next candidate. The current baseline pointer advances only for the two
 passed baseline modes; the Engineer compatibility gate remains open.
+
+## J617 — Retire owned inactive shield rejectors and use stable player identity
+
+Hypothesis: a shield destroyed before its Collision child first activates can
+retain its HurtBox in the original rejector list because that child's OnDisable
+never runs. The native blocker assigns its callback from root Awake, and the
+public managed HurtBox setter registers it immediately. This is separate from
+J611's null-world-hit failure. J614's fixture did not inspect native membership.
+
+The expanded exact-editor fixture first reproduces retention on an unmodified
+source shield, then on the J614 guarded shield. Failed evidence is preserved at
+work/experiments/engi-shield-lifetime/editor-20261019T091323.399866Z/ and
+work/experiments/engi-shield-lifetime/editor-20261019T091548.344623Z/.
+ReferenceEquals counts show the exact managed HurtBox remains once after the
+inactive host is destroyed. No global registry reset/clear/restore is used.
+This proves that editor lifecycle case, not its frequency or impact on Android.
+
+The guard's host-destruction path now clears only its exact still-owned callback
+through the native public setter. CLR reference checks permit that managed
+setter to remove the exact destroyed wrapper. Foreign callbacks remain intact.
+Explicit component-only detach retains the separate restore-native-first path;
+template lease release already calls it before removing the component. No native
+attack, collider, deployment timing or global-list algorithm changes. Prior-art
+API observations remain J614's pinned Starstorm2/R2API context; current accepted
+HurtBox/blocker source and measured Unity lifecycle supply this cleanup contract.
+
+The final actual Play Mode fixture passes native null-hit reproduction, guarded
+null-hit behavior, native blocked/clear equivalence, cloned native references,
+owned restore, foreign replacement/destruction preservation, explicit live
+component detach, and inactive guarded host membership removal. An unrelated
+native template entry stays unchanged during clone withdrawal. The native and
+foreign retention controls are recorded, then each exact fixture-owned entry
+is withdrawn with the public setter. The scene-template stand-in still tests
+explicit native restoration, not Android bundle mutation. No primary or scene
+restoration error remains. Evidence and exact source hashes:
+work/experiments/engi-shield-lifetime/editor-20261019T091936.551556Z/.
+
+Also correct the J616 setup predicate: selected Engi's native body index and
+reciprocal live master linkage replace the invalid equality between its old
+source prefab and a catalog entry subsequently rebound by the owned population
+adapter. No selection eligibility, body or catalog entry is changed by this
+check. Full host suite passes 900 tests with one optional skip, recorded in
+work/coordination/codex-engi-lifetime-host-tests.log. Selected-device live
+preflight passes; an initial unselected preflight correctly refused ambiguity
+when several devices were attached. No extra device was selected or onboarded.
+The next code build must pass both baseline modes and Engineer input/cleanup;
+installed J616 APK remains unchanged during these host/editor checks.
