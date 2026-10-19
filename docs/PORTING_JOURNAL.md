@@ -8684,3 +8684,49 @@ verified APK rollback, with its cached matching payload and source hashes. Both
 baseline runners remove their selectors, stop the app and sleep the OLED. No
 extra device, storage/data change, receipt hand edit, input mutation or Phase 2
 output is introduced. Authored replay requirements remain J638/J639/J642.
+
+## J645 — Observe Engineer projectile and owned-summon damage on device
+
+Hypothesis: J642's bounded observer can distinguish actual native player-owned
+projectile damage and owned-minion damage in the integrated world, beyond the
+four skill-activation callbacks. Its native API and pinned observation prior
+art are recorded in J642; no damage, ownership, inventory, skill, event or
+projectile is injected by this observer.
+
+The selected-device preflight passes. The 101-file source cohort builds with
+zero errors in 108.05 s through the existing code-only pipeline, request
+20261019T120232.783775Z. APK
+9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82
+is frozen with its build receipt, source hashes and build/preflight output at
+work/experiments/survivor-combat-output/candidate-20261019T120232.783775Z/.
+An in-place install takes 4.79 s after live adopted-capacity and placement
+checks; the existing payload sync passes. The accepted J644 118540ea… APK
+remains the baseline until both modes pass for this candidate.
+
+Engineer reaches 60.44 s of assisted first-stage play with native authority
+and server callbacks 28/4/2/2 across primary/secondary/utility/special. The new
+observer remains attached, non-inert and error-free, with 7 player-body damage
+events whose inflictors are exact mapped player-owned projectiles, and
+16 damage events from exact mapped summon bodies/masters whose native
+MinionOwnership points to the player master. It records 32 distinct projectile
+network IDs, including native grenade, mine and bubble-shield catalog entries;
+the retained history does not overflow and the network scan is not truncated.
+These are output/ownership observations, not attribution to individual skill
+slots. There are zero unknown-owner damage events and zero unexpected
+current-process runtime errors. Applied profile runs remain 13.
+
+Evidence: work/experiments/survivor-check/20261019T120927.155789Z/Engi/,
+including first/final reports, current-process log, captures, runner assessment
+and root-output-validation.json. First failure: none in this bounded case.
+The final report is captured before force-stop; its observer is still live,
+so this run does not establish native observer teardown or a second-session
+subscription. Runner finalization removes its selector, stops the app and
+sleeps the OLED.
+
+Mercenary and both baseline modes remain queued separately. Full skill kits,
+shield blocking, mine-specific effects, ordinary unlocks, unassisted combat,
+long sessions and observer overhead remain open. Revisit native cleanup on an
+actual completed session/restart, and retain explicit catalog/ownership facts
+when testing alternate variants. No extra device, storage/data change,
+receipt hand edit, content mutation or Phase 2 output is introduced. The
+authored source/fixture replay requirement remains J642.

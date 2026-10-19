@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J644** (cleanup APK passes both baseline modes and actual Engineer restart).
+Last updated 2026-10-19 after **J645** (Engineer native combat outputs on the observer candidate; baseline checks pending).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -14,10 +14,10 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` — J644 both baseline modes; J643 native Engineer teardown, shield-lease release and healthy same-process restart. Earlier loss-only cleanup proof is J609. |
-| Installed now | Same `118540ea…` APK, updated in place on current Nova adopted storage. Payload hashes match the preceding baseline and sync passes (J641). Both baseline modes pass (J644); runners stop the app and sleep the OLED. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since verified APK | J632 exit telemetry, J638 unstarted skill-response cleanup guard and J639 stage-context helpers are built into installed 118540ea… (100 runtime files). J642 adds a bounded survivor combat-output observer (101-file source cohort), with passing exact-editor contracts; it is not in that APK. The larger native stage-lifecycle path remains unintegrated. |
+| Installed now | Candidate `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82`, updated in place on current Nova adopted storage; live placement and payload sync pass (J645). Engineer output observation passes; Mercenary and both baseline modes are pending. Runners stop the app and sleep the OLED. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Runtime source since verified APK | J642's bounded survivor combat-output observer is built into installed 9e7c4224… (101 runtime files), with exact-editor contracts and Engineer device output evidence (J645). The accepted 118540ea… baseline has 100 files. The larger native stage-lifecycle and skill-variant selector paths remain unintegrated. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
-| Executable rollbacks | J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
+| Executable rollbacks | J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
 
 Retention rules for these rollbacks: [docs/history-retention.md](docs/history-retention.md).
@@ -37,7 +37,8 @@ they are not normal-difficulty acceptance.
   Loader through developer-only selection (J504). Four canonical native callbacks
   passed for Commando, Huntress and Bandit2 (J603), Toolbot including utility
   (J611), Mage (J614), Mercenary (J618) and Engineer (J621). Engineer's corrected
-  setup and native mines/shields/turrets pass (J631); damage, blocking and full kits remain open.
+  setup and native mines/shields/turrets pass (J631), with player projectile and owned-summon
+  damage observed in J645; blocking and full kits remain open.
   REX passes (J623); Loader passes a finite replay (J634), while intermittent
   LightningStake corruption remains unresolved. Acrid and Captain pass (J625).
 - **Stages:** Huntress completed four original boss/charge/exit transitions
