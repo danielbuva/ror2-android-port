@@ -8164,3 +8164,42 @@ UI-abandon checks. Installed APK remains the failed-acceptance 9d022653…;
 accepted baseline remains J620 fb0f2953…. This authored runtime change must be
 included on R8/build-entry replay. No new source file, generated asset, required
 local input, device receipt or Phase 2 output is introduced.
+
+## J631 — Engineer produces native mines, guarded shields and owned turrets
+
+The J630 cold-list correction builds in 96.41 s with zero errors after selected
+live preflight, request 20261019T105117.916216Z. APK
+03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648
+and source100 input hashes are frozen in
+work/experiments/engi-deployables/candidate-20261019T105117.916216Z/.
+The candidate updates the current Nova in place on live adopted storage.
+Queue the concrete Engineer regression before the longer baseline checks;
+no baseline promotion occurs until both standard modes pass.
+
+Engineer now reaches 60.36 s of live Lakes play with four valid native skill
+components and authority/server callback counts 44/8/2/2. There is no report
+failure, missing/suppressed canonical callback or unexpected current-process
+runtime error. Source-attributed observation records eight unique mines, two
+bubbles, and two live ownership-confirmed turret masters/bodies. Seven native
+mine states are observed, including arming, target wait and pre-detonation.
+One bubble is live in its native Deployed state at the final sample. Both
+observed bubbles own the exact source Collision HurtBox guard filter; one is
+still live at the final sample. Two matching native master-summon events are
+recorded. Evidence:
+work/experiments/survivor-check/20261019T105409.986542Z/Engi/.
+
+These are genuine native output and ownership observations, not only skill
+callbacks. They do not certify mine damage, turret attacks, shield blocking,
+alternate kits or every transient output. The guarded-null-hit log marker is
+still zero; that particular compatibility branch remains unexecuted. The
+shield template lease is prepared but unreleased at the live final snapshot.
+This force-stopped case does not certify completed-session teardown. Explicit
+locked diagnostic selection, automatic input and invincibility make it assisted;
+applied profile runs remain 13, earned unlocks one and resultApplied=false.
+Runner finalization removes its selector, stops the app and sleeps the OLED.
+
+The separately queued UI abandon/restart and Loader trace cases retain their
+own evidence and first-failure gates. Both baseline modes on this APK remain
+pending, so J620 fb0f2953… remains accepted. No additional device, storage
+configuration, profile grant, payload or Phase 2 output is changed by this
+case. Authored runtime replay requirements remain those of J630.
