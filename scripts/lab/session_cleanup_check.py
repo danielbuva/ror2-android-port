@@ -13,7 +13,7 @@ import time
 
 from common import ROOT, WORK, now, read, sha, write
 from device import Device, PACKAGE
-from installed_attempt import attempt_from_installed
+from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from nova_bridge import current_errors
 from survivor_check import (
     BASE_SURVIVORS,
@@ -725,7 +725,8 @@ class SessionCleanupDevice(Device):
         return super().cmd(*args, **kwargs)
 
 
-def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_variants=None):
+def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_variants=None, expected_apk_sha256=None):
+    expected_apk_sha256 = validate_expected_apk_sha256(expected_apk_sha256)
     if ending not in ("loss", "abandon"):
         raise ValueError("Use ending loss or abandon")
     if survivor not in BASE_SURVIVORS:
@@ -742,12 +743,18 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
     expected_prefix = "/data/app/" if mode == "internal" else "/mnt/expand/" + str(storage.get("uuid")) + "/"
     if expected_prefix not in installed.get("package_path", ""):
         raise RuntimeError("Owned APK placement differs from selected live storage")
-    build = read(WORK / "config/current-build.json")
-    if not build.get("success") or not build.get("apk") or not installed.get("apk_sha256"):
-        raise RuntimeError("Current build or installed ownership receipt is incomplete")
-    artifact_hash = sha(build["apk"])
-    if artifact_hash != build.get("apk_sha256") or artifact_hash != installed.get("apk_sha256"):
-        raise RuntimeError("Current APK artifact hash, build receipt, and installed receipt differ")
+    if expected_apk_sha256 is None:
+        build = read(WORK / "config/current-build.json")
+        if not build.get("success") or not build.get("apk") or not installed.get("apk_sha256"):
+            raise RuntimeError("Current build or installed ownership receipt is incomplete")
+        artifact_hash = sha(build["apk"])
+        if artifact_hash != build.get("apk_sha256"):
+            raise RuntimeError("Current APK artifact hash differs from current-build receipt")
+        artifact_hash, apk_binding_mode = bind_installed_apk(
+            installed, current_build_sha256=artifact_hash)
+    else:
+        artifact_hash, apk_binding_mode = bind_installed_apk(
+            installed, expected_sha256=expected_apk_sha256)
     attempt = attempt_from_installed(installed)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     if not runtime.endswith("/Android/data/" + PACKAGE + "/files"):
@@ -768,7 +775,12 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         "serial": device.serial,
         "package": PACKAGE,
         "apk_sha256": artifact_hash,
-        "apk_identity_evidence": "current APK artifact hash matches build and installed ownership receipts; installed package bytes are receipt-backed, not independently rehashed",
+        "apk_binding_mode": apk_binding_mode,
+        "apk_identity_evidence": (
+            "current APK artifact hash matches build and installed ownership receipts; installed package bytes are receipt-backed, not independently rehashed"
+            if apk_binding_mode == "current-build-at-start" else
+            "explicit SHA-256 matches selected-device ownership receipt; receipt APK bytes are verified before attempt extraction; installed package bytes are receipt-backed, not independently rehashed"
+        ),
         "attempt": attempt,
         "storage_mode": mode,
         "scope": (
@@ -1169,6 +1181,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         "session2_menu_ui": {"observed": session2_menu_observed, "start_sent": session2_menu_start_sent},
         "host_timing": host_timing.report(),
         "apk_sha256": artifact_hash,
+        "apk_binding_mode": apk_binding_mode,
         "serial": device.serial,
         "profile_baseline": profile_baseline,
         "profile_completed": _profile_counts(completed) if completed else None,

@@ -12,7 +12,7 @@ import time
 from baseline import DEBUG_OPTIONS, FIRST_STAGE, SPINE_ID, selection
 from common import WORK, now, read, write
 from device import Device, PACKAGE
-from installed_attempt import attempt_from_installed
+from installed_attempt import attempt_from_installed, bind_installed_apk, validate_expected_apk_sha256
 from nova_bridge import current_errors
 
 BASE_SURVIVORS = ("Commando", "Huntress", "Bandit2", "Toolbot", "Engi", "Mage", "Merc", "Treebot", "Loader", "Croco", "Captain")
@@ -595,7 +595,8 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
                 device.display(False)
 
 
-def check_survivors(target, skill_variants=None, skill_slot=None):
+def check_survivors(target, skill_variants=None, skill_slot=None, expected_apk_sha256=None):
+    expected_apk_sha256 = validate_expected_apk_sha256(expected_apk_sha256)
     names = targets(target)
     if skill_slot is not None and skill_slot not in SLOTS:
         raise ValueError("skill slot must be one of: " + ",".join(SLOTS))
@@ -625,17 +626,27 @@ def check_survivors(target, skill_variants=None, skill_slot=None):
     package_path = installed.get("package_path")
     if not isinstance(package_path, str) or expected_prefix not in package_path:
         raise RuntimeError("Owned APK placement differs from selected live storage")
-    if installed["apk_sha256"] != read(WORK / "config/current-build.json")["apk_sha256"]:
-        raise RuntimeError("Installed APK differs from the current build receipt")
+    if expected_apk_sha256 is None:
+        current_build = read(WORK / "config/current-build.json")
+        if not current_build.get("success"):
+            raise RuntimeError("Current build receipt is not successful")
+        apk_sha256, apk_binding_mode = bind_installed_apk(
+            installed, current_build_sha256=current_build.get("apk_sha256"))
+    else:
+        apk_sha256, apk_binding_mode = bind_installed_apk(
+            installed, expected_sha256=expected_apk_sha256)
     attempt = attempt_from_installed(installed)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     out = WORK / "experiments/survivor-check" / now()
     out.mkdir(parents=True)
     results = []
+    # Resolve the selected receipt/build binding once for the entire target list.
     for survivor in names:
         result = check_one(device, survivor, attempt, runtime, out / survivor, installed,
                            skill_variant_override=variant_selection if survivor == names[0] else None,
                            skill_slot=skill_slot)
+        result["apk_sha256"] = apk_sha256
+        result["apk_binding_mode"] = apk_binding_mode
         results.append(result)
         write(out / "result.json", {"success": all(row["success"] for row in results), "results": results})
         print(json.dumps(result), flush=True)

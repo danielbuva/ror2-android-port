@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J712](PORTING_JOURNAL.md#j712--bind-current-diagnostics-explicitly-to-the-selected-devices-owned-apk) | 2026-10-19 | Bind current diagnostics explicitly to the selected device's owned APK | Hypothesis: a host build finishing must not invalidate an independent diagnostic on a still-owned earlier APK merely by changing the global current-build point… |
 | [J711](PORTING_JOURNAL.md#j711--rex-alternate-kit-records-native-projectiles-and-owned-summon-damage) | 2026-10-19 | REX alternate kit records native projectiles and owned summon damage | Hypothesis: J706's fresh native inventory can select the three alternate REX abilities without confusing component names with selected SkillDefs. |
 | [J710](PORTING_JOURNAL.md#j710--native-boss-action-executes-effect-lease-shows-zero-acquisition-delta) | 2026-10-19 | Native boss action executes; effect lease shows zero acquisition delta | Hypothesis: J703's exact assertion operands can distinguish missing acquisition from excess ownership before any cleanup release rule is changed. |
 | [J709](PORTING_JOURNAL.md#j709--record-host-observed-restart-phase-timing-without-changing-acceptance) | 2026-10-19 | Record host-observed restart phase timing without changing acceptance | Hypothesis: the cold catalog/setup envelope dominates short cases, but current same-process cleanup evidence does not measure warm startup accurately enough to… |

@@ -61,6 +61,7 @@ p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
+p.add_argument("--expected-apk-sha256", help="Current: optional exact SHA-256 of the APK already in the selected device ownership receipt for diagnostic checks; omission requires current-build equality at check start and never installs or labels the receipt APK current")
 p.add_argument("--skill-slot", choices=("primary", "secondary", "utility", "special"),
                help="Current: bounded assisted isolated slot diagnostic for one base survivor via survivor-kit-check")
 p.add_argument("--debug-options", help="Ignored local JSON for one integrated run; all acceleration defaults off")
@@ -109,6 +110,11 @@ if a.skill_variants and (
         "--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check "
         "or session-abandon-check"
     )
+if a.expected_apk_sha256 is not None and (
+    a.command != "prototype"
+    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}
+):
+    p.error("--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
 if a.skill_slot and (a.command != "prototype" or a.action != "survivor-kit-check"):
     p.error("--skill-slot requires prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):

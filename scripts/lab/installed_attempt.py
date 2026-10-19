@@ -16,6 +16,38 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_expected_apk_sha256(value: str | None) -> str | None:
+    """Validate an optional explicit hash without consulting a build pointer."""
+    if value is None:
+        return None
+    if (not isinstance(value, str) or len(value) != 64
+            or any(ch not in "0123456789abcdef" for ch in value)):
+        raise ValueError("Expected APK SHA-256 must be 64 lowercase hexadecimal characters")
+    return value
+
+
+def bind_installed_apk(installed: dict, *, expected_sha256=None, current_build_sha256=None):
+    """Choose the receipt-owned APK; explicit hashes never select an APK path.
+
+    The caller must still pass this receipt to attempt_from_installed, which
+    verifies the receipt APK's exact bytes before reading the embedded attempt.
+    """
+    expected_sha256 = validate_expected_apk_sha256(expected_sha256)
+    if not isinstance(installed, dict):
+        raise RuntimeError("Installed ownership receipt is invalid")
+    actual = installed.get("apk_sha256")
+    if (not isinstance(actual, str) or len(actual) != 64
+            or any(ch not in "0123456789abcdef" for ch in actual)):
+        raise RuntimeError("Installed ownership receipt lacks a valid APK SHA-256")
+    if expected_sha256 is not None:
+        if actual != expected_sha256:
+            raise RuntimeError("Installed ownership receipt does not match --expected-apk-sha256")
+        return actual, "explicit-owned-apk-sha256"
+    if current_build_sha256 is None or actual != current_build_sha256:
+        raise RuntimeError("Installed APK differs from current-build; supply --expected-apk-sha256 to select the receipt-bound APK explicitly")
+    return actual, "current-build-at-start"
+
+
 def attempt_from_installed(installed: dict, *, loader=None) -> str:
     """Return the unique MovementBatchProbe attempt from owned APK bytes.
 

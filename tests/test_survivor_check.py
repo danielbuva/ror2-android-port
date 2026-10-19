@@ -95,13 +95,14 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
     def run_selected(self, mode, installed_mode, live, package_path, *, refused=False):
         device = Mock()
         device.settings = {"storage_mode": mode}
-        installed = {"storage": {"mode": installed_mode}, "package_path": package_path, "apk_sha256": "fixture-apk"}
+        digest = "f" * 64
+        installed = {"storage": {"mode": installed_mode}, "package_path": package_path, "apk_sha256": digest}
         device.owned.return_value = installed
         device.storage.return_value = live
         device.read_receipt.return_value = {"persistentDataPath": "/fixture-runtime"}
         with tempfile.TemporaryDirectory() as directory:
             def read(path):
-                return {"apk_sha256": "fixture-apk"} if path.name == "current-build.json" else {"attempt": "mutable-project-attempt"}
+                return {"success": True, "apk_sha256": digest} if path.name == "current-build.json" else {"attempt": "mutable-project-attempt"}
 
             with patch.object(check, "WORK", Path(directory)), patch.object(check, "SurvivorCheckDevice", return_value=device), \
                  patch.object(check, "read", side_effect=read), patch.object(check, "check_one", return_value={"success": True}) as case, \
@@ -114,7 +115,10 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
                     device.read_receipt.assert_not_called()
                     attempt.assert_not_called()
                 else:
-                    self.assertEqual(check.check_survivors("Huntress"), [{"success": True}])
+                    self.assertEqual(check.check_survivors("Huntress"), [{
+                        "success": True, "apk_sha256": digest,
+                        "apk_binding_mode": "current-build-at-start",
+                    }])
                     case.assert_called_once()
                     attempt.assert_called_once_with(installed)
                     self.assertEqual(case.call_args.args[2], "fixture-attempt")
@@ -125,6 +129,37 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
         self.run_selected("internal", "internal", {"mode": "internal"}, "package:/data/app/fixture/base.apk")
         self.run_selected("adopted", "adopted", {"mode": "adopted", "uuid": "live-volume"},
                           "package:/mnt/expand/live-volume/app/fixture/base.apk")
+
+    def test_explicit_owned_apk_binds_the_whole_batch_without_current_build_reads(self):
+        digest = "a" * 64
+        device = Mock()
+        device.settings = {"storage_mode": "internal"}
+        installed = {"storage": {"mode": "internal"},
+                     "package_path": "package:/data/app/fixture/base.apk",
+                     "apk_sha256": digest}
+        device.owned.return_value = installed
+        device.storage.return_value = {"mode": "internal"}
+        device.read_receipt.return_value = {"persistentDataPath": "/fixture-runtime"}
+        for requested in (digest, "b" * 64):
+            with self.subTest(matching=requested == digest), tempfile.TemporaryDirectory() as directory:
+                with patch.object(check, "WORK", Path(directory)), \
+                     patch.object(check, "SurvivorCheckDevice", return_value=device), \
+                     patch.object(check, "read", side_effect=AssertionError("no current-build read")), \
+                     patch.object(check, "attempt_from_installed", return_value="owned-attempt") as attempt, \
+                     patch.object(check, "check_one", side_effect=lambda *a, **kw: {"success": True}) as case, \
+                     redirect_stdout(io.StringIO()):
+                    if requested != digest:
+                        with self.assertRaisesRegex(RuntimeError, "does not match"):
+                            check.check_survivors("Croco,Merc", expected_apk_sha256=requested)
+                        attempt.assert_not_called()
+                        case.assert_not_called()
+                    else:
+                        results = check.check_survivors("Croco,Merc", expected_apk_sha256=requested)
+                        attempt.assert_called_once_with(installed)
+                        self.assertEqual([call.args[1] for call in case.call_args_list], ["Croco", "Merc"])
+                        self.assertTrue(all(call.args[2] == "owned-attempt" for call in case.call_args_list))
+                        self.assertEqual(results, [{"success": True, "apk_sha256": digest,
+                            "apk_binding_mode": "explicit-owned-apk-sha256"}] * 2)
 
     def test_storage_drift_or_missing_placement_refuses_before_launch(self):
         cases = (

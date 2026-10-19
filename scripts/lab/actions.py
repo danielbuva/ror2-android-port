@@ -68,6 +68,9 @@ def _survivor_target(function, kwargs, args):
         selected["skill_variants"] = path
     if slot is not None:
         selected["skill_slot"] = slot
+    expected_apk_sha256 = getattr(args, "expected_apk_sha256", None)
+    if expected_apk_sha256 is not None:
+        selected["expected_apk_sha256"] = expected_apk_sha256
     return function(args.target, **selected)
 
 
@@ -77,6 +80,9 @@ def _session_cleanup_target(function, kwargs, args):
     selected = kwargs if args.target == "lab" else dict(kwargs, survivor=args.target)
     if getattr(args, "skill_variants", None) is not None:
         selected = dict(selected, skill_variants=args.skill_variants)
+    expected_apk_sha256 = getattr(args, "expected_apk_sha256", None)
+    if expected_apk_sha256 is not None:
+        selected = dict(selected, expected_apk_sha256=expected_apk_sha256)
     return _json_result(function, selected, args, indent=2)
 
 
@@ -201,7 +207,7 @@ _ENTRIES = (
         "check_survivors",
         {},
         "current",
-        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector; --skill-slot primary|secondary|utility|special runs one bounded isolated native-input diagnostic for exactly one target and may compose with --skill-variants.",
+        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector; --skill-slot primary|secondary|utility|special runs one bounded isolated native-input diagnostic for exactly one target and may compose with --skill-variants. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it selects only a matching selected-device ownership receipt and its byte-verified APK, without calling it current.",
         handler=_survivor_target,
     ),
     Action(
@@ -210,7 +216,7 @@ _ENTRIES = (
         "check_session_cleanup",
         {},
         "current",
-        "Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects one base survivor (default Commando); locked choices are diagnostic overrides, no expansion. Optional --skill-variants applies one strict per-run native catalog selector to both sessions.",
+        "Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects one base survivor (default Commando); locked choices are diagnostic overrides, no expansion. Optional --skill-variants applies one strict per-run native catalog selector to both sessions. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it binds this diagnostic to the selected device's matching ownership receipt and receipt APK bytes without calling that APK current.",
         handler=_session_cleanup_target,
     ),
     Action(
@@ -219,7 +225,7 @@ _ENTRIES = (
         "check_session_cleanup",
         {"ending": "abandon"},
         "current",
-        "After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides. Optional --skill-variants applies one strict per-run native catalog selector to both sessions.",
+        "After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides. Optional --skill-variants applies one strict per-run native catalog selector to both sessions. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it binds this diagnostic to the selected device's matching ownership receipt and receipt APK bytes without calling that APK current.",
         handler=_session_cleanup_target,
     ),
     Action("whole-catalog-host-providers", "whole_catalog", "host_providers", {}, "current", "Run the whole-catalog native-provider host fixture."),

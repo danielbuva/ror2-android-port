@@ -11616,3 +11616,56 @@ change or permanent award occurs. The accepted 105-file runtime remains
 unchanged. Next collect fresh Acrid/Mercenary inventories before alternate
 selectors, while the ordinary base-stage route and native cleanup investigation
 continue independently.
+
+## J712 — Bind current diagnostics explicitly to the selected device's owned APK
+
+Hypothesis: a host build finishing must not invalidate an independent diagnostic
+on a still-owned earlier APK merely by changing the global current-build pointer.
+Add current optional --expected-apk-sha256 to survivor-kit-check,
+session-cleanup-check and session-abandon-check. Existing installed_attempt.py
+owns syntax validation and selected-receipt binding. Its unchanged J679 reader
+then snapshots and hashes the receipt APK bytes and requires one embedded
+MovementBatchProbe attempt before selector push or launch. This is generic host
+orchestration, not a new RoR2 loader or gameplay mechanism.
+
+Explicit mode requires a lowercase SHA-256 equal to the selected device's
+ownership receipt and never reads current-build.json. It cannot choose an APK
+path or install anything. Results label this explicit-owned-apk-sha256;
+omission keeps current-build equality at start and labels current-build-at-start.
+The survivor target list binds once before its case loop. Device ownership,
+live storage/placement, runtime path, attempt/PID, native failure, assistance,
+profile and finalizer contracts remain in their existing owners. J709 host
+timing and its failure chain are unchanged. Neither mode independently rehashes
+the installed Android package; local APK bytes plus existing device ownership
+and package-placement evidence remain the explicit scope.
+
+Independent reviews clear held patch
+25f9537026093c13dc3d6ec4032c0ec8b29ab2d9b681921000ee63f5ae7cf718
+and the actual integrated diff. Root updates the older storage-policy fixture
+to supply a valid successful receipt/digest and expect the added result labels,
+then adds a two-target survivor regression: explicit binding reads no global
+pointer, extracts the attempt once and rejects a mismatching digest before any
+case. Public portable tests also exercise the real cleanup entry point and
+J679 reader with authored inputs, proving missing ownership, malformed or wrong
+hash, changed bytes and duplicate embedded attempts refuse before selector or
+launch. A positive fake collector checks the emitted attempt. No private draft
+is required to run these public contracts.
+
+Root's 313 relevant host tests pass, Ruff passes and the generated README action
+table/help check passes. Evidence:
+work/coordination/codex-owned-apk-focused-tests-retry.stdout and .stderr;
+work/coordination/owned-apk-root-integration-review/.
+The full-suite retry runs 1002 tests with one skip and 16 errors, all at the
+existing AssemblyProbe source-drift gate while the parallel session edits the
+assembly-transform owner. Those unrelated files/pins are left untouched; this
+is not a full-suite pass. The initial root run also exposes the now-corrected
+old fixture. No new runtime/APK acceptance is inferred from host tests.
+
+First failure: none in the corrected binding contracts; the unrelated in-flight
+transform pin prevents a clean broad-suite result. README/current action help
+and ARCHITECTURE name the owner and omission/explicit semantics. This host-only
+change requires no runtime/R8 replay or APK build. Accepted and installed APK
+remains J707 d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee,
+with unchanged 105 runtime hashes. Fresh Acrid/Mercenary defaults now run through
+explicit mode separately; no outcome is claimed yet. No original input,
+Phase 2 output, device receipt edit, extra device, storage change or award occurs.

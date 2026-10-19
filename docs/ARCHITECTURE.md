@@ -743,6 +743,19 @@ stops the owned app and sleeps the display. Every ADB command checks the paralle
 session's coordination lock. Host contracts: `tests/test_survivor_check.py`.
 This supplements both unchanged baseline modes; it does not replace them.
 
+The current optional `--expected-apk-sha256` on survivor-kit-check and both
+session cleanup actions binds a diagnostic to the selected device's matching
+ownership receipt. `scripts/lab/installed_attempt.py` owns hash syntax and
+receipt binding, then its existing reader verifies the receipt APK bytes and
+extracts the unique embedded attempt before any selector push or launch.
+Explicit binding never reads the mutable global current-build pointer, installs
+an APK or claims the selected APK is current. Omission retains current-build
+equality at check start. The survivor batch resolves this binding once before
+its target loop, allowing host builds to finish during independent device runs.
+Results record `apk_binding_mode`; default baseline acceptance remains separate.
+Refusal/workflow contracts: `tests/test_owned_apk_diagnostic_binding.py` and the
+existing installed-attempt, survivor and session cleanup tests.
+
 `DeveloperSkillVariantSelection.cs` is the current, explicitly assisted per-run
 loadout boundary owned by `AndroidProfileSession`. The optional
 `survivor-kit-check --target <base-key> --skill-variants <ignored-json>` accepts
