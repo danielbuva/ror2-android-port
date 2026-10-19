@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J595** (current Nova tooling verified; APK baseline remains J585).
+Last updated 2026-10-18 after **J596** (exact-editor survivor/Siren contracts passed; APK baseline remains J585).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -15,7 +15,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` — J585 code build of `main`: layered R9 reimport in `LabBuild.cs`, `Unity.Timeline` preserved whole (J584); runtime source unchanged since J551; passed both `./dev check-baseline` modes |
 | Installed now | J585 APK `da5e4959…`, installed in place on the current Nova's adopted storage and passed both baseline modes through the scoped receipt path (J595); app stopped, OLED asleep. Receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since that APK | J587/J590 survivor accounting/loadout drafts and J594's source Siren encounter owner are staged; build and device acceptance remain pending. |
+| Runtime source since that APK | J587/J590 survivor accounting/loadout drafts and J594's source Siren encounter owner are staged; exact-editor contracts and imported GUIDs passed (J596). APK build and device acceptance remain pending. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |

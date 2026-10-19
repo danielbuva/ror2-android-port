@@ -6728,3 +6728,41 @@ for this Nova; the second Nova and Thor require internal-only policy and reserve
 checks. The host Unity mutex remains the sole build coordinator. This checkpoint
 changes host tooling only, not R8 runtime inputs; survivor/Siren runtime build
 and acceptance remain separate queued work. No Phase 2 rebuild step ran here.
+
+
+## J596 — Execute survivor and Siren contracts in the exact editor
+
+Hypothesis: the J587/J590 survivor observer and J594 Siren owner can compile and
+satisfy their source-selection, accounting and teardown contracts in the pinned
+Unity editor before paying for an Android build. Prior art and native contracts
+remain those cited in J587/J590/J594; no new reconstruction mechanism is added.
+
+After J586 released the coordination lock, the existing whole-catalog source
+producer staged all 94 authored runtime sources and both editor fixtures into
+the working lab project. The host Unity mutex covered staging, asset refresh,
+compilation and fixture execution through the pinned MCP. Auto-refresh and asset
+editing were restored in finally. The editor was Unity 2021.3.45f2, idle and
+compiled before each fixture; no build or Play Mode ran concurrently.
+
+SurvivorSkillHost passed: four slots, three native server callbacks, four native
+authority callbacks, override observations, teardown, destroyed-body teardown and
+slot reassignment. Source loadout rows retained Toolbot indices 0–4 and Captain
+indices 0–5. SirenEncounterHost passed exact imported inactive scene-ID-10
+selection, three unchanged disabled MapZones, changed/ambiguous/active/wrong
+source refusals, activation-before-spawn and failed-attach rollback/error
+preservation. Its result explicitly leaves native encounter lifecycle unverified.
+These fixtures do not prove Android skill effects, natural egg placement, the
+boss/reward lifecycle or live network cleanup.
+
+Evidence: work/coordination/codex-runtime-fixtures/ (idle, refresh, compilation
+and both structured fixture results). The actual imported GUIDs for the two new
+repository-authored runtime sources are now pinned in project-layout.json;
+preflight will require those exact identities. No private content or importer
+body was added to the recipe. The provenance audit is in recipe/README.md.
+
+APK baseline and installed package remain J585, whose two checks passed again
+through the scoped Nova path in J595. This result changes R8 authored source/
+importer/provenance inputs and requires later replay by the rebuild track; no
+Phase 2 step ran here. Next is one code-only APK followed by both baseline modes
+and attributed survivor gameplay. The Siren mission still requires native device
+evidence. No extra device was used.

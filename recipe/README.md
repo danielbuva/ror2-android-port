@@ -168,15 +168,15 @@ Built-in modules remain under the operator's applicable Unity Software license
 
 The survivor activation observer adds one repository-authored runtime source to
 both source/layout selections (93 entries). It contains no game-derived data;
-the source is staged by the existing build producer. Its layout GUID awaits the
-first editor import. `SurvivorSkillHost.cs` is an authored editor-only fixture,
+the source is staged by the existing build producer. Its actual first-import GUID
+is pinned in the layout (J596). `SurvivorSkillHost.cs` is an authored editor-only fixture,
 staged by that same producer; neither file introduces a local content input.
 
 The Siren encounter draft adds `runtime/stage/SirenEncounterBoundary.cs` to both
 source/layout selections (94 entries). This repository-authored owner contains
 only source API calls and the minimum scene/object/card identity contract; no
 serialized scene, original algorithm, asset body or middleware is reproduced.
-Its GUID awaits the first editor import. `SirenEncounterHost.cs` is an authored
+Its actual first-import GUID is pinned in the layout (J596). `SirenEncounterHost.cs` is an authored
 editor-only selection/transaction fixture staged by the existing build producer.
 Neither file adds a local content input. Audited 2026-10-18; device acceptance
 and R8 source/importer/provenance replay remain pending.
