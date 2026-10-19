@@ -13131,3 +13131,49 @@ UI event with EndOfEvent, bounded PCM and the same zero-error cleanup gate.
 This load-only pass has no event, PCM, audibility, managed-ABI or composed-game
 acceptance. Audio remains unavailable in the port; baseline and rebuild inputs
 are unchanged. All bank/SDK/native material remains ignored.
+
+## J741 — Sample native enemy components through their own lifetimes
+
+Hypothesis: J739's observer must handle native bodies that lack a
+CharacterMotor, and references retired independently of their body or AI.
+Read-only exact-editor inspection confirms the staged WispBody prefab has a
+RigidbodyMotor, health/body components and the Body state machine, with no
+CharacterMotor. The failed report's Wisp spawn state and position/path writes
+precede the unsafe motor read. This is a strong explanation, not a measured
+identity for the null in the failed IL2CPP frame. Pinned community character
+prior art preserves native component/state-machine relationships; accepted
+BaseAI target-reset behavior supplies the separate nullable-target contract.
+
+Change the existing EnemySpineSession owner. Cache and test each Unity/native
+reference before sampling target, state, motor or health fields; retain prior
+measurements when a field is unavailable. Position/path/fall and health continue
+for non-CharacterMotor bodies. Preserve accumulated death/corpse facts. A
+missing enemy report guards the dependent reward observer and enemy-specific
+samples while independent navigation/director observations still execute.
+There is no catch-all, alternate motor simulation, spawn/damage/state change
+or new experiment-switch case. Independent review caught the earlier draft's
+overbroad missing-report return; the integrated revision resolves it and has
+no remaining concrete review finding.
+
+The new host contract extracts and executes the actual production method with
+authored live, null-target and destroyed AI/body/motor/health/master doubles.
+It checks surviving measurements, absent-report sibling observations, nonmotor
+path/fall sampling and retained previous values. Root passes all 1,025 host
+tests with scripts/env.sh and the exact local compiler/toolchain, in 19.647
+seconds. An earlier full run exposed two recipe-generation fixture errors:
+that unit test accidentally consulted the live dirty Git source gate introduced
+by J738. Its orchestration double now supplies a fixture source identity; the
+production guard and its temporary-Git contract remain unchanged. A prior
+environment-free run also skipped the toolchain slice fixture; the complete
+pinned-environment result is the actual full-suite qualification.
+
+Evidence: work/coordination/native-loss-enemy-observer-triage/
+(root-wisp-prefab-layout.json and root-full-host-suite-pinned-env files);
+independent review:
+work/coordination/native-loss-enemy-observer-independent-review/findings.md.
+First runtime failure/revisit condition remains J739 until a new APK passes
+both defaults and native first-stage loss/restart. No new APK or device
+acceptance is claimed by this source checkpoint. Accepted/installed 12d79359
+and its rollback remain unchanged. The authored observer source affects R8
+staging; ARCHITECTURE names its owner and host contract, and recipe/README.md
+records provenance/privacy review. No new local production input is added.

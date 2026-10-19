@@ -547,55 +547,80 @@ public sealed partial class PortSession
         }
         public void ObserveEnemy()
         {
-            coordinator.ObserveEnemyRewards();
+            // The player-defeat observer also calls this method when no enemy context was
+            // prepared. Treat the entire native graph as independently-lived observations.
+            if (coordinator.r.enemy != null)
+                coordinator.ObserveEnemyRewards();
             coordinator.ObserveOriginalNavigation();
             coordinator.ObserveDirectorActors();
-            if (coordinator.enemyAI)
+            if (coordinator.r.enemy == null)
+                return;
+            var ai = coordinator.enemyAI;
+            if (ai)
             {
                 coordinator.r.enemy.aiFrames++;
-                coordinator.r.enemy.targetFound |= coordinator.enemyAI.currentEnemy.characterBody == coordinator.enemyPlayer;
-                if (coordinator.enemyAI.stateMachine.state != null)
-                    coordinator.r.enemy.aiState = coordinator.enemyAI.stateMachine.state.GetType().FullName;
+                var target = ai.currentEnemy;
+                var targetBody = target == null ? null : target.characterBody;
+                coordinator.r.enemy.targetFound |= targetBody && targetBody == coordinator.enemyPlayer;
+                var aiStateMachine = ai.stateMachine;
+                if (aiStateMachine && aiStateMachine.state != null)
+                    coordinator.r.enemy.aiState = aiStateMachine.state.GetType().FullName;
             }
-            if (coordinator.enemyBody)
+            var body = coordinator.enemyBody;
+            if (body)
             {
-                var state = EntityStateMachine.FindByCustomName(coordinator.enemyBody.gameObject, "Body").state;
-                if (state != priorEnemyState && state is EntityStates.BeetleMonster.HeadbuttState)
-                    coordinator.r.enemy.headbutts++;
-                priorEnemyState = state;
-                coordinator.r.enemy.bodyState = state == null ? "null" : state.GetType().FullName;
-                coordinator.r.enemy.position = coordinator.enemyBody.transform.position;
+                var bodyMachine = EntityStateMachine.FindByCustomName(body.gameObject, "Body");
+                if (bodyMachine)
+                {
+                    var state = bodyMachine.state;
+                    if (state != priorEnemyState && state is EntityStates.BeetleMonster.HeadbuttState)
+                        coordinator.r.enemy.headbutts++;
+                    priorEnemyState = state;
+                    coordinator.r.enemy.bodyState = state == null ? "null" : state.GetType().FullName;
+                }
+                coordinator.r.enemy.position = body.transform.position;
                 var delta = coordinator.r.enemy.position - priorEnemyPosition;
                 coordinator.r.enemy.pathLength += delta.magnitude;
                 delta.y = 0;
                 coordinator.r.enemy.planarPathLength += delta.magnitude;
                 coordinator.r.enemy.maxFall =
                     Mathf.Max(coordinator.r.enemy.maxFall, coordinator.r.enemy.spawnPosition.y - coordinator.r.enemy.position.y);
-                coordinator.r.enemy.velocity = coordinator.enemyBody.characterMotor.velocity;
-                if (coordinator.enemyBody.characterMotor.isGrounded)
-                    coordinator.r.enemy.groundedFrames++;
                 if (coordinator.r.enemy.enemyDamageEvents == 0)
                 {
                     coordinator.r.enemy.planarBeforeDamage += delta.magnitude;
                     coordinator.r.enemy.maxFallBeforeDamage = coordinator.r.enemy.maxFall;
-                    if (coordinator.enemyBody.characterMotor.isGrounded)
+                }
+                var motor = body.characterMotor;
+                if (motor)
+                {
+                    coordinator.r.enemy.velocity = motor.velocity;
+                    if (motor.isGrounded)
+                        coordinator.r.enemy.groundedFrames++;
+                    if (coordinator.r.enemy.enemyDamageEvents == 0 && motor.isGrounded)
                         coordinator.r.enemy.groundedBeforeDamage++;
                 }
                 priorEnemyPosition = coordinator.r.enemy.position;
-                coordinator.r.enemy.health = coordinator.enemyBody.healthComponent.health;
-                coordinator.r.enemy.dead |= !coordinator.enemyBody.healthComponent.alive;
+                var health = body.healthComponent;
+                if (health)
+                {
+                    coordinator.r.enemy.health = health.health;
+                    coordinator.r.enemy.dead |= !health.alive;
+                }
             }
-            if (coordinator.enemyPlayer)
+            var player = coordinator.enemyPlayer;
+            if (player)
             {
-                coordinator.r.enemy.playerHealth = coordinator.enemyPlayer.healthComponent.health;
-                coordinator.r.enemy.playerKillsAfter = coordinator.enemyPlayer.killCountServer;
+                var health = player.healthComponent;
+                if (health)
+                    coordinator.r.enemy.playerHealth = health.health;
+                coordinator.r.enemy.playerKillsAfter = player.killCountServer;
             }
             if (coordinator.r.enemy.dead)
             {
-                coordinator.r.enemy.naturalBodyDestroyed = !coordinator.enemyBody;
+                coordinator.r.enemy.naturalBodyDestroyed = !body;
                 coordinator.r.enemy.naturalMasterDestroyed = !coordinator.enemyMasterHost;
                 coordinator.r.enemy.preservedCorpseObserved |=
-                    !coordinator.enemyBody && enemyDetachedModel && enemyDetachedModel.GetComponent<Corpse>();
+                    !body && enemyDetachedModel && enemyDetachedModel.GetComponent<Corpse>();
             }
         }
         public void CleanupEnemy()

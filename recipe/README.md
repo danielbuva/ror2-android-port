@@ -1156,3 +1156,14 @@ bookkeeping and a synthetic CoinEmitter lookup fixture. No additional source
 asset body, implementation or protected material is included. Exact native
 baked indices and original files remain local inputs; the public change affects
 R8 source staging and is independently checked in the pinned editor.
+
+## Native actor observer audit (J741)
+
+The enemy observation change is authored null/lifetime handling around existing
+native API fields. Its host collaborators and measurements are independently
+authored; no original method body, prefab serialization, game media, SDK or
+private evidence is copied. Minimum component/type identities explain why
+bodies can expose different motor implementations. Original assets and the
+read-only component-layout receipt stay ignored. Spawn, damage, native event
+dispatch and entitlement behavior are unchanged. The runtime source is staged
+through R8; no new ignored production input or build step is introduced.

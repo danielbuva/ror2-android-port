@@ -617,7 +617,13 @@ Ownership begins before the first add, normal cleanup removes exact delegates
 before actors, and source-stage recovery retains the owner and observations.
 `test_enemy_actor_observation.py` executes the authored helpers/callbacks and
 cleanup against host collaborators, including partial setup and unrelated
-listeners. It does not raise native gameplay events. `AutomaticDirectorSession`
+listeners. `EnemySpineSession.ObserveEnemy` samples each live target, state
+machine, motor and health component independently, including bodies without a
+CharacterMotor. Missing enemy reports skip only dependent reward/actor fields;
+navigation and director observers keep their own lifetimes. Prior samples and
+death facts survive unavailable components. `test_enemy_observer_lifetime.py`
+executes that production method with live, missing and destroyed collaborators.
+These host fixtures do not raise native gameplay events. `AutomaticDirectorSession`
 separates native elite/catalog/
 player initialization from the existing one-card director activation.
 Its native first-stage path registers only the exact existing inactive player
