@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J583](PORTING_JOURNAL.md#j583--causes-of-the-four-j582-r9-gaps-script-audit-equal) | 2026-10-18 | Causes of the four J582 R9 gaps; script audit equal | Phase 2, from-scratch rebuild (diagnosed by Claude; no build, install or source change). |
 | [J582](PORTING_JOURNAL.md#j582--first-from-scratch-apk-passes-both-device-checks-r9-still-unequal) | 2026-10-18 | First from-scratch APK passes both device checks; R9 still unequal | Phase 2, from-scratch rebuild (run by Claude). |
 | [J581](PORTING_JOURNAL.md#j581--tmp-settings-are-null-in-any-batch-editor-r9-gate-split) | 2026-10-18 | TMP settings are null in any batch editor; R9 gate split | Phase 2, from-scratch rebuild (run and fixed by Claude). |
 | [J580](PORTING_JOURNAL.md#j580--r9-hud-repaired-differential-reimport-error-gate) | 2026-10-18 | R9 HUD repaired; differential reimport-error gate | Phase 2, from-scratch rebuild (run and fixed by Claude). |

@@ -6065,3 +6065,70 @@ standard checks. It is not yet proven equivalent to the working project's. Revis
 `Unity.Timeline.dll` becomes a linker root and `Hidden/Compositing` drops out; the three new
 reimport errors; the 251 selection-wide missing-script references against the working project;
 whether the first stage-exit's longer first stage recurs.
+
+## J583 — Causes of the four J582 R9 gaps; script audit equal
+
+Phase 2, from-scratch rebuild (diagnosed by Claude; no build, install or source change). Hypothesis:
+each R9 gap J582 left open has a cause that the receipt, both editor logs, the two APKs and the
+working editor can name without another R9 run. All four items now have one; two still need a
+decision before any fix. Working-editor probes ran through the pinned MCP bridge (port 8080) with
+`editor.py`'s project and version guards; bodies and outputs are in `work/receipts/J583-evidence/`.
+
+(1) `Unity.Timeline.dll` linker root. Unity roots an assembly whose types it serialized earlier in
+the same editor process (J506). R9 builds every bundle from a fresh Library, and 55 bundle manifests
+reference the Timeline DLL, so it becomes the 13th root. The reference APK `5f0520d2…` is a
+57-second code-only build that rebuilt no bundle. The working project's own full builds root it
+too: the editor log `lab-editor-20261012T051749.817522Z.log` shows 36 thirteen-root and 183
+twelve-root linker commands, and the full builds `0d9d054e…` (J542, 1,417 s) and `6d3e1526…` (J551)
+have a `global-metadata.dat` byte-identical to R9's. Their `libil2cpp.so` matches R9's size
+(97,061,512 B) and differs in only 24 bytes: the 20-byte GNU build-id and the 4-byte debuglink CRC.
+The Burst library embeds the absolute project path 32 times; with the path replaced, its length
+matches. `UnityLinkerToEditorData.json` is identical in both projects. So R9 matches a working full
+build. `whole_catalog.BUNDLE_ROOT_ASSEMBLIES` pins 8 assemblies `preserve="all"`, and Timeline only
+by type. Pinning it too would make code-only and full builds agree (the J506 mechanism), at
++109 KB in the baseline APK. That change needs a decision and a new device-verified baseline.
+
+(2) `Hidden/Compositing` (`unity_builtin_extra` path ID 17000, the `TextureMixerPlayable` shader).
+The build appends it after the four video shaders, as the 35th entry of `GraphicsSettings`'
+always-included list. Every build of the working project that compiled built-in shaders includes
+it: fresh-editor and warm builds, batch and GUI (`lab-editor-*.log`, `adoption-editor.log`, J505's
+code-only builds, all cached APKs). Both R9 runs omit it (J576 `work/receipts/J576-editor.log` and
+J582). Ruled out as causes, because they are identical in both projects: the file list (91,841
+files), `Packages`, `ProjectSettings`, the linker report, `BuildPlayerData` type databases (paths
+aside), and the object types in all 549 player data files. No project asset names the shader. So
+the trigger is Library or import state that the working project has and a fresh import lacks. Open
+question; next experiment: list the built-in resources Unity would include from a code-only build
+in a destination editor and in the working editor.
+
+(3) The three reimport errors. In the working editor, reading `TMP_Settings.defaultStyleSheet`
+logs exactly the destination's pair: "RuntimeData is null…" and the TMP `NullReferenceException`
+(the game's TMP loads its settings through Addressables, which has no runtime data in an editor).
+`TMP_Text.SetText` with unchanged text returns without that lookup; with different text, even
+empty, it throws (tested on a preview-scene clone). The working `TrialPortalEntry` prefabs store
+the text their `tsfTrialTimer` formatter produces, so `TimerText.OnValidate` never reaches TMP.
+In R9, pass 1 imported both TrialPortal prefabs while TimerText's TMP target was unresolved
+(`editor-repair.log`: "TimerText does not specify a target label"). Pass 2's single batch did not
+follow LabBuild's dependency order: Unity imported 9,031 `.asset` files before 4,950 prefabs. So
+`iscTrialPortalEntry.asset` and `iscTrialPortalEntryDanger.asset` loaded their prefabs from pass 1's
+artifacts, and `OnValidate` set text different from the stored label text. The exact text it set
+was not observed. J580's control reimported `Hud.prefab`, which no spawn card loads before its own
+reimport, so it could not show this. A fix with no allowance: import the dependents in dependency
+layers, one `StartAssetEditing` batch per layer. A host estimate from text references gives 39
+layers; the TrialPortal prefabs are in layer 1, before their spawn cards in layer 2. Not
+implemented: it changes `LabBuild.cs` and needs the exact-editor and device proof plus an R9 rerun.
+
+(4) The 251 missing-script references. The shared audit body (`script_audit.py`'s file-based
+payload) hit the bridge's fixed 30-second limit, and 20 roots alone took 26 s, so splitting by root
+does not scale. The unchanged body ran in an `EditorApplication.delayCall` lambda that wrote its
+report to a file (`work/receipts/J583-working-script-audit.json`). `script_audit.py --compare`
+reports equal. Both projects have 251 per asset in 9 of 5,132 assets (226 in `mire.unity`, 17 in
+`soul_perftest.unity`), and no resolved MonoScript is lost.
+
+The gate also counts four unity-generated file differences, so fixing (3) alone cannot make R9
+`equal`. `Assets/Lab.unity` is re-saved with new object IDs on every build. The two render textures
+differ only by field order. The `BlueNoise_R8_1.png.meta` difference is not a reordering, as J576
+called it: the destination holds the AssetRipper export meta unchanged (hash `2ffa932b…`, written
+before R9), and the working meta has other importer values (mipmaps, texture type, compression,
+platform overrides). The editor does not rewrite a meta on a plain import. Revisit: decide the
+Timeline pin; run the item-2 experiment; implement the layered reimport, then rerun R9; decide how
+R9 treats `Lab.unity` and the export-form metas.
