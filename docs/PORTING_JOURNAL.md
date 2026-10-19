@@ -11867,3 +11867,159 @@ the corrected guarded base-stage route still runs on it. Next build/freeze the
 candidate, wait for that device run, require both default controls after install,
 then observe the native mismatch. No original input, Phase 2 output, device
 receipt edit, extra device, storage change, Moon attempt or award occurs.
+
+## J717 — Bound the initial assistance marker wait in the guarded stage runner
+
+Hypothesis: the first world-playing save can precede the first update that
+records diagnostic assistance, so a safe route collector must distinguish bounded
+startup from lost assistance during play. The second guarded Huntress attempt on
+accepted J707 APK d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee
+stops at its first world snapshot, zero world seconds, after 169.433 host seconds:
+work/experiments/siren-route/20261019T182602.734463Z/.
+The top-level Siren selector is honored; everAssisted is still false before the
+first update. Native error/first-failure fields and root process-log errors are
+empty. Stop assistance-not-recorded is a host admission refusal, not a native
+failure, route pass or fourth-boundary observation. No first-world/profile
+baseline is admitted. The stop report has 13 applied runs, one unlock/coin and
+result application false; without an admitted baseline, profileUnchanged remains
+unknown. Selector removal, stop and OLED sleep succeed.
+
+The private runner now permits at most 15 monotonic host seconds for this marker
+only on initial Lakes at transition 0. It captures no first-world/profile until
+the marker is actually true. Identity, native failure and selector checks remain
+immediate; route/Moon boundaries still stop while pending. After admission,
+marker loss refuses immediately, including at the otherwise normal fourth exit.
+Independent actual-loop fake-device tests expose an initial draft that wrongly
+let normal fourth-exit classification outrank lost assistance; the correction
+restores that precedence. Root's 31 private contracts and 11 independent actual
+poll-loop fake-clock cases pass, including expiry, no premature profile admission,
+native failure, identity/PID drift, Moon/fourth stop and owner-scoped cleanup.
+Actual runner SHA-256:
+bc51dd45c3ee592fa67210319afc446564979cc853c4651f3335ad9953f6c149.
+Evidence: work/coordination/siren-startup-readiness-draft/ and
+work/coordination/siren-startup-readiness-review/.
+
+First failure: premature host assistance admission check. This generic Python
+correction changes no RoR2 runtime or ownership rule; J701's frozen guard/fixture
+and actual default-control prerequisite remain mandatory. The third bounded
+attempt is active separately on owned d545d800 while the global build points to
+an uninstalled candidate. No Moon attempt, extra device, storage change, manual
+device receipt edit, original input change or permanent award occurs.
+
+## J718 — Acrid alternates record Breath projectile and aggregate Blight infliction
+
+Hypothesis: the fresh native inventory can select Blight, Bite, Chainable Leap
+and Breath without changing the sole primary variant or saved loadout. This
+assisted case passes at 60.444260 world seconds on accepted J707 APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/experiments/survivor-check/20261019T183414.411231Z/Croco/.
+The strict selector applies effective variants 1/0/1/1/1. All five spawned native
+definitions match: passive Blight, unchanged Slash, Bite, Chainable Leap and
+Breath. The passive is disabled/noncanonical and correctly needs no active
+callback. Final authority/server counts for the four canonical slots are
+19/5/1/2; each canonical coverage request is observed. No first failure,
+unexpected runtime error, missing callback or suppressed callback is reported.
+
+The owned observer retains one CrocoBreathProjectile identity, catalog 69,
+network ID 54, no longer live at the final sample. It proves at least one
+native Breath projectile occurrence, not both activations' complete output.
+There is no player-projectile-attributed damage. Twelve player-body damage
+facts and 641.28 aggregate damage cannot be assigned to individual skills.
+The melee owner records Bite hitbox activity with nine peak attack ticks,
+not slot-exclusive damage. The DOT owner records one aggregate Blight infliction
+and zero Blight damage events. This is a positive run-level status observation,
+consistent with the exact e544 damage-type controller/passive contract, without
+an exact attack/source-slot link or demonstrated damage tick. Chainable Leap's
+activation and later return to main do not prove landing or impact/blast.
+Prior art remains J625 and the pinned native state/authority/ownership contract;
+no source state, collision, velocity or status is forced.
+
+Developer survivor/variant selection, diagnostic input/coverage and invincibility
+make this assisted; the other acceleration controls are off. Profile retains
+saved variants 0/0/0/0/0, 13 applied runs, one earned/available unlock and one
+coin, result/menu commit false. The collector removes its selector, stops and
+sleeps. Interpretation: work/coordination/croco-alternate-results/.
+The explicit-owned-apk-sha256 result remains bound to d545d800 even as the global
+build advances to b32998b8; it does not claim that candidate was installed.
+
+First failure: none in this bounded alternate case. Full ability semantics,
+Breath impact/damage, leap impact, exact Blight causality and ordinary eligibility
+remain open. No new runtime is added for the case, nor original input, Phase 2
+output, extra device, receipt, storage or award changed. Mercenary's separate
+alternate case is classified independently rather than inferred from this pass.
+
+## J719 — Freeze the native-operation candidate with reviewed host-source drift
+
+Hypothesis: J716's read-only witness can be built without changing the accepted
+content payload. Unity succeeds with zero errors in 130.457831 seconds, request
+20261019T183328.164488Z, source bef493c:
+b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54.
+All 266 payload hashes exactly equal accepted d545d800's frozen receipt. No asset
+closure or proprietary payload is newly generated for this source-only change.
+Host-only preflight passes the unchanged accepted input before dispatch.
+
+The outer controller then correctly refuses its broad post-build source check:
+the parallel session changed four host modules during the build (catalog_rebuild,
+composition_io, composition_rebuild and whole_catalog). Preserve that refusal and
+its original outputs. Do not relabel the outer controller as a pass or disable
+the guard. Root and an independent review trace the actual code-only/default-
+destination path. Its build entry, map/source/bootstrap generators and StageIO
+are AST-identical to bef493c; changed audit/reconcile/native-inventory and R2/R3/R4
+owners are outside that path. All 241 pre-build frozen input hashes match the
+published bef493c source. All 105 staged runtime files still match that frozen
+manifest. The APK's actual IL2CPP metadata contains both new authored witness
+types. These request-specific checks support a one-off provenance binding; they
+are not a general exception for changed or unknown build inputs.
+
+Freeze the exact hashed APK, original build receipt/logs, unchanged source
+manifest, complete authored source snapshot from Git, reviewed-source-binding
+proof, preflight and host/editor evidence under:
+work/experiments/shrine-operation/candidate-20261019T183328.164488Z/.
+Independent audit: work/coordination/shrine-build-host-drift-review/.
+The old accepted d545d800 APK/receipt remains intact; normal current-build points
+to b32998b8, while selected-device ownership still identifies d545d800. No device
+receipt is edited to pretend the new APK is installed.
+
+First failure: outer provenance guard detects unrelated concurrent host changes;
+the explicit audit resolves only this artifact's source binding. No Android
+reflection, native cleanup, default-control or baseline acceptance follows from
+compilation or metadata presence. b32998b8 is uninstalled/unaccepted; both default
+modes remain required before any new baseline. The separate Mercenary failure
+may justify combining its correction into a later candidate first. The current
+Siren route continues on d545d800. No original input, Phase 2 implementation,
+extra device, storage configuration/data move, Moon attempt or award is changed.
+
+## J720 — Mercenary alternate projectile fails native impact-effect lookup
+
+Hypothesis: fresh exact native variants can exercise Uppercut, Focused Assault
+and EvisProjectile alongside unchanged primary. The case fails on accepted J707
+APK d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/experiments/survivor-check/20261019T183904.364248Z/Merc/.
+At 25.143845 world seconds the live definitions match the requested variants.
+All four final authority/server counters are positive (16/2/1/1), but that cannot
+pass the required 60-second case after a native runtime error. Current-process
+log checking stops at the first error: Unable to SpawnEffect from prefab named
+MercSwordFinisherSlash, with ProjectileExplosion.DetonateServer/Detonate in its
+stack. The report's own error/firstFailure fields are empty, demonstrating why
+the independent native-log gate remains necessary. The collector returns failure.
+
+This establishes a rejected non-null prefab lookup during the case, not yet
+whether its EffectComponent is absent, its catalog registration is missing, or
+the caller holds a duplicate asset identity. Nor does the name/temporal relation
+alone prove which individual activation created it. Next trace exact e544
+projectile/effect references, current payload membership and native EffectCatalog
+registration against prior art before changing the existing content owner.
+Do not suppress the error, force an effect index, or add an experiment-switch fix.
+Parallel source/identity analysis is under:
+work/coordination/merc-alternate-effect-triage/ and
+work/coordination/merc-impact-effect-identity/.
+
+This is explicit-owned-apk-sha256 on d545d800, not the global uninstalled b32998b8
+candidate. Developer survivor/variant selection, automatic diagnostic input and
+invincibility exclude normal acceptance; the other accelerations are off. Saved
+variants remain 0/0/0/0 with 13 applied runs, one earned/available unlock/coin and
+result/menu commit false. The collector preserves the failed case, removes its
+selector, stops and sleeps. First failure: native impact-effect lookup; complete
+alternate-kit semantics remain unaccepted. The independent guarded stage route
+is active. No original input, runtime correction, Phase 2 output, extra device,
+manual receipt edit, storage change or award occurs in this result.
