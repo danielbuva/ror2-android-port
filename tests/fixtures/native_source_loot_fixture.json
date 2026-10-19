@@ -1,0 +1,102 @@
+{
+  "source_cohorts": {
+    "golemplains": {
+      "identity_count": 5,
+      "toggle_target_count": 3,
+      "owned_chest_consumers": 0,
+      "owned_wake_consumers": 0
+    },
+    "lakes": {
+      "identity_count": 8,
+      "toggle_target_count": 21,
+      "owned_chest_consumers": 1,
+      "owned_wake_consumers": 1
+    }
+  },
+  "lakes_native_table_consumers": [
+    {
+      "component": "ChestBehavior",
+      "fields": [
+        "dropTable"
+      ],
+      "tables": [
+        "dtChest2"
+      ],
+      "count": 1,
+      "handled": true
+    },
+    {
+      "component": "WakeController",
+      "fields": [
+        "goldDropTable",
+        "silverDropTable",
+        "bronzeDropTable"
+      ],
+      "tables": [
+        "dtCursedItemTable",
+        "dtTier2Item",
+        "dtTier1Item"
+      ],
+      "count": 1,
+      "handled": true
+    },
+    {
+      "component": "PickupPickerController",
+      "fields": [
+        "excludedItemsDropTable",
+        "includedItemsDropTable"
+      ],
+      "tables": [
+        "Chest2:null/null",
+        "Scrapper:pdtUnscrappableItems/null"
+      ],
+      "count": 2,
+      "handled": false,
+      "reason": "ExplicitPickupDropTable is picker exclusion data; exact source reference remains unchanged"
+    },
+    {
+      "component": "CreatePickupsFromDropTable",
+      "fields": [
+        "sourceDropTable"
+      ],
+      "tables": [
+        null
+      ],
+      "count": 1,
+      "handled": false,
+      "reason": "WakeController.DropShamanRewards late-binds one of the owned Wake tables"
+    }
+  ],
+  "lakes_chest2": {
+    "scene_object_name": "Chest2",
+    "active_in_source_scene": false,
+    "scene_id": 1,
+    "table_name": "dtChest2",
+    "tier_weights": {
+      "tier2": "positive",
+      "tier3": "positive"
+    },
+    "availability_source": "current Run available lists selected by positive native table weights",
+    "ownership_rule": "clone through ObjectiveDropTable and retain in objectiveResources"
+  },
+  "lakes_wake": {
+    "identity_name": "WakeStageEvent",
+    "scene_id": 8,
+    "controller": "WakeController",
+    "late_assignment": {
+      "component": "CreatePickupsFromDropTable",
+      "field": "sourceDropTable",
+      "native_method": "WakeController.DropShamanRewards"
+    },
+    "table_fields": {
+      "gold": "dtCursedItemTable",
+      "silver": "dtTier2Item",
+      "bronze": "dtTier1Item"
+    },
+    "selector_policy": {
+      "choice_count": "equals positive-weight entries in current Run lists",
+      "zero_choices": "preserve an empty native tier; do not grant or substitute",
+      "missing_positive_weight_list": "refuse preparation"
+    }
+  }
+}

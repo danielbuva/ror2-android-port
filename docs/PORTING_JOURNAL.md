@@ -9969,3 +9969,66 @@ J670; root has started the independent ordinary Huntress inventory/callback
 case while the next code candidate is prepared. No new runtime behavior,
 original input, additional device, private receipt hand edit, existing data
 move or storage reconfiguration occurs.
+
+## J675 — Own and prepare the source cohort's native loot tables before activation
+
+Hypothesis: J668's original Chest2 starts before its source Basic table has
+current Run choices. Preparing an owned table before activation can preserve
+the original roll while removing that readiness failure. The same audited
+Lakes cohort contains three related Wake reward tables; treating every table
+field as Chest2 would incorrectly reject valid source content.
+
+Existing WholeInteractableSession qualifies the exact Golemplains/Lakes
+identity/toggle union and known ChestBehavior, WakeController, picker and
+reward-creator shapes. Lakes prepares four Basic clones through the existing
+ObjectiveDropTable resource owner: Chest2 and Wake gold/silver/bronze. Native
+serialized configuration must equal its source before explicit regeneration
+against the current Run; the original source must remain unchanged. The
+unfiltered native selector count must equal entries in positive-weight current
+lists, which must be non-null. Chest2 requires eligible choices; optional Wake
+tiers can remain empty. No loot, expansion or entitlement is fabricated, no
+roll/RNG draw occurs during preparation, and no global Run event is synthesized.
+
+Scrapper's Explicit exclusion table stays exact and unchanged; the native
+reward creator retains its audited null slot until Wake assigns one of the
+owned reward tables. This is a version-bound known-consumer inventory, not an
+arbitrary object-graph scanner. Native Wake's source lacks an empty-selector
+reward guard; its unavailable-tier behavior remains an unplayed risk, not a
+newly observed failure or acceptance.
+
+Each borrowed-field lease is registered before binding. Reverse restoration
+accepts only its exact owned or already-original value; foreign replacement
+refuses and retains recovery state. Source identity unspawn precedes restoration,
+then toggles restore before objective resources release. Existing source-stage
+and Director owners forward this transaction without changing default setup.
+The source table and cloned resources remain separate until teardown succeeds.
+
+Prior art: pinned R2API.Director f539511e README's owned card clones and shared
+stage-pool mutation hazards, plus ItemAPI's initialized native catalog identities,
+re-inspected through community-prior-art. Accepted e544 ChestBehavior.Roll,
+BasicPickupDropTable, Wake rewards and picker/creator contracts establish the
+version-specific readiness/consumer paths. No native/community implementation
+or serialized table content is copied. Source inventory and independent review:
+work/coordination/native-source-loot-ownership/ and
+work/coordination/native-source-loot-review-v2/.
+
+Root relocates public tests into normal tests/ discovery and uses the existing
+optional pinned Mono/Roslyn pattern. Four contracts include execution of the
+actual extracted production lease for bind, restoration, foreign refusal and
+partial rollback; Run choice counting/source ordering are inspected contracts,
+not engine execution. All 952 host tests pass with one existing skip; focused
+test, Ruff and diff checks pass. Exact-editor source compile and existing
+production/native fixtures pass at work/experiments/first-stage-native-lifecycle/
+stake-editor-20261019T150945.082248Z/. All four actual source assets separately
+pass native clone/JSON equivalence, unchanged-source and no-filter checks at
+work/experiments/native-source-loot/clone-editor-20261019T150702.217855Z/.
+That fixture rolls nothing, creates no Run and does not prove regeneration.
+
+First failure: none in integrated host/editor checks. Native regeneration,
+Chest2 roll, Wake rewards and exact field restoration require the next APK.
+Accepted/installed ad84d0cb… does not contain J669/J672 or this change; Huntress's
+independent default inventory/callback run is active. Runtime selection remains
+105 files. ARCHITECTURE and recipe audit record owner/state/teardown; no new
+local build input is needed. Replay three changed runtime owners through R8;
+no Phase 2 output, original input, extra device, private receipt hand edit,
+existing data or storage configuration is changed.

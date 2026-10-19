@@ -616,6 +616,23 @@ That owner binds both decks before genuine activation; default selection retains
 its existing immediate writes. `NativeDirectorDeckSetterFixture.cs`, staged by
 the same source producer, checks native setter effects on an inactive component
 without a Run or network session.
+`WholeInteractableSession` also owns the native first-stage borrowed drop-table
+transaction. After exact source identities/toggle targets are captured, it
+qualifies Lakes' Chest2 and Wake reward fields, clones four Basic tables through
+`TeleporterWorldSession.ObjectiveDropTable`, verifies serialized configuration,
+and regenerates choices from the current Run before activation. Positive-weight
+categories require current lists; only the ordinary chest requires a nonempty
+selector. Empty optional reward tiers remain empty. The known Scrapper exclusion
+table and late-bound reward-creator slot are validated without replacement.
+`NativeBorrowedFieldLease` records each binding before mutation and restores
+only its exact owned/original values. Identity unspawn precedes reverse field
+restoration, which precedes toggle restoration and objective resource release.
+A foreign replacement retains recovery state and owned resources. Golemplains
+has no known chest/Wake consumer. This qualifies accepted known component shapes;
+it does not discover arbitrary future table consumers. The portable
+`test_native_source_loot_contract.py` executes the extracted lease and checks
+source ordering with authored fixtures. Native Run regeneration/roll remains a
+device gate.
 `TeleporterWorldSession.PrepareInactiveObjectiveTemplate` prepares its owned
 clone before the existing direct spawn. `WholeInteractableSession` uses a
 short-lived `WholeStagePopulationObservation` to store the exact selection/spawn

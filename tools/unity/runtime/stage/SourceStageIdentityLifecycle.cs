@@ -29,6 +29,10 @@ internal interface ISourceStageIdentityOwners
     // Return the exact inactive source root through AutomaticDirectorSession and
     // configure its current stage deck before any root/CombatDirector Awake.
     GameObject PrepareDirectorRoot(Scene scene);
+    // Bind only audited borrowed source interactables before any source target activates.
+    void PrepareSourceInteractableTables(Scene scene, NetworkIdentity[] sourceIdentities, GameObject[] toggleTargets);
+    // Restore exact borrowed fields after identity unspawn and before toggle targets restore.
+    void RestoreSourceInteractableTables(Scene scene);
     // Suppress only this owner's two native CombatDirectors while the root is
     // activated/spawned ahead of Run.OnServerSceneChanged; DirectorCore stays on.
     // The bridge must prove disabled MonoBehaviours still receive Awake in the
@@ -235,6 +239,8 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
             CaptureIdentityState(spec.identities);
             ValidateToggleGroups(spec.groups);
             CaptureToggleTargets();
+            owners.PrepareSourceInteractableTables(scene, identities.Select(state => state.identity).ToArray(),
+                                                  toggleStates.Select(state => state.target).ToArray());
             ActivateAndSpawnAll(spec.identities);
             identitiesPrepared = true;
             RequireOwnedToggleQueue();
@@ -392,6 +398,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         if (directorIdentity && directorIdentity.isServer)
             owners.BeforeDirectorIdentityUnspawn(directorIdentity);
         RollbackOwnedIdentities();
+        owners.RestoreSourceInteractableTables(scene);
         foreach (var target in toggleStates)
             if (target.target)
                 target.target.SetActive(target.activeSelf);
@@ -419,6 +426,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         if (directorIdentity && directorIdentity.isServer)
             owners.BeforeDirectorIdentityUnspawn(directorIdentity);
         RollbackOwnedIdentities();
+        owners.RestoreSourceInteractableTables(scene);
         if (directorRoot)
             owners.RestoreDirectorRoot(directorRoot);
         foreach (var target in toggleStates)

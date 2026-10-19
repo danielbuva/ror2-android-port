@@ -1109,3 +1109,16 @@ community code, profile, private path or device identity is copied. Native
 projectile behavior and source-asset identity assertions stay unchanged. The
 existing producer stages the updated fixture and runtime owner; membership stays
 105. Replay these inputs through R8; no new ignored input or Phase 2 edit occurs.
+
+### Native source loot field ownership audit (2026-10-19)
+
+The existing WholeInteractableSession qualifies minimum source component, scene
+identity and table-name relationships, then clones native configuration locally
+and compares it at runtime. No serialized weight/tag values or native gameplay
+body is copied into the authored recipe. The generic borrowed-field lease,
+portable host collaborators and synthetic inventory fixture are authored code
+and minimum reconstruction relationships. No asset, middleware, profile,
+entitlement, private path or device identity is added. Native availability,
+weights and RNG remain authoritative, including empty optional tiers. Existing
+source/fixture producers and the 105-source selection remain; replay changed
+runtime owners through R8. No new ignored build input or Phase 2 edit occurs.

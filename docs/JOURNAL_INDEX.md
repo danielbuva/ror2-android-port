@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J675](PORTING_JOURNAL.md#j675--own-and-prepare-the-source-cohorts-native-loot-tables-before-activation) | 2026-10-19 | Own and prepare the source cohort's native loot tables before activation | Hypothesis: J668's original Chest2 starts before its source Basic table has current Run choices. |
 | [J674](PORTING_JOURNAL.md#j674--mage-alternate-loadout-survives-native-menu-abandon-cleanup-and-restart) | 2026-10-19 | Mage alternate loadout survives native menu-abandon cleanup and restart | Hypothesis: the same per-run four-alternate loadout can finish the existing native UI-abandon path, release observations and start a healthy session in the sam… |
 | [J673](PORTING_JOURNAL.md#j673--mages-four-alternates-pass-callbacks-with-mapped-projectile-outputs) | 2026-10-19 | Mage's four alternates pass callbacks with mapped projectile outputs | Hypothesis: the actual typed-dependency payload can run Mage's exact four alternate loadout, including the previously host-only Earth Shards charge reference,… |
 | [J672](PORTING_JOURNAL.md#j672--keep-bounded-stake-observation-alive-across-projectile-identity-turnover) | 2026-10-19 | Keep bounded stake observation alive across projectile identity turnover | Hypothesis: J667's first three finite stake identities retire before the error, but their permanent sampling slots prevent observing later stakes. |

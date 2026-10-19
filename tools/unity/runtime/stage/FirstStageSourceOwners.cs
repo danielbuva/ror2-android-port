@@ -84,6 +84,20 @@ public sealed partial class PortSession
                                   "A foreign active director or missing full native deck conflicts with first-stage source ownership");
             }
 
+            public void PrepareSourceInteractableTables(Scene requested, NetworkIdentity[] sourceIdentities,
+                                                       GameObject[] toggleTargets)
+            {
+                coordinator.Check(requested == scene && coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                                  "Native source interactable preparation lost its exact scene owner");
+                coordinator.PrepareNativeSourceInteractableTables(scene, sourceIdentities, toggleTargets);
+            }
+
+            public void RestoreSourceInteractableTables(Scene requested)
+            {
+                coordinator.Check(requested == scene, "Native source interactable restore changed scenes");
+                coordinator.RestoreNativeSourceInteractableTables(scene);
+            }
+
             public GameObject PrepareDirectorRoot(Scene requested)
             {
                 PreflightDirectorRoot(requested);
