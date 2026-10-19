@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J622](PORTING_JOURNAL.md#j622--engineer-survives-lakes-loss-only-cleanup-check-ends-at-departure) | 2026-10-19 | Engineer survives Lakes; loss-only cleanup check ends at departure | The separate J620-APK Engineer cleanup observation runs with all five gameplay debug assists off and diagnostic automatic input. |
 | [J621](PORTING_JOURNAL.md#j621--engineer-reaches-four-native-callbacks-with-the-shield-lease-attached) | 2026-10-19 | Engineer reaches four native callbacks with the shield lease attached | On J620 APK fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971, the selected Engineer diagnostic case reaches 60.38 s of Lakes play with four val… |
 | [J620](PORTING_JOURNAL.md#j620--engineer-identity-and-cleanup-candidate-passes-both-baseline-modes) | 2026-10-19 | Engineer identity and cleanup candidate passes both baseline modes | J617 authored runtime builds in 85.74 s with zero errors, request 20261019T092321.649115Z, after selected-device live preflight. |
 | [J619](PORTING_JOURNAL.md#j619--honor-selected-device-storage-policy-in-the-current-survivor-runner) | 2026-10-19 | Honor selected-device storage policy in the current survivor runner | Host audit finds one remaining current runner assuming adopted storage instead of using the selected device policy: survivor-kit-check. |

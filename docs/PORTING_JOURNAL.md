@@ -7672,6 +7672,8 @@ preflight passes; an initial unselected preflight correctly refused ambiguity
 when several devices were attached. No extra device was selected or onboarded.
 The next code build must pass both baseline modes and Engineer input/cleanup;
 installed J616 APK remains unchanged during these host/editor checks.
+The same 96 authored runtime inputs changed; R8/build-entry replay must include
+these J617 changes in the parallel rebuild track.
 
 ## J618 — Mercenary canonical callbacks pass on the baseline APK
 
@@ -7768,3 +7770,39 @@ and sleeps the OLED. A separate genuine native loss/cleanup/same-process
 restart observation is underway on this APK with all gameplay debug assists
 off; its outcome belongs to its own journal result. Complete Engineer kit and
 ordinary unlock acceptance remain open.
+
+## J622 — Engineer survives Lakes; loss-only cleanup check ends at departure
+
+The separate J620-APK Engineer cleanup observation runs with all five gameplay
+debug assists off and diagnostic automatic input. It reaches a genuine first
+exit to Goolake at 287.40 s of world play, alive at 247 health with 17 kills.
+No report first failure or current-process runtime error is observed. The
+first-stage-only runner correctly stops at that departure, before any Moon
+scope, and preserves the unsuccessful cleanup result:
+work/device/<serial>/experiments/session-cleanup/20261019T093818.011657Z/.
+APK remains
+fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971.
+
+No player death, completed-session report, template release or restart occurs;
+world.engiShieldGuardPrepared=true and Released=false are consistent with live
+world play. Utility still has one native activation, and the captured log has
+no guarded-null-hit marker. The longer run therefore adds natural stage
+progression evidence, not shield wiring/filter execution or cleanup acceptance.
+Applied profile runs remain 13 and earned/available unlocks remain one; no
+result is applied. The finalizer removes the selector, stops the process and
+confirms display sleep; there are no cleanup-finalizer errors.
+
+The host result also lists an unobserved ordinary menu start. Accepted
+OfflineApplicationSession.AwaitOfflineRunStart intentionally skips that menu
+for developerSurvivorOverride, so the current runner's unconditional menu
+requirement is invalid for its newly supported locked diagnostic targets.
+Correct that launch contract without presenting the locked choice as earned.
+The native loss mode must continue requiring a genuine death/result; an
+explicit original UI abandon mode may separately test cleanup if its reported
+controls/ending semantics are sufficient. No death, difficulty setting,
+GameOver callback or lifecycle method is forced to make the check pass.
+
+After classifying this scope stop, continue Treebot/Loader/Croco/Captain on the
+unchanged baseline while host work prepares the launch-contract correction,
+source-backed Siren input and exact native Engineer output observations.
+The original first-stage loss/cleanup proof remains J609 on the earlier APK.
