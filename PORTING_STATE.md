@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J609** (native loss, cleanup and same-process restart pass).
+Last updated 2026-10-19 after **J610** (native restart passes; system CPU profiler refused).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -48,6 +48,7 @@ they are not normal-difficulty acceptance.
   (profile holds 13 applied runs).
 - **Performance:** 120 Hz display with a 300 FPS request; first stage about 116 FPS under a
   firing workload; crowded later stages fall below 60 FPS with the main thread over budget.
+  The first system-simpleperf call graph attempt is permission-denied (J610).
 
 Per-subsystem detail and vocabulary (original / recovered / adapted / approximate /
 unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).

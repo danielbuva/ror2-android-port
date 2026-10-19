@@ -7384,3 +7384,31 @@ unassisted progression, repeated-session memory stability or a complete kit.
 The baseline remains J608's two standard checks; no source/build input changed
 for this acceptance. Continue the remaining base-survivor callback sweep on this
 same APK, then investigate its first failure before adding runtime scope.
+
+## J610 — Android refuses the first system CPU call-graph capture
+
+Hypothesis: J599's bounded system-simpleperf host action can capture native CPU
+owners from an already-running development APK without changing the application
+or launching a profiler. This is a generic Android tooling/permission test; no
+new RoR2-specific reconstruction or runtime diagnostic is introduced.
+
+On J608 APK
+41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14,
+the configured Nova is already in the assisted Toolbot survivor check. The live
+report has 20.11 s of Lakes play, zero transitions and a matching owned foreground
+PID/session/attempt. The one requested 15 s system-simpleperf record command
+fails immediately: opening the cpu-cycles perf event returns Permission denied.
+The capture receipt records raw-profile-record as the first failure, and the
+same PID/owned APK remains present. There is no accepted raw trace or function
+attribution. No alternate privilege, profiler binary, app launch, install or
+runtime setting is attempted. The survivor runner retains lifecycle/display
+ownership and continues independently.
+
+Private failure receipt:
+work/device/<serial>/performance/cpu-20261019T083050.490953Z-7d3a99c26b-survivor-toolbot/.
+The unique remote attempt path is preserved as uncertain output; the receipt
+does not establish that a file exists there. The attempted sample is not a
+performance benchmark and provides no bottleneck or frame-rate conclusion.
+Revisit through a documented permitted development-build profiling mechanism
+or a device/build permission change; repeating the unchanged system-shell
+command is not useful. No source/build input or baseline acceptance changes.

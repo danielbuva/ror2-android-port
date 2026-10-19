@@ -108,8 +108,9 @@ from the selected device's already running, owned foreground lab process. Setup
 validates ownership, APK hash, one PID, foreground activity and the validated runtime
 receipt. Before/after reports preserve available attempt/session/stage/frame context;
 a changed process, APK or previously available session identity fails. It does not
-launch gameplay or install a profiler. Live system-simpleperf permissions remain a
-device gate. Raw profile, symbol report, receipt and failures stay in validated
+launch gameplay or install a profiler. J610's first current-Nova attempt is refused
+by Android perf-event permissions; no call graph is available from that path.
+Raw profile, symbol report, receipt and failures stay in validated
 `work/device/<serial>/performance/<attempt>/`. A symbol-report failure retains the
 successful raw capture and explicitly records the report error. Teardown removes
 only its unique remote profile after a verified nonempty pull; a failed pull or
