@@ -505,3 +505,214 @@ public static class MageEarthShardsStaticConfigFixture
 }
 }
 #endif
+
+#if UNITY_EDITOR
+namespace NativeShrineOperationFixture
+{
+using System.Linq;
+using UnityEditor;
+// Authored exact-editor fixture. It uses only a temporary local Addressables
+// locator/provider and a new GameObject; it does not load game assets or mutate
+// the user's configured locators after TearDown.
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.Serialization;
+using RoR2;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
+using UnityEngine.ResourceManagement.ResourceProviders;
+
+public static class NativeShrineOperationSnapshotEditorFixture
+{
+    const string FixtureKey = "native-shrine-operation-witness-fixture-key";
+    const string FixtureGuid = "0123456789abcdef0123456789abcdef";
+
+    public static object Run()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling ||
+            UnityEngine.Networking.NetworkServer.active || UnityEngine.Networking.NetworkClient.active)
+            throw new InvalidOperationException("Operation fixture requires an idle editor without a network session");
+        var manager = Addressables.ResourceManager;
+        var providers = manager.ResourceProviders.ToArray();
+        var locators = Addressables.ResourceLocators.ToArray();
+        var providerMap = ReadProviderMap(manager).ToArray();
+        var observations = new List<string>();
+        for (int iteration = 0; iteration < 2; iteration++)
+        {
+            observations.Add(Verify());
+            if (!providers.SequenceEqual(manager.ResourceProviders) ||
+                !locators.SequenceEqual(Addressables.ResourceLocators))
+                throw new InvalidOperationException("Fixture changed the existing provider or locator membership/order");
+            var current = ReadProviderMap(manager);
+            if (current.Count != providerMap.Length || providerMap.Any(entry =>
+                !current.ContainsKey(entry.Key) || !ReferenceEquals(current[entry.Key], entry.Value)))
+                throw new InvalidOperationException("Fixture retained or replaced a provider cache entry");
+        }
+        return new { authoredOperationObservations = observations,
+                     repeatedSetupTeardown = true, existingProvidersAndLocatorsPreserved = true,
+                     existingProviderCachePreserved = true, gameAssetsOrNativeRunUsed = false };
+    }
+
+    public static string Verify()
+    {
+        var effect = new GameObject("NativeShrineOperationSnapshotFixtureEffect");
+        var provider = new FixtureGameObjectProvider(effect);
+        provider.Initialize("NativeShrineOperationSnapshotFixtureProvider", string.Empty);
+        var locator = new FixtureLocator(provider.ProviderId);
+        AsyncOperationHandle<GameObject> lease = default(AsyncOperationHandle<GameObject>);
+        AsyncOperationHandle<GameObject> second = default(AsyncOperationHandle<GameObject>);
+        bool providerAdded = false, locatorAdded = false;
+        IDictionary<int, IResourceProvider> providerMap = null;
+        int providerCacheKey = 0;
+        try
+        {
+            providerMap = ReadProviderMap(Addressables.ResourceManager);
+            providerCacheKey = provider.ProviderId.GetHashCode() * 31 + typeof(GameObject).GetHashCode();
+            if (providerMap.ContainsKey(providerCacheKey))
+                throw new InvalidOperationException("Refusing fixture provider cache key already owned by another provider");
+            Addressables.ResourceManager.ResourceProviders.Add(provider);
+            providerAdded = true;
+            Addressables.AddResourceLocator(locator);
+            locatorAdded = true;
+
+            lease = Addressables.ResourceManager.ProvideResource<GameObject>(locator.Location);
+            if (lease.WaitForCompletion() != effect || !lease.IsValid())
+                throw new InvalidOperationException("Authored provider did not complete the local GameObject operation");
+            if (!lease.IsDone || lease.Status != AsyncOperationStatus.Succeeded || lease.Result != effect)
+                throw new InvalidOperationException("Local authored operation did not finish successfully with the supplied object");
+            int beforeObserver = ReferenceCount(lease);
+            var snapshotType = typeof(PortSession).Assembly.GetType("NativeShrineEffectOperationSnapshot", true);
+            var flags = BindingFlags.Static | BindingFlags.NonPublic;
+            var baselineMethod = snapshotType.GetMethod("CaptureBaseline", flags);
+            object[] baselineArgs = { lease, FixtureGuid, FixtureGuid, null };
+            object baseline = baselineMethod.Invoke(null, baselineArgs);
+            string baselineError = Convert.ToString(baselineArgs[3]);
+            if (baseline is System.Collections.ICollection entries && entries.Count == 0)
+                throw new InvalidOperationException("The authored ResourceManager cache did not expose its matching operation");
+            if (!string.IsNullOrEmpty(baselineError))
+                throw new InvalidOperationException("The authored cache baseline reported an error: " + baselineError);
+
+            // A second ProvideResource uses the same key and must share the
+            // cached operation. This tests the production comparison path with
+            // a real cached handle, without involving game locators or effects.
+            second = Addressables.ResourceManager.ProvideResource<GameObject>(locator.Location);
+            if (second.WaitForCompletion() != effect)
+                throw new InvalidOperationException("The second local operation did not return the authored object");
+            int beforeCapture = ReferenceCount(lease);
+            var captureMethod = snapshotType.GetMethod("Capture", flags);
+            object[] captureArgs = { lease, effect, FixtureGuid, FixtureGuid, -1, "authored-editor-fixture", baseline, baselineError };
+            string row = Convert.ToString(captureMethod.Invoke(null, captureArgs));
+            int afterCapture = ReferenceCount(lease);
+            if (beforeCapture != afterCapture || afterCapture <= beforeObserver)
+                throw new InvalidOperationException("Observer mutated the lease count or fixture failed to add a shared cache reference");
+            int entriesStart = row.IndexOf("entries=[", StringComparison.Ordinal);
+            int entriesEnd = entriesStart < 0 ? -1 : row.IndexOf("]", entriesStart, StringComparison.Ordinal);
+            string operationRows = entriesStart < 0 || entriesEnd < 0 ? string.Empty : row.Substring(entriesStart + 9, entriesEnd - entriesStart - 9);
+            bool sameOperationEvidence = false;
+            foreach (var operationRow in operationRows.Split('|'))
+            {
+                if (operationRow.IndexOf("owned=True", StringComparison.Ordinal) >= 0 &&
+                    operationRow.IndexOf("prior=True", StringComparison.Ordinal) >= 0 &&
+                    operationRow.IndexOf("beforeRc=" + beforeObserver, StringComparison.Ordinal) >= 0 &&
+                    operationRow.IndexOf("afterRc=" + beforeCapture, StringComparison.Ordinal) >= 0 &&
+                    operationRow.IndexOf("delta=" + (beforeCapture - beforeObserver), StringComparison.Ordinal) >= 0 &&
+                    operationRow.IndexOf("resultOwned=True", StringComparison.Ordinal) >= 0)
+                    sameOperationEvidence = true;
+            }
+            if (row.IndexOf("leaseValid=True", StringComparison.Ordinal) < 0 ||
+                row.IndexOf("supportIndex=-1", StringComparison.Ordinal) < 0 ||
+                row.IndexOf("effectCatalogIndex=", StringComparison.Ordinal) < 0 ||
+                row.IndexOf("cacheUnavailable=true", StringComparison.Ordinal) >= 0 || !sameOperationEvidence)
+                throw new InvalidOperationException("Snapshot did not identify one owned, prior cached operation and its result/count facts: " + row);
+
+            object[] missingArgs = { lease, effect, "fedcba9876543210fedcba9876543210", "fedcba9876543210fedcba9876543210",
+                                     -1, "authored-editor-missing-key", null, "" };
+            string missingRow = Convert.ToString(captureMethod.Invoke(null, missingArgs));
+            if (missingRow.IndexOf("cacheMatches=0", StringComparison.Ordinal) < 0 ||
+                missingRow.IndexOf("candidateLocations=0", StringComparison.Ordinal) < 0)
+                throw new InvalidOperationException("Missing-key observation did not report an empty bounded match set: " + missingRow);
+
+            // Exercise the actual session wrapper's catch boundary with an
+            // intentionally incomplete, uninitialized coordinator. It must
+            // return a diagnostic string without escaping the observer fault.
+            var coordinator = (PortSession)FormatterServices.GetUninitializedObject(typeof(PortSession));
+            typeof(PortSession).GetField("r", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(coordinator, new PortSession.SessionReport());
+            var sessionType = typeof(PortSession).GetNestedType("WorldCommerceSession", BindingFlags.NonPublic);
+            var session = Activator.CreateInstance(sessionType, BindingFlags.Instance | BindingFlags.Public,
+                                                   null, new object[] { coordinator }, null);
+            var wrapper = sessionType.GetMethod("CaptureNativeShrineEffectOperationWitness", BindingFlags.Instance | BindingFlags.NonPublic);
+            string inertFailure = Convert.ToString(wrapper.Invoke(session, new object[] { "authored-invalid-coordinator" }));
+            if (inertFailure.IndexOf("captureError=", StringComparison.Ordinal) < 0)
+                throw new InvalidOperationException("Session observer did not contain the intentionally invalid capture state");
+            return row + "\nmissing=" + missingRow + "\ninert=" + inertFailure;
+        }
+        finally
+        {
+            if (second.IsValid()) Addressables.Release(second);
+            if (lease.IsValid()) Addressables.Release(lease);
+            if (locatorAdded) Addressables.RemoveResourceLocator(locator);
+            if (providerAdded) Addressables.ResourceManager.ResourceProviders.Remove(provider);
+            if (providerMap != null)
+            {
+                IResourceProvider cached;
+                if (providerMap.TryGetValue(providerCacheKey, out cached) && ReferenceEquals(cached, provider))
+                    providerMap.Remove(providerCacheKey);
+            }
+            UnityEngine.Object.DestroyImmediate(effect);
+        }
+    }
+
+    sealed class FixtureGameObjectProvider : ResourceProviderBase
+    {
+        readonly GameObject result;
+        internal FixtureGameObjectProvider(GameObject result) { this.result = result; }
+        public override Type GetDefaultType(IResourceLocation location) { return typeof(GameObject); }
+        public override void Provide(ProvideHandle handle) { handle.Complete(result, true, null); }
+    }
+
+    sealed class FixtureLocator : IResourceLocator
+    {
+        readonly IResourceLocation location;
+        internal readonly IResourceLocation Location;
+        internal FixtureLocator(string providerId)
+        {
+            Location = new ResourceLocationBase(FixtureKey, FixtureGuid, providerId, typeof(GameObject));
+            location = Location;
+        }
+        public string LocatorId { get { return "NativeShrineOperationSnapshotFixture"; } }
+        public IEnumerable<object> Keys { get { yield return FixtureGuid; } }
+        public bool Locate(object key, Type type, out IList<IResourceLocation> locations)
+        {
+            if (Equals(key, FixtureGuid) && (type == null || type == typeof(GameObject)))
+            {
+                locations = new List<IResourceLocation> { location };
+                return true;
+            }
+            locations = null;
+            return false;
+        }
+    }
+
+    static IDictionary<int, IResourceProvider> ReadProviderMap(ResourceManager manager)
+    {
+        var field = typeof(ResourceManager).GetField("m_providerMap", BindingFlags.Instance | BindingFlags.NonPublic);
+        var map = field == null ? null : field.GetValue(manager) as IDictionary<int, IResourceProvider>;
+        if (map == null) throw new InvalidOperationException("Pinned ResourceManager provider map is unavailable");
+        return map;
+    }
+
+    static int ReferenceCount(AsyncOperationHandle<GameObject> handle)
+    {
+        var property = typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic);
+        return Convert.ToInt32(property.GetValue(handle, null));
+    }
+}
+
+}
+#endif

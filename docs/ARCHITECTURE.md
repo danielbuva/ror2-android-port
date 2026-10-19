@@ -954,11 +954,27 @@ acceptance remains pending; J641's APK contains this telemetry source.
 
 `WorldCommerceSession` owns the typed ShrineUseEffect baseline and synchronous
 native-purchase attribution counts from setup through final cleanup. Its inline
-`NativeShrineEffectAttributionWitness` reports only failure operands (baseline,
+`NativeShrineEffectAttributionWitness` reports failure operands (baseline,
 final, delta, aggregate and four concrete shrine callback counts). Those counts
 share the existing session lifetime; they do not intercept native loads or claim
 their caller. Cleanup still requires exact equality before releasing references;
 a mismatch retains the existing recovery refusal.
+
+For the explicit native-first-stage diagnostic only, this owner also owns an
+inline `NativeShrineEffectOperationSnapshot`: one weak operation baseline before
+the first boss-shrine observation, one post-purchase snapshot and one reserved
+final-cleanup snapshot. Read-only locator/cache reflection records actual
+operation/version/result identity and reference counts, current versus setup
+legacy GUID, support-array index and native effect-catalog index. Locator/raw
+location/cache/match/string limits and incomplete/error markers are explicit.
+The report retains scalar strings only; the baseline retains weak references.
+It adds no load, wait, acquire, release, profiler callback or per-frame polling.
+Capture failures stay diagnostic and the strict refusal remains authoritative.
+Post-event state is not proof of the native call's exact lookup or a rendered
+effect. The existing `FirstStageDiagnosticGateFixture.cs` producer owns the
+authored operation fixture: it runs twice, verifies shared-operation/count and
+missing/error cases, then checks exact provider/locator/cache restoration.
+The compiled formatter host contract preserves the ordinary failure prefix.
 
 Survivor combat output observation (authored source, J642):
 `IntegratedWorldSession` owns a disposable `SurvivorCombatOutputObserver` beside

@@ -20,6 +20,13 @@ static class NativeShrineEffectAttributionWitnessHost
         Require(deficit.Contains("referenceCountDelta=-3") && deficit.Contains("attributedDetailedPurchaseCallbacks=4"),
                 "negative delta was hidden or normalized");
 
+        string operation = "reason=fixture; captureError=UnavailableFixtureMember";
+        string extended = NativeShrineEffectAttributionWitness.Format(12, 15, 2, 1, 0, 1, 0, operation);
+        Require(extended == excess + "; nativeEffectOperationWitness=" + operation,
+                "diagnostic evidence replaced or reordered the original attribution failure");
+        Require(NativeShrineEffectAttributionWitness.Format(12, 15, 2, 1, 0, 1, 0, null) == excess,
+                "absent diagnostic evidence changed the ordinary attribution failure");
+
         Console.WriteLine("PASS shrine effect mismatch values and callback attribution formatting");
         return 0;
     }

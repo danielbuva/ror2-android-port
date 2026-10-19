@@ -9,6 +9,11 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
+using System.Runtime.CompilerServices;
 
 // Original purchase/selection/shrine code; owned layout, presentation and observations.
 public sealed partial class PortSession
@@ -49,6 +54,7 @@ public sealed partial class PortSession
         public List<CommercePurchase> purchases = new List<CommercePurchase>();
         public List<CommercePlacement> placements = new List<CommercePlacement>();
         public List<HealingWardObservation> healingWards = new List<HealingWardObservation>();
+        public List<string> nativeShrineEffectOperationWitnesses;
     }
     // Shared with the integrated world, native interactables and proc content.
     readonly List<PurchaseInteraction> commercePurchases = new List<PurchaseInteraction>();
@@ -138,6 +144,10 @@ public sealed partial class PortSession
         static readonly FieldInfo commercePickupModelField =
             typeof(PickupDisplay).GetField("modelObject", BindingFlags.NonPublic | BindingFlags.Instance);
         int commerceEffectBaseline, commerceDirectShrineEffectLoads;
+        string commerceEffectExpectedGuid;
+        string commerceEffectOperationBaselineError = string.Empty;
+        List<NativeShrineEffectOperationBaseline> commerceEffectOperationBaseline = new List<NativeShrineEffectOperationBaseline>();
+        bool commerceEffectOperationBaselineCaptured, commerceEffectOperationDetailCaptured, commerceEffectOperationCleanupCaptured;
         int commerceBloodShrineDetailedPurchaseCallbacks, commerceHealingShrineDetailedPurchaseCallbacks,
             commerceBossShrineDetailedPurchaseCallbacks, commerceRestackShrineDetailedPurchaseCallbacks;
         public WorldCommerceSession(PortSession coordinator)
@@ -170,6 +180,11 @@ public sealed partial class PortSession
                 return null;
             coordinator.commerceEffectIndex = Array.IndexOf(cfg.objectiveSupportPaths, "Prefabs/Effects/ShrineUseEffect");
             coordinator.Check(coordinator.commerceEffectIndex >= 0, "Original shrine effect provider absent");
+            commerceEffectExpectedGuid = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt
+                                             ? (cfg.objectiveSupportKeys != null && cfg.objectiveSupportKeys.Length > coordinator.commerceEffectIndex
+                                                    ? cfg.objectiveSupportKeys[coordinator.commerceEffectIndex]
+                                                    : null)
+                                             : null;
             var effect = coordinator.objectiveSupportSources[coordinator.commerceEffectIndex];
             coordinator.Check(effect && effect.GetComponent<EffectComponent>(), "Original shrine effect component missing");
             commerceEffectBaseline = (int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>)
@@ -311,6 +326,11 @@ public sealed partial class PortSession
                     commerceBossShrineDetailedPurchaseCallbacks++;
                 if (restackShrine)
                     commerceRestackShrineDetailedPurchaseCallbacks++;
+                if (bossShrine && coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && !commerceEffectOperationDetailCaptured)
+                {
+                    commerceEffectOperationDetailCaptured = true;
+                    CaptureNativeShrineEffectOperationWitness("boss-detailed-purchase");
+                }
                 coordinator.Check(context.activatorBody == coordinator.worldPlayer && context.purchaseInteraction == purchase,
                                   "Original commerce purchase context changed");
                 coordinator.r.commerce.purchases.Add(new CommercePurchase {
@@ -322,6 +342,8 @@ public sealed partial class PortSession
                 });
                 coordinator.Save();
             };
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && !commerceEffectOperationBaselineCaptured)
+                CaptureNativeShrineEffectOperationBaselineInert(purchase);
             coordinator.commerceListeners.Add(purchase, listener);
             purchase.onDetailedPurchaseServer.AddListener(listener);
         }
@@ -573,12 +595,18 @@ public sealed partial class PortSession
                                              .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)
                                              .GetValue(lease);
                 int extra = finalReferenceCount - commerceEffectBaseline;
+                string nativeWitness = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && !commerceEffectOperationCleanupCaptured
+                                           ? CaptureNativeShrineEffectOperationWitness("cleanup-before-refusal")
+                                           : null;
+                if (nativeWitness != null)
+                    commerceEffectOperationCleanupCaptured = true;
                 coordinator.Check(
                     extra == commerceDirectShrineEffectLoads,
                     NativeShrineEffectAttributionWitness.Format(
                         commerceEffectBaseline, finalReferenceCount, commerceDirectShrineEffectLoads,
                         commerceBloodShrineDetailedPurchaseCallbacks, commerceHealingShrineDetailedPurchaseCallbacks,
-                        commerceBossShrineDetailedPurchaseCallbacks, commerceRestackShrineDetailedPurchaseCallbacks));
+                        commerceBossShrineDetailedPurchaseCallbacks, commerceRestackShrineDetailedPurchaseCallbacks,
+                        nativeWitness));
                 for (int i = 0; i < extra; i++)
                     Addressables.Release(lease.Result);
                 coordinator.commerceEffectIndex = -1;
@@ -587,6 +615,70 @@ public sealed partial class PortSession
         public void Dispose()
         {
             CleanupWorldCommerce(true);
+        }
+        void CaptureNativeShrineEffectOperationBaselineInert(PurchaseInteraction purchase)
+        {
+            try
+            {
+                if (!purchase || !purchase.GetComponent<ShrineBossBehavior>())
+                    return;
+                commerceEffectOperationBaselineCaptured = true;
+                int supportIndex = coordinator.commerceEffectIndex;
+                if (supportIndex < 0 || coordinator.objectiveSupportLeases == null ||
+                    coordinator.objectiveSupportSources == null || supportIndex >= coordinator.objectiveSupportLeases.Length ||
+                    supportIndex >= coordinator.objectiveSupportSources.Length)
+                {
+                    commerceEffectOperationBaselineError = "baselineSupportIndexUnavailable";
+                    return;
+                }
+                var lease = coordinator.objectiveSupportLeases[supportIndex];
+                string currentGuid = LegacyResourcesAPI.GetPathGuidString("Prefabs/Effects/ShrineUseEffect");
+                commerceEffectOperationBaseline = NativeShrineEffectOperationSnapshot.CaptureBaseline(
+                    lease, commerceEffectExpectedGuid, currentGuid, out commerceEffectOperationBaselineError);
+            }
+            catch (Exception exception)
+            {
+                commerceEffectOperationBaselineCaptured = true;
+                commerceEffectOperationBaselineError = "baselineError=" + exception.GetType().Name;
+                commerceEffectOperationBaseline = new List<NativeShrineEffectOperationBaseline>();
+            }
+        }
+        string CaptureNativeShrineEffectOperationWitness(string reason)
+        {
+            try
+            {
+                if (reason == "boss-detailed-purchase" && commerceEffectOperationDetailCaptured == false)
+                    commerceEffectOperationDetailCaptured = true;
+                if (reason == "cleanup-before-refusal" && commerceEffectOperationCleanupCaptured)
+                    return "reason=cleanup-before-refusal; captureSkipped=alreadyCaptured";
+                if (reason == "cleanup-before-refusal")
+                    commerceEffectOperationCleanupCaptured = true;
+                var row = NativeShrineEffectOperationSnapshot.Capture(
+                    coordinator.objectiveSupportLeases[coordinator.commerceEffectIndex],
+                    coordinator.objectiveSupportSources[coordinator.commerceEffectIndex], commerceEffectExpectedGuid,
+                    LegacyResourcesAPI.GetPathGuidString("Prefabs/Effects/ShrineUseEffect"), coordinator.commerceEffectIndex, reason,
+                    commerceEffectOperationBaseline, commerceEffectOperationBaselineError);
+                if (coordinator.r.commerce != null)
+                {
+                    if (coordinator.r.commerce.nativeShrineEffectOperationWitnesses == null)
+                        coordinator.r.commerce.nativeShrineEffectOperationWitnesses = new List<string>();
+                    if (coordinator.r.commerce.nativeShrineEffectOperationWitnesses.Count < 4)
+                        coordinator.r.commerce.nativeShrineEffectOperationWitnesses.Add(row);
+                }
+                return row;
+            }
+            catch (Exception exception)
+            {
+                string error = "captureError=" + exception.GetType().Name;
+                if (coordinator.r.commerce != null)
+                {
+                    if (coordinator.r.commerce.nativeShrineEffectOperationWitnesses == null)
+                        coordinator.r.commerce.nativeShrineEffectOperationWitnesses = new List<string>();
+                    if (coordinator.r.commerce.nativeShrineEffectOperationWitnesses.Count < 4)
+                        coordinator.r.commerce.nativeShrineEffectOperationWitnesses.Add("reason=" + reason + "; " + error);
+                }
+                return "reason=" + reason + "; " + error;
+            }
         }
     }
 }
@@ -598,15 +690,321 @@ public sealed partial class PortSession
 internal static class NativeShrineEffectAttributionWitness
 {
     internal static string Format(int baselineReferenceCount, int finalReferenceCount, int attributedPurchaseCallbacks,
-                                  int bloodCallbacks, int healingCallbacks, int bossCallbacks, int restackCallbacks)
+                                  int bloodCallbacks, int healingCallbacks, int bossCallbacks, int restackCallbacks,
+                                  string operationWitness = null)
     {
         int referenceCountDelta = finalReferenceCount - baselineReferenceCount;
         return string.Format(
             "Unattributed original blood/healing shrine effect loads; " +
                 "referenceCountBaseline={0}; referenceCountFinal={1}; referenceCountDelta={2}; " +
                 "attributedDetailedPurchaseCallbacks={3}; bloodCallbacks={4}; healingCallbacks={5}; " +
-                "bossCallbacks={6}; restackCallbacks={7}",
+                "bossCallbacks={6}; restackCallbacks={7}{8}",
             baselineReferenceCount, finalReferenceCount, referenceCountDelta, attributedPurchaseCallbacks, bloodCallbacks,
-            healingCallbacks, bossCallbacks, restackCallbacks);
+            healingCallbacks, bossCallbacks, restackCallbacks,
+            string.IsNullOrEmpty(operationWitness) ? string.Empty : "; nativeEffectOperationWitness=" + operationWitness);
+    }
+}
+
+// Native-diagnostic-only, read-only snapshot of cached operations for the exact
+// ShrineUseEffect GUID/type lookup. It creates no Addressables operations and
+// retains no handles or Unity objects after Capture returns.
+internal static class NativeShrineEffectOperationSnapshot
+{
+    const int MaxCacheEntries = 8192, MaxLocators = 32, MaxRawLocations = 128, MaxLocations = 32, MaxMatches = 8,
+              MaxSerializedChars = 4096, MaxIdentityStringChars = 1024;
+    static readonly BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    static readonly FieldInfo CacheField = typeof(ResourceManager).GetField("m_AssetOperationCache", BindingFlags.Instance | BindingFlags.NonPublic);
+    static readonly FieldInfo LocationField = typeof(AsyncOperationHandle<GameObject>).GetField("m_InternalOp", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    internal static List<NativeShrineEffectOperationBaseline> CaptureBaseline(AsyncOperationHandle<GameObject> lease,
+                                                                               string expectedGuid, string currentGuid,
+                                                                               out string error)
+    {
+        error = string.Empty;
+        try
+        {
+            var output = new List<NativeShrineEffectOperationBaseline>();
+            int locatorsVisited, rawLocationsVisited;
+            bool locatorTruncated, rawLocationTruncated, uniqueLocationTruncated, expectedGuidInvalid, currentGuidInvalid;
+            var locations = CandidateLocations(expectedGuid, currentGuid, out locatorsVisited, out rawLocationsVisited,
+                                               out locatorTruncated, out rawLocationTruncated, out uniqueLocationTruncated,
+                                               out expectedGuidInvalid, out currentGuidInvalid);
+            if (locatorTruncated || rawLocationTruncated || uniqueLocationTruncated || expectedGuidInvalid || currentGuidInvalid)
+                error = "baselineLocatorScanCappedOrInvalid";
+            var cache = CacheField == null ? null : CacheField.GetValue(Addressables.ResourceManager) as System.Collections.IDictionary;
+            if (cache == null)
+            {
+                error = "cacheUnavailable";
+                return output;
+            }
+            int visited = 0;
+            foreach (System.Collections.DictionaryEntry entry in cache)
+            {
+                if (++visited > MaxCacheEntries)
+                {
+                    error = "baselineScanTruncated";
+                    break;
+                }
+                object operation;
+                var location = CacheLocation(entry, out operation);
+                if (operation == null || location == null || !MatchesAny(location, locations) || !CacheTypeIsGameObject(entry.Key))
+                    continue;
+                if (output.Count >= MaxMatches)
+                {
+                    error = "baselineMatchCapReached";
+                    break;
+                }
+                output.Add(new NativeShrineEffectOperationBaseline(operation, ReadInt(operation, "Version"),
+                                                                    ReadInt(operation, "ReferenceCount")));
+            }
+            return output;
+        }
+        catch (Exception exception)
+        {
+            error = exception.GetType().Name;
+            return new List<NativeShrineEffectOperationBaseline>();
+        }
+    }
+
+    internal static string Capture(AsyncOperationHandle<GameObject> lease, GameObject ownedEffect, string expectedGuid,
+                                   string currentGuid, int supportIndex, string reason,
+                                   List<NativeShrineEffectOperationBaseline> baseline, string baselineError)
+    {
+        var leaseOp = LocationField == null ? null : LocationField.GetValue(lease);
+        var leaseLocation = OperationLocation(leaseOp);
+        int visitedLocators, visitedLocations;
+        bool locatorTruncated, rawLocationTruncated, uniqueLocationTruncated, expectedGuidInvalid, currentGuidInvalid;
+        var candidateLocations = CandidateLocations(expectedGuid, currentGuid, out visitedLocators, out visitedLocations,
+                                                     out locatorTruncated, out rawLocationTruncated, out uniqueLocationTruncated,
+                                                     out expectedGuidInvalid, out currentGuidInvalid);
+        int effectCatalogIndex = (int)EffectCatalog.FindEffectIndexFromPrefab(ownedEffect);
+        var manager = Addressables.ResourceManager;
+        var cache = CacheField == null ? null : CacheField.GetValue(manager) as System.Collections.IDictionary;
+        if (cache == null)
+                return BoundSerialized(Header(reason, expectedGuid, currentGuid, supportIndex, effectCatalogIndex,
+                                              lease, leaseOp, leaseLocation, candidateLocations.Count, visitedLocators,
+                                              visitedLocations, locatorTruncated, rawLocationTruncated, uniqueLocationTruncated,
+                                              expectedGuidInvalid, currentGuidInvalid, -1, false, true) +
+                              "; cacheUnavailable=true; baselineError=" + (baselineError ?? string.Empty));
+
+        int visited = 0, matched = 0;
+        bool truncated = false;
+        var rows = new List<string>();
+        foreach (System.Collections.DictionaryEntry entry in cache)
+        {
+            if (++visited > MaxCacheEntries)
+            {
+                truncated = true;
+                break;
+            }
+            object operation;
+            var location = CacheLocation(entry, out operation);
+            if (operation == null || location == null || !MatchesAny(location, candidateLocations) || !CacheTypeIsGameObject(entry.Key))
+                continue;
+
+            matched++;
+            object result = OperationResult(operation);
+            if (rows.Count < MaxMatches)
+            {
+                int version = ReadInt(operation, "Version"), count = ReadInt(operation, "ReferenceCount");
+                var previous = baseline == null ? null : baseline.FirstOrDefault(item => item.Matches(operation, version));
+                rows.Add(string.Format("op={0},owned={1},prior={2},beforeRc={3},afterRc={4},delta={5},version={6},status={7},done={8},resultOwned={9},pk={10},provider={11},internal={12}",
+                    RuntimeHelpers.GetHashCode(operation), ReferenceEquals(operation, leaseOp), previous != null,
+                    previous == null ? -1 : previous.ReferenceCount, count,
+                    previous == null ? -1 : count - previous.ReferenceCount, version, ReadText(operation, "Status"), ReadBool(operation, "IsDone"),
+                    ReferenceEquals(result, ownedEffect), Hash(location.PrimaryKey), Hash(location.ProviderId), Hash(location.InternalId)));
+            }
+        }
+        string header = Header(reason, expectedGuid, currentGuid, supportIndex, effectCatalogIndex, lease, leaseOp, leaseLocation,
+                               candidateLocations.Count, visitedLocators, visitedLocations, locatorTruncated, rawLocationTruncated,
+                               uniqueLocationTruncated, expectedGuidInvalid, currentGuidInvalid, matched, matched > MaxMatches, truncated);
+        return BoundSerialized(header + "; baselineEntries=" + (baseline == null ? 0 : baseline.Count) + "; baselineError=" +
+               (baselineError ?? string.Empty) + (rows.Count == 0 ? string.Empty : "; entries=[" + string.Join("|", rows.ToArray()) + "]"));
+    }
+
+    static List<IResourceLocation> CandidateLocations(string expectedGuid, string currentGuid, out int locatorsVisited,
+                                                       out int rawLocationsVisited, out bool locatorTruncated,
+                                                       out bool rawLocationTruncated, out bool uniqueLocationTruncated,
+                                                       out bool expectedGuidInvalid, out bool currentGuidInvalid)
+    {
+        var output = new List<IResourceLocation>();
+        locatorsVisited = 0;
+        rawLocationsVisited = 0;
+        locatorTruncated = rawLocationTruncated = uniqueLocationTruncated = false;
+        expectedGuidInvalid = !IsGuid(expectedGuid);
+        currentGuidInvalid = !IsGuid(currentGuid);
+        if (!expectedGuidInvalid)
+            AddLocations(expectedGuid, output, ref locatorsVisited, ref rawLocationsVisited,
+                         ref locatorTruncated, ref rawLocationTruncated, ref uniqueLocationTruncated);
+        if (!currentGuidInvalid && currentGuid != expectedGuid && !locatorTruncated && !rawLocationTruncated && !uniqueLocationTruncated)
+            AddLocations(currentGuid, output, ref locatorsVisited, ref rawLocationsVisited,
+                         ref locatorTruncated, ref rawLocationTruncated, ref uniqueLocationTruncated);
+        return output;
+    }
+    static void AddLocations(string key, List<IResourceLocation> output, ref int locatorsVisited, ref int rawLocationsVisited,
+                             ref bool locatorTruncated, ref bool rawLocationTruncated, ref bool uniqueLocationTruncated)
+    {
+        foreach (var locator in Addressables.ResourceLocators)
+        {
+            if (locatorsVisited >= MaxLocators) { locatorTruncated = true; return; }
+            locatorsVisited++;
+            IList<IResourceLocation> locations;
+            if (!locator.Locate(key, typeof(GameObject), out locations) || locations == null)
+                continue;
+            foreach (var location in locations)
+            {
+                if (rawLocationsVisited >= MaxRawLocations) { rawLocationTruncated = true; return; }
+                rawLocationsVisited++;
+                if (location == null)
+                    continue;
+                if (output.Any(existing => LocationEquals(existing, location)))
+                    continue;
+                if (output.Count >= MaxLocations) { uniqueLocationTruncated = true; return; }
+                output.Add(location);
+            }
+        }
+    }
+    static bool IsGuid(string value)
+    {
+        if (value == null || value.Length != 32) return false;
+        for (int i = 0; i < value.Length; i++)
+        {
+            char c = value[i];
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) return false;
+        }
+        return true;
+    }
+    static string SafeGuid(string value) { return IsGuid(value) ? value : "<invalid>"; }
+    static string BoundSerialized(string value)
+    {
+        if (value == null || value.Length <= MaxSerializedChars) return value;
+        return value.Substring(0, MaxSerializedChars - 32) + ";serializedCapped=true";
+    }
+
+    static IResourceLocation CacheLocation(System.Collections.DictionaryEntry entry, out object operation)
+    {
+        operation = entry.Value;
+        var key = entry.Key;
+        if (key == null || operation == null)
+            return null;
+        var field = key.GetType().GetField("m_Location", InstanceFlags);
+        return field == null ? null : field.GetValue(key) as IResourceLocation;
+    }
+    static bool CacheTypeIsGameObject(object key)
+    {
+        if (key == null)
+            return false;
+        var field = key.GetType().GetField("m_DesiredType", InstanceFlags);
+        return field != null && (field.GetValue(key) as Type) == typeof(GameObject);
+    }
+
+    static bool MatchesAny(IResourceLocation target, List<IResourceLocation> candidates)
+    {
+        return candidates.Any(candidate => LocationEquals(target, candidate));
+    }
+    static bool LocationEquals(IResourceLocation left, IResourceLocation right)
+    {
+        if (left == null || right == null) return false;
+        string leftId = left.InternalId, rightId = right.InternalId;
+        string leftProvider = left.ProviderId, rightProvider = right.ProviderId;
+        return leftId != null && rightId != null && leftProvider != null && rightProvider != null &&
+               leftId.Length <= MaxIdentityStringChars && rightId.Length <= MaxIdentityStringChars &&
+               leftProvider.Length <= MaxIdentityStringChars && rightProvider.Length <= MaxIdentityStringChars &&
+               leftId == rightId && leftProvider == rightProvider && left.ResourceType == right.ResourceType;
+    }
+    static IResourceLocation OperationLocation(object operation)
+    {
+        if (operation == null)
+            return null;
+        var iface = operation.GetType().GetInterfaces().FirstOrDefault(type => type.Name == "IGenericProviderOperation");
+        var property = iface == null ? null : iface.GetProperty("Location");
+        return property == null ? null : property.GetValue(operation, null) as IResourceLocation;
+    }
+    static object OperationResult(object operation)
+    {
+        var iface = operation == null ? null : operation.GetType().GetInterfaces().FirstOrDefault(type => type.Name == "IAsyncOperation");
+        var method = iface == null ? null : iface.GetMethod("GetResultAsObject");
+        return method == null ? null : method.Invoke(operation, null);
+    }
+    static int ReadInt(object target, string name)
+    {
+        var property = FindProperty(target, name);
+        return property == null ? -1 : Convert.ToInt32(property.GetValue(target, null));
+    }
+    static bool ReadBool(object target, string name)
+    {
+        var property = FindProperty(target, name);
+        return property != null && Convert.ToBoolean(property.GetValue(target, null));
+    }
+    static string ReadText(object target, string name)
+    {
+        var property = FindProperty(target, name);
+        return property == null ? "missing" : Convert.ToString(property.GetValue(target, null));
+    }
+    static PropertyInfo FindProperty(object target, string name)
+    {
+        if (target == null)
+            return null;
+        var property = target.GetType().GetProperty(name, InstanceFlags);
+        if (property != null)
+            return property;
+        foreach (var iface in target.GetType().GetInterfaces())
+        {
+            property = iface.GetProperty(name);
+            if (property != null)
+                return property;
+        }
+        return null;
+    }
+    static string Hash(string value)
+    {
+        if (value == null)
+            return "null";
+        unchecked
+        {
+            uint hash = 2166136261;
+            int count = Math.Min(value.Length, MaxIdentityStringChars);
+            for (int i = 0; i < count; i++)
+                hash = (hash ^ value[i]) * 16777619;
+            return hash.ToString("x8") + (value.Length > count ? "capped" : string.Empty);
+        }
+    }
+    static string Header(string reason, string expectedGuid, string currentGuid, int supportIndex, int effectCatalogIndex,
+                         AsyncOperationHandle<GameObject> lease, object leaseOp, IResourceLocation leaseLocation,
+                         int candidateLocations, int locatorsVisited, int rawLocationsVisited, bool locatorTruncated,
+                         bool rawLocationTruncated, bool uniqueLocationTruncated, bool expectedGuidInvalid,
+                         bool currentGuidInvalid, int matched, bool matchRowsCapped, bool scanTruncated)
+    {
+        return string.Format("reason={0},expectedGuid={1},currentGuid={2},mapMatch={3},supportIndex={4},effectCatalogIndex={5},leaseValid={6}," +
+                             "leaseRc={7},leaseVersion={8},leaseStatus={9},leaseOp={10},leasePk={11},leaseProvider={12}," +
+                             "leaseInternal={13},candidateLocations={14},locatorsVisited={15},rawLocationsVisited={16}," +
+                             "locatorScanTruncated={17},rawLocationScanTruncated={18},uniqueLocationScanTruncated={19}," +
+                             "expectedGuidInvalid={20},currentGuidInvalid={21},cacheMatches={22},matchRowsCapped={23},scanTruncated={24}",
+            reason, SafeGuid(expectedGuid), SafeGuid(currentGuid), IsGuid(expectedGuid) && expectedGuid == currentGuid,
+            supportIndex, effectCatalogIndex, lease.IsValid(), ReadInt(leaseOp, "ReferenceCount"), ReadInt(leaseOp, "Version"),
+            ReadText(leaseOp, "Status"), leaseOp == null ? "null" : RuntimeHelpers.GetHashCode(leaseOp).ToString(),
+            Hash(leaseLocation == null ? null : leaseLocation.PrimaryKey), Hash(leaseLocation == null ? null : leaseLocation.ProviderId),
+            Hash(leaseLocation == null ? null : leaseLocation.InternalId), candidateLocations, locatorsVisited, rawLocationsVisited,
+            locatorTruncated, rawLocationTruncated, uniqueLocationTruncated, expectedGuidInvalid, currentGuidInvalid,
+            matched, matchRowsCapped, scanTruncated);
+    }
+
+}
+
+// Weak references let the native-only observer compare cache operations across
+// the purchase without keeping a released Addressables operation alive.
+internal sealed class NativeShrineEffectOperationBaseline
+{
+    readonly WeakReference operation;
+    internal readonly int Version, ReferenceCount;
+    internal NativeShrineEffectOperationBaseline(object operation, int version, int referenceCount)
+    {
+        this.operation = new WeakReference(operation);
+        Version = version;
+        ReferenceCount = referenceCount;
+    }
+    internal bool Matches(object candidate, int version)
+    {
+        return Version == version && ReferenceEquals(operation.Target, candidate);
     }
 }

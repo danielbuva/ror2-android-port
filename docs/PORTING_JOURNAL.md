@@ -11805,3 +11805,65 @@ is unchanged. Separately, the native effect-operation witness is now unbuilt
 authored source under exact-editor validation; it is not attributed to these
 installed-APK results. The corrected guarded Siren route is active. No original
 input, Phase 2 output, extra device, receipt edit, storage change or award occurs.
+## J716 — Bounded read-only shrine operation witness passes exact-editor contracts
+
+Hypothesis: J710's callback/zero-delta mismatch needs actual cached operation,
+location and result identity before changing any ownership rule. Add an inline
+diagnostic helper to the existing WorldCommerceSession, gated by the explicit
+native-first-stage flag. It weakly snapshots matching operations before the
+first watched boss shrine, samples once after its detailed event, and reserves
+one final-cleanup sample. It compares actual operation/version/result identity,
+status and counts with the owned typed lease, and records current versus setup
+legacy GUID, distinct support/native effect indices and bounded location hashes.
+It creates no loads, waits, acquisitions, releases, global callbacks or polling.
+The exact equality/refusal and release order are unchanged; capture faults are
+inert and cannot replace the original failure. Later post-event state does not
+prove the native caller's past lookup, successful rendering or full cleanup.
+
+Prior art: the existing community Addressables guidance preserves key/type/
+provider/location identity rather than assuming GUID equality; pinned R2API
+reference wrappers distinguish completion from successful results. J710's
+accepted LegacyResourcesAPI SHA 69d5c8d2 and exact ResourceManager source supply
+the private cache/interface contract. The helper addresses only the missing
+Android diagnostic evidence; no community or game source is copied. Runtime
+membership remains 105; this owner change is reproduced by the existing R8
+authored-source generator and needs replay there. No new game asset or local
+build-input file is introduced.
+
+Root/independent reviews reject early drafts that could throw during setup,
+mislabel a support-array index as an effect catalog index, traverse unbounded
+duplicate locations, or repeat a scan after the retained-row cap. Corrected
+code validates/caps keys, locator/raw/cache/match/string work and serial output,
+captures at most once at each point, and preserves primary failures. The final
+reviewed runtime SHA is
+37fd2f945dfc36a451b032d051a610021c6a934f6f69e926d0f91d7fb681c147.
+The authored fixture also corrects internal-handle-release API use and removes
+only its exact temporary provider-cache entry, preserving foreign state.
+
+Host-only preflight passes accepted input. Standalone helper compilation passes
+with pinned explicit metadata references; this is not a Unity runtime result.
+Root full suite runs 1007 tests with no failures and one existing skip. The
+compiled formatter additionally verifies optional diagnostic text cannot replace
+the original operand prefix and absence leaves it unchanged. Evidence:
+work/coordination/codex-shrine-operation-host-tests.stdout and .stderr;
+work/coordination/native-shrine-witness-host-compile/ and
+work/coordination/native-shrine-operation-witness-review/.
+
+The exact idle Unity editor compiles the complete staged owner/fixture and passes
+the existing default-off gates plus the new fixture twice:
+work/experiments/first-stage-native-lifecycle/shrine-operation-editor-20261019T182614.843745Z/.
+Its authored provider makes one cached operation at count 1; the fixture's own
+second request raises it to 2. The actual production snapshot identifies that
+same owned/prior/result row and leaves count 2 unchanged. Repeated setup reuses
+the pooled object with a new version and still passes. Missing-key lookup shows
+zero matches; deliberately invalid coordinator state returns an inert capture
+error. Existing provider/locator membership/order and provider-cache mappings
+match after each teardown. No original asset, Run, server or gameplay is used.
+
+First failure: none in the corrected host/editor contracts. No Android/IL2CPP
+operation witness or cleanup repair is accepted yet. Accepted/installed APK
+remains J707 d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee;
+the corrected guarded base-stage route still runs on it. Next build/freeze the
+candidate, wait for that device run, require both default controls after install,
+then observe the native mismatch. No original input, Phase 2 output, device
+receipt edit, extra device, storage change, Moon attempt or award occurs.
