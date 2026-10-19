@@ -74,20 +74,20 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec`, J663 acceptance of J660's 105-source build, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.22 s on Lakes and one genuine stage exit to Goolake with 10.10 s next-stage play, no report or current-process log error (J660/J663) |
+| APK | `ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69`, J670 acceptance of J665's full-content 105-source build, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.19 s on Lakes and one genuine stage exit to Goolake with 10.10 s next-stage play, no report or current-process log error (J665/J670) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J663), with the native diagnostic flag off. The opt-in native
-first-stage path passes the corrected player/results context but fails the later
-source Director initialization witness before Stage-begin (J661).
-Timed-chest event delivery and an ordinary saved award are also
-unverified. Engineer's live inventory and three alternate callbacks with actual
-UI-abandon cleanup/restart passed on the prior f57e172b… APK (J650/J653), with
-Laser Cutter remaining a failed feature case; J662's host dependency repair
-still needs a content build and device replay. Mercenary direct damage is earlier
-J647 evidence. Both baseline modes use Commando and do not establish full
-ability semantics, ordinary difficulty, audio, frame rate or visual parity.
+passed it (J670), with the native diagnostic flag off. The opt-in native
+first-stage path now starts original Stage/population, then fails on source
+large-chest loot readiness (J668). Timed-chest delivery and an ordinary saved
+award remain unverified. Engineer's repaired four-slot alternate case passes
+the former missing charge key and all callbacks, then fails on the known
+elite-stake error (J667); full Laser Cutter damage/sequence is open. Earlier
+three-alternate UI-abandon cleanup/restart is J653 on f57e172b…, and Mercenary
+direct damage is J647. The newer J669 actor-event owner is staged but not in
+this APK. Both baseline modes use Commando and do not establish full ability
+semantics, ordinary difficulty, audio, frame rate or visual parity.

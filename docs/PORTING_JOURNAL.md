@@ -9782,3 +9782,35 @@ ARCHITECTURE and recipe provenance audit name the owner/test. No new ignored
 build input is required; replay the changed authored owner through R8.
 No Phase 2 output, original input, extra device, private receipt hand edit,
 existing data or storage configuration is changed.
+
+## J670 — Accept the full typed-dependency APK on both default controls
+
+Hypothesis: J659/J662's actual content repair and J664's native-only setter
+order preserve default stage transport, independently of J667/J668's failed
+feature cases. No APK or installed payload change since J665. The newer J669
+actor-event source is staged only and is not part of this APK.
+
+APK ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69
+passes the default stage-exit mode. Evidence: work/experiments/baseline/
+20261019T144635.786784Z/. One genuine exit reaches Goolake with 10.097290 s
+of next-stage play at world time 152.424820 s. The collector and root's
+current-process log validation both pass without failure or unexpected error.
+Native diagnostic/recovery flags are false, and profile runs/earned/available
+unlocks remain 13/1/1. J665 records the same APK's separate 35.194702 s plain
+control and frozen full content/source/hash receipts.
+
+Accept ad84d0cb… as the current default baseline and retain J663 6506b99b…
+as the immediate executable rollback. Its 105-file runtime is J664's source
+selection; the repaired 30-file payload is actually included. These assisted
+controls use the existing default transport path. They do not accept the
+native source-stage chest failure, the intermittent elite-stake error,
+complete alternate abilities, ordinary awards, timed-chest delivery, completed
+session cleanup, normal difficulty, audio or sustained frame rate. The final
+report is still playing when the collector stops it.
+
+First failure: none in this exit control. Finally removes selectors, stops
+the app and sleeps OLED. A fresh Mage developer-selection run now gathers
+current native family/definition identities for exact variant cases; its
+outcome is separate. The native chest draft and J669 observer require the
+next APK. No original input, extra device, private receipt hand edit, existing
+data move, storage change or new runtime mechanism occurs in this control.

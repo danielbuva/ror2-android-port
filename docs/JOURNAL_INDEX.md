@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J670](PORTING_JOURNAL.md#j670--accept-the-full-typed-dependency-apk-on-both-default-controls) | 2026-10-19 | Accept the full typed-dependency APK on both default controls | Hypothesis: J659/J662's actual content repair and J664's native-only setter order preserve default stage transport, independently of J667/J668's failed feature… |
 | [J669](PORTING_JOURNAL.md#j669--give-native-director-actor-observations-an-explicit-session-event-owner) | 2026-10-19 | Give native director actor observations an explicit session event owner | Hypothesis: J668's native actor rows have zero damage/death events because the only existing event subscription lives inside the optional fixture omitted by th… |
 | [J668](PORTING_JOURNAL.md#j668--native-source-stage-starts-original-large-chest-drop-table-is-uninitialized) | 2026-10-19 | Native source Stage starts; original large-chest drop table is uninitialized | Hypothesis: J664's final-owner deck binding permits genuine source Director startup while retaining strict cold preflight. |
 | [J667](PORTING_JOURNAL.md#j667--engineer-dependency-replay-passes-the-old-key-then-hits-known-elite-stake-corruption) | 2026-10-19 | Engineer dependency replay passes the old key, then hits known elite-stake corruption | Hypothesis: the typed EntityStateGameObject closure in J659/J662 lets the actual Engineer alternate kit get past J650's missing Laser Cutter charge asset. |
