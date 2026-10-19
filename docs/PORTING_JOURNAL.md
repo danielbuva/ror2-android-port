@@ -9207,3 +9207,47 @@ Positive ordinary timed-chest progression, native event/teardown recovery and
 complete stage coverage remain open. Changed authored inputs/fixture require
 R8 replay as J651/J652 record; no Phase 2 output, original input, private
 receipt hand edit or extra device is introduced.
+
+## J656 — Native first-stage diagnostic stops before activation on missing early player context
+
+Hypothesis: the J651 default-off native path can replace the early combat
+fixture while retaining mandatory player/results dependencies before source
+Stage activation. APK is unchanged from J655:
+86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03.
+The per-attempt native lifecycle flag is explicitly true; the ordinary plain
+control has separately passed with that flag false (J655).
+
+Evidence: work/experiments/baseline/20261019T133255.990423Z/,
+including selection, failed result, report, logs/capture and
+root-native-first-stage-validation.json. This folder uses the existing bounded
+baseline collector under an explicit diagnostic wrapper; it is marked
+experimental_native_first_stage true/default_baseline_acceptance false.
+
+First failure: Original player statistics identity missing, at
+integrated-results-context, before world play or any native Stage-begin.
+The report ends with success false, cleanup true, recovery false and world
+seconds zero. No native source cohort/Stage/population success is claimed.
+The early report's zero profile counters and unprepared debug-acceleration
+report are not observations of a loaded profile, erased progress or normal-game
+acceptance; profile preparation had not run. The request itself remains an
+explicit assisted diagnostic. The collector removes the selector, stops the
+process and sleeps the OLED, preserving the first failure.
+
+Source triage: results preparation requires PlayerStatsComponent's original
+controller identity to equal coordinator.directorPlayer. The default early
+combat/director fixture used to register that controller before world/results
+setup. The native context-only branch skips the fixture, but its replacement
+PrepareNativeFirstStageDirectorContext registers the player later, after results
+preparation. Mandatory player identity and optional diagnostic spawning are
+therefore still coupled in the call order. The default path's passing control
+and this exact first assertion bound the correction; no statistics identity
+check should be weakened and no connection/NetworkUser should be fabricated.
+
+Revisit with a named early player-context owner/extraction, exact once-only
+registration/adoption and matching cleanup, without a temporary CombatDirector,
+extra RNG consumption or a default-path order change. A host-only draft is
+under review while the unchanged candidate runs its separate default one-exit
+control. This is the first native diagnostic failure, not stage coverage or
+recovery acceptance. Accepted J654 f57e172b… remains unchanged. No new source,
+original input, private receipt hand edit, extra device, existing data move or
+storage configuration change occurs in this experiment.
