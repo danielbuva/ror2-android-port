@@ -6864,3 +6864,70 @@ before any ADB command. Installed/accepted APK remains J585, app stopped and
 Nova OLED asleep. This host-only checkpoint changes no R8 runtime input and
 runs no Phase 2 step. Revisit the CPU action after candidate baseline/survivor
 checks, using a recorded crowded-stage cohort rather than a menu capture.
+
+
+## J600 — Draft server-active retirement of the owned native teleporter
+
+Hypothesis: completed-session cleanup can retain native CombatSquad callbacks
+because the current owner schedules NetworkServer.Destroy and the outer session
+shuts the server down before Unity's deferred OnDestroy. The accepted native
+CombatSquad subscribes to the global death/summon events in Awake only while the
+server is active, and unsubscribes inside the same server gate in OnDestroy.
+Stage transport already yields twice under active authority after destruction;
+final session cleanup has no equivalent yield. This is a specific retention
+candidate, not proof of the broader managed-memory root.
+
+Prior-art-first: community-prior-art.md's lifecycle guidance and J462's owned
+callback removal informed the boundary; no blanket delegate snapshot restore is
+allowed. Accepted RoR2 CombatSquad, BossGroup and HLAPI NetworkServer source is
+the authority for this ordering. J594 already uses the same public UnSpawn then
+synchronous destruction pattern for its exact scene encounter. Unity's pinned
+2021.3 lifecycle documentation explains why this fixture requires Play Mode:
+[ExecuteInEditMode](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/ExecuteInEditMode.html),
+[OnDestroy](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/MonoBehaviour.OnDestroy.html).
+No original lifecycle method is invoked privately or reimplemented.
+
+TeleporterWorldSession now captures its exact host/NetworkIdentity and marks
+possible activation before removing the inactive staging parent. Disposal checks
+ownership and captured server registration, calls public UnSpawn, verifies the
+network map entry is gone, then destroys that exact host synchronously while
+NetworkServer.active. A never-activated, inactive, unspawned host with zero owned
+listeners has a separate cleanup path whether the server is active or inactive.
+Activated objects cannot take that path. Foreign/reassigned hosts refuse cleanup.
+The existing stage-handoff path remains unchanged.
+
+A read-only helper counts only callbacks whose managed target is one of this
+host's exact CombatSquad wrappers, including destroyed Unity wrappers; actual
+managed nulls are excluded. It never changes either event list. Before/after
+counts and active/synchronous/pre-Awake context remain in ObjectiveReport after
+owner references clear. Both accepted regular and lunar teleporter prefabs have
+one CombatSquad on an originally inactive owner, supporting the source contract;
+live activation and removal still require runtime evidence.
+
+TeleporterLifetimeHost is staged by the existing source producer. In Play Mode
+with no existing client/server, it opens a temporary loopback server, observes
+zero callbacks before activation, original Awake registration, public Spawn and
+UnSpawn, then original OnDestroy removal and server shutdown. Cleanup attempts
+shutdown even after a cleanup failure and preserves the primary failure. It does
+not load the teleporter prefab or test the actual session owner; device checks
+must exercise those paths. The initial idle-editor draft was corrected during
+review because ordinary MonoBehaviour Awake does not run there. Source-scanning
+assertions were removed; they did not exercise the behavioral contract.
+
+Compiler-only evidence: all 94 authored runtime sources and the final fixture
+compile with zero errors against the exact editor references, without opening
+Unity, running Play Mode, building an APK or touching a device. Frozen result,
+response files, logs and source hashes:
+work/experiments/teleporter-lifetime/host-20261019T070536.844848Z/.
+Read-only review: work/coordination/codex-teleporter-review.md. The build-entry
+staging tests pass (12); the shared host suite and Ruff pass. This is a draft,
+not executed native-listener or managed-memory acceptance.
+
+Claude's renewed coordination lock remains held. The installed/accepted APK is
+still J585, app stopped and Nova OLED asleep; the separately frozen J599
+survivor/Siren candidate awaits installation and both baseline modes. This change
+is not staged into that candidate. Next: run the fixture through a bounded empty
+Play Mode scene after lock release, then integrate a later APK and verify both
+baseline modes plus same-process teardown/restart callback counts. Keep broad
+managed-memory attribution separate. This alters R8 runtime, editor-fixture and
+provenance inputs; later rebuild replay is required. No Phase 2 step ran here.

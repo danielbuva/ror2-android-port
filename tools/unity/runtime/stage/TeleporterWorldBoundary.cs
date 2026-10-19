@@ -18,6 +18,37 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
+// Read-only evidence for the two native global events owned by CombatSquad.
+// The exact publisher fields are source-gated: absence means the accepted
+// native callback contract changed and must fail rather than report zero.
+public static class NativeCombatSquadListenerEvidence
+{
+    static readonly BindingFlags StaticPrivate = BindingFlags.Static | BindingFlags.NonPublic;
+
+    static int Count(Type publisher, string eventField, IEnumerable<CombatSquad> exactTargets)
+    {
+        var field = publisher.GetField(eventField, StaticPrivate);
+        if (field == null)
+            throw new InvalidOperationException("Original native event backing field missing: " + publisher.FullName + "." + eventField);
+        var handlers = field.GetValue(null) as Delegate;
+        if (handlers == null)
+            return 0;
+        var targets = (exactTargets ?? Enumerable.Empty<CombatSquad>())
+                          .Where(target => !ReferenceEquals(target, null)).ToArray();
+        return handlers.GetInvocationList().Count(handler => targets.Any(target => ReferenceEquals(handler.Target, target)));
+    }
+
+    public static int CountDeathListeners(IEnumerable<CombatSquad> exactTargets)
+    {
+        return Count(typeof(GlobalEventManager), "onCharacterDeathGlobal", exactTargets);
+    }
+
+    public static int CountSummonListeners(IEnumerable<CombatSquad> exactTargets)
+    {
+        return Count(typeof(MasterSummon), "onServerMasterSummonGlobal", exactTargets);
+    }
+}
+
 // Composed original objective. This shell owns content/context, observation and Android view.
 // Original interaction/FSM/director/boss squad/holdout/rewards/exit perform gameplay.
 public sealed partial class PortSession
@@ -76,7 +107,8 @@ public sealed partial class PortSession
     public class ObjectiveReport
     {
         public bool ready, rules, idle, available, selected, authority, charging, charged, bossDefeated, finished, exitBegan, exitFinished,
-            cleaned, rewardCollected, rewardLeftBehind;
+            cleaned, rewardCollected, rewardLeftBehind, nativeHostTeardownServerActive, nativeHostTeardownSynchronous,
+            nativeHostTeardownPreAwake, nativeHostTeardownObserved;
         public int rewardPickupBaseline, rewardPickupMessages;
         public string[] rewardTables;
         public int silentSourceComponents, frames, bossSpawns, bossDeaths, bossMembers, normalSpawns, ruleCount,
@@ -88,6 +120,8 @@ public sealed partial class PortSession
         public List<string> transitions = new List<string>();
         public ObjectiveRendererObservation[] rendererViews, ownedSurfaceViews, presentedSurfaceViews;
         public int lateNativeMaterials, ownedSurfaceCount;
+        public int nativeHostCombatSquads, nativeHostDeathListenersBefore, nativeHostDeathListenersAfter,
+            nativeHostSummonListenersBefore, nativeHostSummonListenersAfter;
     }
     // Shared objective content, stage references and ownership observations.
     readonly List<GameObject> objectiveTemplates = new List<GameObject>();
@@ -286,6 +320,10 @@ public sealed partial class PortSession
         readonly HashSet<CharacterMaster> objectiveDirectorActors = new HashSet<CharacterMaster>();
         GameObject objectiveOrbHost, objectiveProjectileTemplates;
         bool ownsObjectiveOrbEffects;
+        GameObject ownedObjectiveHost;
+        NetworkIdentity ownedObjectiveIdentity;
+        NetworkInstanceId ownedObjectiveNetworkId;
+        bool ownsObjectiveNetworkSpawn, ownedObjectiveWasActivated;
         static bool objectiveHoldoutInitialized;
         readonly Dictionary<PickupDropTable, PickupDropTable> objectiveDropTables = new Dictionary<PickupDropTable, PickupDropTable>();
         Collider objectiveBeacon;
@@ -1076,6 +1114,11 @@ public sealed partial class PortSession
         }
         public IEnumerator SpawnStageObjective(SessionConfig cfg)
         {
+            coordinator.Check(!ownedObjectiveHost, "Prior native teleporter host survived stage replacement");
+            ownedObjectiveIdentity = null;
+            ownedObjectiveNetworkId = default;
+            ownsObjectiveNetworkSpawn = false;
+            ownedObjectiveWasActivated = false;
             coordinator.r.objective = new ObjectiveReport {
                 rules = true, ruleCount = RuleCatalog.ruleCount, difficulty = coordinator.SelectedOfflineDifficulty().ToString(),
                 scope =
@@ -1101,6 +1144,9 @@ public sealed partial class PortSession
                 coordinator.artifactBundle.LoadAsset<GameObject>(primordial ? cfg.lunarTeleporterAsset : cfg.teleporterAsset);
             coordinator.Check(objectiveSource, "Original stage teleporter source missing");
             coordinator.objectiveHost = Instantiate(objectiveSource, coordinator.worldStaging.transform);
+            ownedObjectiveHost = coordinator.objectiveHost;
+            ownedObjectiveIdentity = coordinator.objectiveHost.GetComponent<NetworkIdentity>();
+            coordinator.Check(ownedObjectiveIdentity, "Original teleporter NetworkIdentity missing before activation");
             coordinator.objectiveHost.name = objectiveSource.name;
             coordinator.Check(coordinator.objectiveHost.GetComponentsInChildren<Component>(true).All(x => x),
                               "Original teleporter serialized component missing");
@@ -1214,9 +1260,17 @@ public sealed partial class PortSession
                 coordinator.objectiveSubscribed = true;
             }
             coordinator.objectiveHost.transform.position = hit.point;
+            // Detaching from the inactive staging root can invoke native Awake
+            // immediately when the authored source instance is activeSelf.
+            ownedObjectiveWasActivated = true;
             coordinator.objectiveHost.transform.SetParent(null, true);
             coordinator.objectiveHost.SetActive(true);
             NetworkServer.Spawn(coordinator.objectiveHost);
+            ownedObjectiveNetworkId = ownedObjectiveIdentity.netId;
+            ownsObjectiveNetworkSpawn = ownedObjectiveNetworkId.Value != 0;
+            coordinator.Check(NetworkServer.active && ownedObjectiveIdentity && ownedObjectiveIdentity.netId.Value != 0 &&
+                                  NetworkServer.FindLocalObject(ownedObjectiveIdentity.netId) == ownedObjectiveHost,
+                              "Original teleporter host was not registered under its exact server identity");
             yield return null;
             coordinator.Check(TeleporterInteraction.instance == coordinator.worldTeleporter &&
                                   coordinator.worldTeleporter.holdoutZoneController && coordinator.worldTeleporter.bossGroup &&
@@ -1799,8 +1853,7 @@ public sealed partial class PortSession
             ObserveObjectiveSupport(true);
             CleanupObjectiveEffects();
             CleanupObjectiveSupport();
-            if (coordinator.objectiveHost)
-                NetworkServer.Destroy(coordinator.objectiveHost);
+            RetireOwnedObjectiveHost();
             if (coordinator.objectiveBossDeck)
                 Destroy(coordinator.objectiveBossDeck);
             coordinator.ReleaseObjectiveStage();
@@ -1837,6 +1890,116 @@ public sealed partial class PortSession
                 Addressables.RemoveResourceLocator(coordinator.objectiveLocator);
                 coordinator.objectiveLocator = null;
             }
+        }
+        void RetireOwnedObjectiveHost()
+        {
+            var host = ownedObjectiveHost;
+            if (!host)
+            {
+                coordinator.Check(!coordinator.objectiveHost || ReferenceEquals(coordinator.objectiveHost, host),
+                                  "Teleporter cleanup would clear a host outside this session's ownership");
+                if (ReferenceEquals(coordinator.objectiveHost, host))
+                    coordinator.objectiveHost = null;
+                if (!coordinator.objectiveHost)
+                    coordinator.worldTeleporter = null;
+                ownedObjectiveHost = null;
+                ownedObjectiveIdentity = null;
+                ownedObjectiveNetworkId = default;
+                ownsObjectiveNetworkSpawn = false;
+                ownedObjectiveWasActivated = false;
+                return;
+            }
+            coordinator.Check(ReferenceEquals(coordinator.objectiveHost, host),
+                              "Teleporter cleanup lost ownership of its exact native host");
+            var identity = host.GetComponent<NetworkIdentity>();
+            if (!ownedObjectiveWasActivated && !host.activeInHierarchy &&
+                !ownsObjectiveNetworkSpawn && (!identity || identity.netId.Value == 0))
+            {
+                // The host is still beneath the inactive staging root. Native Awake
+                // has never run, so no CombatSquad server listeners can need removal.
+                var unstartedSquads = host.GetComponentsInChildren<CombatSquad>(true);
+                int unstartedDeathBefore = NativeCombatSquadListenerEvidence.CountDeathListeners(unstartedSquads);
+                int unstartedSummonBefore = NativeCombatSquadListenerEvidence.CountSummonListeners(unstartedSquads);
+                RecordNativeHostTeardown(NetworkServer.active, false, true, unstartedSquads.Length, unstartedDeathBefore, -1,
+                                         unstartedSummonBefore, -1);
+                coordinator.Save();
+                coordinator.Check(unstartedDeathBefore == 0 && unstartedSummonBefore == 0,
+                                  "Inactive unstarted teleporter already owns native CombatSquad listeners");
+                DestroyImmediate(host);
+                coordinator.Check(!host, "Inactive unstarted original teleporter survived cleanup");
+                int unstartedDeathAfter = NativeCombatSquadListenerEvidence.CountDeathListeners(unstartedSquads);
+                int unstartedSummonAfter = NativeCombatSquadListenerEvidence.CountSummonListeners(unstartedSquads);
+                RecordNativeHostTeardown(NetworkServer.active, true, true, unstartedSquads.Length, unstartedDeathBefore, unstartedDeathAfter,
+                                         unstartedSummonBefore, unstartedSummonAfter);
+                coordinator.Save();
+                coordinator.Check(unstartedDeathAfter == 0 && unstartedSummonAfter == 0,
+                                  "Inactive unstarted teleporter changed native listener state");
+                coordinator.objectiveHost = null;
+                coordinator.worldTeleporter = null;
+                ownedObjectiveHost = null;
+                ownedObjectiveIdentity = null;
+                ownedObjectiveNetworkId = default;
+                ownsObjectiveNetworkSpawn = false;
+                ownedObjectiveWasActivated = false;
+                coordinator.Save();
+                return;
+            }
+            if (!NetworkServer.active)
+                throw new InvalidOperationException("Cannot synchronously destroy the owned original teleporter while the server is inactive");
+            coordinator.Check(identity && (!ownedObjectiveIdentity || identity == ownedObjectiveIdentity),
+                              "Owned original teleporter NetworkIdentity changed before cleanup");
+            var squads = host.GetComponentsInChildren<CombatSquad>(true);
+            coordinator.Check(squads.Length > 0, "Owned original teleporter CombatSquad component missing");
+            int deathBefore = NativeCombatSquadListenerEvidence.CountDeathListeners(squads);
+            int summonBefore = NativeCombatSquadListenerEvidence.CountSummonListeners(squads);
+            RecordNativeHostTeardown(true, false, false, squads.Length, deathBefore, -1, summonBefore, -1);
+            coordinator.Save();
+            coordinator.Check(deathBefore == squads.Length && summonBefore == squads.Length,
+                              "Owned native CombatSquad static listener registration differs before teardown");
+            if (ownsObjectiveNetworkSpawn || identity.netId.Value != 0)
+            {
+                var networkId = ownsObjectiveNetworkSpawn ? ownedObjectiveNetworkId : identity.netId;
+                coordinator.Check(identity.netId == networkId && networkId.Value != 0 &&
+                                      NetworkServer.FindLocalObject(networkId) == host,
+                                  "Owned original teleporter no longer matches its captured server identity");
+                NetworkServer.UnSpawn(host);
+                coordinator.Check(NetworkServer.active && NetworkServer.FindLocalObject(networkId) != host,
+                                  "Original teleporter identity remains registered after NetworkServer.UnSpawn");
+            }
+            else
+                coordinator.Check(identity.netId.Value == 0,
+                                  "Untracked original teleporter identity cannot be safely destroyed");
+            DestroyImmediate(host);
+            coordinator.Check(!host, "Owned original teleporter host survived synchronous cleanup");
+            int deathAfter = NativeCombatSquadListenerEvidence.CountDeathListeners(squads);
+            int summonAfter = NativeCombatSquadListenerEvidence.CountSummonListeners(squads);
+            RecordNativeHostTeardown(true, true, false, squads.Length, deathBefore, deathAfter, summonBefore, summonAfter);
+            coordinator.Save();
+            coordinator.Check(deathAfter == 0 && summonAfter == 0,
+                              "Native CombatSquad static listeners remained after synchronous teleporter teardown");
+            coordinator.objectiveHost = null;
+            coordinator.worldTeleporter = null;
+            ownedObjectiveHost = null;
+            ownedObjectiveIdentity = null;
+            ownedObjectiveNetworkId = default;
+            ownsObjectiveNetworkSpawn = false;
+            ownedObjectiveWasActivated = false;
+            coordinator.Save();
+        }
+        void RecordNativeHostTeardown(bool serverActive, bool synchronous, bool preAwake, int squadCount,
+                                      int deathBefore, int deathAfter, int summonBefore, int summonAfter)
+        {
+            if (coordinator.r.objective == null)
+                return;
+            coordinator.r.objective.nativeHostTeardownObserved = true;
+            coordinator.r.objective.nativeHostTeardownServerActive = serverActive;
+            coordinator.r.objective.nativeHostTeardownSynchronous = synchronous;
+            coordinator.r.objective.nativeHostTeardownPreAwake = preAwake;
+            coordinator.r.objective.nativeHostCombatSquads = squadCount;
+            coordinator.r.objective.nativeHostDeathListenersBefore = deathBefore;
+            coordinator.r.objective.nativeHostDeathListenersAfter = deathAfter;
+            coordinator.r.objective.nativeHostSummonListenersBefore = summonBefore;
+            coordinator.r.objective.nativeHostSummonListenersAfter = summonAfter;
         }
         public void CleanupObjectiveConfigs()
         {

@@ -571,6 +571,23 @@ requests are recorded as requests; `cleanupDisposed` must be read alongside
 rewards and teardown still need device acceptance. No separate probe switch case
 implements this behavior.
 
+Native teleporter retirement (`TeleporterWorldSession`, current source draft,
+J600): this owner captures the exact instantiated host and network identity,
+marks possible activation before detaching it from inactive staging, and keeps
+ownership through partial setup. Final disposal unregisters the identity and
+synchronously destroys only that host while the server remains active. This lets
+the native `CombatSquad.OnDestroy` remove its server-gated static callbacks before
+the outer session shuts down networking. A never-activated inactive host with no
+network identity/listeners has a separate partial-setup cleanup path. Exact-target
+death/summon callback counts before and after retirement remain as scalar fields
+in `ObjectiveReport`; the read-only `NativeCombatSquadListenerEvidence` helper
+preserves destroyed Unity wrappers and never restores or modifies event lists.
+The existing stage-handoff destruction/two-yield path remains unchanged.
+`TeleporterLifetimeHost.Run()` is a Play Mode native-callback fixture, staged by
+`whole_catalog.stage_build_sources`; compiler checks pass, but fixture execution,
+repeated device sessions and attribution of broader managed-memory growth remain
+pending. No new probe switch case implements the cleanup.
+
 Survivor ability observations (`SurvivorSkillObserver.cs`, current runtime source):
 `IntegratedWorldSession` creates this independent `IDisposable` owner after local
 player authority is connected. It holds only that body's four original skill slots,

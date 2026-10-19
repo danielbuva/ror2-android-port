@@ -105,6 +105,7 @@ class BuildEntryTests(unittest.TestCase):
             "AndroidLifecycleHost",
             "SurvivorSkillHost",
             "SirenEncounterHost",
+            "TeleporterLifetimeHost",
             "WholeCatalogBuild",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")

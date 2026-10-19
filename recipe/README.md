@@ -182,6 +182,13 @@ editor-only selection/transaction fixture staged by the existing build producer.
 Neither file adds a local content input. Audited 2026-10-18; device acceptance
 and R8 source/importer/provenance replay remain pending.
 
+J600's teleporter retirement draft changes the existing authored runtime source,
+with no new runtime GUID or content input. The new `TeleporterLifetimeHost.cs`
+fixture is staged by the existing build producer and uses public native lifecycle
+calls plus read-only exact event-target counts. It contains no original gameplay
+algorithm, asset body or middleware. Audited 2026-10-19; Play Mode/device acceptance
+and R8 source/importer/provenance replay remain pending.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

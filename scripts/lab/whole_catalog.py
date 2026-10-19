@@ -1308,7 +1308,7 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
     for filename in runtime_sources:
         io.apply(runtime / Path(filename).name, copy=ROOT / "tools/unity" / filename, catalog=True)
     # Exact-editor host fixtures; stage together so none goes stale in the project.
-    for filename in ["AndroidProgressionHost.cs", "AndroidDiscoveryHost.cs", "AndroidProfileHost.cs", "AndroidLifecycleHost.cs", "SurvivorSkillHost.cs", "SirenEncounterHost.cs"]:
+    for filename in ["AndroidProgressionHost.cs", "AndroidDiscoveryHost.cs", "AndroidProfileHost.cs", "AndroidLifecycleHost.cs", "SurvivorSkillHost.cs", "SirenEncounterHost.cs", "TeleporterLifetimeHost.cs"]:
         io.apply(project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
     # Bundle-only serialized components and reflected location types are invisible
     # to the APK linker. Preserve their measured contracts, not a tested whitelist.
