@@ -11410,3 +11410,51 @@ receipt edit, storage reconfiguration/data move or permanent award occurs.
 The allowlist still contains only the current Nova. Next inspect isolated Mage,
 then repeat native abandon for first-failure counts; run the prepared REX
 alternate selector and source/fixture-bound base-stage route independently.
+
+## J708 — Isolated Mage utility records native Earth Shard projectile occurrence
+
+Hypothesis: J704's bounded faster observation can expose the short-lived native
+output missed by J699, after J700 verifies the original static configuration.
+The isolated alternate Mage utility case passes on accepted J707 APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/experiments/survivor-check/20261019T174937.256801Z/Mage/.
+It reaches 60.452377 world seconds with exact live component 2/family 105/
+variant 1/SkillDef 137 MageBodyFireEarthShards and activation state
+EntityStates.Mage.Weapon.FireEarthShards. The two utility requests produce two
+authority/server callbacks and a later input-bank edge. Primary, secondary and
+special have zero requests, edges and callbacks. The owner reaches its full
+isolated observation interval without first failure or runtime errors.
+
+The native combat observer retains two distinct projectile identities, both
+catalog 209 MageEarthShardProjectile, network IDs 60 and 61, first seen at frame
+2121. Both have exact player-body ownership and are no longer live at the final
+sample. This establishes at least two native Earth Shard projectile objects
+appeared during this case. It does not prove that two is the volley size, that
+every projectile was seen, or which individual request caused an identity.
+Body/projectile damage events remain zero; impact, blast/status behavior and
+complete Earth Shards semantics are still unaccepted.
+
+Two request windows are accepted, with 35 in-window scans including 34 extra
+scans. Maximum observed inter-sample gap is 0.065796 world seconds. Both windows
+expire at their bounded cutoff; completed-at-exact-deadline count zero is normal
+when no update lands exactly at that deadline. There are no request/scan-budget/
+object-cap drops, observer errors/inert state, scan truncation or retained-history
+overflow. J699's one-second observation retained no such objects, but this is
+not a controlled claim about every other scene/run condition or a performance
+benchmark. The narrower sampling now yields positive occurrence evidence,
+without a gameplay or source-config correction. Prior art remains J642/J699/
+J700's exact native projectile/catalog/ownership APIs and pinned query technique;
+no output is assigned to a skill merely by callback timing.
+
+Developer survivor/variant selection and invincibility make this assisted;
+other four acceleration controls are off. Profile remains 13 applied runs,
+one earned/available unlock and one coin, result application/menu loadout
+commit false and saved variants 0/0/0/0. The collector removes its selector,
+stops and sleeps the OLED. Interpretation:
+work/coordination/mage-isolated-output-results/.
+
+First failure: none in this bounded input/output case. No original input,
+Phase 2 output, authored runtime, extra device, receipt edit, storage change
+or permanent award occurs. Current source remains J707's accepted 105-file
+runtime. Native UI-abandon retry is active separately; the prepared REX alternate
+selector and source/fixture-bound base-stage route remain next breadth work.
