@@ -9084,3 +9084,55 @@ positive progression. Installed f57e172b… and accepted J647 9e7c4224… are
 unchanged. R8 must replay the changed authored runtime/fixture. No original
 input, private receipt, extra device, storage configuration or Phase 2 output
 is edited; Moon/finale remains deferred.
+
+## J653 — Engineer's three alternate skills pass callbacks and native abandon/restart
+
+Hypothesis: retaining the default primary can classify Spider Mines, Harpoons
+and Walker Turrets independently of J650's missing Laser Cutter input, then
+exercise the existing J649 completed-session lifecycle contract. No runtime
+change, new native mechanism or community API is introduced.
+
+On unchanged APK f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8,
+an explicit ignored selector requests the three observed native alternate
+variants, retaining the default grenade primary. Evidence:
+work/experiments/survivor-check/20261019T130317.357803Z/Engi/.
+All four native server/authority callbacks pass over 60.381897 s: primary,
+secondary, utility and special counts 21/4/2/2. The native effective vector is
+[0, 1, 1, 1]; requested catalog identities and live runtime definitions agree.
+The healthy generic observer records actual SpiderMine and grenade projectile
+identities, 14 player-projectile damage events and one owned-summon damage
+event. It retains 18 unique projectile IDs with zero history overflow or scan
+truncation. No runtime error. Harpoon callbacks alone do not establish target
+selection, missile firing or damage, and no shield/blocking proof is claimed.
+The default-specific Engineer observer's known SpiderMine/Walker telemetry gap
+is not interpreted as gameplay failure or silently patched.
+
+The same selector then passes the current session-abandon-check, with all
+five gameplay debug options off and automatic input/variant selection explicitly
+assisted. Evidence: work/device/<serial>/experiments/session-cleanup/
+20261019T130719.835119Z/ (frozen inputs, report snapshots, result, logs/captures).
+After more than 60 s continuously ready living play, the host uses the reported
+settings UI and native end-run action. The completed report records 66.678741 s,
+130 health, source abandon true, no persisted loss/result and no client ending.
+Actual native teleporter cleanup occurs synchronously with the server active:
+one CombatSquad, death and summon listeners each 1 → 0, never pre-Awake.
+The Engineer guard is prepared and released. World/objective cleanup completes.
+
+The generic combat observer is healthy at the first ready snapshot, then
+completed cleanup reports attached false/cleaned true/inert false/no error.
+A fresh session 2 in the same process independently reapplies the selector,
+reaches 5.001038 s ready living play at 130 health and attaches a healthy fresh
+observer. Both sessions retain the permanent assisted marker and effective
+variant identities; those setup snapshots are explicitly non-continuous.
+Applied profile runs stay 13 and earned/available unlocks stay one throughout.
+No current-process runtime error. Finalization removes the selector, stops the
+app and sleeps the OLED.
+
+First failure: none in these two cases. Laser Cutter's J650 dependency remains
+open; three alternate callbacks and scoped damage facts do not establish every
+ability semantic, ordinary unlock eligibility or normal difficulty. Both f57e172b…
+baseline modes are still pending, so J647 9e7c4224… remains accepted. New J651/
+J652 source is still unbuilt. Revisit Harpoon targeting/output, the independent
+Laser Cutter repair, and later ordinary selection/positive unlock conditions.
+No source/recipe change, original-input mutation, extra-device action, receipt
+hand edit, existing data move or storage configuration change occurs here.

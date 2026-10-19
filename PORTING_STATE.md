@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J652** (native first-stage lifecycle and timed-chest event source prepared; runtime validation pending).
+Last updated 2026-10-19 after **J653** (Engineer alternate callback and native cleanup/restart checks pass; baseline acceptance pending).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -13,8 +13,8 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Latest device-verified APK | `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` — J647 both baseline modes and Mercenary direct damage; J645 Engineer projectile/owned-summon damage. Native completed-session observer cleanup remains open; prior Engineer teardown/restart is J643 on 118540ea… and loss-only proof is J609. |
-| Installed now | Corrected inventory candidate `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8`, updated in place on current Nova adopted storage; placement/payload sync pass. Default Engineer callbacks/live inventory pass (J650). All four alternate definitions apply, but Laser Cutter hits a missing Addressables input (J650); the other three alternates are under a separate check. Both baseline modes remain pending. Runners sleep the OLED on exit. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Latest device-verified APK | `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` — J647 both baseline modes and Mercenary direct damage; J645 Engineer projectile/owned-summon damage. Candidate f57e172b… now passes completed observer cleanup/restart (J653); loss-only proof remains J609. |
+| Installed now | Corrected inventory candidate `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8`, updated in place on current Nova adopted storage; placement/payload sync pass. Default Engineer callbacks/live inventory pass (J650). All four alternate definitions apply, but Laser Cutter hits a missing Addressables input (J650); the other three alternate callbacks and UI-abandon/same-process observer restart pass (J653). Both baseline modes remain pending. Runners sleep the OLED on exit. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
 | Runtime source since verified APK | Installed f57e172b… has J646's per-run variant selector and J648's live ownership correction (102 runtime files). J649 adds host-only alternate-kit cleanup/restart checks. J651 integrates default-off first-stage source lifecycle; J652 adds the ordinary timed-chest event adapter (105 files). Exact-editor gates/progression fixture pass; both changes are unbuilt. The accepted 9e7c4224… baseline has 101 files. Native stage lifecycle is unverified on device. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J647 `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` · J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
@@ -38,7 +38,7 @@ they are not normal-difficulty acceptance.
   passed for Commando, Huntress and Bandit2 (J603), Toolbot including utility
   (J611), Mage (J614), Mercenary (J618) and Engineer (J621). Engineer's corrected
   setup and native mines/shields/turrets pass (J631), with player projectile and owned-summon
-  damage observed in J645; blocking and full kits remain open.
+  damage observed in J645. Three alternate callbacks plus UI-abandon/restart pass (J653); Laser Cutter and complete ability semantics remain open.
   REX passes (J623); Loader passes a finite replay (J634), while intermittent
   LightningStake corruption remains unresolved. Acrid and Captain pass (J625).
 - **Stages:** Huntress completed four original boss/charge/exit transitions
@@ -47,7 +47,8 @@ they are not normal-difficulty acceptance.
   path. The Gold Shores portal/mission path runs (J485).
 - **World:** original director decks and placement, purchases (chests, Turret1, Drone1),
   items, equipment, procs, elites, death → results. Native completed-session cleanup, Engineer shield-lease release and a healthy
-  same-process restart pass on 118540ea… (J643); earlier loss-only proof is J609.
+  same-process restart pass on f57e172b… with three alternate skills and explicit observer
+  lifecycle checks (J653); earlier loss-only proof is J609.
 - **Progression:** Android-only native profile, results and settings; original achievement
   classes evaluate at genuine events, and assisted runs are excluded from permanent awards
   (profile holds 13 applied runs).
