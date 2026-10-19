@@ -9419,3 +9419,42 @@ full alternate kits and timed-chest delivery remain open. The source change
 requires R8 replay as J658 records. No original input change, extra-device
 selection, private receipt hand edit, existing data move or storage configuration
 change occurs here.
+
+## J661 — Native path passes player/results context then refuses the source Director witness
+
+Hypothesis: J658's early exact registration lets J660's candidate pass the
+previous statistics assertion and reach the next genuine native prerequisite.
+No source or payload change since its build/install/plain control.
+APK: 6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec.
+
+The explicit per-attempt native flag is true. Evidence: work/experiments/
+baseline/20261019T140002.752370Z/, including request, result, final report,
+logs/capture and root-native-first-stage-validation.json. This uses the bounded
+baseline collector as an experimental native diagnostic, explicitly not default
+baseline acceptance. The wrapper's validation exception preserves that failure.
+
+The earlier J656 statistics identity failure is passed: the native profile is
+ready with 13 applied runs and one earned/available unlock; director context
+records the exact registered player, one living/participating player and native
+source context prepared. No duplicate registration failure is observed during
+late adoption. These setup observations do not establish native cleanup.
+
+First failure: Source Director native component cohort was already awakened or
+its initialization witness changed, at integrated-world-commerce, before any
+native Stage-begin or world play. The final report has originalStageBegins zero,
+world time zero, success false, cleanup false and recovery required true. The
+uncompleted SceneDirector population retains source owners, providers and Run
+context rather than pretending teardown succeeded. The host collector then
+removes the selector, force-stops that process and sleeps the OLED. No normal
+session cleanup, recovery completion, scene activation or population success is
+claimed from that process termination.
+
+Revisit the exact source Director initialization conjuncts against accepted
+serialized fields, genuine Awake/OnEnable and the preserved log. A host-only
+first-failure draft is underway; do not weaken preactivation ownership or
+recovery checks. Separate audits also identify legacy director damage/death
+counter wiring and source Chest2 late drop-table regeneration as follow-ups,
+not this run's proven first failure. A fresh process is running the default
+one-exit control; accepted J657 86d2542a… remains unchanged. No source, original
+input, private receipt hand edit, extra-device selection, existing data move or
+storage configuration change occurs in this case.
