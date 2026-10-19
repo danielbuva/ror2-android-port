@@ -11116,3 +11116,61 @@ device, receipt edit, storage alteration, fifth transport or permanent award
 occurs. Next: build, run both default controls, then require immutable
 source/fixture-bound receipts before a bounded base-stage route; keep the Moon
 rollback and all manual-only acceptance intact.
+
+## J702 — Accept cleanup candidate defaults; native teardown reaches effect-attribution refusal
+
+Hypothesis: J697's conditional exact managed-field restoration should preserve
+default world play and advance genuine native abandon cleanup without skipping
+live source owners. Selected preflight and 980 host tests pass (one existing
+skip), as do the exact-editor schema/retirement contracts in J697. Exact Unity
+code-only build succeeds in 103.212179 seconds with zero errors, request
+20261019T170508.255700Z. APK:
+efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d.
+Source checkpoint d7efa8e contains 105 runtime files. Frozen APK/build/source/
+preflight/host/editor receipts:
+work/experiments/native-retired-binding/candidate-20261019T170508.255700Z/.
+All 266 payload hashes equal J698 fe4dc0de. In-place adopted install/sync pass.
+
+The plain default check reaches 35.219406 world seconds on Lakes:
+work/experiments/baseline/20261019T170959.611317Z/. The default exit check reaches
+one genuine transition to Goolake, 161.313400 world seconds and 13.082214 seconds
+on that stage: work/experiments/baseline/20261019T172135.335623Z/.
+Both checks and root current-process log validation pass, native first-stage
+diagnostic is off, and source lifecycle recovery is false. Profile remains 13
+applied runs, one earned/available unlock and one coin; result application is
+false. Accept efb0ba93 as the next default baseline, preserving fe4dc0de as the
+immediate executable rollback. Default controls do not accept the native path.
+
+The separate explicit native ordinary-Commando UI-abandon/restart attempt fails:
+work/device/<serial>/experiments/session-cleanup/20261019T171522.645116Z/.
+It records one genuine server Stage-begin and 68.177261 world seconds before
+session-1 teardown. Settings / End Run is requested through the recovered UI.
+The first failure is now Unattributed original blood/healing shrine effect loads
+in WorldCommerceSession.CleanupWorldCommerce(true), during
+abandoning-offline-session. Reaching this guard establishes that preceding
+CleanupTeleporterWorld/source-table restoration passed; an earlier refusal would
+have set recovery and returned before this commerce check. It does not prove
+all cleanup. The catch retains providers/Run context and sets recovery true;
+there is no completed-session report, session-2 menu start, freshly healthy
+observer or same-process second-session identity. Runtime log error collection
+is empty; the report's exact failure remains authoritative. Profile stays 13/1/1
+with result application false. Native diagnostic assistance remains explicit,
+even with all five acceleration controls off. The collector stops and sleeps.
+
+First failure classification: the native path has advanced past J696's captured
+Wake-field refusal to the existing effect-reference ownership assertion. The
+report lacks the assertion's baseline/final/delta and expected callback count,
+so it cannot identify an extra native loader or establish even the direction
+of the mismatch. J337's typed ShrineUseEffect lease/purchase ownership is the
+applicable prior-art contract. Exact e544 source has additional native callers,
+but their presence is not evidence they executed. Do not expand attribution or
+release extra handles speculatively. Private source/evidence triage:
+work/coordination/native-shrine-effect-triage/. Next expose bounded assertion
+operands and existing per-type callback counts, keeping the equality fail-closed.
+
+J700's editor fixture and J701's manual Moon boundary are later source changes
+absent from this APK. The full current host suite passes 986 tests separately;
+that does not change this candidate's frozen source receipt. No original input,
+Phase 2 output, runtime membership, extra device, manual receipt edit, storage
+reconfiguration/data move, Moon attempt or permanent award occurs. Both default
+collectors remove their selector, stop the package and sleep the OLED.

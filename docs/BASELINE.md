@@ -74,19 +74,17 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `fe4dc0de0f70ec70b699e9d54e55e3e657c0a89f1f9efb52ee58411ed0bcc383`, J698 acceptance of the J693 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.21 s on Lakes and one genuine stage exit to Goolake with 10.12 s next-stage play, no unexpected report or current-process log error (J698) |
+| APK | `efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d`, J702 acceptance of the J697 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.22 s on Lakes and one genuine stage exit to Goolake with 13.08 s next-stage play, no unexpected report or current-process log error (J702) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J698), with the native diagnostic flag off. Its separate
-native source path reaches genuine Stage-begin with generated identity bindings,
-then retains recovery at the borrowed source-table restore guard (J688).
-J696 on 039bc73d isolates a destroyed Wake component with the source scene intact.
-The conditional captured-owner cleanup correction is building separately.
-Completed native restoration/restart and transport remain unaccepted. Prior
+baseline passed it (J702), with the native diagnostic flag off. Its separate
+native source path reaches genuine Stage-begin and passes J697's source-table
+restoration, then refuses at the effect-reference attribution guard (J702).
+Completed native cleanup/restart and transport remain unaccepted. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
 
