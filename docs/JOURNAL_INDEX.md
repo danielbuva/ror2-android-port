@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J624](PORTING_JOURNAL.md#j624--observe-native-engineer-outputs-with-explicit-owner-and-network-attribution) | 2026-10-19 | Observe native Engineer outputs with explicit owner and network attribution | J621 proves callbacks, not actual outputs or clone filter ownership. |
 | [J623](PORTING_JOURNAL.md#j623--rex-callbacks-pass-loader-stops-on-intermittent-native-projectile-corruption) | 2026-10-19 | REX callbacks pass; Loader stops on intermittent native projectile corruption | On unchanged J620 APK fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971, Treebot reaches 60.46 s on Lakes with four valid native components and… |
 | [J622](PORTING_JOURNAL.md#j622--engineer-survives-lakes-loss-only-cleanup-check-ends-at-departure) | 2026-10-19 | Engineer survives Lakes; loss-only cleanup check ends at departure | The separate J620-APK Engineer cleanup observation runs with all five gameplay debug assists off and diagnostic automatic input. |
 | [J621](PORTING_JOURNAL.md#j621--engineer-reaches-four-native-callbacks-with-the-shield-lease-attached) | 2026-10-19 | Engineer reaches four native callbacks with the shield lease attached | On J620 APK fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971, the selected Engineer diagnostic case reaches 60.38 s of Lakes play with four val… |

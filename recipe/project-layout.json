@@ -115,6 +115,7 @@
     "runtime/world/EnemyRewardBoundary.cs": "eac2bc06158244064b9c5258f0380809",
     "runtime/world/EnemySpineBoundary.cs": "1dcbbd1b7b6344e8db8b9df853e41ee8",
     "runtime/world/EngiShieldHitGuard.cs": "45ed8ee0814ca4dbd9ae00746ce4a2ed",
+    "runtime/world/EngineerNativeOutputObserver.cs": "01d926c3af9e747629384a7a2a2ee690",
     "runtime/world/IntegratedWorldBoundary.cs": "ac04f47c69a324f909780e41d20711ac",
     "runtime/world/PlayerDefeatBoundary.cs": "3e35d508f0b8d4b3bb325b276da1dec7",
     "runtime/world/PrimaryFireBoundary.cs": "6556087584415469fa03afea093f5cc6",

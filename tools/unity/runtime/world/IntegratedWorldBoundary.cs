@@ -83,6 +83,7 @@ public sealed partial class PortSession
         public WorldEquipmentReport equipment;
         public bool lunarDefinition, lunarCurrencyAvailable;
         public bool engiShieldGuardPrepared, engiShieldGuardReleased;
+        public EngineerNativeOutputObserver.Report engiNativeOutputs;
         public bool ready, authority, lootReady, interactionReady, cleaned, diagnosticInput, diagnosticInputEver;
         public int tableLoadedCount, barrels, chests, openedBarrels, openedChests, pickups, droplets, pickupMessages, coinMessages,
             xpMessages, frames, kills, liveEnemies;
@@ -387,6 +388,7 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         SurvivorSkillObserver survivorSkills;
+        EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
         EngiShieldHitGuardTemplateLease engiShieldGuard;
         float nextSurvivorSkillSample;
@@ -985,6 +987,11 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
             survivorSkills = new SurvivorSkillObserver(player);
             coordinator.r.survivorSkills = survivorSkills.report;
+            if (coordinator.r.selectedSurvivor == "Engi")
+            {
+                engiNativeOutputs = new EngineerNativeOutputObserver(player);
+                coordinator.r.world.engiNativeOutputs = engiNativeOutputs.report;
+            }
             coordinator.PrepareWholeRunAvailability();
             var displayRules = coordinator.PrepareWholeModelDisplayRules();
             while (displayRules.MoveNext())
@@ -1740,6 +1747,7 @@ public sealed partial class PortSession
             {
                 nextSurvivorSkillSample = elapsed + 1;
                 survivorSkills?.Sample();
+                engiNativeOutputs?.Sample();
             }
             long performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             if (worldClientUpdate == null)
@@ -2780,6 +2788,8 @@ public sealed partial class PortSession
         {
             skillInputCoverage?.Dispose();
             skillInputCoverage = null;
+            engiNativeOutputs?.Dispose();
+            engiNativeOutputs = null;
             survivorSkills?.Dispose();
             survivorSkills = null;
             nextSurvivorSkillSample = 0;

@@ -697,6 +697,30 @@ deployment timing or a bundle-template mutation on Android. J614 records its
 evidence; J617 adds exact native rejector-list identity checks for inactive
 destruction and explicit detach. Native skill/device acceptance remains separate.
 
+Engineer native outputs (`EngineerNativeOutputObserver.cs`, current authored source):
+`IntegratedWorldSession` creates this read-only `IDisposable` owner for the exact
+live original Engineer after local authority and skill observation exist. A
+once-per-second sample reads only that master's native deployable list. Mines
+and bubbles require their native slots, reciprocal owner and exact projectile
+catalog identity with a server-local network mapping. Bubble deployment state
+and ownership of the exact source Collision HurtBox guard filter are separate
+counters. Turret masters require native deployable/minion ownership and the
+original master index; live bodies additionally require reciprocal master/body
+references, original body index and server mappings. The original summon event
+records exact owner/current catalog master attribution independently of samples.
+No skill, stock, damage, deployable, state or gameplay object is changed.
+
+The report is `r.world.engiNativeOutputs`. Unique observed counts and native
+mine state names survive cleanup as scalars; they do not prove damage, turret
+attacks, shield blocking, the guarded-null-hit branch, or every transient output
+between samples. Disposal before skill/body teardown detaches the summon event
+and clears retained engine references, sets and scratch storage. The source
+asset fixture reads minimum GUID/relationship contracts without activation;
+its separate Play Mode clone fixture checks real guard/HurtBox remapping and
+retires only fixture-owned callbacks. The adapted-catalog fixture requires
+initialized lab catalogs and has its own execution gate. These fixture contracts
+do not substitute for actual server-created Android outputs.
+
 `TeleportMaterialSession` also owns final overlay/material release.
 `TeleportOverlayRegistryOwnership`, in the same authored file, reads the native
 active registry prefix to resolve exact wrapper identity before public removal.

@@ -7849,3 +7849,46 @@ proposing a repair. This remains J499's unresolved intermittent failure,
 not a new prefab reconstruction requirement. The batch finalizer removes its
 selector, stops the app and sleeps the OLED. Croco/Captain continue separately
 on the same baseline after this classification; no APK or payload changes.
+
+## J624 — Observe native Engineer outputs with explicit owner and network attribution
+
+J621 proves callbacks, not actual outputs or clone filter ownership. Add the
+named EngineerNativeOutputObserver owned/disposed by IntegratedWorldSession,
+with a once-per-second sample of only the selected master's original
+GetDeployables list and an exact native MasterSummon subscription. Native
+slot, projectile/master catalog index, reciprocal owner/body/minion links and
+server-local mappings distinguish observed mines, deployed bubbles and live
+turret bodies. Exact source Collision HurtBox filter ownership is a separate
+bubble counter. No skill, cooldown, stock, damage, deployable, state machine
+or gameplay object is changed. Teardown detaches the event and clears engine
+references/sets before skill/body cleanup; scalar history remains in the report.
+Counts can miss short-lived outputs between samples and do not prove blocked
+hits, damage, turret attacks or complete kit semantics.
+
+Prior-art-first: read community-prior-art and the pinned Starstorm2
+SwiftSkateboard server skill subscription/OnDestroy unsubscription. Its native
+owner/event lifecycle is API context only; the accepted current Engineer
+FireMines/FireBubbleShield, native deployable list, turret construction,
+MasterSummon and catalog code determine the actual attribution contracts.
+No original or community implementation is copied. The fixture names six
+minimum source asset GUIDs/paths; recipe/README.md records their audit.
+
+The existing stage_build_sources producer now stages the authored owner and
+editor fixture. Both source/layout selections contain 97 runtime files;
+exact-editor first-import GUID is pinned. Twelve build-entry producer host
+tests pass. The exact Unity editor compiles the staged runtime. Idle source
+contracts pass without activation; an isolated Play Mode fixture verifies
+real Unity clone/Collision HurtBox remapping, exact guard ownership and owned
+native rejector cleanup with clean scene restoration. Final evidence/hashes:
+work/experiments/engi-native-output/editor-20261019T100427.193569Z/.
+An earlier fixture attempt in editor-20261019T100330.531336Z correctly refused
+because the fixture activated Collision before the lease's inactive-source
+validation. Corrected only that fixture ordering; production guard unchanged.
+The adapted-catalog fixture is available but was not run in an empty scene.
+
+No Android build or native Engineer output acceptance follows yet. Installed
+APK remains J620 fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971.
+Use an actual Engineer run to observe native deployables/summons and retain
+null-hit marker evidence separately. This changes authored runtime inputs and
+public selections; R8/build-entry replay must include them. No new required
+local content input or Phase 2 output is edited.

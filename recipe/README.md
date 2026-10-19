@@ -232,6 +232,17 @@ The survivor check uses native body index/master linkage after owned catalog
 template replacement. No new path, asset identity or required local input is
 added. Audited 2026-10-19; device evidence and rebuild replay remain separate.
 
+The Engineer native output observer adds the authored
+`runtime/world/EngineerNativeOutputObserver.cs` to both selections (97 entries),
+with its exact-editor imported GUID pinned. It reads native deployable/summon
+APIs and stable catalog identities; no original algorithm, state machine or
+asset body is copied. Its editor-only fixture names only the six minimum
+Engineer asset GUIDs and paths needed to validate the original skill family,
+projectiles and turret master/body relationships. The existing producer stages
+both files; there is no new required local content input. Audited 2026-10-19;
+Android output evidence and R8 source/importer/provenance replay remain separate
+gates.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.
