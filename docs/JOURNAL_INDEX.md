@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J660](PORTING_JOURNAL.md#j660--player-context-correction-builds-and-passes-its-plain-default-control) | 2026-10-19 | Player-context correction builds and passes its plain default control | Hypothesis: J658's extracted registration retains ordinary first-stage play while enabling a separate native-path retry. |
 | [J659](PORTING_JOURNAL.md#j659--follow-typed-state-string-references-in-the-original-catalog-closure) | 2026-10-19 | Follow typed state string references in the original catalog closure | Hypothesis: J650's missing Laser Cutter asset is omitted because native EntityStateGameObject fields serialize keyed references as stringValue rather than PPtr… |
 | [J658](PORTING_JOURNAL.md#j658--register-the-original-player-context-before-native-first-stage-results) | 2026-10-19 | Register the original player context before native first-stage results | Hypothesis: J656's first failure is the missing early controller registration, not a statistics or profile incompatibility. |
 | [J657](PORTING_JOURNAL.md#j657--accept-the-105-source-apk-on-both-default-modes-retain-native-path-first-failure) | 2026-10-19 | Accept the 105-source APK on both default modes; retain native-path first failure | Hypothesis: J651/J652 retain the existing ordinary gameplay path through a full first exit despite the separate opt-in ordering failure found in J656. |

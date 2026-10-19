@@ -9386,3 +9386,36 @@ upstream catalog and downstream R3/R8 replay; no Phase 2 output is edited. The
 existing accepted decompile is the input, with no new local prerequisite,
 original input modification, runtime alias, private receipt hand edit, extra
 device, existing data move or storage configuration change.
+
+## J660 — Player-context correction builds and passes its plain default control
+
+Hypothesis: J658's extracted registration retains ordinary first-stage play
+while enabling a separate native-path retry. The code-only build reuses the
+frozen existing content, so J659's host closure repair is not in this payload.
+Implementation and prior art are recorded in J658/J659.
+
+Selected preflight passes. Build request 20261019T135303.011718Z takes
+93.000766 s with zero errors, producing APK
+6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec.
+Frozen APK, build receipt, selected 105-source/recipe/fixture hashes and build/
+preflight evidence: work/experiments/first-stage-player-context/
+candidate-20261019T135303.011718Z/. In-place installation and payload sync pass
+the current Nova's live adopted-storage/capacity policy.
+
+Plain default evidence: work/experiments/baseline/
+20261019T135551.532720Z/. The bounded collector passes 35.223511 s of Lakes
+world play with no failure or unexpected current-process error in
+root-log-validation.json. Native diagnostic and recovery flags are false;
+profile applied runs remain 13 and earned/available unlocks remain one. The
+snapshot is still integrated-world-playing when the collector force-stops it;
+this is not a completed-session cleanup or positive progression witness. The
+runner removes its selector, stops the app and sleeps the OLED.
+
+First failure: none in build/install/plain control. A fresh explicit native
+first-stage attempt is active; the ordinary one-exit control is pending. Keep
+J657's 86d2542a… accepted until both default modes pass on this APK, and retain
+J656's failed native case independently. Native Stage/population/teardown,
+full alternate kits and timed-chest delivery remain open. The source change
+requires R8 replay as J658 records. No original input change, extra-device
+selection, private receipt hand edit, existing data move or storage configuration
+change occurs here.
