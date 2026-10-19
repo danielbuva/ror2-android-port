@@ -10032,3 +10032,37 @@ independent default inventory/callback run is active. Runtime selection remains
 local build input is needed. Replay three changed runtime owners through R8;
 no Phase 2 output, original input, extra device, private receipt hand edit,
 existing data or storage configuration is changed.
+
+## J676 — Refresh ordinary Huntress selection and its exact alternate inventory
+
+Hypothesis: the accepted full-content APK preserves ordinary profile-eligible
+Huntress selection and supplies current exact alternate identities while the
+independent native source-loot code build is prepared. The device remains on
+accepted ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Evidence: work/experiments/survivor-check/20261019T151004.542757Z/Huntress/.
+The checker freezes the installed receipt at launch; the concurrent later host
+build does not relabel this evidence as its new APK.
+
+The default kit passes 60.422592 world seconds with server/authority callbacks
+23/1/2/1, valid four-component inventory, no missing/suppressed activation and
+no report/runtime error. Survivor override is false: Huntress is actually
+eligible through the ordinary local profile. Diagnostic input/invincibility
+still make the run assisted. The output owner records 24 body-attributed damage
+facts and one sampled owned projectile with no overflow, truncation or unknown
+owner. These do not establish each slot's output or complete skill semantics;
+orb/direct damage need not have a ProjectileController inflictor.
+
+Live native master loadout agrees with all default definitions. Root derives
+and host-validates an explicit all-four alternate selector from the reported
+families/variants only, including special SkillDef index zero. No index is
+guessed and no unlock is granted. Private queued control/provenance:
+work/coordination/codex-huntress-alternate-all.json and its adjacent receipt;
+the alternate case has not run. Existing runtime validation must confirm its
+exact identities again when applied on the next APK.
+
+First failure: none in this default Huntress case. Native source-stage/recovery
+flags are false, and profile runs/earned/available unlocks remain 13/1/1.
+Finally removes selectors, stops and sleeps OLED. J675's 105-source code build
+is active; installation waits until both this case and the build finish. No
+source change, original input, additional device, private receipt hand edit,
+existing data move or storage reconfiguration occurs in the device case.
