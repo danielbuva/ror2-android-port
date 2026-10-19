@@ -52,7 +52,7 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
 
     factory = device_factory or _device_type()
     device = factory(selector=args.device)
-    receipt_dir = Path(device.receipt_root) / "bootstrap" / (timestamp or _timestamp())
+    receipt_dir = device.evidence_directory("bootstrap", timestamp or _timestamp())
     receipt_dir.mkdir(parents=True, exist_ok=False)
     apk = ROOT / "builds" / "bootstrap-arm64.apk"
     result = {
@@ -63,6 +63,8 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
         "apk": str(apk),
         "receipt_dir": str(receipt_dir),
     }
+    package_absent_before_install = False
+    install_attempted = False
     installed = False
     remote_screenshot_created = False
 
@@ -75,6 +77,7 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
         # pre-existing instance before asking Android to install anything.
         if _package_exists(device):
             raise RuntimeError("Smoke package already exists; inspect its ownership before replacing or removing it.")
+        package_absent_before_install = True
         device.validate_apk(apk, PACKAGE)
 
         # Both measurements are fresh for this invocation. The helper performs
@@ -86,6 +89,10 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
         result["capacity"] = device.install_capacity(apk, storage)
 
         install_args = ["install", "--force-uuid", storage["uuid"] or "internal", str(apk)]
+        # adb can report a timeout/transport error after PackageManager has
+        # committed the install. Remember dispatch separately from success so
+        # the finally block can inspect this selected package before cleanup.
+        install_attempted = True
         result["install"] = device.cmd(*install_args, timeout=240)
         installed = True
 
@@ -130,7 +137,20 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
         result["error"] = str(exc)
     finally:
         cleanup_errors = []
-        if installed:
+        cleanup_package = installed
+        if install_attempted and not installed and package_absent_before_install:
+            try:
+                cleanup_package = _package_exists(device)
+                result["install_outcome"] = (
+                    "package present after failed install dispatch"
+                    if cleanup_package
+                    else "package absent after failed install dispatch"
+                )
+            except Exception as exc:
+                # The install outcome is uncertain. Never guess and uninstall
+                # a package when the selected device cannot confirm its state.
+                cleanup_errors.append("install outcome query; package cleanup skipped: " + str(exc))
+        if cleanup_package and package_absent_before_install:
             try:
                 device.sh("am", "force-stop", PACKAGE)
             except Exception as exc:

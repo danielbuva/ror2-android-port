@@ -81,10 +81,82 @@ class SafetyTests(unittest.TestCase):
             self.d.owned()
 
     def test_scoped_receipt_with_another_serial_is_refused(self):
+        self.d.serial = SECOND_TEST_SERIAL
+        self.d.configuration = {
+            "device_serial": DEFAULT_TEST_SERIAL,
+            "device_serials": [DEFAULT_TEST_SERIAL, SECOND_TEST_SERIAL],
+        }
         self.d.receipt_root = self.root / "device" / self.d.serial
         write(self.d.receipt("installed.json"), dict(serial=OTHER_TEST_SERIAL))
         with self.assertRaisesRegex(RuntimeError, "belongs to another serial"):
             self.d.read_receipt("installed.json")
+
+    def test_receipt_json_symlink_is_rejected_for_read_and_write(self):
+        root = self.root / "device"
+        root.mkdir()
+        outside = self.root / "outside.json"
+        outside.write_bytes(b"external sentinel")
+        target = root / "installed.json"
+        target.symlink_to(outside)
+
+        with self.assertRaisesRegex(RuntimeError, "cannot be a symlink"):
+            self.d.read_receipt("installed.json")
+        with self.assertRaisesRegex(RuntimeError, "cannot be a symlink"):
+            self.d.write_receipt("installed.json", {"package": device.PACKAGE})
+        self.assertEqual(outside.read_bytes(), b"external sentinel")
+
+    def test_receipt_root_swapped_to_symlink_after_construction_refuses_write(self):
+        # The device instance is constructed with the ordinary legacy path; its
+        # later lookup must revalidate that path before any receipt can escape.
+        self.d.receipt("installed.json")
+        outside = self.root / "outside"
+        outside.mkdir()
+        sentinel = outside / "installed.json"
+        sentinel.write_bytes(b"external sentinel")
+        (self.root / "device").symlink_to(outside, target_is_directory=True)
+
+        with self.assertRaisesRegex(RuntimeError, "unsafe"):
+            self.d.write_receipt("installed.json", {"package": device.PACKAGE})
+        self.assertEqual(sentinel.read_bytes(), b"external sentinel")
+
+    def test_scoped_receipt_root_swapped_after_construction_refuses_write(self):
+        self.d.serial = SECOND_TEST_SERIAL
+        self.d.configuration = {
+            "device_serial": DEFAULT_TEST_SERIAL,
+            "device_serials": [DEFAULT_TEST_SERIAL, SECOND_TEST_SERIAL],
+        }
+        self.d.receipt_root = self.root / "device" / SECOND_TEST_SERIAL
+        self.d.receipt("installed.json")
+        device_root = self.root / "device"
+        device_root.mkdir()
+        outside = self.root / "outside"
+        outside.mkdir()
+        sentinel = outside / "installed.json"
+        sentinel.write_bytes(b"external scoped sentinel")
+        (device_root / SECOND_TEST_SERIAL).symlink_to(outside, target_is_directory=True)
+
+        with self.assertRaisesRegex(RuntimeError, "unsafe"):
+            self.d.write_receipt("installed.json", {"package": device.PACKAGE})
+        self.assertEqual(sentinel.read_bytes(), b"external scoped sentinel")
+
+    def test_evidence_directory_validates_components_without_creating_them(self):
+        path = self.d.evidence_directory("bootstrap", "attempt-1")
+        self.assertEqual(path, self.root / "device" / "bootstrap" / "attempt-1")
+        self.assertFalse(path.exists())
+        for components in [("..",), ("nested/name",), ("nested\\name",), ("",)]:
+            with self.subTest(components=components), self.assertRaisesRegex(ValueError, "safe names"):
+                self.d.evidence_directory(*components)
+
+        self.d.evidence_directory("bootstrap")
+        outside = self.root / "outside-bootstrap"
+        outside.mkdir()
+        sentinel = outside / "sentinel.json"
+        sentinel.write_bytes(b"external bootstrap sentinel")
+        (self.root / "device").mkdir()
+        (self.root / "device" / "bootstrap").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, "unsafe"):
+            self.d.evidence_directory("bootstrap", "attempt-1")
+        self.assertEqual(sentinel.read_bytes(), b"external bootstrap sentinel")
 
     def test_settings_and_receipt_roots_are_isolated_between_device_contexts(self):
         configuration = {
@@ -139,6 +211,49 @@ class SafetyTests(unittest.TestCase):
             self.assertEqual(selected.work_root, self.root)
             self.assertEqual(selected.receipt("installed.json"), self.root / "device/installed.json")
             self.assertEqual(selected.read_receipt("installed.json")["serial"], DEFAULT_TEST_SERIAL)
+
+    def test_relative_work_root_keeps_default_legacy_receipt_and_counter_paths(self):
+        with tempfile.TemporaryDirectory(dir=Path.cwd()) as temp:
+            relative_root = Path(temp).name
+            write(
+                Path(relative_root) / "config/local.json",
+                {
+                    "device_serial": DEFAULT_TEST_SERIAL,
+                    "device_serials": [DEFAULT_TEST_SERIAL],
+                    "storage_mode": "internal",
+                },
+            )
+            attached = ("List of devices attached\n" + DEFAULT_TEST_SERIAL + "\tdevice\n").encode()
+            with patch.object(common, "WORK", self.root), patch.object(
+                device, "run", return_value=types.SimpleNamespace(stdout=attached)
+            ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+                selected = device.Device(work_root=relative_root)
+
+            absolute_root = Path(temp).absolute()
+            self.assertEqual(selected.work_root, absolute_root)
+            self.assertEqual(selected.receipt_root, absolute_root / "device")
+            write(selected.receipt("installed.json"), {"package": device.PACKAGE})
+            self.assertEqual(selected.read_receipt("installed.json"), {"package": device.PACKAGE})
+            self.assertEqual(
+                selected.install_counter(),
+                absolute_root / "device-install-limits" / (device.digest(DEFAULT_TEST_SERIAL) + ".json"),
+            )
+
+            scoped = absolute_root / "device" / DEFAULT_TEST_SERIAL
+            scoped.mkdir()
+            identity = {
+                "serial": DEFAULT_TEST_SERIAL,
+                "package": device.PACKAGE,
+                "package_path": "/data/app/lab",
+                "apk_sha256": "e" * 64,
+            }
+            marker = {"version": 1, "serial": DEFAULT_TEST_SERIAL, "identity": identity, "sha256": {"installed.json": "f" * 64}}
+            marker["marker_sha256"] = device_context._sha256(
+                json.dumps({key: marker[key] for key in ("version", "serial", "identity", "sha256")}, sort_keys=True, separators=(",", ":")).encode()
+            )
+            (scoped / device_context.ACTIVATION_MARKER).write_text(json.dumps(marker))
+            with self.assertRaisesRegex(RuntimeError, "receipt root changed"):
+                selected.install_counter()
 
     def test_runtime_path_rejected_before_commands_or_receipt_publish(self):
         calls = []

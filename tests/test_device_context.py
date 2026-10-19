@@ -107,6 +107,159 @@ class DeviceContextTests(unittest.TestCase):
             with self.assertRaisesRegex(DeviceContextError, "activation marker is invalid"):
                 receipt_directory(temp, {"serial": DEFAULT_SERIAL, "default_serial": DEFAULT_SERIAL})
 
+    def test_receipt_directory_rejects_symlinked_legacy_and_scoped_roots(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            outside = base / "outside"
+            outside.mkdir()
+            sentinel = outside / "sentinel.json"
+            sentinel.write_bytes(b"keep external bytes")
+            work = base / "work"
+            work.mkdir()
+            (work / "device").symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(DeviceContextError, "symlink"):
+                receipt_directory(work, {"serial": DEFAULT_SERIAL, "default_serial": DEFAULT_SERIAL})
+            with self.assertRaisesRegex(DeviceContextError, "symlink"):
+                receipt_directory(work, {"serial": THOR_SERIAL, "default_serial": DEFAULT_SERIAL})
+            self.assertEqual(sentinel.read_bytes(), b"keep external bytes")
+
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            work = base / "work"
+            (work / "device").mkdir(parents=True)
+            outside = base / "outside"
+            outside.mkdir()
+            sentinel = outside / "sentinel.json"
+            sentinel.write_bytes(b"keep scoped external bytes")
+            (work / "device" / THOR_SERIAL).symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(DeviceContextError, "symlink"):
+                receipt_directory(work, {"serial": THOR_SERIAL, "default_serial": DEFAULT_SERIAL})
+            self.assertEqual(sentinel.read_bytes(), b"keep scoped external bytes")
+
+    def test_receipt_directory_rejects_non_directory_components(self):
+        with tempfile.TemporaryDirectory() as temp:
+            work = Path(temp) / "work"
+            work.mkdir()
+            (work / "device").write_bytes(b"not a directory")
+            with self.assertRaisesRegex(DeviceContextError, "not a directory"):
+                receipt_directory(work, {"serial": DEFAULT_SERIAL, "default_serial": DEFAULT_SERIAL})
+
+        with tempfile.TemporaryDirectory() as temp:
+            work = Path(temp) / "work"
+            (work / "device" / THOR_SERIAL).parent.mkdir(parents=True)
+            (work / "device" / THOR_SERIAL).write_bytes(b"not a directory")
+            with self.assertRaisesRegex(DeviceContextError, "not a directory"):
+                receipt_directory(work, {"serial": THOR_SERIAL, "default_serial": DEFAULT_SERIAL})
+
+    def test_explicit_work_root_symlink_is_allowed_when_receipt_tree_is_contained(self):
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            actual = base / "actual-work"
+            actual.mkdir()
+            chosen = base / "chosen-work"
+            chosen.symlink_to(actual, target_is_directory=True)
+            self.assertEqual(
+                receipt_directory(chosen, {"serial": THOR_SERIAL, "default_serial": DEFAULT_SERIAL}),
+                chosen / "device" / THOR_SERIAL,
+            )
+
+    def test_receipt_migration_refuses_symlinked_source_or_target_tree(self):
+        identity = {
+            "serial": DEFAULT_SERIAL,
+            "package": "dev.ror2lab.arm64",
+            "package_path": "/data/app/lab",
+            "apk_sha256": "d" * 64,
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            outside = base / "outside"
+            outside.mkdir()
+            receipt = outside / "installed.json"
+            receipt.write_text(json.dumps(identity))
+            work = base / "work"
+            work.mkdir()
+            (work / "device").symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(DeviceContextError, "symlink"):
+                migrate_legacy_receipts(
+                    work / "device",
+                    work / "device" / DEFAULT_SERIAL,
+                    serial=DEFAULT_SERIAL,
+                    ownership_proof=identity,
+                    coordination_lock=base / "lock",
+                )
+            self.assertEqual(receipt.read_text(), json.dumps(identity))
+
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            work = base / "work"
+            legacy = work / "device"
+            legacy.mkdir(parents=True)
+            installed = legacy / "installed.json"
+            installed.write_text(json.dumps(identity))
+            outside = base / "outside"
+            outside.mkdir()
+            sentinel = outside / "sentinel.json"
+            sentinel.write_bytes(b"keep migration target bytes")
+            (legacy / DEFAULT_SERIAL).symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(DeviceContextError, "symlink"):
+                migrate_legacy_receipts(
+                    legacy,
+                    legacy / DEFAULT_SERIAL,
+                    serial=DEFAULT_SERIAL,
+                    ownership_proof=identity,
+                    coordination_lock=base / "lock",
+                )
+            self.assertEqual(installed.read_text(), json.dumps(identity))
+            self.assertEqual(sentinel.read_bytes(), b"keep migration target bytes")
+
+    def test_migration_rejects_dangling_optional_receipt_and_counter_symlinks(self):
+        identity = {
+            "serial": DEFAULT_SERIAL,
+            "package": "dev.ror2lab.arm64",
+            "package_path": "/data/app/lab",
+            "apk_sha256": "e" * 64,
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            legacy = base / "device"
+            legacy.mkdir()
+            installed = legacy / "installed.json"
+            installed_bytes = json.dumps(identity).encode()
+            installed.write_bytes(installed_bytes)
+            (legacy / "runtime.json").symlink_to(base / "missing-runtime.json")
+            with self.assertRaisesRegex(DeviceContextError, "regular file: runtime.json"):
+                migrate_legacy_receipts(
+                    legacy,
+                    legacy / DEFAULT_SERIAL,
+                    serial=DEFAULT_SERIAL,
+                    ownership_proof=identity,
+                    coordination_lock=base / "lock",
+                )
+            self.assertEqual(installed.read_bytes(), installed_bytes)
+            self.assertFalse((legacy / DEFAULT_SERIAL).exists())
+
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp)
+            legacy = base / "device"
+            legacy.mkdir()
+            installed = legacy / "installed.json"
+            installed_bytes = json.dumps(identity).encode()
+            installed.write_bytes(installed_bytes)
+            counter = base / "device-install-limits" / "counter.json"
+            counter.parent.mkdir()
+            counter.symlink_to(base / "missing-counter.json")
+            with self.assertRaisesRegex(DeviceContextError, "install counter must be a regular file"):
+                migrate_legacy_receipts(
+                    legacy,
+                    legacy / DEFAULT_SERIAL,
+                    serial=DEFAULT_SERIAL,
+                    ownership_proof=identity,
+                    coordination_lock=base / "lock",
+                    install_counter=counter,
+                )
+            self.assertEqual(installed.read_bytes(), installed_bytes)
+            self.assertFalse((legacy / DEFAULT_SERIAL).exists())
+
     def test_storage_policy_is_explicit_per_device(self):
         self.assertEqual(storage_policy(self.config, DEFAULT_SERIAL), "adopted")
         self.assertEqual(storage_policy(self.config, FUTURE_SERIAL), "internal")

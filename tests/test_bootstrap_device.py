@@ -14,11 +14,23 @@ SPEC.loader.exec_module(smoke_device)
 
 
 class FakeDevice:
-    def __init__(self, serial, receipt_root, *, existing=False, fail_capacity=False):
+    def __init__(
+        self,
+        serial,
+        receipt_root,
+        *,
+        existing=False,
+        fail_capacity=False,
+        install_behavior="success",
+        fail_post_install_package_query=False,
+    ):
         self.serial = serial
         self.receipt_root = Path(receipt_root)
         self.existing = existing
         self.fail_capacity = fail_capacity
+        self.install_behavior = install_behavior
+        self.fail_post_install_package_query = fail_post_install_package_query
+        self.package_query_count = 0
         self.calls = []
         self.storage_result = {
             "serial": serial,
@@ -41,9 +53,18 @@ class FakeDevice:
             raise RuntimeError("capacity rejected")
         return {"arm64_only": True, "selected_free_bytes": storage["adopted"]["free_bytes"]}
 
+    def evidence_directory(self, *components):
+        return self.receipt_root.joinpath(*components)
+
     def cmd(self, *args, **kwargs):
         self.calls.append(("cmd", *args))
         if args[0] == "install":
+            if self.install_behavior == "commit_then_raise":
+                self.existing = True
+                raise RuntimeError("install transport lost after commit")
+            if self.install_behavior == "raise_without_commit":
+                raise RuntimeError("install failed before commit")
+            self.existing = True
             return "Success"
         if args[0] == "logcat":
             return "ROR2_BOOTSTRAP_ARM64_OK"
@@ -58,6 +79,9 @@ class FakeDevice:
     def sh(self, *args, **kwargs):
         self.calls.append(("sh", *args))
         if args[:3] == ("pm", "list", "packages"):
+            self.package_query_count += 1
+            if self.fail_post_install_package_query and self.package_query_count > 1:
+                raise RuntimeError("package query failed after install dispatch")
             return ("package:" + smoke_device.PACKAGE) if self.existing else ""
         if args[:2] == ("pm", "path"):
             return "/mnt/expand/" + self.storage_result["uuid"] + "/app/base.apk"
@@ -105,6 +129,53 @@ class BootstrapDeviceTests(unittest.TestCase):
         self.assertFalse(any(call[:2] == ("cmd", "install") for call in device.calls))
         self.assertFalse(any(call[:2] == ("cmd", "uninstall") for call in device.calls))
         self.assertEqual(device.calls[-1], ("display", False))
+
+    def test_install_error_after_commit_queries_then_cleans_selected_package(self):
+        device = FakeDevice(
+            "device-a",
+            self.root / "work" / "device" / "device-a",
+            install_behavior="commit_then_raise",
+        )
+
+        code, result = self.invoke(device)
+
+        self.assertEqual(code, 1)
+        self.assertEqual(result["error"], "install transport lost after commit")
+        self.assertEqual(result["install_outcome"], "package present after failed install dispatch")
+        self.assertTrue(result["removed"])
+        self.assertFalse(device.existing)
+        self.assertTrue(any(call[:2] == ("cmd", "uninstall") for call in device.calls))
+
+    def test_install_error_without_commit_skips_unnecessary_cleanup(self):
+        device = FakeDevice(
+            "device-a",
+            self.root / "work" / "device" / "device-a",
+            install_behavior="raise_without_commit",
+        )
+
+        code, result = self.invoke(device)
+
+        self.assertEqual(code, 1)
+        self.assertEqual(result["error"], "install failed before commit")
+        self.assertEqual(result["install_outcome"], "package absent after failed install dispatch")
+        self.assertFalse(any(call[:2] == ("cmd", "uninstall") for call in device.calls))
+        self.assertFalse(any(call[:3] == ("sh", "am", "force-stop") for call in device.calls))
+
+    def test_install_error_and_failed_presence_query_refuse_guessed_cleanup(self):
+        device = FakeDevice(
+            "device-a",
+            self.root / "work" / "device" / "device-a",
+            install_behavior="commit_then_raise",
+            fail_post_install_package_query=True,
+        )
+
+        code, result = self.invoke(device)
+
+        self.assertEqual(code, 1)
+        self.assertEqual(result["error"], "install transport lost after commit")
+        self.assertIn("package cleanup skipped", result["cleanup_errors"][0])
+        self.assertTrue(device.existing)
+        self.assertFalse(any(call[:2] == ("cmd", "uninstall") for call in device.calls))
 
     def test_capacity_gate_precedes_install_dispatch(self):
         device = FakeDevice("device-a", self.root / "work" / "device" / "device-a", fail_capacity=True)

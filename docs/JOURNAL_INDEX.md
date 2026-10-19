@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J595](PORTING_JOURNAL.md#j595--verify-the-scoped-current-nova-path-and-harden-receipt-cleanup) | 2026-10-18 | Verify the scoped current-Nova path and harden receipt cleanup | Hypothesis: J589's selected-device context can preserve the current Nova's ownership and baseline behavior after migration, while refusing ambiguous selection… |
 | [J586](PORTING_JOURNAL.md#j586--r9-rerun-no-new-reimport-errors-one-gate-file-and-one-apk-shader-left) | 2026-10-18 | R9 rerun: no new reimport errors; one gate file and one APK shader left | Phase 2, from-scratch rebuild (run by Claude, with the operator's approval to stop the lab MCP editor). |
 | [J594](PORTING_JOURNAL.md#j594--restore-the-original-siren-encounter-lifecycle-host-draft) | 2026-10-18 | Restore the original Siren encounter lifecycle (host draft) | Hypothesis: ordinary Siren traversal (J402–J406/J504) does not establish its egg mission. |
 | [J592](PORTING_JOURNAL.md#j592--r9s-four-unity-generated-file-gaps-two-exact-classifications-one-open-drift) | 2026-10-18 | R9's four Unity-generated file gaps: two exact classifications, one open drift | Phase 2, from-scratch rebuild (diagnosed and implemented by Claude; host only, no build, install or editor). |

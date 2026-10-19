@@ -111,6 +111,38 @@ def device_state_paths(work_root, serial):
     }
 
 
+def validate_receipt_directory(work_root, candidate):
+    """Validate an existing-or-future receipt directory under ``work_root``.
+
+    Symlinks are permitted in ancestors of the explicitly selected work root
+    itself (for example macOS ``/var``), but never in the receipt tree below
+    that root. Missing components are allowed so callers can validate a path
+    before creating it.
+    """
+    base = Path(os.path.abspath(os.fspath(work_root)))
+    target = Path(os.path.abspath(os.fspath(candidate)))
+    try:
+        relative = target.relative_to(base)
+    except ValueError as exc:
+        raise DeviceContextError("Receipt directory is outside the selected work root") from exc
+
+    cursor = base
+    try:
+        for component in relative.parts:
+            cursor = cursor / component
+            if cursor.is_symlink():
+                raise DeviceContextError("Receipt directory contains a symlink")
+            if cursor.exists() and not cursor.is_dir():
+                raise DeviceContextError("Receipt directory component is not a directory")
+        resolved_base = base.resolve(strict=False)
+        resolved_target = target.resolve(strict=False)
+        if not resolved_target.is_relative_to(resolved_base):
+            raise DeviceContextError("Resolved receipt directory is outside the selected work root")
+    except OSError as exc:
+        raise DeviceContextError("Receipt directory cannot be validated") from exc
+    return target
+
+
 def receipt_directory(work_root, context):
     """Resolve receipt storage without changing legacy Nova command behavior.
 
@@ -128,10 +160,16 @@ def receipt_directory(work_root, context):
     serial = validate_serial(serial)
     root = Path(work_root) / "device"
     scoped = root / serial
+    # Validate both legacy and scoped candidates before consulting a marker.
+    # This also catches dangling links, which Path.exists() alone misses.
+    validate_receipt_directory(work_root, root)
+    validate_receipt_directory(work_root, scoped)
     if serial != default_serial:
-        return scoped
+        return validate_receipt_directory(work_root, scoped)
     marker = scoped / ACTIVATION_MARKER
-    if marker.exists() and (marker.is_symlink() or not marker.is_file()):
+    if marker.is_symlink():
+        raise DeviceContextError("Scoped receipt activation marker is not a regular file")
+    if marker.exists() and not marker.is_file():
         raise DeviceContextError("Scoped receipt activation marker is not a regular file")
     if marker.is_file():
         try:
@@ -161,8 +199,8 @@ def receipt_directory(work_root, context):
                     raise ValueError("marker contains an invalid hash")
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError, KeyError, ValueError) as exc:
             raise DeviceContextError("Scoped receipt activation marker is invalid") from exc
-        return scoped
-    return root
+        return validate_receipt_directory(work_root, scoped)
+    return validate_receipt_directory(work_root, root)
 
 
 def storage_policy(configuration, serial):
@@ -287,13 +325,16 @@ def migrate_legacy_receipts(
         raise DeviceContextError("Legacy receipt migration is blocked while the coordination lock exists")
     source = Path(source)
     target = Path(target)
+    work_root = source.parent
+    source = validate_receipt_directory(work_root, source)
+    target = validate_receipt_directory(work_root, target)
     if source == target:
         raise DeviceContextError("Legacy receipt source and target must differ")
     if not source.is_dir():
         raise DeviceContextError("Legacy receipt directory is missing")
     if target.exists():
         raise DeviceContextError("Scoped receipt target already exists; inspect before migration")
-    staging = target.with_name(target.name + ".migration-tmp")
+    staging = validate_receipt_directory(work_root, target.with_name(target.name + ".migration-tmp"))
     if staging.exists():
         raise DeviceContextError("Temporary migration directory already exists; inspect before retry")
 
@@ -308,9 +349,11 @@ def migrate_legacy_receipts(
     snapshot = {installed_path: installed_raw}
     for name in MIGRATED_RECEIPTS:
         original = source / name
+        if original.is_symlink():
+            raise DeviceContextError("Legacy receipt must be a regular file: " + name)
         if not original.exists():
             continue
-        if not original.is_file() or original.is_symlink():
+        if not original.is_file():
             raise DeviceContextError("Legacy receipt must be a regular file: " + name)
         if name == "installed.json":
             data, receipt = installed_raw, installed
@@ -328,8 +371,11 @@ def migrate_legacy_receipts(
     counter_payload = None
     if install_counter is not None:
         counter_path = Path(install_counter)
+        validate_receipt_directory(work_root, counter_path.parent)
+        if counter_path.is_symlink():
+            raise DeviceContextError("Per-device install counter must be a regular file")
         if counter_path.exists():
-            if not counter_path.is_file() or counter_path.is_symlink():
+            if not counter_path.is_file():
                 raise DeviceContextError("Per-device install counter must be a regular file")
             counter_bytes, counter = _read_receipt_bytes(counter_path)
             if counter.get("serial") != serial:
@@ -337,7 +383,8 @@ def migrate_legacy_receipts(
             counter_payload = counter_bytes
             snapshot[counter_path] = counter_bytes
 
-    staging.parent.mkdir(parents=True, exist_ok=True)
+    validate_receipt_directory(work_root, target.parent).mkdir(parents=True, exist_ok=True)
+    validate_receipt_directory(work_root, staging)
     staging.mkdir()
     try:
         hashes = {}
@@ -357,6 +404,7 @@ def migrate_legacy_receipts(
         _verify_snapshot(snapshot)
         if Path(coordination_lock).exists():
             raise DeviceContextError("Legacy receipt migration is blocked while the coordination lock exists")
+        validate_receipt_directory(work_root, target)
         target.mkdir()
         for name in copied:
             os.replace(staging / name, target / name)
@@ -370,6 +418,7 @@ def migrate_legacy_receipts(
         _verify_snapshot(snapshot)
         if Path(coordination_lock).exists():
             raise DeviceContextError("Legacy receipt migration is blocked while the coordination lock exists")
+        validate_receipt_directory(work_root, target)
 
         marker_tmp = target / (ACTIVATION_MARKER + ".tmp")
         marker = target / ACTIVATION_MARKER
@@ -380,6 +429,7 @@ def migrate_legacy_receipts(
         if Path(coordination_lock).exists():
             marker_tmp.unlink()
             raise DeviceContextError("Legacy receipt migration is blocked while the coordination lock exists")
+        validate_receipt_directory(work_root, target)
         _verify_snapshot(snapshot)
         _verify_target_hashes(target, hashes)
         if Path(coordination_lock).exists():

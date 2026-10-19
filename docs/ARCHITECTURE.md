@@ -38,10 +38,10 @@ attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
-### Device selection and storage receipts (host draft)
+### Device selection and storage receipts
 
-Device selection is being expanded from one configured serial to an explicit
-allowlist/default model. `work/config/local.json` will accept `device_serials`,
+Device selection uses an explicit allowlist/default model.
+`work/config/local.json` accepts `device_serials`,
 `device_serial`, and `device_settings[serial]`. Device actions accept `--device SERIAL`
 or `LAB_DEVICE=SERIAL`; with multiple attached devices and no explicit selector, they
 refuse to choose. An explicit serial outside the configured allowlist also refuses.
@@ -58,6 +58,16 @@ settings and receipt root. All current and
 retained historical device callers use that instance's receipt API. CLI cleanup sleeps
 only the exact instances it awakened, including on failure. Dual-panel profiles require
 both physical internal panels to report OFF before sleep is accepted.
+
+Receipt and evidence paths reject symlinks and non-directory components beneath the
+chosen work root; an explicitly chosen work root may itself resolve through a symlink.
+Every receipt lookup rechecks the active namespace and refuses a changed root. JSON
+receipt/counter links also refuse, including dangling links during migration.
+`Device.evidence_directory` validates new per-device evidence paths before creation.
+Bootstrap smoke records install dispatch separately from success: an ambiguous failure
+queries the selected package and cleans up only when it was absent before dispatch and
+is now confirmed present. An unavailable follow-up query preserves the primary failure
+and reports cleanup uncertainty.
 
 `scripts/lab/build_lock.py` owns a persistent advisory kernel lock and owner diagnostics.
 It is reentrant in one thread and hands its open descriptor to the editor client. Build
@@ -79,11 +89,12 @@ setting. The host Unity build mutex is mandatory for every caller.
 `./dev build` runs host preflight only and holds the global Unity build lock at
 `work/coordination/unity-build.lock`; install, sync and gameplay actions do not take that
 lock. Every install still queries live storage and free space and enforces the selected
-device reserve. Receipts are planned under `work/device/<serial>/`. The explicit
-`migrate-device-receipts` command will migrate existing `work/device/` receipts after the
+device reserve. Scoped receipts live under `work/device/<serial>/`. The explicit
+`migrate-device-receipts` command migrates legacy `work/device/` receipts after the
 coordination lock clears, preserve the originals, and write its activation marker last.
-No receipts have been migrated, and the selector/config/receipt behavior has not yet been
-validated on a live device.
+J595 migrated the configured Nova's receipts and verified both baseline modes after an
+in-place adopted-storage install. Legacy receipt bytes remain intact. Extra devices and
+their storage/display contracts remain unvalidated until explicitly allowlisted.
 
 Current onboarding is Nova on adopted storage. Nova and Thor are not yet configured as
 internal-storage devices; onboarding waits for configured serials, recorded live storage,

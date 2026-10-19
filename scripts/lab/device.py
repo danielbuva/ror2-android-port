@@ -5,7 +5,16 @@ import shlex
 import zipfile
 import copy
 import common
-from device_context import ACTIVATION_MARKER, command_selectors, migrate_legacy_receipts, receipt_directory, select_device, storage_policy
+from device_context import (
+    ACTIVATION_MARKER,
+    DeviceContextError,
+    command_selectors,
+    migrate_legacy_receipts,
+    receipt_directory,
+    select_device,
+    storage_policy,
+    validate_receipt_directory,
+)
 
 PACKAGE = "dev.ror2lab.arm64"
 ADB = "/opt/homebrew/bin/adb"
@@ -41,7 +50,8 @@ class Device:
 
     def __init__(self, selector=None, work_root=None):
         require_device_access()
-        self._work_root = Path(work_root) if work_root is not None else common.WORK
+        selected_work_root = work_root if work_root is not None else common.WORK
+        self._work_root = Path(os.path.abspath(os.fspath(selected_work_root)))
         configuration = copy.deepcopy(read(self.work_root / "config/local.json"))
         lines = run([ADB, "devices"]).stdout.decode().splitlines()[1:]
         inventory = [{"serial": p[0], "state": p[1]} for line in lines if len(p := line.split()) >= 2]
@@ -64,10 +74,50 @@ class Device:
     def work_root(self):
         return getattr(self, "_work_root", WORK)
 
+    def _validated_receipt_root(self):
+        try:
+            selected = receipt_directory(
+                self.work_root,
+                {"serial": self.serial, "default_serial": self.configuration["device_serial"]},
+            )
+            root = validate_receipt_directory(self.work_root, self.receipt_root)
+        except DeviceContextError as exc:
+            raise RuntimeError("Selected-device receipt directory is unsafe") from exc
+        if root != selected:
+            raise RuntimeError("Selected-device receipt root changed; recreate the device context")
+        return root
+
     def receipt(self, name):
         if Path(name).name != name or not name.endswith(".json"):
             raise ValueError("Receipt name must be a JSON basename")
-        return self.receipt_root / name
+        root = self._validated_receipt_root()
+        path = root / name
+        if path.is_symlink():
+            raise RuntimeError("Device receipt cannot be a symlink")
+        if path.exists() and not path.is_file():
+            raise RuntimeError("Device receipt must be a regular file")
+        return path
+
+    def evidence_directory(self, *components):
+        """Return a validated local evidence directory without creating it."""
+        if not components:
+            raise ValueError("At least one evidence directory component is required")
+        for component in components:
+            if (
+                not isinstance(component, str)
+                or not component
+                or component in (".", "..")
+                or "/" in component
+                or "\\" in component
+                or "\x00" in component
+            ):
+                raise ValueError("Evidence directory components must be safe names")
+        root = self._validated_receipt_root()
+        candidate = root.joinpath(*components)
+        try:
+            return validate_receipt_directory(self.work_root, candidate)
+        except DeviceContextError as exc:
+            raise RuntimeError("Selected-device evidence directory is unsafe") from exc
 
     def read_receipt(self, name):
         value = read(self.receipt(name))
@@ -251,8 +301,18 @@ class Device:
         validate_apk_identity(apk, expected_package)
 
     def install_counter(self):
-        if self.receipt_root == self.work_root / "device":
-            return self.work_root / "device-install-limits" / (digest(self.serial) + ".json")
+        receipt_root = self._validated_receipt_root()
+        legacy_root = self.work_root / "device"
+        if receipt_root == legacy_root:
+            parent = self.work_root / "device-install-limits"
+            try:
+                parent = validate_receipt_directory(self.work_root, parent)
+            except DeviceContextError as exc:
+                raise RuntimeError("Selected-device install-counter directory is unsafe") from exc
+            path = parent / (digest(self.serial) + ".json")
+            if path.is_symlink() or (path.exists() and not path.is_file()):
+                raise RuntimeError("Selected-device install counter is not a regular file")
+            return path
         return self.receipt("device-install-limit.json")
 
     def install_capacity(self, apk, storage):

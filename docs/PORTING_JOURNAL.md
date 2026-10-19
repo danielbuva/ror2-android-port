@@ -6657,3 +6657,74 @@ next-stage play (`…20261019T054738.689503Z`). Restore: baseline APK `da5e4959�
 default payload synced, both modes passed again (35.2 s; Goolake, 13.5 s). App stopped, OLED asleep,
 lab MCP editor restarted and connected. Revisit: the `BlueNoise_R8_1` drift and
 `Hidden/Compositing` are the last two differences between R9 and the working project's build.
+
+## J595 — Verify the scoped current-Nova path and harden receipt cleanup
+
+Hypothesis: J589's selected-device context can preserve the current Nova's
+ownership and baseline behavior after migration, while refusing ambiguous
+selection and redirected state. Generic ADB/filesystem work needs no new
+RoR2-specific reconstruction or ecosystem mechanism.
+
+Host review found two concrete gaps. Receipt directories could be symlinks, and
+bootstrap smoke could skip cleanup if ADB failed after Android committed its
+install. Device-context validation now rejects symlink/non-directory components
+below the chosen work root, JSON/counter symlinks and dangling migration links.
+The explicitly chosen work root may itself be a symlink. Every receipt/counter
+lookup rechecks its namespace; a newly activated namespace requires a fresh
+context. Explicit relative work roots normalize consistently. Validated
+per-device evidence paths use Device.evidence_directory before creation.
+
+Bootstrap tracks absence before dispatch and attempted install separately from
+successful return. After an ambiguous failure it queries the selected package:
+confirmed presence enables cleanup, absence skips uninstall, and a failed query
+records uncertainty without guessing. Pre-existing bootstrap installs still
+refuse any replacement/removal. The primary failure remains the result even
+when cleanup succeeds. Tests use temporary files and mocked transports only.
+
+All 846 shared-workspace host tests pass with one optional skip; Ruff, README
+freshness and diff checks pass. Temp tests preserve external sentinel bytes,
+refuse root/file redirects and namespace changes, and cover committed/absent/
+unknown bootstrap outcomes. No real bootstrap install was run.
+
+After Claude removed the coordination lock and recorded J586's restoration,
+the first doctor invocation correctly refused multiple attached devices with
+no selector. The legacy configuration had only its already authorized default
+serial. That value alone was carried into an absent device_serials allowlist,
+retaining the default and every setting; a local backup is under
+work/coordination/backups. No attached extra serial was added or inspected.
+All subsequent commands explicitly selected that existing default with the
+coordination transport guard enabled. Doctor and live preflight passed.
+
+Migration checked live package ownership, copied seven scoped records including
+the install counter, and published the activation marker last. All seven copies
+matched their migration hashes. Twelve legacy receipt/counter files retained
+exactly their previous bytes; no source receipt was removed. The exact J585 APK
+was located from the existing receipt and hash-verified before installing it in
+place. Fresh storage/placement checks confirmed adopted backing; no storage
+configuration or other game/data changed.
+
+Device evidence on that APK
+`da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0`:
+
+- Plain check passed 35.2 s on Lakes without reported error or first failure:
+  `work/experiments/baseline/20261019T063246.783669Z/`.
+- Stage-exit check passed one transition to Goolake and 10.1 s of next-stage
+  play without reported error or first failure:
+  `work/experiments/baseline/20261019T063648.286965Z/`.
+- Both checks retained 13 applied profile runs, remained explicitly assisted,
+  removed their selectors, force-stopped the app and slept the Nova OLED.
+
+Frozen tooling evidence:
+`work/experiments/multi-device/nova-20261019T064347.066471Z/`.
+It includes selection refusal, selected doctor/preflight, migration, install,
+baseline results and the host suite/source hashes. Private serials, volume IDs,
+paths and raw captures remain ignored. The APK baseline is unchanged; this
+accepts the current Nova tooling path, not full gameplay or extra-device
+compatibility. No extra device or concurrent hardware run is accepted yet.
+
+Revisit: user-supplied extra serials, then live per-device model/storage and
+one/two-panel sleep observations before installs. Preserve adopted-only policy
+for this Nova; the second Nova and Thor require internal-only policy and reserve
+checks. The host Unity mutex remains the sole build coordinator. This checkpoint
+changes host tooling only, not R8 runtime inputs; survivor/Siren runtime build
+and acceptance remain separate queued work. No Phase 2 rebuild step ran here.
