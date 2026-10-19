@@ -1047,6 +1047,15 @@ local NetworkUser, so server-begin does not prove Stage.Start's client
 continuation or `onStageStartGlobal`. Unknown/platform global scene-change
 subscribers refuse; no event queue is cleared to force progress.
 
+Source identity retirement verifies the captured server mapping and current
+ID mapping are absent after owned `UnSpawn`, then invokes native `Reset` for
+the exact retained captured ID even when host-mode `OnNetworkDestroy` already
+cleared `isServer`. Changed IDs/foreign remapping refuse; the postcondition
+requires zero ID and cleared server/client flags before active-state restore.
+No private identity state is assigned. `test_native_identity_reset.py` executes
+the authored production rollback method against host-order HLAPI doubles;
+actual native cleanup/restart remains a device gate.
+
 `sourceStageLifecycleRecoveryRequired` keeps the exact nested iterator,
 body/master, Run, server/client, scene and provider/catalog graph alive after
 partial native acquisition or failed retirement. Destructive upstream finalizers

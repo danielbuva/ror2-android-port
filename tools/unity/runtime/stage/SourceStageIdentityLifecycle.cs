@@ -610,9 +610,14 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
                     if (!ReferenceEquals(currentRegistration, null))
                         throw Refuse("source identity was re-registered under a current or foreign NetworkInstanceId");
                 }
-                if (state.hasRegisteredId && (state.identity.netId != state.registeredId || state.identity.isServer))
+                // Native HLAPI UnSpawn marks this identity for reset. In host mode,
+                // NetworkIdentity.OnNetworkDestroy clears isServer but retains netId,
+                // so isServer cannot decide whether the captured ID still needs Reset.
+                if (state.hasRegisteredId && state.identity.netId == state.registeredId)
                     ResetIdentity.Invoke(state.identity, null);
-                if (state.identity.netId.Value != 0 || state.identity.isServer)
+                else if (state.identity.netId.Value != 0)
+                    throw Refuse("owned source identity retained an unexpected NetworkInstanceId after UnSpawn");
+                if (state.identity.netId.Value != 0 || state.identity.isServer || state.identity.isClient)
                     throw Refuse("owned source NetworkIdentity.Reset did not clear the unspawned identity");
                 if (state.identity.gameObject != directorRoot)
                     state.identity.gameObject.SetActive(state.activeSelf);

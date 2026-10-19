@@ -10317,3 +10317,46 @@ scenes and native transport remain unavailable. Replay R5 policy, R7 maps
 (after R6) and R8 sources for the other session's later rebuild; no work/rebuild
 or R9 status is changed. No original input, extra-device action, receipt hand
 edit, data move or storage reconfiguration occurs.
+
+## J683 — Reset the retained owned identity after host-mode unspawn
+
+Hypothesis: J681's actual teardown assertion is caused by a predicate that
+skips native Reset after host-local OnNetworkDestroy clears isServer while
+retaining the exact captured network ID. The accepted HLAPI confirms UnSpawn
+removes the server mapping, invokes that local-client callback, then marks
+native Reset; marked Reset clears ID/server/client/authority state. The source
+cohort's old comparison made the retained expected ID the one case it skipped.
+
+Prior art remains pinned R2API.Prefab network-registration separation and J651's
+accepted native HLAPI lifecycle; exact current native UnSpawn/DestroyObject,
+OnNetworkDestroy/MarkForReset/Reset govern this correction. Only authored
+ownership validation/API calls are changed, with no copied native method body.
+
+After the existing captured/current registration checks, the source lifecycle
+now calls the same native Reset for its exact captured ID independently of
+isServer. A different nonzero ID refuses; a zero ID with residual server/client
+flags also refuses. Active-state restoration follows the strict clean result.
+No direct private identity-field write, mapping purge, queue clear, unspawn/
+spawn-order change or recovery bypass is introduced. Existing table/provider
+leases remain retained if native rollback fails. Independent source review:
+work/coordination/native-identity-reset-review/; private draft/triage:
+work/coordination/native-identity-reset-triage/.
+
+Root integrates the local hunk into J682's metadata consumer. New portable
+host test extracts the actual authored RollbackOwnedIdentities method and
+executes it with authored host-order HLAPI doubles: formerly skipped same-ID
+reset, repeated cleanup, captured foreign remapping, changed ID, ineffective
+unmarked reset, residual flags and active-state restoration ordering. All
+966 host tests pass with one existing skip. Exact-editor compilation and
+existing first-stage/variant/input/Director/stake/Transform fixtures pass at
+work/experiments/first-stage-native-lifecycle/
+identity-editor-20261019T154832.501178Z/. These tests do not invoke the real
+native teardown path; a new device cleanup/restart is still required.
+
+First failure: none in the integrated host/editor checks. Accepted/installed
+APK remains e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc,
+which still has J681's native cleanup failure. Queue J682 metadata plus this
+fix into one code-only build and rerun native cleanup as well as both default
+controls. ARCHITECTURE names the stricter retirement contract; R8 must replay
+the changed authored source. No Phase 2 output, original input, extra device,
+receipt hand edit, data move or storage configuration change occurs.
