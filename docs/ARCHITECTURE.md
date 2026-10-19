@@ -975,6 +975,19 @@ inert. A pending unsubscribe retains its recovery handle for disposal/retry befo
 replacement; partial reports are never complete output evidence. The exact-editor
 fixture checks native API, caps and fault/disposal contracts without native objects
 or global event dispatch. This owner changes no gameplay, authority, stock or RNG.
+For an explicit isolated-slot request only, the existing observer may arm up to
+three one-second projectile-observation windows, with a 0.05-second cadence and
+at most 60 extra scans per session. The inline pure
+`TransientProjectileWindowSchedule` is owned/disposed with the observer;
+`IntegratedWorldSession` resets its request cursor on setup/cleanup and arms a
+window when its existing input owner issues a request. Normal runs retain the
+one-second scan deadline. All scans reuse the same native server/owner/catalog
+checks, 4,096-object bound and 64-record history. In-window baseline scans count
+as observations without using the extra-scan budget. Reports separate request,
+accepted/drop, scan/cap, expiry and maximum observed gap; these are partial after
+an observer fault. A request window does not prove state entry, projectile
+causality, complete transient coverage or per-slot damage. The extracted actual
+timing policy has a compiled portable host contract.
 
 `TeleportMaterialSession` also owns final overlay/material release.
 `TeleportOverlayRegistryOwnership`, in the same authored file, reads the native

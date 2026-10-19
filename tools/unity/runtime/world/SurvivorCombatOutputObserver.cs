@@ -7,6 +7,99 @@ using RoR2.Projectile;
 using UnityEngine;
 using UnityEngine.Networking;
 
+// Pure bounded timing policy for short extra output-observation windows.
+// This schedule never queries game objects or changes gameplay state.
+public sealed class TransientProjectileWindowSchedule
+{
+    public const int MaximumWindows = 3;
+    public const int MaximumExtraScans = 60;
+    public const float WindowSeconds = 1f;
+    public const float SampleIntervalSeconds = .05f;
+    const float WorldClockToleranceSeconds = .00001f;
+
+    public int requests, accepted, droppedRequests, scans, extraScans, scanBudgetDrops;
+    public int completedWindows, expiredWindows;
+    public float maximumGapWorldSeconds;
+    public bool activeWindow => active;
+    bool active, hasLastSample;
+    float endsAt, nextSampleAt, lastSampleAt;
+
+    public bool Request(float worldSeconds, bool observerAvailable)
+    {
+        requests++;
+        if (!observerAvailable || float.IsNaN(worldSeconds) || float.IsInfinity(worldSeconds) || worldSeconds < 0 ||
+            active || accepted >= MaximumWindows)
+        {
+            droppedRequests++;
+            return false;
+        }
+        accepted++;
+        active = true;
+        hasLastSample = false;
+        endsAt = worldSeconds + WindowSeconds;
+        nextSampleAt = worldSeconds + SampleIntervalSeconds;
+        return true;
+    }
+
+    // Returns one due scan at most. A delayed update never catches up by
+    // repeating scans at the same world timestamp.
+    public bool TryTakeScan(float worldSeconds, bool baselineDue, out bool extraScan)
+    {
+        extraScan = false;
+        if (!active)
+            return false;
+        if (float.IsNaN(worldSeconds) || float.IsInfinity(worldSeconds) || worldSeconds < 0)
+            return false;
+        if (worldSeconds > endsAt)
+        {
+            active = false;
+            expiredWindows++;
+            return false;
+        }
+        if (hasLastSample && worldSeconds <= lastSampleAt)
+            return false;
+        // A scheduled baseline scan is still an in-window observation even
+        // when the transient cadence deadline has not arrived.
+        if (!baselineDue && worldSeconds + WorldClockToleranceSeconds < nextSampleAt)
+            return false;
+
+        extraScan = !baselineDue;
+        if (extraScan && extraScans >= MaximumExtraScans)
+        {
+            scanBudgetDrops++;
+            nextSampleAt = worldSeconds + SampleIntervalSeconds;
+            return false;
+        }
+        if (hasLastSample)
+        {
+            float gap = worldSeconds - lastSampleAt;
+            if (gap > maximumGapWorldSeconds)
+                maximumGapWorldSeconds = gap;
+        }
+        hasLastSample = true;
+        lastSampleAt = worldSeconds;
+        nextSampleAt = worldSeconds + SampleIntervalSeconds;
+        scans++;
+        if (extraScan)
+            extraScans++;
+        if (worldSeconds >= endsAt)
+        {
+            active = false;
+            completedWindows++;
+        }
+        return true;
+    }
+
+    public bool ExpireIfPast(float worldSeconds)
+    {
+        if (!active || float.IsNaN(worldSeconds) || float.IsInfinity(worldSeconds) || worldSeconds < 0 || worldSeconds <= endsAt)
+            return false;
+        active = false;
+        expiredWindows++;
+        return true;
+    }
+}
+
 public sealed class SurvivorCombatOutputObserver : IDisposable
 {
     public const int DamageHistoryCapacity = 32;
@@ -55,10 +148,13 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
         public int bodyDamageEvents, bodyProjectileDamageEvents, ownedSummonDamageEvents, unknownOwnerDamageEvents;
         public int bodyProjectilesLive, masterOwnedProjectilesLive, summonProjectilesLive, unknownOwnerProjectilesLive;
         public int projectileHistoryUniqueNetworkIdsRetained, projectileHistoryOverflowObservations;
+        public int transientWindowRequests, transientWindowsAccepted, transientWindowRequestsDropped;
+        public int transientWindowScans, transientWindowExtraScans, transientWindowScanBudgetDrops;
+        public int transientWindowObjectCapDrops, transientWindowsCompleted, transientWindowsExpired;
         public int damageFactCount, damageFactNext, projectileFactCount, projectileFactNext;
         public DamageFact[] damageFacts = new DamageFact[DamageHistoryCapacity];
         public ProjectileFact[] projectileFacts = new ProjectileFact[ProjectileHistoryCapacity];
-        public float lastDamageUnitySeconds, lastProjectileSampleWorldSeconds;
+        public float lastDamageUnitySeconds, lastProjectileSampleWorldSeconds, transientWindowMaximumGapWorldSeconds;
     }
 
     public readonly Report report;
@@ -66,6 +162,7 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
     CharacterMaster ownerMaster;
     Action<DamageReport> damageHandler;
     readonly HashSet<uint> seenProjectileNetworkIds = new HashSet<uint>();
+    readonly TransientProjectileWindowSchedule transientWindowSchedule = new TransientProjectileWindowSchedule();
     float nextSampleWorldSeconds;
     bool subscribed;
 
@@ -209,67 +306,20 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
         try
         {
             if (!ownerBody || !ownerMaster || !NetworkServer.active || float.IsNaN(elapsedWorldSeconds) ||
-                float.IsInfinity(elapsedWorldSeconds) || elapsedWorldSeconds < nextSampleWorldSeconds)
+                float.IsInfinity(elapsedWorldSeconds) || elapsedWorldSeconds < 0)
                 return;
-            nextSampleWorldSeconds = elapsedWorldSeconds + SampleIntervalSeconds;
-            report.serverObserved = true;
-            report.projectileScanTruncated = false;
-            MarkAllProjectileFactsNotLive(report);
-            report.bodyProjectilesLive = 0;
-            report.masterOwnedProjectilesLive = 0;
-            report.summonProjectilesLive = 0;
-            report.unknownOwnerProjectilesLive = 0;
-
-            int visited = 0;
-            foreach (NetworkIdentity identity in NetworkServer.objects.Values)
-            {
-                if (visited++ >= MaximumNetworkObjectsPerSample)
-                {
-                    report.projectileScanTruncated = true;
-                    break;
-                }
-                if (!identity || !identity.isServer || identity.netId.Value == 0 ||
-                    NetworkServer.FindLocalObject(identity.netId) != identity.gameObject)
-                    continue;
-                var projectile = identity.GetComponent<ProjectileController>();
-                if (!projectile || !IsServerMapped(projectile) || projectile.netId != identity.netId)
-                    continue;
-                byte ownerKind = ResolveProjectileOwner(projectile.owner);
-                if (ownerKind == ProjectileOwnerUnknown)
-                {
-                    report.unknownOwnerProjectilesLive++;
-                    continue;
-                }
-
-                if (ownerKind == ProjectileOwnerPlayerBody)
-                    report.bodyProjectilesLive++;
-                else if (ownerKind == ProjectileOwnerPlayerMaster)
-                    report.masterOwnedProjectilesLive++;
-                else if (ownerKind == ProjectileOwnerOwnedSummon)
-                    report.summonProjectilesLive++;
-
-                uint networkId = projectile.netId.Value;
-                if (!seenProjectileNetworkIds.Contains(networkId))
-                {
-                    if (!TryRetainProjectileIdentity(report, seenProjectileNetworkIds, networkId))
-                        continue;
-                    var prefab = ProjectileCatalog.GetProjectilePrefab(projectile.catalogIndex);
-                    var fact = new ProjectileFact { instanceId = projectile.GetInstanceID(),
-                                                    networkId = networkId,
-                                                    catalogIndex = projectile.catalogIndex,
-                                                    catalogName = prefab ? prefab.name : "unresolved-catalog-index",
-                                                    firstFrame = Time.frameCount,
-                                                    lastFrame = Time.frameCount,
-                                                    ownerKind = ownerKind,
-                                                    liveCurrent = true };
-                    PushProjectileFact(report, fact);
-                }
-                else
-                {
-                    RefreshProjectileFact(report, networkId, Time.frameCount, ownerKind);
-                }
-            }
-            report.lastProjectileSampleWorldSeconds = elapsedWorldSeconds;
+            bool baselineDue = elapsedWorldSeconds >= nextSampleWorldSeconds;
+            if (baselineDue)
+                nextSampleWorldSeconds = elapsedWorldSeconds + SampleIntervalSeconds;
+            bool windowWasActive = transientWindowSchedule.activeWindow;
+            bool extraScan;
+            bool transientWindowDue = transientWindowSchedule.TryTakeScan(elapsedWorldSeconds, baselineDue, out extraScan);
+            bool expiredWindow = transientWindowSchedule.ExpireIfPast(elapsedWorldSeconds);
+            if (windowWasActive || transientWindowDue || extraScan || expiredWindow)
+                CopyTransientWindowCounters();
+            if (!baselineDue && !transientWindowDue)
+                return;
+            ScanProjectiles(elapsedWorldSeconds, transientWindowDue);
         }
         catch (Exception error)
         {
@@ -277,6 +327,89 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
         }
     }
 
+    public void RequestTransientProjectileWindow(float elapsedWorldSeconds)
+    {
+        bool available = !report.cleaned && !report.inert;
+        transientWindowSchedule.Request(elapsedWorldSeconds, available);
+        CopyTransientWindowCounters();
+    }
+
+    void CopyTransientWindowCounters()
+    {
+        report.transientWindowRequests = transientWindowSchedule.requests;
+        report.transientWindowsAccepted = transientWindowSchedule.accepted;
+        report.transientWindowRequestsDropped = transientWindowSchedule.droppedRequests;
+        report.transientWindowScans = transientWindowSchedule.scans;
+        report.transientWindowExtraScans = transientWindowSchedule.extraScans;
+        report.transientWindowScanBudgetDrops = transientWindowSchedule.scanBudgetDrops;
+        report.transientWindowsCompleted = transientWindowSchedule.completedWindows;
+        report.transientWindowsExpired = transientWindowSchedule.expiredWindows;
+        report.transientWindowMaximumGapWorldSeconds = transientWindowSchedule.maximumGapWorldSeconds;
+    }
+
+    void ScanProjectiles(float elapsedWorldSeconds, bool transientWindowDue)
+    {
+        report.serverObserved = true;
+        report.projectileScanTruncated = false;
+        MarkAllProjectileFactsNotLive(report);
+        report.bodyProjectilesLive = 0;
+        report.masterOwnedProjectilesLive = 0;
+        report.summonProjectilesLive = 0;
+        report.unknownOwnerProjectilesLive = 0;
+
+        int visited = 0;
+        foreach (NetworkIdentity identity in NetworkServer.objects.Values)
+        {
+            if (visited++ >= MaximumNetworkObjectsPerSample)
+            {
+                report.projectileScanTruncated = true;
+                if (transientWindowDue)
+                    report.transientWindowObjectCapDrops++;
+                break;
+            }
+            if (!identity || !identity.isServer || identity.netId.Value == 0 ||
+                NetworkServer.FindLocalObject(identity.netId) != identity.gameObject)
+                continue;
+            var projectile = identity.GetComponent<ProjectileController>();
+            if (!projectile || !IsServerMapped(projectile) || projectile.netId != identity.netId)
+                continue;
+            byte ownerKind = ResolveProjectileOwner(projectile.owner);
+            if (ownerKind == ProjectileOwnerUnknown)
+            {
+                report.unknownOwnerProjectilesLive++;
+                continue;
+            }
+
+            if (ownerKind == ProjectileOwnerPlayerBody)
+                report.bodyProjectilesLive++;
+            else if (ownerKind == ProjectileOwnerPlayerMaster)
+                report.masterOwnedProjectilesLive++;
+            else if (ownerKind == ProjectileOwnerOwnedSummon)
+                report.summonProjectilesLive++;
+
+            uint networkId = projectile.netId.Value;
+            if (!seenProjectileNetworkIds.Contains(networkId))
+            {
+                if (!TryRetainProjectileIdentity(report, seenProjectileNetworkIds, networkId))
+                    continue;
+                var prefab = ProjectileCatalog.GetProjectilePrefab(projectile.catalogIndex);
+                var fact = new ProjectileFact { instanceId = projectile.GetInstanceID(),
+                                                networkId = networkId,
+                                                catalogIndex = projectile.catalogIndex,
+                                                catalogName = prefab ? prefab.name : "unresolved-catalog-index",
+                                                firstFrame = Time.frameCount,
+                                                lastFrame = Time.frameCount,
+                                                ownerKind = ownerKind,
+                                                liveCurrent = true };
+                PushProjectileFact(report, fact);
+            }
+            else
+            {
+                RefreshProjectileFact(report, networkId, Time.frameCount, ownerKind);
+            }
+        }
+        report.lastProjectileSampleWorldSeconds = elapsedWorldSeconds;
+    }
     byte ResolveProjectileOwner(GameObject projectileOwner)
     {
         if (!projectileOwner)

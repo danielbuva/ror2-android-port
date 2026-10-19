@@ -11210,3 +11210,58 @@ changed existing runtime source; 105 runtime files/GUID membership remain.
 No new work build input, original input, Phase 2 output, receipt edit, storage
 alteration, extra device or permanent award occurs. Build with the other tested
 source changes, run both defaults, then inspect the exact native mismatch.
+
+## J704 — Bound faster projectile observation around isolated input requests
+
+Hypothesis: after J700 verifies native static configuration, J699's one-second
+output sample can still miss the original 0.3-second Earth Shard lifetime.
+A short request-triggered observation window can expose native output without
+changing the ability. J642's pinned DebugToolkit identity/query prior art and
+exact current ProjectileController/ProjectileManager/NetworkServer APIs remain
+the basis. Native onInitialized is per-instance and occurs before server Spawn,
+so there is no evidenced global callback to adopt. Reuse the existing bounded
+server-map observation rather than add global object searches or native hooks.
+
+IntegratedWorldSession compares its owned isolated-slot request count after
+Apply and arms its existing SurvivorCombatOutputObserver before a later input
+FixedUpdate. Only explicit isolated mode does this; ordinary four-slot/default
+runs retain the one-second full-scan deadline. The observer's inline pure
+TransientProjectileWindowSchedule admits at most three one-second windows,
+0.05-second due cadence and 60 additional scans per session. It drops overlapping
+or over-budget requests, expires delayed windows without catch-up, and rejects
+repeat timestamps. No stock, cooldown, state, RNG, input, asset or gameplay
+behavior changes. Setup/cleanup reset the cursor; observer disposal/fault and
+ownership recovery remain the existing mechanisms.
+
+Every full scan uses the same exact server mapping, native projectile catalog,
+reciprocal player/master/summon ownership checks, 4,096-object cap and 64-entry
+retained history. New scalar counters separate requested/accepted/dropped
+windows, in-window/additional scans, caps, expiry and observed inter-sample gap.
+They are partial telemetry after an observer fault. A request is not a callback,
+state-entry, spawn or causal slot-to-damage assertion. Brief objects can still
+be missed or excluded by a truncated scan; no output completeness is claimed.
+
+Independent review finds a reporting gap in the first private draft: a baseline
+scan between transient deadlines was performed but omitted from window counters.
+The revised policy counts that actual in-window scan without consuming extra
+budget; root reviews the revised control flow and unchanged native scan body.
+Private final patch 6d6b659109bc1320d6c70c7c4d418175161f89992c88b8588edaf5b3d231baed:
+work/coordination/transient-projectile-window-draft/. The root-integrated host
+contract compiles the actual production policy with pinned Mono/Roslyn and
+checks invalid requests/clocks, expiry, cadence, repeat times, all three windows,
+60-scan bound, dropped fourth window, rearm and both baseline-overlap cases.
+Full host suite: 988 tests pass, one existing skip. Exact Unity compiles staged
+source and existing observer native API, bounded history and fault/disposal
+fixtures pass, alongside J700/J701 contracts:
+work/experiments/first-stage-native-lifecycle/
+bounded-output-editor-20261019T173005.589053Z/. No native damage event or gameplay
+object is created by those observer fixtures.
+
+First failure: none in host/editor validation. Device transient sightings remain
+unmeasured until a new accepted APK repeats isolated Mage utility. The owner map
+is updated; R8 must replay the two changed existing runtime sources. Membership
+stays 105 runtime files with unchanged GUIDs and content payload. No new work
+build input, original input, Phase 2 output, extra device, receipt edit, storage
+change, Moon attempt or permanent award occurs. Build together with the tested
+manual boundary and mismatch witness, then run both default controls before
+calling that candidate a baseline.

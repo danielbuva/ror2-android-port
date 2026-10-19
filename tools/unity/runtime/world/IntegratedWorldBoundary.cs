@@ -419,6 +419,7 @@ public sealed partial class PortSession
         SurvivorSkillInputCoverage skillInputCoverage;
         EngiShieldHitGuardTemplateLease engiShieldGuard;
         float nextSurvivorSkillSample;
+        int lastTransientWindowRequestCount;
         public IntegratedWorldSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -949,6 +950,7 @@ public sealed partial class PortSession
             if (survivorCombatOutputs != null && survivorCombatOutputs.report.cleaned)
                 survivorCombatOutputs = null;
             worldFeatherInputAt = -1;
+            lastTransientWindowRequestCount = 0;
             coordinator.Check(
                 ((Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null))
                         .Count == 0,
@@ -1796,8 +1798,10 @@ public sealed partial class PortSession
                 nextSurvivorSkillSample = elapsed + 1;
                 survivorSkills?.Sample();
                 engiNativeOutputs?.Sample();
-                survivorCombatOutputs?.Sample(elapsed);
             }
+            // The observer retains its one-second baseline internally; calling
+            // the owner each world update only services explicitly armed windows.
+            survivorCombatOutputs?.Sample(elapsed);
             long performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             if (worldClientUpdate == null)
                 worldClientUpdate = (Action)Delegate.CreateDelegate(
@@ -2320,6 +2324,19 @@ public sealed partial class PortSession
                 }
             }
             skillInputCoverage.Apply(elapsed);
+            var coverage = skillInputCoverage.reportData;
+            if (coverage.mode == "isolated-slot")
+            {
+                while (lastTransientWindowRequestCount < coverage.requests)
+                {
+                    survivorCombatOutputs?.RequestTransientProjectileWindow(elapsed);
+                    lastTransientWindowRequestCount++;
+                }
+            }
+            else
+            {
+                lastTransientWindowRequestCount = coverage.requests;
+            }
         }
         public void EarnedFeatherInput(CharacterBody player, NovaInputBridge bridge, float elapsed)
         {
@@ -2931,6 +2948,7 @@ public sealed partial class PortSession
             sirenEggDiagnosticInput = null;
             skillInputCoverage?.Dispose();
             skillInputCoverage = null;
+            lastTransientWindowRequestCount = 0;
             engiNativeOutputs?.Dispose();
             engiNativeOutputs = null;
             survivorCombatOutputs?.Dispose();
