@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J603](PORTING_JOURNAL.md#j603--three-survivors-activate-four-native-slots-mul-t-utility-remains-unobserved) | 2026-10-19 | Three survivors activate four native slots; MUL-T utility remains unobserved | Hypothesis: the accepted J601 APK can exercise the four canonical native skill slots across the base roster through existing diagnostic world input. |
 | [J602](PORTING_JOURNAL.md#j602--observe-auxiliary-native-skills-and-use-the-system-death-signal) | 2026-10-19 | Observe auxiliary native skills and use the system-death signal | Hypothesis: four canonical SkillLocator slots do not describe every original loadout component, and an all-death observer must use the accepted assembly's syst… |
 | [J601](PORTING_JOURNAL.md#j601--accept-the-survivorsiren-apk-gate-and-correct-the-native-death-contract) | 2026-10-19 | Accept the survivor/Siren APK gate and correct the native death contract | Hypothesis: J596's staged runtime can preserve the two standard Nova behaviors, and J600's proposed native listener retirement can be verified in Play Mode bef… |
 | [J598](PORTING_JOURNAL.md#j598--hiddencompositing-a-second-destination-build-still-omits-it) | 2026-10-19 | Hidden/Compositing: a second destination build still omits it | Phase 2, from-scratch rebuild (run by Claude; lab MCP editor stopped through the bridge for the build and restarted afterwards; no install). |

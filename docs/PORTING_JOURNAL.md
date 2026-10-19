@@ -7093,3 +7093,38 @@ APK, including actual completed-session cleanup and auxiliary native activations
 The existing four-slot action does not certify auxiliary skills. These authored
 runtime/fixture/provenance inputs require R8 replay; no Phase 2 step or extra
 hardware action ran here.
+
+## J603 — Three survivors activate four native slots; MUL-T utility remains unobserved
+
+Hypothesis: the accepted J601 APK can exercise the four canonical native skill
+slots across the base roster through existing diagnostic world input. This
+uses J587/J590's observer and J602's current-source distinction between canonical
+roles and auxiliary components; no new reconstruction or gameplay change was
+made for this cohort.
+
+Ran `./dev prototype --action survivor-kit-check --target all` on the configured
+Nova, installed APK
+8fbda448bd51df403554a9f58417a0bac05fc85c7b2ff4e2cdbeb9058a2d1660.
+Evidence is under
+work/experiments/survivor-check/20261019T071642.346218Z/; each case preserves
+its selection, current-process reports/logs and captures. Commando, Huntress
+and Bandit2 passed with both authority and server callbacks for all four slots.
+Final world ages were 115.76 s, 181.37 s and 95.64 s respectively. These are
+sample ages after collection, not exact times of their last missing activation.
+
+The sweep stopped at its first failure: Toolbot reached 181.57 s of live Lakes
+play with primary 36, secondary 11, utility 0 and special 6 callbacks on each
+signal. Its utility retained stock 1 and declared ToolbotDash; there was no
+report first failure or error. Current combat input requests utility only for
+an eligible evasion, so absence of a callback does not distinguish an uncovered
+input condition from a skill integration defect. The remaining roster was not
+run. The four-slot APK also cannot establish Toolbot's auxiliary weapon behavior.
+
+All four cases were explicitly assisted: automatic input and invincibility;
+Bandit2/Toolbot additionally used diagnostic locked-survivor selection. Applied
+profile runs stayed 13. This does not establish ordinary selection of locked
+survivors, normal difficulty, skill effects/hits or complete kit semantics.
+The runner removed its selector, stopped the app and slept the OLED at the
+terminal result. Revisit MUL-T using measured native input/state prerequisites
+and the separately built J602 component observer, after both baseline checks.
+No source or Phase 2 rebuild input changed in this experiment.

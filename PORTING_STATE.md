@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J602** (auxiliary skill/source-event draft verified; APK baseline remains J601).
+Last updated 2026-10-19 after **J603** (survivor sweep classified; next APK baseline checks running).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -14,8 +14,8 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `8fbda448bd51df403554a9f58417a0bac05fc85c7b2ff4e2cdbeb9058a2d1660` — J599/J601 survivor/Siren code build; both baseline modes passed. Native Siren mission and complete skill behavior remain pending. |
-| Installed now | J601 APK `8fbda448…`, installed in place on current Nova adopted storage. The base-survivor callback check is running; each case stops the app and sleeps the OLED on cleanup. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since that APK | J600/J601 native teleporter retirement is staged and passed its exact-editor Play Mode callback contract; Android cleanup remains pending. J602 auxiliary skill observations passed their exact-editor fixture; two system-death observer fixes are staged for a later APK. |
+| Installed now | Candidate `76344ab433b15b97943638a5807227278f07cf98a18ef372873988d57c945ebe`, installed in place on current Nova adopted storage. Both baseline checks are running; acceptance remains J601 until both pass. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Runtime source since verified APK | Installed candidate includes J600/J601 native teleporter retirement and J602 auxiliary skill/system-death observations. Exact-editor fixtures pass; Android completed-session cleanup remains pending. No later runtime source is staged. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
@@ -34,7 +34,8 @@ they are not normal-difficulty acceptance.
   survivor roster (profile-eligible ones enabled) and earned loadout choices, then
   original world play.
 - **Survivors:** Commando and Huntress by ordinary selection; Bandit2, Toolbot, Engi and
-  Loader through developer-only selection (35 s of live Lakes combat each, J504).
+  Loader through developer-only selection (J504). Four canonical native callbacks
+  passed for Commando, Huntress and Bandit2; MUL-T utility remains unobserved (J603).
 - **Stages:** Huntress completed four original boss/charge/exit transitions
   Lakes → Goolake → Wisp Graveyard → Ship Graveyard → Sky Meadow (J504). 23 destinations
   are staged; nine DLC scenes are staged but unplayed pending a truthful expansion-availability
