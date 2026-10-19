@@ -20,6 +20,10 @@ class RecipeGenerationTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.work = self.root / "work"
+        for name, value in (("assert_build_unblocked", lambda: None), ("HOST_BUILD_LOCK", self.root / "unity-build.lock")):
+            patcher = patch("build_lock." + name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         self.project = self.work / "lab-project"
         self.recipes = self.root / "recipe"
         self.targets = {

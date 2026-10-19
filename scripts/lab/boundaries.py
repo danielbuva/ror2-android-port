@@ -169,7 +169,7 @@ def rewired_original():
         d.launch()
         result["sync"] = d.sync()
         result["runtime"] = d.launch()
-        runtime = read(WORK / "device/runtime.json")
+        runtime = d.read_receipt("runtime.json")
         report = json.loads(d.sh("cat", runtime["persistentDataPath"] + "/metadata-dispatch.json"))
         write(out / "dispatch.json", report)
         result["success"] = report["success"] and report["attempt"] == out.name and str(report["pid"]) == result["runtime"]["pid"]
@@ -183,7 +183,7 @@ def rewired_original():
             except Exception as capture:
                 result["capture_error"] = str(capture)
     finally:
-        if not had and (WORK / "device/installed.json").exists():
+        if not had and d.receipt("installed.json").exists():
             try:
                 result["cleanup"] = d.reset()
             except Exception as e:
@@ -252,7 +252,7 @@ def collections_runtime():
         d.launch()
         result["sync"] = d.sync()
         result["runtime"] = d.launch()
-        runtime = read(WORK / "device/runtime.json")
+        runtime = d.read_receipt("runtime.json")
         r = json.loads(d.sh("cat", runtime["persistentDataPath"] + "/collections-probe.json"))
         write(out / "android-probe.json", r)
         result["android_success"] = r["success"] and r["attempt"] == out.name and str(r["pid"]) == result["runtime"]["pid"]
@@ -267,7 +267,7 @@ def collections_runtime():
             except Exception as capture:
                 result["capture_error"] = str(capture)
     finally:
-        if not had and (WORK / "device/installed.json").exists():
+        if not had and d.receipt("installed.json").exists():
             try:
                 result["cleanup"] = d.reset()
             except Exception as e:
@@ -361,7 +361,7 @@ def ror2_slice(full_original=False):
                 if d.sh("pidof", __import__("device").PACKAGE, check=False).strip() != pid:
                     raise RuntimeError("Slice process died or changed during survival window")
                 time.sleep(1)
-            paths = read(WORK / "device/runtime.json")
+            paths = d.read_receipt("runtime.json")
             report = json.loads(d.sh("cat", paths["persistentDataPath"] + "/ror2-slice.json"))
             write(run_dir / "probe.json", report)
             d.collect("all", run_dir)
@@ -386,7 +386,7 @@ def ror2_slice(full_original=False):
             except Exception as capture:
                 result["capture_error"] = str(capture)
     finally:
-        if not had and (WORK / "device/installed.json").exists():
+        if not had and d.receipt("installed.json").exists():
             try:
                 result["cleanup"] = d.reset()
             except Exception as e:

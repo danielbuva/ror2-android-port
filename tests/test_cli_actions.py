@@ -39,9 +39,10 @@ class PrototypeActionTests(unittest.TestCase):
                     self.modules[module] = ModuleType(module)
                 setattr(self.modules[module], function, Mock(side_effect=self.record(module, function)))
         self.modules["source_scene_candidate"].SCENES = {"lakes": {}, "fixture-stage": {}}
-        # main.py's unchanged finally block must never reach a real device.
+        # CLI cleanup must never construct a replacement device.
         device = ModuleType("device")
-        device.Device = Mock(display_awakened=False)
+        device.Device = Mock()
+        device.Device.sleep_awakened.return_value = []
         self.modules["device"] = device
         patcher = patch.dict(sys.modules, self.modules)
         patcher.start()

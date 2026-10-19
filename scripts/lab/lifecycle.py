@@ -24,7 +24,7 @@ def lifecycle():
             and r["update_runtime"]["geometry"]
         )
     finally:
-        if (WORK / "device/installed.json").exists():
+        if d.receipt("installed.json").exists():
             r["cleanup"] = d.reset()
         write(out / "result.json", r)
     print(json.dumps({"success": r["success"], "evidence": str(out.relative_to(ROOT))}, indent=2))

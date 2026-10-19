@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J589](PORTING_JOURNAL.md#j589--multi-device-tooling-and-host-build-mutex-host-draft) | 2026-10-18 | Multi-device tooling and host build mutex (host draft) | Observation / hypothesis: shared flat placement/runtime receipts cannot safely support several devices, and destination-only build exclusion cannot serialize t… |
 | [J588](PORTING_JOURNAL.md#j588--versioned-wwise-graph-inventory-android-audio-still-unavailable) | 2026-10-18 | Versioned Wwise graph inventory; Android audio still unavailable | Observation / hypothesis: J496's named event/media inventory cannot establish event playback semantics. |
 | [J587](PORTING_JOURNAL.md#j587--survivor-skill-accounting-and-complete-loadout-rows-host-draft) | 2026-10-18 | Survivor skill accounting and complete loadout rows (host draft) | 2026-10-18 PDT. |
 | [J585](PORTING_JOURNAL.md#j585--r9-pass-2-reimports-dependents-in-dependency-layers) | 2026-10-18 | R9 pass 2 reimports dependents in dependency layers | Phase 2, from-scratch rebuild (implemented and run by Claude). |

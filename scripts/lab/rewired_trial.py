@@ -128,7 +128,7 @@ def controller_run():
         installed = True
         result["install"] = d.install(apk)
         result["runtime"] = d.launch()
-        runtime = read(WORK / "device/runtime.json")
+        runtime = d.read_receipt("runtime.json")
         path = runtime["persistentDataPath"]
         if not path.endswith("/Android/data/" + PACKAGE + "/files"):
             raise RuntimeError("Unexpected reference data path")
@@ -171,8 +171,8 @@ def controller_run():
         result["first_failure"] = str(e)
         # Keep the SDK's own first failure even when the generic launch guard never passes.
         try:
-            launch = read(WORK / "device/last-run.json")
-            runtime = read(WORK / "device/runtime.json")
+            launch = d.read_receipt("last-run.json")
+            runtime = d.read_receipt("runtime.json")
             if str(runtime.get("pid")) == launch.get("pid"):
                 report = json.loads(d.sh("cat", runtime["persistentDataPath"] + "/rewired-trial-controller.json"))
                 if report["attempt"] == out.name and str(report["pid"]) == launch["pid"]:

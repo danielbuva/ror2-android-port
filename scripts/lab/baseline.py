@@ -123,14 +123,19 @@ def assess(stop, first, final, stage_exit=False):
 
 
 def check_baseline(stage_exit=False):
-    installed = read(WORK / "device/installed.json")
-    if installed["storage"]["mode"] != "adopted":
-        raise RuntimeError("Owned APK is not on adopted storage")
+    d = Device()
+    installed = d.owned()
+    storage = d.storage()
+    expected_mode = d.settings["storage_mode"]
+    if installed["storage"]["mode"] != expected_mode or storage["mode"] != expected_mode:
+        raise RuntimeError("Owned APK storage differs from selected-device policy")
+    expected_path = "/data/app/" if expected_mode == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
+    if expected_path not in installed["package_path"]:
+        raise RuntimeError("Owned APK placement differs from selected live volume")
     attempt = read(WORK / "lab-project/Assets/LabLoadingScene/Resources/MovementBatchProbe.json")["attempt"]
     out = WORK / "experiments/baseline" / now()
     out.mkdir(parents=True)
-    d = Device()
-    runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+    runtime = d.read_receipt("runtime.json")["persistentDataPath"]
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + SPINE_ID + ".json"
     if d.sh("sh", "-c", "test -e " + selector + " && echo present", check=False).strip():

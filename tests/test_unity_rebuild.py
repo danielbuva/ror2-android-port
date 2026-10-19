@@ -12,6 +12,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import build
+import build_lock
 import build_entry_rebuild
 import composition_io
 import rebuild
@@ -53,6 +54,13 @@ class UnityRebuildTests(unittest.TestCase):
         self.addCleanup(self.stack.close)
         for module in (r9, rebuild, build, composition_io):
             self.stack.enter_context(patch.object(module, "ROOT", self.root))
+        host_lock = self.root / "coordination/unity-build.lock"
+        self.stack.enter_context(patch.object(build, "HOST_BUILD_LOCK", host_lock))
+        self.stack.enter_context(patch.object(build_lock, "HOST_BUILD_LOCK", host_lock))
+        # Unit fixtures exercise host build orchestration only; the separate
+        # guard contract is tested with a temporary blocker in test_build_lock.
+        self.stack.enter_context(patch.object(build, "assert_build_unblocked"))
+        self.stack.enter_context(patch.object(build_lock, "assert_build_unblocked"))
         self.stack.enter_context(patch.dict(r9.os.environ, {"UNITY_EDITOR": "/pinned/Unity"}))
         self.stack.enter_context(patch.object(composition_io.StageIO, "preflight"))
         self.stack.enter_context(patch.object(build_entry_rebuild, "validate_bindings", return_value={"equal": True}))
@@ -405,7 +413,7 @@ class UnityRebuildTests(unittest.TestCase):
         write(cached, dict(success=True, errors=0, apk=str(apk), apk_sha256=sha(apk), payload={}))
         with (
             patch.object(build, "WORK", self.work),
-            patch.object(build, "preflight"),
+            patch.object(build, "preflight_host"),
             patch.object(build, "validate_staged_runtime_sources"),
             patch.object(build, "stage_android_assets"),
             patch.object(build, "build_cache_key", return_value="key") as key,
@@ -442,6 +450,7 @@ class UnityRebuildTests(unittest.TestCase):
                 with patch.object(sys, "argv", [script, command, option, value]), patch.object(device, "Device") as factory:
                     factory.return_value.install.return_value = {}
                     factory.return_value.sync.return_value = {}
+                    factory.sleep_awakened.return_value = []
                     runpy.run_path(script, run_name="__main__")
                     if command == "install":
                         factory.return_value.install.assert_called_once_with(value)
@@ -477,7 +486,7 @@ class UnityRebuildTests(unittest.TestCase):
             with (
                 self.subTest(code_only=code_only),
                 patch.object(build, "WORK", self.work),
-                patch.object(build, "preflight"),
+                patch.object(build, "preflight_host"),
                 patch.object(build, "validate_staged_runtime_sources"),
                 patch.object(build, "stage_android_assets"),
                 patch.object(build, "validate_whole_payload_reuse") as reuse,

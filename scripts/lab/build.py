@@ -1,9 +1,32 @@
 from common import *
+from build_lock import (
+    HOST_BUILD_LOCK,
+    active_lock_handoff,
+    assert_build_unblocked,
+    assert_host_build_lock_held,
+    host_build_lock,
+)
 import re
 import shutil
 import time
 import zipfile
 import sys
+import threading
+from contextlib import contextmanager
+
+_build_dispatch_state = threading.local()
+
+
+@contextmanager
+def coordinated_editor_operation():
+    """Authorize a nested editor build action while its caller owns the lock."""
+    assert_host_build_lock_held(HOST_BUILD_LOCK)
+    previous = getattr(_build_dispatch_state, "active", False)
+    _build_dispatch_state.active = True
+    try:
+        yield
+    finally:
+        _build_dispatch_state.active = previous
 
 
 def copy_build_artifact(source, destination):
@@ -48,7 +71,8 @@ def validate_project_generation(project, input_id):
         raise RuntimeError("Lab project belongs to another or unrecorded input generation; stage the reviewed migration before building")
 
 
-def preflight():
+def preflight_host():
+    """Validate accepted host inputs and toolchain without querying a device."""
     cfg = config()
     base = game()
     inv = read(WORK / "inventory/files.json")
@@ -81,59 +105,83 @@ def preflight():
     ]
     if bad:
         raise RuntimeError("Restricted files tracked: " + str(bad))
-    from device import Device
-
-    storage = Device().storage()
     result = {
         "success": True,
         "input_id": inv["input_id"],
         "host_free_bytes": shutil.disk_usage(ROOT).free,
-        "storage": storage,
         "scope": "lab build; does not certify full game or semantic patches",
     }
+    return result
+
+
+def preflight():
+    """CLI preflight includes device storage; builds use host-only gates."""
+    result = preflight_host()
+    from device import Device
+
+    result["storage"] = Device().storage()
     write(WORK / "preflight.json", result)
     return result
 
 
 def editor(target="lab", action="inspect"):
-    if action == "open":
-        project = (
-            WORK / "lab-project"
-            if target == "lab"
-            else ROOT / "smoke"
-            if target == "smoke"
-            else ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
-        )
-        if not project.is_dir():
-            raise RuntimeError("Project does not exist: " + str(project))
-        commands = run(["/bin/ps", "-axo", "command"]).stdout.decode().splitlines()
-        if any(c.startswith(os.environ["UNITY_EDITOR"] + " ") and " -projectPath " + str(project) + " " in c for c in commands):
-            return "Editor already open; inspect MCP connectivity with ./dev editor --target " + target
-        env = os.environ.copy()
-        env.update(
-            {
-                "ANDROID_SDK_HOME": str(ROOT / ".local/android-user"),
-                "ANDROID_USER_HOME": str(ROOT / ".local/android-user/.android"),
-                "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),
-            }
-        )
-        stamp = now()
-        log = WORK / "logs" / stamp[:8] / (target + "-editor-" + stamp + ".log")
-        log.parent.mkdir(parents=True, exist_ok=True)
-        proc = subprocess.Popen(
-            [os.environ["UNITY_EDITOR"], "-batchmode", "-projectPath", str(project), "-executeMethod", "BootstrapMcp.Connect", "-logFile", str(log)]
-            + (["-buildTarget", "Android"] if target == "lab" else []),
-            cwd=ROOT,
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-        write(WORK / "editor" / (target + "-process.json"), {"pid": proc.pid, "project": str(project), "log": str(log)})
-        return json.dumps({"started": True, "pid": proc.pid, "log": str(log), "next": "Wait for import/MCP connection, then ./dev editor --target " + target})
+    coordinated_build = bool(getattr(_build_dispatch_state, "active", False))
+    assert_build_unblocked()
     if action == "minimal-build":
-        preflight()
-    return run([ROOT / ".local/tools/unity-mcp/Server/.venv/bin/python", ROOT / "scripts/lab/editor.py", target, action], timeout=200).stdout.decode()
+        raise RuntimeError("The historical minimal-build editor action is unsupported; use ./dev build")
+    if action in {"build", "presentation-payload"} and not coordinated_build:
+        destination = "./dev build" if action == "build" else "the presentation-payload coordinator"
+        raise RuntimeError("Direct editor build dispatch is disabled; use " + destination + " so the host lock covers result collection")
+    with host_build_lock(HOST_BUILD_LOCK, operation=f"editor:{target}:{action}"):
+        assert_build_unblocked()
+        if action == "open":
+            project = (
+                WORK / "lab-project"
+                if target == "lab"
+                else ROOT / "smoke"
+                if target == "smoke"
+                else ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+            )
+            if not project.is_dir():
+                raise RuntimeError("Project does not exist: " + str(project))
+            commands = run(["/bin/ps", "-axo", "command"]).stdout.decode().splitlines()
+            if any(c.startswith(os.environ["UNITY_EDITOR"] + " ") and " -projectPath " + str(project) + " " in c for c in commands):
+                return "Editor already open; inspect MCP connectivity with ./dev editor --target " + target
+            env = os.environ.copy()
+            env.update(
+                {
+                    "ANDROID_SDK_HOME": str(ROOT / ".local/android-user"),
+                    "ANDROID_USER_HOME": str(ROOT / ".local/android-user/.android"),
+                    "GRADLE_USER_HOME": str(ROOT / ".local/gradle"),
+                }
+            )
+            stamp = now()
+            log = WORK / "logs" / stamp[:8] / (target + "-editor-" + stamp + ".log")
+            log.parent.mkdir(parents=True, exist_ok=True)
+            proc = subprocess.Popen(
+                [os.environ["UNITY_EDITOR"], "-batchmode", "-projectPath", str(project), "-executeMethod", "BootstrapMcp.Connect", "-logFile", str(log)]
+                + (["-buildTarget", "Android"] if target == "lab" else []),
+                cwd=ROOT,
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            write(WORK / "editor" / (target + "-process.json"), {"pid": proc.pid, "project": str(project), "log": str(log)})
+            return json.dumps({"started": True, "pid": proc.pid, "log": str(log), "next": "Wait for import/MCP connection, then ./dev editor --target " + target})
+        if action == "minimal-build":
+            preflight_host()
+        env = os.environ.copy()
+        handoff_env, pass_fds = active_lock_handoff()
+        env.update(handoff_env)
+        if coordinated_build:
+            env["ROR2LAB_COORDINATED_BUILD"] = "1"
+        return run(
+            [ROOT / ".local/tools/unity-mcp/Server/.venv/bin/python", ROOT / "scripts/lab/editor.py", target, action],
+            timeout=200,
+            env=env,
+            pass_fds=pass_fds,
+        ).stdout.decode()
 
 
 WHOLE_GENERATED_RUNTIME_SOURCES = {"OriginalBodyVisualMap.cs", "OriginalHealthVisualMap.cs", "OriginalGlobalCommonAssetMap.cs"}
@@ -404,72 +452,76 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         raise RuntimeError("Build target must be gles or vulkan")
     if api == "lab":
         api = "gles"
-    if destination is not None:
-        if reuse_payload:
-            raise RuntimeError("Destination builds require full content; payload reuse is forbidden")
-        from unity_rebuild import execute_build
+    assert_build_unblocked()
+    with host_build_lock(HOST_BUILD_LOCK, operation="build: " + api):
+        assert_build_unblocked()
+        if destination is not None:
+            if reuse_payload:
+                raise RuntimeError("Destination builds require full content; payload reuse is forbidden")
+            from unity_rebuild import execute_build
 
-        return execute_build(Path(destination), Path(work or WORK), api)
-    preflight()
-    project = WORK / "lab-project"
-    recipe = WORK / "scene-probe-build.json"
-    if recipe.exists():
-        validate_runtime_support(project, read(recipe))
-    validate_staged_runtime_sources(project)
-    # Copy changed tool-owned sources only. Never reset project settings during an incremental build.
-    stage_android_assets(project)
-    if reuse_payload:
-        validate_whole_payload_reuse(project)
-    key = build_cache_key(project, api)
-    dest = WORK / "build-cache" / key
-    receipt = dest / "result.json"
-    if receipt.exists() and not force:
-        r = read(receipt)
-        if r.get("success") and r.get("errors", 0) == 0 and Path(r["apk"]).exists() and sha(r["apk"]) == r["apk_sha256"]:
-            for name, h in r.get("payload", {}).items():
-                source = dest / "payload" / name
-                if not source.is_file() or sha(source) != h:
-                    raise RuntimeError("Cached payload is missing or changed: " + name)
-                copy_build_artifact(source, WORK / "generated-android-data" / name)
-            write(WORK / "config/current-build.json", r)
-            print(json.dumps({"cached": True, **r}, indent=2))
-            return r
-    (WORK / "graphics-api.txt").write_text(api)
-    result = WORK / "lab-build/result.json"
-    if result.exists():
-        result.rename(result.with_name("previous-" + now() + ".json"))
-    request_id = now()
-    write(WORK / "build-request.json", {"request_id": request_id, "api": api, "reusePayload": reuse_payload})
-    print(editor("lab", "refresh"), flush=True)
-    print(editor("lab", "build"), flush=True)
-    dispatch_deadline = time.monotonic() + 120
-    deadline = time.monotonic() + (3600 if (WORK / "whole-catalog-build.json").exists() else 1200)
-    while time.monotonic() < deadline:
+            return execute_build(Path(destination), Path(work or WORK), api)
+        preflight_host()
+        project = WORK / "lab-project"
+        recipe = WORK / "scene-probe-build.json"
+        if recipe.exists():
+            validate_runtime_support(project, read(recipe))
+        validate_staged_runtime_sources(project)
+        # Keep staging, editor work and receipt collection in one host-wide critical section.
+        stage_android_assets(project)
+        if reuse_payload:
+            validate_whole_payload_reuse(project)
+        key = build_cache_key(project, api)
+        dest = WORK / "build-cache" / key
+        receipt = dest / "result.json"
+        if receipt.exists() and not force:
+            r = read(receipt)
+            if r.get("success") and r.get("errors", 0) == 0 and Path(r["apk"]).exists() and sha(r["apk"]) == r["apk_sha256"]:
+                for name, h in r.get("payload", {}).items():
+                    source = dest / "payload" / name
+                    if not source.is_file() or sha(source) != h:
+                        raise RuntimeError("Cached payload is missing or changed: " + name)
+                    copy_build_artifact(source, WORK / "generated-android-data" / name)
+                write(WORK / "config/current-build.json", r)
+                print(json.dumps({"cached": True, **r}, indent=2))
+                return r
+        (WORK / "graphics-api.txt").write_text(api)
+        result = WORK / "lab-build/result.json"
         if result.exists():
-            if read(result).get("request_id") != request_id:
-                raise RuntimeError("Terminal build receipt belongs to a different request")
-            break
-        if time.monotonic() > dispatch_deadline and (
-            not (WORK / "lab-build/started.json").exists() or read(WORK / "lab-build/started.json").get("request_id") != request_id
-        ):
-            raise RuntimeError("Queued build never started; inspect editor dispatch evidence")
-        time.sleep(2)
-    else:
-        raise RuntimeError("Build timeout; inspect the editor log named in work/editor/lab-process.json; no cache stamp written")
-    r = read(result)
-    if not r["success"] or r.get("errors", 0) > 0:
-        raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
-    key = build_cache_key(project, api)
-    dest = WORK / "build-cache" / key
-    receipt = dest / "result.json"
-    dest.mkdir(parents=True, exist_ok=True)
-    apk = dest / Path(r["apk"]).name
-    copy_build_artifact(r["apk"], apk)
-    r.update({"apk": str(apk), "apk_sha256": sha(apk), "key": key, "graphics_api": api, "input_id": read(WORK / "inventory/files.json")["input_id"]})
-    payload = dest / "payload"
-    shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=copy_build_artifact)
-    r["payload"] = {p.name: sha(p) for p in payload.glob("*") if p.is_file()}
-    write(receipt, r)
-    write(WORK / "config/current-build.json", r)
-    print(json.dumps(r, indent=2))
-    return r
+            result.rename(result.with_name("previous-" + now() + ".json"))
+        request_id = now()
+        write(WORK / "build-request.json", {"request_id": request_id, "api": api, "reusePayload": reuse_payload})
+        print(editor("lab", "refresh"), flush=True)
+        with coordinated_editor_operation():
+            print(editor("lab", "build"), flush=True)
+        dispatch_deadline = time.monotonic() + 120
+        deadline = time.monotonic() + (3600 if (WORK / "whole-catalog-build.json").exists() else 1200)
+        while time.monotonic() < deadline:
+            if result.exists():
+                if read(result).get("request_id") != request_id:
+                    raise RuntimeError("Terminal build receipt belongs to a different request")
+                break
+            if time.monotonic() > dispatch_deadline and (
+                not (WORK / "lab-build/started.json").exists() or read(WORK / "lab-build/started.json").get("request_id") != request_id
+            ):
+                raise RuntimeError("Queued build never started; inspect editor dispatch evidence")
+            time.sleep(2)
+        else:
+            raise RuntimeError("Build timeout; inspect the editor log named in work/editor/lab-process.json; no cache stamp written")
+        r = read(result)
+        if not r["success"] or r.get("errors", 0) > 0:
+            raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
+        key = build_cache_key(project, api)
+        dest = WORK / "build-cache" / key
+        receipt = dest / "result.json"
+        dest.mkdir(parents=True, exist_ok=True)
+        apk = dest / Path(r["apk"]).name
+        copy_build_artifact(r["apk"], apk)
+        r.update({"apk": str(apk), "apk_sha256": sha(apk), "key": key, "graphics_api": api, "input_id": read(WORK / "inventory/files.json")["input_id"]})
+        payload = dest / "payload"
+        shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=copy_build_artifact)
+        r["payload"] = {p.name: sha(p) for p in payload.glob("*") if p.is_file()}
+        write(receipt, r)
+        write(WORK / "config/current-build.json", r)
+        print(json.dumps(r, indent=2))
+        return r

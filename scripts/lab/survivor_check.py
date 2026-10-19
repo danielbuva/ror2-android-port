@@ -185,7 +185,7 @@ def check_survivors(target):
     if installed["apk_sha256"] != read(WORK / "config/current-build.json")["apk_sha256"]:
         raise RuntimeError("Installed APK differs from the current build receipt")
     attempt = read(WORK / "lab-project/Assets/LabLoadingScene/Resources/MovementBatchProbe.json")["attempt"]
-    runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+    runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     out = WORK / "experiments/survivor-check" / now()
     out.mkdir(parents=True)
     results = []

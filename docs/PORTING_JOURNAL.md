@@ -6314,3 +6314,84 @@ reserved. This support-tool change does not alter R8 runtime inputs.
 Revisit with an authorized compatible runtime or an explicitly scoped renderer
 contract, then compare event traces and audible device behavior. Keep all
 generated audio material ignored.
+
+## J589 — Multi-device tooling and host build mutex (host draft)
+
+Observation / hypothesis: shared flat placement/runtime receipts cannot safely
+support several devices, and destination-only build exclusion cannot serialize
+the shared editor. Keep the current default's legacy path usable for the
+incumbent session while adding explicit selection, transactional migration and a
+single host build mutex. J139/J324/J146 and storage-strategy supply the existing
+selection, adopted/internal storage and OLED contracts; this is generic host
+tooling, with no new RoR2 reconstruction.
+
+Change: `--device` and `LAB_DEVICE` select only configured `device_serials`;
+`device_serial` remains the default. Conflicting selectors, unlisted explicit
+serials, unauthorized/offline/missing targets and multiple attached records
+without an explicit selector refuse. The absent-allowlist legacy default remains
+compatible with one attached device. `device_settings[serial]` isolates storage,
+reserve, installation-limit and display settings; legacy top-level fallback
+applies only to the default. Context freezes config, serial and work/receipt roots.
+
+Selected placement, storage, runtime, sync and installation-limit receipts use
+`work/device/<serial>/`. The default stays on flat receipts until the explicit
+`migrate-device-receipts` action verifies live ownership. Migration copies exact
+bytes, preserves originals and the consumed install counter, rechecks source
+hashes and coordination, then atomically publishes an activation marker last.
+Partial/conflicting/tampered activation refuses; later receipt updates or reset
+do not reactivate old flat state. No migration was executed on real receipts.
+
+Current and retained historical callers use the instance receipt API. Runtime
+snapshots validate package path and freshly measured backing in both storage
+modes before publication/use. Every install measures live capacity, uses its
+live adopted UUID or internal target and reserves at least 1,024 MiB internal
+headroom plus its conservative APK/native estimate. Both baseline modes now
+verify owned placement against selected live policy, allowing an internal-only
+device without weakening the current Nova's adopted requirement.
+
+Display cleanup retains exact awakened instances and preserves the first error.
+An explicit model/count profile supports a two-panel sleep check: all physical
+internal panels must report OFF. Thor's actual output format and both-screen
+sleep remain unverified; no Thor profile or serial was invented. Bootstrap smoke
+keeps its separate package, checks APK identity, refuses pre-existing installs,
+uses the shared live capacity gate and writes selected-device evidence.
+
+`build_lock.py` uses one persistent kernel flock at
+`work/coordination/unity-build.lock`, independent of device and work-directory
+selection. Whole-catalog/player/presentation staging through terminal/result
+publication and bootstrap batch builds use it; child editor clients inherit the
+locked descriptor. Direct asynchronous player/payload dispatch requires the
+polling coordinator; historical minimal-build refuses with supported-build
+guidance. Editor actions refuse an outstanding player build. Device runs stay
+outside the build mutex. Builds run `preflight_host`; CLI preflight additionally
+queries selected storage unless `--host-only` is given.
+
+The task ownership file is distinct from that mutex. Generic existing CLIs remain
+usable by its incumbent; `LAB_COORDINATION_GUARD=1` provides an optional waiting
+caller's transport guard, not owner authentication. This agent continues to
+check the lock before every exclusive action. Receipt migration always refuses
+while it exists. Protected R9 helpers were not edited here; supported R9 CLI
+build dispatch passes through the shared coordinator. Its direct internal helper
+and legacy baseline-reference reader remain a post-lock integration review.
+
+Host evidence: `work/experiments/multi-device/host-20261019T053947.051508Z/`.
+All 828 shared-workspace host tests pass, one optional test skipped. Coverage
+includes selection/refusal, namespace separation, migration interruption/drift,
+counter preservation, internal/adopted backing, exact display cleanup and
+cross-process build exclusion during staging/polling/publication. Ruff, README
+freshness, diff checks and `./dev preflight --host-only` pass. These are host
+contracts, not Unity-build or hardware acceptance.
+
+No editor, ADB/device action, APK build, install, payload sync or real receipt
+write/migration ran. The parallel session still owns the current Nova; this entry
+does not assert what is currently installed. Latest accepted baseline remains
+J585; no baseline is advanced. No `work/rebuild/` tree or protected Phase 2
+source was modified by this agent. J586 remains reserved.
+
+Revisit after lock release: doctor/live preflight on the current Nova, migrate
+its verified receipts, reinstall the accepted baseline in place and pass both
+baseline modes. Only then onboard user-allowlisted extra devices after live
+storage/model/display observations. Current Nova stays adopted-only; the second
+Nova and Thor use internal-only policy with reserve checks. Runtime survivor
+draft acceptance remains separately queued; these host-tool changes do not
+alter the generated player's R8 runtime selection.

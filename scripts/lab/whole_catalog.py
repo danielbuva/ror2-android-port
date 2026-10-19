@@ -1348,6 +1348,15 @@ def generate_build_bootstrap(io, manifest, closure):
 
 
 def build_integration(code_only=False, destination=None, work=None):
+    from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
+
+    assert_build_unblocked()
+    with host_build_lock(HOST_BUILD_LOCK, operation="whole-catalog staging and build"):
+        assert_build_unblocked()
+        return _build_integration(code_only=code_only, destination=destination, work=work)
+
+
+def _build_integration(code_only=False, destination=None, work=None):
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
 
@@ -1407,7 +1416,7 @@ def run_integration():
     try:
         result["install"] = d.install(read(WORK / "config/current-build.json")["apk"])
         result["bootstrap"] = d.launch()
-        runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+        runtime = d.read_receipt("runtime.json")["persistentDataPath"]
         result["sync"] = d.sync()
         candidate_selection = runtime + "/whole-catalog-selection.json"
         if d.sh("sh", "-c", "test ! -e " + candidate_selection + " || echo present", check=False).strip() == "present":

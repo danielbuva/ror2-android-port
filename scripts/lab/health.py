@@ -2,8 +2,11 @@ from common import *
 import importlib.metadata
 
 
-def doctor(as_json=False):
-    p = run([ROOT / "scripts/doctor.sh", "--json"], timeout=90, check=False)
+def doctor(as_json=False, selector=None):
+    from device import require_device_access
+
+    require_device_access()
+    p = run([ROOT / "scripts/doctor.sh", "--json", *(["--device", selector] if selector else [])], timeout=90, check=False)
     try:
         bootstrap = json.loads(p.stdout)
     except ValueError:

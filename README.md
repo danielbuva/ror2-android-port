@@ -37,17 +37,30 @@ services, the Moon finale and PC visual parity are not done. See
 
 The prepared workstation already has the exact Unity/Android toolchain and inspection tools.
 `./scripts/lab-setup.sh` restores the pinned Python dependencies (Python 3.11 or newer).
-Copy `environment/lab-config.example.json` to the ignored `work/config/local.json` and give
-it the legitimate installation path and the explicitly authorized device serial. Never copy
-the original installation into tracked directories.
+Copy `environment/lab-config.example.json` to the ignored `work/config/local.json` and set
+the legitimate installation path. Never copy the original installation into tracked
+directories. Device selection is a host draft pending live validation. Configure authorized
+serials in `device_serials` and choose the default in `device_serial`; each serial may have
+its own `device_settings` entry. Device actions accept `--device SERIAL` or
+`LAB_DEVICE=SERIAL`. If more than one attached device is available and neither selector is
+given, the action refuses to guess. An explicit serial outside the configured allowlist
+also refuses.
 
-Storage defaults to `"storage_mode": "adopted"`. An explicitly authorized internal-only
-device can use `"storage_mode": "internal"`; live checks reject an unexpected adopted volume
-and verify installation under internal app storage. Preserve the previous device's local
-configuration and ownership receipts before switching devices. Optional
-`"apk_install_limit": 1` counts installation dispatches for the selected device, including
-unknown outcomes; after that dispatch only the identical receipted APK may be reused, and
-replacing or uninstalling it does not reset the limit.
+For example, device-specific settings can select `storage_mode` (`adopted` or `internal`),
+`internal_reserve_mib`, `apk_install_limit`, `sleep_display_when_idle`,
+`display_models`, and `display_count`. Existing top-level legacy settings are fallback values
+for the configured default device only. Live checks must still confirm current storage and
+free space before every install. Do not change storage configuration or move existing data.
+Per-device receipts are planned under `work/device/<serial>/`; the existing
+`work/device/` receipts will be migrated only by the explicit `migrate-device-receipts`
+command after the coordination lock clears. The migration retains the original receipts and
+writes its activation marker last. No receipt migration has run yet.
+
+Current onboarding remains narrow: Nova is configured for adopted storage. Nova and Thor
+must not be onboarded as internal-storage devices until their serials are configured, live
+storage is recorded, and the current Nova baseline passes. Thor's two-display sleep behavior
+also needs verification. All multi-device behavior and migration commands remain unvalidated
+until the active device/tooling lock is released.
 
 `./dev inspect --full` creates a reviewed input identity. New or updated inputs must be
 reviewed before their ID is recorded in `work/config/accepted-input.json`. No Steam
@@ -59,16 +72,17 @@ authentication is needed to inspect the supplied installation.
 | --- | --- |
 | `./dev test` | Host tests in the lab venv. |
 | `./dev doctor [--json]` | Toolchain, inventory and dependency-pin health. |
-| `./dev preflight` | Input acceptance and drift, tracked-file policy, toolchain pin, host and device storage. Run before every expensive build. |
+| `./dev preflight [--device SERIAL] [--host-only]` | Current: host/input gates plus selected-device storage; `--host-only` omits device access. |
 | `./dev check-baseline` | The standard device check on the installed APK: 35 s of assisted Lakes play, no report error, profile run count unchanged ([docs/BASELINE.md](docs/BASELINE.md)). |
 | `./dev editor --target lab --action open` | Start the isolated exact editor and connect the pinned Unity MCP. One editor mutation at a time. |
-| `./dev build [--target vulkan] [--force]` | Instrumented IL2CPP ARM64 build through MCP with a content-addressed APK receipt. Rejects stale staged runtime sources. |
-| `./dev install` | Install on the configured, live-checked storage; rejects foreign pre-existing packages and records placement. |
-| `./dev sync-data` | Hash-verified sync of changed payload into the runtime-reported path. |
+| `./dev build [--target vulkan] [--force]` | Host preflight and instrumented IL2CPP ARM64 build through MCP with a content-addressed APK receipt. Rejects stale staged runtime sources. |
+| `./dev install [--device SERIAL]` | Install on the selected device after live storage and reserve checks; rejects foreign pre-existing packages and records placement. |
+| `./dev sync-data [--device SERIAL]` | Hash-verified sync of changed payload into the selected device's runtime-reported path. |
 | `./dev run` | Launch the lab, wait for its checkpoint, collect the runtime snapshot. |
 | `./dev logs` · `crash` · `screenshot` · `perf` | Timestamped local captures. |
-| `./dev storage` | Live capacity, volume and backing report; changes nothing. |
-| `./dev reset` | Uninstall only the locally receipted disposable lab package. |
+| `./dev storage [--device SERIAL]` | Live capacity, volume and backing report; changes nothing. |
+| `./dev reset [--device SERIAL]` | Uninstall only the selected device's locally receipted disposable lab package. |
+| `./dev migrate-device-receipts [--device SERIAL]` | Current host draft: migrate default-device receipts after live ownership verification, preserve originals, activate last. Blocked while the coordination lock exists. |
 | `./dev inspect [--full]` · `decompile` · `export-project` · `graphics` | Input inventory and recovery stages (cached, receipted). |
 
 `./dev prototype --action list` lists all actions with help, current first, including
@@ -130,13 +144,18 @@ so a stale APK cannot pass as feature evidence. Gameplay runs on the device are 
 driven by runner scripts kept under the ignored `work/experiments/whole-catalog/gameplay/`;
 they are not yet tracked (see [docs/LOCAL_STATE.md](docs/LOCAL_STATE.md)).
 
+Multi-device selector, per-device receipts, and receipt migration descriptions above are a
+host draft; their CLI, configuration and device checks are pending the coordination lock.
+Device operations do not take the global Unity build lock at
+`work/coordination/unity-build.lock`; Unity build/editor work uses that shared host lock.
+
 ## Validation tiers
 
 | Tier | Needs | Proves |
 | --- | --- | --- |
 | Host tests (`./dev test`, CI) | Python and `tools/lab-requirements.txt` | Tooling logic, transforms, safety guards. Runs on a fresh clone without `work/`. |
 | Toolchain checks | Exact Unity editor, local .NET SDK, accepted input | Compilation, assembly and catalog contracts (`tools/catalog/*Host.cs`, assembly-slice tests). |
-| Device acceptance | Accepted input, generated project, the authorized Nova | Actual runtime behaviour. The only authority for gameplay claims. |
+| Device acceptance | Accepted input, generated project, an explicitly configured and authorized device | Actual runtime behaviour. The only authority for gameplay claims. |
 
 Passing an earlier tier never stands in for a later one. Acceptance limits:
 [docs/testing-strategy.md](docs/testing-strategy.md); storage policy:

@@ -21,6 +21,7 @@ class SceneAcceptanceTests(unittest.TestCase):
             write(work / "config/current-build.json", {"success": True, "apk": "mock.apk", "payload": {"loadingbasic-lab": "mock"}})
             write(work / "device/runtime.json", {"persistentDataPath": "mock-owned-path"})
             d = MagicMock()
+            d.read_receipt.return_value = {"persistentDataPath": "mock-owned-path"}
             d.sync.return_value = {}
             d.exists.return_value = False
             d.launch.return_value = {"pid": "123"}
@@ -57,6 +58,7 @@ class SceneAcceptanceTests(unittest.TestCase):
             write(work / "config/current-build.json", {"success": True, "apk": "mock.apk", "payload": {"loadingbasic-lab": "mock"}})
             write(work / "device/runtime.json", {"persistentDataPath": "mock-owned-path"})
             d = MagicMock()
+            d.read_receipt.return_value = {"persistentDataPath": "mock-owned-path"}
             d.exists.return_value = True
             d.launch.return_value = {"pid": "123"}
             d.install.return_value = {}
@@ -96,6 +98,7 @@ class MovementBatchTests(unittest.TestCase):
             write(work / "lab-build/result.json", {"success": True, "apk": "mock.apk"})
             write(work / "device/runtime.json", {"persistentDataPath": "mock-owned-path"})
             d = MagicMock()
+            d.read_receipt.return_value = {"persistentDataPath": "mock-owned-path"}
             d.install.return_value = {}
             d.launch.side_effect = [{"pid": "1"}, RuntimeError("first process crashed"), {"pid": "3"}, {"pid": "4"}, {"pid": "5"}]
             current = {}
@@ -142,6 +145,7 @@ class MovementBatchTests(unittest.TestCase):
             write(work / "lab-build/result.json", {"success": True, "apk": "mock.apk"})
             write(work / "device/runtime.json", {"persistentDataPath": "mock-owned-path"})
             d = MagicMock()
+            d.read_receipt.return_value = {"persistentDataPath": "mock-owned-path"}
             d.install.return_value = {}
             d.launch.return_value = {"pid": "123"}
             d.sh.return_value = json.dumps({"id": "input", "attempt": "attempt", "pid": 123, "success": True, "phase": "complete"})
@@ -273,6 +277,7 @@ class MovementBatchTests(unittest.TestCase):
             write(work / "lab-build/result.json", {"success": True, "apk": "mock.apk"})
             write(work / "device/runtime.json", {"persistentDataPath": "mock-owned-path"})
             d = MagicMock()
+            d.read_receipt.return_value = {"persistentDataPath": "mock-owned-path"}
             d.install.return_value = {}
             d.launch.return_value = {"pid": "123"}
             d.sh.return_value = json.dumps({"id": "input", "attempt": "attempt", "pid": 123, "success": True, "phase": "complete"})

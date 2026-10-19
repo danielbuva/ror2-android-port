@@ -1638,7 +1638,7 @@ def bind():
     write(target, mapping)
     d = Device()
     d.owned()
-    runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+    runtime = d.read_receipt("runtime.json")["persistentDataPath"]
     expected = "/storage/emulated/0/Android/data/dev.ror2lab.arm64/files"
     if runtime != expected:
         raise RuntimeError("Unexpected lab runtime mapping destination")

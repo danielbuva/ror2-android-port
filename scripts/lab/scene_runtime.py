@@ -172,7 +172,7 @@ def scene_run(verification=False):
             if d.sh("pidof", PACKAGE, check=False).strip() != pid:
                 raise RuntimeError("Scene process died or changed")
             time.sleep(1)
-        path = read(WORK / "device/runtime.json")["persistentDataPath"]
+        path = d.read_receipt("runtime.json")["persistentDataPath"]
         report_name = (
             "startup-segment-probe.json"
             if attempt.get("startup")
@@ -234,7 +234,7 @@ def scene_run(verification=False):
             except Exception as capture:
                 result["capture_error"] = str(capture)
     finally:
-        if not had and (WORK / "device/installed.json").exists():
+        if not had and d.receipt("installed.json").exists():
             try:
                 result["cleanup"] = d.reset()
             except Exception as e:
@@ -1457,7 +1457,7 @@ def movement_batch_run(cases=None, retry=False, interactive=False, debug_options
     write(out / "install.json", d.install(b["apk"]))
     d.launch()
     d.sync()
-    runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+    runtime = d.read_receipt("runtime.json")["persistentDataPath"]
     results = {}
     if a.get("playable_spine"):
         mapping = read((ROOT / read(WORK / "experiments/scene-runtime/current.json")["path"]) / "nova-input-mapping.json")

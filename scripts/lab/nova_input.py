@@ -28,7 +28,7 @@ def observe(capture=False):
     write(out / "target.json", {"serial": d.serial, "model": "Retroid Pocket Nova", "event_path": match[0]})
     result = {"success": True, "evidence": str(out.relative_to(ROOT)), "scope": "Kernel gamepad observation only; physical mapping and game binding unproven"}
     if not capture:
-        runtime = read(WORK / "device/runtime.json")["persistentDataPath"]
+        runtime = d.read_receipt("runtime.json")["persistentDataPath"]
         if not runtime.endswith("/Android/data/" + PACKAGE + "/files"):
             raise RuntimeError("Unexpected lab runtime path")
         if d.sh("ls", runtime + "/movement-batch-selection.json", check=False):

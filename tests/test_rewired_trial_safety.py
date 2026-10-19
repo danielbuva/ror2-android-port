@@ -66,6 +66,9 @@ class TrialSafetyTests(unittest.TestCase):
             def exists(self):
                 return True
 
+            def read_receipt(self, name):
+                return json.loads((trial.WORK / "device" / name).read_text())
+
             def owned(self):
                 return {"apk": str(previous), "apk_sha256": sha(previous)}
 
@@ -102,6 +105,9 @@ class TrialSafetyTests(unittest.TestCase):
         class Android:
             def exists(self):
                 return False
+
+            def read_receipt(self, name):
+                return json.loads((trial.WORK / "device" / name).read_text())
 
             def sh(self, *args, **kwargs):
                 if args[0] == "getprop":
@@ -141,6 +147,9 @@ class TrialSafetyTests(unittest.TestCase):
         class Android:
             def exists(self):
                 return True
+
+            def read_receipt(self, name):
+                return json.loads((trial.WORK / "device" / name).read_text())
 
             def owned(self):
                 return {"apk": str(previous), "apk_sha256": sha(previous)}
@@ -194,6 +203,9 @@ class TrialSafetyTests(unittest.TestCase):
         class Android:
             def exists(self):
                 return False
+
+            def read_receipt(self, name):
+                return json.loads((trial.WORK / "device" / name).read_text())
 
             def sh(self, *args, **kwargs):
                 if args[0] == "getprop":

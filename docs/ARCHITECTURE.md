@@ -18,7 +18,7 @@ synced content payload comes out. Everything game-derived stays under the ignore
 | # | Step | Command | Main code | Output under `work/` |
 | --- | --- | --- | --- | --- |
 | 1 | Accept input | `./dev inspect --full`, then record the ID in `config/accepted-input.json` by hand | `scripts/lab/inventory.py` | `inventory/` |
-| 2 | Check before building | `./dev preflight` (also run by `build`) | `scripts/lab/build.py` (`preflight`) | none (refuses on drift) |
+| 2 | Check before building | `./dev preflight` (host + selected storage); `--host-only` omits device access; builds run host gates | `scripts/lab/build.py` (`preflight_host`, `preflight`) | selected preflight receipt; refuses on drift |
 | 3 | Decompile and export | `./dev decompile`, `./dev export-project` | `scripts/lab/recovery.py` | `config/reconstruction.json`, exported project |
 | 4 | Assembly transforms | `./dev prototype --action assembly-transforms-check` (verification only) | `scripts/lab/assembly_transforms.py` → `tools/assembly-transforms/` | none; verifies three transformed plugins in disposable `.local/` scratch |
 | 5 | Compose the project | `./dev prototype --action composition-update-stage`, then `composition-update-dependencies` | `scripts/lab/composition_migration.py` | `lab-project/` |
@@ -37,6 +37,59 @@ which makes `PortSession.Start` exit: it checks catalog registration
 attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
+
+### Device selection and storage receipts (host draft)
+
+Device selection is being expanded from one configured serial to an explicit
+allowlist/default model. `work/config/local.json` will accept `device_serials`,
+`device_serial`, and `device_settings[serial]`. Device actions accept `--device SERIAL`
+or `LAB_DEVICE=SERIAL`; with multiple attached devices and no explicit selector, they
+refuse to choose. An explicit serial outside the configured allowlist also refuses.
+Top-level legacy settings are fallback values for the default device only. Per-device
+overrides cover `storage_mode` (`adopted` or `internal`), `internal_reserve_mib`,
+`apk_install_limit`, `sleep_display_when_idle`, `display_models`, and `display_count`.
+
+`scripts/lab/device_context.py` owns pure selection, storage policy and receipt namespace
+resolution. Its explicit migration transaction requires verified ownership, preserves
+source receipts/counters, and publishes `.device-context-active.json` last. Hashes in that
+marker audit the original copy; ordinary receipt updates and reset keep the namespace
+active. A malformed marker refuses selection. `Device` freezes the selected serial,
+settings and receipt root. All current and
+retained historical device callers use that instance's receipt API. CLI cleanup sleeps
+only the exact instances it awakened, including on failure. Dual-panel profiles require
+both physical internal panels to report OFF before sleep is accepted.
+
+`scripts/lab/build_lock.py` owns a persistent advisory kernel lock and owner diagnostics.
+It is reentrant in one thread and hands its open descriptor to the editor client. Build
+coordinators retain it through staging, Unity completion and result publication; editor
+actions share it and refuse an outstanding player build. Bootstrap batch builds use the
+same path. Device runs do not acquire it. Direct editor player-build dispatch requires
+the receipt-polling coordinator. Protected R9 direct helper integration remains deferred
+while the parallel session owns that file; its supported CLI enters through the shared
+whole-catalog/build coordinator.
+
+Session ownership and the host build mutex are separate. The incumbent session must
+remain able to use the existing CLIs while it holds its coordination file. A waiting
+orchestrator checks that file before every editor/device action and can additionally set
+`LAB_COORDINATION_GUARD=1` for transport-level refusal. That opt-in is not ownership
+authentication. Migration always refuses while the file exists, regardless of this
+setting. The host Unity build mutex is mandatory for every caller.
+
+`./dev preflight` combines host/input validation with selected-device live storage checks.
+`./dev build` runs host preflight only and holds the global Unity build lock at
+`work/coordination/unity-build.lock`; install, sync and gameplay actions do not take that
+lock. Every install still queries live storage and free space and enforces the selected
+device reserve. Receipts are planned under `work/device/<serial>/`. The explicit
+`migrate-device-receipts` command will migrate existing `work/device/` receipts after the
+coordination lock clears, preserve the originals, and write its activation marker last.
+No receipts have been migrated, and the selector/config/receipt behavior has not yet been
+validated on a live device.
+
+Current onboarding is Nova on adopted storage. Nova and Thor are not yet configured as
+internal-storage devices; onboarding waits for configured serials, recorded live storage,
+and a passing current Nova baseline. Thor's two-display sleep behavior also remains to be
+verified. These are readiness conditions, not evidence that either device currently uses
+the proposed settings.
 
 Assembly transform verification (`scripts/lab/assembly_transforms.py`, current):
 `recipe/assembly-transforms.json` pins the accepted input, AssemblyProbe sources,

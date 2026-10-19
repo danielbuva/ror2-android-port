@@ -3,67 +3,182 @@ import time
 import re
 import shlex
 import zipfile
+import copy
+import common
+from device_context import ACTIVATION_MARKER, command_selectors, migrate_legacy_receipts, receipt_directory, select_device, storage_policy
 
 PACKAGE = "dev.ror2lab.arm64"
 ADB = "/opt/homebrew/bin/adb"
 
 
-def validate_apk_identity(apk):
+def require_device_access(*, force=False):
+    if (force or os.environ.get("LAB_COORDINATION_GUARD") == "1") and (ROOT / "work/coordination/claude-r9.lock").exists():
+        raise RuntimeError("Device access blocked by work/coordination/claude-r9.lock")
+
+
+def physical_display_states(text):
+    """Read physical internal panel states; virtual/logical duplicates don't count."""
+    states = []
+    for line in text.splitlines():
+        if "DisplayDeviceInfo{" in line and re.search(r"\btype INTERNAL\b", line):
+            match = re.search(r"\bstate (OFF|ON|DOZE|DOZE_SUSPEND|UNKNOWN)\b", line)
+            if match:
+                states.append(match[1])
+    return states
+
+
+def validate_apk_identity(apk, expected_package=PACKAGE):
     aapt = Path(os.environ["UNITY_ANDROID_ROOT"]) / "SDK/build-tools" / toolchain()["android_build_tools"] / "aapt"
     metadata = run([aapt, "dump", "badging", apk]).stdout.decode(errors="replace")
     package = re.search(r"^package: name='([^']+)'", metadata, re.M)
-    if not package or package[1] != PACKAGE:
-        raise RuntimeError("APK must update the single owned lab package; refusing another app identity")
+    if not package or package[1] != expected_package:
+        label = "the single owned lab package" if expected_package == PACKAGE else "the separate bootstrap package"
+        raise RuntimeError("APK must use " + label + "; refusing another app identity")
 
 
 class Device:
-    display_awakened = False
+    _awake_devices = {}
 
-    def __init__(self):
-        serial = config()["device_serial"]
+    def __init__(self, selector=None, work_root=None):
+        require_device_access()
+        self._work_root = Path(work_root) if work_root is not None else common.WORK
+        configuration = copy.deepcopy(read(self.work_root / "config/local.json"))
         lines = run([ADB, "devices"]).stdout.decode().splitlines()[1:]
-        if [serial, "device"] not in [l.split()[:2] for l in lines]:
-            raise RuntimeError("Configured device is not connected and authorized: " + serial)
+        inventory = [{"serial": p[0], "state": p[1]} for line in lines if len(p := line.split()) >= 2]
+        cli, env = command_selectors()
+        if selector is not None:
+            if cli is not None and selector != cli:
+                raise RuntimeError("Conflicting device selectors")
+            cli = selector
+        serial = select_device(configuration, inventory, cli_selector=cli, env_selector=env)
         self.base = [ADB, "-s", serial]
         self.serial = serial
+        self.configuration = configuration
+        self.settings = dict(configuration) if serial == configuration["device_serial"] else {}
+        self.settings.update(configuration.get("device_settings", {}).get(serial, {}))
+        self.settings["storage_mode"] = storage_policy(configuration, serial)
+        self.receipt_root = receipt_directory(self.work_root, {"serial": serial, "default_serial": configuration["device_serial"]})
+        self.display_awakened = False
+
+    @property
+    def work_root(self):
+        return getattr(self, "_work_root", WORK)
+
+    def receipt(self, name):
+        if Path(name).name != name or not name.endswith(".json"):
+            raise ValueError("Receipt name must be a JSON basename")
+        return self.receipt_root / name
+
+    def read_receipt(self, name):
+        value = read(self.receipt(name))
+        if not isinstance(value, dict):
+            raise RuntimeError("Device receipt must be a JSON object")
+        serial = value.get("serial")
+        if serial is not None and serial != self.serial:
+            raise RuntimeError("Device receipt belongs to another serial")
+        # Old snapshots lack serials. Only the legacy default or a verified
+        # migration marker may associate those bytes with the selected device.
+        if serial is None and self.receipt_root != self.work_root / "device":
+            marker = self.receipt(ACTIVATION_MARKER)
+            if not marker.exists() or read(marker).get("serial") != self.serial:
+                raise RuntimeError("Device receipt lacks selected serial identity")
+        if name == "runtime.json":
+            self.validate_runtime(value)
+        return value
+
+    def write_receipt(self, name, value):
+        require_device_access()
+        if name == "runtime.json":
+            self.validate_runtime(value)
+        write(self.receipt(name), dict(value, serial=self.serial))
+
+    def validate_runtime(self, value):
+        path = value.get("persistentDataPath") if isinstance(value, dict) else None
+        pattern = r"/(?:storage/(?:emulated/[0-9]+|[A-Za-z0-9-]+)|sdcard)/Android/data/" + re.escape(PACKAGE) + r"/files"
+        if not isinstance(path, str) or not re.fullmatch(pattern, path):
+            raise RuntimeError("Unexpected runtime content path")
+        storage = self.storage()
+        parts = self.sh("df", "-k", path).splitlines()[-1].split()
+        selected = storage["internal"] if storage["mode"] == "internal" else storage["adopted"]
+        if int(parts[1]) * 1024 != selected["total_bytes"]:
+            raise RuntimeError("Runtime payload path is not backed by the selected " + storage["mode"] + " volume")
+
+    def migrate_receipts(self):
+        require_device_access(force=True)
+        if self.serial != self.configuration["device_serial"] or self.receipt_root != self.work_root / "device":
+            raise RuntimeError("Only the legacy configured default needs receipt migration")
+        proof = self.owned()
+        result = migrate_legacy_receipts(
+            self.receipt_root, self.work_root / "device" / self.serial, serial=self.serial,
+            ownership_proof=proof, coordination_lock=ROOT / "work/coordination/claude-r9.lock",
+            install_counter=self.install_counter(),
+        )
+        self.receipt_root = result["directory"]
+        return {key: str(value) if isinstance(value, Path) else value for key, value in result.items()}
+
+    @classmethod
+    def sleep_awakened(cls):
+        errors = []
+        for key, instance in list(cls._awake_devices.items()):
+            try:
+                instance.display(False)
+            except Exception as error:
+                errors.append(str(error))
+        return errors
 
     def cmd(self, *args, check=True, timeout=120):
+        require_device_access()
         return run(self.base + list(args), check=check, timeout=timeout).stdout.decode(errors="replace").strip()
 
     def sh(self, *args, check=True):
         return self.cmd("shell", shlex.join(str(a) for a in args), check=check)
 
     def display(self, awake):
-        if not config().get("sleep_display_when_idle", False):
+        if not self.settings.get("sleep_display_when_idle", False):
             return False
-        if self.sh("getprop", "ro.product.model") != "Retroid Pocket Nova":
-            raise RuntimeError("Idle display control is authorized only for Nova")
-        self.sh("input", "keyevent", "KEYCODE_WAKEUP" if awake else "KEYCODE_SLEEP")
+        models = self.settings.get("display_models")
+        if models is None and self.serial == self.configuration["device_serial"]:
+            models = ["Retroid Pocket Nova"]
+        if not isinstance(models, list) or not models or self.sh("getprop", "ro.product.model") not in models:
+            raise RuntimeError("Idle display control needs an explicitly authorized exact model (legacy default: Nova)")
+        count = self.settings.get("display_count", 1)
+        if not isinstance(count, int) or isinstance(count, bool) or count < 1:
+            raise RuntimeError("Invalid physical display_count")
+        key = (str(self.receipt_root), self.serial)
         if awake:
-            Device.display_awakened = True
+            self.display_awakened = True
+            self._awake_devices[key] = self
+        self.sh("input", "keyevent", "KEYCODE_WAKEUP" if awake else "KEYCODE_SLEEP")
         expected = "Awake" if awake else "Asleep"
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
             if "mWakefulness=" + expected in self.sh("dumpsys", "power"):
-                Device.display_awakened = awake
+                if count > 1:
+                    panels = physical_display_states(self.sh("dumpsys", "display"))
+                    if len(panels) != count or (not awake and any(state != "OFF" for state in panels)) or (awake and "ON" not in panels):
+                        time.sleep(0.25)
+                        continue
+                self.display_awakened = awake
+                if not awake:
+                    self._awake_devices.pop(key, None)
                 return True
             time.sleep(0.25)
-        raise RuntimeError("Nova display did not reach " + expected + "; inspect current power state")
+        raise RuntimeError("Selected device displays did not reach " + expected + "; inspect current power state")
 
     def exists(self):
         return ("package:" + PACKAGE) in self.sh("pm", "list", "packages", PACKAGE).splitlines()
 
     def owned(self):
-        receipt = WORK / "device/installed.json"
+        receipt = self.receipt("installed.json")
         if not receipt.exists():
             raise RuntimeError("No lab ownership receipt; refusing to modify an existing package")
-        r = read(receipt)
+        r = self.read_receipt("installed.json")
         if r["serial"] != self.serial or r["package"] != PACKAGE or self.sh("pm", "path", PACKAGE) != r["package_path"]:
             raise RuntimeError("Package placement/ownership changed; inspect before modifying")
         return r
 
     def storage(self):
-        mode = config().get("storage_mode", "adopted")
+        mode = self.settings["storage_mode"]
         if mode not in ["adopted", "internal"]:
             raise RuntimeError("Unknown explicitly configured storage mode")
         lines = [x.split() for x in self.sh("sm", "list-volumes", "all").splitlines() if x.startswith("private:") and " mounted " in x]
@@ -87,7 +202,7 @@ class Device:
             "shared": df("/sdcard"),
             "install_location": self.sh("pm", "get-install-location"),
         }
-        write(WORK / "device/storage.json", result)
+        self.write_receipt("storage.json", result)
         return result
 
     def install(self, apk):
@@ -96,9 +211,12 @@ class Device:
         if self.exists():
             self.owned()
         storage = self.storage()
-        limit = config().get("apk_install_limit")
-        counter = WORK / "device-install-limits" / (digest(self.serial) + ".json")
-        used = read(counter).get("dispatched", 0) if counter.exists() else 0
+        limit = self.settings.get("apk_install_limit")
+        counter = self.install_counter()
+        prior_counter = read(counter) if counter.exists() else {"serial": self.serial, "dispatched": 0}
+        used = prior_counter.get("dispatched", 0)
+        if prior_counter.get("serial") != self.serial or not isinstance(used, int) or isinstance(used, bool) or used < 0:
+            raise RuntimeError("Invalid selected-device install counter; inspect before installing")
         if limit is not None:
             if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
                 raise RuntimeError("Invalid APK installation limit")
@@ -108,18 +226,7 @@ class Device:
                     if prior["apk_sha256"] == sha(apk):
                         return dict(prior, reused=True, install_output="Existing receipted identical APK reused; no installation dispatched")
                 raise RuntimeError("Authorized APK installation limit exhausted; retain current APK")
-        with zipfile.ZipFile(apk) as z:
-            abis = {n.split("/")[1] for n in z.namelist() if n.startswith("lib/") and n.endswith(".so")}
-            native = sum(i.file_size for i in z.infolist() if i.filename.startswith("lib/"))
-        if abis != {"arm64-v8a"}:
-            raise RuntimeError("APK must contain only arm64-v8a; found " + str(abis))
-        reserve = config().get("internal_reserve_mib", 1024) * 1024**2
-        estimate = apk.stat().st_size * 3 + native
-        if storage["internal"]["free_bytes"] < reserve + estimate:
-            raise RuntimeError("Insufficient internal installation scratch headroom; do not move/remove games")
-        volume = storage["internal"] if storage.get("mode") == "internal" else storage["adopted"]
-        if volume["free_bytes"] < estimate + reserve:
-            raise RuntimeError("Insufficient selected storage headroom")
+        self.install_capacity(apk, storage)
         write(counter, {"serial": self.serial, "dispatched": used + 1, "apk_sha256": sha(apk), "status": "dispatched; verify installation receipt"})
         t = time.monotonic()
         output = self.cmd("install", "-r", "--force-uuid", storage["uuid"] or "internal", str(apk), timeout=240)
@@ -134,11 +241,39 @@ class Device:
             "install_output": output,
             "storage": storage,
         }
-        write(WORK / "device/installed.json", r)
+        self.write_receipt("installed.json", r)
         expected = "/data/app/" if storage.get("mode") == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
         if expected not in r["package_path"]:
             raise RuntimeError("Placement verification failed; lab receipt saved, inspect before next action")
         return r
+
+    def validate_apk(self, apk, expected_package):
+        validate_apk_identity(apk, expected_package)
+
+    def install_counter(self):
+        if self.receipt_root == self.work_root / "device":
+            return self.work_root / "device-install-limits" / (digest(self.serial) + ".json")
+        return self.receipt("device-install-limit.json")
+
+    def install_capacity(self, apk, storage):
+        """Shared lab/bootstrap capacity gate; no device writes or package changes."""
+        apk = Path(apk)
+        with zipfile.ZipFile(apk) as z:
+            abis = {n.split("/")[1] for n in z.namelist() if n.startswith("lib/") and n.endswith(".so")}
+            native = sum(i.file_size for i in z.infolist() if i.filename.startswith("lib/"))
+        if abis != {"arm64-v8a"}:
+            raise RuntimeError("APK must contain only arm64-v8a; found " + str(abis))
+        reserve_mib = self.settings.get("internal_reserve_mib", 1024)
+        if not isinstance(reserve_mib, int) or isinstance(reserve_mib, bool) or reserve_mib < 1024:
+            raise RuntimeError("internal_reserve_mib must reserve at least 1024 MiB")
+        reserve = reserve_mib * 1024**2
+        estimate = apk.stat().st_size * 3 + native
+        if storage["internal"]["free_bytes"] < reserve + estimate:
+            raise RuntimeError("Insufficient internal installation scratch headroom; do not move/remove games")
+        volume = storage["internal"] if storage.get("mode") == "internal" else storage["adopted"]
+        if volume["free_bytes"] < estimate + reserve:
+            raise RuntimeError("Insufficient selected storage headroom")
+        return {"estimate_bytes": estimate, "reserve_bytes": reserve}
 
     def launch(self):
         self.owned()
@@ -171,7 +306,7 @@ class Device:
                     raise RuntimeError("Unexpected diagnostic path")
                 snapshots.append(json.loads(self.sh("cat", path + "/snapshot.json")))
         if snapshots:
-            write(WORK / "device/runtime.json", snapshots[-1])
+            self.write_receipt("runtime.json", snapshots[-1])
         result = {
             "launch": launch,
             "pid": pid,
@@ -181,14 +316,14 @@ class Device:
             "geometry": "LAB_GEOMETRY_OK" in logs,
             "log": logs,
         }
-        write(WORK / "device/last-run.json", result)
+        self.write_receipt("last-run.json", result)
         if not result["checkpoint"]:
-            raise RuntimeError("Runtime checkpoint failed; inspect work/device/last-run.json and ./dev crash")
+            raise RuntimeError("Runtime checkpoint failed; inspect selected-device last-run.json and ./dev crash")
         return result
 
     def sync(self, payload_directory=None):
         self.owned()
-        runtime = read(WORK / "device/runtime.json")
+        runtime = self.read_receipt("runtime.json")
         path = runtime["persistentDataPath"]
         storage = self.storage()
         if not path.endswith("/Android/data/" + PACKAGE + "/files"):
@@ -200,7 +335,7 @@ class Device:
                 raise RuntimeError("Runtime payload path is not backed by the selected adopted volume")
         dest = path + "/payload"
         self.sh("mkdir", "-p", dest)
-        files = list((Path(payload_directory) if payload_directory is not None else WORK / "generated-android-data").glob("*"))
+        files = list((Path(payload_directory) if payload_directory is not None else self.work_root / "generated-android-data").glob("*"))
         if payload_directory is not None and not files:
             raise RuntimeError("Payload directory is empty or missing")
         manifest = []
@@ -224,7 +359,7 @@ class Device:
                 self.sh("mv", remote + ".partial", remote)
             manifest.append({"name": p.name, "sha256": h, "bytes": p.stat().st_size, "transferred": changed})
         result = {"runtime_path": path, "backing_df": self.sh("df", "-k", path), "files": manifest}
-        write(WORK / "device/sync.json", result)
+        self.write_receipt("sync.json", result)
         return result
 
     def collect(self, kind, out):
@@ -241,6 +376,7 @@ class Device:
             (out / "exit-info.txt").write_text(self.sh("dumpsys", "activity", "exit-info", PACKAGE, check=False))
             (out / "tombstone-access.txt").write_text(self.sh("ls", "/data/tombstones", check=False) or "Not accessible on this non-root device")
         if kind in ["all", "screenshot"]:
+            require_device_access()
             data = run(self.base + ["exec-out", "screencap", "-p"]).stdout
             if not data.startswith(b"\x89PNG\r\n\x1a\n"):
                 raise RuntimeError("Invalid screenshot")
@@ -258,8 +394,8 @@ class Device:
             # separate observations. The Linux temperature ABI uses millidegree Celsius.
             zones = 'for z in /sys/class/thermal/thermal_zone*; do [ -r "$z/type" ] && [ -r "$z/temp" ] || continue; t=$(cat "$z/type" 2>/dev/null); v=$(cat "$z/temp" 2>/dev/null); [ -n "$t" ] && [ -n "$v" ] || continue; printf "%s\\t%s\\t%s\\n" "${z##*/}" "$t" "$v"; done'
             (out / "thermal-zones.txt").write_text(self.sh("sh", "-c", zones, check=False))
-            if (WORK / "device/runtime.json").exists():
-                path = read(WORK / "device/runtime.json")["persistentDataPath"]
+            if self.receipt("runtime.json").exists():
+                path = self.read_receipt("runtime.json")["persistentDataPath"]
                 for name in ["snapshot.json", "exceptions.jsonl"]:
                     text = self.sh("cat", path + "/" + name, check=False)
                     if text:
@@ -275,7 +411,7 @@ class Device:
             return {"removed": False, "reason": "package absent"}
         self.owned()
         result = self.cmd("uninstall", PACKAGE)
-        (WORK / "device/installed.json").unlink()
+        self.receipt("installed.json").unlink()
         return {"uninstall": result, "removed": not self.exists()}
 
 
@@ -306,7 +442,7 @@ def smoke(apk):
             result["collection_error"] = str(collection_error)
     finally:
         # Only remove a package first installed by this smoke transaction.
-        if not had_package and (WORK / "device/installed.json").exists():
+        if not had_package and d.receipt("installed.json").exists():
             try:
                 result["cleanup"] = d.reset()
             except Exception as e:

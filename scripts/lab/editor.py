@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import sys
 import datetime
 from pathlib import Path
@@ -9,9 +10,17 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts/lab"))
+from build_lock import (
+    HOST_BUILD_LOCK,
+    INHERITED_FD_ENV,
+    assert_build_unblocked,
+    assert_host_build_lock_held,
+    host_build_lock,
+)
 
 
-async def main():
+async def _main():
     target, action = sys.argv[1:3]
     expected = (
         (ROOT / "work/lab-project")
@@ -28,9 +37,13 @@ async def main():
     evidence = {"target": str(expected), "action": action}
     async with streamablehttp_client("http://127.0.0.1:8080/mcp") as (r, w, _):
         async with ClientSession(r, w) as s:
+            assert_build_unblocked()
+            assert_host_build_lock_held(HOST_BUILD_LOCK)
             await s.initialize()
 
             async def call(name, args):
+                assert_build_unblocked()
+                assert_host_build_lock_held(HOST_BUILD_LOCK)
                 row = {"tool": name, "args": args, "status": "sent"}
                 evidence.setdefault("calls", []).append(row)
                 (out / (target + "-" + action + "-progress.json")).write_text(json.dumps(evidence, indent=2) + "\n")
@@ -46,11 +59,15 @@ async def main():
                     raise RuntimeError(str(data))
                 return data
 
+            assert_build_unblocked()
+            assert_host_build_lock_held(HOST_BUILD_LOCK)
             instances = json.loads((await s.read_resource("mcpforunity://instances")).contents[0].text)["instances"]
             matches = [i for i in instances if i["name"] == expected.name]
             if len(matches) != 1:
                 raise RuntimeError("Expected one connected editor named " + expected.name + "; found " + str(instances))
             evidence["selection"] = await call("set_active_instance", {"instance": matches[0]["id"]})
+            assert_build_unblocked()
+            assert_host_build_lock_held(HOST_BUILD_LOCK)
             project = (await s.read_resource("mcpforunity://project/info")).model_dump(mode="json")
             evidence["project"] = project
             if str(expected) not in json.dumps(project):
@@ -60,7 +77,7 @@ async def main():
                 "execute_code",
                 {
                     "action": "execute",
-                    "code": "if(Application.unityVersion!="
+                    "code": 'if(BuildPipeline.isBuildingPlayer)throw new System.Exception("Outstanding Unity build must finish before another editor action");if(Application.unityVersion!='
                     + json.dumps(version)
                     + ')throw new System.Exception("Connected editor differs from approved exact pin");return Application.unityVersion;',
                 },
@@ -120,6 +137,20 @@ async def main():
     (archive / "result.json").write_text(json.dumps(evidence, indent=2) + "\n")
     (out / (target + "-" + action + ".json")).write_text(json.dumps(evidence, indent=2) + "\n")
     print(json.dumps(evidence, indent=2))
+
+
+async def main():
+    target, action = sys.argv[1:3]
+    assert_build_unblocked()
+    if action == "minimal-build":
+        raise RuntimeError("The historical minimal-build editor action is unsupported; use ./dev build")
+    if action in {"build", "presentation-payload"} and (
+        os.environ.get("ROR2LAB_COORDINATED_BUILD") != "1" or INHERITED_FD_ENV not in os.environ
+    ):
+        raise RuntimeError("Direct editor build dispatch is disabled; use the build coordinator")
+    with host_build_lock(HOST_BUILD_LOCK, operation=f"editor:{target}:{action}"):
+        assert_build_unblocked()
+        await _main()
 
 
 asyncio.run(asyncio.wait_for(main(), 180))

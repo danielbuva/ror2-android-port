@@ -3,6 +3,7 @@ import tempfile
 import json
 import zipfile
 import sys
+import os
 import types
 import runpy
 import io
@@ -12,7 +13,13 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import device
+import device_context
+import common
 from common import write
+REAL_REQUIRE_DEVICE_ACCESS = device.require_device_access
+DEFAULT_TEST_SERIAL = "synthetic-default"
+SECOND_TEST_SERIAL = "synthetic-secondary"
+OTHER_TEST_SERIAL = "synthetic-other"
 
 
 class SafetyTests(unittest.TestCase):
@@ -21,16 +28,26 @@ class SafetyTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.patcher = patch.object(device, "WORK", self.root)
         self.patcher.start()
+        self.access_patcher = patch.object(device, "require_device_access")
+        self.access_patcher.start()
         # These ABI/storage fixtures are ZIP containers, not Android manifests.
         # APK identity rejection is exercised separately with explicit metadata.
         self.identity_patcher = patch.object(device, "validate_apk_identity")
         self.identity_patcher.start()
         self.d = object.__new__(device.Device)
-        self.d.serial = "authorized-test"
+        self.d._work_root = self.root
+        self.d.serial = DEFAULT_TEST_SERIAL
         self.d.base = ["must-not-execute-adb"]
+        self.d.configuration = dict(device_serial=self.d.serial, device_serials=[self.d.serial], storage_mode="adopted")
+        self.d.settings = dict(self.d.configuration)
+        self.d.receipt_root = self.root / "device"
+        self.d.display_awakened = False
+        device.Device._awake_devices.clear()
 
     def tearDown(self):
         self.identity_patcher.stop()
+        self.access_patcher.stop()
+        device.Device._awake_devices.clear()
         self.patcher.stop()
         self.temp.cleanup()
 
@@ -48,27 +65,253 @@ class SafetyTests(unittest.TestCase):
     def test_low_internal_space_blocks_before_install(self):
         self.d.exists = lambda: False
         self.d.storage = lambda: {"internal": {"free_bytes": 128}, "adopted": {"free_bytes": 10**12}}
-        with patch.object(device, "config", return_value={"internal_reserve_mib": 1024}):
-            with self.assertRaisesRegex(RuntimeError, "Insufficient internal"):
-                self.d.install(self.apk())
+        self.d.settings["internal_reserve_mib"] = 1024
+        with self.assertRaisesRegex(RuntimeError, "Insufficient internal"):
+            self.d.install(self.apk())
 
     def test_wrong_abi_blocks_before_install(self):
         self.d.exists = lambda: False
         self.d.storage = lambda: {}
-        # install() reads config() from common's own WORK; keep the real local.json out of the fixture.
-        with patch.object(device, "config", return_value={}):
-            with self.assertRaisesRegex(RuntimeError, "only arm64-v8a"):
-                self.d.install(self.apk("x86_64"))
+        with self.assertRaisesRegex(RuntimeError, "only arm64-v8a"):
+            self.d.install(self.apk("x86_64"))
 
     def test_ownership_receipt_bound_to_device_and_placement(self):
-        write(self.root / "device/installed.json", {"serial": "REDACTED", "package": device.PACKAGE, "package_path": "old"})
-        with self.assertRaisesRegex(RuntimeError, "ownership changed"):
+        write(self.d.receipt("installed.json"), dict(serial=OTHER_TEST_SERIAL, package=device.PACKAGE, package_path="old"))
+        with self.assertRaisesRegex(RuntimeError, "another serial"):
             self.d.owned()
+
+    def test_scoped_receipt_with_another_serial_is_refused(self):
+        self.d.receipt_root = self.root / "device" / self.d.serial
+        write(self.d.receipt("installed.json"), dict(serial=OTHER_TEST_SERIAL))
+        with self.assertRaisesRegex(RuntimeError, "belongs to another serial"):
+            self.d.read_receipt("installed.json")
+
+    def test_settings_and_receipt_roots_are_isolated_between_device_contexts(self):
+        configuration = {
+            "device_serial": DEFAULT_TEST_SERIAL,
+            "device_serials": [DEFAULT_TEST_SERIAL, SECOND_TEST_SERIAL],
+            "storage_mode": "adopted",
+            "internal_reserve_mib": 2048,
+            "sleep_display_when_idle": True,
+            "device_settings": {
+                SECOND_TEST_SERIAL: {"storage_mode": "internal", "internal_reserve_mib": 3072, "display_count": 2},
+            },
+        }
+        attached = (
+            "List of devices attached\n"
+            + f"{DEFAULT_TEST_SERIAL}\tdevice\n{SECOND_TEST_SERIAL}\tdevice\n"
+        ).encode()
+        write(self.root / "config/local.json", configuration)
+        with patch.object(common, "WORK", self.root), patch.object(
+            device, "run", return_value=types.SimpleNamespace(stdout=attached)
+        ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+            first = device.Device(selector=DEFAULT_TEST_SERIAL, work_root=self.root)
+            second = device.Device(selector=SECOND_TEST_SERIAL, work_root=self.root)
+
+        self.assertEqual(first.settings["storage_mode"], "adopted")
+        self.assertEqual(first.settings["internal_reserve_mib"], 2048)
+        self.assertTrue(first.settings["sleep_display_when_idle"])
+        self.assertNotIn("sleep_display_when_idle", second.settings)
+        self.assertEqual(second.settings["storage_mode"], "internal")
+        self.assertEqual(second.settings["internal_reserve_mib"], 3072)
+        self.assertEqual(second.settings["display_count"], 2)
+        self.assertNotEqual(first.receipt_root, second.receipt_root)
+        self.assertNotEqual(first.install_counter(), second.install_counter())
+
+    def test_device_freezes_config_and_receipt_tree_at_construction(self):
+        configuration = {
+            "device_serial": DEFAULT_TEST_SERIAL,
+            "device_serials": [DEFAULT_TEST_SERIAL],
+            "storage_mode": "internal",
+        }
+        write(self.root / "config/local.json", configuration)
+        attached = ("List of devices attached\n" + DEFAULT_TEST_SERIAL + "\tdevice\n").encode()
+        elsewhere = self.root / "later-work-tree"
+        write(elsewhere / "config/local.json", {**configuration, "device_serial": SECOND_TEST_SERIAL})
+        with patch.object(common, "WORK", self.root), patch.object(
+            device, "run", return_value=types.SimpleNamespace(stdout=attached)
+        ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+            selected = device.Device()
+
+        write(selected.receipt("installed.json"), {"serial": DEFAULT_TEST_SERIAL, "package": device.PACKAGE})
+        with patch.object(common, "WORK", elsewhere):
+            self.assertEqual(selected.configuration["device_serial"], DEFAULT_TEST_SERIAL)
+            self.assertEqual(selected.work_root, self.root)
+            self.assertEqual(selected.receipt("installed.json"), self.root / "device/installed.json")
+            self.assertEqual(selected.read_receipt("installed.json")["serial"], DEFAULT_TEST_SERIAL)
+
+    def test_runtime_path_rejected_before_commands_or_receipt_publish(self):
+        calls = []
+        self.d.sh = lambda *args, **kwargs: (calls.append(args) or self.fail("Unsafe path reached a device command"))
+        unsafe = {"persistentDataPath": "/data/local/tmp/not-the-package"}
+
+        with self.assertRaisesRegex(RuntimeError, "Unexpected runtime"):
+            self.d.write_receipt("runtime.json", unsafe)
+
+        self.assertFalse(self.d.receipt("runtime.json").exists())
+        self.assertEqual(calls, [])
+
+    def test_internal_backing_mismatch_rejects_receipt_before_remote_write(self):
+        self.d.settings["storage_mode"] = "internal"
+        self.d.storage = lambda: {
+            "mode": "internal",
+            "internal": {"total_bytes": 4096},
+            "adopted": None,
+        }
+        calls = []
+
+        def shell(*args, **kwargs):
+            calls.append(args)
+            if args[:2] == ("df", "-k"):
+                return "Filesystem 1K-blocks Used Available Use% Mounted on\ninternal 8 1 7 1% /storage/emulated"
+            self.fail("Mismatched runtime backing must reject before remote writes")
+
+        self.d.sh = shell
+        runtime = {
+            "persistentDataPath": "/storage/emulated/0/Android/data/" + device.PACKAGE + "/files",
+        }
+        with self.assertRaisesRegex(RuntimeError, "not backed by the selected internal"):
+            self.d.write_receipt("runtime.json", runtime)
+
+        self.assertFalse(self.d.receipt("runtime.json").exists())
+        self.assertEqual(calls, [("df", "-k", runtime["persistentDataPath"])])
+
+        # Even a stale on-disk snapshot cannot reach mkdir/push when its path
+        # resolves to a different backing volume than the selected profile.
+        write(self.d.receipt("runtime.json"), runtime)
+        self.d.owned = lambda: {}
+        with self.assertRaisesRegex(RuntimeError, "not backed by the selected internal"):
+            self.d.sync()
+        self.assertEqual(calls, [
+            ("df", "-k", runtime["persistentDataPath"]),
+            ("df", "-k", runtime["persistentDataPath"]),
+        ])
+
+    def test_internal_and_adopted_runtime_snapshots_validate_on_their_own_serials(self):
+        configuration = {
+            "device_serial": DEFAULT_TEST_SERIAL,
+            "device_serials": [DEFAULT_TEST_SERIAL, SECOND_TEST_SERIAL],
+            "storage_mode": "internal",
+            "device_settings": {SECOND_TEST_SERIAL: {"storage_mode": "adopted"}},
+        }
+        write(self.root / "config/local.json", configuration)
+        attached = (
+            "List of devices attached\n"
+            + DEFAULT_TEST_SERIAL + "\tdevice\n"
+            + SECOND_TEST_SERIAL + "\tdevice\n"
+        ).encode()
+        with patch.object(common, "WORK", self.root), patch.object(
+            device, "run", return_value=types.SimpleNamespace(stdout=attached)
+        ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+            internal = device.Device(selector=DEFAULT_TEST_SERIAL)
+            adopted = device.Device(selector=SECOND_TEST_SERIAL)
+
+        internal_total = 4096 * 1024
+        adopted_total = 8192 * 1024
+        internal.storage = lambda: {
+            "mode": "internal", "internal": {"total_bytes": internal_total}, "adopted": None,
+        }
+        adopted.storage = lambda: {
+            "mode": "adopted", "internal": {"total_bytes": 1024}, "adopted": {"total_bytes": adopted_total},
+        }
+        observed = []
+
+        def df_for(total_bytes):
+            def shell(*args, **kwargs):
+                self.assertEqual(args[:2], ("df", "-k"))
+                observed.append((args[2], total_bytes))
+                blocks = total_bytes // 1024
+                return f"Filesystem 1K-blocks Used Available Use% Mounted on\nselected {blocks} 1 {blocks - 1} 1% /selected"
+            return shell
+
+        internal.sh = df_for(internal_total)
+        adopted.sh = df_for(adopted_total)
+        internal_runtime = {
+            "persistentDataPath": "/storage/emulated/0/Android/data/" + device.PACKAGE + "/files",
+            "marker": "internal",
+        }
+        adopted_runtime = {
+            "persistentDataPath": "/sdcard/Android/data/" + device.PACKAGE + "/files",
+            "marker": "adopted",
+        }
+
+        internal.write_receipt("runtime.json", internal_runtime)
+        adopted.write_receipt("runtime.json", adopted_runtime)
+        internal_read = internal.read_receipt("runtime.json")
+        adopted_read = adopted.read_receipt("runtime.json")
+        self.assertEqual(internal_read["marker"], "internal")
+        self.assertEqual(adopted_read["marker"], "adopted")
+        self.assertEqual(internal_read["serial"], DEFAULT_TEST_SERIAL)
+        self.assertEqual(adopted_read["serial"], SECOND_TEST_SERIAL)
+        self.assertEqual(observed, [
+            (internal_runtime["persistentDataPath"], internal_total),
+            (adopted_runtime["persistentDataPath"], adopted_total),
+            (internal_runtime["persistentDataPath"], internal_total),
+            (adopted_runtime["persistentDataPath"], adopted_total),
+        ])
+
+    def test_internal_reserve_override_blocks_before_any_device_operation(self):
+        self.d.settings.update({"storage_mode": "internal", "internal_reserve_mib": 1536})
+        storage = {
+            "mode": "internal",
+            "internal": {"free_bytes": 1024**3},
+            "adopted": None,
+        }
+        with self.assertRaisesRegex(RuntimeError, "Insufficient internal"):
+            self.d.install_capacity(self.apk(), storage)
+
+    def test_dual_physical_display_sleep_requires_both_panels_off(self):
+        calls = []
+
+        def shell(*args, **kwargs):
+            calls.append(args)
+            if args == ("getprop", "ro.product.model"):
+                return "Authorized Dual Display"
+            if args == ("dumpsys", "power"):
+                return "mWakefulness=Asleep"
+            if args == ("dumpsys", "display"):
+                return "\n".join(
+                    [
+                        'DisplayDeviceInfo{"panel-left" type INTERNAL state OFF}',
+                        'DisplayDeviceInfo{"panel-right" type INTERNAL state OFF}',
+                        'DisplayDeviceInfo{"virtual" type VIRTUAL state ON}',
+                    ]
+                )
+            if args == ("input", "keyevent", "KEYCODE_SLEEP"):
+                return ""
+            self.fail("Unexpected mocked device command: " + repr(args))
+
+        self.d.settings.update(
+            {
+                "sleep_display_when_idle": True,
+                "display_models": ["Authorized Dual Display"],
+                "display_count": 2,
+            }
+        )
+        self.d.sh = shell
+        self.assertTrue(self.d.display(False))
+        self.assertEqual(
+            calls,
+            [
+                ("getprop", "ro.product.model"),
+                ("input", "keyevent", "KEYCODE_SLEEP"),
+                ("dumpsys", "power"),
+                ("dumpsys", "display"),
+            ],
+        )
+
+    def test_production_device_lock_refusal_uses_only_temporary_root(self):
+        lock = self.root / "work/coordination/claude-r9.lock"
+        lock.parent.mkdir(parents=True)
+        lock.write_text("fixture")
+        with patch.object(device, "ROOT", self.root):
+            with self.assertRaisesRegex(RuntimeError, "Device access blocked"):
+                REAL_REQUIRE_DEVICE_ACCESS(force=True)
 
     def test_sync_rejects_arbitrary_destination(self):
         self.d.owned = lambda: {}
         self.d.storage = lambda: {}
-        write(self.root / "device/runtime.json", {"persistentDataPath": "/data/local/tmp/another-game"})
+        write(self.d.receipt("runtime.json"), {"persistentDataPath": "/data/local/tmp/another-game"})
         with self.assertRaisesRegex(RuntimeError, "Unexpected runtime"):
             self.d.sync()
 
@@ -84,7 +327,7 @@ class SafetyTests(unittest.TestCase):
             self.fail("Storage rejection must precede writes")
 
         self.d.sh = shell
-        write(self.root / "device/runtime.json", {"persistentDataPath": "/storage/emulated/0/Android/data/" + device.PACKAGE + "/files"})
+        write(self.d.receipt("runtime.json"), {"persistentDataPath": "/storage/emulated/0/Android/data/" + device.PACKAGE + "/files"})
         with self.assertRaisesRegex(RuntimeError, "not backed"):
             self.d.sync()
         self.assertEqual(len(calls), 1)
@@ -95,15 +338,14 @@ class SafetyTests(unittest.TestCase):
 
     def test_internal_storage_requires_explicit_mode_and_no_adopted_volume(self):
         self.d.sh = lambda *args, **kwargs: "private:disk mounted " + ("a" * 8 + "-" + ("b" * 4 + "-") * 3 + "c" * 12)
-        with patch.object(device, "config", return_value={"storage_mode": "internal"}):
-            with self.assertRaisesRegex(RuntimeError, "now has adopted"):
-                self.d.storage()
+        self.d.settings["storage_mode"] = "internal"
+        with self.assertRaisesRegex(RuntimeError, "now has adopted"):
+            self.d.storage()
 
     def test_default_adopted_mode_rejects_missing_volume(self):
         self.d.sh = lambda *args, **kwargs: ""
-        with patch.object(device, "config", return_value={}):
-            with self.assertRaisesRegex(RuntimeError, "mounted adopted"):
-                self.d.storage()
+        with self.assertRaisesRegex(RuntimeError, "mounted adopted"):
+            self.d.storage()
 
     def test_one_apk_limit_reuses_identical_owned_install_and_rejects_replacement(self):
         calls = []
@@ -118,27 +360,27 @@ class SafetyTests(unittest.TestCase):
             return "Success"
 
         self.d.cmd = command
-        with patch.object(device, "config", return_value={"apk_install_limit": 1}):
-            apk = self.apk()
+        self.d.settings["apk_install_limit"] = 1
+        apk = self.apk()
+        self.d.install(apk)
+        self.assertTrue(self.d.install(apk)["reused"])
+        self.assertEqual(calls[0][:4], ("install", "-r", "--force-uuid", "internal"))
+        self.assertEqual(len(calls), 1)
+        with zipfile.ZipFile(apk, "w") as z:
+            z.writestr("lib/arm64-v8a/libtest.so", b"changed")
+        with self.assertRaisesRegex(RuntimeError, "limit exhausted"):
             self.d.install(apk)
-            self.assertTrue(self.d.install(apk)["reused"])
-            self.assertEqual(calls[0][:4], ("install", "-r", "--force-uuid", "internal"))
-            self.assertEqual(len(calls), 1)
-            with zipfile.ZipFile(apk, "w") as z:
-                z.writestr("lib/arm64-v8a/libtest.so", b"changed")
-            with self.assertRaisesRegex(RuntimeError, "limit exhausted"):
-                self.d.install(apk)
-            installed[0] = False
-            with self.assertRaisesRegex(RuntimeError, "limit exhausted"):
-                self.d.install(apk)
-            self.assertEqual(len(calls), 1)
+        installed[0] = False
+        with self.assertRaisesRegex(RuntimeError, "limit exhausted"):
+            self.d.install(apk)
+        self.assertEqual(len(calls), 1)
 
     def test_display_control_refuses_non_nova_before_sending_key(self):
         calls = []
         self.d.sh = lambda *args, **kwargs: (calls.append(args) or "different-model")
-        with patch.object(device, "config", return_value={"sleep_display_when_idle": True}):
-            with self.assertRaisesRegex(RuntimeError, "authorized only for Nova"):
-                self.d.display(False)
+        self.d.settings["sleep_display_when_idle"] = True
+        with self.assertRaisesRegex(RuntimeError, "explicitly authorized exact model"):
+            self.d.display(False)
         self.assertEqual(calls, [("getprop", "ro.product.model")])
 
     def test_authorized_update_replaces_same_package_and_counts_dispatches(self):
@@ -154,24 +396,22 @@ class SafetyTests(unittest.TestCase):
             return "Success"
 
         self.d.cmd = command
-        with patch.object(device, "config", return_value={}):
-            apk = self.apk()
-            first = self.d.install(apk)
-            with zipfile.ZipFile(apk, "w") as z:
-                z.writestr("lib/arm64-v8a/libtest.so", b"updated")
-            second = self.d.install(apk)
+        apk = self.apk()
+        first = self.d.install(apk)
+        with zipfile.ZipFile(apk, "w") as z:
+            z.writestr("lib/arm64-v8a/libtest.so", b"updated")
+        second = self.d.install(apk)
         self.assertEqual(first["package"], second["package"])
         self.assertNotEqual(first["apk_sha256"], second["apk_sha256"])
         self.assertEqual(len(calls), 2)
         for call in calls:
             self.assertEqual(call[:4], ("install", "-r", "--force-uuid", "internal"))
-        counter = json.loads(next((self.root / "device-install-limits").glob("*.json")).read_text())
+        counter = json.loads(self.d.install_counter().read_text())
         self.assertEqual(counter["dispatched"], 2)
 
     def test_display_opt_out_never_queries_device(self):
         self.d.sh = lambda *args, **kwargs: self.fail("Unrequested display operation")
-        with patch.object(device, "config", return_value={}):
-            self.assertFalse(self.d.display(False))
+        self.assertFalse(self.d.display(False))
 
     def test_display_wake_and_sleep_verify_power_state(self):
         calls = []
@@ -187,11 +427,11 @@ class SafetyTests(unittest.TestCase):
             return ""
 
         self.d.sh = shell
-        with patch.object(device, "config", return_value={"sleep_display_when_idle": True}):
-            self.assertTrue(self.d.display(True))
-            self.assertTrue(device.Device.display_awakened)
-            self.assertTrue(self.d.display(False))
-            self.assertFalse(device.Device.display_awakened)
+        self.d.settings["sleep_display_when_idle"] = True
+        self.assertTrue(self.d.display(True))
+        self.assertTrue(self.d.display_awakened)
+        self.assertTrue(self.d.display(False))
+        self.assertFalse(self.d.display_awakened)
 
     def test_failed_cli_sleeps_awakened_display_and_keeps_first_error(self):
         calls = []
@@ -199,10 +439,10 @@ class SafetyTests(unittest.TestCase):
         scene = types.ModuleType("scene_runtime")
 
         class FakeDevice:
-            display_awakened = True
-
-            def display(self, awake):
-                calls.append(awake)
+            @classmethod
+            def sleep_awakened(cls):
+                calls.append(("cleanup", "all-registered-instances"))
+                return []
 
         fake.Device = FakeDevice
         stderr = io.StringIO()
@@ -213,14 +453,52 @@ class SafetyTests(unittest.TestCase):
         scene.movement_batch_run = fail_run
         with (
             patch.dict(sys.modules, {"device": fake, "scene_runtime": scene}),
+            patch.object(device_context, "set_command_selector", lambda cli, env: calls.append(("selector", cli, env))),
             patch.object(sys, "argv", ["dev", "prototype", "--action", "movement-batch-run"]),
             contextlib.redirect_stderr(stderr),
         ):
             with self.assertRaises(SystemExit) as ended:
                 runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/lab/main.py"), run_name="__main__")
         self.assertEqual(ended.exception.code, 1)
-        self.assertEqual(calls, [False])
+        self.assertEqual(calls, [("selector", None, None), ("cleanup", "all-registered-instances")])
         self.assertIn("deliberate runtime failure", stderr.getvalue())
+
+    def test_sleep_awakened_cleans_exact_registered_instances(self):
+        first = object.__new__(device.Device)
+        second = object.__new__(device.Device)
+        calls = []
+        first.display = lambda awake: calls.append((first, awake))
+        second.display = lambda awake: calls.append((second, awake))
+        device.Device._awake_devices[("receipt-a", DEFAULT_TEST_SERIAL)] = first
+        device.Device._awake_devices[("receipt-b", SECOND_TEST_SERIAL)] = second
+
+        self.assertEqual(device.Device.sleep_awakened(), [])
+        self.assertEqual(calls, [(first, False), (second, False)])
+
+    def test_cleanup_failure_does_not_replace_original_cli_error(self):
+        fake = types.ModuleType("device")
+        scene = types.ModuleType("scene_runtime")
+
+        class FakeDevice:
+            @classmethod
+            def sleep_awakened(cls):
+                return ["display could not sleep"]
+
+        fake.Device = FakeDevice
+        fake.set_command_selector = lambda cli, env: None
+        scene.movement_batch_run = lambda: (_ for _ in ()).throw(RuntimeError("original command failure"))
+        stderr = io.StringIO()
+        with (
+            patch.dict(sys.modules, {"device": fake, "scene_runtime": scene}),
+            patch.object(device_context, "set_command_selector", lambda cli, env: None),
+            patch.object(sys, "argv", ["dev", "prototype", "--action", "movement-batch-run"]),
+            contextlib.redirect_stderr(stderr),
+        ):
+            with self.assertRaises(SystemExit) as ended:
+                runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/lab/main.py"), run_name="__main__")
+        self.assertEqual(ended.exception.code, 1)
+        self.assertIn("original command failure", stderr.getvalue())
+        self.assertIn("display could not sleep", stderr.getvalue())
 
 
 if __name__ == "__main__":

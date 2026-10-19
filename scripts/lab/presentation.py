@@ -18,6 +18,15 @@ NAMES = [
 
 
 def build_payload(stages=False, recovered=False):
+    from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
+
+    assert_build_unblocked()
+    with host_build_lock(HOST_BUILD_LOCK, operation="presentation payload staging, build and receipt collection"):
+        assert_build_unblocked()
+        return _build_payload_locked(stages=stages, recovered=recovered)
+
+
+def _build_payload_locked(stages=False, recovered=False):
     from build import preflight, editor
     from device import Device
 
@@ -154,7 +163,10 @@ def build_payload(stages=False, recovered=False):
     }
     write(WORK / "presentation-build-request.json", request)
     print(editor("lab", "refresh"), flush=True)
-    print(editor("lab", "presentation-payload"), flush=True)
+    from build import coordinated_editor_operation
+
+    with coordinated_editor_operation():
+        print(editor("lab", "presentation-payload"), flush=True)
     deadline = time.monotonic() + 300
     while time.monotonic() < deadline:
         if terminal.exists():

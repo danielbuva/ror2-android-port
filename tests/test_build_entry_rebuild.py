@@ -24,6 +24,10 @@ class BuildEntryTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name).resolve()
         self.work = self.root / "inputs"
+        for name, value in (("assert_build_unblocked", lambda: None), ("HOST_BUILD_LOCK", self.root / "unity-build.lock")):
+            patcher = patch("build_lock." + name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         self.dest = self.root / "clone/work/rebuild/project"
         self.recipe = self.root / "recipe"
         self.input_id = "a" * 64
@@ -331,7 +335,7 @@ class ProductionOrderTests(unittest.TestCase):
             tree = ast.parse(inspect.getsource(function))
             return [node.func.id for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
 
-        order = calls(whole_catalog.build_integration)
+        order = calls(whole_catalog._build_integration)
         expected = [
             "generate_runtime_config",
             "generate_content_recipe",
@@ -343,7 +347,7 @@ class ProductionOrderTests(unittest.TestCase):
         ]
         indices = [order.index(name) for name in expected]
         self.assertEqual(indices, sorted(indices))
-        source = inspect.getsource(whole_catalog.build_integration)
+        source = inspect.getsource(whole_catalog._build_integration)
         self.assertIn('build("vulkan", force=True, reuse_payload=code_only)', source)
         maps = calls(whole_catalog.generate_build_maps)
         self.assertEqual(

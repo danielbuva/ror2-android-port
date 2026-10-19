@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import build
+import build_lock
 from common import read, write
 
 
@@ -39,7 +40,10 @@ class BuildErrorTests(unittest.TestCase):
             with (
                 patch.object(build, "ROOT", root),
                 patch.object(build, "WORK", work),
-                patch.object(build, "preflight"),
+                patch.object(build, "HOST_BUILD_LOCK", root / "coordination/unity-build.lock"),
+                patch.object(build_lock, "HOST_BUILD_LOCK", root / "coordination/unity-build.lock"),
+                patch.object(build, "assert_build_unblocked"),
+                patch.object(build, "preflight_host"),
                 patch.object(build, "editor", side_effect=editor),
             ):
                 with self.assertRaisesRegex(RuntimeError, "build errors=36"):

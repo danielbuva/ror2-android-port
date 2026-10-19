@@ -4,7 +4,8 @@ import runpy
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import baseline
@@ -66,6 +67,38 @@ class BaselineAssessmentTests(unittest.TestCase):
         enabled = [key for key in baseline.DEBUG_OPTIONS if value["debugOptions"][key]]
         self.assertEqual(enabled, ["invincibility"])
         self.assertFalse(value["goldshoresRoute"])
+
+
+class BaselinePlacementTests(unittest.TestCase):
+    def test_both_modes_accept_selected_internal_or_adopted_placement_before_run(self):
+        class StopBeforeRun(Exception):
+            pass
+
+        for stage_exit in (False, True):
+            for mode, path, uuid in (("internal", "package:/data/app/fixture/base.apk", None), ("adopted", "package:/mnt/expand/live-volume/app/base.apk", "live-volume")):
+                with self.subTest(mode=mode, stage_exit=stage_exit):
+                    d = SimpleNamespace(
+                        settings={"storage_mode": mode},
+                        owned=Mock(return_value={"storage": {"mode": mode}, "package_path": path}),
+                        storage=Mock(return_value={"mode": mode, "uuid": uuid}),
+                    )
+                    with patch.object(baseline, "Device", return_value=d), patch.object(baseline, "read", side_effect=StopBeforeRun):
+                        with self.assertRaises(StopBeforeRun):
+                            baseline.check_baseline(stage_exit=stage_exit)
+                    d.owned.assert_called_once_with()
+                    d.storage.assert_called_once_with()
+
+    def test_policy_or_live_volume_drift_refuses_before_runtime_writes(self):
+        for installed_mode, path in (("internal", "package:/data/app/fixture/base.apk"), ("adopted", "package:/mnt/expand/previous-volume/app/base.apk")):
+            d = SimpleNamespace(
+                settings={"storage_mode": "adopted"},
+                owned=lambda: {"storage": {"mode": installed_mode}, "package_path": path},
+                storage=lambda: {"mode": "adopted", "uuid": "current-volume"},
+            )
+            with self.subTest(installed_mode=installed_mode), patch.object(baseline, "Device", return_value=d), patch.object(baseline, "write") as write:
+                with self.assertRaisesRegex(RuntimeError, "differs from selected"):
+                    baseline.check_baseline()
+                write.assert_not_called()
 
 
 class StageExitAssessmentTests(unittest.TestCase):
@@ -199,7 +232,7 @@ class BaselineCliTests(unittest.TestCase):
         with (
             patch.object(sys, "argv", ["dev", *arguments]),
             patch.object(baseline, "check_baseline", return_value={"success": True}) as check,
-            patch.object(baseline.Device, "display_awakened", False),
+            patch.object(baseline.Device, "sleep_awakened", return_value=[]),
             contextlib.redirect_stdout(io.StringIO()),
             contextlib.redirect_stderr(io.StringIO()),
         ):
