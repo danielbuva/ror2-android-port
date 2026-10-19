@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J728](PORTING_JOURNAL.md#j728--accept-the-native-commerce-ordering-apk-after-both-default-controls) | 2026-10-19 | Accept the native-commerce ordering APK after both default controls | Hypothesis: J726's source-table-first commerce reconciliation can preserve the ordinary game while retaining the strict native cleanup guard. |
 | [J727](PORTING_JOURNAL.md#j727--refresh-mul-t-and-commando-defaults-and-native-alternate-identities) | 2026-10-19 | Refresh MUL-T and Commando defaults and native alternate identities | Hypothesis: accepted J724 APK b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54 can supply fresh native loadout tuples before remaining alternat… |
 | [J726](PORTING_JOURNAL.md#j726--preserve-the-shrine-baseline-lease-through-native-purchase-reconciliation) | 2026-10-19 | Preserve the shrine baseline lease through native purchase reconciliation | Hypothesis: J716's Android operation witness can distinguish a missing acquire from a later release in J710's native cleanup failure. |
 | [J725](PORTING_JOURNAL.md#j725--rebuild-regenerates-its-catalog-analysis-on-the-host-provenance-refreshed) | 2026-10-19 | Rebuild regenerates its catalog analysis on the host; provenance refreshed | Phase 2, from-scratch rebuild (implemented and run by Claude, operator-approved; host only, no editor, device or R9). |

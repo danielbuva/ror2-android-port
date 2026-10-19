@@ -12391,3 +12391,42 @@ Revisit with exact per-run alternate selectors, current-process log checks and
 native output/state evidence. Callback delivery alone does not close full kits,
 ordinary unlocks or normal-difficulty acceptance. No runtime source, original
 asset/assembly, storage setting, extra device or Moon route changes occur.
+
+## J728 — Accept the native-commerce ordering APK after both default controls
+
+Hypothesis: J726's source-table-first commerce reconciliation can preserve the
+ordinary game while retaining the strict native cleanup guard. Build the two-file
+ordering correction from f49d93e425c2ce9c60998f64d9736360948643d9, with 105 runtime
+sources. Host preflight passes; the J726 full suite remains 1,014 tests with one
+existing skip. Frozen authored build inputs equal that commit before staging and
+remain unchanged through build/freeze. The exact editor's Vulkan ARM64 IL2CPP
+build succeeds in 182.242841 seconds with zero build errors. The frozen APK is
+885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715;
+all 266 payload hashes equal accepted J724 b32998b8. No one-off drift exception
+is needed. Evidence and source snapshot:
+work/experiments/native-commerce-order/candidate-20261019T193839.954125Z/.
+
+The public installer updates the owned package in place on freshly queried
+adopted storage; sync succeeds. Both default baseline modes pass with ordinary
+Commando selection and their documented diagnostic assists. The plain control
+reaches 35.182953 world seconds on Lakes:
+work/experiments/baseline/20261019T194440.285977Z/.
+The one-exit control records exactly one genuine transition to Goolake and
+10.135834 seconds there at world 126.917343:
+work/experiments/baseline/20261019T194829.958296Z/.
+Both reports have empty error/firstFailure and root-checked current-process
+logs have no unexpected error. The native diagnostic flag remains false,
+recovery required is false, pauseBeforeMoon is true, native shrine operation
+witnesses are empty, automatic-boundary hold is false with zero ticks, and all
+four isolated-window counters remain zero. The assisted profile remains at
+13 applied runs. Each control removes its selector, stops the app and sleeps
+the display through existing final cleanup.
+
+First failure: none under these two default contracts. This is the new accepted
+baseline, with b32998b8 and earlier executable rollbacks retained. J726's native
+UI-abandon/restart retry is now a separate running gate; these default controls
+do not accept native cleanup, source-stage transport, complete skills, ordinary
+awards, audio, frame rate or visual parity. Native gameplay source-table and
+reference-count contracts remain unchanged apart from J726's documented order.
+The two runtime inputs affect R8 staging, as recorded in J726. No original
+asset/assembly, storage configuration, extra device or Moon route is changed.
