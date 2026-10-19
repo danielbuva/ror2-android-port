@@ -10396,3 +10396,41 @@ removes selectors, stops and sleeps OLED. This accepts bounded alternate
 activation/output only, not normal-difficulty play, complete semantics or
 ordinary unlock eligibility. No source/APK change, original input, extra device,
 receipt hand edit, existing data move or storage configuration change occurs.
+
+## J685 — Engineer's full alternate kit reaches its callback gate
+
+Hypothesis: the repaired original Laser Cutter charge dependency and all-four
+native loadout can run beyond J667's failed window on the new candidate.
+APK is accepted e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+Evidence: work/experiments/survivor-check/20261019T154650.614574Z/Engi/;
+source/output reading: work/coordination/engineer-full-alternate-e099-triage/.
+
+All live native variants match the request: families 56/57/59/58, variant 1,
+SkillDefs 117/63/68/65 (Laser Cutter, Spider Mine, Harpoons, Walker Turret).
+Authority/server callback totals are 20/20, 3/3, 1/1 and 1/1 over 60.473480
+world seconds. The old Laser Cutter charge-key InvalidKey error does not
+recur. The generic observer retains two exact player-owned SpiderMine
+projectiles and three mapped projectile damage facts, plus four damage facts
+from one exact owned summon. No scan truncation/history overflow is recorded.
+These facts do not assign skill-slot causality to other damage or prove the
+complete Laser Cutter charge/beam, Harpoon release or deployable lifecycles.
+The Engineer-specific observer's default mine/turret contracts do not establish
+alternate Spider Mine states or Walker Turret ownership in this report.
+
+J672's rolling LightningStake observer is ready but admits zero identities;
+there are no stake samples in either endpoint. This is not comparable to
+J667's three blue-elite Wisp-owned stakes and 18 finite samples preceding the
+nonfinite collider error at 30.182114 s. A no-stake pass cannot test retirement,
+later admissions or finite-to-invalid capture, and does not resolve the
+intermittent corruption.
+
+First failure: none at the current callback gate. Filtered current-process
+runtime errors are empty; raw logs retain the known rejected Windows shader
+bundle/CAB message. Survivor/variant overrides, automatic scheduling and
+invincibility are explicit diagnostic assists, with other accelerations off.
+Native/recovery flags are false, no transition occurs, and profile runs/earned/
+available unlocks remain 13/1/1 with saved variants all zero. Finally removes
+selectors, stops and sleeps OLED. Full alternate UI-abandon/restart is now
+active on these unchanged bytes. J682/J683's separate code build is active;
+this result is not retroactively assigned to that newer source. No original
+input, extra device, receipt hand edit, data move or storage change occurs.

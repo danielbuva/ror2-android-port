@@ -13,10 +13,11 @@ result in the journal.
       Shrine, loop) and positive ordinary unlock grants without assists.
 - [ ] Complete default and alternate ability semantics for the base survivors.
       Callback coverage is broader than complete effects; continue with the exact
-      live variant inventories and output owners (J653, J667, J671).
-- [ ] Finish the opt-in source-stage lifecycle: prepare known source loot consumers,
-      observe actual native actor damage/death and prove completed-session teardown
-      before extending stage transport (J668/J669).
+      live variant inventories and output owners (J673, J684, J685).
+- [ ] Finish the opt-in source-stage lifecycle: validate native source rewards and
+      completed-session identity/table teardown before extending transport. Startup
+      and actor events are covered; J681 reset recovery needs a device retry after
+      J683, and J682 generated identity bindings need runtime validation.
 - [ ] Identify the intermittent LightningStake nonfinite transition across projectile
       identity turnover; retain native elite behavior while collecting evidence (J667).
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).

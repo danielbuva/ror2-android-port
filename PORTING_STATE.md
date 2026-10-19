@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J684** (Huntress alternate callbacks/output; metadata/reset build active).
+Last updated 2026-10-19 after **J685** (Engineer full alternate callbacks; metadata/reset build active).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -38,7 +38,7 @@ they are not normal-difficulty acceptance.
   passed for Commando, Huntress and Bandit2 (J603), Toolbot including utility
   (J611), Mage (J614), Mercenary (J618) and Engineer (J621). Engineer's corrected
   setup and native mines/shields/turrets pass (J631), with player projectile and owned-summon
-  damage observed in J645. Three Engineer alternate callbacks plus UI-abandon/restart pass (J653). Mage's four alternate callbacks and native UI-abandon/restart pass (J673/J674), with Earth Shards output and full effects still open. Huntress's four alternates pass bounded callbacks/output (J684), with full ability semantics open. The repaired full kit has all four callbacks before a known elite-stake error (J667); Laser Cutter damage/sequence and complete ability semantics remain open.
+  damage observed in J645. Three Engineer alternate callbacks plus UI-abandon/restart pass (J653). Mage's four alternate callbacks and native UI-abandon/restart pass (J673/J674), with Earth Shards output and full effects still open. Huntress's four alternates pass bounded callbacks/output (J684), with full ability semantics open. The repaired full kit reaches 60 s with all four callbacks on e09920fd… (J685), but no stakes are observed in that case; J667 intermittence, Laser Cutter damage/sequence and complete ability semantics remain open.
   REX passes (J623); Loader passes a finite replay (J634), while intermittent
   LightningStake corruption remains unresolved. Acrid and Captain pass (J625).
 - **Stages:** Huntress completed four original boss/charge/exit transitions
