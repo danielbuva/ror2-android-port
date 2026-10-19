@@ -1271,6 +1271,35 @@ plus `project-manifest-capture`, `project-manifest-compare`,
 `authored-additions-check` (owned by `authored_additions`), plus
 `inherited-state-check` and `inherited-store-capture` (owned by `inherited_state`).
 
+### Mercenary impact-effect adapter
+
+`BodyCatalogSession.MercEvisImpactEffectLease` in `BodyCatalogBoundary.cs`
+owns the Evis-only compatibility adapter. `EnemyRewardSession` requests it
+only for the selected Mercenary teleporter-loop session. Setup clones the
+shared swing visual under an inactive owner, preserves its native one-second
+timer, adds a nonpooled EffectComponent and a lifetime marker, appends one
+native EffectCatalog entry, then redirects the registered Evis projectile's
+impact field. The shared GroundLight2 visual and baked catalog indices remain
+unchanged. No projectile catalog entry is added.
+
+`RestoreComposedEffects` checks exact catalog/field ownership and refuses live
+projectile or marked effect references before restoring the Evis field,
+registered indices, sound metadata, prior catalog and availability. It removes
+only the adapter's cache entry and destroys its owner after restoration. A
+refusal retains the lease for diagnosis. Setup failures use the same ownership
+checks for rollback, including the ordinary non-Merc path.
+
+`MercEvisImpactEffectExactEditorFixture.cs` is support code staged by
+`whole_catalog.stage_build_sources` into `Assets/Editor`. Its public `Run()`
+requires the pinned, compiled, idle editor with no network session or populated
+EffectCatalog. It initializes Addressables through the public API with generated
+empty test settings/catalog, then exercises the actual owner and native
+SetEntries in three restored generations. The fixture tests later-registration
+failure, default-path rollback, live-projectile refusal, source immutability,
+and provider/cache restoration. Generated initialization files remain under
+`work/tests/merc-evis-impact-effect/addressables-init/` for the initialized
+locator's lifetime. This fixture does not prove device effect presentation.
+
 ## Known structural debt
 
 First verified against `af2e101`; status updated after J597. Each step was its own commit with

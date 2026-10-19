@@ -394,3 +394,13 @@ folder is a build input. Early policy-only R5 generation reads neither later
 source scenes nor that receipt. Post-R6 R7 and ordinary whole-catalog builds
 verify exact source hashes before emission. All generated identity data stays
 ignored under `work/`; it is not a new user-maintained configuration field.
+
+### Mercenary editor-fixture initialization
+
+`work/tests/merc-evis-impact-effect/addressables-init/{settings,catalog}.json`
+are authored empty Addressables fixture inputs generated and validated by
+`tools/catalog/MercEvisImpactEffectExactEditorFixture.cs`. They are retained for
+the initialized content locator's lifetime and reused only with identical
+contents. They are not user-supplied state or game content. The support fixture
+is staged by `whole_catalog.stage_build_sources`; ordinary player behavior
+never reads this test directory.

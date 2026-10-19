@@ -194,7 +194,8 @@ public sealed partial class PortSession
                                                       .Concat(cfg.teleporterLoop ? coordinator.ObjectiveEffects(cfg) : new EffectDef[0])
                                                       .GroupBy(x => x.prefab)
                                                       .Select(x => x.First())
-                                                      .ToArray());
+                                                      .ToArray(),
+                                                  cfg.teleporterLoop && coordinator.r.selectedSurvivor == "Merc");
             coordinator.Check(EffectCatalog.FindEffectIndexFromPrefab(coordinator.rewardPrefabs[0]) != EffectIndex.Invalid,
                               "Original coin effect catalog identity");
             rewardRun = Run.instance;

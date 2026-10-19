@@ -124,6 +124,7 @@ class BuildEntryTests(unittest.TestCase):
             "FirstStageDiagnosticGateFixture",
             "NativeDirectorDeckSetterFixture",
             "SourceIdentityTransformParityFixture",
+            "MercEvisImpactEffectExactEditorFixture",
             "WholeCatalogBuild",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")

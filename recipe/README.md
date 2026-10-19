@@ -1138,3 +1138,15 @@ No activation policy, gameplay selection, native RNG or ownership grant is
 changed. Existing R5 policy calls stay early/receipt-independent; replay
 strict maps at R7 after R6, and the changed source/fixture through R8. No
 Phase 2 output is edited by this change.
+
+## Mercenary adapter source and fixture audit (J731)
+
+The authored runtime adapter and exact-editor fixture name only the minimum
+Mercenary projectile, shared visual, state configuration, baked-catalog path
+and lookup keys needed to verify the accepted local relationship. No game
+implementation, serialized asset body, visual, media, bank or middleware is
+copied into public source. The fixture's empty Addressables settings/catalog
+are independently generated test data. Native behavior was inspected locally;
+pinned R2API.ContentManagement `ContentAddition.AddEffect` informs the root
+EffectComponent prerequisite without supplying implementation. Generated clones
+and test data stay local. These runtime and fixture changes affect R8 staging.

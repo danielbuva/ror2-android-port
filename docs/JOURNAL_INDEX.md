@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J731](PORTING_JOURNAL.md#j731--own-mercenarys-evis-impact-visual-as-a-native-effect) | 2026-10-19 | Own Mercenary's Evis impact visual as a native effect | Hypothesis: J720's rejected MercSwordFinisherSlash lookup can be repaired by an Evis-only owned effect clone. |
 | [J730](PORTING_JOURNAL.md#j730--native-first-stage-abandonment-returns-its-loan-and-restarts) | 2026-10-19 | Native first-stage abandonment returns its loan and restarts | Hypothesis: J726's source-table-first commerce reconciliation fixes the measured baseline-release ordering failure. |
 | [J729](PORTING_JOURNAL.md#j729--clean-checkout-replay-r1r7-equal-the-working-project-now-holds-uncommitted-code) | 2026-10-19 | Clean-checkout replay: R1–R7 equal; the working project now holds uncommitted code | Phase 2, from-scratch rebuild (run by Claude; host only). |
 | [J728](PORTING_JOURNAL.md#j728--accept-the-native-commerce-ordering-apk-after-both-default-controls) | 2026-10-19 | Accept the native-commerce ordering APK after both default controls | Hypothesis: J726's source-table-first commerce reconciliation can preserve the ordinary game while retaining the strict native cleanup guard. |

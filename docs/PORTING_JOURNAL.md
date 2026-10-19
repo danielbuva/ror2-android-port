@@ -12502,3 +12502,59 @@ The default accepted APK and older rollbacks remain intact. No APK, original
 content, storage configuration, extra device or Moon route changes during this
 retry. Named-owner/prior-art context remains J726's native Addressables lease
 and source-table retirement contracts.
+
+## J731 — Own Mercenary's Evis impact visual as a native effect
+
+Hypothesis: J720's rejected MercSwordFinisherSlash lookup can be repaired by an
+Evis-only owned effect clone. J721 establishes that the original Evis impact
+field points at the direct GroundLight2 visual, which lacks EffectComponent;
+this is not a missing converted asset. Prior art: pinned R2API.ContentManagement
+`ContentAddition.AddEffect` at f539511eabf87f02afddb5a83cafd2f4704c85ad requires
+that root component separately from registration. J430/J431 establish stable
+baked effect identities. Current native source and exact staged assets remain
+the authority; no community or game implementation is copied.
+
+Change: BodyCatalogSession owns MercEvisImpactEffectLease. Selected Mercenary
+teleporter-loop setup clones the source beneath an inactive owner, preserves
+its native one-second timer, sets nonpooling, adds the native effect component
+and an instance marker, appends one EffectCatalog entry, and binds only the
+existing registered Evis projectile impact field. The shared direct visual,
+GroundLight2 binding and baked indices remain unchanged. Exact ownership and
+live-reference preflight precede teardown writes. Cleanup restores fields,
+indices, sound metadata, catalog and availability before destroying the clone
+owner. Later setup failures also restore each exact prior value; this includes
+the ordinary non-Merc setup path.
+
+Validation: the runtime pair host-compiles against the pinned current headers.
+The full host suite passes 1,018 tests in 18.869 seconds after adding the new
+support file to the isolated rebuild test inputs.
+The tracked exact-editor fixture is staged by whole_catalog.stage_build_sources
+and invokes the actual owner and original EffectCatalog.SetEntries. Evidence:
+work/experiments/first-stage-native-lifecycle/merc-adapter-fixture-tracked-20261019T202215.085579Z/;
+root result: work/coordination/codex-merc-adapter-editor-fixture-tracked.stdout.
+All reported contracts pass across three fully restored catalog generations:
+native prefab/index round trip, Evis-only field restoration, rollback after a
+valid replacement followed by failure, non-Merc exact-index/sound rollback,
+refusal with a live projectile, owned clone/root destruction, unchanged shared
+source, and exact provider/locator/cache restoration.
+
+Earlier fixture attempts exposed harness issues, preserved under the same
+local experiment root: refresh/assembly discovery, assertion cleanup, missing
+editor Addressables runtime settings, import namespaces, and an invalid
+post-initialization CatalogLocator expectation. The final fixture uses real
+public initialization, retains and checks its generated empty settings/catalog,
+requires completed Succeeded status and the actual registered returned locator,
+and restores the public transform before owner testing. Reuse accepts only the
+exact locator previously initialized successfully by this fixture instance;
+there is no private initialization-flag reset. Fixture source SHA-256:
+5c82b3039247bf4c37089a2d6f016dcabff9934a9a27096f72124d97a78a48e1.
+
+No APK contains this change yet. Installed and accepted APK remains
+885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715.
+First failure under the final editor contract: none. Device presentation,
+complete alternate ability semantics and same-process Mercenary teardown remain
+open. Next: freeze committed inputs, preflight, code-only build, both default
+baseline modes, then repeat the original Mercenary alternate case. The two
+runtime sources, support fixture and staging list affect R8 replay; this is a
+committed build target checkpoint, not device acceptance. No original input,
+protected bytes, storage setting, extra device or Moon route is changed.

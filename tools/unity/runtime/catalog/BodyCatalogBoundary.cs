@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 using RoR2.Skills;
+using RoR2.Projectile;
 using Path = System.IO.Path;
 using RoR2;
 using UnityEngine;
@@ -111,9 +112,9 @@ public sealed partial class PortSession
     {
         GetBodyCatalogSession().RestoreCatalogBodyTemplates();
     }
-    void InitializeComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions)
+    void InitializeComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions, bool includeMercEvisAdapter)
     {
-        GetBodyCatalogSession().InitializeComposedEffects(definitions);
+        GetBodyCatalogSession().InitializeComposedEffects(definitions, includeMercEvisAdapter);
     }
     void RegisterComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions)
     {
@@ -439,6 +440,290 @@ public sealed partial class PortSession
         }
         ResourceAvailability priorComposedEffectAvailability;
         readonly Dictionary<EffectDef, string> priorComposedEffectSounds = new Dictionary<EffectDef, string>();
+        EffectDef[] ownedComposedEntries, nativeComposedEntryBaseline;
+        IDictionary ownedComposedNameMap;
+        Dictionary<string, EffectIndex> nativeComposedNameMapBaseline;
+        ResourceAvailability ownedComposedAvailability;
+#if UNITY_EDITOR
+        GameObject fixtureLastMercOwnedPrefab, fixtureLastMercOwnedOwner;
+#endif
+        MercEvisImpactEffectLease mercEvisImpactEffectLease;
+        EffectMutationState[] ownedEffectMutationStates = Array.Empty<EffectMutationState>();
+        sealed class EffectMutationState
+        {
+            public readonly EffectDef definition;
+            readonly GameObject prefab;
+            readonly EffectComponent component;
+            readonly EffectIndex priorDefinitionIndex;
+            readonly EffectIndex priorComponentIndex;
+            readonly string priorSound;
+            EffectIndex registeredIndex = EffectIndex.Invalid;
+            public EffectIndex RegisteredIndex => registeredIndex;
+            public EffectMutationState(EffectDef value)
+            {
+                if (value == null) throw new InvalidOperationException("Null EffectDef in composed definition set");
+                definition = value;
+                prefab = value.prefab;
+                component = value.prefabEffectComponent;
+                priorDefinitionIndex = value.index;
+                priorComponentIndex = component ? component.effectIndex : EffectIndex.Invalid;
+                priorSound = value.spawnSoundEventName;
+            }
+            public void CaptureRegisteredIndex()
+            {
+                registeredIndex = EffectCatalog.FindEffectIndex(definition.prefabName);
+            }
+            public bool IsOwnedCurrentValue()
+            {
+                return definition != null && definition.prefab == prefab && definition.prefabEffectComponent == component &&
+                       (definition.index == priorDefinitionIndex || definition.index == registeredIndex) &&
+                       (!component || component.effectIndex == priorComponentIndex || component.effectIndex == registeredIndex) &&
+                       (definition.spawnSoundEventName == priorSound ||
+                        (!string.IsNullOrEmpty(priorSound) && definition.spawnSoundEventName == null));
+            }
+            public void RestorePriorValues()
+            {
+                if (definition == null || definition.prefab != prefab || definition.prefabEffectComponent != component)
+                    throw new InvalidOperationException("Composed EffectDef identity changed before restoring saved fields");
+                typeof(EffectDef).GetProperty("index").SetValue(definition, priorDefinitionIndex, null);
+                if (component) component.effectIndex = priorComponentIndex;
+                typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(definition, priorSound, null);
+            }
+        }
+        static EffectDef[] UniqueEffectDefinitions(IEnumerable<EffectDef> source)
+        {
+            var result = new List<EffectDef>();
+            foreach (var value in source)
+                if (!result.Any(existing => ReferenceEquals(existing, value)))
+                    result.Add(value);
+            return result.ToArray();
+        }
+        static void DestroyOwnedObject(GameObject value)
+        {
+            if (!value) return;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                UnityEngine.Object.DestroyImmediate(value);
+            else
+                UnityEngine.Object.Destroy(value);
+#else
+            UnityEngine.Object.Destroy(value);
+#endif
+        }
+        bool ComposedCatalogStructureStillOwned(EffectDef[] entries, IDictionary nameMap)
+        {
+            if (!ReferenceEquals(entries, ownedComposedEntries) || !ReferenceEquals(nameMap, ownedComposedNameMap) ||
+                entries == null || nameMap == null || nativeComposedEntryBaseline == null || nativeComposedNameMapBaseline == null ||
+                entries.Length != nativeComposedEntryBaseline.Length || nameMap.Count != nativeComposedNameMapBaseline.Count ||
+                !EffectCatalog.availability.Equals(ownedComposedAvailability)) return false;
+            foreach (var pair in nativeComposedNameMapBaseline)
+                if (!nameMap.Contains(pair.Key) || !Equals(nameMap[pair.Key], pair.Value)) return false;
+            for (int i = 0; i < entries.Length; i++)
+                if (!ReferenceEquals(entries[i], nativeComposedEntryBaseline[i]) &&
+                    !ownedEffectMutationStates.Any(state => (int)state.RegisteredIndex == i &&
+                                                            ReferenceEquals(state.definition, entries[i]))) return false;
+            return true;
+        }
+        sealed class MercEvisImpactEffectLease
+        {
+            const string VisualPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab";
+            const string ProjectilePath = "Assets/WholeGame/RoR2/Base/Characters/Merc/Skills/EvisProjectile.prefab";
+            readonly GameObject targetProjectile;
+            readonly ProjectileImpactExplosion targetComponent;
+            readonly GameObject originalImpactEffect;
+            readonly GameObject ownedEffectPrefab;
+            readonly GameObject inactiveOwner;
+            readonly EffectDef definition;
+            readonly int markerToken;
+            EffectDef[] ownedCatalogEntries;
+            IDictionary ownedCatalogNameMap;
+            EffectDef[] nativeEntryBaseline;
+            Dictionary<string, EffectIndex> nativeNameMapBaseline;
+            ResourceAvailability ownedCatalogAvailability;
+            public EffectDef Definition => definition;
+            public GameObject OwnedEffectPrefab => ownedEffectPrefab;
+            public GameObject OwnedEffectOwner => inactiveOwner;
+            public void CaptureCatalogOwnership(EffectDef[] entries, IDictionary nameMap, ResourceAvailability availability)
+            {
+                if (entries == null || !entries.Contains(definition) || nameMap == null ||
+                    !nameMap.Contains(definition.prefabName) ||
+                    (EffectIndex)nameMap[definition.prefabName] != definition.index)
+                    throw new InvalidOperationException("Merc Evis registered catalog ownership was not established");
+                ownedCatalogEntries = entries;
+                ownedCatalogNameMap = nameMap;
+                ownedCatalogAvailability = availability;
+                nativeEntryBaseline = entries.ToArray();
+                nativeNameMapBaseline = new Dictionary<string, EffectIndex>();
+                foreach (DictionaryEntry entry in nameMap)
+                    nativeNameMapBaseline.Add((string)entry.Key, (EffectIndex)entry.Value);
+            }
+            public void CaptureCatalogAvailability(ResourceAvailability availability) { ownedCatalogAvailability = availability; }
+            public EffectDef[] NativeEntryBaseline => nativeEntryBaseline;
+            public IDictionary OwnedCatalogNameMap => ownedCatalogNameMap;
+            public Dictionary<string, EffectIndex> NativeNameMapBaseline => nativeNameMapBaseline;
+            public ResourceAvailability OwnedCatalogAvailability => ownedCatalogAvailability;
+            public bool CanRestoreTarget()
+            {
+                return targetProjectile && targetComponent && targetComponent.gameObject == targetProjectile &&
+                       (targetComponent.impactEffect == originalImpactEffect || targetComponent.impactEffect == ownedEffectPrefab);
+            }
+            public void RestoreTargetForRollback()
+            {
+                if (!CanRestoreTarget())
+                    throw new InvalidOperationException("Foreign Merc Evis target field during setup rollback");
+                if (targetComponent.impactEffect == ownedEffectPrefab)
+                    targetComponent.impactEffect = originalImpactEffect;
+            }
+            public bool CatalogStructureStillOwned(EffectDef[] entries, IDictionary nameMap, ResourceAvailability availability)
+            {
+                if (!ReferenceEquals(entries, ownedCatalogEntries) || !ReferenceEquals(nameMap, ownedCatalogNameMap) ||
+                    !availability.Equals(ownedCatalogAvailability) || nativeEntryBaseline == null || nativeNameMapBaseline == null ||
+                    entries.Length != nativeEntryBaseline.Length || nameMap.Count != nativeNameMapBaseline.Count)
+                    return false;
+                foreach (var pair in nativeNameMapBaseline)
+                    if (!nameMap.Contains(pair.Key) || !Equals(nameMap[pair.Key], pair.Value)) return false;
+                return true;
+            }
+            MercEvisImpactEffectLease(GameObject projectile, ProjectileImpactExplosion component, GameObject original,
+                                     GameObject effectPrefab, GameObject owner, EffectDef effectDefinition, int token)
+            {
+                targetProjectile = projectile;
+                targetComponent = component;
+                originalImpactEffect = original;
+                ownedEffectPrefab = effectPrefab;
+                inactiveOwner = owner;
+                definition = effectDefinition;
+                markerToken = token;
+            }
+            public static MercEvisImpactEffectLease Create(GameObject visualSource, GameObject projectileSource,
+                                                           bool requireOwnedProjectileCatalog = true)
+            {
+                if (!visualSource || visualSource.name != "MercSwordFinisherSlash" ||
+                    visualSource.GetComponent<EffectComponent>() || !visualSource.GetComponent<VFXAttributes>() ||
+                    !visualSource.GetComponent<DestroyOnTimer>() || !visualSource.GetComponent<ShakeEmitter>() ||
+                    !visualSource.GetComponent<ScaleParticleSystemDuration>())
+                    throw new InvalidOperationException("Exact Merc swing visual source contract changed");
+                var timer = visualSource.GetComponent<DestroyOnTimer>();
+                if (!timer || Mathf.Abs(timer.duration - 1f) > 0.0001f)
+                    throw new InvalidOperationException("Exact Merc swing native one-second lifetime changed");
+                if (!projectileSource || projectileSource.name != "EvisProjectile" ||
+                    projectileSource.GetComponent<ProjectileController>() == null)
+                    throw new InvalidOperationException("Exact Evis projectile source contract changed");
+                var components = projectileSource.GetComponents<ProjectileImpactExplosion>();
+                if (components.Length != 1 || components[0].impactEffect != visualSource || components[0].explosionEffect ||
+                    components[0].blastImpactEffect)
+                    throw new InvalidOperationException("Exact Evis impact-effect field ownership changed");
+                if (requireOwnedProjectileCatalog && WholeCatalogComposed.CategoryFamily(RoR2.ContentManagement.AddressablesLabels.projectile, new GameObject[0])
+                        .Count(value => ReferenceEquals(value, projectileSource)) != 1)
+                    throw new InvalidOperationException("Evis projectile is not the unique exact owned projectile-catalog object");
+
+                GameObject owner = null;
+                GameObject clone = null;
+                try
+                {
+                    owner = new GameObject("Owned Merc Evis impact-effect lease");
+                    owner.SetActive(false);
+                    clone = UnityEngine.Object.Instantiate(visualSource, owner.transform, false);
+                    clone.name = "MercSwordFinisherSlash_PortEvisImpact";
+                    if (clone.activeSelf != visualSource.activeSelf || clone.activeInHierarchy)
+                        throw new InvalidOperationException("Owned effect clone activation state changed during setup");
+                    var vfx = clone.GetComponent<VFXAttributes>();
+                    if (!vfx)
+                        throw new InvalidOperationException("Owned effect clone lost native VFXAttributes");
+                    vfx.DoNotPool = true;
+                    var component = clone.AddComponent<EffectComponent>();
+                    var token = NextMercEvisEffectToken();
+                    var marker = clone.AddComponent<MercEvisEffectInstanceMarker>();
+                    marker.token = token;
+                    component.applyScale = false;
+                    component.soundName = null;
+                    var definition = new EffectDef(clone);
+                    if (definition.prefabEffectComponent != component || definition.prefab != clone || definition.shouldPool ||
+                        !string.IsNullOrEmpty(definition.spawnSoundEventName))
+                        throw new InvalidOperationException("Owned Merc effect definition contract changed");
+                    return new MercEvisImpactEffectLease(projectileSource, components[0], visualSource, clone, owner, definition, token);
+                }
+                catch
+                {
+                    if (owner)
+                        DestroyOwnedObject(owner);
+                    else if (clone)
+                        DestroyOwnedObject(clone);
+                    throw;
+                }
+            }
+            public void Bind()
+            {
+                if (!targetProjectile || !targetComponent || targetComponent.gameObject != targetProjectile ||
+                    targetComponent.impactEffect != originalImpactEffect || !ownedEffectPrefab)
+                    throw new InvalidOperationException("Merc Evis impact target ownership changed before bind");
+                targetComponent.impactEffect = ownedEffectPrefab;
+                if (targetComponent.impactEffect != ownedEffectPrefab)
+                    throw new InvalidOperationException("Owned Merc Evis impact binding did not stick");
+            }
+            public void PreflightCleanup(EffectDef[] currentEntries)
+            {
+                var currentNameMap = (IDictionary)PortSession.RewardField(typeof(EffectCatalog), "nameToEffectIndex").GetValue(null);
+                if (!targetProjectile || !targetComponent || targetComponent.gameObject != targetProjectile ||
+                    targetComponent.impactEffect != ownedEffectPrefab || !ownedEffectPrefab || !inactiveOwner ||
+                    definition == null || definition.prefab != ownedEffectPrefab || definition.prefabEffectComponent !=
+                        ownedEffectPrefab.GetComponent<EffectComponent>() ||
+                    !CatalogStructureStillOwned(currentEntries, currentNameMap, EffectCatalog.availability) ||
+                    !ReferenceEquals(currentEntries, ownedCatalogEntries) ||
+                    definition.prefabEffectComponent.effectIndex != definition.index ||
+                    EffectCatalog.FindEffectIndex(definition.prefabName) != definition.index ||
+                    EffectCatalog.GetEffectDef(definition.index) != definition ||
+                    !currentEntries.Contains(definition))
+                    throw new InvalidOperationException("Merc Evis adapter ownership changed; retain catalog and asset lease");
+                var pools = (Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap")
+                                .GetValue(null);
+                if (pools.ContainsKey(ownedEffectPrefab))
+                    throw new InvalidOperationException("Non-pooled Merc Evis adapter unexpectedly owns an EffectPool");
+                var pooledUse = (IDictionary)PortSession.RewardField(typeof(EffectManager), "_ShouldUsePooledEffectMap").GetValue(null);
+                if (pooledUse.Contains(ownedEffectPrefab) && !Equals(pooledUse[ownedEffectPrefab], false))
+                    throw new InvalidOperationException("Merc Evis adapter's pooled-use cache is not explicitly false");
+                var liveOwnedInstances = Resources.FindObjectsOfTypeAll<MercEvisEffectInstanceMarker>()
+                    .Any(value => value && value.token == markerToken && value.gameObject != ownedEffectPrefab);
+                if (liveOwnedInstances)
+                    throw new InvalidOperationException("Merc Evis marked effect instance remains; retain catalog and asset lease");
+                var liveProjectilesHoldingEffect = Resources.FindObjectsOfTypeAll<ProjectileImpactExplosion>()
+                    .Any(value => value && value != targetComponent && value.impactEffect == ownedEffectPrefab &&
+                                  value.gameObject.scene.IsValid());
+                if (liveProjectilesHoldingEffect)
+                    throw new InvalidOperationException("Live projectile still references the Merc Evis effect clone; retain catalog and asset lease");
+            }
+            public void RestoreBinding()
+            {
+                if (!targetComponent || targetComponent.impactEffect != ownedEffectPrefab)
+                    throw new InvalidOperationException("Merc Evis impact field changed after cleanup preflight");
+                targetComponent.impactEffect = originalImpactEffect;
+                if (targetComponent.impactEffect != originalImpactEffect)
+                    throw new InvalidOperationException("Merc Evis original impact reference failed to restore");
+            }
+            public void ReleaseAfterCatalogRestore()
+            {
+                var pools = (Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap")
+                                .GetValue(null);
+                var cache = (IDictionary)PortSession.RewardField(typeof(EffectManager), "_ShouldUsePooledEffectMap").GetValue(null);
+                cache.Remove(ownedEffectPrefab);
+                if (pools.ContainsKey(ownedEffectPrefab))
+                    throw new InvalidOperationException("Merc Evis adapter pool appeared during teardown");
+                DestroyOwnedObject(inactiveOwner);
+            }
+        }
+        static int nextMercEvisEffectToken;
+        static int NextMercEvisEffectToken()
+        {
+            var live = Resources.FindObjectsOfTypeAll<MercEvisEffectInstanceMarker>();
+            do
+            {
+                unchecked { nextMercEvisEffectToken++; }
+                if (nextMercEvisEffectToken == 0) unchecked { nextMercEvisEffectToken++; }
+            }
+            while (live.Any(value => value && value.token == nextMercEvisEffectToken));
+            return nextMercEvisEffectToken;
+        }
+        sealed class MercEvisEffectInstanceMarker : MonoBehaviour { public int token; }
         public void AdaptComposedEffectAudio(EffectDef definition)
         {
             // These owned runtime records are distinct from original baked assets.
@@ -481,17 +766,218 @@ public sealed partial class PortSession
                 SetCatalogBodyTemplate(pair.Key, pair.Value);
             coordinator.priorCatalogBodyTemplates.Clear();
         }
-        public void InitializeComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions)
+        public void InitializeComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions, bool includeMercEvisAdapter)
         {
+            InitializeComposedEffectsCore(definitions, includeMercEvisAdapter, null, null, null, true);
+        }
+#if UNITY_EDITOR
+        public void InitializeMercEvisAdapterFixture(GameObject visualSource, GameObject projectileSource,
+                                                       System.Collections.Generic.IEnumerable<EffectDef> definitions,
+                                                       System.Collections.Generic.IEnumerable<EffectDef> fixtureAdditions = null)
+        {
+            InitializeComposedEffectsCore(definitions, true, visualSource, projectileSource, fixtureAdditions, false);
+        }
+        public GameObject[] MercEvisFixtureLastOwnedObjects()
+        {
+            return new[] { fixtureLastMercOwnedPrefab, fixtureLastMercOwnedOwner };
+        }
+        public void InitializeComposedEffectsFixture(System.Collections.Generic.IEnumerable<EffectDef> definitions,
+                                                       System.Collections.Generic.IEnumerable<EffectDef> fixtureAdditions = null)
+        {
+            InitializeComposedEffectsCore(definitions, false, null, null, fixtureAdditions, false);
+        }
+#endif
+        void InitializeComposedEffectsCore(System.Collections.Generic.IEnumerable<EffectDef> definitions,
+                                           bool includeMercEvisAdapter, GameObject fixtureVisual, GameObject fixtureProjectile,
+                                           System.Collections.Generic.IEnumerable<EffectDef> fixtureAdditions = null,
+                                           bool requireOwnedProjectileCatalog = true)
+        {
+            coordinator.Check(mercEvisImpactEffectLease == null, "Existing Merc Evis effect adapter owner");
             priorComposedEffectAvailability = EffectCatalog.availability;
-            // The composed path has no ContentManager additions array. The current
-            // original providers supply no extra EffectDefs beyond their baked catalog.
-            EffectCatalog.SetEntries(Array.Empty<EffectDef>());
-            EffectCatalog.availability.MakeAvailable();
-            coordinator.Check(EffectCatalog.effectCount > 0, "Original baked effect catalog unavailable");
-            RegisterComposedEffects(definitions);
-            foreach (var definition in (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null))
-                AdaptComposedEffectAudio(definition);
+            var entriesField = PortSession.RewardField(typeof(EffectCatalog), "entries");
+            var nameMapField = PortSession.RewardField(typeof(EffectCatalog), "nameToEffectIndex");
+            var priorEntries = (EffectDef[])entriesField.GetValue(null);
+            var nameMap = (IDictionary)nameMapField.GetValue(null);
+            coordinator.Check(priorEntries.Length == 0 && nameMap.Count == 0 && !priorComposedEffectAvailability.available,
+                              "Original effect catalog already owned");
+            var priorNames = new Dictionary<string, EffectIndex>();
+            foreach (DictionaryEntry entry in nameMap)
+                priorNames.Add((string)entry.Key, (EffectIndex)entry.Value);
+            MercEvisImpactEffectLease candidate = null;
+            if (includeMercEvisAdapter)
+                candidate = MercEvisImpactEffectLease.Create(
+                    fixtureVisual ? fixtureVisual : WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab"),
+                    fixtureProjectile ? fixtureProjectile : WholeCatalogComposed.LoadOwnedContent<GameObject>("Assets/WholeGame/RoR2/Base/Characters/Merc/Skills/EvisProjectile.prefab"),
+                    requireOwnedProjectileCatalog);
+#if UNITY_EDITOR
+            if (candidate != null && fixtureVisual)
+            {
+                fixtureLastMercOwnedPrefab = candidate.OwnedEffectPrefab;
+                fixtureLastMercOwnedOwner = candidate.OwnedEffectOwner;
+            }
+#endif
+            bool setEntriesCalled = false, setEntriesReturned = false;
+            EffectDef[] ownedEntries = null, nativeEntriesBaseline = null;
+            IDictionary ownedNameMap = null;
+            EffectMutationState[] mutationStates = Array.Empty<EffectMutationState>();
+            try
+            {
+                // This is the only SetEntries call in this catalog generation.
+                // Additions are separate from baked-name replacement definitions.
+                var additions = fixtureAdditions == null ? Array.Empty<EffectDef>() : fixtureAdditions.ToArray();
+                var replacements = definitions == null ? null : definitions.ToArray();
+                mutationStates = UniqueEffectDefinitions((candidate == null ? Enumerable.Empty<EffectDef>() : new[] { candidate.Definition })
+                    .Concat(additions).Concat(replacements ?? Array.Empty<EffectDef>()))
+                    .Select(value => new EffectMutationState(value)).ToArray();
+                setEntriesCalled = true;
+                EffectCatalog.SetEntries((candidate == null ? Enumerable.Empty<EffectDef>() : new[] { candidate.Definition })
+                                             .Concat(additions).ToArray());
+                setEntriesReturned = true;
+                ownedEntries = (EffectDef[])entriesField.GetValue(null);
+                ownedNameMap = (IDictionary)nameMapField.GetValue(null);
+                if (ownedEntries == null || !ReferenceEquals(ownedNameMap, nameMap))
+                    throw new InvalidOperationException("Native SetEntries replaced the exact owned catalog structure");
+                nativeEntriesBaseline = ownedEntries.ToArray();
+                if (candidate != null)
+                    candidate.CaptureCatalogOwnership(ownedEntries, ownedNameMap, EffectCatalog.availability);
+                foreach (var state in mutationStates)
+                    state.CaptureRegisteredIndex();
+                ownedEffectMutationStates = mutationStates;
+                ownedComposedEntries = ownedEntries;
+                ownedComposedNameMap = ownedNameMap;
+                nativeComposedEntryBaseline = nativeEntriesBaseline;
+                nativeComposedNameMapBaseline = new Dictionary<string, EffectIndex>();
+                foreach (DictionaryEntry entry in ownedNameMap)
+                    nativeComposedNameMapBaseline.Add((string)entry.Key, (EffectIndex)entry.Value);
+                EffectCatalog.availability.MakeAvailable();
+                ownedComposedAvailability = EffectCatalog.availability;
+                if (candidate != null)
+                    candidate.CaptureCatalogAvailability(EffectCatalog.availability);
+                coordinator.Check(EffectCatalog.effectCount > 0, "Original baked effect catalog unavailable");
+                if (candidate != null)
+                {
+                    var index = EffectCatalog.FindEffectIndex(candidate.Definition.prefabName);
+                    coordinator.Check(index != EffectIndex.Invalid && EffectCatalog.GetEffectDef(index) == candidate.Definition &&
+                                          EffectCatalog.FindEffectIndexFromPrefab(candidate.OwnedEffectPrefab) == index,
+                                      "Owned Merc Evis effect catalog identity failed");
+                }
+                RegisterComposedEffects(candidate == null ? definitions : replacements);
+                foreach (var definition in (EffectDef[])entriesField.GetValue(null))
+                    AdaptComposedEffectAudio(definition);
+                if (candidate != null)
+                    candidate.Bind();
+                mercEvisImpactEffectLease = candidate;
+                ownedEffectMutationStates = mutationStates;
+            }
+            catch (Exception setupFailure)
+            {
+                if (!setEntriesCalled)
+                {
+                    if (candidate != null && candidate.OwnedEffectPrefab)
+                        DestroyOwnedObject(candidate.OwnedEffectOwner);
+                    throw;
+                }
+                if (!setEntriesReturned)
+                {
+                    // SetEntries may have partially assigned indices or replaced
+                    // static catalog state before it throws. No such state is
+                    // mutated during recovery; retain the candidate for recovery.
+                    mercEvisImpactEffectLease = candidate;
+                    ownedEffectMutationStates = mutationStates;
+                    throw new AggregateException("Native EffectCatalog.SetEntries failed before ownership capture", setupFailure);
+                }
+                if (candidate == null)
+                {
+                    try
+                    {
+                        var current = (EffectDef[])entriesField.GetValue(null);
+                        var currentMap = (IDictionary)nameMapField.GetValue(null);
+                        if (!ComposedCatalogStructureStillOwned(current, currentMap) ||
+                            mutationStates.Any(state => !state.IsOwnedCurrentValue()) ||
+                            priorComposedEffectSounds.Any(pair => pair.Key == null ||
+                                (pair.Key.spawnSoundEventName != null && pair.Key.spawnSoundEventName != pair.Value)))
+                            throw new InvalidOperationException("Non-Merc composed catalog ownership changed before setup rollback");
+                    }
+                    catch (Exception ownershipFailure)
+                    {
+                        ownedEffectMutationStates = mutationStates;
+                        throw new AggregateException("Non-Merc setup rollback refused; retain the exact catalog state",
+                                                     setupFailure, ownershipFailure);
+                    }
+                    foreach (var state in mutationStates)
+                        state.RestorePriorValues();
+                    foreach (var pair in priorComposedEffectSounds)
+                        typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key, pair.Value, null);
+                    priorComposedEffectSounds.Clear();
+                    entriesField.SetValue(null, priorEntries);
+                    nameMap.Clear();
+                    foreach (var pair in priorNames) nameMap.Add(pair.Key, pair.Value);
+                    EffectCatalog.availability = priorComposedEffectAvailability;
+                    ClearOwnedComposedCatalogSnapshot();
+                    ownedEffectMutationStates = Array.Empty<EffectMutationState>();
+                    throw;
+                }
+
+                // Prove every owned structure and field before the first rollback
+                // write. Foreign replacement or uncertain SetEntries state keeps
+                // the catalog, source lease, and clone intact.
+                try
+                {
+                    var currentEntries = (EffectDef[])entriesField.GetValue(null);
+                    var currentNameMap = (IDictionary)nameMapField.GetValue(null);
+                    if (!candidate.CanRestoreTarget() || !ReferenceEquals(currentEntries, ownedEntries) ||
+                        !ReferenceEquals(currentNameMap, ownedNameMap) || currentEntries.Length != nativeEntriesBaseline.Length ||
+                        !EffectCatalog.availability.Equals(candidate.OwnedCatalogAvailability) ||
+                        currentNameMap.Count != candidate.NativeNameMapBaseline.Count)
+                        throw new InvalidOperationException("Catalog or target field ownership changed before setup rollback");
+                    foreach (var pair in candidate.NativeNameMapBaseline)
+                        if (!currentNameMap.Contains(pair.Key) || !Equals(currentNameMap[pair.Key], pair.Value))
+                            throw new InvalidOperationException("Native effect name map changed before setup rollback");
+                    for (int i = 0; i < currentEntries.Length; i++)
+                    {
+                        if (ReferenceEquals(currentEntries[i], nativeEntriesBaseline[i])) continue;
+                        if (!mutationStates.Any(state => (int)state.RegisteredIndex == i &&
+                                                   ReferenceEquals(state.definition, currentEntries[i])))
+                            throw new InvalidOperationException("Foreign EffectDef replacement before setup rollback at index " + i);
+                    }
+                    if (mutationStates.Any(state => !state.IsOwnedCurrentValue()))
+                        throw new InvalidOperationException("Composed definition changed before setup rollback");
+                    if (priorComposedEffectSounds.Any(pair => pair.Key == null ||
+                        (pair.Key.spawnSoundEventName != null && pair.Key.spawnSoundEventName != pair.Value)))
+                        throw new InvalidOperationException("Composed audio metadata changed before setup rollback");
+                }
+                catch (Exception ownershipFailure)
+                {
+                    mercEvisImpactEffectLease = candidate;
+                    ownedEffectMutationStates = mutationStates;
+                    throw new AggregateException("Setup rollback refused; retain the exact catalog and source lease",
+                                                 setupFailure, ownershipFailure);
+                }
+
+                candidate.RestoreTargetForRollback();
+                foreach (var state in mutationStates)
+                    state.RestorePriorValues();
+                foreach (var pair in priorComposedEffectSounds)
+                    typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key, pair.Value, null);
+                entriesField.SetValue(null, priorEntries);
+                nameMap.Clear();
+                foreach (var pair in priorNames) nameMap.Add(pair.Key, pair.Value);
+                EffectCatalog.availability = priorComposedEffectAvailability;
+                priorComposedEffectSounds.Clear();
+                if (candidate.OwnedEffectPrefab)
+                    DestroyOwnedObject(candidate.OwnedEffectOwner);
+                ClearOwnedComposedCatalogSnapshot();
+                ownedEffectMutationStates = Array.Empty<EffectMutationState>();
+                throw;
+            }
+        }
+        void ClearOwnedComposedCatalogSnapshot()
+        {
+            ownedComposedEntries = null;
+            ownedComposedNameMap = null;
+            nativeComposedEntryBaseline = null;
+            nativeComposedNameMapBaseline = null;
+            ownedComposedAvailability = default(ResourceAvailability);
         }
         public void RegisterComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions)
         {
@@ -510,9 +996,33 @@ public sealed partial class PortSession
         public void RestoreComposedEffects(EffectDef[] previous)
         {
             var entries = (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null);
-            foreach (var definition in entries)
-                if (definition.prefabEffectComponent)
-                    definition.prefabEffectComponent.effectIndex = EffectIndex.Invalid;
+            var nameMap = (IDictionary)PortSession.RewardField(typeof(EffectCatalog), "nameToEffectIndex").GetValue(null);
+            if (mercEvisImpactEffectLease != null)
+            {
+                mercEvisImpactEffectLease.PreflightCleanup(entries);
+                for (int i = 0; i < entries.Length; i++)
+                {
+                    if (ReferenceEquals(entries[i], mercEvisImpactEffectLease.NativeEntryBaseline[i]))
+                        continue;
+                    if (!ownedEffectMutationStates.Any(state => (int)state.RegisteredIndex == i &&
+                                                              ReferenceEquals(state.definition, entries[i])))
+                        throw new InvalidOperationException("Foreign composed EffectDef prevents Merc adapter teardown at index " + i);
+                }
+                if (ownedEffectMutationStates.Any(state => !state.IsOwnedCurrentValue()) ||
+                    priorComposedEffectSounds.Any(pair => pair.Key == null ||
+                        (pair.Key.spawnSoundEventName != null && pair.Key.spawnSoundEventName != pair.Value)))
+                    throw new InvalidOperationException("Composed effect fields changed; retain Merc catalog and asset lease");
+            }
+            else if (!ComposedCatalogStructureStillOwned(entries, nameMap) ||
+                     ownedEffectMutationStates.Any(state => !state.IsOwnedCurrentValue()) ||
+                     priorComposedEffectSounds.Any(pair => pair.Key == null ||
+                         (pair.Key.spawnSoundEventName != null && pair.Key.spawnSoundEventName != pair.Value)))
+                throw new InvalidOperationException("Composed effect ownership changed; retain catalog state");
+            // Restore only after every adapter/catalog/pool ownership check passes.
+            if (mercEvisImpactEffectLease != null)
+                mercEvisImpactEffectLease.RestoreBinding();
+            foreach (var state in ownedEffectMutationStates)
+                state.RestorePriorValues();
             foreach (var pair in priorComposedEffectSounds)
                 typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key, pair.Value, null);
             priorComposedEffectSounds.Clear();
@@ -521,6 +1031,13 @@ public sealed partial class PortSession
             PortSession.RewardField(typeof(EffectCatalog), "entries").SetValue(null, previous);
             ((IDictionary)PortSession.RewardField(typeof(EffectCatalog), "nameToEffectIndex").GetValue(null)).Clear();
             EffectCatalog.availability = priorComposedEffectAvailability;
+            if (mercEvisImpactEffectLease != null)
+            {
+                mercEvisImpactEffectLease.ReleaseAfterCatalogRestore();
+                mercEvisImpactEffectLease = null;
+            }
+            ownedEffectMutationStates = Array.Empty<EffectMutationState>();
+            ClearOwnedComposedCatalogSnapshot();
         }
         public BuffDef[] UpdatedComparisonBuffs(SessionConfig cfg)
         {

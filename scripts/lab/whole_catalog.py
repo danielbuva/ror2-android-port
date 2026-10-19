@@ -1706,6 +1706,7 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
         "FirstStageDiagnosticGateFixture.cs",
         "NativeDirectorDeckSetterFixture.cs",
         "SourceIdentityTransformParityFixture.cs",
+        "MercEvisImpactEffectExactEditorFixture.cs",
     ]:
         io.apply(project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
     # Bundle-only serialized components and reflected location types are invisible
