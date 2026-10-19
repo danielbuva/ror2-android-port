@@ -78,13 +78,11 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    inherited files are in a hash-verified local store (J564). The from-scratch rebuild reproduces
    86,811 of 91,841 files byte-identically on the host, including all 352 shader outputs,
    and 190 of the 204 inherited-store files are regenerated; its binding gate passes
-   (J567–J575). R9 then built the destination from a fresh Library into an APK that passes
-   both device checks (J582, the stage exit on its second run). R9 still reports it unequal; J583
-   named the causes. The extra `Unity.Timeline.dll` linker root was editor-process history; J584
-   preserves it, so code-only builds now match full builds. The three reimport errors came from
-   Unity importing spawn cards before the prefabs they load, within one batch; J585 imports in
-   dependency layers. R9 has not been rerun with either fix. The missing-script audit is equal to the working project's. Still open: why `Hidden/Compositing`
-   drops out, and how R9 treats `Lab.unity` and export-form metas. Still needed for a rebuild
+   (J567–J575). R9 builds the destination from a fresh Library into an APK that passes
+   both device checks (J582; rerun J586, both checks passing first time). With the Timeline pin
+   (J584) and the layered reimport (J585), R9 logs no new reimport error, and its APK matches the
+   baseline except `Hidden/Compositing` (open), the path-dependent Burst library and build metadata.
+   One gate file still differs: `BlueNoise_R8_1.png.meta`, working-project drift (J592). Still needed for a rebuild
    from public inputs alone: R2 reads local migration evidence (B1, B3–B6, B8), 14 files still
    come from the inherited store (11 editor-built HUD assets, FastDirector, `Strings.json`, the
    TMP mobile shader, so J558 is still open) and 63 local analysis inputs are hash-pinned. The remaining

@@ -670,13 +670,10 @@ Still open:
    ([rebuild-plan.md](rebuild-plan.md)). `./dev prototype --action rebuild-step` builds a
    separate destination in twelve host steps, each byte-identical to the working project
    (J567–J575). R9 builds it into an APK that passed both device checks (J582), but R9
-   still reports it unequal. J583 named the causes. The extra `Unity.Timeline.dll` linker
-   root came from editor-process history; it is now preserved in the descriptor, so
-   code-only builds match full builds (J584). The three reimport errors came from Unity
-   importing spawn cards before their prefabs within one batch; pass 2 now imports in
-   dependency layers (J585). R9 has not been rerun with either fix. `Hidden/Compositing`
-   drops out for a reason still open, and `Lab.unity` plus a few export-form importers
-   differ on every build.
+   still reports it unequal. With the J584 Timeline pin and the J585 layered reimport, the J586
+   rerun logs no new reimport error and passes both checks first time; its APK differs from the
+   baseline only in `Hidden/Compositing` (open), the path-dependent Burst library and build
+   metadata. The last differing gate file is `BlueNoise_R8_1.png.meta`, working-project drift (J592).
 2. **The rebuild still reads local migration evidence.** Its R2 step runs
    `composition_migration.stage`, which reads `work/config/composition-migration.json`,
    the previous project's runtime config and the composition evidence B3–B6

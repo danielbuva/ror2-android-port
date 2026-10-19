@@ -6614,3 +6614,46 @@ reproduced by R8; replay its source/importer/provenance cohort after acceptance.
 The new GUID remains null until actual import. Moon and executable rollbacks are
 untouched. Revisit after the current-Nova multi-device gate, then execute both
 fixtures and one combined runtime build before the survivor and Siren checks.
+
+## J586 — R9 rerun: no new reimport errors; one gate file and one APK shader left
+
+Phase 2, from-scratch rebuild (run by Claude, with the operator's approval to stop the lab MCP
+editor). Hypothesis: with the J584 Timeline pin and the J585 layered reimport, an R9 run from a
+fresh destination logs no reimport error that pass 1 did not, and its APK matches the J585
+baseline except for the known open items. Method: the J582 destination was kept as
+`lab-project.J582-receipt`, and all twelve host steps rebuilt a fresh one (8 minutes, every step
+identical). The lab editor was stopped through the bridge and restarted afterwards. Device steps
+ran from a detached worktree at the committed HEAD, sharing the same ignored `work/`, because the
+checkout held a sibling session's uncommitted device-tooling draft at the time. That worktree's
+symlinked `work/` broke three output-only `relative_to` path strings in `device.py`,
+`lifecycle.py` and `baseline.py`, so the first two check attempts failed after their runs,
+before judging. Those three lines printed absolute paths in the throwaway tree only (never
+committed; pass criteria untouched), and both checks were rerun.
+
+Build (run `20261019T041330.236012Z`): 1,940 s, zero counted errors. Pass 2 imported 14,366 dependents in
+40 layers (the first two hold 8,591 and 2,376). The only error logged during the reimport is the
+Sky Meadow director-weight message pass 1 also logs, so `reimport_errors.new` is empty; the J582
+TMP and Addressables errors are gone. The script audit passed again (251 missing-script references,
+equal to the working project per J583). APK
+`fd174e1bf9a07d3e4a02e9968fb9f6092bfad9e67851781d82c5a498975bfa07` against the J585 baseline
+`da5e4959…`: 565 entries identical, 9 different, none missing (J582: 563 and 11). Now identical:
+`global-metadata.dat` and `level0`. `libil2cpp.so` has the same size, differing only in the
+build-id and CRC bytes (J583). Still different: `unity_builtin_extra` (`Hidden/Compositing`,
+open), `lib_burst_generated.so` (embedded project path), build metadata (`globalgamemanagers`,
+`boot.config`, `unity_app_guid`) and the three signing entries.
+
+Gate. The receipt as written still says `equal: false`, from the four unity-generated files.
+With J592's classifications, `--compare-only` leaves one: `Lab.unity` is
+`local_ids_renumbered`, the two render textures are `serialized_version_moved`, and
+`BlueNoise_R8_1.png.meta` stays different (working-project drift, J592). Project obligations (2),
+deferred graphs (28), 1,511 unity-generated files and the folder-GUID scan are clean. Evidence:
+`work/receipts/J586-compare-only.out`, with `J586-compare-tree-status.txt` listing the
+uncommitted files present during that read-only comparison.
+
+Device, R9 APK installed in place on adopted storage, destination payload synced: `./dev
+check-baseline` passed (35.3 s on Lakes, `work/experiments/baseline/20261019T054410.747329Z`),
+and `--stage-exit` passed on its first run, one genuine transition to Goolake with 13.1 s of
+next-stage play (`…20261019T054738.689503Z`). Restore: baseline APK `da5e4959…` reinstalled,
+default payload synced, both modes passed again (35.2 s; Goolake, 13.5 s). App stopped, OLED asleep,
+lab MCP editor restarted and connected. Revisit: the `BlueNoise_R8_1` drift and
+`Hidden/Compositing` are the last two differences between R9 and the working project's build.

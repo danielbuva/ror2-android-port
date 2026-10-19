@@ -508,13 +508,12 @@ but J547 supplies a checker rather than a complete initializer. No game readines
 
 ## R9: isolated Unity import/build (current; not yet equivalent)
 
-Status (J582–J585, J592): from a fresh Library, R9 builds an APK that passed both device checks,
-but reports it unequal. Of its four unity-generated file differences, `Lab.unity` and two render
-textures are now exact classifications; `BlueNoise_R8_1.png.meta` is working-project drift from one
-editor session and stays different (J592). The extra `Unity.Timeline.dll` linker root is now preserved in the
-descriptor, so the baseline matches full builds (J584). The reimport errors came from batch
-import order, and pass 2 now imports in dependency layers (J585). R9 has not been rerun with
-either fix. Why `Hidden/Compositing` drops out is still open. R2 still reads local migration evidence; see
+Status (J582–J586, J592): from a fresh Library, R9 builds an APK that passed both device checks
+(J586: first time). With the Timeline pin (J584) and the layered reimport (J585) it logs no new
+reimport error, and its APK matches the baseline except `Hidden/Compositing` (open), the
+path-dependent Burst library and build metadata. `Lab.unity` and two render textures are exact
+classifications; `BlueNoise_R8_1.png.meta` is working-project drift and the last differing gate
+file (J592). R2 still reads local migration evidence; see
 [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
 `unity-build` runs only after a passing `validate-bindings` on the same destination.

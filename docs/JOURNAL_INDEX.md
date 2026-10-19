@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J586](PORTING_JOURNAL.md#j586--r9-rerun-no-new-reimport-errors-one-gate-file-and-one-apk-shader-left) | 2026-10-18 | R9 rerun: no new reimport errors; one gate file and one APK shader left | Phase 2, from-scratch rebuild (run by Claude, with the operator's approval to stop the lab MCP editor). |
 | [J594](PORTING_JOURNAL.md#j594--restore-the-original-siren-encounter-lifecycle-host-draft) | 2026-10-18 | Restore the original Siren encounter lifecycle (host draft) | Hypothesis: ordinary Siren traversal (J402–J406/J504) does not establish its egg mission. |
 | [J592](PORTING_JOURNAL.md#j592--r9s-four-unity-generated-file-gaps-two-exact-classifications-one-open-drift) | 2026-10-18 | R9's four Unity-generated file gaps: two exact classifications, one open drift | Phase 2, from-scratch rebuild (diagnosed and implemented by Claude; host only, no build, install or editor). |
 | [J591](PORTING_JOURNAL.md#j591--narrow-the-audio-runtime-and-plugin-requirements-static-research) | 2026-10-18 | Narrow the audio runtime and plugin requirements (static research) | Question: which native runtime family and concrete codecs/plugins are worth verifying against J588's accepted version-150 banks? |

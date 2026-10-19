@@ -28,8 +28,8 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Make R9 equivalent (J583): rerun R9 with the layered reimport (J585) and the
-      `Unity.Timeline` pin (J584); find why `Hidden/Compositing` drops out; decide how R9 treats `Lab.unity` and export-form importers.
+- [ ] Make R9 equivalent (J586): resolve the `BlueNoise_R8_1.png.meta` working-project drift
+      (J592) and find why `Hidden/Compositing` drops out of R9's APK.
 - [ ] Remove the rebuild's remaining local inputs: R2's migration evidence (B1, B3–B6, B8),
       the 63 hash-pinned analysis inputs and the 14 inherited-store files.
 - [ ] Switch the working project's own build to the rebuild path (migration-removal commit 9,
