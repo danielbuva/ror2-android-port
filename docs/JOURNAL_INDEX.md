@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J629](PORTING_JOURNAL.md#j629--source100-plain-baseline-passes-one-exit-acceptance-stops-at-the-deadline) | 2026-10-19 | Source100 plain baseline passes; one-exit acceptance stops at the deadline | After selected live preflight, the J624/J626 source100 cohort builds in 135.17 s with zero errors, request 20261019T102322.640172Z. |
 | [J628](PORTING_JOURNAL.md#j628--add-explicit-app-scoped-software-cpu-capture-with-truthful-attribution) | 2026-10-19 | Add explicit app-scoped software CPU capture with truthful attribution | J610's hardware cpu-cycles permission denial remains preserved. |
 | [J627](PORTING_JOURNAL.md#j627--reject-an-apparently-simple-audio-fallback-on-inherited-rtpc-evidence) | 2026-10-19 | Reject an apparently simple audio fallback on inherited RTPC evidence | Independent offline audio work tests whether one source-called UI event can use a narrowly authored Unity one-shot while native Wwise remains unavailable. |
 | [J626](PORTING_JOURNAL.md#j626--add-source-backed-siren-input-bounded-projectile-traces-and-ui-abandon-checks) | 2026-10-19 | Add source-backed Siren input, bounded projectile traces and UI abandon checks | Hypothesis: broad survivor/stage acceptance needs observed native outputs and safe lifecycle checks; J623's projectile failure needs a discriminating trace, no… |

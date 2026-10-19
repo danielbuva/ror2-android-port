@@ -8081,3 +8081,43 @@ storage/device receipt or required local build input. Source100 candidate
 is separately installed in place and undergoing baseline acceptance; it has
 not yet passed both modes. First validate that APK, then attempt app scope only
 during an owned suitable gameplay interval and preserve any permission refusal.
+
+## J629 — Source100 plain baseline passes; one-exit acceptance stops at the deadline
+
+After selected live preflight, the J624/J626 source100 cohort builds in 135.17 s
+with zero errors, request 20261019T102322.640172Z. APK
+9d022653f52736640826447b7911f589e4d1680f3eb2c6b3a2041ed8873eb75d
+is frozen with build receipt and authored input hashes in
+work/experiments/native-diagnostics/candidate-20261019T102322.640172Z/.
+Installation updates the current Nova in place on its live adopted storage.
+No storage configuration, other device or Phase 2 output is changed.
+
+Plain baseline passes 35.20 s of live Lakes play. Evidence:
+work/experiments/baseline/20261019T102652.656590Z/.
+The separate one-exit mode stops at its unchanged 370 s host deadline with
+197.76 s of world time, still on Lakes and zero transitions. Its original boss
+is defeated, charge is one, and the reward is collected. The report records
+the teleporter Finished transition and exit-begin observation, but the current
+native teleporter FSM is ChargedState, SceneExit state is Idle, and no exit-finish
+observation exists. Final navigation still approaches the teleporter. This is
+a failed exit check; these scalar observations do not establish its cause.
+Evidence: work/experiments/baseline/20261019T103020.235517Z/.
+
+Both reports have empty error/firstFailure and applied profile runs remain 13.
+Root classifies the captured current-process logs with the existing expected
+error contract: zero unexpected errors in each; root-log-validation.json
+preserves that result separately from the baseline acceptance receipt. The
+stage runner stops before capture and its finally removes only the owned
+selector, force-stops the app and sleeps the OLED. Known startup warnings and
+historical log entries are not attributed to the current gameplay failure.
+
+The acceptance queue stops at this first failed mode. The waiting app-scoped
+CPU observer makes no capture because its later Engineer window is not reached.
+J620 fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971
+remains the accepted baseline; source100 remains installed and unaccepted by
+both modes. Review the native exit/input evidence against the unchanged seed
+and previous passing case before any retry or repair; do not lengthen the
+check, force an exit or infer a Siren/Engineer regression from this timeout.
+Independent survivor/lifecycle diagnostics can follow with their own evidence.
+No new source or recipe is changed by this experiment; R8/build-entry replay
+requirements for the built authored inputs remain those in J624/J626.
