@@ -7672,3 +7672,23 @@ preflight passes; an initial unselected preflight correctly refused ambiguity
 when several devices were attached. No extra device was selected or onboarded.
 The next code build must pass both baseline modes and Engineer input/cleanup;
 installed J616 APK remains unchanged during these host/editor checks.
+
+## J618 — Mercenary canonical callbacks pass on the baseline APK
+
+Continue the base roster independently while J617's host/editor fix is built.
+On unchanged J616 APK
+16f21f5e1156cb3a817f7ac1877d362853b627e02488f011c8c31e59f35cbc09,
+the current Merc diagnostic case reaches 60.39 s of Lakes play. Original
+primary/secondary/utility/special authority and server callbacks are
+49/7/1/3, with four valid canonical components, no noncanonical component,
+missing activation, suppressed callback or current-process runtime error.
+The selected locked base survivor is explicitly a diagnostic override;
+automatic input and invincibility make this assisted evidence.
+
+Evidence: work/experiments/survivor-check/20261019T091824.926153Z/Merc/.
+Applied profile runs remain 13, with one earned/available earned unlock and no
+result applied. The host runner stops the app, removes only its selector and
+sleeps the OLED. This establishes native activation callback breadth, not
+melee hit chains, dash target outcomes, invulnerability timing, alternate
+skills, ordinary unlocks or completed-session cleanup. Engineer remains
+blocked on J616's setup predicate until the J617 APK is device-tested.
