@@ -10838,3 +10838,51 @@ native UI-abandon witness is a separate pending case. J693 isolated skill input
 has passed host/editor gates and is now building separately; do not infer that
 it is installed. No new original input, Phase 2 output, runtime membership,
 extra device, manual receipt edit, storage reconfiguration or permanent award.
+
+## J696 — Device witness isolates destroyed Wake component at native cleanup
+
+Hypothesis: J691's independent guard predicates can distinguish source-table
+liveness from scene ordering before changing restoration. Explicit native
+UI-abandon/restart uses accepted APK
+039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc,
+ordinary eligible Commando, all five gameplay acceleration options off and
+automatic diagnostic input. It is marked assisted by the native lifecycle gate.
+No runtime source change or special encounter/expansion activation is requested.
+
+Generated source bindings pass and exactly one genuine native Stage-begin is
+recorded. At 67.424774 world seconds the real Settings/End Run UI requests
+abandon. Captured-ID native Reset no longer blocks teardown. The first source
+field restoration refuses at WakeAltar.WakeController.bronzeDropTable:
+requestedMatchesBound, requestedSceneValid, requestedSceneLoaded and
+activeSceneMatchesRequested are all true; componentAlive is false. Its captured
+component ID was nonzero and current ID unavailable. Requested/bound/active
+scene names all remain lakes. This identifies a retired Unity component rather
+than a scene guard mismatch.
+
+The old witness derives ownerAlive=false from the unavailable component, so it
+does not prove that the GameObject is destroyed. Native WakeSpawner's known
+root-destruction path remains a supported source hypothesis, not a measured
+cause. Independent review also identifies component-only destruction as a real
+hazard: native Wake rewards can copy a cloned table into the child pickup
+creator. A live GameObject/child must not lose that provider merely because the
+Wake component is gone. The pending cleanup draft must capture the actual
+GameObject reference independently, require it to be destroyed for managed-
+wrapper restoration, and still invoke the same ownership-checking lease.
+J694's inactive full-GameObject fixture establishes field access only.
+
+Evidence: work/device/<serial>/experiments/session-cleanup/
+20261019T164619.123705Z/ (result, first-live report, frozen receipt and current-
+process log). The last report is abandoning-offline-session with source recovery
+required. No completed-session report or session 2 menu exists; full cleanup/
+restart fails. Runtime errors outside the guarded first failure are empty;
+profile remains 13 applied runs and one earned/available unlock, with no result
+or permanent loadout award. The collector retains evidence, removes its own
+selector, force-stops the package and sleeps the OLED.
+
+First failure: the destroyed component guard above. Default controls on this
+APK remain accepted by J695; do not infer native acceptance from them. The
+conditional managed-field cleanup correction remains private pending the
+captured-owner contract/review. Separately, the J693 isolated-input candidate
+has built and is on device checks; its full result will be recorded separately.
+No original input, Phase 2 output, extra device, hand-edited receipt, storage
+configuration/data change or permanent progression occurs.
