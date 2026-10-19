@@ -174,6 +174,16 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
+Audio remains unavailable in the composed game. Separate native diagnostics
+use one disposable engine owner for exact bank buffers, listener/emitter,
+event callback, bounded output capture and cumulative monitor; reverse cleanup
+retains uncertain ownership. The private managed owner tests the retained
+Wwise interface in fresh Unity players and is not the normal game controller.
+Their setup/input boundaries are listed in
+[LOCAL_STATE](LOCAL_STATE.md#isolated-wwise-diagnostic-inputs); experiment
+acceptance and limits are recorded once in J740/J742. Neither diagnostic owner
+changes the default assembly transforms or the current game build pipeline.
+
 The updated-input transform also guards native `SkillResponseBehavior.OnDestroy`
 when its skill array was never initialized by `Start` (J638). An absent array
 returns without event work; an existing array executes the original cleanup IL.

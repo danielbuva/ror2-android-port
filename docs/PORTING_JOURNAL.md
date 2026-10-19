@@ -13177,3 +13177,68 @@ acceptance is claimed by this source checkpoint. Accepted/installed 12d79359
 and its rollback remain unchanged. The authored observer source affects R8
 staging; ARCHITECTURE names its owner and host contract, and recipe/README.md
 records provenance/privacy review. No new local production input is added.
+
+## J742 — Original Global UI event passes with adapted Android Init metadata
+
+Hypothesis: J740's clean Init metadata adaptation can support the previously
+traced original Global UI event without J736's later SetBusDevice workaround.
+Use a fresh disposable native engine with the same authorized SDK, exact
+Vorbis/effect registrations and cumulative monitor. Preserve Global and all
+embedded media unchanged. No event graph, media, switch, state, audioTeam,
+RTPC or effect parameter is reconstructed or injected. This remains one
+isolated event path under an explicit output adaptation, not game integration.
+
+The producer packages Root's exact 6,264-byte adapted Init followed by the
+complete 95,239,411-byte original Global. It binds J740's transform/script/
+receipt and the accepted input/manifest, validates both bank identities and
+native bank type, and posts the original Play_UI_menuClick event 3993912102.
+The prior compiled cumulative-monitor bridge and JNI remain byte-identical;
+the Activity has no routing API declaration/call and the strict plan/checker
+rejects SetBusDevice or a routing-adaptation claim. Unknown bank/event results
+retain ownership. Successful cleanup publishes released ownership before
+fallible logging and unwinds event, capture, banks, emitter and engine in order.
+
+Root passes 14 producer/input and 20 classifier/guarded-workflow host contracts.
+The actual extracted Java reader, plan, owner cleanup, release and final-witness
+methods also pass compilation/execution with native and logging fault injection.
+These include exact array/EOF/hash handling, truthful first-failure retention,
+EndOfEvent/PCM evidence, post-Term cumulative observation and owned cleanup
+refusal. No SDK implementation is replaced by those host doubles. Prior art
+remains J740's installed SDK registration/bank/monitor contracts and pinned
+R2API.Sound's Init-first bank lifetime.
+
+APK 6b6b0e5f1774321daa90322c55d2bb642ebeb4e480df0a5d6534efe7175585c6
+passes on the configured Nova. All required real codec/effect queries pass.
+Init, listener/emitter setup, both bank loads, capture registration, original
+event post, real EndOfEvent, event release, capture disarm, reverse bank
+unloads, emitter unregister and Term succeed. The final post-Term cumulative
+error count is zero, sticky state is none-observed, legacy monitor has no
+error and firstFailure is empty. No later routing call is issued.
+
+The retired capture snapshot has 30 callbacks, 17,280 frames, 34,560 analyzed
+finite samples and 32,582 nonzero finite samples. Nonfinite, rejected and
+limited counts are zero. Peak is 0.1782330871 and RMS is 0.0194590304. The
+callback is unregistered and the snapshot is read after sound-engine Term.
+These are bounded main-output PCM statistics, not sample-level source
+attribution, physical audibility or PC-fidelity measurement.
+
+Fresh adopted-volume/capacity, installed placement and both runtime data/output
+backing checks pass. The separate package is force-stopped and removed;
+cleanup errors are empty, no Android fatal is observed and the OLED sleeps.
+Evidence: work/device/<serial>/wwise-adapted-init-global/20261019T215002.251919Z/;
+root result: work/coordination/codex-wwise-adapted-init-global-device-v1.stdout.
+Private producer, source/native bindings and signed-byte receipt:
+work/coordination/wwise-adapted-init-global-fixture-draft/root-build-v1/.
+Original game/Global bytes and previous failed candidates remain unchanged.
+
+The Init adaptation removes this observed failure for this event; it does not
+prove every original bank or the retained game's output/music lifecycle.
+The independent fresh Unity managed-ABI player build is still pending, with
+Java-first and DllImport-first requiring separate processes. Audio remains
+disabled/unavailable in the composed game. The accepted main APK remains
+12d79359; J741's gameplay observer source is still awaiting a game build.
+No rebuild input is changed by this audio checkpoint. LOCAL_STATE records the
+authorized SDK/integration and private fixture inputs needed to reproduce
+these isolated experiments; proprietary bytes, raw evidence and keys remain
+ignored. Promote reviewed authored producers before making them a normal
+build dependency.

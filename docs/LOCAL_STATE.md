@@ -404,3 +404,27 @@ the initialized content locator's lifetime and reused only with identical
 contents. They are not user-supplied state or game content. The support fixture
 is staged by `whole_catalog.stage_build_sources`; ordinary player behavior
 never reads this test directory.
+
+### Isolated Wwise diagnostic inputs
+
+The optional J740/J742 native fixtures and fresh Unity managed-readiness
+fixture require the locally authorized Wwise 2023.1.8.8601 SDK and matching
+Unity Integration 2023.1.8.3208. These are protected user-supplied dependencies,
+separate from the current game's default no-audio build. They are not bundled
+with the public repository. Preserve the following local inputs for replay:
+
+| Local state | Reason and consumer |
+| --- | --- |
+| `work/wwise/` and `work/coordination/wwise-installed-sdk-audit/` | Authorized integration archive/extraction and exact native-library receipts; independent fixture staging reads the pinned ARM64 Profile library. |
+| `work/coordination/wwise-original-bank-load-plan/bank-manifest.json` | Hash-bound accepted original bank/event inventory; fixture producers verify supplied game bytes against it. Banks remain in the legitimate external input. |
+| `work/coordination/wwise-init-android-platform-metadata/` | Private authored exact-input transform, immutable Root-generated bank and receipt; fixture-only platform metadata candidate, generated without modifying the original. |
+| `work/coordination/wwise-controller-bus-monitor-candidate/native-build-v1/` | Frozen bridge/JNI and actual compiler/source/input bindings reused by the separate native fixtures. |
+| `work/coordination/wwise-init-metadata-fixture-draft/`, `work/coordination/wwise-init-metadata-runner-draft/`, `work/coordination/wwise-adapted-init-global-fixture-draft/` | Private authored producer/checker and native/Java host-contract drafts plus explicit signed fixture receipts. No current game build reads them. |
+| `work/coordination/wwise-android-managed-compat-draft/`, `work/coordination/wwise-android-owner-draft/`, `work/coordination/wwise-unity-managed-fixture-generator/`, `work/coordination/wwise-managed-player-build-draft/`, `work/coordination/wwise-unity-managed-device-runner-draft/` | Private managed ABI candidate, owner, generator and fresh-player build/run drafts. They preserve source hashes and reference closure; they are not yet a supported public rebuild recipe. |
+| `work/coordination/wwise-android-fixture-draft/fixture-signing.*` | Disposable locally generated signing identity used only for standalone fixtures; key/password bytes must remain private. |
+
+These fixtures select explicit hash-bound inputs, not a timestamped run as a
+mutable source. Raw device output remains local evidence. Their authored
+drafts are an explicit reproducibility gap until reviewed generators are
+promoted into the repository; do not make them a current game dependency or
+infer full audio readiness from an isolated result.

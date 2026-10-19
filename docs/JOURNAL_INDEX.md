@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J742](PORTING_JOURNAL.md#j742--original-global-ui-event-passes-with-adapted-android-init-metadata) | 2026-10-19 | Original Global UI event passes with adapted Android Init metadata | Hypothesis: J740's clean Init metadata adaptation can support the previously traced original Global UI event without J736's later SetBusDevice workaround. |
 | [J741](PORTING_JOURNAL.md#j741--sample-native-enemy-components-through-their-own-lifetimes) | 2026-10-19 | Sample native enemy components through their own lifetimes | Hypothesis: J739's observer must handle native bodies that lack a CharacterMotor, and references retired independently of their body or AI. |
 | [J740](PORTING_JOURNAL.md#j740--android-init-metadata-adaptation-clears-the-native-plugin-lookup) | 2026-10-19 | Android Init metadata adaptation clears the native plugin lookup | Hypothesis: J736's Init-time plugin lookup comes from platform-specific output metadata, which can be adapted before loading while leaving media and other bank… |
 | [J739](PORTING_JOURNAL.md#j739--native-first-stage-loss-attempt-stops-at-an-unsafe-enemy-observation) | 2026-10-19 | Native first-stage loss attempt stops at an unsafe enemy observation | Hypothesis: J730's separate native first-stage UI-abandon/restart acceptance can be extended to native loss on the accepted J737 APK, without enabling debug in… |

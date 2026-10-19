@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J741** (enemy observer lifetime guards pass host tests; new APK/device retry pending).
+Last updated 2026-10-19 after **J742** (isolated original UI event passes with adapted Init; game audio remains unavailable).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -75,8 +75,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   explicit Android bus adaptation succeeds but still fails an Init-time plugin
   lookup under cumulative error observation (J736). A fixture-only Init output
   metadata adaptation then loads/unloads with zero post-Term cumulative errors
-  (J740); unchanged Global playback under that adaptation, the retained managed
-  ABI and game lifecycle remain open.
+  (J740), then supports one unchanged Global UI event with EndOfEvent, finite
+  nonzero PCM and zero post-Term cumulative errors (J742). The retained managed
+  ABI, wider bank behavior and game lifecycle remain open.
   J627 rejects a proposed static UI fallback; J640 resolves its numeric default
   but leaves native switch/routing semantics unproven.
   Licensed Rewired and generic controllers remain open.
