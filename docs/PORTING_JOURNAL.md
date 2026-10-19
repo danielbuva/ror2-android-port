@@ -9899,3 +9899,73 @@ source/fixture producer are unchanged. ARCHITECTURE and recipe audit name the
 policy and its limits; R8 must replay the changed owner/fixture. No new local
 build input, Phase 2 output, original input, extra device, receipt hand edit,
 existing data or storage configuration is changed.
+
+## J673 — Mage's four alternates pass callbacks with mapped projectile outputs
+
+Hypothesis: the actual typed-dependency payload can run Mage's exact four
+alternate loadout, including the previously host-only Earth Shards charge
+reference, through a bounded gameplay interval. APK remains accepted
+ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Evidence: work/experiments/survivor-check/20261019T145632.362213Z/Mage/;
+read-only source/output audit: work/coordination/mage-alternate-output-triage/.
+
+The case passes 60.511215 world seconds without runtime/report errors or
+missing/suppressed activations. Native live loadout matches requested skills
+139/142/137/141 in families 102/103/105/104; server/authority callback totals
+are 22/3/4/3 for Lightning Bolt, Ice Bomb, Earth Shards and Fly Up. No missing
+charge-key failure occurs. This is callback/dependency coverage, not complete
+ability acceptance.
+
+The bounded output owner retains 18 unique player-owned projectiles without
+overflow/truncation: four MageLightningboltBasic, two MageIceBombProjectile
+and twelve MissileProjectile. All 19 observed body damage facts have mapped
+projectile inflictors: fourteen Lightning Bolt and five MissileProjectile.
+No observed Ice Bomb impact or direct Fly Up blast damage is established.
+The accepted Earth Shards prefab is present in the base/projectile manifest
+but has a different root name from MissileProjectile. Native catalog setup
+sorts names and rewrites indices, so neither serialized indices nor nearby
+callback timing can assign those missiles to Earth Shards. Source/input-path
+correlation remains under investigation; absence from a periodic projectile
+sample is not proof that no Earth Shard was spawned.
+
+First failure: none at the bounded four-callback gate. Complete charge/release,
+Earth Shards output, status effects and blast semantics remain open. Variant
+and survivor overrides/input are assisted; native stage/recovery flags are
+false and profile runs/earned/available unlocks remain 13/1/1. Finally removes
+selectors, stops and sleeps OLED. J669/J672 source is still unbuilt, so its
+new observation behavior is not part of this evidence. No profile unlock,
+original input, additional device, private receipt hand edit, existing data
+move or storage configuration change occurs.
+
+## J674 — Mage alternate loadout survives native menu-abandon cleanup and restart
+
+Hypothesis: the same per-run four-alternate loadout can finish the existing
+native UI-abandon path, release observations and start a healthy session in
+the same process without persisting diagnostic progression. APK is unchanged
+ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Evidence: work/device/<serial>/experiments/session-cleanup/
+20261019T150126.017433Z/; result.json embeds completed/restarted reports and
+preserved prior reports remain separately named.
+
+The source UI-abandon case passes. Its live Mage reaches 67.505753 world
+seconds, completes cleanup successfully, and returns through the next menu
+into session two in the same process. The restarted session reaches
+5.005341 world seconds with no first failure. Generic combat output changes
+from attached/uncleaned to detached/cleaned, then attaches fresh on restart.
+The four variants are verified by post-spawn setup snapshots, not continuous
+state coverage. All five gameplay debug options are off, but automatic input
+and developer loadout/survivor selection remain explicitly assisted.
+
+No native death/ending or persisted result is fabricated by abandoning.
+Profile runs/earned/available unlocks remain 13/1/1 across first live,
+completed and restarted snapshots. Native source-stage mode/recovery are
+false; this proves the default completed-session path, not the queued native
+cohort/table restoration or J669/J672 changes. Runtime errors and contract
+failures are empty. The collector finally removes selectors, stops and sleeps
+OLED. Startup memory counters alone are not a repeated-workload leak result.
+
+First failure: none in this cleanup/restart case. Default baseline remains
+J670; root has started the independent ordinary Huntress inventory/callback
+case while the next code candidate is prepared. No new runtime behavior,
+original input, additional device, private receipt hand edit, existing data
+move or storage reconfiguration occurs.
