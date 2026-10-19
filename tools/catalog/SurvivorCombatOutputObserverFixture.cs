@@ -51,6 +51,37 @@ public static class SurvivorCombatOutputObserverFixture
                      serverMappingApi = true, noNetworkOrGameplayClaimed = true };
     }
 
+    public static object RunBodyCatalogNameContract()
+    {
+        var helper =
+            typeof(SurvivorCombatOutputObserver).GetMethod("NativeBodyCatalogNameForFact", BindingFlags.Static | BindingFlags.NonPublic);
+        Require(helper != null && helper.ReturnType == typeof(string) && helper.GetParameters().Length == 1 &&
+                    helper.GetParameters()[0].ParameterType == typeof(BodyIndex),
+                "Native body catalog-name helper signature changed");
+        var nativeLookup =
+            typeof(BodyCatalog)
+                .GetMethod("GetBodyName", BindingFlags.Static | BindingFlags.Public, null, new[] { typeof(BodyIndex) }, null);
+        Require(nativeLookup != null && nativeLookup.ReturnType == typeof(string), "Native BodyCatalog.GetBodyName(BodyIndex) API changed");
+
+        string unavailableName = (string)helper.Invoke(null, new object[] { BodyIndex.None });
+        Require(unavailableName == string.Empty, "Unavailable BodyIndex.None must map to an empty catalog name");
+
+        bool positiveLookupObserved = false;
+        for (int i = 0; i < BodyCatalog.bodyCount; i++)
+        {
+            var candidate = (BodyIndex)i;
+            var candidateName = BodyCatalog.GetBodyName(candidate);
+            if (string.IsNullOrEmpty(candidateName))
+                continue;
+            string observedName = (string)helper.Invoke(null, new object[] { candidate });
+            Require(observedName == candidateName, "Damage fact catalog name does not resolve from its native body index");
+            positiveLookupObserved = true;
+            break;
+        }
+        return new { nativeLookupApiPresent = true, noneIsUnavailable = true, positiveLookupObserved = positiveLookupObserved,
+                     noNativeObjectsCreated = true };
+    }
+
     public static object RunBoundedHistoryContract()
     {
         var report = new SurvivorCombatOutputObserver.Report();

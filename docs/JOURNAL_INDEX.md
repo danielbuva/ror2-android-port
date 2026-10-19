@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J690](PORTING_JOURNAL.md#j690--preserve-native-body-catalog-names-in-bounded-damage-facts) | 2026-10-19 | Preserve native body catalog names in bounded damage facts | Hypothesis: future output evidence should identify its native attacker/victim catalog entries directly. |
 | [J689](PORTING_JOURNAL.md#j689--accept-receipt-bound-metadata-candidate-on-both-default-controls) | 2026-10-19 | Accept receipt-bound metadata candidate on both default controls | Hypothesis: J687's metadata/reset candidate retains ordinary transport despite J688's separate opt-in cleanup refusal. |
 | [J688](PORTING_JOURNAL.md#j688--metadata-stage-starts-native-teardown-reaches-the-source-table-guard) | 2026-10-19 | Metadata stage starts; native teardown reaches the source-table guard | Hypothesis: J682/J683's packaged source bindings and corrected native Reset can complete the first-stage lifecycle on J687's APK 55dee31826b7ecd545488d601490ba… |
 | [J687](PORTING_JOURNAL.md#j687--build-and-install-receipt-bound-identities-with-native-reset-repair) | 2026-10-19 | Build and install receipt-bound identities with native reset repair | Hypothesis: J682's metadata consumer and J683's retained-ID reset correction can ship together while reusing the accepted full content. |

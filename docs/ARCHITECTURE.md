@@ -934,6 +934,14 @@ are explicit. Histories retain 32 damage facts and 64 distinct network IDs;
 overflow observations and retained unique IDs are separate counts. Unity damage
 time and world sampling time are separately labelled. Network-ID reuse and
 short-lived outputs limit coverage; no skill slot is inferred from timing.
+Each damage fact also records attacker/victim native catalog names from
+`BodyCatalog.GetBodyName` at the event. These use the existing cached native
+strings; missing bodies/indices remain explicit empty names. The unchanged
+body/network indices and reciprocal ownership checks determine attribution.
+Names help interpret a later exact index without reconstructing catalog order.
+The exact-editor API/None fixture reports whether any positive native entry was
+available; idle editor catalogs remain uninitialized. Portable tests execute
+the authored helper against an authored catalog double.
 Cleanup detaches before body/skill retirement and releases owner references.
 An observer read failure records its first bounded error and makes only telemetry
 inert. A pending unsubscribe retains its recovery handle for disposal/retry before

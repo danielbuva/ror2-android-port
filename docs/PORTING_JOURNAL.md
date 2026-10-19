@@ -10574,3 +10574,45 @@ accepted APK to derive exact alternate identities for the next survivor batch;
 its outcome is pending. Damage catalog-name fields are applied to newer working
 source with host/editor contracts and have not been built or run. No original
 input, extra device, receipt hand edit, data move or storage change occurs.
+
+## J690 — Preserve native body catalog names in bounded damage facts
+
+Hypothesis: future output evidence should identify its native attacker/victim
+catalog entries directly. J685 has four exact owned-summon damage facts at
+body index 81, but no same-generation ordered name list that proves which
+summon that index denotes. Do not guess from sort order or clone names.
+
+Existing SurvivorCombatOutputObserver.DamageFact gains attacker/victim body
+catalog names, resolved only when the native damage event creates a fact.
+Accepted e544 BodyCatalog.GetBodyName returns its existing cached name entry;
+None/missing lookups remain empty. Existing indices, ownership predicates,
+32-slot history, subscription, sampling, gameplay and RNG are unchanged.
+No name becomes ownership or skill-slot causality evidence. Earlier reports
+remain unlabelled; no name is retroactively assigned to J685's summon.
+
+Prior art is J642's identity-first bounded observer and pinned DebugToolkit
+body/master observations at d1e2f0aa; the exact accepted catalog API supplies
+this small additional field. No native/community method body or actual catalog
+name list is copied into public source. The same existing owner/source/fixture
+producer stages the change; R8 must replay it, with no new runtime file or local
+build input. ARCHITECTURE names the data contract.
+
+Root's full 969-test suite passes with one existing skip. The initial suite
+fails a source call-site assertion after normal C# formatting; root makes that
+assertion whitespace-independent without changing the method test. The actual
+production helper is extracted and executed with an authored catalog double:
+None avoids lookup, known names retain the cached string reference, and null/
+out-of-range entries remain empty. Exact-editor compilation and API/None
+fixture pass at work/experiments/first-stage-native-lifecycle/
+catalog-names-editor-20261019T160928.947156Z/. It reports
+positiveLookupObserved=false because the idle native body catalog is not
+initialized; no Run, catalog setup or native body is fabricated to pass it.
+
+First failure: none in the final contracts. Private draft:
+work/coordination/survivor-damage-catalog-names-draft/. This source is unbuilt;
+accepted/installed APK stays J689
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+A new device fact with native catalog names remains required. Native field
+restoration diagnostics and opt-in isolated skill input are separate pending
+work. No original input, Phase 2 output, extra device, receipt hand edit,
+data move, storage reconfiguration or permanent progression occurs.

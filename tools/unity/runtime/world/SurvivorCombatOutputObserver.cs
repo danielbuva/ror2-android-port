@@ -28,6 +28,7 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
     public struct DamageFact
     {
         public int frame, attackerBodyIndex, victimBodyIndex, inflictorInstanceId, inflictorCatalogIndex;
+        public string attackerBodyCatalogName, victimBodyCatalogName;
         public uint attackerNetworkId, attackerMasterNetworkId, victimNetworkId, victimMasterNetworkId, inflictorNetworkId;
         public float unitySeconds, damageDealt, rawDamage, procCoefficient, positionX, positionY, positionZ;
         public uint damageTypeBits, damageTypeExtendedBits;
@@ -99,6 +100,13 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
         return projectile && IsServerMapped(projectile) && ProjectileCatalog.GetProjectilePrefab(projectile.catalogIndex);
     }
 
+    static string NativeBodyCatalogNameForFact(BodyIndex bodyIndex)
+    {
+        if (bodyIndex == BodyIndex.None)
+            return string.Empty;
+        return BodyCatalog.GetBodyName(bodyIndex) ?? string.Empty;
+    }
+
     static uint NetworkId(NetworkBehaviour value)
     {
         return value && value.netId.Value != 0 ? value.netId.Value : 0;
@@ -157,6 +165,10 @@ public sealed class SurvivorCombatOutputObserver : IDisposable
             var fact = new DamageFact { frame = Time.frameCount,
                                         attackerBodyIndex = damage.attackerBody ? (int)damage.attackerBody.bodyIndex : (int)BodyIndex.None,
                                         victimBodyIndex = damage.victimBody ? (int)damage.victimBody.bodyIndex : (int)BodyIndex.None,
+                                        attackerBodyCatalogName = NativeBodyCatalogNameForFact(
+                                            damage.attackerBody ? damage.attackerBody.bodyIndex : BodyIndex.None),
+                                        victimBodyCatalogName =
+                                            NativeBodyCatalogNameForFact(damage.victimBody ? damage.victimBody.bodyIndex : BodyIndex.None),
                                         attackerNetworkId = damage.attackerBody ? NetworkId(damage.attackerBody) : 0,
                                         attackerMasterNetworkId = damage.attackerMaster ? NetworkId(damage.attackerMaster) : 0,
                                         victimNetworkId = damage.victimBody ? NetworkId(damage.victimBody) : 0,
