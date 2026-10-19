@@ -12782,3 +12782,64 @@ retained managed ABI, Unity initialization, lifecycle and composed gameplay
 validation. No original bank conversion has been established as necessary.
 All native binaries, banks, raw logs and SDK material stay ignored locally;
 this documentation-only checkpoint changes no runtime or rebuild input.
+
+
+## J735 — MUL-T and Commando alternates; require live loadout identity
+
+Hypothesis: the native alternate identities inventoried in J727 execute bounded
+four-slot checks on candidate f05465855016ec4b5db17fd88a1e5f7ab54fea7e37039e5f3c99dc753c0ec200.
+Use existing per-run diagnostic selection and native input/callback observers;
+no prefab, SkillDef, cooldown, stock or persistent unlock mutation. Prior art
+remains J727's native loadout contract and the pinned R2API.LoadoutAPI context
+in docs/community-prior-art.md. Root alone runs the configured device; the
+concurrent editor build does not change the explicit owned-APK binding.
+
+MUL-T requests auxiliary Buzzsaw (component 1/family 142/variant 3/skill 193)
+and Dual Wield (component 4/family 144/variant 1/skill 201), retaining Nailgun.
+The case reaches 60.484116 live world seconds with authority/server callback
+counts 9/2/1/3 across the canonical four slots. The final native live inventory
+matches all requested identities; auxiliary Buzzsaw is correctly selected but
+has zero direct component callbacks in the final report, so this is not a
+Buzzsaw activation or damage proof. Eleven native CryoCanister/bomblet projectile
+occurrences and nine mapped player-owned projectile damage facts are recorded:
+three 24.2-damage canister hits and six 4.84-damage bomblet hits. These establish
+that native output, not slot-specific Buzzsaw or full Dual Wield semantics.
+Evidence: work/experiments/survivor-check/20261019T204800.360878Z/Toolbot/;
+root result: work/coordination/codex-toolbot-f054-alternate.stdout.
+
+Commando requests Shotgun (component 1/family 42/variant 1/skill 41), Slide
+(component 2/family 44/variant 1/skill 45) and Grenade (component 3/family 43/
+variant 1/skill 187). The 60.414108-second case records canonical authority/
+server counts 33/2/3/1 and exact final native live definitions 40/41/45/187.
+One player-owned CommandoGrenadeProjectile (catalog 67) is observed; no mapped
+grenade damage is recorded, so its damage/impact semantics remain open.
+Evidence: work/experiments/survivor-check/20261019T205414.511652Z/Commando/;
+root result: work/coordination/codex-commando-f054-alternate.stdout.
+
+Both cases have empty report first failures, collector failures and current
+process errors, unchanged profile appliedRuns 13 and zero isolated-window
+counters. Diagnostic invincibility, automated input and developer loadout
+selection make them assisted bounded cases. They do not prove ordinary unlocks,
+normal difficulty, full ability semantics or visual parity. Existing cleanup
+removes the selector, stops the app and sleeps its OLED. First failure: none.
+
+The host result previously exposed the earlier pre-spawn override inventory as
+its main inventory and left the full-check post-spawn field null. Root checked
+the real final survivorSkills inventories for J733 and these two cases rather
+than treating the pre-spawn snapshot as live proof. Change: survivor_check now
+keeps the authoring snapshot, exposes separately labelled pre/post inventories
+for both modes, and requires final native family/variant/SkillDef/runtime
+identity for each requested alternate in a four-slot case. Effective native
+loadout indices must agree. Default cases and non-requested auxiliary components
+retain their existing contracts; no extra activation criterion is invented.
+
+Host regressions reject a mismatched live SkillDef despite a correctly applied
+pre-spawn selector, reject missing live inventory, accept matching requested
+alternates, and preserve default/isolated behavior. The full suite passes
+1,020 tests in 19.869 seconds. Re-assessing actual saved Mercenary, MUL-T and
+Commando evidence under the new checker passes; authored assessment receipts:
+work/coordination/codex-survivor-live-loadout-saved-evidence-assessment.json.
+This host-only change is made after J733's runtime source was frozen into
+12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8;
+that new APK's controls are underway and it is not yet accepted. No runtime
+source, protected content, storage configuration or extra device is changed.

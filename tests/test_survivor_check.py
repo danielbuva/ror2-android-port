@@ -628,6 +628,17 @@ class SkillVariantSelectionTests(unittest.TestCase):
             ],
         }
 
+    def matching_live_inventory(self, effective):
+        inventory = copy.deepcopy(self.valid_catalog_inventory())
+        inventory["selectionSource"] = "native-master-loadout-live"
+        for row in inventory["components"]:
+            variant = effective[row["componentIndex"]]
+            row["selectedLoadoutVariantIndex"] = variant
+            row["selectedLoadoutSkillCatalogIndex"] = row["variants"][variant]["skillCatalogIndex"]
+            row["runtimeSkillCatalogIndex"] = row["selectedLoadoutSkillCatalogIndex"]
+            row["runtimeDefinitionStatus"] = "matches-selected-native-loadout"
+        return inventory
+
     def test_strict_selection_is_per_run_and_assisted(self):
         with tempfile.TemporaryDirectory() as directory:
             selector = self.write_selector(directory, self.valid_selector())
@@ -680,12 +691,16 @@ class SkillVariantSelectionTests(unittest.TestCase):
         requested = self.valid_selector()
         expected = check.survivor_selection("fixture", "Toolbot", requested)["developerSkillVariantOverride"]
         inventory = self.valid_catalog_inventory()
+        inventory["selectionSource"] = "native-master-loadout-pre-spawn"
+        effective = [0, 0, 0, 0, 1]
+        live_inventory = self.matching_live_inventory(effective)
         final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
                        developerSkillVariantAssisted=True,
                        developerSkillVariantOverride=expected,
                        developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True, "assisted": True,
-                                                            "effectiveSkillVariants": [0, 0, 0, 0, 1],
-                                                            "skillVariantInventory": inventory})
+                                                            "effectiveSkillVariants": effective,
+                                                            "skillVariantInventory": inventory},
+                       survivorSkills={**report()["survivorSkills"], "skillVariantInventory": live_inventory})
         self.assertEqual(check.assess("Toolbot", "four-slots-activated", final, final, [], expected), [])
         final["developerSkillVariantOverrideReport"]["effectiveSkillVariants"][4] = 0
         self.assertIn("per-run effective native loadout differs from the requested skill variants",
@@ -698,6 +713,50 @@ class SkillVariantSelectionTests(unittest.TestCase):
         final["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": False}
         self.assertIn("per-run skill-variant override was not applied as assisted",
                       check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+
+    def test_full_variant_contract_rejects_wrong_post_spawn_definition(self):
+        selector = self.valid_selector()
+        expected = check.survivor_selection("fixture", "Toolbot", selector)["developerSkillVariantOverride"]
+        effective = [0, 0, 0, 0, 1]
+        pre_spawn = copy.deepcopy(self.valid_catalog_inventory())
+        pre_spawn["selectionSource"] = "native-master-loadout-pre-spawn"
+        live = self.matching_live_inventory(effective)
+        final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
+                       developerSkillVariantAssisted=True, developerSkillVariantOverride=expected,
+                       developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True,
+                           "assisted": True, "effectiveSkillVariants": effective, "skillVariantInventory": pre_spawn},
+                       survivorSkills={**report()["survivorSkills"], "skillVariantInventory": live})
+        # Unrequested component 1 is intentionally unassigned; this contract checks the selected alternates only.
+        live["components"][1]["runtimeSkillCatalogIndex"] = -1
+        live["components"][1]["runtimeDefinitionStatus"] = "uninitialized-or-unassigned"
+        self.assertEqual(check.assess("Toolbot", "four-slots-activated", final, final, [], expected), [])
+        live["components"][4]["runtimeSkillCatalogIndex"] = 806
+        live["components"][4]["runtimeDefinitionStatus"] = "differs-from-selected-native-loadout"
+        failures = check.assess("Toolbot", "four-slots-activated", final, final, [], expected)
+        self.assertIn("post-spawn native family/variant/skill identity differs from request", failures)
+
+    def test_full_variant_contract_requires_live_inventory_and_reports_both_snapshots(self):
+        selector = self.valid_selector()
+        expected = check.survivor_selection("fixture", "Toolbot", selector)["developerSkillVariantOverride"]
+        effective = [0, 0, 0, 0, 1]
+        pre_spawn = copy.deepcopy(self.valid_catalog_inventory())
+        pre_spawn["selectionSource"] = "native-master-loadout-pre-spawn"
+        final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
+                       developerSkillVariantAssisted=True, developerSkillVariantOverride=expected,
+                       developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True,
+                           "assisted": True, "effectiveSkillVariants": effective, "skillVariantInventory": pre_spawn},
+                       survivorSkills={**report()["survivorSkills"], "skillVariantInventory": self.matching_live_inventory(effective)})
+        fields = check.skill_variant_inventory_report_fields(final)
+        self.assertEqual(fields["pre_spawn_skill_variant_catalog_inventory"]["selectionSource"],
+                         "native-master-loadout-pre-spawn")
+        self.assertEqual(fields["post_spawn_skill_variant_catalog_inventory"]["selectionSource"],
+                         "native-master-loadout-live")
+        self.assertEqual(fields["skill_variant_catalog_inventory"], fields["pre_spawn_skill_variant_catalog_inventory"])
+        del final["survivorSkills"]["skillVariantInventory"]
+        fields = check.skill_variant_inventory_report_fields(final)
+        self.assertEqual(fields["post_spawn_skill_variant_catalog_inventory"]["status"], "unavailable")
+        failures = check.assess("Toolbot", "four-slots-activated", final, final, [], expected)
+        self.assertIn("post-spawn native skill-variant inventory unavailable or not live", failures)
 
     def test_catalog_inventory_exposes_exact_indexes_and_refuses_unbounded_or_ambiguous_shapes(self):
         report_value = {"developerSkillVariantOverrideReport": {

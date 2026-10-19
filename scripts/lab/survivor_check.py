@@ -249,6 +249,25 @@ def skill_variant_catalog_inventory(report):
             "selectionSource": selection_source, "components": normalized}
 
 
+def post_spawn_skill_variant_catalog_inventory(report):
+    """Validate the live observer inventory, bypassing the pre-spawn selector snapshot."""
+    survivor_skills = report.get("survivorSkills") or {}
+    return skill_variant_catalog_inventory({
+        "survivorSkills": {"skillVariantInventory": survivor_skills.get("skillVariantInventory")}
+    })
+
+
+def skill_variant_inventory_report_fields(report):
+    """Keep the selector snapshot for authoring and expose live post-spawn identity separately."""
+    override = report.get("developerSkillVariantOverrideReport") or {}
+    selected = skill_variant_catalog_inventory(report)
+    return {
+        "skill_variant_catalog_inventory": selected,
+        "pre_spawn_skill_variant_catalog_inventory": selected if override.get("requested") is True else None,
+        "post_spawn_skill_variant_catalog_inventory": post_spawn_skill_variant_catalog_inventory(report),
+    }
+
+
 def suppressed_missing_callbacks(report):
     """Return suppressed callback types that are still absent from each slot."""
     observation = report.get("survivorSkills") or {}
@@ -475,6 +494,31 @@ def assess(survivor, stop, first, final, errors, skill_variant_override=None):
                         row["variants"][entry["variantIndex"]]["skillCatalogIndex"] != entry["skillCatalogIndex"]):
                     failures.append("per-run skill-variant request differs from reported native catalog identity")
                     break
+
+            live_catalog = post_spawn_skill_variant_catalog_inventory(final)
+            if (live_catalog["status"] != "valid" or
+                    live_catalog.get("selectionSource") != "native-master-loadout-live"):
+                failures.append("post-spawn native skill-variant inventory unavailable or not live")
+            else:
+                live_rows = {row["componentIndex"]: row for row in live_catalog["components"]}
+                if (not isinstance(effective, list) or len(effective) != len(live_rows) or
+                        any(type(index) is not int or index < 0 for index in effective) or
+                        any(entry["componentIndex"] not in live_rows or
+                            effective[entry["componentIndex"]] != entry["variantIndex"]
+                            for entry in skill_variant_override.get("entries", []))):
+                    failures.append("post-spawn effective native loadout differs from requested variants")
+                elif any(
+                    entry["componentIndex"] not in live_rows or
+                    live_rows[entry["componentIndex"]]["familyCatalogIndex"] != entry["familyCatalogIndex"] or
+                    live_rows[entry["componentIndex"]]["selectedLoadoutVariantIndex"] != entry["variantIndex"] or
+                    live_rows[entry["componentIndex"]]["selectedLoadoutSkillCatalogIndex"] != entry["skillCatalogIndex"] or
+                    live_rows[entry["componentIndex"]]["runtimeDefinitionStatus"] != "matches-selected-native-loadout" or
+                    live_rows[entry["componentIndex"]]["runtimeSkillCatalogIndex"] != entry["skillCatalogIndex"] or
+                    entry["variantIndex"] >= len(live_rows[entry["componentIndex"]]["variants"]) or
+                    live_rows[entry["componentIndex"]]["variants"][entry["variantIndex"]]["skillCatalogIndex"] != entry["skillCatalogIndex"]
+                    for entry in skill_variant_override.get("entries", [])
+                ):
+                    failures.append("post-spawn native family/variant/skill identity differs from request")
     inventory = component_inventory(final, survivor)
     if inventory["status"] == "invalid":
         failures.append("invalid survivor skill component inventory: " + inventory.get("reason", "unknown"))
@@ -560,9 +604,7 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
         failures = (assess_isolated_skill(survivor, skill_slot, stop, first, final, runtime_errors, skill_variant_override)
                     if skill_slot else assess(survivor, stop, first, final, runtime_errors, skill_variant_override))
         isolated_identity = isolated_skill_identity(final or {}, skill_slot) if skill_slot else None
-        live_variant_inventory = (skill_variant_catalog_inventory({
-            "survivorSkills": {"skillVariantInventory": (final.get("survivorSkills") or {}).get("skillVariantInventory")}
-        }) if skill_slot else None)
+        inventory_fields = skill_variant_inventory_report_fields(final or {})
         result = {
             "success": not failures,
             "survivor": survivor,
@@ -573,11 +615,10 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
             "missing_activations": missing_activations(final or {}),
             "suppressed_callbacks": suppressed_missing_callbacks(final or {}),
             "component_inventory": component_inventory(final or {}, survivor),
-            "skill_variant_catalog_inventory": skill_variant_catalog_inventory(final or {}),
+            **inventory_fields,
             "skill_variant_override": skill_variant_override,
             "mode": "isolated-skill-slot-diagnostic" if skill_slot else "four-slot-survivor-kit-check",
             "selected_skill_slot": isolated_identity,
-            "post_spawn_skill_variant_catalog_inventory": live_variant_inventory,
             "ability_effects": {"status": "not-attributed-by-slot-callback-check",
                                 "complete_skill_semantics": "not-established"} if skill_slot else None,
             "apk_sha256": installed["apk_sha256"],

@@ -790,6 +790,12 @@ A live inventory binds reciprocal native body/master ownership and exact server
 mappings, with the catalog prefab's matching component/family order. Override
 inventory takes precedence only for an explicitly requested override; Unity's
 empty default inline reports do not displace the actual live observation.
+The host result keeps that authoring inventory and labels pre-spawn and live
+post-spawn inventories separately in both full-kit and isolated checks. A
+requested alternate in the four-slot check must also match the final live
+family, selected variant, selected SkillDef and runtime definition/index, with
+the effective native loadout agreeing. Non-requested passive/auxiliary runtime
+identities gain no invented activation requirement.
 
 Host parser/assessment contracts are in `tests/test_survivor_check.py` and dispatch
 contracts in `tests/test_cli_actions.py`. The existing fixture producer stages
