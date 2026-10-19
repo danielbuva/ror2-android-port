@@ -1222,7 +1222,9 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
 # built earlier in the same editor process count; a code-only build in a fresh editor
 # reuses the payload and sees none, so the linker then strips reflected Addressables
 # operations (J30-J33, J505). Preserve the set the device-verified J503 build rooted
-# instead of depending on editor process history (J506).
+# instead of depending on editor process history (J506). A build that rebuilds the
+# Timeline-bearing bundles in-process also roots Unity.Timeline, so code-only and full
+# builds rooted different sets (J583); preserving it makes both agree.
 BUNDLE_ROOT_ASSEMBLIES = (
     "AK.Wwise.Unity.API",
     "AK.Wwise.Unity.API.WwiseTypes",
@@ -1231,6 +1233,7 @@ BUNDLE_ROOT_ASSEMBLIES = (
     "Rewired_Core",
     "Unity.Postprocessing.Runtime",
     "Unity.ResourceManager",
+    "Unity.Timeline",
     "com.unity.multiplayer-hlapi.Runtime",
 )
 

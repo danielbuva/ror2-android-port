@@ -329,7 +329,8 @@ class PreservationDescriptorTests(unittest.TestCase):
         # ResourceManager/CompletedOperation`1; whole-assembly preservation covers them.
         self.assertEqual(assemblies["Unity.ResourceManager"].get("preserve"), "all")
         self.assertEqual([n.get("fullname") for n in assemblies["Unity.ResourceManager"]], ["Outer/Inner"])
-        for name in ["KinematicCharacterController", "Rewired_Core", "com.unity.multiplayer-hlapi.Runtime"]:
+        # J583: full builds also root Unity.Timeline; code-only builds must match them.
+        for name in ["KinematicCharacterController", "Rewired_Core", "Unity.Timeline", "com.unity.multiplayer-hlapi.Runtime"]:
             self.assertEqual(assemblies[name].get("preserve"), "all")
         self.assertIsNone(assemblies["RoR2"].get("preserve"))
         self.assertEqual(sorted(n.get("fullname") for n in assemblies["RoR2"]), ["RoR2.Achievements.*", "RoR2.ItemDef"])

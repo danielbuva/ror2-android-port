@@ -24,9 +24,8 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Make R9 equivalent (J583): reimport dependents in dependency layers; decide whether to
-      pin `Unity.Timeline.dll` so code-only and full builds agree; find why
-      `Hidden/Compositing` drops out; decide how R9 treats `Lab.unity` and export-form importers.
+- [ ] Make R9 equivalent (J583): reimport dependents in dependency layers, then rerun R9
+      (the `Unity.Timeline` pin is in place since J584); find why `Hidden/Compositing` drops out; decide how R9 treats `Lab.unity` and export-form importers.
 - [ ] Remove the rebuild's remaining local inputs: R2's migration evidence (B1, B3–B6, B8),
       the 63 hash-pinned analysis inputs and the 14 inherited-store files.
 - [ ] Switch the working project's own build to the rebuild path (migration-removal commit 9,

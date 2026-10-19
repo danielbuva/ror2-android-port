@@ -562,8 +562,8 @@ Still open:
    separate destination in twelve host steps, each byte-identical to the working project
    (J567–J575). R9 builds it into an APK that passed both device checks (J582), but R9
    still reports it unequal. J583 named the causes: the extra `Unity.Timeline.dll` linker
-   root matches the working project's own full builds (the reference APK is a code-only
-   build); the three reimport errors come from Unity importing spawn cards before their
+   root came from editor-process history and is now preserved in the descriptor, so
+   code-only builds match full builds (J584; R9 not yet rerun); the three reimport errors come from Unity importing spawn cards before their
    prefabs within one batch; `Hidden/Compositing` drops out for a reason still open; and
    `Lab.unity` plus a few export-form importers differ on every build.
 2. **The rebuild still reads local migration evidence.** Its R2 step runs

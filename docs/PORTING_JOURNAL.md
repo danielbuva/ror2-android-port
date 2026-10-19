@@ -6134,3 +6134,34 @@ before R9), and the working meta has other importer values (mipmaps, texture typ
 platform overrides). The editor does not rewrite a meta on a plain import. Revisit: decide the
 Timeline pin; run the item-2 experiment; implement the layered reimport, then rerun R9; decide how
 R9 treats `Lab.unity` and the export-form metas.
+
+## J584 — Unity.Timeline preserved; code-only builds match full builds
+
+Phase 2, from-scratch rebuild (operator decision on J583 item 1; implemented and run by Claude).
+Hypothesis: preserving `Unity.Timeline` whole in the whole-catalog `link.xml`, as J506 did for 8
+other bundle-rooted assemblies, gives a code-only build the same managed code as a build that
+rebuilds the Timeline-bearing bundles in-process. Change: `Unity.Timeline` joins
+`whole_catalog.BUNDLE_ROOT_ASSEMBLIES` (`preserve="all"`); its 16 per-type entries stay. The host
+test now checks it; 757 host tests and preflight pass. No prior-art entry covers player stripping;
+the mechanism is Unity's documented `link.xml` preservation (J31–J33, J506).
+
+Evidence. `whole-catalog-code-build` in the working exact editor: zero errors in 108 s, APK
+`94e683bdecf73488d5c6f4a8c6e204605ed30485fb65bba9c9d652327333ba8d`. The linker still received 12
+root assemblies; the extra preservation comes from the descriptor. `global-metadata.dat` is now
+byte-identical to R9's (J582) and to the working full builds of J542 and J551. `libil2cpp.so`
+grew to R9's 97,061,512 B (+109,008 B over `5f0520d2…`) and differs from R9's in only the 24
+build-id and debuglink-CRC bytes. The Burst library is unchanged from `5f0520d2…`; it still
+differs from R9's only through the embedded project path. `unity_builtin_extra` still holds
+`Hidden/Compositing` (J583 item 2 is unaffected). Installed in place on adopted storage, default
+payload. `./dev check-baseline` passed: 35.2 s on Lakes, 13 applied runs before and after
+(`work/experiments/baseline/20261019T014219.638122Z`). `--stage-exit` passed: one genuine
+transition to Goolake with 10.1 s of next-stage play (`…20261019T014553.527174Z`). App stopped,
+OLED asleep. This APK is the new baseline. R9 compares against it from now on.
+
+Rebuild side. The `link.xml` provenance row was refreshed (sha256 `3801fd31…`, 100,048 B). The
+previous map is kept as `work/receipts/provenance-map.before-J584-20261019T015143.000000Z.json`.
+Rerunning `runtime-sources` (the step that owns the descriptor) on the destination regenerated it
+byte-identically: 100 files identical. `importer-identities` (286 identical) and
+`validate-bindings` pass. The destination's existing R9 receipt and APK predate this, so R9 must
+rerun before it can be compared again. Revisit: rerun R9 after the layered reimport (J583 item 3);
+the Timeline difference should then be gone from its APK comparison.
