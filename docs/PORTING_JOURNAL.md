@@ -8251,3 +8251,41 @@ installed 03339547… (J631); candidate device checks remain separate. Both
 baseline modes are still required before APK acceptance. R8/build-entry replay
 must include this authored source and fixture. No new required local content,
 generated asset, payload, device receipt or Phase 2 output is introduced.
+
+## J633 — Wait for a sampled living world before timing UI abandon
+
+The first UI-abandon attempt on J631 APK
+03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648
+stops before either settings/end-run tap. Its first session-1 world-playing
+report has ready=true but world time, health and maxHealth still zero and
+diagnosticInputEver=false. Death events are zero, death/ending/result flags
+are false, and no report error exists. The runtime announces its prepared
+world before the first live observation populates those health/input samples;
+the host incorrectly treats this startup snapshot as a failed living interval.
+Evidence: work/device/<serial>/experiments/session-cleanup/20261019T105801.021835Z/.
+The per-device result contains the failed current report and exact launch ID.
+No UI, forced death, cleanup or restart is established. Finalization stops the
+app, removes its selector and sleeps the display. The profiling watcher stops
+without dispatching its command because the suitable interval is never reached.
+
+Host-only correction: wait up to 60 s from the first world-playing snapshot
+for finite positive health/maxHealth, ready state, diagnostic-input evidence
+and the required Engineer guard. Start the 60 s host living interval only
+after all are present; the existing world-time threshold also remains. Actual
+death events/lifecycle, run endings, profile-result application and runtime
+errors remain fatal before that interval. Any sampled health/readiness/input
+or guard interruption after it starts still refuses. No tap is sent on a
+startup wait or timeout. The original 600 s overall deadline stays unchanged.
+
+The real-module fake-device regression includes the incomplete startup report,
+then the full positive baseline and a whole live interval before its first tap.
+A separate case bounds startup without tapping, and existing post-start health
+and interruption refusals remain. Independent review finds no additional issue.
+All 925 host tests pass with one optional skip; Ruff passes. Evidence:
+work/coordination/codex-cleanup-startup-wait-host.log and
+work/coordination/codex-cleanup-startup-wait-all-host.log.
+These are host contracts, not Android cleanup acceptance. Revisit with another
+explicit Engineer UI attempt on the unchanged receipt-backed APK; preserve the
+first failure. Loader is separately replaying while this host fix is reviewed.
+Both baseline modes remain pending and J620 stays accepted. This changes no
+APK, runtime, recipe, payload, local build input, device receipt or Phase 2 output.

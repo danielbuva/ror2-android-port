@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J633](PORTING_JOURNAL.md#j633--wait-for-a-sampled-living-world-before-timing-ui-abandon) | 2026-10-19 | Wait for a sampled living world before timing UI abandon | The first UI-abandon attempt on J631 APK 03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648 stops before either settings/end-run tap. |
 | [J632](PORTING_JOURNAL.md#j632--keep-objective-exit-reports-coherent-and-retain-a-bounded-native-handoff-trace) | 2026-10-19 | Keep objective exit reports coherent and retain a bounded native handoff trace | J629's final objective strings were sampled at different times: the existing observer saved a new activation state before refreshing FSM/exit fields, and the e… |
 | [J631](PORTING_JOURNAL.md#j631--engineer-produces-native-mines-guarded-shields-and-owned-turrets) | 2026-10-19 | Engineer produces native mines, guarded shields and owned turrets | The J630 cold-list correction builds in 96.41 s with zero errors after selected live preflight, request 20261019T105117.916216Z. |
 | [J630](PORTING_JOURNAL.md#j630--observe-engineers-cold-deployable-list-without-initializing-it) | 2026-10-19 | Observe Engineer's cold deployable list without initializing it | The independent selected Engineer check on J629 source100 APK 9d022653f52736640826447b7911f589e4d1680f3eb2c6b3a2041ed8873eb75d stops before world readiness at… |

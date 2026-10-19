@@ -20,6 +20,7 @@ SPINE_ID = "body-state-spawn-state-auto-nova-spine-bringup"
 FIRST_STAGE = "lakes"
 HOST_DEADLINE_SECONDS = 600
 ABANDON_MIN_LIVE_SECONDS = 60.0
+ABANDON_STARTUP_TIMEOUT_SECONDS = 60.0
 POLL_SECONDS = 2
 LOG_POLL_SECONDS = 10
 COMPLETED_REPORT_NAME = "movement-completed-session-1.json"
@@ -222,8 +223,10 @@ def abandon_observation_failures(report, survivor, elapsed, live_started):
     world = report.get("world") or {}
     if world.get("ready") is not True:
         failures.append("waiting for a ready integrated world" if live_started is None else "world stopped being ready during observed interval")
-    elif not _finite_number(world.get("health")) or world["health"] <= 0:
-        failures.append("ready world does not report a living player")
+    elif not _finite_number(world.get("health")) or world["health"] <= 0 or not _finite_number(world.get("maxHealth")) or world["maxHealth"] <= 0:
+        failures.append(
+            "waiting for positive player health/maxHealth" if live_started is None else "ready world does not report a living player with positive maxHealth"
+        )
     if world.get("diagnosticInputEver") is not True:
         failures.append(
             "waiting for diagnostic input in the live world" if live_started is None else "diagnostic input was not observed throughout the live interval"
@@ -237,6 +240,19 @@ def abandon_observation_failures(report, survivor, elapsed, live_started):
         failures.append(
             "waiting for Engi shield template guard" if live_started is None else "Engi shield template guard was not prepared throughout the live interval"
         )
+    defeat = report.get("playerDefeat") or {}
+    if isinstance(defeat, dict):
+        events = defeat.get("deathEvents")
+        if events is not None and (type(events) is not int or events != 0):
+            failures.append("player death event occurred before abandon")
+        if defeat.get("deathEntered") is True or defeat.get("bodyDestroyed") is True:
+            failures.append("player death lifecycle occurred before abandon")
+    results = report.get("results") or {}
+    if isinstance(results, dict) and any(results.get(field) is True for field in ("serverEnding", "clientEnding", "reportGenerated", "persisted")):
+        failures.append("run ending or result occurred before abandon")
+    profile = report.get("profile") or {}
+    if isinstance(profile, dict) and profile.get("resultApplied") is True:
+        failures.append("profile result was applied before abandon")
     return failures
 
 
@@ -537,6 +553,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss"):
     completed = None
     profile_baseline = None
     abandon_live_at = None
+    abandon_startup_at = None
     stop = "deadline"
     first_failure = None
     observed_session1_defeat = False
@@ -654,11 +671,15 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss"):
                         write(out / "first-live-session.json", current)
                     if ending == "abandon" and not abandon_input_sent:
                         observed_world = current.get("world") or {}
+                        if abandon_startup_at is None:
+                            abandon_startup_at = time.monotonic()
                         if (
                             abandon_live_at is None
                             and observed_world.get("ready") is True
                             and _finite_number(observed_world.get("health"))
                             and observed_world["health"] > 0
+                            and _finite_number(observed_world.get("maxHealth"))
+                            and observed_world["maxHealth"] > 0
                             and observed_world.get("diagnosticInputEver") is True
                             and (survivor != "Engi" or observed_world.get("engiShieldGuardPrepared") is True)
                         ):
@@ -676,6 +697,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss"):
                                 "host did not observe a full 60 second live interval",
                                 "waiting for a ready integrated world",
                                 "waiting for diagnostic input in the live world",
+                                "waiting for positive player health/maxHealth",
                                 "waiting for Engi shield template guard",
                             )
                             for failure in observation_failures
@@ -689,12 +711,17 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss"):
                                 "host did not observe a full 60 second live interval",
                                 "waiting for a ready integrated world",
                                 "waiting for diagnostic input in the live world",
+                                "waiting for positive player health/maxHealth",
                                 "waiting for Engi shield template guard",
                             )
                         ]
                         if blocking_failures:
                             fail("abandon-observation-contract-failed")
                             first_failure = blocking_failures[0]
+                            break
+                        if abandon_live_at is None and time.monotonic() - abandon_startup_at >= ABANDON_STARTUP_TIMEOUT_SECONDS:
+                            fail("abandon-world-startup-timeout")
+                            first_failure = "positive health, diagnostic input, and required Engi guard were not observed within 60 seconds"
                             break
                         if waiting_for_minute:
                             # Keep observing the same report stream; elapsed host time

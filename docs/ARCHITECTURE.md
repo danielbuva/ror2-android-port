@@ -811,6 +811,10 @@ profile counts, and refuses stale reports, runtime errors or departure from
 Lakes. Setup preserves and removes only the owned report targets; teardown
 preserves foreign selectors, verifies process termination and sleeps the display.
 Raw evidence stays in validated `work/device/<serial>/experiments/session-cleanup/<attempt>/`.
+UI-abandon startup waits at most 60 s from its first world-playing snapshot for
+sampled positive health/maxHealth, ready/input evidence and the required guard.
+Only then does its 60 s host interval start. Death/ending evidence stays fatal
+through startup; any sampled interruption after the interval begins refuses.
 The check cannot certify an unassisted run, permanent unlocks or a memory leak
 fix. Host contracts live in `tests/test_session_cleanup_check.py`; J609 records
 Android acceptance on the earlier J608 APK; the current candidate needs its own check.
