@@ -6261,3 +6261,56 @@ draft, not a completed feature. The authored runtime sources, source/layout reci
 and fixture staging change R8's reproduced files; its source/importer/provenance
 cohorts need replay after this candidate is accepted. No Phase 2 rebuild work was
 performed here.
+
+## J588 — Versioned Wwise graph inventory; Android audio still unavailable
+
+Observation / hypothesis: J496's named event/media inventory cannot establish
+event playback semantics. Parse bank generator versions and full event graphs
+offline before choosing an Android runtime or designing a compatibility renderer.
+
+Prior art: revisited pinned R2API.Sound at `f539511e`, which requires native
+engine initialization before bank/event use. Inspected wwiser `v20260808` at
+`08e937b649bc7007c234bbd59e34a41d5eef3b38`: its documentation and TXTP generator
+describe containers, game-sync selectors, RTPCs, music and decoder limitations.
+No license file was found in the inspected tree; the checkout is research-only.
+No upstream implementation, game banks, media, graph or plan is copied to Git.
+
+Change: the existing authored `wwise_bank_index.py` now reads exactly one complete
+BKHD header, records platform/schema/generator version and rejects disagreement
+between each bank and SoundBanksInfo. Three focused host tests pass, including
+non-first BKHD and missing/truncated/duplicate-header refusal. The existing
+host-only index action confirms all 247 accepted Windows banks use version 150
+and XML schema 16; its 11,876 embedded-media and 3,318 event counts remain intact.
+
+Evidence: `work/experiments/audio-recovery/event-graph-20261019T050912.324360Z/`
+preserves the first failed relative-reference attempt.
+`work/experiments/audio-recovery/event-graph-20261019T051021.605843Z/` corrects
+the output directory, yields 12 Commando plans and resolves 11 randomized primary
+variants. Decoder metadata succeeds at 44,100 Hz mono Vorbis with zero WAV
+outputs; no audio was played. The explicit zero-dB request emits a misleading
+volume warning because the pinned generator tests zero as falsy while setting
+automatic volume off. It is not evidence of source gain parity.
+
+`work/experiments/audio-recovery/event-graph-all-20261019T051514.427006Z/`
+parses copies of all 247 banks with exit code 0, producing 3,081 TXTP plans and
+309 duplicate notices. Accepted source hashes match before and after; the
+legitimate installation is unchanged. Generated XML contains 3,318 event objects,
+2,623 random/sequence containers, 2,098 RTPC blocks, 16,325 state chunks, music
+switches/sequences/segments/tracks and action/routing/transition objects.
+Plans are not distinct playable events. Unused-audio/transition notices remain
+in the preserved log.
+
+First unresolved boundary: graph and decoder metadata do not supply an Android
+engine. Current reviewed no-audio transforms still report uninitialized audio
+and suppress native producers truthfully. A compatible authorized Android SDK,
+codec/plugin coverage and runtime license have not been established. An
+alternative renderer would need source-backed graph execution, state/switch/RTPC
+updates, routing/mixing/spatialization, exact game-facing playing IDs/callbacks
+and owned bank/event teardown; a one-event/one-clip table cannot satisfy this.
+
+No APK, install, payload or audio capability change. No editor/device action or
+rebuild step ran while the parallel-session lock remained present; J586 stays
+reserved. This support-tool change does not alter R8 runtime inputs.
+Revisit with an authorized compatible runtime or an explicitly scoped renderer
+contract, then compare event traces and audible device behavior. Keep all
+generated audio material ignored.

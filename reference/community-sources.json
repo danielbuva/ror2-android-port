@@ -3,6 +3,39 @@
   "local_head": "3cfc3a4f5375da72fb89ad648cae813e77f57612",
   "sources": [
     {
+      "name": "wwiser",
+      "url": "https://github.com/bnnm/wwiser",
+      "revision": "08e937b649bc7007c234bbd59e34a41d5eef3b38",
+      "license": "No LICENSE file found in inspected tree; research only, no code copied or vendored",
+      "last_verified": "2026-10-19",
+      "activity": {
+        "head_commit_date": "2026-09-30T23:57:20+02:00",
+        "head_subject": "cleaner: fix unreachable .wem being marked as unwanted",
+        "interpretation": "Observed commit metadata, not a maintenance guarantee"
+      },
+      "ror2_version": "Generic bank parser; accepted local Windows banks independently verified as version 150",
+      "unity_version": "Offline Python analysis; no Unity or Android runtime integration",
+      "subsystems": [
+        "Wwise",
+        "audio graph",
+        "diagnostics"
+      ],
+      "local_reuse": "Inspect event/container/game-sync/RTPC/music graphs and decoder plans against copies of legitimate input",
+      "notes": "Version v20260808. Generated plans/graphs and bank/media bytes remain ignored. No runtime, codec, redistribution or SDK permission follows from parsing.",
+      "milestones": "audio",
+      "confidence": "VERIFIED host graph / EXPERIMENTAL Android applicability",
+      "inspected_files": [
+        {
+          "path": "doc/WWISER.md",
+          "url": "https://github.com/bnnm/wwiser/blob/08e937b649bc7007c234bbd59e34a41d5eef3b38/doc/WWISER.md"
+        },
+        {
+          "path": "wwiser/generator/txtp/wtxtp_cache.py",
+          "url": "https://github.com/bnnm/wwiser/blob/08e937b649bc7007c234bbd59e34a41d5eef3b38/wwiser/generator/txtp/wtxtp_cache.py"
+        }
+      ]
+    },
+    {
       "name": "R2Wiki",
       "url": "https://github.com/risk-of-thunder/R2Wiki",
       "revision": "0eefb7ab1c96393cd19e13e140a42c401f5d76e4",

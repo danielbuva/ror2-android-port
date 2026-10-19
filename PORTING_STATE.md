@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J587** (host draft; device baseline remains J585).
+Last updated 2026-10-18 after **J588** (host research; device baseline remains J585).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -55,7 +55,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 - Moon, finale and escape: deferred; manual only, never navigated autonomously.
 - Stock Steam startup, cloud profiles, platform identity: unavailable by design (no
   fabricated ownership or service success).
-- Audio (unavailable), licensed Rewired and generic controllers.
+- Audio remains unavailable: J588 parses the complete version-150 bank graph
+  offline; a compatible authorized Android runtime is still unestablished.
+  Licensed Rewired and generic controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across sessions.
 

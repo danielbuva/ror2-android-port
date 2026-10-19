@@ -6,7 +6,7 @@ Keep DEVELOPMENT_PLAN.md and Architecture C authoritative. This reference preven
 
 Evidence order: measured legitimate input → local experiments → exact community source → Risk of Thunder documentation → functioning mod projects → issues/PRs → conversation leads. **VERIFIED** identifies either a stated source implementation or measured local fact, explicitly scoped. **INFERRED** is a supported applicability judgment. **EXPERIMENTAL** requires a new test. **NOT APPLICABLE** rejects use at this boundary. A community package version is never evidence of the shipped game's package version.
 
-The [structured source index](../reference/community-sources.json) records 16 repositories, exact inspected SHAs, file permalinks, licenses, commit activity, version assumptions, reuse boundaries and milestones. Source IDs below resolve through that index. Public reference checkouts are shallow, source-focused and ignored under `work/reference-repos/`; nothing is installed in Unity or the game. No source code was copied into authored implementation. A root license does not grant rights to bundled game declarations, assets or proprietary middleware.
+The [structured source index](../reference/community-sources.json) records 17 repositories, exact inspected SHAs, file permalinks, licenses, commit activity, version assumptions, reuse boundaries and milestones. Source IDs below resolve through that index. Public reference checkouts are shallow, source-focused and ignored under `work/reference-repos/`; nothing is installed in Unity or the game. No source code was copied into authored implementation. A root license does not grant rights to bundled game declarations, assets or proprietary middleware.
 
 ## Verified baseline and version caveat
 
@@ -311,3 +311,17 @@ J429 revisits pinned AddressReferencedAsset.cs before adapting updated native pr
 J430: pinned ThunderKit FileIdUtil and AssetRipper MonoScriptExtensions establish namespace/name-based source script identity; actual 45f2 editor MonoScripts independently verify all 43 UI mapping targets. Pinned R2API AddressReferencedAsset location validation separates runtime addresses from serialized GUIDs. For one exported scene GUID collision, the original catalog uniquely assigns the GUID while retaining two distinct scene addresses; keep that owner and give only the other generated scene a deterministic local ID. No source scene is deleted, original installation changed, entitlement enabled or community/game implementation copied into tracked files. Provider discovery reads constructor calls in the original registration IL and checks recovered categories against the original IL; startup phase/dependency attributes are observed without running platform initialization.
 
 J430 runtime roots revisit pinned R2API AddressReferencedAsset and content-provider source: exact addresses, typed loading and handle ownership differ from broad labels and mere request strings. Original IL/catalog matches seed shared baked/UI dependencies without guessing paths or invoking startup services. Original bundle container/type/name/path IDs disambiguate exported font subassets. Native EffectCatalog behavior, not the previous provider-array meaning, supplies the updated effect count. The existing measured thirteen-catalog path is shared by host and Android; no game/community implementation or platform initializer is reconstructed.
+
+
+## J588 — Offline Wwise event graphs
+
+Pinned wwiser `08e937b649bc7007c234bbd59e34a41d5eef3b38` parses accepted
+version-150 Windows banks into event/container/state/RTPC/music graphs and decoder
+plans. Its [documentation](https://github.com/bnnm/wwiser/blob/08e937b649bc7007c234bbd59e34a41d5eef3b38/doc/WWISER.md)
+makes graph execution and decoder limitations explicit. The local zero-dB warning
+is explained by the pinned generator's falsy-zero check, not a measured game
+volume discrepancy. No license file was found; research observation only, no
+code vendoring or runtime dependency. Full result and private evidence paths live
+once in J588. R2API.Sound's native initialization prerequisite remains material;
+neither bank parsing nor TXTP generation supplies Android ABI/codec/SDK permission
+or audible acceptance.

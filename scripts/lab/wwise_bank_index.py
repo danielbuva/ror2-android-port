@@ -57,6 +57,16 @@ def embedded_media(path):
     return result
 
 
+def bank_version(path):
+    """Read the generator ABI from one accepted Windows bank header."""
+    headers = [(offset, size) for tag, offset, size in chunks(path) if tag == b"BKHD"]
+    if len(headers) != 1 or headers[0][1] < 4:
+        raise ValueError(f"Expected one complete BKHD version: {path.name}")
+    with path.open("rb") as stream:
+        stream.seek(headers[0][0])
+        return struct.unpack("<I", stream.read(4))[0]
+
+
 def index(verify_decoder=False):
     accepted = read(WORK / "config/accepted-input.json")
     generation = read(WORK / "lab-project/.port-input.json")
@@ -67,6 +77,7 @@ def index(verify_decoder=False):
     if not xml.is_file():
         raise RuntimeError("Accepted Wwise bank metadata unavailable")
     source = ET.parse(xml).getroot()
+    metadata_version = int(source.attrib["SoundBankVersion"])
     banks, events, mismatches = [], [], []
     all_media = {}
     for bank in source.findall("SoundBanks/SoundBank"):
@@ -80,6 +91,9 @@ def index(verify_decoder=False):
         if not path.is_file() or path.suffix.lower() != ".bnk":
             raise ValueError(f"SoundBanksInfo bank missing: {relative}")
         embedded = embedded_media(path)
+        version = bank_version(path)
+        if version != metadata_version:
+            raise ValueError(f"Bank generator version differs from SoundBanksInfo: {relative}")
         embedded_ids = {entry["id"] for entry in embedded}
         declared = []
         for file in bank.findall("Media/File"):
@@ -89,7 +103,7 @@ def index(verify_decoder=False):
             all_media.setdefault(media_id, set()).add(relative)
             if (location == "Memory") != (media_id in embedded_ids):
                 mismatches.append({"bank": relative, "media": media_id, "location": location, "embedded": media_id in embedded_ids})
-        banks.append({"path": relative, "sha256": sha(path), "bytes": path.stat().st_size, "embedded": embedded, "declared": declared})
+        banks.append({"path": relative, "sha256": sha(path), "bytes": path.stat().st_size, "version": version, "embedded": embedded, "declared": declared})
         for event in bank.findall("Events/Event"):
             events.append(
                 {
@@ -123,10 +137,14 @@ def index(verify_decoder=False):
     report = {
         "input_id": accepted["input_id"],
         "metadata_sha256": sha(xml),
+        "metadata_schema_version": int(source.attrib["SchemaVersion"]),
+        "metadata_bank_version": metadata_version,
+        "platform": source.attrib["Platform"],
         "banks": banks,
         "events": events,
         "summary": {
             "banks": len(banks),
+            "bank_versions": sorted({bank["version"] for bank in banks}),
             "events": len(events),
             "embedded_media": sum(len(bank["embedded"]) for bank in banks),
             "single_media_events": sum(len(event["media"]) == 1 for event in events),
