@@ -974,6 +974,14 @@ authored operation fixture: it runs twice, verifies shared-operation/count and
 missing/error cases, then checks exact provider/locator/cache restoration.
 The compiled formatter host contract preserves the ordinary failure prefix.
 
+Native teardown restores the source cohort and borrowed tables before final
+commerce reconciliation. `TeleporterWorldSession.Dispose` performs that
+reconciliation while the baseline objective-support leases still exist, then
+releases support. `IntegratedWorldSession` resumes its remaining cleanup afterward.
+`test_native_commerce_release_order.py` compiles the actual two native branches
+and support tail against the authored `native_commerce_release_order_host.cs`
+ownership contracts, including refusal before baseline release.
+
 Survivor combat output observation (authored source, J642):
 `IntegratedWorldSession` owns a disposable `SurvivorCombatOutputObserver` beside
 the skill observer; `r.world.survivorCombatOutputs` holds bounded scalar reports.

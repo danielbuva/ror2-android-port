@@ -2969,7 +2969,6 @@ public sealed partial class PortSession
                     coordinator.CleanupTeleporterWorld();
                     if (coordinator.r.sourceStageLifecycleRecoveryRequired)
                         return;
-                    coordinator.CleanupWorldCommerce(true);
                     CleanupWorldTransmutation();
                 }
                 catch (Exception primary)

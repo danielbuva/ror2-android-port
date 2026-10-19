@@ -12285,3 +12285,66 @@ owned them, they matched. R8 (runtime sources) stops at `IntegratedWorldBoundary
 checkout holds Codex's uncommitted draft of that source, while the working project and `HEAD`
 agree. Revisit: replay R8 onward from a clean detached checkout at the committed `HEAD` (next
 entry), then decide the R9 rerun with the operator.
+
+## J726 — Preserve the shrine baseline lease through native purchase reconciliation
+
+Hypothesis: J716's Android operation witness can distinguish a missing acquire
+from a later release in J710's native cleanup failure. Retry accepted J724 APK
+b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54:
+work/device/<serial>/experiments/session-cleanup/20261019T191546.370979Z/.
+Ordinary Commando selection reaches one genuine Stage-begin and 66.003998 world
+seconds, then uses Settings/End Run. All five gameplay acceleration controls are
+off; automatic input and the explicit native diagnostic still mark it assisted.
+Cleanup refuses at the same exact-equality guard, retains providers/Run context
+and sets recovery required. No completed-session report or second session is
+accepted. The result's restarted_session field contains the last session-1
+failure report; its field name does not prove a restart. The collector stops
+and sleeps through its existing failure cleanup.
+
+The new witness works on IL2CPP. At the post-purchase snapshot the one matching
+cached operation is the exact prior owned operation/version/result reference,
+Succeeded, with count 1 to 2 and delta 1. At cleanup it is still that same
+operation/version, now count 1, delta 0. Setup/current legacy GUIDs match, scans
+are not truncated, and support-array index 12 is distinct from effect-catalog
+index 336. One boss detailed-purchase callback is recorded; the other three
+shrine callback counts are zero. This is a surviving reference after a real
+post-purchase increase, rather than evidence that no acquire occurred. The
+snapshots do not intercept the native call or prove a rendered effect.
+
+Source review identifies the intervening release. The native world path detaches
+commerce listeners, fully disposes the teleporter owner, then runs final commerce
+reconciliation. Teleporter disposal releases every valid objective-support handle,
+including ShrineUseEffect's baseline handle, before the final guard. The count
+therefore drops from 2 to 1 while the native-acquired reference remains. Its
+baseline comparison is too late. Default cleanup had the opposite order and
+does not expose this native-path bug. Evidence/source notes:
+work/coordination/native-shrine-current-call-path/.
+
+Move the existing final commerce call into TeleporterWorldSession's native
+retirement block, immediately after source-stage transport/table restoration and
+before objective-support release. Remove its later duplicate from the parent
+IntegratedWorldSession. Preserve exact callback/count equality, release count,
+source-table-first ordering and refusal-before-dependent-release; do not discount
+the callback, release arbitrary handles or special-case the failed count.
+These two authored runtime inputs affect R8 source staging; replay that staging
+in later Phase 2 builds. No original assembly, asset or recipe is modified.
+
+The new host contract compiles the actual two native owner branches and actual
+support-cleanup tail with pinned Mono/Roslyn against authored ownership doubles.
+Four cases pass: one purchase, no purchase, unexpected extra reference retaining
+all leases after source restoration, and source-retirement failure skipping both
+commerce and support release while preserving the original failure. The old
+committed ordering compiles but fails the baseline-lifetime contract; retaining
+the old outer call also fails the exactly-once contract. Full host suite passes
+1,014 tests with one existing skip, and the added Python test passes Ruff.
+Evidence: work/coordination/native-commerce-release-order/ and
+work/coordination/codex-native-commerce-order-host-tests.*. Existing prior art
+remains the native Addressables ownership/lifetime contracts used by J697/J716;
+this changes authored teardown ordering, not a game algorithm.
+
+First failure: baseline support released before native reconciliation. The source
+correction is host-validated but unbuilt/device-unverified; both default modes
+and a new native cleanup/restart retry remain required. Installed/accepted b32998b8
+and older rollbacks stay intact. Fresh MUL-T/Commando checks run separately on
+that explicitly bound APK while the new build is queued. No award, extra device,
+storage configuration, Moon navigation or Phase 2 implementation changes occur.

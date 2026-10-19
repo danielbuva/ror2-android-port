@@ -2202,6 +2202,9 @@ public sealed partial class PortSession
                     coordinator.ReleaseObjectiveStage();
                     CleanupNativeObjectivePlacement();
                     coordinator.CleanupStageTransport();
+                    // Source tables are restored; reconcile native purchase
+                    // acquisitions while the baseline support leases still exist.
+                    coordinator.CleanupWorldCommerce(true);
                 }
                 catch (Exception primary)
                 {
