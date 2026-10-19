@@ -11669,3 +11669,49 @@ remains J707 d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee,
 with unchanged 105 runtime hashes. Fresh Acrid/Mercenary defaults now run through
 explicit mode separately; no outcome is claimed yet. No original input,
 Phase 2 output, device receipt edit, extra device, storage change or award occurs.
+
+## J713 — Base-stage route stops safely on an incorrect host scene expectation
+
+Hypothesis: accepted J707's source/fixture-bound automatic Moon guard allows a
+bounded Huntress route through the first four exits while observing Siren's
+Call, without unattended Moon progression. The root-only runner uses the actual
+accepted build/source/host/exact-editor/default-control prerequisite receipt,
+not a fabricated device fourth-transition acceptance. On APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee,
+the first attempt stops at transition 2 because its private table incorrectly
+expects foggystage instead of the actual wispgraveyard. Evidence:
+work/experiments/siren-route/20261019T180610.117907Z/.
+
+At 162.132446 world seconds, the report has three original Stage-begin events,
+two completed native boss/charge/pickup/exit records for Lakes and Goolake, and
+active scene/SceneDef both verified as wispgraveyard. Native error/first-failure
+fields are empty; root current-process log validation finds zero unexpected
+errors. The host stop is route-diverged after 331.516 host seconds. Process exit
+code zero reports completion of the collector, not passage of its route goal.
+No Siren encounter is observed; egg input remains awaiting its original Ship
+Graveyard owner with zero requests/targets. The fourth-transition held marker
+remains false/unproven. No fifth transport or Moon/finale is attempted.
+
+Source-first review finds the existing runtime configuration, exact-name
+transport/SceneDef checks and J504 all identify Wisp Graveyard here; foggystage
+is not the configured scene key. Correct only that private runner table entry.
+Its first-failure precedence, exact owned APK/prerequisite receipt, four-exit
+Sky Meadow stop and Moon refusal remain unchanged. Root runs all 24 synthetic
+contracts, including accepting wispgraveyard, rejecting the mistaken key and
+retaining first-failure/fourth-boundary behavior. Corrected runner SHA-256:
+147a1bae6c862cb3f435f15a47775a9856e207cfe448f2801900dbba14da17f1.
+Review/tests: work/coordination/siren-route-scene-correction/.
+This generic host classification correction adds no RoR2 reconstruction or
+runtime source; prior-art native stage/ownership contracts remain J504/J701.
+
+Ordinary Huntress selection is used with no developer survivor override, but
+automatic input, invincibility, high damage and fast charge make this assisted.
+Movement/jump boosts and the separate native-first-stage diagnostic are off;
+source lifecycle recovery is false and pauseBeforeMoon true. Profile remains
+13 applied runs, one earned/available unlock and one coin, result application
+false. Selector removal, force-stop and OLED sleep all succeed without cleanup
+errors. The bounded evidence is preserved; accepted baseline and 105 runtime
+hashes remain unchanged. First failure: incorrect private host route key.
+Retry only after the active Acrid/Mercenary batch releases the Nova. No original
+input, Phase 2 output, extra device, manual receipt edit, storage change or
+permanent award occurs.
