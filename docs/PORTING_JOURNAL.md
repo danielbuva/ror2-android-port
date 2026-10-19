@@ -6431,3 +6431,52 @@ baseline and survivor checks remain queued behind the parallel-session lock.
 J586 and the Moon/rollback candidates are untouched. These authored runtime and
 fixture corrections change files reproduced by R8, so its source/importer/
 provenance cohort must be replayed after device acceptance. No Phase 2 step ran.
+
+## J591 — Narrow the audio runtime and plugin requirements (static research)
+
+Question: which native runtime family and concrete codecs/plugins are worth
+verifying against J588's accepted version-150 banks? No SDK acquisition, account
+action, native execution, media extraction or playback is part of this work.
+
+Pinned wwiser `parser/wdefs.py` maps bank 150 to Wwise 2023.1. The accepted managed
+wrapper also contains 2023.1-era deprecation annotations, but its version property
+calls native imports; assembly version is 0.0.0.0. The legitimate Windows native
+library has no usable PE version resource or embedded numeric release string in
+the limited static scan. Exact native patch/build and XML Schema 16's version
+mapping remain unknown. No middleware implementation is copied.
+
+Audiokinetic documents bank compatibility across minor releases within a major
+line ([versioning](https://www.audiokinetic.com/en/library/Launcher_2023.2.4.3909/?id=wwise_versioning&source=InstallGuide)).
+The [2023.1.9 Unity release notes](https://www.audiokinetic.com/library/2024.1.5_8803/?id=pg_releasenotes_2023_1_9.html&source=Unity)
+state support from Unity 2020.3 through 6.0, with a different exact version tested.
+Thus 2023.1.x is the best-supported **candidate**, not an identified exact SDK or
+tested integration with our editor. An authorized package still needs inspection
+for Android ARM64, managed ABI and plugin compatibility.
+
+Static graph inventory finds one media codec, Vorbis, in 12,397 source-record
+occurrences across 152 banks; these are not unique-media counts. Seven
+Audiokinetic effects have 13 numeric references. No source-plugin record appears.
+The initialization registry also contains Windows output sink definitions;
+Android output identity and support cannot be inferred from them. Private
+identifiers, names, graph records and per-bank tables stay ignored.
+
+There are no unplayable/external-ID marks in the 3,081 generated plans, but random,
+crossfade and independent-loop cases remain analysis limitations, and the
+preserved generator's transition/possibly-unused notices still matter.
+These observations do not establish complete graph behavior or audible output.
+
+Official [bank generation guidance](https://www.audiokinetic.com/library/2024.1.1_8691/?id=generating_soundbanks_for_project&source=Help)
+treats platform output separately from bank-version compatibility. Unchanged
+Windows-bank playback on Android remains unproven.
+[Bank-loading documentation](https://www.audiokinetic.com/library/edge/?id=soundengine_banks_general.html&source=SDK)
+requires matching-project Init first and required plugin registration before it.
+No platform conversion, sink-ID substitution or license permission is inferred.
+
+Evidence: `work/coordination/codex-wwise-compatibility.md`,
+`codex-wwise-plugin-inventory.md` and `codex-wwise-native-version.json`; the
+underlying graph/index remains in J588's preserved directories. This is an
+authored static conclusion, not a new decoder/device experiment. Native audio
+stays explicitly unavailable. Revisit with an authorized 2023.1 Android package,
+then test initialization, Init/event banks, plugin/routing behavior and audible
+output. No APK/runtime/receipt/rebuild change; the parallel-session lock remains
+honored and J586 remains reserved.

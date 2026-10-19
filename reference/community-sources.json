@@ -26,6 +26,10 @@
       "confidence": "VERIFIED host graph / EXPERIMENTAL Android applicability",
       "inspected_files": [
         {
+          "path": "wwiser/parser/wdefs.py",
+          "url": "https://github.com/bnnm/wwiser/blob/08e937b649bc7007c234bbd59e34a41d5eef3b38/wwiser/parser/wdefs.py"
+        },
+        {
           "path": "doc/WWISER.md",
           "url": "https://github.com/bnnm/wwiser/blob/08e937b649bc7007c234bbd59e34a41d5eef3b38/doc/WWISER.md"
         },

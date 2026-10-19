@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J590** (host drafts; device baseline remains J585).
+Last updated 2026-10-18 after **J591** (host drafts/research; device baseline remains J585).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -56,8 +56,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 - Moon, finale and escape: deferred; manual only, never navigated autonomously.
 - Stock Steam startup, cloud profiles, platform identity: unavailable by design (no
   fabricated ownership or service success).
-- Audio remains unavailable: J588 parses the complete version-150 bank graph
-  offline; a compatible authorized Android runtime is still unestablished.
+- Audio remains unavailable: J591 narrows the candidate to Wwise 2023.1 with
+  Vorbis and seven effects; an authorized Android runtime and bank compatibility
+  remain unestablished.
   Licensed Rewired and generic controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across sessions.
