@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J710](PORTING_JOURNAL.md#j710--native-boss-action-executes-effect-lease-shows-zero-acquisition-delta) | 2026-10-19 | Native boss action executes; effect lease shows zero acquisition delta | Hypothesis: J703's exact assertion operands can distinguish missing acquisition from excess ownership before any cleanup release rule is changed. |
 | [J709](PORTING_JOURNAL.md#j709--record-host-observed-restart-phase-timing-without-changing-acceptance) | 2026-10-19 | Record host-observed restart phase timing without changing acceptance | Hypothesis: the cold catalog/setup envelope dominates short cases, but current same-process cleanup evidence does not measure warm startup accurately enough to… |
 | [J708](PORTING_JOURNAL.md#j708--isolated-mage-utility-records-native-earth-shard-projectile-occurrence) | 2026-10-19 | Isolated Mage utility records native Earth Shard projectile occurrence | Hypothesis: J704's bounded faster observation can expose the short-lived native output missed by J699, after J700 verifies the original static configuration. |
 | [J707](PORTING_JOURNAL.md#j707--accept-manual-boundary-and-bounded-output-apk-against-both-defaults) | 2026-10-19 | Accept manual-boundary and bounded-output APK against both defaults | Hypothesis: J701's automatic manual-boundary enforcement, J703's failure-only ownership operands and J704's isolated-request observation must preserve default… |

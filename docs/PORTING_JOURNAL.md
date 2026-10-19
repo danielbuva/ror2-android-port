@@ -11507,3 +11507,62 @@ d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee,
 with unchanged 105 runtime hashes; no R8 runtime replay/build is needed for
 these host clocks. Next use observed same-process timings before investing in
 a batch executor; continue classifying native cleanup independently.
+
+## J710 — Native boss action executes; effect lease shows zero acquisition delta
+
+Hypothesis: J703's exact assertion operands can distinguish missing acquisition
+from excess ownership before any cleanup release rule is changed. Native
+ordinary-Commando UI-abandon retry fails on accepted J707 APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/device/<serial>/experiments/session-cleanup/20261019T175414.390117Z/.
+It records one genuine server Stage-begin and 67.351135 world seconds. Settings /
+End Run is requested through the UI. The first failure remains final commerce
+ownership during abandoning-offline-session, with exact operands:
+referenceCountBaseline 1, referenceCountFinal 1, delta 0, expected detailed-
+purchase attribution 1; Blood/Healing/Restack 0 and Boss 1. Thus this is not
+evidence of an extra held reference. The actual recorded purchase is
+ShrineBoss(Clone), cost 20, at world time 9.919693.
+
+The accepted native e544 prefab/event/source contract and recorded native
+SHRINE_BOSS_USE_MESSAGE establish that ShrineBossBehavior.AddShrineStack ran
+past its server guard. PurchaseInteraction invokes its detailed event after
+onPurchase returns. The native method emits the boss message, then calls the
+legacy effect loader and increments its purchase count before returning. This
+supports executed native action, not an unwired purchase callback. It does not
+prove the loader returned a non-null prefab, rendered an effect or selected
+this particular held operation. The report lacks actual operation/location/
+result status; no provider alias or missing-effect cause is established.
+
+Prior-art/source audit: J337's retained typed effect lease remains the earlier
+ownership contract. The inspected Unity ResourceManager cache uses location,
+provider and requested type; matching cache reuse increments its reference count.
+A source-only map equality is not runtime operation identity. Investigation also
+finds the old LegacyResourcesAPI decompile came from the prior input. The pinned
+host decompile helper now verifies current original inventory/recipe/staged DLL
+SHA 69d5c8d2 and emits a matching zero-diagnostic ILSpy 11.0.0.9375 source receipt
+at work/decompiled/LegacyResourcesAPI/66cad65f82f9adfb/. Its accepted Load path
+resolves the legacy key then delegates to Addressables without private successful-
+load caching or release; no assembly transform changes it. This excludes that
+proposed cache explanation without proving which runtime location was chosen.
+Evidence and source analysis:
+work/coordination/native-boss-shrine-effect-triage/ and
+work/coordination/native-boss-shrine-effect-provider/.
+
+Preceding source-table restoration again reaches the later commerce check.
+That guard remains fail-closed: providers/Run context are retained, recovery
+becomes true, no completed-session report or session-2 gameplay is accepted.
+Profile remains 13 applied runs, one earned unlock/coin and result application
+false. All five acceleration controls are off; explicit native diagnostic
+assistance still excludes ordinary acceptance. The collector removes its
+selector, stops and sleeps. This collector loaded before J709 host timing;
+no new host phase measurement is attributed to it.
+
+First failure: exact native effect-operation accounting, still unresolved.
+Do not discard the callback, release arbitrary handles, assume no effect, or
+accept complete cleanup from this result. Next capture bounded read-only actual
+resolved key/location/operation/result evidence at the native purchase and
+cleanup boundary, with concrete pinned API validation before a new build. No
+runtime change is made here; d545d800 remains the accepted default baseline.
+No original input, Phase 2 output, extra device, receipt edit, storage change
+or permanent award occurs. REX alternates and the bounded base-stage route run
+independently through the ordinary path.
