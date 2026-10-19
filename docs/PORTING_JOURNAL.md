@@ -6931,3 +6931,34 @@ Play Mode scene after lock release, then integrate a later APK and verify both
 baseline modes plus same-process teardown/restart callback counts. Keep broad
 managed-memory attribution separate. This alters R8 runtime, editor-fixture and
 provenance inputs; later rebuild replay is required. No Phase 2 step ran here.
+
+## J600 — Hidden/Compositing: a second destination build still omits it
+
+Phase 2, from-scratch rebuild (run by Claude; lab MCP editor stopped through the bridge for the
+build and restarted afterwards; no install). Follow-up to J583 item 2 and J592. Hypothesis: the
+shader is missing from R9's `unity_builtin_extra` because R9 makes one build from a fresh
+Library, and a later build in the same Library would include it, as every working-project build
+does.
+
+Method. An APFS clone of the J586 destination (warm Library from R9's full build) ran one
+code-only `LabBuild.Build` in batch mode, under the host build lock, with R9's run inputs
+(`reusePayload`, Vulkan). 5 minutes, success, zero errors. Evidence:
+`work/receipts/phase2-compositing/editor.log` and `result.json`; the clone was then deleted.
+
+Result: refuted. The log compiles no `Hidden/Compositing`, and the APK's `unity_builtin_extra`
+is byte-identical to J586's (535,668 B). Also compared with the working project's Library, and
+found equal (so not the cause): `EditorUserBuildSettings`, `BuildSettings`, `MonoManager`,
+`ScriptMapper` (the same 1,847 shader names; none is `Hidden/Compositing`), both
+`UnityLinkerToEditorData.json` module reports, the package cache, `ProjectSettings`,
+`Packages` and `ScriptsOnlyCache` scene classes; `ShaderCache.db` holds only two
+shader-error rows. R9's own script cache lists more used scripts than the working one, so used
+scripts do not explain it either. No project shader declares that name. The first lab editor
+build on 2026-09-13, in a near-empty smoke project, already included the shader. So something
+the working and smoke projects share, and the rebuilt destination lacks, makes Unity add it;
+the remaining differences are the asset databases (`ArtifactDB`, `SourceAssetDB`) and the
+3,227 folder GUIDs Unity minted afresh (J575).
+
+Open question. Next discriminating experiment: open an APFS clone of the working project with
+its Library removed, and build it once. With the shader, the trigger is in project files (folder
+GUIDs are the only systematic difference); without it, it is Library import state. The device
+impact is nil so far: R9's APK passed both checks without it (J582, J586).

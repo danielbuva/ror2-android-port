@@ -29,7 +29,8 @@ result in the journal.
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
 - [ ] Make R9 equivalent (J586): resolve the `BlueNoise_R8_1.png.meta` working-project drift
-      (J592) and find why `Hidden/Compositing` drops out of R9's APK.
+      (J592) and find why `Hidden/Compositing` drops out of R9's APK (a second build in the same
+      Library still omits it, J600; next: a Library-less build of a working-project clone).
 - [ ] Remove the rebuild's remaining local inputs (R2's migration evidence is gone, J597):
       the 57 hash-pinned analysis inputs (R3's ten need a host Addressables catalog reader),
       the 14 inherited-store files (12 need an exact-editor `RecoveredHudBuilder` step) and the
