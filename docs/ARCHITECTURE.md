@@ -760,6 +760,9 @@ original master index; live bodies additionally require reciprocal master/body
 references, original body index and server mappings. The original summon event
 records exact owner/current catalog master attribution independently of samples.
 No skill, stock, damage, deployable, state or gameplay object is changed.
+The native deployable wrapper may be uninitialized before first registration;
+the observer uses its bool contract before Count/indexing and never initializes
+the master's backing list. An idle exact-editor fixture covers that cold state.
 
 The report is `r.world.engiNativeOutputs`. Unique observed counts and native
 mine state names survive cleanup as scalars; they do not prove damage, turret

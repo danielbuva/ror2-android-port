@@ -45,6 +45,42 @@ public static class EngineerNativeOutputObserverFixture
         return count;
     }
 
+    // Exercises the exact native null-backed wrapper from a cold master and the
+    // production count path. No native Awake, deployment or list write occurs.
+    public static object RunDeployableListContract()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !UnityEngine.Networking.NetworkServer.active &&
+                    !UnityEngine.Networking.NetworkClient.active,
+                "Deployable-list fixture requires an idle editor without a network session");
+        GameObject owner = null;
+        try
+        {
+            owner = new GameObject("Engineer empty deployables fixture");
+            owner.SetActive(false);
+            var master = owner.AddComponent<CharacterMaster>();
+            var rows = master.GetDeployables();
+            Require(!rows && EngineerNativeOutputObserver.DeployableCount(rows) == 0,
+                    "Cold native deployable wrapper must observe as empty");
+            Require(!master.GetDeployables(), "Observation initialized the native deployable list");
+            var source = new List<DeployableInfo>();
+            HG.ReadOnlyList<DeployableInfo> initialized = source;
+            Require(initialized && EngineerNativeOutputObserver.DeployableCount(initialized) == 0,
+                    "Initialized empty wrapper must observe as empty");
+            source.Add(default(DeployableInfo));
+            Require(EngineerNativeOutputObserver.DeployableCount(initialized) == 1, "Native wrapper must retain its live backing list");
+            source.Clear();
+            Require(EngineerNativeOutputObserver.DeployableCount(initialized) == 0,
+                    "Previously populated empty wrapper must observe as empty");
+            return new { coldNativeListRemainedUninitialized = true, initializedEmptyAndPopulatedListsObserved = true,
+                         noNativeAwakeOrDeploymentClaimed = true };
+        }
+        finally
+        {
+            if (owner)
+                UnityEngine.Object.DestroyImmediate(owner);
+        }
+    }
+
     public static object Run()
     {
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !UnityEngine.Networking.NetworkServer.active &&

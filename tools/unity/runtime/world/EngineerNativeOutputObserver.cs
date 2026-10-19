@@ -91,6 +91,14 @@ public sealed class EngineerNativeOutputObserver : IDisposable
         return row.slot == expectedSlot && row.deployable && owner && row.deployable.ownerMaster == owner;
     }
 
+    // Native masters leave the backing list null until their first deployable.
+    // HG's wrapper exposes that state through its bool conversion; Count and
+    // enumeration both require a backing list. Observation must not create it.
+    public static int DeployableCount(HG.ReadOnlyList<DeployableInfo> rows)
+    {
+        return rows ? rows.Count : 0;
+    }
+
     static bool IsServerMapped(NetworkBehaviour value)
     {
         return value && value.isServer && value.netId.Value != 0 && NetworkServer.FindLocalObject(value.netId) == value.gameObject;
@@ -141,8 +149,11 @@ public sealed class EngineerNativeOutputObserver : IDisposable
         report.serverObserved = true;
         int mineLive = 0, bubbleLive = 0, bubbleDeployed = 0, bubbleGuardOwnedLive = 0;
         int turretMasterLive = 0, turretLive = 0;
-        foreach (DeployableInfo row in ownerMaster.GetDeployables())
+        var deployables = ownerMaster.GetDeployables();
+        int deployableCount = DeployableCount(deployables);
+        for (int i = 0; i < deployableCount; i++)
         {
+            DeployableInfo row = deployables[i];
             Deployable deployable = row.deployable;
             if (!deployable || deployable.ownerMaster != ownerMaster)
                 continue;

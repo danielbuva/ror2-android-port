@@ -8121,3 +8121,46 @@ check, force an exit or infer a Siren/Engineer regression from this timeout.
 Independent survivor/lifecycle diagnostics can follow with their own evidence.
 No new source or recipe is changed by this experiment; R8/build-entry replay
 requirements for the built authored inputs remain those in J624/J626.
+
+## J630 — Observe Engineer's cold deployable list without initializing it
+
+The independent selected Engineer check on J629 source100 APK
+9d022653f52736640826447b7911f589e4d1680f3eb2c6b3a2041ed8873eb75d
+stops before world readiness at EngineerNativeOutputObserver's constructor
+sample. The first exception is HG.ReadOnlyList.GetEnumerator dereferencing an
+uninitialized backing list. Later missing callback/profile/timing criteria are
+consequences of failed setup, not independent survivor regressions. Evidence:
+work/experiments/survivor-check/20261019T104428.952890Z/Engi/.
+The shield template lease records prepared and released through this failed
+setup; that does not prove live shield-clone cleanup. UI abandon, software CPU
+capture and Loader were not reached; no profiling command was dispatched.
+Runner finalization stops the process, removes its selector and sleeps the OLED.
+
+Hypothesis: the observer incorrectly assumes native GetDeployables always
+returns an initialized collection. Accepted CharacterMaster leaves its private
+list null until first registration. HG.ReadOnlyList is a value wrapper: its
+bool conversion exposes backing-list presence, while Count and enumeration
+require a backing list. Use that public native bool contract to observe zero
+entries when cold, and index the same wrapper when initialized. The observer
+never creates or writes the native list, deploys an object or changes the game.
+The initial sample still precedes global subscription, preserving setup failure
+cleanup. Existing attribution and disposal remain unchanged.
+
+Prior-art context remains J624's pinned Starstorm2 native server-event ownership
+and teardown; the accepted current CharacterMaster/HG API supplies this missing
+cold-state contract. No game/community implementation is reproduced. Independent
+host review finds no additional issue in the small fix. Exact Unity compiles
+it and the idle regression fixture passes against a real inactive cold master,
+then an initialized empty/populated/cleared native wrapper. The cold list stays
+uninitialized and the fixture retires only its temporary object. Existing
+Engineer source-asset contracts also pass. Evidence:
+work/experiments/engi-deployables/editor-20261019T104728.263525Z/.
+Twelve build-entry producer tests pass in
+work/coordination/codex-engi-deployables-host.log.
+
+These are exact-editor/API regression checks, not Android acceptance. Next:
+code build, both unchanged baseline modes, then separate Engineer output and
+UI-abandon checks. Installed APK remains the failed-acceptance 9d022653…;
+accepted baseline remains J620 fb0f2953…. This authored runtime change must be
+included on R8/build-entry replay. No new source file, generated asset, required
+local input, device receipt or Phase 2 output is introduced.
