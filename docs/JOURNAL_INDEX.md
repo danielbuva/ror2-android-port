@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J663](PORTING_JOURNAL.md#j663--accept-the-player-context-apk-on-both-default-modes) | 2026-10-19 | Accept the player-context APK on both default modes | Hypothesis: J658 preserves the ordinary transport path despite the separate native Director witness failure classified in J661. |
 | [J662](PORTING_JOURNAL.md#j662--reconcile-and-stage-typed-state-dependencies-through-the-real-host-pipeline) | 2026-10-19 | Reconcile and stage typed state dependencies through the real host pipeline | Hypothesis: J659's read-only dependency delta can pass the existing guarded reconciliation, exact-editor import and original content-provider pipeline, without… |
 | [J661](PORTING_JOURNAL.md#j661--native-path-passes-playerresults-context-then-refuses-the-source-director-witness) | 2026-10-19 | Native path passes player/results context then refuses the source Director witness | Hypothesis: J658's early exact registration lets J660's candidate pass the previous statistics assertion and reach the next genuine native prerequisite. |
 | [J660](PORTING_JOURNAL.md#j660--player-context-correction-builds-and-passes-its-plain-default-control) | 2026-10-19 | Player-context correction builds and passes its plain default control | Hypothesis: J658's extracted registration retains ordinary first-stage play while enabling a separate native-path retry. |

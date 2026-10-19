@@ -9504,3 +9504,34 @@ still uses the previous payload; its fresh default exit control is active.
 Accepted J657 86d2542a… remains unchanged. R3/R8 replay follows J659's recorded
 input changes; no Phase 2 output, original input, private device receipt hand
 edit, extra-device selection, existing data move or storage configuration change.
+
+## J663 — Accept the player-context APK on both default modes
+
+Hypothesis: J658 preserves the ordinary transport path despite the separate
+native Director witness failure classified in J661. No source, APK or installed
+payload change since J660's build/install/plain control. J662's staged host
+content is not in this installed payload.
+
+APK 6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec
+passes the default one-exit control. Evidence: work/experiments/baseline/
+20261019T140328.239432Z/. Exactly one genuine exit reaches Goolake, with
+10.104614 s of next-stage play at world time 126.522751 s. The bounded collector
+reports success with no failure or unexpected current-process log error in
+root-log-validation.json. Native diagnostic and recovery flags are false;
+applied profile runs remain 13 and earned/available unlocks remain one. The
+collector force-stops a live playing report, so this does not prove completed
+session cleanup. Its finally removes selectors, stops the app and sleeps OLED.
+
+J660 records this same APK's separate 35.223511 s plain control. Both default
+modes now pass, so accept 6506b99b… and preserve J657 86d2542a… as the immediate
+executable rollback. Default transport uses the existing gameplay path, not
+J661's failed native source-cohort attempt. Neither control establishes native
+Stage/population/recovery, timed-chest event delivery, full alternate kits,
+normal difficulty, audio, PC parity or sustained frame rate.
+
+First failure: none in the default exit control. Revisit J661 with the bounded
+source Director deck-binding order correction under review, then build it with
+J662's staged content, run the actual alternate kit and both new APK controls.
+The two feature gates remain independent. No new source or native mechanism,
+original input change, private receipt hand edit, extra-device selection,
+existing data move or storage configuration change occurs here.
