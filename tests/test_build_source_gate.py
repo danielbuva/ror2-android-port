@@ -21,7 +21,7 @@ class BuildSourceGateTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         git(self.root, "init", "-q")
-        git(self.root, "config", "user.email", "gate@example.invalid")
+        git(self.root, "config", "user.email", "gate")
         git(self.root, "config", "user.name", "gate")
         for path in ("tools/unity/runtime/A.cs", "tools/catalog/Host.cs", "android/Assets/Editor/LabBuild.cs", "docs/notes.md"):
             (self.root / path).parent.mkdir(parents=True, exist_ok=True)
