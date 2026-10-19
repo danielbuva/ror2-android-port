@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J715](PORTING_JOURNAL.md#j715--fresh-acrid-and-mercenary-defaults-pass-explicit-owned-apk-diagnostics) | 2026-10-19 | Fresh Acrid and Mercenary defaults pass explicit owned-APK diagnostics | Hypothesis: J712 can collect current native inventories for two remaining alternate kits while binding the entire batch to the installed owned APK. |
 | [J714](PORTING_JOURNAL.md#j714--host-addressables-catalog-reader-replaces-the-editor-catalog-export) | 2026-10-19 | Host Addressables catalog reader replaces the editor catalog export | Phase 2, from-scratch rebuild (implemented by Claude; host only, no build or device). |
 | [J713](PORTING_JOURNAL.md#j713--base-stage-route-stops-safely-on-an-incorrect-host-scene-expectation) | 2026-10-19 | Base-stage route stops safely on an incorrect host scene expectation | Hypothesis: accepted J707's source/fixture-bound automatic Moon guard allows a bounded Huntress route through the first four exits while observing Siren's Call… |
 | [J712](PORTING_JOURNAL.md#j712--bind-current-diagnostics-explicitly-to-the-selected-devices-owned-apk) | 2026-10-19 | Bind current diagnostics explicitly to the selected device's owned APK | Hypothesis: a host build finishing must not invalidate an independent diagnostic on a still-owned earlier APK merely by changing the global current-build point… |

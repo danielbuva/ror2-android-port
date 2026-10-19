@@ -11755,3 +11755,53 @@ which no fixed pin set can follow. Revisit: run audit, native inventory and reco
 into R3's destination with out-directory parameters, so the pins become expected hashes, not
 inputs. Have the live pipeline rerun its audit through the same host path. Then refresh the
 provenance map from the accepted working project and replay R1–R9.
+## J715 — Fresh Acrid and Mercenary defaults pass explicit owned-APK diagnostics
+
+Hypothesis: J712 can collect current native inventories for two remaining
+alternate kits while binding the entire batch to the installed owned APK.
+Both cases pass on accepted J707
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/experiments/survivor-check/20261019T181616.778723Z/{Croco,Merc}/.
+Both outputs explicitly record explicit-owned-apk-sha256, four-slots-activated,
+no first failure/runtime errors, and valid native-master-loadout-live inventory.
+This is a positive device use of the new host binding, not an independent
+rehash of the installed Android package or a new APK acceptance.
+
+Acrid reaches 60.492599 world seconds. Its four canonical final authority/server
+counts are 9/3/1/1 for Slash, Spit, Leap and Disease. The fifth component is the
+disabled, noncanonical CrocoPassivePoison and needs no active-slot callback.
+All five native definitions match their selected default variants. Its combat
+observer counts 39 body damage events, three classified as body-projectile
+damage, and retains two projectile identities. The 32-entry damage fact ring
+wraps; rows are not a full history. Mercenary reaches 60.462112 world seconds,
+with final native counts 24/3/1/1 for GroundLight2, Whirlwind, Assaulter and Evis.
+Its earlier input-coverage snapshot reaches all four callback predicates with
+three requests: secondary has no recorded request even though its counters
+rise. Do not infer another input or cast-specific cause. It records nine body
+damage events, zero body-projectile damage and no retained projectile identity.
+Neither observer is inert, truncated or in error; unknown-owner and summon
+damage counters are zero. These are activation and bounded output observations,
+not complete ability, status, impact or movement acceptance.
+
+The fresh live inventories support strict, per-run alternate selectors without
+guessing component order. Croco's four non-default selections include passive
+Blight, Bite, Chainable Leap and Breath; Merc's three are Uppercut, Focused
+Assault and EvisProjectile, leaving primary unchanged. Parser and exact native
+tuple/non-expansion checks pass in ignored coordination notes. No alternate
+is executed in this batch, and unlock names do not prove ordinary eligibility.
+Prior art remains J625/J618 and the pinned native GenericSkill/state/authority
+and ownership contracts already used by the existing checker; no reconstruction
+or new runtime observer is added for these cases.
+
+Both developer survivor selections and invincibility make these assisted;
+other acceleration controls are off, with no variant override. Profile remains
+13 applied runs, one earned/available unlock and one coin, result/menu commit
+false. The collectors preserve evidence, remove their selectors, stop and sleep.
+Interpretation: work/coordination/croco-merc-default-results/ and
+work/coordination/croco-alternate-inventory/.
+
+First failure: none in either bounded default case. Accepted/installed d545d800
+is unchanged. Separately, the native effect-operation witness is now unbuilt
+authored source under exact-editor validation; it is not attributed to these
+installed-APK results. The corrected guarded Siren route is active. No original
+input, Phase 2 output, extra device, receipt edit, storage change or award occurs.
