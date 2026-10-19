@@ -132,7 +132,7 @@ public sealed partial class PortSession
         readonly Dictionary<FieldInfo, object> enemyStaticFields = new Dictionary<FieldInfo, object>();
         EliteDef[] priorEnemyElites;
         EliteIndex[] priorEnemyEliteList;
-        bool ownsEnemyElites;
+        bool ownsEnemyElites, observesEnemyActorEvents;
         public EnemySpineSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -345,6 +345,8 @@ public sealed partial class PortSession
             }
             coordinator.enemyTemplates = new GameObject("Owned inactive enemy templates");
             coordinator.enemyTemplates.SetActive(false);
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                SubscribeEnemyActorEvents();
         }
         // Optional diagnostic fixture: source-body adaptation, directed spawn, and its
         // actor observations/assertions. The existing public path invokes it immediately
@@ -434,8 +436,7 @@ public sealed partial class PortSession
                 enemySurface.impactSoundString = null;
             foreach (var surface in surfaces)
                 surface.surfaceDef = enemySurface;
-            GlobalEventManager.onServerDamageDealt += EnemyDamage;
-            GlobalEventManager.onCharacterDeathServer += EnemyDeath;
+            SubscribeEnemyActorEvents();
             coordinator.r.enemy.playerKillsBefore = player.killCountServer;
             coordinator.r.enemy.excludedCallbacks =
                 new[] { "CharacterNetworkTransform platform snapshot clock", "InteractionDriver pause/interaction context",
@@ -506,6 +507,23 @@ public sealed partial class PortSession
             coordinator.Save();
         }
 
+        void SubscribeEnemyActorEvents()
+        {
+            if (observesEnemyActorEvents)
+                return;
+            // Own partial registration before either native event subscription can fail.
+            observesEnemyActorEvents = true;
+            GlobalEventManager.onServerDamageDealt += EnemyDamage;
+            GlobalEventManager.onCharacterDeathServer += EnemyDeath;
+        }
+        void UnsubscribeEnemyActorEvents()
+        {
+            if (!observesEnemyActorEvents)
+                return;
+            GlobalEventManager.onServerDamageDealt -= EnemyDamage;
+            GlobalEventManager.onCharacterDeathServer -= EnemyDeath;
+            observesEnemyActorEvents = false;
+        }
         public void EnemyDamage(DamageReport report)
         {
             coordinator.ObserveDirectorDamage(report);
@@ -584,8 +602,7 @@ public sealed partial class PortSession
         {
             if (coordinator.r.sourceStageLifecycleRecoveryRequired)
                 return;
-            GlobalEventManager.onServerDamageDealt -= EnemyDamage;
-            GlobalEventManager.onCharacterDeathServer -= EnemyDeath;
+            UnsubscribeEnemyActorEvents();
             if (coordinator.enemyMasterHost)
                 NetworkServer.Destroy(coordinator.enemyMasterHost);
             if (coordinator.enemyBody)

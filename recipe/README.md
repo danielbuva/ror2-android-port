@@ -1088,3 +1088,13 @@ native method body, source asset, platform identity, middleware, private path or
 device data is copied. The existing producer stages the fixture; runtime source
 membership remains 105. Replay selector/fixture inputs through R8; no new local
 build prerequisite or Phase 2 output edit is introduced.
+
+### Native actor observation ownership audit (2026-10-19)
+
+The existing EnemySpineSession extracts ownership of its existing native damage
+and death subscriptions. The public host contract extracts authored methods and
+uses authored event/data collaborators; it copies no native gameplay body or
+community implementation. Only minimum native API identities are named. No
+asset, middleware, account, private path or device data is added. Source count
+remains 105; the existing producer and R8 reproduce the changed owner. No new
+local build input, runtime diagnostic case, entitlement or Phase 2 edit occurs.

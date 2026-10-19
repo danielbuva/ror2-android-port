@@ -9737,3 +9737,48 @@ stops the process and sleeps OLED; a fresh default exit control is now active.
 Accepted APK remains J663 6506b99b… until that control passes. No original
 input, storage configuration, existing data, additional device or private
 receipt hand edit is changed.
+
+## J669 — Give native director actor observations an explicit session event owner
+
+Hypothesis: J668's native actor rows have zero damage/death events because the
+only existing event subscription lives inside the optional fixture omitted by
+the native path. The actual dead bodies prove a missing observation coupling,
+not absence of native combat or a need to rewrite damage.
+
+Existing EnemySpineSession now owns idempotent subscribe/unsubscribe helpers
+and a flag set before the first event add. The explicit native context
+subscribes at its end before source activation; default fixture registration
+stays at its original point and order. Normal cleanup removes those exact
+method-group delegates before actors; the existing recovery return retains
+both the owner and observations. Existing damage/death callback bodies and
+separate SurvivorCombatOutputObserver are unchanged. No event replacement,
+native AI/reward mutation, counter fabrication or new diagnostic switch occurs.
+Legacy bringup input uses some observations; default timing is preserved.
+
+Prior art: community-prior-art L6/L7 and pinned DebugToolkit d1e2f0aa's
+Code/Util.cs use actual user/master relationships for observations. Accepted
+e544 GlobalEventManager emits the real damage/death report events. Existing
+Android owner/callbacks solve the report mapping; only their registration
+ownership changes. No native or community implementation is copied.
+
+Independent review and private production-method checks:
+work/coordination/native-director-observer-wiring/. The portable public
+host test extracts the actual authored helpers, callbacks, native context
+gate and CleanupEnemy, then executes them against authored collaborators.
+Six cases cover default/native ordering, exact-once registration, unrelated
+listener preservation, recovery retention, unprepared cleanup and three
+partial-add failures. It raises no native gameplay event. All 947 host tests
+pass with one existing skip; focused test, Ruff, README-action and diff checks
+pass. Exact-editor source staging/compilation, pure production gates, native
+API/input and inactive deck-setter fixture pass at work/experiments/
+first-stage-native-lifecycle/director-editor-20261019T144844.125505Z/.
+
+First failure: none in these host/editor contracts. Actual native event
+counts and detach/restart remain unverified until a new APK runs; J668's
+source chest failure remains the next gameplay gate. Current installed
+ad84d0cb… does not contain this change, its default exit control is active,
+and accepted APK remains 6506b99b…. Public runtime membership stays 105.
+ARCHITECTURE and recipe provenance audit name the owner/test. No new ignored
+build input is required; replay the changed authored owner through R8.
+No Phase 2 output, original input, extra device, private receipt hand edit,
+existing data or storage configuration is changed.

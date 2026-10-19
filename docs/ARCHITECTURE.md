@@ -596,7 +596,15 @@ Build, device and safety tooling has its own tests: `test_build_identity.py`,
 
 Stage-context preparation seams (J639) remain inside those existing owners.
 `EnemySpineSession.PrepareEnemy` forwards mandatory `PrepareEnemyContext` then
-its actor fixture. `AutomaticDirectorSession` separates native elite/catalog/
+its actor fixture. `EnemySpineSession` owns idempotent damage/death event
+subscriptions: the native first-stage context subscribes before source actor
+activation, while the default fixture subscribes at its existing setup point.
+Ownership begins before the first add, normal cleanup removes exact delegates
+before actors, and source-stage recovery retains the owner and observations.
+`test_enemy_actor_observation.py` executes the authored helpers/callbacks and
+cleanup against host collaborators, including partial setup and unrelated
+listeners. It does not raise native gameplay events. `AutomaticDirectorSession`
+separates native elite/catalog/
 player initialization from the existing one-card director activation.
 Its native first-stage path registers only the exact existing inactive player
 controller before results prepare their statistics component. The later catalog
