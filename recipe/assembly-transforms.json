@@ -15,7 +15,7 @@
       },
       "mode": "--optional-presentation-guard",
       "outputs": {
-        "RoR2.dll": "f12f084c7730e39480202b37e65a4a1099e083604a37c5942317a4d1180ce7cf"
+        "RoR2.dll": "3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30"
       }
     },
     {
@@ -44,7 +44,7 @@
     "tools/assembly-transforms/AudioGuard.cs": "ac5d6dd4e08786d54346bc14c69f640785e04f98d8a104da9c39c86c6a00ffd6",
     "tools/assembly-transforms/CatalogContract.cs": "5c9ec3e42209d7f1cf1f7cbc18e2ff61c16e314363b3fc9135fc77c8747e1da4",
     "tools/assembly-transforms/MigrationSurface.cs": "771f9ecb44b76328b135eecb3539a611ffc3f8ab3fff7213494865e84d7a56af",
-    "tools/assembly-transforms/OptionalPresentationGuard.cs": "27e28313f22bfdba0ef1a25bed770be6848c6f16415d3d1aac505c1fdaceca49",
+    "tools/assembly-transforms/OptionalPresentationGuard.cs": "a78d5d453bfe7d78a2df3b2040ff3ca09f22ef6ef9dd9047be751b5ed6e962f0",
     "tools/assembly-transforms/Program.cs": "adfc73412c86e7aa54839be1d95bd1b95d13567ab64fd7c13ca865831333be72",
     "tools/assembly-transforms/RewiredContract.cs": "ed300e3f88ed25823d05ef9ab22e732d9d37d6dee0e5968e837c50ec63c8b8f3",
     "tools/assembly-transforms/Slice.cs": "6d25f9bf0c8f8f4107708d32d0275fb728ffe06de81ec1fdee7fcb32962bf494",

@@ -17,9 +17,9 @@ static class OptionalPresentationGuard {
   var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(Path.GetDirectoryName(Path.GetFullPath(input))!);resolver.AddSearchDirectory(args[3]);
   using var assembly=AssemblyDefinition.ReadAssembly(input,new ReaderParameters{AssemblyResolver=resolver});
   IEnumerable<TypeDefinition> Types(IEnumerable<TypeDefinition> ts){foreach(var t in ts){yield return t;foreach(var child in Types(t.NestedTypes))yield return child;}}
-  string Fingerprint(MethodDefinition m){
+  string Fingerprint(MethodDefinition m,IEnumerable<Instruction>? selected=null){
    if(!m.HasBody)return "no-body";
-   var body=m.Body.Instructions;
+   var body=(selected??m.Body.Instructions).ToList();
    string Operand(object? value)=>value switch {
     Instruction target=>"instruction:"+body.IndexOf(target),
     Instruction[] targets=>string.Join(",",targets.Select(x=>body.IndexOf(x))),
@@ -33,7 +33,30 @@ static class OptionalPresentationGuard {
   var identity=assembly.Name.FullName;var mvid=assembly.MainModule.Mvid;
   string[] Contracts(AssemblyDefinition value)=>Types(value.MainModule.Types).SelectMany(t=>new[]{"type:"+t.FullName+"|"+t.BaseType?.FullName}.Concat(t.Fields.Select(f=>"field:"+f.FullName)).Concat(t.Methods.Select(m=>"method:"+m.FullName))).OrderBy(x=>x).ToArray();
   var contracts=Contracts(assembly);
-  var before=Types(assembly.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
+  var before=Types(assembly.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,m=>Fingerprint(m));
+  var skillResponseMethods=new List<MethodDefinition>();
+  if(expected==measured[1]){
+   var response=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.SkillResponseBehavior");
+   if(response.BaseType?.FullName!="UnityEngine.MonoBehaviour")throw new Exception("Skill response base contract changed");
+   var slots=response.Fields.Single(f=>f.Name=="allSkillSlots");
+   if(!slots.IsFamily||slots.FieldType.FullName!="RoR2.GenericSkill[]")throw new Exception("Skill response slot field contract changed");
+   var responseStart=response.Methods.Single(m=>m.Name=="Start"&&m.Parameters.Count==0);
+   var responseDestroy=response.Methods.Single(m=>m.Name=="OnDestroy"&&m.Parameters.Count==0);
+   if(!responseStart.IsVirtual||!responseStart.IsFamily||responseStart.ReturnType.FullName!="System.Void"||
+      !responseStart.Body.Instructions.Any(i=>i.OpCode==OpCodes.Stfld&&i.Operand is FieldReference f&&f.FullName==slots.FullName)||
+      !responseStart.Body.Instructions.Any(i=>i.Operand is MethodReference mr&&mr.Name=="add_onSkillChanged"))
+    throw new Exception("Skill response Start initialization/subscription contract changed");
+   if(!responseDestroy.IsVirtual||!responseDestroy.IsFamily||responseDestroy.ReturnType.FullName!="System.Void"||
+      !responseDestroy.Body.Instructions.Any(i=>i.OpCode==OpCodes.Ldfld&&i.Operand is FieldReference f&&f.FullName==slots.FullName)||
+      !responseDestroy.Body.Instructions.Any(i=>i.Operand is MethodReference mr&&mr.Name=="remove_onSkillChanged"))
+    throw new Exception("Skill response OnDestroy unsubscription contract changed");
+   var responseFirst=responseDestroy.Body.Instructions[0];var responseIl=responseDestroy.Body.GetILProcessor();
+   responseIl.InsertBefore(responseFirst,responseIl.Create(OpCodes.Ldarg_0));
+   responseIl.InsertBefore(responseFirst,responseIl.Create(OpCodes.Ldfld,slots));
+   responseIl.InsertBefore(responseFirst,responseIl.Create(OpCodes.Brtrue,responseFirst));
+   responseIl.InsertBefore(responseFirst,responseIl.Create(OpCodes.Ret));
+   skillResponseMethods.Add(responseDestroy);
+  }
   var audio=assembly.MainModule.Types.Single(t=>t.FullName=="RoR2.WwiseIntegrationManager").Methods.Single(m=>m.Name=="get_noAudio");
   if(audio.Body.Instructions.Count!=2||audio.Body.Instructions[0].OpCode!=OpCodes.Ldc_I4_0||audio.Body.Instructions[1].OpCode!=OpCodes.Ret)throw new Exception("noAudio input contract changed");
   audio.Body.Instructions[0].OpCode=OpCodes.Ldc_I4_1;
@@ -148,11 +171,18 @@ static class OptionalPresentationGuard {
    else if(instruction.OpCode==OpCodes.Brtrue_S)instruction.OpCode=OpCodes.Brtrue;
   }
   assembly.Write(output);
-  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,rtpcCtor.FullName,rtpcFlush.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).Concat(profileMethods.Select(m=>m.FullName)).ToArray();
+  var changed=new[]{audio.FullName,sound.FullName,landing.FullName,rtpcCtor.FullName,rtpcFlush.FullName,fixedUpdate.FullName,countdown.FullName,turbine.FullName}.Concat(stopMethods.Select(m=>m.FullName)).Concat(loopMethods.Select(m=>m.FullName)).Concat(profileMethods.Select(m=>m.FullName)).Concat(skillResponseMethods.Select(m=>m.FullName)).ToArray();
   using var verified=AssemblyDefinition.ReadAssembly(output,new ReaderParameters{AssemblyResolver=resolver});
   if(verified.Name.FullName!=identity||verified.MainModule.Mvid!=mvid||!contracts.SequenceEqual(Contracts(verified)))throw new Exception("Optional presentation changed original assembly/type/field/method identity");
-  var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,Fingerprint);
+  var after=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,m=>Fingerprint(m));
   if(before.Count!=after.Count||before.Any(pair=>!after.ContainsKey(pair.Key)||(!changed.Contains(pair.Key)&&pair.Value!=after[pair.Key]))||changed.Any(name=>before[name]==after[name]))throw new Exception("Unexpected method addition/removal or change outside optional presentation");
-  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); CharacterModel RTPC IDs and value flush retain managed state while omitting only unavailable native calls; five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise. Updated-input UserProfile constructor retains default controller-map creation when ReInput is ready; unavailable input leaves maps null for native local XML. Mage hover preference uses its original null-user default when the local-player collection is empty. Ownership/authentication unchanged."}));
+  foreach(var method in skillResponseMethods){
+   var afterMethod=Types(verified.MainModule.Types).SelectMany(t=>t.Methods).Single(m=>m.FullName==method.FullName);
+   if(afterMethod.Body.Instructions.Take(4).Select(i=>i.OpCode).SequenceEqual(new[]{OpCodes.Ldarg_0,OpCodes.Ldfld,OpCodes.Brtrue,OpCodes.Ret})==false||
+      !ReferenceEquals(afterMethod.Body.Instructions[2].Operand,afterMethod.Body.Instructions[4])||
+      Fingerprint(afterMethod,afterMethod.Body.Instructions.Skip(4))!=before[method.FullName])
+    throw new Exception("Skill response null guard or original cleanup suffix changed");
+  }
+  Console.WriteLine(JsonSerializer.Serialize(new{input_sha256=expected,output_sha256=Hash(output),assembly_identity_preserved=true,type_field_method_contracts_preserved=true,module_identity_preserved=true,methods=changed,unchanged_method_bodies=before.Count-changed.Length,skill_response_guard_only_updated_input=expected==measured[1],skill_response_original_nonnull_cleanup_body_preserved=true,scope="noAudio true; PlaySound returns invalid ID0 only when audio unavailable; optional discovery profile null guard; optional landing sound/effects unavailable (server fall damage unchanged); CharacterModel RTPC IDs and value flush retain managed state while omitting only unavailable native calls; five lunar, one Golem and one Lesser Wisp plus seven additional base-monster native sound-stop methods, escape countdown and LaserTurbine RTPC calls bypassed only when audio unavailable, retaining original state exit/cleanup/HUD countdown and turbine spin/charge visuals. Updated-input loop events use the guarded utility; native heap/helper allocation, unlink/free and projectile gameplay remain unchanged; loop RTPC omits unavailable native audio. Original sound bodies otherwise. Updated-input UserProfile constructor retains default controller-map creation when ReInput is ready; unavailable input leaves maps null for native local XML. Mage hover preference uses its original null-user default when the local-player collection is empty. Ownership/authentication unchanged."}));
  }
 }

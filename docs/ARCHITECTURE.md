@@ -149,6 +149,17 @@ or failure; there is no persistent state. This verifies plugin bytes only, not
 importers, script orders or project initialization. Host contracts:
 `tests/test_assembly_transforms.py`.
 
+The updated-input transform also guards native `SkillResponseBehavior.OnDestroy`
+when its skill array was never initialized by `Start` (J638). An absent array
+returns without event work; an existing array executes the original cleanup IL.
+The generator preserves assembly/MVID/type/field/method identity and audits all
+other bodies. `SkillResponseCleanupExactEditorFixture` invokes the native base
+lifecycle on isolated inactive fixture objects and verifies subscription removal
+without claiming automatic Unity lifecycle or culprit-template attribution.
+`assembly_transforms.generate` produces these plugin bytes from supplied originals;
+working-project staging must hold the host editor lock and batch asset editing,
+verify the prior plugin/generation hashes, and update the local generation marker.
+
 Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
 `unity_rebuild.py` owns R9 `unity-build` after `validate-bindings`: destination-only
 host preflight, an exclusive operation lock, exact-editor batch invocation through

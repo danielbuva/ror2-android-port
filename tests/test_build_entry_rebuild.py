@@ -113,6 +113,7 @@ class BuildEntryTests(unittest.TestCase):
             "SirenEggDiagnosticInputExactEditorFixture",
             "LightningStakeSourceContractFixture",
             "TeleporterExitTraceSourceContractFixture",
+            "SkillResponseCleanupExactEditorFixture",
             "WholeCatalogBuild",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")

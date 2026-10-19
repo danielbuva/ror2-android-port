@@ -8404,3 +8404,52 @@ separate facts. Both runners remove their selector, stop the app and sleep the
 OLED. No extra device, storage change or Phase 2 output is used. The authored
 replay requirements are those recorded in J630/J632; this acceptance changes
 only the documented baseline and its current device evidence.
+
+## J638 — Preserve native skill-response cleanup when Start never initialized slots
+
+J635 fails actual UI-abandon teardown in native SkillResponseBehavior.OnDestroy.
+The accepted source initializes allSkillSlots before any event subscription in
+Start; a null array therefore has no matching subscription to remove. Add only
+an entry null guard to the existing exact-input assembly transform. A non-null
+array executes the original cleanup instructions, including empty arrays. No
+Start is synthesized, no private array is initialized, and no exception or
+native gameplay error is hidden. Only the updated reviewed input takes this
+new transform branch; the historical input path remains unchanged by inspection,
+without a new old-input generation run.
+
+Prior-art-first: consult community-prior-art and the pinned R2Wiki Code Analysis
+and Source Code Diff sources (0eefb7a…), which support exact-version IL inspection
+and deterministic comparison rather than stale source assumptions. Accepted
+SkillResponseBehavior and SkillCrosshairController define this lifecycle contract;
+no community implementation solves this Android unstarted-owner teardown case.
+An inactive owned body-template path is a plausible cause, but the device stack
+identifies no object. This fix does not promote that attribution to a fact.
+
+The existing transform audits assembly identity, MVID and type/field/method
+contracts, and unchanged method bodies outside its declared edits. An added
+suffix check proves original cleanup instructions remain unchanged after the
+four-instruction entry guard. Independent source review finds no actionable
+issue. Both Wwise output hashes remain unchanged. Updated transformed RoR2 hash:
+3124a2ed9cf458acee78b1beaf969590b184be452e2b3aa5a8852df82ff95d30.
+The public recipe pins this output and the authored tool-source hash; no game
+source, binary, private path or ownership adapter is published.
+
+Root replays the shared assembly_transforms.generate generator from verified
+legitimate originals, checks the prior working plugin hash, preserves its prior
+bytes/marker, and stages only the regenerated RoR2 plugin under the host mutex
+and batched editor asset editing. The original installation is untouched. The
+current read-only assembly-transforms-check replays all three outputs with zero
+differences. Eleven assembly host tests and twelve fixture-producer tests pass;
+Ruff passes. Exact Unity compilation and the new synthetic lifecycle fixture
+pass at work/experiments/skill-response-cleanup/editor-20261019T112825.471069Z/.
+The fixture tests null/empty arrays, original Start initialization and callback,
+direct delegate dispatch, and original OnDestroy removal while retaining a
+separate handler. It does not activate a genuine body, profile, server or automatic
+Unity lifecycle. The J632 native exit API/buffer fixture also passes on the latest
+UTC-bearing source in that same editor check.
+
+Installed/accepted APK remains J637 03339547…; the new plugin and source are
+not built yet. Revisit with a new APK, both baseline modes and actual Engineer
+UI-abandon/restart before claiming the device failure resolved. R1 assembly
+replay must use the updated public transform recipe; R8 must include the fixture.
+No Phase 2 replay/output, payload, device receipt or storage setting is changed.
