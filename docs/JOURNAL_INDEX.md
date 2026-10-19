@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J738](PORTING_JOURNAL.md#j738--whole-catalog-builds-stage-only-committed-sources-and-record-the-commit) | 2026-10-19 | Whole-catalog builds stage only committed sources and record the commit | Phase 2, from-scratch rebuild (operator decision on J729; implemented by Claude; host only). |
 | [J737](PORTING_JOURNAL.md#j737--accept-mercenary-effect-ownership-fix-with-cleanup-and-restart) | 2026-10-19 | Accept Mercenary effect ownership fix with cleanup and restart | Hypothesis: J733's deferred effect ledger closes the missing ownership path without changing content or the ordinary controls. |
 | [J736](PORTING_JOURNAL.md#j736--native-controller-routing-succeeds-init-time-plugin-lookup-still-fails) | 2026-10-19 | Native controller routing succeeds; Init-time plugin lookup still fails | Hypothesis: J734's unavailable controller-speaker route can be explicitly mapped to the accepted System shareset after unchanged Init loading and before Global… |
 | [J735](PORTING_JOURNAL.md#j735--mul-t-and-commando-alternates-require-live-loadout-identity) | 2026-10-19 | MUL-T and Commando alternates; require live loadout identity | Hypothesis: the native alternate identities inventoried in J727 execute bounded four-slot checks on candidate f05465855016ec4b5db17fd88a1e5f7ab54fea7e37039e5f3… |

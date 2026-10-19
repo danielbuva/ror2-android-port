@@ -31,6 +31,9 @@ class BuildEntryTests(unittest.TestCase):
             patcher = patch("build_lock." + name, value)
             patcher.start()
             self.addCleanup(patcher.stop)
+        identity = patch("build.build_source_identity", return_value=dict(commit="synthetic", clean_paths=[]))
+        identity.start()
+        self.addCleanup(identity.stop)
         self.dest = self.root / "clone/work/rebuild/project"
         self.recipe = self.root / "recipe"
         self.input_id = "a" * 64
@@ -328,7 +331,7 @@ class BuildEntryTests(unittest.TestCase):
                 "build",
             ],
         )
-        actual_build.assert_called_once_with("vulkan", force=True, reuse_payload=True)
+        actual_build.assert_called_once_with("vulkan", force=True, reuse_payload=True, source=dict(commit="synthetic", clean_paths=[]))
         freeze.assert_not_called()
         self.assertEqual(read(self.work / "whole-catalog-build.json"), dict(manifest=str(attempt / "manifest.json")))
         self.assertEqual(read(attempt / "build.json"), dict(host_fixture=True))
@@ -413,7 +416,7 @@ class ProductionOrderTests(unittest.TestCase):
         indices = [order.index(name) for name in expected]
         self.assertEqual(indices, sorted(indices))
         source = inspect.getsource(whole_catalog._build_integration)
-        self.assertIn('build("vulkan", force=True, reuse_payload=code_only)', source)
+        self.assertIn('build("vulkan", force=True, reuse_payload=code_only, source=source_identity)', source)
         maps = calls(whole_catalog.generate_build_maps)
         self.assertEqual(
             [name for name in maps if name.startswith("generate_") or name.startswith("repair_")],

@@ -1747,21 +1747,30 @@ def generate_build_bootstrap(io, manifest, closure):
 
 
 def build_integration(code_only=False, destination=None, work=None):
+    from build import build_source_identity
     from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
 
     assert_build_unblocked()
     with host_build_lock(HOST_BUILD_LOCK, operation="whole-catalog staging and build"):
         assert_build_unblocked()
-        return _build_integration(code_only=code_only, destination=destination, work=work)
+        # Stage and build only committed sources, and record the commit (J738).
+        identity = build_source_identity()
+        result = _build_integration(code_only=code_only, destination=destination, work=work, source_identity=identity)
+        if build_source_identity() != identity:
+            raise RuntimeError("Build sources changed during the build; its receipt names " + identity["commit"])
+        return result
 
 
-def _build_integration(code_only=False, destination=None, work=None):
+def _build_integration(code_only=False, destination=None, work=None, source_identity=None):
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
 
     if destination is not None:
         # R1–R8 already supplied the host products. Share the Unity half only.
-        return build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
+        result = build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
+        if isinstance(result, dict):
+            result["source"] = source_identity
+        return result
     io = StageIO(WORK)
     project = io.project
     # Both build paths own their config inputs; never inherit migration or probe extras.
@@ -1792,7 +1801,7 @@ def _build_integration(code_only=False, destination=None, work=None):
     previous = attempt / "build.json"
     if previous.exists():
         previous.rename(attempt / ("build-previous-" + now() + ".json"))
-    result = build("vulkan", force=True, reuse_payload=code_only)
+    result = build("vulkan", force=True, reuse_payload=code_only, source=source_identity)
     write(attempt / "build.json", result)
     if not code_only:
         freeze_whole_payload(project, result)

@@ -447,7 +447,24 @@ def stage_android_assets(project, io=None):
                 io.apply(project / "Assets" / source.relative_to(ROOT / "android/Assets"), copy=source)
 
 
-def build(api="gles", force=False, reuse_payload=False, destination=None, work=None):
+# Authored sources a whole-catalog build stages into the project (J738).
+BUILD_SOURCE_PATHS = ("tools/unity", "tools/catalog", "android/Assets/Editor")
+
+
+def build_source_identity():
+    """The committed source a build stages; refuses uncommitted or untracked build sources."""
+    def git(*args):
+        return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, check=True).stdout
+
+    dirty = git("status", "--porcelain", "--untracked-files=all", "--", *BUILD_SOURCE_PATHS).splitlines()
+    if dirty:
+        raise RuntimeError(
+            "Uncommitted build sources; commit them before building so the build is reproducible (J738): " + ", ".join(line[3:] for line in dirty[:10])
+        )
+    return dict(commit=git("rev-parse", "HEAD").strip(), clean_paths=list(BUILD_SOURCE_PATHS))
+
+
+def build(api="gles", force=False, reuse_payload=False, destination=None, work=None, source=None):
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
     if api == "lab":
@@ -521,6 +538,8 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         payload = dest / "payload"
         shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=copy_build_artifact)
         r["payload"] = {p.name: sha(p) for p in payload.glob("*") if p.is_file()}
+        if source is not None:
+            r["source"] = source
         write(receipt, r)
         write(WORK / "config/current-build.json", r)
         print(json.dumps(r, indent=2))

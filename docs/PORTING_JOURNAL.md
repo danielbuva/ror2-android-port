@@ -13004,3 +13004,20 @@ affect R8 source staging; J735's later host assessment change adds no game
 runtime difference. Audio remains disabled in the game; J736's separate native
 fixture failure is not part of this APK. Original input, extra devices and the
 manual Moon boundary are unchanged.
+
+## J738 — Whole-catalog builds stage only committed sources and record the commit
+
+Phase 2, from-scratch rebuild (operator decision on J729; implemented by Claude; host only).
+J729 found that the working project held staged runtime drafts that matched no commit, so no
+rebuild from public source could reproduce it. Change: `build.build_source_identity` refuses
+any uncommitted or untracked change under `tools/unity`, `tools/catalog` and
+`android/Assets/Editor` (`git status --porcelain --untracked-files=all`), and otherwise returns
+the `HEAD` commit. `whole_catalog.build_integration` checks it under the host build lock before
+any staging, for full, code-only and destination (R9) builds. It checks again after the build
+and refuses if the commit or tree changed meanwhile. The commit is recorded as `source` in the
+build-cache receipt (`result.json`), the attempt's `build.json` and R9's result. Changes
+elsewhere (docs, receipts) do not block. AGENTS.md states the rule, so both agents see it: commit
+before building, a WIP commit if necessary. Four new host tests run in a temporary Git
+repository; 1,024 host tests pass. Not yet exercised by a real build: the next code build after
+this commit is the first. Revisit: refresh the provenance map at the first accepted commit built
+under this gate, then replay R1–R8 and decide R9 with the operator (J729).

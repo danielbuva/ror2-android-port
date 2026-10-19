@@ -29,6 +29,10 @@ class UnityRebuildTests(unittest.TestCase):
         self.work = self.root / "shared-work"
         self.dest = self.root / "work/rebuild/input/lab-project"
         self.dest.mkdir(parents=True)
+        # Synthetic roots are not Git checkouts; the clean-source gate has its own tests (J738).
+        identity = patch("build.build_source_identity", return_value=dict(commit="synthetic", clean_paths=[]))
+        identity.start()
+        self.addCleanup(identity.stop)
         self.input_id = "a" * 64
         write(self.work / "config/accepted-input.json", dict(input_id=self.input_id))
         write(self.work / "config/reconstruction.json", dict(projects=["work/export"]))
