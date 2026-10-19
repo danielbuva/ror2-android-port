@@ -861,7 +861,7 @@ public sealed partial class PortSession
                                           EffectCatalog.FindEffectIndexFromPrefab(candidate.OwnedEffectPrefab) == index,
                                       "Owned Merc Evis effect catalog identity failed");
                 }
-                RegisterComposedEffects(candidate == null ? definitions : replacements);
+                RegisterComposedEffectsInitial(candidate == null ? definitions : replacements);
                 foreach (var definition in (EffectDef[])entriesField.GetValue(null))
                     AdaptComposedEffectAudio(definition);
                 if (candidate != null)
@@ -904,7 +904,7 @@ public sealed partial class PortSession
                         throw new AggregateException("Non-Merc setup rollback refused; retain the exact catalog state",
                                                      setupFailure, ownershipFailure);
                     }
-                    foreach (var state in mutationStates)
+                    foreach (var state in mutationStates.Reverse())
                         state.RestorePriorValues();
                     foreach (var pair in priorComposedEffectSounds)
                         typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key, pair.Value, null);
@@ -955,7 +955,7 @@ public sealed partial class PortSession
                 }
 
                 candidate.RestoreTargetForRollback();
-                foreach (var state in mutationStates)
+                foreach (var state in mutationStates.Reverse())
                     state.RestorePriorValues();
                 foreach (var pair in priorComposedEffectSounds)
                     typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key, pair.Value, null);
@@ -980,6 +980,54 @@ public sealed partial class PortSession
             ownedComposedAvailability = default(ResourceAvailability);
         }
         public void RegisterComposedEffects(System.Collections.Generic.IEnumerable<EffectDef> definitions)
+        {
+            if (definitions == null)
+                throw new InvalidOperationException("Late composed effect registration has no definitions");
+            var entries = (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null);
+            var nameMap = (IDictionary)PortSession.RewardField(typeof(EffectCatalog), "nameToEffectIndex").GetValue(null);
+            if (!ComposedCatalogStructureStillOwned(entries, nameMap) ||
+                ownedEffectMutationStates.Any(state => !state.IsOwnedCurrentValue()) ||
+                priorComposedEffectSounds.Any(pair => pair.Key == null ||
+                    (pair.Key.spawnSoundEventName != null && pair.Key.spawnSoundEventName != pair.Value)))
+                throw new InvalidOperationException("Cannot add composed effects after catalog ownership changed");
+
+            // Resolve and validate the whole request before writing. For a repeated
+            // baked identity in this batch, preserve the supplied order; each
+            // mutation snapshot is captured immediately before its own writes.
+            var plans = new List<KeyValuePair<EffectDef, EffectIndex>>();
+            foreach (var definition in definitions.ToArray())
+            {
+                if (definition == null || !definition.prefab || !definition.prefabEffectComponent ||
+                    definition.prefabEffectComponent.gameObject != definition.prefab)
+                    throw new InvalidOperationException("Late composed EffectDef has no exact prefab component");
+                var index = EffectCatalog.FindEffectIndex(definition.prefabName);
+                if (index == EffectIndex.Invalid || (int)index < 0 || (int)index >= entries.Length)
+                    throw new InvalidOperationException("Original baked effect identity absent: " + definition.prefabName);
+                bool slotOwned = ReferenceEquals(entries[(int)index], nativeComposedEntryBaseline[(int)index]) ||
+                    ownedEffectMutationStates.Any(state => (int)state.RegisteredIndex == (int)index &&
+                                                           ReferenceEquals(state.definition, entries[(int)index]));
+                if (!slotOwned)
+                    throw new InvalidOperationException("Foreign composed EffectDef occupies baked slot " + index);
+                plans.Add(new KeyValuePair<EffectDef, EffectIndex>(definition, index));
+            }
+
+            foreach (var plan in plans)
+            {
+                var definition = plan.Key;
+                var state = new EffectMutationState(definition);
+                state.CaptureRegisteredIndex();
+                if (state.RegisteredIndex != plan.Value)
+                    throw new InvalidOperationException("Baked effect identity changed during late registration: " + definition.prefabName);
+                // Publish ownership before the first mutation so a later failure
+                // can only clean up through the ordinary strict teardown path.
+                ownedEffectMutationStates = ownedEffectMutationStates.Concat(new[] { state }).ToArray();
+                typeof(EffectDef).GetProperty("index").SetValue(definition, plan.Value, null);
+                definition.prefabEffectComponent.effectIndex = plan.Value;
+                entries[(int)plan.Value] = definition;
+                AdaptComposedEffectAudio(definition);
+            }
+        }
+        void RegisterComposedEffectsInitial(System.Collections.Generic.IEnumerable<EffectDef> definitions)
         {
             var entries = (EffectDef[])PortSession.RewardField(typeof(EffectCatalog), "entries").GetValue(null);
             foreach (var definition in definitions)
@@ -1021,7 +1069,7 @@ public sealed partial class PortSession
             // Restore only after every adapter/catalog/pool ownership check passes.
             if (mercEvisImpactEffectLease != null)
                 mercEvisImpactEffectLease.RestoreBinding();
-            foreach (var state in ownedEffectMutationStates)
+            foreach (var state in ownedEffectMutationStates.Reverse())
                 state.RestorePriorValues();
             foreach (var pair in priorComposedEffectSounds)
                 typeof(EffectDef).GetProperty("spawnSoundEventName").SetValue(pair.Key, pair.Value, null);

@@ -1150,3 +1150,9 @@ are independently generated test data. Native behavior was inspected locally;
 pinned R2API.ContentManagement `ContentAddition.AddEffect` informs the root
 EffectComponent prerequisite without supplying implementation. Generated clones
 and test data stay local. These runtime and fixture changes affect R8 staging.
+
+J733 extends the same authored owner/fixture with deferred field-mutation
+bookkeeping and a synthetic CoinEmitter lookup fixture. No additional source
+asset body, implementation or protected material is included. Exact native
+baked indices and original files remain local inputs; the public change affects
+R8 source staging and is independently checked in the pinned editor.

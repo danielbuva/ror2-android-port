@@ -12647,3 +12647,72 @@ fixtures do not restore audio to the port. Continue with the complete unchanged
 Global bank and a traced original event, then integrate a named Android audio
 owner only after the native and managed contracts pass. No original bank
 conversion has been shown necessary.
+
+## J733 — Mercenary alternates pass; retain later effect registrations
+
+Hypothesis: J731's owned Evis effect adapter removes J720's native lookup
+failure while preserving the ordinary controls. Freeze db64b53's 243 authored
+inputs against Git objects, build code-only, then repeat the exact alternate
+loadout. APK f05465855016ec4b5db17fd88a1e5f7ab54fea7e37039e5f3c99dc753c0ec200
+builds in 120.738693 seconds, IL2CPP ARM64 Vulkan, zero errors; all 266 content
+payload records equal accepted 885ea294. Frozen build/source receipts and source
+snapshot: work/experiments/merc-evis-effect/candidate-20261019T202618.511215Z/.
+
+The configured device's in-place adopted-storage install/sync pass. Both default
+controls pass with empty report and current-process log errors: plain Lakes
+35.218307 seconds at work/experiments/baseline/20261019T203047.991863Z/;
+one genuine exit to Goolake with 11.052154 next-stage seconds at
+work/experiments/baseline/20261019T203435.604032Z/ (total world 161.383392).
+Native first-stage diagnostic and recovery remain false, operation witnesses
+empty, pauseBeforeMoon true, automatic hold false/zero, and all four isolated
+window counters zero. Profiles remain at 13 applied runs. Selectors are removed,
+the app stops and the OLED sleeps through existing cleanup.
+
+The exact Mercenary selector requests Uppercut, Focused Assault and EvisProjectile
+with the unchanged primary. The 60.477005-second case passes all four callbacks,
+with final authority/server counts 12/3/1/2 and empty collector failures/log
+errors. Evidence: work/experiments/survivor-check/20261019T204111.354543Z/Merc/;
+root result: work/coordination/codex-merc-f054-alternate.stdout. The final live
+survivorSkills inventory identifies native skills 156/154/153/152 and matching
+selected loadouts. The top-level override inventory is the earlier pre-spawn
+snapshot; it is not substituted for that live evidence. Two player-owned
+EvisOverlapProjectile occurrences are observed. Three mapped player-owned
+projectile damage events each deal 12 damage to a Wisp; attribution is to that
+projectile, not an inference from callback time alone. The rejected
+MercSwordFinisherSlash error does not recur. This is an assisted bounded case
+with invincibility, automatic input and developer loadout selection, not complete
+ability semantics, normal difficulty, ordinary unlocks or visual parity.
+
+Before promoting the candidate, source review identifies an additional ownership
+gap: TeleporterWorldBoundary registers support EffectDefs after the initial
+BodyCatalogSession snapshot. Strict final teardown would treat those legitimate
+later replacements as foreign. This is a source-confirmed missing ledger path,
+not a claimed device teardown observation. Keep f054 as a diagnostic candidate;
+885ea294 remains the accepted rollback while this gap is repaired.
+
+Change: later RegisterComposedEffects now preflights exact catalog/name-map/
+availability/field ownership and the complete request before writes. It records
+and publishes each late definition's exact prior index/component/sound state
+before mutating it. Initial registration retains its original setup path. All
+mutation stacks restore in reverse order, including two EffectDefs sharing a
+prefab component. Foreign entries/fields still refuse cleanup and retain their
+owner; no equality or reference guard is weakened. Prior art and native baked
+identity context remain J731's pinned R2API.ContentManagement and J430/J431.
+
+The extended tracked exact-editor fixture invokes the actual owner and original
+SetEntries across three restored generations. New cases prove legitimate late
+registration, same-component stack restoration, preflight refusal of a later
+invalid batch, and foreign-slot teardown refusal before writes. A synthetic
+CoinEmitter supplies only the baked-name lookup and its owned test component;
+no source asset is modified. Original Evis/source visual, live-reference refusal
+and provider/cache restoration contracts still pass. Evidence:
+work/experiments/first-stage-native-lifecycle/composed-late-registration-fixture-20261019T204539.214190Z/;
+root result: work/coordination/codex-composed-late-registration-editor-fixture.stdout.
+The full host suite passes 1,018 tests in 19.361 seconds. First failure under the
+final editor contract: none.
+
+The late-registration runtime/fixture sources affect R8 and are not in f054.
+Next: commit/freeze this reviewed target, code-only build, both default controls,
+then Mercenary alternate play and UI-abandon/restart to qualify actual teardown.
+No original input, protected bytes, storage setting, extra device or Moon route
+changes. All failed experiments and accepted APKs remain preserved.

@@ -1287,7 +1287,12 @@ projectile or marked effect references before restoring the Evis field,
 registered indices, sound metadata, prior catalog and availability. It removes
 only the adapter's cache entry and destroys its owner after restoration. A
 refusal retains the lease for diagnosis. Setup failures use the same ownership
-checks for rollback, including the ordinary non-Merc path.
+checks for rollback, including the ordinary non-Merc path. Deferred teleporter
+support uses `RegisterComposedEffects` after initial setup; it preflights the
+whole request and records each field mutation before writes. Teardown restores
+the accumulated stack in reverse so definitions sharing a prefab component
+recover the original index. Initial setup uses its separately scoped registration
+path and the same reverse restoration rule.
 
 `MercEvisImpactEffectExactEditorFixture.cs` is support code staged by
 `whole_catalog.stage_build_sources` into `Assets/Editor`. Its public `Run()`

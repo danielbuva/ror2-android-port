@@ -27,6 +27,26 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 // baked catalog. It does not save or alter any asset.
 public static class MercEvisImpactEffectExactEditorFixture
 {
+    sealed class LateMutationExpectation
+    {
+        public readonly EffectDef first, second;
+        public readonly EffectIndex firstIndex, secondIndex, componentIndex;
+        public readonly string firstSound, secondSound;
+        public readonly EffectComponent component;
+        public LateMutationExpectation(EffectDef first, EffectDef second, EffectIndex firstIndex,
+                                       EffectIndex secondIndex, string firstSound, string secondSound,
+                                       EffectComponent component, EffectIndex componentIndex)
+        {
+            this.first = first;
+            this.second = second;
+            this.firstIndex = firstIndex;
+            this.secondIndex = secondIndex;
+            this.firstSound = firstSound;
+            this.secondSound = secondSound;
+            this.component = component;
+            this.componentIndex = componentIndex;
+        }
+    }
     const string EvisPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/Skills/EvisProjectile.prefab";
     const string SwingPath = "Assets/WholeGame/RoR2/Base/Characters/Merc/MercSwordFinisherSlash.prefab";
     const string BakedCatalogPath = "Assets/WholeGame/RoR2/Catalog/BakedEffectsCatalog.asset";
@@ -217,8 +237,10 @@ public static class MercEvisImpactEffectExactEditorFixture
             var initialize = sessionType.GetMethod("InitializeMercEvisAdapterFixture", BindingFlags.Instance | BindingFlags.Public);
             var initializeDefault = sessionType.GetMethod("InitializeComposedEffectsFixture", BindingFlags.Instance | BindingFlags.Public);
             var lastOwnedObjects = sessionType.GetMethod("MercEvisFixtureLastOwnedObjects", BindingFlags.Instance | BindingFlags.Public);
+            var registerLate = sessionType.GetMethod("RegisterComposedEffects", BindingFlags.Instance | BindingFlags.Public);
             var restore = sessionType.GetMethod("RestoreComposedEffects", BindingFlags.Instance | BindingFlags.Public);
-            Require(initialize != null && initializeDefault != null && lastOwnedObjects != null && restore != null,
+            Require(initialize != null && initializeDefault != null && lastOwnedObjects != null &&
+                        registerLate != null && restore != null,
                     "Authored effect owner fixture seam unavailable");
 
             // Generation one: actual owner registration, lookup, field binding,
@@ -227,6 +249,8 @@ public static class MercEvisImpactEffectExactEditorFixture
             EffectDef firstAdded = null;
             GameObject[] generationOneObjects = null;
             bool generationOneInitialized = false;
+            var fixtureLateMutationExpectations = new List<LateMutationExpectation>();
+            GameObject lateFixturePrefab = null;
             RunWithCleanup(() =>
             {
                 var requestCountBefore = provider.NativeCatalogRequests;
@@ -270,6 +294,65 @@ public static class MercEvisImpactEffectExactEditorFixture
                             "Cleanup did not retain adapter/catalog while a live projectile referenced its clone");
                 }
                 finally { UnityEngine.Object.DestroyImmediate(liveProjectile); }
+
+                // Later teleporter setup registers new definitions after the
+                // initial catalog snapshot. Use two EffectDefs sharing one
+                // baked prefab/component to prove mutation-stack restoration.
+                lateFixturePrefab = MakeTestEffectPrefab("CoinEmitter");
+                var sharedPrefab = lateFixturePrefab;
+                var sharedComponent = sharedPrefab.GetComponent<EffectComponent>();
+                var sharedPriorComponentIndex = sharedComponent.effectIndex;
+                var lateFirst = new EffectDef(sharedPrefab);
+                var lateSecond = new EffectDef(sharedPrefab);
+                var lateFirstPriorIndex = lateFirst.index;
+                var lateSecondPriorIndex = lateSecond.index;
+                var lateFirstPriorSound = lateFirst.spawnSoundEventName;
+                var lateSecondPriorSound = lateSecond.spawnSoundEventName;
+                registerLate.Invoke(session, new object[] { new[] { lateFirst, lateSecond } });
+                var lateIndex = EffectCatalog.FindEffectIndex(lateFirst.prefabName);
+                Require(lateIndex != EffectIndex.Invalid && lateIndex == EffectCatalog.FindEffectIndex("CoinEmitter") &&
+                            lateIndex == EffectCatalog.FindEffectIndex(lateSecond.prefabName) &&
+                            ReferenceEquals(((EffectDef[])entriesField.GetValue(null))[(int)lateIndex], lateSecond) &&
+                            lateFirst.index == lateIndex && lateSecond.index == lateIndex &&
+                            sharedComponent.effectIndex == lateIndex,
+                        "Late same-component registration did not preserve native slot and ordered replacement");
+
+                // A failed later request is preflight-only and must preserve the
+                // already-owned late replacement. Then inject a foreign slot
+                // value to verify cleanup refuses before restoring any state.
+                var laterValid = new EffectDef(sharedPrefab);
+                Exception laterRequestFailure = null;
+                try { registerLate.Invoke(session, new object[] { new EffectDef[] { laterValid, null } }); }
+                catch (TargetInvocationException error) { laterRequestFailure = error.InnerException; }
+                Require(laterRequestFailure is InvalidOperationException &&
+                            laterRequestFailure.Message == "Late composed EffectDef has no exact prefab component" &&
+                            ReferenceEquals(((EffectDef[])entriesField.GetValue(null))[(int)lateIndex], lateSecond) &&
+                            lateSecond.index == lateIndex && laterValid.index == EffectIndex.Invalid &&
+                            sharedComponent.effectIndex == lateIndex,
+                        "Rejected later registration changed the previously-owned late effect");
+                var foreignLate = new EffectDef(sharedPrefab);
+                var liveEntries = (EffectDef[])entriesField.GetValue(null);
+                liveEntries[(int)lateIndex] = foreignLate;
+                Exception lateCleanupFailure = null;
+                try { restore.Invoke(session, new object[] { priorEntries }); }
+                catch (TargetInvocationException error) { lateCleanupFailure = error.InnerException; }
+                finally
+                {
+                    if (ReferenceEquals(liveEntries[(int)lateIndex], foreignLate))
+                        liveEntries[(int)lateIndex] = lateSecond;
+                }
+                Require(lateCleanupFailure is InvalidOperationException &&
+                            lateCleanupFailure.Message == "Foreign composed EffectDef prevents Merc adapter teardown at index " + lateIndex &&
+                            ReferenceEquals(liveEntries[(int)lateIndex], lateSecond) &&
+                            impact[0].impactEffect == bound && lateSecond.index == lateIndex &&
+                            sharedComponent.effectIndex == lateIndex,
+                        "Cleanup did not refuse a foreign late slot before changing its owned state");
+
+                // Keep the exact pre-registration values for assertions after
+                // the ordinary outer cleanup restores the initial generation.
+                fixtureLateMutationExpectations.Add(new LateMutationExpectation(
+                    lateFirst, lateSecond, lateFirstPriorIndex, lateSecondPriorIndex,
+                    lateFirstPriorSound, lateSecondPriorSound, sharedComponent, sharedPriorComponentIndex));
             },
             () => generationOneInitialized || !ReferenceEquals(entriesField.GetValue(null), priorEntries) ||
                   ((GameObject[])lastOwnedObjects.Invoke(session, null)).Any(value => value),
@@ -280,6 +363,15 @@ public static class MercEvisImpactEffectExactEditorFixture
                         EffectCatalog.availability.Equals(priorAvailability) &&
                         firstAdded.index == EffectIndex.Invalid && !generationOneObjects[0] && !generationOneObjects[1],
                     "Normal owner cleanup did not restore the original catalog and binding");
+            Require(fixtureLateMutationExpectations.Count == 1 && fixtureLateMutationExpectations.All(expectation =>
+                        expectation.first.index == expectation.firstIndex && expectation.second.index == expectation.secondIndex &&
+                        expectation.first.spawnSoundEventName == expectation.firstSound &&
+                        expectation.second.spawnSoundEventName == expectation.secondSound &&
+                        expectation.component.effectIndex == expectation.componentIndex),
+                    "Late definition stack did not restore the prior shared component and definition fields");
+            Require(lateFixturePrefab, "Late-registration fixture prefab unexpectedly retired before cleanup proof");
+            UnityEngine.Object.DestroyImmediate(lateFixturePrefab);
+            lateFixturePrefab = null;
 
             // Generation two: force the existing RegisterComposedEffects path to
             // fail after one valid replacement was assigned, then verify that
@@ -403,6 +495,10 @@ public static class MercEvisImpactEffectExactEditorFixture
             threeFullyRestoredCatalogGenerations = true,
             nativePrefabToIndexRoundTrip = true,
             evisOnlyFieldRestored = true,
+            lateRegistrationDefinitionsTracked = true,
+            lateSameComponentMutationStackRestored = true,
+            laterInvalidRegistrationLeftPriorOwnerIntact = true,
+            foreignLateCatalogSlotRefusedBeforeCleanupWrites = true,
             failureAfterValidReplacementRestoredIndicesAndCatalog = true,
             defaultPathFailureRestoredExactPriorDefinitionAndComponentIndices = true,
             cleanupRefusedWhileLiveProjectileReferencedClone = true,

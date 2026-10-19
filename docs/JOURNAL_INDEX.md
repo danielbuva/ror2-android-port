@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J733](PORTING_JOURNAL.md#j733--mercenary-alternates-pass-retain-later-effect-registrations) | 2026-10-19 | Mercenary alternates pass; retain later effect registrations | Hypothesis: J731's owned Evis effect adapter removes J720's native lookup failure while preserving the ordinary controls. |
 | [J732](PORTING_JOURNAL.md#j732--native-wwise-output-and-unchanged-original-init-loading-on-android) | 2026-10-19 | Native Wwise output and unchanged original Init loading on Android | Hypothesis: the user-supplied Wwise 2023.1.8.8601 Android ARM64 SDK can produce native output independently of the game's disabled managed audio path, then acc… |
 | [J731](PORTING_JOURNAL.md#j731--own-mercenarys-evis-impact-visual-as-a-native-effect) | 2026-10-19 | Own Mercenary's Evis impact visual as a native effect | Hypothesis: J720's rejected MercSwordFinisherSlash lookup can be repaired by an Evis-only owned effect clone. |
 | [J730](PORTING_JOURNAL.md#j730--native-first-stage-abandonment-returns-its-loan-and-restarts) | 2026-10-19 | Native first-stage abandonment returns its loan and restarts | Hypothesis: J726's source-table-first commerce reconciliation fixes the measured baseline-release ordering failure. |
