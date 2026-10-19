@@ -9586,3 +9586,38 @@ retry and both default controls. Accepted/installed APK remains
 Nova is stopped/OLED asleep. R8 must replay the changed authored selector and
 staged fixture. No new local build input, Phase 2 output, original input,
 private receipt hand edit, extra device, existing data move or storage change.
+
+## J665 — Build and install the typed-dependency/Director candidate; plain control passes
+
+Hypothesis: J659/J662's staged dependencies and J664's bounded native deck-order
+correction can produce a full Android payload while preserving ordinary first-
+stage play. Their implementation, provenance and host contracts are recorded
+in those entries; this is the first combined full build/device control.
+
+Selected preflight passes. Build request 20261019T141329.506691Z completes in
+732.845748 s with zero errors, producing APK
+ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Frozen APK, build receipt, all 105 runtime/recipe/fixture hashes, actual manifest,
+reconciled closure, host gate receipts and build/preflight output are at
+work/experiments/typed-state-closure/candidate-20261019T141329.506691Z/.
+The actual manifest has 30,322 locations, including the repaired dependencies;
+266 independently hashed payload files are frozen in the build cache. This
+full build regenerates content rather than reusing the old code-only payload.
+
+Live adopted-storage/free-space checks, in-place installation and payload sync
+pass on the configured Nova. Plain evidence: work/experiments/baseline/
+20261019T143043.307620Z/. The collector passes 35.194702 s of Lakes play with
+no first failure or unexpected current-process log error in
+root-log-validation.json. Native diagnostic/recovery flags are false; applied
+profile runs remain 13 and earned/available unlocks remain one. The collector
+force-stops a live report and sleeps the OLED; it is not a completed-session
+cleanup, native Stage or positive ordinary-award witness.
+
+First failure: none in build/install/plain control. Engineer's full four-slot
+alternate replay is active; native first-stage and default one-exit checks are
+pending. J650's Laser Cutter failure is not erased merely because its locations
+are built, and J661's failed native case remains separate. Keep J663 6506b99b…
+accepted until both default modes pass on this APK. R3/R8 replay follows J659/
+J662/J664's recorded input changes; no Phase 2 output is edited. No original
+input change, private device receipt hand edit, extra-device selection, existing
+data move or storage reconfiguration occurs in this case.
