@@ -88,8 +88,10 @@ source-table restoration, then refuses at the effect-reference attribution guard
 ahead of support retirement after source-table restoration. This APK contains
 that ordering fix and retains J716's read-only operation witness and J703's exact
 failure operands; both diagnostics remain inactive in default controls. Its
-native cleanup/restart retry is a separate running gate.
-Completed native cleanup/restart and transport remain unaccepted. Prior
+native UI-abandon/restart retry passes on device in J730.
+J730 accepts completed native first-stage UI abandonment and a healthy same-process
+restart, with the exact shrine loan returned and no recovery required. Native
+loss cleanup and stage transport remain unaccepted. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
 

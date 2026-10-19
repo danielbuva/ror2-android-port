@@ -12456,3 +12456,49 @@ Revisit: the target for R8–R9 must be a working project built from a committed
 build records the commit and refuses or flags a dirty tree, or the rebuild compares against a
 build receipt instead of the live project. Then refresh the map at that commit and run R9 (editor
 and device, operator approval).
+
+## J730 — Native first-stage abandonment returns its loan and restarts
+
+Hypothesis: J726's source-table-first commerce reconciliation fixes the measured
+baseline-release ordering failure. After both J728 default controls pass, retry
+native UI abandonment on installed APK
+885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715.
+Evidence: work/device/<serial>/experiments/session-cleanup/20261019T195426.249966Z/;
+root result: work/coordination/codex-native-order-885-abandon.stdout.
+
+Ordinary Commando selection and default loadout; all five gameplay acceleration
+controls are off. Automatic input and the explicit native lifecycle diagnostic
+still mark the run assisted. Session 1 reaches one genuine original Stage-begin
+and 65.452194 world seconds, then uses Settings/End Run. The completed-session
+contract passes with phase complete, success and cleanup true, empty
+error/firstFailure, and recovery required false. Combat-output observers detach
+and clean up. Exactly one shrine effect loan is returned. The operation witness
+shows the same owned Succeeded operation/version/result at purchase and final
+reconciliation, with baseline count 1, current count 2 and delta 1 at both.
+Its existing cleanup-before-refusal reason is only a snapshot label; no refusal
+occurs. Exact equality and release count were not weakened.
+
+The same process presents session 2's menu and starts a healthy new body/master
+with another genuine Stage-begin. The accepted second-session sample is
+integrated-world-playing at 4.991669 world seconds, with its observer attached
+and healthy, empty report error, and recovery required false. Collector
+runtime_errors and failures are empty; stop is same-process-restart. Profiles
+retain 13 applied runs and one earned/available unlock throughout, with no
+permanent award. Existing final cleanup removes the selector, stops the app and
+sleeps the OLED.
+
+Host-observed elapsed time after launch returns is 149.812887 seconds to first
+world, 216.828896 to End Run, 251.448837 to validated cleanup, and 335.895156 to
+a healthy second world. End Run to observed cleanup is 34.619941 seconds.
+These are polling wall times, not native CPU/FPS or precise internal cleanup
+timings. The second menu was sampled just before cleanup validation; no negative
+cleanup-to-menu interval is inferred.
+
+First failure: none under this native first-stage UI-abandon/restart contract.
+This closes the specific J726 reference-lifetime defect on IL2CPP. Native loss
+cleanup, stage transport and later source-scene retirement remain separate
+gates, as do ordinary awards, complete skills and normal-difficulty acceptance.
+The default accepted APK and older rollbacks remain intact. No APK, original
+content, storage configuration, extra device or Moon route changes during this
+retry. Named-owner/prior-art context remains J726's native Addressables lease
+and source-table retirement contracts.
