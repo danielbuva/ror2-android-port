@@ -60,6 +60,13 @@ def _target(function, kwargs, args):
     return function(args.target, **kwargs)
 
 
+def _session_cleanup_target(function, kwargs, args):
+    # The global prototype target defaults to "lab"; preserve the old Commando
+    # behavior unless a caller explicitly supplies a base survivor key.
+    target = "Commando" if args.target == "lab" else args.target
+    return _json_result(function, dict(kwargs, survivor=target), args, indent=2)
+
+
 def _timed_prepare(function, kwargs, args, *, seconds):
     from common import ROOT, WORK, read, write
 
@@ -190,8 +197,8 @@ _ENTRIES = (
         "check_session_cleanup",
         {},
         "current",
-        "Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off.",
-        handler=partial(_json_result, indent=2),
+        "Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects a base survivor (default Commando); locked choices are diagnostic overrides, no expansion.",
+        handler=_session_cleanup_target,
     ),
     Action("whole-catalog-host-providers", "whole_catalog", "host_providers", {}, "current", "Run the whole-catalog native-provider host fixture."),
     Action("whole-catalog-repair-bindings", "whole_catalog", "repair_root_bindings", {}, "current", "Repair recorded whole-catalog root bindings."),

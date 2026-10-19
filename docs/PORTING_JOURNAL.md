@@ -7560,3 +7560,30 @@ This adds the 96th authored runtime source, its imported GUID and an editor
 fixture to the existing producer; R8/build-entry inputs must be replayed by the
 parallel session. No Phase 2 step, content payload, original installation or
 extra device was changed.
+
+## J615 — Select a base survivor for native cleanup acceptance
+
+Hypothesis: the current cleanup observer can validate Engineer's template
+release and same-process restart through the ordinary native loss flow, once
+its survivor identity is explicit. The default Commando path remains current.
+This changes generic host selection and report contracts, not native gameplay.
+
+The current session-cleanup-check action accepts optional --target Engi or
+another base survivor. It rejects expansion/unknown keys before constructing a
+device, labels locked choices as diagnostic overrides, and requires exact
+survivor/override fields in every matching current-process report before menu
+or restart input. Both completed/restarted contracts repeat the identity check.
+All five gameplay debug assists remain off; automatic input remains assisted
+and excluded from permanent awards. Root review also tightened exclusion to
+explicit assistedExcluded=true and resultApplied=false, refusing missing,
+null or truthy-string substitutes. Existing first-stage, genuine death/results,
+native listener retirement, same-PID restart and display finalizers remain.
+
+Twenty-five focused mocked tests pass, including Engineer's full report flow,
+wrong survivor before each tap, expansion refusal, default action JSON dispatch,
+strict profile booleans and the existing failure/finalizer cases. Ruff and the
+generated README action table check pass. Host log:
+work/coordination/codex-cleanup-survivor-host.log. Architecture/help identify
+this as a current support action. No APK or runtime input changed, and the
+new target path has no device acceptance yet. J609 remains the existing
+Commando native cleanup evidence; Engineer will need its own run.

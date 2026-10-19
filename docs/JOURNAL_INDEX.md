@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J615](PORTING_JOURNAL.md#j615--select-a-base-survivor-for-native-cleanup-acceptance) | 2026-10-19 | Select a base survivor for native cleanup acceptance | Hypothesis: the current cleanup observer can validate Engineer's template release and same-process restart through the ordinary native loss flow, once its surv… |
 | [J614](PORTING_JOURNAL.md#j614--guard-the-engineer-shields-native-null-world-hit-boundary) | 2026-10-19 | Guard the Engineer shield's native null-world-hit boundary | Hypothesis: J611's exception is the current native filter receiving a legitimate world BulletHit with no HurtBox, rather than a broken collider import. |
 | [J613](PORTING_JOURNAL.md#j613--stop-survivor-cases-on-live-current-process-errors) | 2026-10-19 | Stop survivor cases on live current-process errors | Hypothesis: J611's shield exception demonstrates that callback counts and empty report error fields are insufficient to stop at the first native gameplay failu… |
 | [J612](PORTING_JOURNAL.md#j612--qualify-cpu-evidence-by-survivor-and-sampled-gameplay-context) | 2026-10-19 | Qualify CPU evidence by survivor and sampled gameplay context | Hypothesis: a process-attributed raw profile needs explicit survivor and stage qualifiers before it can support the parallel survivor/performance work. |

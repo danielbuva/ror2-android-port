@@ -704,9 +704,11 @@ fixture-owned entries. Actual completed-session cleanup and restart pass in J609
 `./dev prototype --action session-cleanup-check` (current support action,
 `scripts/lab/session_cleanup_check.py`) observes the existing first-stage loss
 and restart flow with automatic diagnostic input and every gameplay debug
-assist disabled. It requires a genuine player death/result, native teleporter
-listener retirement while the server is active, and live session 2 in the same
-process. It verifies the receipt-backed APK against its host artifact, freezes
+assist disabled. Optional `--target <base survivor>` selects the exact survivor;
+the default remains Commando, and locked base choices are labelled diagnostic
+overrides. Every current report must match that choice before any menu/restart
+tap. It requires a genuine player death/result, native teleporter listener
+retirement while the server is active, and live session 2 in the same process. It verifies the receipt-backed APK against its host artifact, freezes
 profile counts, and refuses stale reports, runtime errors or departure from
 Lakes. Setup preserves and removes only the owned report targets; teardown
 preserves foreign selectors, verifies process termination and sleeps the display.

@@ -1,7 +1,10 @@
 import hashlib
+import io
 import json
 import sys
 import tempfile
+from argparse import Namespace
+from contextlib import redirect_stdout
 import unittest
 from contextlib import ExitStack
 from pathlib import Path
@@ -12,6 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from session_cleanup_check import (
     SPINE_ID,
     cleanup_contract,
+    selection,
+    survivor_identity_failures,
     matches_run,
     menu_start_coordinates,
     parse_display_size,
@@ -23,6 +28,7 @@ from session_cleanup_check import (
     selector_action,
 )
 import session_cleanup_check as runner
+from actions import ACTIONS
 
 
 def live_report(**changes):
@@ -30,6 +36,8 @@ def live_report(**changes):
         "pid": 314,
         "attempt": "attempt-1",
         "id": SPINE_ID,
+        "selectedSurvivor": "Commando",
+        "developerSurvivorOverride": False,
         "session": 1,
         "phase": "integrated-world-playing",
         "integratedWorld": True,
@@ -107,12 +115,13 @@ SYNTHETIC_SERIAL = "synthetic-device"
 class FakeDevice:
     serial = SYNTHETIC_SERIAL
 
-    def __init__(self, work, reports, log_error=False, foreign_selector=False):
+    def __init__(self, work, reports, log_error=False, foreign_selector=False, survivor="Commando"):
         self.runtime = "/storage/emulated/0/Android/data/dev.ror2lab.arm64/files"
         self.remote = {}
         self.reports = list(reports)
         self.log_error = log_error
         self.foreign_selector = foreign_selector
+        self.survivor = survivor
         self.pid = "314"
         self.alive = False
         self.taps = []
@@ -177,7 +186,7 @@ class FakeDevice:
         if args[0] == "input" and args[1] == "tap":
             self.taps.append((int(args[2]), int(args[3])))
             if len(self.taps) == 2:
-                self.remote[self.completed_path] = json.dumps(completed_report())
+                self.remote[self.completed_path] = json.dumps(completed_report(selectedSurvivor=self.survivor, developerSurvivorOverride=self.survivor not in runner.FREE_SURVIVORS))
             return ""
         if args[:2] == ("wm", "size"):
             return "Physical size: 1280x800\n"
@@ -188,7 +197,7 @@ class FakeDevice:
         return ""
 
 
-def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_deadline_seconds=600):
+def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_deadline_seconds=600, survivor="Commando"):
     temp = tempfile.TemporaryDirectory()
     base = Path(temp.name)
     work = base / "work"
@@ -208,7 +217,7 @@ def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_dea
         )
     )
     (config / "MovementBatchProbe.json").write_text(json.dumps({"attempt": "attempt-1"}))
-    device = FakeDevice(work, reports, log_error=log_error, foreign_selector=foreign_selector)
+    device = FakeDevice(work, reports, log_error=log_error, foreign_selector=foreign_selector, survivor=survivor)
     device.apk_hash = apk_hash
     device.remote[device.report_path] = json.dumps({"attempt": "stale", "session": 1})
     device.remote[device.completed_path] = json.dumps({"attempt": "stale", "session": 1})
@@ -227,7 +236,7 @@ def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_dea
         for patcher in patches:
             stack.enter_context(patcher)
         try:
-            result = runner.check_session_cleanup()
+            result = runner.check_session_cleanup(survivor=survivor)
             error = None
         except RuntimeError as exc:
             result = None
@@ -258,6 +267,43 @@ def session_one_defeat_report():
 
 
 class SessionCleanupCheckTests(unittest.TestCase):
+    def test_survivor_target_is_base_only_and_locked_choices_are_diagnostic(self):
+        self.assertEqual(selection("attempt-1")["selectedSurvivor"], "Commando")
+        self.assertFalse(selection("attempt-1")["developerSurvivorOverride"])
+        engi = selection("attempt-1", "Engi")
+        self.assertEqual(engi["selectedSurvivor"], "Engi")
+        self.assertTrue(engi["developerSurvivorOverride"])
+        self.assertEqual(set(engi["debugOptions"]) - {"purpose"}, set(runner.DEBUG_ASSISTS))
+        self.assertTrue(all(value is False for key, value in engi["debugOptions"].items() if key != "purpose"))
+        with self.assertRaises(ValueError):
+            selection("attempt-1", "Railgunner")
+
+    def test_survivor_identity_requires_exact_hero_and_override(self):
+        report = live_report()
+        self.assertEqual(survivor_identity_failures(report, "Commando"), [])
+        self.assertTrue(survivor_identity_failures({**report, "selectedSurvivor": "Engi"}, "Commando"))
+        self.assertTrue(survivor_identity_failures({**report, "developerSurvivorOverride": True}, "Commando"))
+        engi = {**report, "selectedSurvivor": "Engi", "developerSurvivorOverride": True}
+        self.assertEqual(survivor_identity_failures(engi, "Engi"), [])
+        self.assertTrue(survivor_identity_failures({**engi, "developerSurvivorOverride": False}, "Engi"))
+
+    def test_action_handler_preserves_json_output_and_maps_lab_default(self):
+        handler = ACTIONS["session-cleanup-check"].handler
+        calls = []
+
+        def fake_check(**kwargs):
+            calls.append(kwargs)
+            return {"success": True}
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            handler(fake_check, {}, Namespace(target="lab"))
+        self.assertEqual(calls, [{"survivor": "Commando"}])
+        self.assertEqual(json.loads(output.getvalue()), {"success": True})
+        with redirect_stdout(io.StringIO()):
+            handler(fake_check, {}, Namespace(target="Engi"))
+        self.assertEqual(calls[-1], {"survivor": "Engi"})
+
     def test_report_identity_requires_process_attempt_and_owner(self):
         report = live_report()
         self.assertTrue(matches_run(report, 314, "attempt-1", 1))
@@ -327,6 +373,18 @@ class SessionCleanupCheckTests(unittest.TestCase):
         counts = {"appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2}
         self.assertEqual(restart_contract(report, 314, "attempt-1", counts), [])
         self.assertIn("stage geometry identity is not Lakes", restart_contract({**report, "stage": {"scene": "goolake"}}, 314, "attempt-1", counts))
+
+    def test_completed_session_requires_explicit_profile_exclusion_booleans(self):
+        counts = {"appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2}
+        for field, values in (("assistedExcluded", (None, "true", 1)), ("resultApplied", (None, "false", 0))):
+            for value in values:
+                with self.subTest(field=field, value=value):
+                    report = completed_report()
+                    report["profile"][field] = value
+                    self.assertIn("assisted loss was not excluded from profile result application", cleanup_contract(report, 314, "attempt-1", counts))
+            report = completed_report()
+            del report["profile"][field]
+            self.assertIn("assisted loss was not excluded from profile result application", cleanup_contract(report, 314, "attempt-1", counts))
 
     def test_restart_requires_a_ready_observed_integrated_tick(self):
         report = live_report(
@@ -423,6 +481,56 @@ class SessionCleanupCheckTests(unittest.TestCase):
             self.assertEqual(json.loads((evidence / "first-live-session.json").read_text())["phase"], "integrated-world-playing")
             self.assertEqual(json.loads((evidence / "result.json").read_text())["restarted_session"]["world"]["seconds"], 10.0)
             self.assertTrue(json.loads((evidence / "result.json").read_text())["success"])
+        finally:
+            temp.cleanup()
+
+    def test_mocked_runner_accepts_base_engi_with_consistent_locked_override(self):
+        reports = [
+            {**ordinary_start_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
+            {**live_report(session=1), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
+            {**session_one_defeat_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
+            {**live_report(session=2), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
+        ]
+        temp, _device, result, error, evidence = run_fake_check(reports, survivor="Engi")
+        try:
+            self.assertIsNone(error)
+            self.assertTrue(result["success"])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["selected_survivor"], "Engi")
+            self.assertTrue(saved["developer_survivor_override"])
+        finally:
+            temp.cleanup()
+
+    def test_mocked_runner_refuses_first_current_report_for_wrong_hero_before_taps(self):
+        reports = [
+            {**ordinary_start_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
+            live_report(session=1),
+        ]
+        temp, device, result, error, evidence = run_fake_check(reports)
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "survivor-selection-mismatch")
+            self.assertIn("selected survivor differs", saved["first_failure"])
+        finally:
+            temp.cleanup()
+
+    def test_mocked_runner_refuses_wrong_hero_before_restart_tap(self):
+        reports = [
+            ordinary_start_report(),
+            live_report(session=1),
+            {**session_one_defeat_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
+        ]
+        temp, device, result, error, evidence = run_fake_check(reports)
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [(100, 200)])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "survivor-selection-mismatch")
+            self.assertIn("restart input was not sent", saved["failures"])
         finally:
             temp.cleanup()
 

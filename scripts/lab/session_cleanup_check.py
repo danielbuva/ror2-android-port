@@ -14,6 +14,7 @@ import time
 from common import ROOT, WORK, now, read, sha, write
 from device import Device, PACKAGE
 from nova_bridge import current_errors
+from survivor_check import BASE_SURVIVORS, FREE_SURVIVORS
 
 SPINE_ID = "body-state-spawn-state-auto-nova-spine-bringup"
 FIRST_STAGE = "lakes"
@@ -23,6 +24,7 @@ LOG_POLL_SECONDS = 10
 COMPLETED_REPORT_NAME = "movement-completed-session-1.json"
 RESTART_RECT = (32, 390, 350, 60)  # Current source UI rect; never tapped without live report geometry.
 DEBUG_ASSISTS = ("invincibility", "highDamage", "fastCharge", "movementBoost", "jumpBoost")
+DEFAULT_SURVIVOR = "Commando"
 PROFILE_COUNTS = ("appliedRuns", "earnedUnlocks", "availableEarnedUnlocks")
 ERROR_PATHS = (
     (("debugAcceleration",), ("error",)),
@@ -35,14 +37,16 @@ ERROR_PATHS = (
 )
 
 
-def selection(attempt):
-    """Use the existing playable spine and its ordinary loss/restart flow."""
+def selection(attempt, survivor=DEFAULT_SURVIVOR):
+    """Use a base survivor; locked roster choices are explicitly diagnostic."""
+    if survivor not in BASE_SURVIVORS:
+        raise ValueError("Use a base survivor catalog name: " + ",".join(BASE_SURVIVORS))
     return {
         "attempt": attempt,
         "id": SPINE_ID,
         "freePlay": True,
-        "selectedSurvivor": "Commando",
-        "developerSurvivorOverride": False,
+        "selectedSurvivor": survivor,
+        "developerSurvivorOverride": survivor not in FREE_SURVIVORS,
         "runSeedOverride": "2",
         "goldshoresRoute": False,
         "debugOptions": {
@@ -54,6 +58,17 @@ def selection(attempt):
             "purpose": "Native cleanup/restart observation; automatic input is diagnostic and assisted",
         },
     }
+
+
+def survivor_identity_failures(report, survivor):
+    """Fail closed when a report omits or changes the selected base survivor."""
+    expected_override = survivor not in FREE_SURVIVORS
+    failures = []
+    if report.get("selectedSurvivor") != survivor:
+        failures.append("selected survivor differs (expected %s, got %s)" % (survivor, report.get("selectedSurvivor")))
+    if report.get("developerSurvivorOverride") is not expected_override:
+        failures.append("developer survivor override differs (expected %s, got %s)" % (expected_override, report.get("developerSurvivorOverride")))
+    return failures
 
 
 def matches_run(report, pid, attempt, session=None):
@@ -119,10 +134,12 @@ def first_stage_errors(report, required=False):
     return failures
 
 
-def runtime_stop(report, pid, attempt):
+def runtime_stop(report, pid, attempt, survivor=DEFAULT_SURVIVOR):
     """Return an immediate terminal reason for a report from this launch."""
     if not matches_run(report, pid, attempt):
         return None
+    if survivor_identity_failures(report, survivor):
+        return "survivor-selection-mismatch"
     if report_errors(report):
         return "first-failure"
     failures = first_stage_errors(report, required=True)
@@ -175,11 +192,12 @@ def _debug_assisted_without_gameplay_assists(report):
     )
 
 
-def cleanup_contract(report, pid, attempt, profile_baseline):
+def cleanup_contract(report, pid, attempt, profile_baseline, survivor=DEFAULT_SURVIVOR):
     """Require actual active native listener retirement and an excluded loss."""
     if not matches_run(report, pid, attempt, session=1):
         return ["completed-session report identity differs"]
-    failures = report_errors(report)
+    failures = survivor_identity_failures(report, survivor)
+    failures.extend(report_errors(report))
     failures.extend(first_stage_errors(report, required=True))
     if not report.get("success") or not report.get("cleanup") or report.get("phase") != "complete":
         failures.append("completed session did not report successful cleanup")
@@ -205,7 +223,7 @@ def cleanup_contract(report, pid, attempt, profile_baseline):
     if not results.get("persisted") or not results.get("clientEnding"):
         failures.append("original loss result did not persist before restart")
     profile = report.get("profile") or {}
-    if not profile.get("assistedExcluded") or profile.get("resultApplied"):
+    if profile.get("assistedExcluded") is not True or profile.get("resultApplied") is not False:
         failures.append("assisted loss was not excluded from profile result application")
     if not _debug_assisted_without_gameplay_assists(report):
         failures.append("diagnostic assistance evidence or all-off debug options differ")
@@ -215,10 +233,11 @@ def cleanup_contract(report, pid, attempt, profile_baseline):
     return failures
 
 
-def restart_contract(report, pid, attempt, profile_baseline):
+def restart_contract(report, pid, attempt, profile_baseline, survivor=DEFAULT_SURVIVOR):
     if not matches_run(report, pid, attempt, session=2):
         return ["same-process restarted session identity differs"]
-    failures = report_errors(report)
+    failures = survivor_identity_failures(report, survivor)
+    failures.extend(report_errors(report))
     failures.extend(first_stage_errors(report, required=True))
     if report.get("phase") != "integrated-world-playing":
         failures.append("second session did not reach live integrated play")
@@ -353,7 +372,9 @@ class SessionCleanupDevice(Device):
         return super().cmd(*args, **kwargs)
 
 
-def check_session_cleanup():
+def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
+    if survivor not in BASE_SURVIVORS:
+        raise ValueError("Use a base survivor catalog name: " + ",".join(BASE_SURVIVORS))
     device = SessionCleanupDevice()
     installed = device.owned()
     storage = device.storage()
@@ -382,7 +403,7 @@ def check_session_cleanup():
     out = device.evidence_directory("experiments", "session-cleanup", now())
     out.mkdir(parents=True, exist_ok=False)
     device.evidence_directory("experiments", "session-cleanup", out.name)
-    value = selection(attempt)
+    value = selection(attempt, survivor)
     write(out / "selection.json", value)
     frozen = {
         "serial": device.serial,
@@ -392,6 +413,8 @@ def check_session_cleanup():
         "attempt": attempt,
         "storage_mode": mode,
         "scope": "diagnostic automatic input; no gameplay debug assists; ordinary native death/restart only",
+        "selected_survivor": survivor,
+        "developer_survivor_override": survivor not in FREE_SURVIVORS,
     }
     write(out / "frozen.json", frozen)
 
@@ -444,7 +467,12 @@ def check_session_cleanup():
                 if current.get("session") not in (1, 2):
                     fail("unexpected-session-index")
                     break
-                reason = runtime_stop(current, pid, attempt)
+                identity_failures = survivor_identity_failures(current, survivor)
+                if identity_failures:
+                    fail("survivor-selection-mismatch")
+                    first_failure = identity_failures[0]
+                    break
+                reason = runtime_stop(current, pid, attempt, survivor)
                 if reason:
                     fail(reason)
                     details = report_errors(current)
@@ -486,13 +514,13 @@ def check_session_cleanup():
                     restart_sent = True
                 if current.get("session") == 2 and phase == "integrated-world-playing" and session2_ready(current):
                     completed = _read_json(device, completed_path)
-                    failures = cleanup_contract(completed or {}, pid, attempt, profile_baseline)
+                    failures = cleanup_contract(completed or {}, pid, attempt, profile_baseline, survivor)
                     if failures:
                         fail("completed-session-cleanup-failed")
                     elif not observed_session1_defeat or not restart_sent or not started_from_menu:
                         fail("launch-to-restart-observations-incomplete")
                     else:
-                        failures = restart_contract(current, pid, attempt, profile_baseline)
+                        failures = restart_contract(current, pid, attempt, profile_baseline, survivor)
                         if failures:
                             fail("restart-contract-failed")
                         else:
@@ -562,11 +590,11 @@ def check_session_cleanup():
     if not completed or not pid:
         failures.append("no current-launch completed-session report")
     else:
-        failures.extend(cleanup_contract(completed, pid, attempt, profile_baseline))
+        failures.extend(cleanup_contract(completed, pid, attempt, profile_baseline, survivor))
     if not final or not pid:
         failures.append("no current-launch restarted-session report")
     else:
-        failures.extend(restart_contract(final, pid, attempt, profile_baseline))
+        failures.extend(restart_contract(final, pid, attempt, profile_baseline, survivor))
     if runtime_errors:
         failures.append("current-process runtime errors: " + str(runtime_errors[:3]))
         if first_failure is None:
@@ -579,6 +607,8 @@ def check_session_cleanup():
         "failures": failures,
         "pid": pid,
         "attempt": attempt,
+        "selected_survivor": survivor,
+        "developer_survivor_override": survivor not in FREE_SURVIVORS,
         "apk_sha256": artifact_hash,
         "serial": device.serial,
         "profile_baseline": profile_baseline,
