@@ -522,7 +522,9 @@ use the original `SkillLocator.FindSkillSlot` at each event, preserving Toolbot'
 component reassignment and the source precedence for aliased slots. They count
 activation per slot; a once-per-second sample records active definitions,
 stock and state-machine context. Definition names are cached until the original
-definition changes. Cleanup detaches both managed callbacks, including after Unity
+definition changes. Removed native components clear live slot context while retaining
+historical activation counters. Suppressed missing callbacks are a classified non-pass.
+Cleanup detaches both managed callbacks, including after Unity
 destroys the native body, then clears all body/skill/definition references before
 world teardown. The report is `SessionReport.survivorSkills`; it proves callback
 execution, not targeting, placement, effects or complete ability semantics.

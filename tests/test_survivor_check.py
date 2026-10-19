@@ -23,7 +23,15 @@ def report(**updates):
         "survivorSkills": {
             "attached": True,
             "cleaned": False,
-            "slots": [{"slot": name, "authorityActivations": 1, "serverActivations": 1} for name in check.SLOTS],
+            "slots": [
+                {
+                    "slot": name,
+                    "authorityActivations": 1,
+                    "serverActivations": 1,
+                    "suppressesActivationEvents": False,
+                }
+                for name in check.SLOTS
+            ],
         },
     }
     value.update(updates)
@@ -99,6 +107,37 @@ class SurvivorAssessmentTests(unittest.TestCase):
         self.assertEqual(check.stop_reason(report(world={"seconds": 180}, survivorSkills=None)), "unobserved-skills")
         for value in (None, -1, True, "60", float("nan"), float("inf")):
             self.assertIsNone(check.stop_reason(report(world={"seconds": value})))
+
+    def test_suppressed_callbacks_are_classified_with_callback_context_and_never_pass(self):
+        value = report()
+        slot = value["survivorSkills"]["slots"][1]
+        slot["authorityActivations"] = 0
+        slot["serverActivations"] = 0
+        slot["suppressesActivationEvents"] = True
+        context = [{"slot": "secondary", "callbacks": ["authorityActivations", "serverActivations"]}]
+        self.assertEqual(check.suppressed_missing_callbacks(value), context)
+        self.assertEqual(check.stop_reason(value), "suppressed-activation-events")
+        failures = check.assess("Huntress", "suppressed-activation-events", report(), value, [])
+        self.assertTrue(any("suppressed activation callbacks: secondary(authorityActivations, serverActivations)" in item for item in failures))
+        self.assertTrue(failures)
+
+    def test_only_the_missing_suppressed_callback_is_reported(self):
+        value = report()
+        slot = value["survivorSkills"]["slots"][2]
+        slot["authorityActivations"] = 0
+        slot["suppressesActivationEvents"] = True
+        self.assertEqual(
+            check.suppressed_missing_callbacks(value),
+            [{"slot": "utility", "callbacks": ["authorityActivations"]}],
+        )
+        self.assertEqual(check.stop_reason(value), "suppressed-activation-events")
+
+    def test_unsuppressed_missing_callback_remains_unobserved(self):
+        value = report()
+        value["survivorSkills"]["slots"][0]["authorityActivations"] = 0
+        self.assertEqual(check.suppressed_missing_callbacks(value), [])
+        self.assertIsNone(check.stop_reason(value))
+        self.assertEqual(check.stop_reason(report(world={"seconds": 180}, survivorSkills=value["survivorSkills"])), "unobserved-skills")
 
     def test_errors_result_and_transport_take_precedence_over_activations(self):
         for updates, expected in (

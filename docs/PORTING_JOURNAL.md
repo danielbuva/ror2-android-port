@@ -6395,3 +6395,39 @@ storage/model/display observations. Current Nova stays adopted-only; the second
 Nova and Thor use internal-only policy with reserve checks. Runtime survivor
 draft acceptance remains separately queued; these host-tool changes do not
 alter the generated player's R8 runtime selection.
+
+## J590 — Survivor diagnostic review corrections (host draft)
+
+Source review of J587 found three evidence gaps: suppressed callbacks became a
+generic missing-skill failure, the fixture did not invoke authority callbacks,
+and Unity's destroyed-wrapper equality could retain stale slot context.
+Prior-art/API contracts remain those recorded in J587; native slot lookup and
+original activation semantics are unchanged.
+
+Change: absent source-suppressed callbacks now produce a strict non-pass with
+slot and callback-type context. Ordinary missing callbacks retain the bounded
+unobserved classification. The observer compares managed component identities,
+canonicalizes destroyed wrappers and clears removed-slot state without clearing
+historical counters. Its existing owner, setup, sampling and teardown stay intact.
+
+The authored fixture invokes both native event delegates, preserves foreign
+listeners on each, and checks destroyed-wrapper removal, subsequent null and
+replacement. Review also caught that the first draft destroyed the utility
+component before constructing another all-four-slot observer; the fixture now
+restores a synthetic replacement before that teardown case. No fixture execution
+failure is claimed: this was a source-review correction.
+
+Host evidence:
+`work/experiments/survivor-check/review-20261019T054225.718707Z/`.
+All 16 focused Python assessor tests pass. The exact editor's bundled Roslyn
+compiler compiles the complete authored runtime and revised fixture with zero
+errors using existing reference response files. An initial compiler invocation
+from the repository root failed to resolve relative project inputs; rerunning
+from the existing project directory succeeds. No editor process was started or
+connected, and the fixture has not executed.
+
+No APK/build/install/payload/device action or capability advancement. Real
+baseline and survivor checks remain queued behind the parallel-session lock.
+J586 and the Moon/rollback candidates are untouched. These authored runtime and
+fixture corrections change files reproduced by R8, so its source/importer/
+provenance cohort must be replayed after device acceptance. No Phase 2 step ran.

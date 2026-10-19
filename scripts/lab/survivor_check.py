@@ -60,6 +60,26 @@ def missing_activations(report):
     return [slot["slot"] for slot in slots if any(type(slot.get(key)) is not int or slot[key] <= 0 for key in ("authorityActivations", "serverActivations"))]
 
 
+def suppressed_missing_callbacks(report):
+    """Return suppressed callback types that are still absent from each slot."""
+    observation = report.get("survivorSkills") or {}
+    slots = observation.get("slots") or []
+    if [slot.get("slot") for slot in slots] != list(SLOTS):
+        return []
+    suppressed = []
+    for slot in slots:
+        if not slot.get("suppressesActivationEvents"):
+            continue
+        callbacks = [
+            key
+            for key in ("authorityActivations", "serverActivations")
+            if type(slot.get(key)) is not int or slot[key] <= 0
+        ]
+        if callbacks:
+            suppressed.append({"slot": slot["slot"], "callbacks": callbacks})
+    return suppressed
+
+
 def stop_reason(report):
     if report.get("error") or report.get("firstFailure"):
         return "first-failure"
@@ -78,6 +98,8 @@ def stop_reason(report):
     if report.get("phase") == "integrated-world-playing" and type(seconds) in (int, float) and math.isfinite(seconds):
         if seconds >= MIN_WORLD_SECONDS and not missing_activations(report):
             return "four-slots-activated"
+        if seconds >= MIN_WORLD_SECONDS and suppressed_missing_callbacks(report):
+            return "suppressed-activation-events"
         if seconds >= MAX_WORLD_SECONDS:
             return "unobserved-skills"
     return None
@@ -89,6 +111,12 @@ def assess(survivor, stop, first, final, errors):
         failures.append("stopped: " + stop)
     if not final:
         return failures + ["no current-process report"]
+    suppressed = suppressed_missing_callbacks(final)
+    if suppressed:
+        details = ", ".join(
+            item["slot"] + "(" + ", ".join(item["callbacks"]) + ")" for item in suppressed
+        )
+        failures.append("suppressed activation callbacks: " + details)
     expected = survivor_selection("fixture", survivor)
     if final.get("selectedSurvivor") != survivor or final.get("developerSurvivorOverride") is not expected["developerSurvivorOverride"]:
         failures.append("survivor selection differs")
@@ -161,6 +189,7 @@ def check_one(device, survivor, attempt, runtime, out, installed):
             "stop": stop,
             "failures": failures,
             "missing_activations": missing_activations(final or {}),
+            "suppressed_callbacks": suppressed_missing_callbacks(final or {}),
             "apk_sha256": installed["apk_sha256"],
             "evidence": str(out.relative_to(WORK.parent)),
         }

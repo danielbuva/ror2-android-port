@@ -83,8 +83,11 @@ public static class SurvivorSkillHost
                                          })
                                  .ToArray();
             int sentinel = 0;
+            int authoritySentinel = 0;
             Action<GenericSkill> prior = skill => sentinel++;
+            Action<GenericSkill> priorAuthority = skill => authoritySentinel++;
             body.onSkillActivatedServer += prior;
+            body.onSkillActivatedAuthority += priorAuthority;
             observer = new SurvivorSkillObserver(body);
             var report = observer.report;
             Require(report.attached && !report.cleaned && report.slots.Length == 4 &&
@@ -96,6 +99,11 @@ public static class SurvivorSkillHost
             Require(report.slots[0].serverActivations == 1 && report.slots[3].serverActivations == 1 &&
                         report.slots.All(slot => slot.authorityActivations == 0) && sentinel == 2,
                     "Native server callbacks were conflated with authority callbacks");
+            var authorityEvent = Event(body, "onSkillActivatedAuthority");
+            for (int i = 0; i < skills.Length; i++)
+                authorityEvent.DynamicInvoke(skills[i]);
+            Require(report.slots.All(slot => slot.authorityActivations == 1) && authoritySentinel == 4,
+                    "Native authority callbacks were not recorded per original slot");
             Set(skills[0], "skillDef", definitions[4]);
             definitions[4].suppressSkillActivation = true;
             observer.Sample();
@@ -115,17 +123,19 @@ public static class SurvivorSkillHost
             body.ForceSkillActivatedAction(skills[0]);
             Require(!report.attached && report.cleaned && report.slots[0].serverActivations == 2 && sentinel == 5 &&
                         Event(body, "onSkillActivatedServer").GetInvocationList().SequenceEqual(new Delegate[] { prior }) &&
-                        Event(body, "onSkillActivatedAuthority") == null,
+                        Event(body, "onSkillActivatedAuthority").GetInvocationList().SequenceEqual(new Delegate[] { priorAuthority }),
                     "Observer retained callbacks or removed a foreign listener");
+            skills[2] = DestroyImmediateSkillAndSample(body, skills[2], definitions[2]);
             observer = new SurvivorSkillObserver(body);
             UnityEngine.Object.DestroyImmediate(root);
             observer.Dispose();
             Require(Event(body, "onSkillActivatedServer").GetInvocationList().SequenceEqual(new Delegate[] { prior }) &&
-                        Event(body, "onSkillActivatedAuthority") == null,
+                        Event(body, "onSkillActivatedAuthority").GetInvocationList().SequenceEqual(new Delegate[] { priorAuthority }),
                     "Destroyed native body retained an owned callback");
             return new { success = true,
                          slots = 4,
                          nativeServerCallbacks = 3,
+                         nativeAuthorityCallbacks = 4,
                          overrideObserved = true,
                          teardown = true,
                          destroyedBodyTeardown = true,
@@ -141,6 +151,31 @@ public static class SurvivorSkillHost
                 if (definition)
                     UnityEngine.Object.DestroyImmediate(definition);
             EditorSceneManager.ClosePreviewScene(scene);
+        }
+    }
+
+    static GenericSkill DestroyImmediateSkillAndSample(CharacterBody body, GenericSkill skill, SkillDef definition)
+    {
+        // A separate observer verifies that destroyed Unity wrappers are
+        // compared by managed identity and removed slots lose stale state.
+        using (var probe = new SurvivorSkillObserver(body))
+        {
+            UnityEngine.Object.DestroyImmediate(skill);
+            probe.Sample();
+            var slot = probe.report.slots[2];
+            Require(slot.componentChanges == 1 && !slot.enabled && slot.definition == "" && slot.declaredActivationState == "" &&
+                        slot.machineState == "" && slot.stock == 0 && slot.maxStock == 0 && !slot.suppressesActivationEvents,
+                    "Removed skill slot retained stale snapshot state");
+            body.skillLocator.utility = null;
+            probe.Sample();
+            Require(slot.componentChanges == 1, "Destroyed wrapper to null counted twice");
+            var replacement = body.gameObject.AddComponent<GenericSkill>();
+            Set(replacement, "skillDef", definition);
+            body.skillLocator.utility = replacement;
+            probe.Sample();
+            Require(slot.componentChanges == 2 && slot.definition == ((ScriptableObject)definition).name,
+                    "Replacement after destroyed component was not observed");
+            return replacement;
         }
     }
 }

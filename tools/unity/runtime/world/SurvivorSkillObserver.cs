@@ -81,13 +81,34 @@ public sealed class SurvivorSkillObserver : IDisposable
             return;
         for (int i = 0; i < skills.Length; i++)
         {
-            var current = locator.GetSkill((SkillSlot)i);
-            if (skills[i] != current)
+            var source = locator.GetSkill((SkillSlot)i);
+            // Canonicalize Unity's destroyed wrapper to a real managed null.
+            var current = source ? source : null;
+            // Unity's overloaded equality treats a destroyed native wrapper as
+            // null. Compare managed identity so a destroyed component replaced
+            // by an empty slot is still recorded as a change.
+            if (!ReferenceEquals(skills[i], current))
             {
                 report.slots[i].componentChanges++;
                 skills[i] = current;
+                if (!current)
+                {
+                    definitions[i] = null;
+                    ResetSlotSnapshot(report.slots[i]);
+                }
             }
         }
+    }
+
+    static void ResetSlotSnapshot(SlotReport slot)
+    {
+        slot.definition = "";
+        slot.declaredActivationState = "";
+        slot.machineState = "";
+        slot.enabled = false;
+        slot.suppressesActivationEvents = false;
+        slot.stock = 0;
+        slot.maxStock = 0;
     }
 
     public void Sample()
