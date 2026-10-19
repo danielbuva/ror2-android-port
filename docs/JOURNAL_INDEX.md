@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J722](PORTING_JOURNAL.md#j722--identify-the-current-native-wwise-version-and-concrete-package-requirements) | 2026-10-19 | Identify the current native Wwise version and concrete package requirements | Hypothesis: the current accepted input's native version getters can resolve the patch uncertainty left by J591 without executing its Windows middleware. |
 | [J721](PORTING_JOURNAL.md#j721--trace-mercenarys-rejected-impact-visual-to-the-accepted-source) | 2026-10-19 | Trace Mercenary's rejected impact visual to the accepted source | Hypothesis: J720's named-effect rejection might come from an omitted catalog registration or changed conversion reference. |
 | [J720](PORTING_JOURNAL.md#j720--mercenary-alternate-projectile-fails-native-impact-effect-lookup) | 2026-10-19 | Mercenary alternate projectile fails native impact-effect lookup | Hypothesis: fresh exact native variants can exercise Uppercut, Focused Assault and EvisProjectile alongside unchanged primary. |
 | [J719](PORTING_JOURNAL.md#j719--freeze-the-native-operation-candidate-with-reviewed-host-source-drift) | 2026-10-19 | Freeze the native-operation candidate with reviewed host-source drift | Hypothesis: J716's read-only witness can be built without changing the accepted content payload. |

@@ -12072,3 +12072,61 @@ d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee
 remains installed; b32998b8 remains frozen/unaccepted. The independent guarded
 route continues on d545d800. Host-only preflight still passes the accepted input.
 No Phase 2 output, extra device, storage configuration, award or Moon path changes.
+
+## J722 — Identify the current native Wwise version and concrete package requirements
+
+Hypothesis: the current accepted input's native version getters can resolve the
+patch uncertainty left by J591 without executing its Windows middleware.
+An independent host-only inspection and root reproduction hash-check the native
+wrapper, managed wrapper and bank XML against the accepted migration inventory;
+the inventory generation matches accepted input 6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88,
+Steam build 25475991. Static PE export lookup follows the bounded version-getter
+thunks and decodes their immediate return values: the current native wrapper
+reports Wwise 2023.1.8.8601. No native code is executed. The retained previous
+input reports 2023.1.4.8496 from a different binary, explaining the historical
+version; it must not select the current SDK request.
+
+The retained managed wrapper has assembly version 0.0.0.0, which does not identify
+the Wwise engine release. Its two version declarations are zero-argument uint32
+imports. All 1,280 accepted named imports occur among the Windows native wrapper's
+exports; name coverage does not establish Android signatures, ABI or callability.
+Bank metadata separately remains Windows, format 150/schema 16 across 247 banks.
+Those measurements do not prove unchanged cross-platform playback.
+
+Recover the exact graph-referenced package requirements from J591's private
+inventory: Vorbis; Parametric EQ (0x00690003), Peak Limiter (0x006E0003), RoomVerb
+(0x00760003), Guitar Distortion (0x007E0003), Meter (0x00810003), Stereo Delay
+(0x00870003), and Harmonizer (0x008A0003). These identify required runtime
+capabilities, not verified Android implementations or permission coverage.
+
+The concrete acquisition request is the official Wwise SDK 2023.1.8.8601,
+Android arm64-v8a components and matching Unity Integration, including those
+codec/effects and the platform output/registration dependencies. Audiokinetic's
+[Unity release index](https://www.audiokinetic.com/en/public-library/2024.1.5_8803/?id=index.html&source=Unity)
+lists the 2023.1.8 integration. Its exact release-note page is inaccessible in this
+check, so do not guess its integration suffix, exact Unity support table or NDK
+revision. Record the actual package metadata when acquired. Keep Unity's pinned
+NDK unchanged; a vendor prebuilt library and a native-source rebuild have separate
+requirements. Official acquisition uses the
+[Audiokinetic Launcher](https://www.audiokinetic.com/en/download);
+account/project access and the SDK agreement remain user-side dependencies.
+No usable local official package is found in the bounded search; no login,
+agreement acceptance, download, installation or middleware redistribution occurs.
+A request for the authorized local package path remains pending.
+
+Evidence: work/coordination/wwise-current-native-version/ contains the reproducible
+hash-asserting read-only inspector and captured result;
+work/coordination/codex-wwise-current-native-version-root.json independently
+matches it; work/coordination/wwise-official-package-path/ records primary-source
+availability and exact-version limits. Prior art remains J588/J591/J627/J640,
+pinned R2API.Sound's initialized-engine prerequisite and wwiser's research-only
+bank graph evidence. No third-party implementation or protected material is copied.
+
+Next test after authorized acquisition: validate an isolated ARM64 native runtime
+with self-authored diagnostic banks, then test the accepted original Init and a
+minimal dependency-complete original bank set unchanged with required plugins and
+event context. Record engine init, bank load, playing ID, audible output and
+teardown separately. Do not assume conversion is necessary or that loading proves
+playback; restore the existing unavailable-audio transformations only in a reviewed
+integration candidate. First failure remains missing authorized Android runtime;
+audio is unavailable. No APK/runtime or build input changes in this investigation.
