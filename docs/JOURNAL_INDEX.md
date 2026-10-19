@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J620](PORTING_JOURNAL.md#j620--engineer-identity-and-cleanup-candidate-passes-both-baseline-modes) | 2026-10-19 | Engineer identity and cleanup candidate passes both baseline modes | J617 authored runtime builds in 85.74 s with zero errors, request 20261019T092321.649115Z, after selected-device live preflight. |
 | [J619](PORTING_JOURNAL.md#j619--honor-selected-device-storage-policy-in-the-current-survivor-runner) | 2026-10-19 | Honor selected-device storage policy in the current survivor runner | Host audit finds one remaining current runner assuming adopted storage instead of using the selected device policy: survivor-kit-check. |
 | [J618](PORTING_JOURNAL.md#j618--mercenary-canonical-callbacks-pass-on-the-baseline-apk) | 2026-10-19 | Mercenary canonical callbacks pass on the baseline APK | Continue the base roster independently while J617's host/editor fix is built. |
 | [J617](PORTING_JOURNAL.md#j617--retire-owned-inactive-shield-rejectors-and-use-stable-player-identity) | 2026-10-19 | Retire owned inactive shield rejectors and use stable player identity | Hypothesis: a shield destroyed before its Collision child first activates can retain its HurtBox in the original rejector list because that child's OnDisable n… |

@@ -7717,3 +7717,28 @@ or launch. All 27 focused survivor tests and Ruff pass. Evidence:
 work/coordination/codex-survivor-storage-host.log. The ignored helper-model tests
 were not substituted for the tracked runner contract. No APK, build input,
 controller support, device receipt or external device action changes here.
+
+## J620 — Engineer identity and cleanup candidate passes both baseline modes
+
+J617 authored runtime builds in 85.74 s with zero errors, request
+20261019T092321.649115Z, after selected-device live preflight. APK SHA-256:
+fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971.
+The independent frozen APK, original build receipt and exact runtime/recipe
+hashes are under
+work/experiments/engi-shield-lifetime/candidate-20261019T092321.649115Z/.
+Installation updates the owned current Nova package in place after querying
+live adopted storage; scoped ownership/placement receipts stay local.
+
+Both assisted baseline modes pass: 35.20 s on Lakes, then one genuine
+transport to Goolake with 11.44 s there (140.99 s total) in the exit mode.
+Profile applied runs remain 13, neither final report has a first failure,
+and the current-process log classifier finds no unexpected errors in either
+captured Unity log. Evidence:
+work/experiments/baseline/20261019T092539.212505Z/ and
+work/experiments/baseline/20261019T092908.637979Z/.
+Each runner removes its selector, force-stops the app and sleeps the OLED.
+This advances the baseline for those two contracts only. The separate Engineer
+callback and genuine cleanup/restart pipeline is underway; the shield fix has
+no Engineer Android acceptance yet. The prior APKs and failed setup evidence
+remain frozen. No extra device, content payload, Phase 2 input or Moon route
+was changed by this code-only build.
