@@ -50,17 +50,17 @@ public sealed partial class PortSession
         public int frame, instance, projectileCatalogIndex, lastFiniteFrame, stuckHurtBoxIndex;
         public uint networkId, ownerNetworkId, victimNetworkId;
         public float fixedTime, seconds;
-        public string sample, networkAssetId, ownerName, ownerBody, position, rotation, scale, networkPosition,
-            networkRotation, rigidbodyPosition, velocity, angularVelocity, ownerPosition, victimName, victimPosition,
-            stuckTransformPath, stuckTransformPosition, stuckBody, stuckBodyPosition, stuckHurtBox, localPosition,
-            localRotation, colliderRadius, colliderCenter, lastFinitePosition, lastFiniteNetworkPosition,
-            lastFiniteRigidbodyPosition, lastFiniteVelocity, lastFiniteAngularVelocity;
+        public string sample, networkAssetId, ownerName, ownerBody, position, rotation, scale, networkPosition, networkRotation,
+            rigidbodyPosition, velocity, angularVelocity, ownerPosition, victimName, victimPosition, stuckTransformPath,
+            stuckTransformPosition, stuckBody, stuckBodyPosition, stuckHurtBox, localPosition, localRotation, colliderRadius,
+            colliderCenter, lastFinitePosition, lastFiniteNetworkPosition, lastFiniteRigidbodyPosition, lastFiniteVelocity,
+            lastFiniteAngularVelocity;
         public int ownerTeam;
         public bool spawnTimeKnown, networkObjectMatches, isServer, ownerObjectMatches, ownerBlueElite;
-        public bool finiteSnapshot, firstNonFiniteTransition, finitePosition, finiteRotation, finiteScale,
-            finiteNetworkPosition, finiteNetworkRotation, finiteRigidbodyPosition, finiteVelocity, finiteAngularVelocity,
-            finiteLocalPosition, finiteLocalRotation, finiteStuckTransformPosition, finiteVictimPosition,
-            rigidbodyKinematic, rigidbodyGravity, rigidbodyDetectCollisions, colliderEnabled, colliderTrigger, stuck;
+        public bool finiteSnapshot, firstNonFiniteTransition, finitePosition, finiteRotation, finiteScale, finiteNetworkPosition,
+            finiteNetworkRotation, finiteRigidbodyPosition, finiteVelocity, finiteAngularVelocity, finiteLocalPosition, finiteLocalRotation,
+            finiteStuckTransformPosition, finiteVictimPosition, rigidbodyKinematic, rigidbodyGravity, rigidbodyDetectCollisions,
+            colliderEnabled, colliderTrigger, stuck;
     }
     [Serializable]
     public class BlueEliteHitObservation
@@ -1000,9 +1000,8 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
             survivorSkills = new SurvivorSkillObserver(player);
             if (coordinator.r.diagnosticSkillCoverage || coordinator.r.developerSkillVariantOverride != null)
-                survivorSkills.report.skillVariantInventory =
-                    SurvivorSkillObserver.CaptureSkillVariantInventory(
-                        player.gameObject, player.master.loadout, "native-master-loadout-live");
+                survivorSkills.report.skillVariantInventory = SurvivorSkillObserver.CaptureSkillVariantInventory(
+                    player.gameObject, player.master.loadout, "native-master-loadout-live");
             coordinator.r.survivorSkills = survivorSkills.report;
             if (survivorCombatOutputs == null)
                 survivorCombatOutputs = new SurvivorCombatOutputObserver(player);
@@ -1257,11 +1256,32 @@ public sealed partial class PortSession
                 coordinator.worldDriver.enabled &&
                 ReferenceEquals(PortSession.DriverField(coordinator.worldDriver, "inputBank"), player.inputBank);
             coordinator.r.world.start = origin;
-            coordinator.r.world.ready = coordinator.r.world.authority && coordinator.r.world.lootReady &&
-                                        coordinator.r.world.interactionReady && coordinator.rewardDirector.enabled;
+            coordinator.r.world.ready = !coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && coordinator.r.world.authority &&
+                                        coordinator.r.world.lootReady && coordinator.r.world.interactionReady &&
+                                        coordinator.rewardDirector && coordinator.rewardDirector.enabled;
             if (cfg.teleporterLoop)
             {
-                var objective = coordinator.PrepareTeleporterWorld(cfg);
+                if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                {
+                    var nativeDirector = coordinator.PrepareNativeFirstStageDirectorContext(player, cfg);
+                    while (nativeDirector.MoveNext())
+                        yield return nativeDirector.Current;
+                }
+                IEnumerator objective;
+                if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                {
+                    var directorRoots = coordinator.stageGeometryScene.GetRootGameObjects()
+                                            .Where(root => root.name == "Director" && root.scene == coordinator.stageGeometryScene)
+                                            .ToArray();
+                    coordinator.Check(directorRoots.Length == 1 && !directorRoots[0].activeSelf,
+                                      "Native objective preparation requires the exact inactive source Director root");
+                    coordinator.wholeSceneDirector = directorRoots[0].GetComponent<SceneDirector>();
+                    coordinator.Check(coordinator.wholeSceneDirector && !coordinator.wholeSceneDirector.enabled,
+                                      "Native objective preparation requires the exact disabled source SceneDirector");
+                    objective = coordinator.PrepareNativeTeleporterWorld(cfg, coordinator.wholeSceneDirector);
+                }
+                else
+                    objective = coordinator.PrepareTeleporterWorld(cfg);
                 while (objective.MoveNext())
                     yield return objective.Current;
             }
@@ -1288,6 +1308,12 @@ public sealed partial class PortSession
             var stage = coordinator.BeginOriginalStage();
             while (stage.MoveNext())
                 yield return stage.Current;
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+            {
+                var nativePopulation = coordinator.StartNativeWholeStagePopulation();
+                while (nativePopulation.MoveNext())
+                    yield return nativePopulation.Current;
+            }
             coordinator.PlaceGoldshoresDiagnosticShrine();
             coordinator.PrepareRecoveredHud();
             coordinator.Check(coordinator.r.world.ready, "Integrated session setup incomplete");
@@ -1965,16 +1991,16 @@ public sealed partial class PortSession
         }
         SirenEggDiagnosticInput EnsureSirenEggInputOwner()
         {
-            if (sirenEggDiagnosticInput == null && coordinator.r.diagnosticSirenEggInput &&
-                coordinator.r.sirenEggInput != null)
-                sirenEggDiagnosticInput = new SirenEggDiagnosticInput(
-                    new IntegratedWorldSirenContext(coordinator), coordinator.r.sirenEggInput);
+            if (sirenEggDiagnosticInput == null && coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null)
+                sirenEggDiagnosticInput =
+                    new SirenEggDiagnosticInput(new IntegratedWorldSirenContext(coordinator), coordinator.r.sirenEggInput);
             return sirenEggDiagnosticInput;
         }
         public void PrepareSirenEggDiagnosticInputFrame(CharacterBody player, NovaInputBridge bridge)
         {
             bool selected = coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null;
-            if (selected) EnsureSirenEggInputOwner();
+            if (selected)
+                EnsureSirenEggInputOwner();
             SirenEggDiagnosticInput.PrepareProducerFrameForSelection(selected, sirenEggDiagnosticInput, bridge);
         }
         public void ApplySirenEggDiagnosticInput(CharacterBody player, NovaInputBridge bridge)
@@ -1986,7 +2012,10 @@ public sealed partial class PortSession
         sealed class IntegratedWorldSirenContext : ISirenEggDiagnosticContext
         {
             readonly PortSession coordinator;
-            public IntegratedWorldSirenContext(PortSession owner) { coordinator = owner; }
+            public IntegratedWorldSirenContext(PortSession owner)
+            {
+                coordinator = owner;
+            }
             public bool Selected => coordinator.r.diagnosticSirenEggInput;
             public bool Assisted => coordinator.IsRunAssisted();
             public bool ManualTakeover => coordinator.worldManualTakeover;
@@ -1995,19 +2024,20 @@ public sealed partial class PortSession
             public bool SourceListenerActive => coordinator.SirenDiagnosticListenerActive;
             public bool NativeEncounterStarted => coordinator.SirenNativeEncounterStarted;
             public bool StageTransporting => coordinator.SirenDiagnosticStageTransporting;
-            public bool FirstFailure => !string.IsNullOrEmpty(coordinator.r.firstFailure) ||
-                !string.IsNullOrEmpty(coordinator.r.error) || coordinator.r.stageProgress != null &&
-                !string.IsNullOrEmpty(coordinator.r.stageProgress.error);
+            public bool FirstFailure => !string.IsNullOrEmpty(coordinator.r.firstFailure) || !string.IsNullOrEmpty(coordinator.r.error) ||
+                                        coordinator.r.stageProgress != null && !string.IsNullOrEmpty(coordinator.r.stageProgress.error);
             public int StageSceneHandle => coordinator.SirenDiagnosticSceneHandle;
             public float StageElapsed => Time.realtimeSinceStartup - coordinator.stageEnteredAt;
             public CharacterBody NearestRevalidatedSourceEgg(Vector3 position) => coordinator.NearestSirenDiagnosticEgg(position);
             public bool IsCurrentSourceEgg(CharacterBody candidate) => coordinator.IsCurrentSirenDiagnosticEgg(candidate);
-            public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus ||
-                coordinator.HasNearbyHostileDirectorThreat(player);
+            public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus
+                                                                                  || coordinator.HasNearbyHostileDirectorThreat(player);
             public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 target, float stopDistance,
-                string targetName, float elapsed) => coordinator.NavigateWorldInput(player, bridge, target, stopDistance, targetName, elapsed);
-            public Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin, out bool visible) =>
-                coordinator.WorldCombatAimPoint(target, origin, out visible);
+                                           string targetName, float elapsed) => coordinator.NavigateWorldInput(player, bridge, target,
+                                                                                                               stopDistance, targetName,
+                                                                                                               elapsed);
+            public Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin,
+                                               out bool visible) => coordinator.WorldCombatAimPoint(target, origin, out visible);
         }
         // Read-only companion to DefendWorldApproach's live actor, stage-bounds,
         // and <20 m checks. It never calls ObjectiveCombatInput, so the normal
@@ -2112,8 +2142,7 @@ public sealed partial class PortSession
             if (coordinator.r.commerceSweep && coordinator.r.stageProgress != null && coordinator.r.stageProgress.transitions == 0 &&
                 elapsed - coordinator.stageEnteredAt < 420 && coordinator.CommerceSweepPendingRepairs())
             {
-                coordinator.Check(coordinator.IsRunAssisted(),
-                                  "Commerce sweep must be marked assisted");
+                coordinator.Check(coordinator.IsRunAssisted(), "Commerce sweep must be marked assisted");
                 var purchase = coordinator.NextCommerceSweepTarget(player);
                 if (purchase)
                 {
@@ -2881,6 +2910,8 @@ public sealed partial class PortSession
         }
         public void CleanupIntegratedWorld()
         {
+            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                return;
             sirenEggDiagnosticInput?.Dispose();
             sirenEggDiagnosticInput = null;
             skillInputCoverage?.Dispose();
@@ -2895,9 +2926,35 @@ public sealed partial class PortSession
             nextSurvivorSkillSample = 0;
             coordinator.CleanupRecoveredHud();
             coordinator.CleanupIntegratedResults();
-            coordinator.CleanupWorldCommerce(true);
-            CleanupWorldTransmutation();
-            coordinator.CleanupTeleporterWorld();
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+            {
+                try
+                {
+                    // Detach per-object commerce listeners first, but keep provider
+                    // leases and Run/catalog context until ordered native teardown completes.
+                    coordinator.CleanupWorldCommerce(false);
+                    coordinator.CleanupTeleporterWorld();
+                    if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                        return;
+                    coordinator.CleanupWorldCommerce(true);
+                    CleanupWorldTransmutation();
+                }
+                catch (Exception primary)
+                {
+                    coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                    coordinator.r.cleanup = false;
+                    coordinator.r.success = false;
+                    coordinator.r.error += " Native source teardown retained providers and Run context: " + primary;
+                    coordinator.Save();
+                    throw;
+                }
+            }
+            else
+            {
+                coordinator.CleanupWorldCommerce(true);
+                CleanupWorldTransmutation();
+                coordinator.CleanupTeleporterWorld();
+            }
             coordinator.CleanupOriginalGlobalCommonAssets();
             coordinator.CleanupOriginalBodyVisualReferences();
             if (earlyHurtCacheHandler != null)

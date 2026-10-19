@@ -20,7 +20,7 @@ public sealed partial class PortSession
     public class DirectorReport
     {
         public bool automatic, sourceSettings, playerRegistered, originalTarget, preloaded, creditConserved, placement, stopped, cleaned,
-            navigationNext, navigationReachable;
+            navigationNext, navigationReachable, nativeSourceContextPrepared;
         public int navigationTicks, navigationAgents, navigationAgentPeak;
         public float navigationTime, navigationPathUpdate;
         public string navigationError;
@@ -51,6 +51,9 @@ public sealed partial class PortSession
     {
         return GetAutomaticDirectorSession().SourceStageDirectorRoot(holdSlow);
     }
+    bool NativeSourceSceneDirectorWasEnabled => GetAutomaticDirectorSession().NativeSourceSceneDirectorWasEnabled;
+    DirectorCardCategorySelection NativeOriginalSourceFastDeck => GetAutomaticDirectorSession().NativeOriginalSourceFastDeck;
+    DirectorCardCategorySelection NativeOriginalSourceSlowDeck => GetAutomaticDirectorSession().NativeOriginalSourceSlowDeck;
     void ObserveSourceSlowDirector(CharacterBody player)
     {
         GetAutomaticDirectorSession().ObserveSourceSlowDirector(player);
@@ -91,6 +94,10 @@ public sealed partial class PortSession
     {
         return GetAutomaticDirectorSession().SpawnAutomaticEnemy(template, player, cfg);
     }
+    IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)
+    {
+        return GetAutomaticDirectorSession().PrepareNativeFirstStageDirectorContext(player, cfg);
+    }
     void CleanupAutomaticDirector()
     {
         GetAutomaticDirectorSession().Dispose();
@@ -113,10 +120,16 @@ public sealed partial class PortSession
         float automaticDirectorFixedBegan;
         Action ownedNavigationTick;
         BroadNavigationSystem navigationSystem;
+        GameObject nativeSourceDirectorRoot;
+        bool nativeSourceSceneDirectorWasEnabled;
+        DirectorCardCategorySelection nativeOriginalSourceFastDeck, nativeOriginalSourceSlowDeck;
         public AutomaticDirectorSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
         }
+        public bool NativeSourceSceneDirectorWasEnabled => nativeSourceDirectorRoot && nativeSourceSceneDirectorWasEnabled;
+        public DirectorCardCategorySelection NativeOriginalSourceFastDeck => nativeOriginalSourceFastDeck;
+        public DirectorCardCategorySelection NativeOriginalSourceSlowDeck => nativeOriginalSourceSlowDeck;
         public GameObject SourceStageDirectorRoot(bool holdSlow)
         {
             var roots = coordinator.stageGeometryScene.GetRootGameObjects().Where(root => root.name == "Director").ToArray();
@@ -125,12 +138,24 @@ public sealed partial class PortSession
             var root = roots[0];
             var sceneDirector = root.GetComponent<SceneDirector>();
             var directors = root.GetComponents<CombatDirector>();
-            coordinator.Check(sceneDirector && sceneDirector.enabled && directors.Length == 2 && directors.All(x => x.enabled) &&
-                                  root.GetComponent<DirectorCore>(),
+            coordinator.Check(sceneDirector && directors.Length == 2 && directors.All(x => x) && root.GetComponent<DirectorCore>(),
                               "Original source Director components changed");
+            if (!sceneDirector.enabled)
+            {
+                coordinator.Check(ReferenceEquals(nativeSourceDirectorRoot, root) && coordinator.sourceSlowDirector == directors[1],
+                                  "Disabled source SceneDirector was not suspended by this session");
+                if (holdSlow)
+                    coordinator.sourceSlowDirector.enabled = false;
+                return root;
+            }
+            coordinator.Check(directors.All(x => x.enabled), "Original source CombatDirector was disabled before ownership");
             // Teleporter ownership is established later; its original Start is invoked
             // after that boundary. The slow director waits for the complete stage deck.
+            nativeOriginalSourceFastDeck = directors[0].monsterCards;
+            nativeOriginalSourceSlowDeck = directors[1].monsterCards;
+            nativeSourceSceneDirectorWasEnabled = sceneDirector.enabled;
             sceneDirector.enabled = false;
+            nativeSourceDirectorRoot = root;
             coordinator.sourceSlowDirector = directors[1];
             if (holdSlow)
                 coordinator.sourceSlowDirector.enabled = false;
@@ -285,8 +310,7 @@ public sealed partial class PortSession
         // Own the full master table, local participant registration, and run clock setup.
         // The current catalog builder requires its authored template as an input; this helper
         // deliberately does not select a one-card deck, activate a director, or spawn actors.
-        MasterCatalog.MasterIndex PrepareNativeDirectorCatalogAndPlayerContext(
-            GameObject template, CharacterBody player, SessionConfig cfg)
+        MasterCatalog.MasterIndex PrepareNativeDirectorCatalogAndPlayerContext(GameObject template, CharacterBody player, SessionConfig cfg)
         {
             foreach (var name in new[] { "masterPrefabs", "masterPrefabMasterComponents", "aiMasterPrefabs", "masterNames" })
             {
@@ -300,8 +324,9 @@ public sealed partial class PortSession
                               "Existing preload/catalog state");
             if (cfg.teleporterLoop)
                 coordinator.PrepareObjectiveActorTemplates(cfg);
-            var adaptedMasters =
-                new[] { template }.Concat(coordinator.objectiveTemplates.Where(x => x.GetComponent<CharacterMaster>())).ToArray();
+            var adaptedMasters = (template ? new[] { template } : Array.Empty<GameObject>())
+                                     .Concat(coordinator.objectiveTemplates.Where(x => x.GetComponent<CharacterMaster>()))
+                                     .ToArray();
             var masters = adaptedMasters;
             if (coordinator.r.liveCatalogs != null)
             {
@@ -316,8 +341,16 @@ public sealed partial class PortSession
                     masters.Count(value => coordinator.objectiveTemplates.Contains(value) || adaptedMasters.Contains(value));
             }
             StaticCall(typeof(MasterCatalog), "SetEntries", new object[] { masters });
-            var index = MasterCatalog.FindMasterIndex(template);
-            coordinator.Check(MasterCatalog.GetMasterPrefab(index) == template, "Original master catalog identity");
+            var catalogTemplate = template;
+            if (!catalogTemplate)
+            {
+                var source = coordinator.artifactBundle.LoadAsset<GameObject>(cfg.enemyMasterAsset);
+                coordinator.Check(source && coordinator.wholeMasterTemplates.TryGetValue(source.name, out catalogTemplate) &&
+                                      catalogTemplate,
+                                  "Owned source master adaptation missing from native catalog");
+            }
+            var index = MasterCatalog.FindMasterIndex(catalogTemplate);
+            coordinator.Check(MasterCatalog.GetMasterPrefab(index) == catalogTemplate, "Original master catalog identity");
             coordinator.r.director.masterIndex = (int)index;
             coordinator.directorPlayer = player.master.GetComponent<PlayerCharacterMasterController>();
             coordinator.Check(coordinator.directorPlayer && !coordinator.directorPlayer.gameObject.activeInHierarchy &&
@@ -341,6 +374,58 @@ public sealed partial class PortSession
                               "Original participant/body counts or unavailable user contract changed");
             coordinator.StartOriginalRunClock();
             return index;
+        }
+
+        public IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)
+        {
+            coordinator.Check(
+                coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && cfg.integratedWorld && cfg.teleporterLoop &&
+                    coordinator.stageSourceObjects && coordinator.stageGeometryScene.IsValid() &&
+                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes") &&
+                    !coordinator.automaticDirectorHost && !coordinator.rewardDirectorHost && !coordinator.rewardCard,
+                "Native first-stage director context requires a clean supported source attempt");
+            // Suspend this exact source SceneDirector before objective setup can
+            // activate scene-owned objects. The later lifecycle owner adopts the
+            // same suspension rather than disabling or starting it again.
+            var borrowedRoot = SourceStageDirectorRoot(false);
+            coordinator.Check(borrowedRoot && !borrowedRoot.activeSelf && !borrowedRoot.GetComponent<SceneDirector>().enabled,
+                              "Exact source SceneDirector was not suspended before native preparation");
+            coordinator.r.director = new DirectorReport {
+                automatic = true, spawnLimit = int.MaxValue, monsterLimit = TeamCatalog.GetTeamDef(TeamIndex.Monster).softCharacterLimit,
+                scope =
+                    "Native source-stage directors and complete accepted stage pool; no early diagnostic actor spawn or Beetle assertions."
+            };
+            var tiers = PrepareNativeDirectorEliteTiers();
+            while (tiers.MoveNext())
+                yield return tiers.Current;
+            // Prepare whole catalog masters through the owned template mapping. Passing
+            // the raw Beetle prefab here would mark it pre-adapted and skip rebinding.
+            var sourceMaster = coordinator.artifactBundle.LoadAsset<GameObject>(cfg.enemyMasterAsset);
+            coordinator.Check(sourceMaster && sourceMaster.GetComponent<CharacterMaster>() && !sourceMaster.activeSelf,
+                              "Original catalog source master missing or active");
+            StartOriginalNavigation();
+            coordinator.automaticDirectorBegan = Time.realtimeSinceStartup;
+            automaticDirectorFixedBegan = Run.instance.fixedTime;
+            var sourceIndex = PrepareNativeDirectorCatalogAndPlayerContext(null, player, cfg);
+            GameObject adaptedBeetle;
+            coordinator.Check(MasterCatalog.GetMasterPrefab(sourceIndex) &&
+                                  coordinator.wholeMasterTemplates.TryGetValue(sourceMaster.name, out adaptedBeetle) && adaptedBeetle &&
+                                  ReferenceEquals(MasterCatalog.GetMasterPrefab(sourceIndex), adaptedBeetle),
+                              "Owned adapted Beetle master is missing from the native master catalog");
+            var sourceCard = coordinator.artifactBundle.LoadAsset<CharacterSpawnCard>(cfg.enemySpawnCardAsset);
+            coordinator.Check(sourceCard && sourceCard.name == "cscBeetle" && sourceCard.prefab &&
+                                  coordinator.wholeMasterTemplates.ContainsKey(sourceCard.prefab.name),
+                              "Original source spawn card/master unavailable for world-item attribution");
+            coordinator.rewardCard = Instantiate(sourceCard);
+            coordinator.rewardCard.name = sourceCard.name;
+            coordinator.rewardCard.prefab = coordinator.wholeMasterTemplates[sourceCard.prefab.name];
+            coordinator.Check(coordinator.rewardCard.prefab && coordinator.rewardCard.prefab.GetComponent<CharacterMaster>(),
+                              "Owned source master template missing for source-card attribution");
+            coordinator.r.director.masterIndex = (int)MasterCatalog.FindMasterIndex(coordinator.rewardCard.prefab);
+            coordinator.r.director.nativeSourceContextPrepared = true;
+            coordinator.r.director.playerRegistered = coordinator.directorPlayer && PlayerCharacterMasterController.instances.Count == 1 &&
+                                                      PlayerCharacterMasterController.instances[0] == coordinator.directorPlayer;
+            coordinator.Save();
         }
 
         public IEnumerator SpawnAutomaticEnemy(GameObject template, CharacterBody player, SessionConfig cfg)
@@ -508,6 +593,23 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && nativeSourceDirectorRoot)
+            {
+                var directors = nativeSourceDirectorRoot.GetComponents<CombatDirector>();
+                coordinator.Check(directors.Length == 2 && directors.All(candidate => candidate),
+                                  "Borrowed source directors disappeared before deck restoration");
+                var selected = coordinator.automaticDeck;
+                coordinator.Check(ReferenceEquals(directors[0].monsterCards, nativeOriginalSourceFastDeck) ||
+                                      ReferenceEquals(directors[0].monsterCards, selected),
+                                  "Foreign fast source deck replacement during cleanup");
+                coordinator.Check(ReferenceEquals(directors[1].monsterCards, nativeOriginalSourceSlowDeck) ||
+                                      ReferenceEquals(directors[1].monsterCards, selected),
+                                  "Foreign slow source deck replacement during cleanup");
+                if (ReferenceEquals(directors[0].monsterCards, selected))
+                    directors[0].monsterCards = nativeOriginalSourceFastDeck;
+                if (ReferenceEquals(directors[1].monsterCards, selected))
+                    directors[1].monsterCards = nativeOriginalSourceSlowDeck;
+            }
             coordinator.CleanupStageCombatDecks();
             coordinator.CleanupWholePopulation();
             ownedNavigationTick = null;

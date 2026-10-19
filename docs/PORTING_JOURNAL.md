@@ -8973,3 +8973,67 @@ Both baseline modes and alternate cleanup remain pending on this APK; J647's
 9e7c4224… remains accepted. J648's observer change must be replayed through R8.
 No original-input, proprietary implementation, profile grant, receipt hand edit,
 extra-device action or Phase 2 output is introduced.
+
+## J651 — Integrate a default-off native first-stage lifecycle owner
+
+Hypothesis: the existing full native stage deck, prepared objective and source
+scene can run the original scene-identity, Run/Stage and SceneDirector lifecycle
+without the earlier temporary combat fixture. Keep the established path as the
+default and validate the native first-stage path independently before expanding.
+
+Prior art: inspected pinned R2API.Director README and DirectorAPIinternal.cs at
+f539511e, separating native stage settings/card pools and original population
+from catalog membership. Its stage timing, clone reuse and empty-expansion
+notes reinforce exact input/version and ownership checks. Current e544 native
+Run, Stage, NetworkServer, SceneObjectToggleGroup/SpawnGroup, SceneDirector,
+CombatDirector and Teleporter source contracts govern; no gameplay algorithm
+or proprietary implementation is reproduced.
+
+Added named FirstStageDiagnosticGate, FirstStageSourceOwners and
+SourceStageIdentityLifecycle owners (105 selected runtime files), integrating
+with existing stage, objective, population, input and session cleanup owners.
+The per-attempt nativeFirstStageLifecycleDiagnosticAttempt flag defaults off,
+supports generated Golemplains/Lakes only and always marks assisted. It skips
+the older Beetle/temporary CombatDirector fixture, retains initialized native
+Run RNG and the full native deck, and prepares the objective beneath an
+inactive owner. Observers arm before activation. The audited complete source
+identity cohort follows native activation/spawn order; genuine Run scene
+change and the actual validated offline global multicast precede the genuine
+server Stage-begin witness, then natural SceneDirector population and native
+Teleporter Start. No RNG rewind/injection, forced toggle outcome, fake local
+NetworkUser, entitlement or manually invoked SceneDirector.Start is added.
+The server-begin witness cannot establish the client continuation of Stage.Start
+or onStageStartGlobal without a real local NetworkUser.
+
+Teardown retires owned actors/interactables, the exact captured Stage, native
+objective, source identity cohort and then providers/catalogs. Exact captured
+network IDs and mapping absence gate native reset. Partial acquisition or
+failed retirement retains the complete nested iterator/body/master/Run/server/
+scene/provider graph through sourceStageLifecycleRecoveryRequired; upstream
+destructive finalizers stop. Retention is failure, never successful cleanup.
+Transport refuses before mutation. Independent review found and corrected
+Stage capture, assisted provenance, default-path cleanup and ordinary abort
+ordering before integration. A narrow early Director-prepare catch can still
+conservatively retain recovery after restoring its SceneDirector before observer
+disarm; this is explicitly not a successful safe abort.
+
+Validation: exact Unity editor compilation, pure production-gate fixture and
+existing native variant API/strict-input fixtures pass. Evidence:
+work/experiments/first-stage-native-lifecycle/editor-20261019T130245.827753Z/.
+The pure fixture creates no Unity objects or lifecycle events. Host suite:
+941 tests pass with one existing skip; focused runtime selection and producer
+fixtures pass, Ruff and diff checks pass. Logs:
+work/coordination/codex-first-stage-native-host-tests.stdout and .stderr.
+Private draft/review notes remain under work/coordination/
+source-stage-lifecycle-draft/. Public recipe audit, named ownership and fixture
+producer are updated; Unity-imported authored GUIDs are pinned.
+
+First failure: none in compilation/pure host contracts; native Unity callback
+ordering, scene activation, objective placement, actual teardown and recovery
+remain unverified. This is an unbuilt source checkpoint, not a device result or
+feature completion. Installed f57e172b… remains the 102-source J650 candidate;
+accepted J647 9e7c4224… is unchanged. Revisit after the current device batch,
+selected preflight, build, both default baseline modes and a bounded explicit
+first-stage diagnostic. R8 must replay the changed authored sources/fixture;
+no work/rebuild output, original input, private receipt, extra device or storage
+configuration is edited. Moon/finale remains deferred.

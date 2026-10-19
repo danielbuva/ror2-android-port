@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J651](PORTING_JOURNAL.md#j651--integrate-a-default-off-native-first-stage-lifecycle-owner) | 2026-10-19 | Integrate a default-off native first-stage lifecycle owner | Hypothesis: the existing full native stage deck, prepared objective and source scene can run the original scene-identity, Run/Stage and SceneDirector lifecycle… |
 | [J650](PORTING_JOURNAL.md#j650--corrected-live-skill-inventory-passes-alternate-engineer-exposes-missing-laser-cutter-input) | 2026-10-19 | Corrected live skill inventory passes; alternate Engineer exposes missing Laser Cutter input | Hypothesis: J648's reciprocal live ownership check can publish exact native catalog metadata, allowing J646's explicit per-run selector to exercise a full alte… |
 | [J649](PORTING_JOURNAL.md#j649--extend-native-cleanup-checks-to-explicit-alternate-skill-selections) | 2026-10-19 | Extend native cleanup checks to explicit alternate skill selections | Hypothesis: the existing loss/UI-abandon runner can verify alternate-loadout setup, native cleanup and same-process restart through the per-run selector, witho… |
 | [J648](PORTING_JOURNAL.md#j648--correct-live-skill-inventory-ownership-after-its-first-device-refusal) | 2026-10-19 | Correct live skill inventory ownership after its first device refusal | J646's 102-file cohort passes selected-device preflight and builds with zero errors in 110.66 s, request 20261019T122900.397031Z. |

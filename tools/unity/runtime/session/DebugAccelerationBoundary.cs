@@ -34,6 +34,7 @@ public sealed partial class PortSession
     {
         public int version = 1;
         public bool everAssisted, normalGameAcceptanceEligible = true, restored, ownerDestroyed;
+        public bool nativeFirstStageLifecycleDiagnostic;
         public DebugAccelerationOptions active = new DebugAccelerationOptions();
         public string purpose, error;
         public float damageMultiplier = 1000, chargeRateMultiplier = 8, movementMultiplier = 2, jumpMultiplier = 6;
@@ -94,13 +95,16 @@ public sealed partial class PortSession
     {
         if (r == null)
             return false;
-        if (r.developerSkillVariantAssisted && r.debugAcceleration != null)
+        bool nativeLifecycleDiagnostic = r.nativeFirstStageLifecycleDiagnosticAttempt;
+        if ((r.developerSkillVariantAssisted || nativeLifecycleDiagnostic) && r.debugAcceleration != null)
         {
             r.debugAcceleration.everAssisted = true;
             r.debugAcceleration.normalGameAcceptanceEligible = false;
+            if (nativeLifecycleDiagnostic)
+                r.debugAcceleration.nativeFirstStageLifecycleDiagnostic = true;
         }
-        return r.developerSkillVariantAssisted ||
-               r.debugAcceleration != null && r.debugAcceleration.everAssisted;
+        return LabPort.SourceStageLifecycle.FirstStageDiagnosticGate.IsAssisted(
+            nativeLifecycleDiagnostic, r.developerSkillVariantAssisted, r.debugAcceleration != null && r.debugAcceleration.everAssisted);
     }
     void ApplyDebugAcceleration(DebugAccelerationOptions next, string source)
     {
@@ -157,15 +161,19 @@ public sealed partial class PortSession
             coordinator.Check(!debugBody && !ownsDebugAcceleration, "Debug acceleration owner already exists");
             debugBody = body;
             debugPriorGodMode = body.healthComponent.godMode;
-            coordinator.r.debugAcceleration =
-                new DebugAccelerationReport { purpose = coordinator.r.debugOptions == null ||
-                                                                string.IsNullOrWhiteSpace(coordinator.r.debugOptions.purpose)
-                                                            ? "Interactive developer controls"
-                                                            : coordinator.r.debugOptions.purpose,
-                                              everAssisted = coordinator.r.developerSkillVariantAssisted,
-                                              normalGameAcceptanceEligible = !coordinator.r.developerSkillVariantAssisted,
-                                              originalBaseDamage = body.baseDamage, originalLevelDamage = body.levelDamage,
-                                              originalBaseMoveSpeed = body.baseMoveSpeed, originalLevelMoveSpeed = body.levelMoveSpeed };
+            coordinator.r.debugAcceleration = new DebugAccelerationReport {
+                purpose = coordinator.r.debugOptions == null || string.IsNullOrWhiteSpace(coordinator.r.debugOptions.purpose)
+                              ? "Interactive developer controls"
+                              : coordinator.r.debugOptions.purpose,
+                everAssisted = coordinator.r.developerSkillVariantAssisted || coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                normalGameAcceptanceEligible =
+                    !coordinator.r.developerSkillVariantAssisted && !coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                nativeFirstStageLifecycleDiagnostic = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                originalBaseDamage = body.baseDamage,
+                originalLevelDamage = body.levelDamage,
+                originalBaseMoveSpeed = body.baseMoveSpeed,
+                originalLevelMoveSpeed = body.levelMoveSpeed
+            };
             ownsDebugAcceleration = true;
             coordinator.r.debugAcceleration.originalBaseJumpPower = body.baseJumpPower;
             coordinator.r.debugAcceleration.originalLevelJumpPower = body.levelJumpPower;

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using LabPort.SourceStageLifecycle;
 using RoR2;
 using RoR2.Navigation;
 using RoR2.ContentManagement;
@@ -110,6 +111,14 @@ public sealed partial class PortSession
     {
         GetIntegratedStageSession().ReleaseObjectiveStage();
     }
+    internal void BeginNativeFirstStageBoundary()
+    {
+        GetIntegratedStageSession().BeginNativeStageBoundary();
+    }
+    internal bool CaptureNativeFirstStage(Stage stage)
+    {
+        return GetIntegratedStageSession().CaptureNativeStage(stage);
+    }
     void TickOriginalStage()
     {
         GetIntegratedStageSession().TickOriginalStage();
@@ -146,7 +155,7 @@ public sealed partial class PortSession
     // Create on first use and retain for partial setup, repeated cleanup and stage
     // transport. Dispose preserves transport/catalog cleanup only; objective-stage
     // release and every transport yield remain at their existing call sites.
-    sealed class IntegratedStageSession : IDisposable
+    sealed partial class IntegratedStageSession : IDisposable
     {
         readonly PortSession coordinator;
         AndroidStageTransport worldTransport;
@@ -165,23 +174,27 @@ public sealed partial class PortSession
         bool ownsSurfaceCatalog;
         static bool originalDamageMacrosReady;
         bool ownsOriginalStage;
+        NetworkInstanceId capturedOriginalStageId;
+        SourceStageIdentityLifecycle firstStageIdentityLifecycle;
+        FirstStageSourceOwners firstStageIdentityOwners;
         SirenEncounterSession sirenEncounter;
         public IntegratedStageSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
         }
         public int SirenDiagnosticSceneHandle => sirenEncounter != null ? sirenEncounter.DiagnosticSceneHandle : 0;
-        public bool SirenDiagnosticSceneActive => sirenEncounter != null && sirenEncounter.DiagnosticSceneActive &&
-            (coordinator.r.moon == null || !coordinator.r.moon.loaded);
+        public bool SirenDiagnosticSceneActive =>
+            sirenEncounter != null && sirenEncounter.DiagnosticSceneActive && (coordinator.r.moon == null || !coordinator.r.moon.loaded);
         public bool SirenDiagnosticOwnerAttached => sirenEncounter != null && sirenEncounter.DiagnosticOwnerAttached;
         public bool SirenDiagnosticListenerActive => sirenEncounter != null && sirenEncounter.DiagnosticListenerActive;
         public bool SirenNativeEncounterStarted => sirenEncounter != null && sirenEncounter.NativeEncounterStarted;
-        public bool SirenDiagnosticStageTransporting => transportingStage ||
-            coordinator.r.stageProgress != null && coordinator.r.stageProgress.transporting;
-        public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) =>
-            sirenEncounter != null ? sirenEncounter.NearestRevalidatedDiagnosticEgg(position) : null;
-        public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) =>
-            sirenEncounter != null && sirenEncounter.IsCurrentDiagnosticSourceEgg(body);
+        public bool SirenDiagnosticStageTransporting =>
+            transportingStage || coordinator.r.stageProgress != null && coordinator.r.stageProgress.transporting;
+        public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) => sirenEncounter != null
+                                                                                ? sirenEncounter.NearestRevalidatedDiagnosticEgg(position)
+                                                                                : null;
+        public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) => sirenEncounter != null
+                                                                       && sirenEncounter.IsCurrentDiagnosticSourceEgg(body);
         public void ObserveStageEntry(CharacterMotor motor, string tag = "settling")
         {
             var solver = motor.Motor;
@@ -375,6 +388,13 @@ public sealed partial class PortSession
         {
             if (coordinator.r.liveCatalogs == null || !coordinator.stageSourceObjects)
                 yield break;
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+            {
+                var native = BeginNativeFirstStage();
+                while (native.MoveNext())
+                    yield return native.Current;
+                yield break;
+            }
             coordinator.Check(coordinator.objectiveStage && !coordinator.objectiveStageHost.activeInHierarchy &&
                                   Stage.instance == coordinator.objectiveStage && NetworkServer.active && Run.instance,
                               "Temporary stage context missing before original handoff");
@@ -424,15 +444,196 @@ public sealed partial class PortSession
                 Stage.onServerStageBegin -= onBegin;
             }
         }
+        IEnumerator BeginNativeFirstStage()
+        {
+            // Persist the selector as assisted provenance before any native stage
+            // events or progression callbacks can observe this run.
+            coordinator.IsRunAssisted();
+            coordinator.Check(
+                coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt &&
+                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes") &&
+                    !coordinator.objectiveStage && !Stage.instance && NetworkServer.active && Run.instance &&
+                    coordinator.currentStageCombatDeck != null && coordinator.currentStageCombatDeck.nativePool &&
+                    coordinator.automaticDeck && coordinator.wholeSceneDirector && !coordinator.wholeSceneDirector.enabled &&
+                    coordinator.objectiveHost && !coordinator.r.objective.ready && !coordinator.r.sourceStageLifecycleRecoveryRequired,
+                "Native first-stage transaction preconditions changed before identity activation");
+            var spells = ContentManager.cursedBookSpellDefs;
+            coordinator.Check(spells != null, "Original Cursed Book spell array absent before Stage.Start");
+            foreach (var spell in spells)
+                coordinator.Check(spell && spell.itemDef && spell.consumedItemDef,
+                                  "Original Cursed Book spell item references missing before Stage.Start");
+            firstStageIdentityOwners = new FirstStageSourceOwners(coordinator, coordinator.stageGeometryScene);
+            SourceStageIdentityLifecycle.PreflightBeforeStageRelease(coordinator.stageGeometryScene, firstStageIdentityOwners);
+            firstStageIdentityLifecycle = SourceStageIdentityLifecycle.Create(coordinator.stageGeometryScene, firstStageIdentityOwners);
+            bool completed = false;
+            int begins = 0;
+            Action<Stage> onBegin = stage =>
+            {
+                if (firstStageIdentityLifecycle != null && firstStageIdentityLifecycle.HasCapturedNativeStage &&
+                    ReferenceEquals(stage, firstStageIdentityLifecycle.CapturedNativeStage) &&
+                    ReferenceEquals(Stage.instance, firstStageIdentityLifecycle.CapturedNativeStage) &&
+                    ReferenceEquals(stage.gameObject, firstStageIdentityLifecycle.CapturedNativeStageHost) &&
+                    stage.gameObject.scene == coordinator.stageGeometryScene)
+                    begins++;
+            };
+            try
+            {
+                firstStageIdentityLifecycle.Prepare();
+                Stage.onServerStageBegin += onBegin;
+                firstStageIdentityLifecycle.CompleteAtBeginOriginalStage();
+                coordinator.Check(
+                    firstStageIdentityLifecycle.HasCapturedNativeStage &&
+                        ReferenceEquals(coordinator.objectiveStage, firstStageIdentityLifecycle.CapturedNativeStage) &&
+                        ReferenceEquals(coordinator.objectiveStageHost, firstStageIdentityLifecycle.CapturedNativeStageHost) &&
+                        ownsOriginalStage && capturedOriginalStageId == firstStageIdentityLifecycle.CapturedNativeStageId,
+                    "Native Stage capture did not retain the exact proved Stage host and registration ID");
+                yield return null;
+                coordinator.Check(
+                    begins == 1 && coordinator.objectiveStage &&
+                        ReferenceEquals(coordinator.objectiveStage, firstStageIdentityLifecycle.CapturedNativeStage) &&
+                        coordinator.objectiveStage.isServer && coordinator.objectiveStage.netId == capturedOriginalStageId &&
+                        ReferenceEquals(NetworkServer.FindLocalObject(capturedOriginalStageId), coordinator.objectiveStageHost) &&
+                        coordinator.objectiveStage.gameObject.scene == coordinator.stageGeometryScene &&
+                        coordinator.objectiveStage.sceneDef == SceneCatalog.GetSceneDefForCurrentScene(),
+                    "The genuine server Stage-begin callback did not fire exactly once for the spawned source Stage");
+                firstStageIdentityLifecycle.ObserveServerStageBegin();
+                coordinator.r.sourceStageLifecycleRecoveryRequired = false;
+                coordinator.r.stageProgress.originalStageBegins++;
+                coordinator.Save();
+                completed = true;
+            }
+            finally
+            {
+                Stage.onServerStageBegin -= onBegin;
+                if (!completed)
+                {
+                    if (firstStageIdentityLifecycle != null && Stage.instance && ownsOriginalStage)
+                    {
+                        // Preserve all owning objects if the real Stage or a native
+                        // activation queue cannot be retired synchronously.
+                        coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                        coordinator.r.cleanup = false;
+                        coordinator.r.success = false;
+                        coordinator.Save();
+                    }
+                    else if (firstStageIdentityLifecycle != null && !firstStageIdentityLifecycle.HasCapturedNativeStage && !Stage.instance)
+                    {
+                        try
+                        {
+                            firstStageIdentityLifecycle.AbortBeforeBoundary();
+                            coordinator.r.sourceStageLifecycleRecoveryRequired = false;
+                            firstStageIdentityLifecycle = null;
+                            firstStageIdentityOwners = null;
+                        }
+                        catch
+                        {
+                            coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                            coordinator.r.cleanup = false;
+                            coordinator.r.success = false;
+                            coordinator.Save();
+                        }
+                    }
+                    else if (firstStageIdentityLifecycle != null)
+                    {
+                        // Any partially acquired Stage, including one whose exact
+                        // server-map capture failed, remains owned by the recovery gate.
+                        coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                        coordinator.r.cleanup = false;
+                        coordinator.r.success = false;
+                        coordinator.Save();
+                    }
+                }
+            }
+        }
+        void DisposeNativeFirstStageLifecycle()
+        {
+            if (firstStageIdentityLifecycle == null)
+                return;
+            try
+            {
+                firstStageIdentityLifecycle.Dispose();
+                coordinator.Check(firstStageIdentityLifecycle.IsSafeToUnload, "Native first-stage identities were not fully retired");
+                firstStageIdentityLifecycle = null;
+                firstStageIdentityOwners = null;
+            }
+            catch (Exception primary)
+            {
+                coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                coordinator.r.cleanup = false;
+                coordinator.r.success = false;
+                coordinator.r.error += " Native source lifecycle retained for recovery: " + primary;
+                coordinator.Save();
+                throw;
+            }
+        }
+        internal void BeginNativeStageBoundary()
+        {
+            // Run.BeginStage installs Stage.instance before registering its identity.
+            // Retain the full session context before crossing that partial-acquisition boundary.
+            coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+            coordinator.r.cleanup = false;
+            coordinator.r.success = false;
+        }
+        internal bool CaptureNativeStage(Stage stage)
+        {
+            if (!stage || coordinator.objectiveStage || ownsOriginalStage || !stage.isServer || stage.netId.Value == 0 ||
+                stage.gameObject.scene != coordinator.stageGeometryScene ||
+                !ReferenceEquals(NetworkServer.FindLocalObject(stage.netId), stage.gameObject))
+                return false;
+            var identity = stage.GetComponent<NetworkIdentity>();
+            if (!identity || identity.netId.Value == 0 || !ReferenceEquals(NetworkServer.FindLocalObject(identity.netId), stage.gameObject))
+                return false;
+            coordinator.objectiveStage = stage;
+            coordinator.objectiveStageHost = stage.gameObject;
+            capturedOriginalStageId = identity.netId;
+            ownsOriginalStage = true;
+            return true;
+        }
         public void ReleaseObjectiveStage()
         {
             if (!coordinator.objectiveStage)
                 return;
             if (ownsOriginalStage)
             {
-                coordinator.Check(NetworkServer.active, "Original Stage requires a live server for teardown");
-                NetworkServer.Destroy(coordinator.objectiveStageHost);
-                ownsOriginalStage = false;
+                try
+                {
+                    coordinator.Check(NetworkServer.active && coordinator.objectiveStageHost &&
+                                          ReferenceEquals(coordinator.objectiveStage.gameObject, coordinator.objectiveStageHost),
+                                      "Original Stage requires its exact live server host for teardown");
+                    if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                    {
+                        coordinator.Check(capturedOriginalStageId.Value != 0,
+                                          "Native Stage teardown requires its captured registration ID");
+                        var stage = coordinator.objectiveStage;
+                        var host = coordinator.objectiveStageHost;
+                        var identity = host.GetComponent<NetworkIdentity>();
+                        coordinator.Check(identity && identity.isServer && identity.netId == capturedOriginalStageId &&
+                                              ReferenceEquals(NetworkServer.FindLocalObject(capturedOriginalStageId), host),
+                                          "Refusing to retire an unowned or replaced native Stage registration");
+                        var networkId = capturedOriginalStageId;
+                        NetworkServer.UnSpawn(host);
+                        coordinator.Check(NetworkServer.active && ReferenceEquals(NetworkServer.FindLocalObject(networkId), null),
+                                          "Native Stage identity remained registered after UnSpawn");
+                        DestroyImmediate(host);
+                        coordinator.Check(!stage && !Stage.instance && !coordinator.objectiveStage,
+                                          "Native Stage OnDisable did not synchronously release its singleton");
+                    }
+                    else
+                        NetworkServer.Destroy(coordinator.objectiveStageHost);
+                    ownsOriginalStage = false;
+                }
+                catch (Exception e)
+                {
+                    if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                    {
+                        coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                        coordinator.r.cleanup = false;
+                        coordinator.r.success = false;
+                        coordinator.r.error += " Native Stage retirement retained for recovery: " + e;
+                        coordinator.Save();
+                    }
+                    throw;
+                }
             }
             else
             {
@@ -492,6 +693,8 @@ public sealed partial class PortSession
         }
         public IEnumerator TransportIntegratedStage(NovaInputBridge bridge, float simulationBegan)
         {
+            coordinator.Check(!coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                              "The native source-lifecycle diagnostic owns only its first stage; transport turnover is not implemented");
             if (string.IsNullOrEmpty(coordinator.pendingStage))
                 yield break;
             var next = integratedStageConfig.integratedStages.SingleOrDefault(x => x.name == coordinator.pendingStage);
@@ -577,6 +780,9 @@ public sealed partial class PortSession
             if (coordinator.objectiveBossDeck)
                 PortSession.Destroy(coordinator.objectiveBossDeck);
             ReleaseObjectiveStage();
+            DisposeNativeFirstStageLifecycle();
+            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                yield break;
             if (coordinator.sourceSceneInfoRoot)
                 coordinator.DeactivateSourceSceneInfo();
             if (coordinator.enemySceneHost)
@@ -862,8 +1068,8 @@ public sealed partial class PortSession
                 return;
             coordinator.Check(sirenEncounter == null && coordinator.stageSourceObjects,
                               "Siren encounter needs its original source scene and a fresh owner");
-            sirenEncounter = SirenEncounterSession.Attach(
-                coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenEncounters.Add(selected));
+            sirenEncounter = SirenEncounterSession.Attach(coordinator.stageGeometryScene,
+                                                          selected => coordinator.r.stageProgress.sirenEncounters.Add(selected));
         }
         void CleanupSirenEncounter()
         {
@@ -873,6 +1079,13 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
+            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                return;
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && (Stage.instance || coordinator.objectiveStage))
+                throw new InvalidOperationException("Native first-stage recovery owner must retire Stage before source identities");
+            DisposeNativeFirstStageLifecycle();
+            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                return;
             CleanupSirenEncounter();
             coordinator.PauseStageMapZones();
             coordinator.StopStageMapZoneObservations();

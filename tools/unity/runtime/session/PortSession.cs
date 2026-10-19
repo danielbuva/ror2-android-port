@@ -224,6 +224,9 @@ public sealed partial class PortSession : MonoBehaviour
         public string worldLootSlowBuffAsset;
         public string worldGlassesAsset, worldSlugAsset, worldLunarCoinAsset;
         public bool integratedWorld;
+        // Explicit per-attempt opt-in; defaults false when omitted from the attempt report.
+        public bool nativeFirstStageLifecycleDiagnosticAttempt;
+        public bool sourceStageLifecycleRecoveryRequired;
         public WorldReport world;
         public SurvivorSkillObserver.Report survivorSkills;
         public CommerceReport commerce;
@@ -373,6 +376,12 @@ public sealed partial class PortSession : MonoBehaviour
     NetworkIdentity recoveredOwnedIdentity;
     SessionReport r;
     GameObject host, obstacle, eventHost, artifactHost;
+    readonly List<object> retainedNativeLifecycleObjects = new List<object>();
+    void RetainNativeLifecycleObject(object value)
+    {
+        if (value != null && !retainedNativeLifecycleObjects.Contains(value))
+            retainedNativeLifecycleObjects.Add(value);
+    }
     bool ownsServer;
     ArtifactDef[] priorArtifacts;
     ArtifactDef priorFallArtifact;
@@ -453,21 +462,20 @@ public sealed partial class PortSession : MonoBehaviour
             {
                 r.developerSkillVariantOverride = DeveloperSkillVariantSelection.ParseSessionReport(selectionJson);
                 if (r.developerSkillVariantOverride != null)
-                    r.developerSkillVariantOverrideReport = new DeveloperSkillVariantOverrideReport { requested = true, status = "pending" };
+                    r.developerSkillVariantOverrideReport =
+                        new DeveloperSkillVariantOverrideReport { requested = true, status = "pending" };
             }
             catch (DeveloperSkillVariantSelection.SelectionException error)
             {
                 variantSelectionError = error;
-                r.developerSkillVariantOverrideReport = new DeveloperSkillVariantOverrideReport {
-                    requested = true, status = error.outcome, error = error.Message
-                };
+                r.developerSkillVariantOverrideReport =
+                    new DeveloperSkillVariantOverrideReport { requested = true, status = error.outcome, error = error.Message };
             }
             catch (Exception error)
             {
                 variantSelectionError = error;
-                r.developerSkillVariantOverrideReport = new DeveloperSkillVariantOverrideReport {
-                    requested = true, status = "refused", error = error.Message
-                };
+                r.developerSkillVariantOverrideReport =
+                    new DeveloperSkillVariantOverrideReport { requested = true, status = "refused", error = error.Message };
             }
             if (variantSelectionError != null)
             {
@@ -576,6 +584,13 @@ public sealed partial class PortSession : MonoBehaviour
                                    });
              step.MoveNext();)
             yield return step.Current;
+        if (r.sourceStageLifecycleRecoveryRequired)
+        {
+            r.cleanup = false;
+            r.success = false;
+            Save();
+            yield break; // Keep the owning PortSession and all source dependencies alive for recovery.
+        }
         if (catalogFixture)
         {
             yield return null; // Let deferred owned clone/root destruction finish before releasing catalog assets.
@@ -691,55 +706,68 @@ public sealed partial class PortSession : MonoBehaviour
     }
     IEnumerator RunSelectedProbe(bool catalogFixture)
     {
+        IEnumerator session = null;
         try
         {
-            var session = IsPlayableSpine() ? GameSession() : LabExperiment(catalogFixture);
+            session = IsPlayableSpine() ? GameSession() : LabExperiment(catalogFixture);
             while (session.MoveNext())
                 yield return session.Current;
             r.success = true;
         }
         finally
         {
-            try
+            if (r.sourceStageLifecycleRecoveryRequired)
             {
-                CleanupLanding();
-            }
-            catch (Exception e)
-            {
-                r.error += " Cleanup: " + e;
+                RetainNativeLifecycleObject(session);
+                // The inner native owner retained a live Stage/cohort. Preserve the
+                // server, client, body, and catalogs that make that owner recoverable.
+                r.cleanup = false;
                 r.success = false;
+                Save();
             }
-            if (obstacle)
-                Destroy(obstacle);
-            if (host)
-                Destroy(host);
-            if (selectedBodyStaging)
-                Destroy(selectedBodyStaging);
-            selectedBodyStaging = null;
-            if (recoveredClient != null)
+            else
             {
-                recoveredClient.Disconnect();
-                recoveredClient.Shutdown();
-                if (ownsServer)
+                try
                 {
-                    NetworkServer.Shutdown();
-                    ownsServer = false;
+                    CleanupLanding();
                 }
-                StaticCall(typeof(ClientScene), "Shutdown");
-                Check(!NetworkClient.active && NetworkClient.allClients.Count == 0, "Recovered client cleanup");
+                catch (Exception e)
+                {
+                    r.error += " Cleanup: " + e;
+                    r.success = false;
+                }
+                if (obstacle)
+                    Destroy(obstacle);
+                if (host)
+                    Destroy(host);
+                if (selectedBodyStaging)
+                    Destroy(selectedBodyStaging);
+                selectedBodyStaging = null;
+                if (recoveredClient != null)
+                {
+                    recoveredClient.Disconnect();
+                    recoveredClient.Shutdown();
+                    if (ownsServer)
+                    {
+                        NetworkServer.Shutdown();
+                        ownsServer = false;
+                    }
+                    StaticCall(typeof(ClientScene), "Shutdown");
+                    Check(!NetworkClient.active && NetworkClient.allClients.Count == 0, "Recovered client cleanup");
+                }
+                if (ownsServer)
+                    NetworkServer.Shutdown();
+                FinishActiveClientSceneCleanup();
+                if (ownsStateCatalog)
+                {
+                    BuildStateCatalog(Array.Empty<Type>());
+                    ownsStateCatalog = false;
+                }
+                r.cleanup = !ownsServer || !NetworkServer.active;
+                r.success &= r.cleanup;
+                r.phase = catalogFixture ? "catalog-cleanup-pending" : "complete";
+                Save();
             }
-            if (ownsServer)
-                NetworkServer.Shutdown();
-            FinishActiveClientSceneCleanup();
-            if (ownsStateCatalog)
-            {
-                BuildStateCatalog(Array.Empty<Type>());
-                ownsStateCatalog = false;
-            }
-            r.cleanup = !ownsServer || !NetworkServer.active;
-            r.success &= r.cleanup;
-            r.phase = catalogFixture ? "catalog-cleanup-pending" : "complete";
-            Save();
         }
     }
     // The shipped game: both playable-spine ids (IsPlayableSpine) run the original body
@@ -1693,6 +1721,11 @@ public sealed partial class PortSession : MonoBehaviour
                                 var statsRoutine = OriginalStats(body, cfg);
                                 while (statsRoutine.MoveNext())
                                     yield return statsRoutine.Current;
+                                if (r.sourceStageLifecycleRecoveryRequired)
+                                {
+                                    RetainNativeLifecycleObject(statsRoutine);
+                                    yield break;
+                                }
                             }
                         }
                     }
@@ -1714,61 +1747,81 @@ public sealed partial class PortSession : MonoBehaviour
         }
         finally
         {
-            // This inactive fixture's Awake was invoked manually; remove exactly its
-            // owned subscription before releasing inventory, even if Unity destroyed it.
-            if (!ReferenceEquals(initializedModelLocator, null) && modelSubscription != null)
-                initializedModelLocator.onModelChanged -= modelSubscription;
-            if (initializedMotor)
-                Call(initializedMotor, "OnDestroy");
-            if (initializedSkills != null)
-                foreach (var skill in initializedSkills)
-                    Call(skill, "OnDestroy");
-            if (team)
-                Call(team, "OnDestroy");
-            if (body && body.inventory)
+            if (r.sourceStageLifecycleRecoveryRequired)
             {
-                var callback = (Action)Delegate.CreateDelegate(
-                    typeof(Action), body,
-                    typeof(CharacterBody).GetMethod("OnInventoryChanged", BindingFlags.NonPublic | BindingFlags.Instance));
-                body.inventory.onInventoryChanged -= callback;
+                RetainNativeLifecycleObject(host);
+                RetainNativeLifecycleObject(body);
+                RetainNativeLifecycleObject(team);
+                RetainNativeLifecycleObject(linkedMasterHost);
+                RetainNativeLifecycleObject(linkedMaster);
+                RetainNativeLifecycleObject(linkedInventory);
+                RetainNativeLifecycleObject(initializedMotor);
+                RetainNativeLifecycleObject(initializedSkills);
+                RetainNativeLifecycleObject(restoreAdoption);
+                // Keep native body/master/catalog state until the source-stage owner
+                // can retire its captured identities and server callbacks.
+                r.cleanup = false;
+                r.success = false;
             }
-            if (linkedMasterHost)
+            else
             {
-                NetworkServer.UnSpawn(linkedMasterHost);
-                if (linkedMaster)
-                    Call(linkedMaster, "OnDestroy");
-                if (linkedInventory)
+                // This inactive fixture's Awake was invoked manually; remove exactly its
+                // owned subscription before releasing inventory, even if Unity destroyed it.
+                if (!ReferenceEquals(initializedModelLocator, null) && modelSubscription != null)
+                    initializedModelLocator.onModelChanged -= modelSubscription;
+                if (initializedMotor)
+                    Call(initializedMotor, "OnDestroy");
+                if (initializedSkills != null)
+                    foreach (var skill in initializedSkills)
+                        Call(skill, "OnDestroy");
+                if (team)
+                    Call(team, "OnDestroy");
+                if (body && body.inventory)
                 {
-                    Call(linkedInventory, "OnDestroy");
-                    StaticCall(typeof(Inventory), "StaticFixedUpdate");
+                    var callback = (Action)Delegate.CreateDelegate(
+                        typeof(Action), body,
+                        typeof(CharacterBody).GetMethod("OnInventoryChanged", BindingFlags.NonPublic | BindingFlags.Instance));
+                    body.inventory.onInventoryChanged -= callback;
                 }
-                Destroy(linkedMasterHost);
+                if (linkedMasterHost)
+                {
+                    NetworkServer.UnSpawn(linkedMasterHost);
+                    if (linkedMaster)
+                        Call(linkedMaster, "OnDestroy");
+                    if (linkedInventory)
+                    {
+                        Call(linkedInventory, "OnDestroy");
+                        StaticCall(typeof(Inventory), "StaticFixedUpdate");
+                    }
+                    Destroy(linkedMasterHost);
+                }
+                if (host && ownsServer)
+                {
+                    var id = host.GetComponent<NetworkIdentity>().netId;
+                    NetworkServer.UnSpawn(host);
+                    Check(!NetworkServer.FindLocalObject(id), "Body network object not removed");
+                }
+                if (registered)
+                    Call(body, "OnDisable");
+                WholeCatalogComposed.RestoreDefinitionFields();
+                RoR2Content.Buffs.MedkitHeal = oldMedkit;
+                RoR2Content.Buffs.TonicBuff = oldTonic;
+                DLC2Content.Buffs.SoulCost = oldSoul;
+                RoR2Content.Buffs.Intangible = oldIntangible;
+                RoR2Content.Buffs.HiddenInvincibility = oldHidden;
+                DLC2Content.Buffs.KnockUpHitEnemies = oldKnock;
+                DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount = oldJuggle;
+                names.Clear();
+                foreach (var pair in previous)
+                    pair.Key.SetValue(null, pair.Value);
+                Check(names.Count == 0, "Buff name mapping restoration");
+                if (restoreAdoption != null)
+                    restoreAdoption();
             }
-            if (host && ownsServer)
-            {
-                var id = host.GetComponent<NetworkIdentity>().netId;
-                NetworkServer.UnSpawn(host);
-                Check(!NetworkServer.FindLocalObject(id), "Body network object not removed");
-            }
-            if (registered)
-                Call(body, "OnDisable");
-            WholeCatalogComposed.RestoreDefinitionFields();
-            RoR2Content.Buffs.MedkitHeal = oldMedkit;
-            RoR2Content.Buffs.TonicBuff = oldTonic;
-            DLC2Content.Buffs.SoulCost = oldSoul;
-            RoR2Content.Buffs.Intangible = oldIntangible;
-            RoR2Content.Buffs.HiddenInvincibility = oldHidden;
-            DLC2Content.Buffs.KnockUpHitEnemies = oldKnock;
-            DLC2Content.Buffs.KnockUpHitEnemiesJuggleCount = oldJuggle;
-            names.Clear();
-            foreach (var pair in previous)
-                pair.Key.SetValue(null, pair.Value);
-            Check(names.Count == 0, "Buff name mapping restoration");
-            if (restoreAdoption != null)
-                restoreAdoption();
         }
-        foreach (var pair in previous)
-            Check(ReferenceEquals(pair.Key.GetValue(null), pair.Value), "Buff catalog restoration");
+        if (!r.sourceStageLifecycleRecoveryRequired)
+            foreach (var pair in previous)
+                Check(ReferenceEquals(pair.Key.GetValue(null), pair.Value), "Buff catalog restoration");
     }
     void RestoreAdoption(ItemDef[] priorItems, FieldInfo[] fields, ItemDef[] old, EquipmentDef oldBattery)
     {
@@ -2205,6 +2258,11 @@ public sealed partial class PortSession : MonoBehaviour
                 var spawnRoutine = SpawnBoundary(body, cfg);
                 while (spawnRoutine.MoveNext())
                     yield return spawnRoutine.Current;
+                if (r.sourceStageLifecycleRecoveryRequired)
+                {
+                    RetainNativeLifecycleObject(spawnRoutine);
+                    yield break;
+                }
             }
             else if (r.id.StartsWith("body-state-"))
                 RecoveredState(body);
@@ -2237,46 +2295,60 @@ public sealed partial class PortSession : MonoBehaviour
         }
         finally
         {
-            CleanupOriginalSkins();
-            WholeCatalogComposed.RestoreProjectiles();
-            if (r.liveCatalogs != null)
-                r.liveCatalogs.projectileCleanup = ProjectileCatalog.projectilePrefabCount == 0;
-            WholeCatalogComposed.RestoreDefinitionFields();
-            body.onRecalculateStats -= observed;
-            if (healthAwake)
-                Call(body.healthComponent, "OnDestroy");
-            if (team)
-                Call(team, "OnDestroy");
-            if (artifacts)
+            if (r.sourceStageLifecycleRecoveryRequired)
             {
-                if (RunArtifactManager.instance == artifacts)
-                    Call(artifacts, "OnDisable");
-                var enabled = typeof(RunArtifactManager)
-                                  .GetField("_enabledArtifacts", BindingFlags.Instance | BindingFlags.NonPublic)
-                                  .GetValue(artifacts);
-                if (enabled != null)
-                {
-                    Check(Enumerable.Range(0, ArtifactCatalog.artifactCount).All(i => ArtifactCatalog.GetArtifactDef((ArtifactIndex)i)),
-                          "Original artifact catalog changed before Run teardown");
-                    Call(artifacts, "OnDestroy");
-                }
+                RetainNativeLifecycleObject(body);
+                RetainNativeLifecycleObject(teamHost);
+                RetainNativeLifecycleObject(runHost);
+                RetainNativeLifecycleObject(runStaging);
+                RetainNativeLifecycleObject(manager);
+                RetainNativeLifecycleObject(run);
+                RetainNativeLifecycleObject(artifacts);
+                RetainNativeLifecycleObject(eventHost);
             }
-            if (run && Run.instance == run)
-                Call(run, "OnDisable");
-            if (runStaging)
-                Destroy(runStaging);
-            else if (runHost)
-                Destroy(runHost);
-            if (manager)
-                Call(manager, "OnDisable");
-            if (teamHost)
-                Destroy(teamHost);
-            RoR2Content.Artifacts.WeakAssKnees = oldFall;
-            RoR2Content.Artifacts.Glass = priorGlass;
-            StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { priorDefs });
-            StaticCall(typeof(RunArtifactManager), "Init");
-            DLC1Content.Equipment.EliteVoidEquipment = oldVoid;
-            RoR2Content.Equipment.LunarPotion = oldPotion;
+            else
+            {
+                CleanupOriginalSkins();
+                WholeCatalogComposed.RestoreProjectiles();
+                if (r.liveCatalogs != null)
+                    r.liveCatalogs.projectileCleanup = ProjectileCatalog.projectilePrefabCount == 0;
+                WholeCatalogComposed.RestoreDefinitionFields();
+                body.onRecalculateStats -= observed;
+                if (healthAwake)
+                    Call(body.healthComponent, "OnDestroy");
+                if (team)
+                    Call(team, "OnDestroy");
+                if (artifacts)
+                {
+                    if (RunArtifactManager.instance == artifacts)
+                        Call(artifacts, "OnDisable");
+                    var enabled = typeof(RunArtifactManager)
+                                      .GetField("_enabledArtifacts", BindingFlags.Instance | BindingFlags.NonPublic)
+                                      .GetValue(artifacts);
+                    if (enabled != null)
+                    {
+                        Check(Enumerable.Range(0, ArtifactCatalog.artifactCount).All(i => ArtifactCatalog.GetArtifactDef((ArtifactIndex)i)),
+                              "Original artifact catalog changed before Run teardown");
+                        Call(artifacts, "OnDestroy");
+                    }
+                }
+                if (run && Run.instance == run)
+                    Call(run, "OnDisable");
+                if (runStaging)
+                    Destroy(runStaging);
+                else if (runHost)
+                    Destroy(runHost);
+                if (manager)
+                    Call(manager, "OnDisable");
+                if (teamHost)
+                    Destroy(teamHost);
+                RoR2Content.Artifacts.WeakAssKnees = oldFall;
+                RoR2Content.Artifacts.Glass = priorGlass;
+                StaticCall(typeof(ArtifactCatalog), "SetArtifactDefs", new object[] { priorDefs });
+                StaticCall(typeof(RunArtifactManager), "Init");
+                DLC1Content.Equipment.EliteVoidEquipment = oldVoid;
+                RoR2Content.Equipment.LunarPotion = oldPotion;
+            }
         }
     }
     IEnumerator SpawnBoundary(CharacterBody body, SessionConfig cfg)
@@ -2314,7 +2386,14 @@ public sealed partial class PortSession : MonoBehaviour
         }
         finally
         {
-            (routine as IDisposable)?.Dispose();
+            if (!r.sourceStageLifecycleRecoveryRequired)
+                (routine as IDisposable)?.Dispose();
+        }
+        if (r.sourceStageLifecycleRecoveryRequired)
+        {
+            RetainNativeLifecycleObject(routine);
+            RetainNativeLifecycleObject(pendingBodies);
+            yield break;
         }
         // Destroy is deferred. Native model-loss callbacks must finish while their
         // master inventory and catalog owners still exist, including failed runs.
@@ -2444,11 +2523,9 @@ public sealed partial class PortSession : MonoBehaviour
             }
             if (r.developerSkillVariantOverride != null && !(cfg.integratedWorld && r.liveCatalogs != null))
             {
-                var refused = r.developerSkillVariantOverrideReport ??
-                              new DeveloperSkillVariantOverrideReport { requested = true };
+                var refused = r.developerSkillVariantOverrideReport ?? new DeveloperSkillVariantOverrideReport { requested = true };
                 r.developerSkillVariantOverrideReport = refused;
-                MarkDeveloperSkillVariantAssisted(
-                    "explicit per-run skill variant requires integrated native profile/loadout boundary");
+                MarkDeveloperSkillVariantAssisted("explicit per-run skill variant requires integrated native profile/loadout boundary");
                 refused.assisted = true;
                 refused.status = "refused";
                 refused.error = "Developer skill-variant override requires integrated world and available live catalogs before spawn";
@@ -2530,6 +2607,8 @@ public sealed partial class PortSession : MonoBehaviour
                 var autoRoutine = AutomaticSpawnBoundary(spawned, cfg);
                 while (autoRoutine.MoveNext())
                     yield return autoRoutine.Current;
+                if (r.sourceStageLifecycleRecoveryRequired)
+                    yield break;
             }
             else if (r.id == "body-state-spawn-state-barrier-effect")
             {
@@ -2544,28 +2623,31 @@ public sealed partial class PortSession : MonoBehaviour
         }
         finally
         {
-            foreach (var candidate in Resources.FindObjectsOfTypeAll<CharacterBody>())
+            if (!r.sourceStageLifecycleRecoveryRequired)
             {
-                if (!candidate || before.Contains(candidate.GetInstanceID()) || !candidate.gameObject.scene.IsValid())
-                    continue;
-                r.spawnCloneCount++;
-                r.spawnedTeamCached = candidate.teamComponent;
-                r.spawnedSkillCached = candidate.skillLocator;
-                r.spawnedMasterMatches = candidate.GetMasterObjectId() == master.netId;
-                var identity = candidate.GetComponent<NetworkIdentity>();
-                r.spawnedNetworked = identity && NetworkServer.FindLocalObject(identity.netId) == candidate.gameObject;
-                Save();
-                if (r.spawnedNetworked)
-                    NetworkServer.UnSpawn(candidate.gameObject);
-                pendingBodies.Add(candidate.gameObject);
-                Destroy(candidate.gameObject);
-            }
-            master.bodyPrefab = previous;
-            if (automaticSpawn)
-            {
-                prefab.SetActive(previousPrefabActive);
-                foreach (var pair in childStates)
-                    pair.Key.SetActive(pair.Value);
+                foreach (var candidate in Resources.FindObjectsOfTypeAll<CharacterBody>())
+                {
+                    if (!candidate || before.Contains(candidate.GetInstanceID()) || !candidate.gameObject.scene.IsValid())
+                        continue;
+                    r.spawnCloneCount++;
+                    r.spawnedTeamCached = candidate.teamComponent;
+                    r.spawnedSkillCached = candidate.skillLocator;
+                    r.spawnedMasterMatches = candidate.GetMasterObjectId() == master.netId;
+                    var identity = candidate.GetComponent<NetworkIdentity>();
+                    r.spawnedNetworked = identity && NetworkServer.FindLocalObject(identity.netId) == candidate.gameObject;
+                    Save();
+                    if (r.spawnedNetworked)
+                        NetworkServer.UnSpawn(candidate.gameObject);
+                    pendingBodies.Add(candidate.gameObject);
+                    Destroy(candidate.gameObject);
+                }
+                master.bodyPrefab = previous;
+                if (automaticSpawn)
+                {
+                    prefab.SetActive(previousPrefabActive);
+                    foreach (var pair in childStates)
+                        pair.Key.SetActive(pair.Value);
+                }
             }
         }
     }

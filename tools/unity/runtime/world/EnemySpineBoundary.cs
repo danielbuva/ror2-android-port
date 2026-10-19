@@ -89,6 +89,10 @@ public sealed partial class PortSession
     {
         return GetEnemySpineSession().PrepareEnemy(player, cfg);
     }
+    IEnumerator PrepareEnemyContext(CharacterBody player, SessionConfig cfg)
+    {
+        return GetEnemySpineSession().PrepareEnemyContext(player, cfg);
+    }
     void EnemyDamage(DamageReport report)
     {
         GetEnemySpineSession().EnemyDamage(report);
@@ -578,6 +582,8 @@ public sealed partial class PortSession
         }
         public void CleanupEnemy()
         {
+            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                return;
             GlobalEventManager.onServerDamageDealt -= EnemyDamage;
             GlobalEventManager.onCharacterDeathServer -= EnemyDeath;
             if (coordinator.enemyMasterHost)

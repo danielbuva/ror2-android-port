@@ -1026,3 +1026,20 @@ are used. No native method body, original asset, middleware, profile, entitlemen
 private path or device identity is copied. The existing source/fixture producer
 stages these inputs. A diagnostic native loadout is temporary; normal profile
 eligibility and permanent awards remain separate.
+
+### First-stage source lifecycle audit (2026-10-19)
+
+The 105-source selection adds authored `FirstStageDiagnosticGate.cs`,
+`FirstStageSourceOwners.cs` and `SourceStageIdentityLifecycle.cs`, their
+Unity-imported GUIDs, and a pure-gate exact-editor fixture staged by the existing
+producer. Existing input, stage, population and session owners integrate the
+transaction behind a default-off per-attempt diagnostic. The code contains
+validation, scoped native API calls, owned state restoration and minimum source
+scene identities/toggle relationships required to reconstruct and verify the
+local scene. It contains no native gameplay method body, original asset,
+proprietary middleware, profile data, entitlement, private path or device
+identifier. It does not grant expansions, ownership or achievements. The owner
+always marks the attempt assisted and refuses unsupported scenes/subscribers.
+The fixture checks authored decisions only; native lifecycle/device acceptance
+is separate. No new ignored build input is needed. Replay changed authored
+sources and fixture through R8; Phase 2 outputs are not edited.

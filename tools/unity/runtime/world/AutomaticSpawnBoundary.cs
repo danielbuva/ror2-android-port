@@ -180,6 +180,8 @@ public sealed partial class PortSession
                     var healthRoutine = AutomaticHealthBoundary(body, machine);
                     while (healthRoutine.MoveNext())
                         yield return healthRoutine.Current;
+                    if (r.sourceStageLifecycleRecoveryRequired)
+                        yield break;
                 }
             }
             if (IsAutomaticSkill())
@@ -189,6 +191,8 @@ public sealed partial class PortSession
                 var novaRoutine = NovaInputBoundary(body, machine, cfg);
                 while (novaRoutine.MoveNext())
                     yield return novaRoutine.Current;
+                if (r.sourceStageLifecycleRecoveryRequired)
+                    yield break;
                 if (restartRequested)
                 {
                     Check(CompletedOfflineAbandon() || CompletedResultsReturn() ||
@@ -202,12 +206,16 @@ public sealed partial class PortSession
                 var directionRoutine = AutomaticDirectionBoundary(body, machine);
                 while (directionRoutine.MoveNext())
                     yield return directionRoutine.Current;
+                if (r.sourceStageLifecycleRecoveryRequired)
+                    yield break;
             }
             else if (r.id == "body-state-spawn-state-auto-gravity" || IsRecoveredLanding())
             {
                 var groundRoutine = AutomaticGroundBoundary(body, machine, cfg);
                 while (groundRoutine.MoveNext())
                     yield return groundRoutine.Current;
+                if (r.sourceStageLifecycleRecoveryRequired)
+                    yield break;
             }
             else
             {
@@ -316,39 +324,44 @@ public sealed partial class PortSession
         }
         finally
         {
-            if (body)
-                body.gameObject.SetActive(false);
-            if (!ReferenceEquals(motor, null))
-                motor.onMotorStart -= observed;
-            if (input)
-                input.moveVector = Vector3.zero;
-            if (automaticBody)
+            if (!r.sourceStageLifecycleRecoveryRequired)
             {
-                if (spawnedMaster)
-                    spawnedMaster.onBodyStart -= masterStarted;
-                CharacterBody.onBodyStartGlobal -= bodyStarted;
-                if (!ReferenceEquals(body, null))
-                    body.onRecalculateStats -= stats;
+                if (body)
+                    body.gameObject.SetActive(false);
+                if (!ReferenceEquals(motor, null))
+                    motor.onMotorStart -= observed;
+                if (input)
+                    input.moveVector = Vector3.zero;
+                if (automaticBody)
+                {
+                    if (spawnedMaster)
+                        spawnedMaster.onBodyStart -= masterStarted;
+                    CharacterBody.onBodyStartGlobal -= bodyStarted;
+                    if (!ReferenceEquals(body, null))
+                        body.onRecalculateStats -= stats;
+                }
+                // Explicit original exit keeps measured buff/material dependencies alive during teardown.
+                if (body && IsPlayableSpine())
+                    foreach (var weapon in new[] { body.skillLocator.primary.stateMachine, body.skillLocator.secondary.stateMachine,
+                                                   body.skillLocator.utility.stateMachine, body.skillLocator.special.stateMachine }
+                                 .Distinct()
+                                 .Where(x => x != machine))
+                        if (weapon)
+                            Call(weapon, "OnDestroy");
+                if (machine)
+                    Call(machine, "OnDestroy");
+                Physics.gravity = savedGravity;
+                if (solver)
+                {
+                    solver.CollidableLayers = savedLayers;
+                    solver.SetGroundSolvingActivation(savedSolving);
+                }
+                if ((restartRequested || (r.playerDefeat != null && r.playerDefeat.bodyDestroyed)) && ownedDetachedModel)
+                    Destroy(ownedDetachedModel);
             }
-            // Explicit original exit keeps measured buff/material dependencies alive during teardown.
-            if (body && IsPlayableSpine())
-                foreach (var weapon in new[] { body.skillLocator.primary.stateMachine, body.skillLocator.secondary.stateMachine,
-                                               body.skillLocator.utility.stateMachine, body.skillLocator.special.stateMachine }
-                             .Distinct()
-                             .Where(x => x != machine))
-                    if (weapon)
-                        Call(weapon, "OnDestroy");
-            if (machine)
-                Call(machine, "OnDestroy");
-            Physics.gravity = savedGravity;
-            if (solver)
-            {
-                solver.CollidableLayers = savedLayers;
-                solver.SetGroundSolvingActivation(savedSolving);
-            }
-            if ((restartRequested || (r.playerDefeat != null && r.playerDefeat.bodyDestroyed)) && ownedDetachedModel)
-                Destroy(ownedDetachedModel);
         }
+        if (r.sourceStageLifecycleRecoveryRequired)
+            yield break;
         Check(!automaticBody || !CharacterBody.readOnlyInstancesList.Contains(body), "Original automatic body deregistration");
         Check(machine.state == null && !KinematicCharacterSystem.CharacterMotors_Important.Contains(solver),
               "Automatic state exit/solver unregistration");

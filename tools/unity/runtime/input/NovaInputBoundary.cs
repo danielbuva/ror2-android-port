@@ -279,12 +279,21 @@ public sealed partial class PortSession
                 }
                 if (cfg.enemySpine)
                 {
+                    bool nativeFirstStageAttempt = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt;
+                    if (nativeFirstStageAttempt)
+                        coordinator.Check(
+                            cfg.integratedWorld && cfg.teleporterLoop && coordinator.stageGeometryScene.IsValid() &&
+                                (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes"),
+                            "Native first-stage lifecycle diagnostic is limited to integrated Golemplains/Lakes attempts");
                     foreach (var hurt in body.hurtBoxGroup.hurtBoxes)
                     {
                         hurt.enabled = true;
                         hurt.GetComponent<Collider>().enabled = true;
                     }
-                    var enemyRoutine = coordinator.PrepareEnemy(body, cfg);
+                    // The opt-in keeps Run/reward/navigation/source-context preparation but
+                    // does not execute the historical early Beetle/CombatDirector fixture.
+                    var enemyRoutine =
+                        nativeFirstStageAttempt ? coordinator.PrepareEnemyContext(body, cfg) : coordinator.PrepareEnemy(body, cfg);
                     while (enemyRoutine.MoveNext())
                         yield return enemyRoutine.Current;
                 }
@@ -727,44 +736,57 @@ public sealed partial class PortSession
             }
             finally
             {
-                if (cfg.integratedWorld)
+                if (coordinator.r.sourceStageLifecycleRecoveryRequired)
                 {
-                    coordinator.CleanupDebugAcceleration();
-                    coordinator.CleanupIntegratedWorld();
+                    // Preserve the input/physics owners and service graph while the
+                    // native Stage/cohort recovery transaction is still live.
+                    coordinator.r.cleanup = false;
+                    coordinator.r.success = false;
                 }
-                coordinator.CleanupActiveBodyClient();
-                coordinator.CleanupOriginalMoneyCost();
-                coordinator.CleanupOriginalItemPickup();
-                if (cfg.originalDefaultPickup && (bringup || cfg.integratedWorld))
-                    coordinator.CleanupOriginalDefaultPickup();
-                coordinator.CleanupOriginalBarrel();
-                coordinator.CleanupRunClock();
-                if (cfg.enemySpine)
-                    coordinator.CleanupEnemy();
-                if (bridge)
+                else
                 {
-                    bridge.enabled = false;
-                    Destroy(bridge);
+                    if (cfg.integratedWorld && !coordinator.r.sourceStageLifecycleRecoveryRequired)
+                    {
+                        coordinator.CleanupDebugAcceleration();
+                        coordinator.CleanupIntegratedWorld();
+                    }
+                    if (!coordinator.r.sourceStageLifecycleRecoveryRequired)
+                    {
+                        coordinator.CleanupActiveBodyClient();
+                        coordinator.CleanupOriginalMoneyCost();
+                        coordinator.CleanupOriginalItemPickup();
+                        if (cfg.originalDefaultPickup && (bringup || cfg.integratedWorld))
+                            coordinator.CleanupOriginalDefaultPickup();
+                        coordinator.CleanupOriginalBarrel();
+                        coordinator.CleanupRunClock();
+                    }
+                    if (cfg.enemySpine)
+                        coordinator.CleanupEnemy();
+                    if (bridge)
+                    {
+                        bridge.enabled = false;
+                        Destroy(bridge);
+                    }
+                    if (cfg.combatSpine)
+                        coordinator.CleanupCombatScene();
+                    if (display != null)
+                        display.Dispose();
+                    if (!ReferenceEquals(body, null))
+                        body.onJump -= jumped;
+                    if (!ReferenceEquals(motor, null))
+                        motor.onHitGroundAuthority -= landed;
+                    Physics.gravity = gravity;
+                    Physics.queriesHitTriggers = priorTriggerQueries;
+                    if (solver)
+                    {
+                        solver.CollidableLayers = layers;
+                        solver.StableGroundLayers = stable;
+                        solver.SetGroundSolvingActivation(false);
+                    }
+                    coordinator.worldView = null;
+                    Application.targetFrameRate = priorTargetFrameRate;
+                    Screen.sleepTimeout = sleepTimeout;
                 }
-                if (cfg.combatSpine)
-                    coordinator.CleanupCombatScene();
-                if (display != null)
-                    display.Dispose();
-                if (!ReferenceEquals(body, null))
-                    body.onJump -= jumped;
-                if (!ReferenceEquals(motor, null))
-                    motor.onHitGroundAuthority -= landed;
-                Physics.gravity = gravity;
-                Physics.queriesHitTriggers = priorTriggerQueries;
-                if (solver)
-                {
-                    solver.CollidableLayers = layers;
-                    solver.StableGroundLayers = stable;
-                    solver.SetGroundSolvingActivation(false);
-                }
-                coordinator.worldView = null;
-                Application.targetFrameRate = priorTargetFrameRate;
-                Screen.sleepTimeout = sleepTimeout;
             }
         }
         // The input iterator's finally releases its resources in the original order.

@@ -51,8 +51,8 @@ public static class NativeCombatSquadListenerEvidence
 [Serializable]
 public sealed class ObjectiveExitTraceEntry
 {
-    public string kind, reason, utc, timeframe, activationState, fsmState, pendingState, exitState, stageScene, stageNextStage, stageAdvanceTime,
-        runNextScene, nextScene, selectorTarget, observerError;
+    public string kind, reason, utc, timeframe, activationState, fsmState, pendingState, exitState, stageScene, stageNextStage,
+        stageAdvanceTime, runNextScene, nextScene, selectorTarget, observerError;
     public int frame, teleporterId, exitControllerId, stageId, runId;
     public float time, fixedTime, worldTime, runTime;
     public bool exitRunning, teleporterActive, teleporterEnabled, exitActive, exitEnabled, serverActive, selectorMatchesObjective,
@@ -285,6 +285,14 @@ public sealed partial class PortSession
     {
         return GetTeleporterWorldSession().PrepareTeleporterWorld(cfg);
     }
+    IEnumerator PrepareNativeTeleporterWorld(SessionConfig cfg, SceneDirector director)
+    {
+        return GetTeleporterWorldSession().PrepareNativeTeleporterWorld(cfg, director);
+    }
+    IEnumerator CompleteNativeTeleporterPlacement(SceneDirector director)
+    {
+        return GetTeleporterWorldSession().CompleteNativeTeleporterPlacement(director);
+    }
     IEnumerator SpawnStageObjective(SessionConfig cfg)
     {
         return GetTeleporterWorldSession().SpawnStageObjective(cfg);
@@ -369,6 +377,16 @@ public sealed partial class PortSession
         NetworkIdentity ownedObjectiveIdentity;
         NetworkInstanceId ownedObjectiveNetworkId;
         bool ownsObjectiveNetworkSpawn, ownedObjectiveWasActivated;
+        GameObject nativeObjectiveTemplate;
+        GameObject nativeObservedTeleporter;
+        SceneDirector nativeObjectiveSceneDirector;
+        InteractableSpawnCard nativeSourceTeleporterCard, nativeTeleporterSpawnCard;
+        PickupDropTable nativeObjectiveBossDropTable;
+        Action<SceneDirector, GameObject> nativeTeleporterPlaced;
+        Action<SceneDirector> nativePostPopulateSceneServer;
+        bool nativeObjectivePopulationComplete;
+        bool nativeIndicatorLeaseAccounted;
+        int nativeIndicatorReferenceBaseline;
         static bool objectiveHoldoutInitialized;
         readonly Dictionary<PickupDropTable, PickupDropTable> objectiveDropTables = new Dictionary<PickupDropTable, PickupDropTable>();
         Collider objectiveBeacon;
@@ -1094,6 +1112,23 @@ public sealed partial class PortSession
         }
         public IEnumerator PrepareTeleporterWorld(SessionConfig cfg)
         {
+            var support = PrepareTeleporterWorldSupport(cfg);
+            while (support.MoveNext())
+                yield return support.Current;
+            var spawn = SpawnStageObjective(cfg);
+            while (spawn.MoveNext())
+                yield return spawn.Current;
+        }
+        public IEnumerator PrepareNativeTeleporterWorld(SessionConfig cfg, SceneDirector director)
+        {
+            var support = PrepareTeleporterWorldSupport(cfg);
+            while (support.MoveNext())
+                yield return support.Current;
+            ResetObjectiveReport(cfg);
+            PrepareNativeObjectivePlacement(cfg, director);
+        }
+        IEnumerator PrepareTeleporterWorldSupport(SessionConfig cfg)
+        {
             coordinator.r.phase = "integrated-teleporter-context";
             coordinator.Save();
             PrepareObjectiveRules();
@@ -1153,10 +1188,8 @@ public sealed partial class PortSession
             }
             coordinator.PrepareStageTransport(cfg);
             coordinator.EnableStageMapZones();
-            var spawn = SpawnStageObjective(cfg);
-            while (spawn.MoveNext())
-                yield return spawn.Current;
         }
+
         public IEnumerator SpawnStageObjective(SessionConfig cfg)
         {
             coordinator.Check(!ownedObjectiveHost, "Prior native teleporter host survived stage replacement");
@@ -1164,16 +1197,7 @@ public sealed partial class PortSession
             ownedObjectiveNetworkId = default;
             ownsObjectiveNetworkSpawn = false;
             ownedObjectiveWasActivated = false;
-            coordinator.r.objective = new ObjectiveReport {
-                rules = true, ruleCount = RuleCatalog.ruleCount, difficulty = coordinator.SelectedOfflineDifficulty().ToString(),
-                scope =
-                    "Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."
-            };
-            objectiveState = null;
-            objectiveExitTraceInert = false;
-            objectiveExitPostFinishTicks = 0;
-            objectiveExitTraceNextSampleAt = 0;
-            objectiveRewardApproachAt = -1;
+            ResetObjectiveReport(cfg);
             coordinator.Check(!Stage.instance, "Unowned stage lifecycle");
             coordinator.objectiveStageHost = new GameObject("Owned Android stage coordinator");
             coordinator.objectiveStageHost.SetActive(false);
@@ -1216,8 +1240,7 @@ public sealed partial class PortSession
             ObserveTeleporterWorld();
             coordinator.Save();
         }
-        // Prepare source components, decks and listeners while the clone remains beneath the inactive staging root.
-        // The existing ownedObjectiveHost/Identity fields retain its exact cleanup ownership for the current direct-spawn path.
+        // Existing direct-spawn wrapper. Keep its owned-host assignments and call order intact.
         void PrepareInactiveObjectiveTemplate(SessionConfig cfg, Vector3 placement)
         {
             var primordial = SceneCatalog.GetSceneDefForCurrentScene().cachedName == "skymeadow";
@@ -1229,9 +1252,170 @@ public sealed partial class PortSession
             ownedObjectiveIdentity = coordinator.objectiveHost.GetComponent<NetworkIdentity>();
             coordinator.Check(ownedObjectiveIdentity, "Original teleporter NetworkIdentity missing before activation");
             coordinator.objectiveHost.name = objectiveSource.name;
-            coordinator.Check(coordinator.objectiveHost.GetComponentsInChildren<Component>(true).All(x => x),
+            PrepareObjectiveTemplate(cfg, coordinator.objectiveHost, true);
+            WireObjectiveInstance(coordinator.objectiveHost, coordinator.worldTeleporter, false);
+            coordinator.objectiveHost.transform.position = placement;
+        }
+        void ResetObjectiveReport(SessionConfig cfg)
+        {
+            coordinator.r.objective = new ObjectiveReport {
+                rules = true, ruleCount = RuleCatalog.ruleCount, difficulty = coordinator.SelectedOfflineDifficulty().ToString(),
+                scope =
+                    "Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."
+            };
+            objectiveState = null;
+            objectiveExitTraceInert = false;
+            objectiveExitPostFinishTicks = 0;
+            objectiveExitTraceNextSampleAt = 0;
+            objectiveRewardApproachAt = -1;
+        }
+        void PrepareNativeObjectivePlacement(SessionConfig cfg, SceneDirector director)
+        {
+            coordinator.Check(!Stage.instance, "Native objective preparation ran with an unowned stage lifecycle");
+            coordinator.Check(coordinator.worldStaging && !coordinator.worldStaging.activeInHierarchy,
+                              "Native objective staging root must remain inactive");
+            coordinator.Check(!ownedObjectiveHost && !nativeObjectiveTemplate && !nativeTeleporterSpawnCard && !nativeObservedTeleporter,
+                              "Prior native teleporter preparation survived stage replacement");
+            coordinator.Check(director && director.gameObject && !director.gameObject.activeInHierarchy &&
+                                  director.gameObject.scene == coordinator.stageGeometryScene,
+                              "Native SceneDirector must be retained in the inactive source scene");
+            coordinator.Check(!director.teleporterInstance && director.teleporterSpawnCard is InteractableSpawnCard,
+                              "Native SceneDirector teleporter source card is unavailable or already placed");
+            var sourceCard = (InteractableSpawnCard)director.teleporterSpawnCard;
+            coordinator.Check(sourceCard.prefab, "Native source teleporter card has no prefab");
+            nativeObjectiveSceneDirector = director;
+            nativeSourceTeleporterCard = sourceCard;
+
+            nativeObjectiveTemplate = Instantiate(sourceCard.prefab, coordinator.worldStaging.transform);
+            coordinator.objectiveHost = nativeObjectiveTemplate;
+            nativeObjectiveTemplate.name = sourceCard.prefab.name;
+            coordinator.Check(nativeObjectiveTemplate.GetComponent<NetworkIdentity>(),
+                              "Native teleporter template NetworkIdentity missing before activation");
+            PrepareObjectiveTemplate(cfg, nativeObjectiveTemplate, false);
+            nativeObjectiveTemplate.GetComponent<BossGroup>().dropTable = nativeObjectiveBossDropTable;
+            var preparedTeleporter = nativeObjectiveTemplate.GetComponent<TeleporterInteraction>();
+            preparedTeleporter.bossDirector.monsterCards = coordinator.objectiveBossDeck;
+            preparedTeleporter.bonusDirector.monsterCards = coordinator.automaticDeck;
+            nativeObjectiveTemplate.SetActive(true);
+            var indicatorField =
+                typeof(TeleporterInteraction).GetField("teleporterPositionIndicator", BindingFlags.Instance | BindingFlags.NonPublic);
+            coordinator.Check(nativeObjectiveTemplate.activeSelf && !nativeObjectiveTemplate.activeInHierarchy &&
+                                  !preparedTeleporter.isActiveAndEnabled && indicatorField != null &&
+                                  indicatorField.GetValue(preparedTeleporter) == null,
+                              "Native teleporter template must be self-active under its inactive staging root");
+
+            nativeTeleporterSpawnCard = Instantiate(sourceCard);
+            nativeTeleporterSpawnCard.name = sourceCard.name;
+            nativeTeleporterSpawnCard.prefab = nativeObjectiveTemplate;
+            director.teleporterSpawnCard = nativeTeleporterSpawnCard;
+            nativeIndicatorReferenceBaseline = ObjectiveIndicatorReferenceCount();
+            nativeTeleporterPlaced = OnNativeTeleporterPlaced;
+            nativePostPopulateSceneServer = OnNativePostPopulateSceneServer;
+            SceneDirector.onTeleporterPlaced += nativeTeleporterPlaced;
+            SceneDirector.onPostPopulateSceneServer += nativePostPopulateSceneServer;
+        }
+        void OnNativeTeleporterPlaced(SceneDirector director, GameObject placed)
+        {
+            if (!ReferenceEquals(director, nativeObjectiveSceneDirector))
+                return;
+            nativeObservedTeleporter = placed;
+            coordinator.Check(director && placed && ReferenceEquals(director.teleporterInstance, placed),
+                              "Native SceneDirector teleporter placement event did not match its retained instance");
+            bool ownedCard = nativeObjectiveTemplate && nativeTeleporterSpawnCard &&
+                             ReferenceEquals(director.teleporterSpawnCard, nativeTeleporterSpawnCard) &&
+                             ReferenceEquals(nativeTeleporterSpawnCard.prefab, nativeObjectiveTemplate) &&
+                             !ReferenceEquals(placed, nativeObjectiveTemplate);
+            var identity = placed.GetComponent<NetworkIdentity>();
+            var teleporter = placed.GetComponent<TeleporterInteraction>();
+            if (ownedCard)
+            {
+                // Capture exact director ownership before assertions that can fail.
+                coordinator.objectiveHost = placed;
+                coordinator.worldTeleporter = teleporter;
+                ownedObjectiveHost = placed;
+                ownedObjectiveIdentity = identity;
+                ownedObjectiveNetworkId = identity ? identity.netId : default;
+                ownsObjectiveNetworkSpawn =
+                    identity && identity.netId.Value != 0 && NetworkServer.FindLocalObject(identity.netId) == placed;
+                ownedObjectiveWasActivated = true;
+                AccountNativeTeleporterIndicatorAwake(placed, teleporter);
+            }
+            coordinator.Check(ownedCard && placed.scene == coordinator.stageGeometryScene && NetworkServer.active,
+                              "Native SceneDirector placed a foreign or unprepared teleporter");
+            coordinator.Check(identity && identity.isServer && ownsObjectiveNetworkSpawn && teleporter && teleporter.bossDirector &&
+                                  teleporter.bonusDirector,
+                              "Native teleporter placement did not preserve its server identity and combat components");
+            var liveBossGroup = placed.GetComponent<BossGroup>();
+            coordinator.Check(liveBossGroup, "Native teleporter placement lost its BossGroup");
+            liveBossGroup.dropTable = nativeObjectiveBossDropTable;
+            WireObjectiveInstance(placed, teleporter, true);
+        }
+        void OnNativePostPopulateSceneServer(SceneDirector director)
+        {
+            if (!ReferenceEquals(director, nativeObjectiveSceneDirector))
+                return;
+            coordinator.Check(ownedObjectiveHost && ReferenceEquals(director.teleporterInstance, ownedObjectiveHost),
+                              "Native SceneDirector population completed without the adopted objective");
+            nativeObjectivePopulationComplete = true;
+        }
+        public IEnumerator CompleteNativeTeleporterPlacement(SceneDirector director)
+        {
+            coordinator.Check(nativeObjectiveSceneDirector && ReferenceEquals(director, nativeObjectiveSceneDirector) &&
+                                  nativeObjectivePopulationComplete && ownedObjectiveHost &&
+                                  ReferenceEquals(director.teleporterInstance, ownedObjectiveHost) &&
+                                  ReferenceEquals(coordinator.objectiveHost, ownedObjectiveHost),
+                              "Native SceneDirector population completed without the exact adopted objective");
+            // Post-population is raised from SceneDirector.Start before the spawned
+            // teleporter's Start is guaranteed to have run. Yield to a real later
+            // Unity frame; never invoke either native Start method manually.
+            yield return null;
+            coordinator.Check(ReferenceEquals(coordinator.objectiveHost, ownedObjectiveHost) &&
+                                  TeleporterInteraction.instance == coordinator.worldTeleporter &&
+                                  coordinator.worldTeleporter.holdoutZoneController && coordinator.worldTeleporter.bossGroup &&
+                                  Run.instance.nextStageScene && coordinator.worldTeleporter.isActiveAndEnabled,
+                              "Native objective Start context has not completed for its exact source instance");
+            coordinator.Check(coordinator.worldTeleporter.isIdle &&
+                                  coordinator.worldTeleporter.GetInteractability(coordinator.worldPlayer.GetComponent<Interactor>()) ==
+                                      Interactability.Available,
+                              "Native teleporter idle/interaction state missing after population");
+            coordinator.r.objective.sourceDuration = coordinator.worldTeleporter.holdoutZoneController.baseChargeDuration;
+            coordinator.r.objective.sourceRadius = coordinator.worldTeleporter.holdoutZoneController.baseRadius;
+            coordinator.r.objective.position = ownedObjectiveHost.transform.position;
+            coordinator.r.objective.ready = true;
+            ObserveTeleporterWorld();
+            coordinator.Save();
+        }
+        int ObjectiveIndicatorReferenceCount()
+        {
+            coordinator.Check(objectiveIndicatorLease.IsValid(), "Original charging indicator lease is no longer valid");
+            return (int)typeof(AsyncOperationHandle<GameObject>)
+                .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(objectiveIndicatorLease);
+        }
+        void AccountNativeTeleporterIndicatorAwake(GameObject placed, TeleporterInteraction teleporter)
+        {
+            if (nativeIndicatorLeaseAccounted)
+                return;
+            var indicatorField =
+                typeof(TeleporterInteraction).GetField("teleporterPositionIndicator", BindingFlags.Instance | BindingFlags.NonPublic);
+            var indicator = indicatorField == null || !teleporter ? null : indicatorField.GetValue(teleporter) as PositionIndicator;
+            // e544 Awake synchronously loads this indicator before onTeleporterPlaced;
+            // its exact private field and target are the witness for this clone's lease.
+            bool awakeWitness = placed && teleporter && indicator && indicator.targetTransform == placed.transform;
+            if (awakeWitness)
+            {
+                objectiveIndicatorConsumers++;
+                nativeIndicatorLeaseAccounted = true;
+            }
+            coordinator.Check(awakeWitness, "Native teleporter Awake indicator field did not identify its exact instance");
+            int referenceDelta = ObjectiveIndicatorReferenceCount() - nativeIndicatorReferenceBaseline;
+            coordinator.Check(referenceDelta == 1, "Native teleporter Awake charging-indicator reference delta was not exactly one");
+        }
+        void PrepareObjectiveTemplate(SessionConfig cfg, GameObject host, bool bindLiveOwner)
+        {
+            coordinator.Check(host.GetComponentsInChildren<Component>(true).All(x => x),
                               "Original teleporter serialized component missing");
-            foreach (var behaviour in coordinator.objectiveHost.GetComponentsInChildren<MonoBehaviour>(true))
+            foreach (var behaviour in host.GetComponentsInChildren<MonoBehaviour>(true))
             {
                 if (behaviour.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                 {
@@ -1243,11 +1427,12 @@ public sealed partial class PortSession
                     behaviour.GetType().Name == "WwiseSound")
                     behaviour.enabled = false;
             }
-            coordinator.worldTeleporter = coordinator.objectiveHost.GetComponent<TeleporterInteraction>();
-            coordinator.Check(coordinator.worldTeleporter && !coordinator.worldTeleporter.skipCombat &&
-                                  coordinator.worldTeleporter.bossDirector && coordinator.worldTeleporter.bonusDirector,
+            var teleporter = host.GetComponent<TeleporterInteraction>();
+            if (bindLiveOwner)
+                coordinator.worldTeleporter = teleporter;
+            coordinator.Check(teleporter && !teleporter.skipCombat && teleporter.bossDirector && teleporter.bonusDirector,
                               "Original objective combat contract absent");
-            var rewardGroup = coordinator.objectiveHost.GetComponent<BossGroup>();
+            var rewardGroup = host.GetComponent<BossGroup>();
             coordinator.Check(rewardGroup, "Original objective BossGroup component absent");
             rewardGroup.dropTable = ObjectiveDropTable(rewardGroup.dropTable);
             foreach (var table in objectiveDropTables.Values)
@@ -1259,6 +1444,12 @@ public sealed partial class PortSession
                               "Original objective reward tables have no available pickups: " +
                                   string.Join(",", coordinator.r.objective.rewardTables));
             coordinator.PrepareStageBossDeck(cfg);
+            nativeObjectiveBossDropTable = rewardGroup.dropTable;
+        }
+        void WireObjectiveInstance(GameObject host, TeleporterInteraction teleporter, bool bindLiveOwner)
+        {
+            if (bindLiveOwner)
+                coordinator.worldTeleporter = teleporter;
             coordinator.worldTeleporter.bossDirector.onSpawnedServer.AddListener(QueueObjectiveDirectorActor);
             coordinator.worldTeleporter.bossDirector.monsterCards = coordinator.objectiveBossDeck;
             coordinator.worldTeleporter.bonusDirector.monsterCards = coordinator.automaticDeck;
@@ -1272,11 +1463,11 @@ public sealed partial class PortSession
                                                           else
                                                               coordinator.RecordDirectorActor(obj, coordinator.worldPlayer);
                                                       });
-            var model = coordinator.objectiveHost.GetComponent<ModelLocator>().modelTransform;
+            var model = host.GetComponent<ModelLocator>().modelTransform;
             coordinator.worldModels.Add(model);
             coordinator.PresentWorldModel(model, false, true);
-            objectiveBeacon = coordinator.objectiveHost.GetComponentsInChildren<Collider>(true).Single(
-                x => x.GetComponent<EntityLocator>() && x.GetComponent<EntityLocator>().entity == coordinator.objectiveHost);
+            objectiveBeacon = host.GetComponentsInChildren<Collider>(true).Single(x => x.GetComponent<EntityLocator>() &&
+                                                                                       x.GetComponent<EntityLocator>().entity == host);
             coordinator.Check(objectiveBeacon.gameObject.layer == LayerIndex.defaultLayer.intVal,
                               "Original teleporter interaction layer changed");
             if (!coordinator.objectiveSubscribed)
@@ -1347,8 +1538,8 @@ public sealed partial class PortSession
                 SceneExitController.onFinishExit += objectiveFinishExit;
                 coordinator.objectiveSubscribed = true;
             }
-            coordinator.objectiveHost.transform.position = placement;
         }
+
         public void ObserveTeleporterWorld()
         {
             // Native startup can instantiate additional prong renderers after initial
@@ -1574,8 +1765,8 @@ public sealed partial class PortSession
                 string error = ex.GetType().FullName + ": " + ex.Message;
                 coordinator.r.objective.exitTraceFirstError = error;
                 ObjectiveExitTraceBuffer.Append(coordinator.r.objective.exitTrace, new ObjectiveExitTraceEntry {
-                    utc = DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
-                    kind = "first-fault", reason = reason, frame = Time.frameCount, time = Time.time, fixedTime = Time.fixedTime,
+                    utc = DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture), kind = "first-fault",
+                    reason = reason, frame = Time.frameCount, time = Time.time, fixedTime = Time.fixedTime,
                     worldTime = coordinator.r.world != null ? coordinator.r.world.seconds : 0f,
                     runTime = Run.instance ? Run.instance.time : 0f, observerError = error
                 });
@@ -1999,9 +2190,38 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
-            coordinator.CleanupStageBossContent();
-            coordinator.CleanupMoonMission();
-            coordinator.CleanupStageTransport();
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+            {
+                try
+                {
+                    // Retire scene actors while the real Stage, source scene and its
+                    // providers remain alive. Native objective cleanup itself requires
+                    // the Stage singleton to have been retired.
+                    coordinator.CleanupDirectorActors();
+                    coordinator.CleanupWholeStageInteractables();
+                    coordinator.ReleaseObjectiveStage();
+                    CleanupNativeObjectivePlacement();
+                    coordinator.CleanupStageTransport();
+                }
+                catch (Exception primary)
+                {
+                    coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                    coordinator.r.cleanup = false;
+                    coordinator.r.success = false;
+                    coordinator.r.error += " Native first-stage teardown retained for recovery: " + primary;
+                    coordinator.Save();
+                    throw;
+                }
+                coordinator.CleanupStageBossContent();
+                coordinator.CleanupMoonMission();
+            }
+            else
+            {
+                CleanupNativeObjectivePlacement();
+                coordinator.CleanupStageBossContent();
+                coordinator.CleanupMoonMission();
+                coordinator.CleanupStageTransport();
+            }
             if (objectiveSummon != null)
                 MasterSummon.onServerMasterSummonGlobal -= objectiveSummon;
             pendingObjectiveActors.Clear();
@@ -2055,6 +2275,78 @@ public sealed partial class PortSession
                 coordinator.objectiveLocator = null;
             }
         }
+        void CleanupNativeObjectivePlacement()
+        {
+            if (!nativeObjectiveSceneDirector && !nativeObjectiveTemplate && !nativeTeleporterSpawnCard && !nativeObservedTeleporter &&
+                nativeTeleporterPlaced == null && nativePostPopulateSceneServer == null)
+                return;
+            coordinator.Check(!Stage.instance,
+                              "Native objective recovery must retire the real Stage and its actors before teleporter cleanup");
+            var director = nativeObjectiveSceneDirector;
+            coordinator.Check(director, "Native objective recovery lost its exact source SceneDirector");
+            coordinator.Check(ReferenceEquals(nativeObservedTeleporter, null) ||
+                                  ReferenceEquals(nativeObservedTeleporter, ownedObjectiveHost),
+                              "Native placement callback observed an unadopted teleporter; retaining its stage recovery context");
+            if (nativeTeleporterSpawnCard)
+            {
+                coordinator.Check(ReferenceEquals(director.teleporterSpawnCard, nativeTeleporterSpawnCard),
+                                  "Native SceneDirector teleporter card changed outside this recovery owner");
+                coordinator.Check(!director.teleporterInstance || ReferenceEquals(director.teleporterInstance, ownedObjectiveHost),
+                                  "Native SceneDirector now owns an unadopted teleporter; retaining recovery dependencies");
+            }
+            else if (nativeSourceTeleporterCard)
+                coordinator.Check(ReferenceEquals(director.teleporterSpawnCard, nativeSourceTeleporterCard),
+                                  "Native SceneDirector source card changed without a retained clone");
+            if (nativeTeleporterPlaced != null)
+                SceneDirector.onTeleporterPlaced -= nativeTeleporterPlaced;
+            if (nativePostPopulateSceneServer != null)
+                SceneDirector.onPostPopulateSceneServer -= nativePostPopulateSceneServer;
+            nativeTeleporterPlaced = null;
+            nativePostPopulateSceneServer = null;
+
+            if (nativeTeleporterSpawnCard)
+            {
+                director.teleporterSpawnCard = nativeSourceTeleporterCard;
+                DestroyImmediate(nativeTeleporterSpawnCard);
+                coordinator.Check(!nativeTeleporterSpawnCard, "Native teleporter spawn card clone survived cleanup");
+                nativeTeleporterSpawnCard = null;
+            }
+
+            // Existing exact-host teardown owns both inactive templates and spawned hosts.
+            // Keep its NetworkServer.UnSpawn and CombatSquad listener assertions authoritative.
+            var adoptedHost = ownedObjectiveHost;
+            if (ownedObjectiveHost)
+                RetireOwnedObjectiveHost();
+            else
+            {
+                coordinator.Check(!director.teleporterInstance,
+                                  "Native SceneDirector has a teleporter without an adopted recovery identity");
+                if (ReferenceEquals(coordinator.objectiveHost, nativeObjectiveTemplate))
+                    coordinator.objectiveHost = null;
+                if (!coordinator.objectiveHost)
+                    coordinator.worldTeleporter = null;
+            }
+            if (!ReferenceEquals(adoptedHost, null) && ReferenceEquals(director.teleporterInstance, adoptedHost))
+                director.teleporterInstance = null;
+            coordinator.Check(!director.teleporterInstance, "Native SceneDirector retained a teleporter after exact-host retirement");
+            if (nativeObjectiveTemplate)
+            {
+                coordinator.Check(!nativeObjectiveTemplate.activeInHierarchy &&
+                                      (!nativeObjectiveTemplate.GetComponent<NetworkIdentity>() ||
+                                       nativeObjectiveTemplate.GetComponent<NetworkIdentity>().netId.Value == 0),
+                                  "Native teleporter template became active or network registered before placement");
+                DestroyImmediate(nativeObjectiveTemplate);
+                coordinator.Check(!nativeObjectiveTemplate, "Native teleporter template survived cleanup");
+            }
+            nativeObjectiveTemplate = null;
+            nativeObservedTeleporter = null;
+            nativeObjectiveSceneDirector = null;
+            nativeSourceTeleporterCard = null;
+            nativeObjectiveBossDropTable = null;
+            nativeObjectivePopulationComplete = false;
+            nativeIndicatorLeaseAccounted = false;
+            nativeIndicatorReferenceBaseline = 0;
+        }
         void RetireOwnedObjectiveHost()
         {
             var host = ownedObjectiveHost;
@@ -2076,8 +2368,8 @@ public sealed partial class PortSession
             coordinator.Check(ReferenceEquals(coordinator.objectiveHost, host),
                               "Teleporter cleanup lost ownership of its exact native host");
             var identity = host.GetComponent<NetworkIdentity>();
-            if (!ownedObjectiveWasActivated && !host.activeInHierarchy &&
-                !ownsObjectiveNetworkSpawn && (!identity || identity.netId.Value == 0))
+            if (!ownedObjectiveWasActivated && !host.activeInHierarchy && !ownsObjectiveNetworkSpawn &&
+                (!identity || identity.netId.Value == 0))
             {
                 // The host is still beneath the inactive staging root. Native Awake
                 // has never run, so no CombatSquad server listeners can need removal.
@@ -2093,8 +2385,8 @@ public sealed partial class PortSession
                 coordinator.Check(!host, "Inactive unstarted original teleporter survived cleanup");
                 int unstartedDeathAfter = NativeCombatSquadListenerEvidence.CountDeathListeners(unstartedSquads);
                 int unstartedSummonAfter = NativeCombatSquadListenerEvidence.CountSummonListeners(unstartedSquads);
-                RecordNativeHostTeardown(NetworkServer.active, true, true, unstartedSquads.Length, unstartedDeathBefore, unstartedDeathAfter,
-                                         unstartedSummonBefore, unstartedSummonAfter);
+                RecordNativeHostTeardown(NetworkServer.active, true, true, unstartedSquads.Length, unstartedDeathBefore,
+                                         unstartedDeathAfter, unstartedSummonBefore, unstartedSummonAfter);
                 coordinator.Save();
                 coordinator.Check(unstartedDeathAfter == 0 && unstartedSummonAfter == 0,
                                   "Inactive unstarted teleporter changed native listener state");
@@ -2109,7 +2401,8 @@ public sealed partial class PortSession
                 return;
             }
             if (!NetworkServer.active)
-                throw new InvalidOperationException("Cannot synchronously destroy the owned original teleporter while the server is inactive");
+                throw new InvalidOperationException(
+                    "Cannot synchronously destroy the owned original teleporter while the server is inactive");
             coordinator.Check(identity && (!ownedObjectiveIdentity || identity == ownedObjectiveIdentity),
                               "Owned original teleporter NetworkIdentity changed before cleanup");
             var squads = host.GetComponentsInChildren<CombatSquad>(true);
@@ -2123,16 +2416,14 @@ public sealed partial class PortSession
             if (ownsObjectiveNetworkSpawn || identity.netId.Value != 0)
             {
                 var networkId = ownsObjectiveNetworkSpawn ? ownedObjectiveNetworkId : identity.netId;
-                coordinator.Check(identity.netId == networkId && networkId.Value != 0 &&
-                                      NetworkServer.FindLocalObject(networkId) == host,
+                coordinator.Check(identity.netId == networkId && networkId.Value != 0 && NetworkServer.FindLocalObject(networkId) == host,
                                   "Owned original teleporter no longer matches its captured server identity");
                 NetworkServer.UnSpawn(host);
                 coordinator.Check(NetworkServer.active && NetworkServer.FindLocalObject(networkId) != host,
                                   "Original teleporter identity remains registered after NetworkServer.UnSpawn");
             }
             else
-                coordinator.Check(identity.netId.Value == 0,
-                                  "Untracked original teleporter identity cannot be safely destroyed");
+                coordinator.Check(identity.netId.Value == 0, "Untracked original teleporter identity cannot be safely destroyed");
             DestroyImmediate(host);
             coordinator.Check(!host, "Owned original teleporter host survived synchronous cleanup");
             int deathAfter = NativeCombatSquadListenerEvidence.CountDeathListeners(squads);
@@ -2150,8 +2441,8 @@ public sealed partial class PortSession
             ownedObjectiveWasActivated = false;
             coordinator.Save();
         }
-        void RecordNativeHostTeardown(bool serverActive, bool synchronous, bool preAwake, int squadCount,
-                                      int deathBefore, int deathAfter, int summonBefore, int summonAfter)
+        void RecordNativeHostTeardown(bool serverActive, bool synchronous, bool preAwake, int squadCount, int deathBefore, int deathAfter,
+                                      int summonBefore, int summonAfter)
         {
             if (coordinator.r.objective == null)
                 return;
