@@ -9458,3 +9458,49 @@ not this run's proven first failure. A fresh process is running the default
 one-exit control; accepted J657 86d2542a… remains unchanged. No source, original
 input, private receipt hand edit, extra-device selection, existing data move or
 storage configuration change occurs in this case.
+
+## J662 — Reconcile and stage typed state dependencies through the real host pipeline
+
+Hypothesis: J659's read-only dependency delta can pass the existing guarded
+reconciliation, exact-editor import and original content-provider pipeline,
+without changing input identity or rebuilding unrelated content.
+
+Root reconciliation evidence: work/experiments/typed-state-closure/
+reconcile-20261019T135619.411932Z/. Prior closure, conversion and pointer receipts
+are preserved there before regeneration. root-delta-validation.json confirms
+exactly 30 added files, zero removals and 1,106 additional soft edges, with
+accepted input, source catalog, conversions and provider/runtime roots unchanged.
+No inventory drift is accepted or original input modified.
+
+Staging evidence: work/experiments/typed-state-closure/
+stage-20261019T140440.570372Z/. The root holds the host mutex, batches import in
+the exact idle editor, invokes the normal ./dev producer using its pinned lab
+Python/toolchain and explicit configured device, restores auto-refresh and
+passes import/compilation. The import receipt copies 30 files and reuses 43,681;
+the actual manifest has the projected 30,322 locations and all 7,458 roots.
+Integration: work/experiments/whole-catalog/20261012T052308.866868Z/
+integration-20261019T140504.836690Z/. No private timestamped analysis draft is
+read by the producer; J659 names the accepted existing inputs and owners.
+
+Host gate evidence: work/experiments/typed-state-closure/
+host-20261019T140628.322789Z/. whole-catalog-host loads all 7,458 typed roots
+and 526 mesh aliases with zero failures, so no binding repair is needed.
+whole-catalog-contracts and whole-catalog-host-providers also exit zero; the
+original provider run finishes success true at whole-catalogs-ready. These are
+host/import/provider checks, not Android loading of each lazy skill asset,
+complete alternate-kit behavior, DLC availability or native Stage execution.
+
+First failure in staging orchestration: the first private wrapper lacked the
+pinned toolchain environment; the next used MCP's Python without UnityPy. Both
+stopped before asset copying and restored AssetDatabase batching/auto-refresh.
+Their failed stage folders are preserved. The terminal attempt delegates the
+producer to ./dev's existing lab environment and passes; no package/runtime pin
+or public production command is changed to hide either orchestration error.
+
+A full content build, in-place payload sync, actual Engineer alternate replay
+and both resulting APK baseline modes remain pending. Current installed
+6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec
+still uses the previous payload; its fresh default exit control is active.
+Accepted J657 86d2542a… remains unchanged. R3/R8 replay follows J659's recorded
+input changes; no Phase 2 output, original input, private device receipt hand
+edit, extra-device selection, existing data move or storage configuration change.
