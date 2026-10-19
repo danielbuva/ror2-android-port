@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J677](PORTING_JOURNAL.md#j677--build-and-install-owned-source-loot-actor-events-and-rolling-observation) | 2026-10-19 | Build and install owned source loot, actor events and rolling observation | Hypothesis: J675's prepared source tables, J669's actor-event ownership and J672's bounded rolling observation can compile into one code-only candidate while r… |
 | [J676](PORTING_JOURNAL.md#j676--refresh-ordinary-huntress-selection-and-its-exact-alternate-inventory) | 2026-10-19 | Refresh ordinary Huntress selection and its exact alternate inventory | Hypothesis: the accepted full-content APK preserves ordinary profile-eligible Huntress selection and supplies current exact alternate identities while the inde… |
 | [J675](PORTING_JOURNAL.md#j675--own-and-prepare-the-source-cohorts-native-loot-tables-before-activation) | 2026-10-19 | Own and prepare the source cohort's native loot tables before activation | Hypothesis: J668's original Chest2 starts before its source Basic table has current Run choices. |
 | [J674](PORTING_JOURNAL.md#j674--mage-alternate-loadout-survives-native-menu-abandon-cleanup-and-restart) | 2026-10-19 | Mage alternate loadout survives native menu-abandon cleanup and restart | Hypothesis: the same per-run four-alternate loadout can finish the existing native UI-abandon path, release observations and start a healthy session in the sam… |

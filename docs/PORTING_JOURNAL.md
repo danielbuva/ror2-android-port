@@ -10066,3 +10066,37 @@ Finally removes selectors, stops and sleeps OLED. J675's 105-source code build
 is active; installation waits until both this case and the build finish. No
 source change, original input, additional device, private receipt hand edit,
 existing data move or storage reconfiguration occurs in the device case.
+
+## J677 — Build and install owned source loot, actor events and rolling observation
+
+Hypothesis: J675's prepared source tables, J669's actor-event ownership and
+J672's bounded rolling observation can compile into one code-only candidate
+while retaining J665's actual typed-dependency payload.
+
+Selected preflight passes. Build request 20261019T151427.348960Z succeeds in
+258.139330 s with zero errors. The root CLI finishes successfully after its
+artifact receipt/cache work, producing APK
+e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+Frozen APK, build receipt, all 105 source/two recipe hashes, exact-editor and
+host/preflight/build outputs: work/experiments/native-source-loot/
+candidate-20261019T151427.348960Z/. Authored source hashes remain unchanged
+through the build. All 266 payload hashes equal J665's frozen full content,
+so the 30-file repair and 30,322-location manifest remain included; no content
+rebuild, stale binding substitution or new input acceptance occurs.
+
+Live storage/free-space checks, adopted placement, in-place installation and
+payload sync pass on the configured Nova. No reset, data removal or storage
+configuration change is used. The plain default control is now active; its
+outcome, native first-stage retry and default exit remain pending. The previous
+Huntress run has finished and is independently recorded on ad84d0cb… (J676).
+No current-build label is applied retroactively to that earlier device case.
+
+First failure: none in this build/install/sync. Compilation and cloned-asset
+contracts do not accept native chest rolling, actor-event emission or teardown.
+Accepted baseline stays J670 ad84d0cb… until both new default modes pass.
+Runtime source equals this built candidate; no newer runtime is integrated.
+Corrected source-identity metadata and exact installed-attempt host tooling
+remain private drafts pending root integration. R8 replay for the runtime
+changes is recorded in their implementation entries; no Phase 2 output,
+original input, extra device, private receipt hand edit, existing data move or
+storage reconfiguration occurs here.
