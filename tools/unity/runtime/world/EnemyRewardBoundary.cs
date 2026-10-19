@@ -546,7 +546,9 @@ public sealed partial class PortSession
                                   !rewardPlacementHost && !coordinator.rewardCard && !ExperienceManager.instance &&
                                   !DirectorCore.instance && CombatDirector.instancesList.Count == 0,
                               "Owned reward/director teardown incomplete");
-            coordinator.ReleaseCompletedRunAsyncAssets();
+            var asyncRelease = coordinator.ReleaseCompletedRunAsyncAssets();
+            while (asyncRelease.MoveNext())
+                yield return asyncRelease.Current;
             if (ownsRewardEffects)
             {
                 coordinator.RestoreComposedEffects(priorRewardEffects);

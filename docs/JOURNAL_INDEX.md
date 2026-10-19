@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J748](PORTING_JOURNAL.md#j748--await-native-effect-retirement-before-asynchronous-asset-and-scene-release) | 2026-10-19 | Await native effect retirement before asynchronous asset and scene release | Hypothesis: J746's synchronous zero-loan guard can run before the native capacity-return branch has completed its deferred Unity destruction. |
 | [J747](PORTING_JOURNAL.md#j747--managed-audio-refusal-localizes-to-import-metadata-before-the-native-query) | 2026-10-19 | Managed audio refusal localizes to import metadata before the native query | Hypothesis: immutable first-failure diagnostics can identify J743's generic managed-player failure while preserving its startup and cleanup policy. |
 | [J746](PORTING_JOURNAL.md#j746--native-loss-reaches-defeat-and-restart-request-then-retains-effect-loans) | 2026-10-19 | Native loss reaches defeat and restart request, then retains effect loans | Hypothesis: J745's accepted enemy-observer guards allow J739's native loss attempt to reach the source defeat and same-process restart lifecycle. |
 | [J745](PORTING_JOURNAL.md#j745--enemy-observer-lifetime-candidate-passes-both-default-device-checks) | 2026-10-19 | Enemy-observer lifetime candidate passes both default device checks | Hypothesis: J741's independent component-lifetime guards preserve default integrated gameplay while removing J739's unsafe observation precondition. |

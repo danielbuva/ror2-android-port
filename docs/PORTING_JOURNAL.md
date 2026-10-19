@@ -13495,3 +13495,63 @@ truncate the live witness. Test those mechanisms before one fresh retry with
 the same bank/library/mode. No composed-game audio guard, production source,
 normal bank payload or rebuild input changes. Native SDK acceptance remains
 J740/J742; managed startup and game audio remain unaccepted.
+
+## J748 — Await native effect retirement before asynchronous asset and scene release
+
+Hypothesis: J746's synchronous zero-loan guard can run before the native
+capacity-return branch has completed its deferred Unity destruction. Accepted
+EffectPool.ReturnObject schedules destruction when its inactive pool is full;
+EffectManagerHelper.OnDestroy later removes the helper from InUse. The separate
+incomplete-effect/orphan branch can remain pending longer and must still refuse.
+The failed device run did not identify its exact residual pool/helper, so this
+source correction is not a claim that J746's observed failure is resolved.
+Prior art remains pinned R2API.Addressables' exact handle/lifetime boundaries;
+accepted native effect-pool behavior is the authority for callback timing.
+
+Change three existing authored owners. IntegratedStageSession snapshots the
+exact owned pool dictionary, pool objects and loan helpers, validates ownership,
+and issues each native ReturnObject once. It retains that batch across an
+interruption or refusal. Coroutine transport and final run cleanup cross at
+most one actual next frame only when loans remain, then require unchanged
+map/pool ownership, zero InUse and a real destroyed or original inactive-pool
+witness for every captured helper. Partial issue, foreign replacement, stuck
+loans and a missing real frame refuse with references retained. No repeated
+return, direct pool-count removal, extra destruction or force-release fallback
+is added. The synchronous native scene-exit listener retains its immediate
+strict guard and invocation order.
+
+RunClockSession.ReleaseCompletedRunAsyncAssets is now an awaited coroutine;
+EnemyRewardSession.CleanupEnemyRewards waits for it before releasing dependent
+reward assets. Transport waits before its original scene-unload boundary.
+Only proven completion credits the captured return counts. Setup/teardown and
+the retained batch have a named place in ARCHITECTURE; no experiment-switch
+case or private production input is added. These three runtime changes affect
+R8 source staging and require replay there. Recipe/README records the authored
+source/fixture provenance audit.
+
+The portable host test extracts the actual production owners and caller seams
+and executes them against authored lifecycle collaborators. It covers immediate
+return, seven deferred destructions, stuck/orphan behavior, foreign map/pool/
+helper replacement, partial callback failure, interrupted iterators, actual
+frame progression and transport/final-release ordering. A synchronous-guard
+mutant compiles but fails the deferred contract. Independent review finds no
+blocking lifecycle or ordering issue. A full offline compile of 109 source
+inputs against 163 exact references passes with zero errors and 74 warnings.
+Root passes all 1,039 host tests under scripts/env.sh in 21.620 seconds.
+
+The earlier full run exposed one documentation-only recipe audit failure:
+J744's new Init recipe had its full audit explanation but lacked the required
+Audit record table row. Adding that row resolves the contract; no recipe or
+transform behavior changes. Full passing results:
+work/coordination/codex-effect-loan-frame-fence-full-host-v2.*;
+source/compile/contracts: work/coordination/native-loss-effect-loan-triage/;
+independent review:
+work/coordination/native-loss-effect-loan-independent-review/review.md.
+
+First device failure remains J746 until targeted requalification. Next, commit
+and freeze this source, build under J738, install in place and run both default
+baseline modes. The user requests a pause immediately after the next accepted
+main build for a provenance-map refresh; retain native-loss requalification as
+explicit open work at that checkpoint. The larger audio, MUL-T and Siren drafts
+remain private/unapplied. Accepted/installed main APK remains caeeb62f until
+that new gated default acceptance.

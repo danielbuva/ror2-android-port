@@ -59,6 +59,7 @@ produce the file from the input, prefer tracking the generator.
 
 | File | Replaces | Provenance | Privacy and licensing | Readers |
 | --- | --- | --- | --- | --- |
+| `wwise-init-android.json` | Private fixture-only Init metadata generator constants (J744) | Minimum source-bank path, format/identity/size and plugin/device/bus relationships; generated bank bodies remain local. | Authored parsing/serialization and metadata only; accepted full inventory plus explicit source hash required, exclusive ignored outputs, no SDK/media/implementation/private identifiers. Audit details below. | `wwise_init_platform.py`, explicitly invoked support tool; no current game-build dependency. |
 | `inherited-rebuild.json` | One texture-importer host input | Accepted input, minimum export metadata identity/hash, inherited GUID and creation-time parameter. | No texture/importer body or private identifiers; accepted local export only. | `inherited_rebuild` gates source and final ledger hashes. |
 | `inherited-rebuild-package.json` | Three remaining TMP include bodies | Existing TMP 3.0.6 package/archive pins, three source selectors/hashes and inherited GUIDs. | Unity Companion License, authorized local editor package; no third-party bytes tracked. | Existing `unity_package_additions.generate_pairs`, isolated R2 replay only. |
 | `rebuild-r9-obligations.json` | Two previously unknown producers | Public PlayerSettings/editor callback identities and authored setup notes. | No private settings, reflected game type lists or XML content. | Coverage and validate-bindings report explicit editor obligations with local target hashes. |
@@ -1196,3 +1197,14 @@ legitimate installation; twelve synthetic contracts and a byte-identical local
 reproduction pass. The generated bank, operator-supplied input hash,
 receipt, SDK, native binaries, device evidence and absolute local paths remain
 local ignored state.
+
+## Native effect-loan retirement audit (J748)
+
+Three existing authored owners now retain exact effect-pool/loan references
+through native callbacks and a bounded Unity frame fence. Native API/type/member
+names identify the required ownership and retirement contract; no original
+implementation, decompiled source, serialized assets, assemblies, media or SDK
+code is included. The portable host fixture contains authored lifecycle
+collaborators and executes the public production owner methods. Compile inputs,
+raw evidence and generated outputs remain ignored. The runtime changes affect
+R8 source staging and add no private production input or build-step text patch.

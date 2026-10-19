@@ -53,9 +53,9 @@ public sealed partial class PortSession
         TickOriginalStage();
         GetRunClockSession().TickFrame();
     }
-    void ReleaseCompletedRunAsyncAssets()
+    IEnumerator ReleaseCompletedRunAsyncAssets()
     {
-        GetRunClockSession().ReleaseCompletedRunAsyncAssets();
+        return GetRunClockSession().ReleaseCompletedRunAsyncAssets();
     }
     void ObserveOriginalRunClock()
     {
@@ -275,18 +275,21 @@ public sealed partial class PortSession
                 coordinator.Save();
             }
         }
-        public void ReleaseCompletedRunAsyncAssets()
+        public IEnumerator ReleaseCompletedRunAsyncAssets()
         {
             if (!ownsRunAsyncLifecycle)
-                return;
+                yield break;
             coordinator.Check(!Run.instance, "Async end-run release requires completed owned Run teardown");
             // The final stage has no exit callback. Return this world's remaining native
             // effect loans after actor teardown, before the original forced pool release.
             if (coordinator.ownsIntegratedPools)
             {
                 var pools = (Dictionary<GameObject, EffectPool>)RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null);
-                coordinator.r.runClock.endRunEffectLoansReturned = pools.Values.Sum(pool => pool.InUseCount());
-                coordinator.ReturnIntegratedStageEffects();
+                int loans = pools.Values.Sum(pool => pool.InUseCount());
+                var returned = coordinator.ReturnIntegratedStageEffectsAfterNativeCallbacks();
+                while (returned.MoveNext())
+                    yield return returned.Current;
+                coordinator.r.runClock.endRunEffectLoansReturned = loans;
             }
             // The inactive owned Run does not dispatch OnDestroy; use its shipped asset-release callback after actors exit.
             AssetAsyncLiaison.AssetAsyncReleaseAllReferences(true);

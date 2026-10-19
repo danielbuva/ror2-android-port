@@ -646,7 +646,23 @@ CharacterMotor. Missing enemy reports skip only dependent reward/actor fields;
 navigation and director observers keep their own lifetimes. Prior samples and
 death facts survive unavailable components. `test_enemy_observer_lifetime.py`
 executes that production method with live, missing and destroyed collaborators.
-These host fixtures do not raise native gameplay events. `AutomaticDirectorSession`
+These host fixtures do not raise native gameplay events.
+
+`IntegratedStageSession` retains an exact effect-pool map/pool/helper return
+batch until native retirement is proven. It issues each original return once;
+the existing transport and final reward-cleanup coroutines cross one actual
+Unity frame only when loans remain, allowing native deferred destruction to
+finish before the strict zero-loan and inactive-pool/destroyed witnesses.
+Unknown, interrupted or failed ownership retains the batch and dependent
+assets. The synchronous native scene-exit listener keeps its immediate guard
+and ordering. `RunClockSession.ReleaseCompletedRunAsyncAssets` is now awaited
+by `EnemyRewardSession.CleanupEnemyRewards` before forced asset release;
+transport awaits the same fence before scene unload.
+`test_effect_loan_return_lifecycle.py` executes the production owners/caller
+seams with authored immediate, deferred, stuck and foreign-owner collaborators.
+It does not identify the exact residual from J746 or qualify native loss.
+
+`AutomaticDirectorSession`
 separates native elite/catalog/
 player initialization from the existing one-card director activation.
 Its native first-stage path registers only the exact existing inactive player

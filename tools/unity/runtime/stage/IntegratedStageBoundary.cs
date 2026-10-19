@@ -164,6 +164,10 @@ public sealed partial class PortSession
     {
         GetIntegratedStageSession().ReturnIntegratedStageEffects();
     }
+    IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks()
+    {
+        return GetIntegratedStageSession().ReturnIntegratedStageEffectsAfterNativeCallbacks();
+    }
     void CleanupStageTransport()
     {
         GetIntegratedStageSession().Dispose();
@@ -854,7 +858,11 @@ public sealed partial class PortSession
                               "Original queued XP settlement accounting failed");
             coordinator.Save();
             var old = coordinator.stageGeometryScene;
-            ReturnIntegratedStageEffects();         // Original sceneUnloaded kills pools; release their live loans first.
+            // Native capacity returns use deferred Unity destruction. Finish those
+            // actual callbacks before sceneUnloaded synchronously kills the pools.
+            var effectReturns = ReturnIntegratedStageEffectsAfterNativeCallbacks();
+            while (effectReturns.MoveNext())
+                yield return effectReturns.Current;
             coordinator.ReleaseObjectiveOrbCache(); // Original sceneUnloaded clears its map without releasing leases.
             foreach (var root in old.GetRootGameObjects())
                 if (!coordinator.stageStaticRoots.Contains(root))
@@ -1078,18 +1086,97 @@ public sealed partial class PortSession
             coordinator.r.phase = "integrated-world-playing";
             coordinator.Save();
         }
-        public void ReturnIntegratedStageEffects()
+        // Retained across a coroutine suspension or refusal. Never reissue a native
+        // return from an interrupted/failed batch or discard its exact pool/loan refs.
+        sealed class EffectLoanReturnBatch
+        {
+            public Dictionary<GameObject, EffectPool> map;
+            public KeyValuePair<GameObject, EffectPool>[] pools;
+            public EffectManagerHelper[][] loans;
+            public int count, issuedFrame;
+            public bool issued, completed;
+        }
+        EffectLoanReturnBatch pendingEffectLoanReturns;
+
+        void CheckEffectLoanPoolOwnership(EffectLoanReturnBatch batch)
+        {
+            var current = (Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null);
+            coordinator.Check(coordinator.ownsIntegratedPools && ReferenceEquals(current, batch.map) && current.Count == batch.pools.Length,
+                              "Owned stage effect pool map changed during original return callbacks");
+            foreach (var entry in batch.pools)
+            {
+                EffectPool currentPool;
+                coordinator.Check(current.TryGetValue(entry.Key, out currentPool) && ReferenceEquals(currentPool, entry.Value),
+                                  "Owned stage effect pool identity changed during original return callbacks");
+            }
+        }
+        EffectLoanReturnBatch BeginIntegratedStageEffectReturns()
         {
             coordinator.Check(coordinator.ownsIntegratedPools, "Stage effect pools have no integrated ownership baseline");
-            var pools =
-                (Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null);
-            int loans = pools.Values.Sum(pool => pool.InUseCount());
-            foreach (var pool in pools.Values.ToArray())
-                foreach (var effect in pool.InUse.ToArray())
-                    pool.ReturnObject(effect);
+            if (pendingEffectLoanReturns != null)
+            {
+                CheckEffectLoanPoolOwnership(pendingEffectLoanReturns);
+                coordinator.Check(pendingEffectLoanReturns.issued, "Prior owned stage effect return batch did not finish issuing callbacks");
+                return pendingEffectLoanReturns;
+            }
+            var map = (Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null);
+            var entries = map.ToArray();
+            var batch = new EffectLoanReturnBatch { map = map, pools = entries,
+                loans = entries.Select(entry => entry.Value.InUse.ToArray()).ToArray(), issuedFrame = Time.frameCount };
+            var helpers = new HashSet<EffectManagerHelper>();
+            for (int i = 0; i < entries.Length; i++)
+                foreach (var effect in batch.loans[i])
+                {
+                    coordinator.Check(effect && ReferenceEquals(effect.OwningPool, entries[i].Value) && helpers.Add(effect),
+                                      "Owned stage effect return snapshot contains an unowned or duplicate loan");
+                    batch.count++;
+                }
+            pendingEffectLoanReturns = batch;
+            for (int i = 0; i < entries.Length; i++)
+                foreach (var effect in batch.loans[i])
+                {
+                    CheckEffectLoanPoolOwnership(batch);
+                    coordinator.Check(effect && ReferenceEquals(effect.OwningPool, entries[i].Value) && entries[i].Value.InUse.Contains(effect),
+                                      "Owned stage effect loan changed before its original return callback");
+                    entries[i].Value.ReturnObject(effect);
+                }
+            batch.issued = true;
+            return batch;
+        }
+        void CompleteIntegratedStageEffectReturns(EffectLoanReturnBatch batch)
+        {
+            if (batch.completed)
+                return;
+            CheckEffectLoanPoolOwnership(batch);
+            coordinator.Check(batch.issued, "Owned stage effect return callbacks were not fully issued");
+            coordinator.Check(batch.map.Values.All(x => x.InUseCount() == 0), "Owned stage effect loans survived original return callbacks");
+            for (int i = 0; i < batch.pools.Length; i++)
+                foreach (var effect in batch.loans[i])
+                    coordinator.Check(!effect || (ReferenceEquals(effect.OwningPool, batch.pools[i].Value) &&
+                                                  batch.pools[i].Value.IsObjectInPool(effect) && !effect.gameObject.activeSelf),
+                                      "Owned stage effect loan has no original inactive-pool or destroyed retirement witness");
             if (coordinator.r.stageProgress != null)
-                coordinator.r.stageProgress.effectLoansReturned += loans;
-            coordinator.Check(pools.Values.All(x => x.InUseCount() == 0), "Owned stage effect loans survived original return callbacks");
+                coordinator.r.stageProgress.effectLoansReturned += batch.count;
+            batch.completed = true;
+            pendingEffectLoanReturns = null;
+        }
+        public void ReturnIntegratedStageEffects()
+        {
+            // The genuine synchronous onFinishExit listener keeps its existing
+            // invocation order and strict immediate empty-pool requirement.
+            CompleteIntegratedStageEffectReturns(BeginIntegratedStageEffectReturns());
+        }
+        public IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks()
+        {
+            var batch = BeginIntegratedStageEffectReturns();
+            if (batch.map.Values.Any(pool => pool.InUseCount() != 0) && Time.frameCount <= batch.issuedFrame)
+            {
+                // Object.Destroy retires after this Update; yield null resumes on
+                // the next actual frame. No repeated returns or arbitrary timeout.
+                yield return null;
+                coordinator.Check(Time.frameCount > batch.issuedFrame, "Owned stage effect return fence did not cross a Unity frame");
+            }
+            CompleteIntegratedStageEffectReturns(batch);
         }
         void AttachSirenEncounterIfPresent()
         {
