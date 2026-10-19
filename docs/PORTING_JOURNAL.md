@@ -11566,3 +11566,53 @@ runtime change is made here; d545d800 remains the accepted default baseline.
 No original input, Phase 2 output, extra device, receipt edit, storage change
 or permanent award occurs. REX alternates and the bounded base-stage route run
 independently through the ordinary path.
+
+## J711 — REX alternate kit records native projectiles and owned summon damage
+
+Hypothesis: J706's fresh native inventory can select the three alternate REX
+abilities without confusing component names with selected SkillDefs. The strict
+selector passes on accepted J707 APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/experiments/survivor-check/20261019T175905.949425Z/Treebot/.
+The final report reaches 60.384 world seconds with no first failure, runtime
+errors, missing activations or suppressed callbacks. Live native definitions
+match secondary component 1/family 147/variant 0/SkillDef 203
+TreebotBodyAimMortarRain, utility 2/149/2/208 TreebotBodyProliferation and
+special 3/148/0/205 TreebotBodyFireFruitSeed. Primary retains default 0/146/0/206
+TreebotBodyFireSyringe. All four definitions remain unchanged. In particular,
+the special component's name FireFlower2 is not its selected SkillDef.
+
+Native authority/server callback counts are 16/3/1/2 for primary through
+special. The input coverage summary records one request per slot; primary has
+no input-bank edge and the other three have one each. These are bounded
+activation/input observations, not a cast-by-cast causal mapping or proof of
+hold/release and complete prepare/fire behavior.
+
+The existing observer retains three exact player-body-owned TreebotMortarRain
+identities (catalog 371), one TreebotFruitSeedProjectile (369) and one
+ProliferationTurretProjectile (258). The three mortars remain live at the final
+sample; the other two do not. It attributes nine damage events to the owned
+ProliferationFlowerTurretBody. Total counters record 25 body/projectile damage
+events and nine owned-summon events, with zero unknown-owner damage. The damage
+fact ring wraps, so retained rows are not a complete event history. Projectile
+history holds 15 unique identities without overflow or scan truncation; its
+bounded sampling does not establish every transient output. Full volleys,
+fruit growth/blast/status effects, turret lifecycle and complete ability
+semantics remain open. Prior art is J642/J706's pinned native catalog,
+GenericSkill and network-object ownership contract; no new reconstruction,
+loader or runtime diagnostic is introduced.
+
+Developer survivor/variant selection and invincibility make this assisted;
+the other four acceleration options are off. Saved profile variants remain
+0/1/0/1, with 13 applied runs, one earned/available unlock and one coin;
+menu loadout commit and run-result application remain false. The collector
+removes its selector, stops the package and sleeps the OLED. Interpretation:
+work/coordination/treebot-alternate-results/; selector/result receipt:
+work/coordination/codex-content-d545d80048fb-treebot-alternate.json.
+
+First failure: none in this bounded alternate-kit case. No original input,
+authored runtime, Phase 2 output, extra device, manual receipt edit, storage
+change or permanent award occurs. The accepted 105-file runtime remains
+unchanged. Next collect fresh Acrid/Mercenary inventories before alternate
+selectors, while the ordinary base-stage route and native cleanup investigation
+continue independently.
