@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J745](PORTING_JOURNAL.md#j745--enemy-observer-lifetime-candidate-passes-both-default-device-checks) | 2026-10-19 | Enemy-observer lifetime candidate passes both default device checks | Hypothesis: J741's independent component-lifetime guards preserve default integrated gameplay while removing J739's unsafe observation precondition. |
 | [J744](PORTING_JOURNAL.md#j744--reproduce-the-tested-android-init-metadata-through-public-authored-tooling) | 2026-10-19 | Reproduce the tested Android Init metadata through public authored tooling | Hypothesis: J740/J742's exact fixture metadata variant can be reconstructed from the legitimate accepted input using a small audited public recipe and an autho… |
 | [J743](PORTING_JOURNAL.md#j743--fresh-unity-wwise-java-first-player-maps-the-library-but-refuses-readiness) | 2026-10-19 | Fresh Unity Wwise Java-first player maps the library but refuses readiness | Hypothesis: the retained managed Wwise API candidate can initialize and shut down the official Android ARM64 integration from a fresh Unity player, with an app… |
 | [J742](PORTING_JOURNAL.md#j742--original-global-ui-event-passes-with-adapted-android-init-metadata) | 2026-10-19 | Original Global UI event passes with adapted Android Init metadata | Hypothesis: J740's clean Init metadata adaptation can support the previously traced original Global UI event without J736's later SetBusDevice workaround. |

@@ -13345,3 +13345,48 @@ byte-identical output reproduction; runtime acceptance remains J740/J742's
 specific native results, and J743's managed readiness failure remains open.
 All protected outputs stay ignored. Revisit the contract on accepted-input
 or required platform-output changes; never silently apply it to drifted banks.
+
+## J745 — Enemy-observer lifetime candidate passes both default device checks
+
+Hypothesis: J741's independent component-lifetime guards preserve default
+integrated gameplay while removing J739's unsafe observation precondition.
+This checkpoint accepts the default controls only; native first-stage loss
+and restart require their own device evidence.
+
+Preflight passes. The serialized code-only Unity 2021.3.45f2 IL2CPP ARM64/Vulkan
+build stages 105 runtime sources, takes 111.140853 seconds and reports zero
+errors. J738's new source receipt binds frozen Git commit
+9212cd033fdffe5be2c747f53ca144ee00e8334a; the runtime fix is committed in
+78b284f. APK:
+caeeb62fe45e7b8bad8a89272390a11a392152b975277660675a75e56a230453.
+Root freezes the APK, exact build/source receipts and authored source snapshot,
+and rehashes the actual payload. All 266 payload entries equal J737's accepted
+12d79359 variant. No asset/bank/content payload is replaced by this source fix.
+Frozen candidate:
+work/experiments/enemy-observer-lifetime/candidate-20261019T215721.848675Z/.
+
+Install updates the same owned main package in place. Fresh adopted-storage
+capacity, APK placement and runtime data backing checks pass; sync succeeds.
+The plain default check passes 35.426010 seconds on Lakes. The one-exit check
+passes exactly one genuine exit to Goolake, then 10.142395 seconds of next-stage
+play (153.413147 seconds total world time). Both have empty error/firstFailure
+and no unexpected current-process log error. Applied-run count remains 13;
+resultApplied is false. Native first-stage diagnostics and recovery are false,
+Moon pause remains true, the native operation witness is empty, and automatic
+boundary-hold plus all four isolated-window counters remain zero.
+
+Evidence: work/experiments/baseline/20261019T220437.973968Z/ and
+work/experiments/baseline/20261019T220841.944645Z/ (including Root's explicit
+log/control validation). Root install/sync/baseline outputs and the frozen
+candidate status are under work/coordination/codex-enemy-observer-lifetime-*.
+Both checks remove their selector, force-stop and sleep the OLED in cleanup.
+J741's 1,025-test pinned-environment qualification covers the source change;
+no additional runtime code changed after that qualification.
+
+Promote caeeb62f to the accepted/installed default baseline. Retain 12d79359
+and 885ea294 as ready rollbacks with their separate Mercenary/abandonment
+results. These default controls do not repeat those alternate-skill results,
+prove normal difficulty or qualify native loss/transport. Retry J739's native
+loss path next and preserve its first failure separately. J741's authored
+source is reproduced by R8; no new private build input is added. Audio remains
+disabled, and Moon/finale remains manual-only.
