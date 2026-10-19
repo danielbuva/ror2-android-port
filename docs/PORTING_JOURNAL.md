@@ -12348,3 +12348,46 @@ and a new native cleanup/restart retry remain required. Installed/accepted b3299
 and older rollbacks stay intact. Fresh MUL-T/Commando checks run separately on
 that explicitly bound APK while the new build is queued. No award, extra device,
 storage configuration, Moon navigation or Phase 2 implementation changes occur.
+
+## J727 — Refresh MUL-T and Commando defaults and native alternate identities
+
+Hypothesis: accepted J724 APK
+b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54 can supply
+fresh native loadout tuples before remaining alternate-kit checks. The public
+survivor-kit-check runs Toolbot then Commando with explicit owned-APK binding;
+no build-pointer inference or APK change is used. Evidence:
+work/experiments/survivor-check/20261019T192452.822119Z/.
+Both cases stop at four-slots-activated after 60.457321 and 60.441742 world
+seconds. Collector failures, missing/suppressed callbacks, report error and
+firstFailure, and root-checked current-process log errors are empty. The live
+SessionReport success flag is still false before full-probe completion; the
+bounded survivor collector contract passes without reinterpreting that flag.
+
+Toolbot reports five components with one noncanonical auxiliary primary;
+canonical activation counts are 10/2/2/2. Its default vector is 0/1/0/0/0.
+The native inventory identifies Buzzsaw on auxiliary component 1, family 142,
+variant 3, SkillDef 193, and Dual Wield on component 4, family 144, variant 1,
+SkillDef 201. Commando's four counts are 37/4/2/1, with default vector 0/0/0/0.
+Its three alternate tuples are component 1/family 42/variant 1/SkillDef 41,
+component 2/family 44/variant 1/SkillDef 45, and component 3/family 43/variant 1/
+SkillDef 187. These represent Shotgun Blast, Slide and Grenade. The local
+selector drafts pass the public parser; no alternate is applied in these cases.
+They are unlock-gated, non-expansion choices, so future per-run diagnostics
+remain assisted and must not grant or persist unlocks.
+
+The bounded output observer is healthy and untruncated. Toolbot retains eleven
+owned projectile identities and 50 aggregate body damage events, but no mapped
+projectile hit. Commando retains thirteen owned identities and records seven
+mapped projectile damage events: four MissileProjectile and three FMJRamping.
+These facts do not attribute a hit to a skill slot or establish full ability
+semantics. Profile loadouts and applied runs stay unchanged, resultApplied is
+false, and diagnostic input/invincibility remain explicit assistance. Existing
+finally cleanup removes each selector, stops the app and sleeps the OLED.
+Interpretation and hash-bound selector drafts:
+work/coordination/b329-toolbot-commando-inventory/.
+
+First failure: none under the bounded default callback/inventory contract.
+Revisit with exact per-run alternate selectors, current-process log checks and
+native output/state evidence. Callback delivery alone does not close full kits,
+ordinary unlocks or normal-difficulty acceptance. No runtime source, original
+asset/assembly, storage setting, extra device or Moon route changes occur.
