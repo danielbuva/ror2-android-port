@@ -15,6 +15,8 @@ from nova_bridge import current_errors
 
 BASE_SURVIVORS = ("Commando", "Huntress", "Bandit2", "Toolbot", "Engi", "Mage", "Merc", "Treebot", "Loader", "Croco", "Captain")
 FREE_SURVIVORS = {"Commando", "Huntress"}
+EXPECTED_SKILL_COMPONENTS = {"Croco": 5, "Toolbot": 5, "Captain": 6}
+CANONICAL_COMPONENT_SLOTS = ("Primary", "Secondary", "Utility", "Special", "None")
 SLOTS = ("primary", "secondary", "utility", "special")
 MIN_WORLD_SECONDS = 60
 MAX_WORLD_SECONDS = 180
@@ -47,7 +49,7 @@ def survivor_selection(attempt, survivor):
     if survivor not in BASE_SURVIVORS:
         raise ValueError("Unsupported base survivor")
     value = selection(attempt)
-    value.update(selectedSurvivor=survivor, developerSurvivorOverride=survivor not in FREE_SURVIVORS)
+    value.update(selectedSurvivor=survivor, developerSurvivorOverride=survivor not in FREE_SURVIVORS, diagnosticSkillCoverage=True)
     value["debugOptions"]["purpose"] = "Original base-survivor skill integration; diagnostic selection/input, no permanent progression"
     return value
 
@@ -60,6 +62,68 @@ def missing_activations(report):
     return [slot["slot"] for slot in slots if any(type(slot.get(key)) is not int or slot[key] <= 0 for key in ("authorityActivations", "serverActivations"))]
 
 
+def component_inventory(report, survivor):
+    """Classify the current J602 component inventory without claiming behavior."""
+    observation = report.get("survivorSkills")
+    expected = EXPECTED_SKILL_COMPONENTS.get(survivor, 4)
+    if not isinstance(observation, dict) or "components" not in observation:
+        return {"status": "instrumentation-unavailable", "expectedComponents": expected}
+
+    rows = observation.get("components")
+    if not isinstance(rows, list):
+        return {"status": "invalid", "reason": "components-not-array", "expectedComponents": expected}
+
+    summary = {"status": "invalid", "expectedComponents": expected, "reportedComponents": len(rows)}
+    current, historical = [], 0
+    for row in rows:
+        if not isinstance(row, dict):
+            summary["reason"] = "component-row-not-object"
+            return summary
+        present = row.get("present")
+        if present is True:
+            current.append(row)
+        elif present is False:
+            historical += 1
+        else:
+            summary["reason"] = "component-presence-invalid"
+            return summary
+
+    summary["observedComponents"] = len(current)
+    summary["historicalComponents"] = historical
+    if len(current) != expected:
+        summary["reason"] = "component-count-mismatch"
+        return summary
+
+    indexes, identities, canonical_counts = [], [], {slot: 0 for slot in CANONICAL_COMPONENT_SLOTS}
+    noncanonical = 0
+    for row in current:
+        index = row.get("componentIndex")
+        instance_id = row.get("instanceId")
+        canonical = row.get("canonicalSlot")
+        if type(index) is not int or type(instance_id) is not int or instance_id == 0:
+            summary["reason"] = "component-index-or-identity-invalid"
+            return summary
+        if not isinstance(canonical, str) or canonical not in CANONICAL_COMPONENT_SLOTS:
+            summary["reason"] = "component-native-role-invalid"
+            return summary
+        indexes.append(index)
+        identities.append(instance_id)
+        canonical_counts[canonical] += 1
+        if canonical == "None":
+            noncanonical += 1
+
+    if sorted(indexes) != list(range(expected)):
+        summary["reason"] = "component-indexes-not-contiguous-unique"
+    elif len(set(identities)) != expected:
+        summary["reason"] = "component-identities-not-unique"
+    else:
+        summary["status"] = "valid"
+        summary["reason"] = None
+    summary["noncanonicalCount"] = noncanonical
+    summary["canonicalCounts"] = canonical_counts
+    return summary
+
+
 def suppressed_missing_callbacks(report):
     """Return suppressed callback types that are still absent from each slot."""
     observation = report.get("survivorSkills") or {}
@@ -70,11 +134,7 @@ def suppressed_missing_callbacks(report):
     for slot in slots:
         if not slot.get("suppressesActivationEvents"):
             continue
-        callbacks = [
-            key
-            for key in ("authorityActivations", "serverActivations")
-            if type(slot.get(key)) is not int or slot[key] <= 0
-        ]
+        callbacks = [key for key in ("authorityActivations", "serverActivations") if type(slot.get(key)) is not int or slot[key] <= 0]
         if callbacks:
             suppressed.append({"slot": slot["slot"], "callbacks": callbacks})
     return suppressed
@@ -113,15 +173,16 @@ def assess(survivor, stop, first, final, errors):
         return failures + ["no current-process report"]
     suppressed = suppressed_missing_callbacks(final)
     if suppressed:
-        details = ", ".join(
-            item["slot"] + "(" + ", ".join(item["callbacks"]) + ")" for item in suppressed
-        )
+        details = ", ".join(item["slot"] + "(" + ", ".join(item["callbacks"]) + ")" for item in suppressed)
         failures.append("suppressed activation callbacks: " + details)
     expected = survivor_selection("fixture", survivor)
     if final.get("selectedSurvivor") != survivor or final.get("developerSurvivorOverride") is not expected["developerSurvivorOverride"]:
         failures.append("survivor selection differs")
     if final.get("error") or final.get("firstFailure"):
         failures.append("runtime first failure")
+    inventory = component_inventory(final, survivor)
+    if inventory["status"] == "invalid":
+        failures.append("invalid survivor skill component inventory: " + inventory.get("reason", "unknown"))
     if stop_reason(final) != "four-slots-activated":
         failures.append("four native slot activations and live first-stage timing not established")
     if not (final.get("debugAcceleration") or {}).get("everAssisted"):
@@ -190,6 +251,7 @@ def check_one(device, survivor, attempt, runtime, out, installed):
             "failures": failures,
             "missing_activations": missing_activations(final or {}),
             "suppressed_callbacks": suppressed_missing_callbacks(final or {}),
+            "component_inventory": component_inventory(final or {}, survivor),
             "apk_sha256": installed["apk_sha256"],
             "evidence": str(out.relative_to(WORK.parent)),
         }

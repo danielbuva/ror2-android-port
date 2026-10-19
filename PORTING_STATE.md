@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J605** (native teleporter retirement passes; later overlay cleanup blocks restart).
+Last updated 2026-10-19 after **J606** (bounded diagnostic skill input passes its editor fixture; J605 restart failure remains open).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the

@@ -146,6 +146,8 @@ public sealed partial class PortSession : MonoBehaviour
         public bool visualCaptureActive, detailedVisualDiagnostics;
         public Vector3 visualCaptureCenter;
         public bool developerSurvivorOverride;
+        public bool diagnosticSkillCoverage;
+        public SurvivorSkillInputCoverage.Report skillInputCoverage;
         public bool goldshoresRoute;
         public GoldshoresMissionReport goldshores;
         public SourceAnimationEventReport sourceAnimationEvents;

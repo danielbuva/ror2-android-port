@@ -7209,3 +7209,56 @@ TemporaryOverlayManager indexing/validation and this owner's release boundary.
 Do not clear the global registry or suppress the cleanup assertion. No runtime
 source or Phase 2 build input changed for this host runner; later drafts are
 separate from the tested APK.
+
+## J606 — Add bounded ordinary input coverage for unobserved survivor slots
+
+Hypothesis: J603's missing MUL-T utility callback can be investigated through
+explicit eligible ordinary input, without changing native skill definitions or
+execution. Current accepted prefab/family/SkillDef/state links match the
+imported ToolbotDash chain; the old run has no utility-request history and its
+final threat is outside the automatic evasion range. This leaves an input
+coverage gap, not a proven skill import defect.
+
+Prior-art review: pinned Starstorm2 a9a4badd's SwiftSkateboard observes and
+unsubscribes the native server skill signal; SS2VanillaSurvivor retains original
+skill families. Current e544 GenericCharacterMain and SkillDef supply the
+ordinary input and readiness/stock/interrupt contracts. No community or native
+skill algorithm is copied.
+
+Added default-off SurvivorSkillInputCoverage, explicitly selected by the
+survivor host check. IntegratedWorldSession creates it only for the owned live
+authoritative body after bridge/debug/observer preparation and applies it after
+ordinary automatic input. It round-robins missing canonical callbacks, reads
+the currently assigned component's native CanExecute, and overlays one 0.25 s
+ordinary bridge button pulse every 6 s, bounded to 12 requests/120 s. It never
+executes a skill, changes stock/cooldown, forces a state or writes motion.
+Reports distinguish eligible samples, requests, later actual input-bank edges
+and before/after native callback counts. Pulse expiry preserves fresh producer
+values; early release preserves foreign/manual changes. Disposal clears live
+references before observer/body teardown.
+
+Review corrected cached component lookup for MUL-T stance changes, stale
+producer restoration, and attribution of a pre-request justPressed bit. The
+synthetic exact-editor fixture passes dynamic canonical lookup, exclusive
+bridge routing, stale-edge refusal/new-tick evidence, fresh producer/foreign
+input preservation, completion, both bounds and reference disposal. Final
+evidence and source hashes:
+work/experiments/survivor-check/editor-input-20261019T080408.412617Z/.
+The earlier compiler pass is under
+work/experiments/survivor-check/host-input-20261019T075817.953239Z/;
+the final revision was compiled by the exact editor. Synthetic callback data
+tests the owner only; it does not establish native ability execution.
+
+The host checker additionally validates J602 component inventory separately:
+Toolbot/Croco five, Captain six, other base bodies four; current indexes and
+instance identities must be unique/complete. Removed history is excluded.
+Older missing instrumentation is reported unavailable; passive/auxiliary
+components are not required to invent an input callback. The four canonical
+pass and source-suppressed callback criteria remain unchanged. Focused tests
+pass, as does the full host suite (883 tests, one optional skip) and Ruff.
+
+Installed/verified APK remains J604's 76344ab4…; these sources are staged for a
+combined code build, not device-accepted. Revisit MUL-T and the remaining base
+roster after both baseline modes on that build. The authored source, importer
+selection and fixture alter R8/build-entry inputs; the parallel session must
+replay them. No Phase 2 step or extra device action ran here.

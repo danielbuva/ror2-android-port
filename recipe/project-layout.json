@@ -70,6 +70,7 @@
     "runtime/input/NovaInputBridge.cs": "8cc417d3d71fb490e9bf29e4c14c27dd",
     "runtime/input/NovaThirdPersonView.cs": "a0979b7433378447e92dfa06c70fbe8f",
     "runtime/input/OfflineSettingsBoundary.cs": "fa7cfe85111b94105bcfe7779fa9dc46",
+    "runtime/input/SurvivorSkillInputCoverage.cs": "93644143347274ff0a0f1bae1f1d9fbd",
     "runtime/presentation/MoonPillarPresentation.cs": "d7661005d5f4a476aaf4faf65285d735",
     "runtime/presentation/RecoveredHudBoundary.cs": "e1a53a7a1d7ac4242a3570e625e5ba7e",
     "runtime/presentation/RecoveredHudFeedback.cs": "8dfb50268d23e4b1181363d3a7f45b53",

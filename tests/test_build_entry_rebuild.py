@@ -104,6 +104,7 @@ class BuildEntryTests(unittest.TestCase):
             "AndroidProfileHost",
             "AndroidLifecycleHost",
             "SurvivorSkillHost",
+            "SurvivorSkillInputHost",
             "SirenEncounterHost",
             "TeleporterLifetimeHost",
             "WholeCatalogBuild",

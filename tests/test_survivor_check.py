@@ -53,6 +53,7 @@ class SurvivorSelectionTests(unittest.TestCase):
             self.assertEqual(value["attempt"], "owned-attempt")
             self.assertEqual(value["developerSurvivorOverride"], name not in check.FREE_SURVIVORS)
             self.assertFalse(value["goldshoresRoute"])
+            self.assertTrue(value["diagnosticSkillCoverage"])
             self.assertEqual([key for key in check.DEBUG_OPTIONS if value["debugOptions"][key]], ["invincibility"])
             self.assertIn("no permanent progression", value["debugOptions"]["purpose"])
 
@@ -77,6 +78,83 @@ class SurvivorSelectionTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "coordination lock"):
                     device.cmd("shell", "true")
                 self.assertEqual(send.call_count, 1)
+
+
+def component_rows(count, *, passive_last=False):
+    roles = ["Primary", "Secondary", "Utility", "Special"] + ["None"] * max(0, count - 4)
+    rows = [{"componentIndex": index, "instanceId": 100 + index, "canonicalSlot": role, "present": True} for index, role in enumerate(roles[:count])]
+    if passive_last and rows:
+        rows[-1]["enabled"] = False
+        rows[-1]["definition"] = ""
+        rows[-1]["authorityActivations"] = 0
+        rows[-1]["serverActivations"] = 0
+    return rows
+
+
+class SurvivorComponentInventoryTests(unittest.TestCase):
+    def test_older_report_without_component_array_is_instrumentation_unavailable(self):
+        value = report()
+        self.assertEqual(
+            check.component_inventory(value, "Toolbot"),
+            {"status": "instrumentation-unavailable", "expectedComponents": 5},
+        )
+        self.assertEqual(check.assess("Huntress", "four-slots-activated", value, value, []), [])
+
+    def test_actual_expected_component_counts_and_native_roles_are_reported(self):
+        for survivor, count in (("Croco", 5), ("Toolbot", 5), ("Captain", 6), ("Huntress", 4)):
+            with self.subTest(survivor=survivor):
+                value = report()
+                value["survivorSkills"]["components"] = component_rows(count, passive_last=survivor == "Croco")
+                inventory = check.component_inventory(value, survivor)
+                self.assertEqual(inventory["status"], "valid")
+                self.assertEqual(inventory["observedComponents"], count)
+                self.assertEqual(inventory["noncanonicalCount"], count - 4)
+                self.assertEqual(inventory["canonicalCounts"]["None"], count - 4)
+                if survivor == "Croco":
+                    value["selectedSurvivor"] = "Croco"
+                    value["developerSurvivorOverride"] = True
+                    self.assertEqual(check.assess(survivor, "four-slots-activated", value, value, []), [])
+
+    def test_removed_component_history_does_not_distort_current_body_inventory(self):
+        value = report()
+        rows = component_rows(5)
+        removed = {"componentIndex": -1, "instanceId": 77, "canonicalSlot": "", "present": False}
+        value["survivorSkills"]["components"] = rows + [removed]
+        inventory = check.component_inventory(value, "Toolbot")
+        self.assertEqual(inventory["status"], "valid")
+        self.assertEqual(inventory["observedComponents"], 5)
+        self.assertEqual(inventory["historicalComponents"], 1)
+
+    def test_present_malformed_inventory_fails_without_changing_four_slot_gate(self):
+        for rows, reason in ((component_rows(4), "component-count-mismatch"), (None, "components-not-array")):
+            with self.subTest(reason=reason):
+                value = report()
+                value["survivorSkills"]["components"] = rows
+                inventory = check.component_inventory(value, "Toolbot")
+                self.assertEqual(inventory["status"], "invalid")
+                self.assertEqual(inventory["reason"], reason)
+
+    def test_duplicate_ids_and_bad_indexes_or_roles_fail_inventory(self):
+        cases = []
+        duplicate = component_rows(5)
+        duplicate[-1]["instanceId"] = duplicate[0]["instanceId"]
+        cases.append((duplicate, "component-identities-not-unique"))
+        bad_index = component_rows(5)
+        bad_index[-1]["componentIndex"] = 3
+        cases.append((bad_index, "component-indexes-not-contiguous-unique"))
+        bad_role = component_rows(5)
+        bad_role[-1]["canonicalSlot"] = "aux"
+        cases.append((bad_role, "component-native-role-invalid"))
+        bad_presence = component_rows(5)
+        bad_presence[-1]["present"] = False
+        cases.append((bad_presence, "component-count-mismatch"))
+        for rows, reason in cases:
+            with self.subTest(reason=reason):
+                value = report()
+                value["survivorSkills"]["components"] = rows
+                self.assertEqual(check.component_inventory(value, "Toolbot")["reason"], reason)
+                failures = check.assess("Toolbot", "four-slots-activated", report(), value, [])
+                self.assertTrue(any("invalid survivor skill component inventory" in failure for failure in failures))
 
 
 class SurvivorAssessmentTests(unittest.TestCase):

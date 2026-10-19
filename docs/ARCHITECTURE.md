@@ -636,6 +636,27 @@ stops the owned app and sleeps the display. Every ADB command checks the paralle
 session's coordination lock. Host contracts: `tests/test_survivor_check.py`.
 This supplements both unchanged baseline modes; it does not replace them.
 
+The checker also classifies J602's current component inventory independently
+of the four-slot gate: four components for most base bodies, five for Toolbot
+and Croco, six for Captain. Current indexes/instance identities must be unique
+and complete; removed history is separate. Missing older instrumentation is
+explicitly unavailable. Passive and auxiliary components need no invented
+activation requirement; valid inventory is not complete ability acceptance.
+
+`SurvivorSkillInputCoverage` (diagnostic input owner, default unconstructed)
+is selected only by `SessionReport.diagnosticSkillCoverage`, which the skill
+check explicitly enables. `IntegratedWorldSession` creates it after live
+authority, bridge, assist tracking and skill observation exist; applies it
+after the ordinary automatic producer; and disposes it before the observer
+and body. It resolves current canonical components at each request, reads
+native `CanExecute`, and overlays a single 0.25 s ordinary skill-button pulse.
+Requests are bounded to 12 and 120 s, spaced by 6 s. Reports distinguish
+eligibility, requests, later input-bank edges and native callback counts.
+Manual/foreign input changes survive release. No cooldown, stock, skill state
+or movement is written. `SurvivorSkillInputHost` tests synthetic routing,
+dynamic slots, stale-edge refusal, ownership, bounds and disposal in the
+exact editor. Real survivor behavior remains a device gate.
+
 `./dev prototype --action session-cleanup-check` (current support action,
 `scripts/lab/session_cleanup_check.py`) observes the existing first-stage loss
 and restart flow with automatic diagnostic input and every gameplay debug

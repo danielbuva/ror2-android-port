@@ -196,6 +196,15 @@ component names identify only the minimum original API contract; no native
 algorithm or serialized game data is copied. Audited 2026-10-19. R8 replay and
 Android acceptance of these new observations remain separate gates.
 
+J606 adds the repository-authored diagnostic input owner
+`runtime/input/SurvivorSkillInputCoverage.cs` to both selections (95 entries),
+with its actual imported GUID pinned after exact-editor validation. The owner
+uses native readiness and ordinary bridge inputs; no original skill algorithm,
+asset body or state configuration is copied. Its authored editor fixture is
+staged by the existing producer. The selection flag is default-off runtime
+diagnostic state, not a new local content input. Audited 2026-10-19; device
+acceptance and R8 source/importer/provenance replay remain separate gates.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

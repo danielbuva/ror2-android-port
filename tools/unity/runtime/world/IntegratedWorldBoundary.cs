@@ -333,7 +333,9 @@ public sealed partial class PortSession
     }
     void IntegratedWorldStimulus(CharacterBody player, NovaInputBridge bridge, float elapsed)
     {
-        GetIntegratedWorldSession().IntegratedWorldStimulus(player, bridge, elapsed);
+        var session = GetIntegratedWorldSession();
+        session.IntegratedWorldStimulus(player, bridge, elapsed);
+        session.ApplySurvivorSkillCoverage(player, bridge, elapsed);
     }
     void EarnedFeatherInput(CharacterBody player, NovaInputBridge bridge, float elapsed)
     {
@@ -384,6 +386,7 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         SurvivorSkillObserver survivorSkills;
+        SurvivorSkillInputCoverage skillInputCoverage;
         float nextSurvivorSkillSample;
         public IntegratedWorldSession(PortSession coordinator)
         {
@@ -2136,6 +2139,24 @@ public sealed partial class PortSession
             }
         }
         float worldFeatherInputAt = -1;
+        public void ApplySurvivorSkillCoverage(CharacterBody player, NovaInputBridge bridge, float elapsed)
+        {
+            if (!coordinator.r.diagnosticSkillCoverage || coordinator.r.phase != "integrated-world-playing")
+                return;
+            coordinator.Check(player && player == coordinator.worldPlayer && coordinator.r.world.authority,
+                              "Diagnostic skill coverage requires the owned authoritative player");
+            if (skillInputCoverage == null)
+            {
+                if (!bridge || !bridge.diagnosticInput)
+                    return;
+                coordinator.Check(survivorSkills != null && coordinator.r.debugAcceleration != null,
+                                  "Diagnostic skill coverage requires prepared observation and assist tracking");
+                skillInputCoverage = new SurvivorSkillInputCoverage(player, bridge, survivorSkills.report);
+                coordinator.r.skillInputCoverage = skillInputCoverage.reportData;
+                coordinator.DebugToggle("diagnosticSkillCoverage", true, "explicit launch selection");
+            }
+            skillInputCoverage.Apply(elapsed);
+        }
         public void EarnedFeatherInput(CharacterBody player, NovaInputBridge bridge, float elapsed)
         {
             // Whole-game diagnostic input only. Do not grant inventory, change jump limits,
@@ -2734,6 +2755,8 @@ public sealed partial class PortSession
         }
         public void CleanupIntegratedWorld()
         {
+            skillInputCoverage?.Dispose();
+            skillInputCoverage = null;
             survivorSkills?.Dispose();
             survivorSkills = null;
             nextSurvivorSkillSample = 0;

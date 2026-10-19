@@ -31,6 +31,7 @@
   "runtime/input/NovaInputBridge.cs",
   "runtime/input/NovaThirdPersonView.cs",
   "runtime/input/OfflineSettingsBoundary.cs",
+  "runtime/input/SurvivorSkillInputCoverage.cs",
   "runtime/presentation/MoonPillarPresentation.cs",
   "runtime/presentation/RecoveredHudBoundary.cs",
   "runtime/presentation/RecoveredHudFeedback.cs",
