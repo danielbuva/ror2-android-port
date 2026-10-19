@@ -77,6 +77,12 @@ class CatalogAnalysisTests(unittest.TestCase):
         with self.fake_chain(inspected=False), self.assertRaisesRegex(RuntimeError, "inspection incomplete"):
             catalog_analysis.ensure(self.work, self.dest, INPUT)
 
+    def test_recorded_work_paths_resolve_against_selected_inputs(self):
+        from whole_catalog import ROOT, work_path
+
+        self.assertEqual(work_path(self.work, "work/assetripper/x/export"), self.work / "assetripper/x/export")
+        self.assertEqual(work_path(self.work, "smoke/project"), ROOT / "smoke/project")
+
     def test_recipe_for_another_input_is_refused(self):
         with self.fake_chain(), self.assertRaisesRegex(RuntimeError, "accepted input"):
             catalog_analysis.ensure(self.work, self.dest, "b" * 64)

@@ -25,6 +25,12 @@ def copy_catalog_asset(source, target):
     shutil.copy2(source, target)
 
 
+def work_path(work, value):
+    """Resolve a recorded `work/...` path against the selected inputs, as StageIO.resolve does (J726)."""
+    path = Path(value)
+    return work.joinpath(*path.parts[1:]) if path.parts and path.parts[0] == "work" else ROOT / path
+
+
 def read_catalog(path):
     data = read(path)
     if data.get("schemaVersion") == 2:
@@ -581,7 +587,7 @@ def reconcile():
 
 def reconcile_into(out, native, work=WORK):
     """Typed native conversions and the reconciled closure for the audit in `out` (J725)."""
-    export = ROOT / read(work / "config/reconstruction.json")["projects"][0]
+    export = work_path(work, read(work / "config/reconstruction.json")["projects"][0])
     closure = read(out / "host-closure.json")
     index = read(out / "source-guid-index.json")
     metadata = read_catalog(catalog_path(out))
@@ -709,7 +715,7 @@ def audit():
 
 def audit_into(out, work=WORK):
     """Host catalog audit into `out`; writes no live pointer (J725)."""
-    export = ROOT / read(work / "config/reconstruction.json")["projects"][0]
+    export = work_path(work, read(work / "config/reconstruction.json")["projects"][0])
     # The accepted decompilation location is receipted by recovery.py.
     assembly_hash = sha(game(work) / "Risk of Rain 2_Data/Managed/RoR2.dll")
     expected_hash = next(row["sha256"] for row in read(work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
@@ -770,7 +776,7 @@ def export_source_catalog(out, filename="source-catalog.json", work=WORK):
     from boundaries import probe_tool
     from catalog_reader import dumps, read_shipped
 
-    export = ROOT / read(work / "config/reconstruction.json")["projects"][0]
+    export = work_path(work, read(work / "config/reconstruction.json")["projects"][0])
     original = game(work) / "Risk of Rain 2_Data/Managed/RoR2.dll"
     expected = next(row["sha256"] for row in read(work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
     contract = json.loads(run(probe_tool() + ["--catalog-contract", original], timeout=120).stdout)
