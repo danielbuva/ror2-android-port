@@ -7692,3 +7692,28 @@ sleeps the OLED. This establishes native activation callback breadth, not
 melee hit chains, dash target outcomes, invulnerability timing, alternate
 skills, ordinary unlocks or completed-session cleanup. Engineer remains
 blocked on J616's setup predicate until the J617 APK is device-tested.
+
+## J619 — Honor selected-device storage policy in the current survivor runner
+
+Host audit finds one remaining current runner assuming adopted storage instead
+of using the selected device policy: survivor-kit-check. Baseline and cleanup
+already compare selected policy, live storage and receipt-backed placement.
+Current runtime receipt reads use Device.read_receipt; no flat receipt bypass
+was found outside namespace/migration internals. Generic tooling only changes.
+
+The survivor runner now requires receipt/live mode agreement with the selected
+storage_mode and verifies package placement against that live adopted UUID or
+internal app path before launching a case. Missing/mismatched storage or
+placement refuses. Device.install still owns internal reserve enforcement.
+No device model, serial, controller map or storage configuration is inferred;
+the current Nova remains configured adopted-only. Extra devices still await
+user-supplied allowlist entries and live onboarding observations.
+
+Root integrated the reviewed draft and added end-to-end host gate tests that
+call the real check_survivors function with a fake selected device. Valid
+internal/adopted cases reach the existing case runner; receipt/live mode drift,
+wrong UUID/backing and missing placement refuse before runtime receipt access
+or launch. All 27 focused survivor tests and Ruff pass. Evidence:
+work/coordination/codex-survivor-storage-host.log. The ignored helper-model tests
+were not substituted for the tracked runner contract. No APK, build input,
+controller support, device receipt or external device action changes here.

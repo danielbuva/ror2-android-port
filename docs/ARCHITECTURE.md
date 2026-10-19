@@ -632,7 +632,10 @@ Toolbot's five and Captain's six loadout rows remain reachable.
 sequentially in the integrated Lakes world. A comma-separated `--target` selects a
 subset. Commando/Huntress use ordinary selection; locked base survivors use an
 explicit diagnostic override and invincibility, never permanent profile awards or
-expansion availability. A case needs 60 s of live world play and positive native
+expansion availability. Before launching, the runner verifies selected storage
+policy against both the ownership receipt and live storage/package placement;
+internal-storage reserve remains the install owner's gate. It does not infer
+controller support from storage policy. A case needs 60 s of live world play and positive native
 authority **and** server activations on all four slots; at 180 s it reports missing
 activation evidence. Source-suppressed callbacks remain unproven. First failure,
 first-stage departure or process exit ends the batch. Current-process errors are

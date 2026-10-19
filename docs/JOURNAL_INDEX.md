@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J619](PORTING_JOURNAL.md#j619--honor-selected-device-storage-policy-in-the-current-survivor-runner) | 2026-10-19 | Honor selected-device storage policy in the current survivor runner | Host audit finds one remaining current runner assuming adopted storage instead of using the selected device policy: survivor-kit-check. |
 | [J618](PORTING_JOURNAL.md#j618--mercenary-canonical-callbacks-pass-on-the-baseline-apk) | 2026-10-19 | Mercenary canonical callbacks pass on the baseline APK | Continue the base roster independently while J617's host/editor fix is built. |
 | [J617](PORTING_JOURNAL.md#j617--retire-owned-inactive-shield-rejectors-and-use-stable-player-identity) | 2026-10-19 | Retire owned inactive shield rejectors and use stable player identity | Hypothesis: a shield destroyed before its Collision child first activates can retain its HurtBox in the original rejector list because that child's OnDisable n… |
 | [J616](PORTING_JOURNAL.md#j616--engineer-guard-build-passes-both-baselines-then-refuses-body-identity) | 2026-10-19 | Engineer guard build passes both baselines, then refuses body identity | J614 source at c9e80aa builds a code-only Vulkan ARM64 candidate in 85.55 s with zero errors, request 20261019T090205.852490Z. |

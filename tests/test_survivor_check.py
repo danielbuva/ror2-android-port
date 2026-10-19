@@ -1,5 +1,7 @@
 import copy
+import io
 import json
+from contextlib import redirect_stdout
 from pathlib import Path
 import sys
 import tempfile
@@ -78,6 +80,51 @@ class SurvivorSelectionTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "coordination lock"):
                     device.cmd("shell", "true")
                 self.assertEqual(send.call_count, 1)
+
+
+class SurvivorStoragePolicyTests(unittest.TestCase):
+    def run_selected(self, mode, installed_mode, live, package_path, *, refused=False):
+        device = Mock()
+        device.settings = {"storage_mode": mode}
+        installed = {"storage": {"mode": installed_mode}, "package_path": package_path, "apk_sha256": "fixture-apk"}
+        device.owned.return_value = installed
+        device.storage.return_value = live
+        device.read_receipt.return_value = {"persistentDataPath": "/fixture-runtime"}
+        with tempfile.TemporaryDirectory() as directory:
+            def read(path):
+                return {"apk_sha256": "fixture-apk"} if path.name == "current-build.json" else {"attempt": "fixture-attempt"}
+
+            with patch.object(check, "WORK", Path(directory)), patch.object(check, "SurvivorCheckDevice", return_value=device), \
+                 patch.object(check, "read", side_effect=read), patch.object(check, "check_one", return_value={"success": True}) as case, \
+                 redirect_stdout(io.StringIO()):
+                if refused:
+                    with self.assertRaises(RuntimeError):
+                        check.check_survivors("Huntress")
+                    case.assert_not_called()
+                    device.read_receipt.assert_not_called()
+                else:
+                    self.assertEqual(check.check_survivors("Huntress"), [{"success": True}])
+                    case.assert_called_once()
+                    self.assertIs(case.call_args.args[-1], installed)
+                    device.storage.assert_called_once()
+
+    def test_selected_internal_and_adopted_devices_reach_the_existing_case_runner(self):
+        self.run_selected("internal", "internal", {"mode": "internal"}, "package:/data/app/fixture/base.apk")
+        self.run_selected("adopted", "adopted", {"mode": "adopted", "uuid": "live-volume"},
+                          "package:/mnt/expand/live-volume/app/fixture/base.apk")
+
+    def test_storage_drift_or_missing_placement_refuses_before_launch(self):
+        cases = (
+            ("internal", "adopted", {"mode": "internal"}, "package:/data/app/fixture/base.apk"),
+            ("internal", "internal", {"mode": "adopted"}, "package:/data/app/fixture/base.apk"),
+            ("internal", "internal", {"mode": "internal"}, "package:/mnt/expand/old/app/fixture/base.apk"),
+            ("adopted", "adopted", {"mode": "adopted", "uuid": "live-volume"}, "package:/mnt/expand/old/app/fixture/base.apk"),
+            ("adopted", "adopted", {"mode": "adopted"}, "package:/mnt/expand/old/app/fixture/base.apk"),
+            ("internal", "internal", {"mode": "internal"}, None),
+        )
+        for values in cases:
+            with self.subTest(values=values):
+                self.run_selected(*values, refused=True)
 
 
 def component_rows(count, *, passive_last=False):

@@ -293,8 +293,25 @@ def check_survivors(target):
     names = targets(target)
     device = SurvivorCheckDevice()
     installed = device.owned()
-    if installed["storage"]["mode"] != "adopted":
-        raise RuntimeError("Owned APK is not on adopted storage")
+    mode = device.settings["storage_mode"]
+    storage_receipt = installed.get("storage")
+    if not isinstance(storage_receipt, dict) or storage_receipt.get("mode") != mode:
+        raise RuntimeError("Owned APK storage differs from selected-device policy")
+    storage = device.storage()
+    if storage.get("mode") != mode:
+        raise RuntimeError("Owned APK storage differs from selected-device policy")
+    if mode == "internal":
+        expected_prefix = "/data/app/"
+    elif mode == "adopted":
+        uuid = storage.get("uuid")
+        if not isinstance(uuid, str) or not uuid:
+            raise RuntimeError("Selected adopted storage has no live volume identity")
+        expected_prefix = "/mnt/expand/" + uuid + "/"
+    else:
+        raise RuntimeError("Unknown explicitly configured storage mode")
+    package_path = installed.get("package_path")
+    if not isinstance(package_path, str) or expected_prefix not in package_path:
+        raise RuntimeError("Owned APK placement differs from selected live storage")
     if installed["apk_sha256"] != read(WORK / "config/current-build.json")["apk_sha256"]:
         raise RuntimeError("Installed APK differs from the current build receipt")
     attempt = read(WORK / "lab-project/Assets/LabLoadingScene/Resources/MovementBatchProbe.json")["attempt"]
