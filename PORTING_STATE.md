@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J620** (both baselines pass; Engineer acceptance running).
+Last updated 2026-10-19 after **J621** (Engineer callbacks pass; native cleanup check running).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -14,7 +14,7 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971` — J620 both baseline modes; Engineer checks remain separate. J609 cleanup/restart evidence belongs to the earlier 41ecca66… APK. |
-| Installed now | J617 candidate `fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971`, installed in place on current Nova adopted storage. Both baseline modes pass; Engineer callback/cleanup pipeline running. Runners sleep the OLED in finalizers. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Installed now | J617 candidate `fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971`, installed in place on current Nova adopted storage. Both baseline modes and Engineer callbacks pass; genuine Engineer cleanup/restart check running. Runners sleep the OLED in finalizers. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
 | Runtime source since verified APK | J617 identity/cleanup fixes are included in J620's baseline APK; Engineer acceptance remains pending. J619 changes only the host runner's selected storage-policy checks; no later runtime source is staged. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
@@ -36,8 +36,9 @@ they are not normal-difficulty acceptance.
 - **Survivors:** Commando and Huntress by ordinary selection; Bandit2, Toolbot, Engi and
   Loader through developer-only selection (J504). Four canonical native callbacks
   passed for Commando, Huntress and Bandit2 (J603), Toolbot including utility
-  (J611), Mage (J614) and Mercenary (J618). Engineer's native shield error (J611) is followed by a
-  refused guard setup on the next APK (J616); further acceptance remains open.
+  (J611), Mage (J614), Mercenary (J618) and Engineer (J621). Engineer's corrected
+  setup passes; actual shield filter execution/output and full kits remain open.
+  Treebot, Loader, Croco and Captain callback cases are next.
 - **Stages:** Huntress completed four original boss/charge/exit transitions
   Lakes → Goolake → Wisp Graveyard → Ship Graveyard → Sky Meadow (J504). 23 destinations
   are staged; nine DLC scenes are staged but unplayed pending a truthful expansion-availability

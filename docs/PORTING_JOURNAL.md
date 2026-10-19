@@ -7742,3 +7742,29 @@ callback and genuine cleanup/restart pipeline is underway; the shield fix has
 no Engineer Android acceptance yet. The prior APKs and failed setup evidence
 remain frozen. No extra device, content payload, Phase 2 input or Moon route
 was changed by this code-only build.
+
+## J621 — Engineer reaches four native callbacks with the shield lease attached
+
+On J620 APK
+fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971,
+the selected Engineer diagnostic case reaches 60.38 s of Lakes play with four
+valid canonical components and native authority/server counts 14/3/1/2 for
+primary/secondary/utility/special. No suppressed/missing callback, report first
+failure or current-process runtime error is observed. The corrected native
+body-index/master check succeeds, and world.engiShieldGuardPrepared is true.
+Evidence: work/experiments/survivor-check/20261019T093424.140550Z/Engi/.
+
+There is no LAB_ENGI_SHIELD_NULL_TARGET_GUARDED marker in this capture. Therefore
+this run proves successful setup and canonical activation breadth, not device
+execution of the guarded null-world-hit branch, actual mine/shield/turret output
+or shield blocking equivalence. Template release is also not exercised by this
+force-stop case. The native output observer remains an ignored draft and must
+verify an actual owner-listed shield's wrapper before claiming clone wiring.
+
+The locked base selection is diagnostic, automatic input/invincibility are
+assisted, and no permanent result is applied. Profile runs remain 13, with one
+earned/available earned unlock. The runner force-stops, removes its selector
+and sleeps the OLED. A separate genuine native loss/cleanup/same-process
+restart observation is underway on this APK with all gameplay debug assists
+off; its outcome belongs to its own journal result. Complete Engineer kit and
+ordinary unlock acceptance remain open.

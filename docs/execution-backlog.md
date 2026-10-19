@@ -12,9 +12,9 @@ result in the journal.
 - [ ] Observe the remaining J503 achievement conditions (near-death charge, two-stack Mountain
       Shrine, loop) and positive ordinary unlock grants without assists.
 - [ ] Complete skill kits for the base survivors beyond 35 s Lakes play (J504).
-      J611 passes MUL-T's four callbacks; diagnose Engineer's native shield hit-filter
-      error, then resume the remaining tracked survivor checks. Callback coverage
-      does not establish complete ability effects.
+      Continue after J621's Engineer callback coverage: verify actual shield filter/
+      output and native cleanup, then Treebot, Loader, Croco and Captain. Callback
+      coverage does not establish complete ability effects.
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
 - [ ] Validate the drafted Siren encounter owner: native eggs, boss start/defeat,
       rewards, disabled MapZones and stage teardown after the coordination lock clears.
