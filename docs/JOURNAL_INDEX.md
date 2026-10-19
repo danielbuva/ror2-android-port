@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J642](PORTING_JOURNAL.md#j642--observe-survivor-combat-outputs-with-bounded-native-ownership-facts) | 2026-10-19 | Observe survivor combat outputs with bounded native ownership facts | Four canonical callbacks do not establish skill output or damage. |
 | [J641](PORTING_JOURNAL.md#j641--rebuild-the-reviewed-cleanup-plugin-with-the-normal-content-pipeline) | 2026-10-19 | Rebuild the reviewed cleanup plugin with the normal content pipeline | Selected-device preflight passes before building J632 exit telemetry, J638's native skill-response cleanup guard and J639's context helpers. |
 | [J640](PORTING_JOURNAL.md#j640--bank-defaults-narrow-the-ui-audio-fallback-uncertainty-without-resolving-routing) | 2026-10-19 | Bank defaults narrow the UI audio fallback uncertainty without resolving routing | Continue J627's strict static-UI fallback review offline against the accepted J588 247-bank, version-150 parser receipt. |
 | [J639](PORTING_JOURNAL.md#j639--separate-mandatory-stage-context-from-existing-fixture-activation) | 2026-10-19 | Separate mandatory stage context from existing fixture activation | The unintegrated source-stage cohort draft consumed native stage RNG in the wrong order: even disabled CombatDirector.Awake draws a seed, and the existing tele… |

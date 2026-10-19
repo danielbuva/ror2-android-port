@@ -1003,3 +1003,15 @@ implementation, game asset data, captures or proprietary content is copied.
 Existing stage_build_sources produces the fixture; no new ignored build input is
 required. The runtime selection remains 100 authored files. Native snapshots are
 local evidence and stay ignored, outside public recipes.
+
+### J642 survivor combat observation source audit
+
+Add the authored `runtime/world/SurvivorCombatOutputObserver.cs` to both
+runtime source and layout selections (101 files), pinning its Unity-imported
+script GUID. The existing stage_build_sources producer stages this file and
+its exact-editor fixture. The report types contain authored scalar diagnostics;
+API/type/field names are the minimum needed for native ownership and damage
+observation. No native method body, original asset, middleware, device identity,
+private path or account data is reproduced. The public runtime selection and
+GUID are authored reconstruction inputs. Audited 2026-10-19; device acceptance
+and output coverage remain separate from the passing editor contracts in J642.

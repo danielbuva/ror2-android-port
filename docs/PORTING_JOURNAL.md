@@ -8568,3 +8568,55 @@ fix or full game readiness. The next survivor-combat observer source is not in
 this frozen APK. No additional device, device-receipt hand edit, storage change,
 original-input mutation or Phase 2 output is used. Replay obligations remain
 J638 R1 and J639 R8; no new content producer is introduced.
+
+## J642 — Observe survivor combat outputs with bounded native ownership facts
+
+Four canonical callbacks do not establish skill output or damage. Add a named
+read-only SurvivorCombatOutputObserver owned by IntegratedWorldSession, following
+the exact server-mapped selected body/master. It records native body-attributed
+damage, mapped projectile inflictors and reciprocal owned-summon damage separately.
+A one-second scan visits at most 4,096 current server identities; unknown/foreign
+ownership, incomplete scans, sampled live counts, 64 retained unique network IDs
+and repeated overflow observations remain explicit. A 32-entry damage ring retains
+scalar native damage/proc/inflictor facts. Unity damage time and world sampling
+time are labelled separately. No output is attributed to a skill slot by timing;
+no skill, stock, buff, damage, authority, projectile, summon or RNG is changed.
+
+The exact delegate is disposed before skill/body teardown. Read faults preserve
+the first bounded observer error, detach this observer and make only telemetry
+inert. They do not escape into native damage dispatch or suppress native errors.
+Owner references are released on fault/disposal. If unsubscribe fails, retain the
+exact handler and owner recovery handle for retry before replacement; do not add
+a second observer or claim cleanup while removal is pending. After a read fault,
+all counters/facts are partial evidence. Fixed scalar history remains local and
+bounded; network-ID reuse can merge sampled history, and one-second observation
+can miss transient outputs. Target-device overhead remains unmeasured.
+
+Prior-art-first: inspect pinned Starstorm2 SwiftSkateboard's native skill-event
+subscription and matching OnDestroy unsubscribe at a9a4badd… as an ownership
+precedent. Accepted e544 DamageReport, DamageInfo, ProjectileController,
+ProjectileCatalog and HLAPI mapping source define the actual API and attribution.
+Existing CombatSpine aggregate damage observation remains separate. No community
+or game method implementation is copied. Independent reviews correct escaping
+observer exceptions, misleading ever-count names, detach-handle loss, and missing
+editor guards. Test seams and fixture are excluded from the player.
+
+Root reviews/integrates the revised source and pins its imported authored GUID.
+The public source/layout selections now contain 101 runtime files; the existing
+fixture producer owns staging, with no timestamped runtime dependency. Fourteen
+runtime-source, thirteen layout and twelve build-entry host tests pass; Ruff
+passes. Combined exact Unity compilation and all three new contracts pass at
+work/experiments/survivor-combat-output/editor-20261019T114422.590647Z/.
+They verify native API shape, ring/history caps and honest repeated overflow,
+first-fault/inert behavior, release-before-retry, cleanup only after successful
+unsubscribe and idempotence. No native damage event, body, network object or
+projectile is installed by these fixtures. Private source/ownership review:
+work/coordination/survivor-combat-output-review.md.
+
+Installed J641 APK 118540ea… predates this observer. Its own cleanup/baseline
+checks continue independently; accepted baseline remains J637 03339547… until
+both new baseline modes pass. Next build must test the observer on actual survivor
+runs and inspect its error/partial fields; neither compilation nor sightings
+certify full kits or ordinary unlocks. R8/runtime-source replay must include this
+new source/fixture. No generated content, middleware, new required local input,
+device receipt, profile grant or Phase 2 output is introduced.

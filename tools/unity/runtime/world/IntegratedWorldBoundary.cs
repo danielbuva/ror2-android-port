@@ -94,6 +94,7 @@ public sealed partial class PortSession
         public bool lunarDefinition, lunarCurrencyAvailable;
         public bool engiShieldGuardPrepared, engiShieldGuardReleased;
         public EngineerNativeOutputObserver.Report engiNativeOutputs;
+        public SurvivorCombatOutputObserver.Report survivorCombatOutputs;
         public bool ready, authority, lootReady, interactionReady, cleaned, diagnosticInput, diagnosticInputEver;
         public int tableLoadedCount, barrels, chests, openedBarrels, openedChests, pickups, droplets, pickupMessages, coinMessages,
             xpMessages, frames, kills, liveEnemies;
@@ -412,6 +413,7 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         SurvivorSkillObserver survivorSkills;
+        SurvivorCombatOutputObserver survivorCombatOutputs;
         SirenEggDiagnosticInput sirenEggDiagnosticInput;
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
@@ -943,6 +945,9 @@ public sealed partial class PortSession
         }
         public IEnumerator PrepareIntegratedWorld(CharacterBody player, SessionConfig cfg)
         {
+            survivorCombatOutputs?.Dispose();
+            if (survivorCombatOutputs != null && survivorCombatOutputs.report.cleaned)
+                survivorCombatOutputs = null;
             worldFeatherInputAt = -1;
             coordinator.Check(
                 ((Dictionary<GameObject, EffectPool>)PortSession.RewardField(typeof(EffectManager), "_EffectPrefabMap").GetValue(null))
@@ -954,6 +959,8 @@ public sealed partial class PortSession
                     "Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",
                 feedbackCapability = "Authored pickup HUD; original native-audio notification handler unavailable."
             };
+            if (survivorCombatOutputs != null)
+                coordinator.r.world.survivorCombatOutputs = survivorCombatOutputs.report;
             try
             {
                 lightningStakeObserver = new LightningStakeDiagnosticObserver();
@@ -993,6 +1000,9 @@ public sealed partial class PortSession
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
             survivorSkills = new SurvivorSkillObserver(player);
             coordinator.r.survivorSkills = survivorSkills.report;
+            if (survivorCombatOutputs == null)
+                survivorCombatOutputs = new SurvivorCombatOutputObserver(player);
+            coordinator.r.world.survivorCombatOutputs = survivorCombatOutputs.report;
             if (coordinator.r.selectedSurvivor == "Engi")
             {
                 engiNativeOutputs = new EngineerNativeOutputObserver(player);
@@ -1754,6 +1764,7 @@ public sealed partial class PortSession
                 nextSurvivorSkillSample = elapsed + 1;
                 survivorSkills?.Sample();
                 engiNativeOutputs?.Sample();
+                survivorCombatOutputs?.Sample(elapsed);
             }
             long performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             if (worldClientUpdate == null)
@@ -2872,6 +2883,9 @@ public sealed partial class PortSession
             skillInputCoverage = null;
             engiNativeOutputs?.Dispose();
             engiNativeOutputs = null;
+            survivorCombatOutputs?.Dispose();
+            if (survivorCombatOutputs != null && survivorCombatOutputs.report.cleaned)
+                survivorCombatOutputs = null;
             survivorSkills?.Dispose();
             survivorSkills = null;
             nextSurvivorSkillSample = 0;

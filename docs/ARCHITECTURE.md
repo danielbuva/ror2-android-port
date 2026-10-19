@@ -808,7 +808,25 @@ resets controls per objective, teardown uses the existing exact subscriptions,
 and read failures make only telemetry inert. No native method/input/state is
 changed. `TeleporterExitTraceSourceContractFixture` checks the exact native API
 and production buffer through the existing fixture producer. Android trace
-acceptance remains pending; the installed J631 APK predates this change.
+acceptance remains pending; J641's APK contains this telemetry source.
+
+Survivor combat output observation (authored source, J642):
+`IntegratedWorldSession` owns a disposable `SurvivorCombatOutputObserver` beside
+the skill observer; `r.world.survivorCombatOutputs` holds bounded scalar reports.
+Setup requires the exact live server-mapped body/master and subscribes one stored
+native damage delegate. Direct body damage, mapped projectile inflictors and
+reciprocal owned summons remain separate attribution facts. A one-second sample
+visits at most 4,096 server identities; scan truncation and sampled live counts
+are explicit. Histories retain 32 damage facts and 64 distinct network IDs;
+overflow observations and retained unique IDs are separate counts. Unity damage
+time and world sampling time are separately labelled. Network-ID reuse and
+short-lived outputs limit coverage; no skill slot is inferred from timing.
+Cleanup detaches before body/skill retirement and releases owner references.
+An observer read failure records its first bounded error and makes only telemetry
+inert. A pending unsubscribe retains its recovery handle for disposal/retry before
+replacement; partial reports are never complete output evidence. The exact-editor
+fixture checks native API, caps and fault/disposal contracts without native objects
+or global event dispatch. This owner changes no gameplay, authority, stock or RNG.
 
 `TeleportMaterialSession` also owns final overlay/material release.
 `TeleportOverlayRegistryOwnership`, in the same authored file, reads the native

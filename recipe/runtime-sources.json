@@ -88,6 +88,7 @@
   "runtime/world/StageBossContentBoundary.cs",
   "runtime/world/StageCombatDeckBoundary.cs",
   "runtime/world/StagePopulationBoundary.cs",
+  "runtime/world/SurvivorCombatOutputObserver.cs",
   "runtime/world/SurvivorSkillObserver.cs",
   "runtime/world/WholeInteractableBoundary.cs",
   "runtime/world/WholePopulationBoundary.cs",
