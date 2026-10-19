@@ -298,7 +298,7 @@ class SessionCleanupCheckTests(unittest.TestCase):
         output = io.StringIO()
         with redirect_stdout(output):
             handler(fake_check, {}, Namespace(target="lab"))
-        self.assertEqual(calls, [{"survivor": "Commando"}])
+        self.assertEqual(calls, [{}])
         self.assertEqual(json.loads(output.getvalue()), {"success": True})
         with redirect_stdout(io.StringIO()):
             handler(fake_check, {}, Namespace(target="Engi"))

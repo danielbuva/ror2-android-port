@@ -63,8 +63,8 @@ def _target(function, kwargs, args):
 def _session_cleanup_target(function, kwargs, args):
     # The global prototype target defaults to "lab"; preserve the old Commando
     # behavior unless a caller explicitly supplies a base survivor key.
-    target = "Commando" if args.target == "lab" else args.target
-    return _json_result(function, dict(kwargs, survivor=target), args, indent=2)
+    selected = kwargs if args.target == "lab" else dict(kwargs, survivor=args.target)
+    return _json_result(function, selected, args, indent=2)
 
 
 def _timed_prepare(function, kwargs, args, *, seconds):

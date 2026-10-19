@@ -7582,7 +7582,10 @@ native listener retirement, same-PID restart and display finalizers remain.
 Twenty-five focused mocked tests pass, including Engineer's full report flow,
 wrong survivor before each tap, expansion refusal, default action JSON dispatch,
 strict profile booleans and the existing failure/finalizer cases. Ruff and the
-generated README action table check pass. Host log:
+generated README action table check pass. The full suite also caught an explicit
+default keyword differing from the historical dispatch contract; the action now
+leaves the runner's default implicit and forwards only an explicit target.
+All 900 host tests then pass with one optional skip. Host log:
 work/coordination/codex-cleanup-survivor-host.log. Architecture/help identify
 this as a current support action. No APK or runtime input changed, and the
 new target path has no device acceptance yet. J609 remains the existing
