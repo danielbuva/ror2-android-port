@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J581**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J582**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -73,8 +73,10 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    inherited files are in a hash-verified local store (J564). The from-scratch rebuild reproduces
    86,811 of 91,841 files byte-identically on the host, including all 352 shader outputs,
    and 190 of the 204 inherited-store files are regenerated; its binding gate passes
-   (J567–J575). The first full R9 Unity build of the destination produced an APK that
-   fails at its first report with a catalog generation-identity mismatch (J576). Remaining: the R9 Unity import of the destination (5,028 Unity-generated files
+   (J567–J575). R9 then built the destination from a fresh Library into an APK that passes
+   both device checks (J582, the stage exit on its second run). R9 still reports it unequal: three
+   new reimport errors, a larger IL2CPP binary (an extra `Unity.Timeline.dll` linker root) and one
+   missing built-in shader (J576–J582). Remaining: the R9 Unity import of the destination (5,028 Unity-generated files
    plus `ProjectSettings.asset` and one linker file), 14 store files (11 editor-built HUD
    assets, FastDirector, `Strings.json`, the TMP mobile shader, so J558 is still open) and 63
    hash-pinned local analysis inputs. The remaining

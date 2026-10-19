@@ -6026,3 +6026,42 @@ inlined, a real build selection exceeded the bridge's 50,000-character code limi
 storage; `./dev check-baseline` passed (35.2 s on Lakes) and `--stage-exit` passed (one genuine
 exit). App stopped, OLED asleep. 757 host tests pass. Working-editor evidence:
 `work/receipts/J580-working-hud-reimport-errors.json`.
+
+## J582 — First from-scratch APK passes both device checks; R9 still unequal
+
+Phase 2, from-scratch rebuild (run by Claude). Hypothesis: with the J577–J581 fixes, R9 builds the
+R1–R8 destination from a fresh Library into an APK that passes both device checks. The lab MCP
+editor was stopped for the run (operator approval) and restarted afterwards.
+
+Build. Pass 1 reimported the 49 managed DLLs; pass 2 reimported 14,366 dependents in one batch.
+The script audit passed: no missing script in `RecoveredUI/Hud.prefab` or `Menu.prefab`,
+`TimerText` has its target label (251 missing-script references across the whole selection still
+need comparing with the working project). Asset-bundle and player builds both succeeded with zero
+counted errors; the J576 `TimerText` errors are gone. APK
+`8aae50e03bbe…` (full hash in the destination receipt `.rebuild/unity-build.json`).
+
+R9 reports `equal: false`, for two reasons. (1) Three distinct errors during the dependent reimport
+are absent from pass 1's fresh import: two TMP `NullReferenceException`s and Addressables'
+"RuntimeData is null"; the third known message, a director weight warning, is pre-existing.
+(2) The APK is closer but not equivalent: 563 entries identical and none missing (J576: 545 and
+7). All 13 data entries that differed in J576 now match. Remaining differences: three signing
+entries; `libil2cpp.so` (+109 KB), `global-metadata.dat` (+15 KB) and the Burst library, the
+open `Unity.Timeline.dll` linker root (J577); `unity_builtin_extra` (−4 KB, the `Hidden/Compositing`
+shader J577 named); `level0`; and build metadata (`globalgamemanagers`, `boot.config`,
+`unity_app_guid`). Project files: both R9 obligations and all 28 deferred graphs identical, 1,511
+identical Unity-generated files, 3,227 folder metas differing only by their minted GUID, the same
+four known differences as J576, and no reference to a minted folder GUID.
+
+Device (installed in place on adopted storage, destination payload synced). `./dev
+check-baseline` passed: 35.2 s on Lakes, no report error
+(`work/experiments/baseline/20261019T000914.848708Z`). The first `--stage-exit` run made one
+genuine transition to Goolake but hit the check's deadline after 7.7 s there (196.5 s world time;
+`…20261019T001242.302731Z`). The immediate rerun passed: Goolake reached at 105.7 s with 12.2 s of
+next-stage play (`…20261019T001923.915031Z`). The baseline APK `5f0520d2…` and default payload were
+then reinstalled, and `./dev check-baseline` passed (35.2 s). App stopped, OLED asleep.
+
+So public source, recipes and the legitimate installation now rebuild an APK that runs both
+standard checks. It is not yet proven equivalent to the working project's. Revisit: why
+`Unity.Timeline.dll` becomes a linker root and `Hidden/Compositing` drops out; the three new
+reimport errors; the 251 selection-wide missing-script references against the working project;
+whether the first stage-exit's longer first stage recurs.
