@@ -98,7 +98,9 @@ restart, with the exact shrine loan returned and no recovery required. Native
 loss cleanup and stage transport remain unaccepted. J739's loss attempt on
 12d79359 stops at an enemy-observer NullReferenceException before observed
 player defeat; no restarted session is accepted. J745 includes J741
-component-lifetime guards and passes both defaults; native loss retry is pending. Prior
+component-lifetime guards and passes both defaults. J746 reaches genuine
+native defeat and the restart request, then stops at effect-loan retirement;
+no completed or restarted native-loss session is accepted. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
 

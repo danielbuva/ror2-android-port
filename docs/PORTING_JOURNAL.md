@@ -13390,3 +13390,108 @@ prove normal difficulty or qualify native loss/transport. Retry J739's native
 loss path next and preserve its first failure separately. J741's authored
 source is reproduced by R8; no new private build input is added. Audio remains
 disabled, and Moon/finale remains manual-only.
+
+## J746 — Native loss reaches defeat and restart request, then retains effect loans
+
+Hypothesis: J745's accepted enemy-observer guards allow J739's native loss
+attempt to reach the source defeat and same-process restart lifecycle. Use
+caeeb62fe45e7b8bad8a89272390a11a392152b975277660675a75e56a230453,
+ordinary Commando selection and seed 2, with the explicit native first-stage
+selector. Automatic input is diagnostic/assisted; invincibility, high damage,
+fast charge, movement and jump boosts are all false. Moon/finale stays paused.
+This separate experiment does not replace either default baseline check.
+
+The current-process first live world report arrives 149.466512 seconds after
+launch. Genuine native defeat follows: one death event, Commando.DeathState,
+health -23.800003, fourteen ragdoll bodies, corpse observed, matching death
+effect destroyed, body destroyed and master retained. The last world clock
+is 152.876953 seconds. The host sends the loss restart tap at 306.971881
+seconds. No enemy-observer NullReferenceException is observed in this attempt.
+That is narrower than proving every lifetime branch or identifying J739's
+exact null operand.
+
+The new first failure is "Owned stage effect loans survived original return
+callbacks", from RunClockSession.ReleaseCompletedRunAsyncAssets through
+ReturnIntegratedStageEffects. The last report remains session 1 in
+catalog-cleanup-pending; asyncAssetsReleased is false. No completed-session
+report or healthy session 2 is accepted. The report's partial cleanup=true
+and source-recovery=false do not override this later ownership refusal.
+The endRunEffectLoansReturned value 7 is sampled before issuing returns; it
+is not seven successful returns or a measured residual count. Existing
+operation witnesses remain diagnostic facts, not permission to release an
+unattributed handle. Profile baseline and last report remain 13 applied runs
+and one earned unlock; a completed-session profile is unavailable.
+
+Evidence: work/device/<serial>/experiments/session-cleanup/
+20261019T221453.774905Z/ (result, current-process log, first live snapshot,
+selection and launch receipts); root result:
+work/coordination/codex-native-caeeb-loss-restart.*. The host removes its
+selector, force-stops and sleeps through the existing runner cleanup. Main
+package and accepted default baseline remain caeeb62f; J730 abandonment is
+still separate evidence. Preserve this failure and inspect native effect-pool
+return/destruction ordering before another loss retry. No synchronous count
+reset, foreign effect destruction, forced asset release or weakened ownership
+assertion is authorized by the observed failure. No source/rebuild input is
+changed in this experiment.
+
+## J747 — Managed audio refusal localizes to import metadata before the native query
+
+Hypothesis: immutable first-failure diagnostics can identify J743's generic
+managed-player failure while preserving its startup and cleanup policy.
+Diagnostic-only owner/fixture/bootstrap copies record phase, returned AKRESULT,
+nullable native initialized observations and exception details before rollback.
+Original frozen sources remain intact. The fixture still completes only after
+actual readiness and owned Dispose; new diagnostic fields cannot qualify a pass.
+Independent review confirms startup refusal snapshots and fail-closed gates;
+a later cleanup-only failure would still lack an action-specific owner phase.
+Root passes four diagnostic and nine runner contracts.
+
+Reuse the disposable project's Library and unchanged whole JavaFirst scene,
+settings asset, original Init, managed closure and official ARM64 plugin.
+A package-only editor helper changes only the fresh package identifier and
+verifies every other selected setting/scene byte. Initial source staging needs
+a full AssetDatabase refresh to import the new helper; a premature idle check
+and an unavailable-menu attempt refuse without a player build. The retry
+coordinator then refuses before dispatch when its fixed snapshot omits the
+existing editor connector. Add only that exact connector, bound to its public
+source and editor-only assembly definition; unknown compiled assets still
+refuse. Twenty-four host contracts pass. The old terminal request is archived
+byte-for-byte, and all prior APK/build receipts remain preserved.
+
+The subsequent exact-editor IL2CPP ARM64 build succeeds in 54.269763 seconds,
+zero errors and two warnings. All 41 frozen inputs match afterward. APK:
+21f6e7f1fe766c2dbec0a59ac43941efe7c1ddf6168a937db21aca0acd8ee296.
+Build receipts:
+work/coordination/wwise-unity-managed-fixture-generator/project-java-first/
+build-output/31cdfe0ac1d94e25832d7086fc6a8bd1/.
+Root verifies packaged native/bank hashes and generated diagnostic getter
+symbols before device use; that is not runtime readiness evidence.
+
+On the configured Nova, the library is initially unmapped, Java loading maps
+it, and the Activity check passes. Startup throws at owner_try_start with
+"Native initialized-state import identity changed." The immutable owner
+phase is query_preexisting_native_engine, no AKRESULT is available and the
+native initialized-state value is unknown. The exception is emitted by the
+fixture's reflected DllImportAttribute identity check before query.Invoke;
+it does not establish a returned native query or an Init failure. The pinned
+candidate's source/import audit remains unchanged. Ready is false, recovery
+and unknown-Init flags are false, and owned cleanup completes.
+
+The extended JSON log event exceeds Unity's observed per-message output
+bound and is truncated; the host correctly rejects the malformed event.
+The local process log still preserves the exception and immutable first-phase
+summary. No complete pulled JSON report is accepted. Fresh adopted storage,
+exact installed APK ownership and cleanup checks pass; the fresh package is
+removed, no Android fatal is observed, cleanup errors are empty and the OLED
+sleeps. Evidence: work/device/<serial>/experiments/wwise-managed-fixture/
+20261019T222047.046922Z/; root result:
+work/coordination/codex-wwise-managed-diagnostic-device-v1.*.
+
+Next, keep metadata identity validation in the exact host/source contract and
+make the fixture's raw native query independent of unavailable AOT reflection
+metadata, preserving its actual boolean/ownership refusal. Publish a compact
+PID-local reference to a hash-bound JSON file so verbose failure data cannot
+truncate the live witness. Test those mechanisms before one fresh retry with
+the same bank/library/mode. No composed-game audio guard, production source,
+normal bank payload or rebuild input changes. Native SDK acceptance remains
+J740/J742; managed startup and game audio remain unaccepted.
