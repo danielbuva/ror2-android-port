@@ -60,6 +60,7 @@
   "runtime/stage/IntegratedStageBoundary.cs",
   "runtime/stage/MoonEscapeBoundary.cs",
   "runtime/stage/MoonMissionBoundary.cs",
+  "runtime/stage/SirenEncounterBoundary.cs",
   "runtime/stage/StageGeometryBoundary.cs",
   "runtime/stage/TeleporterWorldBoundary.cs",
   "runtime/world/AutomaticDirectionBoundary.cs",

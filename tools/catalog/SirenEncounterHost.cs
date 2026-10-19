@@ -1,0 +1,221 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using RoR2;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+
+// Idle-editor fixture for pure runtime selection and rollback contracts. It
+// does not activate imported content or start a game/network session.
+public static class SirenEncounterHost
+{
+    const string OriginalSourceScenePath = "Assets/LabLoadingScene/SourceScenes/shipgraveyard/shipgraveyard.unity";
+
+    sealed class FixtureCandidate
+    {
+        public string scene, name;
+        public uint id;
+        public bool active, validContract;
+    }
+
+    static void Require(bool condition, string message)
+    {
+        if (!condition)
+            throw new InvalidOperationException(message);
+    }
+
+    static bool Refuses(IEnumerable<FixtureCandidate> candidates)
+    {
+        try
+        {
+            SirenEncounterContract.SelectOriginalInactiveEncounter(candidates, candidate => candidate.scene, candidate => candidate.name,
+                candidate => candidate.id, candidate => candidate.active, candidate => candidate.validContract);
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Idle-editor fixture for pure exact source-identity selection and
+    /// refusal. Native NetworkServer spawn/unspawn remains device-only.
+    /// </summary>
+    public static object Run()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !NetworkServer.active &&
+                    !NetworkClient.active,
+            "Siren selection fixture requires the idle editor without a gameplay session");
+
+        // Inspect the staged original scene additively through Unity 2021's
+        // public editor API, retaining the current active scene. The
+        // runtime selector is the same identity/contract gate used by Attach;
+        // this fixture never activates the encounter or starts networking.
+        Require(!SceneManager.GetSceneByPath(OriginalSourceScenePath).IsValid(),
+            "Source-contract fixture must own its additive source scene, which is already open");
+        var priorActiveScene = SceneManager.GetActiveScene();
+        var sourceScene = EditorSceneManager.OpenScene(OriginalSourceScenePath, OpenSceneMode.Additive);
+        int originalMapZoneCount = 0;
+        try
+        {
+            Require(sourceScene.IsValid() && sourceScene.isLoaded,
+                "Could not open staged Ship Graveyard source scene additively");
+            var selectedSource = SirenEncounterSession.SelectSourceEncounter(sourceScene);
+            Require(selectedSource, "Runtime selector returned no Ship Graveyard source encounter");
+            var selectedIdentity = selectedSource.GetComponent<NetworkIdentity>();
+            Require(selectedSource && selectedSource.scene == sourceScene &&
+                        selectedSource.name == SirenEncounterContract.EncounterObjectName && !selectedSource.activeSelf &&
+                        selectedIdentity && selectedIdentity.sceneId.Value == SirenEncounterContract.EncounterSceneId,
+                "Runtime selector did not return the exact inactive source encounter with scene ID 10");
+
+            var originalMapZones = sourceScene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<MapZone>(true))
+                .ToArray();
+            originalMapZoneCount = originalMapZones.Length;
+            Require(originalMapZones.Length == 3 &&
+                        originalMapZones.All(zone => zone && !zone.gameObject.activeSelf && !zone.gameObject.activeInHierarchy),
+                "Source scene must retain all original MapZones disabled");
+        }
+        finally
+        {
+            if (priorActiveScene.IsValid() && priorActiveScene.isLoaded)
+                SceneManager.SetActiveScene(priorActiveScene);
+            if (sourceScene.IsValid() && sourceScene.isLoaded)
+                Require(EditorSceneManager.CloseScene(sourceScene, true), "Fixture-owned additive source scene did not close");
+        }
+
+        var original = new FixtureCandidate
+        {
+            scene = SirenEncounterContract.SceneName,
+            name = SirenEncounterContract.EncounterObjectName,
+            id = SirenEncounterContract.EncounterSceneId,
+            active = false,
+            validContract = true
+        };
+        var selected = SirenEncounterContract.SelectOriginalInactiveEncounter(new[] { original }, candidate => candidate.scene,
+            candidate => candidate.name, candidate => candidate.id, candidate => candidate.active,
+            candidate => candidate.validContract);
+        Require(ReferenceEquals(selected, original), "Exact original inactive source identity was not selected");
+
+        var duplicate = new FixtureCandidate
+        {
+            scene = SirenEncounterContract.SceneName,
+            name = SirenEncounterContract.EncounterObjectName,
+            id = SirenEncounterContract.EncounterSceneId,
+            active = false,
+            validContract = true
+        };
+        var wrongScene = new FixtureCandidate
+        {
+            scene = "wrong-scene",
+            name = SirenEncounterContract.EncounterObjectName,
+            id = SirenEncounterContract.EncounterSceneId,
+            active = false,
+            validContract = true
+        };
+        var wrongName = new FixtureCandidate
+        {
+            scene = SirenEncounterContract.SceneName,
+            name = "different-object",
+            id = SirenEncounterContract.EncounterSceneId,
+            active = false,
+            validContract = true
+        };
+        var active = new FixtureCandidate
+        {
+            scene = SirenEncounterContract.SceneName,
+            name = SirenEncounterContract.EncounterObjectName,
+            id = SirenEncounterContract.EncounterSceneId,
+            active = true,
+            validContract = true
+        };
+        var wrongContract = new FixtureCandidate
+        {
+            scene = SirenEncounterContract.SceneName,
+            name = SirenEncounterContract.EncounterObjectName,
+            id = SirenEncounterContract.EncounterSceneId,
+            active = false,
+            validContract = false
+        };
+        Require(Refuses(Array.Empty<FixtureCandidate>()) && Refuses(new[] { original, duplicate }) &&
+                    Refuses(new[] { wrongScene }) && Refuses(new[] { wrongName }) && Refuses(new[] { active }) &&
+                    Refuses(new[] { wrongContract }),
+            "Siren source identity selector did not refuse missing, ambiguous, wrong-scene/name, active, or changed contracts");
+        Require(!original.active && !duplicate.active && !wrongScene.active && !wrongName.active && active.active &&
+                    !wrongContract.active,
+            "Selection/refusal fixture mutated candidate active state");
+
+        bool transactionActive = false;
+        bool rollbackObserved = false;
+        bool spawnAttempted = false;
+        bool originalFailurePreserved = false;
+        try
+        {
+            SirenEncounterContract.RunAttachTransaction(() => transactionActive = true,
+                () =>
+                {
+                    spawnAttempted = true;
+                    throw new InvalidOperationException("fixture-injected spawn failure");
+                },
+                () =>
+                {
+                    transactionActive = false;
+                    rollbackObserved = true;
+                });
+        }
+        catch (InvalidOperationException exception)
+        {
+            originalFailurePreserved = exception.Message == "fixture-injected spawn failure";
+        }
+        Require(spawnAttempted && rollbackObserved && !transactionActive && originalFailurePreserved,
+            "Failed attach did not preserve its error and restore pre-attach state");
+
+        bool activationRollback = false;
+        bool activationSpawnAttempted = false;
+        bool activationFailurePreserved = false;
+        try
+        {
+            SirenEncounterContract.RunAttachTransaction(
+                () => { throw new InvalidOperationException("fixture-injected activation failure"); },
+                () => activationSpawnAttempted = true,
+                () =>
+                {
+                    activationRollback = true;
+                    throw new InvalidOperationException("fixture-injected rollback failure");
+                });
+        }
+        catch (InvalidOperationException exception)
+        {
+            activationFailurePreserved = exception.Message == "fixture-injected activation failure";
+        }
+        Require(activationRollback && !activationSpawnAttempted && activationFailurePreserved,
+            "Failed activation must skip spawn, attempt rollback and preserve the activation error");
+
+        string successfulOrder = "";
+        SirenEncounterContract.RunAttachTransaction(() => successfulOrder += "activate;",
+            () => successfulOrder += "spawn;", () => successfulOrder += "rollback;");
+        Require(successfulOrder == "activate;spawn;", "Successful attach must activate then spawn without rollback");
+
+        return new
+        {
+            success = true,
+            stagedSourceScene = OriginalSourceScenePath,
+            importedInactiveSceneId10SelectedByRuntimeAttachPredicate = true,
+            originalMapZoneCount = originalMapZoneCount,
+            allOriginalMapZonesRemainDisabled = true,
+            nativeEncounterLifecycleVerified = false,
+            exactIdentitySelected = true,
+            missingAmbiguousWrongSceneWrongNameActiveAndChangedContractsRefused = true,
+            candidatesRemainUnchanged = true,
+            failedAttachRollbackAndErrorPreservation = true,
+            activationFailureSkipsSpawnAndPreservesErrorEvenIfRollbackFails = true,
+            successfulActivationThenSpawnWithoutRollback = true,
+            nativeSpawnAndUnspawn = "device-only; requires live local server"
+        };
+    }
+
+}

@@ -99,6 +99,7 @@
     "runtime/stage/IntegratedStageBoundary.cs": "756b0bdf3059e481c9472691998f8652",
     "runtime/stage/MoonEscapeBoundary.cs": "e997c63b11df74b0ca87691862daf5bc",
     "runtime/stage/MoonMissionBoundary.cs": "32d9e4a34983c4ba0af378210a5090c1",
+    "runtime/stage/SirenEncounterBoundary.cs": null,
     "runtime/stage/StageGeometryBoundary.cs": "7b8d65172b667442f9929d8a03c70978",
     "runtime/stage/TeleporterWorldBoundary.cs": "74f9c081af19141779d6b23134be92d4",
     "runtime/world/AutomaticDirectionBoundary.cs": "0bdb9200f9f7c4cfe89a8d00b66b17f0",

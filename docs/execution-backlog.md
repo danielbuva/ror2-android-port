@@ -15,6 +15,8 @@ result in the journal.
       Build and device-check J587's drafted skill accounting/loadout rows after the
       parallel editor/device lock clears; then use the tracked survivor check.
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
+- [ ] Validate the drafted Siren encounter owner: native eggs, boss start/defeat,
+      rewards, disabled MapZones and stage teardown after the coordination lock clears.
 - [ ] Moon/finale/escape: manual sessions only, never navigated autonomously.
 
 ## Stability and performance

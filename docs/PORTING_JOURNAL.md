@@ -6531,3 +6531,86 @@ Host evidence: both destinations' four rows classify as above with the shipped f
 otherwise: any other byte difference, a missing file or a new reimport error still makes R9
 unequal. 832 host tests pass. Revisit if another scene joins `REBUILT_SCENES` or a native asset
 differs by more than that line.
+
+## J594 — Restore the original Siren encounter lifecycle (host draft)
+
+Hypothesis: ordinary Siren traversal (J402–J406/J504) does not
+establish its egg mission. The source encounter is inactive with scene ID 10;
+Siren's map-zone boundary deliberately omits global scene spawning because the
+three source MapZones are disabled. That also leaves this unrelated native
+encounter unspawned. Activate only the original encounter after stage population
+and native Stage.Start, preserving its authored FSM and gameplay implementation.
+J593 is reserved by the parallel session's in-progress recipe audit.
+
+Prior art: reread community-prior-art and pinned R2API Director README/internal
+and SceneAsset API at f539511eabf87f02afddb5a83cafd2f4704c85ad. Pool selection,
+scene asset acquisition and runtime activation are separate contracts. Preserve
+source pools/cards/requirements, and J402/J403's measured HLAPI rule that global
+SpawnObjects activates eligible inactive scene identities. The accepted source
+scene, Listening, ScriptedCombatEncounter, CombatSquad, BossGroup, MasterSummon,
+MinionOwnership and the native boss summon state supply the current API/lifecycle
+contracts. No game/community algorithm or serialized content is copied.
+
+Change: named independent SirenEncounterSession owns the exact source identity,
+network spawn, native observations and teardown. Its source selector requires
+one inactive scene-ID-10 object, the authored parent and enabled components,
+Listening initial/main state, monster card, no immediate spawn and no squad
+summon propagation. IntegratedStageSession attaches after native stage start,
+including first-stage setup, samples twice per second and releases before stage
+transport or session teardown. Scalar reports survive failed attach rollback and
+completed-stage cleanup; no engine object enters the report.
+
+The original listener still owns egg registration, thresholds, countdown and
+boss start. The owner only observes live eggs, native hasSpawnedServer and the
+exact owned BossGroup defeat callback. The separate expansion-gated portal
+callback, ordinary rewards/unlocks and all three disabled MapZones remain
+source-governed. No replacements, forced boss/egg spawn or expansion grant.
+
+Review found that source summons are outside the non-propagating combat squad.
+Native squad membership captures the exact boss, and the original MasterSummon
+server report captures its probes after Spawn/Respawn with matching native
+body, team, owner and network identities. Earlier ownership-change events fire
+before the probe has a network ID and cannot supply that contract. Cleanup
+removes its listeners first and preflights every live owned root/probe before
+requesting direct body/master destruction, avoiding death/undeploy callbacks
+and their rewards. Requests have separate counts; an empty set claims none.
+
+Unspawn is checked against the actual server object map because HLAPI defers
+clearing netId. After restoring active state, the owner synchronously destroys
+only its exact scene instance while the server remains active. Native
+CombatSquad unregisters static listeners only in OnDestroy with an active server;
+the current generic session shuts down before deferred geometry unload. This
+uses public engine destruction of an owned instance, never asset mutation or a
+manual private OnDestroy call. The synchronous lifecycle and actor requests
+still require device verification. Cleanup errors remain strict failures;
+cleanupDisposed alone is not success.
+
+Host evidence:
+`work/experiments/siren-encounter/host-20261019T061513.101405Z/`.
+All 833 shared-workspace Python host tests pass with one optional skip. The
+exact editor's bundled Roslyn compiles all 94 authored runtime sources and the
+survivor/Siren fixtures against the newly compiled runtime with zero errors.
+Ruff, README freshness, diff checks and host-only preflight pass. Initial host
+harness errors were missing synthetic fixture membership and an old runtime
+reference. The proposed preview-scene API also failed exact-editor compilation;
+the fixture now uses public additive OpenScene/CloseScene, refuses a pre-opened
+source scene, restores the prior active scene and saves no scenes. First-error
+notes and final compiler/test output are frozen with the evidence.
+
+SirenEncounterHost adds exact imported-scene selection through the runtime
+predicate, three disabled MapZones, synthetic ambiguity/contract refusals,
+activation/spawn order and rollback/error preservation. It has compiled only;
+no fixture or native lifecycle execution occurred. Actual six-egg placement,
+natural boss start/defeat, rewards, optional portal refusal, clean stage exit and
+native listener teardown remain unproven. This is a queued implementation draft,
+not stage/feature acceptance.
+
+No editor connection/start, ADB/device operation, Unity build, payload staging,
+real receipt mutation or Phase 2 step ran; the parallel coordination lock remains
+honored. No APK/hash or installed-state advancement. J585 remains the latest
+accepted baseline and both check-baseline modes remain required after changes.
+The new runtime source, source/layout recipes and fixture staging alter files
+reproduced by R8; replay its source/importer/provenance cohort after acceptance.
+The new GUID remains null until actual import. Moon and executable rollbacks are
+untouched. Revisit after the current-Nova multi-device gate, then execute both
+fixtures and one combined runtime build before the survivor and Siren checks.

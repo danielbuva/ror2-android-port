@@ -172,6 +172,15 @@ the source is staged by the existing build producer. Its layout GUID awaits the
 first editor import. `SurvivorSkillHost.cs` is an authored editor-only fixture,
 staged by that same producer; neither file introduces a local content input.
 
+The Siren encounter draft adds `runtime/stage/SirenEncounterBoundary.cs` to both
+source/layout selections (94 entries). This repository-authored owner contains
+only source API calls and the minimum scene/object/card identity contract; no
+serialized scene, original algorithm, asset body or middleware is reproduced.
+Its GUID awaits the first editor import. `SirenEncounterHost.cs` is an authored
+editor-only selection/transaction fixture staged by the existing build producer.
+Neither file adds a local content input. Audited 2026-10-18; device acceptance
+and R8 source/importer/provenance replay remain pending.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

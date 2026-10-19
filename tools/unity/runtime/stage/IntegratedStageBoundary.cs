@@ -41,6 +41,7 @@ public sealed partial class PortSession
         public int itemsBefore, itemsAfter;
         public List<string> completed = new List<string>();
         public List<ObjectiveReport> completedObjectives = new List<ObjectiveReport>();
+        public List<SirenEncounterReport> sirenEncounters = new List<SirenEncounterReport>();
         public List<StageEntryObservation> entryObservations = new List<StageEntryObservation>();
     }
     [Serializable]
@@ -156,6 +157,7 @@ public sealed partial class PortSession
         bool ownsSurfaceCatalog;
         static bool originalDamageMacrosReady;
         bool ownsOriginalStage;
+        SirenEncounterSession sirenEncounter;
         public IntegratedStageSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -393,6 +395,7 @@ public sealed partial class PortSession
                 coordinator.Check(begins == 1 && coordinator.objectiveStage &&
                                       coordinator.objectiveStage.sceneDef == SceneCatalog.GetSceneDefForCurrentScene(),
                                   "Original Stage.Start or server-begin callback did not complete");
+                AttachSirenEncounterIfPresent();
                 coordinator.r.stageProgress.originalStageBegins++;
                 coordinator.Save();
             }
@@ -421,6 +424,8 @@ public sealed partial class PortSession
         }
         public void TickOriginalStage()
         {
+            if (!transportingStage)
+                sirenEncounter?.Observe();
             if (ownsOriginalStage)
                 return; // Active source prefab receives Unity's own Update.
             if (coordinator.r == null || !coordinator.r.teleporterLoop || !coordinator.objectiveStage || transportingStage ||
@@ -520,6 +525,7 @@ public sealed partial class PortSession
             var solver = motor.Motor;
             solver.enabled = false;
             motor.velocity = Vector3.zero;
+            CleanupSirenEncounter();
             coordinator.CleanupStageBossInstances();
             // The native item can summon a player-owned ally outside the stage director.
             // Retire its body/master before replacing the source navigation graph; its
@@ -830,8 +836,24 @@ public sealed partial class PortSession
                 coordinator.r.stageProgress.effectLoansReturned += loans;
             coordinator.Check(pools.Values.All(x => x.InUseCount() == 0), "Owned stage effect loans survived original return callbacks");
         }
+        void AttachSirenEncounterIfPresent()
+        {
+            if (coordinator.stageGeometryScene.name != SirenEncounterContract.SceneName)
+                return;
+            coordinator.Check(sirenEncounter == null && coordinator.stageSourceObjects,
+                              "Siren encounter needs its original source scene and a fresh owner");
+            sirenEncounter = SirenEncounterSession.Attach(
+                coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenEncounters.Add(selected));
+        }
+        void CleanupSirenEncounter()
+        {
+            var owner = sirenEncounter;
+            sirenEncounter = null;
+            owner?.Dispose();
+        }
         public void Dispose()
         {
+            CleanupSirenEncounter();
             coordinator.PauseStageMapZones();
             coordinator.StopStageMapZoneObservations();
             if (coordinator.sourceSceneInfoRoot)
