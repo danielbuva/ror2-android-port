@@ -74,14 +74,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `caeeb62fe45e7b8bad8a89272390a11a392152b975277660675a75e56a230453`, J745 acceptance of the 105-source build with enemy-observer lifetime guards (source 9212cd0); all 266 payload hashes equal J737/J728. Retains J665's repaired content, J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.43 s on Lakes and one genuine stage exit to Goolake with 10.14 s next-stage play, no unexpected report or current-process log error (J745). Earlier Mercenary alternates and source UI-abandon/restart remain separate J737 evidence on 12d79359. |
+| APK | `771fc75282b45197d0dd25d3d537a121112ca35830c8d4dd516711aa7aa813cf`, J749 acceptance of the 105-source build with J748 native effect-retirement fence (source 069eab7); all 266 payload hashes equal J745/J737/J728. Retains J665's repaired content, J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 11.55 s next-stage play, no unexpected report or current-process log error (J749). Earlier Mercenary alternates and source UI-abandon/restart remain separate J737 evidence on 12d79359. |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J745), with the native diagnostic flag off. The separate
+baseline passed it (J749), with the native diagnostic flag off. The separate
 native source path previously reaches genuine Stage-begin and passes J697's
 source-table restoration, then refuses at the effect-reference attribution guard
 (J702/J710). J726 identifies a premature baseline-support release and moves reconciliation
@@ -100,7 +100,9 @@ loss cleanup and stage transport remain unaccepted. J739's loss attempt on
 player defeat; no restarted session is accepted. J745 includes J741
 component-lifetime guards and passes both defaults. J746 reaches genuine
 native defeat and the restart request, then stops at effect-loan retirement;
-no completed or restarted native-loss session is accepted. Prior
+no completed or restarted native-loss session is accepted. J749 includes J748’s
+native callback frame fence and passes both defaults; targeted loss retry remains
+open while work pauses for the user’s provenance-map refresh. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
 

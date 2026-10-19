@@ -13555,3 +13555,54 @@ main build for a provenance-map refresh; retain native-loss requalification as
 explicit open work at that checkpoint. The larger audio, MUL-T and Siren drafts
 remain private/unapplied. Accepted/installed main APK remains caeeb62f until
 that new gated default acceptance.
+
+## J749 — Accept the committed-source effect-retirement build and pause for provenance refresh
+
+Hypothesis: J748's source-backed effect-retirement fence preserves the default
+integrated world and one-exit path. This accepts the default baseline only;
+J746's separate native-loss failure is not requalified or declared resolved.
+The user requests a pause at this accepted build for a provenance-map refresh.
+
+Preflight passes and J738's committed-source gate is enforced. The exact
+Unity 2021.3.45f2 IL2CPP ARM64/Vulkan build reports success in 134.353974 seconds
+with zero errors. Its source.commit is
+069eab7172f91be37b16b7cd28802ad405857887. Root verifies all 247 frozen authored
+source/recipe/toolchain inputs remain unchanged; the runtime cohort stays 105
+sources. APK:
+771fc75282b45197d0dd25d3d537a121112ca35830c8d4dd516711aa7aa813cf.
+The frozen APK, source ZIP, build receipt and payload comparison live at
+work/experiments/native-effect-retirement/candidate-20261019T223504.280409Z/.
+All 266 actual payload hashes equal accepted caeeb62f (J745). The install
+updates the same owned package in place on the configured Nova; fresh adopted
+capacity, placement and runtime backing checks pass, followed by successful
+payload sync. No storage configuration or existing game/data is changed.
+
+Both standard device modes pass. Plain: 35.203033 seconds on Lakes.
+One-exit: exactly one genuine transition to Goolake, then
+11.546631 seconds of next-stage play (120.920761 seconds total world time).
+Both have empty report error/firstFailure, no unexpected current-process log
+error and appliedRuns=13 with resultApplied=false. Native first-stage
+operation/recovery flags are false, the optional operation witness is empty,
+Moon pause remains true, and automatic boundary-hold plus the four isolated
+input-window counters remain zero. The standard assists remain diagnostic;
+this is not ordinary difficulty or complete gameplay acceptance.
+
+Evidence: work/experiments/baseline/20261019T223926.104047Z/ and
+work/experiments/baseline/20261019T224325.517000Z/, including Root's
+log/control validation. Root install/sync/build/check outputs:
+work/coordination/codex-native-effect-retirement-*.
+The candidate's acceptance-receipt.json binds both checks and the exact source.
+The runners remove the selector, force-stop and sleep the OLED in finally.
+The host build lock is released after its terminal receipt. J748's 1,039-test
+qualification and offline full-source compile remain the source validation.
+
+Promote 771fc752 as accepted/installed. Preserve caeeb62f, 12d79359 and
+885ea294 as executable rollbacks and retain their separate earlier evidence.
+The native deferred-capacity branch is source-backed and host-tested; this
+one-exit pass does not prove it was the exact residual branch in J746.
+Native-loss requalification, wider stage coverage and the private audio,
+MUL-T and Siren drafts stay open. No further build, editor or device work is
+started after acceptance. Pause for the user's provenance-map refresh, with
+source 069eab7 frozen and the device idle. R8 must replay the three changed
+runtime owners; this checkpoint does not perform the other session's rebuild
+or provenance-map update.

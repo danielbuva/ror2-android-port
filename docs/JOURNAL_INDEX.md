@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J749](PORTING_JOURNAL.md#j749--accept-the-committed-source-effect-retirement-build-and-pause-for-provenance-refresh) | 2026-10-19 | Accept the committed-source effect-retirement build and pause for provenance refresh | Hypothesis: J748's source-backed effect-retirement fence preserves the default integrated world and one-exit path. |
 | [J748](PORTING_JOURNAL.md#j748--await-native-effect-retirement-before-asynchronous-asset-and-scene-release) | 2026-10-19 | Await native effect retirement before asynchronous asset and scene release | Hypothesis: J746's synchronous zero-loan guard can run before the native capacity-return branch has completed its deferred Unity destruction. |
 | [J747](PORTING_JOURNAL.md#j747--managed-audio-refusal-localizes-to-import-metadata-before-the-native-query) | 2026-10-19 | Managed audio refusal localizes to import metadata before the native query | Hypothesis: immutable first-failure diagnostics can identify J743's generic managed-player failure while preserving its startup and cleanup policy. |
 | [J746](PORTING_JOURNAL.md#j746--native-loss-reaches-defeat-and-restart-request-then-retains-effect-loans) | 2026-10-19 | Native loss reaches defeat and restart request, then retains effect loans | Hypothesis: J745's accepted enemy-observer guards allow J739's native loss attempt to reach the source defeat and same-process restart lifecycle. |
