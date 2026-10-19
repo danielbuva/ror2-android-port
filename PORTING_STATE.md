@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J737** (Mercenary effect ownership accepted after both controls and cleanup/restart).
+Last updated 2026-10-19 after **J740** (isolated Android Init metadata loading passes; native loss attempt fails separately).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -73,12 +73,17 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   posts an unchanged original Global event and captures nonzero PCM, but strict
   validation fails on the unavailable Controller Speaker output plugin. An
   explicit Android bus adaptation succeeds but still fails an Init-time plugin
-  lookup under cumulative error observation (J736). Init platform metadata, the
-  retained managed ABI and game lifecycle remain open.
+  lookup under cumulative error observation (J736). A fixture-only Init output
+  metadata adaptation then loads/unloads with zero post-Term cumulative errors
+  (J740); unchanged Global playback under that adaptation, the retained managed
+  ABI and game lifecycle remain open.
   J627 rejects a proposed static UI fallback; J640 resolves its numeric default
   but leaves native switch/routing semantics unproven.
   Licensed Rewired and generic controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
+- Native first-stage loss/restart: J739 stops at an unsafe enemy observation
+  before observed player defeat; the accepted default and J730 abandonment
+  results remain separate.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across sessions.
 
 ## Next actions

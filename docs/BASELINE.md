@@ -95,7 +95,9 @@ occurrence and source UI-abandon/restart with that loadout in J737. Complete
 ability semantics, projectile damage on this APK and visual parity remain open.
 J730 accepts completed native first-stage UI abandonment and a healthy same-process
 restart, with the exact shrine loan returned and no recovery required. Native
-loss cleanup and stage transport remain unaccepted. Prior
+loss cleanup and stage transport remain unaccepted. J739's loss attempt on the
+current APK stops at an enemy-observer NullReferenceException before observed
+player defeat; no restarted session is accepted. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
 

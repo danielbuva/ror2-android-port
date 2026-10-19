@@ -13021,3 +13021,113 @@ before building, a WIP commit if necessary. Four new host tests run in a tempora
 repository; 1,024 host tests pass. Not yet exercised by a real build: the next code build after
 this commit is the first. Revisit: refresh the provenance map at the first accepted commit built
 under this gate, then replay R1–R8 and decide R9 with the operator (J729).
+
+## J739 — Native first-stage loss attempt stops at an unsafe enemy observation
+
+Hypothesis: J730's separate native first-stage UI-abandon/restart acceptance
+can be extended to native loss on the accepted J737 APK, without enabling debug
+invincibility, damage, charge or movement assists. Root uses the existing
+session-loss checker with only the explicit native-first-stage diagnostic
+selector added. Automatic input still marks the run assisted and excludes
+normal-game/progression acceptance. Moon remains paused.
+
+APK 12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8
+reaches the native first-stage Lakes world. The attempt fails at 164.524673
+world seconds with a NullReferenceException in EnemySpineSession.ObserveEnemy,
+called directly from NovaInputBoundary. The final report still has player
+health 143 and no observed player-defeat event or death-state entry. Thus this
+is a failure during the loss attempt, not proof of a failure during player
+death. No completed-session or healthy restarted-session contract passes.
+
+The last enemy snapshot identifies Wisp1Monster.SpawnState, records position
+and path length, and has no AI frame or health sample. The observer assumes
+every body has a CharacterMotor and HealthComponent and every AI has a live
+target/state machine. Those nested references are not checked. The stack has
+no source offset; the precise null identity is not measured. Read the actual
+native body/component layout before narrowing that diagnosis. A correction
+must tolerate independently unavailable observation fields while preserving
+the native actor, defeat and cleanup lifecycles, with no catch-all or fabricated
+measurement.
+
+Prior art: the pinned Starstorm2/R2API character references in
+community-prior-art.md preserve body/state-machine relationships; the accepted
+BaseAI source shows cached target references can be reset independently of
+the AI. This is lifetime/API evidence, not proof of which null occurred here.
+J609's earlier loss/restart and J730's UI-abandonment remain separate results.
+
+Evidence: work/device/<serial>/experiments/session-cleanup/20261019T212617.500262Z/;
+root result: work/coordination/codex-native-12d-loss-restart.stderr.
+The failed session reports cleanup=true and recovery=false; the host removes
+its selector, force-stops and sleeps the OLED with no added cleanup failure.
+Profile applied/earned/available counts at first live remain 13/1/1. No new
+runtime source, APK, bank, install or baseline is introduced. Revisit after a
+production-method host contract and a fresh device retry of the observer fix.
+
+## J740 — Android Init metadata adaptation clears the native plugin lookup
+
+Hypothesis: J736's Init-time plugin lookup comes from platform-specific output
+metadata, which can be adapted before loading while leaving media and other
+bank content unchanged. This is an explicit fixture-only metadata adaptation,
+not unchanged-bank or original controller-output fidelity acceptance. The
+installed SDK's sink-registration/bank APIs and pinned R2API.Sound's Init-first
+bank lifetime remain the prior art. No game audio gate is enabled.
+
+The authored, exact-input transformer verifies the original Init SHA-256,
+6,319-byte size, format 150, bank ID, chunk ordering, plugin/device inventory
+and root-bus bindings. It removes the empty Controller Speaker autoload entry
+and two empty Controller device objects, then redirects their two root buses
+to the existing System shareset. It preserves bus IDs, child/auxiliary routes,
+the remaining three devices and their opaque parameters, BKHD and unaffected
+chunks. It recomputes structural counts/sizes without guessing plugin data.
+Outputs must be new files under ignored work; escapes, symlinks, source
+collision and overwrite refuse without writes. Eight host contracts pass.
+The original bank's hash is unchanged before and after Root's execution.
+
+The generated candidate is 6,264 bytes, SHA-256
+618d1c5d534af10fc4cc30a1bacd193bf6871dab3e63992ebedd92a92576fb90.
+Transformer SHA-256 is
+91c72d254ba9473d93ffb18c4be2233be1781b6072b08571aed7f607e76e9b37;
+Root-executed receipt is
+3b274de411fe2128bffd43de117baf9156e58e75ebcd0f0cb2a5379b1f22260f.
+The load-only JNI exposes no event, capture or routing operation. Root compiles
+its new source 70033d5c3c8c17968530a724b43167e86bf00a9cc49486839a89007ad148e1e5
+into 8ca52eebaf754857fd09e1e64a92ed0fd77a7b487536276c2167a9add5758063,
+reusing J736's exact cumulative-monitor bridge. The pinned r21d compiler and
+separately recorded mixed-link constraints remain unchanged.
+
+Root passes 14 producer/input contracts, actual extracted Java plan/reader/
+sink/cleanup/final-witness methods, actual generic sink JNI forwarding, and
+14 runner-classifier contracts. The reader owns one exact-size/hash/EOF-checked
+array; unload precedes Term, and unknown/refused ownership is retained. A real
+post-Term cumulative summary is mandatory. Sink queries record true or false
+truthfully; unavailability is distinct from an invalid query. The strict
+classifier rejects pending/sticky/legacy errors, including codes 114 and 42.
+
+APK a97c42a29513dacf70b6a16d45715792c73d760e79a89516999e070ce7b799ee
+passes on the configured Nova. Native SDK version is 2023.1.8.8601. Before bank
+loading, actual queries report System 174=true, Controller Speaker 179=false,
+No Output 181=true. Init, adapted-bank load, twelve no-event RenderAudio calls,
+exact bank unload and Term succeed. The parsed post-Term count is zero with
+no sticky/pending/legacy error, no first failure and complete owned cleanup.
+Fresh adopted-volume/capacity, APK placement and runtime data/output backing
+checks pass. The fresh disposable package is removed, no Android fatal is
+observed, cleanup errors are empty and the OLED sleeps.
+
+Evidence: work/device/<serial>/wwise-init-metadata/20261019T213937.088212Z/;
+root result: work/coordination/codex-wwise-init-metadata-device-v2.stdout.
+The first runner invocation lacked the pinned Android environment and refused
+before install; its evidence is preserved separately. The builder/transform/
+native receipts remain under work/coordination/wwise-init-metadata-fixture-draft/
+and work/coordination/wwise-init-android-platform-metadata/root-generated-v1/.
+
+Static metadata coverage includes all 247 bank entries and 3,318 events, but
+the saved typed HIRC graph covers Init only. Controller auxiliary sends refer
+to distinct preserved bus IDs; raw matches in DATA are not typed references.
+The accepted game's identified MusicController.AddOutput caller uses the
+preserved Music_Audio_Device shareset. Full-bank/native callers, bank-header
+integrity semantics and retained Unity/music lifecycle remain unproven.
+Next, test a fresh adapted Init plus unchanged Global and the previously traced
+UI event with EndOfEvent, bounded PCM and the same zero-error cleanup gate.
+This load-only pass has no event, PCM, audibility, managed-ABI or composed-game
+acceptance. Audio remains unavailable in the port; baseline and rebuild inputs
+are unchanged. All bank/SDK/native material remains ignored.
