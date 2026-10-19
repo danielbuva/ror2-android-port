@@ -1,8 +1,10 @@
 import hashlib
 import io
 import json
+import runpy
 import sys
 import tempfile
+import types
 from argparse import Namespace
 from contextlib import redirect_stdout
 import unittest
@@ -27,6 +29,9 @@ from session_cleanup_check import (
     parse_window_rotation,
     report_errors,
     restart_contract,
+    skill_variant_failures,
+    combat_output_lifecycle,
+    first_ready_observer_contract,
     runtime_stop,
     restart_coordinates,
     selector_action,
@@ -354,6 +359,23 @@ def session_one_defeat_report():
 
 
 class SessionCleanupCheckTests(unittest.TestCase):
+    def test_cli_accepts_skill_variants_for_existing_three_actions(self):
+        main_path = Path(__file__).resolve().parents[1] / "scripts/lab/main.py"
+        for action in ("survivor-kit-check", "session-cleanup-check", "session-abandon-check"):
+            with self.subTest(action=action):
+                captured = []
+                fake_actions = types.ModuleType("actions")
+                fake_actions.dispatch = lambda args: captured.append(args)
+                fake_actions.print_actions = lambda: None
+                argv = [
+                    str(main_path), "prototype", "--action", action, "--target", "Toolbot",
+                    "--skill-variants", "/ignored/variants.json",
+                ]
+                with mock.patch.object(sys, "argv", argv), mock.patch.dict(sys.modules, {"actions": fake_actions}):
+                    runpy.run_path(str(main_path), run_name="__main__")
+                self.assertEqual(len(captured), 1)
+                self.assertEqual(captured[0].skill_variants, "/ignored/variants.json")
+
     def test_survivor_target_is_base_only_and_locked_choices_are_diagnostic(self):
         self.assertEqual(selection("attempt-1")["selectedSurvivor"], "Commando")
         self.assertFalse(selection("attempt-1")["developerSurvivorOverride"])
@@ -393,6 +415,11 @@ class SessionCleanupCheckTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             ACTIONS["session-abandon-check"].handler(fake_check, dict(ACTIONS["session-abandon-check"].kwargs), Namespace(target="Engi"))
         self.assertEqual(calls[-1], {"ending": "abandon", "survivor": "Engi"})
+        with redirect_stdout(io.StringIO()):
+            ACTIONS["session-cleanup-check"].handler(
+                fake_check, {}, Namespace(target="Toolbot", skill_variants="/ignored/variants.json")
+            )
+        self.assertEqual(calls[-1], {"survivor": "Toolbot", "skill_variants": "/ignored/variants.json"})
 
     def test_abandon_action_is_distinct_and_original_action_keeps_loss_default(self):
         self.assertEqual(ACTIONS["session-cleanup-check"].kwargs, {})
@@ -440,6 +467,129 @@ class SessionCleanupCheckTests(unittest.TestCase):
         self.assertEqual(runtime_stop(report, 314, "attempt-1"), "outside-first-stage-contract")
         menu = live_report(phase="offline-start-menu", integratedWorld=False, teleporterLoop=False)
         self.assertIsNone(runtime_stop(menu, 314, "attempt-1"))
+
+    def test_skill_variant_selector_is_optional_and_reused_by_launch_selection(self):
+        request = {
+            "survivor": "Toolbot",
+            "entries": [{"componentIndex": 1, "familyCatalogIndex": 41, "variantIndex": 1, "skillCatalogIndex": 102}],
+        }
+        plain = selection("attempt-1", "Toolbot")
+        self.assertNotIn("developerSkillVariantOverride", plain)
+        selected = selection("attempt-1", "Toolbot", request)
+        self.assertEqual(selected["developerSkillVariantOverride"], request)
+        self.assertIn("assisted", selected["debugOptions"]["purpose"])
+        self.assertIn("no profile or unlock changes", selected["debugOptions"]["purpose"])
+
+    def test_variant_contract_checks_pre_mutation_identity_effective_vector_live_fields_and_marker(self):
+        request = {
+            "survivor": "Toolbot",
+            "entries": [{"componentIndex": 1, "familyCatalogIndex": 41, "variantIndex": 1, "skillCatalogIndex": 102}],
+        }
+        pre_rows, live_rows = [], []
+        for component in range(5):
+            variants = [{"variantIndex": index, "skillCatalogIndex": 100 + component + index, "skillName": ""} for index in range(3)]
+            chosen = 1 if component == 1 else 0
+            common = {
+                "componentIndex": component,
+                "familyCatalogIndex": 40 + component,
+                "selectedLoadoutVariantIndex": chosen,
+                "selectedLoadoutSkillCatalogIndex": 100 + component + chosen,
+                "runtimeSkillCatalogIndex": 100 + component + chosen,
+                "runtimeDefinitionStatus": "matches-selected-native-loadout",
+                "variants": variants,
+            }
+            before = dict(common, selectedLoadoutVariantIndex=0, selectedLoadoutSkillCatalogIndex=100 + component,
+                          runtimeSkillCatalogIndex=-1, runtimeDefinitionStatus="uninitialized-or-unassigned")
+            pre_rows.append(before)
+            live_rows.append(common)
+        inventory = {"status": "available", "bodyIndex": 7, "selectionSource": "native-master-loadout-pre-spawn", "components": pre_rows}
+        live_inventory = {"status": "available", "bodyIndex": 7, "selectionSource": "native-master-loadout-live", "components": live_rows}
+        report = live_report(
+            selectedSurvivor="Toolbot",
+            developerSurvivorOverride=True,
+            developerSkillVariantOverride=request,
+            developerSkillVariantAssisted=True,
+            developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True, "assisted": True,
+                                                 "effectiveSkillVariants": [0, 1, 0, 0, 0], "skillVariantInventory": inventory},
+            survivorSkills={"skillVariantInventory": live_inventory},
+        )
+        self.assertEqual(skill_variant_failures(report, request), [])
+        missing_marker = dict(report, developerSkillVariantAssisted=False)
+        self.assertIn("per-run skill-variant assisted session marker is absent", skill_variant_failures(missing_marker, request))
+        wrong_effective = dict(report, developerSkillVariantOverrideReport={**report["developerSkillVariantOverrideReport"], "effectiveSkillVariants": [0, 0, 0, 0, 0]})
+        self.assertTrue(any("effective native" in failure for failure in skill_variant_failures(wrong_effective, request)))
+        wrong_live = dict(live_inventory, components=[dict(row) for row in live_rows])
+        wrong_live["components"][1]["runtimeSkillCatalogIndex"] = 101
+        wrong_report = dict(report, survivorSkills={"skillVariantInventory": wrong_live})
+        self.assertIn("post-spawn setup SkillDef snapshot does not match the requested effective variant", skill_variant_failures(wrong_report, request))
+
+    def test_skill_variant_contract_rejects_wrong_catalog_identity_and_selector(self):
+        request = {"survivor": "Toolbot", "entries": [{"componentIndex": 0, "familyCatalogIndex": 40, "variantIndex": 1, "skillCatalogIndex": 101}]}
+        report = {"developerSkillVariantOverride": {"survivor": "Toolbot", "entries": []}}
+        self.assertIn("per-run skill-variant selector differs", skill_variant_failures(report, request))
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "invalid-variants.json"
+            path.write_text(json.dumps(request))
+            with mock.patch.object(runner, "SessionCleanupDevice") as device:
+                with self.assertRaises(ValueError):
+                    runner.check_session_cleanup(survivor="Engi", skill_variants=str(path))
+                device.assert_not_called()
+
+    def test_combat_observer_lifecycle_reports_unavailable_or_validates_both_edges(self):
+        for malformed in ([], "invalid", None, {"world": [1]}):
+            with self.subTest(malformed=malformed):
+                state, errors = combat_output_lifecycle(malformed, expect_cleaned=True)
+                self.assertEqual(state["status"], "invalid")
+                self.assertTrue(errors)
+        unavailable, failures = combat_output_lifecycle(live_report(), expect_cleaned=True)
+        self.assertEqual(unavailable["status"], "unavailable")
+        self.assertEqual(failures, [])
+        completed = live_report(world={"survivorCombatOutputs": {"attached": False, "cleaned": True, "inert": False}})
+        self.assertEqual(combat_output_lifecycle(completed, expect_cleaned=True)[0]["status"], "valid")
+        self.assertTrue(combat_output_lifecycle(live_report(world={"survivorCombatOutputs": {"attached": True, "cleaned": False, "inert": True}}), expect_cleaned=False)[1])
+        healthy = live_report(world={"survivorCombatOutputs": {"attached": True, "cleaned": False, "inert": False, "observerError": ""}})
+        self.assertEqual(combat_output_lifecycle(healthy, expect_cleaned=False)[0]["status"], "valid")
+
+    def test_first_ready_observer_check_waits_for_body_and_engi_guard_then_refuses_fault(self):
+        startup = live_report(
+            selectedSurvivor="Engi",
+            developerSurvivorOverride=True,
+            world={"ready": False, "health": 0, "maxHealth": 0, "diagnosticInputEver": False,
+                   "engiShieldGuardPrepared": False,
+                   "survivorCombatOutputs": {"attached": False, "cleaned": False, "inert": True, "observerError": "early"}},
+        )
+        self.assertEqual(first_ready_observer_contract(startup, "Engi"), (None, []))
+        ready_fault = live_report(
+            selectedSurvivor="Engi",
+            developerSurvivorOverride=True,
+            world={"ready": True, "health": 130, "maxHealth": 130, "diagnosticInputEver": True,
+                   "engiShieldGuardPrepared": True,
+                   "survivorCombatOutputs": {"attached": False, "cleaned": True, "inert": True, "observerError": "detach failed"}},
+        )
+        state, failures = first_ready_observer_contract(ready_fault, "Engi")
+        self.assertEqual(state["status"], "invalid")
+        self.assertTrue(any("first-ready session combat-output observer" in failure for failure in failures))
+        healthy = dict(ready_fault, world={**ready_fault["world"], "survivorCombatOutputs": {
+            "attached": True, "cleaned": False, "inert": False, "observerError": ""}})
+        self.assertEqual(first_ready_observer_contract(healthy, "Engi")[0]["status"], "valid")
+
+    def test_completed_and_restarted_contracts_gate_variant_marker_and_available_observer(self):
+        counts = {"appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2}
+        request = {
+            "survivor": "Commando",
+            "entries": [{"componentIndex": 0, "familyCatalogIndex": 40, "variantIndex": 1, "skillCatalogIndex": 101}],
+        }
+        completed = completed_report()
+        completed["world"]["survivorCombatOutputs"] = {
+            "attached": False, "cleaned": True, "inert": True, "observerError": "detach failed"
+        }
+        failures = cleanup_contract(completed, 314, "attempt-1", counts, skill_variant_override=request)
+        self.assertTrue(any("assisted session marker is absent" in failure for failure in failures))
+        self.assertTrue(any("completed-session combat-output observer" in failure for failure in failures))
+        restarted = live_report(session=2, world={"survivorCombatOutputs": {"attached": False, "cleaned": True}})
+        failures = restart_contract(restarted, 314, "attempt-1", counts, skill_variant_override=request)
+        self.assertTrue(any("assisted session marker is absent" in failure for failure in failures))
+        self.assertTrue(any("restarted-session combat-output observer" in failure for failure in failures))
 
     def test_completed_session_requires_active_native_listener_retirement_and_real_loss(self):
         counts = {"appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2}
@@ -653,6 +803,37 @@ class SessionCleanupCheckTests(unittest.TestCase):
             self.assertEqual(device.taps, [])
             saved = json.loads((evidence / "result.json").read_text())
             self.assertEqual(saved["stop"], "abandon-world-startup-timeout")
+        finally:
+            temp.cleanup()
+
+    def test_mocked_abandon_waits_for_ready_body_then_refuses_faulted_observer_before_taps(self):
+        startup = live_report(
+            session=1,
+            selectedSurvivor="Engi",
+            developerSurvivorOverride=True,
+            world={"seconds": 0.0, "ready": False, "health": 0.0, "maxHealth": 0.0,
+                   "diagnosticInputEver": False, "engiShieldGuardPrepared": False,
+                   "survivorCombatOutputs": {"attached": False, "cleaned": False, "inert": True, "observerError": "early"}},
+        )
+        first_ready_fault = live_report(
+            session=1,
+            selectedSurvivor="Engi",
+            developerSurvivorOverride=True,
+            world={"seconds": 1.0, "ready": True, "health": 130.0, "maxHealth": 130.0,
+                   "diagnosticInputEver": True, "engiShieldGuardPrepared": True,
+                   "survivorCombatOutputs": {"attached": False, "cleaned": True, "inert": True,
+                                              "observerError": "observer fault"}},
+        )
+        temp, device, result, error, evidence = run_fake_check(
+            [startup, first_ready_fault], survivor="Engi", ending="abandon", clock_step=1.0
+        )
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "first-live-combat-output-observer-unhealthy")
+            self.assertEqual(saved["combat_output_lifecycle"]["first_ready_session_1"]["status"], "invalid")
         finally:
             temp.cleanup()
 

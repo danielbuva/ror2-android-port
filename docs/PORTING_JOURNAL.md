@@ -8881,3 +8881,46 @@ stopped the app and slept the OLED. Existing named owners and fixture producer
 remain; R8 must replay the changed authored observer. No extra device, storage/
 data change, receipt hand edit, original-input mutation or Phase 2 output is
 introduced.
+
+## J649 — Extend native cleanup checks to explicit alternate skill selections
+
+Hypothesis: the existing loss/UI-abandon runner can verify alternate-loadout
+setup, native cleanup and same-process restart through the per-run selector,
+without changing runtime gameplay or profile eligibility. J646/J648 provide
+the native loadout and ownership contracts; no new game reconstruction or
+community API is introduced by this host extension.
+
+The current session-cleanup-check and session-abandon-check actions now accept
+the same optional strict skill-variants JSON as survivor-kit-check, for one
+base-survivor target. Parsing happens before device construction. The selector
+remains installed until finalization; source inspection confirms every fresh
+PortSession rereads it, applying the request independently in both sessions.
+The runner checks requested catalog identities, effective native indices,
+post-spawn setup snapshots and permanent assisted provenance before accepting
+either session. Snapshot metadata says continuous false. It preserves the
+distinct ordinary-loss and UI-abandon contracts, all-off gameplay debug options,
+same-PID requirements and unchanged profile counts.
+
+Where J642 observer instrumentation exists, first-ready startup must be healthy,
+completed cleanup must detach, and restart must create a fresh healthy observer.
+Inert/error reports fail even when detached. Startup classification waits for
+positive ready body health, diagnostic input and the Engineer guard. Missing
+older instrumentation is explicitly unavailable rather than a positive witness.
+Existing default invocation remains compatible; no C# source or APK changes.
+
+Validation: the full host suite passes 941 tests with one existing skip; the
+focused draft suite has 46 cleanup tests and the integrated survivor suite has
+34 parser/assessment tests. Ruff, generated README help and diff checks pass.
+Evidence: work/coordination/codex-variant-cleanup-host-final-tests.stdout and
+.stderr, plus codex-variant-cleanup-host-review-tests.stderr. Independent review
+recommendations are covered: malformed observer JSON is classified, and an
+invalid selector test proves device construction never happens.
+First failure: none in the host contracts. Actual alternate-kit cleanup and
+restart remain a device gate on corrected inventory APK f57e172b…. J647 9e7c4224…
+stays the accepted baseline until both standard modes pass for a later candidate.
+
+Revisit with exact live catalog IDs, an explicit non-default kit and actual
+completed/restarted reports. Runtime observer cleanup remains open until that
+device result. No extra device, storage/data change, receipt hand edit, native
+algorithm or profile writer is introduced. This changes host command/help/test
+inputs only; no Phase 2 output or runtime recipe changes.

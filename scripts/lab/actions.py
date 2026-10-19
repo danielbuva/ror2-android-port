@@ -69,6 +69,8 @@ def _session_cleanup_target(function, kwargs, args):
     # The global prototype target defaults to "lab"; preserve the old Commando
     # behavior unless a caller explicitly supplies a base survivor key.
     selected = kwargs if args.target == "lab" else dict(kwargs, survivor=args.target)
+    if getattr(args, "skill_variants", None) is not None:
+        selected = dict(selected, skill_variants=args.skill_variants)
     return _json_result(function, selected, args, indent=2)
 
 
@@ -193,7 +195,7 @@ _ENTRIES = (
         "check_survivors",
         {},
         "current",
-        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector.",
+        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector for one target.",
         handler=_survivor_target,
     ),
     Action(
@@ -202,7 +204,7 @@ _ENTRIES = (
         "check_session_cleanup",
         {},
         "current",
-        "Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects a base survivor (default Commando); locked choices are diagnostic overrides, no expansion.",
+        "Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects one base survivor (default Commando); locked choices are diagnostic overrides, no expansion. Optional --skill-variants applies one strict per-run native catalog selector to both sessions.",
         handler=_session_cleanup_target,
     ),
     Action(
@@ -211,7 +213,7 @@ _ENTRIES = (
         "check_session_cleanup",
         {"ending": "abandon"},
         "current",
-        "After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides.",
+        "After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides. Optional --skill-variants applies one strict per-run native catalog selector to both sessions.",
         handler=_session_cleanup_target,
     ),
     Action("whole-catalog-host-providers", "whole_catalog", "host_providers", {}, "current", "Run the whole-catalog native-provider host fixture."),

@@ -918,6 +918,23 @@ reported settings screen dimensions in the installed APK;
 older APKs refuse those taps. Genuine native loss remains the separate default
 session-cleanup-check contract.
 
+Both cleanup actions accept the current optional `--skill-variants` JSON for
+one base survivor, using the skill check's strict selector parser before device
+access. The attempt-bound selector stays until runner finalization; a fresh
+coordinator rereads it, so each session independently applies and verifies the
+request. The runner distinguishes pre-mutation catalog metadata, effective
+native loadout indices and the post-spawn setup snapshot, and requires the
+sticky assisted marker. Setup snapshots are explicitly not continuous ability
+observations. Original loss and UI-abandon remain separate contracts.
+
+For APKs with combat-output instrumentation, the runner checks the first ready
+healthy observer, completed-session detachment and fresh restarted attachment;
+inert/error reports fail even after detachment. It waits for ready positive
+health, diagnostic input and the Engineer guard before classifying startup.
+Older absent instrumentation is explicitly unavailable, never a positive
+observer lifecycle result. Host contracts remain in
+`tests/test_session_cleanup_check.py`; this adds no runtime or profile writer.
+
 C# under `tools/` is formatted with `clang-format -i` using the repository's `.clang-format`
 (J544). It never rewraps string literals or comments, so a correct reformat leaves each file
 identical once whitespace is removed; check that before committing a reformat. CI does not
