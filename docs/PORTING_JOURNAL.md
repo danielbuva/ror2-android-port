@@ -9251,3 +9251,37 @@ control. This is the first native diagnostic failure, not stage coverage or
 recovery acceptance. Accepted J654 f57e172b… remains unchanged. No new source,
 original input, private receipt hand edit, extra device, existing data move or
 storage configuration change occurs in this experiment.
+
+## J657 — Accept the 105-source APK on both default modes; retain native-path first failure
+
+Hypothesis: J651/J652 retain the existing ordinary gameplay path through a
+full first exit despite the separate opt-in ordering failure found in J656.
+No source or payload changes since J655's build/install/plain control.
+
+APK 86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03
+passes the second standard mode. Evidence: work/experiments/baseline/
+20261019T133535.753334Z/. Exactly one genuine exit reaches Goolake, with
+13.751312 s next-stage play at world time 156.197998 s. Current APK identity
+matches; report/first failure are empty, root-log-validation.json has no
+unexpected process errors, and native diagnostic/recovery flags are false.
+The loaded profile still has 13 applied runs and one earned/available unlock.
+The healthy combat observer records 24 direct body damage events. Diagnostic
+assistance excludes permanent awards. The runner removes its selector,
+force-stops the app and sleeps the OLED.
+
+Together with J655's 35.235565 s plain control, both default modes pass.
+Accept 86d2542a… as the baseline; preserve J654 f57e172b… as immediate executable
+rollback. This acceptance is for the established default path, not the native
+first-stage flag: J656 stopped before native Stage activation because mandatory
+player-controller registration came after statistics setup. That failure remains
+open with a host-only ordering fix being drafted. The timed-chest observer's
+setup/metadata survive both controls; neither opens a timed chest or proves
+positive ordinary progression or live listener teardown.
+
+First failure: none in this default exit case. J656 and J650 remain separate
+failed feature cases; no native lifecycle, full-kit, normal-difficulty, audio,
+visual-parity or performance acceptance follows. Revisit the early player
+context correction, typed state-dependency closure repair and their next
+candidate's own controls. J651/J652 record R8 replay requirements. No original
+input, extra device, private receipt hand edit, existing data or storage
+configuration change occurs here.

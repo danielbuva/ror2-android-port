@@ -60,7 +60,7 @@ count above 1 also stops and fails. Invalid transition counts, report errors, pr
 exit, ordinary results or the 370 s host deadline fail. The check never intentionally
 drives another exit.
 This is a host polling guard, not a new runtime transition interlock. Both baseline
-modes have device evidence (J654). It does not assert a particular commerce purchase count
+modes have device evidence (J657). It does not assert a particular commerce purchase count
 or ordinary-difficulty acceptance.
 
 Stage mode freezes its final evidence at the last current-process report and force-stops
@@ -74,17 +74,18 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8`, J654 acceptance of J650's corrected inventory build, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 11.50 s next-stage play, no report or current-process log error (J654) |
+| APK | `86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03`, J657 acceptance of J655's 105-source build, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.24 s on Lakes and one genuine stage exit to Goolake with 13.75 s next-stage play, no report or current-process log error (J657) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J654). Engineer's default projectile/summon output and live inventory
-pass (J650), and three alternate callbacks with actual UI-abandon cleanup and
-same-process fresh observer pass on this APK (J653). Laser Cutter remains an
-explicit failed feature case (J650). Mercenary direct damage is earlier J647
-evidence. Both baseline modes use Commando; they do not establish other
-survivors, full ability semantics, ordinary difficulty, audio, frame rate or
-visual parity. Use the journal entries for broader evidence.
+passed it (J657), with the new native diagnostic flag off. The opt-in native
+first-stage path remains failed before activation on J656's early player-context
+ordering issue; timed-chest event delivery and an ordinary saved award are also
+unverified. Engineer's live inventory and three alternate callbacks with actual
+UI-abandon cleanup/restart passed on the prior f57e172b… APK (J650/J653), with
+Laser Cutter remaining a failed feature case. Mercenary direct damage is earlier
+J647 evidence. Both baseline modes use Commando and do not establish full
+ability semantics, ordinary difficulty, audio, frame rate or visual parity.

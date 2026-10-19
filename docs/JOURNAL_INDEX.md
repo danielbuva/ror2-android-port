@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J657](PORTING_JOURNAL.md#j657--accept-the-105-source-apk-on-both-default-modes-retain-native-path-first-failure) | 2026-10-19 | Accept the 105-source APK on both default modes; retain native-path first failure | Hypothesis: J651/J652 retain the existing ordinary gameplay path through a full first exit despite the separate opt-in ordering failure found in J656. |
 | [J656](PORTING_JOURNAL.md#j656--native-first-stage-diagnostic-stops-before-activation-on-missing-early-player-context) | 2026-10-19 | Native first-stage diagnostic stops before activation on missing early player context | Hypothesis: the J651 default-off native path can replace the early combat fixture while retaining mandatory player/results dependencies before source Stage act… |
 | [J655](PORTING_JOURNAL.md#j655--build-the-native-stagetimed-chest-candidate-and-pass-its-plain-default-control) | 2026-10-19 | Build the native-stage/timed-chest candidate and pass its plain default control | Hypothesis: the 105-source J651/J652 integration can build and retain the ordinary first-stage baseline with the native lifecycle diagnostic omitted. |
 | [J654](PORTING_JOURNAL.md#j654--accept-the-live-inventory-apk-after-both-default-baseline-modes) | 2026-10-19 | Accept the live-inventory APK after both default baseline modes | Hypothesis: the J646/J648 per-run selector and live ownership correction leave the ordinary Commando baseline path intact. |
