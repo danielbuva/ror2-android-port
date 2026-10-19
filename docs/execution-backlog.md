@@ -15,14 +15,15 @@ result in the journal.
       Callback coverage is broader than complete effects; continue with the exact
       live variant inventories and output owners (J673, J684, J685).
 - [ ] Finish the opt-in source-stage lifecycle: validate native source rewards and
-      completed-session identity/table teardown before extending transport. Startup
-      and actor events are covered; J681 reset recovery needs a device retry after
-      J683, and J682 generated identity bindings need runtime validation.
+      completed-session identity/table teardown before extending transport. Resolve
+      J710's effect-reference attribution using J716's operation witness; retain
+      exact source-table restoration and generated identity-binding checks.
 - [ ] Identify the intermittent LightningStake nonfinite transition across projectile
       identity turnover; retain native elite behavior while collecting evidence (J667).
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
-- [ ] Validate the drafted Siren encounter owner: native eggs, boss start/defeat,
-      rewards, disabled MapZones and stage teardown.
+- [ ] Complete Siren's source controller/toggle/spawn lifecycle and exact egg
+      retirement ownership before native listener registration (J723), then validate
+      boss start/defeat, rewards, disabled MapZones and stage teardown.
 - [ ] Moon/finale/escape: manual sessions only, never navigated autonomously.
 
 ## Stability and performance

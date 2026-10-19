@@ -12130,3 +12130,68 @@ teardown separately. Do not assume conversion is necessary or that loading prove
 playback; restore the existing unavailable-audio transformations only in a reviewed
 integration candidate. First failure remains missing authorized Android runtime;
 audio is unavailable. No APK/runtime or build input changes in this investigation.
+
+## J723 — Guarded Siren route reaches three exits but stalls before the fourth
+
+Hypothesis: the corrected J717 startup gate admits the actual assisted run and
+allows the bounded route to observe native Siren egg eligibility and the existing
+fourth-transition input hold. The run uses accepted J707 APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee:
+work/experiments/siren-route/20261019T184326.966719Z/.
+It genuinely completes Lakes, Goolake and Wisp Graveyard boss/charge/reward/exit
+paths and enters Ship Graveyard. It stops at the 1,200-second host deadline
+(1,202.677 seconds including final observation), with 1,032.211426 world seconds,
+three transitions and no report or current-process Unity error. The collector's
+zero exit code means collection completed; it does not make this route pass.
+
+Ship Graveyard's ordinary teleporter boss is defeated, charge is 1, the reward is
+collected and the teleporter is available. The native interaction remains
+unselected and its exit controller remains Idle, with exitBegan/exitFinished false.
+The automatic input is about 13.75 metres away, outside the 3-metre interaction
+range. Its terrain fallback has no candidate, returns its current foot position
+as the waypoint and produces no local movement; objective stall exceeds 632
+seconds despite recovery attempts. Source review identifies the same stationary
+fallback and a recovery-jump distance measured to that zero-distance waypoint.
+The rejected terrain candidate's exact collider/slope/clearance cause is unknown.
+This is an automatic approach/selection stall before native exit, not a native
+exit refusal. Do not force interaction, expand its range or bypass collision.
+
+The separately attached native Siren encounter is Listening. Its actual native
+registration latch is true with zero egg slots; current population samples see
+zero eligible egg bodies. No native special encounter starts or completes.
+The egg-input owner ends at its 180-second stage budget, with zero target samples
+or primary requests, and yields back to ordinary input. Target zero alone would
+be ambiguous; the native registered-empty list is the stronger observation.
+This does not establish that no egg ever existed between population samples.
+
+Prior-art/source review identifies the missing prerequisite: the source scene's
+authored-inactive ToggleGroupController owns all five native variation groups,
+including 12 of 32 nests. Selected nests' original GenericSceneSpawnPoint creates
+and network-spawns VultureEggBody. Native toggle generation/activation depends on
+controller activation and the real global scene-change event, which this default
+stage path does not supply. The existing complete identity lifecycle is limited
+to the opt-in first stage. The mission owner attaches its own encounter but does
+not own that controller/cohort. Listening then performs its one-shot registration
+after two fixed seconds. These source facts fit the observed empty registration;
+the run did not capture each live nest's active state.
+
+Preserve native group ordering/selection, full validated multicast semantics,
+statue targets, spawn lifecycle and exact cleanup ownership in any future bridge.
+Do not call the outer network-manager scene method, which would repeat the
+existing Run/Stage callback; do not invoke a hand-picked delegate subset, create
+replacement eggs or reset native counters. Naturally spawned egg roots also need
+owned retirement before the existing stage handoff can move residual roots to
+the persistent scene. No runtime patch is made before those contracts are proved.
+Prior art: J594/J596/J601/J626 and pinned R2API Director/source-scene guidance;
+the actual accepted scene and native event/Listening/spawner implementations
+govern. Analysis: work/coordination/siren-current-route-triage/.
+
+First failure is the bounded route deadline after the approach stall; native
+Siren eligibility remains unproved. Count four and the actual hold marker were
+never reached, so fourth-transition hold stays unverified. No fifth transition
+or Moon/finale navigation occurs. Huntress selection is ordinary but invincibility,
+high damage, fast charge and automatic/egg input make the run assisted; movement
+and jump boosts are off. Applied runs stay 13, earned/available unlocks stay one,
+resultApplied false. The runner removes its own selector, force-stops and sleeps
+without cleanup errors. Process stop does not prove in-process Siren retirement.
+No source/build input, Phase 2 output, storage layout, extra device or award changes.
