@@ -7412,3 +7412,44 @@ performance benchmark and provides no bottleneck or frame-rate conclusion.
 Revisit through a documented permitted development-build profiling mechanism
 or a device/build permission change; repeating the unchanged system-shell
 command is not useful. No source/build input or baseline acceptance changes.
+
+## J611 — MUL-T callbacks pass; Engineer's native shield filter stops the sweep
+
+Hypothesis: J606's bounded ordinary input can cover J603's unobserved utility,
+then expose remaining base-survivor integration failures on the J608 baseline.
+Current native skill/input contracts, pinned Starstorm2 observer prior art and
+source cohort verification remain J602/J606's evidence; no runtime source or
+payload is changed for this sweep.
+
+APK SHA-256:
+41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14.
+The current Nova runs the explicitly assisted/diagnostic base-survivor check,
+starting with Toolbot and Engi. Both are locked developer selections, not earned
+ordinary menu grants. Evidence:
+work/experiments/survivor-check/20261019T082740.691371Z/.
+
+Toolbot passes at 60.42 s of Lakes play, with authority/server callback counts
+5/2/1/1 for primary/secondary/utility/special and a valid five-component
+inventory. The coverage owner records four requests, and later input-bank
+edges plus 0-to-1 native callback changes for secondary, utility and special;
+its completion is observed at 18.29 s. This resolves the previous unobserved
+utility callback without changing native skills. The extra alternate-primary
+component has zero callbacks in the final snapshot; this is not complete stance
+or alternate-weapon behavior acceptance.
+
+Engineer reaches 60.41 s and all four callbacks (29/7/2/2 on each signal), with
+four valid components. It fails current-process log validation. The first
+unexpected error is one NullReferenceException in
+HurtBox.SimpleColliderBlockFilter, called through BetterBlockingEnablerSphere's
+rejection filter and BulletAttack.ProcessHitList. The session report's error
+and firstFailure remain empty, so those fields alone would miss the failure.
+The runner preserves the log and fails rather than accepting callback counts.
+Mage, Merc, Treebot, Loader, Croco and Captain do not run after this stop.
+
+Applied profile runs remain 13 in both runs. The runner removes each selector,
+force-stops the app and sleeps the display. J610's profiler refusal belongs to
+Toolbot's same running PID and supplies no performance conclusion. Current
+baseline and J609 completed-session acceptance remain valid for their measured
+contracts; Engineer is a separate open gameplay failure. Revisit by auditing
+the current shield/hurtbox lifecycle and native hit arguments before choosing
+a serialization or runtime fix. No Phase 2 or later build input changed.

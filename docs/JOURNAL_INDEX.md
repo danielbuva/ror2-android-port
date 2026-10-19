@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J611](PORTING_JOURNAL.md#j611--mul-t-callbacks-pass-engineers-native-shield-filter-stops-the-sweep) | 2026-10-19 | MUL-T callbacks pass; Engineer's native shield filter stops the sweep | Hypothesis: J606's bounded ordinary input can cover J603's unobserved utility, then expose remaining base-survivor integration failures on the J608 baseline. |
 | [J610](PORTING_JOURNAL.md#j610--android-refuses-the-first-system-cpu-call-graph-capture) | 2026-10-19 | Android refuses the first system CPU call-graph capture | Hypothesis: J599's bounded system-simpleperf host action can capture native CPU owners from an already-running development APK without changing the application… |
 | [J609](PORTING_JOURNAL.md#j609--native-loss-cleans-the-world-and-restarts-in-the-same-process) | 2026-10-19 | Native loss cleans the world and restarts in the same process | Hypothesis: J607's exact overlay retirement and native destroyed-host pruning resolve J605's later cleanup failure while preserving J600/J601's native teleport… |
 | [J608](PORTING_JOURNAL.md#j608--accept-the-overlayinput-coverage-apk-baseline) | 2026-10-19 | Accept the overlay/input-coverage APK baseline | Hypothesis: J606's opt-in diagnostic input owner and J607's exact overlay cleanup can coexist without regressing the two standard game checks. |

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J610** (native restart passes; system CPU profiler refused).
+Last updated 2026-10-19 after **J611** (MUL-T callbacks pass; Engineer shield error stops sweep).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -14,7 +14,7 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14` — J608 both baseline modes; J609 genuine loss, native cleanup and same-process restart pass. Siren mission and complete skill behavior have separate gates. |
-| Installed now | J608 APK `41ecca66…`, installed in place on current Nova adopted storage. The remaining base-survivor callback sweep is running. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Installed now | J608 APK `41ecca66…`, installed in place on current Nova adopted storage. Stopped and OLED asleep after J611's Engineer shield error. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
 | Runtime source since verified APK | None staged. The APK includes J606 opt-in skill input coverage and J607 exact overlay cleanup; both exact-editor fixtures and J609 device cleanup pass. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
@@ -35,7 +35,9 @@ they are not normal-difficulty acceptance.
   original world play.
 - **Survivors:** Commando and Huntress by ordinary selection; Bandit2, Toolbot, Engi and
   Loader through developer-only selection (J504). Four canonical native callbacks
-  passed for Commando, Huntress and Bandit2; MUL-T utility remains unobserved (J603).
+  passed for Commando, Huntress and Bandit2 (J603), then Toolbot including utility
+  (J611). Engineer activates four slots but logs a native shield hit-filter error;
+  the remaining callback sweep stopped there.
 - **Stages:** Huntress completed four original boss/charge/exit transitions
   Lakes → Goolake → Wisp Graveyard → Ship Graveyard → Sky Meadow (J504). 23 destinations
   are staged; nine DLC scenes are staged but unplayed pending a truthful expansion-availability
