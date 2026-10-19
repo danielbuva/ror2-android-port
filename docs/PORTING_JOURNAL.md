@@ -8924,3 +8924,52 @@ completed/restarted reports. Runtime observer cleanup remains open until that
 device result. No extra device, storage/data change, receipt hand edit, native
 algorithm or profile writer is introduced. This changes host command/help/test
 inputs only; no Phase 2 output or runtime recipe changes.
+
+## J650 — Corrected live skill inventory passes; alternate Engineer exposes missing Laser Cutter input
+
+Hypothesis: J648's reciprocal live ownership check can publish exact native
+catalog metadata, allowing J646's explicit per-run selector to exercise a full
+alternate kit without profile or entitlement mutation. This uses the native
+loadout/observation prior art already cited in J646/J648; no new native algorithm.
+
+Built the 102-source correction at 8704222: request
+20261019T124717.609028Z, 84.916732 s, zero build errors, APK
+f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8.
+The frozen candidate is work/experiments/survivor-skill-variants/
+candidate-20261019T124717.609028Z/ (APK, receipt, source hashes and logs).
+Live storage checks, in-place adopted installation and payload sync pass.
+No storage configuration or existing data changed.
+
+Default Engineer evidence: work/experiments/survivor-check/
+20261019T125040.789269Z/Engi/. All four native callbacks pass for 60.376907 s
+(primary/secondary/utility/special 17/4/1/2). Live inventory is valid, identifies
+body 78 and all four component/family identities, and agrees with the selected
+native loadout and runtime SkillDefs. The generic observer remains healthy,
+records 18 player-projectile damage events and 21 owned-summon damage events,
+with 20 retained unique projectile IDs, zero history overflow or scan truncation.
+No current-process runtime error; profile counts remain 13 applied runs and
+one earned/available unlock. This is the first device witness of the inventory
+correction, not a conclusion about the earlier configured-prefab mismatch.
+
+Using these observed catalog identities, an ignored explicit request selected
+all four alternate variants: Laser Cutter, Spider Mine, Harpoons and Walker
+Turret. Evidence: work/experiments/survivor-check/
+20261019T125923.248358Z/Engi/. The copied native loadout reports [1, 1, 1, 1],
+all four post-spawn runtime definitions match the request, and the permanent
+assisted marker is set. This establishes selector application only.
+
+First failure: native EnterEngiLaserCutter.OnEnter requests a missing GameObject
+Addressables key, followed by AssetAsyncDataInjection.LoadGameObject and
+EntityStateGameObject null exceptions. The host stops at its first current-
+process log error, preserving the last report at 5.006149 s; only primary and
+secondary callbacks have occurred. Profile counts are unchanged. This is not
+alternate-kit acceptance or successful cleanup. The runner removes its selector,
+force-stops the app and sleeps the OLED.
+
+Revisit after tracing the exact shipped state dependency and existing generated
+provider/asset coverage. A separate request retaining the default primary can
+classify the remaining three alternate skills; it cannot discharge Laser Cutter.
+Both baseline modes and alternate cleanup remain pending on this APK; J647's
+9e7c4224… remains accepted. J648's observer change must be replayed through R8.
+No original-input, proprietary implementation, profile grant, receipt hand edit,
+extra-device action or Phase 2 output is introduced.
