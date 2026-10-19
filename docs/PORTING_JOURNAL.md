@@ -6060,8 +6060,10 @@ genuine transition to Goolake but hit the check's deadline after 7.7 s there (19
 next-stage play (`…20261019T001923.915031Z`). The baseline APK `5f0520d2…` and default payload were
 then reinstalled, and `./dev check-baseline` passed (35.2 s). App stopped, OLED asleep.
 
-So public source, recipes and the legitimate installation now rebuild an APK that runs both
-standard checks. It is not yet proven equivalent to the working project's. Revisit: why
+So the rebuild path now produces an APK that runs both standard checks. It is not yet proven
+equivalent to the working project's, and it is not yet built from public source, recipes and
+the legitimate installation alone: R2 still reads local migration evidence (B1, B3–B6, B8) and
+63 inputs are read by recorded hash. (Corrected the same day; the first wording overstated this.) Revisit: why
 `Unity.Timeline.dll` becomes a linker root and `Hidden/Compositing` drops out; the three new
 reimport errors; the 251 selection-wide missing-script references against the working project;
 whether the first stage-exit's longer first stage recurs.

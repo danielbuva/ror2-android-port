@@ -24,8 +24,13 @@ result in the journal.
 
 Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
-- [ ] Migration-removal commits 3–9 ([plan](migration-removal-plan.md)), then `./dev rebuild` into
-      an empty work folder.
+- [ ] Make R9 equivalent (J583): reimport dependents in dependency layers; decide whether to
+      pin `Unity.Timeline.dll` so code-only and full builds agree; find why
+      `Hidden/Compositing` drops out; decide how R9 treats `Lab.unity` and export-form importers.
+- [ ] Remove the rebuild's remaining local inputs: R2's migration evidence (B1, B3–B6, B8),
+      the 63 hash-pinned analysis inputs and the 14 inherited-store files.
+- [ ] Switch the working project's own build to the rebuild path (migration-removal commit 9,
+      [plan](migration-removal-plan.md)).
 - [ ] Have `Start` call `GameSession` directly instead of selecting the session by id.
 - [ ] Replace the hard-coded run folders in historical actions with named receipts, or retire
       those actions.

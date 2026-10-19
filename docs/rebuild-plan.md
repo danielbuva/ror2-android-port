@@ -506,7 +506,13 @@ have explicit Unity ownership evidence. Their GUIDs/settings/allocated IDs still
 or isolated exact-editor fixtures. Likewise, recipe dependency bytes match the package manifest,
 but J547 supplies a checker rather than a complete initializer. No game readiness is inferred.
 
-## R9: isolated Unity import/build (current; operator device gate pending)
+## R9: isolated Unity import/build (current; not yet equivalent)
+
+Status (J582, J583): from a fresh Library, R9 builds an APK that passed both device checks,
+but reports it unequal. The extra `Unity.Timeline.dll` linker root matches the working
+project's own full builds; the reimport errors come from batch import order; why
+`Hidden/Compositing` drops out is still open. R2 still reads local migration evidence; see
+[ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
 `unity-build` runs only after a passing `validate-bindings` on the same destination.
 Both R9 host preflight and the direct build entry refuse missing or mismatched

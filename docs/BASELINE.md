@@ -80,7 +80,7 @@ The plain check and its acceptance criteria remain unchanged.
 | Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
-Not covered by the plain Lakes check: other survivors, stage transitions, ordinary
-(unassisted) difficulty, audio, frame rate and visual parity. The one-exit mode adds
-assisted transport/teleporter coverage when device-verified; it has not yet advanced
-this baseline. Use the journal entries above for broader existing evidence.
+The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
+passed it (J581). Neither mode covers other survivors, ordinary (unassisted) difficulty,
+audio, frame rate or visual parity. Use the journal entries above for broader existing
+evidence.

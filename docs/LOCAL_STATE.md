@@ -135,6 +135,9 @@ The current command set is the ten prototype actions in [Reusable fixes and comm
 
 ## Fresh-rebuild blockers reached by the current workflow
 
+These are still reached by the from-scratch rebuild as well: its R2 step runs
+`composition_migration.stage`, which reads B1, B3–B6 and B8's runtime config (J582).
+
 | Path / family | Readers (file:line) | Producer in repo | Class | Current workflow reaches it | Present |
 | --- | --- | --- | --- | --- | --- |
 | `B1: work/config/composition-migration.json` | `scripts/lab/composition_migration.py:129`; `scripts/lab/composition_migration.py:184` | none found | required local state with no producer | yes — both composition actions | yes |

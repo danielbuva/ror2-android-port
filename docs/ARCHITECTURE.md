@@ -56,16 +56,18 @@ Incremental project rebuild (`scripts/lab/rebuild.py`, current, R0–R9):
 `unity_rebuild.py` owns R9 `unity-build` after `validate-bindings`: destination-only
 host preflight, an exclusive operation lock, exact-editor batch invocation through
 `whole_catalog.build_integration(destination=...)` → `build.build(destination=...)`
-→ `LabBuild.BuildDestination` → the existing full `LabBuild.Build`. Destination-only
-setup force-reimports managed asset plugins after compilation, then their selected
-asset dependents in dependency order. Its read-only script gate checks recovered
-HUD/Menu components and TimerText targets before entering the unchanged real build.
+→ `LabBuild.BuildDestination` → the existing full `LabBuild.Build`. It runs two editor
+sessions: `LabBuild.RepairDestinationPlugins` force-reimports the managed DLLs and exits,
+so their recompilation settles; `BuildDestination` then reimports their asset dependents
+in one batch, runs the read-only script gate on the recovered HUD/Menu components and
+TimerText targets, and enters the unchanged real build (J578–J581). Reimport errors that
+pass 1's fresh import did not log are recorded and make R9 unequal after the build.
 Per-asset missing-script counts and MonoScript identities live in the run's
 `lab-build/script-audit.json` and successful destination receipt. `script_audit.py`
 owns selection generation, working-editor MCP payload generation and comparison;
-it never invokes an editor or stages working-project files. Preview scenes close
-in `finally`; the destination error listener detaches before the real build and
-on failure. Operator commands: [script gate](rebuild-plan.md#destination-script-import-gate).
+it never invokes an editor or stages working-project files. Scenes are audited from
+their text, not opened; the destination error listener detaches before the real build
+and on failure. Operator commands: [script gate](rebuild-plan.md#destination-script-import-gate).
 The default project Library is destination-local. Per-attempt requests/logs/APKs/payload and
 Android/Gradle homes stay under `.rebuild/unity/`; the summary and hash comparisons
 are `.rebuild/unity-build.json`. Cleanup releases the R9 lock, preserving failed
@@ -77,8 +79,9 @@ uses the same read-only host/input/binding gates without live preflight receipts
 `install --apk` and `sync-data --payload-dir` keep the existing `Device` safety
 checks; explicit device-action `--work-dir` selects the existing device receipt
 and config tree. Rebuild `--work-dir` is read-only. Comparison groups and exact
-operator/restore commands: [R9](rebuild-plan.md#r9-isolated-unity-importbuild-current-operator-device-gate-pending).
-Host contracts: `tests/test_unity_rebuild.py`; exact-editor/device execution pending.
+operator/restore commands: [R9](rebuild-plan.md#r9-isolated-unity-importbuild-current-not-yet-equivalent).
+Host contracts: `tests/test_unity_rebuild.py`. The first R9 APK passed both device checks
+but is not yet equivalent to the working project's (J582; causes in J583).
 
 `build_entry_rebuild.py` owns host-only R7 `build-entries` and R8
 `runtime-sources`, after `scene_rebuild.py` supplies R5/R6. It uses destination
@@ -549,23 +552,28 @@ plus `project-manifest-capture`, `project-manifest-compare`,
 
 ## Known structural debt
 
-First verified against `af2e101`; status updated after J547. Each step was its own commit with
+First verified against `af2e101`; status updated after J582. Each step was its own commit with
 host tests, a zero-error exact-editor build and a device check.
 
 Still open:
 
-1. **No from-scratch build** (design: [rebuild-plan.md](rebuild-plan.md)). The project is still made by migrating a previous project
-   (`composition_migration.stage`); seven path families it reads have no producer in the repo
-   ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)),
-   and the generation marker still lacks a full assembly-map initializer. The three
-   transformed plugins are now reproducible through `assembly-transforms-check`,
-   but composition still carries them forward by hash. The removal plan is
-   [migration-removal-plan.md](migration-removal-plan.md); commits 1–2 are done (harness,
-   source manifest, script GUIDs and packages), 3–9 are open.
-2. **Direct composition remains unfinished.** The current build now generates both
-   runtime and content configs from recipes, without inherited extra keys. The
-   earlier composition migration still uses previous-project configs for its own
-   staging/contracts; removing that chain belongs to later steps of the
+1. **The from-scratch rebuild is not yet equivalent or self-contained**
+   ([rebuild-plan.md](rebuild-plan.md)). `./dev prototype --action rebuild-step` builds a
+   separate destination in twelve host steps, each byte-identical to the working project
+   (J567–J575). R9 builds it into an APK that passed both device checks (J582), but R9
+   still reports it unequal. J583 named the causes: the extra `Unity.Timeline.dll` linker
+   root matches the working project's own full builds (the reference APK is a code-only
+   build); the three reimport errors come from Unity importing spawn cards before their
+   prefabs within one batch; `Hidden/Compositing` drops out for a reason still open; and
+   `Lab.unity` plus a few export-form importers differ on every build.
+2. **The rebuild still reads local migration evidence.** Its R2 step runs
+   `composition_migration.stage`, which reads `work/config/composition-migration.json`,
+   the previous project's runtime config and the composition evidence B3–B6
+   ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)).
+   63 further local analysis inputs are read by recorded hash
+   (`recipe/*-rebuild-inputs.json`, `recipe/shader-rebuild-inputs.json`), and 14 files
+   still come from the inherited store. The working project itself is still made by
+   that migration; switching it to the rebuild path is commit 9 of the
    [migration removal plan](migration-removal-plan.md).
 3. **The session is still selected by id.** `Start` waits 8 s and picks the session from a
    string id; the playable spine runs `GameSession()` (J513) and the 116 historical cases live

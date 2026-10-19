@@ -10,9 +10,12 @@ ProjectSettings stay inherited); commit 3's runtime/content recipes and build-en
 generators are implemented (J549/J550 and the second-half generation change;
 host verification only for generation). Commit 4's first cohort (28 SurfaceDefs) is
 implemented with host-only byte
-equivalence evidence in J552; the remaining cohorts, direct composition and
-commits 5–9 remain open. Line numbers drift; re-check before
-use.
+equivalence evidence in J552. Since then the work moved to the orchestrated rebuild
+([rebuild-plan.md](rebuild-plan.md), J567–J582): all adapted assets, most additions and
+every post-migration builder are reproduced in a separate destination, which R9 builds into
+a device-passing APK. Its R2 step still runs this migration chain, so commit 9 (switching
+the real stage to the direct producer and removing B1, B3–B8) remains open. Line numbers
+drift; re-check before use.
 
 Read-only analysis, 2026-10-17. Tracked source, policy, architecture, LOCAL_STATE,
 ADR-001, and journal J430/J431/J508 were consulted. Shared local evidence was

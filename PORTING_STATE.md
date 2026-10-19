@@ -79,8 +79,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    the working project's own full builds, and the reference is a code-only build. The three reimport
    errors come from Unity importing spawn cards before the prefabs they load, within one batch. The
    missing-script audit is equal to the working project's. Still open: why `Hidden/Compositing`
-   drops out, and how R9 treats `Lab.unity` and export-form metas. Remaining: the R9 Unity import of the destination (5,028 Unity-generated files
-   plus `ProjectSettings.asset` and one linker file), 14 store files (11 editor-built HUD
-   assets, FastDirector, `Strings.json`, the TMP mobile shader, so J558 is still open) and 63
-   hash-pinned local analysis inputs. The remaining
+   drops out, and how R9 treats `Lab.unity` and export-form metas. Still needed for a rebuild
+   from public inputs alone: R2 reads local migration evidence (B1, B3–B6, B8), 14 files still
+   come from the inherited store (11 editor-built HUD assets, FastDirector, `Strings.json`, the
+   TMP mobile shader, so J558 is still open) and 63 local analysis inputs are hash-pinned. The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).
