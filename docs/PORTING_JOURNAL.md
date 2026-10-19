@@ -8793,3 +8793,39 @@ GUID recipes change R8/build-entry replay inputs; no Phase 2 output is changed.
 Recipe provenance audit and named setup/teardown are recorded in recipe/README.md
 and ARCHITECTURE.md. No extra device, storage/data change, receipt hand edit or
 new required ignored build input is introduced.
+
+## J647 — Accept the combat-observer APK after Mercenary and both baselines
+
+Accept J645 APK
+9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82
+after both standard modes pass on the configured Nova. Plain mode reaches
+35.21 s on Lakes; one-exit mode completes one genuine transition to Goolake
+and 10.36 s there at 156.34 world seconds. Both final reports retain an
+attached, non-inert combat observer with no observer error or truncated scan;
+the plain report has 16 direct-body damage events and the exit report 22.
+Both have empty error/firstFailure and zero unexpected current-process log
+errors. Applied profile runs stay 13. Evidence:
+work/experiments/baseline/20261019T121710.177444Z/ and
+work/experiments/baseline/20261019T122039.426638Z/.
+
+The intervening Mercenary case reaches 60.49 s with native authority/server
+callbacks 55/9/1/3 across primary/secondary/utility/special. The healthy observer
+records 18 direct player-body damage events, zero player-projectile or
+owned-summon damage events and zero sampled projectile IDs. This does not assign
+damage to individual skills or prove all movement/invulnerability/attack
+semantics. The runner finds zero unexpected runtime errors and unchanged
+profile runs. Evidence:
+work/experiments/survivor-check/20261019T121319.653357Z/Merc/,
+including root-output-validation.json. Engineer's distinct projectile and
+owned-summon output facts are recorded once in J645.
+
+First failure: none in this batch. The frozen APK, source hashes and install/
+payload evidence are J645. The runs force-stop after their final live reports;
+native completed-session observer teardown remains to be checked separately.
+All runner finalizers remove their selector, stop the app and sleep the OLED.
+Retain J644 118540ea… as the immediate accepted rollback. J646's 102-file
+skill-variant source is newer than this 101-file APK and needs its own build,
+actual variant case and both baseline modes. The native first-stage lifecycle
+remains private under correction; no part is in this APK. No extra device,
+storage/data change, receipt hand edit, original-input change or Phase 2 output
+is introduced. Replay requirements remain J642/J646.

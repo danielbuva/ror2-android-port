@@ -60,7 +60,7 @@ count above 1 also stops and fails. Invalid transition counts, report errors, pr
 exit, ordinary results or the 370 s host deadline fail. The check never intentionally
 drives another exit.
 This is a host polling guard, not a new runtime transition interlock. Both baseline
-modes have device evidence (J644). It does not assert a particular commerce purchase count
+modes have device evidence (J647). It does not assert a particular commerce purchase count
 or ordinary-difficulty acceptance.
 
 Stage mode freezes its final evidence at the last current-process report and force-stops
@@ -74,14 +74,15 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717`, J644 acceptance of the J641 content build, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.21 s on Lakes and one genuine stage exit to Goolake with 12.21 s next-stage play, no report or current-process log error (J644) |
+| APK | `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82`, J647 acceptance of the J645 code build, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.21 s on Lakes and one genuine stage exit to Goolake with 10.36 s next-stage play, no report or current-process log error (J647) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J644). Engineer's native outputs pass separately (J631); UI-abandon teardown and same-process restart pass on this APK (J643);
-both baseline modes use Commando. Neither mode covers other survivors, ordinary (unassisted) difficulty,
+passed it (J647). Engineer's native projectile/summon damage and Mercenary's direct damage
+are separate cases (J645/J647); UI-abandon teardown and same-process restart pass on the
+prior 118540ea… APK (J643). Both baseline modes use Commando. Neither mode covers other survivors, ordinary (unassisted) difficulty,
 audio, frame rate or visual parity. Use the journal entries above for broader existing
 evidence.
