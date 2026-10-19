@@ -46,11 +46,62 @@
     "Assets/Editor/CatalogAddressProbe.cs.meta": {
       "guid": "830afde22503742b49bb2f0cc24c47c9"
     },
+    "Assets/Editor/DeveloperSkillVariantSelectionFixture.cs.meta": {
+      "guid": "b38e81343a2474c51b6e5169e0c99af4"
+    },
+    "Assets/Editor/EngiShieldHitGuardHost.cs.meta": {
+      "guid": "83f2e7da29e944b0d812ec715c9cd65b"
+    },
+    "Assets/Editor/EngineerNativeOutputObserverFixture.cs.meta": {
+      "guid": "c5c88eb1ff3dd4b588666387ba4f448b"
+    },
+    "Assets/Editor/FirstStageDiagnosticGateFixture.cs.meta": {
+      "guid": "770f5bdef2a36403abf44972ccad91f5"
+    },
     "Assets/Editor/LabBuild.cs.meta": {
       "guid": "16af7e7674eb7459a854afd32a56f522"
     },
+    "Assets/Editor/LightningStakeSourceContractFixture.cs.meta": {
+      "guid": "44cdec485b373493bbcb140d3cc502a7"
+    },
+    "Assets/Editor/MercEvisImpactEffectExactEditorFixture.cs.meta": {
+      "guid": "cfc2be99c42d6427f875cab1e162f0d1"
+    },
+    "Assets/Editor/NativeDirectorDeckSetterFixture.cs.meta": {
+      "guid": "00e1a5e5ca453444cb229c2921fed9ec"
+    },
     "Assets/Editor/RecoveredHudBuilder.cs.meta": {
       "guid": "ef14363eb2105433f99f53ac9d5407bd"
+    },
+    "Assets/Editor/SirenEggDiagnosticInputExactEditorFixture.cs.meta": {
+      "guid": "268579fc68dcc467daffeb7b659a3eb5"
+    },
+    "Assets/Editor/SirenEncounterHost.cs.meta": {
+      "guid": "916c0bb6a8e5246c8910a833e5a51ea8"
+    },
+    "Assets/Editor/SkillResponseCleanupExactEditorFixture.cs.meta": {
+      "guid": "6be3629f60d2640bfa087b9c639e1e24"
+    },
+    "Assets/Editor/SourceIdentityTransformParityFixture.cs.meta": {
+      "guid": "1f34ab77a81c24941bc680b938c9e7c5"
+    },
+    "Assets/Editor/SurvivorCombatOutputObserverFixture.cs.meta": {
+      "guid": "c918f5f5ba3c2435daa8650c96e12773"
+    },
+    "Assets/Editor/SurvivorSkillHost.cs.meta": {
+      "guid": "554b5d9865f574a9c976ded88c457e85"
+    },
+    "Assets/Editor/SurvivorSkillInputHost.cs.meta": {
+      "guid": "a3f74dab0d17e408196184abca3e5112"
+    },
+    "Assets/Editor/TeleportOverlayLifetimeHost.cs.meta": {
+      "guid": "ea3453669ac354cddb189c2307c685df"
+    },
+    "Assets/Editor/TeleporterExitTraceSourceContractFixture.cs.meta": {
+      "guid": "c269677cc769042b2b510eb0b5017f13"
+    },
+    "Assets/Editor/TeleporterLifetimeHost.cs.meta": {
+      "guid": "2f0264cb73b6041c5a2280c27c760af3"
     },
     "Assets/Editor/WholeCatalogBuild.cs.meta": {
       "guid": "53b0cfcd5d2ee47738bb7e58a2966087"
@@ -145,6 +196,9 @@
     "Assets/LabLoadingScene/DebugAccelerationBoundary.cs.meta": {
       "runtime_source": "runtime/session/DebugAccelerationBoundary.cs"
     },
+    "Assets/LabLoadingScene/DeveloperSkillVariantSelection.cs.meta": {
+      "runtime_source": "runtime/progression/DeveloperSkillVariantSelection.cs"
+    },
     "Assets/LabLoadingScene/DirectorActorBoundary.cs.meta": {
       "runtime_source": "runtime/world/DirectorActorBoundary.cs"
     },
@@ -154,8 +208,20 @@
     "Assets/LabLoadingScene/EnemySpineBoundary.cs.meta": {
       "runtime_source": "runtime/world/EnemySpineBoundary.cs"
     },
+    "Assets/LabLoadingScene/EngiShieldHitGuard.cs.meta": {
+      "runtime_source": "runtime/world/EngiShieldHitGuard.cs"
+    },
+    "Assets/LabLoadingScene/EngineerNativeOutputObserver.cs.meta": {
+      "runtime_source": "runtime/world/EngineerNativeOutputObserver.cs"
+    },
     "Assets/LabLoadingScene/EntityStateTickProbe.cs.meta": {
       "runtime_source": "runtime/session/EntityStateTickProbe.cs"
+    },
+    "Assets/LabLoadingScene/FirstStageDiagnosticGate.cs.meta": {
+      "runtime_source": "runtime/stage/FirstStageDiagnosticGate.cs"
+    },
+    "Assets/LabLoadingScene/FirstStageSourceOwners.cs.meta": {
+      "runtime_source": "runtime/stage/FirstStageSourceOwners.cs"
     },
     "Assets/LabLoadingScene/GenericPickupBoundary.cs.meta": {
       "runtime_source": "runtime/commerce/GenericPickupBoundary.cs"
@@ -183,6 +249,9 @@
     },
     "Assets/LabLoadingScene/LabExperiments.cs.meta": {
       "runtime_source": "experiments/LabExperiments.cs"
+    },
+    "Assets/LabLoadingScene/LightningStakeDiagnosticObserver.cs.meta": {
+      "runtime_source": "runtime/world/LightningStakeDiagnosticObserver.cs"
     },
     "Assets/LabLoadingScene/MoneyCostBoundary.cs.meta": {
       "runtime_source": "runtime/commerce/MoneyCostBoundary.cs"
@@ -274,6 +343,18 @@
     "Assets/LabLoadingScene/SilentProjectileBoundary.cs.meta": {
       "runtime_source": "runtime/world/SilentProjectileBoundary.cs"
     },
+    "Assets/LabLoadingScene/SirenEggDiagnosticInput.cs.meta": {
+      "runtime_source": "runtime/input/SirenEggDiagnosticInput.cs"
+    },
+    "Assets/LabLoadingScene/SirenEncounterBoundary.cs.meta": {
+      "runtime_source": "runtime/stage/SirenEncounterBoundary.cs"
+    },
+    "Assets/LabLoadingScene/SirenEncounterEggTargets.cs.meta": {
+      "runtime_source": "runtime/stage/SirenEncounterEggTargets.cs"
+    },
+    "Assets/LabLoadingScene/SourceStageIdentityLifecycle.cs.meta": {
+      "runtime_source": "runtime/stage/SourceStageIdentityLifecycle.cs"
+    },
     "Assets/LabLoadingScene/SpawnStateBoundary.cs.meta": {
       "runtime_source": "runtime/catalog/SpawnStateBoundary.cs"
     },
@@ -289,8 +370,17 @@
     "Assets/LabLoadingScene/StagePopulationBoundary.cs.meta": {
       "runtime_source": "runtime/world/StagePopulationBoundary.cs"
     },
+    "Assets/LabLoadingScene/SurvivorCombatOutputObserver.cs.meta": {
+      "runtime_source": "runtime/world/SurvivorCombatOutputObserver.cs"
+    },
     "Assets/LabLoadingScene/SurvivorSelectionBoundary.cs.meta": {
       "runtime_source": "runtime/session/SurvivorSelectionBoundary.cs"
+    },
+    "Assets/LabLoadingScene/SurvivorSkillInputCoverage.cs.meta": {
+      "runtime_source": "runtime/input/SurvivorSkillInputCoverage.cs"
+    },
+    "Assets/LabLoadingScene/SurvivorSkillObserver.cs.meta": {
+      "runtime_source": "runtime/world/SurvivorSkillObserver.cs"
     },
     "Assets/LabLoadingScene/TeleportMaterialBoundary.cs.meta": {
       "runtime_source": "runtime/catalog/TeleportMaterialBoundary.cs"

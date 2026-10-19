@@ -154,9 +154,10 @@ class ImporterRebuildTests(unittest.TestCase):
 
     def test_public_membership_counts_and_coordinator_order(self):
         recipe = read(RECIPE / "importer-identities.json")
-        self.assertEqual({group: len(recipe[group]) for group in replay.GROUPS}, dict(scripts=105, shaders=175, other=6))
+        self.assertEqual({group: len(recipe[group]) for group in replay.GROUPS}, dict(scripts=135, shaders=175, other=6))
         self.assertNotIn("folders", recipe)
-        self.assertEqual(sum("guid" in row for row in recipe["scripts"].values()), 14)
+        # J751: Codex's 17 new editor scripts carry explicit GUIDs; runtime sources use the layout.
+        self.assertEqual(sum("guid" in row for row in recipe["scripts"].values()), 31)
         owner = rebuild.STEPS["importer-identities"]
         provenance = {path: dict(producer="unity-generated") for path in replay.membership(recipe)}
         self.assertEqual(rebuild.selected_paths(owner, provenance), set(provenance))
