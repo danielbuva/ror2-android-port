@@ -12430,3 +12430,29 @@ awards, audio, frame rate or visual parity. Native gameplay source-table and
 reference-count contracts remain unchanged apart from J726's documented order.
 The two runtime inputs affect R8 staging, as recorded in J726. No original
 asset/assembly, storage configuration, extra device or Moon route is changed.
+
+## J729 — Clean-checkout replay: R1–R7 equal; the working project now holds uncommitted code
+
+Phase 2, from-scratch rebuild (run by Claude; host only). Follow-up to J725. Hypothesis: from a
+detached checkout of the committed `HEAD` (`78201b2`), reading inputs through `--work-dir` as
+`docs/rebuild-plan.md` describes, R1–R8 reproduce the working project snapshot J725 recorded. The
+first attempt stopped at R2: the catalog cores resolved `reconstruction.json`'s `work/...` export
+against the checkout's own root. `whole_catalog.work_path` now resolves recorded `work/...` paths
+against the selected inputs, as `StageIO.resolve` does (`78201b2`; live behaviour unchanged;
+1,017 host tests pass).
+
+Result (`work/receipts/J726-rebuild/`, written before the number moved): R1 assemblies, shader
+pipeline, R2 composition (with the full host catalog analysis), project inputs, R3 catalog
+closure, R4 dependencies, stage variants, source scenes and R7 build entries are all equal. R8
+reproduces 125 runtime sources and differs on four: `BodyCatalogBoundary.cs`,
+`EnemyRewardBoundary.cs`, `IntegratedWorldBoundary.cs` and `TeleporterWorldBoundary.cs`. All four
+match the J725 snapshot of the map exactly, and R8 compares with the live working project too. That
+project changed after the snapshot: Codex built and accepted `f49d93e` (`IntegratedWorldBoundary`
+and `TeleporterWorldBoundary`) and staged uncommitted drafts of the other two, which match no
+commit. A rebuild from public source cannot reproduce code that is only in a working tree. The
+throwaway checkout and its 9.6 GB destination were deleted; the J725 destination is kept.
+
+Revisit: the target for R8–R9 must be a working project built from a committed tree. Either the
+build records the commit and refuses or flags a dirty tree, or the rebuild compares against a
+build receipt instead of the live project. Then refresh the map at that commit and run R9 (editor
+and device, operator approval).

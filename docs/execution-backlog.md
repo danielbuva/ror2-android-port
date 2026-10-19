@@ -38,6 +38,10 @@ Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 - [ ] Make R9 equivalent (J586): resolve the `BlueNoise_R8_1.png.meta` working-project drift
       (J592) and find why `Hidden/Compositing` drops out of R9's APK (a second build in the same
       Library still omits it, J598; next: a Library-less build of a working-project clone).
+- [ ] Give the rebuild a committed target (J729): the working project now carries staged,
+      uncommitted runtime drafts, so R8–R9 cannot match it from public source. Record the build's
+      commit and refuse or flag a dirty tree (or compare against that receipt), refresh the
+      provenance map at it, then rerun R9 with the operator.
 - [ ] Remove the rebuild's remaining local inputs (R2's migration evidence is gone, J597):
       the 47 hash-pinned analysis inputs (R3's ten are regenerated on the host since J725; left:
       R7's runtime contracts, an editor export, and 46 shader recovery inputs),
