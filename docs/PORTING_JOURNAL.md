@@ -11458,3 +11458,52 @@ Phase 2 output, authored runtime, extra device, receipt edit, storage change
 or permanent award occurs. Current source remains J707's accepted 105-file
 runtime. Native UI-abandon retry is active separately; the prepared REX alternate
 selector and source/fixture-bound base-stage route remain next breadth work.
+
+## J709 — Record host-observed restart phase timing without changing acceptance
+
+Hypothesis: the cold catalog/setup envelope dominates short cases, but current
+same-process cleanup evidence does not measure warm startup accurately enough
+to justify a batching rewrite. Add host observation times to the existing runner
+before making throughput claims. This is generic Python orchestration; no new
+RoR2 mechanism or runtime probe is implemented. J686 and the private warm-study
+findings remain lifecycle evidence, not a warm-duration benchmark.
+
+Session-cleanup-check/session-abandon-check now own HostMilestoneTiming in their
+existing Python module. It starts immediately after device.launch returns and
+records each actually observed milestone once, including qualifying menu/world
+reports, returned Settings/End Run/Start commands, a validated completion report
+and the existing healthy session-2 predicate. It emits host_timing in result and
+summary. Missing observations stay null; intervals are null when an endpoint is
+missing or observed out of order. On abandon, the checker can observe session-2
+menu before validating the completion report, so that cleanup-to-menu interval
+is intentionally unknown. UI command return does not establish input processing
+completion. These host seconds are not world/Run/Stage time, native CPU/FPS,
+cleanup duration itself or implementation of a warm batch executor.
+
+Review rejects the initial draft's incidental if/elif rewrite, which could
+change a later stop reason after completion validation failed. Root and the
+independent reviewer identify the same issue. The final private patch restores
+the original chain exactly and inserts only a successful-validation timing mark
+before it. Its regression combines malformed completion and missing abandon
+observations and preserves the original stop/first failure. The reviewer also
+compares module ASTs after removing timing additions and finds no unrelated
+control-flow, PID/attempt, selector, finalizer or observation-window change.
+Reviewed patch d73bb7ceb1fe04a242dd2a363f0bce8f2eda435b4d967b7efef799c9710f81aa:
+work/coordination/session-restart-timing-draft/.
+
+Root full suite: 996 tests pass with one existing skip, including eight timing
+contracts and the existing 46 checker fake-device contracts. Evidence:
+work/coordination/codex-host-restart-timing-tests.stdout and .stderr. Ruff passes.
+First failure: none in the corrected host contracts. No new on-device timing
+measurement is claimed: the current native collector started before this source
+was loaded and its report has no host_timing fields. The next collector will
+measure whichever milestones it actually observes.
+
+This host-only change is documented under the existing current actions/owner.
+It changes no APK, runtime source, native skill/state, profile writer, original
+input, Phase 2 output, receipt, storage configuration or extra-device selection.
+Accepted and installed APK remains J707
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee,
+with unchanged 105 runtime hashes; no R8 runtime replay/build is needed for
+these host clocks. Next use observed same-process timings before investing in
+a batch executor; continue classifying native cleanup independently.

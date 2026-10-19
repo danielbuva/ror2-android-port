@@ -1036,6 +1036,15 @@ reported settings screen dimensions in the installed APK;
 older APKs refuse those taps. Genuine native loss remains the separate default
 session-cleanup-check contract.
 
+The host-only `HostMilestoneTiming` helper in the same runner records one-time
+`time.monotonic()` offsets from `device.launch()` return. It marks observed
+menu/world reports, returned UI commands, validated completed cleanup and the
+existing healthy session-2 predicate. Missing milestones and out-of-order
+interval endpoints remain null; abandon may observe the menu before validating
+the completion report. `host_timing` is emitted in result/summary evidence only.
+These measurements change no acceptance gate and are neither native CPU/FPS nor
+proof that a warm batch executor exists.
+
 Both cleanup actions accept the current optional `--skill-variants` JSON for
 one base survivor, using the skill check's strict selector parser before device
 access. The attempt-bound selector stays until runner finalization; a fresh

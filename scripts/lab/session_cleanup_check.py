@@ -34,6 +34,81 @@ RESTART_RECT = (32, 390, 350, 60)  # Current source UI rect; never tapped withou
 DEBUG_ASSISTS = ("invincibility", "highDamage", "fastCharge", "movementBoost", "jumpBoost")
 DEFAULT_SURVIVOR = "Commando"
 PROFILE_COUNTS = ("appliedRuns", "earnedUnlocks", "availableEarnedUnlocks")
+
+
+class HostMilestoneTiming:
+    """Record host-observed phase offsets; absent observations stay null."""
+
+    EVENTS = (
+        "launch_return",
+        "first_menu_observed",
+        "first_world_observed",
+        "settings_open_request_sent",
+        "end_run_request_sent",
+        "completed_cleanup_observed",
+        "second_menu_observed",
+        "loss_restart_tap_sent",
+        "session2_menu_start_request_sent",
+        "second_world_healthy_observed",
+    )
+    INTERVALS = {
+        "launch_to_first_menu": ("launch_return", "first_menu_observed"),
+        "launch_to_first_world": ("launch_return", "first_world_observed"),
+        "first_world_to_end_run_request": ("first_world_observed", "end_run_request_sent"),
+        "end_run_request_to_cleanup_observed": ("end_run_request_sent", "completed_cleanup_observed"),
+        "cleanup_to_second_menu": ("completed_cleanup_observed", "second_menu_observed"),
+        "second_menu_to_start_request": ("second_menu_observed", "session2_menu_start_request_sent"),
+        "menu_start_request_to_second_world": ("session2_menu_start_request_sent", "second_world_healthy_observed"),
+        "first_world_to_second_world": ("first_world_observed", "second_world_healthy_observed"),
+    }
+
+    def __init__(self, clock=time.monotonic):
+        self.clock = clock
+        self.origin = None
+        self.events = {name: None for name in self.EVENTS}
+
+    def start(self, observed_at=None):
+        if self.origin is None:
+            self.origin = self.clock() if observed_at is None else observed_at
+            self.events["launch_return"] = self.origin
+
+    def mark(self, name, observed_at=None):
+        if name not in self.events:
+            raise ValueError("Unknown host timing milestone: " + name)
+        if self.origin is None:
+            return
+        if self.events[name] is None:
+            self.events[name] = self.clock() if observed_at is None else observed_at
+
+    def report(self):
+        offsets = {
+            name: round(value - self.origin, 6) if value is not None and self.origin is not None else None
+            for name, value in self.events.items()
+        }
+        intervals = {}
+        for name, (begin, end) in self.INTERVALS.items():
+            left, right = self.events[begin], self.events[end]
+            intervals[name] = round(right - left, 6) if left is not None and right is not None and right >= left else None
+        return {
+            "clock": "time.monotonic() on the host; seconds",
+            "origin": "host observation immediately after device.launch() returns",
+            "event_basis": {
+                "first_menu_observed": "first matching session-1 menu-phase report read",
+                "first_world_observed": "first matching session-1 integrated-world-playing report read",
+                "settings_open_request_sent": "host input-tap command returned",
+                "end_run_request_sent": "host input-tap command returned",
+                "completed_cleanup_observed": "existing completed-session contract validated",
+                "second_menu_observed": "first matching session-2 menu-phase report read",
+                "session2_menu_start_request_sent": "host input-tap command returned",
+                "loss_restart_tap_sent": "host input-tap command returned",
+                "second_world_healthy_observed": "session-2 report passed session2_ready",
+            },
+            "events": offsets,
+            "intervals": intervals,
+            "limits": "Host-observed wall time only; null means milestone not observed. Does not measure native CPU, FPS, or warm-batch execution.",
+        }
+
+
 ERROR_PATHS = (
     (("debugAcceleration",), ("error",)),
     (("results",), ("error", "ledgerRecoveryError")),
@@ -721,6 +796,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
     session2_menu_start_sent = False
     session2_menu_observed = False
     direct_start_observed = False
+    host_timing = HostMilestoneTiming()
     settings_open_sent = False
     abandon_input_sent = False
     started = time.monotonic()
@@ -748,6 +824,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                 raise RuntimeError("Could not clear the exact stale report target")
         device.cmd("push", str(out / "selection.json"), selector)
         launch = device.launch()
+        host_timing.start()
         pid = str(launch["pid"])
         write(out / "launch.json", {"pid": pid, **frozen})
         if not device.display(True):
@@ -777,6 +854,10 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                     break
                 phase = current.get("phase")
                 if phase == "offline-start-menu":
+                    if current.get("session") == 1:
+                        host_timing.mark("first_menu_observed")
+                    elif current.get("session") == 2 and ending == "abandon":
+                        host_timing.mark("second_menu_observed")
                     if survivor not in FREE_SURVIVORS:
                         fail("unexpected-menu-for-diagnostic-override")
                         break
@@ -801,6 +882,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                                 fail("completed-session-cleanup-failed-before-session-2-menu")
                                 first_failure = failures[0]
                                 break
+                            host_timing.mark("completed_cleanup_observed")
                             coords = menu_start_coordinates(current)
                             if coords is None:
                                 fail("session-2-offline-menu-start-control-unavailable")
@@ -817,8 +899,10 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                                 },
                             )
                             device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                            host_timing.mark("session2_menu_start_request_sent")
                             session2_menu_start_sent = True
                 if current.get("session") == 1 and phase == "integrated-world-playing":
+                    host_timing.mark("first_world_observed")
                     if skill_variant_override is not None:
                         variant_failures = skill_variant_failures(current, skill_variant_override)
                         if variant_failures:
@@ -915,6 +999,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                                     fail("abandon-settings-control-geometry-unavailable")
                                     break
                                 device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                                host_timing.mark("settings_open_request_sent")
                                 settings_open_sent = True
                             elif settings.get("visible") is True and settings.get("canEndRun") is True:
                                 coords = abandon_control_coordinates(
@@ -927,6 +1012,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                                     fail("abandon-confirm-control-geometry-unavailable")
                                     break
                                 device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                                host_timing.mark("end_run_request_sent")
                                 abandon_input_sent = True
                 if ending == "abandon" and current.get("session") == 1 and phase == "commando-defeated":
                     fail("original-loss-occurred-before-abandon")
@@ -949,12 +1035,16 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                         fail("restart-control-display-mapping-unavailable")
                         break
                     device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                    host_timing.mark("loss_restart_tap_sent")
                     restart_sent = True
                 if current.get("session") == 2 and phase == "integrated-world-playing" and session2_ready(current):
+                    host_timing.mark("second_world_healthy_observed")
                     completed = _read_json(device, completed_path)
                     failures = ending_contract(
                         completed or {}, pid, attempt, profile_baseline, survivor, ending, skill_variant_override
                     )
+                    if not failures:
+                        host_timing.mark("completed_cleanup_observed")
                     if failures:
                         fail("completed-session-cleanup-failed")
                     elif ending == "loss" and (not observed_session1_defeat or not restart_sent):
@@ -1077,6 +1167,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         ),
         "abandon_ui": {"settings_open_sent": settings_open_sent, "end_run_sent": abandon_input_sent},
         "session2_menu_ui": {"observed": session2_menu_observed, "start_sent": session2_menu_start_sent},
+        "host_timing": host_timing.report(),
         "apk_sha256": artifact_hash,
         "serial": device.serial,
         "profile_baseline": profile_baseline,
@@ -1102,6 +1193,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         "evidence": result["evidence"],
         "skill_variant_override": skill_variant_override,
         "skill_variant_evidence": result["skill_variant_evidence"],
+        "host_timing": result["host_timing"],
         "combat_output_lifecycle": result["combat_output_lifecycle"],
         "profile_snapshots": {
             "first_live_session": profile_baseline,
