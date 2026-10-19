@@ -6962,3 +6962,69 @@ Open question. Next discriminating experiment: open an APFS clone of the working
 its Library removed, and build it once. With the shader, the trigger is in project files (folder
 GUIDs are the only systematic difference); without it, it is Library import state. The device
 impact is nil so far: R9's APK passed both checks without it (J582, J586).
+
+
+## J601 — Accept the survivor/Siren APK gate and correct the native death contract
+
+Hypothesis: J596's staged runtime can preserve the two standard Nova behaviors,
+and J600's proposed native listener retirement can be verified in Play Mode
+before adding it to another APK. These are separate cohorts.
+
+Candidate APK 8fbda448bd51df403554a9f58417a0bac05fc85c7b2ff4e2cdbeb9058a2d1660
+built in 127.1 s with zero counted errors, reusing the frozen payload. J599
+records the build and intervening coordination refusal. After the lock was
+released, it installed in place on adopted storage with fresh placement/free-
+space checks. The current Nova then passed:
+
+- Plain baseline: 35.18 s on Lakes, no reported error/first failure,
+  work/experiments/baseline/20261019T070704.443888Z/.
+- Stage-exit baseline: one transition to Goolake and 10.07 s of next-stage play,
+  no reported error/first failure,
+  work/experiments/baseline/20261019T071033.584203Z/.
+
+Both remained assisted and kept 13 applied profile runs. Both selectors were
+removed and the app stopped/display slept before the next check. Frozen build,
+APK hash, staged-source hashes and preflight evidence:
+work/experiments/survivor-check/candidate-20261019T065704.283061Z/.
+This becomes the baseline for these two modes only. Siren native mission play,
+complete skill behavior, ordinary unlocks, visuals/audio and performance remain
+unaccepted. The base-survivor callback check has now started on this exact APK.
+
+The separate J600 fixture first refused an unsaved editor scene without
+replacing it. Inspection showed a clean empty scene with no roots; the guarded
+runner can reconstruct that exact empty context. In Play Mode, the first native
+attempt then refused the missing onCharacterDeathGlobal backing field. The
+review had used the prior input's decompile. Computing the source directory with
+the build producer's actual assembly/decompiler digest identifies the accepted
+RoR2 SHA-256 a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d,
+work/decompiled/RoR2/e544a320e0b943df/. Current CombatSquad subscribes to
+onCharacterDeathServer; the obsolete global event is a custom alias to the
+chance-gated onDeathProcServer and has no backing field. The helper now names
+the actual server event. It still refuses an absent contract, without fallback
+counts or delegate mutation. This corrects J600's source attribution; its
+server-gated lifetime hypothesis remains present in the current source.
+
+The corrected exact-editor Play Mode fixture passed: one original death listener
+and one summon listener before destruction, zero of each afterward; public
+network spawn/unspawn passed. The runner held the host mutex, used a temporary
+empty scene, exited Play Mode and restored the prior clean empty scene with no
+cleanup error. Evidence:
+work/experiments/teleporter-lifetime/editor-20261019T071219.617249Z/.
+Earlier refusal and failure folders remain beside it. This verifies the native
+squad callback contract, not actual teleporter-prefab teardown on Android or the
+broader managed-memory cause. No private lifecycle method was invoked.
+
+Current-source reviews confirmed the survivor callback/SkillLocator APIs and the
+Siren selection, spawn, timing and member/summon contracts. They corrected the
+private notes' prior-input citations and a SolusFight namespace; no further
+concrete Siren owner mismatch was found. Four canonical skill slots remain a
+limited observation; auxiliary component coverage is a separate draft. The
+event audit also found two all-death observers that should use the server event;
+those changes are queued separately, while the proc-based elite award observer
+retains its original event semantics.
+
+Revisit: finish the attributed survivor cases on the accepted APK, then build
+and run the teleporter/current-source observer changes through both baseline
+modes and completed-session cleanup. Their live callback counts must establish
+Android retirement. The helper change alters R8 authored runtime/provenance and
+requires later rebuild replay. No Phase 2 step or extra-device action ran here.

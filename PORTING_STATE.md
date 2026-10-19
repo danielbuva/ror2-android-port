@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J600** (host teardown draft; survivor/Siren candidate built, device checks pending).
+Last updated 2026-10-19 after **J601** (survivor/Siren APK passed both baseline modes).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -13,11 +13,11 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Latest device-verified APK | `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` — J585 code build of `main`: layered R9 reimport in `LabBuild.cs`, `Unity.Timeline` preserved whole (J584); runtime source unchanged since J551; passed both `./dev check-baseline` modes |
-| Installed now | J585 APK `da5e4959…`, installed in place on the current Nova's adopted storage and passed both baseline modes through the scoped receipt path (J595); app stopped, OLED asleep. Receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since that APK | J587/J590 survivor and J594 Siren drafts passed exact-editor contracts (J596) and built as candidate `8fbda448…` (J599); install/both checks await the renewed coordination lock. J600 teleporter teardown draft compiles but is not staged in that APK; Play Mode/device acceptance remains pending. |
+| Latest device-verified APK | `8fbda448bd51df403554a9f58417a0bac05fc85c7b2ff4e2cdbeb9058a2d1660` — J599/J601 survivor/Siren code build; both baseline modes passed. Native Siren mission and complete skill behavior remain pending. |
+| Installed now | J601 APK `8fbda448…`, installed in place on current Nova adopted storage. The base-survivor callback check is running; each case stops the app and sleeps the OLED on cleanup. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Runtime source since that APK | J600/J601 native teleporter retirement is staged and passed its exact-editor Play Mode callback contract; Android cleanup remains pending. Auxiliary skill observations and two system-death observer fixes are authored drafts for a later APK. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
-| Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
+| Executable rollbacks | J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
 
 Retention rules for these rollbacks: [docs/history-retention.md](docs/history-retention.md).

@@ -59,8 +59,8 @@ during transport. A second exit request, transport after transition 1 or a trans
 count above 1 also stops and fails. Invalid transition counts, report errors, process
 exit, ordinary results or the 370 s host deadline fail. The check never intentionally
 drives another exit.
-This is a host polling guard, not a new runtime transition interlock; device validation
-of this mode remains pending. It does not assert a particular commerce purchase count
+This is a host polling guard, not a new runtime transition interlock. Both baseline
+modes have device evidence (J601). It does not assert a particular commerce purchase count
 or ordinary-difficulty acceptance.
 
 Stage mode freezes its final evidence at the last current-process report and force-stops
@@ -74,13 +74,13 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0`, code build in J585 with the layered R9 reimport in `LabBuild.cs` and `Unity.Timeline` preserved whole (J584); same runtime source as J551 |
-| Check | passed: 35.2 s on Lakes and one genuine stage exit, no report error (J585) |
-| Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`, which has the same runtime code |
-| Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| APK | `8fbda448bd51df403554a9f58417a0bac05fc85c7b2ff4e2cdbeb9058a2d1660`, J599/J601 survivor/Siren code build, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.18 s on Lakes and one genuine stage exit to Goolake with 10.07 s next-stage play, no report error (J601) |
+| Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
+| Rollbacks | J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J585). Neither mode covers other survivors, ordinary (unassisted) difficulty,
+passed it (J601). Neither mode covers other survivors, ordinary (unassisted) difficulty,
 audio, frame rate or visual parity. Use the journal entries above for broader existing
 evidence.

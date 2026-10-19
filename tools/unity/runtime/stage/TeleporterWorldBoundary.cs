@@ -40,12 +40,12 @@ public static class NativeCombatSquadListenerEvidence
 
     public static int CountDeathListeners(IEnumerable<CombatSquad> exactTargets)
     {
-        return Count(typeof(GlobalEventManager), "onCharacterDeathGlobal", exactTargets);
+        return Count(typeof(GlobalEventManager), nameof(GlobalEventManager.onCharacterDeathServer), exactTargets);
     }
 
     public static int CountSummonListeners(IEnumerable<CombatSquad> exactTargets)
     {
-        return Count(typeof(MasterSummon), "onServerMasterSummonGlobal", exactTargets);
+        return Count(typeof(MasterSummon), nameof(MasterSummon.onServerMasterSummonGlobal), exactTargets);
     }
 }
 
