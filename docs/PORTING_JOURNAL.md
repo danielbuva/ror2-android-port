@@ -12843,3 +12843,90 @@ This host-only change is made after J733's runtime source was frozen into
 12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8;
 that new APK's controls are underway and it is not yet accepted. No runtime
 source, protected content, storage configuration or extra device is changed.
+
+
+## J736 — Native controller routing succeeds; Init-time plugin lookup still fails
+
+Hypothesis: J734's unavailable controller-speaker route can be explicitly mapped
+to the accepted System shareset after unchanged Init loading and before Global,
+capture or event work. Keep this a separate Android routing adaptation, not an
+unmodified-routing claim. The exact installed SDK's DemoMotion and SetBusDevice
+contracts are the prior art recorded in J734. No bank, effect parameter, RTPC,
+audioTeam, switch, state or codec is changed.
+
+The guarded C ABI requires a fresh bridge-owned initialized context, exactly
+one pinned Init bank, no second bank/event/capture attempt and no prior routing
+attempt. It queries the actual sink-179 registration and refuses the fallback
+if present. The single real SetBusDevice call uses top-level bus 1803403060
+and existing System shareset 3859886410. SDK failures retain their real result;
+cleanup stays with the disposable engine owner. The separate splitscreen bus
+remains unchanged. Root merges this reviewed draft with cumulative native
+monitor observation; the failed J734 fixture is preserved.
+
+The new monitor counts delivered Error-level callbacks and atomically latches
+one first code/level pair for the library's process lifetime. Benign later
+messages cannot clear the count or pair. No message allocation/storage or new
+SDK call is added in the callback; the previous bounded last-message snapshot
+remains available. Java requires the actual success value 1, fails on any
+count/pending/ready error state, and records a post-Term summary only after its
+real parse succeeds. The scope is callbacks delivered after successful monitor
+registration, not complete native logging or retained error text.
+
+Root passes 15 metadata/binding contracts, the actual extracted routing guard
+with SDK stubs, exact production Java reader/plan contracts and the Java summary
+consumer. Root also compiles the actual extracted native monitor callback/
+getter with host boundary stubs. Sequential and concurrent-first contracts
+pass: exact cumulative counts, publication of a real first pair, retention
+across later errors/benign messages and a simulated Term boundary, and invalid
+pointer refusal. The first host fixture incorrectly expected a reset after a
+prior sequential case; that failed test is preserved and corrected to use the
+process-lifetime baseline. No production reset is introduced. These host tests
+do not establish SDK callback quiescence or Android timing.
+
+The combined bridge source is
+7047c2c80f3395207db7a1e3b1b43a24ebf94d05cb0c81f405fbefc9e55a15e7,
+compiled into native library
+29f90439fc846c8189d21131b666fc562fb645ca031b55d8b0489b14a91f12cf.
+JNI source 713909db5727ab0203571bde43688af156ec84e400fcaee7a42e1a89ceccce4a
+compiles into 7cd427c82be33a8a8f6bf916788cd8727579601fe28e147c6244049386b1a300.
+Both use the same pinned SDK Profile archives, Unity r21d compiler/sysroot and
+explicit hash-pinned compiler-builtins archive as J732. Native/source/input
+receipts are local under
+work/coordination/wwise-controller-bus-monitor-candidate/native-build-v1/.
+The signed fixture APK is
+857aa0668aa4b2d46504c6c692bc17eb142f0f53f8cac80b45b4506b72f3f884;
+its generated plan binds exact original banks, authored source and native bytes.
+The runner additionally checks operation order, actual routing ids/results,
+plan fingerprint, cumulative zero-error requirement and complete cleanup.
+
+On the configured device, SetBusDevice returns actual success with the expected
+ids, issued=true and sink-179 registered=false. Both complete unchanged banks
+load; the original UI event posts, returns a playing id and reaches EndOfEvent.
+Capture contains 31 callbacks, 17,856 frames, 35,712 finite samples and 32,582
+nonzero finite samples; nonfinite/rejected/limited counts are zero. Peak is
+0.1782330871 and RMS 0.0191426023. Capture unregister, reverse bank unloads,
+emitter unregister and Term pass. The disposable package is uninstalled,
+cleanup errors are empty, no Android fatal exception is observed and the
+OLED sleeps. This is still isolated output-window evidence, without physical
+speaker, source-fidelity, managed-ABI or composed-gameplay acceptance.
+
+The strict candidate fails: three cumulative native error callbacks, first
+code 114/level 2. The last-message slot ends at J734's code 42, missing plugin
+11730951. The exact SDK AkMonitorError.h identifies 114 as PluginFileNotFound;
+AkMonitorErrorImpl.h supplies the dynamic-library lookup message template.
+The process log records a failed lib.so lookup immediately before Init's
+LoadBank return and before SetBusDevice. Thus a post-Init second-bus override
+cannot retroactively remove the first failure. The accepted Init's table names
+System 174, Controller Speaker 179 and No Output 181 with empty DLL names.
+Linking the lookup specifically to unavailable 179 is a strong inference from
+that metadata/query, not a recovered first-message identity. System/No Output
+registration was not independently queried by this fixture.
+
+Evidence: work/device/<serial>/wwise-original-global-routing/20261019T210938.707349Z/;
+root result: work/coordination/codex-wwise-original-global-routing-device-v1.stdout.
+Next: investigate exact Init output/plugin metadata and an explicit minimal
+Android adaptation, with no blind plugin-id or parameter rewrite. Retained
+managed Unity initialization remains an independent fixture gate. Original
+media conversion has not been established as necessary. Audio remains
+unavailable in the port. All banks/native libraries/SDK material stay ignored;
+this documentation checkpoint changes no game runtime or rebuild input.

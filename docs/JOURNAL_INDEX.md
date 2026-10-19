@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J736](PORTING_JOURNAL.md#j736--native-controller-routing-succeeds-init-time-plugin-lookup-still-fails) | 2026-10-19 | Native controller routing succeeds; Init-time plugin lookup still fails | Hypothesis: J734's unavailable controller-speaker route can be explicitly mapped to the accepted System shareset after unchanged Init loading and before Global… |
 | [J735](PORTING_JOURNAL.md#j735--mul-t-and-commando-alternates-require-live-loadout-identity) | 2026-10-19 | MUL-T and Commando alternates; require live loadout identity | Hypothesis: the native alternate identities inventoried in J727 execute bounded four-slot checks on candidate f05465855016ec4b5db17fd88a1e5f7ab54fea7e37039e5f3… |
 | [J734](PORTING_JOURNAL.md#j734--original-global-event-produces-pcm-controller-output-remains-unavailable) | 2026-10-19 | Original Global event produces PCM; controller output remains unavailable | Hypothesis: J732's independently verified native SDK output can execute one original event from the complete, unchanged Global bank. |
 | [J733](PORTING_JOURNAL.md#j733--mercenary-alternates-pass-retain-later-effect-registrations) | 2026-10-19 | Mercenary alternates pass; retain later effect registrations | Hypothesis: J731's owned Evis effect adapter removes J720's native lookup failure while preserving the ordinary controls. |
