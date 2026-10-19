@@ -21,6 +21,7 @@ SLOTS = ("primary", "secondary", "utility", "special")
 MIN_WORLD_SECONDS = 60
 MAX_WORLD_SECONDS = 180
 HOST_DEADLINE_SECONDS = 420
+LOG_POLL_SECONDS = 10
 
 
 def require_lab_available():
@@ -204,7 +205,9 @@ def check_one(device, survivor, attempt, runtime, out, installed):
     write(out / "selection.json", survivor_selection(attempt, survivor))
     pid, first, final = None, None, None
     stop, started = "deadline", False
+    runtime_errors, first_failure = [], None
     began = time.monotonic()
+    next_log_poll = began + LOG_POLL_SECONDS
     try:
         device.sh("rm", "-f", report_path)
         device.cmd("push", str(out / "selection.json"), selector)
@@ -225,6 +228,9 @@ def check_one(device, survivor, attempt, runtime, out, installed):
                     first = report
                     device.collect("screenshot", out / "first-world-capture")
                 stop = stop_reason(report) or "deadline"
+                if stop == "first-failure":
+                    first_failure = report.get("firstFailure") or report.get("error")
+                    break
                 if stop != "deadline":
                     break
                 if phase == "offline-start-menu" and not started:
@@ -234,6 +240,15 @@ def check_one(device, survivor, attempt, runtime, out, installed):
                     hud = report["hud"]
                     device.sh("input", "tap", str(round(hud["menuStartX"])), str(round(hud["menuStartY"])))
                     started = True
+            if time.monotonic() >= next_log_poll:
+                logs = device.cmd("logcat", "-d", "--pid=" + str(pid), "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S")
+                runtime_errors = current_errors(logs, pid)
+                if runtime_errors:
+                    first_failure = runtime_errors[0]
+                    (out / "first-error-poll.log").write_text(logs)
+                    stop = "first-runtime-log-error"
+                    break
+                next_log_poll = time.monotonic() + LOG_POLL_SECONDS
             time.sleep(2)
         # Freeze the report before collection can extend automated play.
         device.sh("am", "force-stop", PACKAGE, check=False)
@@ -242,12 +257,19 @@ def check_one(device, survivor, attempt, runtime, out, installed):
         logs = device.cmd("logcat", "-d", "--pid=" + str(pid), "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S")
         (out / "current-process.log").write_text(logs)
         device.collect("crash", out / "capture")
-        errors = current_errors(logs, pid)
-        failures = assess(survivor, stop, first, final, errors)
+        final_errors = current_errors(logs, pid)
+        runtime_errors = list(dict.fromkeys(runtime_errors + final_errors))
+        if runtime_errors and first_failure is None:
+            first_failure = runtime_errors[0]
+        elif first_failure is None and final and (final.get("firstFailure") or final.get("error")):
+            first_failure = final.get("firstFailure") or final.get("error")
+        failures = assess(survivor, stop, first, final, runtime_errors)
         result = {
             "success": not failures,
             "survivor": survivor,
             "stop": stop,
+            "first_failure": first_failure,
+            "runtime_errors": runtime_errors,
             "failures": failures,
             "missing_activations": missing_activations(final or {}),
             "suppressed_callbacks": suppressed_missing_callbacks(final or {}),

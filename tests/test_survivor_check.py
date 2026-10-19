@@ -246,8 +246,19 @@ class SurvivorAssessmentTests(unittest.TestCase):
         self.assertEqual(check.assess("Huntress", "four-slots-activated", None, copy.deepcopy(untouched), []), ["profile run count changed or missing"])
 
 
+class FakeClock:
+    def __init__(self):
+        self.value = 0.0
+
+    def monotonic(self):
+        return self.value
+
+    def sleep(self, seconds):
+        self.value += seconds
+
+
 class SurvivorRunnerTests(unittest.TestCase):
-    def run_case(self, *, stale=False, errors=False, capture_error=False):
+    def run_case(self, *, stale=False, errors=False, capture_error=False, early_error=False, stale_pid_error=False, host_deadline_seconds=420):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
@@ -257,6 +268,12 @@ class SurvivorRunnerTests(unittest.TestCase):
             report(pid="42", attempt="fixture", id="other-session"),
             report(pid="42", attempt="fixture", id=check.SPINE_ID),
         ]
+        if early_error:
+            pending = report(pid="42", attempt="fixture", id=check.SPINE_ID, world={"seconds": 10})
+            for slot in pending["survivorSkills"]["slots"]:
+                slot["authorityActivations"] = 0
+                slot["serverActivations"] = 0
+            reports = [pending]
         replies = iter(reports if stale else reports[-1:])
         device = Mock()
 
@@ -264,15 +281,21 @@ class SurvivorRunnerTests(unittest.TestCase):
             if args[0] == "pidof":
                 return "42"
             if args[0] == "cat":
+                if early_error:
+                    return json.dumps(reports[0])
                 return json.dumps(next(replies))
             return ""
 
         device.sh.side_effect = shell
         device.launch.return_value = {"pid": "42"}
-        device.cmd.return_value = "10-19 01:02:03.004 42 43 E Unity : failure" if errors else ""
+        error_pid = "43" if stale_pid_error else "42"
+        error_line = "10-19 01:02:03.004 " + error_pid + " 53 E Unity : failure"
+        device.cmd.return_value = error_line if errors or early_error or stale_pid_error else ""
         if capture_error:
             device.collect.side_effect = RuntimeError("capture transfer failed")
-        with patch.object(check, "WORK", root), patch.object(check.time, "sleep"):
+        clock = FakeClock()
+        device.fake_clock = clock
+        with patch.object(check, "WORK", root), patch.object(check.time, "sleep", side_effect=clock.sleep), patch.object(check.time, "monotonic", side_effect=clock.monotonic), patch.object(check, "HOST_DEADLINE_SECONDS", host_deadline_seconds):
             try:
                 result = check.check_one(device, "Huntress", "fixture", "/owned/runtime", root / "case", {"apk_sha256": "a" * 64})
             except RuntimeError:
@@ -296,6 +319,46 @@ class SurvivorRunnerTests(unittest.TestCase):
         result, device, root = self.run_case(errors=True)
         self.assertFalse(result["success"])
         self.assertIn("unexpected current-process Unity/Android errors", result["failures"])
+
+    def test_logged_error_stops_before_four_callbacks_and_preserves_first_evidence(self):
+        result, device, root = self.run_case(early_error=True)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["stop"], "first-runtime-log-error")
+        self.assertEqual(result["runtime_errors"], ["10-19 01:02:03.004 42 53 E Unity : failure"])
+        self.assertEqual(result["first_failure"], result["runtime_errors"][0])
+        self.assertEqual(device.fake_clock.value, check.LOG_POLL_SECONDS)
+        self.assertEqual(result["missing_activations"], list(check.SLOTS))
+        self.assertTrue((root / "case/first-report.json").exists())
+        self.assertTrue((root / "case/current-process.log").exists())
+        self.assertEqual(
+            (root / "case/first-error-poll.log").read_text(),
+            "10-19 01:02:03.004 42 53 E Unity : failure",
+        )
+        device.collect.assert_any_call("screenshot", root / "case/first-world-capture")
+
+    def test_late_error_in_final_log_still_fails_and_is_recorded(self):
+        result, device, root = self.run_case(errors=True)
+        self.assertFalse(result["success"])
+        self.assertEqual(result["stop"], "four-slots-activated")
+        self.assertIn("current-process", " ".join(result["failures"]))
+        self.assertEqual(result["runtime_errors"], ["10-19 01:02:03.004 42 53 E Unity : failure"])
+        self.assertEqual(result["first_failure"], result["runtime_errors"][0])
+
+    def test_stale_pid_errors_are_ignored_during_poll_and_final_collection(self):
+        result, device, root = self.run_case(early_error=True, stale_pid_error=True, host_deadline_seconds=20)
+        self.assertFalse(result["success"])  # No callbacks before the deliberately short host deadline.
+        self.assertEqual(result["runtime_errors"], [])
+        self.assertIsNone(result["first_failure"])
+        self.assertFalse(any("current-process" in failure for failure in result["failures"]))
+        self.assertEqual(device.fake_clock.value, 20)
+        self.assertEqual(sum(call[0] == "cmd" and call.args[0] == "logcat" for call in device.mock_calls), 2)
+
+    def test_logged_error_finalizers_remove_selector_stop_app_and_sleep_display(self):
+        result, device, root = self.run_case(early_error=True)
+        self.assertFalse(result["success"])
+        device.sh.assert_any_call("rm", "-f", "/owned/runtime/movement-batch-selection.json", check=False)
+        device.sh.assert_any_call("am", "force-stop", check.PACKAGE, check=False)
+        device.display.assert_called_once_with(False)
 
     def test_capture_failure_still_removes_selection_stops_app_and_sleeps_display(self):
         result, device, root = self.run_case(capture_error=True)

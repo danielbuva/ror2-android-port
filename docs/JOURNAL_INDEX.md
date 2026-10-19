@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J613](PORTING_JOURNAL.md#j613--stop-survivor-cases-on-live-current-process-errors) | 2026-10-19 | Stop survivor cases on live current-process errors | Hypothesis: J611's shield exception demonstrates that callback counts and empty report error fields are insufficient to stop at the first native gameplay failu… |
 | [J612](PORTING_JOURNAL.md#j612--qualify-cpu-evidence-by-survivor-and-sampled-gameplay-context) | 2026-10-19 | Qualify CPU evidence by survivor and sampled gameplay context | Hypothesis: a process-attributed raw profile needs explicit survivor and stage qualifiers before it can support the parallel survivor/performance work. |
 | [J611](PORTING_JOURNAL.md#j611--mul-t-callbacks-pass-engineers-native-shield-filter-stops-the-sweep) | 2026-10-19 | MUL-T callbacks pass; Engineer's native shield filter stops the sweep | Hypothesis: J606's bounded ordinary input can cover J603's unobserved utility, then expose remaining base-survivor integration failures on the J608 baseline. |
 | [J610](PORTING_JOURNAL.md#j610--android-refuses-the-first-system-cpu-call-graph-capture) | 2026-10-19 | Android refuses the first system CPU call-graph capture | Hypothesis: J599's bounded system-simpleperf host action can capture native CPU owners from an already-running development APK without changing the application… |

@@ -7478,3 +7478,26 @@ survivor/phase/scene/transition drift, strict types and runtime errors. Ruff and
 diff checks pass. No new action, build input, local state requirement or device
 operation is added. Installed/baseline APK remains J608's 41ecca66…; J611's
 Engineer first failure remains open.
+
+## J613 — Stop survivor cases on live current-process errors
+
+Hypothesis: J611's shield exception demonstrates that callback counts and empty
+report error fields are insufficient to stop at the first native gameplay
+failure. The existing current-process log classifier should run during the
+case, rather than only after its activation/timing stop. This is generic host
+observation; no native gameplay or RoR2 reconstruction is changed.
+
+The tracked survivor runner now polls the selected PID's Unity/Android log at
+10 s intervals. Its first unexpected error stops the run, preserves that full
+poll log and records the first failure separately from the final report. Final
+collection still catches later errors and preserves the observed list without
+replacing the earlier first failure. Existing expected shader-target messages
+retain their current filter. Report guards, APK/ownership cohort, selectors,
+first-stage restrictions and process/display finalizers remain in force.
+
+Twenty-five focused mocked tests pass, including a logged error before the
+four callbacks, a late final-log error, foreign PID refusal and selector/process/
+display cleanup. Ruff and diff checks pass. No device action, APK/payload or
+build input changed. The installed baseline remains J608's 41ecca66… and the
+Engineer shield failure remains under native-source/exact-editor investigation.
+The next survivor run will use this host observer; it is not yet device-run.

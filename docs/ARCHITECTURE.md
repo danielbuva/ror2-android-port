@@ -635,8 +635,10 @@ explicit diagnostic override and invincibility, never permanent profile awards o
 expansion availability. A case needs 60 s of live world play and positive native
 authority **and** server activations on all four slots; at 180 s it reports missing
 activation evidence. Source-suppressed callbacks remain unproven. First failure,
-first-stage departure or process exit ends the batch. Current-process errors fail
-the check; known handled Windows shader-target messages use the existing filter.
+first-stage departure or process exit ends the batch. Current-process errors are
+polled every 10 s, stop the case even when report error fields are empty, and are
+checked again in the final log; known handled Windows shader-target messages use
+the existing filter. Results preserve the first failure and observed error list.
 Each case preserves its first-world screenshot, frozen report, log and crash
 evidence under `work/experiments/survivor-check/`. Cleanup removes the selector,
 stops the owned app and sleeps the display. Every ADB command checks the parallel
