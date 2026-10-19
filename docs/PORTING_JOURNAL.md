@@ -10184,3 +10184,34 @@ J678 records its prior plain/native-stage controls. Runtime source/APK/payload
 are unchanged by this host-only fix; no rebuild step or new ./dev action is
 added. No original input, extra device, private receipt hand edit, existing
 data move or storage configuration change occurs.
+
+## J680 — Accept the native-loot candidate on both default baseline modes
+
+Hypothesis: J675's native source-table transaction and J669/J672 observations
+preserve ordinary transport while J678 separately proves the opt-in source
+startup path. APK remains J677's
+e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+
+Default exit evidence: work/experiments/baseline/20261019T153015.317158Z/.
+One genuine exit reaches Goolake and 12.411591 s of next-stage play at world
+time 131.031387 s. The collector and root's current-process log check both
+pass; native diagnostic/recovery flags are false. Profile runs/earned/available
+unlocks remain 13/1/1. This case also executes J679's exact owned-APK selector
+binding in the real command path. J678 records the same APK's separate
+35.219040 s plain control.
+
+Both default modes now pass: accept e09920fd… and preserve J670 ad84d0cb…
+as the immediate executable rollback, along with the older named checkpoints.
+The full 266-file payload remains byte-identical to J665's repaired content.
+J678's independent native case records source Stage/population/table readiness
+and real actor events; it does not turn either default control into native
+transport or full lifecycle acceptance.
+
+First failure: none in the default exit. Its finally removes selectors, stops
+and sleeps OLED. Root starts a fresh explicitly native assisted UI-abandon/
+same-process restart case to test completed-session restoration; its outcome
+is pending. The collector stops the default control while still playing, so
+it does not itself prove teardown. Timed-chest grants, Wake rewards, complete
+alternate semantics, normal difficulty, audio and sustained performance remain
+separate gates. No runtime/source change, original input, extra device, private
+receipt hand edit, existing data move or storage configuration change occurs.

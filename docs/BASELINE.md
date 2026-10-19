@@ -74,20 +74,22 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69`, J670 acceptance of J665's full-content 105-source build, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.19 s on Lakes and one genuine stage exit to Goolake with 10.10 s next-stage play, no report or current-process log error (J665/J670) |
+| APK | `e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc`, J680 acceptance of J677's 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.22 s on Lakes and one genuine stage exit to Goolake with 12.41 s next-stage play, no report or current-process log error (J678/J680) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J670), with the native diagnostic flag off. The opt-in native
-first-stage path now starts original Stage/population, then fails on source
-large-chest loot readiness (J668). Timed-chest delivery and an ordinary saved
-award remain unverified. Engineer's repaired four-slot alternate case passes
-the former missing charge key and all callbacks, then fails on the known
-elite-stake error (J667); full Laser Cutter damage/sequence is open. Earlier
-three-alternate UI-abandon cleanup/restart is J653 on f57e172b…, and Mercenary
-direct damage is J647. The newer J669 actor-event owner is staged but not in
-this APK. Both baseline modes use Commando and do not establish full ability
-semantics, ordinary difficulty, audio, frame rate or visual parity.
+passed it (J680), with the native diagnostic flag off. Its separate native
+first-stage path passes original Stage/population, prepared source-table
+readiness and real actor damage/death observations (J678). Completed native
+restoration/restart remains under test; native transport is still refused.
+Timed-chest delivery, Wake rewards and ordinary saved awards remain unverified.
+Mage's default and four-alternate callbacks/output plus alternate menu-abandon/
+restart pass on prior ad84d0cb… (J671/J673/J674); Earth Shards output and full
+ability effects remain open. Engineer's repaired four-alternate case has all
+callbacks before known elite-stake corruption (J667); the new rolling observer
+still needs that workload. Huntress's default inventory is J676; Mercenary
+direct damage is J647. Both default controls use Commando and do not establish
+complete skills, ordinary difficulty, audio, frame rate or visual parity.
