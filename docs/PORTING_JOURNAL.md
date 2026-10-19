@@ -10886,3 +10886,59 @@ captured-owner contract/review. Separately, the J693 isolated-input candidate
 has built and is on device checks; its full result will be recorded separately.
 No original input, Phase 2 output, extra device, hand-edited receipt, storage
 configuration/data change or permanent progression occurs.
+
+## J697 — Restore exact managed table leases after full native owner retirement
+
+Hypothesis: J696's destroyed component can be cleaned without skipping its
+field restoration if its independently captured GameObject is also destroyed.
+J694 proves ordinary managed-field access through a retained destroyed wrapper;
+the new condition must refuse a surviving owner/child borrower. Source knowledge
+remains J675/J691's exact native fields and Wake hierarchy, not an invented
+expansion or retirement rule. Native Wake DropShamanRewards can copy a cloned
+table into its child creator; existing scene lifecycle/queue ownership remains.
+
+WholeInteractableSession now captures the exact GameObject at bind and validates
+one of the four concrete mutable public PickupDropTable fields against the
+accepted native type. Its inline NativeSourceBindingRestorePolicy keeps the
+requested/bound/valid/loaded/active-scene conjunction. Live components must still
+reference that captured live owner in the correct scene. A Unity-fake-null
+component permits the same captured lease only when both managed references
+remain and the captured GameObject is independently Unity-fake-null. The lease
+still checks the exact owned/original reference, restores the field and refuses
+foreign replacements. A live GameObject after component-only destruction
+refuses. Reverse restoration, recovery retention and later provider release
+are unchanged; no clone is freed early, target skipped or object recreated.
+Additional refusal predicates make the next device result classifiable.
+
+Private reviewed runtime patch fb32f9f44333991a242d841fe9277a70ce231eaaab0c0509392704c93c2d556a:
+work/coordination/native-retired-binding-draft/. Independent review closes its
+initial live-owner hazard:
+work/coordination/native-retired-binding-review/corrected-patch-review.md.
+Root adds explicit preview-scene assertions, native field-contract assertions
+and complete refusal diagnostics. The policy remains inline in the existing
+owner; 105 runtime files and GUID/membership recipes are unchanged.
+
+Root's 980 host tests pass with one existing skip. The actual inline production
+policy and lease compile/execute in a temporary host fixture, including scene,
+missing wrapper, live-owner and unknown-field refusal, restore/idempotence and
+foreign replacement. Final seven native-focused tests also pass. These do not
+claim provider lifecycle from a disconnected resource mock. Exact-editor full
+contracts pass at work/experiments/first-stage-native-lifecycle/
+retired-field-editor-20261019T165420.672089Z/. The final focused schema/Unity
+retirement fixture also passes at retired-field-editor-20261019T165651.279802Z/:
+all three real Wake fields and the Chest field API match, component-only destroy
+leaves owner/child live and refuses, full owner destroy retires the child and
+selects captured-field restore, and foreign replacement stays untouched. Only
+fixture objects/tables are created and destroyed; no Run/network/native Start.
+
+First failure: none in the final host/editor contracts. The actual captured
+owner's liveness remains a required device predicate; J696's derived owner
+signal cannot establish it. The new runtime condition checks it before any
+managed restoration, so a still-live owner will retain the prior refusal.
+This source is unbuilt. Candidate fe4dc0de contains J693 and is undergoing default
+checks, while accepted baseline remains J695
+039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc.
+R8 must replay the changed runtime owner/editor fixture. No new local build
+input, Phase 2 output, original input, extra device, manual receipt change,
+storage alteration or permanent progression occurs. Next: build, run both
+default modes, then repeat explicit native UI-abandon/restart.

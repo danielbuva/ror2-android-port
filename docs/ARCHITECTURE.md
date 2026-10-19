@@ -1068,20 +1068,28 @@ local NetworkUser, so server-begin does not prove Stage.Start's client
 continuation or `onStageStartGlobal`. Unknown/platform global scene-change
 subscribers refuse; no event queue is cleared to force progress.
 
-`WholeInteractableSession` captures a binding label and component/GameObject
-instance IDs with each native source table lease. Its restore guard records
-independent requested/bound/active scene and live component/owner predicates
-before the existing exact field restore. `NativeSourceBindingWitnessFormatter`
-is a stateless helper in the same authored file; a failed guard retains every
-lease/context as before. No optional consumer or missing owner is silently
-skipped. The host formatter fixture does not simulate Unity object lifetime.
-The same existing editor fixture file also owns
+`WholeInteractableSession` captures each source table binding's exact component,
+GameObject, scene, label and instance IDs before changing its borrowed field.
+`NativeSourceBindingRestorePolicy` in the same owner file requires the bound,
+valid, loaded, active scene. A live component must still reference the captured
+live GameObject in that scene. For a destroyed component, the captured GameObject
+must independently be Unity-fake-null with both managed references retained;
+bind-time validation must identify one of the four exact mutable native public
+PickupDropTable fields. The existing captured lease then restores that managed
+field and still refuses foreign replacements. A component-only destruction with
+a live GameObject/child consumer refuses. No field restoration is skipped and
+providers remain held until all leases restore; failure retains recovery state.
+`NativeSourceBindingWitnessFormatter` reports each predicate without dereferencing
+dead wrappers. The portable policy/lease and formatting tests do not simulate
+Unity destruction.
+
+The existing editor fixture file also owns
 `NativeSourceFieldFixture.WakeManagedFieldLeaseExactEditorFixture`: a disposable
-preview-scene contract invokes the production lease against an inactive native
-WakeController, destroys its GameObject and restores the ordinary managed field
-through the retained fake-null wrapper. It creates/destroys only fixture objects,
-restores before releasing its temporary tables, and closes the preview scene in
-finally. This does not decide the runtime restore guard or prove WakeSpawner ran.
+inactive preview hierarchy exercises the production field schema and policy,
+component-only destruction with a surviving child pickup consumer, full hierarchy
+retirement, managed field restoration, idempotence and foreign replacement.
+It restores before releasing temporary tables and closes the preview scene in
+finally. It does not start gameplay or establish that native WakeSpawner ran.
 
 Source identity retirement verifies the captured server mapping and current
 ID mapping are absent after owned `UnSpawn`, then invokes native `Reset` for

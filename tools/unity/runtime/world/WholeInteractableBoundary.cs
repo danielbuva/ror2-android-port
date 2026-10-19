@@ -98,6 +98,8 @@ public sealed partial class PortSession
             public int componentInstanceId;
             public int gameObjectInstanceId;
             public string bindingName;
+            public GameObject gameObject;
+            public bool exactDirectManagedField;
             public NativeBorrowedFieldLease<BasicPickupDropTable> lease;
             public Scene scene;
         }
@@ -273,11 +275,48 @@ public sealed partial class PortSession
                                                    componentInstanceId = component.GetInstanceID(),
                                                    gameObjectInstanceId = component.gameObject.GetInstanceID(),
                                                    bindingName = bindingName,
+                                                   gameObject = component.gameObject,
+                                                   exactDirectManagedField = IsExactNativeManagedTableField(component, bindingName),
                                                    scene = scene,
                                                    lease = new NativeBorrowedFieldLease<BasicPickupDropTable>(read, write, source, owned) };
             // Publish the recovery handle before changing the borrowed field.
             nativeSourceDropTableBindings.Add(binding);
             binding.lease.Bind();
+        }
+        static bool IsExactNativeManagedTableField(Component component, string bindingName)
+        {
+            if (!component)
+                return false;
+            Type expectedType;
+            string fieldName;
+            if (bindingName == "Chest2.ChestBehavior.dropTable")
+            {
+                expectedType = typeof(ChestBehavior);
+                fieldName = "dropTable";
+            }
+            else if (bindingName == "WakeAltar.WakeController.goldDropTable")
+            {
+                expectedType = typeof(WakeController);
+                fieldName = "goldDropTable";
+            }
+            else if (bindingName == "WakeAltar.WakeController.silverDropTable")
+            {
+                expectedType = typeof(WakeController);
+                fieldName = "silverDropTable";
+            }
+            else if (bindingName == "WakeAltar.WakeController.bronzeDropTable")
+            {
+                expectedType = typeof(WakeController);
+                fieldName = "bronzeDropTable";
+            }
+            else
+            {
+                return false;
+            }
+            if (component.GetType() != expectedType)
+                return false;
+            var field = expectedType.GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            return field != null && field.FieldType == typeof(PickupDropTable) && !field.IsInitOnly;
         }
         static bool IsSupportedNativeBasicTable(BasicPickupDropTable table, string expectedName)
         {
@@ -355,23 +394,38 @@ public sealed partial class PortSession
                 bool activeSceneMatchesRequested = activeScene == scene;
                 Component liveComponent = binding.component;
                 bool componentAlive = liveComponent;
-                GameObject liveOwner = componentAlive ? liveComponent.gameObject : null;
-                bool ownerAlive = liveOwner;
-                bool ownerSceneMatchesRequested = ownerAlive && liveOwner.scene == scene;
-                bool exactOriginalGuard = requestedMatchesBound && requestedSceneValid && requestedSceneLoaded &&
-                                          activeSceneMatchesRequested && componentAlive && ownerSceneMatchesRequested;
+                bool managedComponentReferencePresent = !ReferenceEquals(binding.component, null);
+                GameObject capturedOwner = binding.gameObject;
+                bool ownerAlive = capturedOwner;
+                bool managedOwnerReferencePresent = !ReferenceEquals(binding.gameObject, null);
+                GameObject componentOwner = componentAlive ? liveComponent.gameObject : null;
+                bool componentOwnerMatchesCaptured = componentAlive && ReferenceEquals(componentOwner, binding.gameObject);
+                bool componentOwnerAlive = componentOwner;
+                bool ownerSceneMatchesRequested = ownerAlive && capturedOwner.scene == scene;
+                bool exactSceneBoundary = requestedMatchesBound && requestedSceneValid && requestedSceneLoaded &&
+                                          activeSceneMatchesRequested;
+                NativeSourceBindingRestoreAction restoreAction =
+                    NativeSourceBindingRestorePolicy.Decide(exactSceneBoundary, componentAlive,
+                        managedComponentReferencePresent, ownerAlive, managedOwnerReferencePresent,
+                        componentOwnerMatchesCaptured && componentOwnerAlive, ownerSceneMatchesRequested,
+                        binding.exactDirectManagedField);
                 int currentComponentId = componentAlive ? liveComponent.GetInstanceID() : 0;
-                int currentGameObjectId = ownerAlive ? liveOwner.GetInstanceID() : 0;
+                int currentGameObjectId = ownerAlive ? capturedOwner.GetInstanceID() : 0;
                 string requestedSceneName = requestedSceneValid ? scene.name : "<invalid>";
                 string boundSceneName = binding.scene.IsValid() ? binding.scene.name : "<invalid>";
                 string activeSceneName = activeScene.IsValid() ? activeScene.name : "<invalid>";
-                string ownerSceneName = ownerAlive && liveOwner.scene.IsValid() ? liveOwner.scene.name : "<unavailable>";
-                coordinator.Check(exactOriginalGuard,
+                string ownerSceneName = ownerAlive && capturedOwner.scene.IsValid() ? capturedOwner.scene.name : "<unavailable>";
+                coordinator.Check(restoreAction != NativeSourceBindingRestoreAction.Refuse,
                                   NativeSourceBindingWitnessFormatter.Format(
                                       binding.bindingName, binding.componentInstanceId, binding.gameObjectInstanceId, currentComponentId,
                                       currentGameObjectId, requestedMatchesBound, requestedSceneValid, requestedSceneLoaded,
                                       activeSceneMatchesRequested, componentAlive, ownerAlive, ownerSceneMatchesRequested,
-                                      requestedSceneName, boundSceneName, activeSceneName, ownerSceneName));
+                                      requestedSceneName, boundSceneName, activeSceneName, ownerSceneName) +
+                                      "; componentOwnerMatchesCaptured=" + componentOwnerMatchesCaptured +
+                                      "; managedComponentReferencePresent=" + managedComponentReferencePresent +
+                                      "; managedOwnerReferencePresent=" + managedOwnerReferencePresent +
+                                      "; exactDirectManagedField=" + binding.exactDirectManagedField +
+                                      "; restoreAction=" + restoreAction);
                 binding.lease.Restore();
             }
             nativeSourceDropTableBindings.Clear();
@@ -870,3 +924,44 @@ internal static class NativeSourceBindingWitnessFormatter
         return value ?? "<unavailable>";
     }
 }
+
+// BEGIN native retired managed-field restore policy (host-test extraction seam).
+internal enum NativeSourceBindingRestoreAction
+{
+    Refuse,
+    RestoreLiveOwner,
+    RestoreCapturedManagedField
+}
+
+internal static class NativeSourceBindingRestorePolicy
+{
+    internal static NativeSourceBindingRestoreAction Decide(bool exactSceneBoundary,
+                                                              bool componentAlive,
+                                                              bool managedComponentReferencePresent,
+                                                              bool capturedOwnerAlive,
+                                                              bool managedOwnerReferencePresent,
+                                                              bool componentOwnerMatchesCaptured,
+                                                              bool ownerSceneMatchesRequested,
+                                                              bool exactDirectManagedField)
+    {
+        if (!exactSceneBoundary)
+            return NativeSourceBindingRestoreAction.Refuse;
+
+        if (componentAlive)
+        {
+            return managedComponentReferencePresent && capturedOwnerAlive && managedOwnerReferencePresent &&
+                           componentOwnerMatchesCaptured && ownerSceneMatchesRequested
+                       ? NativeSourceBindingRestoreAction.RestoreLiveOwner
+                       : NativeSourceBindingRestoreAction.Refuse;
+        }
+
+        // A destroyed component may still have a live child consumer holding its
+        // selected table. Require its captured GameObject wrapper to be fake-null
+        // too. No Unity member is accessed through either dead wrapper.
+        return managedComponentReferencePresent && !capturedOwnerAlive && managedOwnerReferencePresent &&
+                       exactDirectManagedField
+                   ? NativeSourceBindingRestoreAction.RestoreCapturedManagedField
+                   : NativeSourceBindingRestoreAction.Refuse;
+    }
+}
+// END native retired managed-field restore policy.
