@@ -353,6 +353,10 @@ public sealed partial class PortSession
         public void WorldEquipmentStimulus(NovaInputBridge bridge, float elapsed)
         {
             bridge.diagnosticEquipment = false;
+            // Isolated skill diagnostics never request the automatic equipment
+            // action. Preserve explicit touch/manual requests through the bridge.
+            if (bridge.isolatedDiagnosticSkillInput)
+                return;
             if (coordinator.r.world.equipment == null)
                 return;
             if (coordinator.DeveloperEquipmentStimulus(bridge, elapsed))

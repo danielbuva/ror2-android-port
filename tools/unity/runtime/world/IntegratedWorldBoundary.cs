@@ -2081,6 +2081,12 @@ public sealed partial class PortSession
                 coordinator.r.world.diagnosticInput = false;
                 return;
             }
+            if (!string.IsNullOrEmpty(coordinator.r.diagnosticSkillIsolationSlot))
+            {
+                bridge.isolatedDiagnosticSkillInput = true;
+                bridge.isolatedDiagnosticSkillSlot = SurvivorSkillInputCoverage.ParseIsolationSlot(
+                    coordinator.r.diagnosticSkillIsolationSlot);
+            }
             if (!coordinator.r.world.diagnosticInputEver)
             {
                 coordinator.Check(coordinator.r.debugAcceleration != null, "Unattended input has no owned diagnostic evidence");
@@ -2302,9 +2308,16 @@ public sealed partial class PortSession
                     return;
                 coordinator.Check(survivorSkills != null && coordinator.r.debugAcceleration != null,
                                   "Diagnostic skill coverage requires prepared observation and assist tracking");
-                skillInputCoverage = new SurvivorSkillInputCoverage(player, bridge, survivorSkills.report);
+                skillInputCoverage = new SurvivorSkillInputCoverage(player, bridge, survivorSkills.report,
+                                                                    coordinator.r.diagnosticSkillIsolationSlot);
                 coordinator.r.skillInputCoverage = skillInputCoverage.reportData;
                 coordinator.DebugToggle("diagnosticSkillCoverage", true, "explicit launch selection");
+                if (skillInputCoverage.reportData.mode == "isolated-slot")
+                {
+                    coordinator.Check(coordinator.r.developerSkillIsolationAssisted,
+                                      "Isolated skill-slot assistance was not validated before native setup");
+                    coordinator.DebugToggle("diagnosticSkillIsolation", true, "explicit launch selector");
+                }
             }
             skillInputCoverage.Apply(elapsed);
         }

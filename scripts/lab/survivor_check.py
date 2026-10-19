@@ -91,17 +91,25 @@ def read_skill_variant_selection(path, survivor):
     return {"survivor": survivor, "entries": normalized}
 
 
-def survivor_selection(attempt, survivor, skill_variant_override=None):
+def survivor_selection(attempt, survivor, skill_variant_override=None, skill_slot=None):
     if survivor not in BASE_SURVIVORS:
         raise ValueError("Unsupported base survivor")
     value = selection(attempt)
     value.update(selectedSurvivor=survivor, developerSurvivorOverride=survivor not in FREE_SURVIVORS, diagnosticSkillCoverage=True)
+    if skill_slot is not None:
+        if skill_slot not in SLOTS:
+            raise ValueError("skill slot must be one of: " + ",".join(SLOTS))
+        value["diagnosticSkillIsolationSlot"] = skill_slot
+        value["debugOptions"]["purpose"] = (
+            "Assisted isolated native skill-slot input diagnostic; no permanent progression"
+        )
     if skill_variant_override is not None:
         if skill_variant_override.get("survivor") != survivor:
             raise ValueError("skill-variant selection survivor differs")
         value["developerSkillVariantOverride"] = skill_variant_override
-        value["debugOptions"]["purpose"] = "Assisted per-run base-survivor skill-variant check; no profile or unlock changes"
-    else:
+        if skill_slot is None:
+            value["debugOptions"]["purpose"] = "Assisted per-run base-survivor skill-variant check; no profile or unlock changes"
+    elif skill_slot is None:
         value["debugOptions"]["purpose"] = "Original base-survivor skill integration; diagnostic selection/input, no permanent progression"
     return value
 
@@ -282,6 +290,149 @@ def stop_reason(report):
     return None
 
 
+ISOLATED_SKILL_MAX_SECONDS = 60
+
+
+def isolated_skill_identity(report, requested_slot):
+    """Join the exact runtime canonical component to its observed loadout row."""
+    observation = report.get("survivorSkills") or {}
+    slots = [row for row in observation.get("slots", []) if row.get("slot") == requested_slot]
+    components = [row for row in observation.get("components", [])
+                  if row.get("present") is True and row.get("canonicalSlot", "").lower() == requested_slot]
+    inventory = observation.get("skillVariantInventory") or {}
+    catalogs = [row for row in inventory.get("components", [])
+                if len(components) == 1 and row.get("componentIndex") == components[0].get("componentIndex")]
+    if len(slots) != 1 or len(components) != 1 or len(catalogs) != 1 or inventory.get("status") != "available":
+        return {"status": "unavailable", "reason": "slot-component-or-catalog-identity-missing-or-ambiguous"}
+    slot_row, component, catalog = slots[0], components[0], catalogs[0]
+    indexes = (catalog.get("familyCatalogIndex"), catalog.get("selectedLoadoutVariantIndex"),
+               catalog.get("selectedLoadoutSkillCatalogIndex"), catalog.get("runtimeSkillCatalogIndex"))
+    if (type(component.get("componentIndex")) is not int or
+            any(type(index) is not int or index < 0 for index in indexes) or
+            catalog.get("runtimeDefinitionStatus") != "matches-selected-native-loadout" or
+            catalog["runtimeSkillCatalogIndex"] != catalog["selectedLoadoutSkillCatalogIndex"] or
+            not slot_row.get("definition") or not slot_row.get("declaredActivationState") or
+            not slot_row.get("machineState")):
+        return {"status": "invalid", "reason": "selected-native-family-variant-or-state-mismatch"}
+    return {
+        "status": "valid", "slot": requested_slot, "componentIndex": component["componentIndex"],
+        "familyCatalogIndex": catalog["familyCatalogIndex"],
+        "selectedLoadoutVariantIndex": catalog["selectedLoadoutVariantIndex"],
+        "selectedLoadoutSkillCatalogIndex": catalog["selectedLoadoutSkillCatalogIndex"],
+        "runtimeSkillCatalogIndex": catalog["runtimeSkillCatalogIndex"],
+        "runtimeDefinitionStatus": catalog["runtimeDefinitionStatus"],
+        "definition": slot_row["definition"], "activationState": slot_row["declaredActivationState"],
+        "machineState": slot_row["machineState"],
+    }
+
+
+def isolated_stop_reason(report, requested_slot):
+    if report.get("error") or report.get("firstFailure"):
+        return "first-failure"
+    progress = report.get("stageProgress") or {}
+    if (progress.get("transitions", 0) != 0 or progress.get("transporting") or
+            (report.get("stage") or {}).get("scene") not in (None, "", FIRST_STAGE)):
+        return "left-first-stage"
+    coverage = report.get("skillInputCoverage") or {}
+    if coverage.get("mode") == "isolated-slot" and coverage.get("completed") is True:
+        if (coverage.get("outcome") == "isolated-slot-observation-complete" and
+                report.get("phase") == "integrated-world-playing" and
+                coverage.get("isolationSlot") == requested_slot and
+                isolated_skill_success(report, requested_slot)):
+            return "isolated-slot-observation-complete"
+        if coverage.get("outcome") == "isolated-slot-observation-complete":
+            return "isolated-slot-evidence-invalid"
+        return coverage.get("outcome") or "isolated-slot-refused"
+    world_seconds = (report.get("world") or {}).get("seconds")
+    owner_seconds = coverage.get("elapsedSeconds")
+    if (type(world_seconds) in (int, float) and world_seconds >= ISOLATED_SKILL_MAX_SECONDS and
+            type(owner_seconds) in (int, float) and owner_seconds >= ISOLATED_SKILL_MAX_SECONDS):
+        return "isolated-slot-deadline"
+    return None
+
+
+def isolated_skill_success(report, requested_slot):
+    coverage = report.get("skillInputCoverage") or {}
+    if coverage.get("mode") != "isolated-slot" or coverage.get("isolationSlot") != requested_slot:
+        return False
+    if report.get("diagnosticSkillIsolationSlot") != requested_slot or report.get("developerSkillIsolationAssisted") is not True:
+        return False
+    identity = isolated_skill_identity(report, requested_slot)
+    if identity.get("status") != "valid":
+        return False
+    rows = [row for row in coverage.get("slots", []) if row.get("slot") == requested_slot]
+    if len(rows) != 1:
+        return False
+    row = rows[0]
+    return (coverage.get("selectedCallbacksObserved") is True and
+            coverage.get("completed") is True and
+            coverage.get("outcome") == "isolated-slot-observation-complete" and
+            type(coverage.get("elapsedSeconds")) in (int, float) and
+            coverage.get("elapsedSeconds") >= ISOLATED_SKILL_MAX_SECONDS and
+            type((report.get("world") or {}).get("seconds")) in (int, float) and
+            (report.get("world") or {}).get("seconds") >= ISOLATED_SKILL_MAX_SECONDS and
+            type(row.get("inputBankEdges")) is int and row["inputBankEdges"] > 0 and
+            all(type(row.get(key)) is int for key in
+                ("authorityBefore", "serverBefore", "authorityAfter", "serverAfter")) and
+            row["authorityAfter"] > row["authorityBefore"] and
+            row["serverAfter"] > row["serverBefore"])
+
+
+def assess_isolated_skill(survivor, requested_slot, stop, first, final, errors, skill_variant_override=None):
+    failures = []
+    if stop != "isolated-slot-observation-complete":
+        failures.append("stopped: " + stop)
+    if not final:
+        return failures + ["no current-process report"]
+    if (final.get("selectedSurvivor") != survivor or
+            final.get("diagnosticSkillIsolationSlot") != requested_slot or
+            final.get("developerSkillIsolationAssisted") is not True):
+        failures.append("isolated survivor/slot assistance provenance differs")
+    if final.get("error") or final.get("firstFailure"):
+        failures.append("runtime first failure")
+    if isolated_skill_identity(final, requested_slot).get("status") != "valid":
+        failures.append("selected native slot family/variant/state identity unavailable or mismatched")
+    if skill_variant_override is not None:
+        if final.get("developerSkillVariantOverride") != skill_variant_override:
+            failures.append("per-run skill-variant selector differs")
+        override = final.get("developerSkillVariantOverrideReport") or {}
+        if override.get("status") != "applied" or override.get("applied") is not True or override.get("assisted") is not True:
+            failures.append("per-run skill-variant override was not applied as assisted")
+        if final.get("developerSkillVariantAssisted") is not True:
+            failures.append("per-run skill-variant assisted session marker is absent")
+        effective = override.get("effectiveSkillVariants")
+        live_inventory = skill_variant_catalog_inventory({
+            "survivorSkills": {"skillVariantInventory": (final.get("survivorSkills") or {}).get("skillVariantInventory")}
+        })
+        if live_inventory.get("status") != "valid":
+            failures.append("post-spawn native skill-variant inventory unavailable or invalid")
+        elif (not isinstance(effective, list) or len(effective) != len(live_inventory["components"]) or
+              any(type(index) is not int or index < 0 for index in effective) or
+              any(effective[row["componentIndex"]] != row["selectedLoadoutVariantIndex"] or
+                  row["runtimeDefinitionStatus"] != "matches-selected-native-loadout" or
+                  row["runtimeSkillCatalogIndex"] != row["selectedLoadoutSkillCatalogIndex"]
+                  for row in live_inventory["components"]) or
+              any(entry["componentIndex"] >= len(effective) or effective[entry["componentIndex"]] != entry["variantIndex"]
+                  for entry in skill_variant_override.get("entries", []))):
+            failures.append("post-spawn effective native loadout differs from selected native variants")
+        elif any(entry["componentIndex"] >= len(live_inventory["components"]) or
+                 live_inventory["components"][entry["componentIndex"]]["familyCatalogIndex"] != entry["familyCatalogIndex"] or
+                 entry["variantIndex"] >= len(live_inventory["components"][entry["componentIndex"]]["variants"]) or
+                 live_inventory["components"][entry["componentIndex"]]["variants"][entry["variantIndex"]]["skillCatalogIndex"] != entry["skillCatalogIndex"]
+                 for entry in skill_variant_override.get("entries", [])):
+            failures.append("post-spawn native family/variant identity differs from request")
+    if not isolated_skill_success(final, requested_slot):
+        failures.append("isolated input edge plus fresh selected-slot authority/server callbacks not established")
+    if not (final.get("debugAcceleration") or {}).get("everAssisted"):
+        failures.append("diagnostic run not marked assisted")
+    runs = ((first or {}).get("profile") or {}).get("appliedRuns")
+    if type(runs) is not int or (final.get("profile") or {}).get("appliedRuns") != runs:
+        failures.append("profile run count changed or missing")
+    if errors:
+        failures.append("unexpected current-process Unity/Android errors")
+    return failures
+
+
 def assess(survivor, stop, first, final, errors, skill_variant_override=None):
     failures = []
     if stop != "four-slots-activated":
@@ -339,13 +490,13 @@ def assess(survivor, stop, first, final, errors, skill_variant_override=None):
     return failures
 
 
-def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_override=None):
+def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_override=None, skill_slot=None):
     out.mkdir()
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + SPINE_ID + ".json"
     if device.sh("sh", "-c", "test -e " + selector + " && echo present", check=False).strip():
         raise RuntimeError("Existing diagnostic selector; preserve it")
-    write(out / "selection.json", survivor_selection(attempt, survivor, skill_variant_override))
+    write(out / "selection.json", survivor_selection(attempt, survivor, skill_variant_override, skill_slot))
     pid, first, final = None, None, None
     stop, started = "deadline", False
     runtime_errors, first_failure = [], None
@@ -370,7 +521,7 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
                 if phase == "integrated-world-playing" and first is None:
                     first = report
                     device.collect("screenshot", out / "first-world-capture")
-                stop = stop_reason(report) or "deadline"
+                stop = (isolated_stop_reason(report, skill_slot) if skill_slot else stop_reason(report)) or "deadline"
                 if stop == "first-failure":
                     first_failure = report.get("firstFailure") or report.get("error")
                     break
@@ -406,7 +557,12 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
             first_failure = runtime_errors[0]
         elif first_failure is None and final and (final.get("firstFailure") or final.get("error")):
             first_failure = final.get("firstFailure") or final.get("error")
-        failures = assess(survivor, stop, first, final, runtime_errors, skill_variant_override)
+        failures = (assess_isolated_skill(survivor, skill_slot, stop, first, final, runtime_errors, skill_variant_override)
+                    if skill_slot else assess(survivor, stop, first, final, runtime_errors, skill_variant_override))
+        isolated_identity = isolated_skill_identity(final or {}, skill_slot) if skill_slot else None
+        live_variant_inventory = (skill_variant_catalog_inventory({
+            "survivorSkills": {"skillVariantInventory": (final.get("survivorSkills") or {}).get("skillVariantInventory")}
+        }) if skill_slot else None)
         result = {
             "success": not failures,
             "survivor": survivor,
@@ -419,6 +575,11 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
             "component_inventory": component_inventory(final or {}, survivor),
             "skill_variant_catalog_inventory": skill_variant_catalog_inventory(final or {}),
             "skill_variant_override": skill_variant_override,
+            "mode": "isolated-skill-slot-diagnostic" if skill_slot else "four-slot-survivor-kit-check",
+            "selected_skill_slot": isolated_identity,
+            "post_spawn_skill_variant_catalog_inventory": live_variant_inventory,
+            "ability_effects": {"status": "not-attributed-by-slot-callback-check",
+                                "complete_skill_semantics": "not-established"} if skill_slot else None,
             "apk_sha256": installed["apk_sha256"],
             "evidence": str(out.relative_to(WORK.parent)),
         }
@@ -434,8 +595,12 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
                 device.display(False)
 
 
-def check_survivors(target, skill_variants=None):
+def check_survivors(target, skill_variants=None, skill_slot=None):
     names = targets(target)
+    if skill_slot is not None and skill_slot not in SLOTS:
+        raise ValueError("skill slot must be one of: " + ",".join(SLOTS))
+    if skill_slot is not None and len(names) != 1:
+        raise ValueError("isolated skill-slot mode requires exactly one --target survivor")
     if skill_variants is not None and len(names) != 1:
         raise ValueError("per-run skill variants require exactly one --target survivor")
     variant_selection = read_skill_variant_selection(skill_variants, names[0]) if skill_variants is not None else None
@@ -469,7 +634,8 @@ def check_survivors(target, skill_variants=None):
     results = []
     for survivor in names:
         result = check_one(device, survivor, attempt, runtime, out / survivor, installed,
-                           skill_variant_override=variant_selection if survivor == names[0] else None)
+                           skill_variant_override=variant_selection if survivor == names[0] else None,
+                           skill_slot=skill_slot)
         results.append(result)
         write(out / "result.json", {"success": all(row["success"] for row in results), "results": results})
         print(json.dumps(result), flush=True)

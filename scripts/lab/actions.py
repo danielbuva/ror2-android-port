@@ -62,7 +62,13 @@ def _target(function, kwargs, args):
 
 def _survivor_target(function, kwargs, args):
     path = getattr(args, "skill_variants", None)
-    return function(args.target, **(dict(kwargs, skill_variants=path) if path is not None else kwargs))
+    slot = getattr(args, "skill_slot", None)
+    selected = dict(kwargs)
+    if path is not None:
+        selected["skill_variants"] = path
+    if slot is not None:
+        selected["skill_slot"] = slot
+    return function(args.target, **selected)
 
 
 def _session_cleanup_target(function, kwargs, args):
@@ -195,7 +201,7 @@ _ENTRIES = (
         "check_survivors",
         {},
         "current",
-        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector for one target.",
+        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector; --skill-slot primary|secondary|utility|special runs one bounded isolated native-input diagnostic for exactly one target and may compose with --skill-variants.",
         handler=_survivor_target,
     ),
     Action(

@@ -61,6 +61,8 @@ p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
+p.add_argument("--skill-slot", choices=("primary", "secondary", "utility", "special"),
+               help="Current: bounded assisted isolated slot diagnostic for one base survivor via survivor-kit-check")
 p.add_argument("--debug-options", help="Ignored local JSON for one integrated run; all acceleration defaults off")
 p.add_argument("--stage-exit", action="store_true", help="Current: check-baseline through one original stage exit and 10 s of next-stage play")
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
@@ -107,6 +109,8 @@ if a.skill_variants and (
         "--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check "
         "or session-abandon-check"
     )
+if a.skill_slot and (a.command != "prototype" or a.action != "survivor-kit-check"):
+    p.error("--skill-slot requires prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):
     p.error("--debug-options requires movement-batch-run or movement-batch-retry")
 if bool(a.compare) != (a.command == "prototype" and a.action == "project-manifest-compare"):

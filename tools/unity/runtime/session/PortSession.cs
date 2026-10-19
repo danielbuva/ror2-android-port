@@ -170,6 +170,8 @@ public sealed partial class PortSession : MonoBehaviour
         // Durable session-level provenance survives replacement of debugAcceleration reports.
         public bool developerSkillVariantAssisted;
         public bool diagnosticSkillCoverage;
+        public string diagnosticSkillIsolationSlot;
+        public bool developerSkillIsolationAssisted;
         public bool diagnosticSirenEggInput;
         public SirenEggInputReport sirenEggInput;
         public SurvivorSkillInputCoverage.Report skillInputCoverage;
@@ -457,6 +459,7 @@ public sealed partial class PortSession : MonoBehaviour
                 yield break;
             // The launch selector is untrusted input. Only this coordinator sets the durable flag.
             r.developerSkillVariantAssisted = false;
+            r.developerSkillIsolationAssisted = false;
             Exception variantSelectionError = null;
             try
             {
@@ -484,6 +487,26 @@ public sealed partial class PortSession : MonoBehaviour
                 r.firstFailurePhase = r.phase;
                 Save();
                 yield break;
+            }
+            if (!string.IsNullOrEmpty(r.diagnosticSkillIsolationSlot))
+            {
+                try
+                {
+                    SurvivorSkillInputCoverage.ParseIsolationSlot(r.diagnosticSkillIsolationSlot);
+                    if (!config.integratedWorld || !r.diagnosticSkillCoverage)
+                        throw new ArgumentException("Isolated skill-slot selector requires the integrated survivor skill diagnostic");
+                    // Set from the validated launch selector before assistance,
+                    // profile, or native gameplay observers are prepared.
+                    r.developerSkillIsolationAssisted = true;
+                }
+                catch (Exception error)
+                {
+                    r.phase = "developer-skill-isolation-refused";
+                    r.firstFailure = "Developer isolated skill-slot selector refused: " + error.Message;
+                    r.firstFailurePhase = r.phase;
+                    Save();
+                    yield break;
+                }
             }
         }
         else

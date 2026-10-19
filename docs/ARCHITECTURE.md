@@ -806,6 +806,19 @@ or movement is written. `SurvivorSkillInputHost` tests synthetic routing,
 dynamic slots, stale-edge refusal, ownership, bounds and disposal in the
 exact editor. Real survivor behavior remains a device gate.
 
+An optional `--skill-slot` on `survivor-kit-check` composes with the existing
+strict per-run variant selector for one base survivor. The same owner enforces
+one selected native skill request during each 0.25 s pulse and masks all other
+skill requests at the input sink for the full 60 s observation interval, even
+after the selected input edge and callback pair appear. It also blocks automatic
+diagnostic equipment requests while preserving explicit touch input. The result
+requires the exact live post-spawn component/family/variant identity, a later
+input-bank edge, and fresh authority/server callbacks. It is assisted single-slot
+input evidence, not a four-slot kit pass, slot-causality proof, or complete
+ability-output acceptance. The special-slot request does not synthesize a
+contextual primary input for Huntress Snipe. Omitting `--skill-slot` retains the
+all-four behavior above.
+
 Siren egg diagnostic input (`SirenEggDiagnosticInput.cs`, explicit default-off
 per-attempt selection): `SessionReport.diagnosticSirenEggInput` constructs an
 independent world-owned input lease only when selected. Jump snapshots carry a

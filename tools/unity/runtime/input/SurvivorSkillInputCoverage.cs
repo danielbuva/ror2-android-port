@@ -3,6 +3,7 @@
 // teardown before the owned body/world is released.
 using System;
 using RoR2;
+using RoR2.Skills;
 using UnityEngine;
 
 // Supplies short ordinary input pulses for canonical slots that have not yet
@@ -14,6 +15,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     public const int MaximumRequests = 12;
     public const float RequestIntervalSeconds = 6f;
     public const float PulseSeconds = .25f;
+    public const int IsolationMaximumSeconds = 60;
+    public const int IsolationMaximumRequests = 10;
 
     [Serializable]
     public sealed class SlotCoverage
@@ -26,10 +29,12 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     [Serializable]
     public sealed class Report
     {
-        public bool active, completed, cleaned;
+        public bool active, completed, cleaned, selectedCallbacksObserved;
         public int requests;
         public float elapsedSeconds;
-        public string outcome;
+        public string outcome, mode, isolationSlot, selectedDefinition, selectedActivationState, selectedMachineState;
+        public int selectedComponentIndex = -1, selectedFamilyCatalogIndex = -1, selectedVariantIndex = -1,
+                   selectedSkillCatalogIndex = -1, runtimeSkillCatalogIndex = -1;
         public SlotCoverage[] slots;
     }
 
@@ -49,10 +54,31 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     int pendingSlot = -1;
     int lastEdgeTick = int.MinValue;
     bool pulseActive;
+    int isolationTarget = -1;
+    int selectedComponentInstanceId;
+    int lastNeutralRevision;
+    int requestEdgeCount;
+    bool isolationRequestPending;
 
     public Report reportData => report;
 
-    public SurvivorSkillInputCoverage(CharacterBody ownedBody, NovaInputBridge ownedBridge, SurvivorSkillObserver.Report observerReport)
+    public static int ParseIsolationSlot(string slot)
+    {
+        for (int i = 0; i < SlotNames.Length; i++)
+            if (string.Equals(slot, SlotNames[i], StringComparison.Ordinal))
+                return i;
+        throw new ArgumentException("Isolated skill slot must be primary, secondary, utility, or special", nameof(slot));
+    }
+
+    public static string IsolationWindowOutcome(float elapsedSeconds, bool selectedCallbacksObserved)
+    {
+        if (float.IsNaN(elapsedSeconds) || float.IsInfinity(elapsedSeconds) || elapsedSeconds < IsolationMaximumSeconds)
+            return null;
+        return selectedCallbacksObserved ? "isolated-slot-observation-complete" : "duration-exhausted";
+    }
+
+    public SurvivorSkillInputCoverage(CharacterBody ownedBody, NovaInputBridge ownedBridge,
+                                      SurvivorSkillObserver.Report observerReport, string isolatedSlot = null)
     {
         if (!ownedBody || !ownedBody.skillLocator || !ownedBridge || observerReport == null || observerReport.slots == null ||
             observerReport.slots.Length != 4)
@@ -63,7 +89,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         body = ownedBody;
         bridge = ownedBridge;
         observed = observerReport;
-        report = new Report { active = false, outcome = "waiting-for-diagnostic-input", slots = new SlotCoverage[4] };
+        isolationTarget = string.IsNullOrEmpty(isolatedSlot) ? -1 : ParseIsolationSlot(isolatedSlot);
+        report = new Report { active = false, outcome = "waiting-for-diagnostic-input",
+                              mode = isolationTarget < 0 ? "all-four-slots" : "isolated-slot",
+                              isolationSlot = isolationTarget < 0 ? "" : SlotNames[isolationTarget],
+                              slots = new SlotCoverage[4] };
         for (int i = 0; i < 4; i++)
         {
             if (!ownedBody.skillLocator.GetSkill((SkillSlot)i))
@@ -72,6 +102,14 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             report.slots[i] = new SlotCoverage { slot = SlotNames[i], authorityBefore = slot.authorityActivations,
                                                  authorityAfter = slot.authorityActivations, serverBefore = slot.serverActivations,
                                                  serverAfter = slot.serverActivations };
+        }
+        lastNeutralRevision = ownedBridge.inputNeutralRevision;
+        if (isolationTarget >= 0)
+        {
+            CaptureSelectedIdentity(observerReport, SlotNames[isolationTarget]);
+            ownedBridge.isolatedDiagnosticSkillInput = true;
+            ownedBridge.isolatedDiagnosticSkillSlot = isolationTarget;
+            ownedBridge.isolatedDiagnosticSkillPulse = false;
         }
     }
 
@@ -94,7 +132,9 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         }
         report.elapsedSeconds = Mathf.Max(0, elapsed - beganAt);
 
-        if (report.elapsedSeconds >= MaximumSeconds)
+        int durationLimit = isolationTarget >= 0 ? IsolationMaximumSeconds : MaximumSeconds;
+        int requestLimit = isolationTarget >= 0 ? IsolationMaximumRequests : MaximumRequests;
+        if (report.elapsedSeconds >= durationLimit && isolationTarget < 0)
         {
             Stop("duration-exhausted");
             return;
@@ -103,11 +143,34 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         {
             if (pulseActive)
                 ReleasePulse();
+            if (isolationTarget >= 0)
+            {
+                ReleaseIsolationSink();
+                Stop("diagnostic-input-yielded");
+                return;
+            }
             report.active = false;
             report.outcome = "waiting-for-owned-live-diagnostic-input";
             return;
         }
         report.active = true;
+
+        if (isolationTarget >= 0)
+        {
+            if (bridge.inputNeutralRevision != lastNeutralRevision)
+            {
+                lastNeutralRevision = bridge.inputNeutralRevision;
+                pulseActive = false;
+                target = -1;
+                isolationRequestPending = false;
+                bridge.isolatedDiagnosticSkillPulse = false;
+                report.outcome = "neutralized-request-cancelled";
+                nextRequestAt = elapsed;
+                return;
+            }
+            ApplyIsolated(elapsed, requestLimit);
+            return;
+        }
 
         if (pulseActive)
         {
@@ -133,7 +196,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             Stop("all-canonical-callbacks-observed");
             return;
         }
-        if (report.requests >= MaximumRequests)
+        if (report.requests >= requestLimit)
         {
             Stop("request-budget-exhausted");
             return;
@@ -181,6 +244,160 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         CaptureProducerRequests();
         ApplyExclusivePulse();
         report.outcome = "pulse-requested";
+    }
+
+    void CaptureSelectedIdentity(SurvivorSkillObserver.Report observerReport, string slotName)
+    {
+        if (observerReport.skillVariantInventory == null || observerReport.skillVariantInventory.status != "available" ||
+            observerReport.components == null)
+            throw new ArgumentException("Isolated slot requires exact post-spawn native component and loadout inventory");
+        var components = Array.FindAll(observerReport.components, row => row != null && row.present &&
+            string.Equals(row.canonicalSlot, slotName, StringComparison.OrdinalIgnoreCase));
+        if (components.Length != 1)
+            throw new ArgumentException("Isolated slot must resolve to exactly one current canonical GenericSkill component");
+        int componentIndex = components[0].componentIndex;
+        var catalogs = Array.FindAll(observerReport.skillVariantInventory.components ?? new SurvivorSkillObserver.SkillVariantComponentReport[0],
+            row => row != null && row.componentIndex == componentIndex);
+        if (catalogs.Length != 1)
+            throw new ArgumentException("Isolated slot native family/variant identity is missing or ambiguous");
+        var catalog = catalogs[0];
+        if (catalog.familyCatalogIndex < 0 || catalog.selectedLoadoutVariantIndex < 0 ||
+            catalog.selectedLoadoutSkillCatalogIndex < 0 || catalog.runtimeSkillCatalogIndex < 0 ||
+            catalog.runtimeDefinitionStatus != "matches-selected-native-loadout" ||
+            catalog.runtimeSkillCatalogIndex != catalog.selectedLoadoutSkillCatalogIndex ||
+            string.IsNullOrEmpty(components[0].definition) || catalog.variants == null ||
+            catalog.selectedLoadoutVariantIndex >= catalog.variants.Length ||
+            catalog.variants[catalog.selectedLoadoutVariantIndex] == null ||
+            catalog.variants[catalog.selectedLoadoutVariantIndex].variantIndex != catalog.selectedLoadoutVariantIndex ||
+            catalog.variants[catalog.selectedLoadoutVariantIndex].skillCatalogIndex != catalog.selectedLoadoutSkillCatalogIndex)
+            throw new ArgumentException("Isolated slot runtime skill differs from the selected native family/variant");
+        var slotReport = Array.Find(observerReport.slots, row => row != null && row.slot == slotName);
+        if (slotReport == null || string.IsNullOrEmpty(slotReport.declaredActivationState) ||
+            string.IsNullOrEmpty(slotReport.machineState))
+            throw new ArgumentException("Isolated slot native activation and machine state are unavailable");
+        report.selectedComponentIndex = componentIndex;
+        selectedComponentInstanceId = components[0].instanceId;
+        report.selectedFamilyCatalogIndex = catalog.familyCatalogIndex;
+        report.selectedVariantIndex = catalog.selectedLoadoutVariantIndex;
+        report.selectedSkillCatalogIndex = catalog.selectedLoadoutSkillCatalogIndex;
+        report.runtimeSkillCatalogIndex = catalog.runtimeSkillCatalogIndex;
+        report.selectedDefinition = slotReport.definition;
+        report.selectedActivationState = slotReport.declaredActivationState;
+        report.selectedMachineState = slotReport.machineState;
+        var current = body.skillLocator.GetSkill((SkillSlot)isolationTarget);
+        if (!current || current.GetInstanceID() != selectedComponentInstanceId || !current.skillDef ||
+            current.skillDef.skillIndex != report.selectedSkillCatalogIndex ||
+            SkillCatalog.GetSkillDef(report.selectedSkillCatalogIndex) != current.skillDef)
+            throw new ArgumentException("Isolated slot does not match the exact current post-spawn GenericSkill/loadout identity");
+    }
+
+    void ApplyIsolated(float elapsed, int requestLimit)
+    {
+        bridge.isolatedDiagnosticSkillInput = true;
+        bridge.isolatedDiagnosticSkillSlot = isolationTarget;
+        if (!RefreshSelectedState())
+        {
+            Stop("selected-native-identity-changed");
+            return;
+        }
+        if (isolationRequestPending && report.slots[isolationTarget].inputBankEdges > requestEdgeCount &&
+            report.slots[isolationTarget].authorityAfter > report.slots[isolationTarget].authorityBefore &&
+            report.slots[isolationTarget].serverAfter > report.slots[isolationTarget].serverBefore)
+        {
+            report.selectedCallbacksObserved = true;
+            isolationRequestPending = false;
+            pulseActive = false;
+            target = -1;
+            bridge.isolatedDiagnosticSkillPulse = false;
+            report.outcome = "isolated-slot-callbacks-observed";
+        }
+        string windowOutcome = IsolationWindowOutcome(report.elapsedSeconds, report.selectedCallbacksObserved);
+        if (windowOutcome != null)
+        {
+            Stop(windowOutcome);
+            return;
+        }
+        if (report.selectedCallbacksObserved)
+        {
+            pulseActive = false;
+            target = -1;
+            bridge.isolatedDiagnosticSkillPulse = false;
+            return;
+        }
+        if (pulseActive)
+        {
+            if (elapsed >= pulseUntil)
+            {
+                ObserveInputBankEdge();
+                pulseActive = false;
+                target = -1;
+                bridge.isolatedDiagnosticSkillPulse = false;
+            }
+            else
+            {
+                bridge.isolatedDiagnosticSkillPulse = true;
+                ObserveInputBankEdge();
+            }
+            return;
+        }
+        if (elapsed < nextRequestAt)
+        {
+            bridge.isolatedDiagnosticSkillPulse = false;
+            report.outcome = isolationRequestPending ? "waiting-for-native-callbacks" : "waiting-for-request-window";
+            return;
+        }
+        if (report.requests >= requestLimit)
+        {
+            Stop("request-budget-exhausted");
+            return;
+        }
+        var skill = body.skillLocator.GetSkill((SkillSlot)isolationTarget);
+        if (!skill || !skill.enabled || !skill.skillDef || !skill.CanExecute())
+        {
+            report.outcome = "waiting-for-native-can-execute";
+            nextRequestAt = elapsed + RequestIntervalSeconds;
+            return;
+        }
+        var slot = report.slots[isolationTarget];
+        slot.eligibleSamples++;
+        slot.authorityBefore = observed.slots[isolationTarget].authorityActivations;
+        slot.serverBefore = observed.slots[isolationTarget].serverActivations;
+        slot.authorityAfter = slot.authorityBefore;
+        slot.serverAfter = slot.serverBefore;
+        requestEdgeCount = slot.inputBankEdges;
+        isolationRequestPending = true;
+        target = isolationTarget;
+        lastEdgeTick = bridge.fixedTicks;
+        pulseUntil = elapsed + PulseSeconds;
+        nextRequestAt = elapsed + RequestIntervalSeconds;
+        report.requests++;
+        slot.requests++;
+        pulseActive = true;
+        bridge.isolatedDiagnosticSkillPulse = true;
+        report.outcome = "isolated-slot-pulse-requested";
+    }
+
+    bool RefreshSelectedState()
+    {
+        var skill = body && body.skillLocator ? body.skillLocator.GetSkill((SkillSlot)isolationTarget) : null;
+        if (!skill || skill.GetInstanceID() != selectedComponentInstanceId || !skill.skillDef ||
+            skill.skillDef.skillIndex != report.selectedSkillCatalogIndex ||
+            SkillCatalog.GetSkillDef(report.selectedSkillCatalogIndex) != skill.skillDef ||
+            ((ScriptableObject)skill.skillDef).name != report.selectedDefinition)
+            return false;
+        report.selectedActivationState = skill.skillDef.activationState.typeName;
+        report.selectedMachineState = skill.stateMachine && skill.stateMachine.state != null
+                                          ? skill.stateMachine.state.GetType().FullName : "";
+        return true;
+    }
+
+    void ReleaseIsolationSink()
+    {
+        if (!bridge)
+            return;
+        bridge.isolatedDiagnosticSkillPulse = false;
+        bridge.isolatedDiagnosticSkillInput = false;
+        bridge.isolatedDiagnosticSkillSlot = -1;
     }
 
     bool OwnsLiveDiagnosticInput()
@@ -284,7 +501,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
 
     void ReleasePulse(bool restoreIfOwned = true)
     {
-        if (pulseActive && restoreIfOwned)
+        if (pulseActive && restoreIfOwned && isolationTarget < 0)
             RestoreOwnedOverlayIfCurrent();
         pulseActive = false;
         target = -1;
@@ -293,6 +510,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     void Stop(string outcome)
     {
         ReleasePulse(true);
+        if (isolationTarget >= 0 && bridge)
+            bridge.isolatedDiagnosticSkillPulse = false;
         SyncNativeCallbacks();
         report.completed = true;
         report.active = false;
@@ -310,6 +529,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         if (report.cleaned)
             return;
         ReleaseAll();
+        if (isolationTarget >= 0)
+            ReleaseIsolationSink();
         report.active = false;
         report.cleaned = true;
         body = null;

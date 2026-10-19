@@ -10705,3 +10705,59 @@ First failure: none in these bounded checks. Ordinary Bandit2 eligibility,
 full rifle/shiv/special effects and sustained normal play remain open. No input,
 recipe, Phase 2 output, device receipts by hand, storage configuration or extra
 device changes. The collector stops the package and sleeps the OLED afterward.
+
+## J693 — Bound isolated native skill-button input to one selected slot
+
+Hypothesis: J673's Earth Shards output gap needs a run where other automatic
+skills and equipment cannot confound the input. Extend the existing J606 owner,
+not a gameplay replacement or another probe-switch case. Prior art: pinned
+DebugToolkit d1e2f0aa PlayerCommands queries canonical native SkillLocator roles;
+J606/J642 cite Starstorm2 native callback subscription/teardown. Exact shipped
+GenericSkill.CanExecute, SkillCatalog and native input bank remain authoritative.
+No native/community skill algorithm is copied.
+
+Current survivor-kit-check accepts optional --skill-slot
+primary|secondary|utility|special for exactly one base survivor, composing the
+existing strict --skill-variants selector. SurvivorSkillInputCoverage binds the
+exact live canonical component, selected family/variant and native SkillDef,
+then requests only its ordinary 0.25 s button pulse at six-second intervals.
+The input sink masks other diagnostic skills on every fixed tick and the
+existing equipment owner suppresses automatic equipment requests. Explicit
+manual/touch input retains its path. No stock, cooldown, state, inventory,
+target or spawn is changed. Missing/replaced identity, lost diagnostic ownership
+and missing evidence refuse; pause neutralization cancels pending input.
+
+A later input-bank edge plus fresh selected authority/server callback deltas
+latches evidence. The owner keeps its mask through a full 60-second observation,
+including after callbacks; terminal success/refusal stays neutral until takeover
+or teardown. Assistance is validated and recorded before native/profile setup
+and survives report replacement, so this cannot award permanent progression.
+The host separately requires the full observation, exact post-spawn loadout and
+unchanged profile. It reports a single-slot input diagnostic, not a four-slot kit
+pass or complete ability/slot-causality proof. Huntress special-only input does
+not synthesize the contextual primary needed for Snipe.
+
+Private reviewed artifact: work/coordination/survivor-skill-isolation-draft/,
+final patch 358d58794977612a4cb476828ccf41617f8d7b4baeefa9110bba5497bea61c42.
+Root preserved newer architecture text and corrected the missing RoR2.Skills
+import found by the first exact-editor compile. Root's 979 host tests pass with
+one existing skip. Ruff and generated current/historical action help pass.
+Exact-editor compilation and the real owner fixture pass after that repair:
+work/experiments/first-stage-native-lifecycle/
+skill-isolation-editor-20261019T163725.939139Z/. The owner creates the request,
+the actual bridge FixedUpdate creates its edge, and later Apply observes it;
+only callback counters are synthetic. Completion at 60 seconds, timeout,
+neutral mask, manual takeover, default routing, equipment/touch separation and
+existing ownership/disposal contracts pass. A temporary authored SkillDef is
+registered and the prior ordered definition set restored through native
+SkillCatalog.SetSkillDefs in finally. No native skill execution is claimed.
+Failed compile evidence remains at skill-isolation-editor-20261019T163533.685079Z/.
+
+First failure: none in the repaired host/editor contracts. These changes are
+unbuilt; the separate J690/J691 candidate is installed for device checks and
+accepted rollback remains J689
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+Rebuild R8 for authored runtime/fixture changes; the same 105 runtime source
+membership remains. No new local build input, Phase 2 output, original input,
+manual device receipt, extra device, storage change or permanent award.
+Next: build and observe an exact isolated Mage utility case and both defaults.

@@ -319,6 +319,12 @@ public sealed partial class PortSession
                 bridge.enablePrimary = spine;
                 bridge.enableAllSkills = cfg.combatSpine;
                 bridge.diagnosticInput = bringup;
+                if (!string.IsNullOrEmpty(coordinator.r.diagnosticSkillIsolationSlot))
+                {
+                    bridge.isolatedDiagnosticSkillInput = true;
+                    bridge.isolatedDiagnosticSkillSlot = SurvivorSkillInputCoverage.ParseIsolationSlot(
+                        coordinator.r.diagnosticSkillIsolationSlot);
+                }
                 bridge.thirdPerson = display.thirdPerson;
                 coordinator.r.nova.originalInputConsumer = true;
                 coordinator.worldEquipmentBridge = bridge;

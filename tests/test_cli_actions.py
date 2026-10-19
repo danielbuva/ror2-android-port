@@ -112,6 +112,12 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(self.calls, [dict(module="survivor_check", function="check_survivors",
                                          args=("Engi",), kwargs=dict(skill_variants="work/config/variants.json"))])
 
+    def test_survivor_slot_and_variant_selectors_compose_only_when_explicit(self):
+        self.dispatch("survivor-kit-check", target="Mage", skill_variants="work/config/mage.json", skill_slot="utility")
+        self.assertEqual(self.calls, [dict(module="survivor_check", function="check_survivors",
+                                         args=("Mage",), kwargs=dict(skill_variants="work/config/mage.json",
+                                                                       skill_slot="utility"))])
+
     def cli(self, *options):
         output, errors = io.StringIO(), io.StringIO()
         code = 0
@@ -219,6 +225,7 @@ class PrototypeActionTests(unittest.TestCase):
             ("--action", "project-manifest-compare"),
             ("--compare", "a.json", "b.json"),
             ("--action", "list", "--compare", "a.json", "b.json"),
+            ("--action", "inspect", "--skill-slot", "utility"),
         ):
             with self.subTest(options=options):
                 self.assertEqual(self.cli(*options)[0], 2)

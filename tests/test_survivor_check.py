@@ -8,9 +8,8 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-ROOT = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "candidate"))
-sys.path.insert(1, str(ROOT / "scripts/lab"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts/lab"))
 import survivor_check as check
 
 
@@ -60,6 +59,14 @@ class SurvivorSelectionTests(unittest.TestCase):
             self.assertTrue(value["diagnosticSkillCoverage"])
             self.assertEqual([key for key in check.DEBUG_OPTIONS if value["debugOptions"][key]], ["invincibility"])
             self.assertIn("no permanent progression", value["debugOptions"]["purpose"])
+
+    def test_isolated_slot_selector_composes_with_existing_variant_selector(self):
+        variants = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 17,
+                    "variantIndex": 4, "skillCatalogIndex": 807}]}
+        value = check.survivor_selection("attempt", "Mage", variants, "utility")
+        self.assertEqual(value["diagnosticSkillIsolationSlot"], "utility")
+        self.assertEqual(value["developerSkillVariantOverride"], variants)
+        self.assertIn("Assisted isolated", value["debugOptions"]["purpose"])
 
     def test_lock_prevents_even_device_discovery(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -297,6 +304,122 @@ class SurvivorAssessmentTests(unittest.TestCase):
         self.assertTrue(check.assess("Huntress", "process-exited", None, None, []))
         untouched = report()
         self.assertEqual(check.assess("Huntress", "four-slots-activated", None, copy.deepcopy(untouched), []), ["profile run count changed or missing"])
+
+
+class IsolatedSkillAssessmentTests(unittest.TestCase):
+    def fixture(self, slot="utility"):
+        value = report(selectedSurvivor="Mage", developerSkillIsolationAssisted=True,
+                       diagnosticSkillIsolationSlot=slot)
+        value["survivorSkills"]["slots"] = [
+            {"slot": name, "authorityActivations": 1, "serverActivations": 1,
+             "definition": "Native" + name.title(), "declaredActivationState": "EntityStates.Native.Activate",
+             "machineState": "EntityStates.GenericCharacterMain"} for name in check.SLOTS]
+        value["survivorSkills"]["components"] = [
+            {"present": True, "canonicalSlot": name.title(), "componentIndex": index, "definition": "Native" + name.title()}
+            for index, name in enumerate(check.SLOTS)]
+        value["survivorSkills"]["skillVariantInventory"] = {"status": "available", "bodyIndex": 0,
+            "selectionSource": "native-master-loadout-live", "components": [
+            {"componentIndex": index, "familyCatalogIndex": 100 + index, "selectedLoadoutVariantIndex": 0,
+             "selectedLoadoutSkillCatalogIndex": 200 + index, "runtimeSkillCatalogIndex": 200 + index,
+             "runtimeDefinitionStatus": "matches-selected-native-loadout", "variants": [
+                 {"variantIndex": 0, "skillCatalogIndex": 200 + index, "skillName": "Native" + name.title()}]}
+            for index, name in enumerate(check.SLOTS)]}
+        value["skillInputCoverage"] = {"mode": "isolated-slot", "isolationSlot": slot,
+            "outcome": "isolated-slot-observation-complete", "completed": True,
+            "selectedCallbacksObserved": True, "elapsedSeconds": check.ISOLATED_SKILL_MAX_SECONDS,
+            "slots": [{"slot": slot,
+                "authorityBefore": 0, "serverBefore": 0, "authorityAfter": 1, "serverAfter": 1,
+                "inputBankEdges": 1}]}
+        value["world"] = {"seconds": check.ISOLATED_SKILL_MAX_SECONDS}
+        return value
+
+    def test_isolated_mode_needs_only_selected_edge_and_fresh_callback_pair(self):
+        value = self.fixture()
+        self.assertTrue(check.isolated_skill_success(value, "utility"))
+        self.assertEqual(check.isolated_stop_reason(value, "utility"), "isolated-slot-observation-complete")
+        for key, bad in (("inputBankEdges", 0), ("authorityAfter", 0), ("serverAfter", 0)):
+            broken = copy.deepcopy(value)
+            broken["skillInputCoverage"]["slots"][0][key] = bad
+            self.assertFalse(check.isolated_skill_success(broken, "utility"))
+
+    def test_callback_pair_does_not_end_or_pass_60_second_window(self):
+        value = self.fixture()
+        value["skillInputCoverage"].update(completed=False, outcome="isolated-slot-callbacks-observed")
+        value["world"]["seconds"] = check.ISOLATED_SKILL_MAX_SECONDS - 1
+        value["skillInputCoverage"]["elapsedSeconds"] = check.ISOLATED_SKILL_MAX_SECONDS - 1
+        self.assertIsNone(check.isolated_stop_reason(value, "utility"))
+        self.assertFalse(check.isolated_skill_success(value, "utility"))
+        value["world"]["seconds"] = check.ISOLATED_SKILL_MAX_SECONDS
+        self.assertIsNone(check.isolated_stop_reason(value, "utility"))
+        value["skillInputCoverage"].update(completed=True, outcome="isolated-slot-observation-complete")
+        value["skillInputCoverage"]["elapsedSeconds"] = check.ISOLATED_SKILL_MAX_SECONDS
+        self.assertEqual(check.isolated_stop_reason(value, "utility"), "isolated-slot-observation-complete")
+
+    def test_outer_world_deadline_waits_for_owner_elapsed_bound(self):
+        value = self.fixture()
+        value["skillInputCoverage"].update(completed=False, outcome="duration-exhausted",
+                                            elapsedSeconds=check.ISOLATED_SKILL_MAX_SECONDS - .01)
+        self.assertIsNone(check.isolated_stop_reason(value, "utility"))
+        value["skillInputCoverage"]["elapsedSeconds"] = check.ISOLATED_SKILL_MAX_SECONDS
+        self.assertEqual(check.isolated_stop_reason(value, "utility"), "isolated-slot-deadline")
+
+    def test_wrong_mode_slot_identity_or_native_variant_refuses_success(self):
+        value = self.fixture()
+        value["skillInputCoverage"]["mode"] = "all-four-slots"
+        self.assertFalse(check.isolated_skill_success(value, "utility"))
+        value = self.fixture()
+        value["survivorSkills"]["components"].append(copy.deepcopy(value["survivorSkills"]["components"][2]))
+        self.assertFalse(check.isolated_skill_success(value, "utility"))
+        value = self.fixture()
+        self.assertFalse(check.isolated_skill_success(value, "special"))
+        value = self.fixture()
+        value["survivorSkills"]["skillVariantInventory"]["components"][2]["runtimeDefinitionStatus"] = "differs-from-selected-native-loadout"
+        self.assertFalse(check.isolated_skill_success(value, "utility"))
+
+    def test_combined_variant_request_requires_exact_post_spawn_live_contract(self):
+        value = self.fixture()
+        selector = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 102,
+                    "variantIndex": 1, "skillCatalogIndex": 802}]}
+        live = value["survivorSkills"]["skillVariantInventory"]["components"][2]
+        live.update(selectedLoadoutVariantIndex=1, selectedLoadoutSkillCatalogIndex=802,
+                    runtimeSkillCatalogIndex=802)
+        live["variants"].append({"variantIndex": 1, "skillCatalogIndex": 802, "skillName": "MageUtilityAlt"})
+        value["survivorSkills"]["slots"][2]["definition"] = "MageUtilityAlt"
+        value["survivorSkills"]["components"][2]["definition"] = "MageUtilityAlt"
+        value["developerSkillVariantOverride"] = selector
+        value["developerSkillVariantAssisted"] = True
+        value["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": True,
+            "effectiveSkillVariants": [0, 0, 1, 0]}
+        self.assertEqual(check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete",
+                                                     value, value, [], selector), [])
+        value["survivorSkills"]["skillVariantInventory"]["components"][2]["runtimeSkillCatalogIndex"] = 201
+        self.assertTrue(check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete",
+                                                    value, value, [], selector))
+        value = self.fixture()
+        primary_catalog = value["survivorSkills"]["skillVariantInventory"]["components"][0]
+        primary_catalog.update(selectedLoadoutVariantIndex=1, selectedLoadoutSkillCatalogIndex=201,
+                               runtimeSkillCatalogIndex=201)
+        primary_catalog["variants"].append({"variantIndex": 1, "skillCatalogIndex": 201, "skillName": "OtherPrimary"})
+        selector = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 102,
+                    "variantIndex": 0, "skillCatalogIndex": 202}]}
+        value["developerSkillVariantOverride"] = selector
+        value["developerSkillVariantAssisted"] = True
+        value["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": True,
+            "effectiveSkillVariants": [0, 0, 0, 0]}
+        self.assertIn("post-spawn effective native loadout differs from selected native variants",
+                      check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete",
+                                                  value, value, [], selector))
+
+    def test_default_four_slot_contract_remains_separate(self):
+        value = self.fixture()
+        self.assertEqual(check.stop_reason(report()), "four-slots-activated")
+        self.assertFalse(check.isolated_skill_success(report(), "utility"))
+
+    def test_multitarget_isolation_refuses_before_device_discovery(self):
+        with patch.object(check, "SurvivorCheckDevice") as device:
+            with self.assertRaisesRegex(ValueError, "exactly one"):
+                check.check_survivors("Mage,Huntress", skill_slot="utility")
+            device.assert_not_called()
 
 
 class FakeClock:

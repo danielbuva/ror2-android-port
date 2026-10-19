@@ -96,7 +96,7 @@ public sealed partial class PortSession
         if (r == null)
             return false;
         bool nativeLifecycleDiagnostic = r.nativeFirstStageLifecycleDiagnosticAttempt;
-        if ((r.developerSkillVariantAssisted || nativeLifecycleDiagnostic) && r.debugAcceleration != null)
+        if ((r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted || nativeLifecycleDiagnostic) && r.debugAcceleration != null)
         {
             r.debugAcceleration.everAssisted = true;
             r.debugAcceleration.normalGameAcceptanceEligible = false;
@@ -104,7 +104,8 @@ public sealed partial class PortSession
                 r.debugAcceleration.nativeFirstStageLifecycleDiagnostic = true;
         }
         return LabPort.SourceStageLifecycle.FirstStageDiagnosticGate.IsAssisted(
-            nativeLifecycleDiagnostic, r.developerSkillVariantAssisted, r.debugAcceleration != null && r.debugAcceleration.everAssisted);
+            nativeLifecycleDiagnostic, r.developerSkillVariantAssisted || r.developerSkillIsolationAssisted,
+            r.debugAcceleration != null && r.debugAcceleration.everAssisted);
     }
     void ApplyDebugAcceleration(DebugAccelerationOptions next, string source)
     {
@@ -165,9 +166,11 @@ public sealed partial class PortSession
                 purpose = coordinator.r.debugOptions == null || string.IsNullOrWhiteSpace(coordinator.r.debugOptions.purpose)
                               ? "Interactive developer controls"
                               : coordinator.r.debugOptions.purpose,
-                everAssisted = coordinator.r.developerSkillVariantAssisted || coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                everAssisted = coordinator.r.developerSkillVariantAssisted || coordinator.r.developerSkillIsolationAssisted ||
+                               coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
                 normalGameAcceptanceEligible =
-                    !coordinator.r.developerSkillVariantAssisted && !coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
+                    !coordinator.r.developerSkillVariantAssisted && !coordinator.r.developerSkillIsolationAssisted &&
+                    !coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
                 nativeFirstStageLifecycleDiagnostic = coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt,
                 originalBaseDamage = body.baseDamage,
                 originalLevelDamage = body.levelDamage,

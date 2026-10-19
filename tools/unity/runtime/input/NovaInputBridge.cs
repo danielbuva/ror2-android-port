@@ -103,9 +103,27 @@ public sealed class NovaInputBridge : MonoBehaviour
     public NovaThirdPersonView thirdPerson;
     public bool diagnosticEquipment, touchEquipment;
     public bool enablePrimary, enableAllSkills, diagnosticInput;
+    // Owned only by SurvivorSkillInputCoverage; the sink enforces the mode on
+    // every FixedUpdate, independent of ordinary producer timing.
+    public bool isolatedDiagnosticSkillInput, isolatedDiagnosticSkillPulse;
+    public int isolatedDiagnosticSkillSlot = -1;
+    public int inputNeutralRevision;
     public bool diagnosticSprint, diagnosticPrimary, diagnosticSecondary, diagnosticUtility, diagnosticSpecial, diagnosticInteract;
     public Vector3 diagnosticAim;
     public bool diagnosticJumpRequest { get; private set; }
+    public static bool SkillInputRequest(bool diagnosticMode, bool isolate, bool pulse, int selectedSlot,
+                                         int buttonSlot, bool diagnosticRequest, bool physicalRequest)
+    {
+        if (!diagnosticMode)
+            return physicalRequest;
+        if (!isolate)
+            return diagnosticRequest;
+        return pulse && selectedSlot == buttonSlot;
+    }
+    public static bool EquipmentInputRequest(bool diagnosticMode, bool isolate, bool diagnosticRequest, bool touchRequest)
+    {
+        return (diagnosticMode && diagnosticRequest && !isolate) || touchRequest;
+    }
     public struct DiagnosticJumpSnapshot
     {
         internal bool request, held, latched;
@@ -279,16 +297,26 @@ public sealed class NovaInputBridge : MonoBehaviour
         if (bank.jump.justPressed)
             jumpPresses++;
         jumpLatched = false;
-        bank.activateEquipment.PushState((diagnosticInput && diagnosticEquipment) || touchEquipment);
+        bool isolatedSkills = diagnosticInput && isolatedDiagnosticSkillInput;
+        bank.activateEquipment.PushState(EquipmentInputRequest(diagnosticInput, isolatedDiagnosticSkillInput,
+                                                                diagnosticEquipment, touchEquipment));
         touchEquipment = false;
         bank.sprint.PushState(diagnosticInput && diagnosticSprint);
         var raw = diagnosticInput ? null : ReadRaw();
         bank.interact.PushState(diagnosticInput ? diagnosticInteract : mapping.enableInteraction && raw.buttons[mapping.interact]);
         bool all = mapping.enableSkills || enableAllSkills;
-        bank.skill1.PushState(diagnosticInput ? diagnosticPrimary : (all || enablePrimary) && raw.buttons[mapping.primary]);
-        bank.skill2.PushState(diagnosticInput ? diagnosticSecondary : all && raw.buttons[mapping.secondary]);
-        bank.skill3.PushState(diagnosticInput ? diagnosticUtility : all && raw.buttons[mapping.utility]);
-        bank.skill4.PushState(diagnosticInput ? diagnosticSpecial : all && raw.buttons[mapping.special]);
+        bank.skill1.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+                                                isolatedDiagnosticSkillSlot, 0, diagnosticPrimary,
+                                                !diagnosticInput && (all || enablePrimary) && raw.buttons[mapping.primary]));
+        bank.skill2.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+                                                isolatedDiagnosticSkillSlot, 1, diagnosticSecondary,
+                                                !diagnosticInput && all && raw.buttons[mapping.secondary]));
+        bank.skill3.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+                                                isolatedDiagnosticSkillSlot, 2, diagnosticUtility,
+                                                !diagnosticInput && all && raw.buttons[mapping.utility]));
+        bank.skill4.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+                                                isolatedDiagnosticSkillSlot, 3, diagnosticSpecial,
+                                                !diagnosticInput && all && raw.buttons[mapping.special]));
         fixedTicks++;
     }
     public void DiagnosticJump(bool down)
@@ -301,6 +329,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     public void Neutral()
     {
         diagnosticJumpRevision++;
+        inputNeutralRevision++;
         movement = aim = Vector2.zero;
         diagnosticJumpRequest = false;
         jumpHeld = jumpLatched = false;
@@ -317,6 +346,7 @@ public sealed class NovaInputBridge : MonoBehaviour
         bank.sprint.PushState(false);
         bank.activateEquipment.PushState(false);
         touchEquipment = diagnosticEquipment = false;
+        isolatedDiagnosticSkillPulse = false;
     }
     void OnApplicationFocus(bool value)
     {

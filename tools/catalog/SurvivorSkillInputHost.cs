@@ -36,6 +36,13 @@ public static class SurvivorSkillInputHost
         field.SetValue(target, value);
     }
 
+    static void SetSkillDefs(SkillDef[] definitions)
+    {
+        var method = typeof(SkillCatalog).GetMethod("SetSkillDefs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        Require(method != null, "Skill catalog registration owner changed");
+        method.Invoke(null, new object[] { definitions });
+    }
+
     static void FixedInput(NovaInputBridge bridge)
     {
         var method = typeof(NovaInputBridge).GetMethod("FixedUpdate", Instance);
@@ -53,6 +60,38 @@ public static class SurvivorSkillInputHost
         Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !NetworkServer.active && !NetworkClient.active,
                 "Require idle editor without a gameplay session");
 
+        for (int selected = 0; selected < 4; selected++)
+            for (int button = 0; button < 4; button++)
+            {
+                bool pulse = NovaInputBridge.SkillInputRequest(true, true, true, selected, button, true, true);
+                Require(pulse == (selected == button), "Isolated bridge sink did not route exactly the selected slot");
+                Require(!NovaInputBridge.SkillInputRequest(true, true, false, selected, button, true, true),
+                        "Isolated bridge sink emitted a skill request outside the owner pulse");
+            }
+        Require(NovaInputBridge.SkillInputRequest(true, false, false, -1, 2, true, false) &&
+                    NovaInputBridge.SkillInputRequest(false, false, false, -1, 2, false, true),
+                "Default diagnostic or physical skill input route changed");
+        Require(!NovaInputBridge.EquipmentInputRequest(true, true, true, false) &&
+                    NovaInputBridge.EquipmentInputRequest(true, false, true, false) &&
+                    NovaInputBridge.EquipmentInputRequest(true, true, false, true),
+                "Isolated automatic equipment suppression changed default or touch requests");
+        Require(SurvivorSkillInputCoverage.ParseIsolationSlot("utility") == 2,
+                "Canonical isolated slot parser changed");
+        bool invalidIsolationSlotRefused = false;
+        try { SurvivorSkillInputCoverage.ParseIsolationSlot("Utility"); }
+        catch (ArgumentException) { invalidIsolationSlotRefused = true; }
+        Require(invalidIsolationSlotRefused, "Noncanonical isolated slot was accepted");
+        Require(SurvivorSkillInputCoverage.IsolationWindowOutcome(
+                    SurvivorSkillInputCoverage.IsolationMaximumSeconds - 1, true) == null &&
+                    SurvivorSkillInputCoverage.IsolationWindowOutcome(
+                        SurvivorSkillInputCoverage.IsolationMaximumSeconds, true) == "isolated-slot-observation-complete" &&
+                    SurvivorSkillInputCoverage.IsolationWindowOutcome(
+                        SurvivorSkillInputCoverage.IsolationMaximumSeconds, false) == "duration-exhausted",
+                "Production isolation window decision did not wait for the full bound or refuse a missing callback pair");
+        for (int selected = 0; selected < 4; selected++)
+            Require(!NovaInputBridge.SkillInputRequest(true, true, false, selected, selected, true, true),
+                    "An attested selected callback must leave the isolated skill-input mask neutral");
+
         var root = new GameObject("Owned survivor skill input coverage fixture");
         root.SetActive(false);
         var definitions = new SkillDef[4];
@@ -64,6 +103,12 @@ public static class SurvivorSkillInputHost
         SurvivorSkillInputCoverage manual = null;
         SurvivorSkillInputCoverage bounded = null;
         SurvivorSkillInputCoverage duration = null;
+        SurvivorSkillInputCoverage isolated = null;
+        SurvivorSkillInputCoverage isolatedTimeout = null;
+        SurvivorSkillInputCoverage isolatedTakeover = null;
+        SkillDef[] previousSkillDefs = null;
+        bool ownsSyntheticSkillCatalog = false;
+        AlwaysReadySkillDef syntheticCatalogSkill = null;
         try
         {
             var body = root.AddComponent<CharacterBody>();
@@ -220,13 +265,110 @@ public static class SurvivorSkillInputHost
             duration.Dispose();
             duration = null;
 
+            observer.Dispose();
+            observer = null;
+            previousSkillDefs = SkillCatalog.allSkillDefs != null
+                                    ? SkillCatalog.allSkillDefs.ToArray() : new SkillDef[0];
+            syntheticCatalogSkill = ScriptableObject.CreateInstance<AlwaysReadySkillDef>();
+            ((ScriptableObject)syntheticCatalogSkill).name = "IsolatedOwnerCatalogSkill";
+            ownsSyntheticSkillCatalog = true;
+            SetSkillDefs(previousSkillDefs.Concat(new SkillDef[] { syntheticCatalogSkill }).ToArray());
+            var nativeDefinition = (SkillDef)syntheticCatalogSkill;
+            foreach (var skill in root.GetComponents<GenericSkill>())
+            {
+                Set(skill, "skillDef", nativeDefinition);
+            }
+            observer = new SurvivorSkillObserver(body);
+            int nativeSkillIndex = nativeDefinition.skillIndex;
+            observer.report.skillVariantInventory = new SurvivorSkillObserver.SkillVariantInventoryReport {
+                status = "available", selectionSource = "synthetic-host-live-catalog-contract",
+                components = observer.report.components.Where(row => row != null && row.present)
+                    .Select(row => new SurvivorSkillObserver.SkillVariantComponentReport {
+                        componentIndex = row.componentIndex, familyCatalogIndex = 0,
+                        selectedLoadoutVariantIndex = 0, selectedLoadoutSkillCatalogIndex = nativeSkillIndex,
+                        runtimeSkillCatalogIndex = nativeSkillIndex,
+                        runtimeDefinitionStatus = "matches-selected-native-loadout",
+                        variants = new[] { new SurvivorSkillObserver.SkillVariantEntryReport {
+                            variantIndex = 0, skillCatalogIndex = nativeSkillIndex,
+                            skillName = ((ScriptableObject)nativeDefinition).name
+                        } }
+                    }).ToArray()
+            };
+            foreach (var slot in observer.report.slots)
+            {
+                slot.declaredActivationState = "EntityStates.GenericCharacterMain";
+                slot.machineState = "EntityStates.GenericCharacterMain";
+            }
+            bridge.diagnosticInput = true;
+            bridge.inputNeutralRevision = 0;
+            bank.skill1.PushState(false);
+            bank.skill2.PushState(false);
+            bank.skill3.PushState(false);
+            bank.skill4.PushState(false);
+            PublishAllRequests(bridge);
+            isolated = new SurvivorSkillInputCoverage(body, bridge, observer.report, "utility");
+            FixedInput(bridge);
+            isolated.Apply(0f);
+            Require(isolated.reportData.requests == 1 && bridge.isolatedDiagnosticSkillPulse,
+                    "Isolated owner did not produce its selected native input request");
+            FixedInput(bridge);
+            isolated.Apply(0.01f);
+            isolated.Apply(0.3f);
+            Require(isolated.reportData.slots[2].inputBankEdges == 1,
+                    "Isolated owner did not observe the later fixed-tick input-bank edge");
+            observer.report.slots[2].authorityActivations = 1;
+            observer.report.slots[2].serverActivations = 1;
+            isolated.Apply(6f);
+            Require(isolated.reportData.selectedCallbacksObserved && !bridge.isolatedDiagnosticSkillPulse,
+                    "Isolated owner did not match the fresh selected callback pair after its input edge");
+            isolated.Apply(SurvivorSkillInputCoverage.IsolationMaximumSeconds);
+            Require(isolated.reportData.completed && isolated.reportData.selectedCallbacksObserved &&
+                        isolated.reportData.outcome == "isolated-slot-observation-complete" &&
+                        bridge.isolatedDiagnosticSkillInput && !bridge.isolatedDiagnosticSkillPulse,
+                    "Selected callback pair did not finish the real isolated owner at its bound while preserving the mask");
+            for (int selected = 0; selected < 4; selected++)
+                Require(!NovaInputBridge.SkillInputRequest(true, true, bridge.isolatedDiagnosticSkillPulse,
+                            bridge.isolatedDiagnosticSkillSlot, selected, true, true),
+                        "Completed isolated observation leaked a diagnostic skill request");
+            isolated.Dispose();
+            isolated = null;
+
+            isolatedTimeout = new SurvivorSkillInputCoverage(body, bridge, observer.report, "utility");
+            isolatedTimeout.Apply(0f);
+            isolatedTimeout.Apply(SurvivorSkillInputCoverage.IsolationMaximumSeconds);
+            Require(isolatedTimeout.reportData.completed && !isolatedTimeout.reportData.selectedCallbacksObserved &&
+                        isolatedTimeout.reportData.outcome == "duration-exhausted" &&
+                        bridge.isolatedDiagnosticSkillInput && !bridge.isolatedDiagnosticSkillPulse,
+                    "Isolated timeout did not refuse while keeping the skill-input mask active");
+            isolatedTimeout.Dispose();
+            isolatedTimeout = null;
+
+            isolatedTakeover = new SurvivorSkillInputCoverage(body, bridge, observer.report, "utility");
+            isolatedTakeover.Apply(0f);
+            bridge.diagnosticInput = false;
+            isolatedTakeover.Apply(0.1f);
+            Require(isolatedTakeover.reportData.completed && isolatedTakeover.reportData.outcome == "diagnostic-input-yielded" &&
+                        !bridge.isolatedDiagnosticSkillInput && !bridge.isolatedDiagnosticSkillPulse,
+                    "Native input takeover did not release the isolated owner mask");
+            isolatedTakeover.Dispose();
+            isolatedTakeover = null;
+            bridge.diagnosticInput = true;
+
             return new { success = true,
+                         isolatedBridgeMask = true,
+                         automaticEquipmentSuppressed = true,
+                         touchEquipmentPreserved = true,
+                         defaultInputRoutePreserved = true,
+                         invalidSlotRefused = true,
                          exclusiveRouting = true,
                          dynamicCanonicalLookup = true,
                          inputBankEdgeObserved = true,
                          freshProducerPreservedAtExpiry = true,
                          partialReleaseAndForeignStatePreserved = true,
                          completionOnCallbacks = true,
+                         isolatedOwnerWindowAndMask = true,
+                         isolatedTimeoutRefusal = true,
+                         isolatedManualTakeoverRelease = true,
                          requestBudget = SurvivorSkillInputCoverage.MaximumRequests,
                          durationBudgetSeconds = SurvivorSkillInputCoverage.MaximumSeconds,
                          disposedReferencesReleased = true,
@@ -235,15 +377,26 @@ public static class SurvivorSkillInputHost
         finally
         {
             duration?.Dispose();
+            isolated?.Dispose();
+            isolatedTimeout?.Dispose();
+            isolatedTakeover?.Dispose();
             bounded?.Dispose();
             manual?.Dispose();
             foreign?.Dispose();
             partial?.Dispose();
             coverage?.Dispose();
             observer?.Dispose();
+            observer = null;
+            if (ownsSyntheticSkillCatalog)
+            {
+                SetSkillDefs(previousSkillDefs);
+                ownsSyntheticSkillCatalog = false;
+            }
             UnityEngine.Object.DestroyImmediate(root);
             if (replacementDefinition)
                 UnityEngine.Object.DestroyImmediate(replacementDefinition);
+            if (syntheticCatalogSkill)
+                UnityEngine.Object.DestroyImmediate(syntheticCatalogSkill);
             foreach (var definition in definitions)
                 if (definition)
                     UnityEngine.Object.DestroyImmediate(definition);
