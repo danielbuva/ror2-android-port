@@ -74,22 +74,23 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc`, J680 acceptance of J677's 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.22 s on Lakes and one genuine stage exit to Goolake with 12.41 s next-stage play, no report or current-process log error (J678/J680) |
+| APK | `55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861`, J689 acceptance of J687's 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 10.69 s next-stage play, no unexpected report or current-process log error (J688/J689) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
-The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J680), with the native diagnostic flag off. Its separate native
-first-stage path passes original Stage/population, prepared source-table
-readiness and real actor damage/death observations (J678). Completed native
-restoration/restart remains under test; native transport is still refused.
-Timed-chest delivery, Wake rewards and ordinary saved awards remain unverified.
-Mage's default and four-alternate callbacks/output plus alternate menu-abandon/
-restart pass on prior ad84d0cb… (J671/J673/J674); Earth Shards output and full
-ability effects remain open. Engineer's repaired four-alternate case has all
-callbacks before known elite-stake corruption (J667); the new rolling observer
-still needs that workload. Huntress's default inventory is J676; Mercenary
-direct damage is J647. Both default controls use Commando and do not establish
-complete skills, ordinary difficulty, audio, frame rate or visual parity.
+The one-exit mode adds one assisted transport/teleporter exit, and the current
+baseline passed it (J689), with the native diagnostic flag off. Its separate
+native source path reaches genuine Stage-begin with generated identity bindings,
+then retains recovery at the borrowed source-table restore guard (J688).
+Completed native restoration/restart and transport remain unaccepted. Prior
+source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
+timed-chest delivery and ordinary saved awards remain unverified.
+
+Mage's alternate callbacks and UI-abandon/restart are J673/J674; Huntress's
+four alternates pass bounded callback/output checks (J684). Engineer's full
+alternate kit passes callbacks and separately its loadout cleanup/restart
+(J685/J686), while LightningStake intermittence and complete ability behavior
+remain open. These Commando default controls do not establish complete skills,
+ordinary difficulty, audio, frame rate or visual parity.

@@ -10507,3 +10507,70 @@ newer runtime integrated. First failure: none in build/install/sync. No reset,
 Phase 2 output, input acceptance, extra-device action, receipt hand edit,
 existing data move or storage reconfiguration occurs. Replay needs remain in
 J682/J683; Moon is untouched.
+
+## J688 — Metadata stage starts; native teardown reaches the source-table guard
+
+Hypothesis: J682/J683's packaged source bindings and corrected native Reset
+can complete the first-stage lifecycle on J687's APK
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+
+The plain default control passes 35.202911 world seconds with native/recovery
+flags false and no unexpected current-process errors. Evidence:
+work/experiments/baseline/20261019T155915.804601Z/. The separate explicit native
+UI-abandon/restart case is at work/device/<serial>/experiments/session-cleanup/
+20261019T160318.777618Z/. Ordinary eligible Commando reaches one genuine native
+Stage-begin, using the generated source bindings, before HUD settings/end-run
+UI abandons at a last reported 69.068024 world seconds. All five gameplay
+accelerations are off, but automatic native-lifecycle diagnosis remains assisted.
+
+First failure: Borrowed native source table owner lost its exact scene
+component. J681's Reset assertion does not recur; control reaches source-table
+restoration after RollbackOwnedIdentities returns. The guard combines requested/
+stored/active scene and component-liveness/scene checks, so this message alone
+does not establish component destruction. Reverse order first checks the Wake
+bronze binding. No completed-session report or session 2 is produced; recovery
+remains required and the process is stopped, with leases/context conservatively
+retained before forced termination. Profile runs/earned/available unlocks stay
+13/1/1; no result is applied. No other unexpected runtime error is reported.
+
+Source review at work/coordination/native-source-table-teardown-triage/ and
+native-source-table-teardown-review/ confirms WakeController has no expansion
+self-retirement gate. It also identifies a separate native path: enabled
+WakeSpawner on the source scene identity's parent unconditionally schedules
+that GameObject's destruction, and the borrowed WakeAltar is a child. This is
+a source-supported candidate cause, not a measured individual guard predicate.
+The next change must name the exact binding and failing conditions while
+preserving native behavior and recovery, before changing lease semantics.
+
+The collector removes selectors and sleeps OLED. Native metadata/startup is
+observed, but completed native identity/table restoration and restart remain
+unaccepted. The default exit is a separate case. No ownership/expansion success,
+original input, extra-device action, receipt hand edit, data move or storage
+reconfiguration is introduced.
+
+## J689 — Accept receipt-bound metadata candidate on both default controls
+
+Hypothesis: J687's metadata/reset candidate retains ordinary transport despite
+J688's separate opt-in cleanup refusal. APK remains
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+
+Default exit evidence: work/experiments/baseline/20261019T160833.830077Z/.
+One genuine exit reaches Goolake and 10.688171 s of next-stage play at
+125.961716 world seconds. Collector and root current-process log validation
+pass, native/recovery flags are false, and profile runs/earned/available
+unlocks remain 13/1/1. J688 records the separate 35.202911 s plain control.
+
+Both default modes now pass: accept 55dee318… and preserve J680 e09920fd…
+as the immediate executable rollback, along with all named older checkpoints.
+The full 266-file payload is unchanged from J677/J665. New source-table cleanup
+work remains an explicit native diagnostic gate; neither default control
+accepts it, normal difficulty or full game readiness. J688 records native
+metadata/startup and its retained teardown refusal without retconning earlier
+actor/reward evidence.
+
+First failure: none in the default exit. Finally removes selectors, stops and
+sleeps OLED. Root starts a fresh Bandit2 callback/output/inventory case on this
+accepted APK to derive exact alternate identities for the next survivor batch;
+its outcome is pending. Damage catalog-name fields are applied to newer working
+source with host/editor contracts and have not been built or run. No original
+input, extra device, receipt hand edit, data move or storage change occurs.
