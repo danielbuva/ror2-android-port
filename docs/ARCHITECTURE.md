@@ -294,13 +294,11 @@ hash/size-gated before buffered project writes are flushed, then compared with
 the current project. R3 requires R2's destination config; R4 requires R3's completion marker and R2's
 destination build config. The real actions retain their original write paths.
 
-`recipe/catalog-rebuild-inputs.json` pins ten retained local analysis inputs; they
-are verified before being copied under `.rebuild/catalog-inputs/`. The source
-catalog itself is now read on the host (`catalog_reader.py` plus `AssemblyProbe
---catalog-names`, J714), byte-identical to the retired editor query, but
-audit/native-inventory/reconcile are **not yet regenerated** by this replay, and the live
-pipeline's 2026-10-19 reconcile drifted two pins (J714). Regenerating these inputs on the
-host is the next blocker. Destination GUID ownership, catalog manifests/import receipts,
+`catalog_analysis.ensure` (J725) regenerates the catalog analysis once per destination
+under `.rebuild/catalog-inputs/`, running the live pipeline's own `audit_into`,
+`native_inventory_into` and `reconcile_into` (the source catalog through `catalog_reader.py`
+and `AssemblyProbe --catalog-names`, J714). Only `recipe/catalog-typed-corrections.json`, three
+measured identities, is not regenerated. No previous analysis or live pointer is read. Destination GUID ownership, catalog manifests/import receipts,
 dependency receipts and optional-content receipts are regenerated. No current
 project owner map or historical output body is used as source. R3 buffers the
 closure import and UI remaps; R4 buffers dependency import, support repair and
@@ -348,7 +346,7 @@ Composition rebuild (`scripts/lab/composition_io.py`, current, R2):
 `StageIO` against the isolated destination. Its selection comes from
 `composition_rebuild.recipe_inputs` (J597): asset transforms, the addition ledger,
 the public runtime/content recipes and `recipe/composition.json`, with source GUIDs
-and catalog closure from R3's hash-pinned analysis inputs. The rebuild reads no
+and catalog closure from the catalog analysis regenerated in the destination (J725). The rebuild reads no
 migration evidence (B1, B3–B6, B8), previous project, live content selection or old
 run attempt; the real action still takes them through `migration_inputs`. The same owner keeps real-stage writes
 at their original paths when no destination is supplied. Export membership comes
@@ -1283,10 +1281,9 @@ Still open:
 2. **The rebuild still has local inputs, and the working project is still migrated.** Since
    J597 the rebuild's R2 takes its selection from public recipes and reads no migration
    evidence (B1, B3–B6, B8), previous project or live pointer; R5 pins nothing and R7 pins one
-   contract result. Left: 57 local analysis inputs read by recorded hash (R3/R4's ten catalog
-   records; the host catalog reader exists, J714, and audit/inventory/reconcile must now run
-   on the host into the destination; R7's runtime contracts; 46 shader
-   recovery inputs), 14 inherited-store files (12 from the editor-side `RecoveredHudBuilder`,
+   contract result. Since J725 R2–R4's catalog analysis is regenerated on the host in the
+   destination. Left: 47 local analysis inputs read by recorded hash (R7's runtime contracts,
+   still an editor export; 46 shader recovery inputs), 14 inherited-store files (12 from the editor-side `RecoveredHudBuilder`,
    FastDirector, the TMP mobile shader), and the local provenance map, which also selects
    membership (export copies, step cohorts), not only compares. The working project's own
    stage still runs the migration (`migration_inputs`); switching it is commit 9 of the

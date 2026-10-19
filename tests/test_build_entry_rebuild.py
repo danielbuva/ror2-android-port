@@ -12,6 +12,7 @@ import zlib
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 import build
 import build_entry_rebuild as replay
+import catalog_analysis
 import catalog_rebuild
 import rebuild
 import recovery
@@ -49,12 +50,16 @@ class BuildEntryTests(unittest.TestCase):
         self.contract = dict(input_sha256=sha(self.assembly), legacyAliases={})
         self.contracts = dict(contracts=[dict(target_imported=dict(assembly="Example", type="Example.Nested+Type"))])
         self.closure = dict(input_id=self.input_id, runtime_key_edges=[dict(field="preloadGUIDReferences", key="absent", locations=[])])
-        catalog_files = {}
         for name, value in (("original-catalog-contract.json", self.contract), ("reconciled-closure.json", self.closure)):
-            p = self.work / "analysis" / name
-            write(p, value)
-            catalog_files[name] = dict(path=str(p.relative_to(self.work)), sha256=sha(p))
-        write(self.recipe / "catalog-rebuild-inputs.json", dict(schema=1, input_id=self.input_id, files=catalog_files))
+            write(self.work / "analysis" / name, value)
+
+        def regenerate(work, out, input_id):
+            # Host regeneration has its own tests; publish the synthetic analysis cohort.
+            for name in catalog_analysis.OUTPUTS:
+                source = self.work / "analysis" / name
+                (out / name).write_bytes(source.read_bytes() if source.is_file() else b"{}")
+
+        self.start(patch.object(catalog_analysis, "regenerate", side_effect=regenerate))
         source = "public static GameObject effect;\npublic static void Resolve() {\n" + (
             'asyncOperationHandle = Addressables.LoadAssetAsync<GameObject>("effect");\n'
             "asyncOperationHandle.Completed += delegate(AsyncOperationHandle<GameObject> x) { effect = x.Result; };\n\t\t}\n"

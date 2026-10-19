@@ -98,6 +98,6 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    rebuild reads no migration evidence (R2 selects from public recipes; R5 and R7 regenerate their
    inputs; every step still byte-identical). Still needed for a rebuild from public inputs alone:
    14 files from the inherited store (11 editor-built HUD assets, FastDirector, `Strings.json`, the
-   TMP mobile shader, so J558 is still open), 57 hash-pinned local analysis inputs and the
+   TMP mobile shader, so J558 is still open), 47 hash-pinned local analysis inputs (R2–R4's catalog analysis is regenerated on the host since J725) and the
    provenance map's role in selecting membership. The working project itself is still migrated. The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

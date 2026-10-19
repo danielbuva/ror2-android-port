@@ -104,7 +104,7 @@ class CatalogReaderTests(unittest.TestCase):
     def test_editor_query_is_retired(self):
         self.assertFalse((ROOT / "tools/catalog/ExportCatalog.cs.txt").exists())
         source = (ROOT / "scripts/lab/whole_catalog.py").read_text()
-        self.assertIn("export_source_catalog(out)", source)
+        self.assertIn("export_source_catalog(out, work=work)", source)
         program = (ROOT / "tools/assembly-transforms/Program.cs").read_text()
         self.assertIn('"--catalog-names"', program)
 

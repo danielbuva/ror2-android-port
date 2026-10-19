@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J725](PORTING_JOURNAL.md#j725--rebuild-regenerates-its-catalog-analysis-on-the-host-provenance-refreshed) | 2026-10-19 | Rebuild regenerates its catalog analysis on the host; provenance refreshed | Phase 2, from-scratch rebuild (implemented and run by Claude, operator-approved; host only, no editor, device or R9). |
 | [J724](PORTING_JOURNAL.md#j724--accept-the-native-operation-observer-apk-through-both-default-controls) | 2026-10-19 | Accept the native-operation observer APK through both default controls | Hypothesis: J716's read-only native diagnostic witness stays inert in ordinary controls and preserves the accepted gameplay/payload path. |
 | [J723](PORTING_JOURNAL.md#j723--guarded-siren-route-reaches-three-exits-but-stalls-before-the-fourth) | 2026-10-19 | Guarded Siren route reaches three exits but stalls before the fourth | Hypothesis: the corrected J717 startup gate admits the actual assisted run and allows the bounded route to observe native Siren egg eligibility and the existin… |
 | [J722](PORTING_JOURNAL.md#j722--identify-the-current-native-wwise-version-and-concrete-package-requirements) | 2026-10-19 | Identify the current native Wwise version and concrete package requirements | Hypothesis: the current accepted input's native version getters can resolve the patch uncertainty left by J591 without executing its Windows middleware. |

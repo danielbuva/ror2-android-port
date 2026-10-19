@@ -16,10 +16,8 @@
     },
     {
       "path": "Assets/Editor/WholeCatalogHost.cs",
-      "sha256": "7b2e22abc539e309d4298b07aae875affa4fb51b6883281e939b4b33a9bc7e5f",
-      "source_commit": "7e4f63b2a62c8f48bf00596f2df8ffe4a65f7e09",
-      "source_path": "tools/catalog/WholeCatalogHost.cs",
-      "template": "templates/rebuild-editors/WholeCatalogHost.cs"
+      "sha256": "072ef0504480257e9a3a9fe4f6d9b51e62a41a7edd45a2976b579ca6de0ab904",
+      "source_path": "tools/catalog/WholeCatalogHost.cs"
     }
   ],
   "geometry": {

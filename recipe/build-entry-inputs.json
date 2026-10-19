@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-  "bootstrap_attempt": "integration-20261014T050839.201013Z",
+  "bootstrap_attempt": "integration-20261019T140504.836690Z",
   "decompiled": {
     "assembly": "RoR2.dll",
     "assembly_sha256": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
@@ -23,8 +23,8 @@
   },
   "files": {
     "contracts.json": {
-      "path": "experiments/whole-catalog/20261012T052308.866868Z/runtime-contracts-20261012T060726.910275Z/result.json",
-      "sha256": "db9cd9322dfc97184877bbb4958350faaa5799afd2c78df8659f152c7b792133"
+      "path": "experiments/whole-catalog/20261012T052308.866868Z/runtime-contracts-20261019T140642.826628Z/result.json",
+      "sha256": "01f85568dc74de1fef7af944457023bcc5c416b101fd45ed0d7ba816541ea0c1"
     }
   }
 }

@@ -82,11 +82,13 @@ def project_inputs(destination, work, input_id, expected, provenance):
         path = "ProjectSettings/GraphicsSettings.asset"
         io.apply(destination / path, graphics_settings((ROOT / "smoke" / path).read_bytes(), recipe["graphics_template_sha256"]))
     for row in recipe["editors"]:
-        relative_path(row["template"])
         relative_path(row["path"])
-        source = RECIPE / row["template"]
-        if not source.resolve().is_relative_to(RECIPE.resolve()) or sha(source) != row["sha256"]:
-            raise RuntimeError("Historical authored editor template drift")
+        # A historical body keeps its recipe template; a restaged one names the current source (J725).
+        base, relative = (RECIPE, row["template"]) if "template" in row else (ROOT, row["source_path"])
+        relative_path(relative)
+        source = base / relative
+        if not source.resolve().is_relative_to(base.resolve()) or sha(source) != row["sha256"]:
+            raise RuntimeError("Historical authored editor template drift" if "template" in row else "Authored editor source drift")
         io.apply(destination / row["path"], copy=source)
     io.apply(destination / "ProjectSettings/InputManager.asset", insert_axes((ROOT / "smoke/ProjectSettings/InputManager.asset").read_text(), nova_axes()))
     guids = read(RECIPE / "project-layout.json")["runtime_source_guids"]

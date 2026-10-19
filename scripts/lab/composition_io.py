@@ -232,7 +232,7 @@ def initialize(io, input_id):
 
 def composition(destination, work, input_id, expected, provenance):
     from composition_migration import stage
-    from composition_rebuild import pinned_catalog_input, pinned_catalog_path, recipe_inputs
+    from composition_rebuild import catalog_input, catalog_input_path, recipe_inputs
     from shader_rebuild import composition_sources
 
     io = StageIO(work, destination)
@@ -242,7 +242,7 @@ def composition(destination, work, input_id, expected, provenance):
     if reconstruction["input_id"] != input_id or membership_recipe["input_id"] != input_id or membership_recipe["schema"] != 1:
         raise RuntimeError("Composition export membership requires accepted input")
     export = io.resolve(reconstruction["projects"][0])
-    closure = pinned_catalog_input(work, "reconciled-closure.json")
+    closure = catalog_input(work, destination, "reconciled-closure.json")
     if closure["input_id"] != input_id:
         raise RuntimeError("Catalog closure requires accepted input")
     from whole_catalog import read_catalog, source_mesh_subobjects
@@ -251,7 +251,7 @@ def composition(destination, work, input_id, expected, provenance):
     # Ambiguous meshes remain explicit recipe identities here; native bundle
     # recovery/conversion itself is R3's responsibility.
     meshes, _ = source_mesh_subobjects(
-        export, closure, read_catalog(pinned_catalog_path(work, "source-catalog.json")), pinned_catalog_input(work, "native-conversions.json")
+        export, closure, read_catalog(catalog_input_path(work, destination, "source-catalog.json")), catalog_input(work, destination, "native-conversions.json")
     )
     membership = export_membership(closure, membership_recipe, [row["source"] for row in meshes])
     copies = {path: membership[path] for path in expected if provenance[path]["producer"] == "export-copy" and path in membership}

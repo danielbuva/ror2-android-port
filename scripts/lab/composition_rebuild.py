@@ -11,31 +11,27 @@ composition evidence, no live content selection and no old run attempt:
   stages (B8 retargeted an older copy of the same rows); content: `recipe/content.json`;
 - shader selection: `recipe/shader-rebuild-inputs.json`; global textures: `recipe/composition.json`.
 
-Source GUIDs come from the hash-pinned catalog index also used by R3. B6's removed-state proof
+Source GUIDs come from the catalog index R2–R4 regenerate on the host (`catalog_analysis`, J725). B6's removed-state proof
 is unnecessary because the public config already omits those bindings.
 """
 
 import copy
 from pathlib import Path
 
-from common import RECIPE, read, sha
+from common import RECIPE, read
 
 
-def pinned_catalog_path(work, name):
-    """One of R3's hash-pinned analysis inputs, instead of following the live catalog pointer."""
-    from rebuild import relative_path
+def catalog_input_path(work, destination, name):
+    """One file of the destination's regenerated catalog analysis, never the live catalog pointer (J725)."""
+    from catalog_analysis import OUTPUTS, ensure
 
-    recipe = read(RECIPE / "catalog-rebuild-inputs.json")
-    row = recipe["files"][name]
-    relative_path(row["path"])
-    source = Path(work) / row["path"]
-    if not source.resolve().is_relative_to(Path(work).resolve()) or sha(source) != row["sha256"]:
-        raise RuntimeError("Recorded catalog input drift: " + name)
-    return source
+    if name not in OUTPUTS:
+        raise RuntimeError("Unknown catalog analysis output: " + name)
+    return ensure(work, destination, read(Path(work) / "config/accepted-input.json")["input_id"]) / name
 
 
-def pinned_catalog_input(work, name):
-    return read(pinned_catalog_path(work, name))
+def catalog_input(work, destination, name):
+    return read(catalog_input_path(work, destination, name))
 
 
 def intermediate_config(runtime, stages):
@@ -61,7 +57,7 @@ def recipe_inputs(io):
     runtime = read(RECIPE / "runtime-config.json")
     if recipe["schema"] != 1 or recipe["input_id"] != accepted:
         raise RuntimeError("Composition recipe requires accepted input")
-    index = pinned_catalog_input(io.work, "source-guid-index.json")
+    index = catalog_input(io.work, io.project, "source-guid-index.json")
     plan = dict(
         conflicts=[],
         rows=[

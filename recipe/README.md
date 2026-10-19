@@ -67,7 +67,7 @@ produce the file from the input, prefer tracking the generator.
 | `build-entry-inputs.json` | R7/R8 inputs: the bootstrap attempt name, the decompiled sources R7 regenerates, and one retained contract result | Accepted input ID, attempt name, assembly name/SHA-256, decompiler pin, three output paths/SHA-256, and one work-relative path/SHA-256. | No decompiled bodies, catalog data, binaries, private roots, credentials or account/device identifiers. Audited 2026-10-18; revised J597. | `build_entry_rebuild.BuildEntryIO` gates the contract result; `BuildEntryIO.decompiled` regenerates and hash-gates the sources. Only the contract result is a blocker. |
 | `rebuild-binding-targets.json` | J565 final binding membership | Accepted input ID and 104 minimum project asset identities from the regenerated R2 guard. | Identifiers only, no serialized content, private roots or device/account data. Audited 2026-10-18. | Final validation requires all identifiers in both the regenerated R2 receipt and destination; R4 deferred targets are checked too. |
 | `scene-rebuild-inputs.json` | Explicit temporary R5 frozen baseline; MapZone script identities now regenerated | Accepted input ID, one work-relative path and SHA-256, and the assembly whose script identities R5 derives. | No baseline contents, script implementation, private roots, binary or account/device data. Audited 2026-10-18; revised J597. | `scene_rebuild.SceneIO` gates the baseline before scratch publication and derives `moon-script-identities.txt` from the installation (`script_identity.py`); the baseline remains a fresh-rebuild blocker. |
-| `catalog-rebuild-inputs.json` | Explicit temporary R3/R4 local analysis dependencies | Accepted input ID, work-relative receipt/metadata paths and SHA-256 only; ten existing catalog-analysis, mesh and support-contract records. | No catalog bodies, source code, binaries, private roots or device/account identifiers. Hashes pin local input, not redistribution permission. Audited 2026-10-18. | `catalog_rebuild.CatalogIO` gates the complete cohort before copying into destination scratch; retained analysis is the next blocker to remove. |
+| `catalog-typed-corrections.json` | The three typed-import corrections an exact-editor typed import measured once (J725) | Accepted input ID, shipped `catalog.json` SHA-256, location IDs, original/source asset paths, native object names, serialized-file names and path IDs; no bodies. | No catalog bodies, binaries, private roots or device/account identifiers; identities only, the minimum needed to replay `reconcile` on the host. Audited 2026-10-19. | `catalog_analysis.regenerate` writes them as the reconcile receipt in the destination; the rest of R2–R4's analysis is regenerated from the installation. |
 | `composition.json` | R2 migration selection B1 and the GUID part of B5 in the rebuild path | Accepted input ID; how many runtime-recipe stages composition stages (7); two accepted-export global-texture paths with SHA-256 and their resource names; 90 previous-input → current-export GUID pairs, exactly those that change inherited store bodies. | GUIDs and asset paths only; no bodies, maps beyond the 90 needed pairs, private roots or device/account data. Audited J597. | `composition_rebuild.recipe_inputs`, with `asset-transforms.json`, `inherited-state.json`, `runtime-config.json`, `content.json` and the shader recipe, replaces B1, B3–B6 and B8 for R2. |
 | `composition-export-copies.json` | Residual R2 export membership outside canonical catalog closure relocation | 128 export-path → project-path pairs and accepted input ID. | Asset identifiers only; no bodies, private roots, device/account identifiers or third-party source. Audited 2026-10-18. | `composition_io.export_membership`; all bytes come from the accepted export and are hash/size-gated against the local map. |
 | `assembly-transforms.json` | Implicit historical plugin transform sequence (migration-removal commit 7, verification scope); J638 adds the reviewed updated-input unstarted skill-response cleanup guard; J714 adds the read-only `--catalog-names` source (tool hashes only; transform outputs unchanged) | Existing authored AssemblyProbe modes, exact ordered argument identifiers, accepted original/output SHA-256, tool source hashes and supplied Mono.Cecil hash. Historical producers: `integrated_objective.transform_optional_presentation`, `source_scene_candidate.stage_unavailable_audio`; current local oracles: generation marker and reviewed transform receipts. | Minimum DLL names, mode/argument identifiers and hashes only; no IL, binaries, decompiled source, middleware, private paths or device/account data. Original assemblies and Cecil must be supplied locally; no ownership or authentication changes. Updated source is an authored null check plus structural audit, with no copied native method body. Audited 2026-10-19. | Current `assembly_transforms.py` verifies in disposable `.local/` scratch. Its shared generator also supplies the three transformed DLLs to R1 below. |
@@ -788,17 +788,17 @@ conversion. R2 reuses existing stage recipes and validates source identity; no
 community code or content was copied. Real-data execution remains an operator
 check. Doctor was not run because it writes outside the authorized destination.
 
-## R3/R4 retained-analysis audit (2026-10-18)
+## R2–R4 catalog analysis audit (2026-10-19, J714, J725)
 
-`catalog-rebuild-inputs.json` records only ten work-relative paths, SHA-256 and
-the accepted input ID. The files themselves remain ignored and are copied only
-to destination scratch after validation. Catalog metadata/contracts, closure/GUID
-analysis and native conversion/mesh findings are retained local inputs because
-the existing metadata exporter requires Unity. The support receipt supplies only
-the verified original field-type contract; the source body comes from the export.
-These dependencies are explicit rebuild debt, not generators or a substitute for
-the legitimate installation. No protected bodies, middleware, private roots,
-credentials, account/device identifiers or binary content are added to the recipe.
+The ten hash-pinned local analysis inputs (`catalog-rebuild-inputs.json`) are retired.
+`catalog_analysis.ensure` regenerates the source catalog (host reader, J714), the
+original contract, GUID index/repairs, host closure, native container receipts, native
+conversions and reconciled closure inside the destination, from the legitimate
+installation, the accepted export and the accepted decompilation. Mesh sub-object
+recovery and the support field contract now run as in the live pipeline. Only
+`catalog-typed-corrections.json` remains: three measured asset identities, no bodies.
+No protected bodies, middleware, private roots, credentials, account/device identifiers
+or binary content are added to the recipe.
 
 Prior art: re-read `docs/community-prior-art.md` and pinned ThunderKit
 `ImportAddressableCatalog.cs` at `95a6236df08b0e4bbd5350dd4afdb0927cb7fb6a`.

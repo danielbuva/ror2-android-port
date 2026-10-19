@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "catalog_sha256": "1cbe89b05987d14cba0809ab8455fd492c0dbfdad0c502529a59c3bb02631c78",
+  "scope": "Three typed conversions the exact-editor typed import measured once: two TMP Bombardier font sub-objects (material, atlas) and the Captain SurvivorDef export-name collision; asset identities only, no content",
+  "conversions": {
+    "1909": {
+      "native": {
+        "name": "tmpBombStandard Material",
+        "native_path_id": -3497243749660211527,
+        "serialized_file": "CAB-46a81233d59874ab3e2d5f685fc3a09b",
+        "source": "Assets/RoR2/Base/Common/Fonts/Bombardier/tmpBombStandard Material.mat",
+        "type": "Material"
+      },
+      "original_internal_id": "Assets/RoR2/Base/Common/Fonts/Bombardier/tmpBombDropshadow.asset",
+      "resolution": "original-typed-container",
+      "source": "Assets/RoR2/Base/Common/Fonts/Bombardier/tmpBombStandard Material.mat"
+    },
+    "1910": {
+      "native": {
+        "name": "tmpBombDropshadow Atlas",
+        "native_path_id": -1300467617572174151,
+        "serialized_file": "CAB-46a81233d59874ab3e2d5f685fc3a09b",
+        "source": "Assets/RoR2/Base/Common/Fonts/Bombardier/tmpBombDropshadow Atlas.png",
+        "type": "Texture2D"
+      },
+      "original_internal_id": "Assets/RoR2/Base/Common/Fonts/Bombardier/tmpBombDropshadow.asset",
+      "resolution": "original-typed-container",
+      "source": "Assets/RoR2/Base/Common/Fonts/Bombardier/tmpBombDropshadow Atlas.png"
+    },
+    "3965": {
+      "expected_type": "RoR2.SurvivorDef",
+      "original_internal_id": "Assets/RoR2/Base/Characters/Captain/Captain.asset",
+      "resolution": "typed-script-export-collision",
+      "source": "Assets/RoR2/Base/Characters/Captain/Captain_0.asset"
+    }
+  }
+}

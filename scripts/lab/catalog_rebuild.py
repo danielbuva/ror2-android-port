@@ -1,4 +1,4 @@
-"""Host-only R3/R4 replay. Analysis requiring Unity remains an explicit pinned debt."""
+"""Host-only R3/R4 replay over the catalog analysis regenerated in the destination (J725)."""
 
 from pathlib import Path
 import re
@@ -21,25 +21,12 @@ def bootstrap_identity(work, input_id):
 class CatalogIO(StageIO):
     def __init__(self, work, destination, input_id):
         super().__init__(work, destination)
-        recipe = read(RECIPE / "catalog-rebuild-inputs.json")
-        if recipe["schema"] != 1 or recipe["input_id"] != input_id:
-            raise RuntimeError("Catalog rebuild inputs require accepted input")
-        self.analysis = self.project / ".rebuild/catalog-inputs"
-        # Validate the complete retained input cohort before publishing scratch.
-        payload = {}
-        from rebuild import relative_path
+        from catalog_analysis import ensure
 
-        for name, row in recipe["files"].items():
-            relative_path(name)
-            relative_path(row["path"])
-            source = self.work / row["path"]
-            if not source.resolve().is_relative_to(self.work.resolve()) or sha(source) != row["sha256"]:
-                raise RuntimeError("Recorded catalog input drift: " + name)
-            payload[name] = source.read_bytes()
-        for name, content in payload.items():
-            target = self.output(self.analysis / name)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(content)
+        if read(self.work / "config/accepted-input.json")["input_id"] != input_id:
+            raise RuntimeError("Catalog rebuild inputs require accepted input")
+        # Audit, native inventory and reconcile run once per destination from the installation.
+        self.analysis = ensure(self.work, self.project, input_id)
 
     def runtime_guid(self, name):
         import re

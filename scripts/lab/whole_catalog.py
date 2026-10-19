@@ -575,11 +575,16 @@ def native_candidates(records, exports):
 
 def reconcile():
     out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    result, conversions = reconcile_into(out, ROOT / read(out / "native-latest.json")["path"])
+    print(json.dumps(dict(result["summary"], original_typed_conversions=len(conversions)), indent=2))
+
+
+def reconcile_into(out, native, work=WORK):
+    """Typed native conversions and the reconciled closure for the audit in `out` (J725)."""
+    export = ROOT / read(work / "config/reconstruction.json")["projects"][0]
     closure = read(out / "host-closure.json")
     index = read(out / "source-guid-index.json")
     metadata = read_catalog(catalog_path(out))
-    native = ROOT / read(out / "native-latest.json")["path"]
     # Unity class IDs are source serialization tags, independent of filename extensions.
     class_names = {
         1: "GameObject",
@@ -665,14 +670,14 @@ def reconcile():
         if corrected["metadata_sha256"] != sha(catalog_path(out)):
             raise RuntimeError("Typed import corrections belong to a different catalog")
         conversions.update(corrected["conversions"])
-    assembly_hash = sha(game() / "Risk of Rain 2_Data/Managed/RoR2.dll")
+    assembly_hash = sha(game(work) / "Risk of Rain 2_Data/Managed/RoR2.dll")
     key = digest(dict(input=assembly_hash, ilspy="11.0.0.9375", args="project-referencepath-csharp9-v2"))
-    helper = WORK / "decompiled/RoR2" / key[:16] / "RoR2.ContentManagement/AddressablesLoadHelper.cs"
+    helper = work / "decompiled/RoR2" / key[:16] / "RoR2.ContentManagement/AddressablesLoadHelper.cs"
     contract = read(out / "original-catalog-contract.json")
     if contract["input_sha256"] != assembly_hash:
         raise RuntimeError("Runtime key metadata belongs to different input")
     legacy_hash = next(
-        row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"
+        row["sha256"] for row in read(work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"
     )
     if contract.get("legacyInputSha256") != legacy_hash:
         raise RuntimeError("Refresh the native catalog contract for the accepted legacy assembly")
@@ -691,28 +696,35 @@ def reconcile():
     result["input_id"] = closure["input_id"]
     result["native_conversion_count"] = len(conversions)
     write(out / "reconciled-closure.json", result)
-    print(json.dumps(dict(result["summary"], original_typed_conversions=len(conversions)), indent=2))
+    return result, conversions
 
 
 def audit():
     out = WORK / "experiments/whole-catalog" / now()
     out.mkdir(parents=True)
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    result = audit_into(out)
+    write(out.parent / "latest.json", dict(path=str(out.relative_to(ROOT)), status="host-audit"))
+    print(json.dumps(result["summary"], indent=2))
+
+
+def audit_into(out, work=WORK):
+    """Host catalog audit into `out`; writes no live pointer (J725)."""
+    export = ROOT / read(work / "config/reconstruction.json")["projects"][0]
     # The accepted decompilation location is receipted by recovery.py.
-    assembly_hash = sha(game() / "Risk of Rain 2_Data/Managed/RoR2.dll")
-    expected_hash = next(row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
+    assembly_hash = sha(game(work) / "Risk of Rain 2_Data/Managed/RoR2.dll")
+    expected_hash = next(row["sha256"] for row in read(work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
     if assembly_hash != expected_hash:
         raise RuntimeError("Original input drift; review and explicitly accept before conversion")
     decompile_key = digest(dict(input=assembly_hash, ilspy="11.0.0.9375", args="project-referencepath-csharp9-v2"))
     candidates = [
         path.parent / "RoR2.ContentManagement/AddressablesLoadHelper.cs"
-        for path in (WORK / "decompiled/RoR2").glob("*/result.json")
+        for path in (work / "decompiled/RoR2").glob("*/result.json")
         if read(path).get("success") and read(path).get("input_sha256") == assembly_hash and read(path).get("cache_key") == decompile_key
     ]
     if len(candidates) != 1:
         raise RuntimeError("Expected one accepted original load helper; review input selection")
     helper = candidates[0]
-    export_source_catalog(out)
+    export_source_catalog(out, work=work)
     source = out / "source-catalog.json"
     # Generated index only caches original GUID metadata, never supplies a readiness filter.
     candidates = {}
@@ -723,7 +735,7 @@ def audit():
         relative = str(Path(str(meta)[:-5]).relative_to(export))
         candidates.setdefault(match[1], []).append(relative)
     data = read_catalog(source)
-    index, repairs = scene_guid_owners(candidates, data, read(WORK / "inventory/files.json")["input_id"])
+    index, repairs = scene_guid_owners(candidates, data, read(work / "inventory/files.json")["input_id"])
     write(out / "source-guid-repairs.json", repairs)
     if (
         list(dict.fromkeys(re.findall(r"FindLocationsThenAddLoadOperation(?:<[^>]+>)?\(AddressablesLabels\.(\w+)", helper.read_text())))
@@ -740,17 +752,16 @@ def audit():
         legacy_aliases=contract.get("legacyAliases", {}),
         state_source_root=helper.parents[1],
     )
-    result["input_id"] = read(WORK / "inventory/files.json")["input_id"]
+    result["input_id"] = read(work / "inventory/files.json")["input_id"]
     result["source_catalog_sha256"] = sha(export / "Assets/StreamingAssets/aa/catalog.json")
     result["metadata_sha256"] = sha(source)
     result["helper_sha256"] = sha(helper)
     write(out / "host-closure.json", result)
     write(out / "source-guid-index.json", index)
-    write(out.parent / "latest.json", dict(path=str(out.relative_to(ROOT)), status="host-audit"))
-    print(json.dumps(result["summary"], indent=2))
+    return result
 
 
-def export_source_catalog(out, filename="source-catalog.json"):
+def export_source_catalog(out, filename="source-catalog.json", work=WORK):
     """Read the shipped catalog schema on the host; no editor is involved (J714).
 
     `catalog_reader` mirrors the original ContentCatalogData.CreateLocator and is
@@ -759,21 +770,21 @@ def export_source_catalog(out, filename="source-catalog.json"):
     from boundaries import probe_tool
     from catalog_reader import dumps, read_shipped
 
-    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
-    original = game() / "Risk of Rain 2_Data/Managed/RoR2.dll"
-    expected = next(row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
+    export = ROOT / read(work / "config/reconstruction.json")["projects"][0]
+    original = game(work) / "Risk of Rain 2_Data/Managed/RoR2.dll"
+    expected = next(row["sha256"] for row in read(work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
     contract = json.loads(run(probe_tool() + ["--catalog-contract", original], timeout=120).stdout)
     if contract["input_sha256"] != expected:
         raise RuntimeError("Provider contract belongs to unaccepted input")
     expected_legacy = next(
-        row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"
+        row["sha256"] for row in read(work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"
     )
     if contract["legacyInputSha256"] != expected_legacy:
         raise RuntimeError("Legacy resource contract belongs to unaccepted input")
     write(out / "original-catalog-contract.json", contract)
     names = json.loads(run(probe_tool() + ["--catalog-names", original] + contract["providers"], timeout=120).stdout)
     # The editor query expanded RuntimePath against the lab project it ran in; keep that form.
-    record = read_shipped(export / "Assets/StreamingAssets/aa/catalog.json", str(WORK / "lab-project/Assets/StreamingAssets/aa"), names)
+    record = read_shipped(export / "Assets/StreamingAssets/aa/catalog.json", str(work / "lab-project/Assets/StreamingAssets/aa"), names)
     (out / filename).write_text(dumps(record), encoding="utf-8")
 
 
@@ -900,18 +911,29 @@ def native_inventory():
     import UnityPy
 
     out = ROOT / read(WORK / "experiments/whole-catalog/latest.json")["path"]
+    destination = out / ("native-containers-" + now())
+    destination.mkdir()
+    result = native_inventory_into(out, destination)
+    write(out / "native-latest.json", dict(path=str(destination.relative_to(ROOT))))
+    print(json.dumps(dict(inspected=len(result["bundles"]), failures=len(result["errors"]), evidence=str(destination.relative_to(ROOT)))))
+    if not result["success"]:
+        raise RuntimeError("Original container inspection incomplete; preserve and inspect its first failure")
+
+
+def native_inventory_into(out, destination, work=WORK):
+    """Container receipts for the audit in `out`, written to `destination`; no live pointer (J725)."""
+    import UnityPy
+
     metadata = read_catalog(catalog_path(out))
     closure = read(out / "host-closure.json")
     locations = {row["id"]: row for row in metadata["locations"]}
     bundle_ids = sorted({row.get("owning_bundle", (row.get("dependencies") or [None])[0]) for row in closure["unresolved"]} - {None})
-    accepted = read(WORK / "inventory/files.json")
-    if accepted["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
+    accepted = read(work / "inventory/files.json")
+    if accepted["input_id"] != read(work / "config/accepted-input.json")["input_id"]:
         raise RuntimeError("Input drift; native inspection requires accepted input")
     file_index = {}
     for row in accepted["files"]:
         file_index.setdefault(Path(row["path"]).name, []).append(row)
-    destination = out / ("native-containers-" + now())
-    destination.mkdir()
     receipts = []
     errors = []
     object_errors = []
@@ -922,7 +944,7 @@ def native_inventory():
         try:
             if len(matches) != 1:
                 raise RuntimeError("Ambiguous or absent legitimate bundle input")
-            source = game() / matches[0]["path"]
+            source = game(work) / matches[0]["path"]
             if sha(source) != matches[0]["sha256"]:
                 raise RuntimeError("Original bundle drift; explicitly review and accept")
             environment = UnityPy.load(str(source))
@@ -961,10 +983,7 @@ def native_inventory():
         scope="Original binary container identities only; no engine loading, asset equivalence or Android acceptance",
     )
     write(destination / "result.json", result)
-    write(out / "native-latest.json", dict(path=str(destination.relative_to(ROOT))))
-    print(json.dumps(dict(inspected=len(receipts), failures=len(errors), evidence=str(destination.relative_to(ROOT)))))
-    if not result["success"]:
-        raise RuntimeError("Original container inspection incomplete; preserve and inspect its first failure")
+    return result
 
 
 def repair_support_source(export, mapped, project, destination, io=None):
@@ -979,15 +998,10 @@ def repair_support_source(export, mapped, project, destination, io=None):
     expected = next(
         row["sha256"] for row in io.read(io.work / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/Assembly-CSharp.dll"
     )
-    if io.rebuilding:
-        record = io.read(io.catalog() / "support-source-alias.json")
-        if record["original_assembly_sha256"] != expected or sha(binary) != expected:
-            raise RuntimeError("Support source field contract input drift")
-        contract = dict(sha256=expected, types=[dict(fields=[dict(name=k, type=v) for k, v in record["fields"].items()])])
-    else:
-        from boundaries import probe_tool
+    from boundaries import probe_tool
 
-        contract = json.loads(run(probe_tool() + [binary, "AffixBeadProjectileSound"], timeout=120).stdout)
+    # Read-only IL field contract; the rebuild no longer pins the previous record (J725).
+    contract = json.loads(run(probe_tool() + [binary, "AffixBeadProjectileSound"], timeout=120).stdout)
     if contract["sha256"] != expected or len(contract["types"]) != 1:
         raise RuntimeError("Recovered support source requires the accepted original field contract")
     fields = {row["name"]: row["type"] for row in contract["types"][0]["fields"]}
@@ -1105,14 +1119,14 @@ def native_mesh_signature(tree):
         return None
 
 
-def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, receipts, accepted):
+def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, receipts, accepted, work=WORK):
     """Resolve only unique native/export mesh signatures from accepted binaries."""
     import UnityPy
 
     locations = {row["id"]: row for row in metadata["locations"]}
     issues = {row["location"]: row for row in native["issues"]}
     files = {row["path"]: row["sha256"] for row in accepted["files"]}
-    if accepted["input_id"] != read(WORK / "config/accepted-input.json")["input_id"]:
+    if accepted["input_id"] != read(work / "config/accepted-input.json")["input_id"]:
         raise RuntimeError("Ambiguous mesh recovery requires accepted input")
     needed = {}
     for row in unresolved:
@@ -1136,9 +1150,9 @@ def recover_ambiguous_mesh_subobjects(export, unresolved, metadata, native, rece
             continue
         evidence = read(receipt)
         source = evidence["source"]
-        if evidence["location"] != owner or source not in files or evidence["sha256"] != files[source] or sha(game() / source) != files[source]:
+        if evidence["location"] != owner or source not in files or evidence["sha256"] != files[source] or sha(game(work) / source) != files[source]:
             raise RuntimeError("Original mesh bundle receipt or accepted hash differs")
-        environment = UnityPy.load(str(game() / source))
+        environment = UnityPy.load(str(game(work) / source))
         objects = {(obj.assets_file.name, obj.path_id): obj for obj in environment.objects if obj.type.name == "Mesh"}
         for row, identity, failure in requests:
             original = failure["native"]
@@ -1181,17 +1195,11 @@ def prepare_integration(io=None, *, attempt=None):
     metadata = read_catalog(catalog_path(out))
     native = io.read(out / "native-conversions.json")
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
-    if io.rebuilding:
-        # Native signature recovery records are an explicit hash-pinned input until
-        # the catalog analysis can run without its Unity metadata exporter.
-        meshes = io.read(out / "mesh-subobjects.json")
-        mesh_subobjects = meshes["resolved"]
-        unresolved_mesh_subobjects = meshes["unresolved"]
-    else:
-        receipts = io.resolve(io.read(out / "native-latest.json")["path"])
-        recovered = recover_ambiguous_mesh_subobjects(export, unresolved_mesh_subobjects, metadata, native, receipts, io.read(io.work / "inventory/files.json"))
-        mesh_subobjects.extend(recovered)
-        unresolved_mesh_subobjects = [row for row in unresolved_mesh_subobjects if row["key"] not in {entry["key"] for entry in recovered}]
+    # The rebuild regenerates its own native receipts in the destination (J725).
+    receipts = out / "native-containers" if io.rebuilding else io.resolve(io.read(out / "native-latest.json")["path"])
+    recovered = recover_ambiguous_mesh_subobjects(export, unresolved_mesh_subobjects, metadata, native, receipts, io.read(io.work / "inventory/files.json"), io.work)
+    mesh_subobjects.extend(recovered)
+    unresolved_mesh_subobjects = [row for row in unresolved_mesh_subobjects if row["key"] not in {entry["key"] for entry in recovered}]
     index = io.read(out / "source-guid-index.json")
     guids = {path: guid for guid, path in index.items()}
     repairs = {row["source"]: row for row in io.read(out / "source-guid-repairs.json")} if (out / "source-guid-repairs.json").exists() else {}

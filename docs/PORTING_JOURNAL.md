@@ -12237,3 +12237,51 @@ First failure: none in either default control. Mercenary's compatibility adapter
 remains a private draft, and J723's source nest lifecycle and automatic approach
 stall remain open. No original input, Phase 2 output, expansion/award gate or Moon
 candidate is changed. These scoped passes do not establish complete port readiness.
+
+## J725 — Rebuild regenerates its catalog analysis on the host; provenance refreshed
+
+Phase 2, from-scratch rebuild (implemented and run by Claude, operator-approved; host only, no
+editor, device or R9). Hypothesis: with the J714 catalog reader, R2–R4 can regenerate the catalog
+analysis from the installation inside the destination instead of reading ten hash-pinned local
+files, and R1–R8 can again reproduce the current accepted working project once the provenance
+map is refreshed.
+
+Changes. The live `audit`, `native_inventory` and `reconcile` now delegate to out-directory cores
+(`audit_into`, `native_inventory_into`, `reconcile_into`); the live actions keep their outputs and
+pointers. New `catalog_analysis.ensure` runs those cores once per destination into
+`.rebuild/catalog-inputs/`, behind a completion marker. Only the cohort is replaced, and R3's
+integration attempts beside it are kept. R2 (`composition_rebuild.catalog_input`) and R3/R4
+(`CatalogIO`) read from it. The three typed-import corrections the exact-editor import measured
+once became the public `recipe/catalog-typed-corrections.json`; `catalog-rebuild-inputs.json` is
+retired. In rebuild mode, mesh sub-objects are now recovered from the regenerated native
+receipts, and the support field contract is read from IL, as in the live path. A project-inputs
+editor row may name its current repo source instead of a historical template: `WholeCatalogHost.cs`
+was restaged by the live build, so its stale template is retired. The public build-entry recipe
+now names the live integration attempt `integration-20261019T140504.836690Z` and the 2026-10-19
+runtime-contracts result (still an editor export, now one of 47 local pins, down from 57). 1,016
+host tests pass, including new `catalog_analysis` tests.
+
+Regeneration (scratch, then in each destination): audit 222 s; native inventory of 709 original
+bundles in 53 s with zero failures; reconcile 172 s, 4,254 conversions with the three corrections.
+`source-catalog.json`, the contract and the GUID index and repairs are byte-identical to the live
+files. `host-closure.json`, `native-conversions.json` and `reconciled-closure.json` equal the live
+ones as sets: 4,251 identical native conversions, and identical issues, runtime-key edges and
+soft edges. Several lists come out in per-process hash or glob order, so no run, live or rebuild,
+reproduces these intermediate bytes. They are judged through the project files they select.
+
+Provenance. The map was backed up (`provenance-map.before-J715-…` in `work/receipts/`, written
+before the number moved) and refreshed from the working project at `bef493c`. 29 changed rows got
+new hashes with their producers kept. 120 new files were classified from same-kind siblings:
+29 sources byte-equal to `tools/catalog` and `tools/unity` (tool-owned), 34 Unity importers, and
+57 WholeGame assets the live 2026-10-19 integration imported (`whole_catalog.prepare_integration`).
+`WholeCatalogHost.cs` moved from unknown to tool-owned.
+
+Replay from a fresh destination (`work/receipts/J715-rebuild/`): R1 (assemblies), shader pipeline,
+R2 composition, project inputs, R3 catalog closure (316 identical, including all 57 new imports),
+R4 dependencies (1,238), stage variants (18), source scenes (46) and build entries (187) all
+equal. A first attempt (`…J715-try1`) had shown four of the new prefabs "different", but only
+because R4 then treated those unowned imports as pending dependencies and sanitized them. Once R3
+owned them, they matched. R8 (runtime sources) stops at `IntegratedWorldBoundary.cs`: the
+checkout holds Codex's uncommitted draft of that source, while the working project and `HEAD`
+agree. Revisit: replay R8 onward from a clean detached checkout at the committed `HEAD` (next
+entry), then decide the R9 rerun with the operator.

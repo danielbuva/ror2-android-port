@@ -252,6 +252,12 @@ class CompositionStageTests(unittest.TestCase):
             self.run_stage()
         self.assertEqual((self.project / self.inherited).read_bytes(), b"inherited\n")
 
+    def assertOnlyAnalysis(self):
+        """A refused R2 places no project file; only the regenerated analysis may exist (J725)."""
+        self.assertIn([p.name for p in self.destination.iterdir()], ([], [".rebuild"]))
+        if (self.destination / ".rebuild").exists():
+            self.assertEqual([p.name for p in (self.destination / ".rebuild").iterdir()], ["catalog-inputs"])
+
     def prepare_coordinator(self):
         self.recipe_dir = self.root / "recipe"
         write(self.recipe_dir / "composition-export-copies.json", dict(schema=1, input_id=self.accepted, copies=[]))
@@ -261,12 +267,16 @@ class CompositionStageTests(unittest.TestCase):
         write(self.work / "catalog/reconciled-closure.json", dict(input_id=self.accepted, files=["Assets/Test.unity"]))
         write(self.work / "catalog/source-catalog.json", dict(keys=[], locations=[]))
         write(self.work / "catalog/native-conversions.json", dict(issues=[]))
-        # Public recipes replace B1/B3–B6/B8 in the rebuild (J597); the catalog stays hash-pinned.
-        pins = {
-            name: dict(path="catalog/" + name, sha256=sha(self.work / "catalog" / name))
-            for name in ("source-guid-index.json", "reconciled-closure.json", "source-catalog.json", "native-conversions.json")
-        }
-        write(self.recipe_dir / "catalog-rebuild-inputs.json", dict(schema=1, input_id=self.accepted, files=pins))
+        # Public recipes replace B1/B3–B6/B8 in the rebuild (J597); the catalog analysis is
+        # regenerated in the destination (J725), here from the synthetic cohort.
+        import catalog_analysis
+
+        def regenerate(work, out, input_id):
+            for name in catalog_analysis.OUTPUTS:
+                source = self.work / "catalog" / name
+                (out / name).write_bytes(source.read_bytes() if source.is_file() else b"{}")
+
+        self.regenerate = self.patches.enter_context(patch.object(catalog_analysis, "regenerate", side_effect=regenerate))
         write(self.recipe_dir / "shader-rebuild-inputs.json", dict(input_id=self.accepted, groups=[]))
         write(
             self.recipe_dir / "composition.json",
@@ -342,9 +352,9 @@ class CompositionStageTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "does not name every J565 binding target"):
             rebuild.rebuild_step("composition", dest=self.root / "work/rebuild/r2c/lab-project", work=self.work)
         write(self.recipe_dir / "rebuild-binding-targets.json", dict(schema=1, input_id=self.accepted, targets=[self.scene]))
-        write(self.work / "catalog/source-guid-index.json", {"f" * 32: "Assets/Test.unity"})
-        with self.assertRaisesRegex(RuntimeError, "Recorded catalog input drift"):
-            rebuild.rebuild_step("composition", dest=self.root / "work/rebuild/r2b/lab-project", work=self.work)
+        # Each fresh destination regenerates its own analysis; none reads the live catalog pointer.
+        self.assertEqual(self.regenerate.call_count, 2)
+        self.assertTrue((self.root / "work/rebuild/r2c/lab-project/.rebuild/catalog-inputs/analysis-complete.json").is_file())
 
     def test_coordinator_refuses_incomplete_export_membership(self):
         self.prepare_coordinator()
@@ -352,14 +362,14 @@ class CompositionStageTests(unittest.TestCase):
         write(self.work / "receipts/provenance-map.json", self.provenance)
         with self.assertRaisesRegex(RuntimeError, "Incomplete export-copy membership"):
             rebuild.rebuild_step("composition", dest=self.destination, work=self.work)
-        self.assertEqual(list(self.destination.iterdir()), [])
+        self.assertOnlyAnalysis()
 
     def test_coordinator_export_drift_stops_before_placement(self):
         self.prepare_coordinator()
         self.put(self.export / "Assets/Test.unity", b"drift")
         with self.assertRaisesRegex(RuntimeError, "Export copy drift"):
             rebuild.rebuild_step("composition", dest=self.destination, work=self.work)
-        self.assertEqual(list(self.destination.iterdir()), [])
+        self.assertOnlyAnalysis()
 
     def test_coordinator_generated_hash_drift_stops_before_flushing_stage(self):
         self.prepare_coordinator()

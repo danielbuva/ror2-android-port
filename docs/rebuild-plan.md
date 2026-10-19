@@ -46,7 +46,7 @@ from public recipes (`composition_rebuild.recipe_inputs`, J597): asset transform
 229-row addition ledger, the public runtime config reduced to the first seven stages,
 `content.json`, the shader recipe and `recipe/composition.json` (two global textures and
 the 90 GUID pairs inherited store bodies need). Source GUIDs, closure, catalog and native
-conversions come from R3's hash-pinned inputs. It reads no B1, B3–B6 or B8, previous
+conversions come from the catalog analysis R2 regenerates in the destination (J725). It reads no B1, B3–B6 or B8, previous
 project, live `scene-probe-build.json` or old run attempt. Its binding receipt lists the
 104 public J565 targets, each of which its config or content must name. It also retains
 intermediate runtime config/project products for later builders and
@@ -90,17 +90,18 @@ recipe; the public project-layout recipe also supplies SilentProjectileBoundary'
 GUID before R7 places its importer. Support repair checks the installed original assembly hash and pinned field
 contract. No probe-tool build or Unity process runs in the rebuild path.
 
-Temporary explicit blocker: `recipe/catalog-rebuild-inputs.json` hash-pins ten
-existing local analysis records: source catalog, original catalog contract,
-host/reconciled closures, source GUID index/repairs, native conversions, typed
-import corrections, resolved mesh records and support field-contract receipt.
-They are copied to destination scratch only after the entire hash gate passes.
-The host audit, native inventory and reconciliation outputs are retained inputs,
-not claimed as freshly generated. Native container receipts are not read: the
-recorded final mesh-resolution receipt supplies that boundary. Removing this debt
-requires a host replacement for the Unity catalog/contract export followed by
-native inventory/reconciliation replay. Source identities still come from the
-export, and every selected project product must match the map and current project.
+Catalog analysis (J714, J725): the first stage that needs it (R2) calls
+`catalog_analysis.ensure`, which runs the live pipeline's own `audit_into`,
+`native_inventory_into` and `reconcile_into` once into `.rebuild/catalog-inputs/`. That covers
+the source catalog read on the host, the IL contract, the GUID index and repairs, the host
+closure, native container receipts for 709 original bundles, native conversions and the
+reconciled closure. Only the three typed-import corrections an exact-editor import measured
+come from a public recipe (`catalog-typed-corrections.json`). R3 then recovers mesh sub-objects
+from those receipts and reads the support field contract from IL, as the live path does. The
+regenerated intermediates equal the live ones as sets but not in list order (several lists
+follow per-process hash order), so equality is judged on the selected project products,
+which must match the map and the current project. Source identities still come from the
+export.
 
 R5 and R6 are executable after R4, in the same destination:
 
@@ -122,7 +123,7 @@ installation's shipped MonoScripts with Unity's MD4 file-ID rule (`script_identi
 and its stage graphs are the export's `RoR2.Navigation.NodeGraph` assets present in the
 destination, each of which must still equal its export copy; Unity's reserialization stays
 an R9 obligation. The frozen `whole-catalog-code-base.json` is no longer read.
-R3/R4's ten pinned analysis inputs remain unchanged. R5 regenerates projections,
+R2–R4's catalog analysis is regenerated in the destination (J725). R5 regenerates projections,
 scene contracts, navigation roots, contexts and receipts from accepted source,
 destination configuration/imported graphs and R3's regenerated manifest. A config
 row without its measured destination scene remains pending; no live-project

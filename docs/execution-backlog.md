@@ -39,8 +39,8 @@ Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
       (J592) and find why `Hidden/Compositing` drops out of R9's APK (a second build in the same
       Library still omits it, J598; next: a Library-less build of a working-project clone).
 - [ ] Remove the rebuild's remaining local inputs (R2's migration evidence is gone, J597):
-      the 57 hash-pinned analysis inputs (R3's ten: the host catalog reader exists, J714; next run
-      audit/inventory/reconcile on the host into the destination, then refresh the provenance map),
+      the 47 hash-pinned analysis inputs (R3's ten are regenerated on the host since J725; left:
+      R7's runtime contracts, an editor export, and 46 shader recovery inputs),
       the 14 inherited-store files (12 need an exact-editor `RecoveredHudBuilder` step) and the
       provenance map's role in selecting step membership.
 - [ ] Switch the working project's own build to the rebuild path (migration-removal commit 9,
