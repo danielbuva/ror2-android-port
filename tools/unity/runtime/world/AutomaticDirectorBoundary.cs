@@ -264,24 +264,10 @@ public sealed partial class PortSession
                               "Original team limit/effect contracts missing");
             yield return null;
         }
-        public IEnumerator SpawnAutomaticEnemy(GameObject template, CharacterBody player, SessionConfig cfg)
+        // Native global initialization is kept separate from fixture deck/host activation.
+        // This preserves the accepted CombatDirector.Init and async elite-tier wait order.
+        IEnumerator PrepareNativeDirectorEliteTiers()
         {
-            int limit = cfg.integratedWorld ? int.MaxValue : cfg.directorSpawnLimit == 0 ? 1 : cfg.directorSpawnLimit;
-            coordinator.Check(cfg.integratedWorld || limit == 1 || limit == 3, "Unmeasured director batch limit");
-            coordinator.r.director = new DirectorReport {
-                automatic = true, spawnLimit = limit, monsterLimit = TeamCatalog.GetTeamDef(TeamIndex.Monster).softCharacterLimit,
-                scope =
-                    "Original enabled fast director; source timing/credits/target/team limit/approximate placement, one base Beetle card, bounded " +
-                    limit + " spawns; no connected user, full stage, elite or full wave acceptance"
-            };
-            if (cfg.integratedWorld)
-                coordinator.r.director.scope =
-                    "Continuous original enabled fast director, one original base Beetle card and real team limit/credits/placement; no artificial spawn cutoff. Original Run clock with unavailable stock startup/user/profile/progression.";
-            coordinator.r.phase = "automatic-director-context";
-            coordinator.Save();
-            coordinator.Check(RunArtifactManager.instance &&
-                                  !RunArtifactManager.instance.IsArtifactEnabled(RoR2Content.Artifacts.eliteOnlyArtifactDef),
-                              "Original disabled Honor artifact missing");
             priorDirectorEliteTiers = RewardField(typeof(CombatDirector), "eliteTiers").GetValue(null);
             coordinator.Check(priorDirectorEliteTiers == null, "Existing original elite tiers");
             StaticCall(typeof(CombatDirector), "Init");
@@ -293,6 +279,15 @@ public sealed partial class PortSession
             coordinator.Check(
                 ((Array)RewardField(typeof(CombatDirector), "eliteTiers").GetValue(null)).Cast<object>().All(tier => tier != null),
                 "Original elite tier initialization incomplete");
+            yield break;
+        }
+
+        // Own the full master table, local participant registration, and run clock setup.
+        // The current catalog builder requires its authored template as an input; this helper
+        // deliberately does not select a one-card deck, activate a director, or spawn actors.
+        MasterCatalog.MasterIndex PrepareNativeDirectorCatalogAndPlayerContext(
+            GameObject template, CharacterBody player, SessionConfig cfg)
+        {
             foreach (var name in new[] { "masterPrefabs", "masterPrefabMasterComponents", "aiMasterPrefabs", "masterNames" })
             {
                 var field = RewardField(typeof(MasterCatalog), name);
@@ -345,6 +340,31 @@ public sealed partial class PortSession
                                   !coordinator.directorPlayer.networkUser,
                               "Original participant/body counts or unavailable user contract changed");
             coordinator.StartOriginalRunClock();
+            return index;
+        }
+
+        public IEnumerator SpawnAutomaticEnemy(GameObject template, CharacterBody player, SessionConfig cfg)
+        {
+            int limit = cfg.integratedWorld ? int.MaxValue : cfg.directorSpawnLimit == 0 ? 1 : cfg.directorSpawnLimit;
+            coordinator.Check(cfg.integratedWorld || limit == 1 || limit == 3, "Unmeasured director batch limit");
+            coordinator.r.director = new DirectorReport {
+                automatic = true, spawnLimit = limit, monsterLimit = TeamCatalog.GetTeamDef(TeamIndex.Monster).softCharacterLimit,
+                scope =
+                    "Original enabled fast director; source timing/credits/target/team limit/approximate placement, one base Beetle card, bounded " +
+                    limit + " spawns; no connected user, full stage, elite or full wave acceptance"
+            };
+            if (cfg.integratedWorld)
+                coordinator.r.director.scope =
+                    "Continuous original enabled fast director, one original base Beetle card and real team limit/credits/placement; no artificial spawn cutoff. Original Run clock with unavailable stock startup/user/profile/progression.";
+            coordinator.r.phase = "automatic-director-context";
+            coordinator.Save();
+            coordinator.Check(RunArtifactManager.instance &&
+                                  !RunArtifactManager.instance.IsArtifactEnabled(RoR2Content.Artifacts.eliteOnlyArtifactDef),
+                              "Original disabled Honor artifact missing");
+            var elitePreparation = PrepareNativeDirectorEliteTiers();
+            while (elitePreparation.MoveNext())
+                yield return elitePreparation.Current;
+            MasterCatalog.MasterIndex index = PrepareNativeDirectorCatalogAndPlayerContext(template, player, cfg);
             coordinator.automaticDeck =
                 Instantiate(coordinator.artifactBundle.LoadAsset<DirectorCardCategorySelection>(cfg.enemyDirectorDeckAsset));
             coordinator.Check(coordinator.automaticDeck, "Original initial director deck missing");

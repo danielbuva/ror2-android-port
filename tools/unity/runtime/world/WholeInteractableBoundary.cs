@@ -302,22 +302,16 @@ public sealed partial class PortSession
                 DroneCatalog.allDroneDefs.Count(def => Run.instance.IsDroneAvailable(def.droneIndex));
             coordinator.currentStageCombatDeck.pickupDefinitions = PickupCatalog.pickupCount;
             coordinator.currentStageCombatDeck.lunarLoot = Run.instance.availableLunarCombinedDropList.Count;
-            var priorPoints = new HashSet<SpawnPoint>(SpawnPoint.readOnlyInstancesList);
-            SceneDirector.onGenerateInteractableCardSelection += AdaptWholeInteractableSelection;
-            SceneDirector.onSpawnInteractableServer += ObserveWholeInteractable;
+            var populationObservation = new WholeStagePopulationObservation(this);
+            populationObservation.ArmBeforeNativeStart();
             try
             {
                 PortSession.Call(coordinator.wholeSceneDirector, "Start");
-                coordinator.currentStageCombatDeck.nativeScenePopulation = true;
-                coordinator.currentStageCombatDeck.remainingInteractableCredits = coordinator.wholeSceneDirector.interactableCredit;
+                populationObservation.ObserveNativeStart();
             }
             finally
             {
-                SceneDirector.onGenerateInteractableCardSelection -= AdaptWholeInteractableSelection;
-                SceneDirector.onSpawnInteractableServer -= ObserveWholeInteractable;
-                foreach (var point in SpawnPoint.readOnlyInstancesList)
-                    if (!priorPoints.Contains(point))
-                        wholePlayerSpawnPoints.Add(point.gameObject);
+                populationObservation.Dispose();
             }
             coordinator.currentStageCombatDeck.playerSpawnPoints = wholePlayerSpawnPoints.Count;
             coordinator.r.world.barrels = coordinator.worldBarrels.Count;
@@ -325,6 +319,44 @@ public sealed partial class PortSession
             coordinator.Save();
             yield return null;
         }
+        sealed class WholeStagePopulationObservation : IDisposable
+        {
+            readonly WholeInteractableSession owner;
+            HashSet<SpawnPoint> priorSpawnPoints;
+            Action<SceneDirector, DirectorCardCategorySelection> onGenerateInteractableCardSelection;
+            Action<SceneDirector, GameObject, DirectorCard> onSpawnInteractableServer;
+
+            public WholeStagePopulationObservation(WholeInteractableSession owner)
+            {
+                this.owner = owner;
+            }
+
+            public void ArmBeforeNativeStart()
+            {
+                priorSpawnPoints = new HashSet<SpawnPoint>(SpawnPoint.readOnlyInstancesList);
+                onGenerateInteractableCardSelection = owner.AdaptWholeInteractableSelection;
+                onSpawnInteractableServer = owner.ObserveWholeInteractable;
+                SceneDirector.onGenerateInteractableCardSelection += onGenerateInteractableCardSelection;
+                SceneDirector.onSpawnInteractableServer += onSpawnInteractableServer;
+            }
+
+            public void ObserveNativeStart()
+            {
+                owner.coordinator.currentStageCombatDeck.nativeScenePopulation = true;
+                owner.coordinator.currentStageCombatDeck.remainingInteractableCredits =
+                    owner.coordinator.wholeSceneDirector.interactableCredit;
+            }
+
+            public void Dispose()
+            {
+                SceneDirector.onGenerateInteractableCardSelection -= onGenerateInteractableCardSelection;
+                SceneDirector.onSpawnInteractableServer -= onSpawnInteractableServer;
+                foreach (var point in SpawnPoint.readOnlyInstancesList)
+                    if (!priorSpawnPoints.Contains(point))
+                        owner.wholePlayerSpawnPoints.Add(point.gameObject);
+            }
+        }
+
         public void CleanupWholeStageInteractables()
         {
             if (coordinator.wholeSceneDirector)

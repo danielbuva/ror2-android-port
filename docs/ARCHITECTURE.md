@@ -581,6 +581,18 @@ Build, device and safety tooling has its own tests: `test_build_identity.py`,
 `test_build_snapshots.py`, `test_apk_identity.py`, `test_adb_target.py`,
 `test_lab_safety.py`, `test_public_privacy.py`.
 
+Stage-context preparation seams (J639) remain inside those existing owners.
+`EnemySpineSession.PrepareEnemy` forwards mandatory `PrepareEnemyContext` then
+its actor fixture. `AutomaticDirectorSession` separates native elite/catalog/
+player initialization from the existing one-card director activation.
+`TeleporterWorldSession.PrepareInactiveObjectiveTemplate` prepares its owned
+clone before the existing direct spawn. `WholeInteractableSession` uses a
+short-lived `WholeStagePopulationObservation` to store the exact selection/spawn
+delegates and spawn-point baseline around its existing manual native `Start`.
+Its `finally` retains sequential detach/collection behavior. These extractions
+preserve the current public call order, setup fields and teardown owners; they
+enable no native source-stage cohort, new selector or RNG-order claim.
+
 The Siren encounter draft activates and network-spawns only the original inactive
 `shipgraveyard` encounter identity. It preserves the source FSM, scripted boss
 card, squad, rewards and separately expansion-gated portal callback. It never

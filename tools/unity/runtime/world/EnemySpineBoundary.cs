@@ -276,7 +276,19 @@ public sealed partial class PortSession
             EntityStates.BeetleMonster.HeadbuttState.hitEffectPrefab = null;
             StunState.stunVfxPrefab = null;
         }
+        // Mandatory context shared with reward, StageGeometry and world population owners.
+        // Keep Run/RNG/reward preparation, the genuine SceneInfo graph, and the one inactive
+        // template staging root ahead of the optional diagnostic actor fixture.
         public IEnumerator PrepareEnemy(CharacterBody player, SessionConfig cfg)
+        {
+            var context = PrepareEnemyContext(player, cfg);
+            while (context.MoveNext())
+                yield return context.Current;
+            var fixture = SpawnAndObserveEnemyFixture(player, cfg);
+            while (fixture.MoveNext())
+                yield return fixture.Current;
+        }
+        public IEnumerator PrepareEnemyContext(CharacterBody player, SessionConfig cfg)
         {
             coordinator.enemyPlayer = player;
             PrepareEnemyElites(cfg);
@@ -329,6 +341,12 @@ public sealed partial class PortSession
             }
             coordinator.enemyTemplates = new GameObject("Owned inactive enemy templates");
             coordinator.enemyTemplates.SetActive(false);
+        }
+        // Optional diagnostic fixture: source-body adaptation, directed spawn, and its
+        // actor observations/assertions. The existing public path invokes it immediately
+        // after mandatory context to retain its historical behavior and ordering.
+        IEnumerator SpawnAndObserveEnemyFixture(CharacterBody player, SessionConfig cfg)
+        {
             var originalBody = coordinator.artifactBundle.LoadAsset<GameObject>(cfg.enemyBodyAsset);
             var bodyTemplate = Instantiate(originalBody, coordinator.enemyTemplates.transform);
             bodyTemplate.name = originalBody.name;
@@ -483,6 +501,7 @@ public sealed partial class PortSession
             coordinator.r.phase = "enemy-active";
             coordinator.Save();
         }
+
         public void EnemyDamage(DamageReport report)
         {
             coordinator.ObserveDirectorDamage(report);

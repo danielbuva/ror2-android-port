@@ -8453,3 +8453,49 @@ not built yet. Revisit with a new APK, both baseline modes and actual Engineer
 UI-abandon/restart before claiming the device failure resolved. R1 assembly
 replay must use the updated public transform recipe; R8 must include the fixture.
 No Phase 2 replay/output, payload, device receipt or storage setting is changed.
+
+## J639 — Separate mandatory stage context from existing fixture activation
+
+The unintegrated source-stage cohort draft consumed native stage RNG in the
+wrong order: even disabled CombatDirector.Awake draws a seed, and the existing
+teleporter path activates source directors before native SceneDirector placement.
+Do not integrate that draft, rewind RNG or claim parity from its compile result.
+The immediate prerequisite is to separate mandatory context from the historical
+fixture activation while preserving the current path.
+
+Extract four small seams in their existing named owners. Enemy preparation
+forwards Run/reward/SceneInfo/graph/inactive-template context, then the same actor
+fixture. Automatic director preparation separates native elite initialization,
+master catalog/player registration and clock setup from the same one-card deck
+and director activation. Teleporter setup extracts the inactive objective clone,
+components/decks/listeners before its existing detach/activate/spawn sequence.
+A short-lived population observation stores exact event delegates and the prior
+spawn-point set around the same manual SceneDirector.Start call. Setup fields,
+report ownership and teardown owners stay in place. No flag, selector, new native
+stage callback, activation, RNG write, profile action or gameplay branch is added.
+
+Prior-art-first: the pinned R2API.Director internal source separates stage deck
+preparation from population and wraps ClassicStageInfo.Start with original order
+retained. Accepted current Run, CombatDirector, SceneDirector and Stage source
+sequences remain authoritative. Independent source review finds no order issue
+in three drafts, but rejects extra population rollback/retry behavior and a nested
+coroutine scheduling change. Root integrates revised drafts preserving the old
+exception/finally statements and explicitly forwarding coroutine values.
+
+Each private draft compiles against the full current Bee cohort with zero C#
+errors. Root's combined exact Unity refresh/compile also passes in
+work/experiments/skill-response-cleanup/editor-20261019T112825.471069Z/;
+its lifecycle and J632 native-exit API/buffer fixtures pass. Twelve producer
+host tests pass. Source compilation establishes compatibility, not automatic
+Unity lifecycle, stage RNG parity or runtime acceptance. The larger native
+first-stage cohort path remains unintegrated and is being redrafted against
+these seams. Ownership/call-order review:
+work/coordination/source-stage-lifecycle-draft/extraction-review.md;
+revised individual draft notes are adjacent under extractions/.
+
+The accepted/installed APK remains J637 03339547… and predates these helpers,
+J632 exit telemetry and J638 plugin guard. Build the reviewed combined source,
+then run both baseline modes and the concrete Engineer teardown regression.
+R8/runtime-source replay must reproduce these authored helpers. No new runtime
+file, asset/payload input, private required-state entry, device receipt or Phase 2
+output is introduced. Current runtime membership remains 100 files.

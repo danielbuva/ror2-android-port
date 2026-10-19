@@ -1187,6 +1187,39 @@ public sealed partial class PortSession
             coordinator.Check(Physics.Raycast(origin + Vector3.forward * 10 + Vector3.up * 20, Vector3.down, out hit, 50,
                                               LayerIndex.world.mask, QueryTriggerInteraction.Ignore),
                               "Objective placement has no source floor");
+            PrepareInactiveObjectiveTemplate(cfg, hit.point);
+            // Detaching from the inactive staging root can invoke native Awake
+            // immediately when the authored source instance is activeSelf.
+            ownedObjectiveWasActivated = true;
+            coordinator.objectiveHost.transform.SetParent(null, true);
+            coordinator.objectiveHost.SetActive(true);
+            NetworkServer.Spawn(coordinator.objectiveHost);
+            ownedObjectiveNetworkId = ownedObjectiveIdentity.netId;
+            ownsObjectiveNetworkSpawn = ownedObjectiveNetworkId.Value != 0;
+            coordinator.Check(NetworkServer.active && ownedObjectiveIdentity && ownedObjectiveIdentity.netId.Value != 0 &&
+                                  NetworkServer.FindLocalObject(ownedObjectiveIdentity.netId) == ownedObjectiveHost,
+                              "Original teleporter host was not registered under its exact server identity");
+            yield return null;
+            coordinator.Check(TeleporterInteraction.instance == coordinator.worldTeleporter &&
+                                  coordinator.worldTeleporter.holdoutZoneController && coordinator.worldTeleporter.bossGroup &&
+                                  Run.instance.nextStageScene,
+                              "Original objective Awake/Start context incomplete");
+            objectiveIndicatorConsumers++; // Original Awake takes one synchronous source lease per teleporter.
+            coordinator.Check(coordinator.worldTeleporter.isIdle &&
+                                  coordinator.worldTeleporter.GetInteractability(coordinator.worldPlayer.GetComponent<Interactor>()) ==
+                                      Interactability.Available,
+                              "Original teleporter idle/interaction state missing");
+            coordinator.r.objective.sourceDuration = coordinator.worldTeleporter.holdoutZoneController.baseChargeDuration;
+            coordinator.r.objective.sourceRadius = coordinator.worldTeleporter.holdoutZoneController.baseRadius;
+            coordinator.r.objective.position = coordinator.objectiveHost.transform.position;
+            coordinator.r.objective.ready = true;
+            ObserveTeleporterWorld();
+            coordinator.Save();
+        }
+        // Prepare source components, decks and listeners while the clone remains beneath the inactive staging root.
+        // The existing ownedObjectiveHost/Identity fields retain its exact cleanup ownership for the current direct-spawn path.
+        void PrepareInactiveObjectiveTemplate(SessionConfig cfg, Vector3 placement)
+        {
             var primordial = SceneCatalog.GetSceneDefForCurrentScene().cachedName == "skymeadow";
             var objectiveSource =
                 coordinator.artifactBundle.LoadAsset<GameObject>(primordial ? cfg.lunarTeleporterAsset : cfg.teleporterAsset);
@@ -1314,34 +1347,7 @@ public sealed partial class PortSession
                 SceneExitController.onFinishExit += objectiveFinishExit;
                 coordinator.objectiveSubscribed = true;
             }
-            coordinator.objectiveHost.transform.position = hit.point;
-            // Detaching from the inactive staging root can invoke native Awake
-            // immediately when the authored source instance is activeSelf.
-            ownedObjectiveWasActivated = true;
-            coordinator.objectiveHost.transform.SetParent(null, true);
-            coordinator.objectiveHost.SetActive(true);
-            NetworkServer.Spawn(coordinator.objectiveHost);
-            ownedObjectiveNetworkId = ownedObjectiveIdentity.netId;
-            ownsObjectiveNetworkSpawn = ownedObjectiveNetworkId.Value != 0;
-            coordinator.Check(NetworkServer.active && ownedObjectiveIdentity && ownedObjectiveIdentity.netId.Value != 0 &&
-                                  NetworkServer.FindLocalObject(ownedObjectiveIdentity.netId) == ownedObjectiveHost,
-                              "Original teleporter host was not registered under its exact server identity");
-            yield return null;
-            coordinator.Check(TeleporterInteraction.instance == coordinator.worldTeleporter &&
-                                  coordinator.worldTeleporter.holdoutZoneController && coordinator.worldTeleporter.bossGroup &&
-                                  Run.instance.nextStageScene,
-                              "Original objective Awake/Start context incomplete");
-            objectiveIndicatorConsumers++; // Original Awake takes one synchronous source lease per teleporter.
-            coordinator.Check(coordinator.worldTeleporter.isIdle &&
-                                  coordinator.worldTeleporter.GetInteractability(coordinator.worldPlayer.GetComponent<Interactor>()) ==
-                                      Interactability.Available,
-                              "Original teleporter idle/interaction state missing");
-            coordinator.r.objective.sourceDuration = coordinator.worldTeleporter.holdoutZoneController.baseChargeDuration;
-            coordinator.r.objective.sourceRadius = coordinator.worldTeleporter.holdoutZoneController.baseRadius;
-            coordinator.r.objective.position = coordinator.objectiveHost.transform.position;
-            coordinator.r.objective.ready = true;
-            ObserveTeleporterWorld();
-            coordinator.Save();
+            coordinator.objectiveHost.transform.position = placement;
         }
         public void ObserveTeleporterWorld()
         {
