@@ -7806,3 +7806,46 @@ After classifying this scope stop, continue Treebot/Loader/Croco/Captain on the
 unchanged baseline while host work prepares the launch-contract correction,
 source-backed Siren input and exact native Engineer output observations.
 The original first-stage loss/cleanup proof remains J609 on the earlier APK.
+
+## J623 — REX callbacks pass; Loader stops on intermittent native projectile corruption
+
+On unchanged J620 APK
+fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971,
+Treebot reaches 60.46 s on Lakes with four valid native components and
+primary/secondary/utility/special authority/server counts 7/2/1/1. No report
+first failure, suppressed callback or unexpected current-process error occurs.
+Evidence: work/experiments/survivor-check/20261019T094810.342167Z/Treebot/.
+The selected native variants are observed, not assumed to be every default or
+alternate kit. Diagnostic override/input and invincibility are assisted;
+profile applied runs stay 13, earned unlocks one, resultApplied=false.
+
+The same sequential batch stops on Loader at 25.14 s, first-runtime-log-error:
+Unity reports a non-finite collider transform on LightningStake(Clone).
+Four canonical components already have authority/server activations 6/1/1/1,
+but the required 60 s live interval fails. The first error poll, frozen report
+and current-process log remain under
+work/experiments/survivor-check/20261019T094810.342167Z/Loader/.
+The player body/motor and sampled aim values remain finite. Equipment cooldown
+-Infinity is the native ready sentinel also present in passing Treebot;
+it is not evidence of the projectile cause.
+
+Two independent host-only reviews compare current accepted source, imported
+prefab geometry and J499/J502. Three stakes are finite at world time 19.928 s;
+at 20.072 s two have NaN transform/network/Rigidbody positions, with finite
+rotation/scale, while one same-prefab object stays finite. The sample clock
+is not correlated to the first Android log timestamp. Loader ThrowPylon binds
+LoaderPylon, whereas the native blue-elite hit path creates LightningStake.
+Callback timing alone cannot attribute the error to Loader's special.
+The source can receive a hit position at fire and later reposition a stake
+from its stuck collider; missing spawn/velocity/stuck-victim evidence leaves
+the first invalid producer unresolved. Root reviewed the current source and
+prior-art/source conclusions; no transform clamp, collider change, native fire
+rewrite or error suppression is justified.
+
+Private reviews: work/coordination/codex-loader-first-failure-review.md and
+work/coordination/loader-lightning-stake-draft/findings.md. Revisit with bounded
+per-instance finite-to-invalid, Rigidbody and stuck/victim observations before
+proposing a repair. This remains J499's unresolved intermittent failure,
+not a new prefab reconstruction requirement. The batch finalizer removes its
+selector, stops the app and sleeps the OLED. Croco/Captain continue separately
+on the same baseline after this classification; no APK or payload changes.
