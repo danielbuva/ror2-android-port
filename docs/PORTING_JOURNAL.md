@@ -11265,3 +11265,48 @@ build input, original input, Phase 2 output, extra device, receipt edit, storage
 change, Moon attempt or permanent award occurs. Build together with the tested
 manual boundary and mismatch witness, then run both default controls before
 calling that candidate a baseline.
+
+## J705 — Engineer alternate kit records native Walker-owned damage
+
+Hypothesis: the accepted typed content/native callback path and J690 catalog
+names can distinguish an actual alternate Walker turret from the previously
+unnamed owned body, without reinterpreting older captures. The existing full
+alternate Engi case passes on J702 APK
+efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d:
+work/experiments/survivor-check/20261019T172833.365619Z/Engi/.
+It reaches 60.457397 world seconds, valid four-component inventory and all four
+requested native variant-1 loadouts (families 56/57/59/58). The selected kit is
+Laser Cutter, Spider Mine, Harpoons and Walker Turret. Authority/server callback
+pairs are 33/33, 4/4, 1/1 and 2/2. The input owner completes its canonical
+callback criterion; no first failure, runtime errors, missing or suppressed
+callbacks occur. J642/J690's native catalog/reciprocal-ownership observation
+remains the prior-art technique; gameplay is unchanged.
+
+There are 11 active damage facts, with the 21 unused ring slots excluded.
+Six player-body facts comprise two mapped EngiHarpoon hits of 70, three mapped
+SpiderMine hits of 84, and one direct hit of 4.2. Five separate facts are exact
+owned-summon attacks by native EngiWalkerTurretBody (body index 81), with its
+mapped master/body identities, each for 6.4 against native WispBody. These names
+are observed on this APK; no earlier index-only evidence is relabelled. The
+separate default-turret observer names EngiTurretBody/EngiTurretMaster and has
+zero turret counters; that default-only counter does not override the Walker
+ownership facts. The generic observer is attached, healthy/non-inert, with no
+error, truncation, unknown-owner damage or history overflow; seven projectile
+history facts are retained. Callback/output facts do not prove complete Laser
+Cutter sequence, turret lifetime, balance or every ability's causal damage.
+
+LightningStake observer is ready but records zero identities/samples; this is
+another absence of observation, not a new corrupt stake or resolution of the
+J667 intermittence. This is a developer-selected, variant-overridden assisted
+case, excluded from normal acceptance. Profile remains 13 applied runs, one
+earned/available unlock and one coin, result application/menu loadout commit
+false and saved variants 0/0/0/0. The collector removes its selector, stops the
+package and sleeps the OLED. Host-only interpretation:
+work/coordination/engi-efb0-alternate-results/.
+
+First failure: none in this bounded case. No source, original input, Phase 2
+output, extra device, receipt edit, storage change or permanent award occurs.
+The J704 source batch is building separately, while a fresh Treebot inventory
+case uses the installed efb0ba93. Next survivor breadth is Treebot/Croco/Merc
+alternate kits after exact current native inventory, without guessed catalog
+indices or ordinary unlock changes.

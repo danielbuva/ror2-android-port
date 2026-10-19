@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J705](PORTING_JOURNAL.md#j705--engineer-alternate-kit-records-native-walker-owned-damage) | 2026-10-19 | Engineer alternate kit records native Walker-owned damage | Hypothesis: the accepted typed content/native callback path and J690 catalog names can distinguish an actual alternate Walker turret from the previously unname… |
 | [J704](PORTING_JOURNAL.md#j704--bound-faster-projectile-observation-around-isolated-input-requests) | 2026-10-19 | Bound faster projectile observation around isolated input requests | Hypothesis: after J700 verifies native static configuration, J699's one-second output sample can still miss the original 0.3-second Earth Shard lifetime. |
 | [J703](PORTING_JOURNAL.md#j703--preserve-shrine-effect-ownership-refusal-with-exact-mismatch-operands) | 2026-10-19 | Preserve shrine-effect ownership refusal with exact mismatch operands | Hypothesis: J702's next native cleanup failure needs its measured ownership operands before any reference release or attribution change. |
 | [J702](PORTING_JOURNAL.md#j702--accept-cleanup-candidate-defaults-native-teardown-reaches-effect-attribution-refusal) | 2026-10-19 | Accept cleanup candidate defaults; native teardown reaches effect-attribution refusal | Hypothesis: J697's conditional exact managed-field restoration should preserve default world play and advance genuine native abandon cleanup without skipping l… |
