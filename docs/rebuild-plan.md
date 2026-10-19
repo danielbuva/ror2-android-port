@@ -508,10 +508,11 @@ but J547 supplies a checker rather than a complete initializer. No game readines
 
 ## R9: isolated Unity import/build (current; not yet equivalent)
 
-Status (J582–J584): from a fresh Library, R9 builds an APK that passed both device checks,
+Status (J582–J585): from a fresh Library, R9 builds an APK that passed both device checks,
 but reports it unequal. The extra `Unity.Timeline.dll` linker root is now preserved in the
-descriptor, so the baseline matches full builds (J584; R9 not yet rerun); the reimport errors come from batch import order; why
-`Hidden/Compositing` drops out is still open. R2 still reads local migration evidence; see
+descriptor, so the baseline matches full builds (J584). The reimport errors came from batch
+import order, and pass 2 now imports in dependency layers (J585). R9 has not been rerun with
+either fix. Why `Hidden/Compositing` drops out is still open. R2 still reads local migration evidence; see
 [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
 `unity-build` runs only after a passing `validate-bindings` on the same destination.

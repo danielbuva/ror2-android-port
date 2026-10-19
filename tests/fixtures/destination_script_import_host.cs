@@ -44,14 +44,15 @@ namespace UnityEditor {
    visit=path=>{string[] children;if(!deps.TryGetValue(path,out children))return;foreach(string child in children)if(result.Add(child)&&recursive)visit(child);};
    foreach(string path in paths)visit(path);return result.ToArray();
   }
-  public static int editing;
-  public static void StartAssetEditing(){editing++;}
+  public static int editing,batches;
+  public static readonly Dictionary<string,int> batchOf=new Dictionary<string,int>();
+  public static void StartAssetEditing(){editing++;batches++;}
   public static void StopAssetEditing(){Host.Check(editing>0,"balanced asset editing");editing--;}
   public static void ImportAsset(string path,ImportAssetOptions options){
    // Plugins: forced synchronous, outside a batch (pass 1). Dependents: forced, batched (pass 2).
    if(path.EndsWith(".dll"))Host.Check(options==(ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport)&&editing==0,"forced synchronous plugin import");
    else Host.Check(options==ImportAssetOptions.ForceUpdate&&editing==1,"batched forced dependent import");
-   imports.Add(path);if(path.EndsWith(".dll"))Host.imported=true;
+   imports.Add(path);batchOf[path]=editing==0?0:batches;if(path.EndsWith(".dll"))Host.imported=true;
    else Host.Check(Host.imported,"plugins imported before assets");
   }
   public static T LoadAssetAtPath<T>(string path) where T:class {return prefabs[path] as T;}
@@ -62,7 +63,7 @@ namespace UnityEditor {
 public static class Host {
  public static bool imported;
  public const string hud="Assets/LabLoadingScene/Resources/RecoveredUI/Hud.prefab",menu="Assets/LabLoadingScene/Resources/RecoveredUI/Menu.prefab",
-  font="Assets/Fonts/TMP.asset",scene="Assets/Stage.unity",unrelated="Assets/Other.asset";
+  font="Assets/Fonts/TMP.asset",scene="Assets/Stage.unity",unrelated="Assets/Other.asset",card="Assets/Card.asset";
  public static void Check(bool passed,string name){if(!passed)throw new Exception(name);}
  public static void Main(){
   var plugins=new[]{"Assets/Plugins/TMP.dll","Assets/LabLoadingScene/Plugins/RoR2.dll","Assets/Other/Derived.dll"};
@@ -72,16 +73,20 @@ public static class Host {
   AssetDatabase.prefabs[hud]=hudRoot;AssetDatabase.prefabs[menu]=new GameObject();AssetDatabase.prefabs["Assets/Other.prefab"]=new GameObject{missing=3};
   AssetDatabase.deps[hud]=new[]{font,plugins[1]};AssetDatabase.deps[font]=new[]{plugins[0]};
   AssetDatabase.deps[menu]=new[]{plugins[2]};
+  // A spawn card that loads the HUD prefab; it sorts first, as Unity's batch put .asset files first (J583).
+  AssetDatabase.deps[card]=new[]{hud};AssetDatabase.prefabs[card]=new GameObject();
   foreach(string path in AssetDatabase.GetAllAssetPaths()){Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllText(path,"fixture");}
   // Scenes are audited from text: one resolved reference, two unresolved (one null script).
   File.WriteAllText(scene,"  m_Script: {fileID: 123, guid: "+plugins[0]+", type: 3}\n  m_Script: {fileID: 9, guid: "+new string('a',32)+", type: 3}\n  m_Script: {fileID: 0}\n");
-  var selection=new[]{hud,menu,scene,"Assets/Other.prefab",unrelated};
+  var selection=new[]{card,hud,menu,scene,"Assets/Other.prefab",unrelated};
   var audit=JObject.Parse(LabBuild.InspectDestinationScripts(selection));Check((bool)audit["uiValid"],"initial ui");
   Check(audit["monoScripts"].All(row=>row["type"].Type==JTokenType.Null),"unresolved initial scripts");
   LabBuild.Repair(selection);
   Check(AssetDatabase.imports.Take(3).OrderBy(x=>x).SequenceEqual(plugins.OrderBy(x=>x)),"all managed plugins, including alternate directories");
   Check(!AssetDatabase.imports.Contains("Assets/Native.dll")&&!AssetDatabase.imports.Contains(unrelated),"unrelated imports excluded");
   Check(AssetDatabase.imports.IndexOf(font)<AssetDatabase.imports.IndexOf(hud),"font before HUD");
+  Check(AssetDatabase.batchOf[font]<AssetDatabase.batchOf[hud]&&AssetDatabase.batchOf[hud]<AssetDatabase.batchOf[card],"one batch per dependency layer");
+  Check(AssetDatabase.batchOf[menu]==AssetDatabase.batchOf[font],"independent assets share a layer");
   int count=AssetDatabase.imports.Count;
   audit=JObject.Parse(LabBuild.InspectDestinationScripts(selection));
   Check((bool)audit["uiValid"]&&(int)audit["missingScripts"]==5,"non-UI counts preserved");

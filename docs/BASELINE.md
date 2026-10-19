@@ -74,13 +74,13 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `94e683bdecf73488d5c6f4a8c6e204605ed30485fb65bba9c9d652327333ba8d`, code build in J584 with `Unity.Timeline` preserved whole (code-only and full builds now agree); same runtime source as J551 |
-| Check | passed: 35.2 s on Lakes and one genuine stage exit, no report error (J584) |
+| APK | `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0`, code build in J585 with the layered R9 reimport in `LabBuild.cs` and `Unity.Timeline` preserved whole (J584); same runtime source as J551 |
+| Check | passed: 35.2 s on Lakes and one genuine stage exit, no report error (J585) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`, which has the same runtime code |
 | Rollbacks | J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J584). Neither mode covers other survivors, ordinary (unassisted) difficulty,
+passed it (J585). Neither mode covers other survivors, ordinary (unassisted) difficulty,
 audio, frame rate or visual parity. Use the journal entries above for broader existing
 evidence.

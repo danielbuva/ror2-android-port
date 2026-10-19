@@ -172,7 +172,7 @@ public static class LabBuild {
   EditorApplication.Exit(result.success?0:1);
  }
  [Serializable] class ScriptSelection {public string[] assets;}
- [Serializable] class ScriptImports {public string[] plugins,dependents,errors;}
+ [Serializable] class ScriptImports {public string[] plugins,dependents,errors;public int[] layers;}
  static string[] ManagedPlugins(){
   // J576/task-720: original DLL import ran before package UI compilation. All
   // managed asset plugins are included, also those outside Assets/Plugins.
@@ -188,27 +188,39 @@ public static class LabBuild {
   var closure=AssetDatabase.GetDependencies(selection,true);
   var dependents=closure.Where(path=>path.StartsWith("Assets/",StringComparison.Ordinal)&&!path.EndsWith(".cs",StringComparison.OrdinalIgnoreCase)&&!path.EndsWith(".dll",StringComparison.OrdinalIgnoreCase))
    .Where(path=>AssetDatabase.GetDependencies(path,true).Any(pluginSet.Contains)).OrderBy(path=>path,StringComparer.Ordinal).ToArray();
-  // Dependency-first order reloads fonts/other ScriptableObjects before their
-  // prefab consumers. Cycles are visited once. No Refresh or broad cache reset.
+  // Dependency layers: an asset's layer is one more than its deepest affected direct
+  // dependency, so fonts/ScriptableObjects precede their prefab consumers. A cycle edge
+  // back to an asset still being visited counts as layer 0. No Refresh or cache reset.
   var affected=new System.Collections.Generic.HashSet<string>(dependents,StringComparer.Ordinal);
-  var visited=new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
-  var ordered=new System.Collections.Generic.List<string>();
-  Action<string> visit=null;
-  visit=path=>{if(!visited.Add(path))return;foreach(string dependency in AssetDatabase.GetDependencies(path,false).Where(affected.Contains).OrderBy(x=>x,StringComparer.Ordinal))visit(dependency);ordered.Add(path);};
-  foreach(string path in dependents)visit(path);
+  var depth=new System.Collections.Generic.Dictionary<string,int>(StringComparer.Ordinal);
+  var visiting=new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+  Func<string,int> layer=null;
+  layer=path=>{
+   int known;if(depth.TryGetValue(path,out known))return known;
+   if(!visiting.Add(path))return -1;
+   int result=0;
+   foreach(string dependency in AssetDatabase.GetDependencies(path,false).Where(dependency=>dependency!=path&&affected.Contains(dependency)))result=Math.Max(result,layer(dependency)+1);
+   visiting.Remove(path);depth[path]=result;return result;
+  };
+  foreach(string path in dependents)layer(path);
+  var layers=dependents.GroupBy(path=>depth[path]).OrderBy(group=>group.Key).Select(group=>group.OrderBy(x=>x,StringComparer.Ordinal).ToArray()).ToArray();
   // J578: one forced synchronous import per asset cost a full refresh each, growing
-  // to over ten minutes apiece. Queue every forced import into one batch instead.
+  // to over ten minutes apiece. Queue forced imports into batches instead. J583: inside
+  // one batch Unity imports native .asset files before prefabs, so spawn cards loaded
+  // pass 1's stale prefab artifacts. One batch per dependency layer keeps the order.
   // J579: inside the batch, TimerText.OnValidate reached TMP settings before they were
   // imported. Import them first, outside the batch. (TMP_Settings.instance itself is null
   // in any batch editor, the working one included: the game's TMP loads it through
   // Addressables, J580.)
   const string tmpSettings="Assets/LabLoadingScene/Resources/TMP Settings.asset";
   if(File.Exists(tmpSettings))AssetDatabase.ImportAsset(tmpSettings,ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
-  AssetDatabase.StartAssetEditing();
-  try{foreach(string path in ordered.Where(path=>path!=tmpSettings))AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);}
-  finally{AssetDatabase.StopAssetEditing();}
-  if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Dependent reimport left pending compilation or import");
-  return new ScriptImports{plugins=plugins,dependents=dependents};
+  foreach(string[] batch in layers){
+   AssetDatabase.StartAssetEditing();
+   try{foreach(string path in batch.Where(path=>path!=tmpSettings))AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);}
+   finally{AssetDatabase.StopAssetEditing();}
+   if(EditorApplication.isCompiling||EditorApplication.isUpdating)throw new InvalidOperationException("Dependent reimport left pending compilation or import");
+  }
+  return new ScriptImports{plugins=plugins,dependents=dependents,layers=layers.Select(batch=>batch.Length).ToArray()};
  }
  // This method body is also emitted by scripts/lab/script_audit.py for in-memory
  // MCP execution in an unchanged working editor. Keep it self-contained/read-only.

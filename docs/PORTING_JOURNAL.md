@@ -6165,3 +6165,31 @@ byte-identically: 100 files identical. `importer-identities` (286 identical) and
 `validate-bindings` pass. The destination's existing R9 receipt and APK predate this, so R9 must
 rerun before it can be compared again. Revisit: rerun R9 after the layered reimport (J583 item 3);
 the Timeline difference should then be gone from its APK comparison.
+
+## J585 — R9 pass 2 reimports dependents in dependency layers
+
+Phase 2, from-scratch rebuild (implemented and run by Claude). Follow-up to J583 item 3. Hypothesis:
+importing pass 2's dependents in one batch per dependency layer stops spawn cards from loading
+pass 1's stale prefab artifacts, so the TMP and Addressables errors that pass 1 never logged do not
+recur. Change, with no message allowance: `LabBuild.ReimportDestinationDependents` gives each
+affected asset a layer one above its deepest affected direct dependency. An edge back to an asset
+still being visited counts as layer 0. It then runs one `StartAssetEditing`/`StopAssetEditing`
+batch per layer in increasing order and checks for pending compilation or import after each.
+`script-imports.json` now records the layer sizes. The TMP settings pre-import and every gate are
+unchanged. The C# host double gained a spawn card that sorts before its HUD prefab: it must land
+in a later batch than the prefab, and the prefab in a later one than its font. The old single
+batch fails that check; the new code passes. 757 host tests and preflight pass.
+
+Evidence. A code build in the working exact editor compiled the staged file, identical to
+`android/Assets/Editor/LabBuild.cs`: zero errors in 26 s, APK
+`da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0`. It differs from J584's
+`94e683bd…` only in `globalgamemanagers`, `level0`, `unity_app_guid` and signing, as expected for
+an editor-only change. Installed in place on adopted storage. `./dev check-baseline` passed (35.2 s
+on Lakes, `work/experiments/baseline/20261019T020517.366608Z`). `--stage-exit` passed: one genuine
+transition to Goolake with 10.1 s of next-stage play (`…20261019T020845.999872Z`). App stopped, OLED
+asleep. The `LabBuild.cs` provenance row was refreshed, with the previous map kept as
+`provenance-map.before-J585-*.json`. Rerunning `runtime-sources` gave the destination the new
+file, and `validate-bindings` passes. The host estimate from J583 is 39 layers. Their refresh cost
+in a fresh Library is unmeasured until R9 reruns, which needs the operator's approval to stop the
+lab MCP editor. Revisit: rerun R9; check that the reimport errors are gone, the pass-2 duration and
+the Timeline-free APK comparison.

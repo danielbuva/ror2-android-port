@@ -59,8 +59,8 @@ host preflight, an exclusive operation lock, exact-editor batch invocation throu
 → `LabBuild.BuildDestination` → the existing full `LabBuild.Build`. It runs two editor
 sessions: `LabBuild.RepairDestinationPlugins` force-reimports the managed DLLs and exits,
 so their recompilation settles; `BuildDestination` then reimports their asset dependents
-in one batch, runs the read-only script gate on the recovered HUD/Menu components and
-TimerText targets, and enters the unchanged real build (J578–J581). Reimport errors that
+in one batch per dependency layer (J585), runs the read-only script gate on the recovered
+HUD/Menu components and TimerText targets, and enters the unchanged real build (J578–J581). Reimport errors that
 pass 1's fresh import did not log are recorded and make R9 unequal after the build.
 Per-asset missing-script counts and MonoScript identities live in the run's
 `lab-build/script-audit.json` and successful destination receipt. `script_audit.py`
@@ -561,11 +561,13 @@ Still open:
    ([rebuild-plan.md](rebuild-plan.md)). `./dev prototype --action rebuild-step` builds a
    separate destination in twelve host steps, each byte-identical to the working project
    (J567–J575). R9 builds it into an APK that passed both device checks (J582), but R9
-   still reports it unequal. J583 named the causes: the extra `Unity.Timeline.dll` linker
-   root came from editor-process history and is now preserved in the descriptor, so
-   code-only builds match full builds (J584; R9 not yet rerun); the three reimport errors come from Unity importing spawn cards before their
-   prefabs within one batch; `Hidden/Compositing` drops out for a reason still open; and
-   `Lab.unity` plus a few export-form importers differ on every build.
+   still reports it unequal. J583 named the causes. The extra `Unity.Timeline.dll` linker
+   root came from editor-process history; it is now preserved in the descriptor, so
+   code-only builds match full builds (J584). The three reimport errors came from Unity
+   importing spawn cards before their prefabs within one batch; pass 2 now imports in
+   dependency layers (J585). R9 has not been rerun with either fix. `Hidden/Compositing`
+   drops out for a reason still open, and `Lab.unity` plus a few export-form importers
+   differ on every build.
 2. **The rebuild still reads local migration evidence.** Its R2 step runs
    `composition_migration.stage`, which reads `work/config/composition-migration.json`,
    the previous project's runtime config and the composition evidence B3–B6

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-18 after **J584**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J585**. This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -12,7 +12,7 @@ content on every update. Results are recorded once in the
 | --- | --- |
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
-| Latest device-verified APK | `94e683bdecf73488d5c6f4a8c6e204605ed30485fb65bba9c9d652327333ba8d` — J584 code build of `main` with `Unity.Timeline` preserved whole in the linker descriptor (runtime source unchanged since J551); passed both `./dev check-baseline` modes |
+| Latest device-verified APK | `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` — J585 code build of `main`: layered R9 reimport in `LabBuild.cs`, `Unity.Timeline` preserved whole (J584); runtime source unchanged since J551; passed both `./dev check-baseline` modes |
 | Installed now | That same APK, installed in place; package `dev.ror2lab.arm64`, adopted storage (install receipt: `work/device/installed.json`); app stopped, OLED asleep |
 | Runtime source since that APK | Unchanged |
 | Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
@@ -76,9 +76,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    (J567–J575). R9 then built the destination from a fresh Library into an APK that passes
    both device checks (J582, the stage exit on its second run). R9 still reports it unequal; J583
    named the causes. The extra `Unity.Timeline.dll` linker root was editor-process history; J584
-   preserves it, so code-only builds now match full builds (R9 must rerun to show it). The three reimport
-   errors come from Unity importing spawn cards before the prefabs they load, within one batch. The
-   missing-script audit is equal to the working project's. Still open: why `Hidden/Compositing`
+   preserves it, so code-only builds now match full builds. The three reimport errors came from
+   Unity importing spawn cards before the prefabs they load, within one batch; J585 imports in
+   dependency layers. R9 has not been rerun with either fix. The missing-script audit is equal to the working project's. Still open: why `Hidden/Compositing`
    drops out, and how R9 treats `Lab.unity` and export-form metas. Still needed for a rebuild
    from public inputs alone: R2 reads local migration evidence (B1, B3–B6, B8), 14 files still
    come from the inherited store (11 editor-built HUD assets, FastDirector, `Strings.json`, the
