@@ -11310,3 +11310,53 @@ The J704 source batch is building separately, while a fresh Treebot inventory
 case uses the installed efb0ba93. Next survivor breadth is Treebot/Croco/Merc
 alternate kits after exact current native inventory, without guessed catalog
 indices or ordinary unlock changes.
+
+## J706 — Fresh REX default kit and native alternate inventory
+
+Hypothesis: a current native inventory can prepare the next untested alternate
+kit without guessing catalog indices from staged names or old reports. Existing
+Treebot/REX default check passes on J702 APK
+efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d:
+work/experiments/survivor-check/20261019T173414.793210Z/Treebot/.
+It reaches 60.479004 world seconds, four valid canonical components, native
+server callbacks 11/2/1/1 and no missing/suppressed callbacks, first failure or
+runtime errors. The live selected native variants are 0/1/0/1, with definitions
+matching their native loadout. These are current default-kit observations,
+not an alternate-kit result or ordinary menu eligibility acceptance.
+
+The healthy combat observer retains 24 active damage facts (not all 32 ring
+storage slots), all player-projectile attributed: SyringeProjectile,
+SyringeProjectileHealing and TreebotMortar2 against native Beetle/Wisp bodies.
+Reported damage is 309.415; eight projectile identities are retained. No owned-
+summon/unknown-owner damage, truncation or history overflow occurs. This adds
+bounded default output evidence; callback/projectile timing does not establish
+complete healing, health costs or every ability effect.
+
+Current live inventory permits a strict three-entry developer selector:
+component 1/family 147/variant 0/SkillDef 203 TreebotBodyAimMortarRain;
+component 2/family 149/variant 2/SkillDef 208 TreebotBodyProliferation;
+component 3/family 148/variant 0/SkillDef 205 TreebotBodyFireFruitSeed.
+All are reported non-expansion-gated; primary is omitted and remains native
+default 0. The special component's name FireFlower2 is not this alternate's
+SkillDef: native TreebotBodyFireFlower2 is variant 1. The exact inventory resolves
+that distinction. Production parser and a host comparison against this live
+inventory pass; future application still requires fresh native component/family/
+variant/SkillDef identity validation. No catalog stability is inferred merely
+from matching payload hashes. Private selector/findings:
+work/coordination/treebot-alternate-inventory/ (selector SHA-256
+88e4af029011725bb97ba87552a93c9c5ac40358f68540f192b9ef2f85c27d37).
+
+J623/J650/J665 and J602/J648's native identity/query contracts are the prior-art
+basis; current native family/SkillDef source outranks display names. Mortar aim
+needs ordinary input release and fruit seed needs aim; no contextual state or
+callback is synthesized to obtain a pass. This developer-selected invincible
+run is assisted and excluded from normal acceptance. Applied runs remain 13,
+result application/menu loadout commit are false and reported profile selection
+remains 0/1/0/1. The collector removes its selector, stops and sleeps the OLED.
+
+First failure: none in this bounded default case. The alternate selector is
+prepared only, not run. No authored runtime, original input, Phase 2 output,
+extra device, receipt edit, storage change or permanent award occurs. Candidate
+d545d800 is now installed in place and undergoing default controls separately;
+it contains J701/J703/J704, with all 266 payload hashes identical to efb0ba93.
+Keep efb0ba93 as accepted baseline until both new controls pass.
