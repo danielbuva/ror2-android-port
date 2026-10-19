@@ -127,6 +127,25 @@ public sealed partial class PortSession : MonoBehaviour
         public float sourceGravity;
     }
     [Serializable]
+    public sealed class DeveloperSkillVariantOverrideRequest
+    {
+        public string survivor;
+        public DeveloperSkillVariantOverrideEntry[] entries;
+    }
+    [Serializable]
+    public sealed class DeveloperSkillVariantOverrideEntry
+    {
+        public int componentIndex, familyCatalogIndex, variantIndex, skillCatalogIndex;
+    }
+    [Serializable]
+    public sealed class DeveloperSkillVariantOverrideReport
+    {
+        public bool requested, assisted, applied;
+        public string status, error;
+        public int[] effectiveSkillVariants;
+        public SurvivorSkillObserver.SkillVariantInventoryReport skillVariantInventory;
+    }
+    [Serializable]
     public class SessionReport
     {
         public PerformanceReport performance;
@@ -146,6 +165,10 @@ public sealed partial class PortSession : MonoBehaviour
         public bool visualCaptureActive, detailedVisualDiagnostics;
         public Vector3 visualCaptureCenter;
         public bool developerSurvivorOverride;
+        public DeveloperSkillVariantOverrideRequest developerSkillVariantOverride;
+        public DeveloperSkillVariantOverrideReport developerSkillVariantOverrideReport;
+        // Durable session-level provenance survives replacement of debugAcceleration reports.
+        public bool developerSkillVariantAssisted;
         public bool diagnosticSkillCoverage;
         public bool diagnosticSirenEggInput;
         public SirenEggInputReport sirenEggInput;
@@ -419,9 +442,41 @@ public sealed partial class PortSession : MonoBehaviour
         var config = JsonUtility.FromJson<SessionConfig>(Resources.Load<TextAsset>("MovementBatchProbe").text);
         if (File.Exists(path))
         {
-            r = JsonUtility.FromJson<SessionReport>(File.ReadAllText(path));
+            string selectionJson = File.ReadAllText(path);
+            r = JsonUtility.FromJson<SessionReport>(selectionJson);
             if (r.attempt != config.attempt)
                 yield break;
+            // The launch selector is untrusted input. Only this coordinator sets the durable flag.
+            r.developerSkillVariantAssisted = false;
+            Exception variantSelectionError = null;
+            try
+            {
+                r.developerSkillVariantOverride = DeveloperSkillVariantSelection.ParseSessionReport(selectionJson);
+                if (r.developerSkillVariantOverride != null)
+                    r.developerSkillVariantOverrideReport = new DeveloperSkillVariantOverrideReport { requested = true, status = "pending" };
+            }
+            catch (DeveloperSkillVariantSelection.SelectionException error)
+            {
+                variantSelectionError = error;
+                r.developerSkillVariantOverrideReport = new DeveloperSkillVariantOverrideReport {
+                    requested = true, status = error.outcome, error = error.Message
+                };
+            }
+            catch (Exception error)
+            {
+                variantSelectionError = error;
+                r.developerSkillVariantOverrideReport = new DeveloperSkillVariantOverrideReport {
+                    requested = true, status = "refused", error = error.Message
+                };
+            }
+            if (variantSelectionError != null)
+            {
+                r.phase = "developer-skill-variant-refused";
+                r.firstFailure = "Developer skill-variant selection refused: " + variantSelectionError.Message;
+                r.firstFailurePhase = r.phase;
+                Save();
+                yield break;
+            }
         }
         else
         {
@@ -2386,6 +2441,18 @@ public sealed partial class PortSession : MonoBehaviour
                 var preparation = PrepareSpawnStateCatalog(cfg);
                 while (preparation.MoveNext())
                     yield return preparation.Current;
+            }
+            if (r.developerSkillVariantOverride != null && !(cfg.integratedWorld && r.liveCatalogs != null))
+            {
+                var refused = r.developerSkillVariantOverrideReport ??
+                              new DeveloperSkillVariantOverrideReport { requested = true };
+                r.developerSkillVariantOverrideReport = refused;
+                MarkDeveloperSkillVariantAssisted(
+                    "explicit per-run skill variant requires integrated native profile/loadout boundary");
+                refused.assisted = true;
+                refused.status = "refused";
+                refused.error = "Developer skill-variant override requires integrated world and available live catalogs before spawn";
+                Check(false, refused.error);
             }
             if (cfg.integratedWorld && r.liveCatalogs != null)
             {

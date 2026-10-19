@@ -80,6 +80,7 @@
     "runtime/progression/AndroidOfflineProfile.cs": "735b9072af2344f3eae9937f96034e0b",
     "runtime/progression/AndroidProfileBoundary.cs": "8715b0366a8f0496e9480494061f0916",
     "runtime/progression/AndroidProgressionBoundary.cs": "9291638821e0d433ea61c00a3c841d00",
+    "runtime/progression/DeveloperSkillVariantSelection.cs": "56fedb2acd7bf4d6b957312cfc370df4",
     "runtime/progression/IntegratedResultsBoundary.cs": "cb357e8b527784d908ac4766a14017d0",
     "runtime/progression/OfflineLoadoutBoundary.cs": "e04ae6aaf223443e0972436b5f5b29d1",
     "runtime/session/ActiveClientBoundary.cs": "e66fb441d5bab490e815954b70177502",

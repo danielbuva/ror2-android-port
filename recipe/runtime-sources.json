@@ -41,6 +41,7 @@
   "runtime/progression/AndroidOfflineProfile.cs",
   "runtime/progression/AndroidProfileBoundary.cs",
   "runtime/progression/AndroidProgressionBoundary.cs",
+  "runtime/progression/DeveloperSkillVariantSelection.cs",
   "runtime/progression/IntegratedResultsBoundary.cs",
   "runtime/progression/OfflineLoadoutBoundary.cs",
   "runtime/session/ActiveClientBoundary.cs",

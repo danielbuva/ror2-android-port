@@ -8730,3 +8730,66 @@ actual completed session/restart, and retain explicit catalog/ownership facts
 when testing alternate variants. No extra device, storage/data change,
 receipt hand edit, content mutation or Phase 2 output is introduced. The
 authored source/fixture replay requirement remains J642.
+
+## J646 — Prepare explicit per-run native skill variants without profile writes
+
+Hypothesis: alternate base-survivor kits can use the original per-body native
+Loadout APIs before spawning, with exact catalog identities and permanent
+assisted provenance, while ordinary earned menu loadouts keep their eligibility.
+Prior art inspected: pinned DebugToolkit PlayerCommands.cs at d1e2f0aa uses a
+copied Loadout and CharacterMaster.SetLoadoutServer for live server application;
+its profile mutation is deliberately outside this per-run diagnostic. Pinned
+ProperSave SaveFile.cs at d20c6c8e keeps run/player restoration and local save
+ownership separate. The accepted native Loadout, CharacterMaster, SkillFamily,
+SkillCatalog and GenericSkill APIs determine the actual Android contract; no
+community or native implementation is copied.
+
+Add authored DeveloperSkillVariantSelection, owned by AndroidProfileSession,
+and optional current `survivor-kit-check --skill-variants` input for one base
+survivor. Strict host/runtime parsing rejects duplicate/unknown fields,
+ambiguous components, invalid identities and expansion-gated variants. The
+profile owner keeps its original preview, applies only the requested variants
+to a copied native master loadout, and separately validates effective spawned
+definitions and unchanged saved profile indices. Diagnostic runs bypass menu
+loadout persistence. No family, unlock, entitlement, profile, item or skill
+definition is edited. Existing teardown clears the temporary selection arrays
+and retires the native master/body.
+
+The coordinator saves a trusted session assistance marker before native
+mutation. It survives debug-report replacement and is consulted by permanent
+discovery/achievement/result gates. The launch input cannot provide it. A
+bounded diagnostic inventory exposes actual component/family/variant/SkillDef
+indices, distinguishing selected native loadout from live temporary overrides;
+it refuses invalid/oversized inventories. Host assessment independently checks
+the effective native indices and retained assistance marker.
+
+Independent review corrected changed-variant confirmation, unsupported
+pre-spawn contexts, pre-body debug-report timing and the assumption that a
+loaded prefab already has GenericSkill.skillDef. Exact-editor inspection of the
+accepted persistent Engineer prefab confirms four family references, all four
+runtime definitions unset, bodyIndex None, activeSelf true and inactive
+hierarchy without invoking Awake. Inventory now reads the selected native
+Loadout and family metadata. This static asset witness does not exercise the
+complete inventory helper against populated live catalogs.
+
+Validation: the 102-file cohort compiles in the exact editor; native API and
+strict parser fixtures pass at
+work/experiments/survivor-skill-variants/editor-20261019T122352.473862Z/.
+The separate registered/unawakened-prefab fixture is authored but not executed;
+idle catalogs do not supply that context. The host suite passes 932 tests with
+one existing skip, and the 33 survivor parser/assessment tests pass again after
+strengthening effective-index checks. Ruff and diff checks pass. Initial draft
+staging refused a misplaced fixture, corrected to the existing catalog-fixture
+owner; draft-only source-text tests were removed. Full host checks then exposed
+and corrected default dispatch, generated help and launch-file buffer contract
+compatibility. No failing result is presented as runtime acceptance.
+
+No APK containing this change has been built or installed yet. Installed
+9e7c4224… still has 101 runtime sources; J645's Engineer output evidence is
+separate. Revisit first with actual catalog inventory and a non-default native
+variant, then both baseline modes and completed-session cleanup. Full kits,
+earned alternate loadouts and ordinary unlocks remain open. Source/fixture and
+GUID recipes change R8/build-entry replay inputs; no Phase 2 output is changed.
+Recipe provenance audit and named setup/teardown are recorded in recipe/README.md
+and ARCHITECTURE.md. No extra device, storage/data change, receipt hand edit or
+new required ignored build input is introduced.

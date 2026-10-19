@@ -60,6 +60,11 @@ def _target(function, kwargs, args):
     return function(args.target, **kwargs)
 
 
+def _survivor_target(function, kwargs, args):
+    path = getattr(args, "skill_variants", None)
+    return function(args.target, **(dict(kwargs, skill_variants=path) if path is not None else kwargs))
+
+
 def _session_cleanup_target(function, kwargs, args):
     # The global prototype target defaults to "lab"; preserve the old Commando
     # behavior unless a caller explicitly supplies a base survivor key.
@@ -188,8 +193,8 @@ _ENTRIES = (
         "check_survivors",
         {},
         "current",
-        "Assisted world skill check: --target all or comma-separated base survivor keys; locked choices are diagnostic, no profile awards.",
-        handler=_target,
+        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector.",
+        handler=_survivor_target,
     ),
     Action(
         "session-cleanup-check",

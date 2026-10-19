@@ -8,7 +8,9 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
+ROOT = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "candidate"))
+sys.path.insert(1, str(ROOT / "scripts/lab"))
 import survivor_check as check
 
 
@@ -413,6 +415,150 @@ class SurvivorRunnerTests(unittest.TestCase):
         device.sh.assert_any_call("rm", "-f", "/owned/runtime/movement-batch-selection.json", check=False)
         device.sh.assert_any_call("am", "force-stop", check.PACKAGE, check=False)
         device.display.assert_called_once_with(False)
+
+
+class SkillVariantSelectionTests(unittest.TestCase):
+    def valid_catalog_inventory(self):
+        return {
+            "status": "available", "bodyIndex": 7, "selectionSource": "native-master-loadout-live",
+            "components": [
+                {"componentIndex": 0, "familyCatalogIndex": 299, "selectedLoadoutVariantIndex": 0,
+                 "selectedLoadoutSkillCatalogIndex": 155, "runtimeSkillCatalogIndex": 155,
+                 "runtimeDefinitionStatus": "matches-selected-native-loadout", "skillName": "Primary",
+                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 155, "skillName": "PrimaryA",
+                               "unlockableName": "", "expansionGated": False}]},
+                {"componentIndex": 1, "familyCatalogIndex": 300, "selectedLoadoutVariantIndex": 0,
+                 "selectedLoadoutSkillCatalogIndex": 160, "runtimeSkillCatalogIndex": -1,
+                 "runtimeDefinitionStatus": "uninitialized-or-unassigned", "skillName": "ToolbotBackup",
+                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 160, "skillName": "Backup",
+                               "unlockableName": "", "expansionGated": False}]},
+                {"componentIndex": 2, "familyCatalogIndex": 299, "selectedLoadoutVariantIndex": 0,
+                 "selectedLoadoutSkillCatalogIndex": 155, "runtimeSkillCatalogIndex": 180,
+                 "runtimeDefinitionStatus": "differs-from-selected-native-loadout", "skillName": "ToolbotPrimary",
+                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 155, "skillName": "PrimaryA",
+                               "unlockableName": "", "expansionGated": False}]},
+                {"componentIndex": 3, "familyCatalogIndex": 302, "selectedLoadoutVariantIndex": 0,
+                 "selectedLoadoutSkillCatalogIndex": 161, "runtimeSkillCatalogIndex": 161,
+                 "runtimeDefinitionStatus": "matches-selected-native-loadout", "skillName": "ToolbotUtility",
+                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 161, "skillName": "Utility",
+                               "unlockableName": "", "expansionGated": False}]},
+                {"componentIndex": 4, "familyCatalogIndex": 301, "selectedLoadoutVariantIndex": 0,
+                 "selectedLoadoutSkillCatalogIndex": 806, "runtimeSkillCatalogIndex": 806,
+                 "runtimeDefinitionStatus": "matches-selected-native-loadout", "skillName": "ToolbotArm",
+                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 806, "skillName": "ArmA",
+                               "unlockableName": "", "expansionGated": False},
+                              {"variantIndex": 1, "skillCatalogIndex": 807, "skillName": "ArmB",
+                               "unlockableName": "", "expansionGated": False}]},
+            ],
+        }
+
+    def write_selector(self, directory, value):
+        path = Path(directory) / "variants.json"
+        path.write_text(json.dumps(value))
+        return path
+
+    def valid_selector(self, survivor="Toolbot"):
+        return {
+            "survivor": survivor,
+            "entries": [
+                {"componentIndex": 4, "familyCatalogIndex": 301, "variantIndex": 1, "skillCatalogIndex": 807},
+                {"componentIndex": 2, "familyCatalogIndex": 299, "variantIndex": 0, "skillCatalogIndex": 155},
+            ],
+        }
+
+    def test_strict_selection_is_per_run_and_assisted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            selector = self.write_selector(directory, self.valid_selector())
+            parsed = check.read_skill_variant_selection(selector, "Toolbot")
+        value = check.survivor_selection("variant-attempt", "Toolbot", parsed)
+        self.assertEqual(value["developerSkillVariantOverride"], parsed)
+        self.assertIn("per-run", value["debugOptions"]["purpose"])
+        self.assertNotIn("profile", parsed)
+        self.assertNotIn("unlock", parsed)
+
+    def test_strict_schema_rejects_unknown_duplicate_wrong_and_ambiguous_fields(self):
+        bad_values = []
+        extra = self.valid_selector()
+        extra["writeProfile"] = True
+        bad_values.append((extra, "exactly"))
+        bool_index = self.valid_selector()
+        bool_index["entries"][0]["variantIndex"] = True
+        bad_values.append((bool_index, "nonnegative"))
+        duplicate_component = self.valid_selector()
+        duplicate_component["entries"][1]["componentIndex"] = 4
+        bad_values.append((duplicate_component, "same GenericSkill"))
+        wrong_survivor = self.valid_selector("Engi")
+        bad_values.append((wrong_survivor, "single --target"))
+        malformed_entry = self.valid_selector()
+        malformed_entry["entries"][0]["skillCatalogIndex"] = None
+        bad_values.append((malformed_entry, "nonnegative"))
+        with tempfile.TemporaryDirectory() as directory:
+            for value, message in bad_values:
+                with self.subTest(value=value):
+                    selector = self.write_selector(directory, value)
+                    with self.assertRaisesRegex(ValueError, message):
+                        check.read_skill_variant_selection(selector, "Toolbot")
+
+    def test_duplicate_json_keys_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "variants.json"
+            path.write_text('{"survivor":"Toolbot","survivor":"Engi","entries":[]}')
+            with self.assertRaisesRegex(ValueError, "duplicate property"):
+                check.read_skill_variant_selection(path, "Toolbot")
+
+    def test_variant_selector_requires_single_target_before_device_access(self):
+        with tempfile.TemporaryDirectory() as directory:
+            selector = self.write_selector(directory, self.valid_selector())
+            with patch.object(check, "SurvivorCheckDevice") as device:
+                with self.assertRaisesRegex(ValueError, "exactly one"):
+                    check.check_survivors("Toolbot,Engi", str(selector))
+                device.assert_not_called()
+
+    def test_report_requires_applied_assisted_result(self):
+        requested = self.valid_selector()
+        expected = check.survivor_selection("fixture", "Toolbot", requested)["developerSkillVariantOverride"]
+        inventory = self.valid_catalog_inventory()
+        final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
+                       developerSkillVariantAssisted=True,
+                       developerSkillVariantOverride=expected,
+                       developerSkillVariantOverrideReport={"status": "applied", "applied": True, "assisted": True,
+                                                            "effectiveSkillVariants": [0, 0, 0, 0, 1],
+                                                            "skillVariantInventory": inventory})
+        self.assertEqual(check.assess("Toolbot", "four-slots-activated", final, final, [], expected), [])
+        final["developerSkillVariantOverrideReport"]["effectiveSkillVariants"][4] = 0
+        self.assertIn("per-run effective native loadout differs from the requested skill variants",
+                      check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+        final["developerSkillVariantOverrideReport"]["effectiveSkillVariants"][4] = 1
+        final["developerSkillVariantAssisted"] = False
+        self.assertIn("per-run skill-variant assisted session marker is absent",
+                      check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+        final["developerSkillVariantAssisted"] = True
+        final["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": False}
+        self.assertIn("per-run skill-variant override was not applied as assisted",
+                      check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+
+    def test_catalog_inventory_exposes_exact_indexes_and_refuses_unbounded_or_ambiguous_shapes(self):
+        report_value = {"developerSkillVariantOverrideReport": {
+            "skillVariantInventory": self.valid_catalog_inventory()}}
+        parsed = check.skill_variant_catalog_inventory(report_value)
+        self.assertEqual(parsed["status"], "valid")
+        self.assertEqual(parsed["components"][4]["familyCatalogIndex"], 301)
+        self.assertEqual(parsed["components"][4]["variants"][1]["skillCatalogIndex"], 807)
+        self.assertEqual(parsed["components"][1]["runtimeDefinitionStatus"], "uninitialized-or-unassigned")
+        self.assertEqual(parsed["components"][2]["runtimeDefinitionStatus"], "differs-from-selected-native-loadout")
+        inventory = self.valid_catalog_inventory()
+        inventory["components"].append(copy.deepcopy(inventory["components"][0]))
+        report_value["developerSkillVariantOverrideReport"]["skillVariantInventory"] = inventory
+        self.assertEqual(check.skill_variant_catalog_inventory(report_value)["status"], "invalid")
+        inventory = self.valid_catalog_inventory()
+        inventory["components"][4]["variants"] *= 9
+        report_value["developerSkillVariantOverrideReport"]["skillVariantInventory"] = inventory
+        self.assertEqual(check.skill_variant_catalog_inventory(report_value)["status"], "invalid")
+
+
+
+
+
 
 
 if __name__ == "__main__":

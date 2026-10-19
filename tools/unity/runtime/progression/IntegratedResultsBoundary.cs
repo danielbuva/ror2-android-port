@@ -586,7 +586,7 @@ public sealed partial class PortSession
                 "Original result XML round trip differs");
             report.reportFile = file + ".xml";
             report.reportReloaded = true;
-            bool assisted = coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted;
+            bool assisted = coordinator.IsRunAssisted();
             string debugEvidence = assisted ? file + ".debug.json" : null;
             if (assisted)
                 File.WriteAllText(Path.Combine(resultsDirectory, debugEvidence), JsonUtility.ToJson(coordinator.r.debugAcceleration, true));
@@ -687,7 +687,7 @@ public sealed partial class PortSession
                                 coordinator.resultsRunReport.gameEnding.isWin
                             ? "Victory"
                             : "Run ended";
-            bool assisted = coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted;
+            bool assisted = coordinator.IsRunAssisted();
             if (coordinator.r.freePlay && report.persisted)
             {
                 if (coordinator.r.phase == "commando-defeated" && GUI.Button(new Rect(32, 390, 350, 60), "Restart run (A)"))

@@ -107,6 +107,11 @@ class PrototypeActionTests(unittest.TestCase):
         self.assertEqual(output, EXPECTED[name]["stdout"])
         self.assertEqual(code, EXPECTED[name]["exit"])
 
+    def test_survivor_variant_selector_is_forwarded_only_when_explicit(self):
+        self.dispatch("survivor-kit-check", target="Engi", skill_variants="work/config/variants.json")
+        self.assertEqual(self.calls, [dict(module="survivor_check", function="check_survivors",
+                                         args=("Engi",), kwargs=dict(skill_variants="work/config/variants.json"))])
+
     def cli(self, *options):
         output, errors = io.StringIO(), io.StringIO()
         code = 0

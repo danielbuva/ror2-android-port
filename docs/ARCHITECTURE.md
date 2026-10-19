@@ -681,6 +681,45 @@ stops the owned app and sleeps the display. Every ADB command checks the paralle
 session's coordination lock. Host contracts: `tests/test_survivor_check.py`.
 This supplements both unchanged baseline modes; it does not replace them.
 
+`DeveloperSkillVariantSelection.cs` is the current, explicitly assisted per-run
+loadout boundary owned by `AndroidProfileSession`. The optional
+`survivor-kit-check --target <base-key> --skill-variants <ignored-json>` accepts
+exactly one survivor. Its JSON object contains `survivor` and `entries`; each
+entry contains `componentIndex`, `familyCatalogIndex`, `variantIndex` and
+`skillCatalogIndex`. The runner refuses unknown/duplicate fields and duplicate
+components before device access. The runtime independently validates the actual
+body component order, native catalog identities, family bounds and expansion
+requirements. Base-game locked variants remain diagnostic choices, never earned
+profile choices or expansion access.
+
+Before `SpawnBody`, the profile owner retains the unchanged profile/default
+preview, copies the native master loadout, applies the requested indices through
+native loadout APIs and calls `CharacterMaster.SetLoadoutServer`. It verifies
+the resulting body against effective per-run variants while checking the saved
+profile against its original preview. Diagnostic selections bypass menu-edited
+loadout persistence. The master owns this temporary native loadout; profile
+cleanup clears the preview/effective arrays, and existing body/master teardown
+retires the run. No `SkillFamily`, unlock or persistent profile is edited.
+
+`SessionReport.developerSkillVariantOverrideReport` records request/application
+and refusal. A session-level assisted marker is saved before native mutation;
+debug report initialization carries it forward, and permanent discovery,
+achievement and result gates consult it directly. The launch file cannot supply
+that trusted marker. Diagnostic `survivorSkills.skillVariantInventory` and the
+override report expose bounded actual component/family/variant/SkillDef indices
+for constructing a later explicit selector. Selected native loadout indices and
+live runtime definitions are separate: prefab assets have no `GenericSkill.Awake`,
+and a live skill can have a temporary override. Invalid or oversized inventories
+refuse rather than truncate. This adds no ordinary menu eligibility.
+
+Host parser/assessment contracts are in `tests/test_survivor_check.py` and dispatch
+contracts in `tests/test_cli_actions.py`. The existing fixture producer stages
+`DeveloperSkillVariantSelectionFixture.cs` for exact-editor native API and strict
+input checks. Its separate unawakened-prefab contract requires an already loaded
+and registered native catalog prefab; idle API checks do not prove application
+to that prefab. Source/host evidence and later device variant results stay
+separate in the journal.
+
 The checker also classifies J602's current component inventory independently
 of the four-slot gate: four components for most base bodies, five for Toolbot
 and Croco, six for Captain. Current indexes/instance identities must be unique

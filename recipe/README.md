@@ -1015,3 +1015,14 @@ observation. No native method body, original asset, middleware, device identity,
 private path or account data is reproduced. The public runtime selection and
 GUID are authored reconstruction inputs. Audited 2026-10-19; device acceptance
 and output coverage remain separate from the passing editor contracts in J642.
+
+### Per-run skill variant selection audit (2026-10-19)
+
+The 102nd runtime source, `DeveloperSkillVariantSelection.cs`, its authored
+imported GUID and editor fixture contain authored validation, observation and
+native API calls. Runtime selection data stays in ignored, explicit per-command
+JSON; no new ignored build input is required. Only minimum catalog/API identities
+are used. No native method body, original asset, middleware, profile, entitlement,
+private path or device identity is copied. The existing source/fixture producer
+stages these inputs. A diagnostic native loadout is temporary; normal profile
+eligibility and permanent awards remain separate.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J646](PORTING_JOURNAL.md#j646--prepare-explicit-per-run-native-skill-variants-without-profile-writes) | 2026-10-19 | Prepare explicit per-run native skill variants without profile writes | Hypothesis: alternate base-survivor kits can use the original per-body native Loadout APIs before spawning, with exact catalog identities and permanent assiste… |
 | [J645](PORTING_JOURNAL.md#j645--observe-engineer-projectile-and-owned-summon-damage-on-device) | 2026-10-19 | Observe Engineer projectile and owned-summon damage on device | Hypothesis: J642's bounded observer can distinguish actual native player-owned projectile damage and owned-minion damage in the integrated world, beyond the fo… |
 | [J644](PORTING_JOURNAL.md#j644--cleanupexit-trace-apk-passes-both-baseline-modes) | 2026-10-19 | Cleanup/exit-trace APK passes both baseline modes | Accept J641 APK 118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717 after both standard modes pass on the configured Nova. |
 | [J643](PORTING_JOURNAL.md#j643--engineer-ui-abandon-releases-the-shield-lease-and-restarts-in-the-same-process) | 2026-10-19 | Engineer UI abandon releases the shield lease and restarts in the same process | On J641 APK 118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717, repeat the concrete Engineer UI-abandon/restart case that failed J635. |

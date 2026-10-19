@@ -6,6 +6,7 @@ This measures four native slot activations, not complete ability semantics.
 
 import json
 import math
+from pathlib import Path
 import time
 
 from baseline import DEBUG_OPTIONS, FIRST_STAGE, SPINE_ID, selection
@@ -46,12 +47,61 @@ def targets(target):
     return names
 
 
-def survivor_selection(attempt, survivor):
+def _unique_object(pairs):
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError("duplicate property: " + key)
+        value[key] = item
+    return value
+
+
+def read_skill_variant_selection(path, survivor):
+    """Read a strict, one-run catalog-index selector; no profile fields are accepted."""
+    if path is None:
+        return None
+    try:
+        value = json.loads(Path(path).read_text(), object_pairs_hook=_unique_object)
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("cannot read skill-variant selection: " + str(error)) from error
+    if not isinstance(value, dict) or set(value) != {"survivor", "entries"}:
+        raise ValueError("skill-variant selection requires exactly survivor and entries")
+    if value["survivor"] not in BASE_SURVIVORS:
+        raise ValueError("skill-variant selection must name a base survivor catalog key")
+    if value["survivor"] != survivor:
+        raise ValueError("skill-variant selection survivor must equal the single --target survivor")
+    entries = value["entries"]
+    if not isinstance(entries, list) or not 1 <= len(entries) <= 6:
+        raise ValueError("skill-variant selection requires 1 to 6 entries")
+    component_indexes = set()
+    normalized = []
+    fields = {"componentIndex", "familyCatalogIndex", "variantIndex", "skillCatalogIndex"}
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != fields:
+            raise ValueError("each skill-variant entry requires exactly the four catalog identity fields")
+        for name in fields:
+            if type(entry[name]) is not int or entry[name] < 0:
+                raise ValueError("skill-variant indexes must be nonnegative integers: " + name)
+        component = entry["componentIndex"]
+        if component in component_indexes:
+            raise ValueError("multiple entries target the same GenericSkill component")
+        component_indexes.add(component)
+        normalized.append({name: entry[name] for name in ("componentIndex", "familyCatalogIndex", "variantIndex", "skillCatalogIndex")})
+    return {"survivor": survivor, "entries": normalized}
+
+
+def survivor_selection(attempt, survivor, skill_variant_override=None):
     if survivor not in BASE_SURVIVORS:
         raise ValueError("Unsupported base survivor")
     value = selection(attempt)
     value.update(selectedSurvivor=survivor, developerSurvivorOverride=survivor not in FREE_SURVIVORS, diagnosticSkillCoverage=True)
-    value["debugOptions"]["purpose"] = "Original base-survivor skill integration; diagnostic selection/input, no permanent progression"
+    if skill_variant_override is not None:
+        if skill_variant_override.get("survivor") != survivor:
+            raise ValueError("skill-variant selection survivor differs")
+        value["developerSkillVariantOverride"] = skill_variant_override
+        value["debugOptions"]["purpose"] = "Assisted per-run base-survivor skill-variant check; no profile or unlock changes"
+    else:
+        value["debugOptions"]["purpose"] = "Original base-survivor skill integration; diagnostic selection/input, no permanent progression"
     return value
 
 
@@ -125,6 +175,70 @@ def component_inventory(report, survivor):
     return summary
 
 
+def skill_variant_catalog_inventory(report):
+    """Validate bounded, exact catalog indexes exposed for explicit case-file authoring."""
+    survivor_skills = report.get("survivorSkills") or {}
+    override = report.get("developerSkillVariantOverrideReport") or {}
+    value = override.get("skillVariantInventory") or survivor_skills.get("skillVariantInventory")
+    if not isinstance(value, dict):
+        return {"status": "unavailable", "reason": "variant-catalog-inventory-missing"}
+    if value.get("status") != "available":
+        return {"status": "invalid", "reason": value.get("error") or "variant-catalog-inventory-refused"}
+    rows = value.get("components")
+    selection_source = value.get("selectionSource")
+    if (type(value.get("bodyIndex")) is not int or value["bodyIndex"] < 0 or
+            selection_source not in ("native-master-loadout-pre-spawn", "native-master-loadout-live") or
+            not isinstance(rows, list) or not 1 <= len(rows) <= 6):
+        return {"status": "invalid", "reason": "variant-catalog-component-range-invalid"}
+    seen_components = set()
+    normalized = []
+    for row in rows:
+        if not isinstance(row, dict):
+            return {"status": "invalid", "reason": "variant-catalog-component-not-object"}
+        component = row.get("componentIndex")
+        family = row.get("familyCatalogIndex")
+        selected_variant = row.get("selectedLoadoutVariantIndex")
+        selected_skill = row.get("selectedLoadoutSkillCatalogIndex")
+        runtime_skill = row.get("runtimeSkillCatalogIndex")
+        runtime_status = row.get("runtimeDefinitionStatus")
+        variants = row.get("variants")
+        if any(type(index) is not int or index < 0 for index in (component, family, selected_variant, selected_skill)):
+            return {"status": "invalid", "reason": "variant-catalog-identity-invalid"}
+        if type(runtime_skill) is not int or runtime_skill < -1 or runtime_status not in (
+            "uninitialized-or-unassigned", "runtime-override-or-unmapped", "matches-selected-native-loadout",
+            "differs-from-selected-native-loadout"
+        ):
+            return {"status": "invalid", "reason": "variant-catalog-runtime-status-invalid"}
+        if component in seen_components or not isinstance(variants, list) or not 1 <= len(variants) <= 16:
+            return {"status": "invalid", "reason": "variant-catalog-duplicate-or-size-invalid"}
+        seen_components.add(component)
+        definitions = []
+        for index, variant in enumerate(variants):
+            if not isinstance(variant, dict) or type(variant.get("variantIndex")) is not int or variant["variantIndex"] != index:
+                return {"status": "invalid", "reason": "variant-catalog-variant-index-invalid"}
+            skill_index = variant.get("skillCatalogIndex")
+            if type(skill_index) is not int or skill_index < 0:
+                return {"status": "invalid", "reason": "variant-catalog-skill-index-invalid"}
+            definitions.append(skill_index)
+        if selected_variant >= len(variants) or variants[selected_variant]["skillCatalogIndex"] != selected_skill:
+            return {"status": "invalid", "reason": "variant-catalog-selected-loadout-mismatch"}
+        normalized.append({"componentIndex": component, "familyCatalogIndex": family,
+                           "selectedLoadoutVariantIndex": selected_variant,
+                           "selectedLoadoutSkillCatalogIndex": selected_skill,
+                           "runtimeSkillCatalogIndex": runtime_skill,
+                           "runtimeDefinitionStatus": runtime_status,
+                           "skillName": row.get("skillName", ""),
+                           "variants": [{"variantIndex": i, "skillCatalogIndex": index,
+                                         "skillName": variants[i].get("skillName", ""),
+                                         "unlockableName": variants[i].get("unlockableName", ""),
+                                         "expansionGated": variants[i].get("expansionGated") is True}
+                                        for i, index in enumerate(definitions)]})
+    if sorted(seen_components) != list(range(len(rows))):
+        return {"status": "invalid", "reason": "variant-catalog-component-indexes-not-contiguous"}
+    return {"status": "valid", "bodyIndex": value["bodyIndex"],
+            "selectionSource": selection_source, "components": normalized}
+
+
 def suppressed_missing_callbacks(report):
     """Return suppressed callback types that are still absent from each slot."""
     observation = report.get("survivorSkills") or {}
@@ -166,7 +280,7 @@ def stop_reason(report):
     return None
 
 
-def assess(survivor, stop, first, final, errors):
+def assess(survivor, stop, first, final, errors, skill_variant_override=None):
     failures = []
     if stop != "four-slots-activated":
         failures.append("stopped: " + stop)
@@ -181,6 +295,33 @@ def assess(survivor, stop, first, final, errors):
         failures.append("survivor selection differs")
     if final.get("error") or final.get("firstFailure"):
         failures.append("runtime first failure")
+    if skill_variant_override is not None:
+        if final.get("developerSkillVariantOverride") != skill_variant_override:
+            failures.append("per-run skill-variant selector differs")
+        result = final.get("developerSkillVariantOverrideReport") or {}
+        if result.get("status") != "applied" or result.get("applied") is not True or result.get("assisted") is not True:
+            failures.append("per-run skill-variant override was not applied as assisted")
+        if final.get("developerSkillVariantAssisted") is not True:
+            failures.append("per-run skill-variant assisted session marker is absent")
+        variant_catalog = skill_variant_catalog_inventory(final)
+        if variant_catalog["status"] != "valid":
+            failures.append("per-run skill-variant catalog inventory is unavailable or invalid")
+        else:
+            indexed = {row["componentIndex"]: row for row in variant_catalog["components"]}
+            effective = result.get("effectiveSkillVariants")
+            if (not isinstance(effective, list) or len(effective) != len(indexed) or
+                    any(type(index) is not int or index < 0 for index in effective) or
+                    any(entry["componentIndex"] >= len(effective) or
+                        effective[entry["componentIndex"]] != entry["variantIndex"]
+                        for entry in skill_variant_override.get("entries", []))):
+                failures.append("per-run effective native loadout differs from the requested skill variants")
+            for entry in skill_variant_override.get("entries", []):
+                row = indexed.get(entry["componentIndex"])
+                if (row is None or row["familyCatalogIndex"] != entry["familyCatalogIndex"] or
+                        entry["variantIndex"] >= len(row["variants"]) or
+                        row["variants"][entry["variantIndex"]]["skillCatalogIndex"] != entry["skillCatalogIndex"]):
+                    failures.append("per-run skill-variant request differs from reported native catalog identity")
+                    break
     inventory = component_inventory(final, survivor)
     if inventory["status"] == "invalid":
         failures.append("invalid survivor skill component inventory: " + inventory.get("reason", "unknown"))
@@ -196,13 +337,13 @@ def assess(survivor, stop, first, final, errors):
     return failures
 
 
-def check_one(device, survivor, attempt, runtime, out, installed):
+def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_override=None):
     out.mkdir()
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + SPINE_ID + ".json"
     if device.sh("sh", "-c", "test -e " + selector + " && echo present", check=False).strip():
         raise RuntimeError("Existing diagnostic selector; preserve it")
-    write(out / "selection.json", survivor_selection(attempt, survivor))
+    write(out / "selection.json", survivor_selection(attempt, survivor, skill_variant_override))
     pid, first, final = None, None, None
     stop, started = "deadline", False
     runtime_errors, first_failure = [], None
@@ -263,7 +404,7 @@ def check_one(device, survivor, attempt, runtime, out, installed):
             first_failure = runtime_errors[0]
         elif first_failure is None and final and (final.get("firstFailure") or final.get("error")):
             first_failure = final.get("firstFailure") or final.get("error")
-        failures = assess(survivor, stop, first, final, runtime_errors)
+        failures = assess(survivor, stop, first, final, runtime_errors, skill_variant_override)
         result = {
             "success": not failures,
             "survivor": survivor,
@@ -274,6 +415,8 @@ def check_one(device, survivor, attempt, runtime, out, installed):
             "missing_activations": missing_activations(final or {}),
             "suppressed_callbacks": suppressed_missing_callbacks(final or {}),
             "component_inventory": component_inventory(final or {}, survivor),
+            "skill_variant_catalog_inventory": skill_variant_catalog_inventory(final or {}),
+            "skill_variant_override": skill_variant_override,
             "apk_sha256": installed["apk_sha256"],
             "evidence": str(out.relative_to(WORK.parent)),
         }
@@ -289,8 +432,11 @@ def check_one(device, survivor, attempt, runtime, out, installed):
                 device.display(False)
 
 
-def check_survivors(target):
+def check_survivors(target, skill_variants=None):
     names = targets(target)
+    if skill_variants is not None and len(names) != 1:
+        raise ValueError("per-run skill variants require exactly one --target survivor")
+    variant_selection = read_skill_variant_selection(skill_variants, names[0]) if skill_variants is not None else None
     device = SurvivorCheckDevice()
     installed = device.owned()
     mode = device.settings["storage_mode"]
@@ -320,7 +466,8 @@ def check_survivors(target):
     out.mkdir(parents=True)
     results = []
     for survivor in names:
-        result = check_one(device, survivor, attempt, runtime, out / survivor, installed)
+        result = check_one(device, survivor, attempt, runtime, out / survivor, installed,
+                           skill_variant_override=variant_selection if survivor == names[0] else None)
         results.append(result)
         write(out / "result.json", {"success": all(row["success"] for row in results), "results": results})
         print(json.dumps(result), flush=True)

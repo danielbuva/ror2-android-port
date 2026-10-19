@@ -999,6 +999,10 @@ public sealed partial class PortSession
                 player.networkIdentity.hasAuthority && coordinator.activeBodyClient.isConnected && coordinator.activeBodyOwner.isReady;
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
             survivorSkills = new SurvivorSkillObserver(player);
+            if (coordinator.r.diagnosticSkillCoverage || coordinator.r.developerSkillVariantOverride != null)
+                survivorSkills.report.skillVariantInventory =
+                    SurvivorSkillObserver.CaptureSkillVariantInventory(
+                        player.gameObject, player.master.loadout, "native-master-loadout-live");
             coordinator.r.survivorSkills = survivorSkills.report;
             if (survivorCombatOutputs == null)
                 survivorCombatOutputs = new SurvivorCombatOutputObserver(player);
@@ -1984,7 +1988,7 @@ public sealed partial class PortSession
             readonly PortSession coordinator;
             public IntegratedWorldSirenContext(PortSession owner) { coordinator = owner; }
             public bool Selected => coordinator.r.diagnosticSirenEggInput;
-            public bool Assisted => coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted;
+            public bool Assisted => coordinator.IsRunAssisted();
             public bool ManualTakeover => coordinator.worldManualTakeover;
             public bool SourceSceneActive => coordinator.SirenDiagnosticSceneActive;
             public bool SourceEncounterAttached => coordinator.SirenDiagnosticOwnerAttached;
@@ -2108,7 +2112,7 @@ public sealed partial class PortSession
             if (coordinator.r.commerceSweep && coordinator.r.stageProgress != null && coordinator.r.stageProgress.transitions == 0 &&
                 elapsed - coordinator.stageEnteredAt < 420 && coordinator.CommerceSweepPendingRepairs())
             {
-                coordinator.Check(coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted,
+                coordinator.Check(coordinator.IsRunAssisted(),
                                   "Commerce sweep must be marked assisted");
                 var purchase = coordinator.NextCommerceSweepTarget(player);
                 if (purchase)

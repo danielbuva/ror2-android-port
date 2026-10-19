@@ -24,6 +24,30 @@ public sealed class SurvivorSkillObserver : IDisposable
         public bool attached, cleaned;
         public SlotReport[] slots;
         public SkillComponentReport[] components;
+        public SkillVariantInventoryReport skillVariantInventory;
+    }
+    [Serializable]
+    public sealed class SkillVariantInventoryReport
+    {
+        public string status, error, selectionSource;
+        public int bodyIndex;
+        public SkillVariantComponentReport[] components;
+    }
+    [Serializable]
+    public sealed class SkillVariantComponentReport
+    {
+        public int componentIndex, familyCatalogIndex, selectedLoadoutVariantIndex, selectedLoadoutSkillCatalogIndex;
+        public int runtimeSkillCatalogIndex;
+        public string runtimeDefinitionStatus;
+        public string skillName;
+        public SkillVariantEntryReport[] variants;
+    }
+    [Serializable]
+    public sealed class SkillVariantEntryReport
+    {
+        public int variantIndex, skillCatalogIndex;
+        public string skillName, unlockableName;
+        public bool expansionGated;
     }
     [Serializable]
     public sealed class SkillComponentReport
@@ -46,6 +70,118 @@ public sealed class SurvivorSkillObserver : IDisposable
     readonly SkillDef[] definitions;
     readonly List<SkillComponentEntry> componentEntries = new List<SkillComponentEntry>();
     public readonly Report report;
+
+    public static SkillVariantInventoryReport CaptureSkillVariantInventory(GameObject bodyPrefab, Loadout selectedLoadout,
+                                                                           string selectionSource)
+    {
+        const int maxBodyComponents = 6;
+        const int maxVariantsPerFamily = 16;
+        var inventory = new SkillVariantInventoryReport {
+            status = "refused", bodyIndex = (int)BodyIndex.None, selectionSource = selectionSource ?? ""
+        };
+        var body = bodyPrefab ? bodyPrefab.GetComponent<CharacterBody>() : null;
+        var catalogPrefab = body && body.bodyIndex != BodyIndex.None ? BodyCatalog.GetBodyPrefab(body.bodyIndex) : null;
+        bool exactBody = body && catalogPrefab &&
+                         (catalogPrefab == bodyPrefab || body.master && body.master.bodyPrefab == catalogPrefab);
+        if (!exactBody)
+        {
+            inventory.error = "Selected body prefab has no exact body catalog identity";
+            return inventory;
+        }
+        if (selectedLoadout == null || string.IsNullOrEmpty(selectionSource))
+        {
+            inventory.error = "Skill variant inventory requires an explicit native Loadout selection source";
+            return inventory;
+        }
+        inventory.bodyIndex = (int)body.bodyIndex;
+        var skills = bodyPrefab.GetComponents<GenericSkill>();
+        if (skills.Length < 1 || skills.Length > maxBodyComponents)
+        {
+            inventory.error = "Skill variant inventory component count is outside the bounded base-body range";
+            return inventory;
+        }
+        var components = new SkillVariantComponentReport[skills.Length];
+        for (int componentIndex = 0; componentIndex < skills.Length; componentIndex++)
+        {
+            var skill = skills[componentIndex];
+            var family = skill ? skill.skillFamily : null;
+            if (!family || family.catalogIndex < 0 || SkillCatalog.GetSkillFamily(family.catalogIndex) != family ||
+                family.variants == null || family.variants.Length < 1 || family.variants.Length > maxVariantsPerFamily)
+            {
+                inventory.error = "Skill variant family is unavailable, mismatched, empty, or exceeds the bounded inventory size at component " + componentIndex;
+                return inventory;
+            }
+            var variants = new SkillVariantEntryReport[family.variants.Length];
+            for (int variantIndex = 0; variantIndex < family.variants.Length; variantIndex++)
+            {
+                var variant = family.variants[variantIndex];
+                var definition = variant.skillDef;
+                if (!definition || definition.skillIndex < 0 || SkillCatalog.GetSkillDef(definition.skillIndex) != definition)
+                {
+                    inventory.error = "Skill variant definition lacks exact catalog identity at component " + componentIndex + ", variant " + variantIndex;
+                    return inventory;
+                }
+                var unlockable = variant.unlockableDef;
+                var unlockableName = unlockable ? unlockable.cachedName : (variant.unlockableName ?? "");
+                bool expansionGated = unlockable && unlockable.requiredExpansion;
+                if (!unlockable && !string.IsNullOrEmpty(variant.unlockableName))
+                {
+                    unlockable = UnlockableCatalog.GetUnlockableDef(variant.unlockableName);
+                    if (!unlockable)
+                    {
+                        inventory.error = "Skill variant legacy unlock identity is unavailable at component " + componentIndex + ", variant " + variantIndex;
+                        return inventory;
+                    }
+                    expansionGated = unlockable.requiredExpansion;
+                }
+                variants[variantIndex] = new SkillVariantEntryReport {
+                    variantIndex = variantIndex,
+                    skillCatalogIndex = definition.skillIndex,
+                    skillName = ((ScriptableObject)definition).name,
+                    unlockableName = unlockableName,
+                    expansionGated = expansionGated
+                };
+            }
+            uint selectedVariant = selectedLoadout.bodyLoadoutManager.GetSkillVariant(body.bodyIndex, componentIndex);
+            if (selectedVariant >= family.variants.Length)
+            {
+                inventory.error = "Native Loadout selected an unavailable family variant at component " + componentIndex;
+                return inventory;
+            }
+            var selectedDefinition = family.variants[(int)selectedVariant].skillDef;
+            if (!selectedDefinition || selectedDefinition.skillIndex < 0 ||
+                SkillCatalog.GetSkillDef(selectedDefinition.skillIndex) != selectedDefinition)
+            {
+                inventory.error = "Selected native Loadout variant lacks exact SkillDef catalog identity at component " + componentIndex;
+                return inventory;
+            }
+            var runtimeDefinition = skill.skillDef;
+            string runtimeStatus;
+            int runtimeIndex = -1;
+            if (!runtimeDefinition)
+                runtimeStatus = "uninitialized-or-unassigned";
+            else if (runtimeDefinition.skillIndex < 0 || SkillCatalog.GetSkillDef(runtimeDefinition.skillIndex) != runtimeDefinition)
+                runtimeStatus = "runtime-override-or-unmapped";
+            else
+            {
+                runtimeIndex = runtimeDefinition.skillIndex;
+                runtimeStatus = runtimeDefinition == selectedDefinition ? "matches-selected-native-loadout" : "differs-from-selected-native-loadout";
+            }
+            components[componentIndex] = new SkillVariantComponentReport {
+                componentIndex = componentIndex,
+                familyCatalogIndex = family.catalogIndex,
+                selectedLoadoutVariantIndex = (int)selectedVariant,
+                selectedLoadoutSkillCatalogIndex = selectedDefinition.skillIndex,
+                runtimeSkillCatalogIndex = runtimeIndex,
+                runtimeDefinitionStatus = runtimeStatus,
+                skillName = skill.skillName ?? "",
+                variants = variants
+            };
+        }
+        inventory.status = "available";
+        inventory.components = components;
+        return inventory;
+    }
 
     public SurvivorSkillObserver(CharacterBody player)
     {

@@ -76,6 +76,32 @@ public sealed partial class PortSession
     {
         DebugAccelerationOwner.DebugToggle(name, enabled, source);
     }
+    void MarkDeveloperSkillVariantAssisted(string source)
+    {
+        Check(r != null && r.developerSkillVariantOverride != null,
+              "Developer skill-variant assistance requires an explicit per-run selector");
+        r.developerSkillVariantAssisted = true;
+        if (r.developerSkillVariantOverrideReport != null)
+            r.developerSkillVariantOverrideReport.assisted = true;
+        if (r.debugAcceleration != null)
+        {
+            r.debugAcceleration.everAssisted = true;
+            r.debugAcceleration.normalGameAcceptanceEligible = false;
+        }
+        Save();
+    }
+    bool IsRunAssisted()
+    {
+        if (r == null)
+            return false;
+        if (r.developerSkillVariantAssisted && r.debugAcceleration != null)
+        {
+            r.debugAcceleration.everAssisted = true;
+            r.debugAcceleration.normalGameAcceptanceEligible = false;
+        }
+        return r.developerSkillVariantAssisted ||
+               r.debugAcceleration != null && r.debugAcceleration.everAssisted;
+    }
     void ApplyDebugAcceleration(DebugAccelerationOptions next, string source)
     {
         DebugAccelerationOwner.ApplyDebugAcceleration(next, source);
@@ -136,11 +162,15 @@ public sealed partial class PortSession
                                                                 string.IsNullOrWhiteSpace(coordinator.r.debugOptions.purpose)
                                                             ? "Interactive developer controls"
                                                             : coordinator.r.debugOptions.purpose,
+                                              everAssisted = coordinator.r.developerSkillVariantAssisted,
+                                              normalGameAcceptanceEligible = !coordinator.r.developerSkillVariantAssisted,
                                               originalBaseDamage = body.baseDamage, originalLevelDamage = body.levelDamage,
                                               originalBaseMoveSpeed = body.baseMoveSpeed, originalLevelMoveSpeed = body.levelMoveSpeed };
             ownsDebugAcceleration = true;
             coordinator.r.debugAcceleration.originalBaseJumpPower = body.baseJumpPower;
             coordinator.r.debugAcceleration.originalLevelJumpPower = body.levelJumpPower;
+            if (coordinator.r.developerSkillVariantAssisted)
+                DebugToggle("developerSkillVariantOverride", true, "explicit per-run survivor skill variant selection");
             ApplyDebugAcceleration(coordinator.r.debugOptions ?? new DebugAccelerationOptions(), "launch selection");
             if (coordinator.r.goldshoresRoute && coordinator.r.goldshores != null && coordinator.r.goldshores.diagnosticShrineSpawned)
                 DebugToggle("diagnosticGoldShrinePlacement", true, "selected assisted integration route");

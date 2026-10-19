@@ -94,7 +94,9 @@ public sealed partial class PortSession
     }
     void ApplyAndroidProfileLoadoutBeforeSpawn(CharacterMaster master, GameObject prefab)
     {
-        GetAndroidProfileSession().ApplyLoadoutBeforeSpawn(master, prefab);
+        var session = GetAndroidProfileSession();
+        session.ApplyLoadoutBeforeSpawn(master, prefab);
+        session.ApplyDeveloperSkillVariantOverride(master, prefab);
     }
     bool HasOwnedProfileUnlock(UnlockableDef definition)
     {
@@ -106,7 +108,7 @@ public sealed partial class PortSession
     }
     void PersistAndroidProfileResult(bool assisted)
     {
-        GetAndroidProfileSession().PersistResult(assisted);
+        GetAndroidProfileSession().PersistResult(assisted || IsRunAssisted());
     }
     void CleanupAndroidProfile()
     {
@@ -125,6 +127,7 @@ public sealed partial class PortSession
         BodyIndex previewLoadoutBody = BodyIndex.None;
         uint previewLoadoutSkin;
         int[] previewLoadoutSkills;
+        int[] appliedLoadoutSkills;
         public void ApplyLoadoutBeforeSpawn(CharacterMaster master, GameObject prefab)
         {
             if (coordinator.r.liveCatalogs == null || !Resources.Load<TextAsset>("WholeCatalogBootstrap"))
@@ -136,7 +139,8 @@ public sealed partial class PortSession
                               "Selected profile loadout body identity changed");
             var directory = System.IO.Path.Combine(Application.persistentDataPath, "android-profile-v1");
             var unlocked = AndroidOfflineProfile.PreviewUnlockNames(directory);
-            var preview = coordinator.offlineLoadoutEdited && coordinator.offlinePendingLoadout != null
+            var preview = coordinator.offlineLoadoutEdited && coordinator.offlinePendingLoadout != null &&
+                                  coordinator.r.developerSkillVariantOverride == null
                               ? coordinator.offlinePendingLoadout
                               : AndroidOfflineProfile.PreviewLoadout(directory);
             uint skinIndex = preview.bodyLoadoutManager.GetSkinIndex(body.bodyIndex);
@@ -169,10 +173,51 @@ public sealed partial class PortSession
             previewLoadoutBody = body.bodyIndex;
             previewLoadoutSkin = skinIndex;
             previewLoadoutSkills = variants;
+            appliedLoadoutSkills = (int[])variants.Clone();
             coordinator.Check(master.loadout.bodyLoadoutManager.GetSkinIndex(body.bodyIndex) == skinIndex &&
                                   Enumerable.Range(0, variants.Length)
                                       .All(i => master.loadout.bodyLoadoutManager.GetSkillVariant(body.bodyIndex, i) == variants[i]),
                               "Original pre-spawn loadout copy differs");
+        }
+        public void ApplyDeveloperSkillVariantOverride(CharacterMaster master, GameObject prefab)
+        {
+            var request = coordinator.r.developerSkillVariantOverride;
+            if (request == null)
+                return;
+            var report = coordinator.r.developerSkillVariantOverrideReport ??
+                         new DeveloperSkillVariantOverrideReport { requested = true };
+            coordinator.r.developerSkillVariantOverrideReport = report;
+            // Record assistance before any per-run native loadout mutation, including refusal.
+            coordinator.MarkDeveloperSkillVariantAssisted("explicit per-run survivor skill variant selection");
+            report.status = "applying";
+            try
+            {
+                if (previewLoadoutBody == BodyIndex.None || appliedLoadoutSkills == null)
+                    throw new DeveloperSkillVariantSelection.SelectionException(
+                        "refused", "Developer skill-variant override requires the native profile/default loadout preview");
+                report.skillVariantInventory = SurvivorSkillObserver.CaptureSkillVariantInventory(
+                    prefab, master.loadout, "native-master-loadout-pre-spawn");
+                if (report.skillVariantInventory.status != "available")
+                    throw new DeveloperSkillVariantSelection.SelectionException(
+                        "refused", "Developer skill-variant catalog inventory refused: " + report.skillVariantInventory.error);
+                appliedLoadoutSkills = DeveloperSkillVariantSelection.Apply(
+                    request, master, prefab, coordinator.r.selectedSurvivor);
+                report.effectiveSkillVariants = (int[])appliedLoadoutSkills.Clone();
+                report.applied = true;
+                report.status = "applied";
+            }
+            catch (DeveloperSkillVariantSelection.SelectionException error)
+            {
+                report.status = error.outcome;
+                report.error = error.Message;
+                coordinator.Check(false, "Developer skill-variant override refused: " + error.Message);
+            }
+            catch (Exception error)
+            {
+                report.status = "refused";
+                report.error = error.Message;
+                coordinator.Check(false, "Developer skill-variant override failed safely: " + error.Message);
+            }
         }
         void ConfirmAndroidProfileLoadout(CharacterBody player, UserProfile profile)
         {
@@ -183,12 +228,12 @@ public sealed partial class PortSession
                               "Original profile loadout verification context missing");
             var spawnedSkills = player.GetComponents<GenericSkill>();
             coordinator.Check(
-                player.skinIndex == previewLoadoutSkin && spawnedSkills.Length == previewLoadoutSkills.Length &&
+                player.skinIndex == previewLoadoutSkin && spawnedSkills.Length == appliedLoadoutSkills.Length &&
                     Enumerable.Range(0, spawnedSkills.Length)
                         .All(i => spawnedSkills[i] && spawnedSkills[i].skillFamily &&
-                                  spawnedSkills[i].skillDef == spawnedSkills[i].skillFamily.variants[previewLoadoutSkills[i]].skillDef),
+                                  spawnedSkills[i].skillDef == spawnedSkills[i].skillFamily.variants[appliedLoadoutSkills[i]].skillDef),
                 "Original spawned body differs from selected loadout");
-            if (coordinator.offlineLoadoutEdited)
+            if (coordinator.offlineLoadoutEdited && coordinator.r.developerSkillVariantOverride == null)
             {
                 coordinator.Check(coordinator.resultsSaveSystem.local != null &&
                                       ReferenceEquals(profile, coordinator.resultsSaveSystem.local.profile),
@@ -205,9 +250,8 @@ public sealed partial class PortSession
             coordinator.Check(skills.Length == previewLoadoutSkills.Length, "Original spawned skill slot count changed");
             for (int i = 0; i < skills.Length; i++)
                 coordinator.Check(skills[i] && skills[i].skillFamily &&
-                                      bodyLoadout.GetSkillVariant(previewLoadoutBody, i) == previewLoadoutSkills[i] &&
-                                      skills[i].skillDef == skills[i].skillFamily.variants[previewLoadoutSkills[i]].skillDef,
-                                  "Decoded original profile skill differs from spawned body");
+                                      bodyLoadout.GetSkillVariant(previewLoadoutBody, i) == previewLoadoutSkills[i],
+                                  "Decoded original profile skill index differs from selected profile preview");
             coordinator.r.profile.loadoutAppliedBeforeSpawn = true;
             coordinator.r.profile.loadoutVerified = true;
             coordinator.r.profile.selectedSkin = previewLoadoutSkin;
@@ -426,7 +470,7 @@ public sealed partial class PortSession
             coordinator.Check(discoveryInventory != null && coordinator.resultsSaveSystem.local != null && NetworkClient.active,
                               "Original pickup event has no owned offline player context");
             if ((coordinator.r.nova != null && coordinator.r.nova.diagnosticInput) ||
-                (coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted))
+                coordinator.IsRunAssisted())
             {
                 coordinator.r.profile.assistedDiscoveriesExcluded++;
                 return;
@@ -481,7 +525,7 @@ public sealed partial class PortSession
             coordinator.r.profile.threeStageEligible = true;
             if (coordinator.r.world != null && coordinator.r.world.diagnosticInputEver ||
                 coordinator.r.nova != null && coordinator.r.nova.diagnosticInput || coordinator.r.developerSurvivorOverride ||
-                coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted)
+                coordinator.IsRunAssisted())
             {
                 coordinator.r.profile.threeStageAssistedExcluded = true;
                 coordinator.Save();
@@ -511,7 +555,7 @@ public sealed partial class PortSession
             profileObservedEvents.Add(identifier);
             bool assisted = coordinator.r.world != null && coordinator.r.world.diagnosticInputEver ||
                             coordinator.r.nova != null && coordinator.r.nova.diagnosticInput || coordinator.r.developerSurvivorOverride ||
-                            coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted;
+                            coordinator.IsRunAssisted();
             AndroidProgressionBoundary.EventAwardReport report;
             if (assisted)
                 report = new AndroidProgressionBoundary.EventAwardReport {
@@ -640,6 +684,7 @@ public sealed partial class PortSession
             {
                 previewLoadoutBody = BodyIndex.None;
                 previewLoadoutSkills = null;
+                appliedLoadoutSkills = null;
                 previewLoadoutSkin = 0;
                 coordinator.offlinePendingLoadout = null;
                 coordinator.offlineLoadoutEdited = false;
@@ -710,6 +755,7 @@ public sealed partial class PortSession
                 coordinator.r.profile.cleaned = true;
             previewLoadoutBody = BodyIndex.None;
             previewLoadoutSkills = null;
+            appliedLoadoutSkills = null;
             previewLoadoutSkin = 0;
             coordinator.offlinePendingLoadout = null;
             coordinator.offlineLoadoutEdited = false;

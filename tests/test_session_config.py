@@ -116,9 +116,13 @@ class SessionConfigTests(unittest.TestCase):
 
     def test_only_selection_json_is_parsed_as_result(self):
         # Restrict every SessionReport parse, also catching resource reads through aliases.
-        parses = []
+        parses, selection_bindings = [], []
         for path, source in self.sources.items():
             parts = tokens(source)
+            for index in range(len(parts) - 2):
+                if parts[index : index + 2] == ["selectionJson", "="]:
+                    end = parts.index(";", index + 2)
+                    selection_bindings.append((path.name, parts[index + 2 : end]))
             for index in range(len(parts) - 4):
                 if parts[index : index + 4] != ["JsonUtility", ".", "FromJson", "<"]:
                     continue
@@ -129,7 +133,8 @@ class SessionConfigTests(unittest.TestCase):
                 opening = end_type + 1
                 self.assertEqual(parts[opening], "(")
                 parses.append((path.name, parts[opening + 1 : closing(parts, opening)]))
-        self.assertEqual(parses, [(PROBE.name, ["File", ".", "ReadAllText", "(", "path", ")"])])
+        self.assertEqual(parses, [(PROBE.name, ["selectionJson"])])
+        self.assertEqual(selection_bindings, [(PROBE.name, ["File", ".", "ReadAllText", "(", "path", ")"])])
 
 
 class FieldParserTests(unittest.TestCase):
