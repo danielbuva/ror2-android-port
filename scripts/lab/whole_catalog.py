@@ -1317,6 +1317,7 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
         "SurvivorSkillInputHost.cs",
         "SirenEncounterHost.cs",
         "TeleporterLifetimeHost.cs",
+        "TeleportOverlayLifetimeHost.cs",
     ]:
         io.apply(project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
     # Bundle-only serialized components and reflected location types are invisible

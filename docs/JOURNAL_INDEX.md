@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J607](PORTING_JOURNAL.md#j607--retire-overlays-by-exact-identity-and-resume-native-validation-at-cleanup) | 2026-10-19 | Retire overlays by exact identity and resume native validation at cleanup | Hypothesis: J605's overlay cleanup failure combines stale native indices with invalid entries left after the gameplay update loop stops. |
 | [J606](PORTING_JOURNAL.md#j606--add-bounded-ordinary-input-coverage-for-unobserved-survivor-slots) | 2026-10-19 | Add bounded ordinary input coverage for unobserved survivor slots | Hypothesis: J603's missing MUL-T utility callback can be investigated through explicit eligible ordinary input, without changing native skill definitions or ex… |
 | [J605](PORTING_JOURNAL.md#j605--native-teleporter-retirement-passes-later-overlay-cleanup-blocks-restart) | 2026-10-19 | Native teleporter retirement passes; later overlay cleanup blocks restart | Hypothesis: the J604 APK can finish a genuine original first-stage loss, retire the native teleporter before server shutdown and start a clean session in the s… |
 | [J604](PORTING_JOURNAL.md#j604--accept-the-native-teardown-and-auxiliary-observer-apk-baseline) | 2026-10-19 | Accept the native teardown and auxiliary-observer APK baseline | Hypothesis: J600/J601's scoped teleporter retirement and J602's auxiliary skill observations/system-death event bindings can join the accepted game without reg… |

@@ -7262,3 +7262,53 @@ combined code build, not device-accepted. Revisit MUL-T and the remaining base
 roster after both baseline modes on that build. The authored source, importer
 selection and fixture alter R8/build-entry inputs; the parallel session must
 replay them. No Phase 2 step or extra device action ran here.
+
+## J607 — Retire overlays by exact identity and resume native validation at cleanup
+
+Hypothesis: J605's overlay cleanup failure combines stale native indices with
+invalid entries left after the gameplay update loop stops. The owner must
+retire its own exact instances and allow native destroyed-host validation to
+run before requiring an empty registry and releasing material assets.
+
+Prior-art review: pinned Starstorm2 a9a4badd BloodTesterAnimator and
+AffixSuperFire use TemporaryOverlayManager.AddOverlay with a concrete model
+host and distinguish model assignment from registry lifetime. They supply API
+and ownership context, not an Android cleanup solution. Current e544
+TemporaryOverlayManager/TemporaryOverlayInstance and J391's earlier completed
+sessions are authoritative for this version and regression boundary.
+
+Current source reveals a specific indexing trap: removing the last active
+entry while others remain can leave the removed wrapper's managerIndex
+positive. Later AddOverlay can reuse that slot for a distinct instance. The
+old cleanup trusted each remembered wrapper's index, so an expired player
+overlay could remove a later unrelated entry. Also, the world loop has stopped
+by final material cleanup; destroyed enemy/source hosts can leave invalid
+entries until the original manager receives an update.
+
+TeleportOverlayRegistryOwnership now reads only the native active registry
+prefix, finds the exact managed instance and invokes public RemoveOverlay on
+that verified match. It normalizes only its own proven-absent wrapper's stale
+index. It never writes the registry, clears global state, restores a snapshot
+or copies the manager implementation. TeleportMaterialSession verifies its
+tracked wrappers are absent, yields for destruction, invokes public native
+OverlayUpdate once, and still requires the global registry to be empty before
+material release. Live foreign overlays are preserved and cause a truthful
+refusal; the assertion is not bypassed.
+
+The exact-editor Play Mode fixture passes native last-slot stale-index
+reproduction, index reuse by a different live overlay, preservation of that
+replacement during stale-owner cleanup, destroyed/unobserved host pruning by
+the public update, preservation of two live foreign fixture overlays, and exact
+fixture removal back to zero. Evidence/source hashes:
+work/experiments/teleport-overlay-lifetime/editor-20261019T080433.919719Z/.
+There were no primary or scene-restoration errors. The fixture required the
+native initialized empty registry and no network session; no private Init or
+global reset was invoked. Final sources compiled in the pinned editor; full
+host suite/Ruff results remain J606's 883 tests with one optional skip.
+
+The installed APK is still J604's 76344ab4… with J605's known restart failure.
+These sources and J606's opt-in input owner are staged in one code-only build;
+no Android fix is accepted yet. Revisit through both baseline modes and the
+genuine loss/cleanup/restart action. This changes authored R8/build-entry inputs
+and adds one support fixture, with no new runtime GUID or content input. Phase 2
+replay remains the parallel session's track.

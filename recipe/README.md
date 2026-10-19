@@ -205,6 +205,14 @@ staged by the existing producer. The selection flag is default-off runtime
 diagnostic state, not a new local content input. Audited 2026-10-19; device
 acceptance and R8 source/importer/provenance replay remain separate gates.
 
+J607 changes the existing authored teleport-material owner to resolve native
+overlay instance identity before public removal and run native validation after
+world destruction. Its helper reads private registry metadata; it does not copy
+or replace the native manager algorithm. The new authored Play Mode fixture
+uses public native APIs and synthetic objects only. No runtime file/GUID,
+content selection or required local input is added. Audited 2026-10-19;
+completed-session device acceptance and R8 replay remain pending.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

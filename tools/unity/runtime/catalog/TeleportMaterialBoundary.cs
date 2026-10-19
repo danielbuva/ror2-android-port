@@ -14,6 +14,80 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
+// Uses the original manager's public removal/update APIs while resolving its
+// private registry read-only. managerIndex alone is not an identity token.
+public static class TeleportOverlayRegistryOwnership
+{
+    static readonly FieldInfo ArrayField =
+        typeof(TemporaryOverlayManager).GetField("overlayArray", BindingFlags.NonPublic | BindingFlags.Static);
+    static readonly FieldInfo CountField =
+        typeof(TemporaryOverlayManager).GetField("arraySize", BindingFlags.NonPublic | BindingFlags.Static);
+
+    static TemporaryOverlayInstance[] ReadRegistry(out int count)
+    {
+        if (ArrayField == null || CountField == null)
+            throw new InvalidOperationException("Original temporary overlay registry fields are unavailable");
+        var overlays = ArrayField.GetValue(null) as TemporaryOverlayInstance[];
+        if (overlays == null || !(CountField.GetValue(null) is int activeCount) || activeCount < 0 || activeCount > overlays.Length)
+            throw new InvalidOperationException("Original temporary overlay registry is not initialized or has an invalid size");
+        count = activeCount;
+        return overlays;
+    }
+
+    public static int ActiveCount
+    {
+        get {
+            ReadRegistry(out int count);
+            return count;
+        }
+    }
+
+    public static bool Contains(TemporaryOverlayInstance overlay)
+    {
+        if (overlay == null)
+            return false;
+        var overlays = ReadRegistry(out int count);
+        for (int i = 0; i < count; i++)
+            if (ReferenceEquals(overlays[i], overlay))
+                return true;
+        return false;
+    }
+
+    public static bool RemoveIfActive(TemporaryOverlayInstance ownedOverlay)
+    {
+        if (ownedOverlay == null)
+            return false;
+        var overlays = ReadRegistry(out int count);
+        int index = -1;
+        for (int i = 0; i < count; i++)
+        {
+            if (ReferenceEquals(overlays[i], ownedOverlay))
+            {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0)
+        {
+            // Native RemoveOverlay can leave a removed last-slot instance with
+            // its old positive index. It is safe to normalize only after proving
+            // the exact instance is absent from the active registry prefix.
+            if (ownedOverlay.managerIndex >= 0)
+                ownedOverlay.managerIndex = -1;
+            return false;
+        }
+
+        if (!ReferenceEquals(overlays[index], ownedOverlay))
+            throw new InvalidOperationException("Temporary overlay identity changed during exact removal");
+        TemporaryOverlayManager.RemoveOverlay(index);
+        if (Contains(ownedOverlay))
+            throw new InvalidOperationException("Native removal retained the exact owned temporary overlay");
+        if (ownedOverlay.managerIndex >= 0)
+            ownedOverlay.managerIndex = -1;
+        return true;
+    }
+}
+
 // A single measured legacy Material location. The prefab bundle keeps its existing owner.
 public sealed partial class PortSession
 {
@@ -67,7 +141,7 @@ public sealed partial class PortSession
         }
         public int TeleportOverlayCount()
         {
-            return (int)typeof(TemporaryOverlayManager).GetField("arraySize", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            return TeleportOverlayRegistryOwnership.ActiveCount;
         }
         public IEnumerator PrepareTeleportMaterial(SessionConfig cfg)
         {
@@ -164,7 +238,7 @@ public sealed partial class PortSession
                               "Original diagnostic overlay update");
             coordinator.r.phase = "original-teleport-overlay-remove";
             coordinator.Save();
-            TemporaryOverlayManager.RemoveOverlay(overlay.managerIndex);
+            TeleportOverlayRegistryOwnership.RemoveIfActive(overlay);
             coordinator.Check(TeleportOverlayCount() == 0 && model.temporaryOverlays.Count == 0 && overlay.managerIndex == -1 &&
                                   overlay.assignedCharacterModel == null,
                               "Original overlay removal");
@@ -176,10 +250,14 @@ public sealed partial class PortSession
                 yield break;
             var copies = ownedTeleportOverlays.Select(x => x.materialInstance).ToArray();
             foreach (var overlay in ownedTeleportOverlays)
-                if (overlay.managerIndex >= 0)
-                    TemporaryOverlayManager.RemoveOverlay(overlay.managerIndex);
-            coordinator.Check(TeleportOverlayCount() == 0, "Owned overlay cleanup incomplete");
+                TeleportOverlayRegistryOwnership.RemoveIfActive(overlay);
+            coordinator.Check(ownedTeleportOverlays.All(x => !TeleportOverlayRegistryOwnership.Contains(x)),
+                              "An exact owned overlay remains in the active manager registry");
             yield return null;
+            // The world loop is already stopped. One public native update prunes
+            // remaining invalid source entries while preserving live foreign ones.
+            TemporaryOverlayManager.OverlayUpdate();
+            coordinator.Check(TeleportOverlayCount() == 0, "Unowned live overlays remain after native pruning");
             coordinator.Check(copies.All(x => !x), "Overlay material copies survived destruction");
             var deadline = Time.realtimeSinceStartup + 3;
             while (LegacyResourcesAPI.ActiveCount != 0 && Time.realtimeSinceStartup < deadline)

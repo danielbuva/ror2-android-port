@@ -657,6 +657,18 @@ or movement is written. `SurvivorSkillInputHost` tests synthetic routing,
 dynamic slots, stale-edge refusal, ownership, bounds and disposal in the
 exact editor. Real survivor behavior remains a device gate.
 
+`TeleportMaterialSession` also owns final overlay/material release.
+`TeleportOverlayRegistryOwnership`, in the same authored file, reads the native
+active registry prefix to resolve exact wrapper identity before public removal.
+A remembered `managerIndex` alone cannot authorize removal. After tracked
+overlays are retired and deferred destruction yields, the owner runs the public
+native overlay update to prune destroyed-host entries, then requires the global
+registry to be empty before releasing material resources. Live foreign overlays
+remain intact and cause refusal. The owner neither clears nor replaces the
+registry. `TeleportOverlayLifetimeHost` reproduces stale-index reuse and native
+destroyed-host pruning in isolated exact-editor Play Mode; it restores only its
+fixture-owned entries. Actual completed-session cleanup remains a device gate.
+
 `./dev prototype --action session-cleanup-check` (current support action,
 `scripts/lab/session_cleanup_check.py`) observes the existing first-stage loss
 and restart flow with automatic diagnostic input and every gameplay debug
