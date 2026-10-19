@@ -9660,3 +9660,80 @@ full Engineer alternate case on that frozen APK. This host recovery makes no
 new native Stage, skill, cleanup or progression claim. No device action,
 private receipt hand edit, extra-device selection, data move, storage
 configuration change or Phase 2 output edit occurs in this repair.
+
+## J667 — Engineer dependency replay passes the old key, then hits known elite-stake corruption
+
+Hypothesis: the typed EntityStateGameObject closure in J659/J662 lets the
+actual Engineer alternate kit get past J650's missing Laser Cutter charge
+asset. J665's full APK is unchanged:
+ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Evidence: work/experiments/survivor-check/20261019T143758.846393Z/Engi/;
+read-only source/owner triage: work/coordination/lightning-stake-engi-triage/.
+
+The native live loadout matches requested skills 117, 63, 68 and 65 in the
+four original families. Server/authority callback counts are 8/2/1/1, with
+no missing activation or suppressed callback. The former missing charge key
+does not recur. This is narrower than complete Laser Cutter behavior: the
+report does not establish its full beam sequence or direct beam damage.
+Two observed player-owned projectile damage facts do not prove each slot's
+causality or a full-kit pass.
+
+First failure: the collector stops at 30.182114 world seconds on Unity's
+nonfinite Collider transform error for LightningStake(Clone); 108 captured
+runtime error lines recur. The requested 60-second gate fails. All three
+observed stake identities map to a blue-elite Wisp and match J634's catalog
+and network asset identity. Accepted native GlobalEventManager's AffixBlue
+hit path explains that ownership; this is not the Engineer Harpoon or Loader
+Pylon path. All 18 bounded samples remain finite and end before the error,
+so neither the exact failing stake nor its invalid transition is identified.
+J499/J623/J634 describe the related intermittent failure. A new manifest
+binding regression or a gameplay repair is not evidenced.
+
+This developer-only variant selection is assisted, native first-stage mode
+is off, and profile applied runs/earned/available unlocks stay 13/1/1.
+The runner stops, removes selectors and sleeps OLED in finally. Revisit with
+a bounded observation that survives sampled-identity turnover, without
+clamping transforms or suppressing native elite projectiles; retain the
+failed run. Default APK acceptance remains separate and its exit control is
+pending. No runtime/source change, original input modification, extra device,
+receipt hand edit, existing data move or storage reconfiguration occurs.
+
+## J668 — Native source Stage starts; original large-chest drop table is uninitialized
+
+Hypothesis: J664's final-owner deck binding permits genuine source Director
+startup while retaining strict cold preflight. APK remains J665's
+ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Native attempt evidence: work/experiments/baseline/20261019T144307.982278Z/;
+root-native-first-stage-validation.json records the log-based rejection.
+
+The opt-in path reaches 35.236252 world seconds with one original Stage-begin,
+source SceneInfo/population active, native player context registered and
+recovery false. Ten observed stage-director actor rows include live Golems,
+Lemurians and Beetles; five have actually died. Legacy per-actor damage/death
+counters remain zero because the fixture-only event subscription is skipped,
+a separately identified observation-owner gap. These are real native spawn
+and lifetime observations, not evidence of complete combat semantics.
+
+First failure: ChestBehavior.Roll calls the original dtChest2
+BasicPickupDropTable before its choices are regenerated, producing an invalid
+pickup index and the error that no pickup could be generated. The generic
+35-second collector reports success, but root's current-process error check
+rejects this feature attempt. No clean native lifecycle acceptance or teardown
+is claimed. Source loot readiness was independently identified in J661's
+follow-up audit; this run now supplies the actual device failure, after the
+old player-stat and Director witness gates pass.
+
+The next candidate must prepare an owned exact source table against the live
+Run after loot availability and before source object activation, preserve
+original weights and RNG semantics, and restore the exact field before
+releasing the clone. Unknown consumers or foreign replacements must refuse
+or retain recovery ownership. The parallel host-only draft remains private
+pending review and meaningful production-linked contracts. Existing director
+event ownership can be extracted without changing native damage or AI.
+
+The run is explicitly assisted, keeps the default path separate and leaves
+profile runs/earned/available unlocks at 13/1/1. The runner removes selectors,
+stops the process and sleeps OLED; a fresh default exit control is now active.
+Accepted APK remains J663 6506b99b… until that control passes. No original
+input, storage configuration, existing data, additional device or private
+receipt hand edit is changed.
