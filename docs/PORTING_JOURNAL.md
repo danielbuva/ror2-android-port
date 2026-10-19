@@ -10100,3 +10100,42 @@ remain private drafts pending root integration. R8 replay for the runtime
 changes is recorded in their implementation entries; no Phase 2 output,
 original input, extra device, private receipt hand edit, existing data move or
 storage reconfiguration occurs here.
+
+## J678 — New candidate passes plain play and the native first-stage retry
+
+Hypothesis: J675 removes J668's actual source Chest2 readiness error, and
+J669 wires real native actor damage/death observations, without disturbing
+the ordinary first-stage path. APK is J677's
+e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+
+Plain evidence: work/experiments/baseline/20261019T152218.055701Z/.
+The default collector passes 35.219040 world seconds with native diagnostic
+and recovery false, no first failure or unexpected current-process log error.
+The separate default exit mode remains active, so the accepted baseline is
+still J670 ad84d0cb… until that mode passes.
+
+Native evidence: work/experiments/baseline/20261019T152623.558774Z/.
+The explicit assisted diagnostic reaches 35.250122 world seconds with one
+genuine original Stage-begin, source population active and recovery false.
+Ten observed stage-director actors record 84 damage events and six native
+death events, matching six dead actor rows. The source chest invalid-roll
+errors from J668 do not recur; preactivation qualification and all four
+prepared-table binding contracts complete. Root's native validation passes
+with no current-process errors and explicitly records that this is not a
+default-baseline acceptance case. The earlier player-stat/Director-witness
+failures remain resolved on this path.
+
+This is native first-stage startup/population/combat-event and source-table
+readiness evidence. It is not a purchase/reward witness, Wake reward execution,
+completed-session table/identity restoration, restart, stage transport or normal
+difficulty acceptance. The live report is still playing when the collector
+stops it. J672's later-identity/invalid-stake trace has not been exercised by
+this case. Native transport remains an explicit refusal before mutation.
+
+Both cases keep profile runs/earned/available unlocks at 13/1/1. Their finally
+removes selectors, stops and sleeps OLED. First failure: none in either case.
+After the fresh default exit, run a native completed-session/restart case to
+observe actual teardown; preserve current executable rollbacks. New exact-APK
+attempt binding is undergoing host integration and has no runtime/APK change.
+No original input, extra device, receipt hand edit, existing data move or storage
+configuration change occurs here.
