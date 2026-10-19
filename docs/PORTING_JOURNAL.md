@@ -12195,3 +12195,45 @@ and jump boosts are off. Applied runs stay 13, earned/available unlocks stay one
 resultApplied false. The runner removes its own selector, force-stops and sleeps
 without cleanup errors. Process stop does not prove in-process Siren retirement.
 No source/build input, Phase 2 output, storage layout, extra device or award changes.
+
+## J724 — Accept the native-operation observer APK through both default controls
+
+Hypothesis: J716's read-only native diagnostic witness stays inert in ordinary
+controls and preserves the accepted gameplay/payload path. J719's frozen candidate
+b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54
+passes both required default modes on the configured Nova. Doctor and host-only
+preflight pass. Installation queries current storage/free space and updates the
+owned package in place on adopted storage; payload sync passes. No extra device
+is queried and no storage configuration/data is changed.
+
+Plain control: work/experiments/baseline/20261019T190443.609090Z/ reaches
+35.227982 world seconds on Lakes. One-exit control:
+work/experiments/baseline/20261019T190858.719745Z/ reaches exactly one genuine
+exit to Goolake, 141.130951 total world seconds and 12.655396 seconds in the next
+stage. Both report success with no report failure or current-process native-log
+error; root log/contract validation is stored beside each capture. Applied runs
+remain 13. Both controls remove their selector, stop and sleep through the normal
+collector cleanup.
+
+In each actual final report, the native first-stage diagnostic is false, recovery
+is false, pauseBeforeMoon is true, the new native operation-witness list is empty,
+the automatic boundary hold is false with zero fixed ticks, and all four isolated
+transient-window counters are zero. Thus the new observer is inactive in these
+default controls; the controls do not exercise its Android reflection path or
+prove native source-stage cleanup. The one-exit check never approaches the fourth
+boundary. Assistance still excludes normal-game/progression acceptance.
+
+This accepts the exact frozen APK and source bound in J719, retaining its original
+outer provenance refusal and request-specific audit. All 266 payload hashes equal
+prior J707, and all 105 authored runtime sources match its frozen bef493c source.
+The J716 host/editor contracts and 1,007-test host run remain in that build's
+evidence; no new runtime source is integrated after it. Update BASELINE and the
+state snapshot; retain d545d800 and earlier executable rollbacks. The explicit
+native abandon/restart retry is now running separately with all five gameplay
+debug assists off. J710's first failure remains unresolved until that evidence is
+classified; no handle attribution rule or release sequence is weakened here.
+
+First failure: none in either default control. Mercenary's compatibility adapter
+remains a private draft, and J723's source nest lifecycle and automatic approach
+stall remain open. No original input, Phase 2 output, expansion/award gate or Moon
+candidate is changed. These scoped passes do not establish complete port readiness.

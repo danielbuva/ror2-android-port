@@ -74,17 +74,19 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee`, J707 acceptance of the J701/J703/J704 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.21 s on Lakes and one genuine stage exit to Goolake with 11.09 s next-stage play, no unexpected report or current-process log error (J707) |
+| APK | `b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54`, J724 acceptance of J716's 105-source observer build; J719 binds its provenance, and all payload hashes equal J707. Retains J665's repaired content, J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.23 s on Lakes and one genuine stage exit to Goolake with 12.66 s next-stage play, no unexpected report or current-process log error (J724) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J707), with the native diagnostic flag off. The separate
+baseline passed it (J724), with the native diagnostic flag off. The separate
 native source path previously reaches genuine Stage-begin and passes J697's
 source-table restoration, then refuses at the effect-reference attribution guard
-(J702). This APK includes J703's exact failure operands; its native retry is pending.
+(J702/J710). This APK adds J716's read-only operation witness to J703's exact
+failure operands; both remain inactive in the default controls. Its native retry
+is a separate gate.
 Completed native cleanup/restart and transport remain unaccepted. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
