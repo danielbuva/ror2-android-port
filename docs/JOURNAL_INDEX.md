@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J721](PORTING_JOURNAL.md#j721--trace-mercenarys-rejected-impact-visual-to-the-accepted-source) | 2026-10-19 | Trace Mercenary's rejected impact visual to the accepted source | Hypothesis: J720's named-effect rejection might come from an omitted catalog registration or changed conversion reference. |
 | [J720](PORTING_JOURNAL.md#j720--mercenary-alternate-projectile-fails-native-impact-effect-lookup) | 2026-10-19 | Mercenary alternate projectile fails native impact-effect lookup | Hypothesis: fresh exact native variants can exercise Uppercut, Focused Assault and EvisProjectile alongside unchanged primary. |
 | [J719](PORTING_JOURNAL.md#j719--freeze-the-native-operation-candidate-with-reviewed-host-source-drift) | 2026-10-19 | Freeze the native-operation candidate with reviewed host-source drift | Hypothesis: J716's read-only witness can be built without changing the accepted content payload. |
 | [J718](PORTING_JOURNAL.md#j718--acrid-alternates-record-breath-projectile-and-aggregate-blight-infliction) | 2026-10-19 | Acrid alternates record Breath projectile and aggregate Blight infliction | Hypothesis: the fresh native inventory can select Blight, Bite, Chainable Leap and Breath without changing the sole primary variant or saved loadout. |

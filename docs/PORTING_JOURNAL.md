@@ -12023,3 +12023,52 @@ selector, stops and sleeps. First failure: native impact-effect lookup; complete
 alternate-kit semantics remain unaccepted. The independent guarded stage route
 is active. No original input, runtime correction, Phase 2 output, extra device,
 manual receipt edit, storage change or award occurs in this result.
+
+## J721 — Trace Mercenary's rejected impact visual to the accepted source
+
+Hypothesis: J720's named-effect rejection might come from an omitted catalog
+registration or changed conversion reference. Read-only exact-editor inspection
+disproves the registration hypothesis. MercSwordFinisherSlash has no root
+EffectComponent, no missing root scripts, no nested EffectComponent and no name
+match among 1,679 baked effects. Its five root component types agree with the
+original bundle/export. GroundLight2 also uses this same asset directly as a
+melee swing visual, a separate valid usage that must remain intact.
+
+The null serialized explosionEffect alone was an incomplete caller trace.
+The exact EvisProjectile's ProjectileImpactExplosion instead has impactEffect
+pointing to MercSwordFinisherSlash. The accepted native impact/detonation path
+copies that field to explosionEffect before calling the original network
+effect-spawn API. That API requires an EffectComponent with a valid native
+catalog identity. The exact-editor read confirms the reference and missing
+component; EvisOverlapProjectile's distinct impact visual has its own component.
+
+Independently parse the unique original Merc static bundle with UnityPy and
+verify its bytes against the accepted current input inventory. Its EvisProjectile
+impact reference resolves within the original bundle to the same sword visual;
+the one-child reference resolves to EvisOverlapProjectile. The exported and
+converted references preserve those identities. Thus the accepted source field
+combination itself conflicts with the native effect-spawn contract. A missing
+asset, dropped component or conversion pointer substitution is not supported.
+The J720 child-projectile observation is consistent with this path, but no
+detonating instance/network identity was captured at the error timestamp; retain
+that event-level attribution limit.
+
+Evidence: work/experiments/first-stage-native-lifecycle/
+merc-effect-read-20261019T185004.497401Z/,
+merc-projectile-read-20261019T185223.336552Z/ and
+merc-evis-fields-read-20261019T185704.455496Z/;
+work/coordination/merc-alternate-effect-triage/ and
+work/coordination/merc-impact-effect-identity/.
+The editor reads prefab/catalog fields without instantiating objects, initializing
+the native catalog or writing asset fields. Prior art remains J337/J430/J431 and
+pinned R2API.ContentAddition.AddEffect's distinction between a valid effect
+component and registration. No original/community implementation is copied.
+
+First failure remains J720's native invalid-effect lookup; the alternate kit is
+unaccepted. Do not add a component or forced index to the shared original swing
+visual. Any scoped compatibility adapter needs a separate setup/teardown and
+native-contract review. No runtime or build change is made here. Accepted APK
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee
+remains installed; b32998b8 remains frozen/unaccepted. The independent guarded
+route continues on d545d800. Host-only preflight still passes the accepted input.
+No Phase 2 output, extra device, storage configuration, award or Moon path changes.
