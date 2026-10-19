@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J647** (combat-observer APK passes both baseline modes and Engineer/Mercenary output checks).
+Last updated 2026-10-19 after **J648** (first skill-inventory refusal corrected in source; new build/device check pending).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -14,10 +14,10 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` — J647 both baseline modes and Mercenary direct damage; J645 Engineer projectile/owned-summon damage. Native completed-session observer cleanup remains open; prior Engineer teardown/restart is J643 on 118540ea… and loss-only proof is J609. |
-| Installed now | Same 9e7c4224… APK, updated in place on current Nova adopted storage; placement/payload sync pass (J645) and both baseline modes pass (J647). Runners stop the app and sleep the OLED. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since verified APK | Installed 9e7c4224… has 101 runtime files. J646 adds an explicitly assisted native per-run skill-variant selector and bounded catalog inventory (102 files); editor/API and host checks pass, but it is unbuilt. The larger native stage-lifecycle path remains unintegrated. |
+| Installed now | Candidate `00f141d16ed3d0aac1079e701a44416c95a77d1d3b8cddfa2382c20d1fa71902`, updated in place on current Nova adopted storage; placement/payload sync pass. Default Engineer callbacks play, but live catalog inventory refuses (J648). No alternate kit or baseline acceptance is claimed. App stopped/OLED asleep. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
+| Runtime source since verified APK | J646's explicitly assisted per-run variant selector is built in installed 00f141d1… (102 runtime files). J648 corrects its live inventory ownership and host inline-report handling; editor/API and focused host checks pass, but this correction is unbuilt. The accepted 9e7c4224… baseline has 101 files. Native stage lifecycle remains unintegrated. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
-| Executable rollbacks | J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
+| Executable rollbacks | J647 `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` · J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
 
 Retention rules for these rollbacks: [docs/history-retention.md](docs/history-retention.md).

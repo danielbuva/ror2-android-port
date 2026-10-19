@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using RoR2;
 using RoR2.Skills;
 using UnityEngine;
+using UnityEngine.Networking;
 
 // Observes the player's original callbacks. Counts prove activation, not damage,
 // placement, targeting, animation or the complete semantics of an ability.
@@ -81,8 +82,16 @@ public sealed class SurvivorSkillObserver : IDisposable
         };
         var body = bodyPrefab ? bodyPrefab.GetComponent<CharacterBody>() : null;
         var catalogPrefab = body && body.bodyIndex != BodyIndex.None ? BodyCatalog.GetBodyPrefab(body.bodyIndex) : null;
+        // A live body's configured master prefab is not its ownership contract.
+        // Use the reciprocal native body/master link and exact server mappings.
+        var master = body ? body.master : null;
+        bool mappedLiveBody = body && master && master.hasBody && master.GetBody() == body &&
+                              NetworkServer.active && body.isServer && master.isServer &&
+                              body.netId.Value != 0 && master.netId.Value != 0 &&
+                              NetworkServer.FindLocalObject(body.netId) == body.gameObject &&
+                              NetworkServer.FindLocalObject(master.netId) == master.gameObject;
         bool exactBody = body && catalogPrefab &&
-                         (catalogPrefab == bodyPrefab || body.master && body.master.bodyPrefab == catalogPrefab);
+                         (catalogPrefab == bodyPrefab || mappedLiveBody);
         if (!exactBody)
         {
             inventory.error = "Selected body prefab has no exact body catalog identity";
@@ -95,9 +104,15 @@ public sealed class SurvivorSkillObserver : IDisposable
         }
         inventory.bodyIndex = (int)body.bodyIndex;
         var skills = bodyPrefab.GetComponents<GenericSkill>();
+        var catalogSkills = catalogPrefab.GetComponents<GenericSkill>();
         if (skills.Length < 1 || skills.Length > maxBodyComponents)
         {
             inventory.error = "Skill variant inventory component count is outside the bounded base-body range";
+            return inventory;
+        }
+        if (catalogSkills.Length != skills.Length)
+        {
+            inventory.error = "Live body skill component count differs from its exact catalog prefab";
             return inventory;
         }
         var components = new SkillVariantComponentReport[skills.Length];
@@ -105,6 +120,11 @@ public sealed class SurvivorSkillObserver : IDisposable
         {
             var skill = skills[componentIndex];
             var family = skill ? skill.skillFamily : null;
+            if (!catalogSkills[componentIndex] || catalogSkills[componentIndex].skillFamily != family)
+            {
+                inventory.error = "Body skill family differs from its catalog component at index " + componentIndex;
+                return inventory;
+            }
             if (!family || family.catalogIndex < 0 || SkillCatalog.GetSkillFamily(family.catalogIndex) != family ||
                 family.variants == null || family.variants.Length < 1 || family.variants.Length > maxVariantsPerFamily)
             {

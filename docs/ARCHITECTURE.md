@@ -711,6 +711,10 @@ for constructing a later explicit selector. Selected native loadout indices and
 live runtime definitions are separate: prefab assets have no `GenericSkill.Awake`,
 and a live skill can have a temporary override. Invalid or oversized inventories
 refuse rather than truncate. This adds no ordinary menu eligibility.
+A live inventory binds reciprocal native body/master ownership and exact server
+mappings, with the catalog prefab's matching component/family order. Override
+inventory takes precedence only for an explicitly requested override; Unity's
+empty default inline reports do not displace the actual live observation.
 
 Host parser/assessment contracts are in `tests/test_survivor_check.py` and dispatch
 contracts in `tests/test_cli_actions.py`. The existing fixture producer stages

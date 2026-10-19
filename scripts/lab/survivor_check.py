@@ -179,7 +179,8 @@ def skill_variant_catalog_inventory(report):
     """Validate bounded, exact catalog indexes exposed for explicit case-file authoring."""
     survivor_skills = report.get("survivorSkills") or {}
     override = report.get("developerSkillVariantOverrideReport") or {}
-    value = override.get("skillVariantInventory") or survivor_skills.get("skillVariantInventory")
+    # JsonUtility can serialize an absent inline report as a nonempty default object.
+    value = override.get("skillVariantInventory") if override.get("requested") is True else survivor_skills.get("skillVariantInventory")
     if not isinstance(value, dict):
         return {"status": "unavailable", "reason": "variant-catalog-inventory-missing"}
     if value.get("status") != "available":

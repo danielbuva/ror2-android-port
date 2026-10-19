@@ -521,7 +521,7 @@ class SkillVariantSelectionTests(unittest.TestCase):
         final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
                        developerSkillVariantAssisted=True,
                        developerSkillVariantOverride=expected,
-                       developerSkillVariantOverrideReport={"status": "applied", "applied": True, "assisted": True,
+                       developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True, "assisted": True,
                                                             "effectiveSkillVariants": [0, 0, 0, 0, 1],
                                                             "skillVariantInventory": inventory})
         self.assertEqual(check.assess("Toolbot", "four-slots-activated", final, final, [], expected), [])
@@ -539,6 +539,7 @@ class SkillVariantSelectionTests(unittest.TestCase):
 
     def test_catalog_inventory_exposes_exact_indexes_and_refuses_unbounded_or_ambiguous_shapes(self):
         report_value = {"developerSkillVariantOverrideReport": {
+            "requested": True,
             "skillVariantInventory": self.valid_catalog_inventory()}}
         parsed = check.skill_variant_catalog_inventory(report_value)
         self.assertEqual(parsed["status"], "valid")
@@ -555,11 +556,11 @@ class SkillVariantSelectionTests(unittest.TestCase):
         report_value["developerSkillVariantOverrideReport"]["skillVariantInventory"] = inventory
         self.assertEqual(check.skill_variant_catalog_inventory(report_value)["status"], "invalid")
 
-
-
-
-
-
+    def test_default_inline_override_report_does_not_hide_live_inventory(self):
+        value = {"developerSkillVariantOverrideReport": {
+            "requested": False, "skillVariantInventory": {"status": "", "components": []}},
+            "survivorSkills": {"skillVariantInventory": self.valid_catalog_inventory()}}
+        self.assertEqual(check.skill_variant_catalog_inventory(value)["status"], "valid")
 
 if __name__ == "__main__":
     unittest.main()

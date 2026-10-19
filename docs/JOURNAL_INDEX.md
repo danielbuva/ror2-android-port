@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J648](PORTING_JOURNAL.md#j648--correct-live-skill-inventory-ownership-after-its-first-device-refusal) | 2026-10-19 | Correct live skill inventory ownership after its first device refusal | J646's 102-file cohort passes selected-device preflight and builds with zero errors in 110.66 s, request 20261019T122900.397031Z. |
 | [J647](PORTING_JOURNAL.md#j647--accept-the-combat-observer-apk-after-mercenary-and-both-baselines) | 2026-10-19 | Accept the combat-observer APK after Mercenary and both baselines | Accept J645 APK 9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82 after both standard modes pass on the configured Nova. |
 | [J646](PORTING_JOURNAL.md#j646--prepare-explicit-per-run-native-skill-variants-without-profile-writes) | 2026-10-19 | Prepare explicit per-run native skill variants without profile writes | Hypothesis: alternate base-survivor kits can use the original per-body native Loadout APIs before spawning, with exact catalog identities and permanent assiste… |
 | [J645](PORTING_JOURNAL.md#j645--observe-engineer-projectile-and-owned-summon-damage-on-device) | 2026-10-19 | Observe Engineer projectile and owned-summon damage on device | Hypothesis: J642's bounded observer can distinguish actual native player-owned projectile damage and owned-minion damage in the integrated world, beyond the fo… |

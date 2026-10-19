@@ -8829,3 +8829,55 @@ actual variant case and both baseline modes. The native first-stage lifecycle
 remains private under correction; no part is in this APK. No extra device,
 storage/data change, receipt hand edit, original-input change or Phase 2 output
 is introduced. Replay requirements remain J642/J646.
+
+## J648 — Correct live skill inventory ownership after its first device refusal
+
+J646's 102-file cohort passes selected-device preflight and builds with zero
+errors in 110.66 s, request 20261019T122900.397031Z. Frozen APK
+00f141d16ed3d0aac1079e701a44416c95a77d1d3b8cddfa2382c20d1fa71902,
+build receipt and source hashes are at
+work/experiments/survivor-skill-variants/candidate-20261019T122900.397031Z/.
+It installs in place in 4.72 s after live adopted-capacity/placement checks;
+payload sync passes. Engineer reaches 60.52 s with callbacks 16/5/1/1, zero
+unexpected current-process runtime errors, unchanged 13 applied profile runs,
+and a healthy combat observer recording 9 player-projectile and 12 owned-summon
+damage events. This callback pass does not establish the new selector.
+
+First feature failure: the live skill inventory refuses with "Selected body
+prefab has no exact body catalog identity". The old live branch requires the
+master's configured body prefab to equal the catalog prefab. The report's
+spawned body index and native damage facts both identify index 78; the exact
+server-mapped body/master combat observer remains healthy. This establishes a
+failure of the live inventory predicate, not a missing body catalog or a
+gameplay failure. The deeper reason for the configured-prefab mismatch is not
+attributed. An initial restore-timing hypothesis was withdrawn: the spawn
+wrapper restores its prior prefab after the world iterator completes.
+
+The host classifier also preferred an empty serialized inline override report
+over the real live report, hiding its specific error. Unity serialized the
+absent request/report as default inline objects; requested remains false.
+Evidence: work/experiments/survivor-check/20261019T123252.319185Z/Engi/,
+including the raw reports, capture/logs and callback assessment. No alternate
+selector is guessed or attempted. Both baseline modes are deferred until this
+first feature failure is corrected; J647 9e7c4224… stays accepted.
+
+Smallest correction: the static prefab branch still requires the exact native
+catalog object. A live inventory instead requires the reciprocal master/body
+link, active native server, nonzero network IDs and exact mappings for both
+objects, using J642's source-backed ownership contract. Component count/order
+and each family reference must match that body's catalog prefab; native
+loadout indices and runtime overrides stay separate. The host uses the override
+inventory only when requested is true. An independent source review finds no
+remaining blocker, and 34 parser/assessment tests pass, including empty-inline
+report masking. Exact-editor compile/API/parser and persistent-source-asset
+checks pass at
+work/experiments/survivor-skill-variants/editor-20261019T124400.305497Z/.
+These checks do not prove the new live mapping on device.
+
+The installed 00f141d1… does not contain this correction. Revisit with a new
+build, valid live inventory, explicit non-default kit and completed-session
+cleanup/restart, then both baseline modes. The runner removed its selector,
+stopped the app and slept the OLED. Existing named owners and fixture producer
+remain; R8 must replay the changed authored observer. No extra device, storage/
+data change, receipt hand edit, original-input mutation or Phase 2 output is
+introduced.
