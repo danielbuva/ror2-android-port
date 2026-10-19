@@ -10942,3 +10942,34 @@ R8 must replay the changed runtime owner/editor fixture. No new local build
 input, Phase 2 output, original input, extra device, manual receipt change,
 storage alteration or permanent progression occurs. Next: build, run both
 default modes, then repeat explicit native UI-abandon/restart.
+
+## J698 — Accept isolated-input tooling APK against both default controls
+
+Hypothesis: J693's optional input isolation must leave the default runtime path
+unchanged. Selected preflight passes; exact Unity code-only build succeeds in
+115.163315 seconds with zero errors, request 20261019T164719.788172Z. APK:
+fe4dc0de0f70ec70b699e9d54e55e3e657c0a89f1f9efb52ee58411ed0bcc383.
+Source checkpoint 6ad4a15 contains J693 and J694, with 105 runtime files. J697's
+conditional native cleanup is a later separate source change. All 266 payload
+hashes equal accepted 039bc73d; the native input and asset generation are retained.
+Frozen APK/build/source/preflight/979-host-test/exact-editor receipts and payload
+comparison are under work/experiments/skill-isolation/
+candidate-20261019T164719.788172Z/. In-place adopted install and sync pass.
+
+The plain default check reaches 35.212570 world seconds on Lakes:
+work/experiments/baseline/20261019T165128.060893Z/. The default exit check reaches
+exactly one genuine exit to Goolake at 156.966797 world seconds and 10.122803
+seconds on the next stage:
+work/experiments/baseline/20261019T165705.272730Z/. Both report and root current-
+process log validation pass, native first-stage diagnostic is off and recovery
+is false. Profile remains 13 applied runs, one earned/available unlock and one
+earned coin; result application is false. These are assisted default controls,
+not a positive isolated-slot case or normal-difficulty/full-run acceptance.
+Both collectors remove their own selector, stop the package and sleep the OLED.
+
+First failure: none in either control. Accept fe4dc0de as the next baseline and
+preserve 039bc73d as the immediate executable rollback. The exact alternate Mage
+utility isolation case is active separately; its outcome is not inferred here.
+J697's reviewed native cleanup correction is also building separately. No new
+original input, Phase 2 output, runtime membership, extra device, manual receipt
+edit, storage reconfiguration/data move or permanent award occurs.
