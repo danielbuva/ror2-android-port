@@ -11,13 +11,17 @@ result in the journal.
 - [ ] Commit an actually earned alternate loadout choice through the profile (J493 revisit).
 - [ ] Observe the remaining J503 achievement conditions (near-death charge, two-stack Mountain
       Shrine, loop) and positive ordinary unlock grants without assists.
-- [ ] Complete skill kits for the base survivors beyond 35 s Lakes play (J504).
-      Continue after J621's Engineer callback coverage: verify actual shield filter/
-      output and native cleanup, then Treebot, Loader, Croco and Captain. Callback
-      coverage does not establish complete ability effects.
+- [ ] Complete default and alternate ability semantics for the base survivors.
+      Callback coverage is broader than complete effects; continue with the exact
+      live variant inventories and output owners (J653, J667, J671).
+- [ ] Finish the opt-in source-stage lifecycle: prepare known source loot consumers,
+      observe actual native actor damage/death and prove completed-session teardown
+      before extending stage transport (J668/J669).
+- [ ] Identify the intermittent LightningStake nonfinite transition across projectile
+      identity turnover; retain native elite behavior while collecting evidence (J667).
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
 - [ ] Validate the drafted Siren encounter owner: native eggs, boss start/defeat,
-      rewards, disabled MapZones and stage teardown after the coordination lock clears.
+      rewards, disabled MapZones and stage teardown.
 - [ ] Moon/finale/escape: manual sessions only, never navigated autonomously.
 
 ## Stability and performance

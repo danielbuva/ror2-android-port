@@ -9814,3 +9814,38 @@ current native family/definition identities for exact variant cases; its
 outcome is separate. The native chest draft and J669 observer require the
 next APK. No original input, extra device, private receipt hand edit, existing
 data move, storage change or new runtime mechanism occurs in this control.
+
+## J671 — Refresh Mage's live default kit and exact alternate identities
+
+Hypothesis: the accepted full dependency payload supports Mage's default
+native skill kit and exposes current exact family/SkillDef indices for the
+next per-run alternate case, without guessing source GUID/catalog ordering.
+APK remains accepted ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69.
+Evidence: work/experiments/survivor-check/20261019T145209.378839Z/Mage/.
+
+The default developer-selected Mage passes 60.509613 world seconds with
+server/authority slot callbacks 15/2/1/1, four valid current GenericSkill
+components, no missing/suppressed activation and no runtime/report error.
+Live native master loadout agrees with default SkillDefs in all four slots.
+The output observer reports 51 body-attributed damage events, 13 involving
+mapped player-owned projectile inflictors, and 18 unique retained projectile
+identities without overflow/truncation or unknown owners. These are native
+output facts, not per-slot causality or complete ability semantics.
+
+The fresh inventory supplies exact component/family/variant/definition
+identities for Lightning Bolt, Ice Bomb, Earth Shards and Fly Up. Root derives
+strict selector JSON only from those live rows, validates it with the existing
+host reader, and starts one bounded all-four alternate case. Private control
+inputs/provenance: work/coordination/codex-mage-alternate-all.json and its
+adjacent provenance receipt. They are explicit case inputs, not new build
+prerequisites or profile writes. Earlier host planning remains a checklist,
+not runtime selector input.
+
+First failure: none in the default Mage case. Native stage/recovery flags
+are false; applied runs/earned/available unlocks remain 13/1/1. Developer
+survivor/variant selection and diagnostic input are assisted, with no earned
+unlock claim. The runner removes selectors, stops and sleeps OLED before the
+fresh alternate run. J669's source remains staged but unbuilt; source chest
+and rolling stake-observer drafts remain under host review. Default APK
+acceptance stays J670. No original input, additional device, storage change,
+existing data move or private receipt hand edit occurs.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J671](PORTING_JOURNAL.md#j671--refresh-mages-live-default-kit-and-exact-alternate-identities) | 2026-10-19 | Refresh Mage's live default kit and exact alternate identities | Hypothesis: the accepted full dependency payload supports Mage's default native skill kit and exposes current exact family/SkillDef indices for the next per-ru… |
 | [J670](PORTING_JOURNAL.md#j670--accept-the-full-typed-dependency-apk-on-both-default-controls) | 2026-10-19 | Accept the full typed-dependency APK on both default controls | Hypothesis: J659/J662's actual content repair and J664's native-only setter order preserve default stage transport, independently of J667/J668's failed feature… |
 | [J669](PORTING_JOURNAL.md#j669--give-native-director-actor-observations-an-explicit-session-event-owner) | 2026-10-19 | Give native director actor observations an explicit session event owner | Hypothesis: J668's native actor rows have zero damage/death events because the only existing event subscription lives inside the optional fixture omitted by th… |
 | [J668](PORTING_JOURNAL.md#j668--native-source-stage-starts-original-large-chest-drop-table-is-uninitialized) | 2026-10-19 | Native source Stage starts; original large-chest drop table is uninitialized | Hypothesis: J664's final-owner deck binding permits genuine source Director startup while retaining strict cold preflight. |
