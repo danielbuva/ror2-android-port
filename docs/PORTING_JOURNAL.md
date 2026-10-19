@@ -8654,3 +8654,33 @@ required and are running next; J637 03339547… stays accepted until they pass.
 Runner finalization removes only its selector, stops the app and sleeps the
 OLED. The J642 observer source is not in this APK. No extra device, data/storage
 change, recipe change, device-receipt hand edit or Phase 2 output is introduced.
+
+## J644 — Cleanup/exit-trace APK passes both baseline modes
+
+Accept J641 APK
+118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717
+after both standard modes pass on the configured Nova. Plain mode reaches
+35.21 s on Lakes. One-exit mode completes one genuine transition to Goolake and
+12.21 s of next-stage play at 121.06 world seconds. Both reports have empty
+error/firstFailure, assisted state and unchanged 13 applied profile runs.
+Independent current-process classification finds zero unexpected runtime errors
+in both captures. Evidence:
+work/experiments/baseline/20261019T114748.464780Z/ and
+work/experiments/baseline/20261019T115117.375307Z/.
+
+The frozen APK and regenerated matching payload are J641; actual Engineer UI
+teardown, shield lease release and healthy same-process restart pass separately
+in J643. These are distinct from ordinary unlocks, alternate kits, normal full-run
+acceptance, audio and performance. Current-stage objective telemetry has no
+observer error at the final snapshots; a new objective resets its bounded trace,
+so the destination report does not reconstruct the earlier J629 failure or
+prove a complete retained prior-stage exit history.
+
+J642's 101-file combat-observer source is newer than this 100-file APK and still
+needs its own build/device checks. The larger native first-stage lifecycle remains
+a private, default-off draft under correction after independent source review;
+none of that draft is in this accepted APK. Preserve J637 03339547… as the immediate
+verified APK rollback, with its cached matching payload and source hashes. Both
+baseline runners remove their selectors, stop the app and sleep the OLED. No
+extra device, storage/data change, receipt hand edit, input mutation or Phase 2
+output is introduced. Authored replay requirements remain J638/J639/J642.
