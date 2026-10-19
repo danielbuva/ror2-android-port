@@ -9170,3 +9170,40 @@ subsequent build, with selected preflight passing and build underway;
 they are not installed or device-verified here. Revisit after that build's
 own default checks and explicit native lifecycle case. No extra device,
 receipt hand edit, original input, existing data or storage configuration change.
+
+## J655 — Build the native-stage/timed-chest candidate and pass its plain default control
+
+Hypothesis: the 105-source J651/J652 integration can build and retain the
+ordinary first-stage baseline with the native lifecycle diagnostic omitted.
+Those entries contain the implementation, prior art and exact-editor results;
+this entry records the first build/install/default device evidence.
+
+Selected preflight passes. Build request 20261019T132519.180640Z takes
+112.547113 s with zero errors, producing APK
+86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03.
+Frozen APK, build receipt, all selected runtime/recipe/fixture hashes and build/
+preflight logs: work/experiments/first-stage-native-lifecycle/
+candidate-20261019T132519.180640Z/. Runtime sources include J651's default-off
+source Stage/cohort transaction and J652's timed-chest listener; the separate
+catalog-closure repair is not integrated. Existing generated payload is reused.
+Live storage/capacity checks, in-place adopted installation and payload sync
+pass; no existing data or storage configuration changes.
+
+Plain baseline evidence: work/experiments/baseline/
+20261019T132906.981713Z/. Ordinary Commando selection reaches 35.235565 s of
+live Lakes play, reports current APK identity, no report/first failure and no
+unexpected process errors in root-log-validation.json. The new native lifecycle
+flag and recovery flag are false. Applied profile runs stay 13; the existing
+diagnostic assist excludes permanent awards. This is the default path only,
+including successful profile metadata/setup with the new timed-chest observer;
+it is not delivery of a timed-chest event or native first-stage acceptance.
+The runner removes its selector, stops the app and sleeps the OLED.
+
+First failure: none in build/install/plain control. An explicit native first-
+stage diagnostic is now a separate queued case, followed by the default
+one-exit control. Both still require their own first-failure classification;
+accepted J654 f57e172b… remains the baseline until both default modes pass.
+Positive ordinary timed-chest progression, native event/teardown recovery and
+complete stage coverage remain open. Changed authored inputs/fixture require
+R8 replay as J651/J652 record; no Phase 2 output, original input, private
+receipt hand edit or extra device is introduced.
