@@ -18,6 +18,8 @@ if (args.Length > 0 && args[0] == "--migration-method-diff") { MigrationSurface.
 if (args.Length > 0 && args[0] == "--migration-self-test") { MigrationSurface.SelfTest(args[1]); return; }
 
 if (args.Length > 0 && args[0] == "--catalog-contract") { CatalogContract.Run(args[1]); return; }
+// Label and provider-identifier literals for the host Addressables catalog reader.
+if (args.Length > 0 && args[0] == "--catalog-names") { CatalogNames.Run(args[1], args.Skip(2).ToArray()); return; }
 
 // Read-only metadata attribution. Never loads or runs the inspected game assembly.
 var resolver = new DefaultAssemblyResolver();

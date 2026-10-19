@@ -295,10 +295,12 @@ the current project. R3 requires R2's destination config; R4 requires R3's compl
 destination build config. The real actions retain their original write paths.
 
 `recipe/catalog-rebuild-inputs.json` pins ten retained local analysis inputs; they
-are verified before being copied under `.rebuild/catalog-inputs/`. Catalog
-metadata export currently needs Unity, so audit/native-inventory/reconcile are
-**not regenerated** by this host-only replay. Regenerating these inputs is the
-next blocker. Destination GUID ownership, catalog manifests/import receipts,
+are verified before being copied under `.rebuild/catalog-inputs/`. The source
+catalog itself is now read on the host (`catalog_reader.py` plus `AssemblyProbe
+--catalog-names`, J714), byte-identical to the retired editor query, but
+audit/native-inventory/reconcile are **not yet regenerated** by this replay, and the live
+pipeline's 2026-10-19 reconcile drifted two pins (J714). Regenerating these inputs on the
+host is the next blocker. Destination GUID ownership, catalog manifests/import receipts,
 dependency receipts and optional-content receipts are regenerated. No current
 project owner map or historical output body is used as source. R3 buffers the
 closure import and UI remaps; R4 buffers dependency import, support repair and
@@ -1266,7 +1268,8 @@ Still open:
    J597 the rebuild's R2 takes its selection from public recipes and reads no migration
    evidence (B1, B3–B6, B8), previous project or live pointer; R5 pins nothing and R7 pins one
    contract result. Left: 57 local analysis inputs read by recorded hash (R3/R4's ten catalog
-   records, which need a host Addressables catalog reader; R7's runtime contracts; 46 shader
+   records; the host catalog reader exists, J714, and audit/inventory/reconcile must now run
+   on the host into the destination; R7's runtime contracts; 46 shader
    recovery inputs), 14 inherited-store files (12 from the editor-side `RecoveredHudBuilder`,
    FastDirector, the TMP mobile shader), and the local provenance map, which also selects
    membership (export copies, step cohorts), not only compares. The working project's own

@@ -712,7 +712,7 @@ def audit():
     if len(candidates) != 1:
         raise RuntimeError("Expected one accepted original load helper; review input selection")
     helper = candidates[0]
-    export_catalog(out)
+    export_source_catalog(out)
     source = out / "source-catalog.json"
     # Generated index only caches original GUID metadata, never supplies a readiness filter.
     candidates = {}
@@ -750,25 +750,37 @@ def audit():
     print(json.dumps(result["summary"], indent=2))
 
 
-def export_catalog(out, template="ExportCatalog.cs.txt", filename="source-catalog.json"):
-    """Read the shipped schema through the already pinned, idle lab editor."""
+def export_source_catalog(out, filename="source-catalog.json"):
+    """Read the shipped catalog schema on the host; no editor is involved (J714).
+
+    `catalog_reader` mirrors the original ContentCatalogData.CreateLocator and is
+    byte-identical to the retired ExportCatalog editor query. The provider contract,
+    label literals and provider identifiers come from shipped IL."""
+    from boundaries import probe_tool
+    from catalog_reader import dumps, read_shipped
+
+    export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
+    original = game() / "Risk of Rain 2_Data/Managed/RoR2.dll"
+    expected = next(row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
+    contract = json.loads(run(probe_tool() + ["--catalog-contract", original], timeout=120).stdout)
+    if contract["input_sha256"] != expected:
+        raise RuntimeError("Provider contract belongs to unaccepted input")
+    expected_legacy = next(
+        row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"
+    )
+    if contract["legacyInputSha256"] != expected_legacy:
+        raise RuntimeError("Legacy resource contract belongs to unaccepted input")
+    write(out / "original-catalog-contract.json", contract)
+    names = json.loads(run(probe_tool() + ["--catalog-names", original] + contract["providers"], timeout=120).stdout)
+    # The editor query expanded RuntimePath against the lab project it ran in; keep that form.
+    record = read_shipped(export / "Assets/StreamingAssets/aa/catalog.json", str(WORK / "lab-project/Assets/StreamingAssets/aa"), names)
+    (out / filename).write_text(dumps(record), encoding="utf-8")
+
+
+def export_catalog(out, template, filename):
+    """Run a read-only catalog template through the already pinned, idle lab editor."""
     export = ROOT / read(WORK / "config/reconstruction.json")["projects"][0]
     code = (ROOT / "tools/catalog" / template).read_text()
-    if "PROVIDER_TYPES" in code:
-        from boundaries import probe_tool
-
-        original = game() / "Risk of Rain 2_Data/Managed/RoR2.dll"
-        expected = next(row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/RoR2.dll")
-        contract = json.loads(run(probe_tool() + ["--catalog-contract", original], timeout=120).stdout)
-        if contract["input_sha256"] != expected:
-            raise RuntimeError("Provider contract belongs to unaccepted input")
-        expected_legacy = next(
-            row["sha256"] for row in read(WORK / "inventory/files.json")["files"] if row["path"] == "Risk of Rain 2_Data/Managed/LegacyResourcesAPI.dll"
-        )
-        if contract["legacyInputSha256"] != expected_legacy:
-            raise RuntimeError("Legacy resource contract belongs to unaccepted input")
-        write(out / "original-catalog-contract.json", contract)
-        code = code.replace("PROVIDER_TYPES", "new string[]{" + ",".join(json.dumps(name) for name in contract["providers"]) + "}")
     code = code.replace("CATALOG", json.dumps(str(export / "Assets/StreamingAssets/aa/catalog.json")))
     code = code.replace("OUTPUT", json.dumps(str(out / filename)))
     client = """import asyncio,json

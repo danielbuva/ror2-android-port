@@ -11715,3 +11715,43 @@ hashes remain unchanged. First failure: incorrect private host route key.
 Retry only after the active Acrid/Mercenary batch releases the Nova. No original
 input, Phase 2 output, extra device, manual receipt edit, storage change or
 permanent award occurs.
+
+## J714 — Host Addressables catalog reader replaces the editor catalog export
+
+Phase 2, from-scratch rebuild (implemented by Claude; host only, no build or device). Hypothesis: the
+Unity step behind R3's pinned catalog analysis, the `ExportCatalog` editor query, can run on the
+host byte-identically. That query loaded the shipped `catalog.json` with Unity's own
+`ContentCatalogData.CreateLocator` and reflected RoR2's labels and providers. Prior art
+(`docs/community-prior-art.md`, Addressables/catalogs): the recorded decision keeps the original
+`CreateLocator` semantics rather than EditorKit's lookup table and fallbacks. So the reader mirrors
+the game's own decompiled `ContentCatalogData.CreateLocator` and `SerializationUtilities`
+(`work/decompiled/Unity.Addressables`), not a community dump.
+
+Change. `scripts/lab/catalog_reader.py` decodes buckets, keys, entries and extra data. It
+expands the one runtime-path token as the editor did, applies `CompactLocation.Dependencies`'
+`typeof(object)` filter, and assigns location IDs in the query's order. It refuses unmeasured
+object kinds, ID prefixes and tokens. A new read-only probe mode, `AssemblyProbe
+--catalog-names`, reads the `AddressablesLabels` string literals and each provider's
+`identifier` literal from shipped IL with Cecil; nothing is invoked. `whole_catalog.audit` now
+calls `export_source_catalog` (contract, names, reader), and `tools/catalog/ExportCatalog.cs.txt`
+is retired. The other three editor templates are unchanged. `recipe/assembly-transforms.json`'s
+`tool_sources` gained the two probe files. R1 then passed its transform-output check against the
+recipe, so the transformed assemblies are unchanged.
+
+Evidence, against R3's pinned files: `source-catalog.json` (75,170,350 B) is byte-identical,
+from either the export or the installation catalog (the two are identical). It takes 13 s instead
+of an editor round trip. `original-catalog-contract.json`, `source-guid-index.json` and
+`source-guid-repairs.json` also regenerate byte-identically through the host audit path. 1,010
+host tests pass, including five new reader tests on an authored synthetic catalog.
+
+Not equal, with causes. (1) `host-closure.json`: the current `analyze` (J659 typed-state
+references) emits a superset of the pinned closure: 43,317 files instead of 40,133, plus
+`runtime_key_edges` and `runtime_roots`. (2) The live pipeline re-ran `reconcile` in place on
+2026-10-19, so the pinned `reconciled-closure.json` and `native-conversions.json` no longer match
+their recipe hashes, and R3's input check now refuses. (3) The local provenance map still records
+`RoR2.dll` `f12f084c…`; `dbc718b` changed the recipe output to `3124a2ed…`, so R1 refuses
+at its provenance check. The working project now comes from an old audit plus a new reconcile,
+which no fixed pin set can follow. Revisit: run audit, native inventory and reconcile on the host
+into R3's destination with out-directory parameters, so the pins become expected hashes, not
+inputs. Have the live pipeline rerun its audit through the same host path. Then refresh the
+provenance map from the accepted working project and replay R1–R9.
