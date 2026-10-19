@@ -10215,3 +10215,42 @@ it does not itself prove teardown. Timed-chest grants, Wake rewards, complete
 alternate semantics, normal difficulty, audio and sustained performance remain
 separate gates. No runtime/source change, original input, extra device, private
 receipt hand edit, existing data move or storage configuration change occurs.
+
+## J681 — Native source teardown retains recovery after UI abandon
+
+Hypothesis: J675's source field leases and J669's actor-event ownership can
+complete native first-stage teardown and start a fresh session in the same
+process. APK remains J680's accepted
+e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+
+Evidence: work/device/<serial>/experiments/session-cleanup/
+20261019T153612.133931Z/. Ordinary eligible Commando runs the explicit native
+first-stage diagnostic with automatic input; all five debug accelerations are
+off. One genuine Stage-begin and source population run before the existing HUD
+settings/end-run buttons send UI abandon. The last report has 68.313644 world
+seconds. This remains diagnostic assistance, not normal-run acceptance.
+
+First failure: SourceStageIdentityLifecycle.RollbackOwnedIdentities refuses
+because owned source NetworkIdentity.Reset did not clear the unspawned
+identity. The completed-session report is absent and session 2 never starts;
+the last report retains session 1 in abandoning-offline-session with recovery
+required. There are no unexpected current-process runtime log errors beyond
+the recorded guarded first failure. Profile runs/earned/available unlocks
+remain 13/1/1; no result is applied. The collector fails and preserves its
+failed evidence, removes selectors, stops the process and sleeps OLED.
+
+This does not prove source-table field restoration, actor observer detach or
+native restart. Source audit identifies a candidate conditional-reset defect:
+an unspawned identity retaining its captured ID with isServer false skips our
+Reset call, then fails the following zero-ID assertion. Exact HLAPI reset
+semantics and the owned registration gate are being independently reviewed
+before a change is integrated. Recovery must remain fail-closed; do not clear
+private identity fields or continue unloading a retained graph.
+
+J678/J680 still accept ordinary default play/transport and native startup;
+they do not accept completed native lifecycle. Huntress's inventory-bound
+alternate case is next on the unchanged APK while the host-only fix is drafted.
+The reviewed metadata stack is applied to working source and passes 965 host
+tests with one existing skip; editor and generated-map checks are pending.
+No new APK, original input, extra-device action, private receipt hand edit,
+existing data move or storage configuration change occurs here.

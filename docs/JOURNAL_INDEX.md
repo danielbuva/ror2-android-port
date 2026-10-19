@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J681](PORTING_JOURNAL.md#j681--native-source-teardown-retains-recovery-after-ui-abandon) | 2026-10-19 | Native source teardown retains recovery after UI abandon | Hypothesis: J675's source field leases and J669's actor-event ownership can complete native first-stage teardown and start a fresh session in the same process. |
 | [J680](PORTING_JOURNAL.md#j680--accept-the-native-loot-candidate-on-both-default-baseline-modes) | 2026-10-19 | Accept the native-loot candidate on both default baseline modes | Hypothesis: J675's native source-table transaction and J669/J672 observations preserve ordinary transport while J678 separately proves the opt-in source startu… |
 | [J679](PORTING_JOURNAL.md#j679--bind-diagnostic-selectors-to-the-exact-owned-apks-embedded-config) | 2026-10-19 | Bind diagnostic selectors to the exact owned APK's embedded config | Hypothesis: a check for one installed artifact must not obtain its selector ID from a mutable working project, which may represent another build/rollback. |
 | [J678](PORTING_JOURNAL.md#j678--new-candidate-passes-plain-play-and-the-native-first-stage-retry) | 2026-10-19 | New candidate passes plain play and the native first-stage retry | Hypothesis: J675 removes J668's actual source Chest2 readiness error, and J669 wires real native actor damage/death observations, without disturbing the ordina… |
