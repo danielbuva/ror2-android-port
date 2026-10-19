@@ -7892,3 +7892,31 @@ Use an actual Engineer run to observe native deployables/summons and retain
 null-hit marker evidence separately. This changes authored runtime inputs and
 public selections; R8/build-entry replay must include them. No new required
 local content input or Phase 2 output is edited.
+
+## J625 — Acrid and Captain pass canonical callbacks on the unchanged baseline
+
+After classifying Loader's first failure in J623, the separate Croco/Captain
+batch uses unchanged J620 APK
+fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971.
+Croco reaches 60.42 s of Lakes play with authority/server counts 18/4/1/2;
+Captain reaches 60.46 s with 27/6/3/4. Their native component inventories are
+valid at five and six components respectively, including one noncanonical
+component each. Captain's two native secondary-mapped components remain
+separate component observations; canonical callback counts are not invented
+requirements for passive/auxiliary components.
+
+Both cases have no suppressed/missing canonical activation, report first
+failure or unexpected current-process runtime error. Evidence:
+work/experiments/survivor-check/20261019T095846.974156Z/Croco/ and
+work/experiments/survivor-check/20261019T095846.974156Z/Captain/.
+Explicit locked-base diagnostic selection, automatic input and invincibility
+make both assisted. Applied profile runs stay 13, earned unlocks one and
+resultApplied=false. Each finalizer stops the app, removes only its selector
+and sleeps the OLED. Selected-device doctor subsequently passes.
+
+All eleven base survivor cases now have four-slot callback observations across
+the documented APKs, but Loader's current case fails its required live interval
+on unresolved LightningStake corruption (J623). None of these cases certifies
+all alternate skills, auxiliary outcomes, damage/targeting, ordinary unlocks,
+normal difficulty or completed-session teardown. No APK, payload, input or
+additional device is changed by this batch.
