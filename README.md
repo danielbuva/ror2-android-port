@@ -79,7 +79,7 @@ authentication is needed to inspect the supplied installation.
 | `./dev sync-data [--device SERIAL]` | Hash-verified sync of changed payload into the selected device's runtime-reported path. |
 | `./dev run` | Launch the lab, wait for its checkpoint, collect the runtime snapshot. |
 | `./dev logs` · `crash` · `screenshot` · `perf` | Timestamped local captures. |
-| `./dev perf --action cpu [--target LABEL] [--device SERIAL]` | Current: 15 s system simpleperf call graph of the already running owned foreground lab process; no launch or install. Raw evidence stays per device; live profiling permissions remain unverified. |
+| `./dev perf --action cpu [--target LABEL] [--device SERIAL] [--profile-scope app]` | Current: 15 s system simpleperf capture of the owned foreground lab app. Default PID mode uses the original event; explicit app mode uses task-clock:u and requires live DEBUGGABLE metadata, with package scope rather than exact PID attribution. No launch or install; permission failures stay recorded per device. |
 | `./dev storage [--device SERIAL]` | Live capacity, volume and backing report; changes nothing. |
 | `./dev reset [--device SERIAL]` | Uninstall only the selected device's locally receipted disposable lab package. |
 | `./dev migrate-device-receipts [--device SERIAL]` | Current: migrate default-device receipts after live ownership verification, preserve originals, activate last. Blocked while the coordination lock exists. |

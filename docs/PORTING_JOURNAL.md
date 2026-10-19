@@ -8043,3 +8043,41 @@ audio enters Git; no new local build input is added. No runtime transform,
 sink, SDK/account/license action, device call, APK or playback occurs. Revisit
 only with authoritative parameter semantics or an authorized compatible native
 Android runtime; audio remains unavailable.
+
+## J628 — Add explicit app-scoped software CPU capture with truthful attribution
+
+J610's hardware cpu-cycles permission denial remains preserved. A separate
+opt-in perf --action cpu --profile-scope app hypothesis uses the system
+simpleperf task-clock:u software event for the already running owned package.
+It requires live selected-package DEBUGGABLE metadata before dispatch and
+retains exact ownership/APK, one-PID, foreground and runtime endpoint gates.
+The receipt explicitly identifies the package process set and sets
+pid_attribution_exact=false; equal endpoint PIDs do not make package-wide
+samples exact-PID evidence. Default PID mode and bare perf collection remain.
+
+The wrapper invokes no app_profiler helper, application launch/stop/restart,
+root, profiler installation, system property, kernel or SELinux change.
+System simpleperf may internally use Android's app-UID profiling helper; that
+normal execution context is disclosed. Unique output ownership, nonempty pull
+validation, failure/raw preservation and separately qualified stage endpoints
+retain their existing owners. Permission/syntax failures stop without retry,
+event fallback or automatic privilege changes. No successful device trace is
+claimed from host tests or cached debuggable metadata.
+
+Root reviewed the copied real-module draft and removed private test import
+paths before integration. Nine additional command/eligibility/refusal/CLI
+contracts bring the full host suite to 923 passing tests, one optional skip;
+Ruff passes. Evidence: work/coordination/codex-app-profile-host.log.
+Primary API context is the exact bundled NDK simpleperf command/reference and
+application profiling sources, reviewed alongside current AOSP record/runner
+source. Current upstream accepts combined selectors, but that does not prove
+the selected system binary's version or behavior; this command deliberately
+claims only its explicit package scope. Private review:
+work/coordination/performance-app-scope-draft/REVIEW.md.
+
+This changes host tooling/help only, with no APK, generated content, recipe,
+storage/device receipt or required local build input. Source100 candidate
+9d022653f52736640826447b7911f589e4d1680f3eb2c6b3a2041ed8873eb75d
+is separately installed in place and undergoing baseline acceptance; it has
+not yet passed both modes. First validate that APK, then attempt app scope only
+during an owned suitable gameplay interval and preserve any permission refusal.

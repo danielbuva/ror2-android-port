@@ -18,11 +18,7 @@ from device import Device, PACKAGE
 
 _LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,47}\Z")
 _SAFE_SELECTION_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,95}\Z")
-_RUNTIME_PATH = re.compile(
-    r"/(?:storage/(?:emulated/[0-9]+|[A-Za-z0-9-]+)|sdcard)/Android/data/"
-    + re.escape(PACKAGE)
-    + r"/files\Z"
-)
+_RUNTIME_PATH = re.compile(r"/(?:storage/(?:emulated/[0-9]+|[A-Za-z0-9-]+)|sdcard)/Android/data/" + re.escape(PACKAGE) + r"/files\Z")
 
 
 class CaptureError(RuntimeError):
@@ -42,15 +38,8 @@ def _pid(device):
 
 def _require_foreground(device):
     listing = device.sh("dumpsys", "activity", "activities")
-    foreground = [
-        line
-        for line in listing.splitlines()
-        if "mResumedActivity" in line or "topResumedActivity" in line
-    ]
-    if not foreground or not any(
-        re.search(r"(?:^|\s)" + re.escape(PACKAGE) + r"(?:/|\s)", line)
-        for line in foreground
-    ):
+    foreground = [line for line in listing.splitlines() if "mResumedActivity" in line or "topResumedActivity" in line]
+    if not foreground or not any(re.search(r"(?:^|\s)" + re.escape(PACKAGE) + r"(?:/|\s)", line) for line in foreground):
         raise RuntimeError("Owned lab package is not confirmed as the resumed foreground activity")
 
 
@@ -159,21 +148,46 @@ def _session_context(device, runtime_path, pid):
             "framePacing": {
                 key: pacing.get(key)
                 for key in (
-                    "frames", "meanMs", "maxMs", "over33ms", "over50ms",
-                    "pauses", "resumeFramesSkipped", "backgroundSeconds",
+                    "frames",
+                    "meanMs",
+                    "maxMs",
+                    "over33ms",
+                    "over50ms",
+                    "pauses",
+                    "resumeFramesSkipped",
+                    "backgroundSeconds",
                 )
                 if key in pacing
             },
             "latestSample": {
                 key: latest.get(key)
                 for key in (
-                    "activeSeconds", "seconds", "frames", "scene", "meanMs", "maxMs",
-                    "over33ms", "over50ms", "managedBytes", "allocatedBytes", "reservedBytes",
-                    "gcCollections", "frameTimingSamples", "gpuTimingSamples", "mainTimingSamples",
-                    "renderTimingSamples", "renderCounterSamples",
-                    "sampledCpuMs", "sampledMainActiveMs", "sampledGpuMs", "sampledRenderActiveMs",
-                    "sampledDrawCalls", "sampledSetPassCalls", "sampledVertices",
-                    "sampledGcAllocBytes", "gcAllocSamples",
+                    "activeSeconds",
+                    "seconds",
+                    "frames",
+                    "scene",
+                    "meanMs",
+                    "maxMs",
+                    "over33ms",
+                    "over50ms",
+                    "managedBytes",
+                    "allocatedBytes",
+                    "reservedBytes",
+                    "gcCollections",
+                    "frameTimingSamples",
+                    "gpuTimingSamples",
+                    "mainTimingSamples",
+                    "renderTimingSamples",
+                    "renderCounterSamples",
+                    "sampledCpuMs",
+                    "sampledMainActiveMs",
+                    "sampledGpuMs",
+                    "sampledRenderActiveMs",
+                    "sampledDrawCalls",
+                    "sampledSetPassCalls",
+                    "sampledVertices",
+                    "sampledGcAllocBytes",
+                    "gcAllocSamples",
                 )
                 if key in latest
             },
@@ -220,7 +234,17 @@ def _identity(device):
     return cohort, _pid(device)
 
 
-def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
+def _require_debuggable_package(device):
+    """Require current installed-package metadata before app-scoped capture."""
+    package_dump = device.sh("dumpsys", "package", PACKAGE)
+    if not re.search(
+        r"(?m)^\s*(?:pkgFlags|flags)=\[[^\]]*\bDEBUGGABLE\b[^\]]*\]",
+        package_dump,
+    ):
+        raise RuntimeError("App-scoped simpleperf requires live package metadata confirming DEBUGGABLE; cached install metadata is insufficient")
+
+
+def capture_cpu(device=None, *, duration_seconds=15, label="sample", scope="pid"):
     """Capture an existing foreground lab process and return its JSON receipt.
 
     The selected ``Device`` is frozen before any command. A successful raw
@@ -232,6 +256,8 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
         raise ValueError("CPU capture duration must be an integer from 1 through 60 seconds")
     if not isinstance(label, str) or not _LABEL.fullmatch(label) or ".." in label:
         raise ValueError("Capture label must be a short safe filename component")
+    if scope not in ("pid", "app"):
+        raise ValueError("CPU capture scope must be 'pid' or 'app'")
 
     selected = device if device is not None else Device()
     serial = selected.serial
@@ -247,10 +273,16 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
     profile_pulled = False
     record_started = False
     first_failure = None
+    app_scoped = scope == "app"
     receipt = {
         "schema": 1,
         "success": False,
-        "success_scope": "Nonempty raw profile from the stable owned process; report and runtime context are separately qualified",
+        "success_scope": (
+            "Nonempty raw profile from the stable owned package target; app mode is not exact-PID attribution; "
+            "report and runtime context are separately qualified"
+            if app_scoped
+            else "Nonempty raw profile from the stable owned process; report and runtime context are separately qualified"
+        ),
         "selected_serial": serial,
         "package": PACKAGE,
         "label": label,
@@ -262,11 +294,36 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
         "runtime_context_before": {"available": False},
         "runtime_context_after": {"available": False},
         "runtime_transition": {},
-        "capture_mechanism": "adb shell system simpleperf record -g -p <PID>; report -g --sort comm,dso,symbol",
+        "capture_scope": ("owned-package-process-set" if app_scoped else "single-owned-pid"),
+        "pid_attribution_exact": not app_scoped,
+        "capture_mechanism": (
+            "adb shell system simpleperf record --app <owned package> -e task-clock:u -f 1000 -g"
+            if app_scoped
+            else "adb shell system simpleperf record -g -p <PID>"
+        )
+        + "; report -g --sort comm,dso,symbol",
+        "profile_scope_note": (
+            "--app selects the owned package process set. Endpoint PID checks remain required, "
+            "but the profile is not attributed to exactly one PID; simpleperf documents --app and -p "
+            "as separate target selectors and does not document combining them."
+            if app_scoped
+            else "The profile targets the exact owned PID captured before recording."
+        ),
         "permission_note": (
-            "The existing runner uses adb shell simpleperf with -p <PID>. Whether the selected Android build "
+            "This explicit app-scoped mode uses adb shell simpleperf with --app and task-clock:u. "
+            "Whether the selected Android build permits recording is device/build dependent; failure "
+            "is preserved without retries or privilege changes."
+            if app_scoped
+            else "The existing mode uses adb shell simpleperf with -p <PID>. Whether the selected Android build "
             "permits shell profiling of this app is device/build dependent; failures are preserved without "
             "falling back to --app, run-as, or another guessed privilege path."
+        ),
+        "profiler_context_note": (
+            "The wrapper invokes shell simpleperf only. Current AOSP simpleperf may internally dispatch "
+            "non-root --app recording through simpleperf_app_runner or run-as to run the profiler in the "
+            "debuggable app UID; the selected device implementation is unverified."
+            if app_scoped
+            else "The wrapper invokes shell simpleperf against the selected PID."
         ),
     }
     operation = "ownership-check"
@@ -277,6 +334,9 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
         receipt["pid"] = pid_before
         operation = "foreground-check"
         _require_foreground(selected)
+        if app_scoped:
+            operation = "package-profile-eligibility"
+            _require_debuggable_package(selected)
         operation = "runtime-context-before"
         runtime_path = _runtime_path(selected)
         context_before = _session_context(selected, runtime_path, pid_before)
@@ -288,10 +348,34 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
         except Exception as exc:
             raise RuntimeError("Android system simpleperf is unavailable; no profiler was installed or guessed") from exc
 
-        receipt["record_command"] = [
-            "simpleperf", "record", "-g", "-p", pid_before,
-            "--duration", str(duration_seconds), "-o", remote_profile,
-        ]
+        if app_scoped:
+            receipt["record_command"] = [
+                "simpleperf",
+                "record",
+                "--app",
+                PACKAGE,
+                "-e",
+                "task-clock:u",
+                "-f",
+                "1000",
+                "-g",
+                "--duration",
+                str(duration_seconds),
+                "-o",
+                remote_profile,
+            ]
+        else:
+            receipt["record_command"] = [
+                "simpleperf",
+                "record",
+                "-g",
+                "-p",
+                pid_before,
+                "--duration",
+                str(duration_seconds),
+                "-o",
+                remote_profile,
+            ]
         receipt["record_remote_profile"] = remote_profile
         record_script = shlex.join(receipt["record_command"]) + " 2>&1"
         receipt["record_command_script"] = record_script
@@ -308,8 +392,15 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
         operation = "symbol-report"
         try:
             rendered = selected.cmd(
-                "shell", "simpleperf", "report", "-g", "-i", remote_profile,
-                "--sort", "comm,dso,symbol", timeout=30,
+                "shell",
+                "simpleperf",
+                "report",
+                "-g",
+                "-i",
+                remote_profile,
+                "--sort",
+                "comm,dso,symbol",
+                timeout=30,
             )
             report_path.write_text(rendered + ("\n" if rendered and not rendered.endswith("\n") else ""))
             receipt["report_generated"] = True
@@ -405,10 +496,7 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
             try:
                 cohort_after, pid_after = _identity(selected)
                 receipt["post_capture_pid"] = pid_after
-                receipt["identity_stable"] = (
-                    receipt.get("cohort") == cohort_after
-                    and receipt.get("pid", pid_after) == pid_after
-                )
+                receipt["identity_stable"] = receipt.get("cohort") == cohort_after and receipt.get("pid", pid_after) == pid_after
                 if receipt.get("pid") is None:
                     receipt["pid"] = pid_after
                 if not receipt["identity_stable"]:

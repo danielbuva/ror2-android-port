@@ -16,10 +16,21 @@ APK_HASH = "a" * 64
 
 
 class FakeDevice:
-    def __init__(self, root, *, owned=True, foreground=True, pids=None,
-                 profiler=True, record_error=None, report_error=None,
-                 session_sequence=None, pull_mode="normal", foreground_sequence=None,
-                 record_output="recorded: samples=987, truncated=0\n"):
+    def __init__(
+        self,
+        root,
+        *,
+        owned=True,
+        foreground=True,
+        pids=None,
+        profiler=True,
+        record_error=None,
+        report_error=None,
+        session_sequence=None,
+        pull_mode="normal",
+        foreground_sequence=None,
+        record_output="recorded: samples=987, truncated=0\n",
+    ):
         self.serial = SERIAL
         self.work_root = Path(root)
         self.root = Path(root) / "device" / SERIAL
@@ -68,24 +79,30 @@ class FakeDevice:
                 "maxMs": 54.0,
                 "over33ms": 800,
                 "over50ms": 40,
-                "samples": [{
-                    "activeSeconds": 240,
-                    "frames": 12000,
-                    "scene": "wispgraveyard",
-                    "managedBytes": 700000000,
-                    "gcCollections": 80,
-                    "sampledCpuMs": 31.0,
-                    "sampledMainActiveMs": 29.0,
-                    "sampledGpuMs": 12.0,
-                    "sampledGcAllocBytes": 20000,
-                }],
+                "samples": [
+                    {
+                        "activeSeconds": 240,
+                        "frames": 12000,
+                        "scene": "wispgraveyard",
+                        "managedBytes": 700000000,
+                        "gcCollections": 80,
+                        "sampledCpuMs": 31.0,
+                        "sampledMainActiveMs": 29.0,
+                        "sampledGpuMs": 12.0,
+                        "sampledGcAllocBytes": 20000,
+                    }
+                ],
             },
         }
         self.runtime_path = "/storage/emulated/0/Android/data/" + PACKAGE + "/files"
-        (self.root / "runtime.json").write_text(json.dumps({
-            "serial": SERIAL,
-            "persistentDataPath": self.runtime_path,
-        }))
+        (self.root / "runtime.json").write_text(
+            json.dumps(
+                {
+                    "serial": SERIAL,
+                    "persistentDataPath": self.runtime_path,
+                }
+            )
+        )
 
     def evidence_directory(self, *components):
         self.evidence_components = components
@@ -114,6 +131,8 @@ class FakeDevice:
             if value is None:
                 raise RuntimeError("no installed ownership receipt")
             return value
+        if isinstance(self._owned, dict):
+            return self._owned
         return {
             "serial": SERIAL,
             "package": PACKAGE,
@@ -137,9 +156,11 @@ class FakeDevice:
                 foreground = self._foreground
             return (
                 "mResumedActivity: ActivityRecord{abc u0 " + PACKAGE + "/.MainActivity t1}\n"
-                if foreground else
-                "mResumedActivity: ActivityRecord{abc u0 example.other/.MainActivity t1}\n"
+                if foreground
+                else "mResumedActivity: ActivityRecord{abc u0 example.other/.MainActivity t1}\n"
             )
+        if args[:2] == ("dumpsys", "package"):
+            return "Package [" + PACKAGE + "]\n  pkgFlags=[ DEBUGGABLE HAS_CODE ]\n"
         if args[0] == "cat" and args[-1].endswith("movement-batch-selection.json"):
             return json.dumps(self.selection)
         if args[0] == "cat" and args[-1].endswith("movement-batch-body-state-spine.json"):
@@ -188,10 +209,7 @@ class PerformanceCaptureTests(unittest.TestCase):
         self.uuid = patch.object(
             performance_capture.uuid,
             "uuid4",
-            side_effect=[
-                type("UUID", (), {"hex": format(index, "010x") + ("0" * 22)})()
-                for index in range(1, 40)
-            ],
+            side_effect=[type("UUID", (), {"hex": format(index, "010x") + ("0" * 22)})() for index in range(1, 40)],
         )
         self.uuid.start()
         self.addCleanup(self.uuid.stop)
@@ -229,26 +247,112 @@ class PerformanceCaptureTests(unittest.TestCase):
         self.assertEqual(record_output_path.read_text(), "recorded: samples=987, truncated=0\n")
         self.assertTrue((Path(self.temp.name) / receipt["report_path"]).is_file())
         self.assertTrue(receipt["remote_profile_removed"])
-        reports = [command for command, _, _ in fake.commands
-                   if command[:3] == ("shell", "simpleperf", "report")]
+        reports = [command for command, _, _ in fake.commands if command[:3] == ("shell", "simpleperf", "report")]
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0][:5], ("shell", "simpleperf", "report", "-g", "-i"))
         self.assertEqual(reports[0][6:], ("--sort", "comm,dso,symbol"))
-        record_calls = [command for command, _, _ in fake.commands
-                        if len(command) == 2 and command[0] == "shell"
-                        and command[1].startswith("simpleperf record ")]
+        record_calls = [
+            command for command, _, _ in fake.commands if len(command) == 2 and command[0] == "shell" and command[1].startswith("simpleperf record ")
+        ]
         self.assertEqual(len(record_calls), 1)
         remote = receipt["record_remote_profile"]
-        expected_argv = ["simpleperf", "record", "-g", "-p", "1234",
-                         "--duration", "15", "-o", remote]
+        expected_argv = ["simpleperf", "record", "-g", "-p", "1234", "--duration", "15", "-o", remote]
         expected_script = shlex.join(expected_argv) + " 2>&1"
         self.assertEqual(record_calls[0][1], expected_script)
         self.assertEqual(receipt["record_command"], expected_argv)
         self.assertEqual(receipt["record_command_script"], expected_script)
-        self.assertTrue(any(command == record_calls[0] and timeout == 45
-                            for command, _, timeout in fake.commands))
-        self.assertFalse(any(arg in {"launch", "install", "push", "sync-data"}
-                             for command, _, _ in fake.commands for arg in command))
+        self.assertTrue(any(command == record_calls[0] and timeout == 45 for command, _, timeout in fake.commands))
+        self.assertFalse(any(arg in {"launch", "install", "push", "sync-data"} for command, _, _ in fake.commands for arg in command))
+
+    def test_explicit_app_scope_uses_only_owned_package_and_software_event(self):
+        fake = FakeDevice(self.temp.name)
+        with patch.object(performance_capture, "Device", return_value=fake):
+            receipt = performance_capture.capture_cpu(scope="app", duration_seconds=10)
+        self.assertTrue(receipt["success"])
+        self.assertEqual(receipt["capture_scope"], "owned-package-process-set")
+        self.assertFalse(receipt["pid_attribution_exact"])
+        self.assertIn("not exact-PID attribution", receipt["success_scope"])
+        self.assertIn("not attributed to exactly one PID", receipt["profile_scope_note"])
+        self.assertIn("may internally dispatch", receipt["profiler_context_note"])
+        command = receipt["record_command"]
+        self.assertEqual(command[:4], ["simpleperf", "record", "--app", PACKAGE])
+        self.assertEqual(command[4:10], ["-e", "task-clock:u", "-f", "1000", "-g", "--duration"])
+        self.assertNotIn("-p", command)
+        self.assertNotIn("cpu-cycles", command)
+        self.assertRegex(receipt["record_remote_profile"], r"^/data/local/tmp/lab-performance-capture-[0-9a-f]{32}\.data$")
+        invocation = [entry for entry in fake.commands if entry[0][0] == "shell"]
+        joined = " ".join(" ".join(entry[0]) for entry in invocation)
+        for forbidden in ("app_profiler.py", "adb root", "force-stop", "am start", "compile -f", "setprop", "setenforce"):
+            self.assertNotIn(forbidden, joined)
+        self.assertEqual(receipt["runtime_transition"]["stage_before"], "wispgraveyard")
+        self.assertTrue(receipt["stable_stage_gameplay"]["stable"])
+
+    def test_app_scope_requires_live_debuggable_metadata_not_cached_receipt(self):
+        fake = FakeDevice(self.temp.name)
+        original = fake.sh
+
+        def no_debuggable(*args, **kwargs):
+            if args[:2] == ("dumpsys", "package"):
+                fake.shell.append(tuple(str(arg) for arg in args))
+                return "Package [" + PACKAGE + "]\n  pkgFlags=[ HAS_CODE ]\n"
+            return original(*args, **kwargs)
+
+        fake.sh = no_debuggable
+        with patch.object(performance_capture, "Device", return_value=fake):
+            with self.assertRaises(performance_capture.CaptureError) as caught:
+                performance_capture.capture_cpu(scope="app")
+        self.assertIn("live package metadata confirming DEBUGGABLE", str(caught.exception))
+        self.assertEqual(caught.exception.receipt["first_failure"]["phase"], "package-profile-eligibility")
+        self.assertFalse(any("simpleperf record" in arg for command, _, _ in fake.commands for arg in command))
+        self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).parent.joinpath("failure.txt").is_file())
+
+    def test_app_scope_preserves_permission_denial_without_retry_or_cleanup(self):
+        fake = FakeDevice(self.temp.name, record_error=RuntimeError("simpleperf failed to open perf event task-clock: Permission denied"))
+        with patch.object(performance_capture, "Device", return_value=fake):
+            with self.assertRaises(performance_capture.CaptureError) as caught:
+                performance_capture.capture_cpu(scope="app")
+        receipt = caught.exception.receipt
+        self.assertEqual(receipt["first_failure"]["phase"], "raw-profile-record")
+        self.assertIn("task-clock: Permission denied", receipt["error"])
+        self.assertIn("remote_profile_preserved", receipt)
+        self.assertNotIn("remote_profile_removed", receipt)
+        failure = Path(self.temp.name) / receipt["profile_path"]
+        self.assertIn("task-clock: Permission denied", failure.parent.joinpath("failure.txt").read_text())
+        record_commands = [entry for entry in fake.commands if any("simpleperf record" in arg for arg in entry[0])]
+        self.assertEqual(len(record_commands), 1)
+        self.assertFalse(any(command[:2] == ("shell", "rm") for command in fake.shell))
+
+    def test_app_scope_refuses_multiple_pids_and_does_not_record(self):
+        fake = FakeDevice(self.temp.name, pids=["1234 5678"])
+        with patch.object(performance_capture, "Device", return_value=fake):
+            with self.assertRaisesRegex(performance_capture.CaptureError, "exactly one running PID") as caught:
+                performance_capture.capture_cpu(scope="app")
+        self.assertEqual(caught.exception.receipt["capture_scope"], "owned-package-process-set")
+        self.assertFalse(any("simpleperf record" in arg for command, _, _ in fake.commands for arg in command))
+        self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).parent.joinpath("failure.txt").is_file())
+
+    def test_app_scope_refuses_foreground_foreign_package(self):
+        fake = FakeDevice(self.temp.name, foreground=False)
+        with patch.object(performance_capture, "Device", return_value=fake):
+            with self.assertRaisesRegex(performance_capture.CaptureError, "not confirmed as the resumed") as caught:
+                performance_capture.capture_cpu(scope="app")
+        self.assertFalse(any("simpleperf record" in arg for command, _, _ in fake.commands for arg in command))
+        self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).parent.joinpath("failure.txt").is_file())
+
+    def test_app_scope_refuses_foreign_owned_package_receipt(self):
+        fake = FakeDevice(
+            self.temp.name,
+            owned={
+                "serial": SERIAL,
+                "package": "foreign.app",
+                "apk_sha256": APK_HASH,
+            },
+        )
+        with patch.object(performance_capture, "Device", return_value=fake):
+            with self.assertRaisesRegex(performance_capture.CaptureError, "does not match the selected lab package") as caught:
+                performance_capture.capture_cpu(scope="app")
+        self.assertFalse(any("simpleperf record" in arg for command, _, _ in fake.commands for arg in command))
+        self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).parent.joinpath("failure.txt").is_file())
 
     def test_multiple_or_changed_pid_refuses_and_preserves_failure_receipt(self):
         fake = FakeDevice(self.temp.name, pids=["1234 5678"])
@@ -271,8 +375,11 @@ class PerformanceCaptureTests(unittest.TestCase):
                 performance_capture.capture_cpu()
 
         initial = {
-            "serial": SERIAL, "package": PACKAGE, "apk_sha256": APK_HASH,
-            "package_path": "/data/app/owned-lab", "build_key": "source-build-key",
+            "serial": SERIAL,
+            "package": PACKAGE,
+            "apk_sha256": APK_HASH,
+            "package_path": "/data/app/owned-lab",
+            "build_key": "source-build-key",
             "storage": {"mode": "adopted"},
         }
         changed_apk = dict(initial, apk_sha256="b" * 64)
@@ -291,9 +398,9 @@ class PerformanceCaptureTests(unittest.TestCase):
                 with self.assertRaises(performance_capture.CaptureError) as caught:
                     performance_capture.capture_cpu()
             self.assertIn(expected, str(caught.exception))
-            self.assertFalse(any(len(command) == 2 and command[0] == "shell"
-                                 and command[1].startswith("simpleperf record ")
-                                 for command, _, _ in fake.commands))
+            self.assertFalse(
+                any(len(command) == 2 and command[0] == "shell" and command[1].startswith("simpleperf record ") for command, _, _ in fake.commands)
+            )
             self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).parent.joinpath("failure.txt").is_file())
 
     def test_unavailable_system_simpleperf_refuses_without_guessing_tool_path(self):
@@ -302,11 +409,11 @@ class PerformanceCaptureTests(unittest.TestCase):
             with self.assertRaises(performance_capture.CaptureError) as caught:
                 performance_capture.capture_cpu()
         self.assertIn("simpleperf is unavailable", str(caught.exception))
-        self.assertFalse(any(any("simpleperf record" in arg for arg in command)
-                             for command, _, _ in fake.commands))
+        self.assertFalse(any(any("simpleperf record" in arg for arg in command) for command, _, _ in fake.commands))
 
     def test_timeout_preserves_failure_and_does_not_remove_remote_partial_profile(self):
         import subprocess
+
         fake = FakeDevice(self.temp.name, record_error=subprocess.TimeoutExpired("adb shell simpleperf", 45))
         with patch.object(performance_capture, "Device", return_value=fake):
             with self.assertRaises(performance_capture.CaptureError) as caught:

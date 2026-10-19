@@ -51,6 +51,12 @@ p.add_argument("--json", action="store_true")
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
 p.add_argument("--action", default="inspect")
+p.add_argument(
+    "--profile-scope",
+    choices=("pid", "app"),
+    default="pid",
+    help=("Current perf CPU scope: pid (default, exact selected PID) or app (explicit owned-package process set, task-clock:u; may include more than one PID)"),
+)
 p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
@@ -75,6 +81,8 @@ if a.payload_dir and a.command != "sync-data":
     p.error("--payload-dir requires sync-data")
 if a.command == "perf" and a.action not in {"inspect", "collect", "cpu"}:
     p.error("perf --action must be collect or cpu (inspect preserves the existing collection behavior)")
+if a.profile_scope != "pid" and not (a.command == "perf" and a.action == "cpu"):
+    p.error("--profile-scope app requires perf --action cpu")
 is_destination_preflight = a.command == "preflight" and a.dest is not None
 if (
     a.work_dir
@@ -182,7 +190,7 @@ try:
         elif a.command == "perf" and a.action == "cpu":
             from performance_capture import capture_cpu
 
-            print(json.dumps(capture_cpu(d, duration_seconds=15, label=a.target), indent=2))
+            print(json.dumps(capture_cpu(d, duration_seconds=15, label=a.target, scope=a.profile_scope), indent=2))
         else:
             print(json.dumps(d.collect(a.command, WORK / "captures" / now()), indent=2))
     else:

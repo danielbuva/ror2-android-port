@@ -123,6 +123,16 @@ endpoints separately from raw capture success; missing context, non-playing
 phase, changed scene/transition count or runtime errors prevent that claim.
 Matching survivor identity is reported separately. These endpoint comparisons
 do not prove uninterrupted gameplay or complete ability behavior between samples.
+Explicit `--profile-scope app` selects an independent software task-clock:u
+hypothesis and requires live selected-package DEBUGGABLE metadata. It retains
+all ownership/PID/foreground/runtime endpoint checks, but labels the raw profile
+as the owned package process set with pid_attribution_exact=false. The system
+simpleperf may internally use Android's app-UID helper; the wrapper requests no
+root, launch, restart, profiler installation or settings change. Device syntax
+and permission support remain measured gates. Any denial is preserved without
+retry or fallback; default PID mode remains unchanged. This mode is not a
+successful trace until the selected device produces one.
+
 Bare `./dev perf` retains the existing dumpsys capture behavior.
 
 Assembly transform verification (`scripts/lab/assembly_transforms.py`, current):
