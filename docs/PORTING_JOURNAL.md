@@ -12716,3 +12716,69 @@ Next: commit/freeze this reviewed target, code-only build, both default controls
 then Mercenary alternate play and UI-abandon/restart to qualify actual teardown.
 No original input, protected bytes, storage setting, extra device or Moon route
 changes. All failed experiments and accepted APKs remain preserved.
+
+
+## J734 — Original Global event produces PCM; controller output remains unavailable
+
+Hypothesis: J732's independently verified native SDK output can execute one
+original event from the complete, unchanged Global bank. Keep this isolated
+from the game, preserve SDK/original Init defaults and require real native
+lifecycle, nonzero finite output, strict monitor checks and full cleanup.
+The exact-sized bank reader has seven Python contracts and an actual Java
+host contract for production plan validation, EOF/zero-progress refusal, bounds
+and hashes. No bank slicing, replacement Init or extracted-clip substitution.
+
+The private Global fixture APK is
+fb50cf4db339a94e3e8f5bce49480fe35161cf0e7a5067c385a8697eaa164ac6.
+It loads original Init first (J732's exact 6,319 bytes), then the full Global
+bank: 95,239,411 bytes, format 150, bank id 1465331116, 3,368 embedded media,
+SHA-256 37756450a0a08a0e3d79ed42926c4de062f67c01dbfef590db1c4af1130485e4.
+The unchanged Play_UI_menuClick event id 3993912102 returns a real playing id
+and EndOfEvent. Init, listener/emitter setup, both memory-view bank loads,
+Vorbis/seven-effect registration queries, capture registration/unregistration,
+unloads and Term return successful native results. Bounded main-output capture
+contains 29 callbacks, 16,704 frames, 33,408 finite samples and 31,622 nonzero
+finite samples; zero nonfinite samples, rejected buffers or limited buffers.
+Peak absolute amplitude is 0.0665275678 and RMS is 0.00848123687. These are
+output-window measurements, not proof of physical audibility, source fidelity,
+complete routing or the retained game's managed ABI.
+
+The strict fixture fails. First failure is native monitor code 42:
+Plug-in not found: 11730951. The monitor is last-only polling, so absence of
+other messages would not prove that no intermediate message occurred. Evidence
+and the complete operation/capture results stay under
+work/device/<serial>/wwise-original-global/20261019T204611.033547Z/;
+root result: work/coordination/codex-wwise-original-global-device-v1.stdout.
+The disposable package was absent before install, installed on the freshly
+queried adopted volume, fully cleaned up and uninstalled. No Android fatal
+exception or cleanup error was observed. The display sleeps afterward; the
+main game package and its ownership receipt remain unchanged.
+
+Offline dependency triage identifies 11730951 as packed sink type 7, company 0,
+plugin 179: Controller Speaker. The accepted original Init graph routes the
+controller bus through top-level Master Controller Speaker Bus 1803403060 to
+Controller_Speaker shareset 1334442663. A separate splitscreen top-level bus
+also selects plugin 179. The installed exact SDK's Windows PluginInfo names
+that sink; its Android PluginInfo lists System, No Output and Wwise Motion but
+omits Controller Speaker. No Android implementation was found. This missing
+output capability is distinct from the seven effects already registered.
+Private metadata receipts: work/coordination/wwise-original-global-sink-triage/.
+
+Prior art for a separate Android adaptation is the exact installed SDK's
+samples/IntegrationDemo/DemoPages/DemoMotion.cpp: its non-controller-output
+path calls SetBusDevice to route a game-pad bus to System. The public SDK
+AkSoundEngine.h contract permits setting a top-level bus's audio-device shareset
+after Init loading and before output creation. The accepted Init identifies
+System shareset 3859886410 using Android-supported sink 174. This supports a
+candidate explicitly rebinding only the unavailable controller-speaker route;
+it does not provide plugin 179 or prove original controller output fidelity.
+Keep this unchanged-routing failure preserved and all strict checks enabled.
+
+Next: test that explicit one-bus adaptation in a fresh owned context before
+Global load/event/capture, recording the real SetBusDevice result and exact
+bus/device ids. Any remaining splitscreen, plugin or monitor failure must still
+fail the candidate. Game audio remains unavailable pending native routing,
+retained managed ABI, Unity initialization, lifecycle and composed gameplay
+validation. No original bank conversion has been established as necessary.
+All native binaries, banks, raw logs and SDK material stay ignored locally;
+this documentation-only checkpoint changes no runtime or rebuild input.
