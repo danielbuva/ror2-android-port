@@ -36,7 +36,10 @@ class ImporterRebuildTests(unittest.TestCase):
                 "Assets/Editor/Example.cs.meta": dict(guid="2" * 32),
             },
             shaders={"Assets/LabLoadingScene/Resources/Example.shader.meta": "3" * 32},
-            other={"Assets/Lab.unity.meta": dict(guid="4" * 32, template="default")},
+            other={
+                "Assets/Lab.unity.meta": dict(guid="4" * 32, template="default"),
+                "Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml.meta": dict(guid="6" * 32, template="text"),
+            },
         )
         self.layout = dict(runtime_source_guids={"runtime/Example.cs": "5" * 32})
         for path in (*self.recipe["scripts"], *self.recipe["shaders"]):
@@ -68,7 +71,11 @@ class ImporterRebuildTests(unittest.TestCase):
         self.put(self.work / "lab-project/Assets/Lab.unity.meta", b"oracle drift")
         before = {str(p): (p.read_bytes(), p.stat().st_mtime_ns) for p in self.work.rglob("*") if p.is_file()}
         result = self.run_step()
-        self.assertEqual(result["placed"], dict(scripts=2, shaders=1, other=1))
+        self.assertEqual(result["placed"], dict(scripts=2, shaders=1, other=2))
+        # Bodies R9 produces get placeholders so Unity keeps the recorded GUIDs at import (J603).
+        self.assertEqual(result["r9_placeholders"], sorted(replay.R9_PLACEHOLDERS))
+        for path, data in replay.R9_PLACEHOLDERS.items():
+            self.assertEqual((self.dest / path).read_bytes(), data)
         for path, data in self.payload.items():
             self.assertEqual((self.dest / path).read_bytes(), data)
         self.assertFalse((self.dest / "Assets/Synthetic.meta").exists())
@@ -76,9 +83,20 @@ class ImporterRebuildTests(unittest.TestCase):
         self.assertEqual(before, {str(p): (p.read_bytes(), p.stat().st_mtime_ns) for p in self.work.rglob("*") if p.is_file()})
         provenance = dict(self.provenance)
         provenance.update({path.removesuffix(".meta"): {} for path in (*self.recipe["scripts"], *self.recipe["shaders"])})
+        provenance.update({path: dict(producer="unity-generated") for path in replay.R9_PLACEHOLDERS})
         comparison = rebuild.compare(self.dest, self.work / "lab-project", set(self.payload), provenance, lambda p: p in self.payload)
-        self.assertEqual(comparison["counts"], dict(identical=3, different=1, missing=0, extra=0))
+        self.assertEqual(comparison["counts"], dict(identical=4, different=1, missing=0, extra=0))
         self.assertIn(b"executionOrder: 0", self.payload["Assets/LabLoadingScene/Example.cs.meta"])
+
+    def test_placeholders_never_replace_an_existing_body_and_require_their_importer(self):
+        self.put(self.dest / "Assets/Lab.unity", b"existing scene")
+        self.assertEqual(self.run_step()["r9_placeholders"], ["Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml"])
+        self.assertEqual((self.dest / "Assets/Lab.unity").read_bytes(), b"existing scene")
+        del self.recipe["other"]["Assets/Lab.unity.meta"]
+        self.save()
+        self.payload.pop("Assets/Lab.unity.meta")
+        with self.assertRaisesRegex(RuntimeError, "no recorded importer"):
+            self.run_step()
 
     def test_last_output_drift_prevents_every_importer_write(self):
         self.provenance["Assets/Lab.unity.meta"]["sha256"] = "f" * 64

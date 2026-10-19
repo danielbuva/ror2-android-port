@@ -545,6 +545,8 @@ def unity_build(destination, work, input_id, provenance, compare_only=False):
     groups = dict(
         r9_obligations=compare_files(destination, work / "lab-project", bindings["r9_obligations"], provenance),
         unity_import_deferred=compare_files(destination, work / "lab-project", bindings["unity_import_deferred"], provenance),
+        # Host-placed importers must survive Unity's import unchanged (J603).
+        importer_identities=compare_files(destination, work / "lab-project", selected_paths(STEPS["importer-identities"], provenance), provenance),
         unity_generated=compare_files(
             destination,
             work / "lab-project",

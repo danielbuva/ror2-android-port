@@ -12,6 +12,13 @@ from scene_rebuild import finish, require_step
 # Folder importers are left to Unity: no serialized asset references a folder GUID (J575),
 # and J548 keeps unneeded game folder inventories out of public recipes.
 GROUPS = ("scripts", "shaders", "other")
+# Bodies only R9 produces: LabBuild's scene and the item-behaviour linker file. Unity drops a
+# meta whose asset is absent at import and later mints a new GUID for the body (J603), so the
+# step places a minimal placeholder that keeps the recorded identity until R9 overwrites it.
+R9_PLACEHOLDERS = {
+    "Assets/Lab.unity": b"%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n",
+    "Assets/LabLoadingScene/WholeCatalogPreservation/item-behaviors/link.xml": b"<linker>\n</linker>\n",
+}
 SERIALIZED = frozenset(
     (
         ".asset",
@@ -147,7 +154,14 @@ def importer_identities(destination, work, input_id, expected, provenance):
         row = provenance[path]
         if hashlib.sha256(data).hexdigest() != row["sha256"] or len(data) != row["size"]:
             raise RuntimeError("Rebuilt importer differs from provenance: " + path)
-    report = dict(input_id=input_id, placed={group: len(recipe[group]) for group in GROUPS})
+    placeholders = []
+    for path, data in R9_PLACEHOLDERS.items():
+        if path + ".meta" not in payload:
+            raise RuntimeError("R9 placeholder has no recorded importer: " + path)
+        if not io.is_file(destination / path):
+            io.apply(destination / path, data)
+            placeholders.append(path)
+    report = dict(input_id=input_id, placed={group: len(recipe[group]) for group in GROUPS}, r9_placeholders=placeholders)
     io.write(destination / ".rebuild/importer-identities-result.json", report)
     finish(io, "importer-identities", input_id, expected, provenance)
     return report
