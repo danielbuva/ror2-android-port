@@ -232,25 +232,27 @@ def initialize(io, input_id):
 
 def composition(destination, work, input_id, expected, provenance):
     from composition_migration import stage
+    from composition_rebuild import pinned_catalog_input, pinned_catalog_path, recipe_inputs
     from shader_rebuild import composition_sources
 
     io = StageIO(work, destination)
-    composition_sources(io, read(work / "config/composition-migration.json")["shader_sources"])
+    composition_sources(io, [group["selected_source"] for group in read(RECIPE / "shader-rebuild-inputs.json")["groups"]])
     reconstruction = read(work / "config/reconstruction.json")
     membership_recipe = read(RECIPE / "composition-export-copies.json")
     if reconstruction["input_id"] != input_id or membership_recipe["input_id"] != input_id or membership_recipe["schema"] != 1:
         raise RuntimeError("Composition export membership requires accepted input")
     export = io.resolve(reconstruction["projects"][0])
-    catalog = io.resolve(read(work / "experiments/whole-catalog/latest.json")["path"])
-    closure = read(catalog / "reconciled-closure.json")
+    closure = pinned_catalog_input(work, "reconciled-closure.json")
     if closure["input_id"] != input_id:
         raise RuntimeError("Catalog closure requires accepted input")
-    from whole_catalog import catalog_path, read_catalog, source_mesh_subobjects
+    from whole_catalog import read_catalog, source_mesh_subobjects
 
     # Reuse the catalog importer's existing typed/native mesh membership rule.
     # Ambiguous meshes remain explicit recipe identities here; native bundle
     # recovery/conversion itself is R3's responsibility.
-    meshes, _ = source_mesh_subobjects(export, closure, read_catalog(catalog_path(catalog)), read(catalog / "native-conversions.json"))
+    meshes, _ = source_mesh_subobjects(
+        export, closure, read_catalog(pinned_catalog_path(work, "source-catalog.json")), pinned_catalog_input(work, "native-conversions.json")
+    )
     membership = export_membership(closure, membership_recipe, [row["source"] for row in meshes])
     copies = {path: membership[path] for path in expected if provenance[path]["producer"] == "export-copy" and path in membership}
     if copies.keys() != {path for path in expected if provenance[path]["producer"] == "export-copy"}:
@@ -275,7 +277,7 @@ def composition(destination, work, input_id, expected, provenance):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(export / source, target)
     io.apply(destination / "Packages/manifest.json", value=dict(dependencies=read(RECIPE / "project-layout.json")["dependencies"]))
-    stage(io)
+    stage(io, recipe_inputs(io))
     # Check required products before publishing any staged transformations. Other
     # stage products are intermediate inputs to later builders, also retained.
     for path in sorted(expected):

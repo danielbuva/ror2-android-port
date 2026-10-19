@@ -261,6 +261,23 @@ class CompositionStageTests(unittest.TestCase):
         write(self.work / "catalog/reconciled-closure.json", dict(input_id=self.accepted, files=["Assets/Test.unity"]))
         write(self.work / "catalog/source-catalog.json", dict(keys=[], locations=[]))
         write(self.work / "catalog/native-conversions.json", dict(issues=[]))
+        # Public recipes replace B1/B3–B6/B8 in the rebuild (J597); the catalog stays hash-pinned.
+        pins = {
+            name: dict(path="catalog/" + name, sha256=sha(self.work / "catalog" / name))
+            for name in ("source-guid-index.json", "reconciled-closure.json", "source-catalog.json", "native-conversions.json")
+        }
+        write(self.recipe_dir / "catalog-rebuild-inputs.json", dict(schema=1, input_id=self.accepted, files=pins))
+        write(self.recipe_dir / "shader-rebuild-inputs.json", dict(input_id=self.accepted, groups=[]))
+        write(
+            self.recipe_dir / "composition.json",
+            dict(schema=1, input_id=self.accepted, composition_stages=0, native_global_textures=[], inherited_guid_rebase={}),
+        )
+        write(self.recipe_dir / "runtime-config.json", dict(attempt="composed-test", integratedStages=[], stageCombatDecks=[]))
+        write(self.recipe_dir / "content.json", dict(prefabAssets=[], stageScene=self.scene))
+        write(self.recipe_dir / "rebuild-binding-targets.json", dict(schema=1, input_id=self.accepted, targets=[self.scene]))
+        generated = dict(path=self.generated, project_path=self.generated, status="reproducible", guid="d" * 32, comparison=dict(basis="authored"))
+        self.patches.enter_context(patch("inherited_state.load_ledger", return_value=dict(self.ledger, assets=self.ledger["assets"] + [generated])))
+        self.patches.enter_context(patch("composition_rebuild.RECIPE", self.recipe_dir))
         self.destination = self.work / "rebuild/r2/lab-project"
         payload = {
             self.scene: ("export-copy", self.scene_data),
@@ -296,9 +313,38 @@ class CompositionStageTests(unittest.TestCase):
             self.assertEqual((self.work / path).read_bytes(), value[0], path)
         marker = json.loads((self.destination / ".port-input.json").read_text())
         self.assertEqual(marker["input_id"], self.accepted)
-        self.assertTrue((self.destination / ".rebuild/composition/evidence/staging-result.json").is_file())
+        self.assertTrue((self.destination / ".rebuild/composition/experiments/input-migration/composed-test/staging-result.json").is_file())
+        self.assertFalse((self.destination / ".rebuild/composition/evidence").exists(), "migration evidence is never read or written")
         with patch.object(rebuild, "game", side_effect=AssertionError("compare-only must not read installation")):
             self.assertTrue(rebuild.rebuild_step("composition", dest=self.destination, work=self.work, compare_only=True)["equal"])
+
+    def test_coordinator_reads_no_migration_evidence_previous_project_or_live_pointers(self):
+        self.prepare_coordinator()
+        import shutil
+
+        for path in (
+            "config/composition-migration.json",
+            "experiments/whole-catalog/latest.json",
+            "experiments/scene-runtime/current.json",
+            "scene-probe-build.json",
+        ):
+            (self.work / path).unlink()
+        for folder in ("evidence", "previous", "old-attempt"):
+            shutil.rmtree(self.work / folder)
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = rebuild.rebuild_step("composition", dest=self.destination, work=self.work)
+        self.assertTrue(result["equal"], result)
+        staged = json.loads((self.destination / ".rebuild/composition/scene-probe-build.json").read_text())
+        self.assertEqual(staged, dict(prefabAssets=[], stageScene=self.scene))
+        receipt = self.destination / ".rebuild/composition/experiments/input-migration/composed-test/missing-runtime-bindings.json"
+        self.assertEqual(json.loads(receipt.read_text()), [self.scene])
+        write(self.recipe_dir / "rebuild-binding-targets.json", dict(schema=1, input_id=self.accepted, targets=["Assets/WholeGame/Unnamed.prefab"]))
+        with self.assertRaisesRegex(RuntimeError, "does not name every J565 binding target"):
+            rebuild.rebuild_step("composition", dest=self.root / "work/rebuild/r2c/lab-project", work=self.work)
+        write(self.recipe_dir / "rebuild-binding-targets.json", dict(schema=1, input_id=self.accepted, targets=[self.scene]))
+        write(self.work / "catalog/source-guid-index.json", {"f" * 32: "Assets/Test.unity"})
+        with self.assertRaisesRegex(RuntimeError, "Recorded catalog input drift"):
+            rebuild.rebuild_step("composition", dest=self.root / "work/rebuild/r2b/lab-project", work=self.work)
 
     def test_coordinator_refuses_incomplete_export_membership(self):
         self.prepare_coordinator()
@@ -322,6 +368,24 @@ class CompositionStageTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(RuntimeError, "differs from provenance"):
             rebuild.rebuild_step("composition", dest=self.destination, work=self.work)
         self.assertFalse((self.destination / self.generated).exists())
+
+
+class RecipeInputTests(unittest.TestCase):
+    def test_intermediate_config_keeps_composition_rows_first_and_leaves_the_recipe_unchanged(self):
+        import composition_rebuild
+
+        runtime = dict(
+            attempt="composed",
+            integratedStages=[dict(name=n) for n in ("a", "b", "c")],
+            stageCombatDecks=[dict(name=n) for n in ("g", "a", "b")],
+        )
+        config = composition_rebuild.intermediate_config(runtime, 2)
+        self.assertEqual([row["name"] for row in config["integratedStages"]], ["a", "b"])
+        self.assertEqual([row["name"] for row in config["stageCombatDecks"]], ["g", "a"])
+        config["integratedStages"][0]["name"] = "changed"
+        self.assertEqual(runtime["integratedStages"][0]["name"], "a")
+        with self.assertRaisesRegex(RuntimeError, "exceeds"):
+            composition_rebuild.intermediate_config(runtime, 4)
 
 
 class ExportMembershipTests(unittest.TestCase):

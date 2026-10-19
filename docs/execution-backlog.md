@@ -30,8 +30,10 @@ Order and rationale: [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 
 - [ ] Make R9 equivalent (J586): resolve the `BlueNoise_R8_1.png.meta` working-project drift
       (J592) and find why `Hidden/Compositing` drops out of R9's APK.
-- [ ] Remove the rebuild's remaining local inputs: R2's migration evidence (B1, B3–B6, B8),
-      the 63 hash-pinned analysis inputs and the 14 inherited-store files.
+- [ ] Remove the rebuild's remaining local inputs (R2's migration evidence is gone, J597):
+      the 57 hash-pinned analysis inputs (R3's ten need a host Addressables catalog reader),
+      the 14 inherited-store files (12 need an exact-editor `RecoveredHudBuilder` step) and the
+      provenance map's role in selecting step membership.
 - [ ] Switch the working project's own build to the rebuild path (migration-removal commit 9,
       [plan](migration-removal-plan.md)).
 - [ ] Have `Start` call `GameSession` directly instead of selecting the session by id.

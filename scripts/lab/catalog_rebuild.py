@@ -8,21 +8,14 @@ from composition_io import StageIO
 
 
 def bootstrap_identity(work, input_id):
-    """Read the historical generation identity through its public hash pin only."""
-    from rebuild import relative_path
-
+    """The historical generation identity, recorded publicly in the build-entry recipe (J597)."""
     recipe = read(RECIPE / "build-entry-inputs.json")
-    if recipe["schema"] != 1 or recipe["input_id"] != input_id:
+    if recipe["schema"] != 2 or recipe["input_id"] != input_id:
         raise RuntimeError("Bootstrap identity requires accepted input")
-    row = recipe["files"]["bootstrap-identity.json"]
-    relative_path(row["path"])
-    source = Path(work) / row["path"]
-    if not source.resolve().is_relative_to(Path(work).resolve()) or sha(source) != row["sha256"]:
-        raise RuntimeError("Recorded build-entry input drift: bootstrap-identity.json")
-    identity = read(source)
-    if identity["input_id"] != input_id or not re.fullmatch(r"integration-[A-Za-z0-9._-]+", identity.get("attempt", "")):
+    attempt = recipe.get("bootstrap_attempt", "")
+    if not re.fullmatch(r"integration-[A-Za-z0-9._-]+", attempt):
         raise RuntimeError("Invalid bootstrap identity")
-    return identity["attempt"]
+    return attempt
 
 
 class CatalogIO(StageIO):

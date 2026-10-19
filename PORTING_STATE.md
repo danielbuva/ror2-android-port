@@ -82,8 +82,10 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    both device checks (J582; rerun J586, both checks passing first time). With the Timeline pin
    (J584) and the layered reimport (J585), R9 logs no new reimport error, and its APK matches the
    baseline except `Hidden/Compositing` (open), the path-dependent Burst library and build metadata.
-   One gate file still differs: `BlueNoise_R8_1.png.meta`, working-project drift (J592). Still needed for a rebuild
-   from public inputs alone: R2 reads local migration evidence (B1, B3–B6, B8), 14 files still
-   come from the inherited store (11 editor-built HUD assets, FastDirector, `Strings.json`, the
-   TMP mobile shader, so J558 is still open) and 63 local analysis inputs are hash-pinned. The remaining
+   One gate file still differs: `BlueNoise_R8_1.png.meta`, working-project drift (J592). Since J597 the
+   rebuild reads no migration evidence (R2 selects from public recipes; R5 and R7 regenerate their
+   inputs; every step still byte-identical). Still needed for a rebuild from public inputs alone:
+   14 files from the inherited store (11 editor-built HUD assets, FastDirector, `Strings.json`, the
+   TMP mobile shader, so J558 is still open), 57 hash-pinned local analysis inputs and the
+   provenance map's role in selecting membership. The working project itself is still migrated. The remaining
    debt is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#known-structural-debt).

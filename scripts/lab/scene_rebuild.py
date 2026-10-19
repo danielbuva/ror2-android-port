@@ -4,16 +4,16 @@ from pathlib import Path
 import re
 
 from catalog_rebuild import CatalogIO, verify_outputs
-from common import RECIPE, read, sha
+from common import RECIPE, game, read, sha
 
 
 class SceneIO(CatalogIO):
     def __init__(self, work, destination, input_id, provenance=None):
         recipe = read(RECIPE / "scene-rebuild-inputs.json")
-        if recipe["schema"] != 1 or recipe["input_id"] != input_id:
+        if recipe["schema"] != 2 or recipe["input_id"] != input_id:
             raise RuntimeError("Scene rebuild inputs require accepted input")
-        if set(recipe["files"]) != {"whole-catalog-code-base.json", "moon-script-identities.txt"}:
-            raise RuntimeError("Incomplete recorded scene input membership")
+        if recipe["files"]:
+            raise RuntimeError("Scene rebuild reads no retained analysis input (J597)")
         from rebuild import relative_path
 
         payload = {}
@@ -24,14 +24,26 @@ class SceneIO(CatalogIO):
             if not source.resolve().is_relative_to(Path(work).resolve()) or sha(source) != row["sha256"]:
                 raise RuntimeError("Recorded scene input drift: " + name)
             payload[name] = source.read_bytes()
+        identities = recipe["script_identities"]
+        relative_path(identities["path"])
+        payload[identities["path"]] = script_identities(work, identities["assembly"]).encode()
         super().__init__(work, destination, input_id)
         self.provenance = provenance or {}
         self.unity_deferred = []
+        self.graphs = None
         for name, content in payload.items():
             # Pin reads in memory as well as retaining them beneath destination.
             self.apply(self.work / name, content)
 
     def accepted(self, path, digest):
+        relative = str(Path(path).relative_to(self.project))
+        if self.graphs is not None and relative in self.graphs:
+            # Before R9 a stage graph is exactly its export copy; Unity's reserialization is an R9 obligation.
+            if digest != self.graphs[relative] or self.sha(path) != digest:
+                return False
+            if self.provenance.get(relative, {}).get("producer") == "unity-generated":
+                self.unity_deferred.append(relative)
+            return True
         # The frozen baseline hashes the editor's re-serialized form of unity-generated files;
         # before R9 imports the destination, require the export copy R2 placed instead.
         if super().accepted(path, digest):
@@ -48,6 +60,44 @@ class SceneIO(CatalogIO):
             return False
         self.unity_deferred.append(relative)
         return True
+
+
+def script_identities(work, assembly):
+    """Regenerate the MapZone script lookup from the installation instead of a retained editor list (J597)."""
+    from script_identity import identity_rows
+
+    rows = [row for row in read(RECIPE / "original-assemblies.json")["assemblies"] if row["source"] == assembly]
+    if len(rows) != 1:
+        raise RuntimeError("Script identities require one R1 importer for " + assembly)
+    data = game(work) / "Risk of Rain 2_Data"
+    if sha(data / "Managed" / assembly) != rows[0]["sha256"]:
+        raise RuntimeError("Script identities require the accepted " + assembly)
+    return identity_rows(data, assembly, rows[0]["guid"])
+
+
+def node_graphs(io, export):
+    """Destination stage graphs and their export-copy hashes, replacing the frozen code-build baseline (J597).
+
+    A graph is an exported asset whose script is RoR2.Navigation.NodeGraph; its identity
+    comes from the R1 importer GUID and Unity's script file ID rule (`script_identity`).
+    """
+    from script_identity import script_file_id
+
+    rows = [row for row in read(RECIPE / "original-assemblies.json")["assemblies"] if row["source"] == "RoR2.dll"]
+    if len(rows) != 1:
+        raise RuntimeError("Stage graphs require the R1 RoR2.dll importer")
+    needle = f"m_Script: {{fileID: {script_file_id('RoR2.Navigation', 'NodeGraph')}, guid: {rows[0]['guid']}, type: 3}}".encode()
+    graphs = {}
+    for source in sorted((export / "Assets").rglob("*.asset")):
+        with source.open("rb") as stream:
+            if needle not in stream.read(4096):
+                continue
+        relative = "Assets/WholeGame/" + str(source.relative_to(export / "Assets"))
+        if io.is_file(io.project / relative):
+            graphs[relative] = sha(source)
+    if not graphs:
+        raise RuntimeError("No exported stage graph is staged in the destination")
+    return graphs
 
 
 def require_step(destination, name, input_id):
@@ -100,10 +150,10 @@ def replay_variants(io):
     config_path = project / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
     recipe_path = io.work / "scene-probe-build.json"
     config, recipe = io.read(config_path), io.read(recipe_path)
-    accepted = io.read(io.work / "whole-catalog-code-base.json")["files"]
+    accepted = io.graphs = node_graphs(io, export)
     accepted_lower = {path.casefold(): digest for path, digest in accepted.items()}
     if len(accepted_lower) != len(accepted):
-        raise RuntimeError("Ambiguous frozen stage baseline paths")
+        raise RuntimeError("Ambiguous stage graph paths")
     out = project / ".rebuild/stage-variants"
     stages = {row["name"]: row for row in config["integratedStages"]}
     decks = {row["name"]: row for row in config["stageCombatDecks"]}
@@ -146,7 +196,7 @@ def replay_variants(io):
                 raise RuntimeError("Scene contract report differs: " + name + "/" + key)
             spec[key] = sorted(counts[key])
         for key in ("groundGraph", "airGraph"):
-            # Resolve case through the frozen baseline, not a filesystem guess.
+            # Resolve case through the export's graph membership, not a filesystem guess.
             paths = [path for path in accepted if path.casefold() == spec[key].casefold()]
             if len(paths) != 1 or not io.accepted(project / paths[0], accepted_lower[spec[key].casefold()]):
                 raise RuntimeError("Accepted variant graph changed: " + name + "/" + key)

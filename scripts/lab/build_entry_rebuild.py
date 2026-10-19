@@ -1,6 +1,8 @@
 """Host-only R7/R8 replay; no editor import, build, or live-project fallback."""
 
+import hashlib
 from pathlib import Path
+import shutil
 
 from catalog_rebuild import CatalogIO, bootstrap_identity
 from common import RECIPE, game, read, sha
@@ -12,9 +14,10 @@ class BuildEntryIO(CatalogIO):
         from rebuild import relative_path
 
         recipe = read(RECIPE / "build-entry-inputs.json")
-        required = {"CharacterBody.cs", "HealthComponent.cs", "GlobalEventManager.cs", "contracts.json", "bootstrap-identity.json"}
-        if recipe["schema"] != 1 or recipe["input_id"] != input_id or set(recipe["files"]) != required:
+        if recipe["schema"] != 2 or recipe["input_id"] != input_id or set(recipe["files"]) != {"contracts.json"}:
             raise RuntimeError("Build-entry pinned inputs require accepted input and complete membership")
+        if set(recipe["decompiled"]["files"]) != {"CharacterBody.cs", "HealthComponent.cs", "GlobalEventManager.cs"}:
+            raise RuntimeError("Build-entry decompiled inputs require complete membership")
         payload = {}
         for name, row in recipe["files"].items():
             relative_path(row["path"])
@@ -23,9 +26,35 @@ class BuildEntryIO(CatalogIO):
                 raise RuntimeError("Recorded build-entry input drift: " + name)
             payload[name] = source.read_bytes()
         super().__init__(work, destination, input_id)
+        self.recipe = recipe
         self.inputs = self.project / ".rebuild/build-entry-inputs"
         for name, data in payload.items():
             self.apply(self.inputs / name, data)
+
+    def decompiled(self):
+        """Regenerate the three map sources from the installation with the pinned decompiler (J597)."""
+        from recovery import ILSPY, ilspy_project, require_ilspy
+        from rebuild import relative_path
+
+        row = self.recipe["decompiled"]
+        managed = game(self.work) / "Risk of Rain 2_Data/Managed"
+        assembly = managed / row["assembly"]
+        if row["ilspy"] != ILSPY or assembly.parent != managed or sha(assembly) != row["assembly_sha256"]:
+            raise RuntimeError("Decompiled build-entry inputs require the accepted assembly and pinned decompiler")
+        require_ilspy()
+        scratch = self.project / ".rebuild/decompiled" / assembly.stem
+        shutil.rmtree(scratch, ignore_errors=True)
+        try:
+            if ilspy_project(assembly, managed, scratch).returncode:
+                raise RuntimeError("Pinned decompiler failed on " + row["assembly"])
+            for name, file in row["files"].items():
+                relative_path(file["path"])
+                data = (scratch / file["path"]).read_bytes()
+                if hashlib.sha256(data).hexdigest() != file["sha256"]:
+                    raise RuntimeError("Regenerated decompiled input differs: " + name)
+                self.apply(self.inputs / name, data)
+        finally:
+            shutil.rmtree(scratch, ignore_errors=True)
 
     def manifest(self):
         from rebuild import relative_path
@@ -67,6 +96,7 @@ def build_entries(destination, work, input_id, expected, provenance):
             if not path.startswith("Assets/WholeGame/") or not source.resolve().is_relative_to(export.resolve()):
                 raise RuntimeError("Animation source escapes accepted export")
             io.apply(destination / path, copy=source)
+    io.decompiled()
     generate_build_maps(io, manifest, contract, io.inputs / "CharacterBody.cs")
     generate_build_bootstrap(io, manifest, io.read(io.catalog() / "reconciled-closure.json"))
     finish(io, "build-entries", input_id, expected, provenance)

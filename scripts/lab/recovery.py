@@ -6,17 +6,28 @@ import urllib.parse
 import shutil
 
 
-def decompile(assembly=None, force=False):
-    version = run([ROOT / "scripts/ilspycmd", "--version"]).stdout.decode()
-    if "11.0.0.9375" not in version:
+ILSPY = "11.0.0.9375"
+
+
+def require_ilspy():
+    if ILSPY not in run([ROOT / "scripts/ilspycmd", "--version"]).stdout.decode():
         raise RuntimeError("ilspycmd pin changed; review cache/tool compatibility")
+
+
+def ilspy_project(assembly, references, dest):
+    """The one pinned decompiler invocation, shared by decompile and the rebuild's R7."""
+    return run([ROOT / "scripts/ilspycmd", "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", references, "-o", dest, assembly], timeout=300, check=False)
+
+
+def decompile(assembly=None, force=False):
+    require_ilspy()
     base = game() / "Risk of Rain 2_Data/Managed"
     results = []
     paths = [base / assembly] if assembly else sorted(base.glob("*.dll"))
     for p in paths:
         if p.parent != base or not p.is_file():
             raise RuntimeError("Assembly must be a filename in Managed")
-        key = digest({"input": sha(p), "ilspy": "11.0.0.9375", "args": "project-referencepath-csharp9-v2"})
+        key = digest({"input": sha(p), "ilspy": ILSPY, "args": "project-referencepath-csharp9-v2"})
         dest = WORK / "decompiled" / p.stem / key[:16]
         status = dest / "result.json"
         if status.exists() and read(status).get("success") and not force:
@@ -27,7 +38,7 @@ def decompile(assembly=None, force=False):
         dest.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()
         try:
-            proc = run([ROOT / "scripts/ilspycmd", "--disable-updatecheck", "-lv", "CSharp9_0", "-p", "-r", base, "-o", dest, p], timeout=300, check=False)
+            proc = ilspy_project(p, base, dest)
             (dest / "decompile.log").write_bytes(proc.stdout + proc.stderr)
             sources = list(dest.rglob("*.cs"))
             diagnostics = []

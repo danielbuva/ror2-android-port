@@ -1,14 +1,9 @@
 {
-  "schema": 1,
+  "schema": 2,
   "input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
-  "files": {
-    "whole-catalog-code-base.json": {
-      "path": "whole-catalog-code-base.json",
-      "sha256": "e31f22fc38cf4952ab29e3692b9576c89cc3266cc8a42e7fcf5ef1c1665ebc97"
-    },
-    "moon-script-identities.txt": {
-      "path": "moon-script-identities.txt",
-      "sha256": "f109b7cfb191f9866fa29bc9234709bf63380a458f98bc0185f0cbf40bd7a5d8"
-    }
-  }
+  "script_identities": {
+    "assembly": "RoR2.dll",
+    "path": "moon-script-identities.txt"
+  },
+  "files": {}
 }

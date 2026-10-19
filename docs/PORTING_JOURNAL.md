@@ -6766,3 +6766,51 @@ importer/provenance inputs and requires later replay by the rebuild track; no
 Phase 2 step ran here. Next is one code-only APK followed by both baseline modes
 and attributed survivor gameplay. The Siren mission still requires native device
 evidence. No extra device was used.
+
+## J597 — Rebuild without migration evidence: R2 from public recipes, R5 and R7 regenerate their inputs
+
+Phase 2, from-scratch rebuild (implemented and run by Claude; host only, no editor, build or
+device). Hypothesis: R2's migration inputs (B1, B3–B6, B8) only *select* what R2 stages, since
+its products already come from recipes, so public recipes can supply that selection; and R5's
+two and R7's four retained inputs can be regenerated from the installation and export.
+
+Changes. (1) `composition_migration.stage(io, inputs)` now takes its selection from
+`migration_inputs` (the real action, unchanged) or, in the rebuild, from
+`composition_rebuild.recipe_inputs`: the 222 asset transforms (B3's plan was exactly this set; a
+target may pre-exist only as its unchanged export copy), the 229 ledger additions (B4's
+addition rows), 90 GUID pairs in a new audited `recipe/composition.json` (exactly the B5 pairs
+that change inherited store bodies; all 189 normalize identically to the full 53,683-entry map),
+the public runtime config reduced to its first seven stages (B8 held an older copy of the same
+rows, plus about 200 stale report keys), `content.json` (equal to the live file R2 used to
+read), the shader recipe's selection and the two global textures. Source GUIDs, closure,
+catalog and native conversions come from R3's hash-pinned inputs instead of the live
+`whole-catalog/latest.json`. The old run attempt's Nova mapping is only a receipt and is not
+read. R2's binding receipt lists the 104 public J565 targets and fails if its config or content
+does not name each one. (2) R5: `script_identity.py` derives the MapZone script lookup from the
+installation's MonoScripts with Unity's file-ID rule, MD4("s\0\0\0" + namespace + name),
+checked against RFC 1320 vectors and against AssetRipper's `ScriptHashing.CalculateScriptFileID`
+(pinned 1ac666f); prior art: J430's ThunderKit `FileIdUtil` note. All 1,431 old rows whose
+script the current player ships reappear exactly, including `RoR2.TeamFilter`, the one R5
+looks up; the eight others name scripts the installed player does not ship. Stage graphs are
+the export's 151 `RoR2.Navigation.NodeGraph` assets, a superset of every graph in the frozen
+code-build baseline, each required to equal its export copy before R9. (3) R7 decompiles
+`RoR2.dll` with the pinned ilspycmd 11.0.0.9375 (the shared `recovery.ilspy_project`) into
+destination scratch, 21 s, and takes the three map sources by recorded hash; the bootstrap
+attempt is now a public recipe string.
+
+Evidence (real data, `work/receipts/phase2-p2/` and `phase2-p3/`). From an empty destination,
+p3: R1 98, shader pipeline 352, R2 84,487, project inputs 26, R3 259, R4 1,238, R5 18, R6 46, R7
+187 files, all identical to the working project; R2 regenerated 190 store files and kept 14, as
+before. R8 (100) and importer identities (286) were identical in p2, run from a detached
+worktree whose runtime sources were the J585 baseline's. In p3, R8 differed in five runtime
+sources only because the parallel session had staged its drafted runtime (J594–J596) into the
+working project at 23:40; this change touches no R8 input. p3's R2 receipt holds all 104
+targets and all exist in the destination. Since every project file is byte-identical to the J586
+destination, whose APK passed both device checks, no new R9 or device run was made; R9's open
+items (`Hidden/Compositing`, `BlueNoise_R8_1`) are unchanged. 858 host tests pass.
+
+Retained local inputs: 57 (R3/R4's ten catalog records, R7's runtime contracts, 46 shader
+recovery inputs), down from 63; plus the 14 inherited-store files and the provenance map, which
+still selects step membership as well as comparing. The working project's own stage still
+reads B1–B8; commit 9 switches it. Revisit: a host Addressables catalog reader would remove R3's
+pins; the inherited HUD set needs an exact-editor `RecoveredHudBuilder` step.

@@ -4,6 +4,7 @@ import hashlib
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import zlib
@@ -13,6 +14,7 @@ import build
 import build_entry_rebuild as replay
 import catalog_rebuild
 import rebuild
+import recovery
 import whole_catalog
 from common import read, sha, write
 from composition_io import StageIO
@@ -62,22 +64,49 @@ class BuildEntryTests(unittest.TestCase):
             common += "public static GameObject " + n + ';\nasyncOperationHandle = Addressables.LoadAssetAsync<GameObject>("' + n + '");\n'
             common += "asyncOperationHandle.Completed += delegate(AsyncOperationHandle<GameObject> x) { " + n + " = x.Result; };\n"
         common += "}\npublic static GlobalEventManager instance;"
-        files = {}
+        decompiled = {}
         for name, data in (("CharacterBody.cs", source), ("HealthComponent.cs", source), ("GlobalEventManager.cs", common)):
             p = self.work / "sources" / name
             self.put(p, data)
-            files[name] = dict(path=str(p.relative_to(self.work)), sha256=sha(p))
-        for name, value in (("contracts.json", self.contracts), ("bootstrap-identity.json", self.manifest)):
-            p = self.work / "sources" / name
-            write(p, value)
-            files[name] = dict(path=str(p.relative_to(self.work)), sha256=sha(p))
-        write(self.recipe / "build-entry-inputs.json", dict(schema=1, input_id=self.input_id, files=files))
+            decompiled[name] = dict(path="RoR2/" + name, sha256=sha(p))
+        p = self.work / "sources/contracts.json"
+        write(p, self.contracts)
+        files = {"contracts.json": dict(path=str(p.relative_to(self.work)), sha256=sha(p))}
+        write(
+            self.recipe / "build-entry-inputs.json",
+            dict(
+                schema=2,
+                input_id=self.input_id,
+                bootstrap_attempt=self.manifest["attempt"],
+                decompiled=dict(assembly="RoR2.dll", assembly_sha256=sha(self.assembly), ilspy=recovery.ILSPY, files=decompiled),
+                files=files,
+            ),
+        )
+        self.decompiles = []
+
+        def decompile(assembly, references, dest):
+            # Stands in for the pinned ilspycmd run: the regenerated tree is the fixture sources.
+            self.decompiles.append((assembly, references))
+            for name in decompiled:
+                self.put(Path(dest) / "RoR2" / name, (self.work / "sources" / name).read_text())
+            return SimpleNamespace(returncode=0)
+
+        self.start(patch.object(recovery, "ilspy_project", decompile))
+        self.start(patch.object(recovery, "require_ilspy", lambda: None))
         self.runtime = "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
         write(self.recipe / "runtime-config.json", dict(stageCombatDecks=[]))
         write(self.recipe / "content.json", dict(prefabAssets=["Assets/Example.asset"]))
         write(self.recipe / "runtime-sources.json", ["runtime/Session.cs"])
         self.put(self.root / "tools/unity/runtime/Session.cs", "class Session {}")
-        for name in ("AndroidProgressionHost", "AndroidDiscoveryHost", "AndroidProfileHost", "AndroidLifecycleHost", "SurvivorSkillHost", "SirenEncounterHost", "WholeCatalogBuild"):
+        for name in (
+            "AndroidProgressionHost",
+            "AndroidDiscoveryHost",
+            "AndroidProfileHost",
+            "AndroidLifecycleHost",
+            "SurvivorSkillHost",
+            "SirenEncounterHost",
+            "WholeCatalogBuild",
+        ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")
         self.put(self.root / "android/Assets/Editor/LabBuild.cs", "class LabBuild {}")
         self.put(self.root / "android/Assets/LabDiagnostics.cs", "class LabDiagnostics {}")
@@ -179,7 +208,23 @@ class BuildEntryTests(unittest.TestCase):
         self.assertFalse((self.dest / self.runtime).exists())
         self.assertFalse((self.dest / ".rebuild/build-entries-complete.json").exists())
         self.put(self.work / "sources/CharacterBody.cs", "drift")
-        with self.assertRaisesRegex(RuntimeError, "input drift"):
+        with self.assertRaisesRegex(RuntimeError, "Regenerated decompiled input differs: CharacterBody.cs"):
+            self.r7_run()
+        self.assertFalse((self.dest / ".rebuild/decompiled").exists() and any((self.dest / ".rebuild/decompiled").iterdir()))
+        self.put(self.work / "sources/contracts.json", "drift")
+        with self.assertRaisesRegex(RuntimeError, "input drift: contracts.json"):
+            self.r7_run()
+
+    def test_decompiled_inputs_come_from_the_accepted_assembly_only(self):
+        self.r7_run()
+        self.assertEqual(self.decompiles, [(self.assembly, self.assembly.parent)])
+        self.assertTrue((self.dest / ".rebuild/build-entries-complete.json").exists())
+        self.r8_run()
+        self.assertEqual(len(self.decompiles), 1, "R8 needs no decompiled source")
+        recipe = read(self.recipe / "build-entry-inputs.json")
+        recipe["decompiled"]["assembly_sha256"] = "0" * 64
+        write(self.recipe / "build-entry-inputs.json", recipe)
+        with self.assertRaisesRegex(RuntimeError, "accepted assembly and pinned decompiler"):
             self.r7_run()
 
     def test_runtime_sources_preserves_existing_importers_and_hash_gates(self):

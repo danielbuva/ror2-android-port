@@ -21,6 +21,10 @@ from composition_io import StageIO
 from composition_migration import scene_contract
 
 
+# RoR2.Navigation.NodeGraph under the R1 RoR2.dll importer GUID (script_identity).
+NODE_GRAPH_SCRIPT = "  m_Script: {fileID: -609359282, guid: 951ce57ad999ac1f040a4dceb5f8b763, type: 3}\n"
+
+
 class SceneRebuildTests(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
@@ -69,11 +73,11 @@ class SceneRebuildTests(unittest.TestCase):
         for guid, name in (("b" * 32, "ground"), ("c" * 32, "air")):
             source = "Assets/Graphs/" + name + ".asset"
             self.index[guid] = source
-            self.put(self.export / source, "synthetic graph " + name)
+            self.put(self.export / source, "synthetic graph " + name + "\n" + NODE_GRAPH_SCRIPT)
             self.put(self.export / (source + ".meta"), "guid: " + guid + "\n")
             relative = "Assets/WholeGame/" + source.removeprefix("Assets/")
             for project in (self.dest, self.work / "lab-project"):
-                self.put(project / relative, "synthetic graph " + name)
+                self.put(project / relative, "synthetic graph " + name + "\n" + NODE_GRAPH_SCRIPT)
                 self.put(project / (relative + ".meta"), "guid: " + guid + "\n")
             self.baseline[relative] = sha(self.export / source)
         write(self.work / "whole-catalog-code-base.json", dict(files=self.baseline))
@@ -98,6 +102,9 @@ class SceneRebuildTests(unittest.TestCase):
             stack.enter_context(patch.object(module, "WORK", self.work))
             stack.enter_context(patch.object(module, "ROOT", self.root))
         stack.enter_context(patch.object(source_scene_candidate, "RECIPE", self.recipes))
+        stack.enter_context(patch.object(scene_rebuild, "RECIPE", self.recipes))
+        rows = [dict(source="RoR2.dll", sha256="0" * 64, guid="951ce57ad999ac1f040a4dceb5f8b763")]
+        write(self.recipes / "original-assemblies.json", dict(schema=1, input_id=self.input_id, assemblies=rows))
         stack.enter_context(patch.object(StageIO, "preflight"))
         stack.enter_context(patch("whole_catalog.original_stage_contexts", return_value=dict(synthetic=True)))
         self.io = StageIO(self.work, self.dest)
@@ -246,14 +253,68 @@ class SceneRebuildTests(unittest.TestCase):
         self.assertFalse((self.dest / path).exists())
         self.assertFalse((self.dest / ".rebuild/source-scenes-complete.json").exists())
 
-    def test_pinned_baseline_gate_before_any_catalog_scratch_writes(self):
-        files = {name: dict(path=name, sha256=sha(self.work / name)) for name in ("whole-catalog-code-base.json", "moon-script-identities.txt")}
-        write(self.recipes / "scene-rebuild-inputs.json", dict(schema=1, input_id=self.input_id, files=files))
-        self.put(self.work / "whole-catalog-code-base.json", "drift")
-        with patch.object(scene_rebuild, "RECIPE", self.recipes), patch.object(catalog_rebuild.CatalogIO, "__init__") as parent:
-            with self.assertRaisesRegex(RuntimeError, "Recorded scene input drift"):
+    def scene_inputs(self):
+        """Schema 2: no retained input; script identities and graphs come from the installation/export (J597)."""
+        files = {}
+        identities = dict(assembly="RoR2.dll", path="moon-script-identities.txt")
+        write(self.recipes / "scene-rebuild-inputs.json", dict(schema=2, input_id=self.input_id, script_identities=identities, files=files))
+        assembly = self.work / "installation/Risk of Rain 2_Data/Managed/RoR2.dll"
+        self.put(assembly, "original assembly")
+        write(self.work / "config/local.json", dict(game_path=str(assembly.parents[2])))
+        rows = [dict(source="RoR2.dll", sha256=sha(assembly), guid="951ce57ad999ac1f040a4dceb5f8b763")]
+        write(self.recipes / "original-assemblies.json", dict(schema=1, input_id=self.input_id, assemblies=rows))
+        return files
+
+    def test_script_identities_are_regenerated_from_installed_monoscripts(self):
+        self.scene_inputs()
+        scripts = {("RoR2", "TeamFilter"), ("", "RendererVisibility")}
+        with patch.object(scene_rebuild, "RECIPE", self.recipes), patch("script_identity.installed_scripts", return_value=scripts) as listed:
+            text = scene_rebuild.script_identities(self.work, "RoR2.dll")
+            listed.assert_called_once_with(self.work / "installation/Risk of Rain 2_Data", "RoR2.dll")
+            # Same row the historical editor list held for the MapZone TeamFilter (J597).
+            self.assertIn("-1895344032|951ce57ad999ac1f040a4dceb5f8b763|RoR2.TeamFilter\n", text)
+            self.assertEqual(len(text.splitlines()), 2)
+            self.put(self.work / "installation/Risk of Rain 2_Data/Managed/RoR2.dll", "other assembly")
+            with self.assertRaisesRegex(RuntimeError, "accepted RoR2.dll"):
+                scene_rebuild.script_identities(self.work, "RoR2.dll")
+
+    def test_md4_matches_rfc_1320_vectors(self):
+        import script_identity
+
+        for message, digest in (
+            (b"", "31d6cfe0d16ae931b73c59d7e0c089c0"),
+            (b"abc", "a448017aaf21d8525fc10ae87aa6729d"),
+            (b"1234567890" * 8, "e33b4ddc9c38f2199c3e7b164fcc0536"),
+        ):
+            self.assertEqual(script_identity.md4(message).hex(), digest)
+        self.assertEqual(script_identity.script_file_id("RoR2", "TeamFilter"), -1895344032)
+
+    def test_retained_inputs_are_refused_before_any_catalog_scratch_writes(self):
+        self.scene_inputs()
+        recipe = read(self.recipes / "scene-rebuild-inputs.json")
+        recipe["files"] = {"whole-catalog-code-base.json": dict(path="whole-catalog-code-base.json", sha256=sha(self.work / "whole-catalog-code-base.json"))}
+        write(self.recipes / "scene-rebuild-inputs.json", recipe)
+        with patch.object(catalog_rebuild.CatalogIO, "__init__") as parent:
+            with self.assertRaisesRegex(RuntimeError, "no retained analysis input"):
                 scene_rebuild.SceneIO(self.work, self.dest, self.input_id)
             parent.assert_not_called()
+
+    def test_stage_graphs_are_export_copies_found_by_their_node_graph_script(self):
+        graphs = scene_rebuild.node_graphs(self.io, self.export)
+        self.assertEqual(graphs, {path: digest for path, digest in self.baseline.items()})
+        self.put(self.export / "Assets/Graphs/other.asset", "not a graph\n")
+        self.put(self.dest / "Assets/WholeGame/Graphs/other.asset", "not a graph\n")
+        self.assertEqual(scene_rebuild.node_graphs(self.io, self.export).keys(), self.baseline.keys())
+        staging = object.__new__(scene_rebuild.SceneIO)
+        StageIO.__init__(staging, self.work, self.dest)
+        staging.graphs, staging.unity_deferred = graphs, []
+        relative = "Assets/WholeGame/Graphs/ground.asset"
+        staging.provenance = {relative: dict(producer="unity-generated")}
+        self.assertTrue(staging.accepted(self.dest / relative, graphs[relative]))
+        self.assertEqual(staging.unity_deferred, [relative])
+        self.assertFalse(staging.accepted(self.dest / relative, "e" * 64))
+        self.put(self.dest / relative, "reserialized by an editor")
+        self.assertFalse(staging.accepted(self.dest / relative, graphs[relative]))
 
     def test_membership_order_and_validate_bindings_is_registered(self):
         self.assertEqual(
@@ -315,20 +376,21 @@ class SceneRebuildTests(unittest.TestCase):
         self.assertFalse((project / ".rebuild").exists())
 
     def test_scene_pin_membership_and_pinned_reads(self):
-        files = {name: dict(path=name, sha256=sha(self.work / name)) for name in ("whole-catalog-code-base.json", "moon-script-identities.txt")}
-        write(self.recipes / "scene-rebuild-inputs.json", dict(schema=1, input_id=self.input_id, files=files))
+        files = self.scene_inputs()
         with (
             patch.object(scene_rebuild, "RECIPE", self.recipes),
+            patch("script_identity.installed_scripts", return_value={("RoR2", "TeamFilter")}),
             patch.object(
                 catalog_rebuild.CatalogIO, "__init__", new=lambda instance, work, destination, input_id: StageIO.__init__(instance, work, destination)
             ),
         ):
             staging = scene_rebuild.SceneIO(self.work, self.dest, self.input_id)
-            self.put(self.work / "whole-catalog-code-base.json", "changed after gate")
-            self.assertEqual(staging.read(self.work / "whole-catalog-code-base.json")["files"], self.baseline)
-            files.pop("moon-script-identities.txt")
-            write(self.recipes / "scene-rebuild-inputs.json", dict(schema=1, input_id=self.input_id, files=files))
-            with self.assertRaisesRegex(RuntimeError, "membership"):
+            self.put(self.work / "moon-script-identities.txt", "retained editor list is never read")
+            self.assertEqual(staging.read_text(self.work / "moon-script-identities.txt"), "-1895344032|951ce57ad999ac1f040a4dceb5f8b763|RoR2.TeamFilter\n")
+            recipe = read(self.recipes / "scene-rebuild-inputs.json")
+            recipe["files"]["moon-script-identities.txt"] = dict(path="moon-script-identities.txt", sha256=sha(self.work / "moon-script-identities.txt"))
+            write(self.recipes / "scene-rebuild-inputs.json", recipe)
+            with self.assertRaisesRegex(RuntimeError, "no retained analysis input"):
                 scene_rebuild.SceneIO(self.work, self.dest, self.input_id)
 
     def test_unity_generated_graph_accepts_only_its_export_copy_before_import(self):
@@ -337,7 +399,7 @@ class SceneRebuildTests(unittest.TestCase):
         relative = "Assets/WholeGame/Graphs/ground.asset"
         digest = "e" * 64  # The editor's re-serialized form in the live project.
         row = dict(producer="unity-generated", sha256=digest, evidence=[dict(export_path="Assets/Graphs/ground.asset")])
-        staging.unity_deferred = []
+        staging.unity_deferred, staging.graphs = [], None
         staging.provenance = {relative: row}
         self.assertTrue(staging.accepted(self.dest / relative, digest))
         self.assertEqual(staging.unity_deferred, [relative])

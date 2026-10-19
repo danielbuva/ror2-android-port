@@ -74,11 +74,7 @@ class CatalogRebuildTests(unittest.TestCase):
             self.put(self.root / "tools/unity/runtime/catalog" / name, "authored synthetic")
         self.put(self.root / "tools/catalog/WholeCatalogHost.cs", "authored synthetic")
         self.pin()
-        write(self.work / "identity.json", dict(input_id=self.input_id, attempt="integration-pinned"))
-        write(
-            self.recipes / "build-entry-inputs.json",
-            dict(schema=1, input_id=self.input_id, files={"bootstrap-identity.json": dict(path="identity.json", sha256=sha(self.work / "identity.json"))}),
-        )
+        write(self.recipes / "build-entry-inputs.json", dict(schema=2, input_id=self.input_id, bootstrap_attempt="integration-pinned", files={}))
         (self.work / "evidence").mkdir()
         stack = contextlib.ExitStack()
         self.addCleanup(stack.close)
@@ -203,14 +199,10 @@ class CatalogRebuildTests(unittest.TestCase):
             whole_catalog.prepare_integration(attempt="integration-pinned")
 
     def test_identity_pin_drift_or_wrong_input_fails_before_catalog_write(self):
-        for identity in (dict(input_id="wrong", attempt="integration-pinned"), dict(input_id=self.input_id, attempt="../escape")):
-            write(self.work / "identity.json", identity)
-            with self.assertRaisesRegex(RuntimeError, "input drift"):
-                catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, set(), {})
-            recipe = read(self.recipes / "build-entry-inputs.json")
-            recipe["files"]["bootstrap-identity.json"]["sha256"] = sha(self.work / "identity.json")
-            write(self.recipes / "build-entry-inputs.json", recipe)
-            with self.assertRaisesRegex(RuntimeError, "Invalid bootstrap"):
+        recipe = read(self.recipes / "build-entry-inputs.json")
+        for change, message in ((dict(input_id="wrong"), "requires accepted input"), (dict(bootstrap_attempt="../escape"), "Invalid bootstrap")):
+            write(self.recipes / "build-entry-inputs.json", dict(recipe, **change))
+            with self.assertRaisesRegex(RuntimeError, message):
                 catalog_rebuild.catalog_closure(self.dest, self.work, self.input_id, set(), {})
         self.assertFalse((self.dest / ".rebuild/catalog-inputs").exists())
 

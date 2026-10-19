@@ -41,8 +41,15 @@ accounting below. Canonical closure
 relocation plus the existing resolved-mesh membership supplies 83,881 export
 copies; the residual 128 are identifier-only
 pairs in `recipe/composition-export-copies.json`, audited in `recipe/README.md`.
-Composition uses the current stage with destination-backed `StageIO`, also
-retaining intermediate runtime config/project products for later builders and
+Composition uses the current stage with destination-backed `StageIO`, with its selection
+from public recipes (`composition_rebuild.recipe_inputs`, J597): asset transforms, the
+229-row addition ledger, the public runtime config reduced to the first seven stages,
+`content.json`, the shader recipe and `recipe/composition.json` (two global textures and
+the 90 GUID pairs inherited store bodies need). Source GUIDs, closure, catalog and native
+conversions come from R3's hash-pinned inputs. It reads no B1, B3–B6 or B8, previous
+project, live `scene-probe-build.json` or old run attempt. Its binding receipt lists the
+104 public J565 targets, each of which its config or content must name. It also retains
+intermediate runtime config/project products for later builders and
 redirecting auxiliary outputs beneath `.rebuild/composition/`. It renders the
 package manifest from project-layout dependencies and initializes assembly
 generation identity from R1 recipes. Existing source/output/conflict gates remain.
@@ -110,10 +117,11 @@ bytes; `--compare-only` works for both. Completion markers enforce R4 → R5 →
 R6 calls `prepare` for all scene names and leaves the two Wwise DLLs to R1.
 The real actions retain their write paths and separate audio action.
 
-R5 explicitly reads two more retained inputs by recorded hash in
-`recipe/scene-rebuild-inputs.json`: the frozen `whole-catalog-code-base.json`
-graph baseline and `moon-script-identities.txt` MapZone script identities.
-Neither is regenerated, and removing these pins remains a fresh-rebuild blocker.
+R5 reads no retained input (J597). Its MapZone script lookup is derived from the
+installation's shipped MonoScripts with Unity's MD4 file-ID rule (`script_identity.py`),
+and its stage graphs are the export's `RoR2.Navigation.NodeGraph` assets present in the
+destination, each of which must still equal its export copy; Unity's reserialization stays
+an R9 obligation. The frozen `whole-catalog-code-base.json` is no longer read.
 R3/R4's ten pinned analysis inputs remain unchanged. R5 regenerates projections,
 scene contracts, navigation roots, contexts and receipts from accepted source,
 destination configuration/imported graphs and R3's regenerated manifest. A config
@@ -161,11 +169,11 @@ R3 closure; sources/fixtures and Android assets from public tracked files;
 linker roots from regenerated locations, retained contracts and authored
 progression roots. Existing importers are preserved, never allocated by R8.
 
-Explicit added blockers in `recipe/build-entry-inputs.json`: three decompiled
-source files, one imported-contract result and one manifest read **only** for
-the historical R3/R7 attempt identity. Each is hash-pinned; none is claimed
-regenerated. Together with R3/R4's ten and R5's two, there are **17** retained
-local input records. `recipe/rebuild-binding-targets.json` is public identifier
+`recipe/build-entry-inputs.json` (J597): R7 regenerates the three decompiled map
+sources from the installation's `RoR2.dll` with the pinned ilspycmd, each gated by its
+recorded hash, and the historical attempt identity is the public `bootstrap_attempt`
+string. Only the imported-contract result remains a retained input. Together with
+R3/R4's ten, there are **11** retained local input records outside the shader recipe. `recipe/rebuild-binding-targets.json` is public identifier
 membership, not a retained content input. See the provenance/privacy audit in
 [recipe/README.md](../recipe/README.md#r7r8-host-replay-audit-2026-10-18).
 
@@ -468,7 +476,7 @@ result list each regenerated path, each retained path/reason and both counts.
 Candidates with different hashes remain inherited. The 352 shader outputs retain
 their native-recovery/CrossOver limitation: shader recovery itself still requires
 a native tool run and the existing 46 hash-pinned shader inputs. This extension
-adds **zero retained local analysis records** (63 remain), one accepted-export
+adds **zero retained local analysis records** (63 then; 57 after J597), one accepted-export
 importer identity/hash, the public smoke GraphicsSettings baseline hash and three
 TMP source selectors/hashes under the **existing** package/archive pins.
 It does not run native recovery, Unity, devices or the real-data harness.

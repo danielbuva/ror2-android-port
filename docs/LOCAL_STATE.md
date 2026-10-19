@@ -135,8 +135,12 @@ The current command set is the ten prototype actions in [Reusable fixes and comm
 
 ## Fresh-rebuild blockers reached by the current workflow
 
-These are still reached by the from-scratch rebuild as well: its R2 step runs
-`composition_migration.stage`, which reads B1, B3–B6 and B8's runtime config (J582).
+Since J597 these are reached only by the working project's own composition actions
+(`composition_migration.migration_inputs`). The from-scratch rebuild's R2 takes the same
+fields from public recipes (`composition_rebuild.recipe_inputs`) and reads none of them,
+nor `work/scene-probe-build.json`, `experiments/scene-runtime/current.json` or the live
+whole-catalog pointer. Commit 9 of the migration-removal plan retires them for the
+working project too.
 
 | Path / family | Readers (file:line) | Producer in repo | Class | Current workflow reaches it | Present |
 | --- | --- | --- | --- | --- | --- |

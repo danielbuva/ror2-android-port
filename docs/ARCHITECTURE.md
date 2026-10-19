@@ -149,7 +149,10 @@ but is not yet equivalent to the working project's (J582; causes in J583).
 
 `build_entry_rebuild.py` owns host-only R7 `build-entries` and R8
 `runtime-sources`, after `scene_rebuild.py` supplies R5/R6. It uses destination
-`StageIO` buffers, explicit retained-input hash gates and completion markers;
+`StageIO` buffers, explicit retained-input hash gates and completion markers. R7
+regenerates its three decompiled map sources with the pinned decompiler
+(`recovery.ilspy_project`) and reads the bootstrap attempt from the public recipe;
+only the runtime-contract result remains a retained input (J597);
 `finish` verifies selected output hashes/sizes before flushing. It shares
 `whole_catalog.generate_build_maps`, `stage_build_sources` and
 `generate_build_bootstrap` with the real build. `build.stage_android_assets`
@@ -243,8 +246,11 @@ contracts); R6 owns 46 bodies/importers. Completion markers enforce order after
 R4, and both steps validate selected hashes/sizes before flushing `StageIO`,
 then compare actual bytes. The real actions keep their original paths. R6
 omits the separate audio action because R1 owns its DLL outputs.
-`scene-rebuild-inputs.json` pins the frozen graph baseline and MapZone script
-identity list as two additional retained-input blockers. Destination scene bytes
+R5 reads no retained analysis input (J597): `script_identity.py` derives the MapZone
+script lookup from the installation's shipped MonoScripts with Unity's MD4 file-ID
+rule, and `scene_rebuild.node_graphs` finds the stage graphs as the export's
+`RoR2.Navigation.NodeGraph` assets, each of which must still be its export copy
+before R9. Destination scene bytes
 determine pending variants even when R2 already supplies their config rows.
 R5 reuses R2/R3's imported closure, validates graph hashes/GUIDs, reads R3's
 regenerated manifest, and regenerates navigation/config/context receipts.
@@ -268,7 +274,12 @@ R1 assembly placement.
 
 Composition rebuild (`scripts/lab/composition_io.py`, current, R2):
 `rebuild-step --step composition` runs `composition_migration.stage` through
-`StageIO` against the isolated destination. The same owner keeps real-stage writes
+`StageIO` against the isolated destination. Its selection comes from
+`composition_rebuild.recipe_inputs` (J597): asset transforms, the addition ledger,
+the public runtime/content recipes and `recipe/composition.json`, with source GUIDs
+and catalog closure from R3's hash-pinned analysis inputs. The rebuild reads no
+migration evidence (B1, B3–B6, B8), previous project, live content selection or old
+run attempt; the real action still takes them through `migration_inputs`. The same owner keeps real-stage writes
 at their original paths when no destination is supplied. Export membership comes
 from canonical catalog closure/resolved-mesh relocation plus the identifier-only residual
 `recipe/composition-export-copies.json`; provenance gates each selected source's
@@ -672,7 +683,7 @@ plus `project-manifest-capture`, `project-manifest-compare`,
 
 ## Known structural debt
 
-First verified against `af2e101`; status updated after J582. Each step was its own commit with
+First verified against `af2e101`; status updated after J597. Each step was its own commit with
 host tests, a zero-error exact-editor build and a device check.
 
 Still open:
@@ -685,14 +696,15 @@ Still open:
    rerun logs no new reimport error and passes both checks first time; its APK differs from the
    baseline only in `Hidden/Compositing` (open), the path-dependent Burst library and build
    metadata. The last differing gate file is `BlueNoise_R8_1.png.meta`, working-project drift (J592).
-2. **The rebuild still reads local migration evidence.** Its R2 step runs
-   `composition_migration.stage`, which reads `work/config/composition-migration.json`,
-   the previous project's runtime config and the composition evidence B3–B6
-   ([LOCAL_STATE.md](LOCAL_STATE.md#fresh-rebuild-blockers-reached-by-the-current-workflow)).
-   63 further local analysis inputs are read by recorded hash
-   (`recipe/*-rebuild-inputs.json`, `recipe/shader-rebuild-inputs.json`), and 14 files
-   still come from the inherited store. The working project itself is still made by
-   that migration; switching it to the rebuild path is commit 9 of the
+2. **The rebuild still has local inputs, and the working project is still migrated.** Since
+   J597 the rebuild's R2 takes its selection from public recipes and reads no migration
+   evidence (B1, B3–B6, B8), previous project or live pointer; R5 pins nothing and R7 pins one
+   contract result. Left: 57 local analysis inputs read by recorded hash (R3/R4's ten catalog
+   records, which need a host Addressables catalog reader; R7's runtime contracts; 46 shader
+   recovery inputs), 14 inherited-store files (12 from the editor-side `RecoveredHudBuilder`,
+   FastDirector, the TMP mobile shader), and the local provenance map, which also selects
+   membership (export copies, step cohorts), not only compares. The working project's own
+   stage still runs the migration (`migration_inputs`); switching it is commit 9 of the
    [migration removal plan](migration-removal-plan.md).
 3. **The session is still selected by id.** `Start` waits 8 s and picks the session from a
    string id; the playable spine runs `GameSession()` (J513) and the 116 historical cases live

@@ -272,6 +272,7 @@ def prepare_asset_transforms(plan, transforms, export, previous, evidence, proje
         if sha(export / row["source"]) != row["current_source_sha256"]:
             raise RuntimeError("Serialized rebase provenance drift: " + row["source"])
         if row["target"] not in transforms:
+            # Only the real action's historical plan can name a preview output.
             output = evidence / "preview" / row["target"]
             if sha(output) != row["output_sha"] or sha(previous / row["old"]) != row["previous_adapted_sha256"]:
                 raise RuntimeError("Serialized rebase provenance drift: " + row["source"])
@@ -283,7 +284,8 @@ def prepare_asset_transforms(plan, transforms, export, previous, evidence, proje
             if asset["source"] != row["source"] or asset["source_sha256"] != row["current_source_sha256"]:
                 raise RuntimeError("Asset transform disagrees with composition provenance: " + row["target"])
             data, meta_data = generate_asset(export, asset, guids[row["source"]])
-            if hashlib.sha256(data).hexdigest() != row["output_sha"]:
+            # Recipe-derived rows carry no historical output hash; R2's provenance gate checks them.
+            if row["output_sha"] is not None and hashlib.sha256(data).hexdigest() != row["output_sha"]:
                 raise RuntimeError("Asset transform differs from composition oracle: " + row["target"])
             meta = Path(str(target) + ".meta")
             if io.is_file(meta) and io.read_bytes(meta) != meta_data:
@@ -360,16 +362,19 @@ def plan_additions(rows, export, accepted, guidmap, remaps, work=None, ledger=No
     return prepared
 
 
-def stage(io=None):
-    io = io or StageIO()
-    io.preflight()
+def migration_inputs(io):
+    """The real action's selection: B1 selection, B3–B6 evidence and B8's previous config.
+
+    The rebuild supplies the same fields from public recipes instead
+    (`composition_rebuild.recipe_inputs`, J597).
+    """
     selection = read(io.work / "config/composition-migration.json")
     evidence = private_path(selection["evidence"], io)
     previous = private_path(selection["previous_project"], io)
     export = io.resolve(read(io.work / "config/reconstruction.json")["projects"][0])
     project = io.project
     accepted = read(io.work / "config/accepted-input.json")["input_id"]
-    if selection["input_id"] != accepted or io.read(project / ".port-input.json")["input_id"] != accepted:
+    if selection["input_id"] != accepted:
         raise RuntimeError("Composition rebase belongs to a different accepted input")
     if previous.resolve() == project.resolve():
         raise RuntimeError("Previous composition must remain a separate rollback")
@@ -386,9 +391,6 @@ def stage(io=None):
             if match[1] in owners:
                 raise RuntimeError("Duplicate current GUID owner")
             owners[match[1]] = str(Path(str(meta)[:-5]).relative_to(project))
-    remaps = read(RECIPE / "hud-ui-remaps.json")
-    if remaps["input_id"] != accepted:
-        raise RuntimeError("UI bindings belong to a different input")
     analysis = read(evidence / "asset-analysis.json")["rows"]
     path_overrides = selection.get("source_path_overrides", {})
     guidmap = read(evidence / "rebase-analysis.json")["guidmap"]
@@ -448,12 +450,6 @@ def stage(io=None):
 
     config_path = previous / "Assets/LabLoadingScene/Resources/MovementBatchProbe.json"
     configuration = retarget(read(config_path))
-    chest_source = export / "Assets/RoR2/Base/Interactables/Chest1/Chest1.prefab"
-    costs = re.findall(r"^  cost: (\d+)$", chest_source.read_text(), re.M)
-    if configuration.get("originalMoneyCost"):
-        if costs != ["25"]:
-            raise RuntimeError("Updated original Chest1 cost requires contract review")
-        configuration["moneySourceSha256"] = sha(chest_source)
     recipe = io.read(io.work / "scene-probe-build.json")
     # Removed original inputs are not incompatibility quarantines or fallbacks.
     recipe["prefabAssets"] = [path for path in recipe["prefabAssets"] if path.casefold() in assetmap]
@@ -466,6 +462,42 @@ def stage(io=None):
         )
         if not io.rebuilding:
             raise RuntimeError("Composition still references removed or unowned assets; inspect missing-runtime-bindings.json")
+    return dict(
+        evidence=evidence,
+        previous=previous,
+        plan=plan,
+        guids=guids,
+        guidmap=guidmap,
+        generated=generated,
+        configuration=configuration,
+        recipe=recipe,
+        shader_sources=selection["shader_sources"],
+        native_global_textures=selection.get("native_global_textures", []),
+        historical_receipts=True,
+        receipt=dict(original_input_removals=absent, retargeted_assets=len(assetmap), removed_state_bindings=removed_bindings),
+    )
+
+
+def stage(io=None, inputs=None):
+    io = io or StageIO()
+    io.preflight()
+    inputs = inputs or migration_inputs(io)
+    evidence, previous, plan, guids, guidmap = (inputs[key] for key in ("evidence", "previous", "plan", "guids", "guidmap"))
+    generated, configuration, recipe = inputs["generated"], inputs["configuration"], inputs["recipe"]
+    export = io.resolve(read(io.work / "config/reconstruction.json")["projects"][0])
+    project = io.project
+    accepted = read(io.work / "config/accepted-input.json")["input_id"]
+    if io.read(project / ".port-input.json")["input_id"] != accepted:
+        raise RuntimeError("Composition rebase belongs to a different accepted input")
+    remaps = read(RECIPE / "hud-ui-remaps.json")
+    if remaps["input_id"] != accepted:
+        raise RuntimeError("UI bindings belong to a different input")
+    chest_source = export / "Assets/RoR2/Base/Interactables/Chest1/Chest1.prefab"
+    costs = re.findall(r"^  cost: (\d+)$", chest_source.read_text(), re.M)
+    if configuration.get("originalMoneyCost"):
+        if costs != ["25"]:
+            raise RuntimeError("Updated original Chest1 cost requires contract review")
+        configuration["moneySourceSha256"] = sha(chest_source)
 
     # Historical plan/identity checks remain until their contracts have replacements.
     from asset_transforms import load_recipe
@@ -497,7 +529,7 @@ def stage(io=None):
     native_names = set()
     from shader_rebuild import composition_sources
 
-    for source in composition_sources(io, selection["shader_sources"]):
+    for source in composition_sources(io, inputs["shader_sources"]):
         receipt = read(source.parent / "receipt.json")
         if not receipt["success"]:
             raise RuntimeError("Current native binding generation failed")
@@ -521,7 +553,7 @@ def stage(io=None):
             io.apply(path, delete=True, reason="native shader absent from selected outputs")
             io.apply(Path(str(path) + ".meta"), delete=True, missing_ok=True, reason="obsolete native shader importer")
     global_textures = []
-    for row in selection.get("native_global_textures", []):
+    for row in inputs["native_global_textures"]:
         source = export / row["source"]
         target = project / "Assets/LabLoadingScene/Resources" / row["resource"]
         if source.suffix != ".png" or target.parent != project / "Assets/LabLoadingScene/Resources" or sha(source) != row["sha256"]:
@@ -570,12 +602,14 @@ def stage(io=None):
         evidence / "current-original-script-orders.json",
         value=restore_script_orders(project, game(io.work) / "Risk of Rain 2_Data/globalgamemanagers.assets", io),
     )
-    old_attempt = io.resolve(io.read(io.work / "experiments/scene-runtime/current.json")["path"])
-    mapping = read(old_attempt / "nova-input-mapping.json")
-    if sha(io.resolve(mapping["observation"])) != mapping["observation_sha256"]:
-        raise RuntimeError("Accepted physical mapping evidence changed")
-    mapping["attempt"] = evidence.name
-    io.apply(evidence / "nova-input-mapping.json", value=mapping)
+    if inputs["historical_receipts"]:
+        # Run attribution for the real action only; no project file depends on it.
+        old_attempt = io.resolve(io.read(io.work / "experiments/scene-runtime/current.json")["path"])
+        mapping = read(old_attempt / "nova-input-mapping.json")
+        if sha(io.resolve(mapping["observation"])) != mapping["observation_sha256"]:
+            raise RuntimeError("Accepted physical mapping evidence changed")
+        mapping["attempt"] = evidence.name
+        io.apply(evidence / "nova-input-mapping.json", value=mapping)
     probe = "body-state-spawn-state-auto-nova-spine-bringup"
     io.apply(
         evidence / "attempt.json",
@@ -605,10 +639,10 @@ def stage(io=None):
             input_id=accepted,
             staged=len(set(staged)),
             source_adaptations=len(plan["rows"]),
-            original_input_removals=absent,
-            retargeted_assets=len(assetmap),
+            original_input_removals=inputs["receipt"]["original_input_removals"],
+            retargeted_assets=inputs["receipt"]["retargeted_assets"],
             native_sources=len(native_names),
-            removed_state_bindings=removed_bindings,
+            removed_state_bindings=inputs["receipt"]["removed_state_bindings"],
             native_global_textures=global_textures,
             scope="Current ignored composition generation only; no Android or complete gameplay acceptance",
         ),

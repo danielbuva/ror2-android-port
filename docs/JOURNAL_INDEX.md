@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J597](PORTING_JOURNAL.md#j597--rebuild-without-migration-evidence-r2-from-public-recipes-r5-and-r7-regenerate-their-inputs) | 2026-10-18 | Rebuild without migration evidence: R2 from public recipes, R5 and R7 regenerate their inputs | Phase 2, from-scratch rebuild (implemented and run by Claude; host only, no editor, build or device). |
 | [J596](PORTING_JOURNAL.md#j596--execute-survivor-and-siren-contracts-in-the-exact-editor) | 2026-10-18 | Execute survivor and Siren contracts in the exact editor | Hypothesis: the J587/J590 survivor observer and J594 Siren owner can compile and satisfy their source-selection, accounting and teardown contracts in the pinne… |
 | [J595](PORTING_JOURNAL.md#j595--verify-the-scoped-current-nova-path-and-harden-receipt-cleanup) | 2026-10-18 | Verify the scoped current-Nova path and harden receipt cleanup | Hypothesis: J589's selected-device context can preserve the current Nova's ownership and baseline behavior after migration, while refusing ambiguous selection… |
 | [J586](PORTING_JOURNAL.md#j586--r9-rerun-no-new-reimport-errors-one-gate-file-and-one-apk-shader-left) | 2026-10-18 | R9 rerun: no new reimport errors; one gate file and one APK shader left | Phase 2, from-scratch rebuild (run by Claude, with the operator's approval to stop the lab MCP editor). |
