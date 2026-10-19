@@ -314,3 +314,194 @@ namespace NativeSourceFieldFixture
     }
 }
 #endif
+
+#if UNITY_EDITOR
+namespace MageConfigFixture
+{
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
+using EntityStates.Mage.Weapon;
+using RoR2;
+using RoR2.Projectile;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Networking;
+
+public static class MageEarthShardsStaticConfigFixture
+{
+    const string ConfigGuid = "aa0faf673d02e8a448725ed13b403c88";
+    const string ConfigPath = "Assets/WholeGame/RoR2/Base/Characters/Mage/Skills/FireEarthShards/EntityStates.Mage.Weapon.FireEarthShards.asset";
+    const string ProjectileGuid = "2c83499e4cf62f54eb25b74fb2e47656";
+    const string ProjectilePath = "Assets/WholeGame/RoR2/Base/Characters/Mage/Skills/FireEarthShards/MageEarthShardProjectile.prefab";
+
+    static void Require(bool condition, string message)
+    {
+        if (!condition)
+            throw new InvalidOperationException("Mage Earth Shards static config fixture failed: " + message);
+    }
+
+    static bool SameValue(object left, object right)
+    {
+        if (left is UnityEngine.Object || right is UnityEngine.Object)
+            return (left as UnityEngine.Object) == (right as UnityEngine.Object);
+        return Equals(left, right);
+    }
+
+    public static object Run()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling && !EditorApplication.isUpdating &&
+                    !NetworkServer.active && !NetworkClient.active && !RoR2.Run.instance,
+                "Require the exact editor idle, with no compilation, Play Mode, network, or Run");
+
+        Require(AssetDatabase.GUIDToAssetPath(ConfigGuid) == ConfigPath &&
+                    AssetDatabase.AssetPathToGUID(ConfigPath) == ConfigGuid,
+                "Generated source map identity for the native EntityStateConfiguration changed or is ambiguous");
+        Require(AssetDatabase.GUIDToAssetPath(ProjectileGuid) == ProjectilePath &&
+                    AssetDatabase.AssetPathToGUID(ProjectilePath) == ProjectileGuid,
+                "Generated source map identity for the native Earth Shard projectile changed or is ambiguous");
+
+        var config = AssetDatabase.LoadAssetAtPath<EntityStateConfiguration>(ConfigPath);
+        var expectedPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ProjectilePath);
+        Require(config && config.name == "EntityStates.Mage.Weapon.FireEarthShards" &&
+                    (Type)config.targetType == typeof(FireEarthShards),
+                "Exact staged config object or target state type changed");
+        Require(expectedPrefab && expectedPrefab.name == "MageEarthShardProjectile" &&
+                    AssetDatabase.LoadAssetAtPath<GameObject>(ProjectilePath) == expectedPrefab,
+                "Exact staged projectile prefab cannot be loaded at its generated path");
+
+        var serialized = config.serializedFieldsCollection;
+        Require(serialized.serializedFields != null && serialized.serializedFields.Length > 0,
+                "Native SerializedFieldCollection is missing or empty");
+
+        // Match SpawnStateBoundary's captured-state ownership seam: snapshot every
+        // mutable static field on this exact state before applying the native config.
+        var fields = typeof(FireEarthShards).GetFields(
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
+        var snapshots = new List<KeyValuePair<FieldInfo, object>>();
+        foreach (var field in fields)
+        {
+            if (!field.IsStatic || field.IsLiteral || field.IsInitOnly)
+                continue;
+            snapshots.Add(new KeyValuePair<FieldInfo, object>(field, field.GetValue(null)));
+        }
+        Require(snapshots.Count > 0, "No mutable native state fields were captured");
+
+        object result = null;
+        Exception fixtureFailure = null;
+        Exception restoreFailure = null;
+        try
+        {
+            var serializedNames = new HashSet<string>(StringComparer.Ordinal);
+            int seenMaxProjectiles = 0, seenDuration = 0, seenCharge = 0, seenFire = 0, seenProjectile = 0;
+            foreach (var serializedField in serialized.serializedFields)
+            {
+                Require(!string.IsNullOrEmpty(serializedField.fieldName) && serializedNames.Add(serializedField.fieldName),
+                        "Serialized field names are empty or duplicated");
+                var field = typeof(FireEarthShards).GetField(
+                    serializedField.fieldName,
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+                Require(field != null && !field.IsLiteral && !field.IsInitOnly,
+                        "Serialized field is not an exact mutable native static field: " + serializedField.fieldName);
+                // The public native ApplyStatic() performs SerializedValue.GetValue
+                // against the declared field type. Count required config field names
+                // here, then verify their actual native static values after applying.
+                switch (serializedField.fieldName)
+                {
+                    case "maxProjectiles": seenMaxProjectiles++; break;
+                    case "baseDuration": seenDuration++; break;
+                    case "chargeTime": seenCharge++; break;
+                    case "fireTime": seenFire++; break;
+                    case "projectilePrefab": seenProjectile++; break;
+                }
+            }
+            Require(seenMaxProjectiles == 1 && seenDuration == 1 && seenCharge == 1 && seenFire == 1 && seenProjectile == 1,
+                    "Required native serialized fields are absent or duplicated");
+
+            // EntityStateCatalog.ApplyEntityStateConfiguration calls this native API
+            // after verifying that its source EntityState type is registered. Avoid
+            // catalog initialization here; this fixture isolates ApplyStatic only.
+            // Distinct sentinels make a swallowed native conversion/binding error
+            // observable even if an earlier editor fixture left configured values.
+            FireEarthShards.maxProjectiles = -410001;
+            FireEarthShards.baseDuration = -.25f;
+            FireEarthShards.chargeTime = -.5f;
+            FireEarthShards.fireTime = -.75f;
+            FireEarthShards.projectilePrefab = null;
+            config.ApplyStatic();
+
+            var configuredPrefab = FireEarthShards.projectilePrefab;
+            var simple = configuredPrefab ? configuredPrefab.GetComponent<ProjectileSimple>() : null;
+            Require(FireEarthShards.maxProjectiles == 8 && Mathf.Approximately(FireEarthShards.baseDuration, 0.8f) &&
+                        Mathf.Approximately(FireEarthShards.chargeTime, 0.167f) &&
+                        Mathf.Approximately(FireEarthShards.fireTime, 0.167f),
+                    "Native ApplyStatic did not produce the expected Earth Shards numeric fields");
+            Require(configuredPrefab == expectedPrefab &&
+                        AssetDatabase.GetAssetPath(configuredPrefab) == ProjectilePath && simple &&
+                        Mathf.Approximately(simple.lifetime, 0.3f),
+                    "Native ApplyStatic did not bind the exact staged projectile and its serialized lifetime");
+
+            result = new
+            {
+                configGuid = ConfigGuid,
+                configPath = ConfigPath,
+                targetType = typeof(FireEarthShards).FullName,
+                serializedFieldCount = serialized.serializedFields.Length,
+                mutableStaticFieldSnapshotCount = snapshots.Count,
+                maxProjectiles = FireEarthShards.maxProjectiles,
+                baseDuration = FireEarthShards.baseDuration,
+                chargeTime = FireEarthShards.chargeTime,
+                fireTime = FireEarthShards.fireTime,
+                projectileGuid = ProjectileGuid,
+                projectilePath = AssetDatabase.GetAssetPath(configuredPrefab),
+                projectileLifetime = simple.lifetime,
+                nativeApplyStaticVerified = true,
+                staticFieldsRestored = true,
+                catalogInitializationRunOrNetworkCreated = false,
+                deviceVolleyOrDamageProven = false
+            };
+        }
+        catch (Exception error)
+        {
+            fixtureFailure = error;
+        }
+        finally
+        {
+            // Restore all mutable native state fields, not only serialized config
+            // members. Keep the first fixture failure if restoration also fails.
+            foreach (var pair in snapshots)
+            {
+                try
+                {
+                    pair.Key.SetValue(null, pair.Value);
+                }
+                catch (Exception error)
+                {
+                    if (restoreFailure == null)
+                        restoreFailure = error;
+                }
+            }
+            foreach (var pair in snapshots)
+            {
+                try
+                {
+                    Require(SameValue(pair.Key.GetValue(null), pair.Value),
+                            "Native static field was not restored: " + pair.Key.Name);
+                }
+                catch (Exception error)
+                {
+                    if (restoreFailure == null)
+                        restoreFailure = error;
+                }
+            }
+        }
+        if (fixtureFailure != null)
+            ExceptionDispatchInfo.Capture(fixtureFailure).Throw();
+        if (restoreFailure != null)
+            ExceptionDispatchInfo.Capture(restoreFailure).Throw();
+        return result;
+    }
+}
+}
+#endif

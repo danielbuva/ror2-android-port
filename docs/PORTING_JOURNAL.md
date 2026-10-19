@@ -11018,3 +11018,43 @@ result application and menu loadout commit are false, saved variants remain
 OLED. No original input, runtime source, Phase 2 output, receipt, storage setting
 or permanent award changes. Accepted baseline remains fe4dc0de; newer J697
 candidate efb0ba93 is installed separately and undergoing default/native checks.
+
+## J700 — Exact native Mage Earth Shards configuration applies and restores
+
+Hypothesis: J699's zero sampled projectiles should first be distinguished from
+an applied-state configuration failure, without changing gameplay. Following
+J642/J699 and the pinned native-identity prior art, the existing first-stage
+editor fixture source now also owns MageEarthShardsStaticConfigFixture. It
+resolves exactly the generated source GUID/path pair for the state config and
+projectile, validates the native target type and serialized field names, then
+calls the accepted native EntityStateConfiguration.ApplyStatic API. No native
+serializer/state algorithm is copied into authored code.
+
+Independent review found two draft issues, both corrected before execution:
+SerializedFieldCollection is a value type, and ApplyStatic catches conversion
+errors internally. Root removes the invalid struct/null comparison and writes
+five distinct temporary static sentinels before applying the native config, so
+previously configured editor values cannot hide a failed field write. All 24
+mutable declared static fields are captured before the try; finally restores
+and verifies every captured field, retaining the first error. The fixture
+creates no scene, Run, catalog, network or gameplay objects, mutates no source
+asset and returns no result if application/restoration fails.
+
+The exact idle Unity editor compiles and passes the fixture:
+work/experiments/first-stage-native-lifecycle/
+moon-and-mage-editor-20261019T172347.559908Z/15-mage-native-static-config.json.
+Its 21 serialized config fields produce maxProjectiles 8, baseDuration 0.8,
+chargeTime/fireTime 0.167, the exact staged MageEarthShardProjectile prefab,
+and native ProjectileSimple lifetime 0.3. Static restoration passes. The same
+session's actual retired-field fixture also passes. Review and private draft:
+work/coordination/mage-earth-shards-output-triage/.
+
+First failure: none after review corrections. This establishes native config
+application in the exact editor, not its runtime value after device startup,
+projectile spawning, impact or damage. It supports bounded faster observation
+of J699's short volley rather than a gameplay/configuration patch. The existing
+fixture producer stages the changed FirstStageDiagnosticGateFixture.cs; R8 must
+replay that editor source. Runtime membership/GUIDs and payload remain unchanged.
+No new build input under work, original input, Phase 2 output, extra device,
+receipt edit, storage change or permanent progression occurs. Current candidate
+efb0ba93 is separately finishing default checks; accepted rollback remains J698.

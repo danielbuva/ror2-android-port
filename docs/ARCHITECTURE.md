@@ -953,7 +953,12 @@ strings; missing bodies/indices remain explicit empty names. The unchanged
 body/network indices and reciprocal ownership checks determine attribution.
 Names help interpret a later exact index without reconstructing catalog order.
 The exact-editor API/None fixture reports whether any positive native entry was
-available; idle editor catalogs remain uninitialized. Portable tests execute
+available; idle editor catalogs remain uninitialized. The existing first-stage
+editor fixture source also owns `MageEarthShardsStaticConfigFixture`: exact
+staged config/projectile GUID-path identity, native `ApplyStatic` after distinct
+sentinels, and finally verified restoration of all captured mutable state fields.
+It creates no Run/catalog/network and proves no device projectile output.
+Portable tests execute
 the authored helper against an authored catalog double.
 Cleanup detaches before body/skill retirement and releases owner references.
 An observer read failure records its first bounded error and makes only telemetry
