@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J684](PORTING_JOURNAL.md#j684--huntress-activates-all-four-native-alternate-definitions) | 2026-10-19 | Huntress activates all four native alternate definitions | Hypothesis: J676's exact native inventory can select Huntress's four alternates without guessing catalog identities or writing locked variants into the saved p… |
 | [J683](PORTING_JOURNAL.md#j683--reset-the-retained-owned-identity-after-host-mode-unspawn) | 2026-10-19 | Reset the retained owned identity after host-mode unspawn | Hypothesis: J681's actual teardown assertion is caused by a predicate that skips native Reset after host-local OnNetworkDestroy clears isServer while retaining… |
 | [J682](PORTING_JOURNAL.md#j682--generate-receipt-bound-source-identity-and-ordered-toggle-metadata) | 2026-10-19 | Generate receipt-bound source identity and ordered toggle metadata | Hypothesis: exact staged source scenes can replace the native lifecycle's hand-maintained Golemplains/Lakes arrays without guessing repeated object names, losi… |
 | [J681](PORTING_JOURNAL.md#j681--native-source-teardown-retains-recovery-after-ui-abandon) | 2026-10-19 | Native source teardown retains recovery after UI abandon | Hypothesis: J675's source field leases and J669's actor-event ownership can complete native first-stage teardown and start a fresh session in the same process. |

@@ -10360,3 +10360,39 @@ fix into one code-only build and rerun native cleanup as well as both default
 controls. ARCHITECTURE names the stricter retirement contract; R8 must replay
 the changed authored source. No Phase 2 output, original input, extra device,
 receipt hand edit, data move or storage configuration change occurs.
+
+## J684 — Huntress activates all four native alternate definitions
+
+Hypothesis: J676's exact native inventory can select Huntress's four alternates
+without guessing catalog identities or writing locked variants into the saved
+profile. APK remains accepted e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+Evidence: work/experiments/survivor-check/20261019T154210.840006Z/Huntress/;
+source/output reading: work/coordination/huntress-alternate-output-triage/.
+
+The existing strict developer selector requests variant 1 in families
+77/78/80/79, SkillDefs 77/186/108/0. Runtime definitions match: Flurry,
+Kickable Cyclone, Mini Blink and Arrow Snipe. Ordinary eligible Huntress is
+selected without a survivor override; the unearned alternate choice is an
+explicit per-run diagnostic assist. Authority/server callbacks are 10/10,
+3/3, 3/3 and 1/1 over 60.377624 world seconds. No slot is missing/suppressed.
+Invincibility alone is enabled among the five debug accelerations, with
+automatic input and diagnostic skill scheduling still assisted.
+
+The bounded observer records three exact player-body-owned Cyclone projectile
+identities and 22 player-body-attributed damage facts, 264 total damage. Those
+facts have no mapped projectile inflictor; the native Flurry path uses orbs,
+which the projectile-controller inventory does not count. No slot causality,
+arrow count, Cyclone impact, Blink displacement or complete Snipe begin/aim/
+contextual-primary/fire sequence is proved by callback counts. Existing
+observer attribution limits and prior art remain J642; accepted native e544
+states explain the orb and multi-state paths without a new reconstruction.
+
+First failure: none in the collector; current-process error filtering reports
+no unexpected runtime errors. The raw log retains its known intentionally
+rejected Windows shader-bundle message, not an empty log. Native lifecycle/
+recovery flags are false, no stage transition occurs, and the profile's
+runs/earned/available unlocks stay 13/1/1 with saved variants all zero. Finally
+removes selectors, stops and sleeps OLED. This accepts bounded alternate
+activation/output only, not normal-difficulty play, complete semantics or
+ordinary unlock eligibility. No source/APK change, original input, extra device,
+receipt hand edit, existing data move or storage configuration change occurs.
