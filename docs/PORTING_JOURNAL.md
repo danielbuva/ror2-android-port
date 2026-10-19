@@ -10973,3 +10973,48 @@ utility isolation case is active separately; its outcome is not inferred here.
 J697's reviewed native cleanup correction is also building separately. No new
 original input, Phase 2 output, runtime membership, extra device, manual receipt
 edit, storage reconfiguration/data move or permanent award occurs.
+
+## J699 — Isolated Mage utility input passes; short-lived output remains unmeasured
+
+Hypothesis: the J693 isolated-input path can distinguish a native Earth Shards
+utility request from the other three skill inputs without changing native skill
+state or permanent loadout. Exact all-alternate Mage selection on accepted J698
+APK fe4dc0de0f70ec70b699e9d54e55e3e657c0a89f1f9efb52ee58411ed0bcc383
+passes the 60-second isolated utility case. Evidence:
+work/experiments/survivor-check/20261019T170403.990784Z/Mage/.
+The final report reaches 60.460129 world seconds and 60.000504 owner seconds.
+The live component 2, family 105, variant 1 and SkillDef 137 resolve exactly to
+MageBodyFireEarthShards / EntityStates.Mage.Weapon.FireEarthShards. All four
+selected variants are the requested alternate native loadout; only utility
+receives diagnostic skill input.
+
+Two utility requests produce two authority and two server callbacks, with a
+later input-bank edge after the last request; the other three callback and edge
+counts remain zero. The owner reports isolated-slot-observation-complete. The
+common all-four missing-activation list is not this mode's acceptance criterion.
+There is no runtime error, first failure, observer error, scan truncation or
+history overflow. Generic output observation records zero projectile identities,
+body-damage events and owned-summon damage events. This is a bounded input pass,
+not a claim that the ability spawned nothing or that its full effects work.
+
+Prior-art check: J642 and docs/community-prior-art.md retain pinned DebugToolkit's
+native identity/query technique, with exact current input APIs authoritative.
+Local e544 state/configuration/projectile source and the staged authored field
+values explain a measurement gap: the original projectile lives for 0.3 seconds,
+and the configured eight-projectile volley is present for about 0.4 seconds,
+shorter than the observer's one-second cadence. Both casts can fall between
+samples. The general state/configuration catalogs report initialized, but the
+report does not expose this particular state's applied static values. Private
+triage and exact-editor fixture draft:
+work/coordination/mage-earth-shards-output-triage/. No gameplay/content correction
+is supported by the zero sampled output. Next verify native ApplyStatic against
+the exact staged config, then consider bounded request-triggered observation;
+callback timing alone will not attribute damage to a slot.
+
+This developer-selected, isolated and invincible run is assisted. The local
+profile remains 13 applied runs, one earned/available unlock and one coin;
+result application and menu loadout commit are false, saved variants remain
+0/0/0/0. The collector removes its selector, stops the package and sleeps the
+OLED. No original input, runtime source, Phase 2 output, receipt, storage setting
+or permanent award changes. Accepted baseline remains fe4dc0de; newer J697
+candidate efb0ba93 is installed separately and undergoing default/native checks.

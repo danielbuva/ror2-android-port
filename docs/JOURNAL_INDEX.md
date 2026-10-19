@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J699](PORTING_JOURNAL.md#j699--isolated-mage-utility-input-passes-short-lived-output-remains-unmeasured) | 2026-10-19 | Isolated Mage utility input passes; short-lived output remains unmeasured | Hypothesis: the J693 isolated-input path can distinguish a native Earth Shards utility request from the other three skill inputs without changing native skill… |
 | [J698](PORTING_JOURNAL.md#j698--accept-isolated-input-tooling-apk-against-both-default-controls) | 2026-10-19 | Accept isolated-input tooling APK against both default controls | Hypothesis: J693's optional input isolation must leave the default runtime path unchanged. |
 | [J697](PORTING_JOURNAL.md#j697--restore-exact-managed-table-leases-after-full-native-owner-retirement) | 2026-10-19 | Restore exact managed table leases after full native owner retirement | Hypothesis: J696's destroyed component can be cleaned without skipping its field restoration if its independently captured GameObject is also destroyed. |
 | [J696](PORTING_JOURNAL.md#j696--device-witness-isolates-destroyed-wake-component-at-native-cleanup) | 2026-10-19 | Device witness isolates destroyed Wake component at native cleanup | Hypothesis: J691's independent guard predicates can distinguish source-table liveness from scene ordering before changing restoration. |
