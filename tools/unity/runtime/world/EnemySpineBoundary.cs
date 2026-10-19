@@ -413,7 +413,7 @@ public sealed partial class PortSession
             foreach (var surface in surfaces)
                 surface.surfaceDef = enemySurface;
             GlobalEventManager.onServerDamageDealt += EnemyDamage;
-            GlobalEventManager.onCharacterDeathGlobal += EnemyDeath;
+            GlobalEventManager.onCharacterDeathServer += EnemyDeath;
             coordinator.r.enemy.playerKillsBefore = player.killCountServer;
             coordinator.r.enemy.excludedCallbacks =
                 new[] { "CharacterNetworkTransform platform snapshot clock", "InteractionDriver pause/interaction context",
@@ -560,7 +560,7 @@ public sealed partial class PortSession
         public void CleanupEnemy()
         {
             GlobalEventManager.onServerDamageDealt -= EnemyDamage;
-            GlobalEventManager.onCharacterDeathGlobal -= EnemyDeath;
+            GlobalEventManager.onCharacterDeathServer -= EnemyDeath;
             if (coordinator.enemyMasterHost)
                 NetworkServer.Destroy(coordinator.enemyMasterHost);
             if (coordinator.enemyBody)

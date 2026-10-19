@@ -7028,3 +7028,68 @@ and run the teleporter/current-source observer changes through both baseline
 modes and completed-session cleanup. Their live callback counts must establish
 Android retirement. The helper change alters R8 authored runtime/provenance and
 requires later rebuild replay. No Phase 2 step or extra-device action ran here.
+
+
+## J602 — Observe auxiliary native skills and use the system-death signal
+
+Hypothesis: four canonical SkillLocator slots do not describe every original
+loadout component, and an all-death observer must use the accepted assembly's
+system event rather than its legacy proc alias. Current-source reviews in J601
+identified both gaps; neither calls for changing original skill/death behavior.
+
+Prior art remains J587/J590's pinned native skill callback pattern and
+J420/J431/J462's scoped lifecycle observation. The accepted e544a320e0b943df
+CharacterBody, GenericSkill, SkillLocator, SkillDef and GlobalEventManager source
+now supplies the API contract. Toolbot's source has five GenericSkills and
+Captain six. Native FindSkillSlot recognizes four canonical roles; auxiliary
+loadout visibility alone cannot prove those components activated.
+
+SurvivorSkillObserver preserves its four canonical rows and adds separate
+component observations with current index, exact identity, native role,
+declared definition/state, suppression/stock and authority/server counts.
+Bounded sampling reconciles the owned body's components; a live same-body cache
+miss reconciles immediately to retain the first callback of a newly added
+component. It never scans other bodies. Canonical alias precedence and dynamic
+reassignment still use native FindSkillSlot. Destroyed callback arguments are
+ignored; removed/destroyed components and body teardown clear live metadata and
+references while preserving scalar activation history. Callback lookup and role
+labels avoid per-activation LINQ/enum conversion allocations. Declared state is
+still the serialized SkillDef field, not its virtual effective activation state.
+
+Review caught stale canonical snapshots after body destruction and the missed
+first callback before the next sample; both are fixed. The final synthetic
+SurvivorSkillHost passes auxiliary and late-before-sample events without
+canonical counter inflation, reassignment/alias precedence, removed/replacement
+components, ignored destroyed callbacks, destroyed-body metadata clearing and
+foreign delegate preservation. The fixture was corrected to stimulate the
+currently assigned primary after its earlier reassignment. Source row checks
+still retain Toolbot 0–4 and Captain 0–5. This is observer routing/ownership
+acceptance, not native skill effects or full kit execution.
+
+EnemySpineBoundary and PlayerDefeatBoundary now attach/detach their exact
+observers to onCharacterDeathServer, which reports every system death. The old
+onCharacterDeathGlobal aliases chance-gated onDeathProcServer in this input.
+Filters, counters and native behavior are unchanged; the elite achievement
+observer remains on the original proc event, as its native achievement requires.
+No blanket event rename, snapshot restore, grant or private lifecycle invocation
+is introduced.
+
+Evidence: compiler pass for all 94 runtime sources and the fixture under
+work/experiments/survivor-check/host-aux-20261019T072216.364362Z/;
+final exact-editor synthetic fixture pass and imported source hashes under
+work/experiments/survivor-check/editor-aux-20261019T072502.836971Z/.
+One earlier fixture attempt refused during editor reconnection before staging;
+inspect confirmed the pinned bridge was ready before retry. All 28 focused
+survivor/staging host tests pass; diff/Ruff checks pass. The read-only review
+notes are under work/coordination/codex-aux-skill-review.md and
+codex-current-death-event-audit.md. No APK containing these changes has device
+acceptance yet; a code-only build is queued/running separately.
+
+Installed/accepted APK remains J601's 8fbda448… while its canonical base-survivor
+checks continue. Commando and Huntress have passed; the unfinished case cohort
+will be recorded once after its terminal result. The native teleporter fixture
+result remains J601. Revisit these new component/death observations on the next
+APK, including actual completed-session cleanup and auxiliary native activations.
+The existing four-slot action does not certify auxiliary skills. These authored
+runtime/fixture/provenance inputs require R8 replay; no Phase 2 step or extra
+hardware action ran here.

@@ -116,7 +116,7 @@ public sealed partial class PortSession
                 "Original ragdoll Start/cache/isolation failed");
             coordinator.r.playerDefeat.ragdollStarted = true;
             observedDefeatBody = body;
-            GlobalEventManager.onCharacterDeathGlobal += ObservePlayerDeathEvent;
+            GlobalEventManager.onCharacterDeathServer += ObservePlayerDeathEvent;
             coordinator.Save();
         }
         public void ObservePlayerDeathEvent(DamageReport report)
@@ -200,7 +200,7 @@ public sealed partial class PortSession
                 coordinator.Check(coordinator.r.results.persisted && coordinator.r.results.clientEnding,
                                   "Original defeat report/client/persistence incomplete");
             }
-            GlobalEventManager.onCharacterDeathGlobal -= ObservePlayerDeathEvent;
+            GlobalEventManager.onCharacterDeathServer -= ObservePlayerDeathEvent;
             coordinator.r.phase = "commando-defeated";
             coordinator.Save();
             // Restart waits for original death/body lifetime, then uses the full session teardown.
@@ -214,11 +214,11 @@ public sealed partial class PortSession
         }
         public void Dispose()
         {
-            GlobalEventManager.onCharacterDeathGlobal -= ObservePlayerDeathEvent;
+            GlobalEventManager.onCharacterDeathServer -= ObservePlayerDeathEvent;
         }
         public IEnumerator CleanupPlayerDeathEffect()
         {
-            GlobalEventManager.onCharacterDeathGlobal -= ObservePlayerDeathEvent;
+            GlobalEventManager.onCharacterDeathServer -= ObservePlayerDeathEvent;
             if (playerDeathLocator == null)
                 yield break;
             foreach (var effect in playerDeathEffects)

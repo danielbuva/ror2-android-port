@@ -43,7 +43,7 @@ public static class SurvivorSkillHost
         var root = new GameObject("Owned inactive survivor skill fixture");
         root.SetActive(false);
         SceneManager.MoveGameObjectToScene(root, scene);
-        var definitions = new SkillDef[5];
+        var definitions = new SkillDef[7];
         SurvivorSkillObserver observer = null;
         try
         {
@@ -58,6 +58,9 @@ public static class SurvivorSkillHost
                 if (i < skills.Length)
                     Set(skills[i], "skillDef", definitions[i]);
             }
+            var auxiliary = root.AddComponent<GenericSkill>();
+            auxiliary.skillName = "FixtureAuxiliary";
+            Set(auxiliary, "skillDef", definitions[5]);
             locator.primary = skills[0];
             locator.secondary = skills[1];
             locator.utility = skills[2];
@@ -90,19 +93,38 @@ public static class SurvivorSkillHost
             body.onSkillActivatedAuthority += priorAuthority;
             observer = new SurvivorSkillObserver(body);
             var report = observer.report;
-            Require(report.attached && !report.cleaned && report.slots.Length == 4 &&
+            Require(report.attached && !report.cleaned && report.slots.Length == 4 && report.components.Length == 5 &&
                         report.slots.Select(slot => slot.initialDefinition)
                             .SequenceEqual(definitions.Take(4).Select(def => ((ScriptableObject)def).name)),
                     "Original slot identities missing");
+            var auxiliaryReport = report.components.Single(row => row.instanceId == auxiliary.GetInstanceID());
+            Require(auxiliaryReport.present && auxiliaryReport.componentIndex == 4 && auxiliaryReport.skillName == "FixtureAuxiliary" &&
+                        auxiliaryReport.canonicalSlot == "None" && auxiliaryReport.definition == ((ScriptableObject)definitions[5]).name,
+                    "Unbound source GenericSkill was not represented separately from canonical slots");
             body.ForceSkillActivatedAction(skills[0]);
             body.ForceSkillActivatedAction(skills[3]);
             Require(report.slots[0].serverActivations == 1 && report.slots[3].serverActivations == 1 &&
                         report.slots.All(slot => slot.authorityActivations == 0) && sentinel == 2,
                     "Native server callbacks were conflated with authority callbacks");
+            body.ForceSkillActivatedAction(auxiliary);
+            Require(auxiliaryReport.serverActivations == 1 && auxiliaryReport.authorityActivations == 0 &&
+                        report.slots.Sum(slot => slot.serverActivations) == 2,
+                    "Unbound component activation was lost or counted as a canonical slot");
+            var lateAuxiliary = root.AddComponent<GenericSkill>();
+            lateAuxiliary.skillName = "FixtureLateAuxiliary";
+            Set(lateAuxiliary, "skillDef", definitions[6]);
+            body.ForceSkillActivatedAction(lateAuxiliary);
+            var lateReport = report.components.Single(row => row.instanceId == lateAuxiliary.GetInstanceID());
+            Require(lateReport.present && lateReport.componentIndex == 5 && lateReport.serverActivations == 1 &&
+                        lateReport.canonicalSlot == "None" && report.slots.Sum(slot => slot.serverActivations) == 2,
+                    "Owned component activated before the next bounded sample was not reconciled separately");
             var authorityEvent = Event(body, "onSkillActivatedAuthority");
             for (int i = 0; i < skills.Length; i++)
                 authorityEvent.DynamicInvoke(skills[i]);
-            Require(report.slots.All(slot => slot.authorityActivations == 1) && authoritySentinel == 4,
+            authorityEvent.DynamicInvoke(auxiliary);
+            authorityEvent.DynamicInvoke(lateAuxiliary);
+            Require(report.slots.All(slot => slot.authorityActivations == 1) && authoritySentinel == 6 &&
+                        auxiliaryReport.authorityActivations == 1 && lateReport.authorityActivations == 1,
                     "Native authority callbacks were not recorded per original slot");
             Set(skills[0], "skillDef", definitions[4]);
             definitions[4].suppressSkillActivation = true;
@@ -116,21 +138,31 @@ public static class SurvivorSkillHost
             body.ForceSkillActivatedAction(skills[0]);
             Require(report.slots[0].componentChanges == 1 && report.slots[0].serverActivations == 2 &&
                         report.slots[1].serverActivations == 0 && report.slots[0].definition == ((ScriptableObject)definitions[1]).name &&
-                        sentinel == 4,
+                        sentinel == 6 && auxiliaryReport.canonicalSlot == "None" && lateReport.canonicalSlot == "None" &&
+                        report.components.Single(row => row.instanceId == skills[1].GetInstanceID()).canonicalSlot == "Primary",
                     "Native slot reassignment, alias precedence or displaced-skill filtering differs");
             observer.Dispose();
             observer.Dispose();
             body.ForceSkillActivatedAction(skills[0]);
-            Require(!report.attached && report.cleaned && report.slots[0].serverActivations == 2 && sentinel == 5 &&
+            Require(!report.attached && report.cleaned && report.slots[0].serverActivations == 2 && sentinel == 7 &&
                         Event(body, "onSkillActivatedServer").GetInvocationList().SequenceEqual(new Delegate[] { prior }) &&
                         Event(body, "onSkillActivatedAuthority").GetInvocationList().SequenceEqual(new Delegate[] { priorAuthority }),
                     "Observer retained callbacks or removed a foreign listener");
             skills[2] = DestroyImmediateSkillAndSample(body, skills[2], definitions[2]);
             observer = new SurvivorSkillObserver(body);
+            body.ForceSkillActivatedAction(body.skillLocator.primary);
+            body.ForceSkillActivatedAction(auxiliary);
             UnityEngine.Object.DestroyImmediate(root);
             observer.Dispose();
             Require(Event(body, "onSkillActivatedServer").GetInvocationList().SequenceEqual(new Delegate[] { prior }) &&
-                        Event(body, "onSkillActivatedAuthority").GetInvocationList().SequenceEqual(new Delegate[] { priorAuthority }),
+                        Event(body, "onSkillActivatedAuthority").GetInvocationList().SequenceEqual(new Delegate[] { priorAuthority }) &&
+                        observer.report.cleaned && observer.report.slots[0].serverActivations == 1 &&
+                        observer.report.components.Single(row => row.instanceId == auxiliaryReport.instanceId).serverActivations == 1 &&
+                        observer.report.slots.All(slot => !slot.enabled && slot.definition == "" && slot.declaredActivationState == "" &&
+                            slot.machineState == "" && slot.stock == 0 && slot.maxStock == 0) &&
+                        observer.report.components.All(row => !row.present && row.componentIndex == -1 &&
+                            row.skillName == "" && row.canonicalSlot == "" && row.definition == "" && row.declaredActivationState == "" &&
+                            row.stock == 0 && row.maxStock == 0),
                     "Destroyed native body retained an owned callback");
             return new { success = true,
                          slots = 4,
@@ -140,6 +172,8 @@ public static class SurvivorSkillHost
                          teardown = true,
                          destroyedBodyTeardown = true,
                          loadoutSlotIndices = visibleSlots,
+                         auxiliaryComponentObserved = true,
+                         lateAuxiliaryBeforeSample = true,
                          slotReassignment = true,
                          sourceLoadoutRows = sourceRows };
         }
@@ -160,11 +194,17 @@ public static class SurvivorSkillHost
         // compared by managed identity and removed slots lose stale state.
         using (var probe = new SurvivorSkillObserver(body))
         {
+            int destroyedId = skill.GetInstanceID();
             UnityEngine.Object.DestroyImmediate(skill);
+            body.ForceSkillActivatedAction(skill);
             probe.Sample();
             var slot = probe.report.slots[2];
-            Require(slot.componentChanges == 1 && !slot.enabled && slot.definition == "" && slot.declaredActivationState == "" &&
-                        slot.machineState == "" && slot.stock == 0 && slot.maxStock == 0 && !slot.suppressesActivationEvents,
+            var removedComponent = probe.report.components.Single(row => row.instanceId == destroyedId);
+            Require(slot.componentChanges == 1 && slot.serverActivations == 0 && !slot.enabled && slot.definition == "" && slot.declaredActivationState == "" &&
+                        slot.machineState == "" && slot.stock == 0 && slot.maxStock == 0 && !slot.suppressesActivationEvents &&
+                        !removedComponent.present && removedComponent.componentIndex == -1 && removedComponent.skillName == "" &&
+                        removedComponent.canonicalSlot == "" && removedComponent.definition == "" &&
+                        removedComponent.declaredActivationState == "" && removedComponent.stock == 0 && removedComponent.maxStock == 0,
                     "Removed skill slot retained stale snapshot state");
             body.skillLocator.utility = null;
             probe.Sample();
@@ -173,7 +213,9 @@ public static class SurvivorSkillHost
             Set(replacement, "skillDef", definition);
             body.skillLocator.utility = replacement;
             probe.Sample();
-            Require(slot.componentChanges == 2 && slot.definition == ((ScriptableObject)definition).name,
+            var replacementRow = probe.report.components.Single(row => row.instanceId == replacement.GetInstanceID());
+            Require(slot.componentChanges == 2 && slot.definition == ((ScriptableObject)definition).name && replacementRow.present &&
+                        replacementRow.canonicalSlot == "Utility" && !removedComponent.present,
                     "Replacement after destroyed component was not observed");
             return replacement;
         }

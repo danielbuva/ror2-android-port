@@ -602,6 +602,17 @@ Cleanup detaches both managed callbacks, including after Unity
 destroys the native body, then clears all body/skill/definition references before
 world teardown. The report is `SessionReport.survivorSkills`; it proves callback
 execution, not targeting, placement, effects or complete ability semantics.
+The separate `components` report covers every GenericSkill on that body by exact
+component identity, including Toolbot/Captain auxiliary loadout components that
+native `FindSkillSlot` maps to None. It retains current component indices and
+canonical mapping separately from the four slot counters. Bounded samples
+reconcile components; a live same-body callback missing from the cache triggers
+one immediate reconciliation so its first activation is retained. Removed/body-
+destroyed components clear live state while scalar counts remain. Callback lookup
+and canonical labels avoid per-activation LINQ closures and enum conversions.
+This source draft passed its extended synthetic fixture (J602); auxiliary native
+ability execution on Android remains pending. The four-slot device check keeps
+its narrower canonical-slot criteria.
 `SurvivorSkillHost.Run()` is the exact-editor synthetic ownership/override fixture.
 It also checks that the loadout menu retains original component indices and uses
 `hideInLoadoutSelect`, independently of character-select visibility. The existing

@@ -189,6 +189,13 @@ calls plus read-only exact event-target counts. It contains no original gameplay
 algorithm, asset body or middleware. Audited 2026-10-19; Play Mode/device acceptance
 and R8 source/importer/provenance replay remain pending.
 
+J602 extends the authored observer/fixture with auxiliary component accounting
+and binds two existing all-death observers to the accepted system-death event.
+It adds no runtime file, GUID, content selection or local build input. Event and
+component names identify only the minimum original API contract; no native
+algorithm or serialized game data is copied. Audited 2026-10-19. R8 replay and
+Android acceptance of these new observations remain separate gates.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.
