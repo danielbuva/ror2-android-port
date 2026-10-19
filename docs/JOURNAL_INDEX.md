@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J703](PORTING_JOURNAL.md#j703--preserve-shrine-effect-ownership-refusal-with-exact-mismatch-operands) | 2026-10-19 | Preserve shrine-effect ownership refusal with exact mismatch operands | Hypothesis: J702's next native cleanup failure needs its measured ownership operands before any reference release or attribution change. |
 | [J702](PORTING_JOURNAL.md#j702--accept-cleanup-candidate-defaults-native-teardown-reaches-effect-attribution-refusal) | 2026-10-19 | Accept cleanup candidate defaults; native teardown reaches effect-attribution refusal | Hypothesis: J697's conditional exact managed-field restoration should preserve default world play and advance genuine native abandon cleanup without skipping l… |
 | [J701](PORTING_JOURNAL.md#j701--enforce-the-configured-manual-moon-boundary-before-automatic-progression) | 2026-10-19 | Enforce the configured manual Moon boundary before automatic progression | Hypothesis: the existing pauseBeforeMoon condition ran too late to guarantee its stated manual boundary. |
 | [J700](PORTING_JOURNAL.md#j700--exact-native-mage-earth-shards-configuration-applies-and-restores) | 2026-10-19 | Exact native Mage Earth Shards configuration applies and restores | Hypothesis: J699's zero sampled projectiles should first be distinguished from an applied-state configuration failure, without changing gameplay. |

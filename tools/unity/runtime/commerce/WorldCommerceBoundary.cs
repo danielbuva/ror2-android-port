@@ -138,6 +138,8 @@ public sealed partial class PortSession
         static readonly FieldInfo commercePickupModelField =
             typeof(PickupDisplay).GetField("modelObject", BindingFlags.NonPublic | BindingFlags.Instance);
         int commerceEffectBaseline, commerceDirectShrineEffectLoads;
+        int commerceBloodShrineDetailedPurchaseCallbacks, commerceHealingShrineDetailedPurchaseCallbacks,
+            commerceBossShrineDetailedPurchaseCallbacks, commerceRestackShrineDetailedPurchaseCallbacks;
         public WorldCommerceSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -295,9 +297,20 @@ public sealed partial class PortSession
             UnityAction<CostTypeDef.PayCostContext, CostTypeDef.PayCostResults> listener = (context, result) =>
             {
                 coordinator.commercePurchaseCounts[purchase]++;
-                if ((purchase.GetComponent<ShrineBloodBehavior>() || purchase.GetComponent<ShrineHealingBehavior>() ||
-                     purchase.GetComponent<ShrineBossBehavior>() || purchase.GetComponent<ShrineRestackBehavior>()))
+                bool bloodShrine = purchase.GetComponent<ShrineBloodBehavior>();
+                bool healingShrine = purchase.GetComponent<ShrineHealingBehavior>();
+                bool bossShrine = purchase.GetComponent<ShrineBossBehavior>();
+                bool restackShrine = purchase.GetComponent<ShrineRestackBehavior>();
+                if (bloodShrine || healingShrine || bossShrine || restackShrine)
                     commerceDirectShrineEffectLoads++;
+                if (bloodShrine)
+                    commerceBloodShrineDetailedPurchaseCallbacks++;
+                if (healingShrine)
+                    commerceHealingShrineDetailedPurchaseCallbacks++;
+                if (bossShrine)
+                    commerceBossShrineDetailedPurchaseCallbacks++;
+                if (restackShrine)
+                    commerceRestackShrineDetailedPurchaseCallbacks++;
                 coordinator.Check(context.activatorBody == coordinator.worldPlayer && context.purchaseInteraction == purchase,
                                   "Original commerce purchase context changed");
                 coordinator.r.commerce.purchases.Add(new CommercePurchase {
@@ -556,11 +569,16 @@ public sealed partial class PortSession
             if (coordinator.commerceEffectIndex >= 0)
             {
                 var lease = coordinator.objectiveSupportLeases[coordinator.commerceEffectIndex];
-                int extra = (int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>)
-                                .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)
-                                .GetValue(lease) -
-                            commerceEffectBaseline;
-                coordinator.Check(extra == commerceDirectShrineEffectLoads, "Unattributed original blood/healing shrine effect loads");
+                int finalReferenceCount = (int)typeof(UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<GameObject>)
+                                             .GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic)
+                                             .GetValue(lease);
+                int extra = finalReferenceCount - commerceEffectBaseline;
+                coordinator.Check(
+                    extra == commerceDirectShrineEffectLoads,
+                    NativeShrineEffectAttributionWitness.Format(
+                        commerceEffectBaseline, finalReferenceCount, commerceDirectShrineEffectLoads,
+                        commerceBloodShrineDetailedPurchaseCallbacks, commerceHealingShrineDetailedPurchaseCallbacks,
+                        commerceBossShrineDetailedPurchaseCallbacks, commerceRestackShrineDetailedPurchaseCallbacks));
                 for (int i = 0; i < extra; i++)
                     Addressables.Release(lease.Result);
                 coordinator.commerceEffectIndex = -1;
@@ -570,5 +588,25 @@ public sealed partial class PortSession
         {
             CleanupWorldCommerce(true);
         }
+    }
+}
+
+
+// Failure-only values for the existing fail-closed native effect ownership check.
+// These counts describe detailed-purchase callbacks; they do not claim to have
+// intercepted LegacyResourcesAPI.Load or identified its caller.
+internal static class NativeShrineEffectAttributionWitness
+{
+    internal static string Format(int baselineReferenceCount, int finalReferenceCount, int attributedPurchaseCallbacks,
+                                  int bloodCallbacks, int healingCallbacks, int bossCallbacks, int restackCallbacks)
+    {
+        int referenceCountDelta = finalReferenceCount - baselineReferenceCount;
+        return string.Format(
+            "Unattributed original blood/healing shrine effect loads; " +
+                "referenceCountBaseline={0}; referenceCountFinal={1}; referenceCountDelta={2}; " +
+                "attributedDetailedPurchaseCallbacks={3}; bloodCallbacks={4}; healingCallbacks={5}; " +
+                "bossCallbacks={6}; restackCallbacks={7}",
+            baselineReferenceCount, finalReferenceCount, referenceCountDelta, attributedPurchaseCallbacks, bloodCallbacks,
+            healingCallbacks, bossCallbacks, restackCallbacks);
     }
 }

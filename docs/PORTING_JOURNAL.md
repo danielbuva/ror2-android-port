@@ -11174,3 +11174,39 @@ that does not change this candidate's frozen source receipt. No original input,
 Phase 2 output, runtime membership, extra device, manual receipt edit, storage
 reconfiguration/data move, Moon attempt or permanent award occurs. Both default
 collectors remove their selector, stop the package and sleep the OLED.
+
+## J703 — Preserve shrine-effect ownership refusal with exact mismatch operands
+
+Hypothesis: J702's next native cleanup failure needs its measured ownership
+operands before any reference release or attribution change. J337's typed
+ShrineUseEffect lease and current native LegacyResourcesAPI/purchase callbacks
+remain authoritative. Source triage confirms several possible original callers,
+but the previous result identifies none; no caller is inferred from existence.
+
+WorldCommerceSession now includes the existing lease baseline, final reference
+count, delta, aggregate attributed detailed-purchase callbacks and separate
+Blood/Healing/Boss/Restack callback counts in its existing failure message.
+The aggregate still increments once for the same four-type OR predicate; detail
+counts do not authorize release. The exact equality guard remains before the
+release loop, with unchanged ownership/recovery behavior. Counters share the
+existing owner/session lifetime. The inline authored helper formats only bounded
+integers and claims neither interception of LegacyResourcesAPI nor a native
+caller. No gameplay, shrine state, asset, reference count or provider is changed.
+
+Reviewed private patch 6bc87f8e4139e8af5dcbccb226d3cbd02e3ab360dd1bf7f1f64b18317b57d822:
+work/coordination/native-shrine-effect-triage/. Independent review finds no
+material blocker. Root's extracted actual formatter/guard host contract passes,
+including signed mismatch values and equality-before-release. The full current
+suite passes 988 tests with one existing skip, and exact Unity compiles the
+staged runtime. Existing actual input/configuration/native-field and observer
+API/history/fault/disposal contracts also pass:
+work/experiments/first-stage-native-lifecycle/
+bounded-output-editor-20261019T173005.589053Z/. These do not prove effect lease
+release; the device first failure remains J702 until a new APK repeats the case.
+
+First failure: none in host/editor validation; no new device observation yet.
+The existing WorldCommerceSession owner map is clarified. R8 must replay the
+changed existing runtime source; 105 runtime files/GUID membership remain.
+No new work build input, original input, Phase 2 output, receipt edit, storage
+alteration, extra device or permanent award occurs. Build with the other tested
+source changes, run both defaults, then inspect the exact native mismatch.

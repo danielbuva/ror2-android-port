@@ -937,6 +937,14 @@ changed. `TeleporterExitTraceSourceContractFixture` checks the exact native API
 and production buffer through the existing fixture producer. Android trace
 acceptance remains pending; J641's APK contains this telemetry source.
 
+`WorldCommerceSession` owns the typed ShrineUseEffect baseline and synchronous
+native-purchase attribution counts from setup through final cleanup. Its inline
+`NativeShrineEffectAttributionWitness` reports only failure operands (baseline,
+final, delta, aggregate and four concrete shrine callback counts). Those counts
+share the existing session lifetime; they do not intercept native loads or claim
+their caller. Cleanup still requires exact equality before releasing references;
+a mismatch retains the existing recovery refusal.
+
 Survivor combat output observation (authored source, J642):
 `IntegratedWorldSession` owns a disposable `SurvivorCombatOutputObserver` beside
 the skill observer; `r.world.survivorCombatOutputs` holds bounded scalar reports.
