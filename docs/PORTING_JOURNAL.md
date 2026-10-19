@@ -6932,7 +6932,7 @@ baseline modes plus same-process teardown/restart callback counts. Keep broad
 managed-memory attribution separate. This alters R8 runtime, editor-fixture and
 provenance inputs; later rebuild replay is required. No Phase 2 step ran here.
 
-## J600 — Hidden/Compositing: a second destination build still omits it
+## J598 — Hidden/Compositing: a second destination build still omits it
 
 Phase 2, from-scratch rebuild (run by Claude; lab MCP editor stopped through the bridge for the
 build and restarted afterwards; no install). Follow-up to J583 item 2 and J592. Hypothesis: the

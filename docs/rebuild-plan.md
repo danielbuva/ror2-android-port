@@ -521,7 +521,7 @@ Status (J582–J586, J592): from a fresh Library, R9 builds an APK that passed b
 reimport error, and its APK matches the baseline except `Hidden/Compositing` (open), the
 path-dependent Burst library and build metadata. `Lab.unity` and two render textures are exact
 classifications; `BlueNoise_R8_1.png.meta` is working-project drift and the last differing gate
-file (J592). A second build in the same Library still omits `Hidden/Compositing` (J600). Since
+file (J592). A second build in the same Library still omits `Hidden/Compositing` (J598). Since
 J597 the rebuild reads no migration evidence; its remaining local inputs are in
 [ARCHITECTURE.md](ARCHITECTURE.md#known-structural-debt).
 

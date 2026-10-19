@@ -10,7 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
-| [J600](PORTING_JOURNAL.md#j600--hiddencompositing-a-second-destination-build-still-omits-it) | 2026-10-19 | Hidden/Compositing: a second destination build still omits it | Phase 2, from-scratch rebuild (run by Claude; lab MCP editor stopped through the bridge for the build and restarted afterwards; no install). |
+| [J598](PORTING_JOURNAL.md#j598--hiddencompositing-a-second-destination-build-still-omits-it) | 2026-10-19 | Hidden/Compositing: a second destination build still omits it | Phase 2, from-scratch rebuild (run by Claude; lab MCP editor stopped through the bridge for the build and restarted afterwards; no install). |
 | [J600](PORTING_JOURNAL.md#j600--draft-server-active-retirement-of-the-owned-native-teleporter) | 2026-10-19 | Draft server-active retirement of the owned native teleporter | Hypothesis: completed-session cleanup can retain native CombatSquad callbacks because the current owner schedules NetworkServer.Destroy and the outer session s… |
 | [J599](PORTING_JOURNAL.md#j599--add-bounded-cpu-call-graph-capture-for-the-selected-process) | 2026-10-18 | Add bounded CPU call-graph capture for the selected process | Hypothesis: the crowded-stage CPU gap identified in J503/J504 needs owner attribution before another optimization. |
 | [J597](PORTING_JOURNAL.md#j597--rebuild-without-migration-evidence-r2-from-public-recipes-r5-and-r7-regenerate-their-inputs) | 2026-10-18 | Rebuild without migration evidence: R2 from public recipes, R5 and R7 regenerate their inputs | Phase 2, from-scratch rebuild (implemented and run by Claude; host only, no editor, build or device). |
