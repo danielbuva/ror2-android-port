@@ -74,16 +74,17 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861`, J689 acceptance of J687's 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 10.69 s next-stage play, no unexpected report or current-process log error (J688/J689) |
+| APK | `039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc`, J695 acceptance of the J690/J691 105-source build with J665's full repaired payload, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 11.61 s next-stage play, no unexpected report or current-process log error (J695) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J689), with the native diagnostic flag off. Its separate
+baseline passed it (J695), with the native diagnostic flag off. Its separate
 native source path reaches genuine Stage-begin with generated identity bindings,
 then retains recovery at the borrowed source-table restore guard (J688).
+The current APK adds independent guard predicates, whose explicit native case is pending.
 Completed native restoration/restart and transport remain unaccepted. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.

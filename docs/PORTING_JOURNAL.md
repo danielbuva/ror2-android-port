@@ -10799,3 +10799,42 @@ fixture reuses the existing R8 generator and introduces no new local input or
 runtime source. A precise device witness remains necessary before changing
 native cleanup. No original input, Phase 2 output, extra device, receipt by hand,
 storage change or permanent progression occurs.
+
+## J695 — Accept native damage names and precise cleanup diagnostics on device
+
+Hypothesis: J690/J691 are read-only observations on the default path and should
+preserve both accepted runtime controls. Selected-device preflight passes; exact
+Unity code-only build succeeds in 152.532975 seconds with zero errors, request
+20261019T163149.822007Z. APK:
+039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc.
+Source checkpoint a0fe766 contains J690/J691 in 105 runtime files. All 266
+payload file hashes equal accepted 55dee318; no bundle/input drift is accepted.
+The frozen APK/build/source/preflight/host/editor receipts and payload comparison
+are under work/experiments/source-binding-witness/
+candidate-20261019T163149.822007Z/. Later J693 source was integrated only after
+this APK/source snapshot was frozen and is not in this installed APK.
+
+In-place adopted-storage install and sync pass with live storage/placement
+checks. The plain default check reaches 35.199966 world seconds on Lakes:
+work/experiments/baseline/20261019T163556.329843Z/. The active 27 damage facts
+contain native CommandoBody attacker names and BeetleBody/WispBody victim names,
+with their numeric native catalog indices retained. Five unused slots of the
+32-entry fact array remain empty. The observer has no error or inert state.
+This supplies J690's first actual positive native catalog-name evidence; it does
+not retroactively name earlier APK facts or attribute damage to a skill.
+
+The default exit check passes exactly one genuine exit to Goolake at 156.244934
+world seconds and 11.610199 seconds on the next stage:
+work/experiments/baseline/20261019T163957.488127Z/. Both report and root current-
+process log validation have no unexpected errors, native diagnostic off and
+source recovery false. Both retain 13 applied runs, one earned/available unlock
+and one earned coin, with result application false. They remain assisted
+controls, not ordinary difficulty, complete kits or native lifecycle acceptance.
+Each collector stops the package and sleeps the OLED in finally.
+
+First failure: none in either default control. Accept 039bc73d as the next
+baseline; preserve 55dee318 as the immediate executable rollback. The explicit
+native UI-abandon witness is a separate pending case. J693 isolated skill input
+has passed host/editor gates and is now building separately; do not infer that
+it is installed. No new original input, Phase 2 output, runtime membership,
+extra device, manual receipt edit, storage reconfiguration or permanent award.
