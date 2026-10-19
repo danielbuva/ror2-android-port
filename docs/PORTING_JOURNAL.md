@@ -10761,3 +10761,41 @@ Rebuild R8 for authored runtime/fixture changes; the same 105 runtime source
 membership remains. No new local build input, Phase 2 output, original input,
 manual device receipt, extra device, storage change or permanent award.
 Next: build and observe an exact isolated Mage utility case and both defaults.
+
+## J694 — Preserve the managed field lease through native object retirement
+
+Hypothesis: if J691 later identifies a natively retired consumer, ordinary managed
+fields might still be restorable through its retained Unity fake-null wrapper.
+This is a prerequisite contract, not a decision to change the runtime guard.
+Exact WakeController source exposes the table as a managed public field; native
+WakeSpawner always schedules its own root for destruction. J675/J691 record the
+owned-clone seam and source hierarchy. No game lifecycle algorithm is reproduced.
+
+Added an authored fixture in the existing FirstStageDiagnosticGateFixture.cs,
+under NativeSourceFieldFixture. It creates a disposable preview scene, an inactive
+WakeController and two new BasicPickupDropTables, then reflects the actual
+WholeInteractableSession.NativeBorrowedFieldLease<T>. It binds the owned field,
+destroys the still-inactive GameObject with DestroyImmediate, verifies Unity
+fake-null with a retained CLR wrapper and a readable managed field, then restores
+and repeats restore through the production lease. Finally retries restoration
+before releasing temporary tables, preserves the primary failure, destroys only
+fixture objects and closes the preview scene. No source scene, asset, Run,
+network, catalog initialization, Awake/Start activation or device is involved.
+
+Exact Unity 2021.3.45f2 execution passes all six field/retirement assertions:
+work/experiments/first-stage-native-lifecycle/
+retired-field-editor-20261019T163936.643726Z/13-retired-native-managed-field.json.
+The same suite also passes existing stage/variant/Director/stake/transform/name
+and isolated input-owner contracts. Independent source review is recorded at
+work/coordination/native-source-table-teardown-review/
+retired-binding-fixture-review.md. Private authored draft:
+work/coordination/native-retired-binding-draft/.
+
+First failure: none in this fixture. DestroyImmediate on an inactive fixture
+cannot establish that WakeSpawner ran on a device, prove deferred Destroy timing,
+or authorize ignoring a missing target. No runtime restore policy changes here.
+The candidate APK/default checks and accepted rollback are unaffected; the new
+fixture reuses the existing R8 generator and introduces no new local input or
+runtime source. A precise device witness remains necessary before changing
+native cleanup. No original input, Phase 2 output, extra device, receipt by hand,
+storage change or permanent progression occurs.

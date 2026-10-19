@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J694](PORTING_JOURNAL.md#j694--preserve-the-managed-field-lease-through-native-object-retirement) | 2026-10-19 | Preserve the managed field lease through native object retirement | Hypothesis: if J691 later identifies a natively retired consumer, ordinary managed fields might still be restorable through its retained Unity fake-null wrappe… |
 | [J693](PORTING_JOURNAL.md#j693--bound-isolated-native-skill-button-input-to-one-selected-slot) | 2026-10-19 | Bound isolated native skill-button input to one selected slot | Hypothesis: J673's Earth Shards output gap needs a run where other automatic skills and equipment cannot confound the input. |
 | [J692](PORTING_JOURNAL.md#j692--bandit2-default-and-three-alternate-native-skill-callbacks) | 2026-10-19 | Bandit2 default and three alternate native skill callbacks | Hypothesis: a fresh native Bandit2 inventory can bind all available alternate variants without guessing catalog indices, while preserving permanent unlocks and… |
 | [J691](PORTING_JOURNAL.md#j691--identify-the-exact-failed-native-source-table-restore-predicate) | 2026-10-19 | Identify the exact failed native source-table restore predicate | Hypothesis: J688's combined guard message must separate scene mismatch from Unity object liveness before a lease or retirement rule changes. |

@@ -76,3 +76,166 @@ public static class FirstStageDiagnosticGateFixture
     }
 }
 #endif
+
+#if UNITY_EDITOR
+namespace NativeSourceFieldFixture
+{
+using System;
+using System.Reflection;
+using RoR2;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+
+// Diagnostic contract fixture only. It constructs an inactive WakeController,
+// never enters Play Mode, and does not run Awake/Start, Run, networking, or a
+// native stage lifecycle. It tests managed field access through the production
+// borrowed-field lease after its Unity component and GameObject become fake-null.
+public static class WakeManagedFieldLeaseExactEditorFixture
+{
+    const BindingFlags Nested = BindingFlags.Public | BindingFlags.NonPublic;
+    const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+    static void Require(bool condition, string message)
+    {
+        if (!condition)
+            throw new InvalidOperationException("Wake managed-field lease fixture failed: " + message);
+    }
+
+    static void Invoke(MethodInfo method, object target)
+    {
+        try
+        {
+            method.Invoke(target, null);
+        }
+        catch (TargetInvocationException error) when (error.InnerException != null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error.InnerException).Throw();
+        }
+    }
+
+    static void Cleanup(ref Exception failure, Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception error)
+        {
+            if (failure == null)
+                failure = error;
+        }
+    }
+
+    static Type FindProductionLeaseType()
+    {
+        Type session = typeof(PortSession).GetNestedType("WholeInteractableSession", Nested);
+        Require(session != null, "Production WholeInteractableSession type is unavailable");
+        Type openLease = session.GetNestedType("NativeBorrowedFieldLease`1", Nested);
+        Require(openLease != null, "Production NativeBorrowedFieldLease<T> type is unavailable");
+        return openLease.MakeGenericType(typeof(BasicPickupDropTable));
+    }
+
+    public static object Run()
+    {
+        Require(!EditorApplication.isPlaying && !EditorApplication.isCompiling &&
+                    !NetworkServer.active && !NetworkClient.active && !RoR2.Run.instance,
+                "Require an idle editor without Play Mode, network, or Run");
+
+        Scene preview = EditorSceneManager.NewPreviewScene();
+        GameObject owner = null;
+        BasicPickupDropTable original = null;
+        BasicPickupDropTable owned = null;
+        WakeController wake = null;
+        object lease = null;
+        MethodInfo restore = null;
+        object result = null;
+        Exception fixtureFailure = null;
+        Exception cleanupFailure = null;
+        try
+        {
+            owner = new GameObject("Inactive Wake managed-field lease fixture");
+            owner.SetActive(false);
+            SceneManager.MoveGameObjectToScene(owner, preview);
+            wake = owner.AddComponent<WakeController>();
+            Require(owner && !owner.activeSelf && !owner.activeInHierarchy && !wake.isActiveAndEnabled,
+                    "WakeController fixture must remain inactive");
+
+            original = ScriptableObject.CreateInstance<BasicPickupDropTable>();
+            owned = ScriptableObject.CreateInstance<BasicPickupDropTable>();
+            Require(original && owned && !ReferenceEquals(original, owned),
+                    "Fixture needs two live, distinct ScriptableObject values");
+            wake.bronzeDropTable = original;
+
+            Func<BasicPickupDropTable> read = () => wake.bronzeDropTable as BasicPickupDropTable;
+            Action<BasicPickupDropTable> write = value => wake.bronzeDropTable = value;
+            Type leaseType = FindProductionLeaseType();
+            ConstructorInfo constructor = leaseType.GetConstructor(
+                Instance, null,
+                new[] { typeof(Func<BasicPickupDropTable>), typeof(Action<BasicPickupDropTable>),
+                        typeof(BasicPickupDropTable), typeof(BasicPickupDropTable) }, null);
+            Require(constructor != null, "Production lease constructor signature changed");
+            lease = constructor.Invoke(new object[] { read, write, original, owned });
+            MethodInfo bind = leaseType.GetMethod("Bind", Instance);
+            restore = leaseType.GetMethod("Restore", Instance);
+            Require(bind != null && restore != null, "Production lease methods are unavailable");
+            Invoke(bind, lease);
+            Require(ReferenceEquals(read(), owned), "Production lease did not bind the owned table");
+
+            UnityEngine.Object.DestroyImmediate(owner);
+            owner = null;
+            Require(!wake && !ReferenceEquals(wake, null),
+                    "Fixture did not retain a Unity fake-null WakeController wrapper");
+            Require(ReferenceEquals(read(), owned),
+                    "Managed table field was not readable through the fake-null wrapper");
+
+            Invoke(restore, lease);
+            Require(ReferenceEquals(read(), original),
+                    "Production lease could not restore the managed table field after native destruction");
+            Invoke(restore, lease);
+            Require(ReferenceEquals(read(), original),
+                    "Repeated restore changed the original table field");
+
+            result = new
+            {
+                productionLease = "PortSession.WholeInteractableSession.NativeBorrowedFieldLease<BasicPickupDropTable>",
+                ownerInactive = true,
+                wakeControllerFakeNull = true,
+                ownedFieldReadableAfterDestroyImmediate = true,
+                productionRestoreAfterDestroyImmediate = true,
+                repeatedRestore = true,
+                gameplayRunNetworkAndAwakeStart = false,
+                nativeWakeSpawnerPathProven = false
+            };
+        }
+        catch (Exception error)
+        {
+            fixtureFailure = error;
+        }
+        finally
+        {
+            // Try the production restore before destroying its managed values,
+            // including when an earlier assertion failed. Preserve the primary
+            // fixture failure if cleanup itself also fails.
+            if (lease != null && restore != null)
+                Cleanup(ref cleanupFailure, () => Invoke(restore, lease));
+            if (owner)
+                Cleanup(ref cleanupFailure, () => UnityEngine.Object.DestroyImmediate(owner));
+            if (original)
+                Cleanup(ref cleanupFailure, () => UnityEngine.Object.DestroyImmediate(original));
+            if (owned)
+                Cleanup(ref cleanupFailure, () => UnityEngine.Object.DestroyImmediate(owned));
+            if (preview.IsValid())
+                Cleanup(ref cleanupFailure, () => EditorSceneManager.ClosePreviewScene(preview));
+        }
+        if (fixtureFailure != null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(fixtureFailure).Throw();
+        if (cleanupFailure != null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(cleanupFailure).Throw();
+        return result;
+    }
+}
+}
+#endif
