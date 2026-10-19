@@ -8203,3 +8203,51 @@ own evidence and first-failure gates. Both baseline modes on this APK remain
 pending, so J620 fb0f2953… remains accepted. No additional device, storage
 configuration, profile grant, payload or Phase 2 output is changed by this
 case. Authored runtime replay requirements remain those of J630.
+
+## J632 — Keep objective exit reports coherent and retain a bounded native handoff trace
+
+J629's final objective strings were sampled at different times: the existing
+observer saved a new activation state before refreshing FSM/exit fields, and
+the exit-begin callback saved older derived fields. That mixed snapshot does
+not prove inconsistent native state. The exact timeout cause remains unknown.
+Move the state-change save after the complete objective observation without
+changing the baseline deadline or native exit/transport behavior.
+
+TeleporterWorldSession now records read-only snapshots at activation changes,
+its existing begin/finish callbacks, and three post-finish observations: the
+next world observation, then one-second intervals while that objective lives.
+Callback snapshots refresh state/FSM/exit/destination and distinct fresh boolean
+fields before event saves. UTC, frame/Unity/fixed time, world elapsed time,
+native Run time and Stage advance time remain separately labelled. Entries
+include native identity, server/enabled state and interaction context. Missing
+Stage context is recorded without dereferencing it. No native gameplay method,
+input, RNG, charge, exit or transport state is changed.
+
+The shared authored buffer holds at most 16 entries, reserves first-fault and
+first-terminal slots, and preserves the initial observation while aging regular
+entries. Repeated faults/terminal samples retain the first evidence. An observer
+failure records its first error and makes only telemetry inert; native errors
+are not caught or suppressed. Per-stage setup resets its controls/report and
+existing exact event teardown remains. The finish callback precedes native
+Stage.BeginAdvanceStage; its snapshot deliberately records pre-handoff state.
+Fast transport can retire the objective before all later observations occur.
+
+Prior-art-first: reread the pinned R2API.Director stage seam and J523/J620 exit
+contract; accepted TeleporterInteraction, SceneExitController, Stage and input
+sources determine member/event order. No game/community algorithm is copied.
+Root rejected a per-frame allocation/signature draft, then corrected missing
+context, clock labels, per-stage reset and reserved retention. Independent
+source review finds no further issue. The new editor fixture uses the existing
+stage_build_sources producer and its expected host contract list. Twelve
+producer tests pass. Exact Unity compilation and native-member/shared-buffer
+fixture pass in
+work/experiments/teleporter-exit-trace/editor-20261019T105905.071105Z/;
+the earlier fixture remains at editor-20261019T105611.787755Z/.
+These checks invoke no native gameplay/transition and do not certify Android
+ordering or persistence. Raw snapshots stay ignored under work/.
+
+The runtime selection remains 100 authored files. This code is not built into
+installed 03339547… (J631); candidate device checks remain separate. Both
+baseline modes are still required before APK acceptance. R8/build-entry replay
+must include this authored source and fixture. No new required local content,
+generated asset, payload, device receipt or Phase 2 output is introduced.

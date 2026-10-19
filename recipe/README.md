@@ -994,3 +994,12 @@ public templates and recorded IDs are the generator's only output inputs.
 Doctor is omitted because it writes outside the authorized harness destination.
 No Unity, build, device, shared-work mutation, Git write, journal or state action
 is authorized in this host-only change.
+
+## Objective exit telemetry audit (2026-10-19, J632)
+
+The existing authored runtime source and new editor fixture contain only authored
+observation/retention policy and minimum native API member names. No native
+implementation, game asset data, captures or proprietary content is copied.
+Existing stage_build_sources produces the fixture; no new ignored build input is
+required. The runtime selection remains 100 authored files. Native snapshots are
+local evidence and stay ignored, outside public recipes.

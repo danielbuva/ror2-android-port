@@ -33,8 +33,7 @@ public static class NativeCombatSquadListenerEvidence
         var handlers = field.GetValue(null) as Delegate;
         if (handlers == null)
             return 0;
-        var targets = (exactTargets ?? Enumerable.Empty<CombatSquad>())
-                          .Where(target => !ReferenceEquals(target, null)).ToArray();
+        var targets = (exactTargets ?? Enumerable.Empty<CombatSquad>()).Where(target => !ReferenceEquals(target, null)).ToArray();
         return handlers.GetInvocationList().Count(handler => targets.Any(target => ReferenceEquals(handler.Target, target)));
     }
 
@@ -46,6 +45,46 @@ public static class NativeCombatSquadListenerEvidence
     public static int CountSummonListeners(IEnumerable<CombatSquad> exactTargets)
     {
         return Count(typeof(MasterSummon), nameof(MasterSummon.onServerMasterSummonGlobal), exactTargets);
+    }
+}
+
+[Serializable]
+public sealed class ObjectiveExitTraceEntry
+{
+    public string kind, reason, utc, timeframe, activationState, fsmState, pendingState, exitState, stageScene, stageNextStage, stageAdvanceTime,
+        runNextScene, nextScene, selectorTarget, observerError;
+    public int frame, teleporterId, exitControllerId, stageId, runId;
+    public float time, fixedTime, worldTime, runTime;
+    public bool exitRunning, teleporterActive, teleporterEnabled, exitActive, exitEnabled, serverActive, selectorMatchesObjective,
+        interactDown, interactJustPressed, interactClaimed, idle, charging, charged, finished;
+}
+
+// Pure bounded retention policy; callers sample only lifecycle/state edges and bounded post-finish ticks.
+public static class ObjectiveExitTraceBuffer
+{
+    public const int Capacity = 16;
+    public static void Append(List<ObjectiveExitTraceEntry> entries, ObjectiveExitTraceEntry value)
+    {
+        if (entries == null || value == null)
+            throw new ArgumentNullException();
+        bool protectedKind = value.kind == "first-fault" || value.kind == "terminal";
+        if (protectedKind && entries.Any(entry => entry.kind == value.kind))
+            return;
+        int regular = entries.Count(entry => entry.kind != "first-fault" && entry.kind != "terminal");
+        if (entries.Count >= Capacity || !protectedKind && regular >= Capacity - 2)
+        {
+            int remove = -1;
+            for (int i = 1; i < entries.Count; ++i)
+                if (entries[i].kind != "first-fault" && entries[i].kind != "terminal")
+                {
+                    remove = i;
+                    break;
+                }
+            if (remove < 0)
+                return;
+            entries.RemoveAt(remove);
+        }
+        entries.Add(value);
     }
 }
 
@@ -118,10 +157,13 @@ public sealed partial class PortSession
         public string[] eligibleBossCards;
         public Vector3 position;
         public List<string> transitions = new List<string>();
+        public List<ObjectiveExitTraceEntry> exitTrace = new List<ObjectiveExitTraceEntry>();
+        public string exitTraceFirstError;
+        public bool exitTraceIdle, exitTraceCharging, exitTraceCharged, exitTraceFinished;
         public ObjectiveRendererObservation[] rendererViews, ownedSurfaceViews, presentedSurfaceViews;
         public int lateNativeMaterials, ownedSurfaceCount;
-        public int nativeHostCombatSquads, nativeHostDeathListenersBefore, nativeHostDeathListenersAfter,
-            nativeHostSummonListenersBefore, nativeHostSummonListenersAfter;
+        public int nativeHostCombatSquads, nativeHostDeathListenersBefore, nativeHostDeathListenersAfter, nativeHostSummonListenersBefore,
+            nativeHostSummonListenersAfter;
     }
     // Shared objective content, stage references and ownership observations.
     readonly List<GameObject> objectiveTemplates = new List<GameObject>();
@@ -311,6 +353,9 @@ public sealed partial class PortSession
         Action<BossGroup> objectiveDefeated;
         Action<SceneExitController> objectiveBeginExit, objectiveFinishExit;
         string objectiveState;
+        bool objectiveExitTraceInert;
+        int objectiveExitPostFinishTicks;
+        float objectiveExitTraceNextSampleAt;
         float objectiveRewardApproachAt = -1;
         GameObject[] objectiveEffectSources;
         string[] deferredObjectiveEffectPaths;
@@ -1125,6 +1170,9 @@ public sealed partial class PortSession
                     "Original teleporter combat/holdout/rewards/exit; Android layout/context/presentation. Optional reward collection is recorded separately. No skipped combat, forced charge, currency or platform success."
             };
             objectiveState = null;
+            objectiveExitTraceInert = false;
+            objectiveExitPostFinishTicks = 0;
+            objectiveExitTraceNextSampleAt = 0;
             objectiveRewardApproachAt = -1;
             coordinator.Check(!Stage.instance, "Unowned stage lifecycle");
             coordinator.objectiveStageHost = new GameObject("Owned Android stage coordinator");
@@ -1213,6 +1261,7 @@ public sealed partial class PortSession
                 {
                     if (coordinator.worldTeleporter && exit == coordinator.worldTeleporter.sceneExitController)
                     {
+                        ObserveObjectiveExitTrace("onBeginExit", "callback");
                         coordinator.r.objective.exitBegan = true;
                         coordinator.Save();
                     }
@@ -1235,6 +1284,12 @@ public sealed partial class PortSession
                 {
                     if (coordinator.worldTeleporter && exit == coordinator.worldTeleporter.sceneExitController)
                     {
+                        ObserveObjectiveExitTrace("onFinishExit", "terminal");
+                        objectiveExitPostFinishTicks = 3;
+                        // The native callback precedes Stage.BeginAdvanceStage.
+                        // Observe its handoff on the next world observation, then
+                        // at one-second intervals while this objective still lives.
+                        objectiveExitTraceNextSampleAt = Time.unscaledTime;
                         coordinator.r.objective.exitFinished = true;
                         coordinator.Save();
                     }
@@ -1379,11 +1434,11 @@ public sealed partial class PortSession
             var report = coordinator.r.objective;
             report.frames++;
             report.state = coordinator.worldTeleporter.activationState.ToString();
-            if (report.state != objectiveState)
+            bool objectiveStateChanged = report.state != objectiveState;
+            if (objectiveStateChanged)
             {
                 objectiveState = report.state;
                 report.transitions.Add(report.state);
-                coordinator.Save();
             }
             report.fsmState = coordinator.worldTeleporter.mainStateMachine.state == null
                                   ? "uninitialized"
@@ -1416,6 +1471,109 @@ public sealed partial class PortSession
             {
                 report.rewardPickupMessages = coordinator.r.world.pickupMessages - report.rewardPickupBaseline;
                 report.rewardCollected = report.rewardPickupMessages > 0;
+            }
+            bool traceRecorded = false;
+            if (objectiveStateChanged)
+                traceRecorded = ObserveObjectiveExitTrace("objectiveStateChanged", "change");
+            else if (objectiveExitPostFinishTicks > 0 && Time.unscaledTime >= objectiveExitTraceNextSampleAt)
+            {
+                traceRecorded = ObserveObjectiveExitTrace("postFinishHandoff", "sample");
+                objectiveExitPostFinishTicks--;
+                objectiveExitTraceNextSampleAt = Time.unscaledTime + 1f;
+            }
+            if (objectiveStateChanged || traceRecorded)
+                coordinator.Save();
+        }
+        bool ObserveObjectiveExitTrace(string reason, string kind)
+        {
+            if (objectiveExitTraceInert || !coordinator.worldTeleporter)
+                return false;
+            ObjectiveExitTraceEntry entry;
+            try
+            {
+                var teleporter = coordinator.worldTeleporter;
+                var exit = teleporter.sceneExitController;
+                var machine = teleporter.mainStateMachine;
+                var state = machine ? machine.state : null;
+                var pendingField = typeof(EntityStateMachine).GetField("nextState", BindingFlags.Instance | BindingFlags.NonPublic);
+                var exitField = typeof(SceneExitController).GetField("exitState", BindingFlags.Instance | BindingFlags.NonPublic);
+                var stage = Stage.instance;
+                var nextField = typeof(Stage).GetField("nextStage", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (pendingField == null || exitField == null || nextField == null)
+                    throw new MissingFieldException("Pinned native exit observation fields are unavailable");
+                var run = Run.instance;
+                var pending = machine ? pendingField.GetValue(machine) as EntityState : null;
+                var stageNext = stage ? nextField.GetValue(stage) as SceneDef : null;
+                var destination = exit && exit.useRunNextStageScene ? (run ? run.nextStageScene : null)
+                                  : exit                            ? exit.destinationScene
+                                                                    : null;
+                var interact = coordinator.worldPlayer ? coordinator.worldPlayer.GetComponent<InputBankTest>() : null;
+                entry = new ObjectiveExitTraceEntry {
+                    kind = kind,
+                    reason = reason,
+                    utc = DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+                    timeframe = Time.frameCount.ToString() + "/" + Time.time.ToString("R"),
+                    frame = Time.frameCount,
+                    time = Time.time,
+                    fixedTime = Time.fixedTime,
+                    worldTime = coordinator.r.world != null ? coordinator.r.world.seconds : 0f,
+                    runTime = run ? run.time : 0f,
+                    teleporterId = teleporter.GetInstanceID(),
+                    exitControllerId = exit ? exit.GetInstanceID() : 0,
+                    stageId = stage ? stage.GetInstanceID() : 0,
+                    runId = Run.instance ? Run.instance.GetInstanceID() : 0,
+                    activationState = teleporter.activationState.ToString(),
+                    fsmState = state == null ? "uninitialized" : state.GetType().FullName,
+                    pendingState = pending == null ? "none" : pending.GetType().FullName,
+                    exitState = exit ? Convert.ToString(exitField.GetValue(exit)) : "missing",
+                    exitRunning = SceneExitController.isRunning,
+                    teleporterActive = teleporter.gameObject.activeInHierarchy,
+                    teleporterEnabled = teleporter.enabled,
+                    exitActive = exit && exit.gameObject.activeInHierarchy,
+                    exitEnabled = exit && exit.enabled,
+                    serverActive = NetworkServer.active,
+                    stageScene = stage && stage.sceneDef ? stage.sceneDef.cachedName : "unavailable",
+                    stageNextStage = stageNext ? stageNext.cachedName : "none",
+                    stageAdvanceTime =
+                        stage ? stage.stageAdvanceTime.t.ToString("R", System.Globalization.CultureInfo.InvariantCulture) : "missing",
+                    runNextScene = Run.instance && Run.instance.nextStageScene ? Run.instance.nextStageScene.cachedName : "none",
+                    nextScene = destination ? destination.cachedName : "unavailable",
+                    selectorMatchesObjective =
+                        coordinator.worldDriver && coordinator.worldDriver.currentInteractable == coordinator.objectiveHost,
+                    selectorTarget = coordinator.worldDriver && coordinator.worldDriver.currentInteractable
+                                         ? coordinator.worldDriver.currentInteractable.name
+                                         : "none",
+                    interactDown = interact && interact.interact.down,
+                    interactJustPressed = interact && interact.interact.justPressed,
+                    interactClaimed = interact && interact.interact.hasPressBeenClaimed,
+                    idle = teleporter.isIdle,
+                    charging = teleporter.isCharging,
+                    charged = teleporter.isCharged,
+                    finished = teleporter.isInFinalSequence
+                };
+                coordinator.r.objective.state = entry.activationState;
+                coordinator.r.objective.fsmState = entry.fsmState;
+                coordinator.r.objective.exitState = entry.exitState;
+                coordinator.r.objective.nextScene = entry.nextScene;
+                coordinator.r.objective.exitTraceIdle = entry.idle;
+                coordinator.r.objective.exitTraceCharging = entry.charging;
+                coordinator.r.objective.exitTraceCharged = entry.charged;
+                coordinator.r.objective.exitTraceFinished = entry.finished;
+                ObjectiveExitTraceBuffer.Append(coordinator.r.objective.exitTrace, entry);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                objectiveExitTraceInert = true;
+                string error = ex.GetType().FullName + ": " + ex.Message;
+                coordinator.r.objective.exitTraceFirstError = error;
+                ObjectiveExitTraceBuffer.Append(coordinator.r.objective.exitTrace, new ObjectiveExitTraceEntry {
+                    utc = DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture),
+                    kind = "first-fault", reason = reason, frame = Time.frameCount, time = Time.time, fixedTime = Time.fixedTime,
+                    worldTime = coordinator.r.world != null ? coordinator.r.world.seconds : 0f,
+                    runTime = Run.instance ? Run.instance.time : 0f, observerError = error
+                });
+                return true;
             }
         }
         public ObjectiveRendererObservation ObserveOwnedSurface(Renderer renderer)

@@ -775,6 +775,18 @@ retires only fixture-owned callbacks. The adapted-catalog fixture requires
 initialized lab catalogs and has its own execution gate. These fixture contracts
 do not substitute for actual server-created Android outputs.
 
+Native objective exit telemetry (current authored source, J632):
+`TeleporterWorldSession` owns scalar snapshots at activation edges, its existing
+begin/finish subscriptions, and three bounded post-finish observations. Summary
+state-change saves follow the complete observation. `ObjectiveExitTraceBuffer`
+reserves initial/first-fault/terminal evidence within 16 entries; separate UTC,
+frame, fixed, world, Run and Stage clocks avoid conflating time domains. Setup
+resets controls per objective, teardown uses the existing exact subscriptions,
+and read failures make only telemetry inert. No native method/input/state is
+changed. `TeleporterExitTraceSourceContractFixture` checks the exact native API
+and production buffer through the existing fixture producer. Android trace
+acceptance remains pending; the installed J631 APK predates this change.
+
 `TeleportMaterialSession` also owns final overlay/material release.
 `TeleportOverlayRegistryOwnership`, in the same authored file, reads the native
 active registry prefix to resolve exact wrapper identity before public removal.
