@@ -82,7 +82,7 @@ class BaselinePlacementTests(unittest.TestCase):
                         owned=Mock(return_value={"storage": {"mode": mode}, "package_path": path}),
                         storage=Mock(return_value={"mode": mode, "uuid": uuid}),
                     )
-                    with patch.object(baseline, "Device", return_value=d), patch.object(baseline, "read", side_effect=StopBeforeRun):
+                    with patch.object(baseline, "Device", return_value=d), patch.object(baseline, "attempt_from_installed", side_effect=StopBeforeRun):
                         with self.assertRaises(StopBeforeRun):
                             baseline.check_baseline(stage_exit=stage_exit)
                     d.owned.assert_called_once_with()

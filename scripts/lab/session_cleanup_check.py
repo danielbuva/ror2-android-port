@@ -13,6 +13,7 @@ import time
 
 from common import ROOT, WORK, now, read, sha, write
 from device import Device, PACKAGE
+from installed_attempt import attempt_from_installed
 from nova_bridge import current_errors
 from survivor_check import (
     BASE_SURVIVORS,
@@ -672,7 +673,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
     artifact_hash = sha(build["apk"])
     if artifact_hash != build.get("apk_sha256") or artifact_hash != installed.get("apk_sha256"):
         raise RuntimeError("Current APK artifact hash, build receipt, and installed receipt differ")
-    attempt = read(WORK / "lab-project/Assets/LabLoadingScene/Resources/MovementBatchProbe.json")["attempt"]
+    attempt = attempt_from_installed(installed)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     if not runtime.endswith("/Android/data/" + PACKAGE + "/files"):
         raise RuntimeError("Selected package runtime path is outside its app-private directory")

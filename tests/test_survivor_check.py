@@ -94,19 +94,23 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
         device.read_receipt.return_value = {"persistentDataPath": "/fixture-runtime"}
         with tempfile.TemporaryDirectory() as directory:
             def read(path):
-                return {"apk_sha256": "fixture-apk"} if path.name == "current-build.json" else {"attempt": "fixture-attempt"}
+                return {"apk_sha256": "fixture-apk"} if path.name == "current-build.json" else {"attempt": "mutable-project-attempt"}
 
             with patch.object(check, "WORK", Path(directory)), patch.object(check, "SurvivorCheckDevice", return_value=device), \
                  patch.object(check, "read", side_effect=read), patch.object(check, "check_one", return_value={"success": True}) as case, \
+                 patch.object(check, "attempt_from_installed", return_value="fixture-attempt") as attempt, \
                  redirect_stdout(io.StringIO()):
                 if refused:
                     with self.assertRaises(RuntimeError):
                         check.check_survivors("Huntress")
                     case.assert_not_called()
                     device.read_receipt.assert_not_called()
+                    attempt.assert_not_called()
                 else:
                     self.assertEqual(check.check_survivors("Huntress"), [{"success": True}])
                     case.assert_called_once()
+                    attempt.assert_called_once_with(installed)
+                    self.assertEqual(case.call_args.args[2], "fixture-attempt")
                     self.assertIs(case.call_args.args[-1], installed)
                     device.storage.assert_called_once()
 

@@ -12,6 +12,7 @@ import time
 from baseline import DEBUG_OPTIONS, FIRST_STAGE, SPINE_ID, selection
 from common import WORK, now, read, write
 from device import Device, PACKAGE
+from installed_attempt import attempt_from_installed
 from nova_bridge import current_errors
 
 BASE_SURVIVORS = ("Commando", "Huntress", "Bandit2", "Toolbot", "Engi", "Mage", "Merc", "Treebot", "Loader", "Croco", "Captain")
@@ -461,7 +462,7 @@ def check_survivors(target, skill_variants=None):
         raise RuntimeError("Owned APK placement differs from selected live storage")
     if installed["apk_sha256"] != read(WORK / "config/current-build.json")["apk_sha256"]:
         raise RuntimeError("Installed APK differs from the current build receipt")
-    attempt = read(WORK / "lab-project/Assets/LabLoadingScene/Resources/MovementBatchProbe.json")["attempt"]
+    attempt = attempt_from_installed(installed)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     out = WORK / "experiments/survivor-check" / now()
     out.mkdir(parents=True)

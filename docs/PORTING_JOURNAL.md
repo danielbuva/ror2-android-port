@@ -10139,3 +10139,48 @@ observe actual teardown; preserve current executable rollbacks. New exact-APK
 attempt binding is undergoing host integration and has no runtime/APK change.
 No original input, extra device, receipt hand edit, existing data move or storage
 configuration change occurs here.
+
+## J679 — Bind diagnostic selectors to the exact owned APK's embedded config
+
+Hypothesis: a check for one installed artifact must not obtain its selector ID
+from a mutable working project, which may represent another build/rollback.
+Source audit finds this coupling in baseline, survivor and completed-session
+checks. Current composed builds share a config ID; no new on-device timeout is
+claimed from that source-derived race. Per-device ownership alone does not
+bind the later project-resource read to the APK.
+
+New pure host owner installed_attempt.py takes the existing Device.owned()
+receipt, reads its APK artifact once, verifies that byte snapshot against the
+receipt SHA and gives those same bytes to the existing UnityPy parser. Exactly
+one MovementBatchProbe TextAsset must contain a nonempty JSON attempt. Missing
+or changed artifacts, unsupported/malformed config and ambiguous assets refuse.
+There is no mutable project/latest pointer, timestamped evidence lookup,
+request-ID guess, new build metadata, device.py edit or receipt write. The three
+callers retain existing selected-device, package, storage and current-build
+gates. Preserved older owned APKs work through the same embedded-config path.
+
+Independent review caught an initial hash-then-reopen window in the private
+draft. The integrated version parses the verified in-memory bytes; a regression
+test replaces the path during parsing and proves that exact snapshot reaches
+the loader. Six portable helper tests pass. The first full suite fails because
+old runner mocks supplied no real APK and bypassed the former project read;
+root updates those fixtures at the new pure boundary, deliberately giving the
+project a different attempt. The full 958-test suite then passes with one
+existing skip, with Ruff/diff checks passing. Failed/retry logs remain distinct
+under work/coordination/codex-installed-attempt-host-tests*.
+
+Root's actual artifact proof uses the integrated helper on the locally recorded
+e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc
+owned APK. It finds its unique authored config in 14.360279 s; evidence:
+work/experiments/installed-attempt/host-20261019T153225.325477Z/.
+That is host receipt/artifact verification, not a fresh physical-device hash
+query. Draft/review: work/coordination/installed-attempt-binding/ and
+work/coordination/installed-attempt-binding-review/. ARCHITECTURE names the
+owner and LOCAL_STATE explains the preserved artifact dependency.
+
+First failure: none in the final helper contracts. The current e09920fd…
+default exit case is running through this binding; its result remains pending.
+J678 records its prior plain/native-stage controls. Runtime source/APK/payload
+are unchanged by this host-only fix; no rebuild step or new ./dev action is
+added. No original input, extra device, private receipt hand edit, existing
+data move or storage configuration change occurs.

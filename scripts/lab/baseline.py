@@ -13,6 +13,7 @@ import time
 
 from common import WORK, now, read, write
 from device import Device, PACKAGE
+from installed_attempt import attempt_from_installed
 
 SPINE_ID = "body-state-spawn-state-auto-nova-spine-bringup"
 WORLD_SECONDS = 35
@@ -132,7 +133,7 @@ def check_baseline(stage_exit=False):
     expected_path = "/data/app/" if expected_mode == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
     if expected_path not in installed["package_path"]:
         raise RuntimeError("Owned APK placement differs from selected live volume")
-    attempt = read(WORK / "lab-project/Assets/LabLoadingScene/Resources/MovementBatchProbe.json")["attempt"]
+    attempt = attempt_from_installed(installed)
     out = WORK / "experiments/baseline" / now()
     out.mkdir(parents=True)
     runtime = d.read_receipt("runtime.json")["persistentDataPath"]

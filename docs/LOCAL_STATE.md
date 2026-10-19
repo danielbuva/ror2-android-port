@@ -248,6 +248,15 @@ initialized only from the already configured default serial; additional serials 
 explicitly supplied. Extra Nova/Thor internal-storage onboarding waits for those serials
 and recorded live storage. Thor's two-display sleep check remains pending.
 
+Current baseline, survivor and completed-session checks additionally read the
+exact APK artifact named by the selected `installed.json` ownership receipt.
+Its `apk` path is written by `./dev install` from the generated/preserved lab
+APK; `apk_sha256` binds its bytes. `installed_attempt.py` parses the embedded
+authored config from that verified byte snapshot instead of the mutable project
+config. Preserve that artifact under the existing rollback/retention rules;
+missing or changed bytes refuse before selector writes. No new receipt field,
+local configuration field or timestamped evidence input is introduced.
+
 Receipt/counter JSON paths and directory components below the selected work root must be
 ordinary files/directories, with no symlink redirects. The user-selected work root itself
 may be a symlink. `Device.evidence_directory` produces validated per-device bootstrap and

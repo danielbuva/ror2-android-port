@@ -294,7 +294,7 @@ def run_fake_check(
             }
         )
     )
-    (config / "MovementBatchProbe.json").write_text(json.dumps({"attempt": "attempt-1"}))
+    (config / "MovementBatchProbe.json").write_text(json.dumps({"attempt": "mutable-project-attempt"}))
     device = FakeDevice(
         work, reports, log_error=log_error, foreign_selector=foreign_selector, survivor=survivor, ending=ending, completed_override=completed_override
     )
@@ -312,6 +312,7 @@ def run_fake_check(
         mock.patch.object(runner, "ROOT", base),
         mock.patch.object(runner, "WORK", work),
         mock.patch.object(runner, "SessionCleanupDevice", return_value=device),
+        mock.patch.object(runner, "attempt_from_installed", return_value="attempt-1"),
         mock.patch.object(runner, "now", return_value="synthetic-run"),
         mock.patch.object(runner.time, "monotonic", side_effect=monotonic),
         mock.patch.object(runner.time, "sleep", return_value=None),

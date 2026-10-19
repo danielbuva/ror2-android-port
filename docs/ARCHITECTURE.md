@@ -81,6 +81,19 @@ queries the selected package and cleans up only when it was absent before dispat
 is now confirmed present. An unavailable follow-up query preserves the primary failure
 and reports cleanup uncertainty.
 
+`scripts/lab/installed_attempt.py` owns read-only diagnostic selector identity
+for baseline, survivor and completed-session checks. After `Device.owned()`
+validates selected-device ownership/placement, it reads the receipt's APK artifact
+once, verifies that byte snapshot against the receipt hash, and parses the same
+bytes with the existing UnityPy reader. Exactly one authored MovementBatchProbe
+TextAsset must supply a nonempty attempt. No mutable project config, latest-build
+attempt, cache search or timestamped run evidence supplies identity. The exact
+owned artifact must remain available; missing/changed/ambiguous content refuses
+before selector writes. This helper writes no receipts and changes no storage,
+package or current-build gate. `test_installed_attempt.py` covers identity,
+refusals and replacement during parsing; runner fixtures keep project and
+installed attempts different.
+
 `scripts/lab/build_lock.py` owns a persistent advisory kernel lock and owner diagnostics.
 It is reentrant in one thread and hands its open descriptor to the editor client. Build
 coordinators retain it through staging, Unity completion and result publication; editor
