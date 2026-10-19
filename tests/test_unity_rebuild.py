@@ -31,6 +31,7 @@ class UnityRebuildTests(unittest.TestCase):
         self.dest.mkdir(parents=True)
         self.input_id = "a" * 64
         write(self.work / "config/accepted-input.json", dict(input_id=self.input_id))
+        write(self.work / "config/reconstruction.json", dict(projects=["work/export"]))
         write(self.work / "receipts/provenance-map.json", {})
         for name in (
             "lab-project/Library/keep",
@@ -252,6 +253,54 @@ class UnityRebuildTests(unittest.TestCase):
         (self.dest / "Assets/Ref.prefab").write_text("%YAML 1.1\nfolder: {guid: " + "2" * 32 + "}\n")
         self.assertEqual(r9.minted_folder_references(self.dest)["referencing_files"], 1)
 
+    def test_rebuilt_scene_matches_only_under_one_consistent_local_id_renaming(self):
+        project = self.work / "lab-project"
+        scene = (
+            "%YAML 1.1\n--- !u!29 &1\nOcclusionCullingSettings:\n  serializedVersion: 2\n"
+            "--- !u!1 &{cam}\nGameObject:\n  m_Component:\n  - component: {{fileID: {tr}}}\n  m_Name: Lab Camera\n"
+            "--- !u!4 &{tr}\nTransform:\n  m_GameObject: {{fileID: {cam}}}\n  m_Father: {{fileID: 0}}\n"
+            "  m_Material: {{fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}}\n  m_X: {x}\n"
+        )
+        (project / "Assets").mkdir(parents=True, exist_ok=True)
+        (project / "Assets/Lab.unity").write_text(scene.format(cam=111, tr=222, x=3))
+        (project / "Assets/Other.unity").write_text(scene.format(cam=111, tr=222, x=3))
+        cases = {
+            "renamed": (scene.format(cam=999, tr=-5, x=3), "local_ids_renumbered"),
+            "field": (scene.format(cam=999, tr=-5, x=4), "different"),
+            "swapped": (scene.format(cam=999, tr=-5, x=3).replace("m_GameObject: {fileID: 999}", "m_GameObject: {fileID: -5}"), "different"),
+            "ambiguous": (scene.format(cam=999, tr=-5, x=3) + "--- !u!1 &7\nGameObject:\n  m_Name: Lab Camera\n", "different"),
+        }
+        for name, (text, expected) in cases.items():
+            (self.dest / "Assets").mkdir(parents=True, exist_ok=True)
+            (self.dest / "Assets/Lab.unity").write_text(text)
+            (self.dest / "Assets/Other.unity").write_text(text)
+            paths = {"Assets/Lab.unity", "Assets/Other.unity"}
+            rows = {row["path"]: row["status"] for row in r9.compare_files(self.dest, project, paths, {p: dict(sha256="0" * 64) for p in paths})["rows"]}
+            # Only the scene LabBuild re-creates every build may differ by minted IDs.
+            self.assertEqual(rows, {"Assets/Lab.unity": expected, "Assets/Other.unity": "different"}, name)
+
+    def test_export_form_native_asset_may_differ_only_by_unity_moving_serialized_version(self):
+        project, export = self.work / "lab-project", self.work / "export"
+        body = "%YAML 1.1\n--- !u!86 &8600000\nCustomRenderTexture:\n  m_Name: crtex\n  serializedVersion: 5\n  m_Width: 64\n  m_Height: 64\n"
+        unity = "%YAML 1.1\n--- !u!86 &8600000\nCustomRenderTexture:\n  m_Name: crtex\n  m_Width: 64\n  serializedVersion: 5\n  m_Height: 64\n"
+        evidence = [
+            dict(export_path="Assets/crtex.renderTexture", method="Exact CustomRenderTexture reserialization signature: only serializedVersion line moves")
+        ]
+        cases = {
+            "moved": (body, body, unity, "serialized_version_moved"),
+            "destination-not-export": (body, body.replace("64\n", "65\n", 1), unity.replace("64\n", "65\n", 1), "different"),
+            "value-changed": (body, body, unity.replace("64\n  serializedVersion", "32\n  serializedVersion"), "different"),
+            "two-lines-moved": (body, body, unity.replace("  m_Name: crtex\n  m_Width: 64\n", "  m_Width: 64\n  m_Name: crtex\n"), "different"),
+        }
+        for name, (source, destination, current, expected) in cases.items():
+            for root, text in ((export, source), (self.dest, destination), (project, current)):
+                (root / "Assets").mkdir(parents=True, exist_ok=True)
+                (root / "Assets/crtex.renderTexture").write_text(text)
+            provenance = {"Assets/crtex.renderTexture": dict(sha256="0" * 64, evidence=evidence)}
+            for given, status in ((export, expected), (None, "different")):
+                rows = r9.compare_files(self.dest, project, provenance, provenance, export=given)["rows"]
+                self.assertEqual(rows[0]["status"], status, (name, given))
+
     def test_lock_excludes_second_r9_and_is_removed_after_failure(self):
         with self.assertRaisesRegex(RuntimeError, "fixture"):
             with r9.build_lock(self.dest):
@@ -335,7 +384,10 @@ class UnityRebuildTests(unittest.TestCase):
         (project / "changed").write_bytes(b"old")
         rows = {name: dict(sha256="f" * 64) for name in ("same", "changed", "missing")}
         result = r9.compare_files(self.dest, project, rows, rows)
-        self.assertEqual(result["counts"], dict(identical=1, folder_guid_minted=0, empty_folder_absent=0, different=2))
+        self.assertEqual(
+            result["counts"],
+            dict(identical=1, folder_guid_minted=0, empty_folder_absent=0, local_ids_renumbered=0, serialized_version_moved=0, different=2),
+        )
         self.assertFalse(result["rows"][-1]["provenance_matches"])
 
     def test_apk_comparison_reports_all_entries_and_metadata_without_normalization(self):

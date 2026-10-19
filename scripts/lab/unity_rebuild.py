@@ -268,13 +268,109 @@ def folder_status(target, current):
     return None
 
 
-def compare_files(destination, project, paths, provenance):
+# LabBuild.Build creates this scene with NewScene and saves it on every build (J592).
+REBUILT_SCENES = {"Assets/Lab.unity"}
+SCENE_HEADER = re.compile(rb"(?m)^--- !u!(\d+) &(-?\d+)\r?\n")
+LOCAL_REFERENCE = re.compile(rb"\{fileID: (-?\d+)\}")
+
+
+def scene_objects(data):
+    """Map each local file ID to a structural name: GameObject name, or component class and owner."""
+    parts = SCENE_HEADER.split(data)
+    if b"stripped" in parts[0] or len(parts) < 4:
+        return None
+    documents = {parts[i + 1]: (parts[i], parts[i + 2]) for i in range(1, len(parts), 3)}
+    if len(documents) != (len(parts) - 1) // 3:
+        return None
+    names = {}
+    for local, (class_id, body) in documents.items():
+        if class_id == b"1":
+            match = re.search(rb"(?m)^  m_Name: (.*)$", body)
+            if not match:
+                return None
+            names[local] = b"GameObject:" + match[1]
+    for local, (class_id, body) in documents.items():
+        if local in names:
+            continue
+        owner = re.search(rb"m_GameObject: \{fileID: (-?\d+)\}", body)
+        if owner:
+            if owner[1] not in names:
+                return None
+            names[local] = class_id + b":" + names[owner[1]]
+        elif int(local) < 100:
+            # Scene settings objects (1–4) keep their fixed IDs.
+            names[local] = b"settings:" + local
+        else:
+            return None
+    if len(set(names.values())) != len(names):
+        return None
+
+    def rename(body):
+        return LOCAL_REFERENCE.sub(lambda m: b"{fileID: " + (names[m[1]] if m[1] != b"0" else b"0") + b"}", body)
+
+    try:
+        return parts[0], {names[local]: (class_id, rename(body)) for local, (class_id, body) in documents.items()}
+    except KeyError:
+        return None
+
+
+def scene_ids_renumbered(target, current):
+    """Equal only if one consistent renaming of local file IDs maps every object, field and reference."""
+    if not target.is_file() or not current.is_file():
+        return None
+    a, b = scene_objects(target.read_bytes()), scene_objects(current.read_bytes())
+    return "local_ids_renumbered" if a is not None and a == b else None
+
+
+SERIALIZED_VERSION = re.compile(rb"^  serializedVersion: \d+\r?\n$")
+
+
+def serialized_version_moved(target, current, export_source):
+    """Unity's reserialization of an export-form native asset moves only its top-level serializedVersion line (J553, J592).
+
+    The destination must still hold the recorded export bytes; the working file must be
+    exactly those bytes with that one line at another position.
+    """
+    if export_source is None or not target.is_file() or not current.is_file() or not export_source.is_file():
+        return None
+    a, b = target.read_bytes(), current.read_bytes()
+    if a != export_source.read_bytes() or len(a) != len(b):
+        return None
+    left, right = a.splitlines(keepends=True), b.splitlines(keepends=True)
+    moved = [line for line in left if SERIALIZED_VERSION.match(line)]
+    if len(left) != len(right) or len(moved) != 1:
+        return None
+    i, j = left.index(moved[0]), right.index(moved[0]) if moved[0] in right else -1
+    if j < 0 or i == j or right.count(moved[0]) != 1:
+        return None
+    rest = left[:i] + left[i + 1 :]
+    return "serialized_version_moved" if right[:j] + right[j + 1 :] == rest else None
+
+
+def export_source(row, export):
+    for evidence in row.get("evidence", []):
+        path = evidence.get("export_path")
+        if export is not None and path and "serializedVersion" in evidence.get("method", ""):
+            source = (export / path).resolve()
+            if source.is_relative_to(export.resolve()):
+                return source
+    return None
+
+
+def compare_files(destination, project, paths, provenance, export=None):
     rows = []
     for path in sorted(paths):
         target, current = destination / path, project / path
         actual = sha(target) if target.is_file() else None
         expected = sha(current) if current.is_file() else None
-        status = "identical" if actual is not None and actual == expected else (path.endswith(".meta") and folder_status(target, current)) or "different"
+        status = (
+            "identical"
+            if actual is not None and actual == expected
+            else (path.endswith(".meta") and folder_status(target, current))
+            or (path in REBUILT_SCENES and scene_ids_renumbered(target, current))
+            or serialized_version_moved(target, current, export_source(provenance[path], export))
+            or "different"
+        )
         rows.append(
             dict(
                 path=path,
@@ -285,7 +381,7 @@ def compare_files(destination, project, paths, provenance):
                 provenance_matches=actual == provenance[path]["sha256"],
             )
         )
-    statuses = ("identical", "folder_guid_minted", "empty_folder_absent", "different")
+    statuses = ("identical", "folder_guid_minted", "empty_folder_absent", "local_ids_renumbered", "serialized_version_moved", "different")
     return dict(rows=rows, counts={status: sum(row["status"] == status for row in rows) for status in statuses})
 
 
@@ -423,6 +519,12 @@ def compare_apks(destination, reference):
     )
 
 
+def accepted_export(work):
+    projects = read(Path(work) / "config/reconstruction.json")["projects"]
+    path = Path(projects[0])
+    return Path(work).joinpath(*path.parts[1:]) if path.parts and path.parts[0] == "work" else ROOT / path
+
+
 def unity_build(destination, work, input_id, provenance, compare_only=False):
     from build_entry_rebuild import validate_bindings
     from whole_catalog import build_integration
@@ -448,6 +550,7 @@ def unity_build(destination, work, input_id, provenance, compare_only=False):
             work / "lab-project",
             {path for path, row in provenance.items() if row["producer"] == "unity-generated"} - selected_paths(STEPS["importer-identities"], provenance),
             provenance,
+            export=accepted_export(work),
         ),
     )
     result = dict(

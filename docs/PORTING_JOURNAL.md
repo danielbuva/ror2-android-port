@@ -6480,3 +6480,54 @@ stays explicitly unavailable. Revisit with an authorized 2023.1 Android package,
 then test initialization, Init/event banks, plugin/routing behavior and audible
 output. No APK/runtime/receipt/rebuild change; the parallel-session lock remains
 honored and J586 remains reserved.
+
+## J592 — R9's four Unity-generated file gaps: two exact classifications, one open drift
+
+Phase 2, from-scratch rebuild (diagnosed and implemented by Claude; host only, no build, install or
+editor). Hypothesis: the four `unity_generated` paths that J576, J582 and J586's R9 receipts list as
+different are Unity-side serialization artefacts rather than reconstruction errors. Evidence is from
+both the J582 destination (kept as `lab-project.J582-receipt`) and the J586 destination, read only.
+
+`Assets/Lab.unity`. `LabBuild.Build` creates it with `NewScene` and saves it on every build, and
+Unity mints random local file IDs for new scene objects: the working file no longer matches its own
+provenance-map hash. Renaming each local ID to a structural name (the GameObject's name, or the
+component's class and owner) makes both destinations' scenes and the working scene identical: the
+same 16 objects, every field and every reference. J586's `level0` is byte-identical to the
+baseline APK's. R9 now records such a file as `local_ids_renumbered`, only for this scene and only
+when one consistent renaming maps every object; a changed field, a swapped reference or an
+ambiguous name stays `different`.
+
+`crtexRush_Lava.renderTexture`, `crtexFungalCaustics.renderTexture`. The destination holds the
+accepted export bytes; the working files are those bytes with the top-level `serializedVersion`
+line moved after the texture fields, the reserialization signature the provenance map already
+records (J553). R9 rewrote the other 12 custom render textures at its final asset save (all mtimes
+22:11:33 in J586); the working project rewrote these two on Oct 13 and Oct 14 in editor sessions,
+not in a build. All 14 are in the payload, whose bundles serialize the loaded objects, not the
+YAML. R9 now records `serialized_version_moved` only when the destination equals the recorded export
+source exactly and the working file is that file with this one line elsewhere.
+
+`BlueNoise_R8_1.png.meta` stays `different`: it is a real content difference. The working meta
+marks the texture as a normal map with mipmaps (texture type, sRGB, compression and platform rows
+differ), while the destination keeps the export meta. Three Standard-shader materials of the DLC4
+`sanctum` blockout use it as `_BumpMap`. The working meta was written at 05:36 UTC on 2026-10-12, in
+the GUI lab MCP editor session `lab-editor-20261012T051749.817522Z.log`, between the texture's two
+imports there (artifact `f0c30f3d…` then `6590c20b…`). No repo code sets this importer, the export
+did not change, and R9's fresh import produces `f0c30f3d…`, the working project's first artifact.
+The payload differs too: R9's bundle size report lists the texture at 32.2 KB and the working build
+at 42.9 KB. So this is working-project drift from one interactive editor session, and the rebuild
+holds the faithful export form. Open: the exact editor action is not in the log. Proposed
+resolution: commit 9 makes the working project the rebuild's output, which restores the export
+meta; that needs the usual device checks.
+
+`Hidden/Compositing` (J583 item 2) is not a fresh-Library effect in general: the first lab editor
+build on 2026-09-13 (`lab-editor-20260913T021747.837153Z.log`, a near-empty smoke project) already
+compiled it. Unity's editor binary names it only for `TextureMixerPlayable` initialisation; the
+managed editor code has no reference, so the selection is native. Next experiment: a second,
+code-only build in an APFS clone of the J586 destination (warm Library), to see whether state from
+an earlier build in the same Library adds it.
+
+Host evidence: both destinations' four rows classify as above with the shipped functions
+(`compare_files` with the accepted export). New C# is not involved. The gate is unchanged
+otherwise: any other byte difference, a missing file or a new reimport error still makes R9
+unequal. 832 host tests pass. Revisit if another scene joins `REBUILT_SCENES` or a native asset
+differs by more than that line.

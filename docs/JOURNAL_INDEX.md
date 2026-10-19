@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J592](PORTING_JOURNAL.md#j592--r9s-four-unity-generated-file-gaps-two-exact-classifications-one-open-drift) | 2026-10-18 | R9's four Unity-generated file gaps: two exact classifications, one open drift | Phase 2, from-scratch rebuild (diagnosed and implemented by Claude; host only, no build, install or editor). |
 | [J591](PORTING_JOURNAL.md#j591--narrow-the-audio-runtime-and-plugin-requirements-static-research) | 2026-10-18 | Narrow the audio runtime and plugin requirements (static research) | Question: which native runtime family and concrete codecs/plugins are worth verifying against J588's accepted version-150 banks? |
 | [J590](PORTING_JOURNAL.md#j590--survivor-diagnostic-review-corrections-host-draft) | 2026-10-18 | Survivor diagnostic review corrections (host draft) | Source review of J587 found three evidence gaps: suppressed callbacks became a generic missing-skill failure, the fixture did not invoke authority callbacks, a… |
 | [J589](PORTING_JOURNAL.md#j589--multi-device-tooling-and-host-build-mutex-host-draft) | 2026-10-18 | Multi-device tooling and host build mutex (host draft) | Observation / hypothesis: shared flat placement/runtime receipts cannot safely support several devices, and destination-only build exclusion cannot serialize t… |

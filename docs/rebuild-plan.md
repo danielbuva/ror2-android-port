@@ -508,8 +508,10 @@ but J547 supplies a checker rather than a complete initializer. No game readines
 
 ## R9: isolated Unity import/build (current; not yet equivalent)
 
-Status (J582–J585): from a fresh Library, R9 builds an APK that passed both device checks,
-but reports it unequal. The extra `Unity.Timeline.dll` linker root is now preserved in the
+Status (J582–J585, J592): from a fresh Library, R9 builds an APK that passed both device checks,
+but reports it unequal. Of its four unity-generated file differences, `Lab.unity` and two render
+textures are now exact classifications; `BlueNoise_R8_1.png.meta` is working-project drift from one
+editor session and stays different (J592). The extra `Unity.Timeline.dll` linker root is now preserved in the
 descriptor, so the baseline matches full builds (J584). The reimport errors came from batch
 import order, and pass 2 now imports in dependency layers (J585). R9 has not been rerun with
 either fix. Why `Hidden/Compositing` drops out is still open. R2 still reads local migration evidence; see
@@ -565,6 +567,13 @@ Comparisons retain actual SHA-256 values, with no normalization:
   Each group reports identical/different counts and per-path current/destination
   hashes, plus whether the destination also matches the recorded provenance hash.
   Missing files are different and retain null hashes. These cohorts overlap.
+  Four exact non-identical statuses do not make R9 unequal, and are counted
+  separately: `folder_guid_minted` and `empty_folder_absent` (J575);
+  `local_ids_renumbered`, only for `Assets/Lab.unity`, which `LabBuild.Build`
+  re-creates every build, when one consistent renaming of Unity's random local
+  file IDs maps every object, field and reference; and `serialized_version_moved`,
+  when the destination holds the recorded export source exactly and the working
+  file is that file with only its `serializedVersion` line moved (J592).
 - `apk`: every entry name, uncompressed size and hash in the destination and the
   device-verified reference named by `BASELINE.md`, located through local receipts
   and independently hash-checked. Added/missing entries stay explicit. ZIP timestamps,
