@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J732](PORTING_JOURNAL.md#j732--native-wwise-output-and-unchanged-original-init-loading-on-android) | 2026-10-19 | Native Wwise output and unchanged original Init loading on Android | Hypothesis: the user-supplied Wwise 2023.1.8.8601 Android ARM64 SDK can produce native output independently of the game's disabled managed audio path, then acc… |
 | [J731](PORTING_JOURNAL.md#j731--own-mercenarys-evis-impact-visual-as-a-native-effect) | 2026-10-19 | Own Mercenary's Evis impact visual as a native effect | Hypothesis: J720's rejected MercSwordFinisherSlash lookup can be repaired by an Evis-only owned effect clone. |
 | [J730](PORTING_JOURNAL.md#j730--native-first-stage-abandonment-returns-its-loan-and-restarts) | 2026-10-19 | Native first-stage abandonment returns its loan and restarts | Hypothesis: J726's source-table-first commerce reconciliation fixes the measured baseline-release ordering failure. |
 | [J729](PORTING_JOURNAL.md#j729--clean-checkout-replay-r1r7-equal-the-working-project-now-holds-uncommitted-code) | 2026-10-19 | Clean-checkout replay: R1–R7 equal; the working project now holds uncommitted code | Phase 2, from-scratch rebuild (run by Claude; host only). |

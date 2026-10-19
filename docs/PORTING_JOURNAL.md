@@ -12558,3 +12558,92 @@ baseline modes, then repeat the original Mercenary alternate case. The two
 runtime sources, support fixture and staging list affect R8 replay; this is a
 committed build target checkpoint, not device acceptance. No original input,
 protected bytes, storage setting, extra device or Moon route is changed.
+
+## J732 — Native Wwise output and unchanged original Init loading on Android
+
+Hypothesis: the user-supplied Wwise 2023.1.8.8601 Android ARM64 SDK can produce
+native output independently of the game's disabled managed audio path, then
+accept the original unchanged Init bank. The matching official Unity Integration
+(build 3208) and Authoring components were obtained through the Launcher after
+the user's agreement authorization. No vendor integration was applied to the
+active Unity project. Prior art remains J591/J722's exact version/plugin findings
+and pinned R2API.Sound at f539511eabf87f02afddb5a83cafd2f4704c85ad: initialize
+first and load matching Init before other banks. No SDK/game implementation or
+protected bytes are published.
+
+Independent output fixture: Wwise Console creates a fresh Android project,
+imports a generated 440 Hz, 0.5-second, mono 48 kHz PCM WAV, and generates Init
+plus ToneDiagnosticBank. Console reports successful PCM conversion with zero
+warnings/errors; SoundbanksInfo identifies one embedded, nonstreamed media item
+and PlayAuthoredTone. The WAV SHA-256 is
+cb29e2ea03f9d0d77f39f06e4ec42f4d2079279a6a673f18c31cd362213f819f.
+All source/project/bank/tool receipts remain under
+work/coordination/wwise-tone-project-draft/. These are self-authored diagnostic
+banks, not game audio or reconstructed game banks.
+
+The authored C ABI/JNI fixture uses real SDK return values, plugin queries,
+playing/token IDs, EndOfEvent, an audio-thread-safe bounded float-PCM callback,
+reverse unload and Term. It links official Profile core/music/memory/stream,
+Vorbis and effect archives with the pinned Unity r21d API 21 compiler. SDK
+outlined atomics require the explicitly hash-pinned official r27c compiler-RT
+builtins archive; the compiler/sysroot and Unity toolchain remain unchanged.
+CommunicationCentral resolves the Profile helper references. This measured mixed
+link is an experiment, not a vendor-supported toolchain claim. The selected
+r21d libc++ runtime is packaged with the fixture. Native libraries stay ignored.
+
+Initial attempts failed before Init because a system USB-mode dialog interrupted
+Activity focus. Dismissing that observed dialog allows the guarded worker to
+start. A vendor procedural demo bank then loads/posts/completes but reports an
+additional missing plugin, so that candidate is rejected. The first self-authored
+PCM candidate completes its event and Android reports delivered audio frames,
+but its capture callback sees zero samples. Inspection of the exact SDK shows
+that registration can attach to a device before asynchronous main-output
+replacement. The smallest change calls public GetSpeakerConfiguration after
+Init bank load, requires a valid nonzero channel configuration, then registers
+capture. No arbitrary delay, forced channel layout, output-file hook, or success
+stub is added. Zero/nonfinite samples still fail.
+
+The corrected standalone APK is
+6c78e6909724cef9cdb3ee6607d7c236dd1e677d9e9667a11856e94e55329c81;
+its native bridge is
+88ed285b884843f2ff55a653d1660f906d7b1ddb6f9fb16e697d0a7521a06e87.
+Device evidence:
+work/device/<serial>/wwise-authored-tone/20261019T202706.695392Z/;
+root receipt: work/coordination/codex-wwise-authored-tone-device-v2.stdout.
+Native Init, all eight required codec/effect registrations, both bank loads,
+PostEvent, EndOfEvent, event release, capture unregister, unload and Term pass.
+Capture observes 44 callbacks, 25,344 frames and 50,688 finite samples, of which
+47,920 are nonzero; nonfinite/rejected/limited counts are zero. Peak is
+0.1767766923 and RMS 0.1208280325. The final snapshot follows successful Term,
+with no retained capture callback and no observed monitor error. This proves
+bounded native output data, not physical audibility or complete game audio.
+
+Then test the exact accepted Windows Init.bnk unchanged: 6,319 bytes, bank format
+150, SHA-256
+3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6.
+A separate load-only APK
+fca6348c6f31f57840b02f89b28abba64a4b9f7b982756b01c60634bd73321b5
+checks accepted input/manifest/bank identities before packaging and again checks
+the packaged bank before loading. Native Init, all eight required registrations,
+LoadBankMemoryView, unload and Term succeed; returned bank ID is 1355168291.
+It defines/posts no event and claims no output from the original bank. Evidence:
+work/device/<serial>/wwise-original-init/20261019T202841.779524Z/;
+root receipt: work/coordination/codex-wwise-original-init-device-v1.stdout.
+
+Both successful runs use the separate disposable fixture package, refuse any
+pre-existing install, query current capacity/placement, install on the configured
+adopted volume and verify runtime data backing. They preserve logs/results,
+remove only the package they installed, and sleep the OLED. Cleanup errors and
+current-process fatal logs are empty. The main game package and its audio guards
+are not altered by these fixtures. Raw logs, identifiers, keys, vendor archives,
+original banks and all generated/proprietary bytes remain local.
+
+First failure in the final output and Init-only contracts: none. The original
+Global bank/event, Windows routing/effects behavior, retained managed ABI and
+normal game audio lifecycle remain open. The private ABI draft checks 28 export
+remaps and 88 string-marshalling parameters, while 11 platform-only imports and
+Android initialization/path handling still require explicit treatment. These
+fixtures do not restore audio to the port. Continue with the complete unchanged
+Global bank and a traced original event, then integrate a named Android audio
+owner only after the native and managed contracts pass. No original bank
+conversion has been shown necessary.
