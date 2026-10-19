@@ -117,6 +117,12 @@ only its unique remote profile after a verified nonempty pull; a failed pull or
 timeout preserves the remote output without guessing a process to kill. The caller
 retains ownership of the existing gameplay run and display. Host transport/refusal
 contracts are in `test_performance_capture.py` and `test_performance_cli.py`.
+Typed survivor/diagnostic/assistance/profile metadata and runtime errors accompany
+each available endpoint. `stable_stage_gameplay` qualifies the two sampled
+endpoints separately from raw capture success; missing context, non-playing
+phase, changed scene/transition count or runtime errors prevent that claim.
+Matching survivor identity is reported separately. These endpoint comparisons
+do not prove uninterrupted gameplay or complete ability behavior between samples.
 Bare `./dev perf` retains the existing dumpsys capture behavior.
 
 Assembly transform verification (`scripts/lab/assembly_transforms.py`, current):

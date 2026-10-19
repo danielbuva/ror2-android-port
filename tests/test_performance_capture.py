@@ -47,6 +47,11 @@ class FakeDevice:
             "session": 7,
             "pid": 1234,
             "phase": "integrated-world-playing",
+            "selectedSurvivor": "Toolbot",
+            "developerSurvivorOverride": True,
+            "diagnosticSkillCoverage": True,
+            "debugAcceleration": {"everAssisted": True},
+            "profile": {"appliedRuns": 13},
             "stage": {"scene": "wispgraveyard"},
             "stageProgress": {"transitions": 2},
             "world": {"seconds": 240},
@@ -209,6 +214,14 @@ class PerformanceCaptureTests(unittest.TestCase):
         self.assertEqual(receipt["runtime_context_before"]["session"], 7)
         self.assertEqual(receipt["runtime_context_after"]["id"], "body-state-spine")
         self.assertEqual(receipt["runtime_transition"]["stage_before"], "wispgraveyard")
+        self.assertEqual(receipt["runtime_context_before"]["selectedSurvivor"], "Toolbot")
+        self.assertIs(receipt["runtime_context_before"]["developerSurvivorOverride"], True)
+        self.assertIs(receipt["runtime_context_before"]["diagnosticSkillCoverage"], True)
+        self.assertIs(receipt["runtime_context_before"]["everAssisted"], True)
+        self.assertEqual(receipt["runtime_context_before"]["profileAppliedRuns"], 13)
+        self.assertTrue(receipt["runtime_context_before"]["survivorMetadataAvailable"])
+        self.assertTrue(receipt["stable_stage_gameplay"]["stable"])
+        self.assertTrue(receipt["survivor_identity_stable"])
         self.assertIn("runtime.json", fake.read_receipt_names)
         self.assertIn("performance", fake.evidence_components)
         self.assertTrue((Path(self.temp.name) / receipt["profile_path"]).is_file())
@@ -324,12 +337,104 @@ class PerformanceCaptureTests(unittest.TestCase):
             with self.assertRaisesRegex(performance_capture.CaptureError, "selection/session changed") as caught:
                 performance_capture.capture_cpu()
         self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).is_file())
-
         lost = FakeDevice(self.temp.name, foreground_sequence=[True, False])
         with patch.object(performance_capture, "Device", return_value=lost):
             with self.assertRaisesRegex(performance_capture.CaptureError, "not confirmed as the resumed") as caught:
                 performance_capture.capture_cpu()
         self.assertTrue((Path(self.temp.name) / caught.exception.receipt["profile_path"]).is_file())
+
+    def test_unavailable_runtime_context_keeps_process_capture_success_but_not_stage_claim(self):
+        fake = FakeDevice(self.temp.name, session_sequence=[None, None])
+        with patch.object(performance_capture, "Device", return_value=fake):
+            receipt = performance_capture.capture_cpu()
+        self.assertTrue(receipt["success"])
+        self.assertFalse(receipt["stable_stage_gameplay"]["comparable"])
+        self.assertFalse(receipt["stable_stage_gameplay"]["stable"])
+        self.assertIn("runtime-context-unavailable", receipt["stable_stage_gameplay"]["reasons"])
+
+    def test_survivor_identity_drift_is_recorded_without_relabeling_raw_capture(self):
+        fake = FakeDevice(self.temp.name)
+        after = dict(fake.report, selectedSurvivor="Engi")
+        fake._session_sequence = [fake.report, after]
+        with patch.object(performance_capture, "Device", return_value=fake):
+            receipt = performance_capture.capture_cpu()
+        self.assertTrue(receipt["success"])
+        self.assertFalse(receipt["survivor_identity_stable"])
+        self.assertEqual(receipt["runtime_transition"]["selected_survivor_before"], "Toolbot")
+        self.assertEqual(receipt["runtime_transition"]["selected_survivor_after"], "Engi")
+        self.assertTrue(receipt["stable_stage_gameplay"]["stable"])
+
+    def test_phase_stage_and_transition_drift_are_explicitly_not_stage_stable(self):
+        variants = [
+            ("phase", "complete", "one-or-both-endpoints-not-integrated-world-playing"),
+            ("stage", {"scene": "goolake"}, "stage-missing-or-changed"),
+            ("stageProgress", {"transitions": 3}, "transition-count-changed"),
+        ]
+        for field, value, reason in variants:
+            with self.subTest(field=field):
+                fake = FakeDevice(self.temp.name)
+                after = dict(fake.report)
+                after[field] = value
+                fake._session_sequence = [fake.report, after]
+                with patch.object(performance_capture, "Device", return_value=fake):
+                    receipt = performance_capture.capture_cpu()
+                self.assertTrue(receipt["success"])
+                self.assertFalse(receipt["stable_stage_gameplay"]["stable"])
+                self.assertIn(reason, receipt["stable_stage_gameplay"]["reasons"])
+
+    def test_survivor_context_fields_are_strictly_typed_and_report_errors_retained(self):
+        fake = FakeDevice(self.temp.name)
+        malformed = dict(
+            fake.report,
+            selectedSurvivor=7,
+            developerSurvivorOverride=1,
+            diagnosticSkillCoverage="true",
+            debugAcceleration={"everAssisted": 1},
+            profile={"appliedRuns": True},
+            error="current runtime issue",
+            firstFailure="native failure",
+            firstFailurePhase="integrated-world-playing",
+        )
+        fake._session_sequence = [malformed, malformed]
+        with patch.object(performance_capture, "Device", return_value=fake):
+            receipt = performance_capture.capture_cpu()
+        context = receipt["runtime_context_before"]
+        self.assertTrue(receipt["success"])
+        self.assertIsNone(context["selectedSurvivor"])
+        self.assertIsNone(context["developerSurvivorOverride"])
+        self.assertIsNone(context["diagnosticSkillCoverage"])
+        self.assertIsNone(context["everAssisted"])
+        self.assertIsNone(context["profileAppliedRuns"])
+        self.assertFalse(context["survivorMetadataAvailable"])
+        self.assertEqual(context["reportError"], "current runtime issue")
+        self.assertEqual(context["reportFirstFailure"], "native failure")
+        self.assertEqual(context["reportFirstFailurePhase"], "integrated-world-playing")
+
+    def test_nonempty_runtime_errors_and_malformed_error_types_disqualify_stage_stability(self):
+        for updates, expected in (
+            ({"error": "late runtime failure"}, "runtime-error-reported"),
+            ({"firstFailure": "native first failure"}, "runtime-error-reported"),
+            ({"error": 7}, "runtime-error-metadata-malformed"),
+            ({"firstFailurePhase": True}, "runtime-error-metadata-malformed"),
+        ):
+            with self.subTest(updates=updates):
+                fake = FakeDevice(self.temp.name)
+                altered = dict(fake.report, **updates)
+                fake._session_sequence = [fake.report, altered]
+                with patch.object(performance_capture, "Device", return_value=fake):
+                    receipt = performance_capture.capture_cpu()
+                self.assertTrue(receipt["success"])
+                self.assertFalse(receipt["stable_stage_gameplay"]["stable"])
+                self.assertIn(expected, receipt["stable_stage_gameplay"]["reasons"])
+
+    def test_empty_survivor_identity_is_not_stable(self):
+        fake = FakeDevice(self.temp.name)
+        altered = dict(fake.report, selectedSurvivor="")
+        fake._session_sequence = [fake.report, altered]
+        with patch.object(performance_capture, "Device", return_value=fake):
+            receipt = performance_capture.capture_cpu()
+        self.assertTrue(receipt["success"])
+        self.assertFalse(receipt["survivor_identity_stable"])
 
     def test_empty_or_missing_pull_preserves_remote_profile_and_fails(self):
         for mode in ("empty", "missing"):

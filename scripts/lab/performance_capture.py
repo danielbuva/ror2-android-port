@@ -97,6 +97,19 @@ def _session_context(device, runtime_path, pid):
     world = report.get("world") if isinstance(report.get("world"), dict) else {}
     progress = report.get("stageProgress") if isinstance(report.get("stageProgress"), dict) else {}
     performance = report.get("performance") if isinstance(report.get("performance"), dict) else {}
+    debug_acceleration = report.get("debugAcceleration") if isinstance(report.get("debugAcceleration"), dict) else {}
+    profile = report.get("profile") if isinstance(report.get("profile"), dict) else {}
+    selected_survivor = report.get("selectedSurvivor")
+    developer_override = report.get("developerSurvivorOverride")
+    diagnostic_skill_coverage = report.get("diagnosticSkillCoverage")
+    ever_assisted = debug_acceleration.get("everAssisted")
+    applied_runs = profile.get("appliedRuns")
+    report_error = report.get("error")
+    first_failure = report.get("firstFailure")
+    first_failure_phase = report.get("firstFailurePhase")
+    report_error_malformed = "error" in report and report_error is not None and not isinstance(report_error, str)
+    first_failure_malformed = "firstFailure" in report and first_failure is not None and not isinstance(first_failure, str)
+    first_failure_phase_malformed = "firstFailurePhase" in report and first_failure_phase is not None and not isinstance(first_failure_phase, str)
     pacing = report.get("framePacing") if isinstance(report.get("framePacing"), dict) else {}
     samples = pacing.get("samples") if isinstance(pacing.get("samples"), list) else []
     latest = samples[-1] if samples and isinstance(samples[-1], dict) else {}
@@ -123,6 +136,25 @@ def _session_context(device, runtime_path, pid):
             "phase": report.get("phase"),
             "stage": stage.get("scene"),
             "transitions": progress.get("transitions"),
+            "selectedSurvivor": selected_survivor if isinstance(selected_survivor, str) else None,
+            "developerSurvivorOverride": developer_override if type(developer_override) is bool else None,
+            "diagnosticSkillCoverage": diagnostic_skill_coverage if type(diagnostic_skill_coverage) is bool else None,
+            "everAssisted": ever_assisted if type(ever_assisted) is bool else None,
+            "profileAppliedRuns": applied_runs if type(applied_runs) is int else None,
+            "survivorMetadataAvailable": (
+                isinstance(selected_survivor, str)
+                and bool(selected_survivor)
+                and type(developer_override) is bool
+                and type(diagnostic_skill_coverage) is bool
+                and type(ever_assisted) is bool
+                and type(applied_runs) is int
+            ),
+            "reportError": report_error if isinstance(report_error, str) and report_error else None,
+            "reportFirstFailure": first_failure if isinstance(first_failure, str) and first_failure else None,
+            "reportFirstFailurePhase": first_failure_phase if isinstance(first_failure_phase, str) and first_failure_phase else None,
+            "reportErrorMetadataMalformed": report_error_malformed,
+            "reportFirstFailureMetadataMalformed": first_failure_malformed,
+            "reportFirstFailurePhaseMetadataMalformed": first_failure_phase_malformed,
             "world_seconds": world.get("seconds"),
             "framePacing": {
                 key: pacing.get(key)
@@ -306,6 +338,44 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
                 receipt["identity_stable"] = False
                 receipt["runtime_identity_error"] = "Runtime selection/session changed during CPU capture"
                 raise RuntimeError(receipt["runtime_identity_error"])
+        before_phase, after_phase = context_before.get("phase"), context_after.get("phase")
+        before_stage, after_stage = context_before.get("stage"), context_after.get("stage")
+        before_transitions, after_transitions = context_before.get("transitions"), context_after.get("transitions")
+        stage_reasons = []
+        if not context_before.get("available") or not context_after.get("available"):
+            stage_reasons.append("runtime-context-unavailable")
+        if before_phase != "integrated-world-playing" or after_phase != "integrated-world-playing":
+            stage_reasons.append("one-or-both-endpoints-not-integrated-world-playing")
+        if not isinstance(before_stage, str) or not before_stage or before_stage != after_stage:
+            stage_reasons.append("stage-missing-or-changed")
+        if type(before_transitions) is not int or type(after_transitions) is not int:
+            stage_reasons.append("transition-count-unavailable")
+        elif before_transitions != after_transitions:
+            stage_reasons.append("transition-count-changed")
+        for context in (context_before, context_after):
+            if context.get("reportError") or context.get("reportFirstFailure"):
+                stage_reasons.append("runtime-error-reported")
+                break
+        if any(
+            context.get("reportErrorMetadataMalformed")
+            or context.get("reportFirstFailureMetadataMalformed")
+            or context.get("reportFirstFailurePhaseMetadataMalformed")
+            for context in (context_before, context_after)
+        ):
+            stage_reasons.append("runtime-error-metadata-malformed")
+        before_survivor, after_survivor = context_before.get("selectedSurvivor"), context_after.get("selectedSurvivor")
+        receipt["stable_stage_gameplay"] = {
+            "comparable": context_before.get("available") is True and context_after.get("available") is True,
+            "stable": not stage_reasons,
+            "reasons": stage_reasons,
+        }
+        receipt["survivor_identity_stable"] = (
+            isinstance(before_survivor, str)
+            and bool(before_survivor)
+            and isinstance(after_survivor, str)
+            and bool(after_survivor)
+            and before_survivor == after_survivor
+        )
         receipt["runtime_transition"] = {
             "phase_before": context_before.get("phase"),
             "phase_after": context_after.get("phase"),
@@ -313,6 +383,8 @@ def capture_cpu(device=None, *, duration_seconds=15, label="sample"):
             "stage_after": context_after.get("stage"),
             "session_before": context_before.get("session"),
             "session_after": context_after.get("session"),
+            "selected_survivor_before": before_survivor,
+            "selected_survivor_after": after_survivor,
             "world_seconds_before": context_before.get("world_seconds"),
             "world_seconds_after": context_after.get("world_seconds"),
             "transitions_before": context_before.get("transitions"),

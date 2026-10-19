@@ -7453,3 +7453,28 @@ baseline and J609 completed-session acceptance remain valid for their measured
 contracts; Engineer is a separate open gameplay failure. Revisit by auditing
 the current shield/hurtbox lifecycle and native hit arguments before choosing
 a serialization or runtime fix. No Phase 2 or later build input changed.
+
+## J612 — Qualify CPU evidence by survivor and sampled gameplay context
+
+Hypothesis: a process-attributed raw profile needs explicit survivor and stage
+qualifiers before it can support the parallel survivor/performance work. J610's
+permission refusal supplies no profile; this host-only improvement does not
+retry that unchanged device path or alter runtime behavior.
+
+The existing capture now retains typed survivor, developer selection, skill
+coverage, assistance and profile-run fields plus runtime error/first-failure
+metadata from available reports. Survivor identity stability is separate from
+stage endpoint stability. Missing context, non-playing endpoints, missing or
+changed scene/transition counts, and runtime errors or malformed error metadata
+prevent the stage qualification. A valid raw capture remains process evidence
+when its stage/survivor qualifier is unavailable or changes; its success is not
+relabelled as gameplay acceptance. Before/after endpoint agreement cannot prove
+uninterrupted play throughout the capture.
+
+Root reviewed the draft, corrected endpoint wording, empty-survivor identity
+and error qualification, and integrated only the authored metadata/tests.
+Eighteen focused performance/CLI tests pass, including unavailable context,
+survivor/phase/scene/transition drift, strict types and runtime errors. Ruff and
+diff checks pass. No new action, build input, local state requirement or device
+operation is added. Installed/baseline APK remains J608's 41ecca66…; J611's
+Engineer first failure remains open.
