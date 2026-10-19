@@ -7128,3 +7128,37 @@ The runner removed its selector, stopped the app and slept the OLED at the
 terminal result. Revisit MUL-T using measured native input/state prerequisites
 and the separately built J602 component observer, after both baseline checks.
 No source or Phase 2 rebuild input changed in this experiment.
+
+## J604 — Accept the native teardown and auxiliary-observer APK baseline
+
+Hypothesis: J600/J601's scoped teleporter retirement and J602's auxiliary skill
+observations/system-death event bindings can join the accepted game without
+regressing standard first-stage play or an original stage exit. Their prior-art,
+API and exact-editor fixture evidence remain in those entries; baseline checks
+do not repeat the completed-session teardown contract.
+
+After host preflight, built one code-only ARM64 Vulkan APK in the pinned editor.
+Request 20261019T072925.863074Z succeeded in 109.51 s with zero build errors.
+The candidate and source hashes, build log and preflight are frozen under
+work/experiments/session-cleanup/candidate-20261019T072925.863074Z/.
+APK SHA-256:
+76344ab433b15b97943638a5807227278f07cf98a18ef372873988d57c945ebe.
+
+Live preflight and in-place installation passed on the configured Nova using
+adopted storage. Both unchanged baseline modes passed on that hash:
+work/experiments/baseline/20261019T073921.584469Z/ records 35.21 s of live
+Lakes play; work/experiments/baseline/20261019T074254.150700Z/ records exactly
+one original exit to Goolake and 10.09 s of next-stage play. Both have empty
+failure lists and no report error/first failure; applied profile runs stayed 13.
+The first check's current report also contains the four distinct Commando
+component rows introduced in J602. This proves observation availability, not
+all skill activations.
+
+The installed and latest device-verified baseline are now this APK. Both checks
+removed their selectors, force-stopped the app and slept the OLED. No extra
+device was queried. Actual native loss → completed-session cleanup → same-PID
+restart remains the next gate: force-stopping a free-play baseline does not
+exercise it. Siren's original egg/boss mission, auxiliary native abilities,
+ordinary progression, normal difficulty and memory/performance acceptance are
+still open. No new runtime source changed during this gate; replay implications
+remain J600/J602's authored R8 inputs, with Phase 2 owned by the parallel session.
