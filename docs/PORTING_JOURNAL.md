@@ -9329,3 +9329,60 @@ with the Nova stopped and OLED asleep. Revisit with this correction's own build,
 explicit native attempt and both default baseline modes. R8 must replay the two
 changed authored runtime inputs. No new local build input, Phase 2 mutation,
 original input change, private receipt edit, data move or storage reconfiguration.
+
+## J659 — Follow typed state string references in the original catalog closure
+
+Hypothesis: J650's missing Laser Cutter asset is omitted because native
+EntityStateGameObject fields serialize keyed references as stringValue rather
+than PPtr or m_AssetGUID. Following those typed edges should repair dependencies
+without suppressing the native skill or adding a survivor whitelist.
+
+The authored whole_catalog.analyze owner now reads field types from the accepted
+source root supplied by audit, reconcile and root-binding repair. It scopes
+classes, nested types and inheritance, preserving nearer non-target field
+shadowing. Only GUID strings on EntityStateGameObject fields become edges.
+Resolution requires an exact unique original GameObject location and existing
+conversion; missing key/type/conversion or ambiguous location records an issue
+and supplies no guessed path. Resolved files enter the existing closure walk;
+provider/runtime roots, loader behavior, native state data and eligibility are
+unchanged. This narrow source reader is bounded by the accepted assembly, not
+presented as a general C# parser.
+
+Prior art: community-prior-art's typed Addressables identity rule and pinned
+R2API.Addressables AddressReferencedAsset keep runtime key, requested type and
+handle ownership distinct. The accepted native state declarations/configs and
+original catalog establish this missing serialization edge. No community or
+native implementation is copied into the authored generator.
+
+Independent review, eight private host contracts and the accepted-input
+Mono.Cecil equivalence check pass in work/coordination/
+engi-alternate-first-failure/. Metadata comparison covers 2,054 selected configs,
+2,044 unique state types, 712 carrying typed fields, and 1,991 cross-namespace
+inheritance chains, with zero missing types or field-map mismatches. Five public
+synthetic contracts additionally exercise nested lexical base identity,
+shadowing, exact type/refusal and transitive staged nonroot propagation.
+All 26 focused and 946 full host tests pass, with one existing skip. Ruff and
+diff checks pass. Public tests contain authored fixtures only.
+
+Read-only full analysis adds 30 closure files and 1,106 soft edges, including
+1,101 typed state edges. The authoritative candidate-manifest-projection.json
+includes 526 existing mesh subobjects: selected locations rise 30,292 to 30,322.
+The earlier projection that omitted those subobjects is preserved and labelled
+stale locally. The four inspected nonroot targets include Laser Cutter's charge,
+medium/large beam and Mage Earth Shards' charge prefab, preserving exact original
+catalog identity. Two Providence DLC4 references remain explicitly missing;
+other issue categories and original conversion/provider/runtime-root counts are
+unchanged. This is dependency analysis, not DLC availability or runtime proof.
+
+First failure: none in the host contracts. The original J650 device failure
+remains uncorrected on the installed payload until reconciliation, staging,
+content build, in-place sync and an actual alternate-kit replay pass. The
+separate J658 code-only build reuses the old payload and cannot prove this fix.
+Accepted and installed APK remains
+86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03.
+Revisit using the existing guarded whole-catalog pipeline, then both baseline
+modes for the resulting APK. Regenerated closure/manifest inputs require
+upstream catalog and downstream R3/R8 replay; no Phase 2 output is edited. The
+existing accepted decompile is the input, with no new local prerequisite,
+original input modification, runtime alias, private receipt hand edit, extra
+device, existing data move or storage configuration change.

@@ -1065,3 +1065,15 @@ remain in their current owners. No game method body, asset, profile, middleware,
 platform identity, private path or device identifier is copied. No new source
 selection, local input, entitlement or linker root is introduced. R8 reproduces
 the two changed authored runtime sources; Phase 2 outputs remain untouched.
+
+### Typed state-reference closure audit (2026-10-19)
+
+The authored host closure reader adds typed string-reference discovery from the
+already required accepted decompile. Only native API/type identities and field
+relationships are inspected locally; no source declaration, game method body,
+asset, middleware or private evidence is included in the recipe. Synthetic host
+tests are authored fixtures. The existing reconciliation and staging producers
+reconstruct dependency files from the legitimate input and preserve original
+catalog identity without inventing aliases or ownership. Regenerated closure
+and manifest inputs affect downstream content and R3/R8 replay; no Phase 2 output
+is edited. No new local build prerequisite is introduced.

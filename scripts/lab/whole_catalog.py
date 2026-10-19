@@ -139,7 +139,250 @@ def runtime_key_roots(data, candidates, legacy_aliases=None):
     return roots, edges
 
 
-def analyze(source, export, index, helper, native_overrides=None, runtime_candidates=(), legacy_aliases=None):
+def entity_state_gameobject_fields(source_root):
+    """Read EntityStateGameObject field identity from the exact accepted C# source."""
+    source_root = Path(source_root)
+    classes = {}
+    # This deliberately narrow field-declaration recognizer is checked against
+    # the accepted RoR2.dll metadata for every selected EntityStateConfiguration.
+    # It retains every declared field type so a derived non-target field masks
+    # a same-named inherited EntityStateGameObject field.
+    field_pattern = re.compile(
+        r"(?m)^[ \t]*(?:public|protected|private|internal)\s+"
+        r"(?:(?:static|readonly|volatile|new|const|extern|unsafe|fixed)\s+)*"
+        r"(?P<type>(?:global::)?[A-Za-z_][\w.]*(?:\s*<[^;\n]+>)?(?:\[\])?\??)\s+"
+        r"(?P<name>[A-Za-z_]\w*)\s*(?:=[^;\n]*)?;"
+    )
+    class_pattern = re.compile(r"\bclass\s+([A-Za-z_]\w*)(?:\s*:\s*([^\{]+?))?\s*(?=\{)")
+    namespace_pattern = re.compile(r"\bnamespace\s+([A-Za-z_][\w.]*)\s*\{")
+    using_pattern = re.compile(r"(?m)^\s*using\s+([A-Za-z_][\w.]*)\s*;")
+
+    def code_only(source):
+        """Mask comments and literals while preserving offsets and braces."""
+        chars = list(source)
+        i, state = 0, "code"
+        while i < len(source):
+            current = source[i]
+            following = source[i + 1] if i + 1 < len(source) else ""
+            if state == "code":
+                if current == "/" and following == "/":
+                    chars[i] = chars[i + 1] = " "
+                    i += 2
+                    state = "line"
+                    continue
+                if current == "/" and following == "*":
+                    chars[i] = chars[i + 1] = " "
+                    i += 2
+                    state = "block"
+                    continue
+                if current == '"':
+                    chars[i] = " "
+                    state = "string"
+                elif current == "'":
+                    chars[i] = " "
+                    state = "char"
+            elif state == "line":
+                if current == "\n":
+                    state = "code"
+                else:
+                    chars[i] = " "
+            elif state == "block":
+                if current == "*" and following == "/":
+                    chars[i] = chars[i + 1] = " "
+                    i += 2
+                    state = "code"
+                    continue
+                if current != "\n":
+                    chars[i] = " "
+            else:
+                if current == "\\":
+                    chars[i] = " "
+                    if i + 1 < len(source):
+                        if source[i + 1] != "\n":
+                            chars[i + 1] = " "
+                        i += 2
+                        continue
+                elif (state == "string" and current == '"') or (state == "char" and current == "'"):
+                    chars[i] = " "
+                    state = "code"
+                elif current != "\n":
+                    chars[i] = " "
+            i += 1
+        return "".join(chars)
+
+    def matching_brace(code, opening):
+        depth = 0
+        for pos in range(opening, len(code)):
+            if code[pos] == "{":
+                depth += 1
+            elif code[pos] == "}":
+                depth -= 1
+                if depth == 0:
+                    return pos
+        raise RuntimeError("Unbalanced accepted C# class or namespace source")
+
+    for path in source_root.rglob("*.cs"):
+        text = path.read_text(errors="replace")
+        code = code_only(text)
+        imports = using_pattern.findall(code)
+        namespaces = []
+        for namespace in namespace_pattern.finditer(code):
+            opening = code.find("{", namespace.end() - 1)
+            namespaces.append((namespace.start(), matching_brace(code, opening), namespace.group(1)))
+        class_rows = []
+        for match in class_pattern.finditer(code):
+            opening = code.find("{", match.end())
+            if opening < 0:
+                raise RuntimeError("Accepted C# class has no body")
+            closing = matching_brace(code, opening)
+            name, bases = match.groups()
+            parent = None
+            if bases:
+                parent = re.split(r",|\bwhere\b", bases, maxsplit=1)[0].strip()
+                parent = re.sub(r"<.*>$", "", parent).strip()
+            namespace = [row for row in namespaces if row[0] < match.start() < row[1]]
+            if not namespace:
+                continue
+            namespace_name = max(namespace, key=lambda row: row[0])[2]
+            enclosing = [row for row in class_rows if row[1] < match.start() < row[2]]
+            class_rows.append((match.start(), opening, closing, name, parent, namespace_name, enclosing, imports))
+        for _, opening, closing, name, parent, namespace_name, enclosing, imports in class_rows:
+            nesting = [row[3] for row in sorted(enclosing, key=lambda row: row[0])]
+            full_name = namespace_name + "." + ("+".join(nesting + [name]) if nesting else name)
+            # Keep only direct members; nested types cannot donate their fields.
+            body = list(" " * (closing - opening - 1))
+            depth = 0
+            for pos in range(opening + 1, closing):
+                char = code[pos]
+                if char == "{":
+                    depth += 1
+                elif char == "}":
+                    depth -= 1
+                elif depth == 0:
+                    body[pos - opening - 1] = code[pos]
+            direct_fields = {match.group("name"): match.group("type").replace("global::", "") for match in field_pattern.finditer("".join(body))}
+            previous = classes.get(full_name)
+            if previous and previous["rawParent"] != parent:
+                raise RuntimeError("Accepted C# partial class has conflicting base identity: " + full_name)
+            container_names = nesting
+            record = classes.setdefault(full_name, {"fields": {}, "rawParent": parent, "namespace": namespace_name, "containers": container_names, "imports": set()})
+            if record["containers"] != container_names:
+                raise RuntimeError("Accepted C# partial class has conflicting container identity: " + full_name)
+            record["imports"].update(imports)
+            for field_name, field_type in direct_fields.items():
+                if field_name in record["fields"] and record["fields"][field_name] != field_type:
+                    raise RuntimeError("Accepted C# partial class has conflicting field identity: " + full_name + "." + field_name)
+                record["fields"][field_name] = field_type
+    for full_name, record in classes.items():
+        parent = record["rawParent"]
+        resolved_parent = None
+        if parent:
+            if "." in parent or "+" in parent:
+                resolved_parent = parent
+            else:
+                if record["containers"]:
+                    nested_parent = record["namespace"] + "." + "+".join(record["containers"] + [parent])
+                    if nested_parent in classes:
+                        resolved_parent = nested_parent
+                namespace_parts = record["namespace"].split(".")
+                if not resolved_parent:
+                    lexical = [".".join(namespace_parts[:i]) + "." + parent for i in range(len(namespace_parts), 0, -1)]
+                    lexical_match = next((name for name in lexical if name in classes), None)
+                    if lexical_match:
+                        resolved_parent = lexical_match
+                    else:
+                        imported = {namespace + "." + parent for namespace in record["imports"] if namespace + "." + parent in classes}
+                        if len(imported) == 1:
+                            resolved_parent = next(iter(imported))
+                        elif len(imported) > 1:
+                            raise RuntimeError("Accepted C# imported base type name is ambiguous: " + full_name + " -> " + parent)
+                if not resolved_parent:
+                    matches = [key for key in classes if key.endswith("." + parent)]
+                    if len(matches) == 1:
+                        resolved_parent = matches[0]
+                    elif len(matches) > 1:
+                        raise RuntimeError("Accepted C# base type name is ambiguous: " + full_name + " -> " + parent)
+        record["parent"] = resolved_parent
+    result = {}
+    for full_name, record in classes.items():
+        effective_fields = {}
+        current = full_name
+        visited = set()
+        while current in classes and current not in visited:
+            visited.add(current)
+            for field_name, field_type in classes[current]["fields"].items():
+                effective_fields.setdefault(field_name, field_type)
+            current = classes[current]["parent"]
+        result[full_name] = {
+            field_name for field_name, field_type in effective_fields.items()
+            if field_type.rsplit(".", 1)[-1] == "EntityStateGameObject"
+        }
+    if not result:
+        raise RuntimeError("Accepted EntityStateGameObject source field index is empty")
+    return result
+
+
+def serialized_entity_state_gameobject_references(text, state_fields):
+    """Find only typed EntityStateGameObject values in native state configs."""
+    target = re.search(r"(?m)^\s+assemblyQualifiedName:\s*([^,\n]+),", text)
+    if not target:
+        return []
+    state_type = target.group(1).strip()
+    typed_fields = state_fields.get(state_type, set())
+    if not typed_fields:
+        return []
+    result = []
+    blocks = re.finditer(r"(?m)^    - fieldName: ([^\n]+)\n((?:^      .*\n?)*)", text)
+    for block in blocks:
+        field_name = block.group(1).strip()
+        if field_name not in typed_fields:
+            continue
+        value = re.search(r"(?m)^        stringValue: ([^\n]*)$", block.group(2))
+        if not value:
+            continue
+        key = value.group(1).strip()
+        if re.fullmatch(r"[a-fA-F0-9]{32}", key):
+            result.append(dict(field=field_name, key=key.lower(), targetType=state_type))
+    return result
+
+
+def entity_state_reference_closure(text, source, state_fields, key_locations, converted, location_metadata):
+    """Resolve typed native state asset refs through the original catalog identity."""
+    edges, pending, issues = [], [], []
+    for edge in serialized_entity_state_gameobject_references(text, state_fields):
+        targets = key_locations.get(edge["key"], [])
+        matches = [identity for identity in targets if location_metadata.get(identity, {}).get("type", "").split(",")[0] == "UnityEngine.GameObject"]
+        resolved = []
+        edge_record = dict(source=source, key=edge["key"], locations=targets, requestedType="UnityEngine.GameObject",
+                           matchingLocations=matches, resolved=resolved, field=edge["field"],
+                           targetType=edge["targetType"], kind="EntityStateGameObject")
+        edge_record["locationIdentity"] = [
+            dict(id=identity, type=location_metadata[identity].get("type"),
+                 provider=location_metadata[identity].get("provider"),
+                 internalId=location_metadata[identity].get("internalId"),
+                 primaryKey=location_metadata[identity].get("primaryKey"))
+            for identity in targets if identity in location_metadata
+        ]
+        edges.append(edge_record)
+        if not targets:
+            issues.append(dict(source=source, key=edge["key"], field=edge["field"], category="asset-reference-key-missing"))
+        elif not matches:
+            issues.append(dict(source=source, key=edge["key"], field=edge["field"], locations=targets,
+                               requestedType="UnityEngine.GameObject", category="asset-reference-requested-type-missing"))
+        elif len(matches) != 1:
+            issues.append(dict(source=source, key=edge["key"], field=edge["field"], locations=matches,
+                               requestedType="UnityEngine.GameObject", category="asset-reference-requested-type-ambiguous"))
+        elif matches[0] not in converted:
+            issues.append(dict(source=source, key=edge["key"], field=edge["field"], locations=matches,
+                               requestedType="UnityEngine.GameObject", category="asset-reference-conversion-unresolved"))
+        else:
+            resolved.append(converted[matches[0]]["source"])
+            edge_record["resolved"] = list(resolved)
+            pending.extend(resolved)
+    return edges, pending, issues
+
+
+def analyze(source, export, index, helper, native_overrides=None, runtime_candidates=(), legacy_aliases=None, state_source_root=None):
     data = read_catalog(source)
     categories = list(dict.fromkeys(re.findall(r"FindLocationsThenAddLoadOperation(?:<[^>]+>)?\(AddressablesLabels\.(\w+)", helper)))
     if not categories:
@@ -182,6 +425,7 @@ def analyze(source, export, index, helper, native_overrides=None, runtime_candid
                 )
             )
     key_locations = {row["key"]: row["locations"] for row in data["keys"] if row.get("keyType", "System.String") == "System.String"}
+    state_fields = entity_state_gameobject_fields(state_source_root) if state_source_root is not None else {}
     # Serialized references and runtime AssetReference keys are different edges.
     pending = deque(converted[identity]["source"] for identity in sorted(seeds) if identity in converted)
     seen = set()
@@ -236,6 +480,15 @@ def analyze(source, export, index, helper, native_overrides=None, runtime_candid
                 issues.append(dict(source=relative, key=guid, category="asset-reference-key-missing"))
             elif len(resolved) != len(targets):
                 issues.append(dict(source=relative, key=guid, locations=targets, category="asset-reference-conversion-unresolved"))
+        # EntityStateConfiguration serializes EntityStateGameObject.AssetReference
+        # keys in stringValue, not an m_AssetGUID member. Follow only fields whose
+        # accepted native state declaration confirms that exact value type.
+        state_edges, state_paths, state_issues = entity_state_reference_closure(
+            text, relative, state_fields, key_locations, converted, locations
+        )
+        soft_edges.extend(state_edges)
+        pending.extend(state_paths)
+        issues.extend(state_issues)
     summary = dict(
         keys=len(data["keys"]),
         locations=len(locations),
@@ -391,7 +644,8 @@ def reconcile():
     if contract.get("legacyInputSha256") != legacy_hash:
         raise RuntimeError("Refresh the native catalog contract for the accepted legacy assembly")
     result = analyze(
-        catalog_path(out), export, index, helper.read_text(), conversions, contract.get("assetKeyCandidates", []), contract.get("legacyAliases", {})
+        catalog_path(out), export, index, helper.read_text(), conversions, contract.get("assetKeyCandidates", []),
+        contract.get("legacyAliases", {}), helper.parents[1]
     )
     result["source_catalog_sha256"] = closure["source_catalog_sha256"]
     result["metadata_sha256"] = sha(catalog_path(out))
@@ -439,7 +693,8 @@ def audit():
         raise RuntimeError("Recovered provider categories disagree with original IL")
     contract = read(out / "original-catalog-contract.json")
     result = analyze(
-        source, export, index, helper.read_text(), runtime_candidates=contract.get("assetKeyCandidates", []), legacy_aliases=contract.get("legacyAliases", {})
+        source, export, index, helper.read_text(), runtime_candidates=contract.get("assetKeyCandidates", []),
+        legacy_aliases=contract.get("legacyAliases", {}), state_source_root=helper.parents[1]
     )
     result["input_id"] = read(WORK / "inventory/files.json")["input_id"]
     result["source_catalog_sha256"] = sha(export / "Assets/StreamingAssets/aa/catalog.json")
@@ -1114,7 +1369,8 @@ def repair_root_bindings():
     contract = read(out / "original-catalog-contract.json")
     if contract["input_sha256"] != assembly_hash:
         raise RuntimeError("Runtime key metadata belongs to different input")
-    result = analyze(catalog_path(out), export, read(out / "source-guid-index.json"), helper.read_text(), conversions, contract.get("assetKeyCandidates", []))
+    result = analyze(catalog_path(out), export, read(out / "source-guid-index.json"), helper.read_text(), conversions,
+                    contract.get("assetKeyCandidates", []), contract.get("legacyAliases", {}), helper.parents[1])
     result.update(input_id=closure["input_id"], source_catalog_sha256=closure["source_catalog_sha256"], metadata_sha256=sha(catalog_path(out)))
     write(out / "reconciled-closure.json", result)
     print(json.dumps(dict(repaired=len(repairs), closure_files=len(result["files"]))))

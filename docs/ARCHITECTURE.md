@@ -38,6 +38,18 @@ attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
+`whole_catalog.analyze` owns the host dependency closure. Audit, reconciliation
+and root-binding repair supply the accepted decompile root to
+`entity_state_gameobject_fields`, a scoped field reader checked against the
+accepted assembly metadata. `entity_state_reference_closure` follows serialized
+string GUIDs only for native EntityStateGameObject fields, retaining inherited
+field identity and nearer-field shadowing. It requires an exact unique original
+GameObject catalog location and existing conversion; unresolved or ambiguous
+edges remain explicit issues. Resolved files enter the existing closure walk
+and manifest without becoming provider roots. No runtime loader alias or
+gameplay-state replacement implements this repair. Host contracts live in
+`tests/test_whole_catalog.py`; generated closure/manifest data remains ignored.
+
 ### Device selection and storage receipts
 
 Device selection uses an explicit allowlist/default model.
