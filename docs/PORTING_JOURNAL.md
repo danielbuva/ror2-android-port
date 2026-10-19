@@ -8499,3 +8499,36 @@ then run both baseline modes and the concrete Engineer teardown regression.
 R8/runtime-source replay must reproduce these authored helpers. No new runtime
 file, asset/payload input, private required-state entry, device receipt or Phase 2
 output is introduced. Current runtime membership remains 100 files.
+
+## J640 — Bank defaults narrow the UI audio fallback uncertainty without resolving routing
+
+Continue J627's strict static-UI fallback review offline against the accepted
+J588 247-bank, version-150 parser receipt. Init metadata declares audioTeam's
+initial value as zero, with no ramp or built-in binding. Its serialized switch
+graph maps zero to numeric switch ID zero, while the metadata names only the
+self/friendly/enemy children. Neither the bank metadata nor SoundbanksInfo
+declares a default child or fallback policy for that zero ID.
+
+For the insufficient-funds event, the inspected ancestor explicitly overrides
+to the UI bus, and its inherited BusVolume curve contributes zero dB at the
+declared parameter default. Those numeric facts do not establish the native
+engine's zero-switch semantics, persistent target-object state, whether this
+particular event uses that switch route, or the Controller Speaker auxiliary
+send. The accepted generic managed setter search provides no missing positive
+runtime witness. The strict inherited-RTPC refusal remains in place.
+
+Prior art: inspect the pinned local wwiser 08e937b… parser and rendering source.
+The parser reads the switch graph fields, but its global-settings renderer
+explicitly leaves that switch-group section unprocessed. Curve-default output
+or an absent generated GAMEVARS line therefore cannot prove the switch choice.
+The checkout remains research-only; no license is inferred and no parser code
+is vendored. A synthetic test of numeric constants would not establish the
+missing engine semantics, so no gate-relaxation test or decoder is added.
+Private review: work/coordination/audio-team-switch-review/README.md, linked to
+J588's parsed evidence. Correct its copied input-ID typo against the actual
+receipt before using it; the accepted input remains unchanged.
+
+Audio remains unavailable, with authorized Android Wwise runtime/bank/plugin
+compatibility still open. No media is decoded or played, no engine behavior is
+claimed, and no asset, runtime, recipe, payload, device receipt, storage setting
+or Phase 2 output changes. J636's profiling refusal is separate evidence.

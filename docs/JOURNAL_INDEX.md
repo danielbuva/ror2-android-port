@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J640](PORTING_JOURNAL.md#j640--bank-defaults-narrow-the-ui-audio-fallback-uncertainty-without-resolving-routing) | 2026-10-19 | Bank defaults narrow the UI audio fallback uncertainty without resolving routing | Continue J627's strict static-UI fallback review offline against the accepted J588 247-bank, version-150 parser receipt. |
 | [J639](PORTING_JOURNAL.md#j639--separate-mandatory-stage-context-from-existing-fixture-activation) | 2026-10-19 | Separate mandatory stage context from existing fixture activation | The unintegrated source-stage cohort draft consumed native stage RNG in the wrong order: even disabled CombatDirector.Awake draws a seed, and the existing tele… |
 | [J638](PORTING_JOURNAL.md#j638--preserve-native-skill-response-cleanup-when-start-never-initialized-slots) | 2026-10-19 | Preserve native skill-response cleanup when Start never initialized slots | J635 fails actual UI-abandon teardown in native SkillResponseBehavior.OnDestroy. |
 | [J637](PORTING_JOURNAL.md#j637--engineer-output-candidate-passes-both-baseline-modes) | 2026-10-19 | Engineer output candidate passes both baseline modes | Accept J630/J631 APK 03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648 as the current baseline after both standard modes pass on the configured… |
