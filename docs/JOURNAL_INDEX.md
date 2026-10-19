@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J627](PORTING_JOURNAL.md#j627--reject-an-apparently-simple-audio-fallback-on-inherited-rtpc-evidence) | 2026-10-19 | Reject an apparently simple audio fallback on inherited RTPC evidence | Independent offline audio work tests whether one source-called UI event can use a narrowly authored Unity one-shot while native Wwise remains unavailable. |
 | [J626](PORTING_JOURNAL.md#j626--add-source-backed-siren-input-bounded-projectile-traces-and-ui-abandon-checks) | 2026-10-19 | Add source-backed Siren input, bounded projectile traces and UI abandon checks | Hypothesis: broad survivor/stage acceptance needs observed native outputs and safe lifecycle checks; J623's projectile failure needs a discriminating trace, no… |
 | [J625](PORTING_JOURNAL.md#j625--acrid-and-captain-pass-canonical-callbacks-on-the-unchanged-baseline) | 2026-10-19 | Acrid and Captain pass canonical callbacks on the unchanged baseline | After classifying Loader's first failure in J623, the separate Croco/Captain batch uses unchanged J620 APK fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444… |
 | [J624](PORTING_JOURNAL.md#j624--observe-native-engineer-outputs-with-explicit-owner-and-network-attribution) | 2026-10-19 | Observe native Engineer outputs with explicit owner and network attribution | J621 proves callbacks, not actual outputs or clone filter ownership. |

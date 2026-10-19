@@ -7998,3 +7998,48 @@ Next: selected live preflight, one code build, both baseline modes, Engineer
 output/UI-abandon acceptance and Loader trace. New authored runtime/recipe
 inputs require R8/build-entry replay; no Phase 2 outputs or required local
 content inputs are changed.
+
+## J627 — Reject an apparently simple audio fallback on inherited RTPC evidence
+
+Independent offline audio work tests whether one source-called UI event can
+use a narrowly authored Unity one-shot while native Wwise remains unavailable.
+The insufficient-funds call has one Play action, one Sound and one embedded
+Vorbis source, with no Sound-local effects/state/RTPC. That local observation
+is insufficient: fresh full-parent parsing of temporary accepted bank copies
+finds an inherited audioTeam GameParameter curve on an Actor-Mixer ancestor.
+Its effective default/producer is unresolved. The static generator draft
+correctly refuses before invoking a decoder or producing PCM/manifest output.
+
+The exact native caller posts on the persistent application root and discards
+the UInt32 playing ID. Root persistence does not establish an audioTeam value.
+Current accepted managed sources show distinct master/SFX/music RTPC setters,
+but no matching audioTeam symbol/ID producer. Inspected TeamComponent,
+TeamFilter and AkGameObj registration do not assign it; a bounded serialized
+asset search also finds no reference. Those negative searches do not cover
+absent native/plugin configuration and cannot prove a constant/default.
+Nearby source-called UI alternatives use the same inherited parameter,
+random/multiple media or spatial parameters. No alternate closed-static event
+was established. Do not flatten the curve, substitute SFX volume or fabricate
+native audio state. The Controller Speaker send would remain an explicit lost
+routing capability even for a qualified 2D fallback.
+
+Evidence and authored ignored drafts:
+work/coordination/audio-fallback-draft/README.md,
+work/coordination/audio-fallback-draft/audio-team-source-trace.md and
+work/coordination/codex-audio-fallback-feasibility.md.
+The strict generator checks accepted input/current metadata and full ancestry
+using temporary copies; it reads no timestamped evidence as build input.
+Six synthetic host tests pass, including drift/graph refusal, in
+work/coordination/codex-audio-fallback-host.log. They prove authored validation
+contracts only, not bank playback, a Cecil transform or sink lifetime.
+
+Prior-art/source context remains pinned R2API.Sound's genuine initialized
+engine/bank boundary and the J588/J591 graph/runtime findings. The inspected
+wwiser documentation treats its plans as static simulation with container,
+loop and effect limitations. Its locally pinned research parser has no license
+file in that checkout, so it is not a supported public recipe dependency.
+No middleware/community implementation, graph, curve data, media or decoded
+audio enters Git; no new local build input is added. No runtime transform,
+sink, SDK/account/license action, device call, APK or playback occurs. Revisit
+only with authoritative parameter semantics or an authorized compatible native
+Android runtime; audio remains unavailable.

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J626** (native diagnostic/UI cleanup sources pass host/editor contracts).
+Last updated 2026-10-19 after **J627** (audio fallback gate refined; native diagnostic candidate building).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -65,7 +65,8 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   fabricated ownership or service success).
 - Audio remains unavailable: J591 narrows the candidate to Wwise 2023.1 with
   Vorbis and seven effects; an authorized Android runtime and bank compatibility
-  remain unestablished.
+  remain unestablished. J627 rejects a proposed static UI fallback on unresolved
+  inherited RTPC semantics.
   Licensed Rewired and generic controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across sessions.
