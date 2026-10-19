@@ -13606,3 +13606,23 @@ started after acceptance. Pause for the user's provenance-map refresh, with
 source 069eab7 frozen and the device idle. R8 must replay the three changed
 runtime owners; this checkpoint does not perform the other session's rebuild
 or provenance-map update.
+
+## J750 — Clean-checkout R1–R8 replay equals the gated baseline's working project
+
+Phase 2, from-scratch rebuild (run by Claude; host only). Hypothesis: with the J738 gate, the
+working project behind the accepted baseline `771fc752…` (J749, built from `069eab7`) is
+reproducible from that commit, public recipes and the legitimate installation. Provenance map
+backed up (`work/receipts/provenance-map.before-provenance-refresh-069eab7-*.json`) and
+refreshed: eight rows changed (seven runtime sources, each byte-equal to its `069eab7` source,
+and the re-saved `Lab.unity`), two new rows (`MercEvisImpactEffectExactEditorFixture.cs`,
+equal to `tools/catalog`, and its importer), none removed. That makes 91,963 rows.
+
+Replay from a fresh detached checkout at `a3571f4` (docs-only after `069eab7`), inputs through
+`--work-dir` (`work/receipts/rebuild-069eab7/`): every step equal. R1 assemblies 98, shader
+pipeline 352, R2 composition 84,487 (with the full host catalog analysis), project inputs 26, R3
+catalog closure 316, R4 dependencies 1,238, stage variants 18, source scenes 46, R7 build
+entries 187, R8 runtime sources 130, importer identities 286, and validate-bindings passes. That is
+87,184 files byte-identical, with no pinned catalog input. The destination (fresh Library) is kept
+in the throwaway checkout `.claude/worktrees/rebuild-head` as the input for the next R9.
+Revisit: run R9 on that destination (editor and device, operator approval). The known R9 gaps are
+`BlueNoise_R8_1.png.meta` drift (J592) and `Hidden/Compositing` (J598).

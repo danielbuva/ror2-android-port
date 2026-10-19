@@ -106,7 +106,9 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
    inherited files are in a hash-verified local store (J564). The from-scratch rebuild reproduces
    86,811 of 91,841 files byte-identically on the host, including all 352 shader outputs,
    and 190 of the 204 inherited-store files are regenerated; its binding gate passes
-   (J567–J575). R9 builds the destination from a fresh Library into an APK that passes
+   (J567–J575); since J738 builds stage only committed sources, and from a clean checkout of
+   the accepted `069eab7` all twelve host steps reproduce 87,184 files with no pinned catalog
+   input (J750). R9 builds the destination from a fresh Library into an APK that passes
    both device checks (J582; rerun J586, both checks passing first time). With the Timeline pin
    (J584) and the layered reimport (J585), R9 logs no new reimport error, and its APK matches the
    baseline except `Hidden/Compositing` (open), the path-dependent Burst library and build metadata.
