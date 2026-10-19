@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J637](PORTING_JOURNAL.md#j637--engineer-output-candidate-passes-both-baseline-modes) | 2026-10-19 | Engineer output candidate passes both baseline modes | Accept J630/J631 APK 03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648 as the current baseline after both standard modes pass on the configured… |
 | [J636](PORTING_JOURNAL.md#j636--android-refuses-explicit-app-scoped-software-profiling-on-adopted-storage) | 2026-10-19 | Android refuses explicit app-scoped software profiling on adopted storage | During J635's living Engineer interval, dispatch J628's explicit app-scoped CPU capture once, using task-clock software sampling and the installed system simpl… |
 | [J635](PORTING_JOURNAL.md#j635--engineer-ui-abandon-reaches-teardown-and-exposes-native-skill-response-cleanup) | 2026-10-19 | Engineer UI abandon reaches teardown and exposes native skill-response cleanup | Retry J633's corrected living-world host gate on unchanged J631 APK 03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648. |
 | [J634](PORTING_JOURNAL.md#j634--loader-passes-a-replay-while-two-elite-stakes-remain-mutually-attached-and-finite) | 2026-10-19 | Loader passes a replay while two elite stakes remain mutually attached and finite | On unchanged J631 APK 03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648, Loader completes 60.37 s with four valid canonical skill components and… |

@@ -60,7 +60,7 @@ count above 1 also stops and fails. Invalid transition counts, report errors, pr
 exit, ordinary results or the 370 s host deadline fail. The check never intentionally
 drives another exit.
 This is a host polling guard, not a new runtime transition interlock. Both baseline
-modes have device evidence (J620). It does not assert a particular commerce purchase count
+modes have device evidence (J637). It does not assert a particular commerce purchase count
 or ordinary-difficulty acceptance.
 
 Stage mode freezes its final evidence at the last current-process report and force-stops
@@ -74,14 +74,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971`, J620 code build, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 11.44 s next-stage play, no report error (J620) |
+| APK | `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648`, J637 acceptance of the J630 code build, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 13.04 s next-stage play, no report or current-process log error (J637) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
 | Rollbacks | J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J620). Engineer's corrected setup and shield cleanup remain under a separate device
-check; both baseline modes use Commando. Neither mode covers other survivors, ordinary (unassisted) difficulty,
+passed it (J637). Engineer's native outputs pass separately (J631), while UI-abandon cleanup fails (J635);
+both baseline modes use Commando. Neither mode covers other survivors, ordinary (unassisted) difficulty,
 audio, frame rate or visual parity. Use the journal entries above for broader existing
 evidence.

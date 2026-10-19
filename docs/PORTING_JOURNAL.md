@@ -8373,3 +8373,34 @@ that another capture scope succeeded. A future explicitly authorized internal
 storage device may behave differently, but no extra serial is allowlisted or
 queried in this experiment. The app's enclosing runner owns stop/OLED cleanup.
 No APK, runtime, public recipe, device receipt or Phase 2 output changes.
+
+## J637 — Engineer output candidate passes both baseline modes
+
+Accept J630/J631 APK
+03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648
+as the current baseline after both standard modes pass on the configured Nova.
+The plain mode reaches 35.20 s on Lakes; the one-exit mode completes one genuine
+transition to Goolake and 13.04 s of next-stage play at 156.13 world seconds.
+Both report no error/firstFailure, keep applied profile runs at 13 and retain
+the assisted marker. Independent current-process log classification finds zero
+unexpected errors in each mode. Evidence:
+work/experiments/baseline/20261019T111914.588686Z/ and
+work/experiments/baseline/20261019T112243.448667Z/.
+
+The frozen code-build candidate is at
+work/experiments/engi-deployables/candidate-20261019T105117.916216Z/;
+it takes 96.41 s with zero build errors and contains 100 authored runtime files
+from source checkpoint 0448927. It was updated in place on adopted storage
+without changing placement/configuration. Its Engineer output result is J631,
+Loader replay is J634, and actual UI abandon still fails native cleanup (J635).
+Passing Commando baseline checks does not accept that separate teardown case,
+complete kits, unassisted play, audio, performance or visual parity.
+
+J629's earlier exit timeout remains preserved and unexplained; this successful
+replay does not establish its cause or erase it. J632 coherent exit telemetry,
+new helper extractions and the proposed skill-response transform are not in
+this APK. Runtime/source and plugin generation since this baseline remain
+separate facts. Both runners remove their selector, stop the app and sleep the
+OLED. No extra device, storage change or Phase 2 output is used. The authored
+replay requirements are those recorded in J630/J632; this acceptance changes
+only the documented baseline and its current device evidence.
