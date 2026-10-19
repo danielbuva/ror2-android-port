@@ -106,13 +106,19 @@ public sealed partial class PortSession
                                         : new string[0]
             };
             r.director.stageDecks.Add(currentStageCombatDeck);
-            if (rewardDirector)
-                rewardDirector.monsterCards = native;
-            if (sourceSlowDirector)
+            // Native first-stage ownership checks the untouched source directors
+            // before its own deck binding. The native setter builds the private
+            // card selection even on an inactive root, without invoking Awake.
+            if (!r.nativeFirstStageLifecycleDiagnosticAttempt)
             {
-                sourceSlowDirector.monsterCards = native;
-                if (!sourceSlowDirector.enabled)
-                    sourceSlowDirector.enabled = true;
+                if (rewardDirector)
+                    rewardDirector.monsterCards = native;
+                if (sourceSlowDirector)
+                {
+                    sourceSlowDirector.monsterCards = native;
+                    if (!sourceSlowDirector.enabled)
+                        sourceSlowDirector.enabled = true;
+                }
             }
             return;
         }

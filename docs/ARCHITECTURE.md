@@ -602,6 +602,12 @@ Its native first-stage path registers only the exact existing inactive player
 controller before results prepare their statistics component. The later catalog
 setup adopts that same registration without another Awake/OnEnable; the existing
 director owner removes it even if results fail before a director report exists.
+Native stage deck selection records the full deck but defers source director
+property/enabled writes to FirstStageSourceOwners after its final cold preflight.
+That owner binds both decks before genuine activation; default selection retains
+its existing immediate writes. `NativeDirectorDeckSetterFixture.cs`, staged by
+the same source producer, checks native setter effects on an inactive component
+without a Run or network session.
 `TeleporterWorldSession.PrepareInactiveObjectiveTemplate` prepares its owned
 clone before the existing direct spawn. `WholeInteractableSession` uses a
 short-lived `WholeStagePopulationObservation` to store the exact selection/spawn

@@ -117,6 +117,7 @@ class BuildEntryTests(unittest.TestCase):
             "SurvivorCombatOutputObserverFixture",
             "DeveloperSkillVariantSelectionFixture",
             "FirstStageDiagnosticGateFixture",
+            "NativeDirectorDeckSetterFixture",
             "WholeCatalogBuild",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")

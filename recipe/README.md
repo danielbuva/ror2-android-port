@@ -1077,3 +1077,14 @@ reconstruct dependency files from the legitimate input and preserve original
 catalog identity without inventing aliases or ownership. Regenerated closure
 and manifest inputs affect downstream content and R3/R8 replay; no Phase 2 output
 is edited. No new local build prerequisite is introduced.
+
+### Native Director deck-order audit (2026-10-19)
+
+The authored selector defers its existing deck/enabled writes to the existing
+native first-stage owner after strict preflight. The editor-only fixture calls
+the native setter on an owned inactive component with an empty authored deck,
+observes minimum API/private-field identities and releases its objects. No
+native method body, source asset, platform identity, middleware, private path or
+device data is copied. The existing producer stages the fixture; runtime source
+membership remains 105. Replay selector/fixture inputs through R8; no new local
+build prerequisite or Phase 2 output edit is introduced.

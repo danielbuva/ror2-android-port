@@ -9535,3 +9535,54 @@ J662's staged content, run the actual alternate kit and both new APK controls.
 The two feature gates remain independent. No new source or native mechanism,
 original input change, private receipt hand edit, extra-device selection,
 existing data move or storage configuration change occurs here.
+
+## J664 — Defer native Director deck setters until after strict cold preflight
+
+Hypothesis: J661's aggregate Director assertion contains a deterministic
+ordering conflict: early native deck binding populates a cache which the later
+cold-owner preflight requires null, without proving Awake ran. Moving that
+binding to the existing final owner can retain the complete initialization proof.
+
+Source tracing finds that SelectStageCombatDeck assigns the genuine inactive
+source slow director's monsterCards before first-stage preflight. Accepted e544
+CombatDirector's public property immediately builds monsterCardsSelection when
+the deck changes; native Awake separately initializes RNG, money waves and that
+selection. The captured aggregate failure does not expose every private field,
+so no actual RNG/money-wave awakening is inferred from it.
+
+StageCombatDeckBoundary now defers only its early fast/slow deck setters and
+slow enabled-state write when the explicit native diagnostic is true. Full
+pool selection, inherited-wave handling, deck ownership and reports remain.
+Default statements/order are unchanged. FirstStageSourceOwners still requires
+all three cold fields null, then owns mutations and binds both selected decks
+before genuine activation. No witness, recovery, RNG, network, callback or
+engine-private field is relaxed or fabricated. The current diagnostic refuses
+stage turnover; a future native transport extension must revisit this scope.
+
+Prior art: pinned R2API.Director f539511e's separation of pool/card setup from
+native stage startup, consulted through community-prior-art L6/L7. Exact accepted
+native setter/Awake declarations provide the version-specific API clue; no
+native implementation is copied into the authored change.
+
+Independent review and the executed production-method synthetic contract pass
+in work/coordination/native-stage-director-witness-fix/: eight default parity
+and eight native deferred-write/final-owner cases. Offline 105-source compile
+has zero errors. Root stages the integrated runtime and new reproducible
+NativeDirectorDeckSetterFixture through the existing producer, then passes
+exact-editor compilation, production pure gates, native API/input contracts and
+the genuine inactive native setter fixture at work/experiments/
+first-stage-native-lifecycle/director-editor-20261019T141112.051165Z/.
+The latter observes native cache creation while RNG/money waves remain cold,
+exact assignment idempotence and native null-deck restoration, then destroys
+its owned objects. It creates no Run, server, user or source-scene cohort.
+All 946 host tests pass with one existing skip; Ruff/diff checks pass.
+
+First failure: none in those source/editor contracts. Actual native Stage-begin,
+population and teardown remain unproven; J661 remains the latest failed native
+case. The next full build combines this correction with J662's staged typed
+dependencies, then needs an actual Engineer alternate replay, native first-stage
+retry and both default controls. Accepted/installed APK remains
+6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec;
+Nova is stopped/OLED asleep. R8 must replay the changed authored selector and
+staged fixture. No new local build input, Phase 2 output, original input,
+private receipt hand edit, extra device, existing data move or storage change.
