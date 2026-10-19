@@ -106,6 +106,10 @@ public sealed class NovaInputBridge : MonoBehaviour
     // Owned only by SurvivorSkillInputCoverage; the sink enforces the mode on
     // every FixedUpdate, independent of ordinary producer timing.
     public bool isolatedDiagnosticSkillInput, isolatedDiagnosticSkillPulse;
+    // NovaInputSession owns this diagnostic-only sink hold; manual controller and
+    // touch-equipment requests retain their independent paths.
+    public bool manualMoonAutomaticHold;
+    public int manualMoonNeutralFixedTicks;
     public int isolatedDiagnosticSkillSlot = -1;
     public int inputNeutralRevision;
     public bool diagnosticSprint, diagnosticPrimary, diagnosticSecondary, diagnosticUtility, diagnosticSpecial, diagnosticInteract;
@@ -123,6 +127,30 @@ public sealed class NovaInputBridge : MonoBehaviour
     public static bool EquipmentInputRequest(bool diagnosticMode, bool isolate, bool diagnosticRequest, bool touchRequest)
     {
         return (diagnosticMode && diagnosticRequest && !isolate) || touchRequest;
+    }
+    public static bool ShouldHoldAutomaticDiagnosticInput(bool diagnosticInput, bool requested)
+    {
+        return diagnosticInput && requested;
+    }
+    public bool SetManualMoonAutomaticHold(bool requested)
+    {
+        bool held = ShouldHoldAutomaticDiagnosticInput(diagnosticInput, requested);
+        if (manualMoonAutomaticHold && !held)
+            ClearAutomaticDiagnosticRequests();
+        manualMoonAutomaticHold = held;
+        return held;
+    }
+    void ClearAutomaticDiagnosticRequests()
+    {
+        movement = aim = Vector2.zero;
+        diagnosticAim = Vector3.zero;
+        diagnosticJumpRevision++;
+        diagnosticJumpRequest = false;
+        jumpHeld = jumpLatched = false;
+        diagnosticSprint = diagnosticPrimary = diagnosticSecondary = diagnosticUtility = diagnosticSpecial =
+            diagnosticInteract = diagnosticEquipment = false;
+        isolatedDiagnosticSkillPulse = false;
+        // Manual touch-equipment requests have an independent owner and are preserved.
     }
     public struct DiagnosticJumpSnapshot
     {
@@ -205,6 +233,7 @@ public sealed class NovaInputBridge : MonoBehaviour
             if (!bank || mapping == null || !focused)
             {
                 presence?.Suspend();
+                SetManualMoonAutomaticHold(false);
                 Neutral();
                 return;
             }
@@ -213,6 +242,7 @@ public sealed class NovaInputBridge : MonoBehaviour
             if (Time.timeScale == 0)
             {
                 presence.Suspend();
+                SetManualMoonAutomaticHold(false);
                 Neutral();
                 return;
             }
@@ -274,9 +304,14 @@ public sealed class NovaInputBridge : MonoBehaviour
             Neutral();
             return;
         }
-        bank.moveVector = thirdPerson != null && !diagnosticInput ? thirdPerson.Movement(movement) : new Vector3(movement.x, 0, movement.y);
-        bank.SetRawMoveStates(movement);
-        if (diagnosticInput && diagnosticAim.sqrMagnitude > 0)
+        bool holdAutomatic = ShouldHoldAutomaticDiagnosticInput(diagnosticInput, manualMoonAutomaticHold);
+        Vector2 effectiveMovement = holdAutomatic ? Vector2.zero : movement;
+        bank.moveVector = thirdPerson != null && !diagnosticInput ? thirdPerson.Movement(movement)
+                                                                   : new Vector3(effectiveMovement.x, 0, effectiveMovement.y);
+        bank.SetRawMoveStates(effectiveMovement);
+        if (holdAutomatic)
+            bank.aimDirection = Vector3.zero;
+        else if (diagnosticInput && diagnosticAim.sqrMagnitude > 0)
         {
             bank.aimDirection = diagnosticAim;
             aimTicks++;
@@ -288,36 +323,39 @@ public sealed class NovaInputBridge : MonoBehaviour
             thirdPerson.report.maxAimError =
                 Mathf.Max(thirdPerson.report.maxAimError, Vector3.Angle(bank.aimDirection, thirdPerson.report.direction));
         }
-        else if (aim.sqrMagnitude > 0)
+        else if (!holdAutomatic && aim.sqrMagnitude > 0)
         {
             bank.aimDirection = new Vector3(aim.x, 0, aim.y);
             aimTicks++;
         }
-        bank.jump.PushState(jumpHeld || jumpLatched);
+        bank.jump.PushState(!holdAutomatic && (jumpHeld || jumpLatched));
         if (bank.jump.justPressed)
             jumpPresses++;
         jumpLatched = false;
         bool isolatedSkills = diagnosticInput && isolatedDiagnosticSkillInput;
         bank.activateEquipment.PushState(EquipmentInputRequest(diagnosticInput, isolatedDiagnosticSkillInput,
-                                                                diagnosticEquipment, touchEquipment));
+                                                                holdAutomatic ? false : diagnosticEquipment, touchEquipment));
         touchEquipment = false;
-        bank.sprint.PushState(diagnosticInput && diagnosticSprint);
+        bank.sprint.PushState(diagnosticInput && !holdAutomatic && diagnosticSprint);
         var raw = diagnosticInput ? null : ReadRaw();
-        bank.interact.PushState(diagnosticInput ? diagnosticInteract : mapping.enableInteraction && raw.buttons[mapping.interact]);
+        bank.interact.PushState(diagnosticInput ? (!holdAutomatic && diagnosticInteract)
+                                                  : mapping.enableInteraction && raw.buttons[mapping.interact]);
         bool all = mapping.enableSkills || enableAllSkills;
-        bank.skill1.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+        bank.skill1.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 0, diagnosticPrimary,
                                                 !diagnosticInput && (all || enablePrimary) && raw.buttons[mapping.primary]));
-        bank.skill2.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+        bank.skill2.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 1, diagnosticSecondary,
                                                 !diagnosticInput && all && raw.buttons[mapping.secondary]));
-        bank.skill3.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+        bank.skill3.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 2, diagnosticUtility,
                                                 !diagnosticInput && all && raw.buttons[mapping.utility]));
-        bank.skill4.PushState(SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
+        bank.skill4.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 3, diagnosticSpecial,
                                                 !diagnosticInput && all && raw.buttons[mapping.special]));
         fixedTicks++;
+        if (holdAutomatic)
+            manualMoonNeutralFixedTicks++;
     }
     public void DiagnosticJump(bool down)
     {
@@ -351,6 +389,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     void OnApplicationFocus(bool value)
     {
         focused = value;
+        SetManualMoonAutomaticHold(false);
         if (!value)
         {
             presence?.Suspend();
@@ -360,6 +399,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     void OnApplicationPause(bool value)
     {
         focused = !value;
+        SetManualMoonAutomaticHold(false);
         if (value)
         {
             presence?.Suspend();
@@ -369,6 +409,7 @@ public sealed class NovaInputBridge : MonoBehaviour
     void OnDisable()
     {
         presence?.Suspend();
+        SetManualMoonAutomaticHold(false);
         Neutral();
     }
 }

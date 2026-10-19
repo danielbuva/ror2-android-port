@@ -11058,3 +11058,61 @@ replay that editor source. Runtime membership/GUIDs and payload remain unchanged
 No new build input under work, original input, Phase 2 output, extra device,
 receipt edit, storage change or permanent progression occurs. Current candidate
 efb0ba93 is separately finishing default checks; accepted rollback remains J698.
+
+## J701 — Enforce the configured manual Moon boundary before automatic progression
+
+Hypothesis: the existing pauseBeforeMoon condition ran too late to guarantee
+its stated manual boundary. Source review finds pending transport and automatic
+input consumed before the old four-transition/30-second check. A slow host poll
+cannot enforce the user's refusal. No unattended Moon/finale route is attempted.
+J504/J626's native progression/input ownership and J693's sink-level masking
+remain the prior-art basis; the current native InputBankTest API is authoritative.
+No native progression algorithm or destination chooser is reconstructed.
+
+The existing IntegratedStageBoundary now contains a pure ManualMoonBoundary
+policy. With pauseBeforeMoon enabled, transport independently refuses an exact
+moon2 destination or any request after four completed transitions, before
+resolving the destination or mutating stage state. NovaInputSession checks the
+four-transition gate before pending transport and automatic producers, then
+rechecks after a transport returns in the same frame. It keeps the existing
+30-second passive observation window. The counter alone does not establish a
+particular scene or Moon arrival. Disabling the config preserves the old path.
+
+NovaInputBridge owns a diagnostic-only hold consumed on every FixedUpdate,
+masking all automatic movement, aim, jump, sprint, skills, interaction and
+equipment requests even if stale producer flags remain true. Explicit touch
+equipment remains separate. The physical-controller path is unchanged when
+diagnosticInput is false; diagnostic mode itself does not route raw physical
+controls. Release/focus/pause/teardown clear owned automatic requests without a
+new rendered-frame clear of physical bank state. Fresh Nova reports record the
+held stage/count and fixed-tick counter only after the held input sink runs.
+The marker is bounded evidence of that sink, not device route acceptance.
+
+Independent review rejects the first draft's rendered-frame Neutral-only
+approach and its physical-input race; the final draft moves suppression into
+the sink. Root also corrects the report scope. The actual native aim getter
+returns transform.forward when stored aim is zero; the fixture checks that
+native fallback rather than a false zero-getter assumption. Reviewed private
+patch a1ddec6fa4d994b5e00534ce03efd33635d143b099b9a9bc8bb684fe7616d0a9
+and review: work/coordination/manual-moon-boundary-draft/ and
+work/coordination/manual-moon-boundary-review/.
+
+Root's full host suite passes 986 tests with one existing skip. Six new tests
+cover exact compiled production policy decisions plus ordering/marker contracts.
+The exact idle editor compiles all staged source and the existing
+SurvivorSkillInputHost fixture passes actual FixedUpdate with stale requests,
+touch-equipment passthrough, physical bank preservation at release, and the
+existing isolated owner/default input contracts. Evidence:
+work/experiments/first-stage-native-lifecycle/
+moon-and-mage-editor-20261019T172347.559908Z/14-manual-moon-input-sink.json.
+No Run/network/gameplay state is started by the fixture. First failure: none
+in final host/editor validation; device four-transition hold remains untested.
+
+This source is unbuilt, not permission to run a longer route on the old APK.
+R8 must replay the three changed runtime sources and existing skill fixture;
+105 runtime files/GUID membership and content payload are unchanged. The owner
+map is updated. No new work build input, original input, Phase 2 output, extra
+device, receipt edit, storage alteration, fifth transport or permanent award
+occurs. Next: build, run both default controls, then require immutable
+source/fixture-bound receipts before a bounded base-stage route; keep the Moon
+rollback and all manual-only acceptance intact.

@@ -13,6 +13,31 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
+// The user's configured manual boundary is a refusal policy, not a destination selector.
+// Keep the production decision pure so the exact-editor fixture exercises the same gate.
+public static class ManualMoonBoundary
+{
+    public const int CompletedTransitions = 4;
+    public const float ObservationSeconds = 30f;
+    public const string MoonDestination = "moon2";
+
+    public static bool HoldAutomaticProgression(bool enabled, int completedTransitions)
+    {
+        return enabled && completedTransitions >= CompletedTransitions;
+    }
+
+    public static bool RefuseTransport(bool enabled, int completedTransitions, string requestedDestination)
+    {
+        return enabled && (completedTransitions >= CompletedTransitions ||
+                           string.Equals(requestedDestination, MoonDestination, StringComparison.Ordinal));
+    }
+
+    public static bool FinishObservation(bool held, float stageElapsed)
+    {
+        return held && stageElapsed > ObservationSeconds;
+    }
+}
+
 // Additive converted-stage transport, with a declared continuous-body entry adapter.
 // No synthetic stage count, reward, kill, authority, ownership or platform identity.
 public sealed partial class PortSession
@@ -697,6 +722,10 @@ public sealed partial class PortSession
                               "The native source-lifecycle diagnostic owns only its first stage; transport turnover is not implemented");
             if (string.IsNullOrEmpty(coordinator.pendingStage))
                 yield break;
+            coordinator.Check(!ManualMoonBoundary.RefuseTransport(coordinator.r.pauseBeforeMoon,
+                                                                    coordinator.r.stageProgress.transitions,
+                                                                    coordinator.pendingStage),
+                              "Configured manual Moon boundary refused further original stage transport");
             var next = integratedStageConfig.integratedStages.SingleOrDefault(x => x.name == coordinator.pendingStage);
             coordinator.Check(next != null, "Original next destination has no accepted converted content: " + coordinator.pendingStage);
             var report = coordinator.r.stageProgress;

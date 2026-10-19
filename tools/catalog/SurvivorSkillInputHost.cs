@@ -125,6 +125,49 @@ public static class SurvivorSkillInputHost
             bridge.diagnosticInput = true;
             PublishAllRequests(bridge);
 
+            // A rendered-frame Neutral is insufficient: later FixedUpdate must
+            // suppress stale automatic producer values at the owned sink.
+            bridge.movement = Vector2.right;
+            bridge.diagnosticAim = Vector3.right;
+            bridge.diagnosticEquipment = true;
+            bridge.diagnosticSprint = true;
+            bridge.diagnosticInteract = true;
+            bridge.DiagnosticJump(true);
+            bridge.Neutral();
+            bridge.diagnosticPrimary = bridge.diagnosticSecondary = bridge.diagnosticUtility = bridge.diagnosticSpecial = true;
+            bridge.movement = Vector2.right;
+            bridge.aim = Vector2.right;
+            bank.aimDirection = Vector3.up;
+            bridge.diagnosticAim = Vector3.right;
+            bridge.diagnosticSprint = bridge.diagnosticInteract = bridge.diagnosticEquipment = true;
+            bridge.DiagnosticJump(true);
+            Require(bridge.SetManualMoonAutomaticHold(true), "Diagnostic manual-boundary hold was not acquired");
+            FixedInput(bridge);
+            Require(!bank.skill1.down && !bank.skill2.down && !bank.skill3.down && !bank.skill4.down &&
+                        !bank.jump.down && !bank.interact.down && !bank.sprint.down && !bank.activateEquipment.down &&
+                        bank.moveVector == Vector3.zero && bank.aimDirection == bank.transform.forward &&
+                        bridge.manualMoonNeutralFixedTicks == 1 &&
+                        bridge.diagnosticPrimary && bridge.diagnosticInteract,
+                    "FixedUpdate reasserted stale automatic requests after Neutral while the hold was owned");
+            bridge.touchEquipment = true;
+            FixedInput(bridge);
+            Require(bank.activateEquipment.down && bridge.manualMoonNeutralFixedTicks == 2,
+                    "The automatic hold consumed the independent manual touch-equipment request");
+            Require(!NovaInputBridge.ShouldHoldAutomaticDiagnosticInput(false, true) &&
+                        !NovaInputBridge.ShouldHoldAutomaticDiagnosticInput(true, false),
+                    "A non-diagnostic/manual input path was classified as held");
+            bridge.touchEquipment = true;
+            bank.skill1.PushState(true);
+            bridge.diagnosticInput = false;
+            Require(!bridge.SetManualMoonAutomaticHold(true) && bank.skill1.down && bridge.touchEquipment &&
+                        !bridge.diagnosticPrimary && !bridge.diagnosticInteract,
+                    "Releasing the diagnostic hold changed physical bank/touch state or retained held automatic requests");
+            bridge.diagnosticInput = true;
+            bridge.SetManualMoonAutomaticHold(false);
+            bridge.touchEquipment = false;
+            bank.skill1.PushState(false);
+            PublishAllRequests(bridge);
+
             var skills = Enumerable.Range(0, 4)
                              .Select(
                                  _ => root.AddComponent<GenericSkill>())
@@ -358,6 +401,7 @@ public static class SurvivorSkillInputHost
                          isolatedBridgeMask = true,
                          automaticEquipmentSuppressed = true,
                          touchEquipmentPreserved = true,
+                         manualMoonFixedUpdateHold = true,
                          defaultInputRoutePreserved = true,
                          invalidSlotRefused = true,
                          exclusiveRouting = true,

@@ -42,6 +42,9 @@ public sealed partial class PortSession
         public float aimPitchCycle, aimYawCycle;
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
+        public bool automaticDiagnosticInputHeldAtBoundary;
+        public int automaticDiagnosticHoldFixedTicks, automaticDiagnosticHoldTransitions;
+        public string automaticDiagnosticHoldStage, automaticDiagnosticHoldScope;
         public int samples, fixedTicks, jumpPresses, localJumpCallbacks, jumpTransitions, landings;
         public float seconds, pathLength, planarPathLength, maxRise, diagnosticReturnFireAt;
         public uint spawnedBodyId, masterId;
@@ -187,6 +190,23 @@ public sealed partial class PortSession
             }
             coordinator.Check(coordinator.r.nova.samples > 300, "Nova Unity raw capture incomplete");
             coordinator.Save();
+        }
+        void ObserveManualMoonHold(NovaInputBridge bridge)
+        {
+            if (!bridge || bridge.manualMoonNeutralFixedTicks <= 0)
+                return;
+            var report = coordinator.r.nova;
+            if (!report.automaticDiagnosticInputHeldAtBoundary)
+            {
+                report.automaticDiagnosticHoldStage = coordinator.r.stageProgress == null
+                                                         ? string.Empty : coordinator.r.stageProgress.current;
+                report.automaticDiagnosticHoldTransitions = coordinator.r.stageProgress == null
+                                                               ? 0 : coordinator.r.stageProgress.transitions;
+                report.automaticDiagnosticHoldScope =
+                    "automatic-diagnostic-input-only; touch-equipment preserved; physical route unchanged when diagnosticInput=false";
+            }
+            report.automaticDiagnosticInputHeldAtBoundary = true;
+            report.automaticDiagnosticHoldFixedTicks = bridge.manualMoonNeutralFixedTicks;
         }
         public IEnumerator NovaInputBoundary(CharacterBody body, EntityStateMachine machine, SessionConfig cfg)
         {
@@ -366,6 +386,12 @@ public sealed partial class PortSession
                         cfg.integratedWorld && Time.frameCount % 30 == 0 ? GC.GetAllocatedBytesForCurrentThread() : -1;
                     if (coordinator.CompletedResultsReturn() || coordinator.CompletedOfflineAbandon())
                         yield break;
+                    bool pauseBeforeMoonBoundary = cfg.pauseBeforeMoon && cfg.teleporterLoop &&
+                                                   coordinator.r.stageProgress != null &&
+                                                   ManualMoonBoundary.HoldAutomaticProgression(
+                                                       cfg.pauseBeforeMoon, coordinator.r.stageProgress.transitions);
+                    bridge.SetManualMoonAutomaticHold(pauseBeforeMoonBoundary);
+                    ObserveManualMoonHold(bridge);
                     if ((coordinator.r.freePlay || cfg.integratedWorld) && body && !body.healthComponent.alive)
                     {
                         var defeat = coordinator.ObservePlayerDefeat(body, machine, bridge);
@@ -383,12 +409,19 @@ public sealed partial class PortSession
                         coordinator.Check(coordinator.r.stageProgress != null && string.IsNullOrEmpty(coordinator.r.stageProgress.error),
                                           "Original stage callback failed: " +
                                               (coordinator.r.stageProgress == null ? "missing" : coordinator.r.stageProgress.error));
-                        if (!string.IsNullOrEmpty(coordinator.pendingStage))
+                        if (!pauseBeforeMoonBoundary && !string.IsNullOrEmpty(coordinator.pendingStage))
                         {
                             var transition = coordinator.TransportIntegratedStage(bridge, began);
                             while (transition.MoveNext())
                                 yield return transition.Current;
                             previous = solver.TransientPosition;
+                            // The fourth transport completes inside this coroutine. Recheck before
+                            // any later producer in this same frame, not only on the next frame.
+                            pauseBeforeMoonBoundary = cfg.pauseBeforeMoon && cfg.teleporterLoop &&
+                                                      ManualMoonBoundary.HoldAutomaticProgression(
+                                                          cfg.pauseBeforeMoon, coordinator.r.stageProgress.transitions);
+                            bridge.SetManualMoonAutomaticHold(pauseBeforeMoonBoundary);
+                            ObserveManualMoonHold(bridge);
                         }
                     }
                     if (coordinator.offlineSettingsPaused)
@@ -459,7 +492,8 @@ public sealed partial class PortSession
                         coordinator.r.performance.worldMs += PerformanceMs(performancePart);
                         performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
                         allocatedPart = allocatedFrameStart >= 0 ? GC.GetAllocatedBytesForCurrentThread() : 0;
-                        if (bringup && !(coordinator.r.results != null && coordinator.r.results.persisted))
+                        if (bringup && !pauseBeforeMoonBoundary &&
+                            !(coordinator.r.results != null && coordinator.r.results.persisted))
                         {
                             coordinator.PrepareSirenEggDiagnosticInputFrame(body, bridge);
                             coordinator.IntegratedWorldStimulus(body, bridge, elapsed);
@@ -471,7 +505,7 @@ public sealed partial class PortSession
                         coordinator.r.performance.stimulusMs += PerformanceMs(performancePart);
                         performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
                     }
-                    if (bringup && !cfg.integratedWorld)
+                    if (bringup && !cfg.integratedWorld && !pauseBeforeMoonBoundary)
                     {
                         bridge.movement = elapsed < 3 ? Vector2.right : elapsed < 6 ? Vector2.left : Vector2.zero;
                         bridge.aim = elapsed < 6 ? Vector2.right : cfg.combatSpine ? coordinator.CombatAim(body) : Vector2.up;
@@ -546,8 +580,9 @@ public sealed partial class PortSession
                         coordinator.r.nova.samples++;
                         next = elapsed + .1f;
                     }
-                    if (cfg.pauseBeforeMoon && cfg.teleporterLoop && coordinator.r.stageProgress.transitions >= 4 &&
-                        elapsed - coordinator.r.stageProgress.enteredAt > 30)
+                    if (pauseBeforeMoonBoundary &&
+                        ManualMoonBoundary.FinishObservation(
+                            true, elapsed - coordinator.r.stageProgress.enteredAt))
                     {
                         coordinator.r.nova.seconds = elapsed;
                         break;
@@ -770,6 +805,7 @@ public sealed partial class PortSession
                         coordinator.CleanupEnemy();
                     if (bridge)
                     {
+                        bridge.SetManualMoonAutomaticHold(false);
                         bridge.enabled = false;
                         Destroy(bridge);
                     }

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J701](PORTING_JOURNAL.md#j701--enforce-the-configured-manual-moon-boundary-before-automatic-progression) | 2026-10-19 | Enforce the configured manual Moon boundary before automatic progression | Hypothesis: the existing pauseBeforeMoon condition ran too late to guarantee its stated manual boundary. |
 | [J700](PORTING_JOURNAL.md#j700--exact-native-mage-earth-shards-configuration-applies-and-restores) | 2026-10-19 | Exact native Mage Earth Shards configuration applies and restores | Hypothesis: J699's zero sampled projectiles should first be distinguished from an applied-state configuration failure, without changing gameplay. |
 | [J699](PORTING_JOURNAL.md#j699--isolated-mage-utility-input-passes-short-lived-output-remains-unmeasured) | 2026-10-19 | Isolated Mage utility input passes; short-lived output remains unmeasured | Hypothesis: the J693 isolated-input path can distinguish a native Earth Shards utility request from the other three skill inputs without changing native skill… |
 | [J698](PORTING_JOURNAL.md#j698--accept-isolated-input-tooling-apk-against-both-default-controls) | 2026-10-19 | Accept isolated-input tooling APK against both default controls | Hypothesis: J693's optional input isolation must leave the default runtime path unchanged. |
