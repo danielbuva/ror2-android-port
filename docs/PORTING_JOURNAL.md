@@ -11360,3 +11360,53 @@ extra device, receipt edit, storage change or permanent award occurs. Candidate
 d545d800 is now installed in place and undergoing default controls separately;
 it contains J701/J703/J704, with all 266 payload hashes identical to efb0ba93.
 Keep efb0ba93 as accepted baseline until both new controls pass.
+
+## J707 — Accept manual-boundary and bounded-output APK against both defaults
+
+Hypothesis: J701's automatic manual-boundary enforcement, J703's failure-only
+ownership operands and J704's isolated-request observation must preserve default
+world/stage play. Selected preflight and 988 host tests pass (one existing skip).
+The exact-editor native-field, input-sink, state-config and observer API/history/
+fault contracts pass at work/experiments/first-stage-native-lifecycle/
+bounded-output-editor-20261019T173005.589053Z/. Exact Unity code-only build
+succeeds in 110.990229 seconds with zero errors, request
+20261019T173349.640516Z. APK:
+d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee.
+Source checkpoint 6473404 contains the three changes and 105 runtime files.
+Frozen APK/build/source/preflight/host/editor receipts and payload comparison:
+work/experiments/bounded-output/candidate-20261019T173349.640516Z/.
+All 266 payload hashes equal J702 efb0ba93. In-place adopted install/sync pass.
+
+The plain default check reaches 35.209442 world seconds on Lakes:
+work/experiments/baseline/20261019T173900.218835Z/. The default exit control
+records exactly one genuine transition to Goolake, 146.129730 world seconds and
+11.089752 next-stage seconds:
+work/experiments/baseline/20261019T174316.316259Z/. Both check results and root
+current-process log validation pass. Native first-stage diagnostic stays off,
+source lifecycle recovery is false and pauseBeforeMoon remains enabled.
+Additional root checks require the new actual fields: no held automatic-input
+witness/ticks before transition four, and zero requested/accepted/in-window/
+additional transient scans in these ordinary controls. All are present and zero;
+no diagnostic-only observation work is silently armed in a default run.
+
+Both profiles remain 13 applied runs, one earned/available unlock and one coin;
+result application is false. These are assisted Commando default controls,
+not complete skill, normal-difficulty or full-run acceptance. Both collectors
+remove their own selector, stop the package and sleep the OLED. Accept d545d800
+as the next baseline, preserving efb0ba93 as the immediate executable rollback.
+Current authored runtime hashes match this frozen source. No later runtime
+change is inferred merely from subsequent documentation commits.
+
+First failure: none in either control. This verifies the existing 0-to-1 stage
+control, not the fourth-transition automatic hold or a fifth-transport refusal
+on device. Moon/finale remains manual-only and its rollback is untouched. The
+source/compiled policy and actual fixed-input fixture remain J701 evidence;
+no unattended Moon attempt is performed. The new isolated Mage utility case is
+active separately. J702's native cleanup still needs the exact J703 operands
+and a completed restart; no native success follows from these default controls.
+
+No original input, Phase 2 output, runtime membership, extra device, manual
+receipt edit, storage reconfiguration/data move or permanent award occurs.
+The allowlist still contains only the current Nova. Next inspect isolated Mage,
+then repeat native abandon for first-failure counts; run the prepared REX
+alternate selector and source/fixture-bound base-stage route independently.
