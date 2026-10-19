@@ -9136,3 +9136,37 @@ J652 source is still unbuilt. Revisit Harpoon targeting/output, the independent
 Laser Cutter repair, and later ordinary selection/positive unlock conditions.
 No source/recipe change, original-input mutation, extra-device action, receipt
 hand edit, existing data move or storage configuration change occurs here.
+
+## J654 — Accept the live-inventory APK after both default baseline modes
+
+Hypothesis: the J646/J648 per-run selector and live ownership correction leave
+the ordinary Commando baseline path intact. No new native mechanism or source
+change is introduced; J650/J653 contain this APK's feature-case results.
+
+APK f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8
+passes both standard modes. Plain evidence: work/experiments/baseline/
+20261019T131351.689836Z/, 35.196518 s of live Lakes play. One-exit evidence:
+work/experiments/baseline/20261019T131753.901330Z/, exactly one genuine original
+exit to Goolake, 11.496368 s of next-stage play at world time 156.179916 s.
+Both report success, current APK identity, no report/first failure and no
+unexpected current-process log errors in root-log-validation.json. Profile
+applied runs remain 13; diagnostic assistance excludes permanent awards.
+The combat observer is healthy in both runs, with 22 and 20 direct body damage
+events respectively. These force-stopped baseline runs do not establish native
+teardown; that separate completed/restarted witness is J653.
+
+The frozen build/source packet and in-place adopted installation are J650;
+J653 records the three alternate callbacks, actual source UI abandon, native
+listener/template cleanup and same-process fresh observer. J650's Laser Cutter
+missing dependency remains open, as do Harpoon target/output and complete
+ability/ordinary-selection semantics. Baseline acceptance does not erase that
+feature failure or establish normal difficulty, audio, parity or performance.
+
+First failure: none in either default check. Accept f57e172b… as the new
+baseline; preserve J647 9e7c4224… as the immediate executable rollback.
+Both runners removed selectors, stopped the owned app and slept the OLED.
+J651/J652's 105-source native first-stage/timed-chest additions are a separate
+subsequent build, with selected preflight passing and build underway;
+they are not installed or device-verified here. Revisit after that build's
+own default checks and explicit native lifecycle case. No extra device,
+receipt hand edit, original input, existing data or storage configuration change.

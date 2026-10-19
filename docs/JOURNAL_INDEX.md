@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J654](PORTING_JOURNAL.md#j654--accept-the-live-inventory-apk-after-both-default-baseline-modes) | 2026-10-19 | Accept the live-inventory APK after both default baseline modes | Hypothesis: the J646/J648 per-run selector and live ownership correction leave the ordinary Commando baseline path intact. |
 | [J653](PORTING_JOURNAL.md#j653--engineers-three-alternate-skills-pass-callbacks-and-native-abandonrestart) | 2026-10-19 | Engineer's three alternate skills pass callbacks and native abandon/restart | Hypothesis: retaining the default primary can classify Spider Mines, Harpoons and Walker Turrets independently of J650's missing Laser Cutter input, then exerc… |
 | [J652](PORTING_JOURNAL.md#j652--observe-the-ordinary-timed-chest-achievement-through-the-owned-offline-profile) | 2026-10-19 | Observe the ordinary timed-chest achievement through the owned offline profile | Hypothesis: the native timed-chest opening event can feed the existing detached Android-local achievement transaction, without fabricating a network user or cl… |
 | [J651](PORTING_JOURNAL.md#j651--integrate-a-default-off-native-first-stage-lifecycle-owner) | 2026-10-19 | Integrate a default-off native first-stage lifecycle owner | Hypothesis: the existing full native stage deck, prepared objective and source scene can run the original scene-identity, Run/Stage and SceneDirector lifecycle… |
