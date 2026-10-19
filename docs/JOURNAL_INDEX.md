@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J605](PORTING_JOURNAL.md#j605--native-teleporter-retirement-passes-later-overlay-cleanup-blocks-restart) | 2026-10-19 | Native teleporter retirement passes; later overlay cleanup blocks restart | Hypothesis: the J604 APK can finish a genuine original first-stage loss, retire the native teleporter before server shutdown and start a clean session in the s… |
 | [J604](PORTING_JOURNAL.md#j604--accept-the-native-teardown-and-auxiliary-observer-apk-baseline) | 2026-10-19 | Accept the native teardown and auxiliary-observer APK baseline | Hypothesis: J600/J601's scoped teleporter retirement and J602's auxiliary skill observations/system-death event bindings can join the accepted game without reg… |
 | [J603](PORTING_JOURNAL.md#j603--three-survivors-activate-four-native-slots-mul-t-utility-remains-unobserved) | 2026-10-19 | Three survivors activate four native slots; MUL-T utility remains unobserved | Hypothesis: the accepted J601 APK can exercise the four canonical native skill slots across the base roster through existing diagnostic world input. |
 | [J602](PORTING_JOURNAL.md#j602--observe-auxiliary-native-skills-and-use-the-system-death-signal) | 2026-10-19 | Observe auxiliary native skills and use the system-death signal | Hypothesis: four canonical SkillLocator slots do not describe every original loadout component, and an all-death observer must use the accepted assembly's syst… |

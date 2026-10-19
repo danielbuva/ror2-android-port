@@ -220,8 +220,8 @@ working project too.
 
 ## Multi-device state (current Nova verified; extra devices pending)
 
-The inventory above records the current single-device receipt paths. The proposed selector
-will use the ignored `work/config/local.json` fields `device_serials` (authorized allowlist),
+The dated inventory above records the historical single-device receipt paths. The current
+selector uses the ignored `work/config/local.json` fields `device_serials` (authorized allowlist),
 `device_serial`, and `device_settings[serial]`. Device commands may select with
 `--device SERIAL` or `LAB_DEVICE=SERIAL`. Multiple attached devices without an explicit
 selection refuse; an explicit serial outside the allowlist refuses. Existing top-level
@@ -229,10 +229,10 @@ legacy configuration is fallback only for the default device. Device-specific se
 include `storage_mode`, `internal_reserve_mib`, `apk_install_limit`,
 `sleep_display_when_idle`, `display_models`, and `display_count`.
 
-Receipts are planned under `work/device/<serial>/`, including that device's installation,
-storage, sync and runtime placement records. The existing `work/device/` receipt set remains
-in place until the explicit `migrate-device-receipts` CLI is run after the coordination lock
-clears. Migration must retain the original files and write its activation marker last so an
+Receipts live under `work/device/<serial>/`, including that device's installation,
+storage, sync and runtime placement records after explicit `migrate-device-receipts`
+activation. Legacy `work/device/` originals remain preserved. Migration retains the
+original files and writes its activation marker last so an
 incomplete migration cannot make an empty per-device receipt directory authoritative. No
 receipt migration was performed before lock release. J595 then migrated the configured
 Nova's verified receipts, preserving the flat originals and copying the counter, and passed
@@ -261,6 +261,14 @@ and preserves unsuccessful/partial attempts. A unique `/data/local/tmp/` output 
 removed only after a verified nonempty host pull. No SDK, profiler binary or extra
 required local content is added. Device permission and useful symbol attribution
 remain unverified.
+
+`session_cleanup_check.py` generates per-device evidence through
+`Device.evidence_directory` under
+`experiments/session-cleanup/<attempt>/`. It reads the current APK artifact,
+owned install/runtime receipts and current launch configuration. Prior exact
+diagnostic report targets are preserved there before clearing; full current
+completion/restart reports, logs and display mapping remain ignored evidence,
+never build inputs. No remembered run directory supplies runtime configuration.
 
 ## Other local inputs and historical workflows
 

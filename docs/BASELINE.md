@@ -54,8 +54,8 @@ It passes only when:
   `appliedRuns` matches the first live Lakes report.
 
 The host polls every 2 s and stops at the first qualifying report. Before transition 1,
-any reported nonempty scene other than Lakes stops and fails immediately, including
-during transport. A second exit request, transport after transition 1 or a transition
+any reported nonempty scene other than Lakes outside an active transport stops
+and fails immediately. A second exit request, transport after transition 1 or a transition
 count above 1 also stops and fails. Invalid transition counts, report errors, process
 exit, ordinary results or the 370 s host deadline fail. The check never intentionally
 drives another exit.

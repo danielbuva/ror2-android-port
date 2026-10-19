@@ -135,6 +135,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "whole-catalog-prepare",
                 "whole-catalog-host",
                 "survivor-kit-check",
+                "session-cleanup-check",
                 "whole-catalog-repair-bindings",
                 "whole-catalog-contracts",
                 "whole-catalog-host-providers",

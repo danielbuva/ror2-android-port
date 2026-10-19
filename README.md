@@ -112,6 +112,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action whole-catalog-prepare` | Prepare the whole-catalog integration. |
 | `./dev prototype --action whole-catalog-host` | Run the whole-catalog editor host fixture. |
 | `./dev prototype --action survivor-kit-check` | Assisted world skill check: --target all or comma-separated base survivor keys; locked choices are diagnostic, no profile awards. |
+| `./dev prototype --action session-cleanup-check` | Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. |
 | `./dev prototype --action whole-catalog-host-providers` | Run the whole-catalog native-provider host fixture. |
 | `./dev prototype --action whole-catalog-repair-bindings` | Repair recorded whole-catalog root bindings. |
 | `./dev prototype --action whole-catalog-build` | Compose content and build the whole-catalog player. |

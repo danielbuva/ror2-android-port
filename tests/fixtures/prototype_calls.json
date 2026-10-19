@@ -182,5 +182,18 @@
   "storage-lifecycle": {"calls": [{"module": "lifecycle", "function": "lifecycle", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "references": {"calls": [{"module": "experiments", "function": "references", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "reconstruction": {"calls": [{"module": "experiments", "function": "reconstruction_report", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
-  "inspect": {"calls": [{"module": "prepare", "function": "prepare", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null}
+  "inspect": {"calls": [{"module": "prepare", "function": "prepare", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
+  "session-cleanup-check": {
+    "calls": [
+      {
+        "module": "session_cleanup_check",
+        "function": "check_session_cleanup",
+        "args": [],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_cleanup_check.check_session_cleanup\"\n}\n",
+    "exit": null
+  }
 }

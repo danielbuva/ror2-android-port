@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J604** (native teardown/auxiliary-observer APK passes both baseline modes).
+Last updated 2026-10-19 after **J605** (native teleporter retirement passes; later overlay cleanup blocks restart).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -15,7 +15,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `76344ab433b15b97943638a5807227278f07cf98a18ef372873988d57c945ebe` — J604 native teardown/auxiliary-observer code build; both baseline modes passed. Native cleanup, Siren mission and complete skill behavior have separate gates. |
 | Installed now | J604 APK `76344ab4…`, installed in place on current Nova adopted storage. Baseline checks ended with the app stopped and OLED asleep. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since verified APK | None staged. The APK contains J600/J601 native teleporter retirement and J602 auxiliary skill/system-death observations. Android completed-session cleanup remains pending. |
+| Runtime source since verified APK | Opt-in diagnostic skill input coverage is staged and passed its exact-editor routing fixture; no later APK built yet. J605 proves native teleporter retirement on Android, but later material-overlay cleanup blocks session restart. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
@@ -41,7 +41,8 @@ they are not normal-difficulty acceptance.
   are staged; nine DLC scenes are staged but unplayed pending a truthful expansion-availability
   path. The Gold Shores portal/mission path runs (J485).
 - **World:** original director decks and placement, purchases (chests, Turret1, Drone1),
-  items, equipment, procs, elites, death → results → restart → menu.
+  items, equipment, procs, elites, death → results. Current completed-session restart
+  is blocked by overlay cleanup (J605); earlier restart evidence is historical.
 - **Progression:** Android-only native profile, results and settings; original achievement
   classes evaluate at genuine events, and assisted runs are excluded from permanent awards
   (profile holds 13 applied runs).

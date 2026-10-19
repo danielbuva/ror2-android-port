@@ -7162,3 +7162,50 @@ exercise it. Siren's original egg/boss mission, auxiliary native abilities,
 ordinary progression, normal difficulty and memory/performance acceptance are
 still open. No new runtime source changed during this gate; replay implications
 remain J600/J602's authored R8 inputs, with Phase 2 owned by the parallel session.
+
+## J605 — Native teleporter retirement passes; later overlay cleanup blocks restart
+
+Hypothesis: the J604 APK can finish a genuine original first-stage loss, retire
+the native teleporter before server shutdown and start a clean session in the
+same process. The current `session-cleanup-check` host action observes this
+flow; J391's earlier repeated losses and J601's exact-editor lifecycle provide
+prior evidence, not acceptance of the new APK.
+
+Added an attempt/PID-bound host runner with all five gameplay debug assists
+off. Automatic input remains diagnostic/assisted. It preserves and clears only
+the exact prior diagnostic reports, validates the selected APK artifact against
+ownership receipts and live placement, captures profile counts after profile
+preparation, and requires a native death/result followed by a source-UI restart
+and a ready session-2 world tick. First-stage/Moon guards, current-process logs,
+late errors, stale completion refusal, foreign-selector preservation, verified
+force-stop and OLED sleep are explicit contracts. Rotated Android/HUD pixel
+grids must agree before the source restart rectangle is tapped. Full evidence
+stays in the validated per-device namespace; installed bytes are receipt-backed,
+not independently rehashed. Eighteen focused host tests cover report rules and
+mocked launch/death/restart/failure sequences; Ruff and CLI dispatch tests pass.
+
+On APK
+76344ab433b15b97943638a5807227278f07cf98a18ef372873988d57c945ebe,
+the real Nova run reached an original StandardLoss at 174.39 s of world play:
+one native death event, original death state/corpse, destroyed player body and
+persisted client ending. Native teleporter cleanup reports one CombatSquad,
+server-active synchronous destruction and both exact-target death/summon
+listener counts changing from 1 to 0. World/objective cleanup completed. This
+is Android evidence for the narrow J600/J601 lifecycle fix.
+
+The overall check failed. First failure: **Owned overlay cleanup incomplete**
+in TeleportMaterialSession.CleanupTeleportMaterial. The subsequent restart guard
+correctly refused the unclean world; no current-launch completed-session file
+or session 2 was accepted. Profile runs stayed 13 and both earned-unlock counts
+stayed 1; the assisted result was excluded. The runner preserved evidence,
+removed its selector, stopped the process and confirmed display sleep.
+
+Private evidence:
+work/device/<serial>/experiments/session-cleanup/20261019T075212.845710Z/.
+It includes the first live snapshot, full terminal report/log, display mapping
+and prior reports. Baseline acceptance remains J604; it does not certify
+completed-session restart. Revisit only after auditing current native
+TemporaryOverlayManager indexing/validation and this owner's release boundary.
+Do not clear the global registry or suppress the cleanup assertion. No runtime
+source or Phase 2 build input changed for this host runner; later drafts are
+separate from the tested APK.
