@@ -1098,3 +1098,14 @@ community implementation. Only minimum native API identities are named. No
 asset, middleware, account, private path or device data is added. Source count
 remains 105; the existing producer and R8 reproduce the changed owner. No new
 local build input, runtime diagnostic case, entitlement or Phase 2 edit occurs.
+
+### Rolling projectile observation audit (2026-10-19)
+
+The existing authored LightningStake observer recycles its bounded live identity
+slots and caps serialized history. Its editor fixture updates shared-policy
+assertions; the portable host test extracts authored policy/retirement methods
+and uses authored collaborators. No native implementation, asset content,
+community code, profile, private path or device identity is copied. Native
+projectile behavior and source-asset identity assertions stay unchanged. The
+existing producer stages the updated fixture and runtime owner; membership stays
+105. Replay these inputs through R8; no new ignored input or Phase 2 edit occurs.

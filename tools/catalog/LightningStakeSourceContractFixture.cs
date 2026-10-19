@@ -24,9 +24,12 @@ public static class LightningStakeSourceContractFixture
     {
         var policy = new LightningStakeSamplingPolicy();
         Require(policy.TryTrack(1) && policy.TryTrack(2) && policy.TryTrack(3),
-                "Sampling policy must accept at most three distinct identities");
-        Require(!policy.TryTrack(4) && !policy.TryTrack(1) && policy.IdentityCount == 3,
-                "Sampling policy exceeded or duplicated the identity cap");
+                "Sampling policy must accept three live identities");
+        Require(!policy.TryTrack(4) && !policy.TryTrack(1) && policy.IdentityCount == 3 && policy.TotalIdentitiesObserved == 3,
+                "Sampling policy exceeded the live identity cap or counted a duplicate");
+        Require(policy.Untrack(2) && policy.IdentityCount == 2 && policy.TryTrack(4) &&
+                    policy.IdentityCount == 3 && policy.TotalIdentitiesObserved == 4,
+                "Retired identity must free a live slot while cumulative identities remain observable");
         Require(LightningStakeSamplingPolicy.InitialSampleReason(true) == "first-observed-not-spawn" &&
                     LightningStakeSamplingPolicy.InitialSampleReason(false) == null,
                 "First observation must not be mislabeled as a true spawn sample");
@@ -34,13 +37,21 @@ public static class LightningStakeSourceContractFixture
                     LightningStakeSamplingPolicy.IsFirstNonFiniteTransition(true, true, false, false) &&
                     !LightningStakeSamplingPolicy.IsFirstNonFiniteTransition(true, true, false, true),
                 "Only the first observed finite-to-nonfinite transition may claim that boundary");
-        for (int priorSamples = 0; priorSamples < 11; priorSamples++)
-            Require(policy.CanRecord(priorSamples, false), "Sampling policy stopped before its reserved slot");
-        Require(!policy.CanRecord(11, false) && policy.CanRecord(11, true),
+        int replaceIndex;
+        Require(policy.TryReserveRecord(10, false, 35, -1, out replaceIndex) && replaceIndex == -1,
+                "Sampling policy stopped before its reserved per-identity slot");
+        Require(!policy.TryReserveRecord(11, false, 35, -1, out replaceIndex) &&
+                    policy.TryReserveRecord(11, true, 35, -1, out replaceIndex),
                 "Final snapshot slot must be reserved for the first finite-to-nonfinite boundary");
-        Require(!policy.CanRecord(12, true), "Sampling policy exceeded the 12-sample identity cap");
+        Require(!policy.TryReserveRecord(12, true, 35, -1, out replaceIndex),
+                "Sampling policy exceeded the 12-sample identity cap");
+        Require(!policy.TryReserveRecord(2, false, 36, 0, out replaceIndex) &&
+                    policy.TryReserveRecord(2, true, 36, 4, out replaceIndex) && replaceIndex == 4 &&
+                    !policy.TryReserveRecord(2, true, 36, -1, out replaceIndex),
+                "Full history must replace ordinary evidence for a transition and refuse transition-only eviction");
         policy.Dispose();
-        Require(policy.IsDisposed && policy.IdentityCount == 0 && !policy.TryTrack(5) && !policy.CanRecord(0, true),
+        Require(policy.IsDisposed && policy.IdentityCount == 0 && policy.TotalIdentitiesObserved == 4 &&
+                    !policy.TryTrack(5) && !policy.TryReserveRecord(0, true, 0, -1, out replaceIndex),
                 "Disposed policy accepted tracking or sampling work");
     }
 
@@ -79,7 +90,9 @@ public static class LightningStakeSourceContractFixture
                      projectileNetworkAndImpactComponents = true,
                      colliderGeometryFinite = true,
                      rigidbodyPropertiesMatchComparedSource = true,
-                     identityCapThreeSampleCapTwelveAndReservedTransitionVerified = true,
+                     identityCapThreeLiveSlotsSampleCapTwelveAndTotalCapThirtySixVerified = true,
+                     identityTurnoverRecyclesSlotAndCumulativeCountRetained = true,
+                     fullHistoryReplacesOnlyOrdinaryRowForTransition = true,
                      firstObservationIsNotClaimedAsSpawn = true,
                      alreadyInvalidFirstObservationIsNotClaimedAsTransition = true,
                      disposedPolicyIsInert = true,

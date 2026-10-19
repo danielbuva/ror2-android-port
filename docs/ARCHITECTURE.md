@@ -828,12 +828,18 @@ destruction and explicit detach. Native skill/device acceptance remains separate
 
 LightningStake diagnostics (`LightningStakeDiagnosticObserver.cs`, current
 read-only owner): the integrated world creates it after catalogs/report setup,
-samples only up to three exact catalog/server-mapped projectile identities,
-and disposes it with the world. Registry discovery retains the old six-frame
-cadence; only retained objects receive per-frame finite/stuck checks. A shared
-sampling policy caps each identity at 12 scalar snapshots, reserves the last
-slot for its first observed finite-to-nonfinite transition and becomes inert on
-disposal. The first observation is explicitly not a known spawn position.
+tracks at most three live exact catalog/server-mapped projectile identities,
+releases their sampling slots when identities retire, and disposes with the
+world. Its report counter retains cumulative admissions across turnover.
+Registry discovery retains the six-frame cadence; only retained objects receive
+per-frame finite/stuck checks. A shared policy caps each identity at 12 scalar
+snapshots and all history at 36 rows. It reserves the last per-identity slot for
+the first observed finite-to-nonfinite transition; at a full history that
+transition can replace only the oldest ordinary row. A latched capped status
+exposes refused/replaced history without a per-frame string allocation.
+Transition-only history cannot grow, and between-scan short lifetimes remain
+unobserved. Disposal releases live slots and makes the policy inert. The first
+observation is explicitly not a known spawn position.
 
 `r.world.lightningStakes` retains root/network/Rigidbody values, velocities,
 owner attribution and native stick/victim/local-offset/ancestry observations.
@@ -841,7 +847,10 @@ Frame/fixed-time clocks accompany world seconds. No native fire/collision hook,
 transform correction or error filter is added. Diagnostic read failures expose
 an inert status separately from native runtime errors. The source-asset/policy
 fixture checks minimum imported identity/geometry and actual sampling limits;
-only a device trace can identify a runtime transition, and neither fixture nor
+`test_lightning_stake_observer.py` executes the extracted policy and identity
+retirement with authored host collaborators. Report replacement/status remain
+source-inspected there. Only a device trace can identify a runtime transition,
+and neither fixture nor
 first sample proves native fire input. J623's intermittent corruption remains
 unresolved until new evidence identifies its producer.
 

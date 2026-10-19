@@ -9849,3 +9849,53 @@ fresh alternate run. J669's source remains staged but unbuilt; source chest
 and rolling stake-observer drafts remain under host review. Default APK
 acceptance stays J670. No original input, additional device, storage change,
 existing data move or private receipt hand edit occurs.
+
+## J672 — Keep bounded stake observation alive across projectile identity turnover
+
+Hypothesis: J667's first three finite stake identities retire before the error,
+but their permanent sampling slots prevent observing later stakes. Releasing
+live slots while bounding report history can expose later invalid transitions
+without changing native elite/projectile behavior.
+
+Existing LightningStakeDiagnosticObserver now untracks retired or unmapped
+identities and reuses at most three live slots. A saturating cumulative report
+counter survives turnover. Each identity still has at most 12 samples, with the
+last reserved for its first observed finite-to-nonfinite transition. All history
+is capped at 36 rows. At capacity only such a transition may replace the oldest
+ordinary row, after its full snapshot is read; transition evidence is never
+selected for replacement. A latched capped status exposes lost/replaced history
+without allocating a status string each Update. Disposal makes the owner inert.
+
+No native firing/collision hook, projectile mutation, transform clamp, error
+filter or spawn substitution is added. Discovery remains every six frames;
+short-lived projectiles between scans can be missed, and a full transition-only
+history refuses more samples. A first observation remains explicitly not a
+spawn sample. This improves an existing bounded observer; it does not identify
+or repair the intermittent corruption.
+
+Prior art: J626's pinned Starstorm2 a9a4badd SwiftSkateboard Start/OnDestroy
+subscription lifetime, re-inspected with community-prior-art, informs ownership
+and teardown only. Accepted native projectile/source contracts and J667's actual
+trace govern the observation. No community or native implementation is copied.
+
+Independent draft review: work/coordination/lightning-stake-rolling-observer-review/.
+Root integrates the reviewed owner and updated existing editor fixture, and
+makes the public test use ordinary temporary scratch paths rather than an
+ignored candidate folder. The portable test executes the actual extracted
+policy and retirement method with authored collaborators. All 948 host tests
+pass with one existing skip; focused test, Ruff and diff checks pass.
+Exact-editor compilation, first-stage pure gates, native API/input, deck-setter
+and source-asset/shared-policy fixture pass at work/experiments/
+first-stage-native-lifecycle/stake-editor-20261019T145818.704880Z/.
+The source fixture loads only the imported asset, without instantiation,
+networking or ProjectileCatalog startup. Report-list replacement/status latch
+are source-inspected, not executed by the host doubles.
+
+First failure: none in these contracts. The current accepted/installed
+ad84d0cb… APK contains neither this update nor J669's actor-event ownership.
+An actual new APK/Engineer replay must test turnover and any invalid transition;
+no improved runtime diagnosis is claimed yet. The 105-file selection and existing
+source/fixture producer are unchanged. ARCHITECTURE and recipe audit name the
+policy and its limits; R8 must replay the changed owner/fixture. No new local
+build input, Phase 2 output, original input, extra device, receipt hand edit,
+existing data or storage configuration is changed.

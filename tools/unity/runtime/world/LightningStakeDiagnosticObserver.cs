@@ -13,24 +13,48 @@ public sealed class LightningStakeSamplingPolicy : IDisposable
 {
     const int MaxTrackedStakes = 3;
     const int MaxSamplesPerStake = 12;
-    readonly HashSet<uint> identities = new HashSet<uint>();
+    const int MaxTotalSamples = MaxTrackedStakes * MaxSamplesPerStake;
+    readonly HashSet<uint> activeIdentities = new HashSet<uint>();
     bool disposed;
+    int totalIdentitiesObserved;
 
-    public int IdentityCount => identities.Count;
+    public int IdentityCount => activeIdentities.Count;
+    public int TotalIdentitiesObserved => totalIdentitiesObserved;
     public bool IsDisposed => disposed;
 
     public bool TryTrack(uint netId)
     {
-        if (disposed || netId == 0 || identities.Contains(netId) || identities.Count >= MaxTrackedStakes)
+        if (disposed || netId == 0 || activeIdentities.Contains(netId) || activeIdentities.Count >= MaxTrackedStakes)
             return false;
-        identities.Add(netId);
+        activeIdentities.Add(netId);
+        if (totalIdentitiesObserved < int.MaxValue)
+            totalIdentitiesObserved++;
         return true;
     }
 
-    public bool CanRecord(int priorSamples, bool firstNonFinite)
+    public bool Untrack(uint netId)
     {
-        return !disposed && priorSamples >= 0 && priorSamples < MaxSamplesPerStake &&
-               (priorSamples < MaxSamplesPerStake - 1 || firstNonFinite);
+        return !disposed && netId != 0 && activeIdentities.Remove(netId);
+    }
+
+    // The observer may recycle a live slot after an identity disappears, but its
+    // serialized sample history remains globally bounded. A transition can use
+    // a full history only by replacing the oldest non-transition row.
+    public bool TryReserveRecord(int priorSamples, bool firstNonFinite, int totalSamples, int oldestOrdinarySampleIndex,
+                                 out int replaceSampleIndex)
+    {
+        replaceSampleIndex = -1;
+        if (disposed || priorSamples < 0 || priorSamples >= MaxSamplesPerStake ||
+            (priorSamples >= MaxSamplesPerStake - 1 && !firstNonFinite) || totalSamples < 0 || totalSamples > MaxTotalSamples)
+            return false;
+
+        if (totalSamples < MaxTotalSamples)
+            return true;
+
+        if (!firstNonFinite || oldestOrdinarySampleIndex < 0 || oldestOrdinarySampleIndex >= totalSamples)
+            return false;
+        replaceSampleIndex = oldestOrdinarySampleIndex;
+        return true;
     }
 
     public static string InitialSampleReason(bool isFirstSample)
@@ -46,7 +70,7 @@ public sealed class LightningStakeSamplingPolicy : IDisposable
     public void Dispose()
     {
         disposed = true;
-        identities.Clear();
+        activeIdentities.Clear();
     }
 }
 
@@ -54,6 +78,7 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
 {
     const int MaxTrackedStakes = 3;
     const int MaxSamplesPerStake = 12;
+    const int MaxTotalSamples = MaxTrackedStakes * MaxSamplesPerStake;
     const int PeriodicSampleFrames = 30;
     const int DiscoveryIntervalFrames = 6;
 
@@ -81,15 +106,17 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
     }
 
     readonly List<TrackedStake> tracked = new List<TrackedStake>(MaxTrackedStakes);
-    readonly List<PortSession.LightningStakeObservation> observations = new List<PortSession.LightningStakeObservation>(36);
+    readonly List<PortSession.LightningStakeObservation> observations = new List<PortSession.LightningStakeObservation>(MaxTotalSamples);
     int projectileIndex = -1;
     GameObject sourcePrefab;
-    public string SetupStatus { get; private set; }
+    string setupStatus;
+    bool historyCapped;
+    public string SetupStatus => setupStatus;
     int lastDiscoveryFrame = -1;
     bool disposed;
 
     public List<PortSession.LightningStakeObservation> Observations => observations;
-    public int DiscoveredCount => samplingPolicy.IdentityCount;
+    public int DiscoveredCount => samplingPolicy.TotalIdentitiesObserved;
 
     public LightningStakeDiagnosticObserver()
     {
@@ -97,7 +124,7 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
         sourcePrefab = projectileIndex >= 0 ? ProjectileCatalog.GetProjectilePrefab(projectileIndex) : null;
         if (!sourcePrefab || sourcePrefab.name != "LightningStake")
         {
-            SetupStatus = "source-projectile-unavailable";
+            SetSetupStatus("source-projectile-unavailable");
             sourcePrefab = null;
             projectileIndex = -1;
             return;
@@ -108,12 +135,12 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
             !sourcePrefab.GetComponent<ProjectileNetworkTransform>() || !sourcePrefab.GetComponent<ProjectileStickOnImpact>() ||
             !sourcePrefab.GetComponent<Rigidbody>() || !sourcePrefab.GetComponent<SphereCollider>())
         {
-            SetupStatus = "source-component-contract-incomplete";
+            SetSetupStatus("source-component-contract-incomplete");
             sourcePrefab = null;
             projectileIndex = -1;
             return;
         }
-        SetupStatus = "ready";
+        SetSetupStatus("ready");
     }
 
     // Call from the integrated-world Update. Existing tracked identities are checked
@@ -132,7 +159,7 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
             // This boundary is read-only. A broken diagnostic must become inert
             // and visible in the report, without changing gameplay or swallowing
             // an exception raised by a native callback elsewhere.
-            SetupStatus = "observe-error: " + error.GetBaseException().Message;
+            SetSetupStatus("observe-error: " + error.GetBaseException().Message);
             Dispose();
             return false;
         }
@@ -146,14 +173,14 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
             TrackedStake stake = tracked[i];
             if (!stake.identity)
             {
-                tracked.RemoveAt(i);
+                RetireTrackedAt(i);
                 continue;
             }
 
             GameObject obj = stake.identity.gameObject;
             if (!obj || stake.identity.netId.Value != stake.netId || NetworkServer.FindLocalObject(stake.identity.netId) != obj)
             {
-                tracked.RemoveAt(i);
+                RetireTrackedAt(i);
                 continue;
             }
 
@@ -167,6 +194,26 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
             addedSample |= DiscoverStakes(runSeconds);
         }
         return addedSample;
+    }
+
+    void RetireTrackedAt(int index)
+    {
+        TrackedStake stake = tracked[index];
+        samplingPolicy.Untrack(stake.netId);
+        tracked.RemoveAt(index);
+    }
+
+    void MarkHistoryCapped()
+    {
+        if (historyCapped)
+            return;
+        historyCapped = true;
+        setupStatus += ";sample-history-capped";
+    }
+
+    void SetSetupStatus(string value)
+    {
+        setupStatus = historyCapped ? value + ";sample-history-capped" : value;
     }
 
     bool DiscoverStakes(float runSeconds)
@@ -255,23 +302,45 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
             stake.lastFiniteVelocity = velocity;
             stake.lastFiniteAngularVelocity = angularVelocity;
         }
-        if (firstNonFinite)
-            stake.firstNonFiniteRecorded = true;
         stake.previousStuck = isStuck;
         stake.previousVictimInstance = victimInstance;
         stake.previousStuckTransformInstance = stuckTransformInstance;
         stake.hasStateSample = true;
 
-        if (!takeSample || !samplingPolicy.CanRecord(stake.sampleCount, firstNonFinite))
+        if (!takeSample)
             return false;
 
+        int replaceSampleIndex = FindOldestOrdinarySampleIndex();
+        if (!samplingPolicy.TryReserveRecord(stake.sampleCount, firstNonFinite, observations.Count, replaceSampleIndex,
+                                             out replaceSampleIndex))
+        {
+            if (observations.Count >= MaxTotalSamples)
+                MarkHistoryCapped();
+            return false;
+        }
         string reason = LightningStakeSamplingPolicy.InitialSampleReason(firstSample) ?? (firstNonFinite ? "first-finite-to-nonfinite"
                                                                                           : stuckChanged ? "stick-or-victim-transition"
                                                                                                          : "bounded-periodic");
-        return Record(stake, obj, runSeconds, reason, firstNonFinite, finite);
+        bool recorded = Record(stake, obj, runSeconds, reason, firstNonFinite, finite, replaceSampleIndex);
+        if (recorded && replaceSampleIndex >= 0)
+            MarkHistoryCapped();
+        if (recorded && firstNonFinite)
+            stake.firstNonFiniteRecorded = true;
+        return recorded;
     }
 
-    bool Record(TrackedStake stake, GameObject obj, float runSeconds, string reason, bool firstNonFinite, bool compositeFinite)
+    int FindOldestOrdinarySampleIndex()
+    {
+        for (int i = 0; i < observations.Count; i++)
+        {
+            if (!observations[i].firstNonFiniteTransition)
+                return i;
+        }
+        return -1;
+    }
+
+    bool Record(TrackedStake stake, GameObject obj, float runSeconds, string reason, bool firstNonFinite, bool compositeFinite,
+                int replaceSampleIndex)
     {
         Transform transform = obj.transform;
         ProjectileNetworkTransform network = obj.GetComponent<ProjectileNetworkTransform>();
@@ -287,7 +356,7 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
         CharacterBody stuckBody = stick ? stick.stuckBody : null;
         HurtBox stuckHurtBox = stick ? stick.stuckHurtBox : null;
 
-        observations.Add(new PortSession.LightningStakeObservation {
+        var observation = new PortSession.LightningStakeObservation {
             frame = Time.frameCount,
             instance = obj.GetInstanceID(),
             fixedTime = Time.fixedTime,
@@ -355,7 +424,10 @@ internal sealed class LightningStakeDiagnosticObserver : IDisposable
             finiteRotation = Finite(transform.rotation),
             finiteScale = Finite(transform.lossyScale),
             finiteNetworkRotation = network && Finite(network.NetworkserverRotation),
-        });
+        };
+        if (replaceSampleIndex >= 0)
+            observations.RemoveAt(replaceSampleIndex);
+        observations.Add(observation);
         stake.sampleCount++;
         stake.lastSampleFrame = Time.frameCount;
         return reason != "bounded-periodic";
