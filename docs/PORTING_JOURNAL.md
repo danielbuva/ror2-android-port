@@ -9037,3 +9037,50 @@ selected preflight, build, both default baseline modes and a bounded explicit
 first-stage diagnostic. R8 must replay the changed authored sources/fixture;
 no work/rebuild output, original input, private receipt, extra device or storage
 configuration is edited. Moon/finale remains deferred.
+
+## J652 — Observe the ordinary timed-chest achievement through the owned offline profile
+
+Hypothesis: the native timed-chest opening event can feed the existing detached
+Android-local achievement transaction, without fabricating a network user or
+claiming sender attribution. Prior art: inspected pinned Starstorm2
+FieldAcceleratorAchievement at a9a4badd for actual-body/server-event observation
+and native grant boundaries, plus ProperSave's d20c6c8e local-filesystem policy.
+The current e544 Opening/FindTimedChest/BaseAchievement/BaseServerAchievement
+source supplies the exact event and reward contracts. No implementation copied.
+
+AndroidProfileSession subscribes one exact Action to the native global
+Opening.onOpened event and records its no-sender/no-chest nature. It captures
+the exact Run/body/master and stable AndroidOfflineProfile/save-system owners,
+then resolves the current profile on each callback, requiring current coordinator,
+global save-system, local store and profile identity to agree. This permits a
+legitimate earlier profile commit to replace the UserProfile object. Teardown
+removes its exact delegate and clears captures, including partial setup cleanup.
+The existing IsRunAssisted policy excludes diagnostic/variant/native-lifecycle
+attempts. Only the detached original local grant/OnGranted candidate transaction
+is used; native server-tracker entitlement/RPC methods are never invoked.
+
+Progression metadata now includes FindTimedChest/Items.BFG. Review corrected
+two draft defects before integration: stale profile-object capture and a
+client-only tracker range that otherwise included the new server-tracked row.
+The complete eight-row tracker classification is checked after actual production
+Prepare. Existing achievement wildcard linker roots already cover its types.
+
+Validation: exact Unity compilation and the full isolated AndroidProgressionHost
+fixture pass at work/experiments/timed-chest-unlock/
+editor-20261019T130902.286436Z/. The fixture exercises production metadata,
+complete event classification, the native event Action signature, detached
+FindTimedChest candidate grant/reward/currency, duplicate no-op and source
+profile immutability. Existing eleven threshold, discovery, persistence/cold
+reload and unavailable-platform checks pass. It confirms a stable store owner
+with a replaced current profile object. No source event is synthesized and no
+real device profile is awarded. Existing native variant API/strict-input
+fixtures also pass. Diff checks pass; runtime source count remains 105.
+
+First failure: none in these editor contracts. This is unbuilt source;
+production listener delivery, live cleanup and an unassisted saved ordinary
+unlock remain unverified. Revisit on a genuine original timed-chest opening
+route, including an earlier profile commit; assisted observations cannot prove
+positive progression. Installed f57e172b… and accepted J647 9e7c4224… are
+unchanged. R8 must replay the changed authored runtime/fixture. No original
+input, private receipt, extra device, storage configuration or Phase 2 output
+is edited; Moon/finale remains deferred.

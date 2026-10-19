@@ -288,10 +288,12 @@ public static class AndroidProgressionHost
                 UserProfile.GenerateSaveFieldFunctions();
             UserProfile.LoadDefaultProfile();
             var empty = Clone(UserProfile.defaultProfile);
+            var timedChestContract = CheckTimedChestEventContract();
             var thresholds = Run(owner, empty);
             var persistence = CheckPersistence(owner, directory);
             var discovery = AndroidDiscoveryHost.Run(owner, empty, Path.Combine(directory, "discovery"));
             return new { success = true,
+                         timedChestContract,
                          thresholds,
                          persistence,
                          discovery,
@@ -309,6 +311,41 @@ public static class AndroidProgressionHost
                          bodyPortraitInitializationTested = false };
         }
     }
+    static object CheckTimedChestEventContract()
+    {
+        // AndroidProgressionHost.Run constructs and prepares the real production owner
+        // before this check. Keep the complete classification explicit so a newly appended
+        // server-tracked event achievement cannot fall through a client-only metadata slice.
+        var eventIds = new[] { "KillEliteMonster",
+                               "KillBossQuick",
+                               "CompleteTeleporter",
+                               "CompleteTeleporterWithoutInjury",
+                               "ChargeTeleporterWhileNearDeath",
+                               "CompleteMultiBossShrine",
+                               "LoopOnce",
+                               "FindTimedChest" };
+        var expectedServerTracked = new[] { true, true, true, false, false, true, false, true };
+        var eventDefinitions = eventIds.Select(id => AchievementManager.GetAchievementDef(id)).ToArray();
+        Check(eventDefinitions.All(def => def != null) && eventDefinitions.Select(def => def.identifier).SequenceEqual(eventIds) &&
+                  eventDefinitions.Select(def => def.serverTrackerType != null).SequenceEqual(expectedServerTracked) &&
+                  eventDefinitions.Where(def => def.serverTrackerType != null)
+                      .All(def => def.serverIndex.intValue >= 0 && def.serverIndex.intValue < AchievementManager.serverAchievementCount),
+              "Production event-achievement metadata classification differs");
+        var sourceEvent = typeof(EntityStates.TimedChest.Opening).GetEvent("onOpened", BindingFlags.Static | BindingFlags.Public);
+        Check(sourceEvent != null && sourceEvent.EventHandlerType == typeof(Action),
+              "Original timed-chest opening event signature changed; it must remain a global no-argument event");
+        var definition = eventDefinitions[7];
+        Check(definition.type == typeof(RoR2.Achievements.FindTimedChestAchievement) &&
+                  definition.unlockableRewardIdentifier == "Items.BFG",
+              "Original timed-chest server-tracker reward contract changed");
+        return new { completeEventMetadataClassification = true,
+                     productionPrepareExercised = true,
+                     globalNoArgumentEvent = true,
+                     nativeServerTracker = true,
+                     reward = definition.unlockableRewardIdentifier,
+                     syntheticEventInvoked = false,
+                     deviceProgressionAwarded = false };
+    }
     public static object Run(AndroidProgressionBoundary owner, UserProfile emptyFixture)
     {
         Check(!EditorApplication.isPlaying && !EditorApplication.isCompiling && owner != null && owner.ready,
@@ -322,6 +359,25 @@ public static class AndroidProgressionHost
         string unchanged = UserProfile.ToXml(emptyFixture).ToString();
         var rows = new List<object>();
         int prerequisites = 0;
+        string originalEmptyXml = UserProfile.ToXml(emptyFixture).ToString();
+        var timedChest = Clone(emptyFixture);
+        var timedChestAward = owner.ApplyObservedEventCandidate(timedChest, "FindTimedChest");
+        var bfg = UnlockableCatalog.GetUnlockableDef("Items.BFG");
+        var timedChestDefinition = AchievementManager.GetAchievementDef("FindTimedChest");
+        AndroidProgressionBoundary.RequireDefinition(bfg);
+        Check(timedChestAward.identifier == "FindTimedChest" && timedChestAward.reward == "Items.BFG" && timedChestAward.wouldGrant &&
+                  timedChestAward.granted && timedChest.HasAchievement("FindTimedChest") && timedChest.statSheet.HasUnlockable(bfg) &&
+                  timedChest.coins == timedChestDefinition.lunarCoinReward &&
+                  timedChest.totalCollectedCoins == timedChestDefinition.lunarCoinReward && timedChest.onStatsReceived == null &&
+                  PlatformSystems.activityManager == null && LocalUserManager.readOnlyLocalUsersList.Count == 0 &&
+                  NetworkUser.readOnlyInstancesList.Count == 0,
+              "Native local timed-chest candidate grant did not award only the Android profile unlock");
+        string awardedTimedChestXml = UserProfile.ToXml(timedChest).ToString();
+        var duplicateTimedChest = owner.ApplyObservedEventCandidate(timedChest, "FindTimedChest");
+        Check(duplicateTimedChest.alreadyAchieved && !duplicateTimedChest.granted &&
+                  UserProfile.ToXml(timedChest).ToString() == awardedTimedChestXml &&
+                  UserProfile.ToXml(emptyFixture).ToString() == originalEmptyXml,
+              "Timed-chest duplicate grant changed candidate or source profile");
         foreach (var definition in owner.persistentStatDefinitions)
         {
             var stat = AndroidProgressionBoundary.GetPersistentStat(definition);
@@ -429,6 +485,9 @@ public static class AndroidProgressionHost
                      entitlementRejected = true,
                      nullAndNoneRejected = true,
                      currencySaturated = true,
+                     timedChestLocalGrant = true,
+                     timedChestDuplicateNoOp = true,
+                     noTimedChestSourceEventRaised = true,
                      awardsDeduplicated = true,
                      callbacksReleased = true,
                      originalMetadata = true,
@@ -447,10 +506,14 @@ public static class AndroidProgressionHost
         var baseline = Guid.NewGuid();
         var id = Guid.NewGuid();
         var store = new AndroidOfflineProfile(directory, new[] { baseline }, progression);
+        var stableStore = store;
+        var profileBeforeResult = store.profile;
         var delta = StatSheet.New();
         delta.PushStatValue(StatDef.totalDeaths, 5UL);
         Check(callbacks == 0 && !store.ApplyResult(baseline, delta) && callbacks == 0, "Historical/initial load awarded progression");
         Check(store.ApplyResult(id, delta) && !store.ApplyResult(id, delta) && callbacks == 1, "Award transaction deduplication differs");
+        Check(ReferenceEquals(store, stableStore) && !ReferenceEquals(store.profile, profileBeforeResult),
+              "Profile transaction no longer demonstrates stable store ownership across profile replacement");
         var reward = UnlockableCatalog.GetUnlockableDef("Items.Bear");
         AndroidProgressionBoundary.RequireDefinition(reward);
         Check(store.profile.HasAchievement("Die5Times") && store.profile.statSheet.HasUnlockable(reward) && store.profile.coins == 1 &&
@@ -466,7 +529,13 @@ public static class AndroidProgressionHost
         Check(replay.recovery == "validated-backup" && replay.ShouldApply(id) && replay.ApplyResult(id, delta) &&
                   !replay.ApplyResult(id, delta) && callbacks == 2 && File.ReadAllText(path) == accepted,
               "Native earned reward replay differs");
-        return new { success = true,    allRewardFieldsAtomic = true, baselineSkipped = true, resultDeduplicated = true,
-                     coldReload = true, backupReplayExact = true };
+        return new { success = true,
+                     allRewardFieldsAtomic = true,
+                     baselineSkipped = true,
+                     resultDeduplicated = true,
+                     storeOwnerStableAcrossProfileReplacement = true,
+                     currentProfileObjectReplacedOnCommit = true,
+                     coldReload = true,
+                     backupReplayExact = true };
     }
 }

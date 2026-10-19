@@ -55,7 +55,7 @@ public sealed class AndroidProgressionBoundary : IDisposable
     [Serializable]
     public sealed class EventAwardReport
     {
-        public string identifier, reward, blocked;
+        public string identifier, reward, blocked, eventSource;
         public bool alreadyAchieved, wouldGrant, granted;
     }
     sealed class UnavailableActivityDispatch : ActivityManager
@@ -241,7 +241,8 @@ public sealed class AndroidProgressionBoundary : IDisposable
                                             map["CompleteTeleporterWithoutInjury"],
                                             map["ChargeTeleporterWhileNearDeath"],
                                             map["CompleteMultiBossShrine"],
-                                            map["LoopOnce"] };
+                                            map["LoopOnce"],
+                                            map["FindTimedChest"] };
         Check(observedEventAchievements[0].type == typeof(KillEliteMonsterAchievement) &&
                   observedEventAchievements[0].unlockableRewardIdentifier == "Items.Medkit" &&
                   observedEventAchievements[1].type == typeof(KillBossQuickAchievement) &&
@@ -256,13 +257,17 @@ public sealed class AndroidProgressionBoundary : IDisposable
                   observedEventAchievements[5].unlockableRewardIdentifier == "Items.Lightning" &&
                   observedEventAchievements[6].type == typeof(LoopOnceAchievement) &&
                   observedEventAchievements[6].unlockableRewardIdentifier == "Items.BounceNearby" &&
+                  observedEventAchievements[7].type == typeof(FindTimedChestAchievement) &&
+                  observedEventAchievements[7].unlockableRewardIdentifier == "Items.BFG" &&
                   observedEventAchievements.Take(3)
                       .Concat(observedEventAchievements.Skip(5).Take(1))
                       .All(def => def.serverTrackerType != null && def.serverIndex.intValue >= 0 &&
                                   def.serverIndex.intValue < AchievementManager.serverAchievementCount) &&
+                  observedEventAchievements[7].serverTrackerType != null && observedEventAchievements[7].serverIndex.intValue >= 0 &&
+                  observedEventAchievements[7].serverIndex.intValue < AchievementManager.serverAchievementCount &&
                   observedEventAchievements.Skip(3)
                       .Take(2)
-                      .Concat(observedEventAchievements.Skip(6))
+                      .Concat(observedEventAchievements.Skip(6).Take(1))
                       .All(def => def.serverTrackerType == null) &&
                   observedEventAchievements.All(def => def.type.BaseType == typeof(BaseAchievement) &&
                                                        def.type.GetMethod("OnGranted").DeclaringType == typeof(BaseAchievement)),

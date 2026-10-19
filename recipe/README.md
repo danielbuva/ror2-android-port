@@ -1043,3 +1043,15 @@ always marks the attempt assisted and refuses unsupported scenes/subscribers.
 The fixture checks authored decisions only; native lifecycle/device acceptance
 is separate. No new ignored build input is needed. Replay changed authored
 sources and fixture through R8; Phase 2 outputs are not edited.
+
+### Timed-chest ordinary event integration audit (2026-10-19)
+
+Existing authored profile/progression owners add the native timed-chest event
+subscription and minimum achievement/reward API identities; the existing editor
+fixture validates metadata and detached local profile transactions. These are
+scoped authored observation, identity validation and cleanup calls, with no
+native event or gameplay method body copied. No asset, middleware, platform
+identity, local profile, private path or device identifier is added. Stable
+store ownership allows legitimate profile replacement; existing assisted-run
+exclusion and entitlement rejection remain. Existing source/fixture staging
+reproduces the change through R8. No new local build input or linker roots.

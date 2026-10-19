@@ -936,6 +936,19 @@ Older absent instrumentation is explicitly unavailable, never a positive
 observer lifecycle result. Host contracts remain in
 `tests/test_session_cleanup_check.py`; this adds no runtime or profile writer.
 
+`AndroidProfileSession` also owns the exact native timed-chest `Opening.onOpened`
+subscription. That event has no sender or chest identity; it is recorded as a
+global native observation for the sole owned offline profile. Setup captures
+the exact Run/body/master and stable Android store/save-system owners. Each
+callback resolves the current profile after prior transactions may replace its
+object, validates the current owner/profile identities, then uses the existing
+unassisted detached native achievement transaction. Teardown removes the exact
+delegate and clears captures before releasing profile state. Assisted attempts
+remain excluded; positive ordinary event delivery and saved awards are runtime
+gates. `AndroidProgressionHost` exercises complete event metadata, detached
+native grant/duplicate behavior and profile replacement in an isolated fixture,
+without synthesizing the source event.
+
 The first-stage source lifecycle diagnostic retains the full native stage deck,
 source toggle references and original Run RNG. It omits the older temporary
 Beetle/CombatDirector fixture, arms population observers before native Start,

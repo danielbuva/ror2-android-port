@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using EntityStates.TimedChest;
 using RoR2;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -184,8 +185,7 @@ public sealed partial class PortSession
             var request = coordinator.r.developerSkillVariantOverride;
             if (request == null)
                 return;
-            var report = coordinator.r.developerSkillVariantOverrideReport ??
-                         new DeveloperSkillVariantOverrideReport { requested = true };
+            var report = coordinator.r.developerSkillVariantOverrideReport ?? new DeveloperSkillVariantOverrideReport { requested = true };
             coordinator.r.developerSkillVariantOverrideReport = report;
             // Record assistance before any per-run native loadout mutation, including refusal.
             coordinator.MarkDeveloperSkillVariantAssisted("explicit per-run survivor skill variant selection");
@@ -195,13 +195,12 @@ public sealed partial class PortSession
                 if (previewLoadoutBody == BodyIndex.None || appliedLoadoutSkills == null)
                     throw new DeveloperSkillVariantSelection.SelectionException(
                         "refused", "Developer skill-variant override requires the native profile/default loadout preview");
-                report.skillVariantInventory = SurvivorSkillObserver.CaptureSkillVariantInventory(
-                    prefab, master.loadout, "native-master-loadout-pre-spawn");
+                report.skillVariantInventory =
+                    SurvivorSkillObserver.CaptureSkillVariantInventory(prefab, master.loadout, "native-master-loadout-pre-spawn");
                 if (report.skillVariantInventory.status != "available")
                     throw new DeveloperSkillVariantSelection.SelectionException(
                         "refused", "Developer skill-variant catalog inventory refused: " + report.skillVariantInventory.error);
-                appliedLoadoutSkills = DeveloperSkillVariantSelection.Apply(
-                    request, master, prefab, coordinator.r.selectedSurvivor);
+                appliedLoadoutSkills = DeveloperSkillVariantSelection.Apply(request, master, prefab, coordinator.r.selectedSurvivor);
                 report.effectiveSkillVariants = (int[])appliedLoadoutSkills.Clone();
                 report.applied = true;
                 report.status = "applied";
@@ -270,6 +269,12 @@ public sealed partial class PortSession
         Action<Stage> profileLoopStage;
         Action<SceneExitController> profileTeleporterExit;
         Action<SceneExitControllerColossusPortal> profileColossusExit;
+        Action profileTimedChestOpened;
+        Run profileAwardRun;
+        CharacterBody profileAwardBody;
+        CharacterMaster profileAwardMaster;
+        AndroidProfileSaveSystem profileAwardSaveSystem;
+        AndroidOfflineProfile profileAwardStore;
         bool profileFirstTeleporterRecorded, profileTeleporterCharging, profileTeleporterHit;
         readonly HashSet<string> profileObservedEvents = new HashSet<string>(StringComparer.Ordinal);
         Inventory discoveryInventory;
@@ -452,6 +457,45 @@ public sealed partial class PortSession
                     RecordOfflineOriginalEvent("CompleteTeleporter");
             };
             SceneExitControllerColossusPortal.onBeginExit += profileColossusExit;
+            var timedChestSaveSystem = coordinator.resultsSaveSystem;
+            var timedChestStore = timedChestSaveSystem == null ? null : timedChestSaveSystem.local;
+            var timedChestProfile = timedChestStore == null ? null : timedChestStore.profile;
+            coordinator.Check(NetworkServer.active && Run.instance && Run.instance.GetType() == typeof(Run) && player &&
+                                  coordinator.worldPlayer == player && player.master && player.master.GetBody() == player &&
+                                  coordinator.directorPlayer && coordinator.directorPlayer.master == player.master &&
+                                  !coordinator.directorPlayer.networkUser && !coordinator.directorPlayer.isConnected &&
+                                  timedChestSaveSystem != null && ReferenceEquals(PlatformSystems.saveSystem, timedChestSaveSystem) &&
+                                  timedChestStore != null && timedChestProfile != null &&
+                                  ReferenceEquals(timedChestSaveSystem.userProfile, timedChestProfile) && timedChestProfile.canSave &&
+                                  !timedChestProfile.loggedIn && !timedChestProfile.isClaimed && timedChestProfile.saveID == 0,
+                              "Timed-chest observer lacks the exact owned offline profile/run/body/master context");
+            profileAwardRun = Run.instance;
+            profileAwardBody = player;
+            profileAwardMaster = player.master;
+            profileAwardSaveSystem = timedChestSaveSystem;
+            profileAwardStore = timedChestStore;
+            profileTimedChestOpened = () =>
+            {
+                // The original event is global and carries no chest or player identity.
+                // AndroidOfflineProfile swaps its UserProfile on commit, so validate its stable owner and resolve the current profile.
+                if (NetworkServer.active && ReferenceEquals(Run.instance, profileAwardRun) && profileAwardRun &&
+                    profileAwardRun.GetType() == typeof(Run) && coordinator.worldPlayer == profileAwardBody && profileAwardBody &&
+                    profileAwardBody.master == profileAwardMaster && profileAwardMaster &&
+                    profileAwardMaster.GetBody() == profileAwardBody && coordinator.directorPlayer &&
+                    coordinator.directorPlayer.master == profileAwardMaster && !coordinator.directorPlayer.networkUser &&
+                    !coordinator.directorPlayer.isConnected && coordinator.resultsSaveSystem != null &&
+                    ReferenceEquals(coordinator.resultsSaveSystem, profileAwardSaveSystem) &&
+                    ReferenceEquals(PlatformSystems.saveSystem, profileAwardSaveSystem) && profileAwardStore != null &&
+                    ReferenceEquals(profileAwardSaveSystem.local, profileAwardStore))
+                {
+                    var currentProfile = profileAwardStore.profile;
+                    if (currentProfile != null && ReferenceEquals(profileAwardSaveSystem.userProfile, currentProfile) &&
+                        currentProfile.canSave && !currentProfile.loggedIn && !currentProfile.isClaimed && currentProfile.saveID == 0)
+                        RecordOfflineOriginalEvent("FindTimedChest",
+                                                   "EntityStates.TimedChest.Opening.onOpened (global; no sender or chest identity)");
+                }
+            };
+            Opening.onOpened += profileTimedChestOpened;
             coordinator.Check(player && player.master && player.master.inventory && player.master.inventory == player.inventory &&
                                   !coordinator.directorPlayer.networkUser && discoveryInventory == null,
                               "Owned offline player pickup discovery identity missing");
@@ -469,8 +513,7 @@ public sealed partial class PortSession
                 return;
             coordinator.Check(discoveryInventory != null && coordinator.resultsSaveSystem.local != null && NetworkClient.active,
                               "Original pickup event has no owned offline player context");
-            if ((coordinator.r.nova != null && coordinator.r.nova.diagnosticInput) ||
-                coordinator.IsRunAssisted())
+            if ((coordinator.r.nova != null && coordinator.r.nova.diagnosticInput) || coordinator.IsRunAssisted())
             {
                 coordinator.r.profile.assistedDiscoveriesExcluded++;
                 return;
@@ -545,7 +588,7 @@ public sealed partial class PortSession
             ObserveAndroidProfile();
             coordinator.Save();
         }
-        void RecordOfflineOriginalEvent(string identifier)
+        void RecordOfflineOriginalEvent(string identifier, string eventSource = null)
         {
             if (coordinator.r.profile == null || !coordinator.r.profile.ready || !NetworkServer.active || !coordinator.worldPlayer ||
                 !coordinator.worldPlayer.master || profileObservedEvents.Contains(identifier))
@@ -558,9 +601,10 @@ public sealed partial class PortSession
                             coordinator.IsRunAssisted();
             AndroidProgressionBoundary.EventAwardReport report;
             if (assisted)
-                report = new AndroidProgressionBoundary.EventAwardReport {
-                    identifier = identifier, blocked = "Developer-assisted run excluded from permanent progression"
-                };
+                report =
+                    new AndroidProgressionBoundary.EventAwardReport { identifier = identifier, eventSource = eventSource,
+                                                                      blocked =
+                                                                          "Developer-assisted run excluded from permanent progression" };
             else
             {
                 report = null;
@@ -568,6 +612,7 @@ public sealed partial class PortSession
                     candidate =>
                     {
                         report = coordinator.androidProgression.ApplyObservedEventCandidate(candidate, identifier);
+                        report.eventSource = eventSource;
                         return report.granted;
                     });
                 coordinator.Check(report != null && awarded == report.granted,
@@ -679,6 +724,16 @@ public sealed partial class PortSession
                 SceneExitControllerColossusPortal.onBeginExit -= profileColossusExit;
                 profileColossusExit = null;
             }
+            if (profileTimedChestOpened != null)
+            {
+                Opening.onOpened -= profileTimedChestOpened;
+                profileTimedChestOpened = null;
+            }
+            profileAwardRun = null;
+            profileAwardBody = null;
+            profileAwardMaster = null;
+            profileAwardSaveSystem = null;
+            profileAwardStore = null;
             profileObservedEvents.Clear();
             if (!ownsProfileContext)
             {
