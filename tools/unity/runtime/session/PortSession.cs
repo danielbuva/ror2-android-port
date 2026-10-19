@@ -147,6 +147,8 @@ public sealed partial class PortSession : MonoBehaviour
         public Vector3 visualCaptureCenter;
         public bool developerSurvivorOverride;
         public bool diagnosticSkillCoverage;
+        public bool diagnosticSirenEggInput;
+        public SirenEggInputReport sirenEggInput;
         public SurvivorSkillInputCoverage.Report skillInputCoverage;
         public bool goldshoresRoute;
         public GoldshoresMissionReport goldshores;
@@ -436,6 +438,8 @@ public sealed partial class PortSession : MonoBehaviour
         using (var process = new AndroidJavaClass("android.os.Process")) r.pid = process.CallStatic<int>("myPid");
 #endif
         r.detailedVisualDiagnostics = config.detailedVisualDiagnostics;
+        if (r.diagnosticSirenEggInput)
+            r.sirenEggInput = new SirenEggInputReport();
         r.recoveredHudEnabled = config.recoveredHudEnabled;
         if (r.recoveredHudEnabled)
             r.hud = new RecoveredHudPresentation.Observation();

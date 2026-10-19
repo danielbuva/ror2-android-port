@@ -15,7 +15,7 @@ public sealed partial class PortSession
         public bool ready, visible, paused, persisted, canEndRun, sessionAbandoned;
         public string recovery, error;
         public float deadzone, lookSensitivity, buttonX, buttonY, endRunButtonX, endRunButtonY, timeScale, runSeconds;
-        public int fixedTicks, observations;
+        public int fixedTicks, observations, screenWidth, screenHeight;
         public bool invertY;
         public int saves, pauses, resumes, controllerOpens, controllerCloses, controllerSaves;
     }
@@ -73,6 +73,8 @@ public sealed partial class PortSession
             var v = coordinator.offlineSettings.values;
             coordinator.r.settings.buttonX = Screen.width - 112.5f;
             coordinator.r.settings.buttonY = 30;
+            coordinator.r.settings.screenWidth = Screen.width;
+            coordinator.r.settings.screenHeight = Screen.height;
             coordinator.r.settings.deadzone = v.deadzone;
             coordinator.r.settings.lookSensitivity = v.lookSensitivity;
             coordinator.r.settings.invertY = v.invertY;

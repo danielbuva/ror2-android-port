@@ -68,9 +68,10 @@ public sealed partial class PortSession
     public class SirenEncounterReport
     {
         public string scene, encounterState, observation;
-        public bool sourceOwnerAttached, listenerStateActive, eggBodiesObserved, nativeEncounterStarted,
+        public bool sourceOwnerAttached, listenerStateActive, eggBodiesObserved, nativeEggRegistrationObserved, nativeEncounterStarted,
             nativeEncounterCompleted, networkObjectUnspawned, retirementPreflightPassed, retirementRequestsIssued,
             retirementRefusedForeignMember, cleanupDisposed, originalActiveRestored, sceneInstanceDestroyed;
+        public int diagnosticSourceEggCandidatesObserved, nativeEggSlotsRegistered;
         public int observedEggBodyCount, nativeBossMembers, observationSamples, encounterSquadMembersAtCleanup,
             retiredBossBodiesRequested, retiredBossMastersRequested, retiredProbeBodiesRequested,
             retiredProbeMastersRequested;
@@ -84,7 +85,7 @@ public sealed partial class PortSession
 /// The source FSM, ScriptedCombatEncounter, BossGroup and spawn card remain the
 /// native encounter implementation.
 /// </summary>
-public sealed class SirenEncounterSession : IDisposable
+public sealed partial class SirenEncounterSession : IDisposable
 {
     sealed class OwnedMaster
     {
@@ -162,6 +163,7 @@ public sealed class SirenEncounterSession : IDisposable
         var owner = new SirenEncounterSession(scene, selected, selected.GetComponent<NetworkIdentity>(),
             selected.GetComponent<EntityStateMachine>(), selected.GetComponent<ScriptedCombatEncounter>(),
             selected.GetComponent<BossGroup>());
+        owner.PrepareDiagnosticEggSourceContract();
         if (owner.identity.isServer || owner.identity.netId.Value != 0)
             throw new InvalidOperationException("Original Siren encounter identity is already server-spawned; refusing ownership transfer");
         onReportSelected?.Invoke(owner.Report);
@@ -287,8 +289,11 @@ public sealed class SirenEncounterSession : IDisposable
         nextObservationAt = Time.unscaledTime + ObservationIntervalSeconds;
 
         var bodies = CharacterBody.readOnlyInstancesList;
-        int eggCount = bodies == null ? 0 : bodies.Count(body => body && body.name.IndexOf("VultureEgg", StringComparison.Ordinal) >= 0);
+        ObserveNativeEggRegistration();
+        int eggCount = RefreshDiagnosticEggCandidates(bodies);
         Report.listenerStateActive = stateMachine && stateMachine.state is EntityStates.Missions.SuperRoboBallEncounter.Listening;
+        Report.nativeEggRegistrationObserved = NativeEggRegistrationObserved;
+        Report.nativeEggSlotsRegistered = NativeEggRegistrationObserved ? NativeEggSlotsRegistered : 0;
         Report.eggBodiesObserved = eggCount > 0;
         Report.observedEggBodyCount = eggCount;
         Report.nativeEncounterStarted = encounter && encounter.hasSpawnedServer;
@@ -298,10 +303,13 @@ public sealed class SirenEncounterSession : IDisposable
         Report.networkId = identity ? identity.netId.Value : 0;
         Report.networkObjectUnspawned = !identity || identity.netId.Value == 0;
         Report.observationSamples++;
-
         if (!Report.nativeEncounterCompleted && !Report.nativeEncounterStarted)
             Report.observation = !Report.listenerStateActive
                 ? "source-owner-attached; native-listener-state-not-observed; encounter-eligibility-unproven"
+                : !Report.nativeEggRegistrationObserved
+                    ? "native-listener-state-active; native-egg-registration-not-observed; encounter-eligibility-unproven"
+                    : Report.nativeEggSlotsRegistered == 0
+                        ? "native-listener-registered-zero-egg-slots; no-eligible-target; encounter-eligibility-unproven"
                 : eggCount == 0
                     ? "native-listener-state-active; no-live-vulture-egg-bodies-observed; eligibility-unproven"
                     : "native-listener-state-and-live-vulture-egg-bodies-observed; encounter-start-unproven";
@@ -368,6 +376,7 @@ public sealed class SirenEncounterSession : IDisposable
             "; network-unspawned=" + Report.networkObjectUnspawned +
             (string.IsNullOrEmpty(Report.cleanupError) ? "" : "; cleanup-error=" + Report.cleanupError);
 
+        ClearDiagnosticEggCandidates();
         scene = default(Scene);
         encounterObject = null;
         identity = null;

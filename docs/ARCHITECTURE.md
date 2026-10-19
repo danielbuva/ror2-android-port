@@ -669,6 +669,28 @@ or movement is written. `SurvivorSkillInputHost` tests synthetic routing,
 dynamic slots, stale-edge refusal, ownership, bounds and disposal in the
 exact editor. Real survivor behavior remains a device gate.
 
+Siren egg diagnostic input (`SirenEggDiagnosticInput.cs`, explicit default-off
+per-attempt selection): `SessionReport.diagnosticSirenEggInput` constructs an
+independent world-owned input lease only when selected. Jump snapshots carry a
+write revision and fixed-consumption boundary so release preserves a later
+producer write and cannot duplicate a consumed pulse. Before ordinary input
+producers it releases its prior owned values; afterward it may navigate, aim
+and request primary against the nearest current original egg. It yields to
+manual control and nearby hostile combat. Native encounter start, source/stage
+loss, transport, first failure and the 180 s observation budget latch a stop.
+No damage, egg counter, native registration, encounter state or spawn is written.
+
+`SirenEncounterEggTargets.cs` extends the existing source encounter owner. Its
+0.5 s sample reads the exact current native Listening registration flag/list,
+then caches only native registered eggs. Each input lookup revalidates source
+body/catalog/asset identity, exact server object mapping, same active scene,
+living health and the original main HurtBox relationship. A replaced native
+Listening state cannot inherit the old list. A registered empty list yields no
+target; runtime names alone never authorize input. Cleanup clears the cache and
+all engine references before source encounter teardown. The editor fixture
+checks the imported original asset and native field contracts, plus synthetic
+input ownership/yield/stop cases; it does not certify actual mission completion.
+
 Engineer shield compatibility (`EngiShieldHitGuard.cs`):
 `IntegratedWorldSession` acquires `EngiShieldHitGuardTemplateLease` only for the
 selected original Engi body, before automatic skill input. The caller loads the
@@ -696,6 +718,25 @@ it manually activates the source Collision child and does not certify native
 deployment timing or a bundle-template mutation on Android. J614 records its
 evidence; J617 adds exact native rejector-list identity checks for inactive
 destruction and explicit detach. Native skill/device acceptance remains separate.
+
+LightningStake diagnostics (`LightningStakeDiagnosticObserver.cs`, current
+read-only owner): the integrated world creates it after catalogs/report setup,
+samples only up to three exact catalog/server-mapped projectile identities,
+and disposes it with the world. Registry discovery retains the old six-frame
+cadence; only retained objects receive per-frame finite/stuck checks. A shared
+sampling policy caps each identity at 12 scalar snapshots, reserves the last
+slot for its first observed finite-to-nonfinite transition and becomes inert on
+disposal. The first observation is explicitly not a known spawn position.
+
+`r.world.lightningStakes` retains root/network/Rigidbody values, velocities,
+owner attribution and native stick/victim/local-offset/ancestry observations.
+Frame/fixed-time clocks accompany world seconds. No native fire/collision hook,
+transform correction or error filter is added. Diagnostic read failures expose
+an inert status separately from native runtime errors. The source-asset/policy
+fixture checks minimum imported identity/geometry and actual sampling limits;
+only a device trace can identify a runtime transition, and neither fixture nor
+first sample proves native fire input. J623's intermittent corruption remains
+unresolved until new evidence identifies its producer.
 
 Engineer native outputs (`EngineerNativeOutputObserver.cs`, current authored source):
 `IntegratedWorldSession` creates this read-only `IDisposable` owner for the exact
@@ -747,7 +788,22 @@ preserves foreign selectors, verifies process termination and sleeps the display
 Raw evidence stays in validated `work/device/<serial>/experiments/session-cleanup/<attempt>/`.
 The check cannot certify an unassisted run, permanent unlocks or a memory leak
 fix. Host contracts live in `tests/test_session_cleanup_check.py`; J609 records
-Android acceptance on the current baseline.
+Android acceptance on the earlier J608 APK; the current candidate needs its own check.
+
+`./dev prototype --action session-abandon-check` (current support action)
+uses the same runner with an explicit separate ending contract. After at least
+60 s of sampled ready, living first-stage play it taps only the reported
+settings and end-run controls, requiring Unity/Android screen-grid agreement.
+It observes the existing offline UI abandon flow, native listener/template
+cleanup and a same-process restart. Explicit no-death/no-ending/no-result fields
+and unchanged profile counts are required. Locked diagnostic targets may launch
+directly; free targets require the ordinary menu. This action does not invoke
+death, result or teardown methods and does not change difficulty/settings.
+Free-target abandon also requires the returned session-2 menu and validates the
+saved session-1 completion before tapping Start again. It requires the newly
+reported settings screen dimensions in the installed APK;
+older APKs refuse those taps. Genuine native loss remains the separate default
+session-cleanup-check contract.
 
 C# under `tools/` is formatted with `clang-format -i` using the repository's `.clang-format`
 (J544). It never rewraps string literals or comments, so a correct reformat leaves each file

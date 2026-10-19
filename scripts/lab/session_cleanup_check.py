@@ -1,8 +1,8 @@
-"""Verify native teleporter listener cleanup and a same-process restart.
+"""Verify native teleporter listener cleanup and same-process restart.
 
-This check uses the existing automatic Nova route, which is diagnostic and
-assisted. It keeps every gameplay debug assist off and never injects damage,
-rewards, stage transitions, or lifecycle calls.
+The default ending observes an original loss; an explicit abandon action uses
+only the existing offline UI and reports teardown without claiming a game
+ending. Both use diagnostic assisted input, all gameplay debug assists off.
 """
 
 import json
@@ -19,6 +19,7 @@ from survivor_check import BASE_SURVIVORS, FREE_SURVIVORS
 SPINE_ID = "body-state-spawn-state-auto-nova-spine-bringup"
 FIRST_STAGE = "lakes"
 HOST_DEADLINE_SECONDS = 600
+ABANDON_MIN_LIVE_SECONDS = 60.0
 POLL_SECONDS = 2
 LOG_POLL_SECONDS = 10
 COMPLETED_REPORT_NAME = "movement-completed-session-1.json"
@@ -192,6 +193,53 @@ def _debug_assisted_without_gameplay_assists(report):
     )
 
 
+def native_objective_cleanup_failures(objective):
+    """Use the same live native listener teardown witnesses for every ending."""
+    objective = objective or {}
+    failures = []
+    if not objective.get("cleaned"):
+        failures.append("owned teleporter/actor/context/provider cleanup incomplete")
+    if objective.get("nativeHostTeardownObserved") is not True:
+        failures.append("native teleporter teardown was not observed")
+    if objective.get("nativeHostTeardownServerActive") is not True or objective.get("nativeHostTeardownSynchronous") is not True:
+        failures.append("native teardown did not run synchronously with the server active")
+    if objective.get("nativeHostTeardownPreAwake") is True:
+        failures.append("native teleporter never reached its active lifecycle")
+    if objective.get("nativeHostCombatSquads") != 1:
+        failures.append("expected exactly one owned native CombatSquad")
+    if (objective.get("nativeHostDeathListenersBefore"), objective.get("nativeHostDeathListenersAfter")) != (1, 0):
+        failures.append("native death listener counts did not retire from 1 to 0")
+    if (objective.get("nativeHostSummonListenersBefore"), objective.get("nativeHostSummonListenersAfter")) != (1, 0):
+        failures.append("native summon listener counts did not retire from 1 to 0")
+    return failures
+
+
+def abandon_observation_failures(report, survivor, elapsed, live_started):
+    """Require 60 seconds of continuously observed ready first-stage play before UI abandon."""
+    failures = []
+    if report.get("phase") != "integrated-world-playing" or report.get("session") != 1:
+        failures.append("abandon observation is not live session 1")
+    world = report.get("world") or {}
+    if world.get("ready") is not True:
+        failures.append("waiting for a ready integrated world" if live_started is None else "world stopped being ready during observed interval")
+    elif not _finite_number(world.get("health")) or world["health"] <= 0:
+        failures.append("ready world does not report a living player")
+    if world.get("diagnosticInputEver") is not True:
+        failures.append(
+            "waiting for diagnostic input in the live world" if live_started is None else "diagnostic input was not observed throughout the live interval"
+        )
+    if live_started is None or not _finite_number(world.get("seconds")) or world["seconds"] < ABANDON_MIN_LIVE_SECONDS:
+        failures.append("live world report is shorter than the 60 second observation interval")
+    if live_started is None or not _finite_number(elapsed) or elapsed < ABANDON_MIN_LIVE_SECONDS:
+        failures.append("host did not observe a full 60 second live interval")
+    failures.extend(first_stage_errors(report, required=True))
+    if survivor == "Engi" and world.get("engiShieldGuardPrepared") is not True:
+        failures.append(
+            "waiting for Engi shield template guard" if live_started is None else "Engi shield template guard was not prepared throughout the live interval"
+        )
+    return failures
+
+
 def cleanup_contract(report, pid, attempt, profile_baseline, survivor=DEFAULT_SURVIVOR):
     """Require actual active native listener retirement and an excluded loss."""
     if not matches_run(report, pid, attempt, session=1):
@@ -204,18 +252,7 @@ def cleanup_contract(report, pid, attempt, profile_baseline, survivor=DEFAULT_SU
     objective = report.get("objective") or {}
     if not (report.get("world") or {}).get("cleaned") or not objective.get("cleaned"):
         failures.append("integrated world or teleporter owner remains uncleaned")
-    if not objective.get("nativeHostTeardownObserved"):
-        failures.append("native teleporter teardown was not observed")
-    if not objective.get("nativeHostTeardownServerActive") or not objective.get("nativeHostTeardownSynchronous"):
-        failures.append("native teardown did not run synchronously with the server active")
-    if objective.get("nativeHostTeardownPreAwake"):
-        failures.append("native teleporter never reached its active lifecycle")
-    if objective.get("nativeHostCombatSquads") != 1:
-        failures.append("expected exactly one owned native CombatSquad")
-    if (objective.get("nativeHostDeathListenersBefore"), objective.get("nativeHostDeathListenersAfter")) != (1, 0):
-        failures.append("native death listener counts did not retire from 1 to 0")
-    if (objective.get("nativeHostSummonListenersBefore"), objective.get("nativeHostSummonListenersAfter")) != (1, 0):
-        failures.append("native summon listener counts did not retire from 1 to 0")
+    failures.extend(native_objective_cleanup_failures(objective))
     defeat = report.get("playerDefeat") or {}
     if defeat.get("deathEvents") != 1 or not defeat.get("deathEntered") or not defeat.get("bodyDestroyed"):
         failures.append("session did not finish one original player death")
@@ -248,6 +285,77 @@ def restart_contract(report, pid, attempt, profile_baseline, survivor=DEFAULT_SU
     if profile_baseline is None or _profile_counts(report) != profile_baseline:
         failures.append("second session applied-run or earned-unlock counts changed/missing")
     return failures
+
+
+def abandon_contract(report, pid, attempt, profile_baseline, survivor=DEFAULT_SURVIVOR):
+    """Require owned session teardown without representing it as a game ending."""
+    if not matches_run(report, pid, attempt, session=1):
+        return ["abandoned-session report identity differs"]
+    failures = survivor_identity_failures(report, survivor)
+    failures.extend(report_errors(report))
+    failures.extend(first_stage_errors(report, required=True))
+    if report.get("phase") != "complete" or report.get("success") is not True or report.get("cleanup") is not True:
+        failures.append("abandoned session did not finish successful owned cleanup")
+    if not (report.get("world") or {}).get("cleaned"):
+        failures.append("integrated world/template cleanup was not observed")
+    failures.extend(native_objective_cleanup_failures(report.get("objective")))
+    settings = report.get("settings") or {}
+    if settings.get("sessionAbandoned") is not True:
+        failures.append("source abandon action was not recorded")
+    results = report.get("results") or {}
+    if (
+        results.get("ready") is not True
+        or results.get("serverEnding") is not False
+        or results.get("clientEnding") is not False
+        or results.get("reportGenerated") is not False
+        or results.get("persisted") is not False
+    ):
+        failures.append("abandon path lacks explicit no-ending/no-result evidence")
+    defeat = report.get("playerDefeat")
+    if (
+        not isinstance(defeat, dict)
+        or type(defeat.get("deathEvents")) is not int
+        or defeat.get("deathEvents") != 0
+        or defeat.get("deathEntered") is not False
+        or defeat.get("bodyDestroyed") is not False
+    ):
+        failures.append("abandon path lacks explicit no-native-death evidence")
+    profile = report.get("profile") or {}
+    if profile.get("resultApplied") is not False:
+        failures.append("abandon path lacks explicit no-profile-result evidence")
+    if survivor == "Engi" and (report.get("world") or {}).get("engiShieldGuardReleased") is not True:
+        failures.append("Engi shield template guard release was not observed during cleanup")
+    counts = _profile_counts(report)
+    if profile_baseline is None or counts != profile_baseline:
+        failures.append("abandon path changed/missed applied-run or earned-unlock counts")
+    if not _debug_assisted_without_gameplay_assists(report):
+        failures.append("diagnostic assistance evidence or all-off debug options differ")
+    return failures
+
+
+def ending_contract(report, pid, attempt, profile_baseline, survivor, ending):
+    if ending == "loss":
+        return cleanup_contract(report, pid, attempt, profile_baseline, survivor)
+    if ending == "abandon":
+        return abandon_contract(report, pid, attempt, profile_baseline, survivor)
+    return ["unsupported ending mode: " + str(ending)]
+
+
+def abandon_control_coordinates(report, key, wm_size_text, window_displays_text):
+    """Map reported settings-button geometry only when Unity and Android grids agree."""
+    settings = report.get("settings") or {}
+    width, height = settings.get("screenWidth"), settings.get("screenHeight")
+    x, y = settings.get(key + "X"), settings.get(key + "Y")
+    physical_size = parse_display_size(wm_size_text)
+    rotation = parse_window_rotation(window_displays_text)
+    if not physical_size or rotation is None or type(width) is not int or type(height) is not int:
+        return None
+    logical_size = physical_size[::-1] if rotation in (90, 270) else physical_size
+    if logical_size != (width, height) or not _finite_number(x) or not _finite_number(y):
+        return None
+    if not (0 <= x < width and 0 <= y < height):
+        return None
+    return round(x), round(y)
 
 
 def selector_action(path_state, raw, attempt):
@@ -372,7 +480,9 @@ class SessionCleanupDevice(Device):
         return super().cmd(*args, **kwargs)
 
 
-def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
+def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss"):
+    if ending not in ("loss", "abandon"):
+        raise ValueError("Use ending loss or abandon")
     if survivor not in BASE_SURVIVORS:
         raise ValueError("Use a base survivor catalog name: " + ",".join(BASE_SURVIVORS))
     device = SessionCleanupDevice()
@@ -406,13 +516,17 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
     value = selection(attempt, survivor)
     write(out / "selection.json", value)
     frozen = {
+        "ending_mode": ending,
         "serial": device.serial,
         "package": PACKAGE,
         "apk_sha256": artifact_hash,
         "apk_identity_evidence": "current APK artifact hash matches build and installed ownership receipts; installed package bytes are receipt-backed, not independently rehashed",
         "attempt": attempt,
         "storage_mode": mode,
-        "scope": "diagnostic automatic input; no gameplay debug assists; ordinary native death/restart only",
+        "scope": (
+            "diagnostic automatic input; no gameplay debug assists; "
+            + ("source UI abandon with no original ending/result" if ending == "abandon" else "ordinary native loss/restart")
+        ),
         "selected_survivor": survivor,
         "developer_survivor_override": survivor not in FREE_SURVIVORS,
     }
@@ -422,11 +536,17 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
     final = None
     completed = None
     profile_baseline = None
+    abandon_live_at = None
     stop = "deadline"
     first_failure = None
     observed_session1_defeat = False
     restart_sent = False
     started_from_menu = False
+    session2_menu_start_sent = False
+    session2_menu_observed = False
+    direct_start_observed = False
+    settings_open_sent = False
+    abandon_input_sent = False
     started = time.monotonic()
     next_log = 0.0
     cleanup_errors = []
@@ -480,19 +600,135 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
                         first_failure = details[0]
                     break
                 phase = current.get("phase")
-                if phase == "offline-start-menu" and not started_from_menu:
-                    coords = menu_start_coordinates(current)
-                    if coords is None:
-                        fail("offline-menu-start-control-unavailable")
+                if phase == "offline-start-menu":
+                    if survivor not in FREE_SURVIVORS:
+                        fail("unexpected-menu-for-diagnostic-override")
                         break
-                    device.sh("input", "tap", str(coords[0]), str(coords[1]))
-                    started_from_menu = True
-                if current.get("session") == 1 and phase == "integrated-world-playing" and profile_baseline is None:
-                    profile_baseline = _profile_counts(current)
+                    if current.get("session") == 1 and not started_from_menu:
+                        coords = menu_start_coordinates(current)
+                        if coords is None:
+                            fail("offline-menu-start-control-unavailable")
+                            break
+                        device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                        started_from_menu = True
+                    elif current.get("session") == 2 and ending == "abandon":
+                        session2_menu_observed = True
+                        if not session2_menu_start_sent:
+                            completed = _read_json(device, completed_path)
+                            if not isinstance(completed, dict):
+                                fail("completed-session-report-unavailable-before-session-2-menu")
+                                break
+                            failures = abandon_contract(completed, pid, attempt, profile_baseline, survivor)
+                            if failures:
+                                fail("completed-session-cleanup-failed-before-session-2-menu")
+                                first_failure = failures[0]
+                                break
+                            coords = menu_start_coordinates(current)
+                            if coords is None:
+                                fail("session-2-offline-menu-start-control-unavailable")
+                                break
+                            write(
+                                out / "session-2-menu-start.json",
+                                {
+                                    "session": current.get("session"),
+                                    "phase": phase,
+                                    "coordinates": coords,
+                                    "completed_attempt": completed.get("attempt"),
+                                    "completed_session": completed.get("session"),
+                                    "completed_phase": completed.get("phase"),
+                                },
+                            )
+                            device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                            session2_menu_start_sent = True
+                if current.get("session") == 1 and phase == "integrated-world-playing":
+                    if survivor in FREE_SURVIVORS and not started_from_menu:
+                        fail("ordinary-menu-start-not-observed")
+                        break
+                    if survivor not in FREE_SURVIVORS:
+                        direct_start_observed = True
                     if profile_baseline is None:
-                        fail("first-live-profile-baseline-unavailable")
-                        break
-                    write(out / "first-live-session.json", current)
+                        profile_baseline = _profile_counts(current)
+                        if profile_baseline is None:
+                            fail("first-live-profile-baseline-unavailable")
+                            break
+                        write(out / "first-live-session.json", current)
+                    if ending == "abandon" and not abandon_input_sent:
+                        observed_world = current.get("world") or {}
+                        if (
+                            abandon_live_at is None
+                            and observed_world.get("ready") is True
+                            and _finite_number(observed_world.get("health"))
+                            and observed_world["health"] > 0
+                            and observed_world.get("diagnosticInputEver") is True
+                            and (survivor != "Engi" or observed_world.get("engiShieldGuardPrepared") is True)
+                        ):
+                            abandon_live_at = time.monotonic()
+                        observation_failures = abandon_observation_failures(
+                            current,
+                            survivor,
+                            time.monotonic() - abandon_live_at if abandon_live_at is not None else 0.0,
+                            abandon_live_at,
+                        )
+                        waiting_for_minute = any(
+                            failure
+                            in (
+                                "live world report is shorter than the 60 second observation interval",
+                                "host did not observe a full 60 second live interval",
+                                "waiting for a ready integrated world",
+                                "waiting for diagnostic input in the live world",
+                                "waiting for Engi shield template guard",
+                            )
+                            for failure in observation_failures
+                        )
+                        blocking_failures = [
+                            failure
+                            for failure in observation_failures
+                            if failure
+                            not in (
+                                "live world report is shorter than the 60 second observation interval",
+                                "host did not observe a full 60 second live interval",
+                                "waiting for a ready integrated world",
+                                "waiting for diagnostic input in the live world",
+                                "waiting for Engi shield template guard",
+                            )
+                        ]
+                        if blocking_failures:
+                            fail("abandon-observation-contract-failed")
+                            first_failure = blocking_failures[0]
+                            break
+                        if waiting_for_minute:
+                            # Keep observing the same report stream; elapsed host time
+                            # alone is not enough until the in-game stopwatch also reaches 60 s.
+                            pass
+                        else:
+                            settings = current.get("settings") or {}
+                            if not settings_open_sent:
+                                coords = abandon_control_coordinates(
+                                    current,
+                                    "button",
+                                    device.sh("wm", "size"),
+                                    device.sh("dumpsys", "window", "displays"),
+                                )
+                                if coords is None:
+                                    fail("abandon-settings-control-geometry-unavailable")
+                                    break
+                                device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                                settings_open_sent = True
+                            elif settings.get("visible") is True and settings.get("canEndRun") is True:
+                                coords = abandon_control_coordinates(
+                                    current,
+                                    "endRunButton",
+                                    device.sh("wm", "size"),
+                                    device.sh("dumpsys", "window", "displays"),
+                                )
+                                if coords is None:
+                                    fail("abandon-confirm-control-geometry-unavailable")
+                                    break
+                                device.sh("input", "tap", str(coords[0]), str(coords[1]))
+                                abandon_input_sent = True
+                if ending == "abandon" and current.get("session") == 1 and phase == "commando-defeated":
+                    fail("original-loss-occurred-before-abandon")
+                    break
                 if current.get("session") == 1 and phase == "commando-defeated" and not observed_session1_defeat:
                     if profile_baseline is None:
                         fail("first-live-profile-baseline-unavailable")
@@ -514,11 +750,19 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
                     restart_sent = True
                 if current.get("session") == 2 and phase == "integrated-world-playing" and session2_ready(current):
                     completed = _read_json(device, completed_path)
-                    failures = cleanup_contract(completed or {}, pid, attempt, profile_baseline, survivor)
+                    failures = ending_contract(completed or {}, pid, attempt, profile_baseline, survivor, ending)
                     if failures:
                         fail("completed-session-cleanup-failed")
-                    elif not observed_session1_defeat or not restart_sent or not started_from_menu:
-                        fail("launch-to-restart-observations-incomplete")
+                    elif ending == "loss" and (not observed_session1_defeat or not restart_sent):
+                        fail("loss-to-restart-observations-incomplete")
+                    elif ending == "abandon" and (not abandon_input_sent or not settings_open_sent):
+                        fail("abandon-to-restart-observations-incomplete")
+                    elif ending == "abandon" and survivor in FREE_SURVIVORS and not session2_menu_start_sent:
+                        fail("session-2-ordinary-menu-start-not-observed")
+                    elif survivor in FREE_SURVIVORS and not started_from_menu:
+                        fail("ordinary-menu-start-not-observed")
+                    elif survivor not in FREE_SURVIVORS and not direct_start_observed:
+                        fail("direct-diagnostic-start-not-observed")
                     else:
                         failures = restart_contract(current, pid, attempt, profile_baseline, survivor)
                         if failures:
@@ -582,15 +826,22 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
     if stop != "same-process-restart":
         failures.append("stopped: " + stop)
     if not observed_session1_defeat:
-        failures.append("session-1 defeat was not observed")
-    if not restart_sent:
+        if ending == "loss":
+            failures.append("session-1 defeat was not observed")
+    if ending == "loss" and not restart_sent:
         failures.append("restart input was not sent")
-    if not started_from_menu:
+    if ending == "abandon" and not abandon_input_sent:
+        failures.append("abandon UI input was not sent")
+    if survivor in FREE_SURVIVORS and not started_from_menu:
         failures.append("ordinary menu start was not observed")
+    if ending == "abandon" and survivor in FREE_SURVIVORS and not session2_menu_start_sent:
+        failures.append("session-2 ordinary menu start was not observed")
+    if survivor not in FREE_SURVIVORS and not direct_start_observed:
+        failures.append("direct diagnostic start was not observed")
     if not completed or not pid:
         failures.append("no current-launch completed-session report")
     else:
-        failures.extend(cleanup_contract(completed, pid, attempt, profile_baseline, survivor))
+        failures.extend(ending_contract(completed, pid, attempt, profile_baseline, survivor, ending))
     if not final or not pid:
         failures.append("no current-launch restarted-session report")
     else:
@@ -602,6 +853,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
     failures.extend(cleanup_errors)
     result = {
         "success": not failures,
+        "ending_mode": ending,
         "stop": stop,
         "first_failure": first_failure,
         "failures": failures,
@@ -609,6 +861,8 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
         "attempt": attempt,
         "selected_survivor": survivor,
         "developer_survivor_override": survivor not in FREE_SURVIVORS,
+        "abandon_ui": {"settings_open_sent": settings_open_sent, "end_run_sent": abandon_input_sent},
+        "session2_menu_ui": {"observed": session2_menu_observed, "start_sent": session2_menu_start_sent},
         "apk_sha256": artifact_hash,
         "serial": device.serial,
         "profile_baseline": profile_baseline,
@@ -622,6 +876,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR):
     write(out / "result.json", result)
     summary = {
         "success": result["success"],
+        "ending_mode": ending,
         "stop": result["stop"],
         "failures": result["failures"],
         "apk": artifact_hash,

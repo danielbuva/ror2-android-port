@@ -105,6 +105,33 @@ public sealed class NovaInputBridge : MonoBehaviour
     public bool enablePrimary, enableAllSkills, diagnosticInput;
     public bool diagnosticSprint, diagnosticPrimary, diagnosticSecondary, diagnosticUtility, diagnosticSpecial, diagnosticInteract;
     public Vector3 diagnosticAim;
+    public bool diagnosticJumpRequest { get; private set; }
+    public struct DiagnosticJumpSnapshot
+    {
+        internal bool request, held, latched;
+        internal int revision, fixedTick;
+        public bool Pending => latched;
+        public int Revision => revision;
+    }
+    int diagnosticJumpRevision;
+    public DiagnosticJumpSnapshot CaptureDiagnosticJump()
+    {
+        return new DiagnosticJumpSnapshot { request = diagnosticJumpRequest, held = jumpHeld, latched = jumpLatched,
+                                            revision = diagnosticJumpRevision, fixedTick = fixedTicks };
+    }
+    // Return only a still-owned diagnostic write. Direct field restoration must
+    // not generate another jump edge. A fixed tick consumes any baseline latch.
+    public bool RestoreDiagnosticJump(DiagnosticJumpSnapshot producer, DiagnosticJumpSnapshot overlay)
+    {
+        if (!diagnosticInput || overlay.revision == producer.revision || diagnosticJumpRevision != overlay.revision ||
+            diagnosticJumpRequest != overlay.request || jumpHeld != overlay.held)
+            return false;
+        diagnosticJumpRequest = producer.request;
+        jumpHeld = producer.held;
+        jumpLatched = producer.latched && fixedTicks == producer.fixedTick;
+        diagnosticJumpRevision++;
+        return true;
+    }
     public Vector2 movement, aim;
     public int fixedTicks, jumpPresses, aimTicks;
     bool focused = true, jumpHeld, jumpLatched;
@@ -200,6 +227,7 @@ public sealed class NovaInputBridge : MonoBehaviour
             if (thirdPerson != null)
                 thirdPerson.Look(aim);
             bool down = raw.buttons[mapping.jump];
+            diagnosticJumpRevision++;
             jumpLatched |= down && !jumpHeld;
             jumpHeld = down;
         }
@@ -265,12 +293,16 @@ public sealed class NovaInputBridge : MonoBehaviour
     }
     public void DiagnosticJump(bool down)
     {
+        diagnosticJumpRevision++;
+        diagnosticJumpRequest = down;
         jumpLatched |= down && !jumpHeld;
         jumpHeld = down;
     }
     public void Neutral()
     {
+        diagnosticJumpRevision++;
         movement = aim = Vector2.zero;
+        diagnosticJumpRequest = false;
         jumpHeld = jumpLatched = false;
         if (!bank)
             return;

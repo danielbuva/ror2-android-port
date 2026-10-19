@@ -110,6 +110,8 @@ class BuildEntryTests(unittest.TestCase):
             "TeleportOverlayLifetimeHost",
             "EngiShieldHitGuardHost",
             "EngineerNativeOutputObserverFixture",
+            "SirenEggDiagnosticInputExactEditorFixture",
+            "LightningStakeSourceContractFixture",
             "WholeCatalogBuild",
         ):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")

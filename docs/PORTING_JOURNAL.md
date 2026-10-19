@@ -7920,3 +7920,81 @@ on unresolved LightningStake corruption (J623). None of these cases certifies
 all alternate skills, auxiliary outcomes, damage/targeting, ordinary unlocks,
 normal difficulty or completed-session teardown. No APK, payload, input or
 additional device is changed by this batch.
+
+## J626 — Add source-backed Siren input, bounded projectile traces and UI abandon checks
+
+Hypothesis: broad survivor/stage acceptance needs observed native outputs and
+safe lifecycle checks; J623's projectile failure needs a discriminating trace,
+not a speculative transform repair. Integrate reviewed host-only drafts into
+named runtime owners, retaining ordinary native gameplay and baseline paths.
+
+SirenEggDiagnosticInput is explicit per-attempt, default-off input ownership.
+It can navigate/aim/press primary only toward exact source eggs registered by
+the current native Listening instance. SirenEncounterEggTargets extends the
+existing encounter owner's 0.5 s observation, requiring native registration,
+source catalog/body/network identity, active scene, live health and original
+main HurtBox relationships. Empty/unregistered lists yield no target. It never
+writes egg counts, native registration, damage, encounter states or spawn.
+Existing hostile combat and manual control take priority; native start,
+transport, owner/stage loss, failure or the observation budget latch a stop.
+Root removed the draft's config overwrite so the explicit selector flag works.
+
+Input review finds a real pending-jump lifetime issue: DiagnosticJump(false)
+releases a hold but leaves a queued edge. The bridge now offers authored
+snapshots with write revision and fixed-consumption context; only a still-owned
+diagnostic write can be restored. Later same-value writes and Neutral survive;
+producer pulses still pending are retained, while consumed ones are not queued
+again. Default ordinary bridge edge/hold behavior is unchanged. Exact C# fixture
+cases cover these boundaries; no Unity scheduling claim follows from modeled
+fixed consumption. The fixture's initial duplicate CharacterBody addition and
+missing idle native caches were corrected without running gameplay Awake.
+The one leaked fixture node was identified by exact owned name/component
+contract and retired; later fixture attempts leave no such node.
+
+LightningStakeDiagnosticObserver replaces the old inline samples. It tracks at
+most three exact catalog/server-mapped identities, with six-frame discovery and
+per-frame checks of retained objects. Each has at most 12 scalar snapshots,
+reserving the final slot for its first observed finite-to-nonfinite transition.
+Root/network/Rigidbody values, velocities, native stick/victim/local offsets,
+ancestry, owner and frame/fixed clocks are recorded. First observed explicitly
+means unknown native spawn time. Read failures expose an inert diagnostic
+status; native fire/collision/error handling is unchanged. No transform clamp,
+projectile reconstruction or cause claim is added. The fixture exercises the
+actual shared sampling policy and imported source geometry/identity.
+
+The host session-cleanup runner now accepts the intentional direct launch for
+locked diagnostic base selections while retaining ordinary free-survivor menus.
+The separate current session-abandon-check action waits at least 60 s of sampled
+ready/living first-stage play, then uses only the reported existing settings/end
+controls. Screen-grid agreement, explicit no-death/no-ending/no-result evidence,
+unchanged profile counts and the same native listener retirement contract are
+required. Free targets must observe the returned session-2 menu; its saved
+session-1 completion is validated before another Start tap. Engi additionally
+requires prepared/released template guard evidence. This is UI-requested owned
+teardown, never original-loss acceptance. No difficulty, preferences, death,
+result or lifecycle method is forced. Two Screen dimension report fields are
+the only runtime change for this host action; older APKs refuse those taps.
+
+Prior-art-first: reread community-prior-art, pinned Starstorm2
+SwiftSkateboard subscription teardown and DebugToolkit Util's explicit native
+master attribution, plus J499/J502/J594/J601. Current accepted Listening,
+ProjectileStickOnImpact, ProjectileManager, input bridge and offline UI sources
+supply the concrete contracts; no original/community algorithm is copied.
+Minimum source GUID/path relationships and new authored sources are audited in
+recipe/README.md. Both selections now contain 100 runtime inputs with exact
+import GUIDs pinned; fixtures use the existing stage_build_sources producer.
+
+Full host suite: 914 tests pass, one optional skip; Ruff and README freshness
+pass. Evidence: work/coordination/codex-native-diagnostics-host.log.
+Exact Unity compiles the staged cohort. Siren asset/native-field/predicate/
+synthetic-owner/lease cases and the LightningStake asset/shared-policy fixture
+pass in the idle editor:
+work/experiments/native-diagnostics/editor-20261019T101916.691827Z/.
+Exact source/recipe hashes are preserved there. Earlier fixture-only failures
+remain in editor-20261019T101535.792546Z and editor-20261019T101826.742489Z.
+No original mission, true spawn input, Android jump behavior or teardown is
+certified by these fixtures. Installed APK remains J620 fb0f2953d11618b35f44be1c824ba3d124a2aafbc94be50ba444cb43c55ac971.
+Next: selected live preflight, one code build, both baseline modes, Engineer
+output/UI-abandon acceptance and Loader trace. New authored runtime/recipe
+inputs require R8/build-entry replay; no Phase 2 outputs or required local
+content inputs are changed.

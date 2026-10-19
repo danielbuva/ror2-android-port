@@ -243,6 +243,32 @@ both files; there is no new required local content input. Audited 2026-10-19;
 Android output evidence and R8 source/importer/provenance replay remain separate
 gates.
 
+Siren diagnostic input adds the two authored sources
+`runtime/input/SirenEggDiagnosticInput.cs` and
+`runtime/stage/SirenEncounterEggTargets.cs` to both selections (99 entries).
+They contain input ownership, read-only native registration/identity checks and
+minimum original API/asset names; no game scene, state algorithm, damage rule or
+asset body is copied. The editor-only fixture validates the one minimum source
+egg GUID/relationship and synthetic lease contracts. Existing staging owns all
+three files. The flag is explicit per-attempt state, default-off, with no new
+resource setting or local content input. Audited 2026-10-19; exact-editor and
+Android mission evidence plus R8 replay remain independent gates.
+
+The authored `runtime/world/LightningStakeDiagnosticObserver.cs` brings both
+source/layout selections to 100 entries. It replaces the existing inline
+read-only samples with a named bounded owner and shared sampling policy, using
+native public projectile/stick/network APIs only. The editor fixture names the
+one minimum source prefab GUID/path and compares local component/geometry
+contracts without reproducing the asset. No original implementation, content,
+private identifier or required local input is added. Audited 2026-10-19;
+exact-editor execution, device attribution and R8 replay remain separate gates.
+
+The explicit abandon checker changes only authored host contracts and adds two
+screen dimension report fields to an existing runtime owner. It uses reported
+existing UI controls; no gameplay, death/result or native teardown algorithm
+is copied or replaced. No new runtime file, GUID or local content input is
+introduced by that report addition. Audited 2026-10-19.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

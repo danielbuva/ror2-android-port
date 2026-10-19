@@ -47,10 +47,20 @@ public sealed partial class PortSession
     [Serializable]
     public class LightningStakeObservation
     {
-        public int frame, instance;
-        public float seconds;
-        public string position, rotation, scale, networkPosition, networkRotation, rigidbodyPosition;
-        public bool finitePosition, finiteRotation, finiteScale, finiteNetworkPosition, finiteNetworkRotation, finiteRigidbodyPosition;
+        public int frame, instance, projectileCatalogIndex, lastFiniteFrame, stuckHurtBoxIndex;
+        public uint networkId, ownerNetworkId, victimNetworkId;
+        public float fixedTime, seconds;
+        public string sample, networkAssetId, ownerName, ownerBody, position, rotation, scale, networkPosition,
+            networkRotation, rigidbodyPosition, velocity, angularVelocity, ownerPosition, victimName, victimPosition,
+            stuckTransformPath, stuckTransformPosition, stuckBody, stuckBodyPosition, stuckHurtBox, localPosition,
+            localRotation, colliderRadius, colliderCenter, lastFinitePosition, lastFiniteNetworkPosition,
+            lastFiniteRigidbodyPosition, lastFiniteVelocity, lastFiniteAngularVelocity;
+        public int ownerTeam;
+        public bool spawnTimeKnown, networkObjectMatches, isServer, ownerObjectMatches, ownerBlueElite;
+        public bool finiteSnapshot, firstNonFiniteTransition, finitePosition, finiteRotation, finiteScale,
+            finiteNetworkPosition, finiteNetworkRotation, finiteRigidbodyPosition, finiteVelocity, finiteAngularVelocity,
+            finiteLocalPosition, finiteLocalRotation, finiteStuckTransformPosition, finiteVictimPosition,
+            rigidbodyKinematic, rigidbodyGravity, rigidbodyDetectCollisions, colliderEnabled, colliderTrigger, stuck;
     }
     [Serializable]
     public class BlueEliteHitObservation
@@ -104,6 +114,8 @@ public sealed partial class PortSession
         public string fireTrailDiagnostic;
         public List<BlueEliteHitObservation> blueEliteHits = new List<BlueEliteHitObservation>();
         public List<LightningStakeObservation> lightningStakes = new List<LightningStakeObservation>();
+        public string lightningStakeObserverStatus;
+        public int lightningStakeIdentitiesObserved;
         public int earlyHurtCaches;
         public List<string> earlyHurtBodies = new List<string>();
         public float simulationSeconds, seconds, health, maxHealth, level, attackSpeed, crit, regen, moveSpeed, difficulty, distance;
@@ -208,6 +220,10 @@ public sealed partial class PortSession
         if (integratedWorldSession == null)
             integratedWorldSession = new IntegratedWorldSession(this);
         return integratedWorldSession;
+    }
+    public bool HasNearbyHostileDirectorThreat(CharacterBody player)
+    {
+        return GetIntegratedWorldSession().HasNearbyHostileDirectorThreat(player);
     }
     void PrepareEarlyHurtCache(CharacterBody body)
     {
@@ -343,6 +359,14 @@ public sealed partial class PortSession
     {
         GetIntegratedWorldSession().EarnedFeatherInput(player, bridge, elapsed);
     }
+    void PrepareSirenEggDiagnosticInputFrame(CharacterBody player, NovaInputBridge bridge)
+    {
+        GetIntegratedWorldSession().PrepareSirenEggDiagnosticInputFrame(player, bridge);
+    }
+    void ApplySirenEggDiagnosticInput(CharacterBody player, NovaInputBridge bridge)
+    {
+        GetIntegratedWorldSession().ApplySirenEggDiagnosticInput(player, bridge);
+    }
     void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination, float stopDistance, string target,
                             float elapsed)
     {
@@ -388,6 +412,7 @@ public sealed partial class PortSession
     {
         readonly PortSession coordinator;
         SurvivorSkillObserver survivorSkills;
+        SirenEggDiagnosticInput sirenEggDiagnosticInput;
         EngineerNativeOutputObserver engiNativeOutputs;
         SurvivorSkillInputCoverage skillInputCoverage;
         EngiShieldHitGuardTemplateLease engiShieldGuard;
@@ -449,7 +474,7 @@ public sealed partial class PortSession
         int worldFeatherEffectIndex = -1, worldFeatherReferenceBaseline;
         CharacterBody.JumpDelegate worldFeatherJumped;
         bool worldWispEffectEligible;
-        readonly Dictionary<int, int> lightningStakeSamples = new Dictionary<int, int>();
+        LightningStakeDiagnosticObserver lightningStakeObserver;
         Action<CharacterBody> earlyHurtCacheHandler;
         static readonly FieldInfo hurtDurationCache =
             typeof(SetStateOnHurt).GetField("buffDurationControllers", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -506,46 +531,16 @@ public sealed partial class PortSession
         }
         public void ObserveLightningStakes()
         {
-            if (coordinator.r.world == null || !NetworkServer.active ||
-                lightningStakeSamples.Count >= 3 && lightningStakeSamples.Values.All(count => count >= 8))
+            if (coordinator.r.world == null || lightningStakeObserver == null)
                 return;
-            foreach (var identity in NetworkServer.objects.Values)
-            {
-                if (!identity || identity.name != "LightningStake(Clone)")
-                    continue;
-                var obj = identity.gameObject;
-                int id = obj.GetInstanceID(), count;
-                if (!lightningStakeSamples.TryGetValue(id, out count))
-                {
-                    if (lightningStakeSamples.Count >= 3)
-                        continue;
-                    count = 0;
-                }
-                if (count >= 8)
-                    continue;
-                var transform = obj.transform;
-                var network = obj.GetComponent<RoR2.Projectile.ProjectileNetworkTransform>();
-                var body = obj.GetComponent<Rigidbody>();
-                var position = transform.position;
-                var rotation = transform.rotation;
-                var scale = transform.lossyScale;
-                var networkPosition = network ? network.NetworkserverPosition : Vector3.zero;
-                var networkRotation = network ? network.NetworkserverRotation : Quaternion.identity;
-                var bodyPosition = body ? body.position : Vector3.zero;
-                coordinator.r.world.lightningStakes.Add(
-                    new LightningStakeObservation { frame = Time.frameCount, instance = id, seconds = coordinator.r.world.seconds,
-                                                    position = Position(position), rotation = Rotation(rotation), scale = Position(scale),
-                                                    networkPosition = network ? Position(networkPosition) : "missing",
-                                                    networkRotation = network ? Rotation(networkRotation) : "missing",
-                                                    rigidbodyPosition = body ? Position(bodyPosition) : "missing",
-                                                    finitePosition = Finite(position), finiteRotation = Finite(rotation),
-                                                    finiteScale = Finite(scale), finiteNetworkPosition = network && Finite(networkPosition),
-                                                    finiteNetworkRotation = network && Finite(networkRotation),
-                                                    finiteRigidbodyPosition = body && Finite(bodyPosition) });
-                lightningStakeSamples[id] = count + 1;
-                if (count == 0 || !Finite(position) || !Finite(rotation) || !Finite(scale))
-                    coordinator.Save();
-            }
+            bool changed = lightningStakeObserver.Observe(coordinator.r.world.seconds);
+            string status = lightningStakeObserver.SetupStatus;
+            bool statusChanged = coordinator.r.world.lightningStakeObserverStatus != status;
+            coordinator.r.world.lightningStakeObserverStatus = status;
+            coordinator.r.world.lightningStakeIdentitiesObserved =
+                Math.Max(coordinator.r.world.lightningStakeIdentitiesObserved, lightningStakeObserver.DiscoveredCount);
+            if (changed || statusChanged)
+                coordinator.Save();
         }
         static readonly PropertyInfo worldNativeLootReferenceCount =
             typeof(AsyncOperationHandle<GameObject>).GetProperty("ReferenceCount", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -959,6 +954,17 @@ public sealed partial class PortSession
                     "Persistent original Commando/default skills, recovered golemplains collision/navigation, continuous original one-card director, local HLAPI client/authority, original Money purchases/chest animation/droplet/default pickup/server grants/gold/XP/stats. Authored layout/HUD/input/materials and explicit audio-unavailable pickup presentation. Original Run clock only: stock startup/menu/profile/route/victory remain unavailable; composed original teleporter is observed separately; no NetworkUser, LocalUser or entitlement grant.",
                 feedbackCapability = "Authored pickup HUD; original native-audio notification handler unavailable."
             };
+            try
+            {
+                lightningStakeObserver = new LightningStakeDiagnosticObserver();
+                coordinator.r.world.lightningStakeObserverStatus = lightningStakeObserver.SetupStatus;
+                coordinator.r.world.lightningStakes = lightningStakeObserver.Observations;
+            }
+            catch (Exception observerError)
+            {
+                coordinator.r.world.lightningStakeObserverStatus = "setup-error: " + observerError.GetBaseException().Message;
+                lightningStakeObserver = null;
+            }
             coordinator.worldPlayer = player;
             if (coordinator.r.selectedSurvivor == "Engi")
             {
@@ -1830,10 +1836,10 @@ public sealed partial class PortSession
             for (int i = 0; i < coordinator.worldLootDefinitions.Length; i++)
                 world.itemStacks[i].count = player.inventory.GetItemCountPermanent(coordinator.worldLootDefinitions[i]);
             if (Time.frameCount % 6 == 0)
-            {
                 ObserveWorldLootSupport(player);
-                ObserveLightningStakes();
-            }
+            // Known stake identities receive a cheap finite/stuck check every frame;
+            // the diagnostic owner scans the server registry only at its own 6-frame cadence.
+            ObserveLightningStakes();
             coordinator.r.performance.lootSupportMs += PortSession.PerformanceMs(performancePart);
             performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             coordinator.ObserveWorldEquipment();
@@ -1941,6 +1947,80 @@ public sealed partial class PortSession
             coordinator.ObserveWorldCommerce();
             coordinator.ObserveRecoveredHud();
             coordinator.r.performance.commerceHudMs += PortSession.PerformanceMs(performancePart);
+        }
+        SirenEggDiagnosticInput EnsureSirenEggInputOwner()
+        {
+            if (sirenEggDiagnosticInput == null && coordinator.r.diagnosticSirenEggInput &&
+                coordinator.r.sirenEggInput != null)
+                sirenEggDiagnosticInput = new SirenEggDiagnosticInput(
+                    new IntegratedWorldSirenContext(coordinator), coordinator.r.sirenEggInput);
+            return sirenEggDiagnosticInput;
+        }
+        public void PrepareSirenEggDiagnosticInputFrame(CharacterBody player, NovaInputBridge bridge)
+        {
+            bool selected = coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null;
+            if (selected) EnsureSirenEggInputOwner();
+            SirenEggDiagnosticInput.PrepareProducerFrameForSelection(selected, sirenEggDiagnosticInput, bridge);
+        }
+        public void ApplySirenEggDiagnosticInput(CharacterBody player, NovaInputBridge bridge)
+        {
+            bool selected = coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null;
+            var owner = selected ? EnsureSirenEggInputOwner() : sirenEggDiagnosticInput;
+            owner?.Apply(player, bridge, true);
+        }
+        sealed class IntegratedWorldSirenContext : ISirenEggDiagnosticContext
+        {
+            readonly PortSession coordinator;
+            public IntegratedWorldSirenContext(PortSession owner) { coordinator = owner; }
+            public bool Selected => coordinator.r.diagnosticSirenEggInput;
+            public bool Assisted => coordinator.r.debugAcceleration != null && coordinator.r.debugAcceleration.everAssisted;
+            public bool ManualTakeover => coordinator.worldManualTakeover;
+            public bool SourceSceneActive => coordinator.SirenDiagnosticSceneActive;
+            public bool SourceEncounterAttached => coordinator.SirenDiagnosticOwnerAttached;
+            public bool SourceListenerActive => coordinator.SirenDiagnosticListenerActive;
+            public bool NativeEncounterStarted => coordinator.SirenNativeEncounterStarted;
+            public bool StageTransporting => coordinator.SirenDiagnosticStageTransporting;
+            public bool FirstFailure => !string.IsNullOrEmpty(coordinator.r.firstFailure) ||
+                !string.IsNullOrEmpty(coordinator.r.error) || coordinator.r.stageProgress != null &&
+                !string.IsNullOrEmpty(coordinator.r.stageProgress.error);
+            public int StageSceneHandle => coordinator.SirenDiagnosticSceneHandle;
+            public float StageElapsed => Time.realtimeSinceStartup - coordinator.stageEnteredAt;
+            public CharacterBody NearestRevalidatedSourceEgg(Vector3 position) => coordinator.NearestSirenDiagnosticEgg(position);
+            public bool IsCurrentSourceEgg(CharacterBody candidate) => coordinator.IsCurrentSirenDiagnosticEgg(candidate);
+            public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus ||
+                coordinator.HasNearbyHostileDirectorThreat(player);
+            public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 target, float stopDistance,
+                string targetName, float elapsed) => coordinator.NavigateWorldInput(player, bridge, target, stopDistance, targetName, elapsed);
+            public Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin, out bool visible) =>
+                coordinator.WorldCombatAimPoint(target, origin, out visible);
+        }
+        // Read-only companion to DefendWorldApproach's live actor, stage-bounds,
+        // and <20 m checks. It never calls ObjectiveCombatInput, so the normal
+        // producer remains the only combat-input writer for this frame.
+        public bool HasNearbyHostileDirectorThreat(CharacterBody player)
+        {
+            if (!player || !player.teamComponent)
+                return false;
+            Vector3 playerPosition = player.corePosition;
+            TeamIndex playerTeam = player.teamComponent.teamIndex;
+            foreach (var actor in coordinator.directorActors)
+            {
+                CharacterBody body = actor.body;
+                CharacterMaster master = actor.master;
+                HealthComponent health = body ? body.healthComponent : null;
+                SirenCombatThreatEvidence evidence = new SirenCombatThreatEvidence {
+                    bodyLive = body,
+                    masterLive = master,
+                    healthAlive = health && health.alive,
+                    playerTeamKnown = true,
+                    hostileTeam = master && master.teamIndex != playerTeam,
+                    insideSourceBounds = body && coordinator.InsideSourceStageBounds(coordinator.DirectorPhysicsPosition(body)),
+                    distanceSqr = body ? (body.corePosition - playerPosition).sqrMagnitude : float.PositiveInfinity
+                };
+                if (SirenCombatThreatContract.IsNearbyHostileDirectorThreat(evidence))
+                    return true;
+            }
+            return false;
         }
         public void IntegratedWorldStimulus(CharacterBody player, NovaInputBridge bridge, float elapsed)
         {
@@ -2786,6 +2866,8 @@ public sealed partial class PortSession
         }
         public void CleanupIntegratedWorld()
         {
+            sirenEggDiagnosticInput?.Dispose();
+            sirenEggDiagnosticInput = null;
             skillInputCoverage?.Dispose();
             skillInputCoverage = null;
             engiNativeOutputs?.Dispose();
@@ -2810,7 +2892,8 @@ public sealed partial class PortSession
             worldPickupRegistryStage = null;
             worldPickupRegistryFallback = false;
             fireTrailDiagnosisRecorded = false;
-            lightningStakeSamples.Clear();
+            lightningStakeObserver?.Dispose();
+            lightningStakeObserver = null;
             coordinator.worldPathFollower.Reset();
             worldElevatedApproachActive = false;
             worldElevatedApproachGraph = null;

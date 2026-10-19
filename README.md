@@ -113,6 +113,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action whole-catalog-host` | Run the whole-catalog editor host fixture. |
 | `./dev prototype --action survivor-kit-check` | Assisted world skill check: --target all or comma-separated base survivor keys; locked choices are diagnostic, no profile awards. |
 | `./dev prototype --action session-cleanup-check` | Observe an original first-stage loss, native cleanup and same-process restart; diagnostic automatic input, gameplay debug assists off. Optional --target selects a base survivor (default Commando); locked choices are diagnostic overrides, no expansion. |
+| `./dev prototype --action session-abandon-check` | After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides. |
 | `./dev prototype --action whole-catalog-host-providers` | Run the whole-catalog native-provider host fixture. |
 | `./dev prototype --action whole-catalog-repair-bindings` | Repair recorded whole-catalog root bindings. |
 | `./dev prototype --action whole-catalog-build` | Compose content and build the whole-catalog player. |

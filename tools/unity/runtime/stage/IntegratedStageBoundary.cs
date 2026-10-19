@@ -134,6 +134,14 @@ public sealed partial class PortSession
     {
         GetIntegratedStageSession().Dispose();
     }
+    public int SirenDiagnosticSceneHandle => GetIntegratedStageSession().SirenDiagnosticSceneHandle;
+    public bool SirenDiagnosticSceneActive => GetIntegratedStageSession().SirenDiagnosticSceneActive;
+    public bool SirenDiagnosticOwnerAttached => GetIntegratedStageSession().SirenDiagnosticOwnerAttached;
+    public bool SirenDiagnosticListenerActive => GetIntegratedStageSession().SirenDiagnosticListenerActive;
+    public bool SirenNativeEncounterStarted => GetIntegratedStageSession().SirenNativeEncounterStarted;
+    public bool SirenDiagnosticStageTransporting => GetIntegratedStageSession().SirenDiagnosticStageTransporting;
+    public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) => GetIntegratedStageSession().NearestSirenDiagnosticEgg(position);
+    public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) => GetIntegratedStageSession().IsCurrentSirenDiagnosticEgg(body);
 
     // Create on first use and retain for partial setup, repeated cleanup and stage
     // transport. Dispose preserves transport/catalog cleanup only; objective-stage
@@ -162,6 +170,18 @@ public sealed partial class PortSession
         {
             this.coordinator = coordinator;
         }
+        public int SirenDiagnosticSceneHandle => sirenEncounter != null ? sirenEncounter.DiagnosticSceneHandle : 0;
+        public bool SirenDiagnosticSceneActive => sirenEncounter != null && sirenEncounter.DiagnosticSceneActive &&
+            (coordinator.r.moon == null || !coordinator.r.moon.loaded);
+        public bool SirenDiagnosticOwnerAttached => sirenEncounter != null && sirenEncounter.DiagnosticOwnerAttached;
+        public bool SirenDiagnosticListenerActive => sirenEncounter != null && sirenEncounter.DiagnosticListenerActive;
+        public bool SirenNativeEncounterStarted => sirenEncounter != null && sirenEncounter.NativeEncounterStarted;
+        public bool SirenDiagnosticStageTransporting => transportingStage ||
+            coordinator.r.stageProgress != null && coordinator.r.stageProgress.transporting;
+        public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) =>
+            sirenEncounter != null ? sirenEncounter.NearestRevalidatedDiagnosticEgg(position) : null;
+        public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) =>
+            sirenEncounter != null && sirenEncounter.IsCurrentDiagnosticSourceEgg(body);
         public void ObserveStageEntry(CharacterMotor motor, string tag = "settling")
         {
             var solver = motor.Motor;

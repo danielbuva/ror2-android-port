@@ -446,8 +446,10 @@ public sealed partial class PortSession
                         allocatedPart = allocatedFrameStart >= 0 ? GC.GetAllocatedBytesForCurrentThread() : 0;
                         if (bringup && !(coordinator.r.results != null && coordinator.r.results.persisted))
                         {
+                            coordinator.PrepareSirenEggDiagnosticInputFrame(body, bridge);
                             coordinator.IntegratedWorldStimulus(body, bridge, elapsed);
                             coordinator.EarnedFeatherInput(body, bridge, elapsed);
+                            coordinator.ApplySirenEggDiagnosticInput(body, bridge);
                         }
                         if (allocatedFrameStart >= 0)
                             coordinator.r.performance.stimulusAllocatedBytes += GC.GetAllocatedBytesForCurrentThread() - allocatedPart;

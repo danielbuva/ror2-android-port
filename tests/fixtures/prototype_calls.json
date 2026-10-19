@@ -195,5 +195,18 @@
     "effects": [],
     "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_cleanup_check.check_session_cleanup\"\n}\n",
     "exit": null
+  },
+  "session-abandon-check": {
+    "calls": [
+      {
+        "module": "session_cleanup_check",
+        "function": "check_session_cleanup",
+        "args": [],
+        "kwargs": {"ending": "abandon"}
+      }
+    ],
+    "effects": [],
+    "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_cleanup_check.check_session_cleanup\"\n}\n",
+    "exit": null
   }
 }

@@ -15,6 +15,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
 from session_cleanup_check import (
     SPINE_ID,
     cleanup_contract,
+    abandon_contract,
+    abandon_control_coordinates,
+    abandon_observation_failures,
+    ending_contract,
     selection,
     survivor_identity_failures,
     matches_run,
@@ -38,6 +42,17 @@ def live_report(**changes):
         "id": SPINE_ID,
         "selectedSurvivor": "Commando",
         "developerSurvivorOverride": False,
+        "settings": {
+            "ready": True,
+            "visible": False,
+            "canEndRun": False,
+            "buttonX": 1167.5,
+            "buttonY": 30.0,
+            "endRunButtonX": 0.0,
+            "endRunButtonY": 0.0,
+            "screenWidth": 1280,
+            "screenHeight": 800,
+        },
         "session": 1,
         "phase": "integrated-world-playing",
         "integratedWorld": True,
@@ -109,22 +124,57 @@ def completed_report(**overrides):
     return report
 
 
+def abandoned_report(survivor="Engi"):
+    report = completed_report(
+        selectedSurvivor=survivor,
+        developerSurvivorOverride=survivor not in runner.FREE_SURVIVORS,
+        playerDefeat={"deathEvents": 0, "deathEntered": False, "bodyDestroyed": False},
+        results={"ready": True, "serverEnding": False, "clientEnding": False, "reportGenerated": False, "persisted": False},
+        settings={"sessionAbandoned": True},
+        world={"cleaned": True, "diagnosticInputEver": True, "engiShieldGuardPrepared": survivor == "Engi", "engiShieldGuardReleased": survivor == "Engi"},
+        profile={
+            "ready": True,
+            "resultApplied": False,
+            "appliedRuns": 13,
+            "earnedUnlocks": 2,
+            "availableEarnedUnlocks": 2,
+        },
+    )
+    report["objective"].update(
+        {
+            "nativeHostTeardownObserved": True,
+            "nativeHostTeardownServerActive": True,
+            "nativeHostTeardownSynchronous": True,
+            "nativeHostTeardownPreAwake": False,
+            "nativeHostCombatSquads": 1,
+            "nativeHostDeathListenersBefore": 1,
+            "nativeHostDeathListenersAfter": 0,
+            "nativeHostSummonListenersBefore": 1,
+            "nativeHostSummonListenersAfter": 0,
+        }
+    )
+    return report
+
+
 SYNTHETIC_SERIAL = "synthetic-device"
 
 
 class FakeDevice:
     serial = SYNTHETIC_SERIAL
 
-    def __init__(self, work, reports, log_error=False, foreign_selector=False, survivor="Commando"):
+    def __init__(self, work, reports, log_error=False, foreign_selector=False, survivor="Commando", ending="loss", completed_override=None):
         self.runtime = "/storage/emulated/0/Android/data/dev.ror2lab.arm64/files"
         self.remote = {}
         self.reports = list(reports)
         self.log_error = log_error
         self.foreign_selector = foreign_selector
         self.survivor = survivor
+        self.ending = ending
+        self.completed_override = completed_override
         self.pid = "314"
         self.alive = False
         self.taps = []
+        self.tap_completion_present = []
         self.display_states = []
         self.completed_path = self.runtime + "/movement-completed-session-1.json"
         self.report_path = self.runtime + "/movement-batch-" + SPINE_ID + ".json"
@@ -184,9 +234,24 @@ class FakeDevice:
             self.alive = False
             return ""
         if args[0] == "input" and args[1] == "tap":
-            self.taps.append((int(args[2]), int(args[3])))
-            if len(self.taps) == 2:
-                self.remote[self.completed_path] = json.dumps(completed_report(selectedSurvivor=self.survivor, developerSurvivorOverride=self.survivor not in runner.FREE_SURVIVORS))
+            point = (int(args[2]), int(args[3]))
+            self.taps.append(point)
+            self.tap_completion_present.append(self.completed_path in self.remote)
+            completes_abandon = self.ending == "abandon" and point == (430, 512)
+            completes_loss = self.ending == "loss" and point == (207, 420)
+            if completes_abandon or completes_loss:
+                if self.completed_override is not None:
+                    self.remote[self.completed_path] = self.completed_override
+                else:
+                    completed = (
+                        abandoned_report(self.survivor)
+                        if self.ending == "abandon"
+                        else completed_report(
+                            selectedSurvivor=self.survivor,
+                            developerSurvivorOverride=self.survivor not in runner.FREE_SURVIVORS,
+                        )
+                    )
+                    self.remote[self.completed_path] = json.dumps(completed)
             return ""
         if args[:2] == ("wm", "size"):
             return "Physical size: 1280x800\n"
@@ -197,7 +262,9 @@ class FakeDevice:
         return ""
 
 
-def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_deadline_seconds=600, survivor="Commando"):
+def run_fake_check(
+    reports, *, log_error=False, foreign_selector=False, host_deadline_seconds=600, survivor="Commando", ending="loss", clock_step=0.1, completed_override=None
+):
     temp = tempfile.TemporaryDirectory()
     base = Path(temp.name)
     work = base / "work"
@@ -217,17 +284,25 @@ def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_dea
         )
     )
     (config / "MovementBatchProbe.json").write_text(json.dumps({"attempt": "attempt-1"}))
-    device = FakeDevice(work, reports, log_error=log_error, foreign_selector=foreign_selector, survivor=survivor)
+    device = FakeDevice(
+        work, reports, log_error=log_error, foreign_selector=foreign_selector, survivor=survivor, ending=ending, completed_override=completed_override
+    )
     device.apk_hash = apk_hash
     device.remote[device.report_path] = json.dumps({"attempt": "stale", "session": 1})
     device.remote[device.completed_path] = json.dumps({"attempt": "stale", "session": 1})
-    ticks = iter(index / 10 for index in range(10000))
+    clock = [0.0]
+
+    def monotonic():
+        value = clock[0]
+        clock[0] += clock_step
+        return value
+
     patches = (
         mock.patch.object(runner, "ROOT", base),
         mock.patch.object(runner, "WORK", work),
         mock.patch.object(runner, "SessionCleanupDevice", return_value=device),
         mock.patch.object(runner, "now", return_value="synthetic-run"),
-        mock.patch.object(runner.time, "monotonic", side_effect=lambda: next(ticks)),
+        mock.patch.object(runner.time, "monotonic", side_effect=monotonic),
         mock.patch.object(runner.time, "sleep", return_value=None),
         mock.patch.object(runner, "current_errors", side_effect=lambda logs, _pid: ["late log failure"] if logs == "FINAL" else []),
         mock.patch.object(runner, "HOST_DEADLINE_SECONDS", host_deadline_seconds),
@@ -236,7 +311,7 @@ def run_fake_check(reports, *, log_error=False, foreign_selector=False, host_dea
         for patcher in patches:
             stack.enter_context(patcher)
         try:
-            result = runner.check_session_cleanup(survivor=survivor)
+            result = runner.check_session_cleanup(survivor=survivor, ending=ending)
             error = None
         except RuntimeError as exc:
             result = None
@@ -254,6 +329,12 @@ def ordinary_start_report():
         hud={"menuStartX": 100, "menuStartY": 200, "screenWidth": 1280, "screenHeight": 800},
     )
     report.pop("profile")
+    return report
+
+
+def session2_offline_menu_report():
+    report = ordinary_start_report()
+    report["session"] = 2
     return report
 
 
@@ -303,6 +384,16 @@ class SessionCleanupCheckTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             handler(fake_check, {}, Namespace(target="Engi"))
         self.assertEqual(calls[-1], {"survivor": "Engi"})
+        with redirect_stdout(io.StringIO()):
+            ACTIONS["session-abandon-check"].handler(fake_check, dict(ACTIONS["session-abandon-check"].kwargs), Namespace(target="Engi"))
+        self.assertEqual(calls[-1], {"ending": "abandon", "survivor": "Engi"})
+
+    def test_abandon_action_is_distinct_and_original_action_keeps_loss_default(self):
+        self.assertEqual(ACTIONS["session-cleanup-check"].kwargs, {})
+        self.assertEqual(ACTIONS["session-abandon-check"].kwargs, {"ending": "abandon"})
+        self.assertIn("without an original loss/result", ACTIONS["session-abandon-check"].help)
+        self.assertIn("60 s", ACTIONS["session-abandon-check"].help)
+        self.assertIn("original first-stage loss", ACTIONS["session-cleanup-check"].help)
 
     def test_report_identity_requires_process_attempt_and_owner(self):
         report = live_report()
@@ -443,6 +534,273 @@ class SessionCleanupCheckTests(unittest.TestCase):
         self.assertEqual(selector_action("symlink", "", "attempt-1"), "preserve-invalid-path")
         self.assertEqual(selector_action("other", "", "attempt-1"), "preserve-invalid-path")
 
+    def test_abandon_contract_requires_real_cleanup_without_native_loss_or_result(self):
+        counts = {"appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2}
+        report = abandoned_report("Engi")
+        self.assertEqual(abandon_contract(report, 314, "attempt-1", counts, "Engi"), [])
+        bad = dict(report, results={"ready": True, "serverEnding": True, "clientEnding": False, "reportGenerated": True, "persisted": True})
+        self.assertTrue(any("no-ending/no-result" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, results={"ready": True, "serverEnding": False, "reportGenerated": False, "persisted": False})
+        self.assertTrue(any("no-ending/no-result" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, results={"ready": True, "serverEnding": False, "clientEnding": False, "reportGenerated": False, "persisted": False})
+        bad["objective"]["nativeHostDeathListenersAfter"] = 1
+        self.assertTrue(any("native death listener counts" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, settings={"sessionAbandoned": False})
+        self.assertTrue(any("abandon action" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, world={"cleaned": False})
+        self.assertTrue(any("world/template cleanup" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, objective={"cleaned": True, "nativeHostTeardownObserved": False})
+        self.assertTrue(any("native teleporter teardown" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, stageProgress={"current": "goolake", "transitions": 1, "transporting": False})
+        self.assertTrue(any("stage" in x or "transition" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, playerDefeat={"deathEvents": 1, "deathEntered": True, "bodyDestroyed": True})
+        self.assertTrue(any("no-native-death" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, playerDefeat={"deathEvents": 0, "deathEntered": False})
+        self.assertTrue(any("no-native-death" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, profile={"ready": True, "resultApplied": True, "appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2})
+        self.assertTrue(any("no-profile-result" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+        bad = dict(report, profile={"ready": True, "appliedRuns": 13, "earnedUnlocks": 2, "availableEarnedUnlocks": 2})
+        self.assertTrue(any("no-profile-result" in x for x in abandon_contract(bad, 314, "attempt-1", counts, "Engi")))
+
+    def test_abandon_waits_for_ready_living_first_stage_and_full_sixty_seconds(self):
+        report = live_report(
+            session=1,
+            selectedSurvivor="Engi",
+            developerSurvivorOverride=True,
+            world={"seconds": 60.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": True},
+            stageProgress={"current": "lakes", "transitions": 0, "transporting": False},
+        )
+        self.assertEqual(abandon_observation_failures(report, "Engi", 60.0, 0.0), [])
+        self.assertTrue(
+            any("report is shorter" in x for x in abandon_observation_failures({**report, "world": {**report["world"], "seconds": 59.9}}, "Engi", 60.0, 0.0))
+        )
+        self.assertTrue(any("host did not observe" in x for x in abandon_observation_failures(report, "Engi", 59.9, 0.0)))
+        self.assertTrue(
+            any("living player" in x for x in abandon_observation_failures({**report, "world": {**report["world"], "health": 0}}, "Engi", 60.0, 0.0))
+        )
+        self.assertTrue(
+            any("waiting for a ready" in x for x in abandon_observation_failures({**report, "world": {**report["world"], "ready": False}}, "Engi", 0.0, None))
+        )
+        self.assertTrue(
+            any(
+                "transition" in x
+                for x in abandon_observation_failures(
+                    {**report, "stageProgress": {"current": "goolake", "transitions": 1, "transporting": False}}, "Engi", 60.0, 0.0
+                )
+            )
+        )
+        self.assertTrue(
+            any(
+                "Engi shield template guard" in x
+                for x in abandon_observation_failures({**report, "world": {**report["world"], "engiShieldGuardPrepared": False}}, "Engi", 60.0, None)
+            )
+        )
+        self.assertTrue(
+            any("stopped being ready" in x for x in abandon_observation_failures({**report, "world": {**report["world"], "ready": False}}, "Engi", 60.0, 0.0))
+        )
+        self.assertTrue(
+            any(
+                "throughout the live interval" in x
+                for x in abandon_observation_failures({**report, "world": {**report["world"], "diagnosticInputEver": False}}, "Engi", 60.0, 0.0)
+            )
+        )
+
+    def test_abandon_controls_require_reported_matching_android_logical_grid(self):
+        report = live_report(
+            settings={
+                "screenWidth": 1280,
+                "screenHeight": 800,
+                "buttonX": 1167.5,
+                "buttonY": 30.0,
+                "endRunButtonX": 430.0,
+                "endRunButtonY": 512.5,
+            }
+        )
+        size = "Physical size: 1280x800\n"
+        rotation = "mDisplayRotation=ROTATION_0\n"
+        self.assertEqual(abandon_control_coordinates(report, "button", size, rotation), (1168, 30))
+        self.assertEqual(abandon_control_coordinates(report, "endRunButton", size, rotation), (430, 512))
+        self.assertIsNone(abandon_control_coordinates(report, "button", size, ""))
+        self.assertIsNone(abandon_control_coordinates(report, "button", "Physical size: 800x1280\n", rotation))
+        self.assertIsNone(abandon_control_coordinates(live_report(settings={"buttonX": 10, "buttonY": 10}), "button", size, rotation))
+        out_of_bounds = live_report(settings={"screenWidth": 1280, "screenHeight": 800, "buttonX": 1280, "buttonY": 30})
+        self.assertIsNone(abandon_control_coordinates(out_of_bounds, "button", size, rotation))
+
+    def test_mocked_abandon_clicks_only_reported_controls_then_observes_direct_same_process_restart(self):
+        settings_open = live_report(
+            session=1,
+            selectedSurvivor="Engi",
+            developerSurvivorOverride=True,
+            settings={
+                "ready": True,
+                "visible": True,
+                "canEndRun": True,
+                "buttonX": 1167.5,
+                "buttonY": 30.0,
+                "endRunButtonX": 430.0,
+                "endRunButtonY": 512.5,
+                "screenWidth": 1280,
+                "screenHeight": 800,
+            },
+            world={"seconds": 60.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": True},
+        )
+        reports = [
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 0.0, "ready": False, "health": 0.0, "diagnosticInputEver": False, "engiShieldGuardPrepared": False},
+            ),
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 5.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": False},
+            ),
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 10.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": True},
+            ),
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 60.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": True},
+            ),
+            settings_open,
+            settings_open,
+            settings_open,
+            live_report(session=2, selectedSurvivor="Engi", developerSurvivorOverride=True),
+        ]
+        temp, device, result, error, evidence = run_fake_check(reports, survivor="Engi", ending="abandon", clock_step=10.0)
+        try:
+            self.assertIsNone(error)
+            self.assertTrue(result["success"])
+            self.assertEqual(device.taps, [(1168, 30), (430, 512)])
+            self.assertFalse(device.alive)
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["ending_mode"], "abandon")
+            self.assertEqual(saved["abandon_ui"], {"settings_open_sent": True, "end_run_sent": True})
+            self.assertEqual(saved["completed_session"]["settings"]["sessionAbandoned"], True)
+            self.assertFalse(saved["completed_session"]["results"]["persisted"])
+        finally:
+            temp.cleanup()
+
+    def test_mocked_abandon_refuses_selection_mismatch_before_any_ui_tap(self):
+        reports = [live_report(session=1, selectedSurvivor="Commando", developerSurvivorOverride=False)]
+        temp, device, result, error, evidence = run_fake_check(reports, survivor="Engi", ending="abandon")
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "survivor-selection-mismatch")
+        finally:
+            temp.cleanup()
+
+    def test_mocked_abandon_rejects_world_readiness_interruption_before_end_run_tap(self):
+        reports = [
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 10.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": True},
+            ),
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 60.0, "ready": True, "health": 130.0, "diagnosticInputEver": True, "engiShieldGuardPrepared": True},
+            ),
+            live_report(
+                session=1,
+                selectedSurvivor="Engi",
+                developerSurvivorOverride=True,
+                world={"seconds": 0.0, "ready": False, "health": 0.0, "diagnosticInputEver": False, "engiShieldGuardPrepared": True},
+            ),
+        ]
+        temp, device, result, error, evidence = run_fake_check(reports, survivor="Engi", ending="abandon", clock_step=30.0)
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [(1168, 30)])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "abandon-observation-contract-failed")
+            self.assertIn("world stopped being ready", saved["first_failure"])
+        finally:
+            temp.cleanup()
+
+    def test_free_survivor_abandon_validates_completed_contract_before_session2_menu_tap(self):
+        settings_open = live_report(
+            session=1,
+            settings={
+                "ready": True,
+                "visible": True,
+                "canEndRun": True,
+                "buttonX": 1167.5,
+                "buttonY": 30.0,
+                "endRunButtonX": 430.0,
+                "endRunButtonY": 512.5,
+                "screenWidth": 1280,
+                "screenHeight": 800,
+            },
+            world={"seconds": 60.0, "ready": True, "health": 100.0, "diagnosticInputEver": True},
+        )
+        reports = [ordinary_start_report(), live_report(session=1, world={"seconds": 10.0, "ready": True, "health": 100.0, "diagnosticInputEver": True})]
+        reports.extend(live_report(session=1, world={"seconds": 60.0, "ready": True, "health": 100.0, "diagnosticInputEver": True}) for _ in range(8))
+        reports.extend([settings_open, settings_open, session2_offline_menu_report(), live_report(session=2)])
+        temp, device, result, error, evidence = run_fake_check(reports, survivor="Commando", ending="abandon", clock_step=10.0)
+        try:
+            self.assertIsNone(error)
+            self.assertTrue(result["success"])
+            self.assertEqual(device.taps, [(100, 200), (1168, 30), (430, 512), (100, 200)])
+            self.assertTrue(device.tap_completion_present[-1])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["session2_menu_ui"], {"observed": True, "start_sent": True})
+            menu = json.loads((evidence / "session-2-menu-start.json").read_text())
+            self.assertEqual(menu["coordinates"], [100, 200])
+            self.assertEqual(menu["completed_session"], 1)
+        finally:
+            temp.cleanup()
+
+    def test_free_survivor_abandon_refuses_malformed_completion_before_session2_menu_tap(self):
+        settings_open = live_report(
+            session=1,
+            settings={
+                "ready": True,
+                "visible": True,
+                "canEndRun": True,
+                "buttonX": 1167.5,
+                "buttonY": 30.0,
+                "endRunButtonX": 430.0,
+                "endRunButtonY": 512.5,
+                "screenWidth": 1280,
+                "screenHeight": 800,
+            },
+            world={"seconds": 60.0, "ready": True, "health": 100.0, "diagnosticInputEver": True},
+        )
+        reports = [ordinary_start_report(), live_report(session=1, world={"seconds": 10.0, "ready": True, "health": 100.0, "diagnosticInputEver": True})]
+        reports.extend(live_report(session=1, world={"seconds": 60.0, "ready": True, "health": 100.0, "diagnosticInputEver": True}) for _ in range(8))
+        reports.extend([settings_open, settings_open, session2_offline_menu_report()])
+        temp, device, result, error, evidence = run_fake_check(
+            reports,
+            survivor="Commando",
+            ending="abandon",
+            clock_step=10.0,
+            completed_override=json.dumps({"attempt": "malformed-completion"}),
+        )
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [(100, 200), (1168, 30), (430, 512)])
+            self.assertFalse(device.tap_completion_present[-1])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "completed-session-cleanup-failed-before-session-2-menu")
+        finally:
+            temp.cleanup()
+
     def test_mocked_runner_observes_stale_clear_death_restart_and_same_process(self):
         reports = [
             ordinary_start_report(),
@@ -486,7 +844,6 @@ class SessionCleanupCheckTests(unittest.TestCase):
 
     def test_mocked_runner_accepts_base_engi_with_consistent_locked_override(self):
         reports = [
-            {**ordinary_start_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
             {**live_report(session=1), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
             {**session_one_defeat_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
             {**live_report(session=2), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
@@ -495,16 +852,40 @@ class SessionCleanupCheckTests(unittest.TestCase):
         try:
             self.assertIsNone(error)
             self.assertTrue(result["success"])
+            self.assertEqual(len(_device.taps), 1)
             saved = json.loads((evidence / "result.json").read_text())
             self.assertEqual(saved["selected_survivor"], "Engi")
             self.assertTrue(saved["developer_survivor_override"])
         finally:
             temp.cleanup()
 
+    def test_locked_diagnostic_target_rejects_ordinary_menu_phase(self):
+        reports = [{**ordinary_start_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True}]
+        temp, device, result, error, evidence = run_fake_check(reports, survivor="Engi")
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "unexpected-menu-for-diagnostic-override")
+        finally:
+            temp.cleanup()
+
+    def test_free_survivor_requires_ordinary_menu_before_live_input(self):
+        reports = [live_report(session=1)]
+        temp, device, result, error, evidence = run_fake_check(reports)
+        try:
+            self.assertIsNone(result)
+            self.assertIsNotNone(error)
+            self.assertEqual(device.taps, [])
+            saved = json.loads((evidence / "result.json").read_text())
+            self.assertEqual(saved["stop"], "ordinary-menu-start-not-observed")
+        finally:
+            temp.cleanup()
+
     def test_mocked_runner_refuses_first_current_report_for_wrong_hero_before_taps(self):
         reports = [
-            {**ordinary_start_report(), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
-            live_report(session=1),
+            {**live_report(session=1), "selectedSurvivor": "Engi", "developerSurvivorOverride": True},
         ]
         temp, device, result, error, evidence = run_fake_check(reports)
         try:
