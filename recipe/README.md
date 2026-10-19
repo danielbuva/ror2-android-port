@@ -1055,3 +1055,13 @@ identity, local profile, private path or device identifier is added. Stable
 store ownership allows legitimate profile replacement; existing assisted-run
 exclusion and entitlement rejection remain. Existing source/fixture staging
 reproduces the change through R8. No new local build input or linker roots.
+
+### Early native player context audit (2026-10-19)
+
+The existing AutomaticDirectorSession extracts its authored controller
+registration and adopts that owned registration before native results setup.
+Exact existing server identities, scoped native lifecycle calls and cleanup
+remain in their current owners. No game method body, asset, profile, middleware,
+platform identity, private path or device identifier is copied. No new source
+selection, local input, entitlement or linker root is introduced. R8 reproduces
+the two changed authored runtime sources; Phase 2 outputs remain untouched.

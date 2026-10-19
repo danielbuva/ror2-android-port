@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J657** (105-source APK accepted on both default modes; opt-in early player-context correction remains open).
+Last updated 2026-10-19 after **J658** (early player-context order corrected in source; next device candidate pending).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -15,7 +15,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03` — J655/J657 both default baseline modes with the native diagnostic off. The opt-in native path stops before Stage activation (J656); timed-chest event delivery is unverified. Prior f57e172b… has Engineer inventory/output (J650), three alternate callbacks and native UI-abandon/observer restart (J653). |
 | Installed now | Accepted 86d2542a… on current Nova adopted storage, installed in place with payload sync and both default modes passing. App stopped/OLED asleep after the exit check. Scoped receipts: `work/device/<serial>/`; original flat receipts retained. |
-| Runtime source since verified APK | Installed 86d2542a… contains J651's default-off native lifecycle and J652's timed-chest adapter (105 files); no newer runtime source. Early player-context correction and typed state-reference closure repair remain private drafts. The earlier f57e172b… baseline has 102 files. |
+| Runtime source since verified APK | J658 corrects early native player-context registration in the same 105-file selection; compiled but not built or device-verified. Installed 86d2542a… contains J651/J652 before that correction. The typed state-reference closure repair is under host integration; its payload has not been regenerated. The earlier f57e172b… baseline has 102 files. |
 | Device tooling | J589/J595 host tests pass for selection, scoped receipts, path isolation, ambiguous bootstrap cleanup and the build mutex. Current Nova migration/install/both baseline modes pass. Additional devices await user-supplied serials and live storage/display observations. |
 | Executable rollbacks | J657 `86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03` · J654 `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8` · J647 `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` · J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |

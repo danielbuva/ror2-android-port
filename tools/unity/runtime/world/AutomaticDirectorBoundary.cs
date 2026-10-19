@@ -10,6 +10,7 @@ using RoR2.Networking;
 using RoR2.Navigation;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
@@ -97,6 +98,10 @@ public sealed partial class PortSession
     IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)
     {
         return GetAutomaticDirectorSession().PrepareNativeFirstStageDirectorContext(player, cfg);
+    }
+    void PrepareNativeFirstStagePlayerContext(CharacterBody player, SessionConfig cfg)
+    {
+        GetAutomaticDirectorSession().PrepareNativeFirstStagePlayerContext(player, cfg);
     }
     void CleanupAutomaticDirector()
     {
@@ -352,15 +357,7 @@ public sealed partial class PortSession
             var index = MasterCatalog.FindMasterIndex(catalogTemplate);
             coordinator.Check(MasterCatalog.GetMasterPrefab(index) == catalogTemplate, "Original master catalog identity");
             coordinator.r.director.masterIndex = (int)index;
-            coordinator.directorPlayer = player.master.GetComponent<PlayerCharacterMasterController>();
-            coordinator.Check(coordinator.directorPlayer && !coordinator.directorPlayer.gameObject.activeInHierarchy &&
-                                  !coordinator.directorPlayer.networkUser && PlayerCharacterMasterController.instances.Count == 0,
-                              "Measured local player registration scope changed");
-            if (!coordinator.directorPlayer.master)
-                Call(coordinator.directorPlayer, "Awake");
-            coordinator.Check(coordinator.directorPlayer.master == player.master, "Original player controller master binding");
-            directorPlayerRegistered = true;
-            Call(coordinator.directorPlayer, "OnEnable");
+            PrepareDirectorPlayerContext(player);
             coordinator.r.director.playerRegistered = PlayerCharacterMasterController.instances.Count == 1 &&
                                                       PlayerCharacterMasterController.instances[0] == coordinator.directorPlayer;
             coordinator.Check(coordinator.r.director.playerRegistered, "Original player registration missing");
@@ -374,6 +371,55 @@ public sealed partial class PortSession
                               "Original participant/body counts or unavailable user contract changed");
             coordinator.StartOriginalRunClock();
             return index;
+        }
+
+        // Results need this original controller before their own PlayerStatsComponent.Awake.
+        // Native first-stage setup borrows only this mandatory context early; catalogs,
+        // elite initialization, director activation and the Run clock keep their existing order.
+        public void PrepareNativeFirstStagePlayerContext(CharacterBody player, SessionConfig cfg)
+        {
+            var master = player ? player.master : null;
+            coordinator.Check(
+                coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && cfg.integratedWorld && cfg.teleporterLoop &&
+                    coordinator.stageSourceObjects && coordinator.stageGeometryScene.IsValid() &&
+                    (coordinator.stageGeometryScene.name == "golemplains" || coordinator.stageGeometryScene.name == "lakes") &&
+                    NetworkServer.active && Run.instance && player && master && player.isServer && master.isServer &&
+                    player.netId.Value != 0 && master.netId.Value != 0 && master.hasBody && master.GetBody() == player &&
+                    ReferenceEquals(NetworkServer.FindLocalObject(player.netId), player.gameObject) &&
+                    ReferenceEquals(NetworkServer.FindLocalObject(master.netId), master.gameObject),
+                "Native first-stage player context requires the exact live server body and master");
+            PrepareDirectorPlayerContext(player);
+        }
+
+        void PrepareDirectorPlayerContext(CharacterBody player)
+        {
+            var master = player ? player.master : null;
+            var controller = master ? master.GetComponent<PlayerCharacterMasterController>() : null;
+            coordinator.Check(controller && !controller.gameObject.activeInHierarchy && !controller.networkUser,
+                              "Measured inactive local player controller scope changed");
+            if (directorPlayerRegistered)
+            {
+                // The early native results prerequisite and later full catalog setup
+                // must share one exact registration and its native subscriptions.
+                coordinator.Check(ReferenceEquals(coordinator.directorPlayer, controller) && controller.master == master &&
+                                      PlayerCharacterMasterController.instances.Count == 1 &&
+                                      ReferenceEquals(PlayerCharacterMasterController.instances[0], controller),
+                                  "Owned player controller registration changed before adoption");
+                return;
+            }
+            coordinator.Check((!coordinator.directorPlayer || ReferenceEquals(coordinator.directorPlayer, controller)) &&
+                                  PlayerCharacterMasterController.instances.Count == 0,
+                              "Unowned local player controller registration");
+            coordinator.directorPlayer = controller;
+            if (!controller.master)
+                Call(controller, "Awake");
+            coordinator.Check(controller.master == master, "Original player controller master binding");
+            // OnEnable can throw after adding the instance; keep its exact owner for cleanup.
+            directorPlayerRegistered = true;
+            Call(controller, "OnEnable");
+            coordinator.Check(PlayerCharacterMasterController.instances.Count == 1 &&
+                                  ReferenceEquals(PlayerCharacterMasterController.instances[0], controller),
+                              "Original player registration missing or duplicated");
         }
 
         public IEnumerator PrepareNativeFirstStageDirectorContext(CharacterBody player, SessionConfig cfg)

@@ -1073,6 +1073,8 @@ public sealed partial class PortSession
                                              .ToArray());
             // Native profiles size discovery storage from this complete pickup catalog.
             // Load earned state before native rules and the first stage choose loot.
+            if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
+                coordinator.PrepareNativeFirstStagePlayerContext(player, cfg);
             coordinator.PrepareIntegratedResults(player, cfg);
             if (cfg.moonMission)
                 coordinator.Check(PickupCatalog.GetPickupDef(PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex))

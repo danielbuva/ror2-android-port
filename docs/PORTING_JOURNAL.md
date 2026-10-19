@@ -9285,3 +9285,47 @@ context correction, typed state-dependency closure repair and their next
 candidate's own controls. J651/J652 record R8 replay requirements. No original
 input, extra device, private receipt hand edit, existing data or storage
 configuration change occurs here.
+
+## J658 — Register the original player context before native first-stage results
+
+Hypothesis: J656's first failure is the missing early controller registration,
+not a statistics or profile incompatibility. Extracting just that prerequisite
+can preserve native results identity without restoring the diagnostic actor or
+consuming extra stage RNG.
+
+AutomaticDirectorSession now owns PrepareDirectorPlayerContext separately from
+its catalog preparation. The native first-stage path calls the wrapper directly
+before unchanged results setup. It requires the supported source scene, live
+Run/server, reciprocal original body/master, nonzero IDs, exact server mappings
+and the existing inactive controller with no NetworkUser. The later catalog
+helper adopts that exact single registration without calling Awake/OnEnable
+again; default setup retains its original catalog, registration and clock order.
+The flag is set before native OnEnable can add the instance and throw. Existing
+Dispose removes it even before late director report, host, card or deck setup.
+No statistics assertion is weakened and no player/network identity is invented.
+
+Prior art: community-prior-art L6/L7/L8, pinned R2API.Director f539511e's
+ClassicStageInfo.Start seam and DebugToolkit d1e2f0aa's distinction between
+NetworkUser lookup and master targeting. Accepted e544 native controller
+Awake/OnEnable/OnDisable and PlayerStatsComponent.Awake establish the actual
+order and subscription ownership; no native method body is copied.
+
+Independent review and private source-order/partial-cleanup checks pass at
+work/coordination/native-stage-player-context-fix/. Offline compilation against
+exact-editor references has zero errors. Root then stages the actual integrated
+105 sources and passes exact Unity compilation, production pure lifecycle gates,
+native variant API and strict-input fixtures at work/experiments/
+first-stage-native-lifecycle/editor-20261019T135034.707924Z/. All 941 host tests
+pass with one existing skip; Ruff and diff checks pass. These are compile/host
+checks, not execution of the optional genuine-player cleanup fixture or proof
+that native Stage/population now progresses.
+
+First failure: none in those source/editor checks; actual device progression
+is pending. Selected-device doctor passes. An unselected doctor correctly
+refuses multiple attached devices; no extra device is selected or onboarded.
+Accepted and installed APK remains
+86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03,
+with the Nova stopped and OLED asleep. Revisit with this correction's own build,
+explicit native attempt and both default baseline modes. R8 must replay the two
+changed authored runtime inputs. No new local build input, Phase 2 mutation,
+original input change, private receipt edit, data move or storage reconfiguration.

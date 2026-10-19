@@ -586,6 +586,10 @@ Stage-context preparation seams (J639) remain inside those existing owners.
 `EnemySpineSession.PrepareEnemy` forwards mandatory `PrepareEnemyContext` then
 its actor fixture. `AutomaticDirectorSession` separates native elite/catalog/
 player initialization from the existing one-card director activation.
+Its native first-stage path registers only the exact existing inactive player
+controller before results prepare their statistics component. The later catalog
+setup adopts that same registration without another Awake/OnEnable; the existing
+director owner removes it even if results fail before a director report exists.
 `TeleporterWorldSession.PrepareInactiveObjectiveTemplate` prepares its owned
 clone before the existing direct spawn. `WholeInteractableSession` uses a
 short-lived `WholeStagePopulationObservation` to store the exact selection/spawn
