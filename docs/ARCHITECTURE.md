@@ -666,6 +666,29 @@ or movement is written. `SurvivorSkillInputHost` tests synthetic routing,
 dynamic slots, stale-edge refusal, ownership, bounds and disposal in the
 exact editor. Real survivor behavior remains a device gate.
 
+Engineer shield compatibility (`EngiShieldHitGuard.cs`):
+`IntegratedWorldSession` acquires `EngiShieldHitGuardTemplateLease` only for the
+selected original Engi body, before automatic skill input. The caller loads the
+exact owned catalog shield template and requires a non-scene asset. The lease
+validates its native blocker/Collision references and adds only an authored
+component to that in-memory template; native type, serialized fields, collider,
+network identity and deployed state remain unchanged. Each Unity-created shield
+runs the guard after native Awake, captures its exact native rejection delegate,
+and handles only an actual-null world-hit HurtBox. Valid HurtBox targets use the
+captured native filter. Processor identity, owner/collider liveness and callback
+ownership are checked; missing or destroyed targets remain visible failures.
+The first guarded world hit per instance emits a bounded lab log marker.
+
+Each instance restores only its still-owned callback at destruction and clears
+references. `VerifyIntegratedWorldCleanup`, after server shutdown and two frame
+yields, requires scene guard clones to be gone before restoring/removing only
+the template component. The existing catalog owner retains asset lifetime.
+`r.world.engiShieldGuardPrepared/Released` records the lease boundaries.
+`EngiShieldHitGuardHost` is a genuine Play Mode native-filter/clone fixture;
+it manually activates the source Collision child and does not certify native
+deployment timing or a bundle-template mutation on Android. J614 records its
+evidence; native skill/device acceptance remains separate.
+
 `TeleportMaterialSession` also owns final overlay/material release.
 `TeleportOverlayRegistryOwnership`, in the same authored file, reads the native
 active registry prefix to resolve exact wrapper identity before public removal.

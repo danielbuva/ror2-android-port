@@ -82,6 +82,7 @@ public sealed partial class PortSession
         public NovaThirdPersonView.Report camera;
         public WorldEquipmentReport equipment;
         public bool lunarDefinition, lunarCurrencyAvailable;
+        public bool engiShieldGuardPrepared, engiShieldGuardReleased;
         public bool ready, authority, lootReady, interactionReady, cleaned, diagnosticInput, diagnosticInputEver;
         public int tableLoadedCount, barrels, chests, openedBarrels, openedChests, pickups, droplets, pickupMessages, coinMessages,
             xpMessages, frames, kills, liveEnemies;
@@ -387,6 +388,7 @@ public sealed partial class PortSession
         readonly PortSession coordinator;
         SurvivorSkillObserver survivorSkills;
         SurvivorSkillInputCoverage skillInputCoverage;
+        EngiShieldHitGuardTemplateLease engiShieldGuard;
         float nextSurvivorSkillSample;
         public IntegratedWorldSession(PortSession coordinator)
         {
@@ -956,6 +958,17 @@ public sealed partial class PortSession
                 feedbackCapability = "Authored pickup HUD; original native-audio notification handler unavailable."
             };
             coordinator.worldPlayer = player;
+            if (coordinator.r.selectedSurvivor == "Engi")
+            {
+                coordinator.Check(engiShieldGuard == null && player.master &&
+                                      player.master.bodyPrefab == BodyCatalog.FindBodyPrefab("EngiBody"),
+                                  "Engineer shield compatibility requires the selected original body");
+                var template = WholeCatalogComposed.LoadOwnedContent<GameObject>(
+                    "Assets/WholeGame/RoR2/Base/Characters/Engi/Projectiles/EngiBubbleShield/EngiBubbleShield.prefab");
+                coordinator.Check(template && !template.scene.IsValid(), "Engineer shield source must be the owned catalog template");
+                engiShieldGuard = EngiShieldHitGuardTemplateLease.Acquire(template);
+                coordinator.r.world.engiShieldGuardPrepared = true;
+            }
             PrepareEarlyHurtCaches(player);
             PrepareUnavailableWorldPresentation(player);
             coordinator.r.phase = "integrated-world-client";
@@ -2592,6 +2605,12 @@ public sealed partial class PortSession
                 yield break;
             yield return null;
             yield return null;
+            if (engiShieldGuard != null)
+            {
+                engiShieldGuard.ReleaseAfterWorldCleanup();
+                engiShieldGuard = null;
+                coordinator.r.world.engiShieldGuardReleased = true;
+            }
             coordinator.FinishWorldDotCleanup();
             coordinator.VerifyFlightEquipmentCleanup();
             var stageHandlers = typeof(Stage)

@@ -213,6 +213,16 @@ uses public native APIs and synthetic objects only. No runtime file/GUID,
 content selection or required local input is added. Audited 2026-10-19;
 completed-session device acceptance and R8 replay remain pending.
 
+J614 adds the authored `runtime/world/EngiShieldHitGuard.cs` compatibility owner
+to both selections (96 entries), with its actual imported GUID pinned. Its
+minimum asset path and native component/member names identify the original
+Engineer shield contract; no asset body, native blocking algorithm or community
+implementation is copied. The guard delegates valid entity hits to the original
+method and handles only the measured null-world-hit boundary. Its authored Play
+Mode fixture uses the accepted imported prefab privately and publishes only
+contract results. Audited 2026-10-19; Android acceptance and R8 source/importer/
+provenance replay remain separate gates.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

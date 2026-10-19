@@ -7501,3 +7501,62 @@ display cleanup. Ruff and diff checks pass. No device action, APK/payload or
 build input changed. The installed baseline remains J608's 41ecca66… and the
 Engineer shield failure remains under native-source/exact-editor investigation.
 The next survivor run will use this host observer; it is not yet device-run.
+
+## J614 — Guard the Engineer shield's native null-world-hit boundary
+
+Hypothesis: J611's exception is the current native filter receiving a legitimate
+world BulletHit with no HurtBox, rather than a broken collider import. Accepted
+e544 BulletAttack initializes hitHurtBox from the hit collider and can pass a
+world hit to collected shield rejectors; SimpleColliderBlockFilter dereferences
+that target. The accepted and generated Engi shield collider/filter/deployed
+references match. No serialization repair is justified.
+
+Prior art: pinned Starstorm2 a9a4badd SuperFireballController distinguishes world
+colliders by absent HurtBox; ProjectileFireOrbOnImpact enters its entity path
+only with a HurtBox. These supply API/input context, not a shield solution.
+Pinned R2API.Prefab f539511e separates clone identity and network registration.
+The adapter preserves the original prefab/type/network identity; no native or
+community blocking algorithm is copied.
+
+Added EngiShieldHitGuard and its template lease as a named survivor compatibility
+owner. IntegratedWorldSession loads the exact owned catalog shield only for
+selected Engi before skill input. It validates native references and attaches
+an authored component to the in-memory template. Clone Awake runs after native
+binding, snapshots the exact sphere-filter delegate and guards only CLR-null
+hitHurtBox with a live, matching owned processor/collider. Every non-null target
+uses the native method; destroyed targets and other failures stay visible.
+The first guarded world hit per instance emits a lab marker. Instances restore
+only their still-owned delegate and clear references. Template release runs
+after server shutdown/two yields and refuses live scene clones before removing
+only its own component, before the existing content owner releases assets.
+
+The genuine exact-editor Play Mode fixture passes: original null-hit exception,
+guarded null-hit return, native blocked and clear ray equivalence, native Awake
+and cloned serialized reference ownership, stale callback refusal, exact restore,
+foreign replacement preservation and cleanup. The first attempt used arbitrary
+ray coordinates and failed its positive blocking assertion; the final fixture
+measures collider bounds to obtain a real blocked ray plus a clear-ray negative
+control. It does not infer deployment timing from manually activating Collision
+or claim the scene stand-in proves an Android bundle-template mutation.
+Final source hashes, result and clean scene restoration:
+work/experiments/engi-shield-lifetime/editor-20261019T085748.723855Z/.
+Earlier attempts are preserved in the same experiment parent. No primary or
+restoration error remains in the final attempt. Full host suite: 893 tests,
+one optional skip; log work/coordination/codex-engi-guard-host-tests.log.
+
+Also on unchanged J608 APK
+41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14,
+an isolated Mage diagnostic case passes at 60.36 s of Lakes play with canonical
+authority/server counts 18/3/1/1, four valid components and no report/log errors.
+Applied profile runs stay 13. Evidence:
+work/experiments/survivor-check/20261019T084715.357705Z/Mage/.
+The J613 live-log observer ran here. The runner stops the app and sleeps the
+OLED. This is callback coverage, not complete Artificer effect acceptance.
+
+Installed/baseline APK remains J608's hash. The new source is compiled/staged
+but not Android-accepted; next run host/live preflight, code build, both baseline
+modes, then Engineer input and cleanup before resuming the remaining roster.
+This adds the 96th authored runtime source, its imported GUID and an editor
+fixture to the existing producer; R8/build-entry inputs must be replayed by the
+parallel session. No Phase 2 step, content payload, original installation or
+extra device was changed.

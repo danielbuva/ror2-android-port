@@ -75,6 +75,7 @@
   "runtime/world/DirectorActorBoundary.cs",
   "runtime/world/EnemyRewardBoundary.cs",
   "runtime/world/EnemySpineBoundary.cs",
+  "runtime/world/EngiShieldHitGuard.cs",
   "runtime/world/IntegratedWorldBoundary.cs",
   "runtime/world/PlayerDefeatBoundary.cs",
   "runtime/world/PrimaryFireBoundary.cs",
