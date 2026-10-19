@@ -6193,3 +6193,71 @@ file, and `validate-bindings` passes. The host estimate from J583 is 39 layers. 
 in a fresh Library is unmeasured until R9 reruns, which needs the operator's approval to stop the
 lab MCP editor. Revisit: rerun R9; check that the reimport errors are gone, the pass-2 duration and
 the Timeline-free APK comparison.
+
+## J587 — Survivor skill accounting and complete loadout rows (host draft)
+
+2026-10-18 PDT. Hypothesis: the integrated original world already executes broader
+survivor abilities, but Commando-specific state counters and 35 s body checks cannot
+establish which other skill slots activated. Separately, the recovered loadout's
+fixed four-row layout cannot fit Toolbot's five or Captain's six source rows.
+
+Prior art: inspected pinned Starstorm2 `SwiftSkateboard.cs` at `a9a4baddc5dd4405e893ab5dfc684eb9e27c26f8`
+for native `onSkillActivatedServer` subscription, original-slot attribution and
+owned unsubscribe, plus `SS2VanillaSurvivor` for unchanged native skill families.
+The accepted `SkillDef.OnExecute`, `CharacterBody.OnSkillActivated`,
+`SkillLocator.FindSkillSlot` and Toolbot stance contracts govern the observer.
+The accepted `LoadoutPanelController` distinguishes `hideInLoadoutSelect` from
+character-select visibility and preserves original component indices. No original
+or community implementation is copied into tracked source.
+
+Change: `IntegratedWorldSession` owns an independent `SurvivorSkillObserver`,
+created after authority connects and disposed before world teardown. It counts
+native authority/server callbacks using the original live slot lookup, including
+Toolbot component reassignment and aliased-slot precedence. Once-per-second context
+records definitions, stock and declared/current machine states. Names are read
+only on definition changes. Managed callback removal also handles destroyed Unity
+wrappers. This is activation evidence, not complete targeting, damage, placement,
+effect or animation acceptance.
+
+The current `./dev prototype --action survivor-kit-check --target all` host action
+checks all eleven base catalog keys sequentially; a comma-separated target selects
+a subset. Free survivors use ordinary selection; locked base choices are explicit
+assisted diagnostics. Each case needs 60 s of Lakes play and both original callback
+types on every slot, stops at 180 s with missing evidence, and rejects report/log
+errors, process exit, stage departure or profile-run changes. It preserves the
+first-world screenshot and frozen current-PID/attempt/session report, logs and crash
+evidence, then removes its selector, stops the app and sleeps the OLED. Every ADB
+command checks the parallel-session lock. Source-suppressed callbacks remain
+unproven; no expansion, unlock or normal-difficulty result is fabricated.
+
+The existing loadout owner now scrolls source-visible rows above a fixed footer,
+keeps serialized slot indices and uses optional source row titles. Its scroll
+resets on menu entry/survivor change. The authored exact-editor
+`SurvivorSkillHost.Run()` fixture covers slot attribution, definition overrides,
+reassignment/alias precedence, foreign-listener preservation, repeated/destroyed-body
+cleanup, visibility filtering and original Toolbot/Captain row counts.
+
+Host evidence: `work/experiments/survivor-check/host-20261019T051154.454459Z/`.
+The 768-test host suite passes with one optional test skipped. Ruff, README action
+freshness and diff checks pass. The exact editor's bundled compiler and existing
+reference response files compile the complete authored runtime and the new fixture
+with zero errors, without starting or connecting an editor. This is compiler-only
+evidence: the fixture has **not executed**, IL2CPP has **not built**, and no survivor
+device capability advances.
+
+No APK/install/payload change. The local installed receipt still records J585
+`da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0`;
+the device itself was not queried. `doctor` and live `preflight` are deferred because
+both query exclusive resources held by `work/coordination/claude-r9.lock`. Calling
+the new check while that lock exists refuses before device discovery. No editor,
+ADB operation or rebuild step was run, and `work/rebuild/` was untouched. J586
+remains reserved for the parallel session; Moon and rollback artifacts are intact.
+
+Revisit when the lock clears: doctor/preflight, stage through the existing code-only
+producer, run the exact-editor fixture, pin the new source's imported GUID, build,
+install through normal storage/ownership checks, run both baseline modes, then the
+broad survivor cases and classify their first failure. This is a pending runtime
+draft, not a completed feature. The authored runtime sources, source/layout recipes
+and fixture staging change R8's reproduced files; its source/importer/provenance
+cohorts need replay after this candidate is accepted. No Phase 2 rebuild work was
+performed here.

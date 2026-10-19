@@ -183,6 +183,7 @@ public sealed partial class PortSession
             coordinator.offlineMenuRoster = roster;
             coordinator.offlineMenuChoices = choices;
             coordinator.offlineRosterScroll = Vector2.zero;
+            coordinator.offlineLoadoutScroll = Vector2.zero;
             offlineSurvivorStickLatched = false;
             offlineDifficultyStickLatched = false;
             coordinator.offlinePendingLoadout =

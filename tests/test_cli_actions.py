@@ -133,6 +133,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "composition-update-dependencies",
                 "whole-catalog-prepare",
                 "whole-catalog-host",
+                "survivor-kit-check",
                 "whole-catalog-repair-bindings",
                 "whole-catalog-contracts",
                 "whole-catalog-host-providers",

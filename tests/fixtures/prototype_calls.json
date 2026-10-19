@@ -17,6 +17,7 @@
   "whole-catalog-contracts": {"calls": [{"module": "whole_catalog", "function": "contracts", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "whole-catalog-prepare": {"calls": [{"module": "whole_catalog", "function": "prepare_integration", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "whole-catalog-host": {"calls": [{"module": "whole_catalog", "function": "host_integration", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
+  "survivor-kit-check": {"calls": [{"module": "survivor_check", "function": "check_survivors", "args": ["lab"], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "whole-catalog-host-providers": {"calls": [{"module": "whole_catalog", "function": "host_providers", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "whole-catalog-repair-bindings": {"calls": [{"module": "whole_catalog", "function": "repair_root_bindings", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},
   "whole-catalog-build": {"calls": [{"module": "whole_catalog", "function": "build_integration", "args": [], "kwargs": {}}], "effects": [], "stdout": "", "exit": null},

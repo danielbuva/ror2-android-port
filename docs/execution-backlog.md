@@ -12,6 +12,8 @@ result in the journal.
 - [ ] Observe the remaining J503 achievement conditions (near-death charge, two-stack Mountain
       Shrine, loop) and positive ordinary unlock grants without assists.
 - [ ] Complete skill kits for the base survivors beyond 35 s Lakes play (J504).
+      Build and device-check J587's drafted skill accounting/loadout rows after the
+      parallel editor/device lock clears; then use the tracked survivor check.
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
 - [ ] Moon/finale/escape: manual sessions only, never navigated autonomously.
 

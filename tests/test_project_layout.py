@@ -129,7 +129,9 @@ class TrackedProjectLayoutTests(unittest.TestCase):
         layout = read(ROOT / "recipe/project-layout.json")
         sources = read(ROOT / "recipe/runtime-sources.json")
         self.assertEqual(set(layout["runtime_source_guids"]), set(sources))
-        guids = list(layout["runtime_source_guids"].values())
+        # A newly declared source may await its first exact-editor import. This
+        # is the same null-GUID contract validated by ProjectLayoutTests above.
+        guids = [guid for guid in layout["runtime_source_guids"].values() if guid is not None]
         self.assertEqual(len(guids), len(set(guids)))
         for guid in guids:
             self.assertRegex(guid, r"^[0-9a-f]{32}$")

@@ -198,6 +198,7 @@ public sealed partial class PortSession : MonoBehaviour
         public string worldGlassesAsset, worldSlugAsset, worldLunarCoinAsset;
         public bool integratedWorld;
         public WorldReport world;
+        public SurvivorSkillObserver.Report survivorSkills;
         public CommerceReport commerce;
         public string firstFailure, firstFailurePhase;
         public ChestEjectionReport chestEjection;

@@ -73,7 +73,7 @@ class BuildEntryTests(unittest.TestCase):
         write(self.recipe / "content.json", dict(prefabAssets=["Assets/Example.asset"]))
         write(self.recipe / "runtime-sources.json", ["runtime/Session.cs"])
         self.put(self.root / "tools/unity/runtime/Session.cs", "class Session {}")
-        for name in ("AndroidProgressionHost", "AndroidDiscoveryHost", "AndroidProfileHost", "AndroidLifecycleHost", "WholeCatalogBuild"):
+        for name in ("AndroidProgressionHost", "AndroidDiscoveryHost", "AndroidProfileHost", "AndroidLifecycleHost", "SurvivorSkillHost", "WholeCatalogBuild"):
             self.put(self.root / "tools/catalog" / (name + ".cs"), "class " + name + " {}")
         self.put(self.root / "android/Assets/Editor/LabBuild.cs", "class LabBuild {}")
         self.put(self.root / "android/Assets/LabDiagnostics.cs", "class LabDiagnostics {}")

@@ -166,6 +166,12 @@ Built-in modules remain under the operator's applicable Unity Software license
 [mathematics-license]: https://docs.unity3d.com/Packages/com.unity.mathematics@1.2/license/LICENSE.html
 [ugui-license]: https://docs.unity3d.com/Packages/com.unity.ugui@1.0/license/LICENSE.html
 
+The survivor activation observer adds one repository-authored runtime source to
+both source/layout selections (93 entries). It contains no game-derived data;
+the source is staged by the existing build producer. Its layout GUID awaits the
+first editor import. `SurvivorSkillHost.cs` is an authored editor-only fixture,
+staged by that same producer; neither file introduces a local content input.
+
 In `project-layout.json`, a runtime source whose GUID is `null` is new and not yet imported by
 Unity: the build skips its `.meta` check until its first build, after which the GUID is
 recorded.

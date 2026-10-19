@@ -461,6 +461,41 @@ Build, device and safety tooling has its own tests: `test_build_identity.py`,
 `test_build_snapshots.py`, `test_apk_identity.py`, `test_adb_target.py`,
 `test_lab_safety.py`, `test_public_privacy.py`.
 
+Survivor ability observations (`SurvivorSkillObserver.cs`, current runtime source):
+`IntegratedWorldSession` creates this independent `IDisposable` owner after local
+player authority is connected. It holds only that body's four original skill slots,
+definition snapshots and authority/server callback subscriptions. Native callbacks
+use the original `SkillLocator.FindSkillSlot` at each event, preserving Toolbot's
+component reassignment and the source precedence for aliased slots. They count
+activation per slot; a once-per-second sample records active definitions,
+stock and state-machine context. Definition names are cached until the original
+definition changes. Cleanup detaches both managed callbacks, including after Unity
+destroys the native body, then clears all body/skill/definition references before
+world teardown. The report is `SessionReport.survivorSkills`; it proves callback
+execution, not targeting, placement, effects or complete ability semantics.
+`SurvivorSkillHost.Run()` is the exact-editor synthetic ownership/override fixture.
+It also checks that the loadout menu retains original component indices and uses
+`hideInLoadoutSelect`, independently of character-select visibility. The existing
+`OfflineLoadoutBoundary` owns that menu's scroll state, resets it at menu entry or
+survivor change, and scrolls the source-selected rows above a fixed footer so
+Toolbot's five and Captain's six loadout rows remain reachable.
+
+`./dev prototype --action survivor-kit-check --target all` (current host action,
+`scripts/lab/survivor_check.py`) runs the eleven base survivor catalog keys
+sequentially in the integrated Lakes world. A comma-separated `--target` selects a
+subset. Commando/Huntress use ordinary selection; locked base survivors use an
+explicit diagnostic override and invincibility, never permanent profile awards or
+expansion availability. A case needs 60 s of live world play and positive native
+authority **and** server activations on all four slots; at 180 s it reports missing
+activation evidence. Source-suppressed callbacks remain unproven. First failure,
+first-stage departure or process exit ends the batch. Current-process errors fail
+the check; known handled Windows shader-target messages use the existing filter.
+Each case preserves its first-world screenshot, frozen report, log and crash
+evidence under `work/experiments/survivor-check/`. Cleanup removes the selector,
+stops the owned app and sleeps the display. Every ADB command checks the parallel
+session's coordination lock. Host contracts: `tests/test_survivor_check.py`.
+This supplements both unchanged baseline modes; it does not replace them.
+
 C# under `tools/` is formatted with `clang-format -i` using the repository's `.clang-format`
 (J544). It never rewraps string literals or comments, so a correct reformat leaves each file
 identical once whitespace is removed; check that before committing a reformat. CI does not

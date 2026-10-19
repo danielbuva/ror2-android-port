@@ -1,6 +1,7 @@
 # Porting state
 
-Last updated 2026-10-18 after **J585**. This page is the current snapshot only: replace its
+Last updated 2026-10-18 after **J587** (host draft; device baseline remains J585).
+This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
 [journal index](docs/JOURNAL_INDEX.md)); the previous long-form state is archived in
@@ -14,7 +15,7 @@ content on every update. Results are recorded once in the
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` — J585 code build of `main`: layered R9 reimport in `LabBuild.cs`, `Unity.Timeline` preserved whole (J584); runtime source unchanged since J551; passed both `./dev check-baseline` modes |
 | Installed now | That same APK, installed in place; package `dev.ror2lab.arm64`, adopted storage (install receipt: `work/device/installed.json`); app stopped, OLED asleep |
-| Runtime source since that APK | Unchanged |
+| Runtime source since that APK | J587 draft adds native survivor skill observations and scrolling source loadout rows. Compiler/host checks pass; editor-fixture execution, build and device checks are pending the parallel session's coordination lock. |
 | Executable rollbacks | J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
 

@@ -383,6 +383,8 @@ public sealed partial class PortSession
     sealed class IntegratedWorldSession : IDisposable
     {
         readonly PortSession coordinator;
+        SurvivorSkillObserver survivorSkills;
+        float nextSurvivorSkillSample;
         public IntegratedWorldSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -961,6 +963,8 @@ public sealed partial class PortSession
             coordinator.r.world.authority =
                 player.networkIdentity.hasAuthority && coordinator.activeBodyClient.isConnected && coordinator.activeBodyOwner.isReady;
             coordinator.Check(coordinator.r.world.authority, "Integrated local authority missing");
+            survivorSkills = new SurvivorSkillObserver(player);
+            coordinator.r.survivorSkills = survivorSkills.report;
             coordinator.PrepareWholeRunAvailability();
             var displayRules = coordinator.PrepareWholeModelDisplayRules();
             while (displayRules.MoveNext())
@@ -1712,6 +1716,11 @@ public sealed partial class PortSession
         public void ObserveIntegratedWorld(CharacterBody player, float elapsed)
         {
             coordinator.ObserveSourceAnimationEvents(player, elapsed);
+            if (elapsed >= nextSurvivorSkillSample)
+            {
+                nextSurvivorSkillSample = elapsed + 1;
+                survivorSkills?.Sample();
+            }
             long performancePart = System.Diagnostics.Stopwatch.GetTimestamp();
             if (worldClientUpdate == null)
                 worldClientUpdate = (Action)Delegate.CreateDelegate(
@@ -2725,6 +2734,9 @@ public sealed partial class PortSession
         }
         public void CleanupIntegratedWorld()
         {
+            survivorSkills?.Dispose();
+            survivorSkills = null;
+            nextSurvivorSkillSample = 0;
             coordinator.CleanupRecoveredHud();
             coordinator.CleanupIntegratedResults();
             coordinator.CleanupWorldCommerce(true);

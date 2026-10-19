@@ -120,6 +120,7 @@
     "runtime/world/StageBossContentBoundary.cs": "46207e779b3b5412c834994f6cae43bf",
     "runtime/world/StageCombatDeckBoundary.cs": "5e536e81710b7483db41b8d5b5c93b28",
     "runtime/world/StagePopulationBoundary.cs": "a6d9845838a2849fbb974e89b77890b8",
+    "runtime/world/SurvivorSkillObserver.cs": null,
     "runtime/world/WholeInteractableBoundary.cs": "b52b7d6c9f69e4fe1855416bc614baa2",
     "runtime/world/WholePopulationBoundary.cs": "5a6a4bc3634e942fbbe88518753b58fa",
     "runtime/world/WorldDotBoundary.cs": "a6aa2321973214cc78db83dc0e8c959b",
