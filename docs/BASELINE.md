@@ -60,7 +60,7 @@ count above 1 also stops and fails. Invalid transition counts, report errors, pr
 exit, ordinary results or the 370 s host deadline fail. The check never intentionally
 drives another exit.
 This is a host polling guard, not a new runtime transition interlock. Both baseline
-modes have device evidence (J608). It does not assert a particular commerce purchase count
+modes have device evidence (J616). It does not assert a particular commerce purchase count
 or ordinary-difficulty acceptance.
 
 Stage mode freezes its final evidence at the last current-process report and force-stops
@@ -74,13 +74,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14`, J608 overlay/input-coverage code build, retaining the J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.21 s on Lakes and one genuine stage exit to Goolake with 13.36 s next-stage play, no report error (J608) |
+| APK | `16f21f5e1156cb3a817f7ac1877d362853b627e02488f011c8c31e59f35cbc09`, J616 code build, retaining the J585 layered reimport and whole Timeline pin |
+| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 11.05 s next-stage play, no report error (J616) |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
 | Rollbacks | J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current baseline
-passed it (J608). Neither mode covers other survivors, ordinary (unassisted) difficulty,
+passed it (J616). Engineer fails its new setup identity predicate before skill input
+(J616); its shield fix remains unaccepted. Neither mode covers other survivors, ordinary (unassisted) difficulty,
 audio, frame rate or visual parity. Use the journal entries above for broader existing
 evidence.

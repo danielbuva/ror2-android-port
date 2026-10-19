@@ -7587,3 +7587,38 @@ work/coordination/codex-cleanup-survivor-host.log. Architecture/help identify
 this as a current support action. No APK or runtime input changed, and the
 new target path has no device acceptance yet. J609 remains the existing
 Commando native cleanup evidence; Engineer will need its own run.
+
+## J616 — Engineer guard build passes both baselines, then refuses body identity
+
+J614 source at c9e80aa builds a code-only Vulkan ARM64 candidate in 85.55 s
+with zero errors, request 20261019T090205.852490Z. APK SHA-256:
+16f21f5e1156cb3a817f7ac1877d362853b627e02488f011c8c31e59f35cbc09.
+Host/live preflight passed. The independent frozen APK, build receipt and
+runtime source hashes are retained at
+work/experiments/engi-shield-lifetime/candidate-20261019T090205.852490Z/.
+Same-package installation queries live adopted storage and updates in place;
+selected-device scoped ownership/install/runtime receipts remain local.
+
+Both baseline modes pass: Lakes play reaches 35.20 s, and the one-exit mode
+observes one genuine transport to Goolake plus 11.05 s there (141.05 s total).
+Applied profile runs remain 13; neither report contains a runtime first failure.
+Evidence: work/experiments/baseline/20261019T090602.003169Z/ and
+work/experiments/baseline/20261019T090932.048812Z/. This is assisted baseline
+acceptance only, not Engineer, normal difficulty, audio or visual acceptance.
+
+The subsequent Engineer diagnostic case stops before skill input with the
+first failure 'Engineer shield compatibility requires the selected original
+body'. Native spawned body index is 78; no skill observer attaches or callback
+executes. This new predicate therefore blocks acceptance of the shield fix.
+Evidence: work/experiments/survivor-check/20261019T091445.986288Z/Engi/.
+The runner preserves the report/logs and stops the app, removes its selector
+and sleeps the OLED. No shield-null-hit marker was exercised by this attempt.
+
+Current source review identifies an invalid template-identity assumption:
+WholePopulationSession replaces body-catalog entries with owned adapted
+templates after the player has spawned. The selected master's source bodyPrefab
+can therefore differ from the catalog's current template while the native body
+index and reciprocal live master linkage remain valid. Follow-up should check
+those stable native identities, preserve this failed APK, and repeat Engineer
+on the next candidate. The current baseline pointer advances only for the two
+passed baseline modes; the Engineer compatibility gate remains open.
