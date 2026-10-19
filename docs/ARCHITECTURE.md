@@ -584,9 +584,9 @@ in `ObjectiveReport`; the read-only `NativeCombatSquadListenerEvidence` helper
 preserves destroyed Unity wrappers and never restores or modifies event lists.
 The existing stage-handoff destruction/two-yield path remains unchanged.
 `TeleporterLifetimeHost.Run()` is a Play Mode native-callback fixture, staged by
-`whole_catalog.stage_build_sources`; compiler checks pass, but fixture execution,
-repeated device sessions and attribution of broader managed-memory growth remain
-pending. No new probe switch case implements the cleanup.
+`whole_catalog.stage_build_sources`; exact-editor execution and Android callback
+retirement pass (J601/J609). Repeated-session memory attribution remains open.
+No new probe switch case implements the cleanup.
 
 Survivor ability observations (`SurvivorSkillObserver.cs`, current runtime source):
 `IntegratedWorldSession` creates this independent `IDisposable` owner after local
@@ -667,7 +667,7 @@ registry to be empty before releasing material resources. Live foreign overlays
 remain intact and cause refusal. The owner neither clears nor replaces the
 registry. `TeleportOverlayLifetimeHost` reproduces stale-index reuse and native
 destroyed-host pruning in isolated exact-editor Play Mode; it restores only its
-fixture-owned entries. Actual completed-session cleanup remains a device gate.
+fixture-owned entries. Actual completed-session cleanup and restart pass in J609.
 
 `./dev prototype --action session-cleanup-check` (current support action,
 `scripts/lab/session_cleanup_check.py`) observes the existing first-stage loss
@@ -680,8 +680,8 @@ Lakes. Setup preserves and removes only the owned report targets; teardown
 preserves foreign selectors, verifies process termination and sleeps the display.
 Raw evidence stays in validated `work/device/<serial>/experiments/session-cleanup/<attempt>/`.
 The check cannot certify an unassisted run, permanent unlocks or a memory leak
-fix. Host contracts live in `tests/test_session_cleanup_check.py`; Android
-acceptance remains a separate gate.
+fix. Host contracts live in `tests/test_session_cleanup_check.py`; J609 records
+Android acceptance on the current baseline.
 
 C# under `tools/` is formatted with `clang-format -i` using the repository's `.clang-format`
 (J544). It never rewraps string literals or comments, so a correct reformat leaves each file

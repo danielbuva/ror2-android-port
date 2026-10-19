@@ -7346,3 +7346,41 @@ their own runs. These baseline results do not certify full skill behavior,
 Siren's mission, normal difficulty, memory stability or performance. No later
 runtime source is staged. R8/build-entry replay implications remain J606/J607;
 the parallel Phase 2 track was untouched.
+
+## J609 — Native loss cleans the world and restarts in the same process
+
+Hypothesis: J607's exact overlay retirement and native destroyed-host pruning
+resolve J605's later cleanup failure while preserving J600/J601's native
+teleporter listener retirement. J606/J607 record the current-source and pinned
+community API review; the unchanged J605 host runner observes the complete
+native loss/results/cleanup/restart path, rather than invoking cleanup directly.
+
+The J608 baseline APK
+41ecca66673864dda4af97e2558bd2813b4637dcddadddb425501f8b73875a14
+passes. Ordinary Commando play, with all five gameplay debug assists off,
+reaches a genuine StandardLoss at 186.88 s of world play: one native death
+event, original death state/corpse/ragdoll and destroyed body. Automatic input
+remains diagnostic/assisted. The original client ending is generated, persisted
+and reloaded. World/objective and final session cleanup all complete. The native
+teleporter reports one CombatSquad, synchronous server-active destruction, and
+both exact-target system-death and summon listener counts changing from 1 to 0.
+Material release completes without the prior overlay assertion.
+
+The source results UI then starts session 2 in the same PID. Acceptance waits
+for an actually ready world with positive health and diagnostic input, rather
+than the initial playing-phase snapshot: the accepted report has 5.01 s of
+Lakes play and 110 health. The completed and restarted reports have no error or
+first failure; current-process logs have no unexpected runtime errors. Applied
+profile runs remain 13, earned/available-earned unlock counts remain 1, and the
+completed assisted result is excluded from permanent awards. The runner removes
+its selector, verifies process termination and confirms OLED sleep.
+
+Private full evidence:
+work/device/<serial>/experiments/session-cleanup/20261019T081729.356148Z/.
+This includes the frozen launch, first live/completed/restarted reports, source
+restart/display mapping and current-process log. This closes the concrete J605
+cleanup/restart regression on the current APK. It does not prove normal combat,
+unassisted progression, repeated-session memory stability or a complete kit.
+The baseline remains J608's two standard checks; no source/build input changed
+for this acceptance. Continue the remaining base-survivor callback sweep on this
+same APK, then investigate its first failure before adding runtime scope.
