@@ -1018,6 +1018,27 @@ gates. `AndroidProgressionHost` exercises complete event metadata, detached
 native grant/duplicate behavior and profile replacement in an isolated fixture,
 without synthesizing the source event.
 
+`scripts/lab/source_identity_metadata.py` owns the source identity/toggle
+metadata read by `SourceStageIdentityLifecycle`. Existing
+`whole_catalog.generate_build_maps` emits it into `WholeStageContexts.json`
+from the exact staged `SourceScenes` bytes and their generated candidate
+receipt; mismatched hashes refuse. It retains nonzero network scene IDs,
+source component/object IDs, ordered group ranges, full slot widths and nulls.
+Runtime bindings resolve exact object references through an ordered Transform
+path under a uniquely named/shaped root, validating names, sibling counts and
+child indices. Identical same-name/root-shape ambiguity refuses. Static
+metadata for other Base scenes does not extend the runtime scene gate.
+
+The early `original_stage_contexts` policy call remains independent of staged
+source scenes and receipts. R5 policy paths explicitly omit identity metadata;
+the nonempty post-R6 R7 map generation requires it, then R8 stages the consumer
+and `SourceIdentityTransformParityFixture`. The fixture uses a disposable
+inactive preview hierarchy, verifies Python/C# Unicode hashing and exact
+ordered path resolution, and destroys/closes that hierarchy in `finally`.
+No native Run, networking or real source scene is started by the fixture.
+Host contracts: `test_source_identity_metadata.py`,
+`test_source_identity_context_phase.py`, `test_source_identity_transform_parity.py`.
+
 The first-stage source lifecycle diagnostic retains the full native stage deck,
 source toggle references and original Run RNG. It omits the older temporary
 Beetle/CombatDirector fixture, arms population observers before native Start,

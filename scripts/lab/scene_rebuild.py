@@ -245,7 +245,9 @@ def replay_variants(io):
             if guid in pool_keys and pool_keys[guid] != row["primaryKey"]:
                 raise RuntimeError("Ambiguous original stage pool identity")
             pool_keys[guid] = row["primaryKey"]
-    contexts = original_stage_contexts(export, list(decks), input_id, pool_keys)
+    # R5 precedes SourceScenes and its receipt. Emit population policy only; R7
+    # regenerates strict receipt-bound identity metadata after R6 completes.
+    contexts = original_stage_contexts(export, list(decks), input_id, pool_keys, include_source_identity=False)
     io.write(project / "Assets/LabLoadingScene/Resources/WholeStageContexts.json", contexts)
     io.write(config_path, config)
     io.write(recipe_path, recipe)

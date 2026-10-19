@@ -211,7 +211,9 @@ def stage(io=None):
                 raise RuntimeError("Ambiguous original stage pool identity")
             pool_keys[guid] = row["primaryKey"]
         next_names = names + pending
-        contexts = original_stage_contexts(export, [row["name"] for row in config["stageCombatDecks"]] + pending, input_id, pool_keys)
+        contexts = original_stage_contexts(
+            export, [row["name"] for row in config["stageCombatDecks"]] + pending, input_id, pool_keys, include_source_identity=False
+        )
         for name in pending:
             config["integratedStages"].append(candidates[name][1])
             config["stageCombatDecks"].append({"name": name, "asset": "", "cards": 0, "categories": 0, "excluded": 0})

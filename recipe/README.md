@@ -1122,3 +1122,19 @@ entitlement, private path or device identity is added. Native availability,
 weights and RNG remain authoritative, including empty optional tiers. Existing
 source/fixture producers and the 105-source selection remain; replay changed
 runtime owners through R8. No new ignored build input or Phase 2 edit occurs.
+
+### Source identity metadata audit (2026-10-19)
+
+The authored source identity reader, runtime binding validation and editor
+preview fixture replace hand-maintained identity/toggle arrays with generated
+local metadata. They contain only parsing, canonical shape hashing, owned
+reference checks and minimum native API/script identities. Synthetic fixture
+names/hierarchies are authored. Actual source object/component IDs, serialized
+ranges, null slots and hierarchy relationships are emitted only under ignored
+`work/` from legitimate staged scenes after their existing receipt hash gate.
+No native method body, original scene/assets, middleware, private path,
+device/account identifier or entitlement is reproduced in public source.
+No activation policy, gameplay selection, native RNG or ownership grant is
+changed. Existing R5 policy calls stay early/receipt-independent; replay
+strict maps at R7 after R6, and the changed source/fixture through R8. No
+Phase 2 output is edited by this change.

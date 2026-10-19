@@ -5,6 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using Newtonsoft.Json.Linq;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -58,23 +61,32 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
     {
         public uint sceneId;
         public string name;
-        public ExpectedIdentity(uint sceneId, string name)
+        public bool activeSelf;
+        public ExpectedIdentity(uint sceneId, string name, bool activeSelf)
         {
             this.sceneId = sceneId;
             this.name = name;
+            this.activeSelf = activeSelf;
         }
     }
 
     sealed class ExpectedToggleGroup
     {
         public int min, max;
-        public string[] names;
-        public ExpectedToggleGroup(int min, int max, params string[] names)
+        public GameObject[] targets;
+        public ExpectedToggleGroup(int min, int max, GameObject[] targets)
         {
             this.min = min;
             this.max = max;
-            this.names = names;
+            this.targets = targets;
         }
+    }
+
+    sealed class SceneSpecData
+    {
+        public ExpectedIdentity[] identities;
+        public ExpectedToggleGroup[] groups;
+        public uint toggleSceneId;
     }
 
     sealed class IdentityState
@@ -112,29 +124,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
     static readonly FieldInfo InitializedObjectsField = typeof(SceneObjectToggleGroup).GetField("allToggleableObjects", PrivateInstance);
     static readonly FieldInfo ActivationsField = typeof(SceneObjectToggleGroup).GetField("activations", PrivateInstance);
 
-    static readonly ExpectedIdentity[] GolemplainsIdentities = { new ExpectedIdentity(1, "Director"), new ExpectedIdentity(2, "NewtStatue"),
-                                                                 new ExpectedIdentity(3, "NewtStatue"),
-                                                                 new ExpectedIdentity(4, "NewtStatue"),
-                                                                 new ExpectedIdentity(5, "ToggleGroupController") };
-
-    static readonly ExpectedIdentity[] LakesIdentities = { new ExpectedIdentity(1, "Chest2"),
-                                                           new ExpectedIdentity(2, "Director"),
-                                                           new ExpectedIdentity(3, "NewtStatueCaveWall"),
-                                                           new ExpectedIdentity(4, "NewtStatueShipParts"),
-                                                           new ExpectedIdentity(5, "NewtStatueWaterfall"),
-                                                           new ExpectedIdentity(6, "Scrapper"),
-                                                           new ExpectedIdentity(7, "ToggleGroupController"),
-                                                           new ExpectedIdentity(8, "WakeStageEvent") };
-
-    static readonly ExpectedToggleGroup[] GolemplainsGroups = { new ExpectedToggleGroup(1, 1, "NewtStatue", "NewtStatue", "NewtStatue") };
-
-    static readonly ExpectedToggleGroup[] LakesGroups = {
-        new ExpectedToggleGroup(1, 2, "TG Island 01", "TG Island 02", "TG Island 03"), new ExpectedToggleGroup(0, 1, "TG NE Cave  01"),
-        new ExpectedToggleGroup(1, 1, "TG Cave Wall 01", "NewtStatueCaveWall", "NewtStatueShipParts"),
-        new ExpectedToggleGroup(2, 6, "TLArchiBeamA", "TLArchiBeamC", "TLArchiBeamA", "TLArchiBeamC", "TLArchiBeamC", "TLArchiBeamB",
-                                "TLArchiBeamA", "TLArchiBeamA", "TLArchiBeamC", "TLArchiCover", "TLArchiRampB", "TLArchiRampB"),
-        new ExpectedToggleGroup(1, 1, "Scrapper", "Chest2")
-    };
+    static readonly HashSet<string> SupportedScenes = new HashSet<string>(StringComparer.Ordinal) { "golemplains", "lakes" };
 
     readonly Scene scene;
     readonly ISourceStageIdentityOwners owners;
@@ -184,7 +174,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         RequireSpawnQueueEmpty();
         RequireKnownGlobalSceneChangedSubscribers();
         var probe = new SourceStageIdentityLifecycle(scene, owners);
-        probe.ValidateGlobalSceneIdentityCohort(SceneSpec(scene.name).identities);
+        probe.ValidateGlobalSceneIdentityCohort(SceneSpec(scene).identities);
     }
 
     public static SourceStageIdentityLifecycle Create(Scene scene, ISourceStageIdentityOwners owners)
@@ -213,7 +203,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
     {
         if (disposed || sourceSceneInfo || identitiesPrepared)
             throw Refuse("owner setup was already attempted");
-        var spec = SceneSpec(scene.name);
+        var spec = SceneSpec(scene);
         try
         {
             sourceSceneInfo = owners.RequireActiveSceneInfo(scene);
@@ -240,7 +230,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
             ValidateToggleGroups(spec.groups);
             CaptureToggleTargets();
             owners.PrepareSourceInteractableTables(scene, identities.Select(state => state.identity).ToArray(),
-                                                  toggleStates.Select(state => state.target).ToArray());
+                                                   toggleStates.Select(state => state.target).ToArray());
             ActivateAndSpawnAll(spec.identities);
             identitiesPrepared = true;
             RequireOwnedToggleQueue();
@@ -349,7 +339,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         toggleQueueDispatched = true;
         RequireQueueEmpty<SceneObjectToggleGroup>(ToggleQueueField, "SceneObjectToggleGroup");
         RequireSpawnQueueEmpty();
-        VerifyNativeActivationResult(SceneSpec(scene.name).groups);
+        VerifyNativeActivationResult(SceneSpec(scene).groups);
     }
 
     // Called by IntegratedStageSession after the genuine server Stage-begin callback
@@ -447,12 +437,17 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
                                    identity.gameObject.scene != scene))
             throw Refuse("foreign or non-scene NetworkServer.SpawnObjects candidate is present");
 
-        var actual = global.Select(identity => new ExpectedIdentity(identity.sceneId.Value, identity.gameObject.name))
-                         .OrderBy(identity => identity.sceneId)
-                         .ToArray();
+        var actual =
+            global
+                .Select(identity => new ExpectedIdentity(identity.sceneId.Value, identity.gameObject.name, identity.gameObject.activeSelf))
+                .OrderBy(identity => identity.sceneId)
+                .ToArray();
         var wanted = expected.OrderBy(identity => identity.sceneId).ToArray();
         if (actual.Length != wanted.Length ||
-            actual.Where((identity, index) => identity.sceneId != wanted[index].sceneId || identity.name != wanted[index].name).Any())
+            actual
+                .Where((identity, index) => identity.sceneId != wanted[index].sceneId || identity.name != wanted[index].name ||
+                                            identity.activeSelf != wanted[index].activeSelf)
+                .Any())
             throw Refuse("complete generated source identity cohort differs from the audited scene manifest");
         if (actual.GroupBy(identity => identity.sceneId).Any(group => group.Count() != 1))
             throw Refuse("duplicate source scene identity value");
@@ -474,7 +469,8 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         {
             var sceneId = identity.sceneId.Value;
             ExpectedIdentity spec;
-            if (!specs.TryGetValue(sceneId, out spec) || identity.gameObject.name != spec.name || identity.gameObject.activeSelf)
+            if (!specs.TryGetValue(sceneId, out spec) || identity.gameObject.name != spec.name ||
+                identity.gameObject.activeSelf != spec.activeSelf)
                 throw Refuse("expected inactive source identity missing/changed: sceneId=" + sceneId + " name=" + identity.gameObject.name);
             if (IsRegisteredIdentity(identity))
                 throw Refuse("refusing to Reset a source identity that is already registered: sceneId=" + sceneId);
@@ -492,9 +488,13 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
             var group = groups[i];
             var contract = expected[i];
             if (group.objects == null || group.minEnabled != contract.min || group.maxEnabled != contract.max ||
-                group.objects.Length != contract.names.Length ||
-                group.objects.Where((obj, index) => !obj || obj.gameObject.scene != scene || obj.name != contract.names[index]).Any() ||
-                group.objects.Distinct().Count() != group.objects.Length)
+                group.objects.Length != contract.targets.Length ||
+                group.objects
+                    .Where((obj, index) => !ReferenceEquals(obj, contract.targets[index]) ||
+                                           (!ReferenceEquals(obj, null) && obj.gameObject.scene != scene))
+                    .Any() ||
+                group.objects.Where(obj => !ReferenceEquals(obj, null)).Distinct().Count() !=
+                    group.objects.Count(obj => !ReferenceEquals(obj, null)))
                 throw Refuse("source toggle group serialized refs/ranges changed at index " + i);
         }
     }
@@ -503,7 +503,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
     {
         foreach (var target in toggle.toggleGroups.SelectMany(group => group.objects))
         {
-            if (toggleStates.All(state => !ReferenceEquals(state.target, target)))
+            if (!ReferenceEquals(target, null) && toggleStates.All(state => !ReferenceEquals(state.target, target)))
                 toggleStates.Add(new ToggleState { target = target, activeSelf = target.activeSelf });
         }
     }
@@ -522,7 +522,7 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
             else
                 state.identity.gameObject.SetActive(true);
         }
-        var spec = SceneSpec(scene.name);
+        var spec = SceneSpec(scene);
         var toggles = scene.GetRootGameObjects()
                           .SelectMany(root => root.GetComponentsInChildren<SceneObjectToggleGroup>(true))
                           .Where(component => component && component.gameObject.scene == scene)
@@ -575,10 +575,10 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         var nativeGroups = (bool[])ActivationsField.GetValue(toggle);
         var objects = (GameObject[])InitializedObjectsField.GetValue(toggle);
         if (nativeGroups == null || objects == null || nativeGroups.Length != objects.Length ||
-            nativeGroups.Length != expected.Sum(group => group.names.Length))
+            nativeGroups.Length != expected.Sum(group => group.targets.Length))
             throw Refuse("native toggle activation result dimensions changed");
         for (int i = 0; i < objects.Length; i++)
-            if (!objects[i] || objects[i].activeSelf != nativeGroups[i])
+            if (!ReferenceEquals(objects[i], null) && objects[i].activeSelf != nativeGroups[i])
                 throw Refuse("original ApplyActivations did not apply its native bit at index " + i);
         // The values are read-only evidence here; no activation bits are authored.
     }
@@ -692,13 +692,141 @@ internal sealed class SourceStageIdentityLifecycle : IDisposable
         return new InvalidOperationException("Source-stage identity lifecycle refused: " + reason);
     }
 
-    static (ExpectedIdentity[] identities, ExpectedToggleGroup[] groups, uint toggleSceneId) SceneSpec(string scene)
+    static SceneSpecData SceneSpec(Scene scene)
     {
-        if (scene == "golemplains")
-            return (GolemplainsIdentities, GolemplainsGroups, 5);
-        if (scene == "lakes")
-            return (LakesIdentities, LakesGroups, 7);
-        throw Refuse("unsupported source scene " + scene);
+        if (!scene.IsValid() || !SupportedScenes.Contains(scene.name))
+            throw Refuse("unsupported source scene " + (scene.IsValid() ? scene.name : "<invalid>"));
+        var contextAsset = Resources.Load<TextAsset>("WholeStageContexts");
+        var bootstrapAsset = Resources.Load<TextAsset>("WholeCatalogBootstrap");
+        if (!contextAsset || !bootstrapAsset)
+            throw Refuse("source identity metadata/bootstrap resource is missing");
+        var contexts = JObject.Parse(contextAsset.text);
+        var bootstrap = JObject.Parse(bootstrapAsset.text);
+        if ((int?)contexts["source_identity_schema_version"] != 1 || (string)contexts["input_id"] != (string)bootstrap["input_id"])
+            throw Refuse("source identity metadata schema/input generation is incompatible");
+        var entry = contexts["stages"]?[scene.name]?["source_identity_lifecycle"] as JObject;
+        if (entry == null || (int?)entry["schema_version"] != 1 || !IsSha256((string)entry["source_scene_sha256"]))
+            throw Refuse("receipt-bound source identity metadata is missing or malformed: " + scene.name);
+
+        var identityRows = entry["network_identities"] as JArray;
+        if (identityRows == null)
+            throw Refuse("source NetworkIdentity cohort is missing: " + scene.name);
+        var identities =
+            identityRows
+                .Select(row => new ExpectedIdentity(checked((uint)(int)row["scene_id"]), (string)row["name"], (bool)row["active_self"]))
+                .ToArray();
+        if (identities.Length == 0 || identities.Any(row => row.sceneId == 0 || String.IsNullOrEmpty(row.name)) ||
+            identities.Select(row => row.sceneId).Distinct().Count() != identities.Length)
+            throw Refuse("source NetworkIdentity metadata contains empty/duplicate IDs: " + scene.name);
+
+        var controllerRows = entry["toggle_controllers"] as JArray;
+        if (controllerRows == null || controllerRows.Count != 1)
+            throw Refuse("supported source scene must have exactly one audited toggle controller: " + scene.name);
+        var controller = (JObject)controllerRows[0];
+        if ((int?)controller["scene_id"] == null || (int)controller["source_component_file_id"] <= 0 ||
+            (int)controller["source_game_object_file_id"] <= 0)
+            throw Refuse("toggle controller lacks serialized source identity: " + scene.name);
+        var controllerSceneId = checked((uint)(int)controller["scene_id"]);
+        var controllerIdentity = identities.Where(row => row.sceneId == controllerSceneId && row.name == "ToggleGroupController").ToArray();
+        if (controllerIdentity.Length != 1)
+            throw Refuse("toggle controller scene ID does not map to its audited identity: " + scene.name);
+        var controllerObject = ResolveTransformPath(scene, controller["transform_path"] as JArray);
+        if (!controllerObject || controllerObject.name != "ToggleGroupController")
+            throw Refuse("serialized transform path did not resolve the exact toggle controller: " + scene.name);
+        var toggle = controllerObject.GetComponent<SceneObjectToggleGroup>();
+        var identity = controllerObject.GetComponent<NetworkIdentity>();
+        if (!toggle || !identity || identity.sceneId.Value != controllerSceneId)
+            throw Refuse("resolved toggle controller component/identity differs from metadata: " + scene.name);
+
+        var groupRows = controller["groups"] as JArray;
+        if (groupRows == null)
+            throw Refuse("serialized toggle groups are missing: " + scene.name);
+        var groups = new ExpectedToggleGroup[groupRows.Count];
+        for (int groupIndex = 0; groupIndex < groupRows.Count; groupIndex++)
+        {
+            var group = (JObject)groupRows[groupIndex];
+            var slots = group["objects"] as JArray;
+            if (slots == null)
+                throw Refuse("toggle slot array is missing at group " + groupIndex);
+            var targets = new GameObject[slots.Count];
+            for (int slotIndex = 0; slotIndex < slots.Count; slotIndex++)
+            {
+                var slot = (JObject)slots[slotIndex];
+                int sourceId = (int)slot["source_game_object_file_id"];
+                var path = slot["transform_path"] as JArray;
+                if (sourceId == 0)
+                {
+                    if (path != null)
+                        throw Refuse("serialized null toggle slot has a fabricated transform path at " + groupIndex + "/" + slotIndex);
+                    targets[slotIndex] = null;
+                }
+                else
+                {
+                    if (sourceId < 0 || path == null)
+                        throw Refuse("non-null toggle slot has no source ID/path binding at " + groupIndex + "/" + slotIndex);
+                    targets[slotIndex] = ResolveTransformPath(scene, path);
+                    if (!targets[slotIndex] || targets[slotIndex].scene != scene)
+                        throw Refuse("serialized toggle target did not resolve in the exact source scene at " + groupIndex + "/" +
+                                     slotIndex);
+                }
+            }
+            groups[groupIndex] = new ExpectedToggleGroup((int)group["min_enabled"], (int)group["max_enabled"], targets);
+        }
+        return new SceneSpecData { identities = identities, groups = groups, toggleSceneId = controllerSceneId };
+    }
+
+    static GameObject ResolveTransformPath(Scene scene, JArray path)
+    {
+        if (path == null || path.Count == 0)
+            throw Refuse("serialized transform path is empty");
+        var root = (JObject)path[0];
+        if ((bool?)root["root"] != true || (int?)root["same_name_same_shape_count"] != 1 || (int?)root["same_name_root_count"] < 1 ||
+            !IsSha256((string)root["root_shape_sha256"]))
+            throw Refuse("serialized root binding is ambiguous or malformed");
+        string rootName = (string)root["name"];
+        var roots = scene.GetRootGameObjects();
+        var namedRoots = roots.Where(candidate => candidate && candidate.name == rootName).ToArray();
+        if (namedRoots.Length != (int)root["same_name_root_count"])
+            throw Refuse("scene root name cohort changed: " + rootName);
+        var matchingRoots = namedRoots.Where(candidate => ShapeHash(candidate.transform) == (string)root["root_shape_sha256"]).ToArray();
+        if (matchingRoots.Length != 1)
+            throw Refuse("serialized scene root shape is missing or ambiguous: " + rootName);
+        Transform current = matchingRoots[0].transform;
+        for (int i = 1; i < path.Count; i++)
+        {
+            var segment = (JObject)path[i];
+            int index = (int)segment["index"];
+            int siblingCount = (int)segment["sibling_count"];
+            if ((bool?)segment["root"] != false || current.childCount != siblingCount || index < 0 || index >= current.childCount)
+                throw Refuse("serialized transform child shape/index changed at segment " + i);
+            current = current.GetChild(index);
+            if (current.name != (string)segment["name"])
+                throw Refuse("serialized transform child name changed at segment " + i);
+        }
+        return current.gameObject;
+    }
+
+    static string ShapeHash(Transform root)
+    {
+        var signature = new StringBuilder();
+        AppendShape(root, signature);
+        using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.ASCII.GetBytes(signature.ToString())))
+            .Replace("-", "")
+            .ToLowerInvariant();
+    }
+
+    static void AppendShape(Transform node, StringBuilder signature)
+    {
+        signature.Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(node.name))).Append('|').Append(node.childCount).Append('[');
+        for (int i = 0; i < node.childCount; i++)
+            AppendShape(node.GetChild(i), signature);
+        signature.Append(']');
+    }
+
+    static bool IsSha256(string value)
+    {
+        return value != null && value.Length == 64 &&
+               value.All(character => (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f'));
     }
 }
 }

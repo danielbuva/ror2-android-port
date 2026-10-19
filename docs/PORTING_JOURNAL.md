@@ -10254,3 +10254,66 @@ The reviewed metadata stack is applied to working source and passes 965 host
 tests with one existing skip; editor and generated-map checks are pending.
 No new APK, original input, extra-device action, private receipt hand edit,
 existing data move or storage configuration change occurs here.
+
+## J682 — Generate receipt-bound source identity and ordered toggle metadata
+
+Hypothesis: exact staged source scenes can replace the native lifecycle's
+hand-maintained Golemplains/Lakes arrays without guessing repeated object
+names, losing null slots or changing native selection/spawn order. Metadata
+also prepares wider Base stage coverage while the runtime activation gate
+remains explicitly limited to those same two scenes.
+
+Prior art: inspected pinned R2API.Director README and R2API.Prefab PrefabAPI
+at f539511e. They separate stage/card policy from prefab network registration;
+they do not supply serialized scene-object ownership for this Android source
+loader. Accepted HLAPI SpawnObjects/ValidateSceneObject and the exact source
+bundles govern the nonempty scene-ID cohort and two-pass native sweep. No
+community or game implementation is copied into public source.
+
+New source_identity_metadata.py reads exact generated SourceScenes bytes,
+retains source component/object IDs, nonzero scene IDs, activeSelf, controller/
+group order, min/max, full slot arrays and literal nulls. Existing map generation
+requires each source hash to match its generated candidate receipt. The
+runtime resolves the exact references with root name/ordered shape SHA-256,
+then child index/count/name bindings; duplicate same-name/same-shape roots
+refuse. Slot order/width, native resource sweep, RNG and spawn order remain
+unchanged. J675's preactivation table binding and exact restoration callbacks
+are retained in the merge.
+
+The private review found an initial R5/R6 receipt cycle and an incomplete
+overlay. The integrated corrected stack keeps four-argument policy generation
+and both early R5 paths receipt-independent. Nonempty R7 map generation is
+strict after R6; empty stage configurations retain their prior empty-policy
+contract. No new timestamped analysis input is consumed. Existing stage source
+producer stages the authored exact-editor fixture. ARCHITECTURE/LOCAL_STATE
+name the owner and input boundary; recipe/README records the provenance audit.
+
+Both root host suites pass 965 tests with one existing skip, with Ruff checks
+and formatting. Exact-editor evidence:
+work/experiments/first-stage-native-lifecycle/
+identity-editor-20261019T154458.573718Z/. Root runs the real generate_build_maps
+producer, stages all 105 runtime files/fixtures under the host mutex, refreshes
+and verifies the pinned compiled idle editor. The new disposable preview-scene
+fixture passes the production Python/C# Unicode shape golden value, duplicate
+child resolution, wrong index/name/shape and ambiguous-root refusals. Existing
+first-stage, variant API/input, native Director setter and LightningStake
+source-policy fixtures also pass. No real scene, Run or server is started.
+C# formatting is independently checked as whitespace-only.
+
+Read-only integrated parity proof:
+work/coordination/base-stage-identity-audit/root-integrated-proof/.
+All 13 staged Base scenes plus Lakes match exact source receipts and native
+serialized-ID/path/range/order/null comparisons: 193 nonzero identities,
+68 groups and 316 slots, including 26 nulls. Native comparison separately
+retains 29 zero-ID components excluded by native SpawnObjects eligibility.
+Golemplains is 5 identities/1 group/3 slots; Lakes is 8/5/21. Those static
+contracts do not prove Unity lifecycle, RNG results, activation or device play.
+
+First failure: none in the corrected host/editor gates. No new APK is built;
+installed/accepted APK remains e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc.
+J681's identity teardown failure is separately under repair. Repeat real native
+startup/cleanup on a new candidate before accepting this consumer; other
+scenes and native transport remain unavailable. Replay R5 policy, R7 maps
+(after R6) and R8 sources for the other session's later rebuild; no work/rebuild
+or R9 status is changed. No original input, extra-device action, receipt hand
+edit, data move or storage reconfiguration occurs.

@@ -265,7 +265,9 @@ def entity_state_gameobject_fields(source_root):
             if previous and previous["rawParent"] != parent:
                 raise RuntimeError("Accepted C# partial class has conflicting base identity: " + full_name)
             container_names = nesting
-            record = classes.setdefault(full_name, {"fields": {}, "rawParent": parent, "namespace": namespace_name, "containers": container_names, "imports": set()})
+            record = classes.setdefault(
+                full_name, {"fields": {}, "rawParent": parent, "namespace": namespace_name, "containers": container_names, "imports": set()}
+            )
             if record["containers"] != container_names:
                 raise RuntimeError("Accepted C# partial class has conflicting container identity: " + full_name)
             record["imports"].update(imports)
@@ -313,10 +315,7 @@ def entity_state_gameobject_fields(source_root):
             for field_name, field_type in classes[current]["fields"].items():
                 effective_fields.setdefault(field_name, field_type)
             current = classes[current]["parent"]
-        result[full_name] = {
-            field_name for field_name, field_type in effective_fields.items()
-            if field_type.rsplit(".", 1)[-1] == "EntityStateGameObject"
-        }
+        result[full_name] = {field_name for field_name, field_type in effective_fields.items() if field_type.rsplit(".", 1)[-1] == "EntityStateGameObject"}
     if not result:
         raise RuntimeError("Accepted EntityStateGameObject source field index is empty")
     return result
@@ -353,28 +352,64 @@ def entity_state_reference_closure(text, source, state_fields, key_locations, co
         targets = key_locations.get(edge["key"], [])
         matches = [identity for identity in targets if location_metadata.get(identity, {}).get("type", "").split(",")[0] == "UnityEngine.GameObject"]
         resolved = []
-        edge_record = dict(source=source, key=edge["key"], locations=targets, requestedType="UnityEngine.GameObject",
-                           matchingLocations=matches, resolved=resolved, field=edge["field"],
-                           targetType=edge["targetType"], kind="EntityStateGameObject")
+        edge_record = dict(
+            source=source,
+            key=edge["key"],
+            locations=targets,
+            requestedType="UnityEngine.GameObject",
+            matchingLocations=matches,
+            resolved=resolved,
+            field=edge["field"],
+            targetType=edge["targetType"],
+            kind="EntityStateGameObject",
+        )
         edge_record["locationIdentity"] = [
-            dict(id=identity, type=location_metadata[identity].get("type"),
-                 provider=location_metadata[identity].get("provider"),
-                 internalId=location_metadata[identity].get("internalId"),
-                 primaryKey=location_metadata[identity].get("primaryKey"))
-            for identity in targets if identity in location_metadata
+            dict(
+                id=identity,
+                type=location_metadata[identity].get("type"),
+                provider=location_metadata[identity].get("provider"),
+                internalId=location_metadata[identity].get("internalId"),
+                primaryKey=location_metadata[identity].get("primaryKey"),
+            )
+            for identity in targets
+            if identity in location_metadata
         ]
         edges.append(edge_record)
         if not targets:
             issues.append(dict(source=source, key=edge["key"], field=edge["field"], category="asset-reference-key-missing"))
         elif not matches:
-            issues.append(dict(source=source, key=edge["key"], field=edge["field"], locations=targets,
-                               requestedType="UnityEngine.GameObject", category="asset-reference-requested-type-missing"))
+            issues.append(
+                dict(
+                    source=source,
+                    key=edge["key"],
+                    field=edge["field"],
+                    locations=targets,
+                    requestedType="UnityEngine.GameObject",
+                    category="asset-reference-requested-type-missing",
+                )
+            )
         elif len(matches) != 1:
-            issues.append(dict(source=source, key=edge["key"], field=edge["field"], locations=matches,
-                               requestedType="UnityEngine.GameObject", category="asset-reference-requested-type-ambiguous"))
+            issues.append(
+                dict(
+                    source=source,
+                    key=edge["key"],
+                    field=edge["field"],
+                    locations=matches,
+                    requestedType="UnityEngine.GameObject",
+                    category="asset-reference-requested-type-ambiguous",
+                )
+            )
         elif matches[0] not in converted:
-            issues.append(dict(source=source, key=edge["key"], field=edge["field"], locations=matches,
-                               requestedType="UnityEngine.GameObject", category="asset-reference-conversion-unresolved"))
+            issues.append(
+                dict(
+                    source=source,
+                    key=edge["key"],
+                    field=edge["field"],
+                    locations=matches,
+                    requestedType="UnityEngine.GameObject",
+                    category="asset-reference-conversion-unresolved",
+                )
+            )
         else:
             resolved.append(converted[matches[0]]["source"])
             edge_record["resolved"] = list(resolved)
@@ -483,9 +518,7 @@ def analyze(source, export, index, helper, native_overrides=None, runtime_candid
         # EntityStateConfiguration serializes EntityStateGameObject.AssetReference
         # keys in stringValue, not an m_AssetGUID member. Follow only fields whose
         # accepted native state declaration confirms that exact value type.
-        state_edges, state_paths, state_issues = entity_state_reference_closure(
-            text, relative, state_fields, key_locations, converted, locations
-        )
+        state_edges, state_paths, state_issues = entity_state_reference_closure(text, relative, state_fields, key_locations, converted, locations)
         soft_edges.extend(state_edges)
         pending.extend(state_paths)
         issues.extend(state_issues)
@@ -644,8 +677,14 @@ def reconcile():
     if contract.get("legacyInputSha256") != legacy_hash:
         raise RuntimeError("Refresh the native catalog contract for the accepted legacy assembly")
     result = analyze(
-        catalog_path(out), export, index, helper.read_text(), conversions, contract.get("assetKeyCandidates", []),
-        contract.get("legacyAliases", {}), helper.parents[1]
+        catalog_path(out),
+        export,
+        index,
+        helper.read_text(),
+        conversions,
+        contract.get("assetKeyCandidates", []),
+        contract.get("legacyAliases", {}),
+        helper.parents[1],
     )
     result["source_catalog_sha256"] = closure["source_catalog_sha256"]
     result["metadata_sha256"] = sha(catalog_path(out))
@@ -693,8 +732,13 @@ def audit():
         raise RuntimeError("Recovered provider categories disagree with original IL")
     contract = read(out / "original-catalog-contract.json")
     result = analyze(
-        source, export, index, helper.read_text(), runtime_candidates=contract.get("assetKeyCandidates", []),
-        legacy_aliases=contract.get("legacyAliases", {}), state_source_root=helper.parents[1]
+        source,
+        export,
+        index,
+        helper.read_text(),
+        runtime_candidates=contract.get("assetKeyCandidates", []),
+        legacy_aliases=contract.get("legacyAliases", {}),
+        state_source_root=helper.parents[1],
     )
     result["input_id"] = read(WORK / "inventory/files.json")["input_id"]
     result["source_catalog_sha256"] = sha(export / "Assets/StreamingAssets/aa/catalog.json")
@@ -1369,14 +1413,39 @@ def repair_root_bindings():
     contract = read(out / "original-catalog-contract.json")
     if contract["input_sha256"] != assembly_hash:
         raise RuntimeError("Runtime key metadata belongs to different input")
-    result = analyze(catalog_path(out), export, read(out / "source-guid-index.json"), helper.read_text(), conversions,
-                    contract.get("assetKeyCandidates", []), contract.get("legacyAliases", {}), helper.parents[1])
+    result = analyze(
+        catalog_path(out),
+        export,
+        read(out / "source-guid-index.json"),
+        helper.read_text(),
+        conversions,
+        contract.get("assetKeyCandidates", []),
+        contract.get("legacyAliases", {}),
+        helper.parents[1],
+    )
     result.update(input_id=closure["input_id"], source_catalog_sha256=closure["source_catalog_sha256"], metadata_sha256=sha(catalog_path(out)))
     write(out / "reconciled-closure.json", result)
     print(json.dumps(dict(repaired=len(repairs), closure_files=len(result["files"]))))
 
 
-def original_stage_contexts(export, stages, input_id, pool_keys):
+def source_identity_lifecycle_metadata(project, stage, source_scene_receipts):
+    """Return receipt-bound source identity metadata, or None before source-scenes exists."""
+    from source_scene_candidate import SCENES
+    from source_identity_metadata import read_scene as source_identity_metadata
+
+    staged_scene = Path(project) / "Assets/LabLoadingScene/SourceScenes" / stage / (stage + ".unity")
+    if not staged_scene.is_file():
+        return None
+    if stage not in SCENES or not (SCENES[stage] == "Base" or stage == "lakes"):
+        return None
+    identity_metadata = source_identity_metadata(staged_scene)
+    receipt_hash = (source_scene_receipts or {}).get(stage)
+    if receipt_hash != identity_metadata["source_scene_sha256"]:
+        raise RuntimeError("Generated source identity metadata differs from the source-scene receipt: " + stage)
+    return identity_metadata
+
+
+def original_stage_contexts(export, stages, input_id, pool_keys, project=None, source_scene_receipts=None, include_source_identity=False):
     """Recover native population policy from each original serialized scene."""
     from source_scene_candidate import SCENES
 
@@ -1466,12 +1535,24 @@ def original_stage_contexts(export, stages, input_id, pool_keys):
         if bonus[1].strip() != "[]" and (not entries or len(entries) != bonus[1].count("objectThatGrantsPointsIfEnabled:")):
             raise RuntimeError("Original bonus credit entry is unresolved: " + stage)
         result["bonus_credits"] = [{"path": object_path(int(match[1])), "points": int(match[2])} for match in entries]
+        if include_source_identity and project is not None:
+            identity_metadata = source_identity_lifecycle_metadata(project, stage, source_scene_receipts)
+            if identity_metadata is not None:
+                result["source_identity_lifecycle"] = identity_metadata
+        if include_source_identity and stage in ("golemplains", "lakes") and "source_identity_lifecycle" not in result:
+            raise RuntimeError("Supported source identity lifecycle scene is not staged: " + stage)
         contexts[stage] = result
-    return {
+    result = {
         "input_id": input_id,
         "stages": contexts,
-        "scope": "Original pool, scene-director policy and bonus-credit object identities. Android retains continuous-body entry and teleporter lifecycle adapters.",
+        "scope": "Original pool, scene-director policy and bonus-credit object identities. This policy-only context does not validate source identity metadata.",
     }
+    if include_source_identity:
+        result["source_identity_schema_version"] = 1
+        result["scope"] = (
+            "Original pool, scene-director policy, bonus-credit object identities and receipt-bound serialized source-stage identity/toggle bindings. Runtime activation remains limited to the explicit Golemplains/Lakes lifecycle gate."
+        )
+    return result
 
 
 # A player build only roots an assembly whose types it saw serialized. Asset bundles
@@ -1554,7 +1635,21 @@ def generate_build_maps(io, manifest, contract, source, code_only=False):
             if guid in pool_keys and pool_keys[guid] != row["primaryKey"]:
                 raise RuntimeError("Ambiguous stage pool serialized owner")
             pool_keys[guid] = row["primaryKey"]
-        io.write(project / "Assets/LabLoadingScene/Resources/WholeStageContexts.json", original_stage_contexts(export, stages, manifest["input_id"], pool_keys))
+        if not stages:
+            # An empty policy configuration has no source scenes to bind. Keep the
+            # existing build-entry contract acyclic and emit the ordinary empty
+            # context resource without requiring the later R6 receipt.
+            stage_contexts = original_stage_contexts(export, stages, manifest["input_id"], pool_keys, include_source_identity=False)
+        else:
+            scene_receipt_path = io.work / "experiments/source-scenes/candidate.json"
+            if not io.is_file(scene_receipt_path):
+                raise RuntimeError("Source-stage identity metadata requires the generated source-scene receipt")
+            scene_receipt = io.read(scene_receipt_path)
+            source_scene_receipts = {row["name"]: row["candidate_sha256"] for row in scene_receipt.get("staged", [])}
+            stage_contexts = original_stage_contexts(
+                export, stages, manifest["input_id"], pool_keys, project, source_scene_receipts, include_source_identity=True
+            )
+        io.write(project / "Assets/LabLoadingScene/Resources/WholeStageContexts.json", stage_contexts)
 
 
 def stage_build_sources(io, runtime_sources, manifest, contracts):
@@ -1584,6 +1679,7 @@ def stage_build_sources(io, runtime_sources, manifest, contracts):
         "DeveloperSkillVariantSelectionFixture.cs",
         "FirstStageDiagnosticGateFixture.cs",
         "NativeDirectorDeckSetterFixture.cs",
+        "SourceIdentityTransformParityFixture.cs",
     ]:
         io.apply(project / "Assets/Editor" / filename, copy=ROOT / "tools/catalog" / filename, catalog=True)
     # Bundle-only serialized components and reflected location types are invisible
