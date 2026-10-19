@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J666](PORTING_JOURNAL.md#j666--restore-managed-editor-artifacts-after-an-offline-compiler-output-mistake) | 2026-10-19 | Restore managed editor artifacts after an offline compiler output mistake | Hypothesis: the host draft compiler's output-scope mistake can be repaired by regenerating only managed script artifacts from the unchanged staged public sourc… |
 | [J665](PORTING_JOURNAL.md#j665--build-and-install-the-typed-dependencydirector-candidate-plain-control-passes) | 2026-10-19 | Build and install the typed-dependency/Director candidate; plain control passes | Hypothesis: J659/J662's staged dependencies and J664's bounded native deck-order correction can produce a full Android payload while preserving ordinary first-… |
 | [J664](PORTING_JOURNAL.md#j664--defer-native-director-deck-setters-until-after-strict-cold-preflight) | 2026-10-19 | Defer native Director deck setters until after strict cold preflight | Hypothesis: J661's aggregate Director assertion contains a deterministic ordering conflict: early native deck binding populates a cache which the later cold-ow… |
 | [J663](PORTING_JOURNAL.md#j663--accept-the-player-context-apk-on-both-default-modes) | 2026-10-19 | Accept the player-context APK on both default modes | Hypothesis: J658 preserves the ordinary transport path despite the separate native Director witness failure classified in J661. |

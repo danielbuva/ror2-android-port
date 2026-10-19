@@ -9621,3 +9621,42 @@ accepted until both default modes pass on this APK. R3/R8 replay follows J659/
 J662/J664's recorded input changes; no Phase 2 output is edited. No original
 input change, private device receipt hand edit, extra-device selection, existing
 data move or storage reconfiguration occurs in this case.
+
+## J666 — Restore managed editor artifacts after an offline compiler output mistake
+
+Hypothesis: the host draft compiler's output-scope mistake can be repaired by
+regenerating only managed script artifacts from the unchanged staged public
+sources, with no APK, device or content-cache replacement.
+
+First failure: a host-only offline metadata draft reused Bee's response file
+without redirecting its output/refout and implicit PDB paths. At 14:33 UTC it
+wrote Assembly-CSharp.dll, Assembly-CSharp.ref.dll and Assembly-CSharp.pdb in
+the generated Bee artifact directory. It did not edit authored/project source,
+ScriptAssemblies, the already completed J665 build or any device receipt. The
+wrong artifacts and response files are preserved before repair at
+work/experiments/editor-artifact-recovery/20261019T143655.423878Z/.
+before.json verifies all 105 staged runtime sources still match the frozen
+public inputs and the cached J665 APK hash is unchanged.
+
+Root holds the host Unity mutex, passes host-only preflight and checks the exact
+compiled idle editor through pinned MCP. After verifying the exact editor API,
+CompilationPipeline.RequestScriptCompilation(CleanBuildCache) regenerates the
+managed script cache only. No asset/bundle cache is cleared and no original
+input is edited. Compilation, production first-stage gates and the native
+inactive deck-setter fixture pass. after.json records that canonical Bee DLL
+and PDB now equal the untouched pre-incident ScriptAssemblies hashes, while the
+reference assembly is freshly regenerated. The loaded runtime module is also
+recorded. The frozen/current J665 APK hash remains unchanged.
+
+The later correct private-output draft compilation is not treated as restoring
+Bee; only root's verified editor regeneration closes this incident. Future
+host compilers must redirect and validate every output, including implicit
+symbols, before invocation. A compact guarded response-file helper is being
+host-tested separately; no new public build input or command is introduced by
+this repair. The existing asset payload and known-good APKs remain preserved.
+
+The device independently passed J665's plain control and is now running the
+full Engineer alternate case on that frozen APK. This host recovery makes no
+new native Stage, skill, cleanup or progression claim. No device action,
+private receipt hand edit, extra-device selection, data move, storage
+configuration change or Phase 2 output edit occurs in this repair.

@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J665** (full dependency/Director candidate installed; plain control passes).
+Last updated 2026-10-19 after **J666** (editor artifacts restored; full candidate plain control passes, Engineer replay active).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
