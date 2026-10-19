@@ -10660,3 +10660,48 @@ Build them together and repeat native UI abandon to classify the actual target.
 R8 must replay the changed owner; no new local build input, Phase 2 output,
 original input, device receipt hand edit, storage change or extra-device action
 occurs. Native restoration/restart remains unaccepted.
+
+## J692 — Bandit2 default and three alternate native skill callbacks
+
+Hypothesis: a fresh native Bandit2 inventory can bind all available alternate
+variants without guessing catalog indices, while preserving permanent unlocks
+and the saved loadout. J603 established default callbacks; this case adds the
+current live inventory and alternate selection on the accepted APK.
+
+No runtime source changes. Accepted/installed APK:
+55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861.
+The selector-free default reaches 60.382156 world seconds with canonical
+primary/secondary/utility/special authority/server callback pairs 12/3/1/3.
+Its fresh inventory yields families 2/3/5/4. A strict per-run selector uses
+variants 1/1/0/1 and skill indices 2/3/189/173: Bandit2Blast,
+Bandit2SerratedShivs, ThrowSmokebomb and SkullRevolver. Utility has no alternate.
+The post-spawn native master loadout confirms all four selected definitions.
+The alternate reaches 60.390884 world seconds with callback pairs 11/2/1/1.
+Both collectors pass with no missing/suppressed callbacks, unexpected errors or
+runtime first failure. These are bounded assisted callback checks, not complete
+ability-sequence or normal-difficulty acceptance.
+
+Alternate combat facts record 11 player-body damage events, one mapped hit
+from an exact player-owned Bandit2ShivProjectile, two distinct shiv projectile
+identities and two MissileProjectile identities. The latter can arise from the
+automatic equipment path and are not assigned to a skill. The other ten damage
+facts have no mapped projectile inflictor; timing does not prove slot causality.
+No summon damage, observer error, history truncation or overflow is recorded.
+Native Run stopwatch is about 81.74 seconds; damage timestamps use Unity time.
+Those clocks differ from the explicit world duration above.
+
+Evidence: work/experiments/survivor-check/20261019T161755.542207Z/Bandit2/
+(default) and 20261019T162724.843946Z/Bandit2/ (alternate).
+Authored host triage and strict selector are under
+work/coordination/bandit-alternate-results/ and bandit-alternate-inventory/.
+Invincibility, automatic diagnostic input and developer survivor selection
+make both assisted; the alternate adds developer variant assistance. Other
+four gameplay acceleration options are off. Profile remains 13 applied runs,
+one earned/available unlock and one earned coin, saved variants 0/0/0/0;
+loadout menu/result application are false. Locked alternate selection grants
+no permanent unlock. Native first-stage diagnostic is off, recovery is false.
+
+First failure: none in these bounded checks. Ordinary Bandit2 eligibility,
+full rifle/shiv/special effects and sustained normal play remain open. No input,
+recipe, Phase 2 output, device receipts by hand, storage configuration or extra
+device changes. The collector stops the package and sleeps the OLED afterward.
