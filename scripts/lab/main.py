@@ -73,6 +73,8 @@ if a.apk and a.command != "install":
     p.error("--apk requires install")
 if a.payload_dir and a.command != "sync-data":
     p.error("--payload-dir requires sync-data")
+if a.command == "perf" and a.action not in {"inspect", "collect", "cpu"}:
+    p.error("perf --action must be collect or cpu (inspect preserves the existing collection behavior)")
 is_destination_preflight = a.command == "preflight" and a.dest is not None
 if (
     a.work_dir
@@ -177,6 +179,10 @@ try:
             print(json.dumps(d.reset(), indent=2))
         elif a.command == "migrate-device-receipts":
             print(json.dumps(d.migrate_receipts(), indent=2))
+        elif a.command == "perf" and a.action == "cpu":
+            from performance_capture import capture_cpu
+
+            print(json.dumps(capture_cpu(d, duration_seconds=15, label=a.target), indent=2))
         else:
             print(json.dumps(d.collect(a.command, WORK / "captures" / now()), indent=2))
     else:

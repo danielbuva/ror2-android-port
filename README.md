@@ -39,7 +39,7 @@ The prepared workstation already has the exact Unity/Android toolchain and inspe
 `./scripts/lab-setup.sh` restores the pinned Python dependencies (Python 3.11 or newer).
 Copy `environment/lab-config.example.json` to the ignored `work/config/local.json` and set
 the legitimate installation path. Never copy the original installation into tracked
-directories. Device selection is a host draft pending live validation. Configure authorized
+directories. Configure authorized
 serials in `device_serials` and choose the default in `device_serial`; each serial may have
 its own `device_settings` entry. Device actions accept `--device SERIAL` or
 `LAB_DEVICE=SERIAL`. If more than one attached device is available and neither selector is
@@ -51,16 +51,15 @@ For example, device-specific settings can select `storage_mode` (`adopted` or `i
 `display_models`, and `display_count`. Existing top-level legacy settings are fallback values
 for the configured default device only. Live checks must still confirm current storage and
 free space before every install. Do not change storage configuration or move existing data.
-Per-device receipts are planned under `work/device/<serial>/`; the existing
-`work/device/` receipts will be migrated only by the explicit `migrate-device-receipts`
-command after the coordination lock clears. The migration retains the original receipts and
-writes its activation marker last. No receipt migration has run yet.
+Per-device receipts live under `work/device/<serial>/`. The explicit
+`migrate-device-receipts` command verifies the configured default device's ownership,
+retains original flat receipts and writes its activation marker last. The current Nova
+has passed migration, an in-place install and both baseline modes (J595).
 
-Current onboarding remains narrow: Nova is configured for adopted storage. Nova and Thor
-must not be onboarded as internal-storage devices until their serials are configured, live
-storage is recorded, and the current Nova baseline passes. Thor's two-display sleep behavior
-also needs verification. All multi-device behavior and migration commands remain unvalidated
-until the active device/tooling lock is released.
+Current onboarding remains narrow: the current Nova uses adopted storage only. The second
+Nova and Thor require explicit serial configuration, recorded live internal storage and
+reserve checks before installation. Thor's two-display sleep behavior also needs
+verification. Concurrent runs and extra-device compatibility remain unvalidated.
 
 `./dev inspect --full` creates a reviewed input identity. New or updated inputs must be
 reviewed before their ID is recorded in `work/config/accepted-input.json`. No Steam
@@ -80,9 +79,10 @@ authentication is needed to inspect the supplied installation.
 | `./dev sync-data [--device SERIAL]` | Hash-verified sync of changed payload into the selected device's runtime-reported path. |
 | `./dev run` | Launch the lab, wait for its checkpoint, collect the runtime snapshot. |
 | `./dev logs` · `crash` · `screenshot` · `perf` | Timestamped local captures. |
+| `./dev perf --action cpu [--target LABEL] [--device SERIAL]` | Current: 15 s system simpleperf call graph of the already running owned foreground lab process; no launch or install. Raw evidence stays per device; live profiling permissions remain unverified. |
 | `./dev storage [--device SERIAL]` | Live capacity, volume and backing report; changes nothing. |
 | `./dev reset [--device SERIAL]` | Uninstall only the selected device's locally receipted disposable lab package. |
-| `./dev migrate-device-receipts [--device SERIAL]` | Current host draft: migrate default-device receipts after live ownership verification, preserve originals, activate last. Blocked while the coordination lock exists. |
+| `./dev migrate-device-receipts [--device SERIAL]` | Current: migrate default-device receipts after live ownership verification, preserve originals, activate last. Blocked while the coordination lock exists. |
 | `./dev inspect [--full]` · `decompile` · `export-project` · `graphics` | Input inventory and recovery stages (cached, receipted). |
 
 `./dev prototype --action list` lists all actions with help, current first, including
@@ -144,8 +144,8 @@ so a stale APK cannot pass as feature evidence. Gameplay runs on the device are 
 driven by runner scripts kept under the ignored `work/experiments/whole-catalog/gameplay/`;
 they are not yet tracked (see [docs/LOCAL_STATE.md](docs/LOCAL_STATE.md)).
 
-Multi-device selector, per-device receipts, and receipt migration descriptions above are a
-host draft; their CLI, configuration and device checks are pending the coordination lock.
+The selector, scoped receipts and receipt migration passed on the current Nova (J595).
+Additional devices and concurrent device runs still need live acceptance.
 Device operations do not take the global Unity build lock at
 `work/coordination/unity-build.lock`; Unity build/editor work uses that shared host lock.
 

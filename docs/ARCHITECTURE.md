@@ -102,6 +102,22 @@ and a passing current Nova baseline. Thor's two-display sleep behavior also rema
 verified. These are readiness conditions, not evidence that either device currently uses
 the proposed settings.
 
+CPU capture (`scripts/lab/performance_capture.py`, current host implementation):
+`./dev perf --action cpu --target LABEL` takes a 15 s system simpleperf call graph
+from the selected device's already running, owned foreground lab process. Setup
+validates ownership, APK hash, one PID, foreground activity and the validated runtime
+receipt. Before/after reports preserve available attempt/session/stage/frame context;
+a changed process, APK or previously available session identity fails. It does not
+launch gameplay or install a profiler. Live system-simpleperf permissions remain a
+device gate. Raw profile, symbol report, receipt and failures stay in validated
+`work/device/<serial>/performance/<attempt>/`. A symbol-report failure retains the
+successful raw capture and explicitly records the report error. Teardown removes
+only its unique remote profile after a verified nonempty pull; a failed pull or
+timeout preserves the remote output without guessing a process to kill. The caller
+retains ownership of the existing gameplay run and display. Host transport/refusal
+contracts are in `test_performance_capture.py` and `test_performance_cli.py`.
+Bare `./dev perf` retains the existing dumpsys capture behavior.
+
 Assembly transform verification (`scripts/lab/assembly_transforms.py`, current):
 `recipe/assembly-transforms.json` pins the accepted input, AssemblyProbe sources,
 Mono.Cecil and ordered arguments/input/output hashes. The checker first applies
