@@ -46,7 +46,7 @@ def build(tool_root, output):
                 "--target=aarch64-linux-android24",
                 "--sysroot=" + str(native),
                 "-resource-dir=" + str(native / "lib/clang/21"),
-                "--ld-path=" + str(native / "bin/lld"),
+                "--ld-path=" + str(native / "bin/ld.lld"),
                 "-B" + str(native / "lib"),
                 "-L/system/lib64",
                 "-O2",
