@@ -6,6 +6,48 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
+owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
+holds open release work. ADR-001's architecture C and the runtime pipeline below
+remain current. [phone-owner-build.md](phone-owner-build.md) assesses build stages
+for phone-only delivery while retaining the desktop workflow as fallback; no
+replacement game runtime or working build pipeline is selected. Public-input bootstrap,
+performance equivalence and device acceptance remain open.
+
+Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
+TextAsset bundle with only Python's standard library; its versioned native
+schemas consume no class database or generated asset. `phone_content.py` owns
+project staging and source/bundle hash checks for that fixture.
+`tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
+separate player build; `ContentFixture.cs` loads either its embedded bundle or
+a hash-bound candidate at a fixed path in its own data directory. It checks two
+load/unload cycles and writes a private report. The three `phone-content-*` prototype
+actions stage/check/build only this fixture under the primary checkout mutex.
+See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
+owner or whole-catalog build calls this support path.
+
+`scripts/lab/phone_apk.py` is separate packaging **support** for that authored
+fixture only. Its standard-library parser increases a literal Android manifest
+version code after checking the fixed package identity, substitutes the authored
+bundle, preserves other entry bytes and removes obsolete signatures. It writes
+new unsigned outputs; alignment and owner signing follow separately. The current
+`phone-apk-fixture` action takes an ignored hash-bound request via `--target`;
+the same file has a standalone Android CLI. It cannot repackage the game ID.
+
+`phone_package_check.py` owns the separate fixture's device acceptance: require
+explicit selection, local APK hashes, matching shell-workspace ownership and
+fresh storage/capacity checks; exercise embedded input, refused hash drift,
+phone-produced input, native reload/unload, a version-code upgrade and data
+retention. Its `finally` removes only a package whose actual APK hash matches
+the owned attempts and verifies display sleep. It records game APK hashes
+read-only before/after. `phone-package-check` takes an ignored request and
+writes private evidence under `work/experiments/phone-packaging/`.
+The player publishes actual Android/Unity data paths in its private bootstrap
+report; the runner binds canonical paths and their separate backing stores
+before reading reports or copying candidates. Editor checks/builds each write
+an isolated oracle report and require its pinned actual Unity version and
+native content checks, independently of process exit status.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

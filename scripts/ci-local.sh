@@ -5,6 +5,9 @@
 # Usage: scripts/ci-local.sh [TARGET [BASE]]   (defaults: HEAD, merge-base with origin/main)
 # Used by the pre-push hook (scripts/git-hooks/pre-push); exits nonzero if CI would fail.
 set -euo pipefail
+# Hooks export repository-local variables. Clear them before addressing the fresh clone;
+# otherwise `git -C` still operates on the pushing worktree instead of the clone.
+for git_env in $(git rev-parse --local-env-vars); do unset "$git_env"; done
 root=$(git -C "$(dirname "$0")/.." rev-parse --show-toplevel)
 target=$(git -C "$root" rev-parse "${1:-HEAD}")
 base=${2:-$(git -C "$root" merge-base origin/main "$target" 2>/dev/null || git -C "$root" hash-object -t tree /dev/null)}
