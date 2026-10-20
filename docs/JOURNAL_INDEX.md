@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J788](PORTING_JOURNAL.md#j788--accept-both-default-controls-and-preserve-the-earlier-mul-t-spawn-failure) | 2026-10-20 | Accept both default controls and preserve the earlier MUL-T spawn failure | Date: 2026-10-20. |
 | [J787](PORTING_JOURNAL.md#j787--root-attribution-names-original-static-registries-that-keep-unloaded-assets) | 2026-10-20 | Root attribution names original static registries that keep unloaded assets | Hypothesis (J782): the retained item-display-rule graphs, and the rest of the ~57 MB per session, are held by a small number of named roots. |
 | [J786](PORTING_JOURNAL.md#j786--complete-the-managed-original-event-but-refuse-its-capture-evidence) | 2026-10-20 | Complete the managed original event but refuse its capture evidence | Date: 2026-10-20. |
 | [J785](PORTING_JOURNAL.md#j785--restore-source-enabled-weapon-machines-and-prepare-siren-before-stage-handoff) | 2026-10-20 | Restore source-enabled weapon machines and prepare Siren before Stage handoff | Date: 2026-10-20. |

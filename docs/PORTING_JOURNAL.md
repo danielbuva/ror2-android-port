@@ -15569,3 +15569,80 @@ registry. Host test covers `RemoveWhere`. Device result: pending.
 Evidence: work/device/<serial>/experiments/session-memory/20261020T093235.358679Z/;
 J667 stops: .../20261020T090209.568874Z/, .../20261020T090901.284133Z/,
 .../20261020T092224.266530Z/. Thor has c8501568… installed.
+
+
+## J788 — Accept both default controls and preserve the earlier MUL-T spawn failure
+
+Date: 2026-10-20. Hypothesis: J785's source-enabled state-machine restoration
+and temporary-Stage handoff correction preserve the standard integrated game
+and expose the next native prerequisite in the targeted survivor path.
+
+Committed source `067cab3fea15f0c2bf18f038346b8b17ab276531` builds in
+170.191486 s with zero errors. APK SHA-256:
+`be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`.
+All 251 frozen source inputs match before/after and all 266 payload hashes
+equal J783. Matching debugging ZIP SHA-256:
+`e22f1c53534a4804839ab440b8d49c1e602d141e9e07d9a22014c5ffe1ce09d9`;
+IL2CPP build ID `9956c87fa0266a072b728c2cfe0629beba7a210a`.
+These symbols belong only to this player. The frozen source includes the
+parallel root-attribution observer; later registry-retirement source is outside
+this APK. No content, native bank or game assembly is changed by this build.
+
+Doctor passes. The adopted-storage Nova updates in place with fresh adopted
+placement/free-space checks, bootstraps and syncs. Both standard Commando
+controls pass: plain reaches 35.211945 s; stage-exit completes exactly one
+transition to Goolake and 10.102417 s there, at 126.462784 s world time.
+Both current-process logs are clear; report error/firstFailure are empty,
+native lifecycle and Siren diagnostics are off, recovery is false and the
+profile remains at 13 applied runs. The selectors are removed, owned app
+force-stopped and display slept.
+
+Between controls, the parallel session claims another serialized host build
+and Thor. Root's original wrapper refuses its next action until that new
+lease is reviewed. The resumed standard stage check runs against the exact
+frozen owned player while the shared current-build pointer advances; its
+recorded is_current_build is false and remains false. Root verifies the owned
+artifact before and after, then independently confirms all four ownership/
+placement identity fields again after completion. No current-build or device
+receipt is edited to make the result current. Both actual check results and
+the original wrapper refusal remain preserved.
+
+A fresh exact archive of 067cab3 passes 1,122 SDK-sourced host tests, zero
+skips, in 35.884 s. Root executes the input-sink fixture in the exact idle
+editor under the shared mutex before the parallel build starts. All 17
+positive booleans pass, nativeSkillExecutionTested remains false, and the four
+guard/fixture source hashes match the APK before/after. This qualifies the
+input boundary only; the fourth transition and Moon remain manual-only and
+unaccepted. No old APK guard receipt supplies the new source proof.
+
+The internal-storage Nova independently updates in place under its reserve
+policy and syncs the unchanged payload, then runs the explicit-hash MUL-T
+offhand diagnostic while the adopted Nova finishes its stage check. This
+trial fails before the first live world report, in automatic-spawn-state-start.
+The current-process log preserves NullReferenceException through native
+Run.IsEquipmentExpansionLocked, Inventory.SetEquipmentInternal,
+TrySetActiveEquipmentLocation, SetActiveEquipmentSlot and
+EntityStateMachine.SetState. The wire report's error/firstFailure are empty;
+they do not override that logged runtime exception. The profile is not yet
+initialized in this report; its default zero fields are not a saved-profile
+reset or progression result. No offhand readiness, Buzzsaw or damage is
+accepted. Cleanup stops the owned game and sleeps the display.
+
+First failure: the targeted MUL-T native equipment-expansion exception during
+spawn. J784's prior APK reached world play and a disabled Weapon2 deadline;
+J785 now exposes an earlier prerequisite. Inspect the exact native call and
+Android owner order before changing initialization. Native Siren entry,
+complete skills, ordinary difficulty, audio, performance and Moon remain
+separate gates. Existing named owners and rebuild staging are unchanged;
+J785's source-staging replay remains with the parallel rebuild track.
+
+Evidence: work/experiments/native-owner-fixes/candidate-20261020T094105.803565Z/;
+work/experiments/baseline/20261020T094445.084031Z/ and
+20261020T094934.768583Z/; work/coordination/codex-be26-baseline-root-acceptance.json;
+codex-be26-baselines-root-r1/; codex-be26-stage-baseline-resume-root-r2/;
+codex-be26-stage-owner-postcheck-root-r1.json;
+native-owner-fixes-guard-qualification/ and editor-root-r1/;
+work/experiments/survivor-check/20261020T095148.549727Z/Toolbot/
+(report SHA-256 `7bc849fbd42097bfd9a852e9dd99fe02dfa07c8c5c2af19daac8c43545cb6251`);
+work/coordination/codex-be26-toolbot-root-validation.json.
+Raw device, source and storage identities remain ignored.
