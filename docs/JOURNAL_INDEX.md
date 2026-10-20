@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J809](PORTING_JOURNAL.md#j809--accept-text-bootstrap-and-huntress-tracker-source-on-both-defaults) | 2026-10-20 | Accept text bootstrap and Huntress tracker source on both defaults | Date: 2026-10-20. |
 | [J808](PORTING_JOURNAL.md#j808--restore-the-source-enabled-huntress-tracker-on-integrated-body-spawn) | 2026-10-20 | Restore the source-enabled Huntress tracker on integrated body spawn | Date: 2026-10-20. |
 | [J807](PORTING_JOURNAL.md#j807--bootstrap-recovered-text-before-catalogs-and-witness-native-siren-targets) | 2026-10-20 | Bootstrap recovered text before catalogs and witness native Siren targets | Date: 2026-10-20. |
 | [J806](PORTING_JOURNAL.md#j806--stop-the-stock-mul-t-trial-on-an-early-tmp-settings-exception) | 2026-10-20 | Stop the stock MUL-T trial on an early TMP settings exception | Date: 2026-10-20. |

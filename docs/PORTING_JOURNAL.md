@@ -17053,3 +17053,67 @@ text replacement. Next build combines J807 and this change. Pass both defaults
 and repeat stock MUL-T before a fresh bounded Huntress/Siren qualification.
 Full skill semantics, native Siren execution, visual indicators and composed
 audio remain open.
+
+
+## J809 — Accept text bootstrap and Huntress tracker source on both defaults
+
+Date: 2026-10-20. Hypothesis: J807/J808 can enter ordinary menu play and retain
+native first-stage transport without regression. This default qualification
+does not establish that Huntress targets update, a stock MUL-T kit completes,
+an indicator renders or the native Siren encounter executes.
+
+Root builds committed source f94a1b24497bb98cd8dacc40b1b5b73a1f6cd190 after the
+1,152-test host checkpoint, doctor and fresh selected-device preflight. The
+exact editor code-only ARM64/Vulkan build succeeds in 177.235980 s with zero
+errors. All 252 frozen build inputs match the commit before/after; 107 runtime
+sources and all 266 payload hashes remain unchanged in membership/content
+respectively. APK SHA-256:
+`4c37596cd5828047a5cb19bc2df8c5c6913333cce01104d3f0b1e4bf748dccb9`.
+The frozen candidate retains the complete source ZIP, receipt, payload equality,
+APK and matching debugging symbols. Symbols SHA-256:
+`4ce9c58a47b7f1ac846748e129dbad25d8d103c992a10bff963a1c5d0d22a4bd`;
+libil2cpp Build ID: `a1b27116751382ec7d4047f0f2b3c017f0181982`.
+
+Both game devices update in place with fresh storage and per-device ownership
+checks. The adopted-storage Nova remains adopted-only; Thor passes its internal
+reserve policy. Install/sync phases share the payload read lock; selected-device
+runs overlap after onboarding. Nova passes plain play at 35.1914368 s, then one
+exit to Goolake with 13.3713379 s in the destination (146.0587006 s world time).
+Applied runs remain 13 in both. Thor separately passes plain play at
+35.0814972 s with applied runs unchanged at 0. Each result records current-build
+true, no report/first-failure or current-PID error, and unchanged owned artifact
+identity before/after. No native diagnostic continuation is selected. Finally
+blocks remove selectors, stop the apps and sleep idle displays, including both
+Thor panels. The internal Nova's game rollback remains untouched.
+
+First failure: none within these bounded default checks. Root views the new
+and previous plain captures: body and HUD render from different camera poses;
+there is no matched PC comparison, native indicator witness or visual-parity
+claim. The original input and retained presentation policy remain the visual
+authority. J806's pre-world stock MUL-T exception remains its own result; a
+fresh stock-kit retry follows the accepted defaults. Native Huntress tracking,
+Siren encounter/cleanup, complete skill semantics and ordinary difficulty stay
+open. Isolated audio remains separate from the game.
+
+Evidence: work/experiments/tmp-siren-tracker-next/candidate-20261020T155746.061578Z/;
+work/coordination/{codex-tmp-siren-tracker-build-root-r1/,
+codex-tmp-siren-tracker-device-root-r1/}.
+Candidate manifest SHA-256:
+`c6670185b9d976d3594aad1e10abbd6ae94cda39fa7e4cc58d1e36495877276f`;
+aggregate acceptance:
+`c44fb5e6613516ae1d3af8e985e6f9781e3068625e55cffe075ecead042aee6e`.
+The three baseline evidence directories under work/experiments/baseline/ are
+20261020T155924.410432Z (Nova plain), 20261020T160308.563262Z (Nova exit) and
+20261020T155912.733018Z (Thor plain). Their result/report SHA-256 pairs are:
+
+- Nova plain: `ae33af6f8249cb9e6f12e6ed2c8fe94290136ae6639e4c770b7fff8ea226bf7b` /
+  `07fc1320545555ec3dabaafc2c9dcc350538e9d20ed0d86a4e896651cb925e88`.
+- Nova exit: `80c5e271aeb3d01682fe6468ffef8daf6bbcaefab4f905acea257a0e1a51c330` /
+  `ec3604d843bbbf0330596443b86363080b47542521618814cb17c974fe1197b3`.
+- Thor plain: `6c3d160fcbf4abb1b99254f15e50b11100bbc964e434d71aa8919a602a3b67b2` /
+  `f7f67be2f2b504d31bd952d048a08dfbb7b9975fc674955c2de6cdb0621bcefe`.
+
+Prior art and replay scope remain J807/J808: the current native component
+lifecycle, exact source prefab and pinned community ownership/population seams.
+No runtime source, GUID or build-input membership changes in this acceptance
+checkpoint. Preserve J805 and all listed executable rollbacks.
