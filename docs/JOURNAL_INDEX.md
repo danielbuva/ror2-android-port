@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J793](PORTING_JOURNAL.md#j793--accept-the-lifecycle-owner-baseline-and-expose-mul-ts-primary-observer-failure) | 2026-10-20 | Accept the lifecycle-owner baseline and expose MUL-T's primary observer failure | Date: 2026-10-20. |
 | [J792](PORTING_JOURNAL.md#j792--retain-exact-stage-and-playable-body-ownership-before-native-callbacks) | 2026-10-20 | Retain exact stage and playable-body ownership before native callbacks | Date: 2026-10-20. |
 | [J791](PORTING_JOURNAL.md#j791--qualify-one-managed-original-audio-event-with-a-stable-pcm-container) | 2026-10-20 | Qualify one managed original audio event with a stable PCM container | Hypothesis: J786's capture refusal is a finalization/container interpretation problem, not evidence that the original Global event cannot render through the re… |
 | [J790](PORTING_JOURNAL.md#j790--accept-the-equipment-owner-player-and-observe-native-mul-t-offhand) | 2026-10-20 | Accept the equipment-owner player and observe native MUL-T offhand | Hypothesis: J789's early acquisition of the existing equipment-availability lease permits native survivor stance entry without changing equipment or expansion… |

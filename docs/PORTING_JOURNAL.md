@@ -15998,3 +15998,82 @@ codex-director-cleanup-doctor-root-r1/.
 Raw source, logs and identity receipts stay ignored. Rebuild source staging
 must replay all three changed existing runtime owners; the parallel rebuild
 track remains separate.
+
+
+## J793 — Accept the lifecycle-owner baseline and expose MUL-T's primary observer failure
+
+Date: 2026-10-20. Build J792's committed ownership changes, qualify default
+play separately, and retry the stock MUL-T kit without its alternate/offhand
+selector. Source commit: 53735b753705e8b8a1ede7757c61c5ec3eae4bb9.
+Prior-art and source contracts remain in J792; this trial adds no runtime code.
+
+Preflight passes. The code-only ARM64/Vulkan player builds in 181.079887 s
+with zero errors and debugging symbols. All 251 frozen inputs match the commit
+before/after, including 106 runtime sources; all 266 payload hashes match
+J790. Frozen candidate:
+work/experiments/director-cleanup-next/candidate-20261020T112558.888368Z/.
+APK SHA-256:
+`23916334f598f68b2f3b7e464b709a74c0b54bb222107031d32dbac9f0a18494`;
+symbols: `cbf647fb647a50dc658bac02653fa85b136bc5e96f2a77d7b7fd89676ef2e6eb`;
+IL2CPP Build ID: `183d55f6b30f87eda03b7246a467dd4b481bd84e`.
+The prior executable candidate and source/symbol receipts remain intact.
+
+The adopted-storage Nova updates in place after fresh live placement/free-space
+checks. Both standard modes pass on this exact current-build APK: 35.210602 s
+of first-stage play, then exactly one original exit to Goolake with 10.114288 s
+of next-stage play at world time 90.679123 s. Both reports/logs have no first
+failure or unexpected current-process error, applied runs remain 13, diagnostic
+native-entry flags remain off and recovery is false. Root checks identical owned
+artifact identity before/after each mode. Final-report SHA-256s:
+`ab1745830125732724b49e744c206dc253f22b40508aa85eec7eeb3199a16e17` and
+`259fd86fe45744c843f1bac87f823f4c7aeeff55ec928cda603e7292c15f90ff`.
+Selectors are removed, the app stops and the idle display sleeps. Accept this
+as the new default baseline, not a complete-game or targeted ability result.
+
+Thor separately updates under its internal-reserve policy and passes the plain
+check at 35.066269 s. Its own applied-run count stays zero; this is a separate
+local profile, not a copy or reset of Nova's profile. Both physical panels sleep
+when idle. Device installs and receipts stay separate. Private orchestration
+review catches and corrects an incorrect alternate-kit command, a pre-install
+check that demanded the new APK already be installed, and a lock that would
+serialize device roles. Shared protection covers onboarding's shared payload;
+pure device checks can overlap. The actual Root default controls are preserved
+independently from those draft corrections.
+
+The stock MUL-T trial still fails at 18.071686 s. Its preserved error now exposes
+NullReferenceException in PrimaryFireSession.ObserveSpinePrimary, before the
+NovaInput/AutomaticSpawn iterator unwinds. Cleanup then reports a missing
+canonical skill slot through Check, setting the firstFailure field to this
+secondary refusal. The exact original null operand remains unknown; neither
+the healthy entry inventory nor the scrubbed final inventory identifies it.
+General cleanup=true does not establish complete native cleanup while the phase
+is catalog-cleanup-pending. No stock four-slot activation/timing acceptance
+follows. Result SHA-256:
+`6a00ad65d739f06086afa9f4b0e49cdf43e9ef1aa1155b169f743ab802b3fcb1`;
+final report: `bdd0e998a9edb34dbaed20e012cbf91c89da84f9c52b814cf085a8a67a13bcba`.
+Revisit after a bounded primary-operand witness and cleanup attribution repair;
+do not suppress the observer failure or infer a lost saved profile.
+
+A fresh archive of committed source passes all 1,133 host tests with zero
+skips. Archive SHA-256:
+`8043c51f235032faf47e77104112318663b7c2cffb4faf516f49d6f497f4b952`.
+Root's fresh exact-editor input-sink fixture passes all 17 positive booleans,
+with nativeSkillExecutionTested=false and the four staged guard hashes unchanged.
+After correcting the private helper to read the actual builder/status/result
+schemas, its real entry is host-tested at the intercepted MCP boundary, then
+Root executes the real fixture. The production reader accepts Root's source/
+fixture guard receipt, bound to this APK and the 0-to-1 control. Fourth-transition
+auto-pause stays pending, Moon stays manual-only and Siren egg input stays off.
+Native loss/restart and the Siren entry retry remain separate runtime checks.
+
+Evidence: work/coordination/codex-director-cleanup-next-build-r1/;
+codex-2391-baselines-root-r1/;
+codex-director-cleanup-next-device-draft/root-ops/{thor-onboard,thor-plain}/;
+director-cleanup-next-guard-qualification/{editor-root-r2,
+accepted-2391-guard-root-r1.json,root-accepted-validation.json};
+codex-2391-toolbot-default-root-r1/;
+work/experiments/baseline/20261020T112912.550837Z/,
+20261020T113253.988544Z/ and 20261020T113331.671293Z/;
+work/experiments/survivor-check/20261020T114021.073271Z/Toolbot/.
+Raw device/source evidence and identifiers remain ignored. No new rebuild input
+changes beyond J792's three existing owners.
