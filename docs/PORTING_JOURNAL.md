@@ -14402,3 +14402,52 @@ Phase 2 is paused by operator decision before any R9 run; the kept destination i
 Revisit (release prerequisite): land the fix, prove it with a working-project build and both
 `./dev check-baseline` modes, then a fresh R1–R8 replay and R9 whose APK `unity_builtin_extra`
 should equal the baseline's.
+
+## J769 — Five repeated UI-abandon sessions retain every completed session
+
+Hypothesis: J417's growth of completed probes/reports (1→2→3) and of managed
+usage per session persists on the current composition. Since J417, Unity objects
+are reclaimed at teardown, but no run has repeated more than two sessions in one
+process. Prior art: J391/J417 and the lifecycle/handle-ownership notes in
+community-prior-art.md that J417 cites; no community algorithm is introduced.
+This is an observation, not a fix.
+
+Change (host only, no APK): new `./dev prototype --action session-memory-check`
+(`scripts/lab/session_memory_check.py`, host tests
+`tests/test_session_memory_check.py`). It repeats J730's ordinary Commando menu
+start, 60 s of ready Lakes play and UI abandon five times, requires the
+unchanged session-abandon contract for every completed session, freezes profile
+counts, and collects the existing `SessionResourceBoundary` samples plus host
+TOTAL PSS at each menu. It binds an explicit owned APK hash only.
+
+Run: Thor (internal storage, explicit automatic diagnostic input, J762), accepted
+J762 APK 96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1,
+seed 2, all five gameplay assists off. Both Novas were busy with Codex checks.
+Sessions 1–4 pass their abandon contracts (native listener/template cleanup,
+no death/result, unchanged profile). Session 5 stops at the first runtime
+error: `LightningStake(Clone)` nonfinite collider transform, J667's known
+intermittent failure; it is unrelated to teardown and stays open there.
+
+| Completed session | 1 | 2 | 3 | 4 |
+| --- | --- | --- | --- | --- |
+| Managed after teardown + GC.Collect (MiB) | 175 | 241 | 305 | 373 |
+| Reserved after collection (MiB) | 735 | 767 | 783 | 803 |
+| Live completed probes/reports at next start | 0 | 1 | 2 | 3 |
+| GameObjects / textures / bundles after reclaim | 11/47/1 | 11/47/1 | 11/47/1 | 11/47/1 |
+| Host menu TOTAL PSS after the session (MiB; first menu 2,104) | 2,851 | 2,674 | 3,150 | 2,967 |
+
+Managed usage after collection grows about 66 MiB per session from session 2
+(least-squares slope 69,402,624 bytes per session), and every completed `PortSession`/`SessionReport` pair
+stays strongly reachable. Unity object and bundle counts return to the same
+floor, so the growth is managed-graph retention, not asset leakage. PSS is noisy
+(Boehm heap and graphics allocations) and alone would not show it. The existing
+root scan (15 original owner types' static delegates plus ResourceManager
+delegates) reports no path, so the retaining root lies outside that scope.
+
+First failure: unattributed managed root retaining each completed session.
+Next: an opt-in, menu-only bounded static-reference walk over the loaded
+authored/RoR2/Unity assemblies to name the path, then fix only that owner.
+Revisit if a session stays alive under the existing scan's types.
+
+Evidence: work/device/<serial>/experiments/session-memory/20261020T061101.783242Z/.
+No install, payload or profile change; Thor display slept and the process stopped.

@@ -1233,6 +1233,19 @@ Older absent instrumentation is explicitly unavailable, never a positive
 observer lifecycle result. Host contracts remain in
 `tests/test_session_cleanup_check.py`; this adds no runtime or profile writer.
 
+`./dev prototype --action session-memory-check --expected-apk-sha256 <hash>`
+(current support action, `scripts/lab/session_memory_check.py`) repeats the
+ordinary Commando menu start, at least 60 s of ready Lakes play and the same UI
+abandon five times in one process, then stops at the sixth menu. Each completed
+`movement-completed-session-<k>.json` must pass `abandon_contract` (reused through
+an index-checked session-1 view) before the next start, and profile counts must
+stay frozen. It collects the existing `SessionResourceBoundary` samples plus host
+`dumpsys meminfo` TOTAL PSS at every menu and reports per-session slopes from
+session 2 onward. It is an observation runner: it attributes no retaining root
+and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
+`--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
+Host contracts: `tests/test_session_memory_check.py`.
+
 `AndroidProfileSession` also owns the exact native timed-chest `Opening.onOpened`
 subscription. That event has no sender or chest identity; it is recorded as a
 global native observation for the sole owned offline profile. Setup captures

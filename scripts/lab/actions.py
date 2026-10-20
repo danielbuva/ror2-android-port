@@ -96,6 +96,14 @@ def _session_cleanup_target(function, kwargs, args):
     return _json_result(function, selected, args, indent=2)
 
 
+def _session_memory(function, kwargs, args):
+    if args.target != "lab":
+        raise SystemExit("session-memory-check uses the ordinary Commando menu start; omit --target")
+    expected_apk_sha256 = getattr(args, "expected_apk_sha256", None)
+    selected = kwargs if expected_apk_sha256 is None else dict(kwargs, expected_apk_sha256=expected_apk_sha256)
+    return _json_result(function, selected, args, indent=2)
+
+
 def _timed_prepare(function, kwargs, args, *, seconds):
     from common import ROOT, WORK, read, write
 
@@ -237,6 +245,15 @@ _ENTRIES = (
         "current",
         "After 60 s of ready first-stage play, observe original UI-driven end-run, native listener/template cleanup and same-process restart without an original loss/result; optional --target selects a base survivor (default Commando), locked choices are diagnostic overrides. Optional --skill-variants applies one strict per-run native catalog selector to both sessions. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it binds this diagnostic to the selected device's matching ownership receipt and receipt APK bytes without calling that APK current.",
         handler=_session_cleanup_target,
+    ),
+    Action(
+        "session-memory-check",
+        "session_memory_check",
+        "check_session_memory",
+        {},
+        "current",
+        "Repeat five ordinary Commando menu-start, 60 s ready Lakes play and UI-abandon sessions in one process; each completed session must pass the session-abandon contract. Reports existing runtime resource samples and per-menu PSS as observations, not a leak fix or normal-game acceptance. Requires --expected-apk-sha256 bound to the selected device's ownership receipt.",
+        handler=_session_memory,
     ),
     Action("whole-catalog-host-providers", "whole_catalog", "host_providers", {}, "current", "Run the whole-catalog native-provider host fixture."),
     Action("whole-catalog-repair-bindings", "whole_catalog", "repair_root_bindings", {}, "current", "Repair recorded whole-catalog root bindings."),

@@ -117,9 +117,12 @@ if a.skill_variants and (
     )
 if a.expected_apk_sha256 is not None and (
     a.command != "prototype"
-    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}
+    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check"}
 ):
-    p.error("--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
+    p.error(
+        "--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check, "
+        "session-abandon-check or session-memory-check"
+    )
 if (a.skill_slot or a.toolbot_offhand) and (a.command != "prototype" or a.action != "survivor-kit-check"):
     p.error("--skill-slot and --toolbot-offhand require prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):

@@ -148,6 +148,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "survivor-kit-check",
                 "session-cleanup-check",
                 "session-abandon-check",
+                "session-memory-check",
                 "whole-catalog-repair-bindings",
                 "whole-catalog-contracts",
                 "whole-catalog-host-providers",

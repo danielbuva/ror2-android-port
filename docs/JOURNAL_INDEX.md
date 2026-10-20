@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J769](PORTING_JOURNAL.md#j769--five-repeated-ui-abandon-sessions-retain-every-completed-session) | 2026-10-19 | Five repeated UI-abandon sessions retain every completed session | Hypothesis: J417's growth of completed probes/reports (1→2→3) and of managed usage per session persists on the current composition. |
 | [J766](PORTING_JOURNAL.md#j766--hiddencompositing-r9-builds-before-unitys-startup-callback-records-it) | 2026-10-19 | Hidden/Compositing: R9 builds before Unity's startup callback records it | Phase 2, from-scratch rebuild (diagnosed by Claude; host only: no editor stop, build, install or working-project change). |
 | [J765](PORTING_JOURNAL.md#j765--bound-full-il2cpp-debugging-symbols-separately-from-the-player-library) | 2026-10-19 | Bound full IL2CPP debugging symbols separately from the player library | Build committed 17dab3497b9b30fe19335ae9f9a6937b438dd7f5 with J764's durable edge witness and J763's optional debugging symbols after host preflight. |
 | [J764](PORTING_JOURNAL.md#j764--native-mul-t-stance-exposes-a-transient-input-edge-observer-gap) | 2026-10-19 | Native MUL-T stance exposes a transient input-edge observer gap | Build committed 1e3f75d1aae42e319a74ec27f00e4454ea702f5e with J760's base-type family-name correction. |
