@@ -6,6 +6,7 @@ import android.os.Process;
 import android.widget.TextView;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +27,13 @@ public final class HostProbeActivity extends Activity {
                 File installed = new File(getApplicationInfo().nativeLibraryDir, "libtoolprobe.so");
                 File writable = new File(getFilesDir(), "writable-probe");
                 report.put("targetSdk", getApplicationInfo().targetSdkVersion);
+                report.put("deviceApi", android.os.Build.VERSION.SDK_INT);
                 report.put("uid", Process.myUid());
+                try (InputStream input = new FileInputStream("/proc/self/attr/current")) {
+                    byte[] bytes = new byte[256];
+                    int count = input.read(bytes);
+                    report.put("selfContext", count > 0 ? new String(bytes, 0, count, StandardCharsets.UTF_8).trim() : "empty");
+                } catch (Exception error) { report.put("selfContextError", error.toString()); }
                 report.put("installedExists", installed.isFile());
                 report.put("installedWritable", installed.canWrite());
                 JSONObject positive = execute(installed);
@@ -41,13 +48,15 @@ public final class HostProbeActivity extends Activity {
                 JSONObject negative = execute(writable);
                 report.put("writable", negative);
                 JSONObject child = new JSONObject(positive.optString("output", "{}"));
-                boolean passed = positive.optInt("exit", -1) == 0
+                boolean installedPassed = positive.optInt("exit", -1) == 0
                     && child.optInt("uid", -1) == Process.myUid()
                     && child.optInt("answer", -1) == 42
                     && "authored-phone-host-v1".equals(child.optString("marker"))
-                    && !installed.canWrite()
-                    && negative.optString("error").contains("error=13");
-                report.put("success", passed);
+                    && !installed.canWrite();
+                boolean writableRefused = negative.optString("error").contains("error=13");
+                report.put("installedPassed", installedPassed);
+                report.put("writableRefused", writableRefused);
+                report.put("success", installedPassed && writableRefused);
             } catch (Exception error) {
                 try { report.put("failure", error.toString()); report.put("success", false); }
                 catch (Exception ignored) { }
