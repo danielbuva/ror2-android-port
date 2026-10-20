@@ -16478,3 +16478,80 @@ toolbot-4029-observer-scope-review/,codex-commando-scope-format-root-r1/,
 codex-commando-scope-compile-root-r1/}. R8 replay must restage the changed
 PrimaryFireBoundary and NovaInputBoundary authored files. No runtime file,
 asset GUID, payload or required local build input is added.
+
+
+## J800 — Continue exact Siren registration through native encounter start
+
+Date: 2026-10-20. Hypothesis: after J795's exact native source-entry handoff,
+retaining those owners and using the existing ordinary egg-input lease can
+reach the original encounter and identify its native boss without synthetic
+state changes. This is an opt-in source checkpoint, not device acceptance.
+
+A new default-false continuation request is validated alongside the existing
+source-entry selector. It keeps the legacy egg-input launch flag false and
+refuses conflicting input diagnostics. After the same exact registration gate,
+it waits at most five seconds for the live source owner and native Listening
+readiness, then arms the existing world-owned input producer. The producer
+revalidates original eggs and only requests ordinary navigation, aim and
+primary input. The stage owner holds further transport during this bounded
+attempt; no egg is destroyed, health edited or native EncounterStart invoked.
+
+The terminal witness requires original hasSpawnedServer and callback-captured
+native squad members. Every captured boss must have a positive network ID
+resolving to that exact master, original catalog body, monster team, matching
+loaded source scene/encounter identity and no player or foreign minion owner.
+Duplicate, foreign, replaced, uncaptured or disposed identities refuse. Callback
+capture itself now requires the original squad membership and server map.
+The bounded completed flag means encounter start and exact boss identity were
+observed; it never means boss defeat, reward or mission completion.
+
+The original entry-only branch retains its full current canonical registration
+guard. Continuation instead retains the earlier exact registration witness
+because native egg deaths change the Listening list. Both branches keep the
+existing source/encounter cleanup, retirement and recovery guards. Finalization
+releases the ordinary input owner, disarms continuation and records whether
+strict source cleanup was observed.
+
+Root and independent review reject the initial draft's mixed clock domains.
+Stage entry is stored relative to integrated-world start, so both continuation
+and egg-input age now use that same world clock. The production finite/range
+contract gives five seconds for app uptime 500, simulation origin 200 and
+stage entry offset 295; invalid, negative, nonfinite or future operands refuse.
+
+Independent review clears the immutable R2 patch, exact native source callback
+ordering and retained entry-only guard. Root integrates five existing owners
+alongside J799, preserves 106 runtime files and formats only changed C# ranges
+with byte-backed whitespace-only receipts. The public test extracts the actual
+authored clock and boss-witness bodies into synthetic mutable scene/catalog/
+network-map fixtures, including fake-null and ownership failures. Root corrects
+its repository-root calculation when moving it from the private draft and keeps
+all compiler output under ignored work/host-tests. The two public tests and
+Ruff pass. No protected native implementation enters public fixtures.
+
+The first full host invocation omits scripts/env.sh and skips the exact-toolchain
+assembly test. The final sourced-environment run passes all 1,139 tests with
+zero skips in 33.341 s; all 468 frozen host inputs remain unchanged. Log SHA-256:
+`14f20903dae0c862978dc193ecac4322b3a3b2f5f79a5a34c9c04a083bbd4971`.
+The combined J799/J800 runtime compiles against the saved exact editor closure
+(106 runtime, four support sources, 264 references), with zero errors and no
+drift. Assembly SHA-256:
+`1be4fc059dbfae64e46365d5c2fee134f83dee4c9454999632947603117b5dee`.
+Accepted/installed game APKs remain J797's 40299fc5. Next build committed source,
+pass both defaults, qualify the exact source guard, then exercise this bounded
+native continuation. No Moon navigation or normal-difficulty/full-stage claim.
+
+Prior art: the pinned R2API.Director population/completion distinction and
+J768/J795 native source/HLAPI handoff establish the owner boundaries. Current
+ScriptedCombatEncounter callback ordering registers the native master before
+squad membership notification; this supplies the observation point, not a new
+spawn or ownership bypass. Device evidence remains authoritative.
+
+Evidence: work/coordination/{siren-native-encounter-continuation-draft/c191-r2/,
+siren-native-encounter-continuation-draft/public-test-candidate-r1/,
+siren-native-encounter-continuation-review/c191-r2/,
+codex-siren-continuation-format-root-r1/,
+codex-siren-continuation-host-root-r1/,codex-siren-continuation-host-root-r2/,
+codex-siren-continuation-compile-root-r1/}. R8 replay must restage PortSession,
+NovaInputBoundary, IntegratedWorldBoundary, SirenEncounterBoundary and
+IntegratedStageBoundary. No new runtime GUID, payload or required local build
+input is added.

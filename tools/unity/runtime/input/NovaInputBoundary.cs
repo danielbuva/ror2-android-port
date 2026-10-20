@@ -471,9 +471,75 @@ public sealed partial class PortSession
                         SirenSourceEntryRuntimeContract.NativeListeningRegistrationMatchesSourceEntry(coordinator.r.stageProgress))
                     {
                         coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved = true;
+                        if (coordinator.r.sirenNativeEncounterContinuationRequested &&
+                            coordinator.r.sirenNativeEncounterContinuationRegistrationObservedAt <= 0)
+                            coordinator.r.sirenNativeEncounterContinuationRegistrationObservedAt = Time.realtimeSinceStartup;
+                        if (!coordinator.r.sirenNativeEncounterContinuationRequested)
+                            break;
+                        bool shouldArm =
+                            !coordinator.r.sirenNativeEncounterContinuationArmed &&
+                            SirenNativeEncounterContinuationContract.MayArm(
+                                coordinator.r.sirenNativeEncounterContinuationRequested, coordinator.r.sirenSourceEntryDiagnosticAttempt,
+                                true, coordinator.SirenDiagnosticOwnerAttached, coordinator.SirenDiagnosticListenerActive,
+                                coordinator.r.diagnosticSirenEggInput, coordinator.SirenNativeEncounterStarted);
+                        if (shouldArm)
+                        {
+                            coordinator.r.sirenNativeEncounterContinuationArmed = true;
+                            coordinator.r.sirenNativeEncounterContinuationWasArmed = true;
+                            coordinator.r.phase = "siren-native-encounter-continuation-armed";
+                            coordinator.Save();
+                        }
+                    }
+                    if (coordinator.r.sirenNativeEncounterContinuationRequested &&
+                        coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved &&
+                        !coordinator.r.sirenNativeEncounterContinuationArmed &&
+                        (coordinator.SirenNativeEncounterStarted ||
+                         Time.realtimeSinceStartup - coordinator.r.sirenNativeEncounterContinuationRegistrationObservedAt >=
+                             SirenNativeEncounterContinuationContract.SourceReadinessWaitSeconds))
+                    {
+                        string readinessFailure =
+                            coordinator.SirenNativeEncounterStarted
+                                ? "Native Siren encounter started before the exact source registration armed controlled input"
+                                : "Native Siren source registration did not reach live owner and Listening readiness within the bounded wait";
+                        SirenSourceEntryFailureClassification.PreserveFirstFailure(ref coordinator.r.firstFailure,
+                                                                                   ref coordinator.r.firstFailurePhase, readinessFailure,
+                                                                                   "siren-native-encounter-continuation-readiness");
+                        coordinator.r.phase = "siren-native-encounter-continuation-readiness-refused";
+                        coordinator.r.success = false;
+                        coordinator.Save();
                         break;
                     }
-                    if (cfg.teleporterLoop)
+                    float continuationStageElapsed;
+                    bool continuationStageClockValid = SirenNativeEncounterContinuationContract.TryGetStageElapsedSeconds(
+                        Time.realtimeSinceStartup, began, coordinator.stageEnteredAt, out continuationStageElapsed);
+                    if (coordinator.r.sirenNativeEncounterContinuationRequested && coordinator.r.sirenNativeEncounterContinuationArmed &&
+                        (!continuationStageClockValid || continuationStageElapsed >= SirenEggDiagnosticInput.MaximumStageSeconds))
+                    {
+                        SirenSourceEntryFailureClassification.PreserveFirstFailure(
+                            ref coordinator.r.firstFailure, ref coordinator.r.firstFailurePhase,
+                            "Native Siren encounter start and exact boss identity were not both observed inside the existing 180-second source-stage input budget",
+                            "siren-native-encounter-continuation-timeout");
+                        coordinator.r.phase = "siren-native-encounter-continuation-timeout";
+                        coordinator.r.success = false;
+                        coordinator.Save();
+                        break;
+                    }
+                    if (coordinator.r.sirenNativeEncounterContinuationRequested &&
+                        SirenNativeEncounterContinuationContract.IsTerminal(
+                            coordinator.r.sirenNativeEncounterContinuationRequested, coordinator.r.sirenNativeEncounterContinuationArmed,
+                            coordinator.SirenNativeEncounterStarted, coordinator.SirenNativeEncounterBossIdentityObserved))
+                    {
+                        coordinator.r.sirenNativeEncounterContinuationCompleted = true;
+                        coordinator.r.sirenNativeEncounterStartedObserved = true;
+                        coordinator.r.sirenNativeBossIdentityObserved = true;
+                        coordinator.r.sirenNativeBossMasterNetworkIds = coordinator.SirenNativeEncounterBossNetworkIds;
+                        coordinator.r.phase = "siren-native-encounter-and-exact-boss-observed";
+                        coordinator.r.success = true;
+                        coordinator.Save();
+                        break;
+                    }
+                    if (cfg.teleporterLoop && !(coordinator.r.sirenNativeEncounterContinuationRequested &&
+                                                coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved))
                     {
                         coordinator.Check(coordinator.r.stageProgress != null && string.IsNullOrEmpty(coordinator.r.stageProgress.error),
                                           "Original stage callback failed: " +
@@ -719,10 +785,24 @@ public sealed partial class PortSession
                 yield return new WaitForSeconds(.5f);
                 if (coordinator.r.sirenSourceEntryDiagnosticAttempt)
                 {
-                    coordinator.Check(coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved &&
-                                         SirenSourceEntryRuntimeContract.NativeListeningRegistrationMatchesSourceEntry(
-                                             coordinator.r.stageProgress),
-                                     "Native Listening registration was not proven against the exact source egg bijection");
+                    coordinator.Check(coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved,
+                                      "Native Listening registration was not proven against the exact source egg bijection");
+                    if (coordinator.r.sirenNativeEncounterContinuationRequested)
+                    {
+                        coordinator.Check(
+                            coordinator.r.sirenNativeEncounterContinuationCompleted &&
+                                SirenNativeEncounterContinuationContract.IsTerminal(coordinator.r.sirenNativeEncounterContinuationRequested,
+                                                                                    coordinator.r.sirenNativeEncounterContinuationArmed,
+                                                                                    coordinator.SirenNativeEncounterStarted,
+                                                                                    coordinator.SirenNativeEncounterBossIdentityObserved),
+                            "Native Siren encounter start and exact captured boss identity were not both observed");
+                    }
+                    else
+                    {
+                        coordinator.Check(
+                            SirenSourceEntryRuntimeContract.NativeListeningRegistrationMatchesSourceEntry(coordinator.r.stageProgress),
+                            "Native Listening registration no longer matches the exact source egg bijection");
+                    }
                     coordinator.r.success = true;
                     coordinator.Save();
                     yield break;
@@ -873,11 +953,21 @@ public sealed partial class PortSession
                         {
                             bool cleanupObserved = coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved &&
                                 SirenSourceEntryRuntimeContract.SourceEntryAndEncounterCleanupObserved(coordinator.r.stageProgress);
+                            if (coordinator.r.sirenNativeEncounterContinuationRequested &&
+                                coordinator.r.sirenNativeEncounterContinuationWasArmed)
+                                cleanupObserved &= coordinator.r.sirenEggInput != null && coordinator.r.sirenEggInput.cleaned &&
+                                                   !coordinator.r.sirenEggInput.active;
                             coordinator.r.sirenSourceEntryDiagnosticCleanupObserved = cleanupObserved;
+                            if (coordinator.r.sirenNativeEncounterContinuationRequested)
+                                coordinator.r.sirenNativeEncounterContinuationCleanupObserved = cleanupObserved;
+                            coordinator.r.sirenNativeEncounterContinuationArmed = false;
+                            coordinator.r.sirenNativeEncounterContinuationDisarmed = cleanupObserved;
                             string failureMessage = SirenSourceEntryFailureClassification.FailureMessage(
                                 coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved, cleanupObserved);
                             if (failureMessage == null)
-                                coordinator.r.phase = "siren-source-entry-listening-registration-and-cleanup-observed";
+                                coordinator.r.phase = coordinator.r.sirenNativeEncounterContinuationRequested
+                                                          ? "siren-native-encounter-boss-and-cleanup-observed"
+                                                          : "siren-source-entry-listening-registration-and-cleanup-observed";
                             else
                             {
                                 coordinator.r.success = false;

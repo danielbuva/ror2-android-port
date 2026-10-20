@@ -192,6 +192,8 @@ public sealed partial class PortSession
     public bool SirenDiagnosticOwnerAttached => GetIntegratedStageSession().SirenDiagnosticOwnerAttached;
     public bool SirenDiagnosticListenerActive => GetIntegratedStageSession().SirenDiagnosticListenerActive;
     public bool SirenNativeEncounterStarted => GetIntegratedStageSession().SirenNativeEncounterStarted;
+    public bool SirenNativeEncounterBossIdentityObserved => GetIntegratedStageSession().SirenNativeEncounterBossIdentityObserved;
+    public uint[] SirenNativeEncounterBossNetworkIds => GetIntegratedStageSession().SirenNativeEncounterBossNetworkIds;
     public bool SirenDiagnosticStageTransporting => GetIntegratedStageSession().SirenDiagnosticStageTransporting;
     public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) => GetIntegratedStageSession().NearestSirenDiagnosticEgg(position);
     public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) => GetIntegratedStageSession().IsCurrentSirenDiagnosticEgg(body);
@@ -236,6 +238,9 @@ public sealed partial class PortSession
         public bool SirenDiagnosticOwnerAttached => sirenEncounter != null && sirenEncounter.DiagnosticOwnerAttached;
         public bool SirenDiagnosticListenerActive => sirenEncounter != null && sirenEncounter.DiagnosticListenerActive;
         public bool SirenNativeEncounterStarted => sirenEncounter != null && sirenEncounter.NativeEncounterStarted;
+        public bool SirenNativeEncounterBossIdentityObserved => sirenEncounter != null && sirenEncounter.HasExactNativeBossIdentity;
+        public uint[] SirenNativeEncounterBossNetworkIds =>
+            sirenEncounter != null ? sirenEncounter.ExactNativeBossNetworkIds : Array.Empty<uint>();
         public bool SirenDiagnosticStageTransporting =>
             transportingStage || coordinator.r.stageProgress != null && coordinator.r.stageProgress.transporting;
         public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) => sirenEncounter != null

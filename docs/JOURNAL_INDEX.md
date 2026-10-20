@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J800](PORTING_JOURNAL.md#j800--continue-exact-siren-registration-through-native-encounter-start) | 2026-10-20 | Continue exact Siren registration through native encounter start | Date: 2026-10-20. |
 | [J799](PORTING_JOURNAL.md#j799--scope-the-commando-primary-diagnostic-by-native-survivor-identity) | 2026-10-20 | Scope the Commando primary diagnostic by native survivor identity | Date: 2026-10-20. |
 | [J798](PORTING_JOURNAL.md#j798--bound-a-native-normal-session-without-observing-defeat) | 2026-10-20 | Bound a native Normal session without observing defeat | Date: 2026-10-20. |
 | [J797](PORTING_JOURNAL.md#j797--accept-the-operand-witness-player-and-identify-mul-ts-null-primary-slot) | 2026-10-20 | Accept the operand-witness player and identify MUL-T's null primary slot | Date: 2026-10-20. |

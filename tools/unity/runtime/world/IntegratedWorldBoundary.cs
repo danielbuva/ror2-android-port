@@ -1997,21 +1997,21 @@ public sealed partial class PortSession
         }
         SirenEggDiagnosticInput EnsureSirenEggInputOwner()
         {
-            if (sirenEggDiagnosticInput == null && coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null)
+            if (sirenEggDiagnosticInput == null && coordinator.SirenEggInputSelected && coordinator.r.sirenEggInput != null)
                 sirenEggDiagnosticInput =
                     new SirenEggDiagnosticInput(new IntegratedWorldSirenContext(coordinator), coordinator.r.sirenEggInput);
             return sirenEggDiagnosticInput;
         }
         public void PrepareSirenEggDiagnosticInputFrame(CharacterBody player, NovaInputBridge bridge)
         {
-            bool selected = coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null;
+            bool selected = coordinator.SirenEggInputSelected && coordinator.r.sirenEggInput != null;
             if (selected)
                 EnsureSirenEggInputOwner();
             SirenEggDiagnosticInput.PrepareProducerFrameForSelection(selected, sirenEggDiagnosticInput, bridge);
         }
         public void ApplySirenEggDiagnosticInput(CharacterBody player, NovaInputBridge bridge)
         {
-            bool selected = coordinator.r.diagnosticSirenEggInput && coordinator.r.sirenEggInput != null;
+            bool selected = coordinator.SirenEggInputSelected && coordinator.r.sirenEggInput != null;
             var owner = selected ? EnsureSirenEggInputOwner() : sirenEggDiagnosticInput;
             owner?.Apply(player, bridge, true);
         }
@@ -2022,7 +2022,7 @@ public sealed partial class PortSession
             {
                 coordinator = owner;
             }
-            public bool Selected => coordinator.r.diagnosticSirenEggInput;
+            public bool Selected => coordinator.SirenEggInputSelected;
             public bool Assisted => coordinator.IsRunAssisted();
             public bool ManualTakeover => coordinator.worldManualTakeover;
             public bool SourceSceneActive => coordinator.SirenDiagnosticSceneActive;
@@ -2033,7 +2033,17 @@ public sealed partial class PortSession
             public bool FirstFailure => !string.IsNullOrEmpty(coordinator.r.firstFailure) || !string.IsNullOrEmpty(coordinator.r.error) ||
                                         coordinator.r.stageProgress != null && !string.IsNullOrEmpty(coordinator.r.stageProgress.error);
             public int StageSceneHandle => coordinator.SirenDiagnosticSceneHandle;
-            public float StageElapsed => Time.realtimeSinceStartup - coordinator.stageEnteredAt;
+            public float StageElapsed
+            {
+                get {
+                    float stageElapsed;
+                    return SirenNativeEncounterContinuationContract.TryGetWorldStageElapsedSeconds(
+                               coordinator.r.world == null ? float.NaN : coordinator.r.world.seconds, coordinator.stageEnteredAt,
+                               out stageElapsed)
+                               ? stageElapsed
+                               : float.NaN;
+                }
+            }
             public CharacterBody NearestRevalidatedSourceEgg(Vector3 position) => coordinator.NearestSirenDiagnosticEgg(position);
             public bool IsCurrentSourceEgg(CharacterBody candidate) => coordinator.IsCurrentSirenDiagnosticEgg(candidate);
             public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus

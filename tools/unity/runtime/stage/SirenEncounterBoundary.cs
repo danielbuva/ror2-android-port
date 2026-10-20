@@ -134,6 +134,52 @@ public static class SirenEncounterContract
     }
 }
 
+public static class SirenNativeEncounterContinuationContract
+{
+    public const float SourceReadinessWaitSeconds = 5f;
+
+    // stageEnteredAt is stored in the integrated-world elapsed clock, not as
+    // an app-uptime timestamp. Convert both operands into that same domain.
+    public static bool TryGetStageElapsedSeconds(float realtimeNow, float simulationBegan, float stageEnteredAt, out float stageElapsed)
+    {
+        stageElapsed = 0;
+        if (float.IsNaN(realtimeNow) || float.IsInfinity(realtimeNow) || float.IsNaN(simulationBegan) ||
+            float.IsInfinity(simulationBegan) || float.IsNaN(stageEnteredAt) || float.IsInfinity(stageEnteredAt) ||
+            realtimeNow < simulationBegan || stageEnteredAt < 0)
+            return false;
+        return TryGetWorldStageElapsedSeconds(realtimeNow - simulationBegan, stageEnteredAt, out stageElapsed);
+    }
+
+    public static bool TryGetWorldStageElapsedSeconds(float worldElapsed, float stageEnteredAt, out float stageElapsed)
+    {
+        stageElapsed = 0;
+        if (float.IsNaN(worldElapsed) || float.IsInfinity(worldElapsed) || float.IsNaN(stageEnteredAt) ||
+            float.IsInfinity(stageEnteredAt) || worldElapsed < 0 || stageEnteredAt < 0 || stageEnteredAt > worldElapsed)
+            return false;
+        stageElapsed = worldElapsed - stageEnteredAt;
+        return !float.IsNaN(stageElapsed) && !float.IsInfinity(stageElapsed) && stageElapsed >= 0;
+    }
+
+    public static bool MayArm(bool requested, bool sourceEntryRequested, bool exactRegistration, bool ownerAttached, bool listenerActive,
+                              bool launchEggInputSelected, bool nativeEncounterStarted)
+    {
+        return requested && sourceEntryRequested && exactRegistration && ownerAttached && listenerActive && !launchEggInputSelected &&
+               !nativeEncounterStarted;
+    }
+
+    public static bool IsExactNativeBossWitness(bool capturedFromExactSourceSquad, bool positiveNetworkId, bool resolvesToSameMaster,
+                                                bool monsterTeam, bool notPlayerMaster, bool exactCatalogBody, bool noForeignOwner)
+    {
+        return capturedFromExactSourceSquad && positiveNetworkId && resolvesToSameMaster && monsterTeam && notPlayerMaster &&
+               exactCatalogBody && noForeignOwner;
+    }
+
+    public static bool IsTerminal(bool requested, bool armed, bool nativeEncounterStarted, bool exactNativeBossIdentity)
+    {
+        return requested && armed && nativeEncounterStarted && exactNativeBossIdentity;
+    }
+}
+
 public sealed partial class PortSession
 {
     [Serializable]
@@ -144,6 +190,8 @@ public sealed partial class PortSession
             nativeEncounterCompleted, networkObjectUnspawned, retirementPreflightPassed, retirementRequestsIssued,
             retirementRefusedForeignMember, cleanupDisposed, originalActiveRestored, sceneInstanceDestroyed;
         public bool nativeEggRegistrationMatchesSourceEntry;
+        public bool nativeBossIdentityObserved;
+        public uint[] nativeBossMasterNetworkIds;
         public int diagnosticSourceEggCandidatesObserved, nativeEggSlotsRegistered;
         public int observedEggBodyCount, nativeBossMembers, observationSamples, encounterSquadMembersAtCleanup,
             retiredBossBodiesRequested, retiredBossMastersRequested, retiredProbeBodiesRequested,
@@ -197,6 +245,42 @@ public sealed partial class SirenEncounterSession : IDisposable
     readonly HashSet<uint> ownedBossNetworkIds = new HashSet<uint>();
 
     public PortSession.SirenEncounterReport Report { get; private set; }
+    public bool HasExactNativeBossIdentity => Report != null && Report.nativeBossIdentityObserved;
+    public uint[] ExactNativeBossNetworkIds =>
+        Report != null && Report.nativeBossMasterNetworkIds != null ? Report.nativeBossMasterNetworkIds : Array.Empty<uint>();
+
+    public bool TryGetExactNativeBossNetworkIds(out uint[] networkIds)
+    {
+        networkIds = Array.Empty<uint>();
+        if (disposed || cleanupStarted || !NetworkServer.active || !encounter || !encounter.hasSpawnedServer || !bossGroup ||
+            !bossGroup.combatSquad || !scene.IsValid() || !scene.isLoaded || scene.name != SirenEncounterContract.SceneName ||
+            !encounterObject || encounterObject.scene != scene || !identity || !identity.isServer ||
+            identity.sceneId.Value != SirenEncounterContract.EncounterSceneId || identity.netId.Value == 0 ||
+            NetworkServer.FindLocalObject(identity.netId) != encounterObject)
+            return false;
+        var catalogBody = BodyCatalog.FindBodyPrefab(OriginalBossBodyName);
+        if (!catalogBody)
+            return false;
+        var members = bossGroup.combatSquad.readOnlyMembersList.Where(member => member).ToArray();
+        if (members.Length == 0)
+            return false;
+        var ids = new List<uint>(members.Length);
+        foreach (var member in members)
+        {
+            var captured = ownedBossMasters.FirstOrDefault(entry => entry.master == member && entry.networkId == member.netId);
+            if (!SirenNativeEncounterContinuationContract.IsExactNativeBossWitness(
+                    captured != null && bossGroup.combatSquad.readOnlyMembersList.Contains(member), member.netId.Value != 0,
+                    NetworkServer.FindLocalObject(member.netId) == member.gameObject, member.teamIndex == TeamIndex.Monster,
+                    !member.playerCharacterMasterController, member.bodyPrefab == catalogBody,
+                    !member.minionOwnership || member.minionOwnership.NetworkownerMasterId == NetworkInstanceId.Invalid))
+                return false;
+            ids.Add(member.netId.Value);
+        }
+        if (ids.Distinct().Count() != ids.Count)
+            return false;
+        networkIds = ids.OrderBy(id => id).ToArray();
+        return true;
+    }
 
     SirenEncounterSession(Scene scene, GameObject encounterObject, NetworkIdentity identity,
                           EntityStateMachine stateMachine, ScriptedCombatEncounter encounter, BossGroup bossGroup)
@@ -365,6 +449,10 @@ public sealed partial class SirenEncounterSession : IDisposable
             member.netId.Value == 0 || ownedBossNetworkIds.Contains(member.netId.Value))
             return;
 
+        if (NetworkServer.FindLocalObject(member.netId) != member.gameObject || !bossGroup || !bossGroup.combatSquad ||
+            !bossGroup.combatSquad.readOnlyMembersList.Contains(member))
+            return;
+
         ownedBossNetworkIds.Add(member.netId.Value);
         ownedBossMasters.Add(new OwnedMaster { master = member, networkId = member.netId });
     }
@@ -418,6 +506,8 @@ public sealed partial class SirenEncounterSession : IDisposable
         Report.observedEggBodyCount = eggCount;
         Report.nativeEncounterStarted = encounter && encounter.hasSpawnedServer;
         Report.nativeBossMembers = bossGroup && bossGroup.combatSquad ? bossGroup.combatSquad.memberCount : 0;
+        Report.nativeBossIdentityObserved = TryGetExactNativeBossNetworkIds(out var exactBossNetworkIds);
+        Report.nativeBossMasterNetworkIds = Report.nativeBossIdentityObserved ? exactBossNetworkIds : Array.Empty<uint>();
         Report.encounterState = !stateMachine || stateMachine.state == null ? "uninitialized" : stateMachine.state.GetType().FullName;
         Report.sourceOwnerAttached = identity && identity.isServer && identity.netId.Value != 0;
         Report.networkId = identity ? identity.netId.Value : 0;

@@ -14,6 +14,10 @@ using UnityEngine.Networking;
 // Each experiment runs in a fresh process. Automatic probes enable only their measured callbacks.
 public sealed partial class PortSession : MonoBehaviour
 {
+    bool SirenEggInputSelected =>
+        r != null && (r.diagnosticSirenEggInput || r.sirenNativeEncounterContinuationRequested && r.sirenNativeEncounterContinuationArmed &&
+                                                       !r.sirenNativeEncounterContinuationCompleted);
+
     internal long MarkSourceStageLifecycleRecovery(bool required)
     {
         r.sourceStageLifecycleRecoveryRequired = required;
@@ -183,6 +187,14 @@ public sealed partial class PortSession : MonoBehaviour
         // Explicit source-entry-only mode; omitted attempt JSON remains false.
         public bool sirenSourceEntryDiagnosticAttempt, sirenSourceEntryDiagnosticRegistrationObserved,
             sirenSourceEntryDiagnosticCleanupObserved;
+        // Separate opt-in continuation. The legacy egg-input selector remains false; this request
+        // only arms the existing ordinary-input owner after exact native registration is observed.
+        public bool sirenNativeEncounterContinuationRequested, sirenNativeEncounterContinuationArmed,
+            sirenNativeEncounterContinuationWasArmed, sirenNativeEncounterContinuationCompleted, sirenNativeEncounterContinuationDisarmed,
+            sirenNativeEncounterContinuationCleanupObserved;
+        public bool sirenNativeEncounterStartedObserved, sirenNativeBossIdentityObserved;
+        public uint[] sirenNativeBossMasterNetworkIds;
+        public float sirenNativeEncounterContinuationRegistrationObservedAt;
         public string diagnosticSkillIsolationSlot;
         public bool developerSkillIsolationAssisted;
         public bool diagnosticSirenEggInput;
@@ -526,9 +538,8 @@ public sealed partial class PortSession : MonoBehaviour
                 try
                 {
                     var selectorRefusal = CaptainSupplyBeaconSequence.SelectorRefusal(
-                        true, r.selectedSurvivor, r.developerSkillVariantOverride != null,
-                        r.diagnosticSkillIsolationSlot, r.diagnosticToolbotOffhand,
-                        r.sirenSourceEntryDiagnosticAttempt);
+                        true, r.selectedSurvivor, r.developerSkillVariantOverride != null, r.diagnosticSkillIsolationSlot,
+                        r.diagnosticToolbotOffhand, r.sirenSourceEntryDiagnosticAttempt || r.sirenNativeEncounterContinuationRequested);
                     if (!config.integratedWorld || !r.diagnosticSkillCoverage || selectorRefusal != null)
                         throw new ArgumentException("Captain supply-beacon sequence requires one integrated Captain case with the native default loadout and no other skill-input selector");
                     r.developerSkillIsolationAssisted = true;
@@ -573,17 +584,20 @@ public sealed partial class PortSession : MonoBehaviour
                     yield break;
                 }
             }
-            if (r.sirenSourceEntryDiagnosticAttempt)
+            if (r.sirenSourceEntryDiagnosticAttempt || r.sirenNativeEncounterContinuationRequested)
             {
                 try
                 {
+                    if (r.sirenNativeEncounterContinuationRequested && !r.sirenSourceEntryDiagnosticAttempt)
+                        throw new ArgumentException("Siren encounter continuation requires the exact source-entry owner");
                     if (!config.integratedWorld || !config.teleporterLoop || !r.freePlay ||
                         (r.id != "body-state-spawn-state-auto-nova-spine" &&
                          r.id != "body-state-spawn-state-auto-nova-spine-bringup") || r.diagnosticSirenEggInput ||
                         r.diagnosticSkillCoverage || r.diagnosticCaptainSupplyBeacon || r.diagnosticToolbotOffhand ||
                         !string.IsNullOrEmpty(r.diagnosticSkillIsolationSlot) || r.developerSkillVariantOverride != null ||
                         r.nativeFirstStageLifecycleDiagnosticAttempt)
-                        throw new ArgumentException("Siren source-entry mode requires the integrated native route and keeps Siren egg input OFF");
+                        throw new ArgumentException(
+                            "Siren source-entry mode requires the integrated native route and keeps the launch egg-input selector OFF");
                 }
                 catch (Exception error)
                 {
@@ -630,7 +644,7 @@ public sealed partial class PortSession : MonoBehaviour
         using (var process = new AndroidJavaClass("android.os.Process")) r.pid = process.CallStatic<int>("myPid");
 #endif
         r.detailedVisualDiagnostics = config.detailedVisualDiagnostics;
-        if (r.diagnosticSirenEggInput)
+        if (r.diagnosticSirenEggInput || r.sirenNativeEncounterContinuationRequested)
             r.sirenEggInput = new SirenEggInputReport();
         r.recoveredHudEnabled = config.recoveredHudEnabled;
         if (r.recoveredHudEnabled)
