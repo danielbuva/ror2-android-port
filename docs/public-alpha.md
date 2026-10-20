@@ -9,17 +9,19 @@ Phone-only owner builds are the installation research target; retain native
 IL2CPP ARM64 and the current renderer, with desktop builds as fallback.
 The [stage assessment](phone-owner-build.md) precedes build-pipeline changes.
 
-Decision preparation: [J826](PORTING_JOURNAL.md#j826--research-public-alpha-distribution-before-choosing-a-launcher).
+Decision preparation: [J828](PORTING_JOURNAL.md#j828--research-public-alpha-distribution-before-choosing-a-launcher).
 
 ## Decision and reproducibility
 
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
-      [J829's precursor](PORTING_JOURNAL.md#j828--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
-      to phone-side generation and the full rendered/script-bound fixture.
+      [J831's precursor](PORTING_JOURNAL.md#j828--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
+      to the full rendered/script-bound fixture; phone-side TextAsset generation
+      is qualified in [J832](PORTING_JOURNAL.md#j832--generate-content-and-sign-increasing-fixture-updates-on-android).
 - [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
       tools beyond the authored converter proof; qualify full native linking,
-      app sandbox execution, packaging/signing and installer updates.
+      app sandbox execution, complete packaging, durable owner signing-key
+      custody and user-mediated installer/update flows beyond the fixture proof.
 - [ ] Present bounded proof findings before changing the working build or choosing
       the final installation experience. Keep other execution backends excluded.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and

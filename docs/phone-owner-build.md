@@ -4,14 +4,18 @@
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This combines source/tool inspection and isolated
 authored probes, not a complete phone build or gameplay proof.
-Evidence: [J828](PORTING_JOURNAL.md#j828--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed).
-First probe checkpoint: [J829](PORTING_JOURNAL.md#j829--run-the-exact-converter-on-android-and-load-content-built-without-a-template).
+Evidence: [J830](PORTING_JOURNAL.md#j830--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed).
+First probe checkpoint: [J831](PORTING_JOURNAL.md#j831--run-the-exact-converter-on-android-and-load-content-built-without-a-template).
+Phone generation/update checkpoint:
+[J832](PORTING_JOURNAL.md#j832--generate-content-and-sign-increasing-fixture-updates-on-android).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in
 the current implementation. The exact converter now has a narrow Android-host
-proof; complete linking/player construction and tool delivery remain open.
+proof. A small content writer and fixture repackaging/signing/update now have
+phone-shell proofs. Complete linking/player construction and app-host tool
+delivery remain open.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
@@ -31,8 +35,8 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | HUD/inherited assets (`RecoveredHudBuilder`) | **Yes, existing producer** | AssetDatabase, prefab, font/material and asset-saving APIs are used. Fourteen inherited-store files remain bootstrap debt; generated game assets cannot be shipped to conceal this dependency. |
 | Import, script/plugin binding and settling (R9 `LabBuild`) | **Yes** | Native importers, AssetDatabase and two-pass dependency reimport have no demonstrated Android equivalent here. Host validators do not replace importers. |
 | Shader compilation/Android bundles (`LabBuild`, `WholeCatalogBuild`) | **Yes** | BuildAssetBundles, UnityShaderCompiler and ShaderUtil produce/validate target variants. SPIR-V compilation or a UnityFS writer alone does not recreate shader metadata, object graphs, mesh/animation import or dependencies. |
-| C# compilation, stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J829 proves exact converter DLLs on an Android build-tool host for a small authored input, with matched outputs. Full stripping/dependencies, app sandbox execution and permitted tool delivery remain gates. |
-| C++/Burst/plugin compilation/linking | Not inherently, once all inputs exist | J829 compiles one emitted translation unit on Android. Full runtime linking and compiler/sysroot equivalence remain open; the supplied NDK compilers are desktop binaries. Burst and middleware are separate gates. |
+| C# compilation, stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J831 proves exact converter DLLs on an Android build-tool host for a small authored input, with matched outputs. Full stripping/dependencies, app sandbox execution and permitted tool delivery remain gates. |
+| C++/Burst/plugin compilation/linking | Not inherently, once all inputs exist | J831 compiles one emitted translation unit on Android. Full runtime linking and compiler/sysroot equivalence remain open; the supplied NDK compilers are desktop binaries. Burst and middleware are separate gates. |
 | Java/resources/DEX, APK alignment/signing | No Unity import APIs | AOSP/Termux provide resource-tool, alignment and signing precedents; D8/R8 source is available. Host wrappers, versions, dependencies and signing/update identity still need testing. These tools cannot fill missing game code/data. |
 | Install, placement, data retention and rollback | No | Android PackageInstaller provides user-mediated installation. Keep stable private owner keys, live capacity/backing checks and interruption handling. Host ADB scripts need on-device equivalents. |
 
@@ -69,7 +73,7 @@ requirements to claim a port.
 Static inspection found managed Unity.IL2CPP/UnityLinker components with
 .NET 6.0.18 runtime configuration alongside macOS apphost/CLR libraries. Three
 inspected managed assemblies declare no direct P/Invoke rows. This is a tool-hosting
-lead. J829 tests its narrow converter path using a separate Android build-tool
+lead. J831 tests its narrow converter path using a separate Android build-tool
 host; wider dependencies, subprocesses and app sandbox execution remain open.
 The build-tool host is separate from the IL2CPP game runtime.
 
@@ -104,10 +108,11 @@ can improve the fallback experience, but neither is a phone-only build.
 
 ## Proof gates
 
-J829 supplies narrow precursors for content and converter work. The content
-generator ran on the host without editor-generated inputs; running it on the
-phone remains a gate. The fixture APK itself still used the desktop editor.
-The larger gates below are deliberately open.
+J831/J832 supply narrow precursors for content, converter and packaging work.
+The small authored writer now runs on the phone; the fixture's base player still
+uses the desktop editor. Phone-shell execution does not qualify an installer
+app's sandbox. Larger content, full native linking, durable owner key custody
+and user-mediated installation remain gates.
 
 1. **Content:** define an independently authored mesh/material/texture/animation/
    script-reference/Vulkan-shader fixture and an exact-editor oracle. Establish

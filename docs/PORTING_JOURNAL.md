@@ -18506,3 +18506,127 @@ whitespace, staged privacy and manual provenance review qualify the tooling
 checkpoint; final CI receipts stay private under the evidence directory.
 PORTING_STATE replaces its alpha installation facts while preserving the
 main session's accepted game APK and unresolved gameplay/audio gates.
+
+## J832 — Generate content and sign increasing fixture updates on Android
+
+2026-10-20. Hypothesis: J831's small content and packaging stages can execute
+on the assigned phone while preserving the exact native IL2CPP/Vulkan player.
+The user requests autonomous continuation under Route A. Rebase onto
+`origin/main` `72f9b2e` precedes this entry. Main gameplay/audio, the working
+Unity project, original installation and other devices remain untouched.
+
+**Content producer.** Replace the fixture's UnityPy-dependent writer with
+`phone_bundle.py`, an authored Python-standard-library writer for the native
+AssetBundle/TextAsset wire contract. It consumes no class database, template,
+editor-generated asset or game input. UnityPy remains an independent host
+parser. The first authored schema uses native AssetBundle class version 1:
+host parsing and phone byte equality pass, but exact Unity rejects it as
+incompatible. Public native-schema inspection identifies class version 3;
+correct that version alone. Exact Unity then loads, reads and unloads it.
+Preserve the failed candidate and log. A separate check attempt refuses the
+held main build mutex; retry only after the owning build releases it.
+
+Termux Python 3.14.8 runs the same source with `-I -S` on internal alpha Nova,
+without site packages. Its 3,118-byte output matches host bytes:
+`6c4ce15b5d766a99284e2488d10c22902c5d231389b357abefdc06dfddddb313`.
+The source is portable here for this two-type contract, not a general Unity
+converter. Four host contracts cover independent native parsing, varying UTF-8
+length/alignment, isolated standard-library execution and overwrite refusal.
+No RoR2-specific reconstruction, shader or gameplay mechanism is introduced.
+
+**Exact player and input binding.** The fixture loader accepts either its
+embedded bundle or a candidate at one fixed path in its own persistent data.
+An explicit selector must match the candidate's SHA-256 before native loading.
+It checks two complete load/read/unload cycles and reports the actual hash and
+accepted source. The separate player builds from committed `fbbf581` with exact
+Unity 2021.3.45f2, ARM64 IL2CPP, Vulkan, Low managed stripping and engine stripping
+disabled, under the primary checkout's persistent mutex. Its desktop base APK
+hash is `af08d466a069127d681130977acfcee5f46e54f879501073e41db958a54c2a58`.
+No existing editor is stopped or reused. Full game preflight/doctor still refuse
+clone-local bootstrap gaps; they are not relabelled as fixture or game passes.
+
+**Phone packaging.** `phone_apk.py` is independent standard-library packaging
+support for the fixed authored fixture identity. Following AOSP's public binary
+XML field definitions, it checks package identity and increases the typed
+version-code integer. It substitutes the authored bundle, preserves other entry
+bytes, removes obsolete signatures and writes new unsigned output. It refuses
+other package IDs, non-increasing versions, malformed/truncated inputs and
+input/output overwrites. Its host contracts exercise both string-pool encodings,
+identity/version/bounds refusals, native-entry preservation and signature removal.
+ARCHITECTURE names the owner and its current `phone-apk-fixture` interface.
+
+Use the previously inspected Termux source pin
+`d22cd9f98891a21199faf22dd9cc7ba0f67eedc5`, its official HTTPS package-index
+hashes and the pinned package manifests: Python 3.14.8, OpenJDK 21.0.12,
+aapt/zipalign 16.0.0.4-4 and apksigner 37.0.0, with their dependencies.
+Inspect the aapt recipe and official
+[alignment ordering/options](https://developer.android.com/tools/zipalign) and
+[AOSP resource wire definitions](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/libs/androidfw/include/androidfw/ResourceTypes.h).
+These generic tool probes require no new game-specific prior-art mechanism.
+No distribution clearance is inferred from package availability; combined-tool
+license/source/notice obligations and proprietary Unity acquisition remain open.
+
+On Android, repackage the explicit desktop-built fixture player with the actual
+phone-generated bundle, align with `-P 16`, then sign versions 3 and 4 using one
+new disposable key. Its password is generated in the Android process, passed
+only through the child-process environment and never retained in a file or log.
+The encrypted disposable key is not a durable owner/release signing identity.
+The first packaging attempt starts keytool but refuses a Python child whose
+native-library search path omits its relocated dependency directory. Preserve
+that attempt; correct only the host-tool environment and use a new owned attempt.
+Both APKs then pass Android signature and post-sign alignment checks, plus an
+independent desktop signature check. The two certificates match. All native
+library bytes and all non-manifest entry bytes match the base player; the
+phone-generated replacement bundle is itself byte-identical to the embedded
+control. This does not establish ELF 16 KiB compatibility or performance parity.
+
+Phone-signed APK SHA-256:
+
+- Version 3: `0bd25d4437bd8302ed1e9b3663b2fe054b95fd97858371ff3c570cf4b35d8538`.
+- Version 4: `a2f90b690d42ee8420c85bd805515f36918170ac9642cfe7527d24d6bc0a7a78`.
+
+**Device acceptance and cleanup.** The new tracked `phone_package_check` owner
+requires an explicit `--device`, APK/hash/version receipts, the matching owned
+shell workspace and an actual phone-candidate hash. Its first attempt stops
+before installation because `pm path` reports an absent package as nonzero.
+Query successful package inventory before requesting a present package's path;
+add an independent absence contract and retain the failed result. Never treat
+a transport failure as proof of absence.
+
+The retry installs only the explicit version-3 fixture APK after fresh storage
+and capacity queries, verifies its actual package bytes/version/placement and
+passes the embedded control. The wrong-hash selector is then rejected before
+native bundle loading. The actual phone-generated candidate passes two native
+load/read/unload cycles under Vulkan. Save a private internal-data marker;
+measure storage/capacity again and upgrade the owned fixture to version 4.
+Verify actual APK/version/placement, retained internal marker and candidate
+bytes, and two more native cycles after update. Record app/persistent-data
+backing after each install. All positive reports identify Unity 2021.3.45f2
+and Vulkan with matching candidate hashes; the refusal reports zero cycles.
+
+Collect PID-scoped logs, remove only the hash-proven owned fixture, verify
+package absence and display sleep. Read-only before/after checks keep the
+existing alpha game APK at `be26c21c…`; no game install, stop or qualification
+occurs. Main and Thor receive no operation. Cleanup guard tests refuse unknown
+installed bytes before stop/uninstall and require explicit device selection.
+
+**Evidence and remaining gates.** The successful result lives under
+`work/experiments/phone-packaging/20261020T204441.809588Z/`; its earlier refusal
+is retained adjacent. `work/coordination/phone-proof/` preserves public package
+archives/manifests, all content and packaging failures, exact-editor outputs,
+phone-produced/signed artifacts and independent entry/signature comparisons.
+`phone-generation-package-receipt.json`, SHA-256
+`04eb4c70d5492c6c05c3aff1a64afa2831ae755c80b97077b1fce5505468d966`, binds the
+inputs, outputs and device evidence. LOCAL_STATE lists required private replay
+adapters. Public sources/host contracts are in Git; no protected asset, tool
+binary, signing material or raw identifier enters tracked content.
+
+This qualifies a phone-shell content/repack/sign/update precursor. Its base
+Unity player still comes from the desktop editor; installs use laboratory ADB.
+A complete phone-only owner build remains unproven. Next are modern Android app
+sandbox hosting, native linking, richer serialized/rendered/script-bound content,
+shader production, permitted tool delivery, durable private owner keys and the
+user-mediated installer flow. Preserve the desktop fallback and exact game
+runtime. No benchmark or numerical performance claim follows from these passes.
+Fresh-clone CI, Ruff, documentation freshness, privacy/provenance and whitespace
+checks qualify the local tooling checkpoint separately from these device results.
