@@ -15451,3 +15451,76 @@ toolbot-1311-prefab-audit/; toolbot-1311-terminal-triage/patch-r2/ and
 independent-fix-review/r2/; codex-source-owner-fixes-host-r1/;
 codex-source-owner-fixes-compile-r1/ and codex-source-owner-fixes-format-r1/.
 Raw game source and device evidence remain ignored.
+
+
+## J786 — Complete the managed original event but refuse its capture evidence
+
+Date: 2026-10-20. Hypothesis: the official PostCallbacks/RenderAudio update
+order lets J778's retained managed API complete the original event, while
+J781's Android decoder makes native monitoring readable. This remains an
+isolated player with the adapted Init metadata and unchanged original Global
+bank; it does not enable game audio.
+
+The reviewed owner pumps callbacks then checks the native RenderAudio result
+only during an owned active scenario before Term. Its Init, post-Init monitor
+setup and single-shot Term bodies remain unchanged. A diagnostic-only failed
+capture collector authenticates the report and owned process/output path before
+pulling a bounded regular WAV; it never turns a failed scenario into a pass.
+Official local Android Integration update-loop code and pinned R2API.Sound's
+initialized-runtime/bank-lifetime contract are the prior art.
+
+Root stages the owner, bootstrap, fixture, manifest, generated raw API and
+matching reference closure while preserving all 45 importer metadata files.
+The actual package-only helper receipt proves that only the package identifier
+changed in player settings. An initial post-refresh readiness check precedes
+compilation completion; later exact-editor inspection is idle with zero console
+errors, so a verified package-only resume completes without restaging. Host
+review then catches stale private plan/manifest expectations and a tuple-versus-
+mapping source-pin bug before dispatch. The corrected real prequeue path passes
+against actual predecessor/package receipts, including all metadata and sources;
+no validator is skipped for the actual build.
+
+Fresh standalone player SHA-256:
+`caf05929063f52ec513f3d9e71fa838d61b6bc3381ca265943945274ca1cbc01`.
+The exact editor builds it in 42.074936 s with zero errors and five warnings.
+All 105 frozen entries, including 32 project inputs and 45 metadata files,
+match before/after. The raw API is J781's `2bd97317…`; 11 imports remain
+unavailable and full enablement remains false. Root freezes the player and
+receipts before device use.
+
+On internal Nova the negative control passes: exactly one expected missing-event
+error callback, a correctly decoded readable message, three successful native
+render calls, both Terms completed and no unknown native outcome. Monitor
+coverage is explicitly after successful engine Init through both Terms; no
+pre-Init observation is claimed. The owned fixture is removed and the display
+sleeps. Root reviews and hashes that result before authorizing the separate
+original-event process.
+
+The original Global UI event then returns playing ID 1 and exactly one
+EndOfEvent callback. Thirteen render calls succeed and cumulative post-Init
+monitor callback/error counts remain zero through completed teardown. This
+resolves the prior missing completion, within this one-event fixture only.
+The scenario still fails at capture validation: immediately after StopOutputCapture,
+the C# reader sees a RIFF declared-size/file-size mismatch. The authenticated
+failed capture is collected as unaccepted: 71,492 bytes, SHA-256
+`3160ca0467607ee1a2d2120ddeca2edbbaff8a168df6d0f0f2696d724c29590c`.
+After failure teardown the preserved file's RIFF size is consistent, but its
+WAVE_FORMAT_EXTENSIBLE encoding is also unsupported by the current validators.
+This suggests a finalization-order issue plus an unsupported valid format;
+it is not PCM or audibility acceptance and no header is patched. Revisit with
+an authoritative capture-completion contract and strict explicit format support.
+
+Both trials remove only their verified owned fixture, leave the game package
+intact, complete host cleanup without error, and record no Android fatal.
+Game audio and every composed-audio acceptance gate remain closed. The private
+fixture inputs and their reason remain listed in LOCAL_STATE; no automatic
+production build step reads them.
+
+Evidence: work/coordination/wwise-managed-render-r5-draft/ and settled-review/;
+codex-audio-r5-stage-draft/finalization-r1/;
+codex-audio-r5-package-resume-root-r1/;
+codex-audio-r5-build-finalization-helper/r4/ and independent-review/r4/;
+codex-audio-managed-r5-candidate-root-r1/; codex-audio-r5-device-binding-draft/;
+work/device/<serial>/experiments/wwise-managed-fixture/20261020T092614.235253Z/
+and 20261020T092749.057645Z/. Original data, SDK material, capture and process
+records remain ignored.

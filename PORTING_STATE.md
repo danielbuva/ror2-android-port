@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-20 after **J785** (MUL-T callback restoration and Siren handoff corrections pass host checks; next player pending).
+Last updated 2026-10-20 after **J786** (MUL-T/Siren source corrections pass host checks; managed audio event completes but capture remains refused).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -92,8 +92,10 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   no event, PCM, cumulative-error or composed-audio acceptance follows.
   J778's corrected standalone managed player passes the numeric native monitor
   control and strict teardown. That player uses the wrong message encoding; J781 reproduces the host
-  correction, with a fresh player trial pending. A fresh original Global event returns a playing ID but times out
-  without EndOfEvent; PCM is unvalidated. These are isolated fixtures, and no
+  correction. J786 passes readable monitoring and native per-frame rendering, then
+  completes one original Global event with EndOfEvent and zero post-Init monitored
+  errors. Its strict capture check refuses unfinished RIFF evidence and lacks
+  WAVE_FORMAT_EXTENSIBLE support; PCM and audibility remain unvalidated. These are isolated fixtures, and no
   composed-audio gate is accepted. J770 makes the incomplete ABI candidate
   reproducible without enabling audio. Wider bank behavior and production
   lifecycle remain open.
