@@ -23,10 +23,26 @@ def bind_runtime(device, paths, storage, *, observed=None):
     external = device.sh("readlink", "-f", paths["externalFilesDir"]).strip()
     private = device.sh("run-as", PACKAGE, "readlink", "-f", paths["filesDir"]).strip()
     data = device.sh("run-as", PACKAGE, "pwd").strip()
+    private_identity = device.sh("run-as", PACKAGE, "stat", "-c", "%d:%i", private).strip()
+    package_identity = device.sh("run-as", PACKAGE, "stat", "-c", "%d:%i", data + "/files").strip()
     if observed is not None:
-        observed.update(paths=paths, canonical_persistent=persistent, canonical_external=external, canonical_private=private, data_directory=data)
+        observed.update(
+            paths=paths,
+            canonical_persistent=persistent,
+            canonical_external=external,
+            canonical_private=private,
+            data_directory=data,
+            private_identity=private_identity,
+            package_identity=package_identity,
+        )
     prefix = "/data/" if storage["mode"] == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
-    if not persistent or persistent != external or private != data + "/files" or not private.startswith(prefix):
+    if (
+        not persistent
+        or persistent != external
+        or not re.fullmatch(r"[0-9]+:[0-9]+", private_identity)
+        or private_identity != package_identity
+        or not data.startswith(prefix)
+    ):
         raise ValueError("Runtime paths do not match Android storage observations")
     return {
         "paths": paths,

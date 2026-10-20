@@ -14,7 +14,7 @@ class PhonePackageCheckTests(unittest.TestCase):
         }
         device = Mock()
         actual = paths["externalFilesDir"]
-        device.sh.side_effect = [actual, actual, paths["filesDir"], "/data/user/0/" + PACKAGE, "private backing", "runtime backing"]
+        device.sh.side_effect = [actual, actual, paths["filesDir"], "/data/user/0/" + PACKAGE, "1:2", "1:2", "private backing", "runtime backing"]
         result = bind_runtime(device, paths, {"mode": "internal"})
         self.assertEqual(result["directory"], actual)
         self.assertEqual(result["app_data_backing"], "private backing")
@@ -24,9 +24,33 @@ class PhonePackageCheckTests(unittest.TestCase):
         paths = {key: "/data/" + PACKAGE + "/files" for key in ("persistentDataPath", "filesDir", "externalFilesDir")}
         for observed in (["one", "different", paths["filesDir"], "/data/" + PACKAGE], ["same", "same", paths["filesDir"], "/data/" + PACKAGE]):
             device = Mock()
-            device.sh.side_effect = observed
+            device.sh.side_effect = observed + ["1:2", "1:2"]
             with self.assertRaises(ValueError):
                 bind_runtime(device, paths, {"mode": "adopted", "uuid": "selected-volume"})
+
+    def test_private_alias_requires_matching_filesystem_and_inode_identity(self):
+        paths = {
+            "persistentDataPath": "/external/" + PACKAGE + "/files",
+            "externalFilesDir": "/external/" + PACKAGE + "/files",
+            "filesDir": "/data/data/" + PACKAGE + "/files",
+        }
+        for identity, accepted in (("1:2", True), ("2:2", False), ("1:3", False)):
+            device = Mock()
+            device.sh.side_effect = [
+                paths["persistentDataPath"],
+                paths["externalFilesDir"],
+                paths["filesDir"],
+                "/data/user/0/" + PACKAGE,
+                "1:2",
+                identity,
+                "private backing",
+                "runtime backing",
+            ]
+            if accepted:
+                self.assertEqual(bind_runtime(device, paths, {"mode": "internal"})["directory"], paths["persistentDataPath"])
+            else:
+                with self.assertRaises(ValueError):
+                    bind_runtime(device, paths, {"mode": "internal"})
 
     def test_cleanup_refuses_unowned_bytes_before_stop_or_uninstall(self):
         device = Mock()
