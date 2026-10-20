@@ -19,7 +19,8 @@ public final class HostProbeActivity extends Activity {
         TextView text = new TextView(this);
         text.setText("Running authored native host checks");
         setContentView(text);
-        new Thread(() -> {
+        new Thread(new Runnable() {
+          @Override public void run() {
             JSONObject report = new JSONObject();
             try {
                 File installed = new File(getApplicationInfo().nativeLibraryDir, "libtoolprobe.so");
@@ -56,7 +57,10 @@ public final class HostProbeActivity extends Activity {
             } catch (Exception error) {
                 android.util.Log.e("PhoneHostFixture", "Report write failed", error);
             }
-            runOnUiThread(() -> text.setText("Host fixture complete"));
+            runOnUiThread(new Runnable() {
+                @Override public void run() { text.setText("Host fixture complete"); }
+            });
+          }
         }, "phone-host-fixture").start();
     }
 
