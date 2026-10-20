@@ -8,8 +8,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
- [Serializable] class Request {public string request_id,api,output,androidSymbols;public bool presentationOnly,stagePresentation,reusePayload;public string[] reflectionTextureGuids;}
- [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage;public double seconds;public int errors;}
+ [Serializable] class Request {public string request_id,api,output,androidSymbols;public bool presentationOnly,stagePresentation,reusePayload,captureIl2CppInvocation;public string[] reflectionTextureGuids;}
+ [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage,build_report_guid;public double seconds;public int errors;}
  [Serializable] class NativeVariant {public string resource;}
  [Serializable] class NativeManifest {public NativeVariant[] variants;}
  [Serializable] class NativeFamily {public NativeVariant[] variants;}
@@ -401,6 +401,7 @@ public static class LabBuild {
    EditorSceneManager.SaveScene(scene,"Assets/Lab.unity");EditorUserBuildSettings.buildAppBundle=false;
    result.apk=Path.Combine(artifactDir,"lab-"+api+".apk");result.backend="IL2CPP ARM64 "+api;
    var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=BuildOptions.Development});
+   result.build_report_guid=report.summary.guid.ToString();
    result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded&&result.errors==0;
    if(result.success&&symbolsMode=="debugging"){var symbolZips=Directory.GetFiles(artifactDir,"*.zip");if(symbolZips.Length!=1)throw new InvalidOperationException("Expected exactly one Unity Android symbols ZIP");result.symbolPackage=Path.GetFullPath(symbolZips[0]);}
   }catch(Exception e){result.success=false;result.result=e.ToString();Debug.LogException(e);}

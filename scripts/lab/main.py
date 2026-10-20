@@ -53,6 +53,11 @@ p.add_argument(
     action="store_true",
     help="Current: opt-in same-request pre-strip UnityLinker input inventory bound to a whole-catalog-code-build APK receipt",
 )
+p.add_argument(
+    "--capture-il2cpp-invocation",
+    action="store_true",
+    help="Current: additionally capture the same-request IL2CPP input directory for whole-catalog-code-build; requires --capture-player-linker-inputs",
+)
 p.add_argument("--json", action="store_true")
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
@@ -99,6 +104,10 @@ if a.debug_symbols and not (a.command == "build" or (a.command == "prototype" an
     p.error("--debug-symbols requires build or prototype --action whole-catalog-code-build")
 if a.capture_player_linker_inputs and not (a.command == "prototype" and a.action == "whole-catalog-code-build"):
     p.error("--capture-player-linker-inputs requires prototype --action whole-catalog-code-build")
+if a.capture_il2cpp_invocation and not (a.command == "prototype" and a.action == "whole-catalog-code-build"):
+    p.error("--capture-il2cpp-invocation requires prototype --action whole-catalog-code-build")
+if a.capture_il2cpp_invocation and not a.capture_player_linker_inputs:
+    p.error("--capture-il2cpp-invocation requires --capture-player-linker-inputs for the same-build pre-strip join")
 # Device operations explicitly select the existing local receipt/config tree.
 # Rebuild --work-dir remains a read-only input boundary.
 if a.work_dir and a.command in {"install", "sync-data", "run", "check-baseline"}:

@@ -18888,106 +18888,6 @@ real inventory-event presentation and ordered teardown. R8/R9 must replay the ne
 runtime source/membership; that reproduction is not claimed here. No alpha UI,
 controls, packaging or game-content source changes are included.
 
-## J836 — Build an authored APK on Android and test app-host execution
-
-2026-10-20. Hypothesis: Android-host open tool components can compile and package
-an independently authored native/Java app without a Unity-built base APK; that
-app can launch an immutable PackageManager-installed executable while refusing
-identical bytes copied to writable private storage. Fetch and integrate accepted
-`origin/main` `d55910f` before this entry. Coordinate J835 and J837 for the main
-session and J836 for this isolated alpha experiment. No Unity/game runtime,
-working game APK, original installation or device security setting changes.
-
-**Owner and inputs.** `tools/phone-build/host/` owns the C arithmetic/context
-probe, Java activity, literal manifest and Android-side standard-library build
-driver. `phone_host_check.py` owns explicit device selection, fixed fixture
-identity, APK/native-control hashes, fresh storage/capacity, actual installation
-placement/backing, report/log collection and hash-proven cleanup. Its current
-experimental `phone-host-check` action takes an ignored exact-artifact request.
-ARCHITECTURE and LOCAL_STATE name these support paths; no game build calls them.
-
-Use the existing receipt-owned Android tool workspace, Termux source/package
-pin from J833, Clang 21.1.8/LLD, Python 3.14.8, OpenJDK 21.0.12,
-aapt/zipalign 16.0.0.4-4 and apksigner 37.0.0. Supply owner SDK API 30
-`android.jar` and build-tools 34.0.0 `d8.jar` as private hash-bound inputs.
-No Unity/editor-generated player or asset is an input. The native link uses the
-phone's system libc; this is not Unity NDK compiler/sysroot equivalence.
-The driver creates a new output directory, retains the first failure and never
-overwrites an earlier attempt. Its disposable signing password exists only in
-process memory/child environment; the encrypted key is not durable owner custody.
-
-**Initial build failures.** Preserve the generic `lld` driver refusal, then
-invoke its `ld.lld` ELF frontend. Native C compile/link and a shell execution
-control pass. Javac next refuses the Android bootclasspath's lambda bootstrap
-method; use ordinary Runnable classes. Pinned D8 then reports an internal null-string
-error while reading an anonymous class. Retaining Java parameter
-names with `-parameters` permits that same D8 input path to complete. This is a
-bounded observed compatibility fix, not a claim to fix arbitrary Java libraries.
-The unchanged authored inputs and all failed build directories remain retained.
-
-**Phone build.** From committed `007c460`, the Android driver completes native
-PIE compilation/linking, javac, D8, resource/manifest packaging, ZIP assembly,
-alignment, key generation, signing, signature verification and post-sign
-alignment checking. The APK contains the same native bytes as an installed
-`lib/arm64-v8a/libtoolprobe.so` and an asset negative control. Its fixture
-package targets API 30, requires API 24+, requests no permissions/network and
-reads no game inputs. First APK:
-`ca46c7881a158a671bd0755656f36db46c9643c8f732e21b713942d1121459a5`.
-This is an entirely phone-built authored app, not a complete phone-built Unity
-or IL2CPP player. Alignment alone does not establish ELF 16 KiB support.
-
-**First device failure.** The immutable installed executable exists, is not
-writable to the app, and returns the authored marker/arithmetic under the app
-UID. The identical writable private copy also executes. The required refusal
-control therefore fails; do not classify the whole sandbox gate as passed.
-The runner removes only the exact owned APK, confirms absence/display sleep and
-checks the existing game APK unchanged. Preserve the result:
-`work/experiments/phone-host/20261020T210213.180078Z/result.json`.
-
-**Bounded diagnosis.** Add only actual API and optional self/child process
-context observations, keeping the same refusal requirement. Committed `53bb492`
-again builds entirely on Android, producing APK
-`f1c13078ea9e8be50978bb9a4a59c41d53249e518ee0aaa8b3996d8c11dc85d0`.
-On device API 33 with target API 30, app and both child processes have the same
-app UID and standard `untrusted_app_30` domain. Installed immutable execution
-passes; writable execution again succeeds, so the overall contract remains
-false. Shell reads of the SELinux enforcement interface are denied. These
-observations do not establish whether enforcement mode, vendor policy or
-another platform difference causes the result; no policy or setting is changed.
-No other device is used to hide that limitation.
-
-The second result is retained at
-`work/experiments/phone-host/20261020T211421.992162Z/result.json`; owned removal,
-display sleep and game APK equality again pass. Private raw contexts/categories,
-UIDs, data paths, supplied tools, signing outputs and logs remain ignored.
-`work/coordination/phone-proof/host-proof-receipt.json` binds builds, original
-failures, tool-input hashes, device results and the denied enforcement query;
-SHA-256 `95cb8d906333bcb651d228aa5b64415092db9e0512d7fe60b0b4e0cf277ebdd2`.
-
-**Validation and classification.** Fresh-clone CI on integrated `5d17b97` passes
-1,174 host tests with 52 optional skips, Ruff, public audit and doc freshness.
-The driver failure contract proves early stop, input hashes, evidence retention,
-no password in outputs and overwrite refusal. Device contracts enforce explicit
-selection, identical native/control bytes and unknown-hash cleanup refusal.
-Full game doctor/preflight still refuse independent clone-local bootstrap debt;
-these app tests do not qualify the game or its installation workflow.
-
-The phone shell can produce this authored APK from source, and installed native
-execution is observed in its app. Expected Android writable-code refusal is not
-qualified here. Revisit with an explicitly assigned platform that demonstrates
-the documented restriction, preserving this failed control; do not lower the
-target SDK, change policy, use privileged execution or execute writable tools to
-claim a general installer. Python/.NET/Clang dependency hosting, exact Unity
-player construction, rich content/shaders, tool-delivery rights, durable signing,
-user-mediated installation and performance remain separate open gates.
-
-References: Android's [execution restriction](https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission),
-[public native library directory](https://developer.android.com/reference/android/content/pm/ApplicationInfo#nativeLibraryDir),
-[Android 13 app policy](https://android.googlesource.com/platform/system/sepolicy/+/refs/heads/android13-release/private/app_neverallows.te)
-and [official D8 invocation](https://r8.googlesource.com/r8/+/refs/heads/main/README.md#Running-D8).
-This generic packaging/tool-host experiment introduces no RoR2-specific content,
-serialization, middleware or gameplay mechanism.
-
 ## J837 — Pass the formatted native monitor control and one original UI event in the isolated player
 
 **Hypothesis.** J824's observed 47-character callback envelope is the exact
@@ -19135,6 +19035,159 @@ native source/prior-art reasoning and host contracts once. The new helper’s
 actual first-import authored GUID is recorded in `recipe/project-layout.json`
 for deterministic replay; it adds no runtime change after the frozen APK.
 R8/R9 must replay J838’s authored sources/membership and this layout metadata.
+
+## J841 — Observe native Huntress skin teardown and retain the next-menu timeout
+
+2026-10-20. Hypothesis: J838’s exclusive native inventory owner resolves J835’s
+pre-play refusal while preserving selected skin and owned teardown. Keep J840’s
+frozen APK `8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770`,
+source `a4664d7`, matching symbols and both-default proof unchanged. Root reviews
+the R6 host runner and corrected Root wrapper before one Main-only attempt;
+all device calls bind the exact frozen APK, whole fresh Root claim, adopted
+storage and absence of other-session leases. No build or install occurs.
+
+The actual attempt is
+`work/experiments/native-source-skin-lifecycle/20261020T220055.108515Z/`, PID
+26150, ordinary selected Huntress, diagnostic invincibility, no damage/transport
+boost and no stage exit. Its capture hook reaches at least 35 seconds of live
+Lakes play. Settings pause and the ordinary end-run action initiate cleanup.
+The runner then times out waiting for the next offline menu under its shared
+observation deadline. Root’s final report is session 2 at body-catalog
+initialization with no error; a healthy returned menu/restart is not observed.
+This is a host stop, not evidence of a native crash or a successful restart.
+
+Preserve the failed runner, raw report/log and sleep evidence under
+`work/coordination/codex-native-skin-device-root-r3/attempts/`.
+A separate fresh guarded read-only collection obtains the completed session-1
+report before another run. It is `complete`, cleanup true, no error/firstFailure,
+37.125458 world seconds and appliedRuns 13. The selected/current native skin
+indexes both remain 0, the original Huntress controller/avatar and initialized
+Animator are recorded, displayDeactivated/ownerDestroyed are true, and
+attached/nativeOwnersActive are false. Five material copies are created and all
+five receive release calls; actual Unity-null material destruction is not
+measured. The same-PID Unity log contains no error. Persisted profile count is
+13 and its complete file hash matches the earlier Root pre-run artifact.
+The current game is stopped, selector absent and display verified asleep;
+no alpha/spare-device action occurs. Completed report, exact raw profile/hash
+and placement/cleanup evidence remain in `post-failure-collection/`.
+`root-classification.json` records the bounded distinctions without changing
+the failed runner’s result.
+
+Root decodes and inspects
+`live-world-35s-before-settings-pause.png`: the weapon is visible while the body
+is largely obscured/absent and a large icon overlaps the model. This single
+Android frame does not establish whether the cause is native visibility,
+an active ability, renderer/material ownership or another presentation issue.
+Earlier Android Huntress captures are not PC authority; no matching local PC
+Huntress capture is available. Investigate source-owned visibility and material
+updates before changing behavior or claiming visual/animation parity.
+
+The native selected-skin and completed owner teardown are directly observed;
+the full runner, healthy restart and visual acceptance remain open. Next retain
+live/completed snapshots before waiting for the next menu so a host timeout
+cannot hide already-written teardown evidence, then address only a demonstrated
+presentation mismatch. No authored runtime or recipe change occurs here;
+J840 remains the default baseline. Moon stays manual and audio remains off.
+
+## J836 — Build an authored APK on Android and test app-host execution
+
+2026-10-20. Hypothesis: Android-host open tool components can compile and package
+an independently authored native/Java app without a Unity-built base APK; that
+app can launch an immutable PackageManager-installed executable while refusing
+identical bytes copied to writable private storage. Fetch and integrate accepted
+`origin/main` `d55910f` before this entry. Coordinate J835 and J837 for the main
+session and J836 for this isolated alpha experiment. No Unity/game runtime,
+working game APK, original installation or device security setting changes.
+
+**Owner and inputs.** `tools/phone-build/host/` owns the C arithmetic/context
+probe, Java activity, literal manifest and Android-side standard-library build
+driver. `phone_host_check.py` owns explicit device selection, fixed fixture
+identity, APK/native-control hashes, fresh storage/capacity, actual installation
+placement/backing, report/log collection and hash-proven cleanup. Its current
+experimental `phone-host-check` action takes an ignored exact-artifact request.
+ARCHITECTURE and LOCAL_STATE name these support paths; no game build calls them.
+
+Use the existing receipt-owned Android tool workspace, Termux source/package
+pin from J833, Clang 21.1.8/LLD, Python 3.14.8, OpenJDK 21.0.12,
+aapt/zipalign 16.0.0.4-4 and apksigner 37.0.0. Supply owner SDK API 30
+`android.jar` and build-tools 34.0.0 `d8.jar` as private hash-bound inputs.
+No Unity/editor-generated player or asset is an input. The native link uses the
+phone's system libc; this is not Unity NDK compiler/sysroot equivalence.
+The driver creates a new output directory, retains the first failure and never
+overwrites an earlier attempt. Its disposable signing password exists only in
+process memory/child environment; the encrypted key is not durable owner custody.
+
+**Initial build failures.** Preserve the generic `lld` driver refusal, then
+invoke its `ld.lld` ELF frontend. Native C compile/link and a shell execution
+control pass. Javac next refuses the Android bootclasspath's lambda bootstrap
+method; use ordinary Runnable classes. Pinned D8 then reports an internal null-string
+error while reading an anonymous class. Retaining Java parameter
+names with `-parameters` permits that same D8 input path to complete. This is a
+bounded observed compatibility fix, not a claim to fix arbitrary Java libraries.
+The unchanged authored inputs and all failed build directories remain retained.
+
+**Phone build.** From committed `007c460`, the Android driver completes native
+PIE compilation/linking, javac, D8, resource/manifest packaging, ZIP assembly,
+alignment, key generation, signing, signature verification and post-sign
+alignment checking. The APK contains the same native bytes as an installed
+`lib/arm64-v8a/libtoolprobe.so` and an asset negative control. Its fixture
+package targets API 30, requires API 24+, requests no permissions/network and
+reads no game inputs. First APK:
+`ca46c7881a158a671bd0755656f36db46c9643c8f732e21b713942d1121459a5`.
+This is an entirely phone-built authored app, not a complete phone-built Unity
+or IL2CPP player. Alignment alone does not establish ELF 16 KiB support.
+
+**First device failure.** The immutable installed executable exists, is not
+writable to the app, and returns the authored marker/arithmetic under the app
+UID. The identical writable private copy also executes. The required refusal
+control therefore fails; do not classify the whole sandbox gate as passed.
+The runner removes only the exact owned APK, confirms absence/display sleep and
+checks the existing game APK unchanged. Preserve the result:
+`work/experiments/phone-host/20261020T210213.180078Z/result.json`.
+
+**Bounded diagnosis.** Add only actual API and optional self/child process
+context observations, keeping the same refusal requirement. Committed `53bb492`
+again builds entirely on Android, producing APK
+`f1c13078ea9e8be50978bb9a4a59c41d53249e518ee0aaa8b3996d8c11dc85d0`.
+On device API 33 with target API 30, app and both child processes have the same
+app UID and standard `untrusted_app_30` domain. Installed immutable execution
+passes; writable execution again succeeds, so the overall contract remains
+false. Shell reads of the SELinux enforcement interface are denied. These
+observations do not establish whether enforcement mode, vendor policy or
+another platform difference causes the result; no policy or setting is changed.
+No other device is used to hide that limitation.
+
+The second result is retained at
+`work/experiments/phone-host/20261020T211421.992162Z/result.json`; owned removal,
+display sleep and game APK equality again pass. Private raw contexts/categories,
+UIDs, data paths, supplied tools, signing outputs and logs remain ignored.
+`work/coordination/phone-proof/host-proof-receipt.json` binds builds, original
+failures, tool-input hashes, device results and the denied enforcement query;
+SHA-256 `95cb8d906333bcb651d228aa5b64415092db9e0512d7fe60b0b4e0cf277ebdd2`.
+
+**Validation and classification.** Fresh-clone CI on integrated `5d17b97` passes
+1,174 host tests with 52 optional skips, Ruff, public audit and doc freshness.
+The driver failure contract proves early stop, input hashes, evidence retention,
+no password in outputs and overwrite refusal. Device contracts enforce explicit
+selection, identical native/control bytes and unknown-hash cleanup refusal.
+Full game doctor/preflight still refuse independent clone-local bootstrap debt;
+these app tests do not qualify the game or its installation workflow.
+
+The phone shell can produce this authored APK from source, and installed native
+execution is observed in its app. Expected Android writable-code refusal is not
+qualified here. Revisit with an explicitly assigned platform that demonstrates
+the documented restriction, preserving this failed control; do not lower the
+target SDK, change policy, use privileged execution or execute writable tools to
+claim a general installer. Python/.NET/Clang dependency hosting, exact Unity
+player construction, rich content/shaders, tool-delivery rights, durable signing,
+user-mediated installation and performance remain separate open gates.
+
+References: Android's [execution restriction](https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission),
+[public native library directory](https://developer.android.com/reference/android/content/pm/ApplicationInfo#nativeLibraryDir),
+[Android 13 app policy](https://android.googlesource.com/platform/system/sepolicy/+/refs/heads/android13-release/private/app_neverallows.te)
+and [official D8 invocation](https://r8.googlesource.com/r8/+/refs/heads/main/README.md#Running-D8).
+This generic packaging/tool-host experiment introduces no RoR2-specific content,
+serialization, middleware or gameplay mechanism.
 
 ## J839 — Compile and link the authored IL2CPP native library on Android
 

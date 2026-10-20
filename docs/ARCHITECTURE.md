@@ -150,13 +150,31 @@ and seals that inventory with the successful request and APK hash. `build.py`
 gives each capture a fresh request-specific output/cache namespace and refuses
 reuse; default builds retain their existing invocation/cache behavior. Output
 ancestry, stale identities, changed snapshots and missing callback evidence
-refuse. This is a UnityLinker-input receipt: a same-request comparison with the
-actual linker/IL2CPP invocation is still required before calling it the complete
-player closure. `test_player_linker_receipt.py` covers identity/dispatch/refusal;
-`test_describe_runtime.py` executes the actual C# copy/output helpers against
-minimal host stubs and skips without the pinned Mono compiler. Exact-editor
-compilation and later device acceptance remain separate. This narrow
-build-receipt addition serves original audio; alpha retains packaging ownership.
+refuse.
+
+The additional `--capture-il2cpp-invocation` opt-in requires
+`--capture-player-linker-inputs` and is independently false by default. The
+staged `Il2CppInvocationCapture.cs` subscribes only for that request, captures
+Unity's pre-launch rendered IL2CPP command line and the one simple
+`--directory=` input path, then snapshots the directory under request-owned
+ignored storage. It records the project-relative input path and BuildReport
+GUID; the UnityLinker receipt and final successful build result carry the same
+GUID. `player_il2cpp_receipt.py` verifies the request/source/input/target/GUID
+join and hashes before adding generic `il2cpp_snapshot_to_apk_build_binding`
+evidence to the build receipt. This does not claim that the process consumed
+those exact bytes, an exact argv vector, or equivalence with the composed-audio
+transformed-input manifest; `stage_to_apk_binding` remains false. The native
+`UnityLogWriter` to `Application.logMessageReceived` delivery is still
+unverified until an owning editor build observes it. No runtime dispatch or
+audio acceptance follows from this receipt.
+
+`test_player_linker_receipt.py` covers the existing input capture and opt-in
+forwarding. `test_player_il2cpp_receipt.py` covers the joined receipt contract;
+`test_describe_runtime.py` and `test_il2cpp_invocation_capture_runtime.py`
+execute the authored C# helpers against minimal host stubs and skip without the
+pinned Mono compiler. Exact-editor compilation and later device acceptance
+remain separate. This narrow build-receipt addition serves original audio;
+alpha retains packaging ownership.
 
 `whole_catalog.analyze` owns the host dependency closure. Audit, reconciliation
 and root-binding repair supply the accepted decompile root to

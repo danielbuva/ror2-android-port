@@ -30,6 +30,7 @@ public sealed class PlayerLinkerInputCapture : IUnityLinkerProcessor
         public string request_id;
         public string source_commit;
         public string input_id;
+        public string build_report_guid;
         public string target;
         public string input_directory;
         public Row[] files;
@@ -92,6 +93,7 @@ public sealed class PlayerLinkerInputCapture : IUnityLinkerProcessor
             request_id = request.request_id,
             source_commit = request.sourceCommit,
             input_id = request.inputId,
+            build_report_guid = report.summary.guid.ToString(),
             target = data.target.ToString(),
             input_directory = relativeDirectory,
             files = rows

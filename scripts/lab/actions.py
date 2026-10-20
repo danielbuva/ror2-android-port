@@ -50,6 +50,8 @@ def _whole_catalog_code_build(function, kwargs, args):
         selected["android_symbols"] = "debugging"
     if getattr(args, "capture_player_linker_inputs", False):
         selected["capture_player_linker_inputs"] = True
+    if getattr(args, "capture_il2cpp_invocation", False):
+        selected["capture_il2cpp_invocation"] = True
     return function(**selected)
 
 
@@ -349,7 +351,7 @@ _ENTRIES = (
         "build_integration",
         {"code_only": True},
         "current",
-        "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into a request/source/input-bound pre-strip UnityLinker inventory in the APK receipt.",
+        "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into the request/source/input-bound pre-strip UnityLinker inventory. Add --capture-il2cpp-invocation to capture the same request's pre-launch rendered IL2CPP line and input directory; it requires --capture-player-linker-inputs and does not claim exact argv or composed-audio stage equivalence.",
         handler=_whole_catalog_code_build,
     ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),
