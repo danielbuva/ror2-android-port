@@ -26,6 +26,14 @@ actions stage/check/build only this fixture under the primary checkout mutex.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.
 
+`scripts/lab/phone_apk.py` is separate packaging **support** for that authored
+fixture only. Its standard-library parser increases a literal Android manifest
+version code after checking the fixed package identity, substitutes the authored
+bundle, preserves other entry bytes and removes obsolete signatures. It writes
+new unsigned outputs; alignment and owner signing follow separately. The current
+`phone-apk-fixture` action takes an ignored hash-bound request via `--target`;
+the same file has a standalone Android CLI. It cannot repackage the game ID.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

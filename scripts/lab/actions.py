@@ -136,6 +136,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-apk-fixture",
+        "phone_apk",
+        "stage_action",
+        {},
+        "current",
+        "Experimental: repackage only the authored content fixture from hash-bound --target REQUEST.json; writes a new unsigned APK, requiring later alignment/signing. No device or game build access.",
+        handler=_target,
+    ),
+    Action(
         "phone-content-check",
         "phone_content",
         "run_editor",

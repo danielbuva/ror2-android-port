@@ -44,3 +44,20 @@ This tiny contract establishes no mesh, texture, material, animation, script
 binding, shader compilation, catalog, game or performance acceptance. The larger
 fixture and owner-build gates remain in
 [phone-owner-build.md](../../docs/phone-owner-build.md).
+
+Packaging support is a separate probe:
+
+```sh
+./dev prototype --action phone-apk-fixture --target work/config/phone-fixture-request.json
+python3 -I -S phone_apk.py BASE.apk CANDIDATE.bundle NEW_UNSIGNED.apk --version-code 3
+```
+
+The host request supplies `apk`, `apk_sha256`, `bundle`, `bundle_sha256` and
+`version_code`. Inputs stay under ignored `work/`. The standalone command takes
+the same explicit artifacts on Android. It accepts only the content fixture
+package, requires an increasing version code and never overwrites an input or
+earlier output. Other ZIP entry bytes remain unchanged; previous signatures are
+removed. Follow with Android-host zipalign, private owner signing, independent
+signature/alignment verification and owned-package installation/update checks.
+Retain signing keys locally. This is repackaging of an explicit desktop-built
+fixture player, not a complete phone build from public source.

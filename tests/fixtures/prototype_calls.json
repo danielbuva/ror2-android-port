@@ -255,5 +255,20 @@
     "effects": [],
     "stdout": "",
     "exit": null
+  },
+  "phone-apk-fixture": {
+    "calls": [
+      {
+        "module": "phone_apk",
+        "function": "stage_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
   }
 }
