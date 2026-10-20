@@ -37,9 +37,9 @@ secret-safe handling; it does not establish original in-game Steam startup or
 DLC entitlement. Local files must not be labelled an authenticated session.
 Android and PC/cloud profiles retain their separate compatibility gates.
 
-Internal Nova is exclusively assigned to alpha by J818. Its serial stays in
-ignored configuration and is explicit on every device action. Main retains
-adopted Nova, original gameplay/audio/animations and their runtime owners.
+The alpha device is exclusively assigned to alpha. Its serial stays in
+ignored configuration and is explicit on every device action. The main session retains
+the primary gameplay device, original gameplay/audio/animations and their runtime owners.
 Shared Unity builds retain the mandatory mutex and editor coordination.
 
 ## Acceptance

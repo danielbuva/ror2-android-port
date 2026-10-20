@@ -13,15 +13,18 @@ public static class ContentFixtureBuilder
 
     public static void Check()
     {
+        if (Application.unityVersion != "2021.3.45f2") throw new Exception("Exact editor required");
         var report = ContentFixture.Check(Path.Combine(Application.streamingAssetsPath, "phone-fixture.bundle"));
-        File.WriteAllText(Output("editor-content-report.json"), JsonUtility.ToJson(report, true));
+        var oracle = Environment.GetEnvironmentVariable("ROR2_PHONE_ORACLE_REPORT");
+        if (String.IsNullOrEmpty(oracle)) throw new Exception("Explicit oracle report required");
+        File.WriteAllText(oracle, JsonUtility.ToJson(report, true));
         if (!report.bundleLoaded || !report.textMatched || !report.unloaded || !String.IsNullOrEmpty(report.failure))
-            throw new Exception("Content fixture failed; inspect editor-content-report.json");
+            throw new Exception("Content fixture failed; inspect the explicit oracle report");
     }
 
     public static void Build()
     {
-        if (Application.unityVersion != "2021.3.45f2") throw new Exception("Exact editor required");
+        Check();
         PlayerSettings.companyName = "Porting Laboratory";
         PlayerSettings.productName = "Phone Content Fixture";
         PlayerSettings.bundleVersion = "0.0.2";

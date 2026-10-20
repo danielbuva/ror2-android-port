@@ -12,10 +12,44 @@ import zipfile
 from phone_apk import PACKAGE, update_manifest
 
 
-RUNTIME = "/sdcard/Android/data/" + PACKAGE + "/files"
-REPORT = RUNTIME + "/phone-content-report.json"
-SELECTOR = RUNTIME + "/phone-fixture-selection.json"
-CANDIDATE = RUNTIME + "/phone-candidate.bundle"
+def bind_runtime(device, paths, storage, *, observed=None):
+    if set(paths) != {"persistentDataPath", "filesDir", "externalFilesDir"}:
+        raise ValueError("Runtime path report fields differ")
+    for path in paths.values():
+        parsed = PurePosixPath(path)
+        if not parsed.is_absolute() or ".." in parsed.parts or parsed.parts[-2:] != (PACKAGE, "files"):
+            raise ValueError("Runtime path must belong to this fixture")
+    persistent = device.sh("readlink", "-f", paths["persistentDataPath"]).strip()
+    external = device.sh("readlink", "-f", paths["externalFilesDir"]).strip()
+    private = device.sh("run-as", PACKAGE, "readlink", "-f", paths["filesDir"]).strip()
+    data = device.sh("run-as", PACKAGE, "pwd").strip()
+    private_identity = device.sh("run-as", PACKAGE, "stat", "-c", "%d:%i", private).strip()
+    package_identity = device.sh("run-as", PACKAGE, "stat", "-c", "%d:%i", data + "/files").strip()
+    if observed is not None:
+        observed.update(
+            paths=paths,
+            canonical_persistent=persistent,
+            canonical_external=external,
+            canonical_private=private,
+            data_directory=data,
+            private_identity=private_identity,
+            package_identity=package_identity,
+        )
+    prefix = "/data/" if storage["mode"] == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
+    if (
+        not persistent
+        or persistent != external
+        or not re.fullmatch(r"[0-9]+:[0-9]+", private_identity)
+        or private_identity != package_identity
+        or not data.startswith(prefix)
+    ):
+        raise ValueError("Runtime paths do not match Android storage observations")
+    return {
+        "paths": paths,
+        "directory": persistent,
+        "app_data_backing": device.sh("run-as", PACKAGE, "df", "-k", private),
+        "runtime_backing": device.sh("df", "-k", persistent),
+    }
 
 
 def package_hash(device, package=PACKAGE):
@@ -89,13 +123,16 @@ def check_action(request):
     absent = False
     attempted = False
     owned_hashes = {item["sha256"] for item in value["apks"]}
+    runtime = {}
 
     def save():
         (directory / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 
     def phase(label, *, expected_source=None, negative=False):
         device.sh("am", "force-stop", PACKAGE)
-        device.sh("rm", "-f", REPORT)
+        if runtime:
+            device.sh("rm", "-f", runtime["directory"] + "/phone-content-report.json")
+        device.sh("run-as", PACKAGE, "rm", "-f", "files/phone-content-paths.json")
         device.display(True)
         launch = device.sh("am", "start", "-W", "-n", PACKAGE + "/com.unity3d.player.UnityPlayerActivity")
         entry = {"name": label, "launch": launch}
@@ -106,7 +143,17 @@ def check_action(request):
         try:
             while time.monotonic() < deadline:
                 try:
-                    report = json.loads(device.sh("cat", REPORT, check=False))
+                    paths = json.loads(device.sh("run-as", PACKAGE, "cat", "files/phone-content-paths.json", check=False))
+                    break
+                except ValueError:
+                    time.sleep(1)
+            else:
+                raise RuntimeError(label + ": runtime path discovery deadline")
+            runtime.update(bind_runtime(device, paths, result["installs"][-1]["storage"], observed=entry.setdefault("runtime_observations", {})))
+            entry["runtime"] = dict(runtime)
+            while time.monotonic() < deadline:
+                try:
+                    report = json.loads(device.sh("cat", runtime["directory"] + "/phone-content-report.json", check=False))
                     entry["report"] = report
                     break
                 except ValueError:
@@ -136,7 +183,7 @@ def check_action(request):
     def select(digest):
         local = directory / "selection.json"
         local.write_text(json.dumps({"sha256": digest}) + "\n")
-        device.cmd("push", str(local), SELECTOR)
+        device.cmd("push", str(local), runtime["directory"] + "/phone-fixture-selection.json")
 
     try:
         result["game_before"] = package_hash(device, "dev.ror2lab.arm64")
@@ -171,7 +218,7 @@ def check_action(request):
             if not index:
                 phase("embedded", expected_source="embedded")
                 device.sh("am", "force-stop", PACKAGE)
-                device.sh("cp", str(remote_candidate), CANDIDATE)
+                device.sh("cp", str(remote_candidate), runtime["directory"] + "/phone-candidate.bundle")
                 select("0" * 64)
                 phase("hash-refusal", negative=True)
                 select(candidate["sha256"])
@@ -181,12 +228,12 @@ def check_action(request):
                 result["marker"] = marker
             else:
                 result["data_retained"] = device.sh("run-as", PACKAGE, "cat", "files/owner-update-marker") == result["marker"]
-                result["candidate_retained"] = device.sh("sha256sum", CANDIDATE).split()[0] == candidate["sha256"]
+                result["candidate_retained"] = device.sh("sha256sum", runtime["directory"] + "/phone-candidate.bundle").split()[0] == candidate["sha256"]
                 if not result["data_retained"] or not result["candidate_retained"]:
                     raise RuntimeError("Owned update did not retain fixture data")
                 phase("updated-phone-candidate", expected_source="external-candidate")
-            install["app_data_backing"] = device.sh("run-as", PACKAGE, "sh", "-c", "pwd; df -k .")
-            install["runtime_backing"] = device.sh("df", "-k", RUNTIME)
+            install["app_data_backing"] = runtime["app_data_backing"]
+            install["runtime_backing"] = runtime["runtime_backing"]
             save()
         result["success"] = True
     except Exception as error:

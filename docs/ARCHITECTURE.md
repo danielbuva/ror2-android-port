@@ -42,6 +42,11 @@ retention. Its `finally` removes only a package whose actual APK hash matches
 the owned attempts and verifies display sleep. It records game APK hashes
 read-only before/after. `phone-package-check` takes an ignored request and
 writes private evidence under `work/experiments/phone-packaging/`.
+The player publishes actual Android/Unity data paths in its private bootstrap
+report; the runner binds canonical paths and their separate backing stores
+before reading reports or copying candidates. Editor checks/builds each write
+an isolated oracle report and require its pinned actual Unity version and
+native content checks, independently of process exit status.
 
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable

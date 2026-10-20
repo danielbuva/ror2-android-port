@@ -22,6 +22,12 @@ public sealed class ContentFixture : MonoBehaviour
     }
 
     [Serializable] sealed class Selection { public string sha256; }
+    [Serializable] sealed class Paths
+    {
+        public string persistentDataPath;
+        public string filesDir;
+        public string externalFilesDir;
+    }
 
     static string Sha256(byte[] data)
     {
@@ -52,6 +58,18 @@ public sealed class ContentFixture : MonoBehaviour
 
     IEnumerator Start()
     {
+        using (var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (var activity = player.GetStatic<AndroidJavaObject>("currentActivity"))
+        using (var files = activity.Call<AndroidJavaObject>("getFilesDir"))
+        using (var external = activity.Call<AndroidJavaObject>("getExternalFilesDir", new object[] { null }))
+        {
+            var paths = new Paths {
+                persistentDataPath = Application.persistentDataPath,
+                filesDir = files.Call<string>("getCanonicalPath"),
+                externalFilesDir = external.Call<string>("getCanonicalPath")
+            };
+            File.WriteAllText(Path.Combine(paths.filesDir, "phone-content-paths.json"), JsonUtility.ToJson(paths));
+        }
         var path = Path.Combine(Application.persistentDataPath, "phone-fixture.bundle");
         var report = new Report { unity = Application.unityVersion };
         var selector = Path.Combine(Application.persistentDataPath, "phone-fixture-selection.json");

@@ -8,10 +8,17 @@ import sys
 import UnityPy
 
 from phone_bundle import ASSET, PAYLOAD, make_bundle
-from phone_content import stage
+from phone_content import stage, validate_oracle
 
 
 class PhoneContentTests(unittest.TestCase):
+    def test_oracle_requires_actual_pinned_version_and_successful_native_contract(self):
+        report = {"unity": "2021.3.45f2", "bundleLoaded": True, "textMatched": True, "unloaded": True}
+        validate_oracle(report)
+        for change in ({"unity": "2021.3.33f1"}, {"unity": None}, {"unloaded": False}, {"failure": "native failure"}):
+            with self.subTest(change=change), self.assertRaises(RuntimeError):
+                validate_oracle(report | change)
+
     def test_authored_schema_bundle_contains_android_text_without_template(self):
         data = make_bundle()
         self.assertEqual(data, make_bundle())
