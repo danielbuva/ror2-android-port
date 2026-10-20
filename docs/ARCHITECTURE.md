@@ -72,6 +72,15 @@ Relinks may reuse only a hash-bound complete object set with equal source/target
 inputs, compile plan and actual compiler arguments. Link repair selects the
 original NDK static C++/ABI/GCC libraries explicitly and preserves old attempts.
 
+`phone_native_apk.py` is separate packaging **support** for the authored content
+fixture only. It requires base APK, ARM64 shared-library and unchanged metadata
+hashes, substitutes that one native entry plus the version integer, retains
+other entry bytes/notices, and removes obsolete signatures. Its current
+`phone-native-apk-fixture` host action and standalone Android CLI produce new
+unsigned outputs; alignment, signing and device checks follow separately.
+The device checker also hashes the actually mapped IL2CPP library inside the
+observed installed code directory, independently of the APK's expected entry.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

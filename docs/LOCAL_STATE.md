@@ -65,6 +65,12 @@ This is required local experimental replay support, not a game-build input.
 binds the old result and every compiled object hash, and invokes the tracked
 reuse checks for a separate link-only attempt. The original failed output and
 its 264 objects remain retained; no timestamp search selects a build input.
+`phone_native_apk.stage_action` generates separate unsigned outputs under
+`work/rebuild/phone-native-packaging/`. Its ignored request pins the authored
+base APK, matching metadata and native library. `native-package-on-android.py`
+and `native-package-driver.py` under the proof root are required local replay
+support for phone-side native substitution, alignment and disposable signing;
+they preserve private inputs/outputs and never feed a current game build.
 
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads

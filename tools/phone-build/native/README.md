@@ -43,3 +43,21 @@ C++/ABI/GCC archives rather than the host compiler's implicit library choices.
 
 References: Android's [external build-system guide](https://developer.android.com/ndk/guides/other_build_systems)
 and [C++ runtime selection](https://developer.android.com/ndk/guides/cpp-support).
+
+Native replacement is separate packaging support:
+
+```sh
+./dev prototype --action phone-native-apk-fixture --target REQUEST.json
+python3 -I -S phone_native_apk.py BASE.apk LIBRARY.so NEW_UNSIGNED.apk \
+  --version-code 3 --apk-sha256 HASH --library-sha256 HASH --metadata-sha256 HASH
+```
+
+Keep `phone_native_apk.py` beside `phone_apk.py` for the standalone Android
+command. The ignored host request supplies `apk`, `apk_sha256`, `library`,
+`library_sha256`, `metadata_sha256` and `version_code`. The writer accepts only
+the authored fixture identity and an ARM64 shared-library header, refuses hash
+or metadata drift and overwrites, preserves other bytes/notices and removes old
+signatures. Header checks do not establish complete ELF/ABI validity. Independently
+inspect dependencies, SONAME and exported APIs, then align/sign and test the
+actual installed/mapped library with `phone-package-check`. Raw unstripped ELF
+outputs remain private and are not a production size/performance qualification.

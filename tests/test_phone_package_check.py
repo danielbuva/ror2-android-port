@@ -2,10 +2,23 @@ import unittest
 from unittest.mock import Mock, patch
 
 from phone_apk import PACKAGE
-from phone_package_check import bind_runtime, check_action, cleanup_owned
+from phone_package_check import bind_runtime, check_action, cleanup_owned, loaded_native
 
 
 class PhonePackageCheckTests(unittest.TestCase):
+    def test_loaded_native_requires_owned_code_directory_and_actual_matching_bytes(self):
+        directory = "/data/app/" + PACKAGE
+        path = directory + "/lib/arm64/libil2cpp.so"
+        maps = "1000-2000 r-xp 00000000 00:01 1 " + path
+        device = Mock()
+        device.sh.side_effect = [maps, "expected " + path]
+        self.assertEqual(loaded_native(device, "42", directory, "expected")["sha256"], "expected")
+        for listing, digest in ((maps, "wrong"), (maps.replace(directory, "/data/app/other"), "expected")):
+            device = Mock()
+            device.sh.side_effect = [listing, digest + " " + path]
+            with self.assertRaises(RuntimeError):
+                loaded_native(device, "42", directory, "expected")
+
     def test_runtime_uses_observed_canonical_paths_and_separate_backing(self):
         paths = {
             "persistentDataPath": "/alias/" + PACKAGE + "/files",
