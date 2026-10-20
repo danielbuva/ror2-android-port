@@ -70,14 +70,14 @@ turn the display off in `finally`, including if collection fails. Stage-mode res
 `mode`, `transitions`, `scene` and `stage_world_seconds` to the usual evidence receipt.
 The plain check and its acceptance criteria remain unchanged.
 
-## Current baseline (2026-10-19)
+## Current baseline (2026-10-20)
 
 | Item | Value |
 | --- | --- |
-| APK | `771fc75282b45197d0dd25d3d537a121112ca35830c8d4dd516711aa7aa813cf`, J749 acceptance of the 105-source build with J748 native effect-retirement fence (source 069eab7); all 266 payload hashes equal J745/J737/J728. Retains J665's repaired content, J585 layered reimport and whole Timeline pin |
-| Check | passed: 35.20 s on Lakes and one genuine stage exit to Goolake with 11.55 s next-stage play, no unexpected report or current-process log error (J749). Earlier Mercenary alternates and source UI-abandon/restart remain separate J737 evidence on 12d79359. |
+| APK | `aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159`, J752 full build from committed source 5f5d1b3: J749's runtime (771fc752…) with `BlueNoise_R8_1.png.meta` restored to its export form; only `whole-game-content` and its catalog/data entries changed in the payload |
+| Check | passed: 35.22 s on Lakes and one genuine stage exit to Goolake with 11.36 s next-stage play, no report error (J752). J749 evidence on 771fc752… covers the same runtime source. |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Rollbacks | J749 `771fc752…`, J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
 | Placement | adopted storage, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current

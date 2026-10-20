@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J752](PORTING_JOURNAL.md#j752--working-project-rebuilt-with-the-export-form-bluenoise-importer-r9-reports-equal) | 2026-10-19 | Working project rebuilt with the export-form BlueNoise importer; R9 reports equal | Phase 2, from-scratch rebuild (operator decision on J751; run by Claude; Codex paused; Claude held `work/coordination/claude-bluenoise.lock`). |
 | [J751](PORTING_JOURNAL.md#j751--r9-from-the-clean-gated-rebuild-no-new-reimport-error-both-device-checks-first-time) | 2026-10-19 | R9 from the clean gated rebuild: no new reimport error, both device checks first time | Phase 2, from-scratch rebuild (run by Claude with the operator's approval; Codex paused). |
 | [J750](PORTING_JOURNAL.md#j750--clean-checkout-r1r8-replay-equals-the-gated-baselines-working-project) | 2026-10-19 | Clean-checkout R1–R8 replay equals the gated baseline's working project | Phase 2, from-scratch rebuild (run by Claude; host only). |
 | [J749](PORTING_JOURNAL.md#j749--accept-the-committed-source-effect-retirement-build-and-pause-for-provenance-refresh) | 2026-10-19 | Accept the committed-source effect-retirement build and pause for provenance refresh | Hypothesis: J748's source-backed effect-retirement fence preserves the default integrated world and one-exit path. |

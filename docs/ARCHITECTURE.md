@@ -1368,7 +1368,8 @@ Still open:
    separate destination in twelve host steps, each byte-identical to the working project
    (J567–J575); from a clean checkout of a gated build commit they reproduce 87,184 files
    (J750), and R9 there builds an APK that passed both device checks first time, with one
-   differing gate file (BlueNoise drift) (J751). R9 builds it into an APK that passed both device checks (J582), but R9
+   differing gate file (BlueNoise drift) (J751); with that importer restored in the working
+   project, R9 reports `equal: true` (J752). R9 builds it into an APK that passed both device checks (J582), but R9
    still reports it unequal. With the J584 Timeline pin and the J585 layered reimport, the J586
    rerun logs no new reimport error and passes both checks first time; its APK differs from the
    baseline only in `Hidden/Compositing` (open), the path-dependent Burst library and build

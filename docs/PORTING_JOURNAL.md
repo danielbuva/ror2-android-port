@@ -13671,3 +13671,37 @@ So public source, recipes, the legitimate installation and 47 hash-pinned inputs
 inherited-store files and the provenance map's selection role aside) rebuild an APK that runs
 both standard checks. Revisit: the BlueNoise drift (re-stage the working project from the export
 form, or classify it); `Hidden/Compositing` (J598); the remaining local inputs.
+
+## J752 — Working project rebuilt with the export-form BlueNoise importer; R9 reports equal
+
+Phase 2, from-scratch rebuild (operator decision on J751; run by Claude; Codex paused; Claude held
+`work/coordination/claude-bluenoise.lock`). Hypothesis: restoring `BlueNoise_R8_1.png.meta` in the
+working project to the export form, which J592 showed is the faithful original, rebuilds into a
+baseline that passes both device checks and makes R9's gate equal. Change: the export meta
+(`2ffa932b…`) replaced the working meta (`4163adfd…`, kept as
+`work/receipts/bluenoise-restore/working-drift.png.meta`). No repo code or recipe sets this
+importer, and the J738 gate needs no source change.
+
+Build: full `whole-catalog-build` from committed `5f5d1b3`, zero errors in 749 s, APK
+`aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159`. Unity kept the export meta byte
+for byte on import. Against `771fc752…`, the payload changed only in `whole-game-content` (the
+bundle holding the texture), its `generated-android-data` index and `whole-catalog.json`. In the
+APK, only `global-metadata.dat` (one `0x10` type-flag byte, the `BeforeFieldInit` variation J506
+recorded), build metadata and signing differ. `libil2cpp.so` is identical.
+
+Device (baseline Nova selected explicitly, installed in place on adopted storage, payload synced):
+`./dev check-baseline` passed (35.22 s on Lakes, `work/experiments/baseline/20261020T013732.871456Z`).
+`--stage-exit` passed, one genuine exit to Goolake with 11.36 s of next-stage play
+(`…20261020T014116.810393Z`). App stopped, OLED asleep. This is the new baseline; J749
+`771fc752…` stays a rollback. The texture is a `_BumpMap` only in the DLC4 sanctum blockout
+materials, which the standard checks do not visit.
+
+Rebuild: provenance map backed up (`provenance-map.before-bluenoise-*.json`) and refreshed; only
+`Lab.unity` and the BlueNoise importer changed. R9 `--compare-only` on the J751 destination then
+reports `equal: true` for the first time (`work/receipts/bluenoise-restore/r9-compare-only.out`).
+That covers 2 obligations, 28 deferred graphs, 316 importers and 1,515 unity-generated files
+identical, `Lab.unity` renumbered and two render textures with moved `serializedVersion` lines (exact
+classifications), 3,229 minted folder GUIDs, no new reimport error and no folder reference. Not
+claimed: payload bytes. Only 103 of 266 payload files match between R9's build and this one,
+because bundles, manifests and the catalog differ between any two full builds. The APK still
+differs in `Hidden/Compositing` (J598) and the path-dependent Burst library.
