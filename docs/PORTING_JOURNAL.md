@@ -17200,3 +17200,70 @@ earlier immutable receipts; its SHA-256 is
 `94f222d34ef95603471feadb78b0b64d7b1b995f9ff1d0d40ca3bd8272b6b7bb`.
 LOCAL_STATE lists the required private support producers. No public runtime,
 default audio transform, recipe or R8 replay input changes here.
+
+## J811 — Reach stock MUL-T world play and instrument its shared input failure
+
+Date: 2026-10-20. Hypothesis: J807's earlier TMP bootstrap lets the stock MUL-T
+retry proceed past J806's pre-world failure; any later first failure must be
+classified before changing a skill, target or cleanup precondition.
+
+Root runs the stock four-slot check on Thor with J809's accepted APK
+`4c37596cd5828047a5cb19bc2df8c5c6913333cce01104d3f0b1e4bf748dccb9`.
+The first report reaches integrated-world-playing with recovered HUD enabled,
+Toolbot selected, no error/first failure and a valid live post-spawn five-component
+skill inventory. Subsequent frames select targets and record aim and 101 motion
+samples. First failure is a NullReferenceException in
+TeleporterWorldSession.ObjectiveCombatInput, called through DefendWorldApproach
+and the ordinary integrated stimulus. The IL2CPP trace provides no operand or
+useful source offset. Five combat candidates and two visible candidates describe
+earlier successful observation, not the failing read. Four native slot callbacks
+and complete kit semantics are not established. The final zero-observed component
+inventory follows the failure/cleanup path; it does not identify a separate kit
+construction defect. Host cleanup removes the selector, stops the owned game
+and sleeps both displays. Native kit/teardown acceptance remains open.
+
+The smallest next change is an opt-in witness in the existing authored owner.
+When skill-coverage diagnostics are off, the wrapper enters the same core
+directly. When enabled, one reused witness labels the read group, current actor
+row and already-read operands, distinguishing unread, CLR-null, Unity fake-null
+and live states. It records no additional game/native getter on the catch path.
+Only the first NRE is copied into the existing WorldReport; a bare rethrow
+preserves the original exception and strict cleanup. No operand becomes optional
+and no readiness, input, target, authority or teardown guard is relaxed.
+
+Root reviews the frozen two-file overlay and independent review, checks exact
+preimages, applies it and formats only changed C# ranges with non-whitespace
+identity verified. The public host test extracts the actual production wrapper,
+witness and report DTO against a synthetic core. It executes the cold path,
+original exception identity, first-report retention, reset and fake-null states;
+it does not reproduce native gameplay. The full suite passes 1,153 tests with
+no skips, 449 frozen code/configuration inputs and no drift. The current 107
+runtime plus four support sources compile against the saved 264-reference
+closure with zero errors or source/reference/tool drift. Host DLL SHA-256:
+`ea0c9add175ad8739aab22737f00ea8cf20f4b24d30d197983f9817a90349fc1`.
+This source is not yet built or run, and the failing operand remains unknown.
+
+Prior art: J797/J804's single-read and CLR/Unity-null distinctions;
+DebugToolkit at d1e2f0aa4b8ac4747547db0fcd87344953432f06, whose inspected
+PlayerCommands uses the original master/body and expansion-query seams before
+developer operations. Such command refusals do not justify silently dropping
+required combat operands. The current input and actual exception outrank that
+community behavior. No community implementation or protected game body is copied.
+
+Evidence: work/experiments/survivor-check/20261020T161026.577048Z/Toolbot/;
+work/coordination/{codex-4c37-toolbot-root-r1/,
+toolbot-4c37-objective-input-triage/,toolbot-4c37-objective-input-review/,
+toolbot-4c37-objective-input-host-tests/,codex-toolbot-objective-source-root-r1/}.
+Result SHA-256:
+`5f3606fd227fb6d8e897c3a6a0b3d328d8c371ce842acc4ebc963130e0f23655`;
+first report:
+`800b1a4c5fd1386c3ad78c49d9ada714712f32426454457a2fa3051f1ff4d107`.
+Root integration receipt:
+`00b35005714e1b0b81ffdeeb572d295c2792090af61e01a57ba3a1e608cedfb8`;
+full-suite stderr:
+`9d435f6dec3cdabded5ab4bf7b4a0681d7967c59d292eae28f5fbc66e59f2d30`;
+compile receipt:
+`68028b8c7c824277a1bffe1633598236bde3d2c4b5af7f797319750801e4be25`.
+The named owner and contract live in ARCHITECTURE. No runtime file, GUID or
+required local game input is added. R8 must restage the two changed authored
+runtime sources; the accepted APK and executable rollbacks remain unchanged.

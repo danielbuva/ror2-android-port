@@ -84,6 +84,21 @@ public sealed partial class PortSession
         public float minimumJumpHeight;
     }
     [Serializable]
+    public sealed class ObjectiveCombatInputFailureReport
+    {
+        // Captured once on the first diagnostic-path NRE. Operand states use
+        // 0=unread, 1=CLR null, 2=Unity fake-null, 3=live.
+        public string step, exceptionType, exceptionMessage;
+        // Bits: input bank 0, player motor 1, SkillLocator 2, actor body 3,
+        // actor health 4, actor master 5, player TeamComponent 6, target body 7,
+        // primary slot 8, primary definition 9, utility slot 10, boss group 11,
+        // CombatSquad 12, membership list 13, KCC motor 14.
+        public int observedMask, actorIndex, lastActorSampleIndex;
+        public byte playerState, playerTeamComponentState, playerInputBankState, actorBodyState, actorHealthComponentState,
+            actorMasterState, targetActorBodyState, bossGroupState, combatSquadState, bossMembersState, playerMotorState, motorState,
+            skillLocatorState, primarySlotState, primaryDefinitionState, utilitySlotState;
+    }
+    [Serializable]
     public class WorldReport
     {
         public int nativeEffectSourceRenderers, nativeEffectSourceMaterials;
@@ -96,6 +111,7 @@ public sealed partial class PortSession
         public EngineerNativeOutputObserver.Report engiNativeOutputs;
         public SurvivorCombatOutputObserver.Report survivorCombatOutputs;
         public bool ready, authority, lootReady, interactionReady, cleaned, diagnosticInput, diagnosticInputEver;
+        public ObjectiveCombatInputFailureReport objectiveCombatInputFailure;
         public int tableLoadedCount, barrels, chests, openedBarrels, openedChests, pickups, droplets, pickupMessages, coinMessages,
             xpMessages, frames, kills, liveEnemies;
         public int lootDomain, syringe, lightning, glasses, slug, drink, steak, secondary, roll, barrage;

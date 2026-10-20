@@ -1998,35 +1998,167 @@ public sealed partial class PortSession
         public void ObjectiveCombatInput(CharacterBody player, NovaInputBridge bridge, float elapsed, Vector2 planar,
                                          bool constrainToHoldout = true)
         {
+            if (!coordinator.r.diagnosticSkillCoverage)
+            {
+                ObjectiveCombatInputCore(player, bridge, elapsed, planar, constrainToHoldout, null);
+                return;
+            }
+            // This witness is allocated only for explicit skill-coverage runs and
+            // reused across frames. No extra native/game getters run on the catch path.
+            if (objectiveCombatInputFailureWitness == null)
+                objectiveCombatInputFailureWitness = new ObjectiveCombatInputFailureWitness();
+            ObjectiveCombatInputFailureWitness witness = objectiveCombatInputFailureWitness;
+            witness.Reset(player);
+            try
+            {
+                ObjectiveCombatInputCore(player, bridge, elapsed, planar, constrainToHoldout, witness);
+            }
+            catch (NullReferenceException error)
+            {
+                if (witness != null)
+                {
+                    try
+                    {
+                        var report = coordinator.r != null ? coordinator.r.world : null;
+                        witness.CaptureFirstFailure(report, error);
+                    }
+                    catch (Exception)
+                    { /* Diagnostics must never replace the primary failure. */
+                    }
+                }
+                throw; // Preserve the original exception and strict cleanup path.
+            }
+        }
+
+        private ObjectiveCombatInputFailureWitness objectiveCombatInputFailureWitness;
+
+        private void ObjectiveCombatInputCore(CharacterBody player, NovaInputBridge bridge, float elapsed, Vector2 planar,
+                                              bool constrainToHoldout, ObjectiveCombatInputFailureWitness witness)
+        {
+            if (witness != null)
+                witness.Step = ObjectiveCombatInputFailureStep.TeleporterState;
             // Once original charging finishes, a source path may leave the holdout to
             // reach a surviving boss. Boss defeat and exit still require original events.
             if (coordinator.worldTeleporter && coordinator.worldTeleporter.chargeFraction >= 1)
                 constrainToHoldout = false;
             coordinator.r.world.combatHoldoutConstrained = constrainToHoldout;
+            if (witness != null)
+                witness.Step = ObjectiveCombatInputFailureStep.ActorPopulation;
             var living = coordinator.directorActors
-                             .Where(x => x.body && x.body.healthComponent.alive && x.master.teamIndex != player.teamComponent.teamIndex)
+                             .Where((x, index) =>
+                                    {
+                                        if (witness != null)
+                                        {
+                                            witness.ActorIndex = index;
+                                            witness.LastActorSampleIndex = index;
+                                            witness.ActorBodyState = witness.ActorHealthComponentState = witness.ActorMasterState =
+                                                witness.PlayerTeamComponentState = 0;
+                                        }
+                                        CharacterBody actorBody = x.body;
+                                        if (witness != null)
+                                        {
+                                            witness.ActorBodyState = ObjectiveCombatInputFailureWitness.UnityState(actorBody);
+                                            witness.ObservedMask |= 1 << 3;
+                                        }
+                                        if (!actorBody)
+                                            return false; // destroyed actor bodies are expected and remain omitted
+                                        HealthComponent actorHealth = actorBody.healthComponent;
+                                        if (witness != null)
+                                        {
+                                            witness.ActorHealthComponentState = ObjectiveCombatInputFailureWitness.UnityState(actorHealth);
+                                            witness.ObservedMask |= 1 << 4;
+                                        }
+                                        bool alive = actorHealth.alive;
+                                        if (!alive)
+                                            return false;
+                                        CharacterMaster actorMaster = x.master;
+                                        if (witness != null)
+                                        {
+                                            witness.ActorMasterState = ObjectiveCombatInputFailureWitness.UnityState(actorMaster);
+                                            witness.ObservedMask |= 1 << 5;
+                                        }
+                                        TeamComponent playerTeam = player.teamComponent;
+                                        if (witness != null)
+                                        {
+                                            witness.PlayerTeamComponentState = ObjectiveCombatInputFailureWitness.UnityState(playerTeam);
+                                            witness.ObservedMask |= 1 << 6;
+                                        }
+                                        return actorMaster.teamIndex != playerTeam.teamIndex;
+                                    })
                              .ToArray();
+            // Keep the current row only while its predicate is executing; the catch
+            // path preserves it if that exact row throws.
+            if (witness != null)
+                witness.ActorIndex = -1;
             var actors = living.Where(x => coordinator.InsideSourceStageBounds(coordinator.DirectorPhysicsPosition(x.body))).ToArray();
             coordinator.r.world.combatCandidates = living.Length;
             coordinator.r.world.combatBoundsRejected = living.Length - actors.Length;
             // The unattended route can aim through terrain or continually select distant
             // adds while the boss survives. Observe actual firing lines before choosing input.
-            var origin = player.inputBank.aimOrigin;
-            var targets =
-                actors
-                    .Select(x =>
-                            {
-                                bool visible;
-                                var point = WorldCombatAimPoint(x.body, origin, out visible);
-                                return new { actor = x, point = point, visible = visible, distance = Vector3.Distance(point, origin),
-                                             boss =
-                                                 coordinator.worldTeleporter &&
-                                                 coordinator.worldTeleporter.bossGroup.combatSquad.readOnlyMembersList.Contains(x.master) };
-                            })
-                    .ToArray();
+            if (witness != null)
+                witness.Step = ObjectiveCombatInputFailureStep.PlayerAimOrigin;
+            var playerInputBank = player.inputBank;
+            if (witness != null)
+            {
+                witness.PlayerInputBankState = ObjectiveCombatInputFailureWitness.UnityState(playerInputBank);
+                witness.ObservedMask |= 1 << 0;
+            }
+            var origin = playerInputBank.aimOrigin;
+            if (witness != null)
+                witness.Step = ObjectiveCombatInputFailureStep.ActorAimProjection;
+            var targets = actors
+                              .Select(x =>
+                                      {
+                                          if (witness != null)
+                                              witness.Step = ObjectiveCombatInputFailureStep.ActorAimPoint;
+                                          if (witness != null)
+                                              witness.TargetActorBodyState = witness.BossGroupState = witness.CombatSquadState =
+                                                  witness.BossMembersState = 0;
+                                          bool visible;
+                                          var aimBody = x.body;
+                                          if (witness != null)
+                                          {
+                                              witness.TargetActorBodyState = ObjectiveCombatInputFailureWitness.UnityState(aimBody);
+                                              witness.ObservedMask |= 1 << 7;
+                                          }
+                                          var point = WorldCombatAimPoint(aimBody, origin, out visible);
+                                          bool boss = false;
+                                          var teleporter = coordinator.worldTeleporter;
+                                          if (teleporter)
+                                          {
+                                              if (witness != null)
+                                                  witness.Step = ObjectiveCombatInputFailureStep.BossMembership;
+                                              var bossGroup = teleporter.bossGroup;
+                                              if (witness != null)
+                                              {
+                                                  witness.BossGroupState = ObjectiveCombatInputFailureWitness.UnityState(bossGroup);
+                                                  witness.ObservedMask |= 1 << 11;
+                                              }
+                                              var squad = bossGroup.combatSquad;
+                                              if (witness != null)
+                                              {
+                                                  witness.CombatSquadState = ObjectiveCombatInputFailureWitness.UnityState(squad);
+                                                  witness.ObservedMask |= 1 << 12;
+                                              }
+                                              var members = squad.readOnlyMembersList;
+                                              if (witness != null)
+                                              {
+                                                  witness.BossMembersState = ObjectiveCombatInputFailureWitness.ClrState(members);
+                                                  witness.ObservedMask |= 1 << 13;
+                                              }
+                                              boss = members.Contains(x.master);
+                                          }
+                                          if (witness != null)
+                                              witness.Step = ObjectiveCombatInputFailureStep.ActorAimProjection;
+                                          return new { actor = x, point = point, visible = visible,
+                                                       distance = Vector3.Distance(point, origin), boss = boss };
+                                      })
+                              .ToArray();
             coordinator.r.world.combatVisibleCandidates = targets.Count(x => x.visible);
             coordinator.r.world.combatOccludedCandidates = targets.Length - coordinator.r.world.combatVisibleCandidates;
             var guardIndex = BodyCatalog.FindBodyIndex("BeetleGuardBody");
+            if (witness != null)
+                witness.Step = ObjectiveCombatInputFailureStep.TargetSelection;
             var target = targets
                              .OrderBy(x => !x.visible                                                ? (x.boss ? 5 : 6)
                                            : x.actor.body.bodyIndex == guardIndex && x.distance < 25 ? 0
@@ -2049,13 +2181,44 @@ public sealed partial class PortSession
                 // A distant occluded add must not interrupt a source-reachable boss approach.
                 // Near contact remains a threat even without a clear firing line.
                 var nearest = targets.Where(x => x.visible || x.distance < 8).OrderBy(x => x.distance).FirstOrDefault();
-                var fromThreat = player.characterMotor.Motor.TransientPosition -
-                                 coordinator.DirectorPhysicsPosition(nearest != null ? nearest.actor.body : target.actor.body);
+                if (witness != null)
+                    witness.Step = ObjectiveCombatInputFailureStep.PlayerMotorAndPrimary;
+                var playerMotor = player.characterMotor;
+                if (witness != null)
+                {
+                    witness.PlayerMotorState = ObjectiveCombatInputFailureWitness.UnityState(playerMotor);
+                    witness.ObservedMask |= 1 << 1;
+                }
+                var motor = playerMotor.Motor;
+                if (witness != null)
+                {
+                    witness.MotorState = ObjectiveCombatInputFailureWitness.UnityState(motor);
+                    witness.ObservedMask |= 1 << 14;
+                }
+                var fromThreat =
+                    motor.TransientPosition - coordinator.DirectorPhysicsPosition(nearest != null ? nearest.actor.body : target.actor.body);
                 float distance = fromThreat.magnitude;
                 fromThreat.y = 0;
                 // The source Loader primary is a BasicMeleeAttack. A ranged retreat ring
                 // kept it outside its own hitbox for the entire unattended route.
-                var primary = player.skillLocator.primary.skillDef;
+                var skillLocator = player.skillLocator;
+                if (witness != null)
+                {
+                    witness.SkillLocatorState = ObjectiveCombatInputFailureWitness.UnityState(skillLocator);
+                    witness.ObservedMask |= 1 << 2;
+                }
+                var primarySlot = skillLocator.primary;
+                if (witness != null)
+                {
+                    witness.PrimarySlotState = ObjectiveCombatInputFailureWitness.UnityState(primarySlot);
+                    witness.ObservedMask |= 1 << 8;
+                }
+                var primary = primarySlot.skillDef;
+                if (witness != null)
+                {
+                    witness.PrimaryDefinitionState = ObjectiveCombatInputFailureWitness.UnityState(primary);
+                    witness.ObservedMask |= 1 << 9;
+                }
                 bool meleePrimary = primary && primary.activationState.stateType != null &&
                                     typeof(EntityStates.BasicMeleeAttack).IsAssignableFrom(primary.activationState.stateType);
                 float safeDistance = meleePrimary ? 1.6f : 20f, engagementRange = meleePrimary ? 2.2f : 32f;
@@ -2100,7 +2263,20 @@ public sealed partial class PortSession
                     bridge.diagnosticSprint = evade;
                 if (!approach && !returnToHoldout)
                     bridge.DiagnosticJump(elapsed % 1.8f < .25f);
-                bridge.diagnosticUtility = evade && player.skillLocator.utility.CanExecute();
+                if (witness != null)
+                    witness.Step = ObjectiveCombatInputFailureStep.PlayerUtility;
+                if (evade)
+                {
+                    var utilitySlot = skillLocator.utility;
+                    if (witness != null)
+                    {
+                        witness.UtilitySlotState = ObjectiveCombatInputFailureWitness.UnityState(utilitySlot);
+                        witness.ObservedMask |= 1 << 10;
+                    }
+                    bridge.diagnosticUtility = utilitySlot.CanExecute();
+                }
+                else
+                    bridge.diagnosticUtility = false;
                 var aim = target.point - origin;
                 bridge.aim = new Vector2(aim.x, aim.z).normalized;
                 bridge.diagnosticAim = aim.normalized;
@@ -2470,4 +2646,83 @@ public sealed partial class PortSession
             objectiveConfigs.Clear();
         }
     }
+}
+
+internal enum ObjectiveCombatInputFailureStep
+{
+    None = 0,
+    TeleporterState = 1,
+    ActorPopulation = 2,
+    PlayerAimOrigin = 3,
+    ActorAimPoint = 4,
+    BossMembership = 5,
+    ActorAimProjection = 6,
+    TargetSelection = 7,
+    PlayerMotorAndPrimary = 8,
+    PlayerUtility = 9
+}
+
+internal sealed class ObjectiveCombatInputFailureWitness
+{
+    internal ObjectiveCombatInputFailureStep Step;
+    // Bits: input bank 0, player motor 1, SkillLocator 2, actor body 3,
+    // actor health 4, actor master 5, player TeamComponent 6, target body 7,
+    // primary slot 8, primary definition 9, utility slot 10, boss group 11,
+    // CombatSquad 12, membership list 13, KCC motor 14.
+    internal int ObservedMask, ActorIndex = -1, LastActorSampleIndex = -1;
+    // 0=unread, 1=CLR null, 2=Unity fake-null, 3=live.
+    internal byte PlayerState, PlayerTeamComponentState, PlayerInputBankState, ActorBodyState, ActorHealthComponentState, ActorMasterState,
+        TargetActorBodyState, BossGroupState, CombatSquadState, BossMembersState, PlayerMotorState, MotorState, SkillLocatorState,
+        PrimarySlotState, PrimaryDefinitionState, UtilitySlotState;
+
+    internal void Reset(CharacterBody player)
+    {
+        Step = ObjectiveCombatInputFailureStep.None;
+        PlayerState = UnityState(player);
+        PlayerTeamComponentState = PlayerInputBankState = ActorBodyState = ActorHealthComponentState = ActorMasterState =
+            TargetActorBodyState = BossGroupState = CombatSquadState = BossMembersState = PlayerMotorState = MotorState =
+                SkillLocatorState = PrimarySlotState = PrimaryDefinitionState = UtilitySlotState = 0;
+        ObservedMask = 0;
+        ActorIndex = LastActorSampleIndex = -1;
+    }
+
+    // Called only from the primary NullReferenceException catch. It never reads live
+    // game/native objects; the values below were recorded as the original path read them.
+    internal void CaptureFirstFailure(PortSession.WorldReport report, Exception error)
+    {
+        if (report == null || report.objectiveCombatInputFailure != null)
+            return;
+        report.objectiveCombatInputFailure =
+            new PortSession.ObjectiveCombatInputFailureReport { step = Step.ToString(),
+                                                                observedMask = ObservedMask,
+                                                                actorIndex = ActorIndex,
+                                                                lastActorSampleIndex = LastActorSampleIndex,
+                                                                playerState = PlayerState,
+                                                                playerTeamComponentState = PlayerTeamComponentState,
+                                                                playerInputBankState = PlayerInputBankState,
+                                                                actorBodyState = ActorBodyState,
+                                                                actorHealthComponentState = ActorHealthComponentState,
+                                                                actorMasterState = ActorMasterState,
+                                                                targetActorBodyState = TargetActorBodyState,
+                                                                bossGroupState = BossGroupState,
+                                                                combatSquadState = CombatSquadState,
+                                                                bossMembersState = BossMembersState,
+                                                                playerMotorState = PlayerMotorState,
+                                                                motorState = MotorState,
+                                                                skillLocatorState = SkillLocatorState,
+                                                                primarySlotState = PrimarySlotState,
+                                                                primaryDefinitionState = PrimaryDefinitionState,
+                                                                utilitySlotState = UtilitySlotState,
+                                                                exceptionType = error.GetType().FullName,
+                                                                exceptionMessage = error.Message };
+    }
+
+    internal static byte UnityState(UnityEngine.Object value)
+    {
+        if (ReferenceEquals(value, null))
+            return 1;
+        return value ? (byte)3 : (byte)2;
+    }
+
+    internal static byte ClrState(object value) => value == null ? (byte)1 : (byte)3;
 }
