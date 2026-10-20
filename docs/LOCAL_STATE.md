@@ -71,6 +71,17 @@ base APK, matching metadata and native library. `native-package-on-android.py`
 and `native-package-driver.py` under the proof root are required local replay
 support for phone-side native substitution, alignment and disposable signing;
 they preserve private inputs/outputs and never feed a current game build.
+The proof root's `native-fixture-request.json` explicitly selects the authored
+project/base APK. The `native-stage-selection.json`,
+`native-relink-stage-selection.json`, `native-run-selection.json` and
+`native-relink-run-selection.json` receipts select exact generated stages and
+owned outputs; they are required local replay state, not a newest-run search.
+`native-elf-comparison.json` is the required pre-packaging verification input,
+produced by pinned NDK readelf/nm plus the retained `native-inspect-on-host.py`
+adapter. It binds metadata/native/base hashes and observed ELF/API comparisons.
+`native-package-selection.json` and `native-package-check-request.json` bind
+the phone signing outputs and explicit device test. Raw evidence and the final
+`native-proof-receipt.json` remain private; none is read by the game build.
 
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
