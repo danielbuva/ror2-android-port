@@ -1366,8 +1366,6 @@ port does not run `TeamComponent.Init`, so position indicators remain
 unavailable. Per-registry removed/remaining counts are recorded.
 The final-menu walk also records a census: the 60 most frequent reachable
 types with object counts and primitive-array bytes (`rootWalkCensus`).
-The final-menu walk also records a census: the 60 most frequent reachable
-types with object counts and primitive-array bytes (`rootWalkCensus`).
 
 `AndroidProfileSession` also owns the exact native timed-chest `Opening.onOpened`
 subscription. That event has no sender or chest identity; it is recorded as a
