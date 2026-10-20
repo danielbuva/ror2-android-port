@@ -2208,7 +2208,7 @@ public sealed partial class PortSession
                 }
                 catch (Exception primary)
                 {
-                    coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                    coordinator.MarkSourceStageLifecycleRecovery(true);
                     coordinator.r.cleanup = false;
                     coordinator.r.success = false;
                     coordinator.r.error += " Native first-stage teardown retained for recovery: " + primary;

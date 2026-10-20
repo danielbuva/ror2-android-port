@@ -193,6 +193,13 @@ public sealed partial class PortSession
                     yield return novaRoutine.Current;
                 if (r.sourceStageLifecycleRecoveryRequired)
                     yield break;
+                if (r.sirenSourceEntryDiagnosticAttempt)
+                {
+                    Check(r.sirenSourceEntryDiagnosticCleanupObserved,
+                          "Siren source-entry diagnostic did not complete exact encounter/source cleanup");
+                    Save();
+                    yield break;
+                }
                 if (restartRequested)
                 {
                     Check(CompletedOfflineAbandon() || CompletedResultsReturn() ||

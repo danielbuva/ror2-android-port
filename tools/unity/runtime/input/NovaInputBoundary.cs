@@ -461,6 +461,12 @@ public sealed partial class PortSession
                     if (cfg.integratedWorld)
                         coordinator.Check(string.IsNullOrEmpty(coordinator.r.debugAcceleration.error),
                                           "Debug acceleration failure: " + coordinator.r.debugAcceleration.error);
+                    if (coordinator.r.sirenSourceEntryDiagnosticAttempt &&
+                        SirenSourceEntryRuntimeContract.NativeListeningRegistrationMatchesSourceEntry(coordinator.r.stageProgress))
+                    {
+                        coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved = true;
+                        break;
+                    }
                     if (cfg.teleporterLoop)
                     {
                         coordinator.Check(coordinator.r.stageProgress != null && string.IsNullOrEmpty(coordinator.r.stageProgress.error),
@@ -705,6 +711,16 @@ public sealed partial class PortSession
                 coordinator.r.spawnedFixedAge = SpawnedStateAge(state, "fixedAge") - initialFixed;
                 bridge.enabled = false;
                 yield return new WaitForSeconds(.5f);
+                if (coordinator.r.sirenSourceEntryDiagnosticAttempt)
+                {
+                    coordinator.Check(coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved &&
+                                         SirenSourceEntryRuntimeContract.NativeListeningRegistrationMatchesSourceEntry(
+                                             coordinator.r.stageProgress),
+                                     "Native Listening registration was not proven against the exact source egg bijection");
+                    coordinator.r.success = true;
+                    coordinator.Save();
+                    yield break;
+                }
                 if (cfg.integratedWorld)
                 {
                     coordinator.r.world.simulationSeconds = coordinator.r.automaticSeconds;
@@ -847,6 +863,22 @@ public sealed partial class PortSession
                     {
                         coordinator.CleanupDebugAcceleration();
                         coordinator.CleanupIntegratedWorld();
+                        if (coordinator.r.sirenSourceEntryDiagnosticAttempt)
+                        {
+                            bool cleanupObserved = coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved &&
+                                SirenSourceEntryRuntimeContract.SourceEntryAndEncounterCleanupObserved(coordinator.r.stageProgress);
+                            coordinator.r.sirenSourceEntryDiagnosticCleanupObserved = cleanupObserved;
+                            if (cleanupObserved)
+                                coordinator.r.phase = "siren-source-entry-listening-registration-and-cleanup-observed";
+                            else
+                            {
+                                coordinator.r.success = false;
+                                coordinator.r.firstFailure = coordinator.r.firstFailure ??
+                                    "Siren source-entry registration was observed but exact owner cleanup was not";
+                                coordinator.r.firstFailurePhase = "siren-source-entry-cleanup";
+                            }
+                            coordinator.Save();
+                        }
                     }
                     if (!coordinator.r.sourceStageLifecycleRecoveryRequired)
                     {

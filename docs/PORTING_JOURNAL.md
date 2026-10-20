@@ -14403,6 +14403,128 @@ Revisit (release prerequisite): land the fix, prove it with a working-project bu
 `./dev check-baseline` modes, then a fresh R1–R8 replay and R9 whose APK `unity_builtin_extra`
 should equal the baseline's.
 
+
+## J767 — Accept the exact-symbol APK and observe native MUL-T readiness refusal
+
+Repeat J765 with committed 38687e96d368f31013cd5c52fec23aba63f30fd3 and
+host preflight. The mandatory build lock serializes the exact 2021.3.45f2
+IL2CPP ARM64 Vulkan build: 96.264038 seconds, zero errors. All 248 frozen
+source/toolchain/recipe inputs match committed bytes; all 266 actual payload
+hashes and receipt entries match J764. Canonical publication succeeds with
+matching ARM64 libil2cpp GNU Build ID, named symbols and valid DWARF. APK:
+2aa936c059331c6a2dcf2a3ef56ef928103707b1f009532dbfaa1c6f6c9697c3.
+The ZIP remains 69c5871449c5d9665f18707b039c1dadaf45858eca4704fe281fed4face7d849;
+native identity is a355f66dff0068de08fd26679ca8955755aecae4. Frozen receipt,
+APK, ZIP, source snapshot and payload comparison:
+work/experiments/toolbot-edge-symbols/candidate-20261020T060649.780002Z/.
+
+Install in place on both Novas through their explicit adopted-only/internal
+policies, fresh reserves and separate receipts; synchronize the unchanged
+payload. Adopted Nova passes both defaults: 35.202362 live seconds, then exactly
+one exit to Goolake with 12.733643 seconds of next-stage play (130.945755 world
+seconds). Applied runs stay 13. Root independently verifies report/APK hashes,
+empty report/current-process errors, measured current-attempt input, assisted
+status and native lifecycle diagnostic off. Root also revalidates the exact
+cache APK/symbol pair and every frozen source snapshot member. This APK is the
+new default baseline; J764 remains executable. Cleanup stops the owned package
+and sleeps the idle display.
+
+The first orchestration continuation refuses before the stage-exit dispatch
+when the parallel session creates its gameplay lease. Read its explicit scope:
+Thor only, no Nova/editor/build ownership. Honor that lease and resume only the
+Nova stage-exit check; both actual game checks pass. Thor retains J762's APK
+for the parallel memory track. A separately started audio fixture control is
+interrupted by this resource handoff and remains unaccepted; its runner waits
+on the host for the Thor lease to end before owned cleanup and a fresh control.
+
+On internal Nova, the bounded MUL-T retry now observes one real special input
+edge, one authority and one server callback, native Dual Wield, contextual
+Cancel, Buzzsaw override and Weapon2 presence. Its next first refusal is
+'offhand-secondary-not-native-ready' after 8.438644 seconds, phase 3, one
+request. Weapon2 remains EntityStates.Uninitialized; the reported SkillDef
+machine configuration is Weapon, not a measured resolved GenericSkill target.
+No secondary pulse or Buzzsaw activation is accepted. Report/current-process
+errors are empty. Inspect live readiness operands before changing native state,
+stock, cooldown or resolver ownership. A new app-scope CPU trace on this APK is
+also pending; old traces cannot use its different library symbols.
+
+Default evidence: work/experiments/baseline/20261020T060802.864779Z/ and
+20261020T061422.677922Z/. MUL-T:
+work/experiments/survivor-check/20261020T060741.578348Z/Toolbot/.
+Root binding: work/coordination/codex-toolbot-edge-symbols-baseline-root-validation.json.
+This accepted APK includes the existing R8 witness correction only; no new
+runtime membership or payload is added. Performance, ordinary combat, complete
+skill semantics and game audio remain open.
+
+## J768 — Integrate native Captain supply-beacon and Siren source-entry owners
+
+Hypothesis: the missing Captain auxiliary activation and Siren source-spawner
+lifecycle can run through their original owners when the existing integrated
+world supplies exact identities, ordinary bounded inputs and correct callback
+order. Consult J625/J754 and the source-entry prior investigations before
+implementation. Pinned R2API.Loadout distinguishes catalog registration from
+execution; Starstorm2's named state-machine relationships support preserving
+actual native machines. R2API.Director's stage boundary and the preserved native
+HLAPI/source-spawner code guide scene ownership; neither substitutes for current
+accepted input or device evidence. No protected implementation is copied.
+
+Captain remains in SurvivorSkillInputCoverage with an explicit default-off
+--captain-supply-beacon selector for one assisted default-loadout Captain case.
+Require the reciprocal exact master/body and six native skill components. Send
+special and then primary only after the original SetupSupplyDrop state remaps
+both slots and reports valid placement. Observe real edge/callback deltas,
+CallSupplyDropHealing, an increased CaptainSupplyDrop count on that same master
+and ordinary state return. This is a count witness, not an identified pod or
+healing/damage proof. Native state/stock/cooldown/placement/deployables are never
+written. Keep the input mask while native state teardown is unresolved.
+
+Add SirenSourceEntrySession under IntegratedStageSession. Bind the full imported
+Ship Graveyard source scene metadata separately from the first-stage lifecycle
+allowlist. Activate the exact ID-11 toggle controller before the existing single
+Run callback so native Awake consumes stage RNG, then dispatch the complete
+unchanged global multicast in stock order. Observe 12 naturally spawned eggs
+from 32 source spawners at their captured poses and network identities before
+admitting the existing ID-10 Listening owner. Egg diagnostic input stays off.
+Retire exact pending eggs, remove witnesses, restore 42 captured toggle targets,
+and unspawn/restore the controller. Completed rows survive partial cleanup;
+unknown, moved or partially destroyed rows retain recovery context. Shared
+recovery generations prevent one owner clearing another owner's failure.
+
+Root and independent reviews correct the boxed Scene reference comparison,
+partial-retirement retry, missing runtime membership, terminal placement latch,
+callback-baseline recapture and edge-refusal continuation. Captain uses the
+production selector policy, and combined source-entry/skill/first-stage diagnostic
+requests refuse. The full host suite runs 1,088 tests with one skip in
+61.218 seconds; an earlier run catches stale Toolbot mode wording, the native
+commerce fixture's missing coordinator helper and README drift during parallel
+CLI work. Adapt the fixture to execute the real helper and regenerate help;
+no behavioral gate is suppressed. A later full 1,099-test run against the
+parallel root-walk commit catches its newly added README action row; regenerate
+help and rerun the nine README contracts successfully. The final full suite
+passes all 1,099 tests in 26.154 seconds on that combined committed source
+plus this staged integration. Ruff formatting/checks
+also pass for every changed Python file; remove a duplicate same-value fixture
+key found by lint. Final exact-reference compile passes all 106
+runtime sources plus four Lab support sources against 264 stable references,
+with zero errors and unchanged source/reference/response hashes. The production
+stager independently selects and byte-stages 106/106 sources in private scratch.
+
+APK: none for this source integration; J767 remains installed. New owner membership
+and its sole first-import null GUID are listed in both public recipes and audited
+in recipe/README.md. Named setup/teardown/state ownership is in ARCHITECTURE.
+The stage-map generator and exact-editor catalog fixture also change; replay their
+documented producers with R8. No timestamped evidence folder becomes build input,
+and no work/rebuild action occurs. Next freeze committed sources, build, run both
+controls and the two bounded native paths before accepting their device behavior.
+
+Evidence: work/coordination/captain-supply-beacon-draft/integration-v3/ and
+captain-supply-beacon-review/v3/; siren-source-entry-postrefresh/
+source-entry-runtime-v5/ and siren-source-entry-review/v5/;
+codex-captain-siren-merged-compile/r2/;
+codex-captain-siren-full-suite-r2.* and codex-captain-siren-final-host-r4/.
+These are authored host/source results,
+not complete ability, ordinary unlock, native Siren encounter or gameplay acceptance.
+
 ## J769 — Five repeated UI-abandon sessions retain every completed session
 
 Hypothesis: J417's growth of completed probes/reports (1→2→3) and of managed

@@ -1,4 +1,5 @@
 """Contracts for the proposed Toolbot-only native offhand input sequence."""
+
 from pathlib import Path
 import os
 import re
@@ -11,6 +12,7 @@ OWNER = REPO_ROOT / "tools/unity/runtime/input/SurvivorSkillInputCoverage.cs"
 SESSION = REPO_ROOT / "tools/unity/runtime/session/PortSession.cs"
 WORLD = REPO_ROOT / "tools/unity/runtime/world/IntegratedWorldBoundary.cs"
 
+
 def method(source, signature):
     start = source.index(signature)
     brace = source.index("{", start)
@@ -21,7 +23,7 @@ def method(source, signature):
         elif source[index] == "}":
             depth -= 1
             if depth == 0:
-                return source[start:index + 1]
+                return source[start : index + 1]
     raise AssertionError("unbalanced method: " + signature)
 
 
@@ -32,7 +34,7 @@ class ToolbotOffhandSequence(unittest.TestCase):
     def test_opt_in_defaults_off_and_preserves_existing_coverage_route(self):
         self.assertIn("bool toolbotOffhand = false", self.source)
         self.assertIn("toolbotOffhandRequested = toolbotOffhandMode", self.source)
-        self.assertIn('mode = toolbotOffhandMode ? "toolbot-offhand-sequence" : isolationTarget < 0 ? "all-four-slots"', self.source)
+        self.assertIn('toolbotOffhandMode ? "toolbot-offhand-sequence" : isolationTarget < 0 ? "all-four-slots"', self.source)
         apply = method(self.source, "public void Apply(float elapsed)")
         self.assertRegex(apply, r"if \(toolbotOffhandMode\)\s*\{\s*ApplyToolbotOffhand\(elapsed\);\s*return;")
         self.assertIn('Stop("all-canonical-callbacks-observed")', self.source)
@@ -84,10 +86,11 @@ class ToolbotOffhandSequence(unittest.TestCase):
         self.assertTrue(all(len(call.split(",")) == 11 for call in calls), "all production phase calls must supply the full gate tuple")
 
     @unittest.skipUnless(
-        Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"),
-             "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe").is_file() and
-        Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"),
-             "MonoBleedingEdge/bin/mono").is_file(),
+        Path(
+            os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"),
+            "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe",
+        ).is_file()
+        and Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"), "MonoBleedingEdge/bin/mono").is_file(),
         "pinned Unity Mono compiler/runtime unavailable",
     )
     def test_extracted_production_phase_policy_requires_each_observed_boundary(self):
@@ -95,7 +98,7 @@ class ToolbotOffhandSequence(unittest.TestCase):
         compiler = editor / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
         runtime = editor / "MonoBleedingEdge/bin/mono"
         helper = method(self.source, "public static int AdvanceToolbotOffhandPhase(")
-        harness = r'''using System;
+        harness = r"""using System;
 public static class Program
 {
     static void Need(bool ok, string why) { if (!ok) throw new Exception(why); }
@@ -130,21 +133,24 @@ public static class Program
              "complete only after observed native Weapon2 state");
         Console.WriteLine("production Toolbot offhand phase policy passed");
     }
-}'''
+}"""
         with tempfile.TemporaryDirectory(prefix="toolbot-offhand-policy-") as temp:
             root = Path(temp)
             source = root / "OwnerPolicy.cs"
             program = root / "Harness.cs"
             exe = root / "policy.exe"
             # Put the exact extracted production method beside the host harness.
-            program.write_text(harness.replace("public static class Program\n{",
-                                               "public static class Program\n{\n" + helper + "\n", 1))
+            program.write_text(harness.replace("public static class Program\n{", "public static class Program\n{\n" + helper + "\n", 1))
             source.write_text("")
-            compiled = subprocess.run([str(runtime), str(compiler), "-nologo", "-out:" + str(exe), str(program)],
-                                      cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            compiled = subprocess.run(
+                [str(runtime), str(compiler), "-nologo", "-out:" + str(exe), str(program)],
+                cwd=root,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
             self.assertEqual(compiled.returncode, 0, compiled.stdout)
-            run = subprocess.run([str(runtime), str(exe)], cwd=root, text=True,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            run = subprocess.run([str(runtime), str(exe)], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.assertEqual(run.returncode, 0, run.stdout)
             self.assertIn("production Toolbot offhand phase policy passed", run.stdout)
 

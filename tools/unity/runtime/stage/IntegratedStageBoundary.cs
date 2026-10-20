@@ -68,7 +68,21 @@ public sealed partial class PortSession
         public List<string> completed = new List<string>();
         public List<ObjectiveReport> completedObjectives = new List<ObjectiveReport>();
         public List<SirenEncounterReport> sirenEncounters = new List<SirenEncounterReport>();
+        public List<SirenSourceEntryReport> sirenSourceEntries = new List<SirenSourceEntryReport>();
         public List<StageEntryObservation> entryObservations = new List<StageEntryObservation>();
+    }
+    [Serializable]
+    public class SirenSourceEntryReport
+    {
+        public string scene, status, sourceSceneSha256, error, cleanupError;
+        public bool selected, nativeAwakeObserved, controllerSpawned, fullMulticastDispatched, nativeToggleQueueDrained,
+            nativeSpawnQueueDrained, exactEggBijection, cleanupDisposed, controllerUnspawned, controllerOriginalInactiveRestored,
+            nativeToggleTargetsRestored;
+        public uint controllerSceneId, controllerNetworkId;
+        public int sourceEggSpawnerCount, nativeActivationChoiceCount, selectedNestCount, observedSpawnerDisableCount,
+            mappedEggCount, retiredEggCount, multicastSubscriberCount, nativeToggleTargetCount;
+        public uint[] mappedEggNetworkIds;
+        public int[] mappedSpawnerInstanceIds;
     }
     [Serializable]
     public class StageEntryObservation
@@ -207,6 +221,10 @@ public sealed partial class PortSession
         SourceStageIdentityLifecycle firstStageIdentityLifecycle;
         FirstStageSourceOwners firstStageIdentityOwners;
         SirenEncounterSession sirenEncounter;
+        SirenSourceEntrySession sirenSourceEntry;
+        bool sirenCleanupRecoveryRequired;
+        bool sirenCleanupMayClearRecovery;
+        long sirenCleanupRecoveryGeneration;
         public IntegratedStageSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
@@ -452,6 +470,20 @@ public sealed partial class PortSession
             Stage.onServerStageBegin += onBegin;
             try
             {
+                if (coordinator.r.sirenSourceEntryDiagnosticAttempt &&
+                    coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)
+                {
+                    coordinator.Check(sirenSourceEntry == null && sirenEncounter == null && coordinator.stageSourceObjects &&
+                                          !coordinator.r.diagnosticSirenEggInput,
+                                      "Siren source-entry attempt requires a fresh source owner and Siren egg input OFF");
+                    sirenSourceEntry = SirenSourceEntrySession.Prepare(
+                        coordinator.stageGeometryScene,
+                        selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
+                    // The source owner's preflight passed; retain its recovery
+                    // handle before ID-11 activation or native queue mutation.
+                    coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
+                    sirenSourceEntry.ActivateAndSpawnController();
+                }
                 Run.instance.OnServerSceneChanged(coordinator.stageGeometryScene.name);
                 coordinator.objectiveStage = Stage.instance;
                 coordinator.objectiveStageHost = coordinator.objectiveStage ? coordinator.objectiveStage.gameObject : null;
@@ -460,10 +492,14 @@ public sealed partial class PortSession
                                       identity.netId.Value != 0 && identity.assetId.Equals(sourceIdentity.assetId),
                                   "Original Run did not spawn the source Stage prefab");
                 ownsOriginalStage = true;
+                if (sirenSourceEntry != null)
+                    sirenSourceEntry.DispatchAfterNativeRunCallback(coordinator.objectiveStage);
                 yield return null;
                 coordinator.Check(begins == 1 && coordinator.objectiveStage &&
                                       coordinator.objectiveStage.sceneDef == SceneCatalog.GetSceneDefForCurrentScene(),
                                   "Original Stage.Start or server-begin callback did not complete");
+                if (sirenSourceEntry != null)
+                    sirenSourceEntry.CompleteAfterNaturalSpawnerStart();
                 AttachSirenEncounterIfPresent();
                 coordinator.r.stageProgress.originalStageBegins++;
                 coordinator.Save();
@@ -526,7 +562,7 @@ public sealed partial class PortSession
                         coordinator.objectiveStage.sceneDef == SceneCatalog.GetSceneDefForCurrentScene(),
                     "The genuine server Stage-begin callback did not fire exactly once for the spawned source Stage");
                 firstStageIdentityLifecycle.ObserveServerStageBegin();
-                coordinator.r.sourceStageLifecycleRecoveryRequired = false;
+                coordinator.MarkSourceStageLifecycleRecovery(false);
                 coordinator.r.stageProgress.originalStageBegins++;
                 coordinator.Save();
                 completed = true;
@@ -540,7 +576,7 @@ public sealed partial class PortSession
                     {
                         // Preserve all owning objects if the real Stage or a native
                         // activation queue cannot be retired synchronously.
-                        coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                        coordinator.MarkSourceStageLifecycleRecovery(true);
                         coordinator.r.cleanup = false;
                         coordinator.r.success = false;
                         coordinator.Save();
@@ -550,13 +586,13 @@ public sealed partial class PortSession
                         try
                         {
                             firstStageIdentityLifecycle.AbortBeforeBoundary();
-                            coordinator.r.sourceStageLifecycleRecoveryRequired = false;
+                            coordinator.MarkSourceStageLifecycleRecovery(false);
                             firstStageIdentityLifecycle = null;
                             firstStageIdentityOwners = null;
                         }
                         catch
                         {
-                            coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                            coordinator.MarkSourceStageLifecycleRecovery(true);
                             coordinator.r.cleanup = false;
                             coordinator.r.success = false;
                             coordinator.Save();
@@ -566,7 +602,7 @@ public sealed partial class PortSession
                     {
                         // Any partially acquired Stage, including one whose exact
                         // server-map capture failed, remains owned by the recovery gate.
-                        coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                        coordinator.MarkSourceStageLifecycleRecovery(true);
                         coordinator.r.cleanup = false;
                         coordinator.r.success = false;
                         coordinator.Save();
@@ -587,7 +623,7 @@ public sealed partial class PortSession
             }
             catch (Exception primary)
             {
-                coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                coordinator.MarkSourceStageLifecycleRecovery(true);
                 coordinator.r.cleanup = false;
                 coordinator.r.success = false;
                 coordinator.r.error += " Native source lifecycle retained for recovery: " + primary;
@@ -599,7 +635,7 @@ public sealed partial class PortSession
         {
             // Run.BeginStage installs Stage.instance before registering its identity.
             // Retain the full session context before crossing that partial-acquisition boundary.
-            coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+            coordinator.MarkSourceStageLifecycleRecovery(true);
             coordinator.r.cleanup = false;
             coordinator.r.success = false;
         }
@@ -655,7 +691,7 @@ public sealed partial class PortSession
                 {
                     if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)
                     {
-                        coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                        coordinator.MarkSourceStageLifecycleRecovery(true);
                         coordinator.r.cleanup = false;
                         coordinator.r.success = false;
                         coordinator.r.error += " Native Stage retirement retained for recovery: " + e;
@@ -1184,21 +1220,70 @@ public sealed partial class PortSession
                 return;
             coordinator.Check(sirenEncounter == null && coordinator.stageSourceObjects,
                               "Siren encounter needs its original source scene and a fresh owner");
+            if (coordinator.r.sirenSourceEntryDiagnosticAttempt)
+                coordinator.Check(sirenSourceEntry != null &&
+                                      sirenSourceEntry.CanAdmitOriginalEncounter(coordinator.r.diagnosticSirenEggInput),
+                                  "Siren source-entry diagnostic refuses ID-10 admission until exact eggs map, queues drain, and egg input is off");
             sirenEncounter = SirenEncounterSession.Attach(coordinator.stageGeometryScene,
-                                                          selected => coordinator.r.stageProgress.sirenEncounters.Add(selected));
+                                                          selected => coordinator.r.stageProgress.sirenEncounters.Add(selected),
+                                                          retained => sirenEncounter = retained,
+                                                          cleanupFailure =>
+                                                          {
+                                                              MarkSirenCleanupRecoveryRequired();
+                                                          },
+                                                          sirenSourceEntry != null ? sirenSourceEntry.CapturedEggIdentities.ToArray() : null);
         }
         void CleanupSirenEncounter()
         {
-            var owner = sirenEncounter;
-            sirenEncounter = null;
-            owner?.Dispose();
+            try
+            {
+                SirenEncounterContract.DisposeOwned(ref sirenEncounter, owner => owner.Dispose());
+                SirenEncounterContract.DisposeOwned(ref sirenSourceEntry, owner => owner.Dispose());
+                if (sirenCleanupRecoveryRequired)
+                {
+                    SirenEncounterContract.CompleteOwnedRecovery(
+                        ref coordinator.r.sourceStageLifecycleRecoveryRequired,
+                        coordinator.r.sourceStageLifecycleRecoveryGeneration,
+                        sirenCleanupRecoveryGeneration,
+                        sirenCleanupMayClearRecovery,
+                        HasOtherSourceLifecycleRecoveryOwner());
+                    sirenCleanupRecoveryRequired = false;
+                    sirenCleanupMayClearRecovery = false;
+                }
+            }
+            catch
+            {
+                MarkSirenCleanupRecoveryRequired();
+                throw;
+            }
+        }
+        void MarkSirenCleanupRecoveryRequired()
+        {
+            if (!sirenCleanupRecoveryRequired)
+                sirenCleanupMayClearRecovery = !coordinator.r.sourceStageLifecycleRecoveryRequired;
+            else if (coordinator.r.sourceStageLifecycleRecoveryGeneration != sirenCleanupRecoveryGeneration)
+                sirenCleanupMayClearRecovery = false;
+            sirenCleanupRecoveryRequired = true;
+            sirenCleanupRecoveryGeneration = coordinator.MarkSourceStageLifecycleRecovery(true);
+            coordinator.r.cleanup = false;
+            coordinator.r.success = false;
+        }
+        bool HasOtherSourceLifecycleRecoveryOwner()
+        {
+            return firstStageIdentityLifecycle != null || firstStageIdentityOwners != null ||
+                   coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && (Stage.instance || coordinator.objectiveStage);
         }
         public void Dispose()
         {
-            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
-                return;
             if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt && (Stage.instance || coordinator.objectiveStage))
                 throw new InvalidOperationException("Native first-stage recovery owner must retire Stage before source identities");
+            if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+            {
+                if (sirenCleanupRecoveryRequired && !HasOtherSourceLifecycleRecoveryOwner())
+                    CleanupSirenEncounter();
+                if (coordinator.r.sourceStageLifecycleRecoveryRequired)
+                    return;
+            }
             DisposeNativeFirstStageLifecycle();
             if (coordinator.r.sourceStageLifecycleRecoveryRequired)
                 return;

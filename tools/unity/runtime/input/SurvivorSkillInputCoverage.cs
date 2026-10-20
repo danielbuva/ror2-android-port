@@ -2,6 +2,8 @@
 // Session phases: constructed after the native skill observer; Apply after the world input producer;
 // teardown before the owned body/world is released.
 using System;
+using System.Reflection;
+using UnityEngine.Networking;
 using RoR2;
 using RoR2.Skills;
 using UnityEngine;
@@ -36,7 +38,18 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         public int selectedComponentIndex = -1, selectedFamilyCatalogIndex = -1, selectedVariantIndex = -1,
                    selectedSkillCatalogIndex = -1, runtimeSkillCatalogIndex = -1;
         // False/zero/empty in ordinary checks. This subreport is populated only
-        // by the explicit Toolbot offhand selector.
+        // by an explicit diagnostic sequence selector.
+        public bool captainSupplyBeaconRequested, captainSupplyBeaconPlacementValid,
+                    captainSupplyBeaconDeployableRegistered, captainSupplyBeaconPendingNativeState,
+                    captainSupplyBeaconDeployablePresentAtReturn;
+        public int captainSupplyBeaconPhase, captainSupplyBeaconRequests,
+                   captainSupplyBeaconDeployablesBefore, captainSupplyBeaconDeployablesAfter,
+                   captainSpecialAuthorityBefore, captainSpecialAuthorityAfter,
+                   captainSpecialServerBefore, captainSpecialServerAfter,
+                   captainSupplyAuthorityBefore, captainSupplyAuthorityAfter,
+                   captainSupplyServerBefore, captainSupplyServerAfter;
+        public string captainSupplyBeaconOutcome, captainSupplyBeaconBodyState,
+                      captainSupplyBeaconPlacementObservation, captainSupplyBeaconNativeOwnership;
         public bool toolbotOffhandRequested, toolbotOffhandStanceObserved, toolbotOffhandOverrideObserved,
                     toolbotOffhandWeapon2Observed, toolbotOffhandBuzzsawStateObserved;
         public int toolbotOffhandPhase, toolbotOffhandRequests, toolbotOffhandSpecialAuthorityBefore,
@@ -85,6 +98,21 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     int lastNeutralRevision;
     int requestEdgeCount;
     bool isolationRequestPending;
+    readonly bool captainSupplyBeaconMode;
+    CaptainSupplyBeaconSequence captainSupplyBeaconSequence;
+    GenericSkill[] captainSupplyBeaconComponents;
+    int[] captainSupplyBeaconComponentIds;
+    int captainDeployablesBefore, captainSpecialAuthorityBefore, captainSpecialServerBefore,
+        captainSupplyAuthorityBefore, captainSupplyServerBefore;
+    CharacterMaster captainSupplyBeaconMaster;
+    NetworkInstanceId captainSupplyBeaconMasterNetworkId;
+    int captainSupplyBeaconMasterInstanceId;
+    GameObject captainSupplyBeaconMasterObject;
+    bool captainPulseActive, captainPulseEdgeAccepted, captainSpecialInputEdge, captainSupplyInputEdge;
+    int captainPulseStartTick;
+    long captainPulseEdgeBaseline;
+    float captainPulseUntil, captainBeganAt = float.NaN;
+    string captainSpecialDefinition;
 
     public Report reportData => report;
 
@@ -139,7 +167,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
 
     public SurvivorSkillInputCoverage(CharacterBody ownedBody, NovaInputBridge ownedBridge,
                                       SurvivorSkillObserver.Report observerReport, string isolatedSlot = null,
-                                      bool toolbotOffhand = false, SurvivorCombatOutputObserver.Report combatReport = null)
+                                      bool toolbotOffhand = false, SurvivorCombatOutputObserver.Report combatReport = null,
+                                      bool captainSupplyBeacon = false)
     {
         if (!ownedBody || !ownedBody.skillLocator || !ownedBridge || observerReport == null || observerReport.slots == null ||
             observerReport.slots.Length != 4)
@@ -150,15 +179,21 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         body = ownedBody;
         bridge = ownedBridge;
         toolbotOffhandMode = toolbotOffhand;
+        captainSupplyBeaconMode = captainSupplyBeacon;
         observed = observerReport;
         combatOutput = combatReport;
         isolationTarget = string.IsNullOrEmpty(isolatedSlot) ? -1 : ParseIsolationSlot(isolatedSlot);
         if (toolbotOffhandMode && isolationTarget >= 0)
             throw new ArgumentException("Toolbot offhand diagnostic cannot be combined with a single-slot isolation selector");
+        if (captainSupplyBeaconMode && (toolbotOffhandMode || isolationTarget >= 0))
+            throw new ArgumentException("Captain supply-beacon diagnostic cannot be combined with Toolbot offhand or slot isolation");
         report = new Report { active = false, outcome = "waiting-for-diagnostic-input",
-                              mode = toolbotOffhandMode ? "toolbot-offhand-sequence" : isolationTarget < 0 ? "all-four-slots" : "isolated-slot",
+                              mode = captainSupplyBeaconMode ? "captain-supply-beacon-sequence" :
+                                     toolbotOffhandMode ? "toolbot-offhand-sequence" : isolationTarget < 0 ? "all-four-slots" : "isolated-slot",
                               isolationSlot = isolationTarget < 0 ? "" : SlotNames[isolationTarget],
                               toolbotOffhandRequested = toolbotOffhandMode,
+                              captainSupplyBeaconRequested = captainSupplyBeaconMode,
+                              captainSupplyBeaconOutcome = captainSupplyBeaconMode ? "waiting-for-owned-live-diagnostic-input" : "",
                               toolbotOffhandOutcome = toolbotOffhandMode ? "waiting-for-owned-live-diagnostic-input" : "",
                               slots = new SlotCoverage[4] };
         for (int i = 0; i < 4; i++)
@@ -171,6 +206,15 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                                                  serverAfter = slot.serverActivations };
         }
         lastNeutralRevision = ownedBridge.inputNeutralRevision;
+        if (captainSupplyBeaconMode)
+        {
+            CaptureCaptainSupplyBeaconIdentity();
+            captainSupplyBeaconSequence = new CaptainSupplyBeaconSequence();
+            ownedBridge.SetDiagnosticInputEdgeWitness(true);
+            ownedBridge.isolatedDiagnosticSkillInput = true;
+            ownedBridge.isolatedDiagnosticSkillSlot = -1;
+            ownedBridge.isolatedDiagnosticSkillPulse = false;
+        }
         if (toolbotOffhandMode)
         {
             CaptureToolbotOffhandIdentity();
@@ -195,6 +239,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         if (report.cleaned || report.completed)
             return;
         SyncNativeCallbacks();
+        if (captainSupplyBeaconMode)
+        {
+            ApplyCaptainSupplyBeacon(elapsed);
+            return;
+        }
         if (toolbotOffhandMode)
         {
             ApplyToolbotOffhand(elapsed);
@@ -369,6 +418,346 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             current.skillDef.skillIndex != report.selectedSkillCatalogIndex ||
             SkillCatalog.GetSkillDef(report.selectedSkillCatalogIndex) != current.skillDef)
             throw new ArgumentException("Isolated slot does not match the exact current post-spawn GenericSkill/loadout identity");
+    }
+
+    public static bool UpdateCaptainPlacementWitness(bool setup, bool currentPlacementValid, Report report)
+    {
+        if (report == null)
+            return false;
+        bool positive = setup && currentPlacementValid;
+        if (positive)
+        {
+            report.captainSupplyBeaconPlacementValid = true;
+            report.captainSupplyBeaconPlacementObservation = "native-setup-placement-valid";
+        }
+        else if (!report.captainSupplyBeaconPlacementValid)
+        {
+            report.captainSupplyBeaconPlacementObservation = setup ?
+                "native-setup-placement-not-valid" : "setup-state-not-current";
+        }
+        return positive;
+    }
+
+    public static void CaptureCaptainCallbackBaselinesForRequest(int slot, int specialAuthority, int specialServer,
+            int supplyAuthority, int supplyServer, Report report)
+    {
+        if (report == null)
+            throw new ArgumentNullException(nameof(report));
+        if (slot == 3)
+        {
+            report.captainSpecialAuthorityBefore = specialAuthority;
+            report.captainSpecialServerBefore = specialServer;
+        }
+        else if (slot == 0)
+        {
+            report.captainSupplyAuthorityBefore = supplyAuthority;
+            report.captainSupplyServerBefore = supplyServer;
+        }
+        else
+            throw new ArgumentOutOfRangeException(nameof(slot), "Captain sequence requests only original special or primary");
+    }
+
+    public static bool CaptainMasterIdentityMatches(CharacterBody ownedBody, CharacterMaster originalMaster,
+            int originalMasterInstanceId, NetworkInstanceId originalMasterNetworkId, GameObject originalMasterObject)
+    {
+        return ownedBody && originalMaster && ReferenceEquals(ownedBody.master, originalMaster) &&
+            originalMaster.GetInstanceID() == originalMasterInstanceId &&
+            originalMaster.netId == originalMasterNetworkId && originalMaster.isServer && originalMaster.hasBody &&
+            originalMaster.GetBody() == ownedBody &&
+            ReferenceEquals(originalMaster.gameObject, originalMasterObject) &&
+            ReferenceEquals(NetworkServer.FindLocalObject(originalMasterNetworkId), originalMasterObject);
+    }
+
+    internal bool ObserveCaptainPulseBeforePolicy(float elapsed)
+    {
+        if (captainPulseActive)
+        {
+            ObserveCaptainInputBankEdge();
+            if (report.completed)
+                return false;
+            if (elapsed >= captainPulseUntil)
+                ReleaseCaptainPulse();
+        }
+        return !report.completed;
+    }
+
+    void CaptureCaptainSupplyBeaconIdentity()
+    {
+        if (!body || body.bodyIndex != BodyCatalog.FindBodyIndex("CaptainBody") || !body.master ||
+            observed.skillVariantInventory == null || observed.skillVariantInventory.status != "available" ||
+            observed.skillVariantInventory.components == null || observed.skillVariantInventory.components.Length != 6)
+            throw new ArgumentException("Captain supply-beacon sequence requires the exact six-component native Captain inventory");
+        captainSupplyBeaconComponents = body.GetComponents<GenericSkill>();
+        if (captainSupplyBeaconComponents == null || captainSupplyBeaconComponents.Length != 6)
+            throw new ArgumentException("Captain supply-beacon sequence requires six live GenericSkill components");
+        string[] names = { "Primary", "Secondary", "Utility", "Special", "SupplyDrop1", "SupplyDrop2" };
+        string[] definitions = { "CaptainShotgun", "CaptainTazer", "PrepAirstrike", "PrepSupplyDrop", "CallSupplyDropHealing", "CallSupplyDropShocking" };
+        captainSupplyBeaconComponentIds = new int[6];
+        for (int i = 0; i < captainSupplyBeaconComponents.Length; i++)
+        {
+            var skill = captainSupplyBeaconComponents[i];
+            var row = observed.skillVariantInventory.components[i];
+            if (!skill || !skill.skillDef || row == null || row.componentIndex != i || row.skillName != names[i] ||
+                row.runtimeDefinitionStatus != "matches-selected-native-loadout" ||
+                skill.skillName != names[i] || ((ScriptableObject)skill.skillDef).name != definitions[i] ||
+                skill.skillDef.skillIndex < 0 || SkillCatalog.GetSkillDef(skill.skillDef.skillIndex) != skill.skillDef)
+                throw new ArgumentException("Captain supply-beacon default native identity mismatch at component " + i);
+            captainSupplyBeaconComponentIds[i] = skill.GetInstanceID();
+        }
+        if (captainSupplyBeaconComponents[3].skillDef.activationStateMachineName != "Weapon" ||
+            captainSupplyBeaconComponents[3].skillDef.activationState.stateType == null ||
+            captainSupplyBeaconComponents[3].skillDef.activationState.stateType.FullName != "EntityStates.Captain.Weapon.SetupSupplyDrop" ||
+            body.skillLocator.special != captainSupplyBeaconComponents[3] ||
+            body.skillLocator.primary != captainSupplyBeaconComponents[0] ||
+            body.skillLocator.secondary != captainSupplyBeaconComponents[1])
+            throw new ArgumentException("Captain supply-beacon special/default slot identity is not canonical");
+        captainSpecialDefinition = ((ScriptableObject)captainSupplyBeaconComponents[3].skillDef).name;
+        if (!NetworkServer.active || !body.isServer || body.netId.Value == 0 ||
+            !CaptainMasterIdentityMatches(body, body.master, body.master.GetInstanceID(), body.master.netId, body.master.gameObject) ||
+            NetworkServer.FindLocalObject(body.netId) != body.gameObject)
+            throw new ArgumentException("Captain supply-beacon requires the reciprocal server-owned body/master identity");
+        captainSupplyBeaconMaster = body.master;
+        captainSupplyBeaconMasterInstanceId = body.master.GetInstanceID();
+        captainSupplyBeaconMasterNetworkId = body.master.netId;
+        captainSupplyBeaconMasterObject = body.master.gameObject;
+        captainDeployablesBefore = captainSupplyBeaconMaster.GetDeployableCount(DeployableSlot.CaptainSupplyDrop);
+        report.captainSupplyBeaconDeployablesBefore = captainDeployablesBefore;
+    }
+
+    bool CaptainStateIs(string fullName)
+    {
+        if (!body) return false;
+        var machines = body.GetComponents<EntityStateMachine>();
+        int matches = 0;
+        foreach (var machine in machines)
+            if (machine && machine.state != null && machine.state.GetType().FullName == fullName) matches++;
+        return matches == 1;
+    }
+
+    string CaptainBodyState()
+    {
+        var machine = body ? EntityStateMachine.FindByCustomName(body.gameObject, "Body") : null;
+        return machine && machine.state != null ? machine.state.GetType().FullName : "";
+    }
+
+    bool CaptainPlacementIsValid()
+    {
+        // Read the original SetupSupplyDrop placement struct only. Reflection is
+        // deliberate because the shipped field is private and version-specific.
+        if (!body) return false;
+        var machines = body.GetComponents<EntityStateMachine>();
+        object placement = null;
+        int matches = 0;
+        foreach (var machine in machines)
+        {
+            if (!machine || machine.state == null || machine.state.GetType().FullName != "EntityStates.Captain.Weapon.SetupSupplyDrop") continue;
+            var field = machine.state.GetType().GetField("currentPlacementInfo", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (field == null) continue;
+            placement = field.GetValue(machine.state);
+            matches++;
+        }
+        if (matches != 1 || placement == null) return false;
+        var type = placement.GetType();
+        var okField = type.GetField("ok", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (okField != null && okField.FieldType == typeof(bool)) return (bool)okField.GetValue(placement);
+        var okProperty = type.GetProperty("ok", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        return okProperty != null && okProperty.PropertyType == typeof(bool) && okProperty.CanRead && (bool)okProperty.GetValue(placement, null);
+    }
+
+    bool BeginCaptainPulse(int slot, float elapsed)
+    {
+        if (slot < 0 || slot > 3 || !bridge.TryGetDiagnosticInputEdgeCount(slot, out captainPulseEdgeBaseline))
+        {
+            FinishCaptainSupplyBeacon("owned-input-edge-witness-unavailable");
+            return false;
+        }
+        captainPulseStartTick = bridge.fixedTicks;
+        captainPulseEdgeAccepted = false;
+        if (slot == 3) captainSpecialInputEdge = false;
+        if (slot == 0) captainSupplyInputEdge = false;
+        target = slot;
+        captainPulseActive = true;
+        captainPulseUntil = elapsed + PulseSeconds;
+        bridge.isolatedDiagnosticSkillInput = true;
+        bridge.isolatedDiagnosticSkillSlot = slot;
+        bridge.isolatedDiagnosticSkillPulse = true;
+        lastEdgeTick = int.MinValue;
+        report.captainSupplyBeaconRequests++;
+        report.requests++;
+        report.slots[slot].requests++;
+        return true;
+    }
+
+    bool ObserveCaptainInputBankEdge()
+    {
+        if (!captainPulseActive) return false;
+        if (!bridge.TryGetDiagnosticInputEdgeCount(target, out long current))
+        {
+            FinishCaptainSupplyBeacon("owned-input-edge-witness-unavailable");
+            return false;
+        }
+        var status = ClassifyDiagnosticInputEdge(captainPulseEdgeBaseline, current,
+            bridge.fixedTicks > captainPulseStartTick, captainPulseEdgeAccepted);
+        if (status == DiagnosticInputEdgeStatus.CounterReset || status == DiagnosticInputEdgeStatus.Multiple)
+        {
+            FinishCaptainSupplyBeacon(status == DiagnosticInputEdgeStatus.CounterReset ?
+                "owned-input-edge-counter-reset" : "multiple-input-edges-for-one-pulse");
+            return false;
+        }
+        if (status != DiagnosticInputEdgeStatus.Fresh) return false;
+        captainPulseEdgeBaseline = current;
+        captainPulseEdgeAccepted = true;
+        report.slots[target].inputBankEdges++;
+        if (target == 3) captainSpecialInputEdge = true;
+        if (target == 0) captainSupplyInputEdge = true;
+        return true;
+    }
+
+    void ReleaseCaptainPulse()
+    {
+        if (bridge)
+        {
+            bridge.isolatedDiagnosticSkillPulse = false;
+            bridge.isolatedDiagnosticSkillSlot = -1;
+        }
+        captainPulseActive = false;
+        target = -1;
+    }
+
+    void ApplyCaptainSupplyBeacon(float elapsed)
+    {
+        if (float.IsNaN(elapsed) || float.IsInfinity(elapsed) || elapsed < 0)
+        {
+            FinishCaptainSupplyBeacon("invalid-elapsed-time"); return;
+        }
+        if (float.IsNaN(captainBeganAt)) captainBeganAt = elapsed;
+        report.elapsedSeconds = Mathf.Max(0, elapsed - captainBeganAt);
+        if (!OwnsLiveDiagnosticInput()) { FinishCaptainSupplyBeacon("diagnostic-input-owner-lost"); return; }
+        if (bridge.inputNeutralRevision != lastNeutralRevision)
+        {
+            lastNeutralRevision = bridge.inputNeutralRevision;
+            FinishCaptainSupplyBeacon("neutralized-request-cancelled"); return;
+        }
+        if (captainSupplyBeaconComponents == null || captainSupplyBeaconComponents.Length != 6 ||
+            body.GetComponents<GenericSkill>().Length != 6 || !captainSupplyBeaconMaster ||
+            !NetworkServer.active || !body.isServer ||
+            !CaptainMasterIdentityMatches(body, captainSupplyBeaconMaster, captainSupplyBeaconMasterInstanceId,
+                captainSupplyBeaconMasterNetworkId, captainSupplyBeaconMasterObject))
+        { FinishCaptainSupplyBeacon("captain-owner-or-skill-inventory-changed"); return; }
+        for (int i = 0; i < 6; i++)
+            if (!captainSupplyBeaconComponents[i] || captainSupplyBeaconComponents[i].GetInstanceID() != captainSupplyBeaconComponentIds[i])
+            { FinishCaptainSupplyBeacon("captain-skill-component-replaced"); return; }
+
+        if (!ObserveCaptainPulseBeforePolicy(elapsed)) return;
+        bool setup = CaptainStateIs("EntityStates.Captain.Weapon.SetupSupplyDrop");
+        bool call = CaptainStateIs("EntityStates.Captain.Weapon.CallSupplyDropHealing");
+        bool primaryRemapped = body.skillLocator.primary == captainSupplyBeaconComponents[4] &&
+                               captainSupplyBeaconComponents[4].skillDef &&
+                               ((ScriptableObject)captainSupplyBeaconComponents[4].skillDef).name == "CallSupplyDropHealing";
+        bool secondaryRemapped = body.skillLocator.secondary == captainSupplyBeaconComponents[5] &&
+                                 captainSupplyBeaconComponents[5].skillDef &&
+                                 ((ScriptableObject)captainSupplyBeaconComponents[5].skillDef).name == "CallSupplyDropShocking";
+        bool specialCallbacks = observed.components[3].authorityActivations > captainSpecialAuthorityBefore &&
+                                observed.components[3].serverActivations > captainSpecialServerBefore;
+        bool supplyCallbacks = observed.components[4].authorityActivations > captainSupplyAuthorityBefore &&
+                               observed.components[4].serverActivations > captainSupplyServerBefore;
+        int ownedCount = body.master.GetDeployableCount(DeployableSlot.CaptainSupplyDrop);
+        report.captainSupplyBeaconDeployablesAfter = ownedCount;
+        report.captainSpecialAuthorityBefore = captainSpecialAuthorityBefore;
+        report.captainSpecialAuthorityAfter = observed.components[3].authorityActivations;
+        report.captainSpecialServerBefore = captainSpecialServerBefore;
+        report.captainSpecialServerAfter = observed.components[3].serverActivations;
+        report.captainSupplyAuthorityBefore = captainSupplyAuthorityBefore;
+        report.captainSupplyAuthorityAfter = observed.components[4].authorityActivations;
+        report.captainSupplyServerBefore = captainSupplyServerBefore;
+        report.captainSupplyServerAfter = observed.components[4].serverActivations;
+        report.captainSupplyBeaconDeployableRegistered = ownedCount > captainDeployablesBefore;
+        report.captainSupplyBeaconBodyState = CaptainBodyState();
+        bool currentPlacementValid = setup && CaptainPlacementIsValid();
+        bool nativePlacementValid = UpdateCaptainPlacementWitness(setup, currentPlacementValid, report);
+        report.captainSupplyBeaconNativeOwnership = "owned-master-CaptainSupplyDrop-count=" + ownedCount;
+        report.captainSupplyBeaconPendingNativeState = setup || call;
+        report.captainSupplyBeaconDeployablePresentAtReturn = !setup && !call && ownedCount > captainDeployablesBefore;
+
+        var observation = new CaptainSupplyBeaconSequence.Observation {
+            elapsedSeconds = report.elapsedSeconds,
+            exactCaptainOwner = body.bodyIndex == BodyCatalog.FindBodyIndex("CaptainBody") && body.master.GetBody() == body,
+            exactDefaultSupplySkill = captainSpecialDefinition == "PrepSupplyDrop" &&
+                ((ScriptableObject)captainSupplyBeaconComponents[3].skillDef).name == "PrepSupplyDrop" &&
+                ((ScriptableObject)captainSupplyBeaconComponents[4].skillDef).name == "CallSupplyDropHealing" &&
+                ((ScriptableObject)captainSupplyBeaconComponents[5].skillDef).name == "CallSupplyDropShocking",
+            isolatedDiagnosticInputOwned = bridge.diagnosticInput && bridge.isolatedDiagnosticSkillInput,
+            neutralRevisionChanged = false,
+            specialCanExecute = body.skillLocator.special && body.skillLocator.special.enabled && body.skillLocator.special.CanExecute(),
+            specialInputEdge = captainSpecialInputEdge,
+            specialAuthorityCallback = specialCallbacks,
+            specialServerCallback = specialCallbacks,
+            setupSupplyDropState = setup,
+            setupPrimaryIsSupplyDrop1 = primaryRemapped,
+            setupSecondaryIsSupplyDrop2 = secondaryRemapped,
+            nativePlacementValid = nativePlacementValid,
+            supplyDrop1CanExecute = primaryRemapped && captainSupplyBeaconComponents[4].enabled && captainSupplyBeaconComponents[4].CanExecute(),
+            supplyDrop1InputEdge = captainSupplyInputEdge,
+            supplyDrop1AuthorityCallback = supplyCallbacks,
+            supplyDrop1ServerCallback = supplyCallbacks,
+            nativeCallSupplyDropHealingState = call,
+            ownedCaptainSupplyDropCountIncreased = report.captainSupplyBeaconDeployableRegistered,
+            returnedToOrdinaryBodyState = !setup && !call && report.captainSupplyBeaconDeployablePresentAtReturn &&
+                                          body.skillLocator.primary == captainSupplyBeaconComponents[0] &&
+                                          body.skillLocator.secondary == captainSupplyBeaconComponents[1]
+        };
+        var decision = captainSupplyBeaconSequence.Step(observation);
+        report.captainSupplyBeaconPhase = (int)decision.phase;
+        report.captainSupplyBeaconOutcome = decision.outcome;
+        if (decision.requestInputSlot >= 0)
+        {
+            CaptureCaptainCallbackBaselinesForRequest(decision.requestInputSlot,
+                observed.components[3].authorityActivations, observed.components[3].serverActivations,
+                observed.components[4].authorityActivations, observed.components[4].serverActivations, report);
+            if (decision.requestInputSlot == 3)
+            {
+                captainSpecialAuthorityBefore = observed.components[3].authorityActivations;
+                captainSpecialServerBefore = observed.components[3].serverActivations;
+            }
+            else
+            {
+                captainSupplyAuthorityBefore = observed.components[4].authorityActivations;
+                captainSupplyServerBefore = observed.components[4].serverActivations;
+            }
+            BeginCaptainPulse(decision.requestInputSlot, elapsed);
+        }
+        if (decision.completed || decision.refused) FinishCaptainSupplyBeacon(decision.outcome);
+    }
+
+    void FinishCaptainSupplyBeacon(string outcome)
+    {
+        ReleaseCaptainPulse();
+        if (bridge)
+        {
+            bridge.isolatedDiagnosticSkillPulse = false;
+            bridge.isolatedDiagnosticSkillSlot = -1;
+            bridge.SetDiagnosticInputEdgeWitness(false);
+            // Keep isolated input ownership until normal Dispose so no physical
+            // button leaks into the unresolved native setup/call state.
+            bridge.isolatedDiagnosticSkillInput = true;
+        }
+        report.captainSupplyBeaconOutcome = outcome;
+        report.captainSupplyBeaconPendingNativeState = CaptainStateIs("EntityStates.Captain.Weapon.SetupSupplyDrop") ||
+                                                        CaptainStateIs("EntityStates.Captain.Weapon.CallSupplyDropHealing");
+        report.captainSupplyBeaconDeployablePresentAtReturn = !report.captainSupplyBeaconPendingNativeState &&
+            body && captainSupplyBeaconMaster &&
+            captainSupplyBeaconMaster.GetDeployableCount(DeployableSlot.CaptainSupplyDrop) > captainDeployablesBefore;
+        report.completed = true;
+        report.active = false;
+        report.outcome = outcome;
+        SyncNativeCallbacks();
+        if (observed != null && observed.components != null && observed.components.Length > 4)
+        {
+            report.captainSpecialAuthorityAfter = observed.components[3].authorityActivations;
+            report.captainSpecialServerAfter = observed.components[3].serverActivations;
+            report.captainSupplyAuthorityAfter = observed.components[4].authorityActivations;
+            report.captainSupplyServerAfter = observed.components[4].serverActivations;
+        }
     }
 
     void CaptureToolbotOffhandIdentity()
@@ -913,6 +1302,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         }
         if (edge)
         {
+            if (captainSupplyBeaconMode)
+            {
+                if (target == 3) captainSpecialInputEdge = true;
+                if (target == 0) captainSupplyInputEdge = true;
+            }
             report.slots[target].inputBankEdges++;
             if (toolbotOffhandMode && bridge.fixedTicks > toolbotPulseStartTick)
             {
@@ -993,6 +1387,20 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         ReleaseAll();
         if (isolationTarget >= 0)
             ReleaseIsolationSink();
+        if (captainSupplyBeaconMode && bridge)
+        {
+            // The world owner tears down before its body. If an original setup/
+            // call state is still active, keep the skill sink masked through
+            // that teardown; the soon-to-be-destroyed body/bridge owns the lease.
+            bool unresolvedNativeState = CaptainStateIs("EntityStates.Captain.Weapon.SetupSupplyDrop") ||
+                                         CaptainStateIs("EntityStates.Captain.Weapon.CallSupplyDropHealing");
+            report.captainSupplyBeaconPendingNativeState = unresolvedNativeState;
+            bridge.SetDiagnosticInputEdgeWitness(false);
+            bridge.isolatedDiagnosticSkillPulse = false;
+            bridge.isolatedDiagnosticSkillSlot = -1;
+            if (!unresolvedNativeState)
+                bridge.isolatedDiagnosticSkillInput = false;
+        }
         if (toolbotOffhandMode && bridge)
         {
             bridge.SetDiagnosticInputEdgeWitness(false);
@@ -1006,5 +1414,229 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         bridge = null;
         observed = null;
         combatOutput = null;
+        captainSupplyBeaconComponents = null;
+        captainSupplyBeaconComponentIds = null;
+        captainSupplyBeaconSequence = null;
+    }
+}
+
+
+// Host-testable policy to splice into SurvivorSkillInputCoverage. The runtime
+// adapter supplies observations from the existing InputBank, skill observer,
+// SetupSupplyDrop state, and CharacterMaster deployable registry.
+public sealed class CaptainSupplyBeaconSequence
+{
+    public enum Phase
+    {
+        WaitingForNativeReadiness,
+        AwaitingSpecialEdgeAndCallbacks,
+        AwaitingSetupAndSlotRemap,
+        AwaitingValidPlacement,
+        AwaitingSupplyEdgeAndCallbacks,
+        AwaitingNativeSupplyState,
+        AwaitingOwnedDeployableAndReturn,
+        Complete,
+        Refused
+    }
+
+    public sealed class Observation
+    {
+        public float elapsedSeconds;
+        public bool exactCaptainOwner;
+        public bool exactDefaultSupplySkill;
+        public bool isolatedDiagnosticInputOwned;
+        public bool neutralRevisionChanged;
+        public bool specialCanExecute;
+        public bool specialInputEdge;
+        public bool specialAuthorityCallback;
+        public bool specialServerCallback;
+        public bool setupSupplyDropState;
+        public bool setupPrimaryIsSupplyDrop1;
+        public bool setupSecondaryIsSupplyDrop2;
+        public bool nativePlacementValid;
+        public bool supplyDrop1CanExecute;
+        public bool supplyDrop1InputEdge;
+        public bool supplyDrop1AuthorityCallback;
+        public bool supplyDrop1ServerCallback;
+        public bool nativeCallSupplyDropHealingState;
+        public bool ownedCaptainSupplyDropCountIncreased;
+        public bool returnedToOrdinaryBodyState;
+    }
+
+    public sealed class Decision
+    {
+        public Phase phase;
+        // -1 means neutral; 3 is the original special button, 0 is primary.
+        public int requestInputSlot = -1;
+        public string outcome;
+        public bool completed;
+        public bool refused;
+    }
+
+    public const float MaximumSeconds = 30f;
+    public const float PhaseTimeoutSeconds = 8f;
+    public const int MaximumRequests = 2;
+
+    Phase phase = Phase.WaitingForNativeReadiness;
+    float beganAt = float.NaN;
+    float phaseBeganAt = float.NaN;
+    int requests;
+
+    public Phase CurrentPhase => phase;
+    public int Requests => requests;
+
+    // Reused by the CLI/selector fixture: this mode cannot combine with a
+    // different survivor, alternate loadout, Toolbot sequence, or slot isolation.
+    public static string SelectorRefusal(bool requested, string survivor, bool variantOverride,
+                                         string isolatedSlot, bool toolbotOffhand, bool sirenSourceEntry = false)
+    {
+        if (!requested)
+            return null;
+        if (!string.Equals(survivor, "Captain", StringComparison.Ordinal))
+            return "captain-supply-beacon-requires-Captain";
+        if (variantOverride)
+            return "captain-supply-beacon-requires-default-loadout";
+        if (!string.IsNullOrEmpty(isolatedSlot))
+            return "captain-supply-beacon-conflicts-with-slot-isolation";
+        if (toolbotOffhand)
+            return "captain-supply-beacon-conflicts-with-Toolbot-offhand";
+        if (sirenSourceEntry)
+            return "captain-supply-beacon-conflicts-with-Siren-source-entry";
+        return null;
+    }
+
+    public Decision Step(Observation observation)
+    {
+        if (observation == null)
+            return Refuse("missing-observation");
+        if (phase == Phase.Complete || phase == Phase.Refused)
+            return Snapshot(-1, phase == Phase.Complete ? "captain-supply-beacon-sequence-complete" : "captain-supply-beacon-refused");
+        if (float.IsNaN(observation.elapsedSeconds) || float.IsInfinity(observation.elapsedSeconds) || observation.elapsedSeconds < 0)
+            return Refuse("invalid-elapsed-time");
+        if (float.IsNaN(beganAt))
+        {
+            beganAt = observation.elapsedSeconds;
+            phaseBeganAt = observation.elapsedSeconds;
+        }
+        if (observation.elapsedSeconds - beganAt >= MaximumSeconds)
+            return Refuse("sequence-deadline");
+        if (!observation.exactCaptainOwner)
+            return Refuse("captain-owner-changed");
+        if (!observation.exactDefaultSupplySkill)
+            return Refuse("native-default-supply-skill-changed");
+        if (!observation.isolatedDiagnosticInputOwned)
+            return Refuse("diagnostic-input-owner-lost");
+        if (observation.neutralRevisionChanged)
+            return Refuse("neutralized-request-cancelled");
+        if (observation.elapsedSeconds - phaseBeganAt >= PhaseTimeoutSeconds)
+            return Refuse(TimeoutOutcome());
+
+        switch (phase)
+        {
+            case Phase.WaitingForNativeReadiness:
+                if (observation.setupSupplyDropState)
+                    return Refuse("setup-state-before-owned-special-request");
+                if (observation.specialCanExecute)
+                {
+                    if (requests >= MaximumRequests)
+                        return Refuse("request-budget-exhausted");
+                    requests++;
+                    phase = Phase.AwaitingSpecialEdgeAndCallbacks;
+                    phaseBeganAt = observation.elapsedSeconds;
+                    return Snapshot(3, "captain-special-pulse-requested");
+                }
+                return Snapshot(-1, "waiting-for-native-special-readiness");
+
+            case Phase.AwaitingSpecialEdgeAndCallbacks:
+                if (observation.specialInputEdge && observation.specialAuthorityCallback && observation.specialServerCallback)
+                    Move(Phase.AwaitingSetupAndSlotRemap, observation.elapsedSeconds);
+                return Snapshot(-1, observation.setupSupplyDropState ?
+                    "setup-observed-waiting-for-special-edge-and-native-callback-pair" :
+                    "waiting-for-special-edge-and-native-callback-pair");
+
+            case Phase.AwaitingSetupAndSlotRemap:
+                if (observation.setupSupplyDropState && observation.setupPrimaryIsSupplyDrop1 &&
+                    observation.setupSecondaryIsSupplyDrop2)
+                    Move(Phase.AwaitingValidPlacement, observation.elapsedSeconds);
+                return Snapshot(-1, "waiting-for-original-setup-state-and-slot-remap");
+
+            case Phase.AwaitingValidPlacement:
+                if (!observation.setupSupplyDropState || !observation.setupPrimaryIsSupplyDrop1 ||
+                    !observation.setupSecondaryIsSupplyDrop2)
+                    return Refuse("native-setup-or-slot-remap-lost-before-placement");
+                if (observation.nativePlacementValid && observation.supplyDrop1CanExecute)
+                {
+                    if (requests >= MaximumRequests)
+                        return Refuse("request-budget-exhausted");
+                    requests++;
+                    Move(Phase.AwaitingSupplyEdgeAndCallbacks, observation.elapsedSeconds);
+                    return Snapshot(0, "captain-supply-drop1-primary-pulse-requested");
+                }
+                return Snapshot(-1, "waiting-for-original-valid-placement-and-supply-readiness");
+
+            case Phase.AwaitingSupplyEdgeAndCallbacks:
+                if (observation.supplyDrop1InputEdge && observation.supplyDrop1AuthorityCallback &&
+                    observation.supplyDrop1ServerCallback)
+                    Move(Phase.AwaitingNativeSupplyState, observation.elapsedSeconds);
+                return Snapshot(-1, observation.nativeCallSupplyDropHealingState ?
+                    "call-state-observed-waiting-for-primary-edge-and-supply-callback-pair" :
+                    "waiting-for-primary-edge-and-supply-callback-pair");
+
+            case Phase.AwaitingNativeSupplyState:
+                if (observation.nativeCallSupplyDropHealingState)
+                    Move(Phase.AwaitingOwnedDeployableAndReturn, observation.elapsedSeconds);
+                return Snapshot(-1, "waiting-for-original-supply-drop-state");
+
+            case Phase.AwaitingOwnedDeployableAndReturn:
+                if (observation.ownedCaptainSupplyDropCountIncreased && observation.returnedToOrdinaryBodyState)
+                {
+                    phase = Phase.Complete;
+                    return Snapshot(-1, "captain-supply-beacon-sequence-complete");
+                }
+                return Snapshot(-1, "waiting-for-native-deployable-and-normal-state-return");
+
+            default:
+                return Refuse("invalid-sequence-phase");
+        }
+    }
+
+    public Decision Cancel()
+    {
+        if (phase == Phase.Complete || phase == Phase.Refused)
+            return Snapshot(-1, "captain-supply-beacon-sequence-already-terminal");
+        return Refuse("sequence-cancelled");
+    }
+
+    Decision Snapshot(int slot, string outcome)
+    {
+        return new Decision { phase = phase, requestInputSlot = slot, outcome = outcome,
+                              completed = phase == Phase.Complete, refused = phase == Phase.Refused };
+    }
+
+    Decision Refuse(string outcome)
+    {
+        phase = Phase.Refused;
+        return Snapshot(-1, outcome);
+    }
+
+    void Move(Phase next, float now)
+    {
+        phase = next;
+        phaseBeganAt = now;
+    }
+
+    string TimeoutOutcome()
+    {
+        switch (phase)
+        {
+            case Phase.WaitingForNativeReadiness: return "special-not-native-ready";
+            case Phase.AwaitingSpecialEdgeAndCallbacks: return "special-edge-or-callback-pair-timeout";
+            case Phase.AwaitingSetupAndSlotRemap: return "setup-state-or-slot-remap-timeout";
+            case Phase.AwaitingValidPlacement: return "native-placement-not-valid";
+            case Phase.AwaitingSupplyEdgeAndCallbacks: return "supply-edge-or-callback-pair-timeout";
+            case Phase.AwaitingNativeSupplyState: return "native-supply-state-timeout";
+            case Phase.AwaitingOwnedDeployableAndReturn: return "native-deployable-or-state-return-timeout";
+            default: return "sequence-phase-timeout";
+        }
     }
 }

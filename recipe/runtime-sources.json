@@ -67,6 +67,7 @@
   "runtime/stage/MoonMissionBoundary.cs",
   "runtime/stage/SirenEncounterBoundary.cs",
   "runtime/stage/SirenEncounterEggTargets.cs",
+  "runtime/stage/SirenSourceEntrySession.cs",
   "runtime/stage/SourceStageIdentityLifecycle.cs",
   "runtime/stage/StageGeometryBoundary.cs",
   "runtime/stage/TeleporterWorldBoundary.cs",

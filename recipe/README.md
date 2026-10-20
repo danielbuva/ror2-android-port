@@ -1246,3 +1246,18 @@ API. The synthetic host collaborators reproduce the API shape independently;
 no original class or method implementation is tracked. The same exact native
 selection predicates remain, with no content, ownership or entitlement change.
 R8 stages the existing authored owner; the new test adds no build input.
+
+## Siren source-entry runtime owner audit (2026-10-19)
+
+The source-entry draft adds the authored runtime owner
+`runtime/stage/SirenSourceEntrySession.cs` to both public source selections.
+Its new layout GUID is `null` until Unity imports the source. The source uses
+native lifecycle APIs and exact local scene identity metadata to observe original
+source-spawner output; it contains no egg cloning, serialized game content,
+original algorithm, or copied protected implementation. Existing stager
+selection is manifest-driven, so this owner is listed explicitly in
+`runtime-sources.json` and `project-layout.json`; no build-time text replacement
+or private source input is added. The host contract exercises source cohort
+refusal and cleanup null/destroyed-object distinctions. Provenance/privacy review
+covers this authored code and minimum identity metadata only. Editor import,
+R8 reproduction and device behavior remain separate acceptance gates.

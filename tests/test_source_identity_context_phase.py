@@ -97,6 +97,48 @@ class SourceIdentityContextPhaseTests(unittest.TestCase):
         self.assertEqual(contexts["stages"]["golemplains"]["source_identity_lifecycle"], metadata)
         self.assertIn("receipt-bound", contexts["scope"])
 
+    def test_siren_source_entry_metadata_is_separate_from_first_stage_allowlist(self):
+        source_scene = self.project / "Assets/LabLoadingScene/SourceScenes/shipgraveyard/shipgraveyard.unity"
+        source_scene.parent.mkdir(parents=True)
+        source_scene.write_text(synthetic_scene().replace("m_Value: 11", "m_Value: 14").replace("m_Value: 13", "m_Value: 11"))
+        metadata = read_scene(source_scene)
+        export_scene = self.export / "Assets/RoR2/Base/Scenes/shipgraveyard/shipgraveyard.unity"
+        export_scene.parent.mkdir(parents=True)
+        export_scene.write_text(original_stage_scene())
+        contexts = whole_catalog.original_stage_contexts(
+            self.export,
+            ["shipgraveyard"],
+            "input",
+            self.pool_keys,
+            self.project,
+            {"shipgraveyard": metadata["source_scene_sha256"]},
+            include_source_identity=True,
+        )
+        entry = contexts["stages"]["shipgraveyard"]
+        self.assertNotIn("source_identity_lifecycle", entry)
+        self.assertEqual(entry["siren_source_entry"], metadata)
+        self.assertEqual(entry["siren_source_entry"]["toggle_controllers"][0]["scene_id"], 11)
+
+    def test_siren_source_entry_requires_exact_controller_id_11(self):
+        source_scene = self.project / "Assets/LabLoadingScene/SourceScenes/shipgraveyard/shipgraveyard.unity"
+        source_scene.parent.mkdir(parents=True)
+        changed = synthetic_scene().replace("m_Value: 13", "m_Value: 14")
+        source_scene.write_text(changed)
+        metadata = read_scene(source_scene)
+        export_scene = self.export / "Assets/RoR2/Base/Scenes/shipgraveyard/shipgraveyard.unity"
+        export_scene.parent.mkdir(parents=True)
+        export_scene.write_text(original_stage_scene())
+        with self.assertRaisesRegex(RuntimeError, "unique scene-ID-11 controller"):
+            whole_catalog.original_stage_contexts(
+                self.export,
+                ["shipgraveyard"],
+                "input",
+                self.pool_keys,
+                self.project,
+                {"shipgraveyard": metadata["source_scene_sha256"]},
+                include_source_identity=True,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

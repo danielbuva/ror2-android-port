@@ -1203,7 +1203,9 @@ def prepare_integration(io=None, *, attempt=None):
     mesh_subobjects, unresolved_mesh_subobjects = source_mesh_subobjects(export, closure, metadata, native)
     # The rebuild regenerates its own native receipts in the destination (J725).
     receipts = out / "native-containers" if io.rebuilding else io.resolve(io.read(out / "native-latest.json")["path"])
-    recovered = recover_ambiguous_mesh_subobjects(export, unresolved_mesh_subobjects, metadata, native, receipts, io.read(io.work / "inventory/files.json"), io.work)
+    recovered = recover_ambiguous_mesh_subobjects(
+        export, unresolved_mesh_subobjects, metadata, native, receipts, io.read(io.work / "inventory/files.json"), io.work
+    )
     mesh_subobjects.extend(recovered)
     unresolved_mesh_subobjects = [row for row in unresolved_mesh_subobjects if row["key"] not in {entry["key"] for entry in recovered}]
     index = io.read(out / "source-guid-index.json")
@@ -1563,8 +1565,15 @@ def original_stage_contexts(export, stages, input_id, pool_keys, project=None, s
         result["bonus_credits"] = [{"path": object_path(int(match[1])), "points": int(match[2])} for match in entries]
         if include_source_identity and project is not None:
             identity_metadata = source_identity_lifecycle_metadata(project, stage, source_scene_receipts)
-            if identity_metadata is not None:
+            if identity_metadata is not None and stage in ("golemplains", "lakes"):
                 result["source_identity_lifecycle"] = identity_metadata
+            if stage == "shipgraveyard":
+                if identity_metadata is None:
+                    raise RuntimeError("Siren source-entry identity scene is not staged: " + stage)
+                controllers = identity_metadata["toggle_controllers"]
+                if len(controllers) != 1 or controllers[0]["scene_id"] != 11:
+                    raise RuntimeError("Siren source-entry metadata requires its unique scene-ID-11 controller")
+                result["siren_source_entry"] = identity_metadata
         if include_source_identity and stage in ("golemplains", "lakes") and "source_identity_lifecycle" not in result:
             raise RuntimeError("Supported source identity lifecycle scene is not staged: " + stage)
         contexts[stage] = result

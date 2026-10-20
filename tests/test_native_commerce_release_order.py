@@ -19,6 +19,7 @@ def repo_root():
 ROOT = repo_root()
 TELEPORTER = ROOT / "tools/unity/runtime/stage/TeleporterWorldBoundary.cs"
 INTEGRATED = ROOT / "tools/unity/runtime/world/IntegratedWorldBoundary.cs"
+SESSION = ROOT / "tools/unity/runtime/session/PortSession.cs"
 FIXTURE = Path(__file__).parent / "fixtures/native_commerce_release_order_host.cs"
 NATIVE = "if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)"
 
@@ -61,10 +62,17 @@ def production_host(teleporter_source=None, integrated_source=None):
     native_integrated = braced_block(integrated, NATIVE)
     return (
         FIXTURE.read_text()
+        + "\npublic sealed partial class Coordinator {\n"
+        + braced_block(SESSION.read_text(), "internal long MarkSourceStageLifecycleRecovery(bool required)")
+        + "\n}\n"
         + "\npublic sealed partial class TeleporterWorldSession {\npublic void Dispose() {\n"
-        + native_dispose + "\n" + tail.group() + "\n}\n}\n"
+        + native_dispose
+        + "\n"
+        + tail.group()
+        + "\n}\n}\n"
         + "public sealed partial class IntegratedWorldSession {\npublic void CleanupIntegratedWorld() {\n"
-        + native_integrated + "\n}\n}\n"
+        + native_integrated
+        + "\n}\n}\n"
     )
 
 
@@ -86,29 +94,43 @@ def compile_and_execute(source, arguments=()):
         environment = os.environ.copy()
         environment.update(TMPDIR=str(scratch), TMP=str(scratch), TEMP=str(scratch))
         compiled = subprocess.run(
-            [str(mono), str(compiler), "-nologo", "-langversion:9", "-target:exe",
-             "-out:" + str(executable), "-debug:portable", "-pdb:" + str(pdb),
-             "-refout:" + str(reference), str(production)],
-            cwd=scratch, env=environment, capture_output=True, text=True,
+            [
+                str(mono),
+                str(compiler),
+                "-nologo",
+                "-langversion:9",
+                "-target:exe",
+                "-out:" + str(executable),
+                "-debug:portable",
+                "-pdb:" + str(pdb),
+                "-refout:" + str(reference),
+                str(production),
+            ],
+            cwd=scratch,
+            env=environment,
+            capture_output=True,
+            text=True,
         )
         if compiled.returncode:
             raise AssertionError(compiled.stdout + compiled.stderr)
         if not all(path.is_file() for path in (executable, pdb, reference)):
             raise AssertionError("Compiler did not produce the explicit private outputs")
-        return subprocess.run([str(mono), str(executable), *arguments], cwd=scratch,
-                              env=environment, capture_output=True, text=True)
+        return subprocess.run([str(mono), str(executable), *arguments], cwd=scratch, env=environment, capture_output=True, text=True)
 
 
 class NativeCommerceReleaseOrderTests(unittest.TestCase):
     def test_actual_native_owners_reconcile_before_releasing_support(self):
         executed = compile_and_execute(production_host())
         self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
-        self.assertEqual(json.loads(executed.stdout), {
-            "normal_purchase": True,
-            "no_purchase": True,
-            "unexpected_extra_retained": True,
-            "source_retirement_failure_retained": True,
-        })
+        self.assertEqual(
+            json.loads(executed.stdout),
+            {
+                "normal_purchase": True,
+                "no_purchase": True,
+                "unexpected_extra_retained": True,
+                "source_retirement_failure_retained": True,
+            },
+        )
 
 
 if __name__ == "__main__":

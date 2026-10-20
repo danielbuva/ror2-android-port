@@ -2316,17 +2316,20 @@ public sealed partial class PortSession
                                   "Diagnostic skill coverage requires prepared observation and assist tracking");
                 skillInputCoverage = new SurvivorSkillInputCoverage(player, bridge, survivorSkills.report,
                     coordinator.r.diagnosticSkillIsolationSlot, coordinator.r.diagnosticToolbotOffhand,
-                    survivorCombatOutputs != null ? survivorCombatOutputs.report : null);
+                    survivorCombatOutputs != null ? survivorCombatOutputs.report : null,
+                    coordinator.r.diagnosticCaptainSupplyBeacon);
                 coordinator.r.skillInputCoverage = skillInputCoverage.reportData;
                 coordinator.DebugToggle("diagnosticSkillCoverage", true, "explicit launch selection");
                 if (skillInputCoverage.reportData.mode == "isolated-slot" ||
-                    skillInputCoverage.reportData.mode == "toolbot-offhand-sequence")
+                    skillInputCoverage.reportData.mode == "toolbot-offhand-sequence" ||
+                    skillInputCoverage.reportData.mode == "captain-supply-beacon-sequence")
                 {
                     coordinator.Check(coordinator.r.developerSkillIsolationAssisted,
                                       "Isolated skill-input assistance was not validated before native setup");
                     coordinator.DebugToggle("diagnosticSkillIsolation", true,
                         skillInputCoverage.reportData.mode == "toolbot-offhand-sequence" ?
-                            "explicit Toolbot offhand selector" : "explicit launch selector");
+                            "explicit Toolbot offhand selector" : skillInputCoverage.reportData.mode == "captain-supply-beacon-sequence" ?
+                            "explicit Captain supply-beacon selector" : "explicit launch selector");
                 }
             }
             skillInputCoverage.Apply(elapsed);
@@ -2989,7 +2992,7 @@ public sealed partial class PortSession
                 }
                 catch (Exception primary)
                 {
-                    coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                    coordinator.MarkSourceStageLifecycleRecovery(true);
                     coordinator.r.cleanup = false;
                     coordinator.r.success = false;
                     coordinator.r.error += " Native source teardown retained providers and Run context: " + primary;

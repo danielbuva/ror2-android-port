@@ -17,6 +17,75 @@ public static class SirenEncounterContract
     public const string EncounterObjectName = "SuperRoboBallEncounter";
     public const uint EncounterSceneId = 10;
 
+    public static void RetainOwnerAfterPreflight<T>(bool preflightPassed, T owner, Action<T> retainOwner)
+    {
+        if (!preflightPassed)
+            throw new InvalidOperationException("Cannot retain a Siren owner whose identity preflight did not pass");
+        retainOwner?.Invoke(owner);
+    }
+
+    public static bool CompleteOwnedRecovery(ref bool sharedRecoveryRequired, long currentGeneration,
+                                             long ownerGeneration, bool thisOwnerMayClear, bool anotherOwnerStillRequiresRecovery)
+    {
+        if (!thisOwnerMayClear || anotherOwnerStillRequiresRecovery || currentGeneration != ownerGeneration)
+            return false;
+        sharedRecoveryRequired = false;
+        return true;
+    }
+
+    public static void DetachOwnedSubscription(ref bool ownsSubscription, Action detach)
+    {
+        if (!ownsSubscription)
+            return;
+        detach();
+        ownsSubscription = false;
+    }
+
+    // Production cleanup uses this cursor so a failed operation remains the
+    // next operation on retry. The cursor advances only after the action returns.
+    public static bool TryAdvanceCleanupStep(ref int completedStep, int requestedStep, Action operation,
+                                             ref Exception firstFailure, out Exception stepFailure)
+    {
+        stepFailure = null;
+        if (completedStep > requestedStep)
+            return true;
+        if (completedStep != requestedStep)
+            throw new InvalidOperationException("Cleanup steps must run in their declared order");
+        try
+        {
+            operation();
+            completedStep++;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            stepFailure = exception;
+            if (firstFailure == null)
+                firstFailure = exception;
+            return false;
+        }
+    }
+
+    public static bool TryAdvanceOwnedCleanupStep(ref int completedStep, int requestedStep, bool ownershipAcquired,
+                                                  Action operation, ref Exception firstFailure, out Exception stepFailure)
+    {
+        return TryAdvanceCleanupStep(ref completedStep, requestedStep,
+            () => { if (ownershipAcquired) operation(); }, ref firstFailure, out stepFailure);
+    }
+
+    // Do not drop the sole owner handle until its Dispose has actually returned.
+    public static void DisposeOwned<T>(ref T owner, Action<T> dispose) where T : class
+    {
+        var current = owner;
+        if (current == null)
+            return;
+        dispose(current);
+        if (ReferenceEquals(owner, current))
+            owner = null;
+        else
+            throw new InvalidOperationException("Owned Siren cleanup handle changed while its captured owner was disposing");
+    }
+
     public static T SelectOriginalInactiveEncounter<T>(System.Collections.Generic.IEnumerable<T> candidates,
                                                         Func<T, string> sceneName, Func<T, string> objectName,
                                                         Func<T, uint> sceneId, Func<T, bool> activeSelf,
@@ -38,7 +107,8 @@ public static class SirenEncounterContract
         return selected;
     }
 
-    public static void RunAttachTransaction(Action activate, Action spawn, Action rollback)
+    public static void RunAttachTransaction(Action activate, Action spawn, Action rollback,
+                                            Action<Exception> onRollbackFailure = null)
     {
         if (activate == null || spawn == null || rollback == null)
             throw new ArgumentNullException("Siren attach transaction requires activation, spawn, and rollback actions");
@@ -53,9 +123,11 @@ public static class SirenEncounterContract
             {
                 rollback();
             }
-            catch
+            catch (Exception cleanupFailure)
             {
                 // Preserve the attach failure; rollback owns its own finally-based restoration.
+                try { onRollbackFailure?.Invoke(cleanupFailure); }
+                catch { /* Recovery reporting cannot replace the attach failure. */ }
             }
             throw;
         }
@@ -71,11 +143,13 @@ public sealed partial class PortSession
         public bool sourceOwnerAttached, listenerStateActive, eggBodiesObserved, nativeEggRegistrationObserved, nativeEncounterStarted,
             nativeEncounterCompleted, networkObjectUnspawned, retirementPreflightPassed, retirementRequestsIssued,
             retirementRefusedForeignMember, cleanupDisposed, originalActiveRestored, sceneInstanceDestroyed;
+        public bool nativeEggRegistrationMatchesSourceEntry;
         public int diagnosticSourceEggCandidatesObserved, nativeEggSlotsRegistered;
         public int observedEggBodyCount, nativeBossMembers, observationSamples, encounterSquadMembersAtCleanup,
             retiredBossBodiesRequested, retiredBossMastersRequested, retiredProbeBodiesRequested,
             retiredProbeMastersRequested;
         public uint identitySceneId, networkId;
+        public uint[] sourceEntryEggNetworkIds, nativeRegisteredEggNetworkIds;
         public string cleanupError;
     }
 }
@@ -92,6 +166,8 @@ public sealed partial class SirenEncounterSession : IDisposable
         public CharacterMaster master;
         public NetworkInstanceId networkId;
         public NetworkInstanceId ownerNetworkId;
+        public bool bodyDestroyRequestCompleted;
+        public bool masterDestroyRequestCompleted;
     }
 
     const float ObservationIntervalSeconds = 0.5f;
@@ -106,10 +182,15 @@ public sealed partial class SirenEncounterSession : IDisposable
     readonly bool originalActiveSelf;
     bool ownsNetworkSpawn;
     bool ownsActivatedSceneInstance;
+    bool ownsActiveStateMutation;
     bool ownsBossDefeatObservation;
     bool ownsSquadMemberObservation;
     bool ownsMinionSummonObservation;
+    bool cleanupStarted;
     bool disposed;
+    int cleanupStep;
+    Exception cleanupFirstFailure;
+    NetworkIdentity[] expectedSourceEggs;
     float nextObservationAt;
     readonly List<OwnedMaster> ownedBossMasters = new List<OwnedMaster>();
     readonly List<OwnedMaster> ownedProbeMasters = new List<OwnedMaster>();
@@ -155,7 +236,10 @@ public sealed partial class SirenEncounterSession : IDisposable
             HasOriginalEncounterContract);
     }
 
-    public static SirenEncounterSession Attach(Scene scene, Action<PortSession.SirenEncounterReport> onReportSelected = null)
+    public static SirenEncounterSession Attach(Scene scene, Action<PortSession.SirenEncounterReport> onReportSelected = null,
+                                                Action<SirenEncounterSession> retainOwner = null,
+                                                Action<Exception> onCleanupFailure = null,
+                                                NetworkIdentity[] expectedSourceEggs = null)
     {
         if (!NetworkServer.active)
             throw new InvalidOperationException("Siren encounter source identity requires the active local server");
@@ -164,18 +248,41 @@ public sealed partial class SirenEncounterSession : IDisposable
             selected.GetComponent<EntityStateMachine>(), selected.GetComponent<ScriptedCombatEncounter>(),
             selected.GetComponent<BossGroup>());
         owner.PrepareDiagnosticEggSourceContract();
+        if (expectedSourceEggs != null)
+        {
+            if (expectedSourceEggs.Length != 12 || expectedSourceEggs.Any(egg => !egg || !egg.isServer || egg.netId.Value == 0 ||
+                    !ReferenceEquals(NetworkServer.FindLocalObject(egg.netId), egg.gameObject)) ||
+                expectedSourceEggs.Select(egg => egg.netId.Value).Distinct().Count() != expectedSourceEggs.Length ||
+                expectedSourceEggs.Any(egg => egg.gameObject.scene != scene || !egg.assetId.Equals(owner.originalEggAssetId)))
+                throw new InvalidOperationException("Siren source-entry handoff requires twelve exact registered original egg identities");
+            owner.expectedSourceEggs = expectedSourceEggs.ToArray();
+            owner.Report.sourceEntryEggNetworkIds = owner.expectedSourceEggs.Select(egg => egg.netId.Value).ToArray();
+        }
         if (owner.identity.isServer || owner.identity.netId.Value != 0)
             throw new InvalidOperationException("Original Siren encounter identity is already server-spawned; refusing ownership transfer");
         onReportSelected?.Invoke(owner.Report);
+        // The coordinator retains the owner after all preflight and immediately
+        // before the first owned event/source mutation.
+        SirenEncounterContract.RetainOwnerAfterPreflight(
+            !owner.identity.isServer && owner.identity.netId.Value == 0, owner, retainOwner);
 
         SirenEncounterContract.RunAttachTransaction(
             () =>
             {
                 BossGroup.onBossGroupDefeatedServer += owner.OnBossGroupDefeatedServer;
                 owner.ownsBossDefeatObservation = true;
-                owner.ownsActivatedSceneInstance = true;
-                owner.ownsNetworkSpawn = true;
-                selected.SetActive(true);
+                try
+                {
+                    selected.SetActive(true);
+                }
+                finally
+                {
+                    if (selected && selected.activeSelf != owner.originalActiveSelf)
+                    {
+                        owner.ownsActiveStateMutation = true;
+                        owner.ownsActivatedSceneInstance = true;
+                    }
+                }
                 owner.encounter.combatSquad.onMemberAddedServer += owner.OnEncounterMemberAddedServer;
                 owner.ownsSquadMemberObservation = true;
                 // MasterSummon's report follows Spawn/Respawn. Its earlier
@@ -185,7 +292,14 @@ public sealed partial class SirenEncounterSession : IDisposable
             },
             () =>
             {
-                NetworkServer.Spawn(selected);
+                try
+                {
+                    NetworkServer.Spawn(selected);
+                }
+                finally
+                {
+                    owner.CaptureNetworkSpawnOwnership();
+                }
                 if (!owner.identity.isServer || owner.identity.netId.Value == 0)
                     throw new InvalidOperationException("Original Siren encounter identity did not acquire a server network ID");
 
@@ -194,7 +308,13 @@ public sealed partial class SirenEncounterSession : IDisposable
                 owner.Report.networkObjectUnspawned = false;
                 owner.Observe(force: true);
             },
-            owner.Release);
+            owner.Release,
+            cleanupFailure =>
+            {
+                if (string.IsNullOrEmpty(owner.Report.cleanupError))
+                    owner.Report.cleanupError = cleanupFailure.GetType().Name + ": " + cleanupFailure.Message;
+                onCleanupFailure?.Invoke(cleanupFailure);
+            });
         return owner;
     }
 
@@ -231,7 +351,7 @@ public sealed partial class SirenEncounterSession : IDisposable
 
     void OnBossGroupDefeatedServer(BossGroup defeated)
     {
-        if (!disposed && defeated == bossGroup && encounter && encounter.hasSpawnedServer)
+        if (!disposed && !cleanupStarted && defeated == bossGroup && encounter && encounter.hasSpawnedServer)
         {
             Report.nativeEncounterCompleted = true;
             Report.observation = "original-native-encounter-started-and-exact-boss-group-defeat-event-observed";
@@ -240,7 +360,7 @@ public sealed partial class SirenEncounterSession : IDisposable
 
     void OnEncounterMemberAddedServer(CharacterMaster member)
     {
-        if (disposed || !NetworkServer.active || !member || member.teamIndex != TeamIndex.Monster ||
+        if (disposed || cleanupStarted || !NetworkServer.active || !member || member.teamIndex != TeamIndex.Monster ||
             member.playerCharacterMasterController || member.bodyPrefab != BodyCatalog.FindBodyPrefab(OriginalBossBodyName) ||
             member.netId.Value == 0 || ownedBossNetworkIds.Contains(member.netId.Value))
             return;
@@ -253,7 +373,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     {
         var master = summon.summonMasterInstance;
         var ownership = master ? master.minionOwnership : null;
-        if (disposed || !NetworkServer.active || !ownership || !summon.leaderMasterInstance)
+        if (disposed || cleanupStarted || !NetworkServer.active || !ownership || !summon.leaderMasterInstance)
             return;
 
         var ownerId = ownership.NetworkownerMasterId;
@@ -282,7 +402,7 @@ public sealed partial class SirenEncounterSession : IDisposable
     /// </summary>
     public void Observe(bool force = false)
     {
-        if (disposed || !encounterObject || !encounterObject.activeInHierarchy)
+        if (disposed || cleanupStarted || !encounterObject || !encounterObject.activeInHierarchy)
             return;
         if (!force && Time.unscaledTime < nextObservationAt)
             return;
@@ -321,60 +441,43 @@ public sealed partial class SirenEncounterSession : IDisposable
     {
         if (disposed)
             return;
-        disposed = true;
-        Exception firstFailure = null;
-        Action<Action> attempt = operation =>
+        cleanupStarted = true;
+        Exception failure;
+        if (!SirenEncounterContract.TryAdvanceCleanupStep(ref cleanupStep, 0, () =>
         {
-            try
-            {
-                operation();
-            }
-            catch (Exception exception)
-            {
-                if (firstFailure == null)
-                    firstFailure = exception;
-                Report.cleanupError = string.IsNullOrEmpty(Report.cleanupError)
-                    ? exception.GetType().Name + ": " + exception.Message
-                    : Report.cleanupError + " | " + exception.GetType().Name + ": " + exception.Message;
-            }
-        };
-
-        if (ownsBossDefeatObservation)
+            SirenEncounterContract.DetachOwnedSubscription(ref ownsBossDefeatObservation,
+                () => BossGroup.onBossGroupDefeatedServer -= OnBossGroupDefeatedServer);
+        }, ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
+        if (!SirenEncounterContract.TryAdvanceCleanupStep(ref cleanupStep, 1, () =>
         {
-            attempt(() => BossGroup.onBossGroupDefeatedServer -= OnBossGroupDefeatedServer);
-            ownsBossDefeatObservation = false;
-        }
-
-        if (ownsSquadMemberObservation)
-        {
-            attempt(() =>
+            SirenEncounterContract.DetachOwnedSubscription(ref ownsSquadMemberObservation, () =>
             {
-                if (encounter && encounter.combatSquad)
-                    encounter.combatSquad.onMemberAddedServer -= OnEncounterMemberAddedServer;
+                if (!encounter || !encounter.combatSquad)
+                    throw new InvalidOperationException("Cannot detach the Siren squad observer from its exact captured native component");
+                encounter.combatSquad.onMemberAddedServer -= OnEncounterMemberAddedServer;
             });
-            ownsSquadMemberObservation = false;
-        }
-
-        if (ownsMinionSummonObservation)
+        }, ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
+        if (!SirenEncounterContract.TryAdvanceCleanupStep(ref cleanupStep, 2, () =>
         {
-            attempt(() => MasterSummon.onServerMasterSummonGlobal -= OnMinionSummoned);
-            ownsMinionSummonObservation = false;
-        }
-
-        attempt(RetireEncounterSquadMembers);
-        attempt(UnSpawnOwnedEncounter);
-        attempt(RestoreEncounterActiveState);
-        attempt(DestroyOwnedSourceSceneInstance);
-
-        Report.cleanupDisposed = true;
-        Report.observation = "owner-disposed; body-destruction-requests=" + Report.retiredBossBodiesRequested +
-            "; master-destruction-requests=" + Report.retiredBossMastersRequested +
-            "; probe-body-destruction-requests=" + Report.retiredProbeBodiesRequested +
-            "; probe-master-destruction-requests=" + Report.retiredProbeMastersRequested +
-            "; original-active-restored=" + Report.originalActiveRestored +
-            "; scene-instance-destroyed=" + Report.sceneInstanceDestroyed +
-            "; network-unspawned=" + Report.networkObjectUnspawned +
-            (string.IsNullOrEmpty(Report.cleanupError) ? "" : "; cleanup-error=" + Report.cleanupError);
+            SirenEncounterContract.DetachOwnedSubscription(ref ownsMinionSummonObservation,
+                () => MasterSummon.onServerMasterSummonGlobal -= OnMinionSummoned);
+        }, ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
+        if (!SirenEncounterContract.TryAdvanceOwnedCleanupStep(ref cleanupStep, 3,
+                ownsActivatedSceneInstance || ownedBossMasters.Count != 0 || ownedProbeMasters.Count != 0,
+                RetireEncounterSquadMembers, ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
+        if (!SirenEncounterContract.TryAdvanceCleanupStep(ref cleanupStep, 4, UnSpawnOwnedEncounter,
+                                                           ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
+        if (!SirenEncounterContract.TryAdvanceOwnedCleanupStep(ref cleanupStep, 5, ownsActiveStateMutation,
+                RestoreEncounterActiveState, ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
+        if (!SirenEncounterContract.TryAdvanceOwnedCleanupStep(ref cleanupStep, 6, ownsActivatedSceneInstance,
+                DestroyOwnedSourceSceneInstance, ref cleanupFirstFailure, out failure))
+            ThrowCleanupFailure(failure);
 
         ClearDiagnosticEggCandidates();
         scene = default(Scene);
@@ -386,22 +489,39 @@ public sealed partial class SirenEncounterSession : IDisposable
         ownedBossMasters.Clear();
         ownedProbeMasters.Clear();
         ownedBossNetworkIds.Clear();
-        if (firstFailure != null)
-            throw firstFailure;
+        disposed = true;
+        Report.cleanupDisposed = true;
+        Report.observation = "owner-disposed; body-destruction-requests=" + Report.retiredBossBodiesRequested +
+            "; master-destruction-requests=" + Report.retiredBossMastersRequested +
+            "; probe-body-destruction-requests=" + Report.retiredProbeBodiesRequested +
+            "; probe-master-destruction-requests=" + Report.retiredProbeMastersRequested +
+            "; original-active-restored=" + Report.originalActiveRestored +
+            "; scene-instance-destroyed=" + Report.sceneInstanceDestroyed +
+            "; network-unspawned=" + Report.networkObjectUnspawned +
+            (string.IsNullOrEmpty(Report.cleanupError) ? "" : "; recovered-after-cleanup-error=" + Report.cleanupError);
+    }
+
+    void ThrowCleanupFailure(Exception failure)
+    {
+        if (string.IsNullOrEmpty(Report.cleanupError))
+            Report.cleanupError = failure.GetType().Name + ": " + failure.Message;
+        throw failure;
     }
 
     void RetireEncounterSquadMembers()
     {
-        if (!encounter || !encounter.combatSquad)
+        if (!ownsActivatedSceneInstance && ownedBossMasters.Count == 0 && ownedProbeMasters.Count == 0)
             return;
+        if (!encounter || !encounter.combatSquad)
+            throw new InvalidOperationException("Cannot verify the exact captured Siren squad during actor cleanup");
 
         if (!NetworkServer.active)
             throw new InvalidOperationException("Cannot retire original Siren encounter actors while the server is inactive");
 
         var members = encounter.combatSquad.readOnlyMembersList.Where(member => member).ToArray();
         Report.encounterSquadMembersAtCleanup = members.Length;
-        var roots = ownedBossMasters.Where(entry => entry.master).ToArray();
-        var probes = ownedProbeMasters.Where(entry => entry.master).ToArray();
+        var roots = ownedBossMasters.ToArray();
+        var probes = ownedProbeMasters.ToArray();
 
         // Every live squad member must match a master captured from this exact
         // source squad. Probe ownership is tracked only from the native ownership
@@ -416,9 +536,14 @@ public sealed partial class SirenEncounterSession : IDisposable
         }
 
         foreach (var entry in roots)
-            ValidateOwnedMaster(entry, OriginalBossBodyName, NetworkInstanceId.Invalid, "native boss");
+            if (!entry.masterDestroyRequestCompleted)
+                ValidateOwnedMaster(entry, OriginalBossBodyName, NetworkInstanceId.Invalid, "native boss");
         foreach (var entry in probes)
         {
+            if (entry.masterDestroyRequestCompleted)
+                continue;
+            if (!entry.master)
+                throw new InvalidOperationException("A captured Siren probe disappeared before its native destroy request was recorded");
             var ownership = entry.master.minionOwnership;
             if (!ownership || !ownedBossNetworkIds.Contains(entry.ownerNetworkId.Value) ||
                 ownership.NetworkownerMasterId != entry.ownerNetworkId)
@@ -438,9 +563,9 @@ public sealed partial class SirenEncounterSession : IDisposable
 
         Report.retirementPreflightPassed = true;
         foreach (var entry in probes)
-            RequestDestroy(entry.master, isProbe: true);
+            RequestDestroy(entry, isProbe: true);
         foreach (var entry in roots)
-            RequestDestroy(entry.master, isProbe: false);
+            RequestDestroy(entry, isProbe: false);
     }
 
     void ValidateOwnedMaster(OwnedMaster entry, string expectedBodyName, NetworkInstanceId expectedOwner, string label)
@@ -469,20 +594,28 @@ public sealed partial class SirenEncounterSession : IDisposable
         }
     }
 
-    void RequestDestroy(CharacterMaster member, bool isProbe)
+    void RequestDestroy(OwnedMaster entry, bool isProbe)
     {
-        var body = member.GetBody();
-        var bodyObject = body ? body.gameObject : null;
-        var masterObject = member.gameObject;
-        if (bodyObject)
+        if (entry.masterDestroyRequestCompleted)
+            return;
+        if (!entry.master)
+            throw new InvalidOperationException("Captured Siren master disappeared before its native destroy request was recorded");
+        if (!entry.bodyDestroyRequestCompleted)
         {
-            NetworkServer.Destroy(bodyObject);
-            if (isProbe)
-                Report.retiredProbeBodiesRequested++;
-            else
-                Report.retiredBossBodiesRequested++;
-            Report.retirementRequestsIssued = true;
+            var body = entry.master.GetBody();
+            var bodyObject = body ? body.gameObject : null;
+            if (bodyObject)
+            {
+                NetworkServer.Destroy(bodyObject);
+                if (isProbe)
+                    Report.retiredProbeBodiesRequested++;
+                else
+                    Report.retiredBossBodiesRequested++;
+                Report.retirementRequestsIssued = true;
+            }
+            entry.bodyDestroyRequestCompleted = true;
         }
+        var masterObject = entry.master.gameObject;
         if (masterObject)
         {
             NetworkServer.Destroy(masterObject);
@@ -492,34 +625,53 @@ public sealed partial class SirenEncounterSession : IDisposable
                 Report.retiredBossMastersRequested++;
             Report.retirementRequestsIssued = true;
         }
+        entry.masterDestroyRequestCompleted = true;
     }
 
     void UnSpawnOwnedEncounter()
     {
-        try
+        if (!ownsNetworkSpawn)
         {
-            if (ownsNetworkSpawn && identity && identity.netId.Value != 0)
+            if (!identity || identity.netId.Value != 0 || identity.isServer || !Report.networkObjectUnspawned)
+                throw new InvalidOperationException("Encounter spawn left an identity state the Siren owner cannot prove it owns or has retired");
+            return;
+        }
+        if (ownsNetworkSpawn)
+        {
+            if (!identity || !encounterObject)
+                throw new InvalidOperationException("Cannot verify the exact owned Siren identity before NetworkServer.UnSpawn");
+            var capturedNetworkId = Report.networkId != 0 ? new NetworkInstanceId(Report.networkId) : identity.netId;
+            if (capturedNetworkId.Value == 0)
+                throw new InvalidOperationException("Owned Siren encounter has no captured network ID to retire");
+            var registered = NetworkServer.FindLocalObject(capturedNetworkId);
+            if (registered && registered != encounterObject)
+                throw new InvalidOperationException("Refusing to unspawn a Siren network ID now mapped to a foreign object");
+            if (registered == encounterObject)
             {
                 if (!NetworkServer.active)
                     throw new InvalidOperationException("Cannot unspawn original Siren encounter identity while the server is inactive");
-                var capturedNetworkId = identity.netId;
+                if (identity.netId != capturedNetworkId)
+                    throw new InvalidOperationException("Original Siren encounter network ID changed before unspawn");
                 NetworkServer.UnSpawn(encounterObject);
-                if (NetworkServer.FindLocalObject(capturedNetworkId) == encounterObject)
-                    throw new InvalidOperationException("Original Siren encounter identity remains registered after NetworkServer.UnSpawn");
-                Report.networkObjectUnspawned = true;
             }
-        }
-        finally
-        {
+            if (NetworkServer.FindLocalObject(capturedNetworkId))
+                throw new InvalidOperationException("Original Siren encounter network ID remains registered after NetworkServer.UnSpawn");
+            Report.networkObjectUnspawned = true;
             ownsNetworkSpawn = false;
         }
     }
 
     void RestoreEncounterActiveState()
     {
-        if (encounterObject)
-            encounterObject.SetActive(originalActiveSelf);
-        Report.originalActiveRestored = encounterObject && encounterObject.activeSelf == originalActiveSelf;
+        if (!ownsActiveStateMutation)
+            return;
+        if (!encounterObject)
+            throw new InvalidOperationException("Cannot verify restoration of the exact owned Siren scene instance active state");
+        encounterObject.SetActive(originalActiveSelf);
+        Report.originalActiveRestored = encounterObject.activeSelf == originalActiveSelf;
+        if (!Report.originalActiveRestored)
+            throw new InvalidOperationException("Original Siren scene instance active state did not restore");
+        ownsActiveStateMutation = false;
         Report.sourceOwnerAttached = false;
     }
 
@@ -527,18 +679,35 @@ public sealed partial class SirenEncounterSession : IDisposable
     {
         if (!ownsActivatedSceneInstance)
             return;
+        if (!Report.networkObjectUnspawned)
+            throw new InvalidOperationException("Cannot destroy the Siren scene identity before its network registration is proven retired");
         if (!NetworkServer.active)
             throw new InvalidOperationException("Cannot synchronously destroy the owned Siren scene instance while the server is inactive");
-        if (encounterObject && (!scene.IsValid() || !scene.isLoaded || scene.name != SirenEncounterContract.SceneName ||
+        if (!encounterObject || !identity)
+            throw new InvalidOperationException("Exact owned Siren scene object or identity disappeared before owner destruction");
+        if (!scene.IsValid() || !scene.isLoaded || scene.name != SirenEncounterContract.SceneName ||
             encounterObject.scene != scene || encounterObject.name != SirenEncounterContract.EncounterObjectName ||
-            !identity || identity.sceneId.Value != SirenEncounterContract.EncounterSceneId))
+            identity.sceneId.Value != SirenEncounterContract.EncounterSceneId)
             throw new InvalidOperationException("Refusing to synchronously destroy an object that no longer matches the owned Ship Graveyard scene identity");
-        if (encounterObject)
-            UnityEngine.Object.DestroyImmediate(encounterObject);
+        UnityEngine.Object.DestroyImmediate(encounterObject);
         Report.sceneInstanceDestroyed = !encounterObject;
         if (!Report.sceneInstanceDestroyed)
             throw new InvalidOperationException("Owned Siren source scene instance remained alive after synchronous destruction");
         ownsActivatedSceneInstance = false;
+    }
+
+    void CaptureNetworkSpawnOwnership()
+    {
+        if (!identity)
+            return;
+        var capturedId = identity.netId;
+        if (capturedId.Value != 0 || identity.isServer)
+        {
+            Report.networkId = capturedId.Value;
+            Report.networkObjectUnspawned = false;
+        }
+        if (capturedId.Value != 0 && NetworkServer.FindLocalObject(capturedId) == encounterObject)
+            ownsNetworkSpawn = true;
     }
 
     public void Dispose()

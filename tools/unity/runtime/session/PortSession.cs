@@ -14,6 +14,12 @@ using UnityEngine.Networking;
 // Each experiment runs in a fresh process. Automatic probes enable only their measured callbacks.
 public sealed partial class PortSession : MonoBehaviour
 {
+    internal long MarkSourceStageLifecycleRecovery(bool required)
+    {
+        r.sourceStageLifecycleRecoveryRequired = required;
+        return ++r.sourceStageLifecycleRecoveryGeneration;
+    }
+
     // Required Moon metadata is separate from the earned-item/drop domain.
     // These exact definitions register identities; original eligibility remains authoritative.
     [Serializable]
@@ -172,6 +178,11 @@ public sealed partial class PortSession : MonoBehaviour
         public bool diagnosticSkillCoverage;
         // Explicit, one-run MUL-T offhand input sequence; absent JSON remains false.
         public bool diagnosticToolbotOffhand;
+        // Default-off, one-run Captain supply-drop input/state/output diagnostic.
+        public bool diagnosticCaptainSupplyBeacon;
+        // Explicit source-entry-only mode; omitted attempt JSON remains false.
+        public bool sirenSourceEntryDiagnosticAttempt, sirenSourceEntryDiagnosticRegistrationObserved,
+            sirenSourceEntryDiagnosticCleanupObserved;
         public string diagnosticSkillIsolationSlot;
         public bool developerSkillIsolationAssisted;
         public bool diagnosticSirenEggInput;
@@ -231,6 +242,9 @@ public sealed partial class PortSession : MonoBehaviour
         // Explicit per-attempt opt-in; defaults false when omitted from the attempt report.
         public bool nativeFirstStageLifecycleDiagnosticAttempt;
         public bool sourceStageLifecycleRecoveryRequired;
+        // Incremented by every owner when it changes the shared recovery gate.
+        // A retry may clear its own gate only if no other owner changed it since.
+        public long sourceStageLifecycleRecoveryGeneration;
         public WorldReport world;
         public SurvivorSkillObserver.Report survivorSkills;
         public CommerceReport commerce;
@@ -490,6 +504,27 @@ public sealed partial class PortSession : MonoBehaviour
                 Save();
                 yield break;
             }
+            if (r.diagnosticCaptainSupplyBeacon)
+            {
+                try
+                {
+                    var selectorRefusal = CaptainSupplyBeaconSequence.SelectorRefusal(
+                        true, r.selectedSurvivor, r.developerSkillVariantOverride != null,
+                        r.diagnosticSkillIsolationSlot, r.diagnosticToolbotOffhand,
+                        r.sirenSourceEntryDiagnosticAttempt);
+                    if (!config.integratedWorld || !r.diagnosticSkillCoverage || selectorRefusal != null)
+                        throw new ArgumentException("Captain supply-beacon sequence requires one integrated Captain case with the native default loadout and no other skill-input selector");
+                    r.developerSkillIsolationAssisted = true;
+                }
+                catch (Exception error)
+                {
+                    r.phase = "captain-supply-beacon-refused";
+                    r.firstFailure = "Captain supply-beacon diagnostic refused: " + error.Message;
+                    r.firstFailurePhase = r.phase;
+                    Save();
+                    yield break;
+                }
+            }
             if (r.diagnosticToolbotOffhand)
             {
                 try
@@ -516,6 +551,27 @@ public sealed partial class PortSession : MonoBehaviour
                 {
                     r.phase = "toolbot-offhand-diagnostic-refused";
                     r.firstFailure = "Toolbot offhand diagnostic refused: " + error.Message;
+                    r.firstFailurePhase = r.phase;
+                    Save();
+                    yield break;
+                }
+            }
+            if (r.sirenSourceEntryDiagnosticAttempt)
+            {
+                try
+                {
+                    if (!config.integratedWorld || !config.teleporterLoop || !r.freePlay ||
+                        (r.id != "body-state-spawn-state-auto-nova-spine" &&
+                         r.id != "body-state-spawn-state-auto-nova-spine-bringup") || r.diagnosticSirenEggInput ||
+                        r.diagnosticSkillCoverage || r.diagnosticCaptainSupplyBeacon || r.diagnosticToolbotOffhand ||
+                        !string.IsNullOrEmpty(r.diagnosticSkillIsolationSlot) || r.developerSkillVariantOverride != null ||
+                        r.nativeFirstStageLifecycleDiagnosticAttempt)
+                        throw new ArgumentException("Siren source-entry mode requires the integrated native route and keeps Siren egg input OFF");
+                }
+                catch (Exception error)
+                {
+                    r.phase = "siren-source-entry-diagnostic-refused";
+                    r.firstFailure = "Siren source-entry diagnostic refused: " + error.Message;
                     r.firstFailurePhase = r.phase;
                     Save();
                     yield break;

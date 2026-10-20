@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -79,6 +80,16 @@ public sealed partial class SirenEncounterSession
             throw new InvalidOperationException("Original Listening reports registered eggs but its native egg list is null");
         observedNativeEggList = registered;
         nativeEggRegistrationObserved = true;
+        if (expectedSourceEggs != null)
+        {
+            var identities = registered.Select(gameObject => gameObject ? gameObject.GetComponent<NetworkIdentity>() : null).ToArray();
+            Report.nativeRegisteredEggNetworkIds = identities.Where(identity => identity).Select(identity => identity.netId.Value).ToArray();
+            Report.nativeEggRegistrationMatchesSourceEntry = identities.Length == expectedSourceEggs.Length &&
+                identities.All(identity => identity && identity.isServer && identity.netId.Value != 0 &&
+                    ReferenceEquals(NetworkServer.FindLocalObject(identity.netId), identity.gameObject)) &&
+                identities.Select(identity => identity.gameObject).Distinct().Count() == expectedSourceEggs.Length &&
+                expectedSourceEggs.All(expected => expected && identities.Any(actual => ReferenceEquals(actual, expected)));
+        }
     }
 
     bool IsCurrentNativeRegisteredEgg(GameObject candidate)

@@ -200,6 +200,40 @@ public static class SirenEncounterHost
             () => successfulOrder += "spawn;", () => successfulOrder += "rollback;");
         Require(successfulOrder == "activate;spawn;", "Successful attach must activate then spawn without rollback");
 
+        var sourceSpawners = new[] { "nest-1", "nest-2", "nest-3" };
+        var selectedSpawners = new[] { "nest-1", "nest-3" };
+        var eggRoots = new[] { "egg-a", "egg-b" };
+        var eggIds = new uint[] { 101, 102 };
+        var observed = new[] { true, true };
+        Require(SirenSourceEntryContract.IsExactBijection(sourceSpawners, selectedSpawners, eggRoots, eggIds, observed, 2),
+            "Exact selected source-spawner/egg bijection rejected a complete unique mapping");
+        Require(!SirenSourceEntryContract.IsExactBijection(sourceSpawners, selectedSpawners, eggRoots,
+                new uint[] { 101, 101 }, observed, 2),
+            "Duplicate network IDs must fail the source-spawner/egg bijection");
+        Require(!SirenSourceEntryContract.IsExactBijection(sourceSpawners, selectedSpawners, eggRoots,
+                new uint[] { 0, 102 }, observed, 2),
+            "Empty network IDs must fail the source-spawner/egg bijection");
+        Require(!SirenSourceEntryContract.IsExactBijection(sourceSpawners, selectedSpawners, eggRoots,
+                eggIds, new[] { true, false }, 2),
+            "A source spawner without its natural disable witness must fail the bijection");
+        Require(!SirenSourceEntryContract.IsExactBijection(sourceSpawners, selectedSpawners, eggRoots,
+                eggIds, observed, 3),
+            "Unexpected selected source-spawner count must fail the bijection");
+        Require(SirenSourceEntryContract.MayRestoreToggleTarget(false, false, true, false, false) &&
+                    SirenSourceEntryContract.MayRestoreToggleTarget(false, true, true, true, true) &&
+                    !SirenSourceEntryContract.MayRestoreToggleTarget(false, true, true, false, true) &&
+                    !SirenSourceEntryContract.MayRestoreToggleTarget(false, true, false, true, true) &&
+                    !SirenSourceEntryContract.MayRestoreToggleTarget(false, true, true, true, false),
+            "Source toggle cleanup must restore only the original state or the exact attempted native choice");
+        Require(SirenSourceEntryContract.MayAdmitEncounter(true, true, true, true, true),
+            "Exact egg mapping, drained queues, inactive ID 10 and egg input OFF should admit the original encounter");
+        Require(!SirenSourceEntryContract.MayAdmitEncounter(false, true, true, true, true) &&
+                    !SirenSourceEntryContract.MayAdmitEncounter(true, false, true, true, true) &&
+                    !SirenSourceEntryContract.MayAdmitEncounter(true, true, false, true, true) &&
+                    !SirenSourceEntryContract.MayAdmitEncounter(true, true, true, false, true) &&
+                    !SirenSourceEntryContract.MayAdmitEncounter(true, true, true, true, false),
+            "Encounter admission must refuse any missing egg bijection, pending queue, active ID 10, or selected egg input");
+
         return new
         {
             success = true,
@@ -214,6 +248,7 @@ public static class SirenEncounterHost
             failedAttachRollbackAndErrorPreservation = true,
             activationFailureSkipsSpawnAndPreservesErrorEvenIfRollbackFails = true,
             successfulActivationThenSpawnWithoutRollback = true,
+            sourceEntryBijectionAndAdmissionRefusalsPassed = true,
             nativeSpawnAndUnspawn = "device-only; requires live local server"
         };
     }

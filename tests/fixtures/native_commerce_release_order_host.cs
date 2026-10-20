@@ -6,12 +6,13 @@ public sealed class Report
 {
     public bool nativeFirstStageLifecycleDiagnosticAttempt = true;
     public bool sourceStageLifecycleRecoveryRequired;
+    public long sourceStageLifecycleRecoveryGeneration;
     public bool cleanup = true;
     public bool success = true;
     public string error = "";
 }
 
-public sealed class Coordinator
+public sealed partial class Coordinator
 {
     public readonly Report r = new Report();
     public readonly List<string> calls = new List<string>();

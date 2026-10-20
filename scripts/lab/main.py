@@ -72,6 +72,11 @@ p.add_argument(
     help="Current: bounded assisted isolated slot diagnostic for one base survivor via survivor-kit-check",
 )
 p.add_argument(
+    "--captain-supply-beacon",
+    action="store_true",
+    help="Current: bounded assisted native Captain PrepSupplyDrop/placement/deployable sequence; requires exactly --target Captain and default loadout",
+)
+p.add_argument(
     "--toolbot-offhand",
     action="store_true",
     help="Current: bounded assisted MUL-T Buzzsaw offhand sequence; requires --target Toolbot and exact --skill-variants",
@@ -126,8 +131,8 @@ if a.expected_apk_sha256 is not None and (
         "--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check, "
         "session-abandon-check, session-memory-check or session-memory-root-check"
     )
-if (a.skill_slot or a.toolbot_offhand) and (a.command != "prototype" or a.action != "survivor-kit-check"):
-    p.error("--skill-slot and --toolbot-offhand require prototype --action survivor-kit-check")
+if (a.skill_slot or a.toolbot_offhand or a.captain_supply_beacon) and (a.command != "prototype" or a.action != "survivor-kit-check"):
+    p.error("--skill-slot, --toolbot-offhand and --captain-supply-beacon require prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):
     p.error("--debug-options requires movement-batch-run or movement-batch-retry")
 if bool(a.compare) != (a.command == "prototype" and a.action == "project-manifest-compare"):

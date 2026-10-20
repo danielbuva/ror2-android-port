@@ -765,7 +765,7 @@ public sealed partial class PortSession
             {
                 if (!completed)
                 {
-                    coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                    coordinator.MarkSourceStageLifecycleRecovery(true);
                     coordinator.r.cleanup = false;
                     coordinator.r.success = false;
                     coordinator.r.error += " Native SceneDirector transaction retained for recovery.";
@@ -848,7 +848,7 @@ public sealed partial class PortSession
             if (nativePopulationObservation != null && !nativePopulationCompleted &&
                 !(!nativePopulationStarted && nativePopulationSafeAborted))
             {
-                coordinator.r.sourceStageLifecycleRecoveryRequired = true;
+                coordinator.MarkSourceStageLifecycleRecovery(true);
                 coordinator.r.cleanup = false;
                 coordinator.r.success = false;
                 coordinator.r.error += " Native SceneDirector population did not complete; retaining source owners and dependencies.";
