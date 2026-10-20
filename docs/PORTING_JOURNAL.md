@@ -16986,3 +16986,70 @@ the catalog editor fixture also changes. No runtime file, GUID, work input or
 build-time authored-source text replacement is added. Build the committed
 candidate, pass both defaults, repeat stock MUL-T, then qualify a bounded Siren
 trial with the new native-target witness.
+
+
+## J808 — Restore the source-enabled Huntress tracker on integrated body spawn
+
+Date: 2026-10-20. Hypothesis: the generic automatic-spawn callback isolation
+removes a required native Huntress component. Reading its cached target while
+it is disabled cannot establish that native targeting ran. This is a source
+checkpoint; the installed J805 player and its default qualification remain
+separate.
+
+Current source and the J803 selected automatic-spine path confirm that
+AutomaticSpawnBoundary disables every root MonoBehaviour and never restores
+HuntressTracker. The exact accepted Huntress body serializes that tracker
+enabled with its indicator prefab, 60-unit/30-degree limits and 10 Hz updates.
+The original CharacterBody Awake already caches the required input/team
+references. Original tracker Awake, OnEnable, Start and FixedUpdate own its
+indicator registration and target updates. This finding applies to the
+inspected automatic-spawn path, not every native player-spawn route. J803's
+blocked aim and absent encounter do not alone prove tracker causality.
+
+The existing iterator now captures enabled trackers only on the owned body
+root before callback isolation. Integrated-world setup checks root identity,
+serialized indicator prefab, input/team references and finite positive update
+frequency, then restores those captured components before body activation.
+The original Unity lifecycle runs normally; no Start call, target assignment,
+health change, skill rewrite or foreign/nested enable is introduced. Disabled
+source components and nonintegrated probes retain their existing behavior.
+Body/session destruction remains the teardown owner. The Siren scalar witness
+now separately observes component enabled/active state and classifies missing,
+disabled and inactive trackers before permitting GetTrackingTarget. An active
+null cache remains only an observation: native 10 Hz timing is not refreshed
+or inferred. Native indicator visual updates depend on a separate original
+application-update event that this patch does not restore or qualify.
+
+Independent review clears the source lifecycle and confirms that J803's
+selected harness reaches this boundary. Root adapts four synthetic production
+contracts to public source and ignored scratch. Changed C# ranges retain byte
+backups and whitespace-equivalence checks. The full sourced host suite passes
+1,152 tests without skips in 38.534 s; all 477 frozen host inputs remain
+unchanged. Log SHA-256:
+`b321b4731fec7929c6ee231f8a8b4593b75a4f590958fb4106779536ce3f11fd`.
+The combined runtime compiles with 107 sources, four support sources and 264
+saved references, zero errors and no drift. Assembly SHA-256:
+`4b3bf0e4c1d37210757bfe3028e9e08290378d9cb2324aeae9b90885fecf48a9`.
+An initial host wrapper misread the saved input-record container and stopped
+before compilation; the corrected wrapper uses its explicit hashes mapping.
+No editor, APK or native targeting result follows from these host checks.
+
+Evidence: work/coordination/{huntress-tracker-activation-triage/r1/,
+huntress-tracker-activation-review/r1/,codex-huntress-tracker-root-r1/}.
+Candidate manifest SHA-256:
+`cf5d934bb0ec984f212dcbacf9dd9df7b3f4be3de7b712ef6740271a2e560c18`;
+independent review:
+`723eef72a090ccbedccd015322f8cad5bc99d00f56bc8708d19f854e23404258`.
+Prior art: community-prior-art's L5.5 character/state-machine seam and pinned
+Starstorm2 SS2VanillaSurvivor AddEntityStateMachine preserve named native
+component/network/death relationships. That corroborates retaining native
+lifecycle dependencies rather than replacing targeting. The exact accepted
+prefab and HuntressTracker/Indicator implementations control this narrower
+Android scheduling fix; no protected implementation is copied.
+
+R8 replay must restage AutomaticSpawnBoundary and SirenEggDiagnosticInput;
+there is no new runtime file, GUID, work input or build-time authored-source
+text replacement. Next build combines J807 and this change. Pass both defaults
+and repeat stock MUL-T before a fresh bounded Huntress/Siren qualification.
+Full skill semantics, native Siren execution, visual indicators and composed
+audio remain open.

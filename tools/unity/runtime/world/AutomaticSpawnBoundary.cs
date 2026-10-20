@@ -163,6 +163,29 @@ public sealed partial class PortSession
         return restored;
     }
 
+    // Retain only the already-enabled source tracker attached to this owned body root.
+    // Child trackers and prefab-disabled trackers stay untouched.
+    internal static HuntressTracker[] CaptureEnabledRootHuntressTrackers(CharacterBody body)
+    {
+        if (!body)
+            return Array.Empty<HuntressTracker>();
+        return body.GetComponents<HuntressTracker>().Where(tracker => tracker && tracker.enabled).ToArray();
+    }
+
+    internal static int RestoreCapturedEnabledRootHuntressTrackers(HuntressTracker[] captured, bool integratedWorld)
+    {
+        if (!integratedWorld || captured == null)
+            return 0;
+        int restored = 0;
+        foreach (var tracker in captured)
+            if (tracker && !tracker.enabled)
+            {
+                tracker.enabled = true;
+                restored++;
+            }
+        return restored;
+    }
+
     IEnumerator AutomaticSpawnBoundary(CharacterBody body, SessionConfig cfg)
     {
         if (!ownsStateCatalog)
@@ -179,6 +202,7 @@ public sealed partial class PortSession
         var rootEntityStateMachines = body.GetComponents<EntityStateMachine>();
         var sourceEnabledRootStateMachines = rootEntityStateMachines.Where(stateMachine => stateMachine && stateMachine.enabled).ToArray();
         var sourceEnabledRootTeamComponents = CaptureEnabledRootTeamComponents(body);
+        var sourceEnabledRootHuntressTrackers = cfg.integratedWorld ? CaptureEnabledRootHuntressTrackers(body) : null;
         EntityStateMachine[] playableSkillMachines = null;
         if (IsPlayableSpine())
         {
@@ -267,6 +291,14 @@ public sealed partial class PortSession
                     skill.stateMachine.enabled = true;
                 }
             }
+            Check(sourceEnabledRootHuntressTrackers == null ||
+                      sourceEnabledRootHuntressTrackers.All(
+                          tracker => tracker && tracker.gameObject == body.gameObject && tracker.trackingPrefab && body.inputBank &&
+                                     body.teamComponent && tracker.trackerUpdateFrequency > 0f &&
+                                     !float.IsNaN(tracker.trackerUpdateFrequency) && !float.IsInfinity(tracker.trackerUpdateFrequency)),
+                  "Original source-enabled root Huntress tracker dependencies");
+            int restoredSourceEnabledRootHuntressTrackers =
+                RestoreCapturedEnabledRootHuntressTrackers(sourceEnabledRootHuntressTrackers, cfg.integratedWorld);
             int restoredSourceEnabledStateMachines =
                 RestoreCapturedEnabledRootStateMachines(sourceEnabledRootStateMachines, cfg.integratedWorld);
             sourceEnabledRootStateMachines = null;
@@ -277,7 +309,8 @@ public sealed partial class PortSession
             if (!cfg.combatSpine)
                 Check(r.automaticCallbacks.Length == (movingMotor ? 2 : 1) + (automaticBody ? 1 : 0) + (automaticDirection ? 1 : 0) +
                                                          (automaticModel ? 1 : 0) + AutomaticSkillCount() + (IsPlayableSpine() ? 2 : 0) +
-                                                         restoredSourceEnabledStateMachines + restoredSourceEnabledRootTeamComponents,
+                                                         restoredSourceEnabledStateMachines + restoredSourceEnabledRootTeamComponents +
+                                                         restoredSourceEnabledRootHuntressTrackers,
                       "Unexpected enabled root callback");
             Physics.gravity = Vector3.zero;
             solver.SetGroundSolvingActivation(false);

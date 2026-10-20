@@ -119,7 +119,8 @@ public sealed class SirenEggInputReport
     // Read-only witness of the native HuntressTracker target at the same input
     // owner's sample. These counters intentionally distinguish an absent
     // tracker, an empty/fake-null target and a known target identity.
-    public int nativeTrackerWitnessSamples, nativeTrackerUnavailableSamples, nativeTargetNullSamples;
+    public int nativeTrackerWitnessSamples, nativeTrackerUnavailableSamples, nativeTrackerDisabledSamples;
+    public int nativeTrackerInactiveSamples, nativeTargetNullSamples;
     public int nativeTargetDestroyedSamples, nativeTargetHealthUnavailableSamples;
     public int nativeTargetIdentityUnavailableSamples, nativeTargetZeroNetworkIdSamples;
     public int nativeTargetIdentifiedSamples, nativeTargetMatchesSelectedSamples, nativeTargetDiffersSelectedSamples;
@@ -127,7 +128,8 @@ public sealed class SirenEggInputReport
     public int primaryRequestedNativeMismatchSamples, primaryRequestedNativeUnknownSamples;
     public uint firstSelectedEggNetworkId, lastSelectedEggNetworkId;
     public uint firstNativeHuntressTargetNetworkId, lastNativeHuntressTargetNetworkId;
-    public bool nativeTrackerConfigurationObserved, lastNativeTrackerAvailable, lastNativeTargetAvailable;
+    public bool nativeTrackerConfigurationObserved, lastNativeTrackerAvailable, lastNativeTrackerEnabled;
+    public bool lastNativeTrackerActiveAndEnabled, lastNativeTrackerActivationObserved, lastNativeTargetAvailable;
     public bool lastNativeTargetIdentityAvailable, lastNativeTargetMatchesSelected, lastNativeTargetHealthAlive;
     public bool lastNativePlayerTeamObserved, lastNativeTargetTeamObserved;
     public int lastNativePlayerTeamIndex, lastNativeTargetTeamIndex;
@@ -142,6 +144,8 @@ public sealed class SirenEggInputReport
 public enum SirenNativeTargetObservation
 {
     TrackerUnavailable,
+    TrackerDisabled,
+    TrackerInactive,
     NoTarget,
     DestroyedTarget,
     HealthUnavailable,
@@ -154,12 +158,21 @@ public static class SirenNativeTargetWitnessPolicy
 {
     static int Increment(int value) => value < int.MaxValue ? value + 1 : value;
 
+    public static bool IsTrackerReadEligible(bool componentPresent, bool enabled, bool activeAndEnabled)
+    {
+        return componentPresent && enabled && activeAndEnabled;
+    }
+
     static string Name(SirenNativeTargetObservation observation)
     {
         switch (observation)
         {
         case SirenNativeTargetObservation.TrackerUnavailable:
             return "tracker-unavailable";
+        case SirenNativeTargetObservation.TrackerDisabled:
+            return "tracker-disabled";
+        case SirenNativeTargetObservation.TrackerInactive:
+            return "tracker-inactive";
         case SirenNativeTargetObservation.NoTarget:
             return "no-target";
         case SirenNativeTargetObservation.DestroyedTarget:
@@ -203,6 +216,12 @@ public static class SirenNativeTargetWitnessPolicy
         {
         case SirenNativeTargetObservation.TrackerUnavailable:
             report.nativeTrackerUnavailableSamples = Increment(report.nativeTrackerUnavailableSamples);
+            break;
+        case SirenNativeTargetObservation.TrackerDisabled:
+            report.nativeTrackerDisabledSamples = Increment(report.nativeTrackerDisabledSamples);
+            break;
+        case SirenNativeTargetObservation.TrackerInactive:
+            report.nativeTrackerInactiveSamples = Increment(report.nativeTrackerInactiveSamples);
             break;
         case SirenNativeTargetObservation.NoTarget:
             report.nativeTargetNullSamples = Increment(report.nativeTargetNullSamples);
@@ -560,6 +579,9 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         SirenNativeTargetObservation observation;
         uint nativeTargetNetworkId = 0;
         report.lastNativeTrackerAvailable = false;
+        report.lastNativeTrackerEnabled = false;
+        report.lastNativeTrackerActiveAndEnabled = false;
+        report.lastNativeTrackerActivationObserved = false;
         report.lastNativeTargetAvailable = false;
         report.lastNativeTargetIdentityAvailable = false;
         report.lastNativeTargetMatchesSelected = false;
@@ -580,67 +602,78 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         else
         {
             report.lastNativeTrackerAvailable = true;
-            report.nativeTrackerConfigurationObserved = true;
-            report.nativeTrackerMaxTrackingDistance = tracker.maxTrackingDistance;
-            report.nativeTrackerMaxTrackingAngle = tracker.maxTrackingAngle;
-            report.nativeTrackerUpdateFrequency = tracker.trackerUpdateFrequency;
-            if (player.teamComponent)
+            report.lastNativeTrackerEnabled = tracker.enabled;
+            report.lastNativeTrackerActiveAndEnabled = tracker.isActiveAndEnabled;
+            report.lastNativeTrackerActivationObserved = true;
+            if (!SirenNativeTargetWitnessPolicy.IsTrackerReadEligible(true, tracker.enabled, tracker.isActiveAndEnabled))
             {
-                report.lastNativePlayerTeamIndex = (int)player.teamComponent.teamIndex;
-                report.lastNativePlayerTeamObserved = true;
-            }
-
-            HurtBox nativeTarget = tracker.GetTrackingTarget();
-            if (ReferenceEquals(nativeTarget, null))
-            {
-                observation = SirenNativeTargetObservation.NoTarget;
-            }
-            else if (!nativeTarget)
-            {
-                observation = SirenNativeTargetObservation.DestroyedTarget;
+                observation =
+                    !tracker.enabled ? SirenNativeTargetObservation.TrackerDisabled : SirenNativeTargetObservation.TrackerInactive;
             }
             else
             {
-                report.lastNativeTargetTeamIndex = (int)nativeTarget.teamIndex;
-                report.lastNativeTargetTeamObserved = true;
-                HealthComponent targetHealth = nativeTarget.healthComponent;
-                if (!targetHealth)
+                report.nativeTrackerConfigurationObserved = true;
+                report.nativeTrackerMaxTrackingDistance = tracker.maxTrackingDistance;
+                report.nativeTrackerMaxTrackingAngle = tracker.maxTrackingAngle;
+                report.nativeTrackerUpdateFrequency = tracker.trackerUpdateFrequency;
+                if (player.teamComponent)
                 {
-                    observation = SirenNativeTargetObservation.HealthUnavailable;
+                    report.lastNativePlayerTeamIndex = (int)player.teamComponent.teamIndex;
+                    report.lastNativePlayerTeamObserved = true;
+                }
+
+                HurtBox nativeTarget = tracker.GetTrackingTarget();
+                if (ReferenceEquals(nativeTarget, null))
+                {
+                    observation = SirenNativeTargetObservation.NoTarget;
+                }
+                else if (!nativeTarget)
+                {
+                    observation = SirenNativeTargetObservation.DestroyedTarget;
                 }
                 else
                 {
-                    report.lastNativeTargetHealthAlive = targetHealth.alive;
-                    UnityEngine.Networking.NetworkIdentity targetIdentity =
-                        targetHealth.gameObject.GetComponent<UnityEngine.Networking.NetworkIdentity>();
-                    if (!targetIdentity)
+                    report.lastNativeTargetTeamIndex = (int)nativeTarget.teamIndex;
+                    report.lastNativeTargetTeamObserved = true;
+                    HealthComponent targetHealth = nativeTarget.healthComponent;
+                    if (!targetHealth)
                     {
-                        observation = SirenNativeTargetObservation.IdentityUnavailable;
-                    }
-                    else if (targetIdentity.netId.Value == 0)
-                    {
-                        observation = SirenNativeTargetObservation.ZeroNetworkId;
+                        observation = SirenNativeTargetObservation.HealthUnavailable;
                     }
                     else
                     {
-                        observation = SirenNativeTargetObservation.IdentifiedTarget;
-                        nativeTargetNetworkId = targetIdentity.netId.Value;
-                        Vector3 toTarget = nativeTarget.transform.position - player.inputBank.aimOrigin;
-                        float distanceSqr = toTarget.sqrMagnitude;
-                        Vector3 aimDirection = player.inputBank.aimDirection;
-                        if (distanceSqr > 0f && !float.IsNaN(distanceSqr) && !float.IsInfinity(distanceSqr))
+                        report.lastNativeTargetHealthAlive = targetHealth.alive;
+                        UnityEngine.Networking.NetworkIdentity targetIdentity =
+                            targetHealth.gameObject.GetComponent<UnityEngine.Networking.NetworkIdentity>();
+                        if (!targetIdentity)
                         {
-                            report.lastNativeTargetCurrentDistance = Mathf.Sqrt(distanceSqr);
-                            report.lastNativeTargetCurrentDistanceObserved = true;
-                            float aimSqr = aimDirection.sqrMagnitude;
-                            if (!float.IsNaN(aimSqr) && !float.IsInfinity(aimSqr))
+                            observation = SirenNativeTargetObservation.IdentityUnavailable;
+                        }
+                        else if (targetIdentity.netId.Value == 0)
+                        {
+                            observation = SirenNativeTargetObservation.ZeroNetworkId;
+                        }
+                        else
+                        {
+                            observation = SirenNativeTargetObservation.IdentifiedTarget;
+                            nativeTargetNetworkId = targetIdentity.netId.Value;
+                            Vector3 toTarget = nativeTarget.transform.position - player.inputBank.aimOrigin;
+                            float distanceSqr = toTarget.sqrMagnitude;
+                            Vector3 aimDirection = player.inputBank.aimDirection;
+                            if (distanceSqr > 0f && !float.IsNaN(distanceSqr) && !float.IsInfinity(distanceSqr))
                             {
-                                float aimDot = Vector3.Dot(aimDirection, toTarget / Mathf.Sqrt(distanceSqr));
-                                if (!float.IsNaN(aimDot) && !float.IsInfinity(aimDot))
+                                report.lastNativeTargetCurrentDistance = Mathf.Sqrt(distanceSqr);
+                                report.lastNativeTargetCurrentDistanceObserved = true;
+                                float aimSqr = aimDirection.sqrMagnitude;
+                                if (!float.IsNaN(aimSqr) && !float.IsInfinity(aimSqr))
                                 {
-                                    report.lastNativeTargetCurrentAimDot = aimDot;
-                                    report.lastNativeTargetCurrentAimDotObserved = true;
-                                    report.lastNativeTargetCurrentGeometryObserved = true;
+                                    float aimDot = Vector3.Dot(aimDirection, toTarget / Mathf.Sqrt(distanceSqr));
+                                    if (!float.IsNaN(aimDot) && !float.IsInfinity(aimDot))
+                                    {
+                                        report.lastNativeTargetCurrentAimDot = aimDot;
+                                        report.lastNativeTargetCurrentAimDotObserved = true;
+                                        report.lastNativeTargetCurrentGeometryObserved = true;
+                                    }
                                 }
                             }
                         }

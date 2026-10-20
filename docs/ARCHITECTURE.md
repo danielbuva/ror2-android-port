@@ -738,6 +738,17 @@ activation/yield; existing body/session teardown owns the components.
 `test_automatic_spawn_state_machine_restore.py` executes the production restore
 helper with fake-null, identity, source-disabled and nonintegrated cases.
 
+The same automatic-spawn iterator captures source-enabled root Huntress trackers
+before isolation and restores them only for integrated-world bodies, after
+checking the owned root, serialized indicator prefab, input/team references and
+finite positive update frequency. Unity retains ownership of the original
+Awake/OnEnable/Start/FixedUpdate lifecycle; body/session teardown retires the
+component. Disabled source components and other probe modes retain their prior
+scheduling. `test_huntress_tracker_activation.py` executes the authored capture,
+restore and target-read eligibility contracts. Native targeting still needs
+device evidence; the original indicator's separate application-update callback
+is not driven by this restoration. See J808.
+
 The same boundary captures canonical skill-machine identities before yielding.
 Cleanup merges entry and current canonical bindings, admits only machines on
 the owned live body root, and keeps native remapping such as MUL-T's Weapon2.
@@ -1129,9 +1140,10 @@ and request primary against the nearest currently visible original registered eg
 When all revalidated candidates are occluded, the nearest remains the navigation
 target with primary released. Candidate caches above 12 refuse before physics
 queries. A fixed scalar witness samples the real Huntress tracker target and
-separates absent, destroyed, unidentified and known targets, selected/native ID
-matches and requested primary. It records live tracker settings and current
-geometry without refreshing native tracking or claiming its last LOS/range/cone
+separates missing, disabled and inactive trackers before reading an active
+tracker; target states distinguish destroyed, unidentified and known targets,
+selected/native ID matches and requested primary. It records live tracker
+settings and current geometry without refreshing native tracking or claiming its last LOS/range/cone
 decision. The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage
