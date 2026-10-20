@@ -74,14 +74,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `aabf41ab5ece8a34d9ac4b70946dad5d8b827baa40e4dd927afd98e6ff15deee`, J758 code-only build from committed source ba5aff74; adds the explicit MUL-T offhand diagnostic to J752's runtime, with all 266 payload hashes unchanged |
-| Check | passed: 35.188507 s on Lakes and one genuine exit to Goolake with 10.229004 s next-stage play; no report or current-process error, appliedRuns stays 13 (J758). The separate MUL-T diagnostic refuses before activation; these default checks do not qualify it. |
+| APK | `96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1`, J762 code-only build from committed source 51338035; adds explicit Thor diagnostic input and MUL-T refusal details; all 266 payload hashes unchanged |
+| Check | both modes pass on the adopted Nova and Thor, with no report/current-process error or applied-run change (J762). Nova: 35.225143 s and one exit plus 10.114502 s on Goolake. Thor: 35.089584 s and one exit plus 11.254150 s. Physical Thor input and MUL-T offhand activation remain unaccepted. |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J752 `aa732f88…`, J749 `771fc752…`, J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
-| Placement | adopted storage, updated in place |
+| Rollbacks | J758 `aabf41ab…`, J752 `aa732f88…`, J749 `771fc752…`, J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Placement | adopted Nova and internal Thor, updated in place |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J758), with the native diagnostic flag off. The separate
+baseline passed it (J762), with the native diagnostic flag off. The separate
 native source path previously reaches genuine Stage-begin and passes J697's
 source-table restoration, then refuses at the effect-reference attribution guard
 (J702/J710). J726 identifies a premature baseline-support release and moves reconciliation

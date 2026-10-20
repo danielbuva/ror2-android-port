@@ -124,8 +124,9 @@ their storage/display contracts remain unvalidated until explicitly allowlisted.
 J755 records the authorized three-device configuration: baseline Nova uses adopted
 storage only, second Nova and Thor use internal storage with live reserve gates.
 The second Nova passes both standard game checks after the current attempt-bound
-measured Nova mapping is supplied. Thor's two physical panels both verify OFF;
-its full-game input remains unavailable pending a supported path. Root assigns
+measured Nova mapping is supplied. J762 qualifies Thor's explicit automatic
+diagnostic path through both standard checks; physical input remains unavailable.
+Its two physical panels both verify OFF. Root assigns
 baseline regressions/native lifecycle to the adopted Nova, gameplay breadth to
 the internal Nova, and isolated audio/compatibility to Thor. Different selected
 device runs may overlap; each device has one runner, and the shared Unity build
@@ -145,7 +146,10 @@ menus, hide physical takeover and guard physical restart/settings consumers.
 Their existing iterator cleanup and bridge disable neutralize input and
 release session ownership. `test_portable_diagnostic_input.py` executes the
 production policy/predicates and checks consumer guards; device acceptance is
-separate. This changes existing R8 sources without adding a runtime file/GUID.
+separate (J762). Availability flags are authoritative: Unity's JSON serializer
+can emit default inline mapping/raw placeholders for null runtime references;
+those wire values are not measured input. This changes existing R8 sources
+without adding a runtime file/GUID.
 
 CPU capture (`scripts/lab/performance_capture.py`, current host implementation):
 `./dev perf --action cpu --target LABEL` takes a 15 s system simpleperf call graph

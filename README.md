@@ -58,8 +58,9 @@ has passed migration, an in-place install and both baseline modes (J595).
 
 J755 records three explicitly selected devices with separate receipts: the baseline
 Nova uses adopted storage only; the second Nova and Thor use internal storage after
-live reserve checks. Both standard checks pass on the second Nova. Thor's two OLED
-panels both sleep; its full-game checks still require a supported input path.
+live reserve checks. Both standard checks pass on the second Nova. Thor passes
+both checks through explicit automatic diagnostics (J762); physical input remains
+unmeasured. Both Thor OLED panels sleep during cleanup.
 Independent device runs have overlapped, while Unity builds remain serialized.
 
 `./dev inspect --full` creates a reviewed input identity. New or updated inputs must be

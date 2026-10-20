@@ -14182,3 +14182,56 @@ codex-internal-nova-stage-perf-root-closure.json and
 internal-nova-stage-perf-analysis/. No runtime, payload or R8 build-input
 change. Next resolve the exact managed enumeration caller and preserve native
 observation/cleanup semantics before a measured optimization candidate.
+
+## J762 — Accept explicit Thor game diagnostics and unchanged Nova controls
+
+Build committed 51338035bfdf08a0a46d42f3f5e2fa9e69fdecaa after host
+preflight, serializing Unity through the mandatory lock. Exact 2021.3.45f2
+IL2CPP ARM64 Vulkan build succeeds in 213.498953 seconds with zero errors;
+all 247 frozen source/toolchain/recipe inputs stay committed-byte equal. All
+266 actual payload hashes and the build receipt match J758. APK:
+96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1.
+Frozen APK, receipt, source snapshot and payload comparison:
+work/experiments/portable-diagnostic-input/candidate-20261020T045512.042081Z/.
+The configured default-device doctor also reports LAB READY.
+
+Canonical selected-device installs retain adopted-only placement on the
+baseline Nova and internal placement on Thor, with fresh reserves and exact
+per-device receipts. Synchronize the unchanged payload. Run both standard
+checks on each, overlapping selected-device work. Nova passes 35.225143 live
+seconds, then one genuine exit to Goolake with 10.114502 seconds of next-stage
+play (153.184555 world seconds); appliedRuns stays 13. Thor passes 35.089584
+seconds, then one exit to Goolake with 11.254150 seconds there (150.531509 world
+seconds); appliedRuns stays 0. Root verifies all four exact APK results, empty
+report/current-process errors and native lifecycle diagnostics off.
+
+Nova reports measured-nova input, physicalInputAvailable=true,
+mappingAvailable=true, the existing current-attempt mapping and original
+observation identity. Thor reports automatic-diagnostic input,
+physicalInputAvailable=false, mappingAvailable=false and diagnosticInput=true.
+The source route creates no measured Thor mapping and performs no raw joystick
+read. Unity JsonUtility materializes null inline mapping/raw references as
+default wire objects; availability flags/source are authoritative, and their
+zero/empty values are not measured Thor axes/buttons. Touch menus/automatic
+producers work for these bounded checks; ordinary physical Thor play remains
+unaccepted. Cleanup stops owned packages and sleeps the Nova panel and both
+Thor panels. This APK is the new default baseline; J758 remains executable.
+
+The parallel Nova MUL-T retry on this frozen APK reaches the detailed initial
+refusal: all three selected-family predicates are false, all three live
+SkillDef-name predicates true, family catalog indices/selected/runtime tuples
+match, and each family name is empty. It corroborates J760's hidden-getter
+source diagnosis before any special/secondary pulse. No native offhand stance
+or Buzzsaw activation is accepted. J760's base-object read correction was
+committed after this APK froze and is not installed here.
+
+Evidence, Nova: work/experiments/baseline/20261020T045923.560988Z/ and
+20261020T050314.935185Z/; Thor: 20261020T045553.440086Z/ and
+20261020T045938.235226Z/. Refusal:
+work/experiments/survivor-check/20261020T045608.917402Z/Toolbot/.
+Root's four-gate validation:
+work/coordination/codex-portable-input-all-gates-root-validation.json.
+J757/J758 change existing R8 sources only; no new private game-build input.
+Generic controllers, ordinary difficulty, full ability semantics, audio and
+visual parity remain open. Next build the committed J760 correction and run
+its bounded offhand case alongside both default controls.
