@@ -61,6 +61,10 @@ private `native-on-android.py` replay adapter under the phone proof root binds
 the existing device/workspace receipt, checks capacity and stages those inputs;
 its Android driver creates new output/log directories without editor mutation.
 This is required local experimental replay support, not a game-build input.
+`native-relink-on-android.py` takes an explicit prior attempt and new stage,
+binds the old result and every compiled object hash, and invokes the tracked
+reuse checks for a separate link-only attempt. The original failed output and
+its 264 objects remain retained; no timestamp search selects a build input.
 
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads

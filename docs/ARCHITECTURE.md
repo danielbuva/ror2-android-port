@@ -68,6 +68,9 @@ Its standalone Android driver checks those hashes, builds into a new output
 directory and retains each command/log and the first failure. Clang/LLD host
 changes are explicit; desktop stripping/code generation and private Unity
 inputs remain dependencies. No game build uses this path.
+Relinks may reuse only a hash-bound complete object set with equal source/target
+inputs, compile plan and actual compiler arguments. Link repair selects the
+original NDK static C++/ABI/GCC libraries explicitly and preserves old attempts.
 
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
