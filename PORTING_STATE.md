@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-20 after **J793** (lifecycle-owner baseline passes both defaults; MUL-T stock kit exposes a primary observer failure).
+Last updated 2026-10-20 after **J794** (default baseline accepted; isolated native audio extension links, with an output-ID width correction required before runtime).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -78,8 +78,11 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   physical audibility, wider banks/effects, music, positioning and game lifecycle
   remain open; all five composed-audio gates stay closed. J770/J781 reproduce
   the managed ABI work without enabling it in the game; the remaining isolated
-  fixture producers remain required local support. J627/J640 record the limits
-  of a simple clip fallback.
+  fixture producers remain required local support. J794 links and statically
+  audits a same-library native monitor/capture extension with isolated NDK r25c;
+  its export/dependency checks pass, but review catches a narrowed SDK output ID
+  that must be corrected before loading. It has no Android/runtime acceptance.
+  J627/J640 record the limits of a simple clip fallback.
 - Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
 - Native first-stage loss/restart passes on J752's APK in J753, including genuine

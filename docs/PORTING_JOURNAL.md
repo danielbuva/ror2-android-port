@@ -16077,3 +16077,96 @@ work/experiments/baseline/20261020T112912.550837Z/,
 work/experiments/survivor-check/20261020T114021.073271Z/Toolbot/.
 Raw device/source evidence and identifiers remain ignored. No new rebuild input
 changes beyond J792's three existing owners.
+
+
+## J794 — Link and statically qualify the same-library Wwise monitor extension
+
+Date: 2026-10-20. Hypothesis: the authorized matching Integration source can
+support pre-Init monitoring and bounded native capture callbacks inside the
+same sound-engine library. This is an isolated native artifact experiment;
+J791's managed-event fixture and the game player are not changed.
+
+Inventory recovers the official Android Integration source from its supplied
+archive, retaining the exact generated wrapper. The authored diagnostic bridge
+adds ten C exports, bounded monitor/capture counters and explicit engine-Term/
+callback-manager-Term return witnesses. The serializer's existing local monitor
+fans out before its initialized-engine guard and remains installed while this
+owner is armed. Disarm requires both return witnesses. Capture sampling is
+bounded and allocation-free on the callback thread; failed unregistration
+retains ownership. No second engine, memory, streaming or Java owner is added.
+These are reviewed source contracts, not runtime observations.
+
+The first native attempt with Unity's pinned NDK r21 fails: supplied SDK
+archives require missing outlined ARM64 atomic helpers, static-runtime ordering
+leaves C++ guard symbols unresolved, and the old host archiver aborts separately.
+The supplied official 2023.1.8 SDK documentation names NDK r25. Root acquires
+Google's isolated r25c archive, verifies its published size/SHA-1, records
+SHA-256 `1856108efde22d502399216c65e2a0f7823bdfac1df69fe6a1f3b71ff7be6ced`,
+and stages revision 25.2.9519653. All 6,927 entries and 3,458,652,215 bytes match
+the read-only image; selected tools are hashed and the task mount is detached.
+Unity's r21 installation, editor preferences and scripts/env.sh stay unchanged.
+
+The native-only recipe places all 31 SDK Profile ARM64 archives in the NDK's
+ordered static-module closure. Root's r25 attempt reaches the link but refuses
+six bare system-library names accidentally left in LOCAL_LDLIBS. The one-line
+retry restores their original -l prefixes and pins the additional SDK libzip.a.
+It changes no plugin membership, C++ owner or SDK archive. The legacy toolchain
+selector is not the measured refusal and remains unchanged. Preserve both
+failed native runs and their logs; orchestration preflight refusals never
+invoked a native build.
+
+The retry links in 3.781 s with exit zero and empty stderr. All 551 frozen
+source/header inputs and 32 static archive hashes match before/after. Native
+artifact SHA-256:
+`2d3af9f1ed7b66e518a66b05f82144cd919134274b01e7bf01d1338c8f3cd8aa`;
+size: 3,998,032 bytes. The isolated source/output lives under
+work/coordination/wwise-managed-preinit-monitor-investigation/native-build-feasibility/
+draft/r7-system-link-flags/root-native-r7-r2/.
+
+Static inspection confirms ELF64/AArch64, all exact 1,280 existing CSharp exports
+and ten new diagnostic exports. The seven dynamic dependencies are exactly
+OpenSLES, android, log, dl, z, libc and libm: no shared Wwise, zip or C++ runtime
+is introduced. All 182 imported symbols resolve to the pinned Android API 21
+stubs, with zero unresolved imports or provider ambiguities. The 480 additional
+visible definitions are independently traced: 179 to supplied Wwise archives,
+300 to pinned NDK runtime archives and JNI_OnLoad to the official source.
+Root rehashes the nine contributing inputs and permits only this exact list
+for this exact artifact. This is an explicit export/dependency review, not an
+open-ended extra-export exemption or proof of interface semantics.
+
+The first audit tool hits an unused symbol-row path lookup after collecting raw
+ELF evidence. A two-line removal and complete-main regression fix it without
+changing policy. Nine host tests pass. Root reruns the corrected auditor with
+the reviewed exact export policy: PASS, 182 resolved and zero unresolved.
+Audit-report SHA-256:
+`dd6a9338e46885aab2f6f1761a4cf69c43df023de42254b0b4dd18699b99f289`;
+Root artifact receipt:
+`8a945199f2916f3ec9e4e54cd338aa3e5b727a3123bc3de7bde2d13f0ae9b125`.
+
+Managed-caller review then catches a semantic interface defect: the SDK's
+AkOutputDeviceID is 64 bits, while the diagnostic callback stores only 32 bits
+before writing its snapshot slot. Preserve this artifact as static link evidence;
+do not load it as a runtime candidate. Correct the complete storage/snapshot
+path and test high-bit round-trips first. Zero is not a valid failure predicate
+for the callback's actual main-output ID; the SDK's invalid registration
+sentinel and the callback value are distinct contracts.
+
+It has not been loaded on Android. Pre-Init and post-callback-manager-Term
+monitor continuity, SDK capture callbacks and new-library playback remain
+unverified; all five composed-audio gates remain closed. The game still has no
+audio. After the width correction, use the existing single managed owner to
+exercise those explicit runtime controls before any game integration. Original
+banks and effective sample precision retain J791's limits.
+
+Prior art: the exact authorized SDK headers and official Integration serializer,
+J791's measured post-Init boundary, and the pinned NDK build-rule/runtime source
+supply the callback, ordering and ABI contracts. No protected source, native
+library, SDK archive or bank is copied into public Git.
+
+Evidence: work/coordination/codex-ndk-r25c-acquisition-root-r1/;
+wwise-managed-preinit-monitor-investigation/native-build-feasibility/draft/
+{r3,r4-link-readiness,r5-toolchain-route,r6-ndk25-build-plan,
+r7-system-link-flags}; the latter retains independent reviews, source pins,
+root-native-r7-r2-elf-audit-root-r2/ and post-link-audit-draft/.
+All producer inputs and generated native artifacts stay ignored and are listed
+as required local diagnostic support. No current game/rebuild source changes.

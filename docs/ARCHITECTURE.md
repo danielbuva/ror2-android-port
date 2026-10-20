@@ -254,6 +254,17 @@ Their setup/input boundaries are listed in
 acceptance and limits are recorded once in J740/J742 and J791. Neither diagnostic owner
 changes the default assembly transforms or the current game build pipeline.
 
+The ignored native-build-feasibility producer recompiles the authorized Android
+bridge against its exact SDK with an isolated, process-local NDK r25c. Unity
+keeps its pinned r21 toolchain. Its authored same-library diagnostic bridge and
+serializer hook must keep the monitor armed through engine and callback-manager
+Term; explicit return witnesses gate disarm, and bounded capture counters do
+not acquire another engine owner. J794 qualifies only the static ELF's export,
+import and dependency closure. A later interface review catches an output-ID
+width mismatch and blocks loading until corrected. Android loading, native
+monitor continuity and capture callbacks remain runtime gates; this library is
+outside the game.
+
 `tools/wwise-android-abi/generate.py` is a current, explicitly invoked host
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the
 exact policy-bound accepted managed API, authorized local Wwise Android
