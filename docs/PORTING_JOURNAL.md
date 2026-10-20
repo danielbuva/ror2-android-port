@@ -17623,3 +17623,84 @@ GUID, build membership or required local input changes here. Next: freshly
 qualify the exact-source Siren guard before the bounded retry, retaining its
 180 s egg-input budget and manual-only Moon/finale boundary. Preserve J813 and
 all listed executable rollbacks. Isolated audio retains J816's separate refusal.
+
+## J818 — Qualify Thor and preserve the Siren guard across device reassignment
+
+Date: 2026-10-20. Hypothesis: J817's exact player can also preserve the default
+route on Thor, while a fresh source/editor guard can safely bound the next
+Siren retry. APK remains
+`107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb`
+from 0a89064f; J817 owns its build, symbols and Nova acceptance evidence.
+
+Thor updates the owned APK after fresh internal-reserve/placement checks and
+passes both standard modes: 35.126587 s on Lakes, then exactly one original
+exit and 10.644379 s on Goolake. Both record current-build true, no report or
+current-process classified error, unchanged owned artifact identity and zero
+applied runs. Native Siren/lifecycle flags stay off. Finally removes selectors,
+stops the app and sleeps both OLEDs. These are automatic assisted controls;
+physical input remains unmeasured. Evidence: work/experiments/baseline/
+{20261020T175950.363791Z,20261020T180332.376565Z}/ and
+work/coordination/codex-siren-eligibility-device-root-r1/.
+Root acceptance:
+`db36a69e4326bfff4760c5a705bb142e1f33c535900082208bf8e68f003e6756`;
+plain result/report:
+`f2735e425b3f076ab4629e038120d10fdeccd4835a2a1d0519f2a76ff4d40d0b` /
+`a9fe8c44fe199d1860bd2ba82363afc91609158a51fc5884188d8d30a4936e2c`;
+stage-exit result/report:
+`6846f3076b1be9a25a8572c755ab904a6416b9f26eab9fdf17eda5b0e13e9f65` /
+`09fd32cbee4dce50e86fa9ee45f74413e128a55514628040e8a37ae83e990aa2`.
+
+Root runs the exact-editor input-sink, Siren source and production scalar
+witness contracts once on the frozen 0a sources. Nine staged source hashes
+match before/after; the input-sink/manual-Moon flags and target-witness policy
+pass. Native skill execution is explicitly untested. The host pack binds
+J815's existing full suite, eleven helper checks, thirteen dispatch-adapter
+checks and the 264-reference generated-snippet compile. Root reconciles one
+stale proposal helper runner-hash pin to the final explicitly routed runner
+through an outer frozen ledger, then runs every original proposal validation;
+no historical source or receipt is rewritten. The accepted receipt qualifies
+this source/editor guard only, not native egg targeting or an encounter.
+
+Evidence: work/coordination/{siren-1077-guard-qualification/,
+codex-siren-1077-guard-root-r1/}. Final host ledger:
+`6e239556618af25af98e3106d151dbae36efd2c6520735f4021643a713016936`;
+actual editor result/manifest:
+`bae9318873a7d72b168a8c203ad8159b87f221e290fa34cdc55d4a5c65a96f41` /
+`ad5d593b64edd0e32697f27ca82e1f4564e12e0747554d6bfdff9f41ce6b0486`;
+Root proposal:
+`a551c6b95e0ce2cf79f37b810778eca2e98271992dc0b56f7ccc78eb731c414a`;
+accepted source-guard receipt:
+`cef2cdb40a040798aca455ca78173fbcbfaf727661ef9116190dc04326bf6bd8`.
+
+The main Nova retry begins through the unchanged bounded dispatch lineage.
+The user then assigns internal Nova exclusively to the separate alpha session
+and leaves Thor unassigned. Root interrupts the retry during Goolake after one
+natural transition, before Ship Graveyard or an eligibility snapshot. The last
+report has empty error/first failure and thirteen applied runs; this is an
+operator interruption, not a gameplay failure or timeout. Finally removes the
+selector, force-stops the app and sleeps the display without cleanup errors.
+No source-teardown or post-stop log claim follows. Run:
+work/experiments/siren-native-continuation/20261020T182624.474510Z/;
+last report:
+`a781a9621b28238983623ab06566f8861fd874f4dcebe11857a44f7d91e88943`;
+Root interruption classification:
+`38978c61b54ee1f19b64aaad1b879792db05e15f204f5a012a0ead9e3dc9513b`.
+
+The short-lived Thor capture attempt stops before world play because its host
+wrapper rejects the legitimate original-body-handling-presets startup phase.
+The report has no game error/first failure; no CPU capture is produced. Its
+selector/app cleanup and both display sleeps pass. Summary:
+work/coordination/performance-enumeration-next/r4/20261020T182922.900126Z/,
+SHA-256 `a5b5e4b4711f15cda7a41b42afa318dee2d40ee2d433a7c5692199fc3452390b`.
+Preserve that first host refusal and hand off the local profiling drafts;
+performance, stability/memory and playtest tooling now belong to alpha.
+
+Root continues original gameplay, audio and animations using only adopted
+Nova, with fresh adopted-only placement and explicit APK/serial selection.
+Internal Nova is hands-off and Thor needs a new agreement. The shared Unity
+mutex remains mandatory; no editor restart while another build holds it.
+Before every push, synchronize main with a fast-forward-only rebase pull;
+renumber and regenerate the index if another session takes a journal number.
+Prior art, named ownership and R8 source replay remain J815/J817. No authored
+game-runtime, GUID or build-membership change here. Retry Siren only on the
+main device within the same 180 s egg budget; Moon/finale remain manual.

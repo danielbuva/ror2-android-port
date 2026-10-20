@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J818](PORTING_JOURNAL.md#j818--qualify-thor-and-preserve-the-siren-guard-across-device-reassignment) | 2026-10-20 | Qualify Thor and preserve the Siren guard across device reassignment | Date: 2026-10-20. |
 | [J817](PORTING_JOURNAL.md#j817--accept-the-siren-eligibility-witness-player-on-both-nova-defaults) | 2026-10-20 | Accept the Siren eligibility witness player on both Nova defaults | Date: 2026-10-20. |
 | [J816](PORTING_JOURNAL.md#j816--service-the-audio-monitor-wait-and-retain-its-exact-marker-refusal) | 2026-10-20 | Service the audio monitor wait and retain its exact-marker refusal | Date: 2026-10-20. |
 | [J815](PORTING_JOURNAL.md#j815--add-bounded-read-only-siren-target-eligibility-snapshots) | 2026-10-20 | Add bounded read-only Siren target eligibility snapshots | Date: 2026-10-20. |

@@ -76,7 +76,7 @@ The plain check and its acceptance criteria remain unchanged.
 | --- | --- |
 | APK | `107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb`, code-only build from committed source 0a89064f; J815's bounded Siren eligibility witness; all 266 payload hashes unchanged; matching debugging symbols retained |
 | Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.239639 s and one exit plus 10.981506 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Full evidence is recorded once in J817. |
-| Placement | Adopted Nova updates in place with fresh adopted-only placement checks. Thor is qualifying the same candidate under its internal-reserve policy; internal Nova retains be26c21c… while isolated audio uses disposable packages. |
+| Placement | Adopted Nova updates in place with fresh adopted-only placement checks. J818 also passes both automatic checks on Thor under its internal-reserve policy. Current assignments reserve adopted Nova for gameplay/audio, internal Nova for the separate alpha session, and Thor as an unassigned spare. |
 | Rollbacks | Previous baseline J813 `91b0b7c9…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
 J817 qualifies J815 on the default route. J814 separately passes a stock MUL-T
