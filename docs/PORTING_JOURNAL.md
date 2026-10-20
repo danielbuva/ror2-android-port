@@ -15745,3 +15745,88 @@ work/experiments/siren-route/20261020T100035.676897Z/;
 work/coordination/codex-be26-siren-root-validation.json and
 native-owner-fixes-guard-qualification/accepted-be26-guard-root-r1.json.
 Raw game/API, device and storage evidence remain ignored.
+
+## J790 — Accept the equipment-owner player and observe native MUL-T offhand
+
+Hypothesis: J789's early acquisition of the existing equipment-availability
+lease permits native survivor stance entry without changing equipment or
+expansion semantics. Build committed 017dd90769de6fd4a6e0b48b4f3449d64c837eeb
+and qualify ordinary controls separately from targeted skill observations.
+Prior-art and owner analysis remain in J789; this trial introduces no new
+runtime mechanism.
+
+Preflight passes. The code-only player and matching debugging symbols build
+in 161.384601 s with zero errors. All 251 frozen source inputs match the
+commit before and after, including 106 runtime sources; all 266 payload hashes
+match J788. APK SHA-256:
+`01654e8187c378e6b26dd6033aa2fac9ce6b7d1b140cb98bf8a0619ea50bf63c`.
+Symbols SHA-256:
+`3f9c6e6c45f89abd5963aa565d97bee5c607520c06b8149799904ef4a5fdc21e`;
+IL2CPP Build ID: `92582b483f5774ad43eb68d4f2ff73c49feebbab`.
+The frozen candidate is
+work/experiments/equipment-siren-next/candidate-20261020T102912.178793Z/.
+
+The adopted-storage Nova updates in place after fresh placement/free-space
+checks, then bootstraps and syncs the unchanged payload. Both standard modes
+pass on this exact current-build APK: 35.186127 s of first-stage play, then
+one original exit into Goolake with 10.896606 s of next-stage play. Both
+current-process logs have zero unexpected errors; report error/firstFailure
+are empty, applied runs remain 13, native diagnostic flags stay off and
+source-stage recovery is false. Root records unchanged owned artifact identity
+before and after each control. Selectors are removed, the app stops and the
+idle display sleeps. Final-report SHA-256s are respectively
+`0807eb061aa7221060bef852013ba3b11e4870baccec9a4988b9838b2734d157`
+and `5812e4fbd405022e6af05e5130fca95cbca7a0e33984a17392c342234112d0c3`.
+This becomes the new default baseline; Siren and ability gates stay separate.
+
+On Thor, fresh internal-reserve checks precede installation and payload sync.
+The developer-selected MUL-T Dual Wield/Buzzsaw trial now passes its exact
+native offhand evaluator. Two diagnostic input requests produce fresh special
+and secondary authority/server callback pairs, native Dual Wield and override
+state, and Weapon2 entering FireBuzzsaw. World observation is 5.011383 s;
+the measured sequence takes 0.764679 s. Root reruns the strict evaluator over
+frozen first/final reports and logs: no failures or unexpected process errors.
+The target result SHA-256 is
+`5f358e149727f92016832ea1ff48d2cf5342abbe4bc865a2eed2c258724b4f98`;
+final report: `af415a350206fbecfac26005bdefeaefca78b6fa56b05cb9cf0aba40bc071502`.
+The outer private wrapper falsely aggregates success because install/bootstrap/
+sync omit an optional success field despite exit zero. Its original status is
+preserved; Root accepts the independently passing target result, with a
+corrected future wrapper and a host regression test. No device receipt is
+rewritten to repair that wrapper result.
+
+This is bounded activation evidence, not Buzzsaw damage, full kit behavior,
+physical controller input or native cleanup acceptance. Weapon2's network
+assignment remains absent, CanExecute is false at stop, and the general run
+success/cleanup/catalog-restoration flags are still false. The expected
+rejected Windows shader-bundle warning remains in raw local evidence.
+
+A separate stock-loadout four-slot MUL-T regression reaches 18.053635 s of
+world time, then fails with NullReferenceException in
+AutomaticSpawnBoundary's coroutine finally, leaving catalog cleanup pending.
+It does not establish the four activations or timing gate. The failed report's
+uninitialized profile fields do not establish a saved-profile reset. Preserve
+this first visible failure for source/log triage rather than suppressing the
+cleanup exception. Result SHA-256:
+`dfae4d8281bf634d6acee13e16d879af0cdeaa7d0d174bf9691cb27ee762d775`;
+final report: `bb2c3303cbee08f745e8fffaeeb249b23f34a7beac54b079f44fc96af97bdc0c`.
+The owned app stops and both idle Thor panels sleep. Revisit full-kit acceptance
+after the actual ownership/cleanup cause is identified and repaired.
+
+A fresh isolated archive of committed source passes all 1,127 host tests with
+zero skips. Root's exact-editor input-sink fixture passes all 17 positive
+booleans; nativeSkillExecutionTested remains false and the four source hashes
+are unchanged. Root's accepted guard receipt permits only the recorded 0-to-1
+control; fourth-transition autopause stays pending and Moon stays manual-only.
+The separately queued source-entry retry keeps egg input off. No audio,
+ordinary difficulty, frame-rate or visual-parity acceptance follows.
+
+Evidence: work/coordination/codex-equipment-siren-next-build-r1/;
+codex-0165-baselines-root-r1/; equipment-siren-next-guard-qualification/;
+codex-0165-toolbot-offhand-root-validation.json;
+work/experiments/baseline/20261020T103149.538725Z/ and
+20261020T103532.533366Z/;
+work/experiments/survivor-check/20261020T103240.683529Z/Toolbot/ and
+20261020T104025.860736Z/Toolbot/.
+Game-derived snapshots, symbols, raw logs and device/storage identifiers remain
+ignored. Rebuild source staging must replay J789's changed owners.

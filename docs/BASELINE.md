@@ -74,14 +74,14 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `be26c21c4cd8ff15a8a663528216cf7a69394a51d8b9441a63a1a496f83e98b5`, J788 shared code-only build from committed source 067cab3; source-enabled machine restoration and temporary-Stage handoff order; all 266 payload hashes unchanged; matching debugging symbols retained |
-| Check | both modes pass on adopted Nova without report/current-process error or applied-run change (J788): 35.211945 s and one exit plus 10.102417 s on Goolake. The stage result honestly records a later shared current-build pointer; exact owned frozen-player identity is verified before/after. Targeted MUL-T fails before world play; native Siren entry remains separate. |
+| APK | `01654e8187c378e6b26dd6033aa2fac9ce6b7d1b140cb98bf8a0619ea50bf63c`, J790 code-only build from committed source 017dd907; early existing-owner equipment availability and strict Siren identity operands; all 266 payload hashes unchanged; matching debugging symbols retained |
+| Check | both modes pass on adopted Nova without report/current-process error or applied-run change (J790): 35.186127 s and one exit plus 10.896606 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Targeted MUL-T offhand activation passes separately; its stock four-slot trial fails in cleanup; native Siren entry remains separate. |
 | Earlier evidence | J503 achievements and J504 survivor/stage breadth ran on `f567e9f6…`; the current runtime additions need their own acceptance |
-| Rollbacks | J783 `1311f105…`, J776 `bbd1f3c1…`, J771 `0dd3f573…` (matching debugging symbols retained), J767 `2aa936c0…`, J764 `d7974718…`, J762 `96006814…`, J758 `aabf41ab…`, J752 `aa732f88…`, J749 `771fc752…`, J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
-| Placement | both Novas updated in place under their separate storage policies; default checks qualify adopted Nova, while internal Nova records the separate failed MUL-T trial |
+| Rollbacks | J788 `be26c21c…`, J783 `1311f105…`, J776 `bbd1f3c1…`, J771 `0dd3f573…` (matching debugging symbols retained), J767 `2aa936c0…`, J764 `d7974718…`, J762 `96006814…`, J758 `aabf41ab…`, J752 `aa732f88…`, J749 `771fc752…`, J745 `caeeb62f…`, J737 `12d79359…`, J728 `885ea294…`, J724 `b32998b8…`, J707 `d545d800…`, J702 `efb0ba93…`, J698 `fe4dc0de…`, J695 `039bc73d…`, J689 `55dee318…`, J680 `e09920fd…`, J670 `ad84d0cb…`, J663 `6506b99b…`, J657 `86d2542a…`, J654 `f57e172b…`, J647 `9e7c4224…`, J644 `118540ea…`, J637 `03339547…`, J585 `da5e4959…`, J503 `f567e9f6…`, J502 `39538592…`, J425 `5a25bb9f…`, J323 paused Moon `893b03c4…` (full hashes in [PORTING_STATE.md](../PORTING_STATE.md)) |
+| Placement | adopted Nova updated in place and qualifies both defaults; Thor updated under its internal-reserve policy for separate skill trials. Internal Nova retains the prior game APK while isolated audio is tested. |
 
 The one-exit mode adds one assisted transport/teleporter exit, and the current
-baseline passed it (J788), with the native diagnostic flag off. The separate
+baseline passed it (J790), with the native diagnostic flag off. The separate
 native source path previously reaches genuine Stage-begin and passes J697's
 source-table restoration, then refuses at the effect-reference attribution guard
 (J702/J710). J726 identifies a premature baseline-support release and moves reconciliation
