@@ -14,6 +14,81 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
+/// <summary>Observes one routine without changing its yielded values or thrown exception.</summary>
+public sealed class SirenSourceEntryObservedRoutine : IEnumerator
+{
+    readonly IEnumerator inner;
+    readonly string operation;
+    readonly Action<string, string> onBoundary;
+    readonly Action<string, Exception> onFailure;
+    bool started, completed;
+
+    public SirenSourceEntryObservedRoutine(IEnumerator inner, string operation, Action<string, string> onBoundary,
+                                           Action<string, Exception> onFailure)
+    {
+        this.inner = inner ?? throw new ArgumentNullException(nameof(inner));
+        this.operation = operation ?? throw new ArgumentNullException(nameof(operation));
+        this.onBoundary = onBoundary;
+        this.onFailure = onFailure;
+    }
+
+    void CaptureFailure(Exception error)
+    {
+        try { onFailure?.Invoke(operation, error); }
+        catch { /* Keep the original iterator exception authoritative. */ }
+    }
+
+    void CaptureBoundary(string phase)
+    {
+        try { onBoundary?.Invoke(operation, phase); }
+        catch { /* Boundary reporting is best-effort and is not a native iterator failure. */ }
+    }
+
+    public object Current
+    {
+        get
+        {
+            try { return inner.Current; }
+            catch (Exception error) { CaptureFailure(error); throw; }
+        }
+    }
+
+    public bool MoveNext()
+    {
+        if (completed)
+            return false;
+        try
+        {
+            if (!started)
+            {
+                started = true;
+                CaptureBoundary("entered");
+            }
+            if (inner.MoveNext())
+                return true;
+            completed = true;
+            CaptureBoundary("returned");
+            return false;
+        }
+        catch (Exception error)
+        {
+            CaptureFailure(error);
+            throw;
+        }
+    }
+
+    public void Reset()
+    {
+        try
+        {
+            inner.Reset();
+            started = false;
+            completed = false;
+        }
+        catch (Exception error) { CaptureFailure(error); throw; }
+    }
+}
+
 /// <summary>
 /// Attempt-scoped owner for the original Ship Graveyard toggle controller and
 /// its exact native egg-spawner outputs. It never creates or edits egg gameplay
@@ -885,6 +960,32 @@ public static class SirenSourceEntryContract
     }
 }
 
+
+public static class SirenSourceEntryFailureClassification
+{
+    public static string FailureMessage(bool registrationObserved, bool cleanupObserved)
+    {
+        if (!registrationObserved)
+            return "Siren source-entry registration was not observed; exact owner cleanup was not evaluated";
+        return cleanupObserved ? null : "Siren source-entry registration was observed but exact owner cleanup was not";
+    }
+
+    public static string FailurePhase(bool registrationObserved, bool cleanupObserved)
+    {
+        if (!registrationObserved)
+            return "siren-source-entry-registration";
+        return cleanupObserved ? null : "siren-source-entry-cleanup";
+    }
+
+    public static bool PreserveFirstFailure(ref string currentMessage, ref string currentPhase, string message, string phase)
+    {
+        if (!string.IsNullOrEmpty(currentMessage))
+            return false;
+        currentMessage = message;
+        currentPhase = phase;
+        return true;
+    }
+}
 
 /// <summary>Pure report gate shared by the automatic runner and host assessor.</summary>
 public static class SirenSourceEntryRuntimeContract

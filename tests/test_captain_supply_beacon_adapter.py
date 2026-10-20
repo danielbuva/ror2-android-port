@@ -31,10 +31,18 @@ public static class AdapterHarness
  {
   var report=new SurvivorSkillInputCoverage.Report();
   bool current=SurvivorSkillInputCoverage.UpdateCaptainPlacementWitness(true,true,report);
-  Need(current&&report.captainSupplyBeaconPlacementValid,"valid current placement and report latch");
+  Need(current&&report.captainSupplyBeaconPlacementValid&&report.captainSupplyBeaconCurrentPlacementValid&&
+    report.captainSupplyBeaconCurrentPlacementObservation=="native-setup-current-placement-valid",
+    "valid current placement and report latch");
+  current=SurvivorSkillInputCoverage.UpdateCaptainPlacementWitness(true,false,report);
+  Need(!current&&report.captainSupplyBeaconPlacementValid&&!report.captainSupplyBeaconCurrentPlacementValid&&
+    report.captainSupplyBeaconCurrentPlacementObservation=="native-setup-current-placement-not-valid",
+    "invalid current setup placement must not reuse the positive witness");
   current=SurvivorSkillInputCoverage.UpdateCaptainPlacementWitness(false,false,report);
   Need(!current&&report.captainSupplyBeaconPlacementValid&&
-    report.captainSupplyBeaconPlacementObservation=="native-setup-placement-valid",
+    report.captainSupplyBeaconPlacementObservation=="native-setup-placement-valid"&&
+    !report.captainSupplyBeaconCurrentPlacementValid&&
+    report.captainSupplyBeaconCurrentPlacementObservation=="setup-state-not-current",
     "placement report must retain positive witness while policy sees current false");
 
   report=new SurvivorSkillInputCoverage.Report();
@@ -107,7 +115,7 @@ class CaptainProductionAdapterTests(unittest.TestCase):
         code = (
             STUBS
             + "public sealed class SurvivorSkillInputCoverage {\n"
-            + "public class Report { public bool captainSupplyBeaconPlacementValid,completed; public string captainSupplyBeaconPlacementObservation; public int captainSpecialAuthorityBefore,captainSpecialServerBefore,captainSupplyAuthorityBefore,captainSupplyServerBefore; }\n"
+            + "public class Report { public bool captainSupplyBeaconPlacementValid,captainSupplyBeaconCurrentPlacementValid,completed; public string captainSupplyBeaconPlacementObservation,captainSupplyBeaconCurrentPlacementObservation; public int captainSpecialAuthorityBefore,captainSpecialServerBefore,captainSupplyAuthorityBefore,captainSupplyServerBefore; }\n"
             + "public Report report=new Report(); public bool captainPulseActive,edgeObserved; public float captainPulseUntil; public int policyCalls,requestCalls; void ObserveCaptainInputBankEdge(){edgeObserved=true;report.completed=true;} void ReleaseCaptainPulse(){captainPulseActive=false;}\n"
             + "\n".join(methods)
             + "\n}\n"

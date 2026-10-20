@@ -15036,3 +15036,87 @@ work/device/<selected-device>/experiments/wwise-managed-fixture/
 wwise-monitor-encoding-triage/ and wwise-managed-global-timeout-triage/.
 All protected SDK, banks, generated API candidates, raw reports and audio stay
 ignored. The fixtures leave the idle display asleep.
+
+
+## J779 — Honor Captain native readiness and preserve Siren transport failures
+
+Date: 2026-10-20. Hypothesis: Captain's auxiliary input must follow the native
+skill predicate without an extra component-enabled gate; Siren transport needs
+its original exception recorded before the enclosing diagnostic finalizer.
+Neither change establishes native ability or stage-lifecycle acceptance.
+
+Both targeted survivor attempts used accepted J776 APK
+`bbd1f3c15958ee42d272d58770a8caa2a73e327354bc668d9564bbd595656eb9`
+from source `7423ff6b6466f2fd3fdbc9b63edaa25968bbc1c0` on the adopted
+Nova. Captain now reaches the original setup after the Skillswap correction,
+but stops after 8.079544 s at `native-placement-not-valid`: one special request,
+a real input edge and the native authority/server callback pair; no primary
+request, supply callback or owned deployable. Its positive placement field is
+a historical latch, not evidence of valid placement at the final sample.
+The auxiliary SupplyDrop1 component is disabled. Accepted native
+`SetupSupplyDrop.OnEnter` remaps the slots without enabling that component;
+`Util.HandlePerformSkill` dispatches through `ExecuteIfReady`, and
+`GenericSkill.CanExecute` forwards the native SkillDef predicate without an
+enabled requirement. The authored extra gate is therefore a defect, but the
+old report does not establish whether it was the only blocker.
+
+`SurvivorSkillInputCoverage` now removes that auxiliary enabled gate while
+retaining native CanExecute, exact ownership/slot/state checks and current valid
+placement before requesting primary. Current placement and remap-gated native
+readiness have separate report values; the earlier positive witness remains
+historical context. Bounded timeout outcomes distinguish placement from native
+readiness. Default input and all native skill state/stock/cooldowns are unchanged.
+
+MUL-T's exact Buzzsaw/Dual Wield diagnostic also fails after 8.352966 s,
+`offhand-secondary-not-native-ready`, with one fresh special edge and native
+callback pair, and no secondary request/callback. Its resolved machine is
+Weapon2 despite the configured Weapon name. At the first refusal, 0.359726 s,
+stock is 1/1, enabled/IsReady/interruptibility pass, but Weapon2 is
+`EntityStates.Uninitialized` with a pending state and native CanExecute is
+false. The current one-shot “at stop” snapshot is taken at that first refusal,
+not at the deadline. It cannot explain the terminal operand; a final bounded
+read-only capture is the revisit condition. No native readiness gate is relaxed.
+Both reports retain 13 applied runs, empty error/firstFailure and no
+current-process runtime error. The host runners stop and sleep the idle device.
+
+For J777's independently failed Siren route, the existing
+`SirenSourceEntrySession` file now supplies a transparent observed iterator.
+Only an explicit source-entry diagnostic entering Ship Graveyard wraps the
+existing population/original-stage routines. `IntegratedStageSession` records
+entry, return and the original exception before outer cleanup, forwards yielded
+values and rethrows the same exception object. Reporting callback failures do
+not alter the native path. The input finalizer preserves an existing first
+failure and distinguishes missing registration from missing cleanup. Identity,
+activation, native callback, retirement/recovery and manual Moon gates remain
+unchanged. No Siren runtime cause is yet established.
+
+Prior art: pinned Starstorm2 `SS2VanillaSurvivor.AddEntityStateMachine` preserves
+named machine and network relationships; pinned R2API Loadout/Director separate
+registration from native execution/population. J768's source-entry lifecycle
+remains the contract. Accepted native source and current device operands outrank
+those community conventions; no community implementation is copied.
+
+Validation: two new extracted Captain readiness/phase tests pass; the existing
+adapter fixture now asserts current invalid placement separately from the
+positive latch. Three extracted Siren tests cover normal yields, original
+MoveNext/Current/Reset exception identity, throwing report callbacks, earlier
+failure preservation and selector/manual-Moon scope. The settled full suite
+passes 1,112 tests in 36.700 s with all 430 recorded inputs unchanged and HEAD
+stable at b240e93 during testing. Offline exact-reference compilation passes
+106 runtime plus four support sources and 264 references with zero errors;
+source/reference/compiler/response hashes remain stable. Compiled host DLL:
+`9bfdc3bec7a2abed45734ff97aa958f3f1d57f996d6ff9f3d828c38a30c0996b`.
+An older adapter test initially lacked the two new report fields; its host stub
+and assertions were updated, then the full suite passed. No new player build
+or targeted runtime acceptance is part of this checkpoint. These authored
+runtime files are reproduced by the rebuild source-staging steps and require
+replay there; the other session owns that pipeline.
+
+Evidence: work/experiments/survivor-check/20261020T075025.431384Z/Captain/
+and 20261020T075716.514811Z/Toolbot/; work/coordination/
+codex-bbd-survivor-failures-root-validation.json;
+captain-beacon-placement-triage/patch/ and independent-review/;
+toolbot-bbd-readiness-triage/findings.md;
+siren-source-entry-first-failure/r3/ and r2/review/;
+codex-survivor-siren-host-r1/; codex-survivor-siren-next-compile/r1/.
+Raw native input, reports and generated outputs stay ignored.

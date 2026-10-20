@@ -41,6 +41,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         // False/zero/empty in ordinary checks. This subreport is populated only
         // by an explicit diagnostic sequence selector.
         public bool captainSupplyBeaconRequested, captainSupplyBeaconPlacementValid,
+                    captainSupplyBeaconCurrentPlacementValid, captainSupplyBeaconSupplyDrop1CanExecute,
                     captainSupplyBeaconDeployableRegistered, captainSupplyBeaconPendingNativeState,
                     captainSupplyBeaconDeployablePresentAtReturn;
         public int captainSupplyBeaconPhase, captainSupplyBeaconRequests,
@@ -50,7 +51,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                    captainSupplyAuthorityBefore, captainSupplyAuthorityAfter,
                    captainSupplyServerBefore, captainSupplyServerAfter;
         public string captainSupplyBeaconOutcome, captainSupplyBeaconBodyState,
-                      captainSupplyBeaconPlacementObservation, captainSupplyBeaconNativeOwnership;
+                      captainSupplyBeaconPlacementObservation, captainSupplyBeaconCurrentPlacementObservation,
+                      captainSupplyBeaconNativeOwnership;
         public bool toolbotOffhandRequested, toolbotOffhandStanceObserved, toolbotOffhandOverrideObserved,
                     toolbotOffhandWeapon2Observed, toolbotOffhandBuzzsawStateObserved;
         public int toolbotOffhandPhase, toolbotOffhandRequests, toolbotOffhandSpecialAuthorityBefore,
@@ -462,6 +464,9 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     {
         if (report == null)
             return false;
+        report.captainSupplyBeaconCurrentPlacementValid = setup && currentPlacementValid;
+        report.captainSupplyBeaconCurrentPlacementObservation = !setup ? "setup-state-not-current" :
+            (currentPlacementValid ? "native-setup-current-placement-valid" : "native-setup-current-placement-not-valid");
         bool positive = setup && currentPlacementValid;
         if (positive)
         {
@@ -474,6 +479,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                 "native-setup-placement-not-valid" : "setup-state-not-current";
         }
         return positive;
+    }
+
+    public static bool CaptainSupplyDrop1CanExecute(bool primaryRemapped, bool nativeCanExecute)
+    {
+        return primaryRemapped && nativeCanExecute;
     }
 
     public static void CaptureCaptainCallbackBaselinesForRequest(int slot, int specialAuthority, int specialServer,
@@ -720,7 +730,10 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         report.captainSupplyBeaconDeployableRegistered = ownedCount > captainDeployablesBefore;
         report.captainSupplyBeaconBodyState = CaptainBodyState();
         bool currentPlacementValid = setup && CaptainPlacementIsValid();
-        bool nativePlacementValid = UpdateCaptainPlacementWitness(setup, currentPlacementValid, report);
+        UpdateCaptainPlacementWitness(setup, currentPlacementValid, report);
+        bool supplyDrop1CanExecute = CaptainSupplyDrop1CanExecute(primaryRemapped,
+            captainSupplyBeaconComponents[4].CanExecute());
+        report.captainSupplyBeaconSupplyDrop1CanExecute = supplyDrop1CanExecute;
         report.captainSupplyBeaconNativeOwnership = "owned-master-CaptainSupplyDrop-count=" + ownedCount;
         report.captainSupplyBeaconPendingNativeState = setup || call;
         report.captainSupplyBeaconDeployablePresentAtReturn = !setup && !call && ownedCount > captainDeployablesBefore;
@@ -741,8 +754,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             setupSupplyDropState = setup,
             setupPrimaryIsSupplyDrop1 = primaryRemapped,
             setupSecondaryIsSupplyDrop2 = secondaryRemapped,
-            nativePlacementValid = nativePlacementValid,
-            supplyDrop1CanExecute = primaryRemapped && captainSupplyBeaconComponents[4].enabled && captainSupplyBeaconComponents[4].CanExecute(),
+            nativePlacementValid = currentPlacementValid,
+            supplyDrop1CanExecute = supplyDrop1CanExecute,
             supplyDrop1InputEdge = captainSupplyInputEdge,
             supplyDrop1AuthorityCallback = supplyCallbacks,
             supplyDrop1ServerCallback = supplyCallbacks,
@@ -1830,6 +1843,8 @@ public sealed class CaptainSupplyBeaconSequence
     float beganAt = float.NaN;
     float phaseBeganAt = float.NaN;
     int requests;
+    bool lastPlacementValid;
+    bool lastSupplyDrop1CanExecute;
 
     public Phase CurrentPhase => phase;
     public int Requests => requests;
@@ -1877,6 +1892,11 @@ public sealed class CaptainSupplyBeaconSequence
             return Refuse("diagnostic-input-owner-lost");
         if (observation.neutralRevisionChanged)
             return Refuse("neutralized-request-cancelled");
+        if (phase == Phase.AwaitingValidPlacement)
+        {
+            lastPlacementValid = observation.nativePlacementValid;
+            lastSupplyDrop1CanExecute = observation.supplyDrop1CanExecute;
+        }
         if (observation.elapsedSeconds - phaseBeganAt >= PhaseTimeoutSeconds)
             return Refuse(TimeoutOutcome());
 
@@ -1981,7 +2001,12 @@ public sealed class CaptainSupplyBeaconSequence
             case Phase.WaitingForNativeReadiness: return "special-not-native-ready";
             case Phase.AwaitingSpecialEdgeAndCallbacks: return "special-edge-or-callback-pair-timeout";
             case Phase.AwaitingSetupAndSlotRemap: return "setup-state-or-slot-remap-timeout";
-            case Phase.AwaitingValidPlacement: return "native-placement-not-valid";
+            case Phase.AwaitingValidPlacement:
+                if (!lastPlacementValid && !lastSupplyDrop1CanExecute)
+                    return "native-placement-and-supply-drop1-not-ready";
+                if (!lastPlacementValid)
+                    return "native-placement-not-valid";
+                return "native-supply-drop1-not-ready";
             case Phase.AwaitingSupplyEdgeAndCallbacks: return "supply-edge-or-callback-pair-timeout";
             case Phase.AwaitingNativeSupplyState: return "native-supply-state-timeout";
             case Phase.AwaitingOwnedDeployableAndReturn: return "native-deployable-or-state-return-timeout";

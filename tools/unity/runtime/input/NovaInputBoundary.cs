@@ -868,14 +868,17 @@ public sealed partial class PortSession
                             bool cleanupObserved = coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved &&
                                 SirenSourceEntryRuntimeContract.SourceEntryAndEncounterCleanupObserved(coordinator.r.stageProgress);
                             coordinator.r.sirenSourceEntryDiagnosticCleanupObserved = cleanupObserved;
-                            if (cleanupObserved)
+                            string failureMessage = SirenSourceEntryFailureClassification.FailureMessage(
+                                coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved, cleanupObserved);
+                            if (failureMessage == null)
                                 coordinator.r.phase = "siren-source-entry-listening-registration-and-cleanup-observed";
                             else
                             {
                                 coordinator.r.success = false;
-                                coordinator.r.firstFailure = coordinator.r.firstFailure ??
-                                    "Siren source-entry registration was observed but exact owner cleanup was not";
-                                coordinator.r.firstFailurePhase = "siren-source-entry-cleanup";
+                                SirenSourceEntryFailureClassification.PreserveFirstFailure(
+                                    ref coordinator.r.firstFailure, ref coordinator.r.firstFailurePhase, failureMessage,
+                                    SirenSourceEntryFailureClassification.FailurePhase(
+                                        coordinator.r.sirenSourceEntryDiagnosticRegistrationObserved, cleanupObserved));
                             }
                             coordinator.Save();
                         }

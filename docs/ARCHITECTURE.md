@@ -702,6 +702,19 @@ report, read against the journal entry that defines what it must show.
 | Shaders and presentation | `AndroidMaterialPresentation`, `AndroidNativeDeferredPresentation`, `Android*Presentation.shader` (18 files) | **own types** (static) | `Begin` → `Finish` | `test_shader_bindings.py`, `test_shader_metadata.py`, `test_pc_draw_export.py` |
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
+Only an explicit Siren source-entry diagnostic entering Ship Graveyard wraps
+the existing population and original-stage iterators with
+`SirenSourceEntryObservedRoutine` in the existing source-entry owner file.
+`IntegratedStageSession` records entry, return and the original exception in
+three scalar transport fields before outer cleanup can mask the failure.
+The observer forwards yielded values and rethrows the same native exception;
+reporting callback failures cannot replace it. It acquires no iterator or
+scene cleanup ownership. `SirenSourceEntryFailureClassification` preserves an
+earlier failure and distinguishes absent registration from failed cleanup.
+`test_siren_source_transport_exception.py` executes these production helpers,
+including throwing `Current`, `Reset` and reporting callbacks. Lifecycle,
+identity, retirement, recovery and the manual Moon gate remain device gates.
+
 Build, device and safety tooling has its own tests: `test_build_identity.py`,
 `test_build_snapshots.py`, `test_apk_identity.py`, `test_adb_target.py`,
 `test_lab_safety.py`, `test_public_privacy.py`.
@@ -1000,6 +1013,14 @@ state, stock, cooldown, placement, deployables, or profile values. The overlay
 remains masked while an original native state is pending and disposes only its
 owned bridge input/witness. This proves neither supply-drop damage/healing nor
 presentation/full ability semantics; those remain separate device gates.
+The auxiliary SupplyDrop1 uses native `CanExecute` without an extra Unity
+component-enabled requirement, matching the original input dispatcher. A
+primary pulse still requires the current setup state, exact slot remaps and
+current valid native placement. The report separates current placement and
+remap-gated native readiness from the historical positive placement witness;
+bounded timeout labels identify the last failing operands.
+`test_captain_supply_readiness.py` executes the extracted production phase and
+readiness policies, including a disabled auxiliary component.
 The setup identity requires the serialized Skillswap activation machine with
 `EntityStates.Captain.Weapon.SetupSupplyDrop`; the state's namespace does not
 name its machine. `test_captain_setup_identity.py` executes this production

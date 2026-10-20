@@ -70,6 +70,7 @@ public sealed partial class PortSession
         public List<SirenEncounterReport> sirenEncounters = new List<SirenEncounterReport>();
         public List<SirenSourceEntryReport> sirenSourceEntries = new List<SirenSourceEntryReport>();
         public List<StageEntryObservation> entryObservations = new List<StageEntryObservation>();
+        public string sirenTransportOperation, sirenTransportPhase, sirenTransportException;
     }
     [Serializable]
     public class SirenSourceEntryReport
@@ -1084,10 +1085,16 @@ public sealed partial class PortSession
                         yield return objective.Current;
                     coordinator.PrepareWorldCommerce(integratedStageConfig, origin);
                 }
+                bool observeSirenTransport = coordinator.r.sirenSourceEntryDiagnosticAttempt &&
+                                             next.name == SirenEncounterContract.SceneName;
                 var population = coordinator.PopulateWholeStage();
+                if (observeSirenTransport)
+                    population = ObserveSirenTransportRoutine("PopulateWholeStage", population);
                 while (population.MoveNext())
                     yield return population.Current;
                 var stage = BeginOriginalStage();
+                if (observeSirenTransport)
+                    stage = ObserveSirenTransportRoutine("BeginOriginalStage", stage);
                 while (stage.MoveNext())
                     yield return stage.Current;
                 if (gold)
@@ -1214,6 +1221,40 @@ public sealed partial class PortSession
             }
             CompleteIntegratedStageEffectReturns(batch);
         }
+        IEnumerator ObserveSirenTransportRoutine(string operation, IEnumerator routine)
+        {
+            return new SirenSourceEntryObservedRoutine(
+                routine, operation,
+                (name, phase) =>
+                {
+                    if (coordinator.r.stageProgress == null)
+                        return;
+                    coordinator.r.stageProgress.sirenTransportOperation = name;
+                    coordinator.r.stageProgress.sirenTransportPhase = phase;
+                    try { coordinator.Save(); }
+                    catch (Exception) { /* The report witness must not alter the native stage path. */ }
+                },
+                ReportSirenTransportException);
+        }
+        void ReportSirenTransportException(string operation, Exception error)
+        {
+            var report = coordinator.r.stageProgress;
+            if (report != null && string.IsNullOrEmpty(report.sirenTransportException))
+            {
+                report.sirenTransportOperation = operation;
+                report.sirenTransportPhase = "exception";
+                report.sirenTransportException = error.ToString();
+            }
+            if (string.IsNullOrEmpty(coordinator.r.error))
+                coordinator.r.error = error.ToString();
+            var message = "Siren source transport " + operation + " threw: " + error.GetBaseException().Message;
+            SirenSourceEntryFailureClassification.PreserveFirstFailure(
+                ref coordinator.r.firstFailure, ref coordinator.r.firstFailurePhase, message, "siren-transport-" + operation);
+            coordinator.r.success = false;
+            try { coordinator.Save(); }
+            catch (Exception) { /* Keep the source operation's original exception authoritative. */ }
+        }
+
         void AttachSirenEncounterIfPresent()
         {
             if (coordinator.stageGeometryScene.name != SirenEncounterContract.SceneName)
