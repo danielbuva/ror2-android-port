@@ -791,6 +791,8 @@ public sealed partial class PortSession
                         {
                             coordinator.r.performance.requestedFrameRate = Application.targetFrameRate;
                             coordinator.r.performance.displayRefreshRate = Screen.currentResolution.refreshRate;
+                            if (nativeSourceSkinRequested && display != null)
+                                display.CaptureNativeSourceSkinReport();
                         }
                         coordinator.Save();
                         if (cfg.integratedWorld)

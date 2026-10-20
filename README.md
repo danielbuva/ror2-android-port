@@ -1,3 +1,5 @@
+![Risk of Rain 2 for Android — unofficial conversion tool](docs/assets/branding/ror2-android-banner.png)
+
 # Risk of Rain 2 for Android
 
 A work-in-progress project to bring Risk of Rain 2 to Android, using game files
@@ -44,6 +46,8 @@ remaining limits.
 | Contribute | [Getting involved](docs/DEVELOPING.md#getting-involved) |
 | Explore the work needed before a public alpha | [Public alpha checklist](docs/public-alpha.md) |
 
-Only authored tooling, transformations and reviewed summaries belong in this
-repository. Game files and generated game content stay private; the project does
-not bypass ownership, authentication or DRM checks.
+This repository contains authored tooling, transformations and reviewed summaries,
+plus two promotional-art graphics described in the
+[branding and source notes](docs/assets/branding/README.md). Game files and
+generated runtime content stay private; the project does not bypass ownership,
+authentication or DRM checks.

@@ -5,8 +5,11 @@ namespace UnityEngine
 {
     public class Object
     {
+        static int nextInstanceId;
+        readonly int instanceId = ++nextInstanceId;
         public bool destroyed;
         public string name;
+        public int GetInstanceID() => instanceId;
         public static implicit operator bool(Object value) => !ReferenceEquals(value, null) && !value.destroyed;
         public static bool operator !(Object value) => !(bool)value;
         public static void Destroy(Object value) { if (!ReferenceEquals(value, null)) value.destroyed = true; }
@@ -29,8 +32,9 @@ namespace UnityEngine
         readonly Dictionary<Type, Component> components = new Dictionary<Type, Component>();
         public bool activeSelf = true;
         public bool activeInHierarchy => activeSelf;
+        public int layer;
         public UnityEngine.Transform transform = new UnityEngine.Transform();
-        public GameObject(string name) { transform.gameObject = this; }
+        public GameObject(string name) { this.name = name; transform.gameObject = this; }
         public T AddComponent<T>() where T : Component, new()
         {
             var component = new T { gameObject = this };
@@ -42,19 +46,31 @@ namespace UnityEngine
     }
     public class Material : Object
     {
-        public string name;
+        public Shader shader = new Shader { name = "test-shader" };
         public Material(string name) { this.name = name; }
-        public Material(Material source) { name = source.name + ".copy"; }
+        public Material(Material source) { name = source.name + ".copy"; shader = source.shader; }
     }
-    public class Renderer : Component
+    public class Shader : Object { }
+    public struct Vector3 { public float x, y, z; }
+    public struct Bounds { public Vector3 center, extents; }
+    public class Renderer : Behaviour
     {
         public Material[] sharedMaterials = Array.Empty<Material>();
+        public int getSharedMaterialsCalls, sharedMaterialGetterCalls;
+        public Material sharedMaterial { get { sharedMaterialGetterCalls++; return sharedMaterials.Length > 0 ? sharedMaterials[0] : null; } }
+        public bool isVisible;
+        public Bounds bounds;
         public void GetSharedMaterials(List<Material> destination)
         {
+            getSharedMaterialsCalls++;
             destination.Clear();
             destination.AddRange(sharedMaterials);
         }
     }
+    public class Mesh : Object { }
+    public class MeshFilter : Component { public Mesh sharedMesh; }
+    public class SkinnedMeshRenderer : Renderer { public Mesh sharedMesh; }
+    public class Camera : Behaviour { }
     public class Transform : Component { }
     public class RuntimeAnimatorController : Object { public RuntimeAnimatorController() { name = "runtime controller"; } }
     public class Avatar : Object { public Avatar() { name = "avatar"; } }
@@ -63,6 +79,15 @@ namespace UnityEngine
         public RuntimeAnimatorController runtimeAnimatorController;
         public Avatar avatar;
         public bool isInitialized;
+        public int layerCount;
+        public AnimatorStateInfo GetCurrentAnimatorStateInfo(int layer) => new AnimatorStateInfo { fullPathHash = 42, normalizedTime = .5f };
+    }
+    public struct AnimatorStateInfo { public int fullPathHash; public float normalizedTime; }
+    public static class Time
+    {
+        public static bool throwFrameCount;
+        public static int frameCount { get { if (throwFrameCount) throw new InvalidOperationException("synthetic Unity frame read failure"); return 12; } }
+        public static float realtimeSinceStartup = 34.5f;
     }
 }
 
@@ -83,6 +108,14 @@ namespace RoR2
         public CharacterBody body;
         public RendererInfo[] baseRendererInfos;
         public bool forceUpdate;
+        public VisibilityLevel visibility = VisibilityLevel.Visible;
+        public int invisibilityCount;
+    }
+    public enum VisibilityLevel { Invisible, Visible, Untargetable }
+    public class CameraRigController : UnityEngine.MonoBehaviour { }
+    public class SceneCamera : UnityEngine.MonoBehaviour
+    {
+        public CameraRigController cameraRigController;
     }
     public class ModelSkinController : UnityEngine.MonoBehaviour
     {

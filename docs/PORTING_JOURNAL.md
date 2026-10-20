@@ -19600,6 +19600,62 @@ underlying route fault before the paired samples exist. R8/R9 replay the two
 changed authored runtime sources and updated exact-editor fixture. No new
 required local input or build-time source replacement is introduced.
 
+## J848 — Add bounded native-model visual evidence without changing presentation
+
+2026-10-20. J841 records native skin/Animator readiness and teardown, but its
+single anomalous frame cannot distinguish native visibility, Blink state,
+renderer state or camera ownership. Source inspection shows that original
+CharacterModel visibility is updated through SceneCamera pre-render callbacks
+with a CameraRigController. The current Nova camera has no such binding;
+another native camera might still deliver those callbacks. This is a hypothesis,
+not an established rendering cause. The pinned prior-art skin/camera ownership
+knowledge in `community-prior-art.md` does not supply an Android visibility fix.
+
+The existing `AndroidNativeSourceSkinLifecycle` gains a read-only scalar
+snapshot of its exact model, Animator and passed owned camera. The existing
+five-second report-save cadence invokes it only for the default-off native-skin
+diagnostic. It records visibility/invisibility, initialized Animator state and
+component/controller/avatar identity, camera/SceneCamera/rig association, and
+at most 32 renderer records. It reads only the first shared material and marks
+total material-slot count unknown; no unbounded material-list enumeration is
+added. All Unity reads are inside the exception boundary. A failed read
+publishes an explicit partial sample, and teardown retains the last complete
+live sample without a new read on destroyed objects.
+
+Independent review rejects earlier unapplied drafts for accepting header-only
+PNG bytes, missing visual-report gates, unguarded Unity getters and incomplete
+Animator identity binding. The corrected private runner requires a complete
+PNG stream with chunk CRCs, IEND and bounded zlib scanline decoding; it persists
+live/completed evidence before subsequent waits. Live, screenshot-time and
+completed snapshots bind signed nonzero model/camera/Animator instance IDs and
+controller/avatar strings, with sequence/frame/time ordering. These samples
+are not claimed to be the screenshot's exact frame. The runner retains its
+600-second observation/660-second fixed claim budget and cleanup reserve.
+
+Final candidate and runner are frozen under
+`work/coordination/animation-native-skin-runtime-triage/r10/`, manifest SHA-256
+`def35b7c04fc18a626f339ad2c000acaeda7a7d4a05ed52989ba303a6cf34d2b`.
+Independent hold-closure review SHA-256
+`1a335da88abfc1f22fff4b3d79024d82db2b4a8f7aba21c794bbc6878caea12b`
+is in the matching review directory. Six private runner tests and 60 synthetic
+production-owner assertions pass. Root integrates the three runtime changes
+and updates the tracked synthetic fixtures/test expectation; six integrated
+host tests pass, including the Siren recorder contract. A combined compile
+of all 111 current runtime sources and six support/exact-editor fixture
+sources against 264 pinned references passes, output SHA-256
+`3e63a0b3524ff481b009377b2dda7918d0ac0aad31872aa0edbc88e27f9bee07`.
+Root evidence is under
+`work/coordination/codex-visual-observer-integration-root-r1/`.
+
+This source checkpoint has no new APK, Unity execution or device visual result.
+It changes no presentation, Animator assignment, skin ownership, camera setup,
+gameplay or alpha-owned controls/UI behavior. The existing input owner only
+requests the bounded diagnostic sample. J840's 8357db8b player stays installed
+and default-qualified. Revisit on the next player after both default checks,
+then inspect the actual model/camera/ability-state samples before choosing a
+rendering correction or claiming animation/PC parity. R8/R9 replay the three
+changed authored runtime files. No new file under work is read by the game build.
+
 ## J846 — Capture authored stripping inputs and replay UnityLinker on Android
 
 2026-10-20. Hypothesis: an exact-editor callback can preserve the authored

@@ -13,12 +13,39 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         public int selectedSkinIndex = -1, currentSkinIndex = -1;
         public string controllerIdentity, avatarIdentity, firstFailure;
         public int materialCopiesCreated, materialCopiesRetired, materialCopiesReleased;
+        public VisualSnapshot visual;
         public void Fail(string reason)
         {
             if (string.IsNullOrEmpty(firstFailure) && !string.IsNullOrEmpty(reason))
                 firstFailure = reason.Length > 256 ? reason.Substring(0, 256) : reason;
         }
     }
+    [Serializable]
+    public sealed class VisualRendererSnapshot
+    {
+        public int index, instanceId, layer, defaultShadowCastingMode, materialSlotCount, sampledMaterialCount, sampledNullMaterialSlots;
+        public string rendererType, rendererName, meshIdentity, rendererRecordMaterialIdentity;
+        public bool exists, active, enabled, visible, ignoreOverlays, materialsTruncated, materialSlotCountKnown;
+        public Vector3 boundsCenter, boundsExtents;
+        public string[] materialIdentities;
+    }
+    [Serializable]
+    public sealed class VisualSnapshot
+    {
+        public int captureSequence, frame, modelInstanceId, visibilityValue, invisibilityCount, rendererRecordCount;
+        public int capturedRendererCount, omittedRendererCount, cameraInstanceId, sceneCameraInstanceId, rigInstanceId;
+        public float realtime;
+        public bool captured, modelExists, modelActive, modelEnabled, forceUpdate;
+        public bool cameraExists, cameraActive, cameraEnabled, cameraHasSceneCamera, sceneCameraEnabled, cameraHasRig;
+        public bool animatorExists, animatorActive, animatorEnabled, animatorInitialized, animatorStateCaptured;
+        public int animatorInstanceId, animatorLayerZeroStateHash;
+        public float animatorLayerZeroNormalizedTime;
+        public string visibility, cameraName, sceneCameraName, animatorControllerIdentity, animatorAvatarIdentity, captureError;
+        public VisualRendererSnapshot[] renderers;
+    }
+    const int MaxVisualRendererRecords = 32;
+    const int MaxVisualMaterialSlots = 8;
+    int visualCaptureSequence;
     Report report;
 
     CharacterModel model;
@@ -192,12 +219,135 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         report.avatarIdentity = Identity(animator ? animator.avatar : null);
     }
 
+    // Read-only, bounded visual evidence for the selected source model and the
+    // Nova-owned camera. Called only at the existing report-save cadence.
+    public void CaptureNativeVisualState(Camera ownedCamera, Animator sourceAnimator)
+    {
+        if (report == null)
+            return;
+        var snapshot = new VisualSnapshot();
+        // Publish the partial snapshot before the first Unity-object read. A
+        // destroyed native object or an exceptional Unity getter must remain a
+        // serializable diagnostic failure, never escape this observer.
+        report.visual = snapshot;
+        snapshot.captureSequence = ++visualCaptureSequence;
+        try
+        {
+            snapshot.frame = Time.frameCount;
+            snapshot.realtime = Time.realtimeSinceStartup;
+            if (!model)
+                throw new InvalidOperationException("Selected source model is unavailable during visual capture");
+            snapshot.modelExists = true;
+            snapshot.modelInstanceId = model.GetInstanceID();
+            snapshot.modelActive = model.gameObject.activeInHierarchy;
+            snapshot.modelEnabled = model.enabled;
+            snapshot.visibility = model.visibility.ToString();
+            snapshot.visibilityValue = (int)model.visibility;
+            snapshot.invisibilityCount = model.invisibilityCount;
+            snapshot.forceUpdate = model.forceUpdate;
+            var records = model.baseRendererInfos;
+            snapshot.rendererRecordCount = records != null ? records.Length : 0;
+            snapshot.cameraExists = ownedCamera;
+            snapshot.cameraName = ownedCamera ? ShortText(ownedCamera.name, 96) : string.Empty;
+            snapshot.cameraInstanceId = ownedCamera ? ownedCamera.GetInstanceID() : 0;
+            snapshot.cameraActive = ownedCamera && ownedCamera.gameObject.activeInHierarchy;
+            snapshot.cameraEnabled = ownedCamera && ownedCamera.enabled;
+            snapshot.animatorExists = sourceAnimator;
+            snapshot.animatorInstanceId = sourceAnimator ? sourceAnimator.GetInstanceID() : 0;
+            snapshot.animatorActive = sourceAnimator && sourceAnimator.gameObject.activeInHierarchy;
+            snapshot.animatorEnabled = sourceAnimator && sourceAnimator.enabled;
+            snapshot.animatorInitialized = sourceAnimator && sourceAnimator.isInitialized;
+            snapshot.animatorControllerIdentity = Identity(sourceAnimator ? sourceAnimator.runtimeAnimatorController : null);
+            snapshot.animatorAvatarIdentity = Identity(sourceAnimator ? sourceAnimator.avatar : null);
+            if (ownedCamera)
+            {
+                var sceneCamera = ownedCamera.GetComponent<SceneCamera>();
+                snapshot.cameraHasSceneCamera = sceneCamera;
+                snapshot.sceneCameraEnabled = sceneCamera && sceneCamera.enabled;
+                snapshot.sceneCameraName = sceneCamera ? ShortText(sceneCamera.name, 96) : string.Empty;
+                snapshot.sceneCameraInstanceId = sceneCamera ? sceneCamera.GetInstanceID() : 0;
+                var rig = sceneCamera ? sceneCamera.cameraRigController : null;
+                snapshot.cameraHasRig = rig;
+                snapshot.rigInstanceId = rig ? rig.GetInstanceID() : 0;
+            }
+            if (sourceAnimator && sourceAnimator.isInitialized && sourceAnimator.layerCount > 0)
+            {
+                var state = sourceAnimator.GetCurrentAnimatorStateInfo(0);
+                snapshot.animatorLayerZeroStateHash = state.fullPathHash;
+                snapshot.animatorLayerZeroNormalizedTime = state.normalizedTime;
+                snapshot.animatorStateCaptured = true;
+            }
+            int count = records != null ? Math.Min(records.Length, MaxVisualRendererRecords) : 0;
+            snapshot.capturedRendererCount = count;
+            snapshot.omittedRendererCount = Math.Max(0, snapshot.rendererRecordCount - count);
+            snapshot.renderers = new VisualRendererSnapshot[count];
+            for (int i = 0; i < count; i++)
+            {
+                var renderer = records[i].renderer;
+                var item = new VisualRendererSnapshot { index = i, exists = renderer };
+                snapshot.renderers[i] = item;
+                item.rendererRecordMaterialIdentity = Identity(records[i].defaultMaterial);
+                item.defaultShadowCastingMode = (int)records[i].defaultShadowCastingMode;
+                item.ignoreOverlays = records[i].ignoreOverlays;
+                if (!renderer)
+                    continue;
+                item.instanceId = renderer.GetInstanceID();
+                item.rendererType = ShortText(renderer.GetType().FullName, 96);
+                item.rendererName = ShortText(renderer.name, 96);
+                item.layer = renderer.gameObject.layer;
+                item.active = renderer.gameObject.activeInHierarchy;
+                item.enabled = renderer.enabled;
+                item.visible = renderer.isVisible;
+                var bounds = renderer.bounds;
+                item.boundsCenter = bounds.center;
+                item.boundsExtents = bounds.extents;
+                Mesh mesh = null;
+                var skinned = renderer as SkinnedMeshRenderer;
+                if (skinned)
+                    mesh = skinned.sharedMesh;
+                else
+                {
+                    var filter = renderer.GetComponent<MeshFilter>();
+                    if (filter)
+                        mesh = filter.sharedMesh;
+                }
+                item.meshIdentity = Identity(mesh);
+                // Unity 2021.3 exposes all shared materials as a list, so avoid
+                // enumerating an unbounded slot array at this 5-second cadence.
+                // Sample only the non-instantiating first sharedMaterial getter.
+                item.materialSlotCount = -1;
+                item.materialSlotCountKnown = false;
+                item.materialsTruncated = true;
+                var material = renderer.sharedMaterial;
+                item.sampledMaterialCount = material ? 1 : 0;
+                item.sampledNullMaterialSlots = 0;
+                item.materialIdentities = material
+                    ? new[] { ShortText(Identity(material) + "|" + (material.shader ? material.shader.name : "<null-shader>"), 192) }
+                    : Array.Empty<string>();
+            }
+            snapshot.captured = true;
+        }
+        catch (Exception error)
+        {
+            snapshot.captureError = ShortText(error.GetBaseException().Message, 192);
+            snapshot.captured = false;
+        }
+        report.visual = snapshot;
+    }
+
     static string Identity(UnityEngine.Object value)
     {
         if (!value)
             return string.Empty;
         string identity = value.GetType().FullName + ":" + value.name;
         return identity.Length > 160 ? identity.Substring(0, 160) : identity;
+    }
+
+    static string ShortText(string value, int maximum)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+        return value.Length > maximum ? value.Substring(0, maximum) : value;
     }
 
     public void RecordDisplayDeactivated()

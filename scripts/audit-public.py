@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check the Git index for common private captures and identifiers; print no values."""
 
+import hashlib
 import re
 import subprocess
 import sys
@@ -25,6 +26,14 @@ PUBLIC_ENVIRONMENT = {
 PRIVATE_SUFFIXES = {".apk", ".aab", ".dll", ".exe", ".bundle", ".assets", ".bank", ".wem", ".so", ".dylib", ".keystore", ".jks", ".log", ".png"}
 
 
+# Exact reviewed marketing graphics only; see docs/assets/branding/README.md.
+# New files or modified bytes require fresh review, never a directory exemption.
+PUBLIC_BRANDING_SHA256 = {
+    "docs/assets/branding/ror2-android-banner.png": "201b06140443c8154af3830f9e7f1964ef5f968f6f32bdd89c2ae6c64e3132cf",
+    "docs/assets/branding/ror2-android-icon.png": "5dabd1fbef4630dc2dfe975547e38380516e9dca7737b40e2f3dea71e07c795e",
+}
+
+
 WWISE_ASSET_NAME = re.compile(rb"(?i)Wwise/ScriptableObjects/[A-Za-z]+/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.asset")
 
 
@@ -34,7 +43,8 @@ def violations(path, data):
         found.append("private output directory")
     if path.startswith("environment/") and path not in PUBLIC_ENVIRONMENT:
         found.append("unreviewed environment capture")
-    if Path(path).suffix.lower() in PRIVATE_SUFFIXES:
+    reviewed_branding = path in PUBLIC_BRANDING_SHA256 and hashlib.sha256(data).hexdigest() == PUBLIC_BRANDING_SHA256[path]
+    if Path(path).suffix.lower() in PRIVATE_SUFFIXES and not reviewed_branding:
         found.append("binary, middleware, or raw capture")
     if path.startswith("recipe/"):
         # Wwise ScriptableObject assets are named by their event or bank GUID. Those file
