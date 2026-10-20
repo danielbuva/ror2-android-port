@@ -40,6 +40,25 @@ It copies the selected files unchanged; recompilation is required if any source
 differs. Desktop stripping, engine/content production and tool-delivery rights
 remain separate dependencies.
 
+Captured managed stripping is also separate experimental support:
+
+```sh
+./dev prototype --action phone-linker-fixture --target REQUEST.json
+python3 -I -S phone_linker.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT
+```
+
+Generate a fresh fixture and use `phone-content-build` first. Its editor callback
+retains complete pre-strip inputs and the final builder records the BuildReport
+identity; host validation requires both identities and every captured hash.
+The ignored linker request supplies `project`, `apk`, `sha256` and `capture`
+(the explicit editor-build attempt directory). The stager binds that snapshot,
+known graph arguments and supplied SDK descriptors/defaults/tool DLLs. The
+Android driver verifies inputs before running, preserves original failures and
+requires actual output. Independently compare all stripped DLLs/symbols and
+classify report differences without editing outputs. Scene/editor roots and
+tool delivery remain explicit dependencies; a successful stripping command does
+not qualify a complete player or game. No current game build uses this owner.
+
 The Android driver verifies the entire staged input manifest and replays each
 compile followed by the link. It preserves target/optimization/ABI defines and
 the original NDK target sysroot/C++ libraries and supplied Baselib archive.

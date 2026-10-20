@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android) | 2026-10-20 | Capture authored stripping inputs and replay UnityLinker on Android | 2026-10-20. |
 | [J847](PORTING_JOURNAL.md#j847--arm-the-bounded-siren-approach-recorder-without-requiring-a-stall) | 2026-10-20 | Arm the bounded Siren approach recorder without requiring a stall | 2026-10-20. |
 | [J844](PORTING_JOURNAL.md#j844--reach-ship-graveyard-but-retain-the-unarmed-siren-navigation-observation) | 2026-10-20 | Reach Ship Graveyard but retain the unarmed Siren navigation observation | 2026-10-20. |
 | [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output) | 2026-10-20 | Run the full authored converter and load its phone-compiled native output | 2026-10-20. |

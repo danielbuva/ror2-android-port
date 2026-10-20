@@ -12,19 +12,23 @@ Storage/oracle review qualification: [J834](PORTING_JOURNAL.md#j834--bind-phone-
 Authored phone-app build and unresolved sandbox control: [J836](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution).
 Native fixture compile/link/loading: [J839](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android).
 Full authored converter/native/device closure: [J842](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output).
+Authored input capture and Android stripping: [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
 blocks. Unity's import/shader/bundle/player-data stages remain editor-bound in
 the current implementation. The exact converter now passes the complete authored
-player's stripped assembly closure on Android. Its emitted C++ feeds native
+player's stripped assembly closure on Android. The exact stripping tool also
+passes the authored fixture using captured desktop scene/editor roots.
+Its emitted C++ feeds native
 compilation and actual fixture loading, with desktop stripping/base engine and
 content inputs still explicit. A small content writer and fixture repackaging/signing/update have
 phone-shell proofs. A separate app now builds wholly on the phone and runs an
 installed native probe, but its writable-execution refusal control fails. Complete
 player construction and app-host tool delivery remain open. Native fixture
 compilation/linking passes with either supplied desktop-generated C++ or the
-hash-bound phone converter output; that does not recreate missing content/stripping stages.
+hash-bound phone converter output; that does not recreate missing content or
+editor-generated stripping roots.
 These are build-pipeline problems; keep the game runtime
 and desktop fallback while investigating them independently.
 
@@ -44,7 +48,7 @@ not proof that reimplementation is impossible. Owners: [ARCHITECTURE](ARCHITECTU
 | HUD/inherited assets (`RecoveredHudBuilder`) | **Yes, existing producer** | AssetDatabase, prefab, font/material and asset-saving APIs are used. Fourteen inherited-store files remain bootstrap debt; generated game assets cannot be shipped to conceal this dependency. |
 | Import, script/plugin binding and settling (R9 `LabBuild`) | **Yes** | Native importers, AssetDatabase and two-pass dependency reimport have no demonstrated Android equivalent here. Host validators do not replace importers. |
 | Shader compilation/Android bundles (`LabBuild`, `WholeCatalogBuild`) | **Yes** | BuildAssetBundles, UnityShaderCompiler and ShaderUtil produce/validate target variants. SPIR-V compilation or a UnityFS writer alone does not recreate shader metadata, object graphs, mesh/animation import or dependencies. |
-| C# compilation, stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J842 qualifies the complete authored fixture's converter on an Android build-tool host, with exact metadata and a classified source-comment difference. Desktop managed compilation/stripping/root production, app sandbox execution and permitted tool delivery remain gates. |
+| C# compilation, stripping, IL2CPP C++/metadata (`BuildPlayer`) | **Yes in current orchestration** | J846 qualifies authored stripping on Android using captured desktop roots; J842 qualifies its converter/native path. Managed DLLs/symbols and metadata match their controls, with report ordering/source-comment differences recorded. Connecting those stages, desktop managed compilation/root production, app execution policy and tool delivery remain gates. |
 | C++/Burst/plugin compilation/linking | Not inherently, once all inputs exist | J839/J842 qualify the authored native graph with desktop or phone-generated C++, original target libraries and actual Unity loading. Desktop stripping/base engine/content remain inputs; compiler/linker and game-performance equivalence, Burst and middleware remain separate gates. |
 | Java/resources/DEX, APK alignment/signing | No Unity import APIs | AOSP/Termux provide resource-tool, alignment and signing precedents; D8/R8 source is available. J836 builds native C/Java/DEX/resources and signs an authored app wholly in a phone shell. Full Unity player packaging, app-host tool dependencies and durable owner signing remain open. These tools cannot fill missing game code/data. |
 | Install, placement, data retention and rollback | No | Android PackageInstaller provides user-mediated installation. Keep stable private owner keys, live capacity/backing checks and interruption handling. Host ADB scripts need on-device equivalents. |
@@ -82,8 +86,9 @@ requirements to claim a port.
 Static inspection found managed Unity.IL2CPP/UnityLinker components with
 .NET 6.0.18 runtime configuration alongside macOS apphost/CLR libraries. Three
 inspected managed assemblies declare no direct P/Invoke rows. This is a tool-hosting
-lead. J832/J842 test the converter through the complete authored player closure
-using a separate Android build-tool host; stripping, wider game dependencies,
+lead. J832/J842 test the converter through the complete authored player closure,
+and J846 tests stripping with desktop roots, using a separate Android build-tool
+host; wider dependencies, editor-root production,
 subprocesses and app sandbox execution remain open.
 The build-tool host is separate from the IL2CPP game runtime.
 
@@ -123,7 +128,7 @@ J832/J833 supply precursors for content, converter and packaging work.
 The small authored writer now runs on the phone; the fixture's base player still
 uses the desktop editor. J842 connects the full authored converter to native
 linking and installed loading. Phone-shell execution does not qualify an installer
-app's sandbox. Larger content, stripping/root production, durable owner key custody
+app's sandbox. Larger content, editor-root production, connected stages and durable owner key custody
 and user-mediated installation remain gates.
 
 1. **Content:** define an independently authored mesh/material/texture/animation/
@@ -132,9 +137,10 @@ and user-mediated installation remain gates.
    without using the oracle's generated assets as build inputs. Validate actual
    rendering, deserialization, callbacks and unload/reload. A loaded container
    is insufficient. Keep the working project unchanged.
-2. **Converter:** preserve J842's authored converter/native/device contract;
-   qualify managed stripping/root production, richer input dependencies and
-   permitted acquisition/delivery. Source-comment differences remain explicit.
+2. **Converter:** preserve J842's authored converter/native/device contract and
+   J846's stripping contract; connect their actual outputs and qualify editor-root
+   production, richer dependencies and permitted acquisition/delivery.
+   Report-order/source-comment differences remain explicit.
    No gameplay interpreter is introduced.
 3. **Packaging:** package/sign/install an authored fixture with approved Android
    tools. Check native loading/alignment, cancellation, storage, signing and

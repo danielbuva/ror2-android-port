@@ -19599,3 +19599,109 @@ player with this exact source and a bounded Siren trace; do not infer the
 underlying route fault before the paired samples exist. R8/R9 replay the two
 changed authored runtime sources and updated exact-editor fixture. No new
 required local input or build-time source replacement is introduced.
+
+## J846 — Capture authored stripping inputs and replay UnityLinker on Android
+
+2026-10-20. Hypothesis: an exact-editor callback can preserve the authored
+fixture's temporary stripping inputs before cleanup, and the supplied UnityLinker
+can produce the same managed outputs on Android. Integrate main through J847
+`1037bf4` before this entry. Main owns its Siren/audio/animation work. No game
+runtime, original installation, working game build or other device changes.
+
+**Missing inputs and API knowledge.** Read-only inspection finds that J842's old
+fixture graph still names its search directory, scene XML, editor-data JSON and
+root assembly, but those temporary inputs no longer exist. A surviving graph
+cannot supply them or establish an executed input set. Inspect Unity's public
+[callback API](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/Build.IUnityLinkerProcessor.GenerateAdditionalLinkXmlFile.html)
+and pinned reference-only
+[Bee ordering](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/Modules/BeeBuildPostprocessor.cs)
+and [descriptor callback ordering](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/AssemblyStripper.cs).
+They suggest scene/editor metadata precede the public callback in Bee. This
+branch reference is a hypothesis about the exact installed patch, not evidence
+of its execution. No reference implementation is copied.
+
+**Authored owner and exact-editor observation.** Committed `e7e5f99` adds
+`ContentFixtureLinkerCapture.cs` only to newly generated fixture projects. It
+requires the exact editor, Android callback and explicit owned attempt/source
+identity. Copy the active input directory with before/copy/after hashes; reject
+links, escaped paths, drift and repeated ambiguous capture. Return only an inert
+linker XML. The fixture builder records its final BuildReport identity;
+`phone_content.validate_linker_capture` independently requires matching
+commit/version/BuildReport, required scene/editor/root inputs, a complete file
+set and every hash. Existing fixtures retain their old source-bound receipts.
+No whole-catalog game builder calls this support owner.
+
+Stage a fresh authored project and build under the primary host mutex, without
+mutating or stopping the shared editor. Exact Unity 2021.3.45f2 passes the fixture
+oracle and player build. The capture contains 340 files, including 273 DLLs,
+27,221,841 bytes, with TypesInScenes.xml, EditorToUnityLinkerData.json and
+Assembly-CSharp.dll present. The callback/final build identities match and all
+copied hashes pass. This verifies the required ordering on this exact fixture.
+The desktop control APK is
+`90e8f9f8fa5028716cf9f1c8de8afb6d297f048c8c0bb486a987a594e3ab5a61`;
+it is not installed or promoted. Its fresh native graph includes this attempt's
+inert descriptor path, binding it to the captured callback rather than an older
+attempt. The normal mutex is released after the isolated editor exits.
+
+**Phone stripping owner and first failure.** `phone_linker.py` owns current
+experimental `phone-linker-fixture` staging and its standalone Android driver.
+It verifies the same authored project/APK/callback build, preserves known linker
+flags and descriptor order, maps only recognized input/output roots and copies
+captured inputs plus supplied tool/SDK bytes unchanged. The driver verifies the
+manifest, writes a new output and retains the original log/result on failure.
+Desktop scene/editor-root production and supplied tools stay explicit inputs.
+Unnecessary tool analytics are disabled; gameplay remains native IL2CPP.
+
+From `d76224c`, the first Android attempt exits 1 before stripping: the tool's
+implicit `support/LinkerDescriptors/Default` directory is missing. Command-line
+XML descriptors alone do not supply these SDK defaults. Preserve that exact
+attempt and manifest. From `18564ea`, copy the pinned SDK's complete
+LinkerDescriptors tree into its original relative support root, include it in
+the manifest and create a separate attempt. No SDK source or descriptor is
+patched and no replacement runtime is introduced.
+
+**Actual output comparison.** The retry exits 0 in 3.013 seconds after staging.
+All 36 emitted DLLs and all 30 PDBs match this build's desktop stripped outputs
+byte for byte. Of the 67 phone output files, 66 match exactly. The remaining
+UnityLinkerToEditorData.json differs only in the order of its 62 module records:
+complete module-entry multisets and every other JSON field match. Classify that
+in memory for analysis; retain both original files unedited. Different string
+collation in the invariant Android build-tool host is a hypothesis, not a
+separate cause proof. The intentionally disabled analytics.json is absent.
+No claim of whole-output byte identity or downstream report-order equivalence
+is made. The original graph's profile/rule/platform/Development settings remain
+explicit; no weaker stripping setting is substituted.
+
+The SDK DLLs run under the previously pinned Android .NET 8.0.32 build-tool
+host; this is not a gameplay backend. The selected alpha device's workspace/tool
+ownership and hashes, fresh capacity/backing and read-only game APK hashes are
+verified. The game hash is unchanged and display sleep is verified after each
+attempt. No APK is installed and the main/spare devices are untouched. J842
+remains the earlier native loading/update qualification; this entry qualifies
+capture and stripping only, not a new gameplay/native/rendering result.
+
+Private selectors under `work/coordination/phone-proof/` bind the fresh
+`strip-capture-build-selection.json`, successful `strip-linker-run-selection.json`
+and original `strip-linker-first-failure-selection.json`. The
+`strip-linker-proof-receipt.json` binds 19 capture/build/graph/failed/successful/
+comparison/CI artifacts; SHA-256
+`0c093ac0b15d58762b0c675c64357a5f04fd8def0ca6b900a3acbffff428121a`.
+ARCHITECTURE names owners/setup/teardown; LOCAL_STATE lists generators and private
+replay support. SDK/runtime data, raw paths/identities and generated outputs stay
+ignored. No timestamp search silently selects build inputs.
+
+**Checks and next gate.** Fresh-clone CI on `d76224c` passes 1,213 host tests with
+54 optional skips, Ruff, public audit and documentation freshness. Contracts
+cover build identity/input closure/hash refusal, source checks, argument/order/
+foreign-root refusal, immutable staging, retained first failures and zero-exit
+without output refusal. Whole-project preflight still refuses the isolated
+worktree's absent game inventory; it is not passing public-bootstrap evidence.
+
+Next bind the actual phone-stripped closure into converter staging and qualify
+richer dependency/root production without desktop history. The scene/editor-root,
+content/import/shader, permitted tool-delivery, app sandbox, durable signing and
+user-mediated installation gates remain. J836's policy control is still failed;
+no new game-performance measurement exists. Keep Route A and the desktop
+fallback. Revisit when the callback/SDK/options/input descriptors or downstream
+report consumers change. This generic authored build probe adds no RoR2-specific
+reconstruction or runtime mechanism.
