@@ -17753,3 +17753,66 @@ narrow gameplay-required exception to alpha's playtest-tooling ownership, not
 a general runner change. The game source, named owners, GUIDs and R8 replay
 membership remain unchanged; prior art remains J815. Retry only on main Nova;
 Moon/finale stay manual and all accepted APKs/failed evidence remain retained.
+
+## J820 — Complete the original-API PostEvent host closure scan
+
+Date: 2026-10-20. Hypothesis: the source-bound pickup hook and strict event
+gate can transform the full managed closure while preserving the disabled
+profile's existing silent assemblies. This is host analysis of the frozen
+J813 staged input, not a binding to J817's player or an audio runtime result.
+
+The raw API-origin audit verifies the accepted Steam input, inventory, public
+recipe/policy and candidate all identify the same 332,800-byte original API,
+SHA-256 `564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781`.
+The isolated fixture API is a different file. This closes original-file
+identity only. The source pickup event belongs to the client message-57
+handler, not `OnTriggerStay`; the candidate adds an audio-only hook to the
+existing offline callback without replaying native grants/chat/notifications.
+Exact route and branch/registration mutants pass. The frozen monitor lease
+is bound to its candidate-relative source; its separate live-fixture service
+extension is retained as drift evidence rather than silently substituted.
+
+Root's first full transform stops at an unclassified Wwise Timeline wrapper.
+The cumulative candidate classifies four exact Timeline references whose
+source route reaches the gated API and four exact Unity diagnostic-event
+references. The next scan stops at a Collections Burst `calli`. Read-only
+inventory finds five such sites, all in one unchanged hash-pinned package DLL;
+the final candidate admits only those exact owners, offsets, ABIs and complete
+method-body fingerprints. Unknown indirect dispatch still refuses. No Burst
+implementation, package pin or gameplay behavior changes. Native inventory
+finds no PostEvent import outside the API's eight checked entries; this is not
+a claim that all other Wwise imports are safe.
+
+Root then executes the cumulative transform and scanner against all 331
+assemblies, using the frozen 330-DLL staged input and 252-source inventory.
+The scan completes successfully with eight allowed PostEvent P/Invokes. The
+disabled-profile identity check reproduces the exact existing silent API,
+MonoBehaviour and RoR2 hashes. It does not prove identity of every player
+assembly. Candidate compilation, sixteen inherited source contracts and
+targeted route/indirect-dispatch mutant checks pass; independent reviews
+cover the two narrow classifications. Root explicitly rebinds the copied
+analysis runner's stale R6 directory constants to R7 in a frozen outer ledger;
+no historical source or receipt is rewritten.
+
+Evidence: work/coordination/{game-audio-api-origin/r1/,
+audio-game-native-optin-real-input-triage/r5/,
+audio-game-native-optin-real-input-triage/r6/,
+audio-game-native-optin-real-input-triage/r7/,
+codex-audio-full-closure-root-r5/,codex-audio-full-closure-root-r6/,
+codex-audio-full-closure-root-r7/}. Final candidate manifest:
+`0edc14d30c1ae09182a3193908e2399433651f826302898bd57065bf376328e7`;
+completed scan:
+`c9b392836d07b8a47e452ce487cacab62a1484ff91aba4564d741abce52b12e7`;
+transform result:
+`88e748e89718e522d88e2a2968735281a424782b481d29e1a7c54c5fe633f3f2`.
+The exact transformed assemblies and failed predecessors remain ignored.
+
+Prior art: pinned R2API.Sound at f539511e explains initialization/bank
+lifetime; pinned ThunderBurster at 9cbfd8c8 provides package-version cautions,
+not this game's ABI. Accepted input IL supplies the route and dispatch facts.
+The private `GameAudioProcessHost`/`GameWwiseRuntime` candidate owns opt-in
+startup/service/teardown; it is not installed in the game. No current build
+membership, GUID or R8 replay source changes. Stage-to-APK binding, dispatch
+and runtime acceptance stay false. Next bind the recipe to the current
+player closure and require the separately qualified native fixture/lifecycle
+before any game opt-in. Audio remains unavailable in normal gameplay.

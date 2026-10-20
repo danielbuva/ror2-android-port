@@ -288,6 +288,15 @@ provenance and importer metadata separately; partial reload responses and termin
 build requests remain preserved. These private support producers are listed in
 LOCAL_STATE and do not enable audio in the game.
 
+The private composed-audio candidate has separate `GameAudioProcessHost` and
+`GameWwiseRuntime` owners for opt-in startup, bounded native service and owned
+teardown, with an identity-bound `GameAudioPostEventGate` around the recovered
+offline pickup callback. J820 qualifies its full frozen host closure scan and
+three disabled-profile assembly identities. It is not a current game owner:
+current-player source/APK binding and native runtime acceptance remain closed.
+Exact Timeline/diagnostic-event and Collections indirect-call classifications
+belong to its transform, without changing the pinned package implementations.
+
 `tools/wwise-android-abi/generate.py` is a current, explicitly invoked host
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the
 exact policy-bound accepted managed API, authorized local Wwise Android
