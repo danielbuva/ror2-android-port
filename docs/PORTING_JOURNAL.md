@@ -19082,3 +19082,56 @@ dispatch/runtime gates remain closed; game audio is still unavailable. Continue
 same-request post-strip/IL2CPP provenance and the composed original-API owner
 integration. No new game source, recipe or R-step input changed here; the
 protected isolated producers remain required local state.
+
+## J840 — Accept the exclusive native inventory-owner player on both default modes
+
+2026-10-20. Hypothesis: J838’s enabled-native-owner dispatch correction can ship
+without changing the default disabled-model gameplay route. Main doctor,
+preflight and exact-editor inspection pass. Build committed source
+`a4664d702b6910f905d529ced5a0e6d5e5fdbeda` through the serialized code-only path,
+with debugging symbols and explicit same-request pre-strip linker capture.
+Request `20261020T214006.177877Z-d628dc35fce047659feb128139ecb124`
+succeeds in 185.441456 seconds with zero errors. Freeze 306 authored inputs,
+111 runtime sources and the unchanged 266-entry payload map.
+
+APK `8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770`;
+symbol ZIP `adbe45d908967255f76fd2e86e64ce166289a5f91cc477a81bae1e88b6e5681c`;
+libil2cpp build ID `35861709bb50fb6583f19fd79c7787c4f05bbd37`.
+The frozen candidate is
+`work/experiments/native-skin-siren-next/candidate-20261020T214442.277797Z/`.
+Its build receipt, source archive/map, payload equality, symbols and actual
+same-request linker capture are hash-bound in `root-device-candidate.json`.
+Root build evidence is under
+`work/coordination/codex-native-inventory-build-root-r{1..2}/`.
+R1 refuses before dispatch because Root’s stdout redirection collides with the
+driver’s exclusive output creation; preserve that first failure and use distinct
+driver/build outputs in R2. No failed player build is inferred from that refusal.
+
+Install only the frozen APK on the primary gameplay device, updating in place
+with fresh adopted-only placement and reserve checks. Bootstrap and payload
+sync pass. The observed ordinary gamepad-A unlock remains a pre-launch UI action;
+no storage configuration changes. Both canonical checks pass:
+
+- Plain `work/experiments/baseline/20261020T214716.531222Z/`: 35.228836 seconds
+  of live Lakes play, current-build true and no report/current-process error.
+- One-exit `work/experiments/baseline/20261020T215104.428227Z/`: exactly one
+  original exit to Goolake, 10.662109 seconds in-stage, current-build true and
+  no report/current-process error.
+
+Both retain appliedRuns 13 and exact owned APK identity. Native skin, Siren,
+first-stage recovery and continuation flags remain off. Selectors are absent,
+the owned game force-stops and the display sleeps. No alpha or spare-device
+action occurs. Full status/log validations and Root acceptance are under
+`work/coordination/codex-native-inventory-device-root-r1/`;
+`root-main-default-acceptance.json` hashes to
+`addd0e6bbcd0cb2d31c0df15cae2d10468330c69baea63c5053accc4a994ea22`.
+
+This is the new default baseline only. J835’s targeted native skin failure is
+not retroactively passed: next run ordinary selected Huntress with the opt-in
+native owner, then measure gameplay, inventory dispatch and end-run teardown.
+Siren encounter execution, complete ability semantics, normal play, PC parity
+and composed audio remain separate gates; Moon stays manual. J838 records the
+native source/prior-art reasoning and host contracts once. The new helper’s
+actual first-import authored GUID is recorded in `recipe/project-layout.json`
+for deterministic replay; it adds no runtime change after the frozen APK.
+R8/R9 must replay J838’s authored sources/membership and this layout metadata.
