@@ -37,6 +37,14 @@ unsigned outputs under `work/rebuild/phone-packaging/`; alignment/signing remain
 separate explicit stages. No code selects a timestamped evidence directory as a
 hidden build input.
 
+The app-sandbox probe stages public `tools/phone-build/host/` sources with
+explicit owner SDK API 30 `android.jar`, build-tools 34.0.0 `d8.jar` and the
+separately pinned Termux signer. `stage-host.py` under the same private proof
+root copies inputs unchanged, binds hashes and invokes the tracked Android
+driver inside the existing receipt-owned shell workspace. Its per-attempt
+build outputs, encrypted disposable key and reports remain ignored. This is
+required local replay support; no game build reads it.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.

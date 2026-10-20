@@ -43,6 +43,14 @@ the owned attempts and verifies display sleep. It records game APK hashes
 read-only before/after. `phone-package-check` takes an ignored request and
 writes private evidence under `work/experiments/phone-packaging/`.
 
+`tools/phone-build/host/` is separate experimental **support**. Its Android
+driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
+signing from explicitly supplied local tools. `HostProbeActivity` owns one
+background check of PackageManager-installed native execution and a writable
+copy's refusal, then writes `files/host-report.json`. It uses no Unity/game
+code, permissions or network. Setup and device cleanup are described in its
+[README](../tools/phone-build/host/README.md); no game build calls it.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).
