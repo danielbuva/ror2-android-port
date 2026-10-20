@@ -16170,3 +16170,69 @@ r7-system-link-flags}; the latter retains independent reviews, source pins,
 root-native-r7-r2-elf-audit-root-r2/ and post-link-audit-draft/.
 All producer inputs and generated native artifacts stay ignored and are listed
 as required local diagnostic support. No current game/rebuild source changes.
+
+
+## J795 — Accept native Siren source entry and cleanup despite a missed host stop
+
+Date: 2026-10-20. Hypothesis: J792's strict owned-Director handoff can admit
+Siren's native controller, original spawners and Listening registration on the
+J793 default-qualified player. This is the explicit source-entry diagnostic:
+egg input is off, progression is assisted and Moon stays manual-only.
+
+APK: `23916334f598f68b2f3b7e464b709a74c0b54bb222107031d32dbac9f0a18494`,
+source 53735b753705e8b8a1ede7757c61c5ec3eae4bb9. The immutable build, both
+standard controls and fresh exact-editor input-sink fixture are bound by J793's
+accepted guard receipt. The selected owned adopted-storage device follows
+Lakes, Goolake and Wisp Graveyard into Ship Graveyard: three exits and four
+original Stage-begin observations. No guard is weakened and no new APK is built.
+
+The early Siren snapshot observes native Awake and full multicast dispatch,
+both native queues drained, 32 original spawners, 12 selected nests and 12
+corresponding disable observations. All 12 spawned eggs map bijectively to
+positive native network identities before the encounter is admitted. The later
+completed report retains those identities and confirms the original ID-10
+Listening owner registered exactly the same 12 eggs. ID-11 controller and
+ID-2 Director activation remain under their strict entry leases.
+
+The diagnostic then completes its intended cleanup: all 12 eggs retired,
+ID-11 unspawned with its prior inactive state restored, all 42 native toggle
+targets restored, ID-10 unspawned, original activation restored and the source
+owner detached. Overall success and cleanup are true, phase is complete,
+source recovery is false and neither error nor firstFailure is present.
+Applied runs remain 13. Root's strict current-process log classifier finds no
+unexpected error. Final-report SHA-256:
+`ea5439254aff90fa5921c5fb304aecde018898dab6eb02e4bf5fecc40a6cca1e`.
+
+The host runner nevertheless waits until its 1,202.475 s deadline. Its stop
+predicate requires registration's live status and attached source owner at the
+same time as cleanup's cleaned status and detached owner. Those states cannot
+coexist. Preserve the raw deadline summary; this is not a host-runner pass.
+A separate private correction accepts the fully validated terminal history
+while preserving every native identity, registration and cleanup condition.
+All 37 host tests pass, including terminal-state acceptance and missing-cleanup
+refusal. Root independently runs those predicates against the unchanged frozen
+report, validates launch PID/attempt, APK, profile, log and cleanup, then accepts
+only the bounded native entry/registration/cleanup result. Root receipt SHA-256:
+`ad587507a45762163688325f7a3942ef6b3344d89e85f28b346ca0b5e36eaf93`.
+Host cleanup removes its selector, force-stops the package and sleeps the
+selected display without error. The original runner and raw evidence remain
+unchanged; future runs should use the reviewed terminal predicate.
+
+Egg input has zero samples and requests. Native encounter start/completion are
+false, and no boss is accepted. Next retain the same live source/encounter
+owners after the proven registration handoff, then separately exercise bounded
+ordinary weapon input against original eggs and observe native encounter start.
+Do not use the cleaned report as a live target or infer rewards, ordinary
+unlock grants, fourth-transition pause, Moon or complete-stage semantics.
+
+Prior art: J768's pinned R2API.Director and accepted native source/HLAPI lifecycle
+analysis separates stage population from encounter execution. J792 supplies the
+exact owned-ID handoff; current device evidence now qualifies that bounded
+handoff. No community or protected implementation is added to public source.
+
+Evidence: work/experiments/siren-route/20261020T115157.424459Z/;
+work/coordination/{codex-2391-siren-root-r1.json,
+director-cleanup-next-guard-qualification/accepted-2391-guard-root-r1.json,
+siren-2391-terminal-review/}. The latter contains the independent review,
+private predicate patch, tests and root-acceptance.json. No current game or
+rebuild source changes; default baseline acceptance remains J793.
