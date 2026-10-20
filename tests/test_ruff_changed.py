@@ -1,42 +1,27 @@
-"""Run CI's Ruff gate locally on every Python file that differs from origin/main.
+"""CI's Ruff step on committed, unpushed Python files (scripts/ruff-committed.py).
 
-CI checks the Python files a push changes (`.github/workflows/host-tests.yml`); without this,
-an unformatted file only fails after it is pushed. Run `ruff format <file>` (the pinned
-ruff==0.11.13 from tools/lab-requirements.txt) and `ruff check <file>` to fix a failure.
+Only committed content is checked, so another session's uncommitted work in the shared
+checkout never fails this test. The tracked pre-push hook runs the same check.
 """
 
-import shutil
+import importlib.util
 import subprocess
-import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location("ruff_committed", ROOT / "scripts/ruff-committed.py")
+ruff_committed = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ruff_committed)
 
 
-def git(*args):
-    return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
-
-
-def ruff():
-    candidate = Path(sys.executable).with_name("ruff")
-    return str(candidate) if candidate.is_file() else shutil.which("ruff")
-
-
-class RuffChangedFilesTests(unittest.TestCase):
-    def test_changed_python_files_pass_ci_ruff_gate(self):
-        if git("rev-parse", "--verify", "--quiet", "origin/main").returncode != 0:
-            self.skipTest("no origin/main reference (fresh CI clone runs its own Ruff step)")
-        tool = ruff()
-        self.assertIsNotNone(tool, "ruff is missing: uv pip install --python .local/lab-venv/bin/python ruff==0.11.13")
-        changed = git("diff", "--name-only", "--diff-filter=ACMR", "origin/main", "--", "*.py").stdout.split()
-        untracked = git("ls-files", "--others", "--exclude-standard", "--", "*.py").stdout.split()
-        files = sorted({path for path in changed + untracked if (ROOT / path).is_file()})
-        if not files:
-            return
-        for args in (["check"], ["format", "--check"]):
-            result = subprocess.run([tool, *args, "--", *files], cwd=ROOT, capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, "ruff " + " ".join(args) + " fails (CI will too):\n" + result.stdout + result.stderr)
+class RuffCommittedTests(unittest.TestCase):
+    def test_unpushed_commits_pass_ci_ruff_step(self):
+        if subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--verify", "--quiet", "origin/main"], capture_output=True).returncode:
+            self.skipTest("no origin/main reference (a fresh CI clone runs its own Ruff step)")
+        base = ruff_committed.git("merge-base", "origin/main", "HEAD").strip()
+        code, message = ruff_committed.check(base, "HEAD")
+        self.assertEqual(code, 0, message)
 
 
 if __name__ == "__main__":
