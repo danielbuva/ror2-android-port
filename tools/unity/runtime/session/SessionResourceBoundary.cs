@@ -37,7 +37,7 @@ public sealed partial class PortSession
         public bool rootWalkRan, rootWalkTruncated;
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
-        public string[] rootWalkPaths, rootWalkFailureSamples;
+        public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus;
     }
     [Serializable]
     class RootWalkSelection
@@ -77,7 +77,8 @@ public sealed partial class PortSession
             if (report != null)
                 targets.Add(new System.Collections.Generic.KeyValuePair<string, object>("completed[" + i + "].report", report));
         }
-        if (targets.Count == 0 || Run.instance || NetworkServer.active || NetworkClient.active)
+        // With no retained completed session the same walk still records a reachable-type census.
+        if (Run.instance || NetworkServer.active || NetworkClient.active)
             return;
         // Live engine-held managed objects (including this coordinator) are roots too.
         var extra = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>();
@@ -99,7 +100,7 @@ public sealed partial class PortSession
             }
         }
         var began = Time.realtimeSinceStartup;
-        var result = CompletedSessionRootWalk.Find(types, extra, targets, RootWalkNodeBudget, 16);
+        var result = CompletedSessionRootWalk.Find(types, extra, targets, RootWalkNodeBudget, 16, 60);
         sample.rootWalkRan = true;
         sample.rootWalkSeconds = Time.realtimeSinceStartup - began;
         sample.rootWalkNodes = result.nodes;
@@ -108,6 +109,7 @@ public sealed partial class PortSession
         sample.rootWalkReadFailures = result.readFailures;
         sample.rootWalkPaths = result.paths;
         sample.rootWalkFailureSamples = result.failureSamples;
+        sample.rootWalkCensus = result.census;
     }
     static readonly System.Collections.Generic.List<WeakReference[]> completedSessionReferences =
         new System.Collections.Generic.List<WeakReference[]>();
@@ -356,6 +358,8 @@ public static class CompletedSessionRootWalk
         public int nodes, roots, readFailures;
         public bool truncated;
         public string[] failureSamples = new string[0];
+        // "Type:objects:primitiveArrayBytes", largest first by objects then bytes (census).
+        public string[] census = new string[0];
     }
     sealed class Identity : System.Collections.Generic.IEqualityComparer<object>
     {
@@ -373,7 +377,7 @@ public static class CompletedSessionRootWalk
     public static Result Find(System.Collections.Generic.IEnumerable<Type> types,
                               System.Collections.Generic.IList<System.Collections.Generic.KeyValuePair<string, object>> extraRoots,
                               System.Collections.Generic.IList<System.Collections.Generic.KeyValuePair<string, object>> targets,
-                              int nodeBudget, int maxPaths)
+                              int nodeBudget, int maxPaths, int censusTop = 0)
     {
         var result = new Result();
         var failures = new System.Collections.Generic.List<string>();
@@ -498,6 +502,7 @@ public static class CompletedSessionRootWalk
         }
         result.nodes = nodes.Count;
         result.paths = found.ToArray();
+        result.census = Census(nodes, censusTop);
         result.failureSamples = failures.ToArray();
         return result;
     }
@@ -515,6 +520,33 @@ public static class CompletedSessionRootWalk
                 removed++;
             }
         return kept;
+    }
+    static string[] Census(System.Collections.Generic.List<object> nodes, int top)
+    {
+        if (top <= 0)
+            return new string[0];
+        var counts = new System.Collections.Generic.Dictionary<Type, long[]>();
+        foreach (var node in nodes)
+        {
+            var type = node.GetType();
+            long[] row;
+            if (!counts.TryGetValue(type, out row))
+                counts.Add(type, row = new long[2]);
+            row[0]++;
+            var array = node as Array;
+            if (array != null && type.GetElementType().IsPrimitive)
+                row[1] += Buffer.ByteLength(array);
+        }
+        var rows = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<Type, long[]>>(counts);
+        rows.Sort((a, b) => a.Value[0] != b.Value[0] ? b.Value[0].CompareTo(a.Value[0]) : b.Value[1].CompareTo(a.Value[1]));
+        var byBytes = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<Type, long[]>>(counts);
+        byBytes.Sort((a, b) => b.Value[1].CompareTo(a.Value[1]));
+        var output = new System.Collections.Generic.List<string>();
+        var seen = new System.Collections.Generic.HashSet<Type>();
+        foreach (var row in rows.Take(top).Concat(byBytes.Take(top / 4)))
+            if (seen.Add(row.Key))
+                output.Add(row.Key.FullName + ":" + row.Value[0] + ":" + row.Value[1]);
+        return output.ToArray();
     }
     static void Fail(Result result, System.Collections.Generic.List<string> failures, string failure)
     {

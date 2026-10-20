@@ -1315,7 +1315,9 @@ spawned AI stays reachable. After the world is cleaned, with no Run or network,
 the owner removes only entries whose `BaseAI` Unity has already destroyed,
 through the Unity-free `CompletedSessionRootWalk.RemoveTargets`. It records the
 count on the `completed-before-reclaim` sample. Live subscribers and accumulation
-within one run are unchanged.
+within one run are unchanged. J775 measured no managed-memory effect from it.
+The final-menu walk also records a census: the 60 most frequent reachable
+types with object counts and primitive-array bytes (`rootWalkCensus`).
 
 `AndroidProfileSession` also owns the exact native timed-chest `Opening.onOpened`
 subscription. That event has no sender or chest identity; it is recorded as a

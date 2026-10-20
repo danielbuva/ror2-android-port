@@ -14884,7 +14884,19 @@ that one original event only the entries whose target is a Unity-destroyed
 `BaseAI`. Live subscribers and the original handler are untouched; the removed
 count is recorded on the `completed-before-reclaim` sample. The pure
 `RemoveTargets` helper has a host test. Within-run accumulation across stages is
-unchanged and remains open. Device result: pending.
+unchanged and remains open.
+
+Result: Thor, APK `50ef1f1a61a3475b6c4b65f8e127ba9c8a9ac0e3f135d5dea634eb85ddbad259`
+(code-only from 5d9ab87), five sessions, all passing. Pruning removes 13, 13,
+13, 12 and 13 destroyed entries, and the event is empty at every later start.
+Managed usage after collection is unchanged: 220, 277, 330, 384 and 441 MiB
+(57,380,454 bytes per session). **The hypothesis is rejected**: those dead AIs
+were not what retained the growth. The pruning stays as a bounded-list
+adaptation with no measured memory effect; revisit or retire it if no later
+evidence justifies it. Next: a reachable-type census at the final menu,
+comparing run lengths, to find types that scale with session count.
+Evidence: work/device/<serial>/experiments/session-memory/20261020T075601.227280Z/.
+Thor has 50ef1f1a… installed.
 
 Evidence: work/device/<serial>/experiments/session-memory/20261020T073248.170048Z/
 (bbd1f3c1 run). Thor has bbd1f3c1… installed.

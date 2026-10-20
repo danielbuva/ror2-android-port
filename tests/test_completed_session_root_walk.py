@@ -17,6 +17,7 @@ OWNER = ROOT / "tools/unity/runtime/session/SessionResourceBoundary.cs"
 HOST = r"""
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 public sealed class Probe { public object report; public Probe previous; }
@@ -96,6 +97,13 @@ public static class Program
         int none;
         output["prune_null"] = CompletedSessionRootWalk.RemoveTargets(null, target => true, out none) == null && none == 0;
 
+        Reset();
+        Roots.holder = new Holder();
+        for (int i = 0; i < 3; i++) Roots.holder.items.Add(new Probe());
+        Roots.holder.items.Add(new byte[100]);
+        var census = CompletedSessionRootWalk.Find(Types(), empty, new KeyValuePair<string, object>[0], 1000, 8, 10).census;
+        output["census"] = census;
+
         var parts = new List<string>();
         foreach (var entry in output)
         {
@@ -169,6 +177,12 @@ class CompletedSessionRootWalkTests(unittest.TestCase):
         self.assertEqual(self.result["prune_removed"], 1)
         self.assertEqual(self.result["prune_remaining"], 2)
         self.assertIs(self.result["prune_null"], True)
+
+    def test_census_counts_types_and_primitive_array_bytes(self):
+        census = self.result["census"]
+        self.assertIn("Probe:3:0", census)
+        self.assertIn("System.Byte[]:1:100", census)
+        self.assertEqual(census[0], "Probe:3:0")
 
     def test_budget_truncates_without_inventing_a_path(self):
         self.assertIs(self.result["budget_truncated"], True)
