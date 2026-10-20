@@ -17883,3 +17883,66 @@ registration change follows. Current game sources, GUIDs and rebuild
 membership are unchanged. Next observe startup/foreground/surface state on
 the same b423 APK before changing the engine or fixture. Audio remains
 unavailable and all composed-audio runtime gates remain closed.
+
+
+## J822 — Native Siren snapshots expose an out-of-range selected egg
+
+2026-10-20. Hypothesis: J819's cadence correction permits the accepted J815
+read-only target witness to distinguish an unavailable tracker from a rejected
+source egg. Reuse the accepted `107718f8…` game APK and the reviewed R4 dispatcher;
+no runtime source, tracker configuration, source egg, damage, profile or input
+budget changes. This remains the narrow Siren gameplay diagnostic exception to
+the alpha session's generic controls/playtest-tooling ownership. J815 records the
+prior-art and exact-original Huntress API investigation; the original tracker and
+ordinary skill states remain authoritative.
+
+The adopted-storage Main attempt
+`work/experiments/siren-native-continuation/20261020T193028.078931Z/` reaches
+Ship Graveyard after three original exits, registers all 12 native eggs in the
+original Listening encounter and arms the diagnostic input. The stale-clock
+refusal does not recur. The host stops after the existing 180-second source-stage
+budget because native encounter start and exact boss identity are not both
+observed. Total host time is 672.644 s. This is assisted execution, not ordinary
+combat or encounter acceptance.
+
+Both bounded eligibility snapshots succeed without a capture error. At the first
+visible-primary mismatch, the selected source egg is 167.098633 m from the aim
+origin, beyond the live native Huntress tracker's 60 m limit. Its measured aim
+cone, line of sight, active collider/hurtbox, live health and global bullseye
+membership pass. The cached native target is a different nearby enemy at
+39.895134 m, inside the measured native range and cone. After 0.500092 s, the
+same selected egg is 168.522125 m away and the native target is null. These are
+before-current-frame-aim-write samples with unknown native cache age; neither
+establishes every team/search filter or a native tracker defect.
+
+The final report records 5,388 tracker samples: zero selected-egg matches,
+31 different identified targets and 5,357 null targets. The player stays near the
+entry area while the existing navigation repeatedly recovers; its selected egg
+remains distant. Visibility alone is therefore insufficient to qualify the
+ordinary primary request. The next change must address the actual selection /
+approach contract, preserving the original tracker, skill states and damage.
+Range explains rejection at the sampled instants; it does not by itself explain
+why navigation failed to close the distance.
+
+The host removes the selector, force-stops the app and verifies display sleep,
+with no cleanup errors. Applied runs remain 13. The final source encounter/input
+reports are still active and not cleaned: process cleanup is not native encounter
+teardown evidence. A fresh selected-device query independently verifies the game
+APK still hashes to `107718f8…`, the isolated audio package is absent and Main's
+display is asleep. No action targets the alpha device or spare.
+
+Evidence SHA-256:
+
+- `summary.json`: `586b7272fbaaf6e812578dffffd9b7dba212e2f40393c126e441b8e85eb5ee17`.
+- `final-report.json`: `01174835e590feca937d82321495754111fdea8c42366e07c31c2433dbe12524`.
+- `siren-entry-report.json`: `5853a35c0e50245473beead9cee713d4ccdf9b308b7b3a35058cdc22aa4570a0`.
+- `cleanup.json`: `50f79eb8d6dbbf42b7c9747dc4a00ec66e9362c6d3869576f428714dec0e1016`.
+- Fresh package/game/sleep query support:
+  `work/coordination/codex-audio-message-main-root-r3/`; package-absence receipt
+  `9105f73055110a6122fed33778de8e15374244a1a65e336996351fe381391518`.
+
+Host preflight passes for accepted input `6af7ed94…`. No build, install, new
+baseline or shipped runtime behavior is introduced by this checkpoint. Moon and
+finale remain manual only. Revisit after a source-backed movement/selection
+change or a measured closer eligible egg; do not extend the 180-second budget or
+force native targeting to manufacture success.
