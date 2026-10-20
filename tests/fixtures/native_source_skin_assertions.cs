@@ -22,6 +22,7 @@ static class AdapterContractTests
         animator.runtimeAnimatorController = new RuntimeAnimatorController();
         animator.avatar = new Avatar();
         animator.isInitialized = true;
+        animator.layerCount = 1;
         var body = gameObject.AddComponent<CharacterBody>();
         body.skinIndex = 4;
         body.modelLocator = gameObject.AddComponent<ModelLocator>();
@@ -260,6 +261,86 @@ static class AdapterContractTests
                   adapter.GetType().GetField("selectedAvatarSnapshot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(adapter) == null,
               "owner teardown clears snapshot references without destroying native controller/avatar objects");
     }
+    static void TestBoundedVisualSnapshotIsReadOnly()
+    {
+        var adapter = Prepare(out var go, out var model, out var skin, out var renderer, out var source);
+        skin.CompleteNativeSkin(4);
+        var animator = go.GetComponent<Animator>();
+        var cameraObject = new GameObject("Nova diagnostic camera");
+        var camera = cameraObject.AddComponent<Camera>();
+        cameraObject.AddComponent<SceneCamera>();
+        renderer.name = "Huntress body mesh";
+        renderer.enabled = false;
+        renderer.isVisible = false;
+        renderer.sharedMaterials = new[] { source, null };
+        renderer.getSharedMaterialsCalls = 0;
+        model.visibility = VisibilityLevel.Invisible;
+        model.invisibilityCount = 1;
+        bool originalForceUpdate = model.forceUpdate;
+        int originalCopies = GetReport(adapter).materialCopiesCreated;
+
+        adapter.CaptureNativeVisualState(camera, animator);
+        var report = GetReport(adapter);
+        var visual = report.visual;
+        Check(visual != null && visual.captured && visual.modelExists && visual.modelInstanceId == model.GetInstanceID(),
+              "visual capture records the exact selected native model");
+        Check(visual.visibility == "Invisible" && visual.invisibilityCount == 1 && visual.forceUpdate == originalForceUpdate,
+              "visual capture reads visibility and blink counter without changing native state");
+        Check(visual.cameraExists && visual.cameraHasSceneCamera && !visual.cameraHasRig,
+              "owned camera association records SceneCamera presence and missing native rig");
+        Check(visual.animatorInstanceId == animator.GetInstanceID() && visual.animatorInitialized && visual.animatorStateCaptured && visual.animatorLayerZeroStateHash == 42,
+              "initialized native Animator state is captured at the bounded report point");
+        Check(visual.capturedRendererCount == 1 && visual.renderers[0].exists && !visual.renderers[0].enabled &&
+                  visual.renderers[0].sampledMaterialCount == 1 && !visual.renderers[0].materialSlotCountKnown &&
+                  visual.renderers[0].materialSlotCount == -1 && visual.renderers[0].materialsTruncated &&
+                  visual.renderers[0].materialIdentities.Length == 1 && renderer.getSharedMaterialsCalls == 0,
+              "renderer evidence samples only the first shared material without unbounded list enumeration");
+        Check(visual.renderers[0].rendererRecordMaterialIdentity.Contains("Material") && visual.renderers[0].ignoreOverlays,
+              "native renderer-record material and overlay metadata are captured separately from live slots");
+        Check(!renderer.enabled && model.visibility == VisibilityLevel.Invisible && report.materialCopiesCreated == originalCopies,
+              "capture does not enable renderers, change visibility, or alter material ownership");
+
+        var slots = new Material[10];
+        for (int i = 0; i < slots.Length; i++)
+            slots[i] = new Material("slot " + i);
+        renderer.sharedMaterials = slots;
+        model.baseRendererInfos = new[] { model.baseRendererInfos[0] };
+        renderer.getSharedMaterialsCalls = 0;
+        adapter.CaptureNativeVisualState(camera, animator);
+        Check(!report.visual.renderers[0].materialSlotCountKnown && report.visual.renderers[0].materialSlotCount == -1 &&
+                  report.visual.renderers[0].materialsTruncated && report.visual.renderers[0].materialIdentities.Length == 1 &&
+                  renderer.getSharedMaterialsCalls == 0,
+              "large material slot arrays are not enumerated by visual capture");
+
+        var many = new CharacterModel.RendererInfo[40];
+        for (int i = 0; i < many.Length; i++)
+        {
+            var child = new GameObject("bounded renderer " + i);
+            var childRenderer = child.AddComponent<Renderer>();
+            many[i] = new CharacterModel.RendererInfo { renderer = childRenderer, defaultMaterial = source };
+        }
+        model.baseRendererInfos = many;
+        adapter.CaptureNativeVisualState(camera, animator);
+        Check(report.visual.capturedRendererCount == 32 && report.visual.omittedRendererCount == 8 &&
+                  report.visual.renderers.Length == 32,
+              "renderer evidence is capped at 32 records with explicit truncation count");
+
+        UnityEngine.Time.throwFrameCount = true;
+        adapter.CaptureNativeVisualState(camera, animator);
+        UnityEngine.Time.throwFrameCount = false;
+        Check(report.visual != null && !report.visual.captured &&
+                  report.visual.captureError.Contains("synthetic Unity frame read failure"),
+              "Unity read failure is caught and published as a partial diagnostic snapshot");
+        UnityEngine.Time.throwFrameCount = false;
+        adapter.CaptureNativeVisualState(camera, animator);
+        var lastLiveVisual = report.visual;
+        int lastLiveSequence = lastLiveVisual.captureSequence;
+        adapter.RecordDisplayDeactivated();
+        CallPrivate(adapter, "OnDestroy");
+        Check(ReferenceEquals(report.visual, lastLiveVisual) && report.visual.captured &&
+                  report.visual.captureSequence == lastLiveSequence && report.displayDeactivated && report.ownerDestroyed,
+              "teardown preserves the last complete pre-disposal visual sample without Unity reads after destruction");
+    }
     public static int Main()
     {
         TestOptInSelectionPolicy();
@@ -269,6 +350,7 @@ static class AdapterContractTests
         TestActiveInventoryDisplayOwnerPredicate();
         TestRetirementWaitsForNativeRendererRelease();
         TestBodyLifetimeCleanupUnsubscribesAndReleasesCopies();
+        TestBoundedVisualSnapshotIsReadOnly();
         Console.WriteLine("PASS: " + assertions + " adapter/selection/lifecycle/report assertions");
         return 0;
     }

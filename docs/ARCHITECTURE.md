@@ -901,6 +901,18 @@ report, read against the journal entry that defines what it must show.
 | Shaders and presentation | `AndroidMaterialPresentation`, `AndroidNativeDeferredPresentation`, `Android*Presentation.shader` (18 files) | **own types** (static) | `Begin` → `Finish` | `test_shader_bindings.py`, `test_shader_metadata.py`, `test_pc_draw_export.py` |
 | Developer controls | `DebugAccelerationBoundary` ([debug-acceleration.md](debug-acceleration.md)) | nested `DebugAccelerationSession` (`IDisposable`) **own type** holds the body, saved god mode, ownership flag, charge scan/callback set and grant inventory; `debugPanel` stays shared with IntegratedWorld's graphics button; sticky "assisted" flags stay in the coordinator report | `PrepareDebugAcceleration` (calls `DebugAccelerationSession.Prepare`) → `CleanupDebugAcceleration` (calls `Dispose`; owner retained) | `test_debug_acceleration.py` |
 
+For the explicitly selected native-skin diagnostic only,
+`NovaDiagnosticDisplay.CaptureNativeSourceSkinReport` asks the existing lifecycle
+owner for a read-only visual sample at the five-second report-save cadence.
+It copies selected-model visibility/invisibility, Animator state and identity,
+the owned camera's SceneCamera/rig association and at most 32 renderer records.
+Only the first shared material is sampled; total slot count remains unknown.
+Exceptions publish a partial diagnostic instead of escaping report saving.
+No renderer, material, camera or visibility state is changed. The report retains
+the last complete pre-disposal sample without retaining Unity object references;
+teardown observations remain separate. The production-owner synthetic host
+contract covers boundedness, read failures and preservation of native state.
+
 `AutomaticSpawnBoundary` captures the owned body's live, source-enabled root
 state machines before callback isolation. Only integrated-world startup restores
 those machines after the existing selected-skill setup, counting newly enabled

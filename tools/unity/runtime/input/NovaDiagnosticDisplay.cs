@@ -31,7 +31,10 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     public void CaptureNativeSourceSkinReport()
     {
         if (nativeSourceSkinLifecycle)
+        {
             nativeSourceSkinLifecycle.CaptureNativeState();
+            nativeSourceSkinLifecycle.CaptureNativeVisualState(camera, nativeAnimator);
+        }
     }
     public void EnableNativeSourceAnimatorAfterSkinReady()
     {
