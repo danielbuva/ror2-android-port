@@ -9,6 +9,7 @@ using UnityEngine.Rendering;
 // One-shot exact-editor oracle/fixture; never used by the game build.
 public static class ContentFixtureBuilder
 {
+    [Serializable] public sealed class BuildReceipt { public string unity; public string source_commit; public string build_report_guid; }
     static string Output(string name) { return Path.GetFullPath(Path.Combine(Application.dataPath, "../..", name)); }
 
     public static void Check()
@@ -46,5 +47,8 @@ public static class ContentFixtureBuilder
         EditorSceneManager.SaveScene(scene, "Assets/Fixture.unity");
         var report = BuildPipeline.BuildPlayer(new[] { "Assets/Fixture.unity" }, Output("phone-content-fixture.apk"), BuildTarget.Android, BuildOptions.Development);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Fixture build failed: " + report.summary.result);
+        var receipt = new BuildReceipt { unity = Application.unityVersion, source_commit = Environment.GetEnvironmentVariable("ROR2_PHONE_BUILD_SOURCE"), build_report_guid = report.summary.guid.ToString() };
+        string attempt = Path.GetDirectoryName(Environment.GetEnvironmentVariable("ROR2_PHONE_ORACLE_REPORT"));
+        File.WriteAllText(Path.Combine(attempt, "player-build.json"), JsonUtility.ToJson(receipt, true));
     }
 }
