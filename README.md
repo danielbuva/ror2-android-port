@@ -100,6 +100,9 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action phone-content-check` | Experimental: check generated --target PROJECT in the exact editor under the primary checkout build mutex; no game project or device access. |
+| `./dev prototype --action phone-content-build` | Experimental: build committed authored --target PROJECT as a separate ARM64 IL2CPP/Vulkan fixture APK under the primary checkout build mutex; no install or game build changes. |
+| `./dev prototype --action phone-content-fixture` | Experimental: generate an authored TextAsset bundle and isolated exact-editor fixture under work/rebuild/phone-content; no game input, build, install or runtime change. |
 | `./dev prototype --action rebuild-step` | Rebuild --step assemblies\|shader-pipeline\|composition\|project-inputs\|catalog-closure\|dependencies\|stage-variants\|source-scenes\|build-entries\|runtime-sources\|importer-identities\|validate-bindings\|unity-build in order under work/rebuild/<input_id>/lab-project (--dest overrides); --compare-only reads an existing destination. |
 | `./dev prototype --action assembly-transforms-check` | Rebuild the three transformed plugins from originals in disposable .local scratch and verify hashes; --work-dir selects read-only local inputs. |
 | `./dev prototype --action inherited-store-capture` | Capture exactly the ledger's inherited asset/meta pairs into work/inherited-store/<input_id>; refuse hash or identity drift. |

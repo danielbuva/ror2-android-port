@@ -14,6 +14,15 @@ for phone-only delivery while retaining the desktop workflow as fallback; no
 replacement runtime or build pipeline is implemented. Public-input bootstrap,
 performance equivalence and device acceptance remain open.
 
+Phone build **support**: `scripts/lab/phone_content.py` owns generation and
+source/bundle hash checks for an isolated authored TextAsset fixture.
+`tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
+separate player build; `ContentFixture.cs` copies, loads, checks and unloads
+the bundle, then writes a private report. The three `phone-content-*` prototype
+actions stage/check/build only this fixture under the primary checkout mutex.
+See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
+owner or whole-catalog build calls this support path.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

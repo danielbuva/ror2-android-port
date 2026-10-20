@@ -136,6 +136,32 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-content-check",
+        "phone_content",
+        "run_editor",
+        {},
+        "current",
+        "Experimental: check generated --target PROJECT in the exact editor under the primary checkout build mutex; no game project or device access.",
+        handler=_target,
+    ),
+    Action(
+        "phone-content-build",
+        "phone_content",
+        "run_editor",
+        {"build": True},
+        "current",
+        "Experimental: build committed authored --target PROJECT as a separate ARM64 IL2CPP/Vulkan fixture APK under the primary checkout build mutex; no install or game build changes.",
+        handler=_target,
+    ),
+    Action(
+        "phone-content-fixture",
+        "phone_content",
+        "stage_action",
+        {},
+        "current",
+        "Experimental: generate an authored TextAsset bundle and isolated exact-editor fixture under work/rebuild/phone-content; no game input, build, install or runtime change.",
+    ),
+    Action(
         "rebuild-step",
         "rebuild",
         "rebuild_action",

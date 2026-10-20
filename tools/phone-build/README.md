@@ -1,0 +1,40 @@
+# Isolated phone build probes
+
+These authored fixtures test build stages for ADR-002. They read no game files
+and do not change the working Android project. Generated outputs, supplied
+Unity tools, dependency archives, signing material and raw evidence stay ignored.
+This is experimental tooling, not a supported phone installer.
+
+`ConverterFixture.cs` supplies a small arithmetic assembly for the exact local
+IL2CPP converter. A build-tool .NET host is independent of the game's native
+IL2CPP runtime. Compare all generated C++ and metadata against the desktop
+baseline. A shell test does not qualify an app sandbox or a complete player.
+
+```sh
+./dev prototype --action phone-content-fixture
+./dev prototype --action phone-content-check --target <generated-project>
+./dev prototype --action phone-content-build --target <generated-project>
+```
+
+The generator constructs a UnityFS archive and Android serialized file from
+authored values and UnityPy's public native type schemas. It reads no editor
+output or game-derived template. The two types are AssetBundle and TextAsset.
+Each generated project binds source and bundle hashes. Staging refuses an
+existing attempt, checks reject source drift, and builds require committed
+fixture sources. The runner locates the primary checkout through Git's common
+directory and acquires its existing persistent build mutex. A contended lock
+refuses promptly. No existing editor is stopped or reused.
+
+The exact-editor check independently loads the bundle, reads the expected
+TextAsset and verifies its destruction on unload. The separate player uses
+`dev.ror2lab.phonecontentfixture`, ARM64 IL2CPP and Vulkan. It copies the bundle
+from StreamingAssets and writes `phone-content-report.json` in its own
+persistent data directory. Before installation, require explicit alpha device
+selection, fresh capacity/storage checks and package absence. Retain ownership,
+actual APK hash, package placement and runtime data backing. Remove only the
+owned disposable fixture and put the display to sleep.
+
+This tiny contract establishes no mesh, texture, material, animation, script
+binding, shader compilation, catalog, game or performance acceptance. The larger
+fixture and owner-build gates remain in
+[phone-owner-build.md](../../docs/phone-owner-build.md).
