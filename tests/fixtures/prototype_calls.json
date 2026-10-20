@@ -210,5 +210,50 @@
     "exit": null
   },
   "session-memory-check": {"calls": [{"module": "session_memory_check", "function": "check_session_memory", "args": [], "kwargs": {}}], "effects": [], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_memory_check.check_session_memory\"\n}\n", "exit": null},
-  "session-memory-root-check": {"calls": [{"module": "session_memory_check", "function": "check_session_memory", "args": [], "kwargs": {"root_walk": true}}], "effects": [], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_memory_check.check_session_memory\"\n}\n", "exit": null}
+  "session-memory-root-check": {"calls": [{"module": "session_memory_check", "function": "check_session_memory", "args": [], "kwargs": {"root_walk": true}}], "effects": [], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_memory_check.check_session_memory\"\n}\n", "exit": null},
+  "phone-content-fixture": {
+    "calls": [
+      {
+        "module": "phone_content",
+        "function": "stage_action",
+        "args": [],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  },
+  "phone-content-check": {
+    "calls": [
+      {
+        "module": "phone_content",
+        "function": "run_editor",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  },
+  "phone-content-build": {
+    "calls": [
+      {
+        "module": "phone_content",
+        "function": "run_editor",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {
+          "build": true
+        }
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  }
 }

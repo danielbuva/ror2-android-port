@@ -145,6 +145,9 @@ class PrototypeActionTests(unittest.TestCase):
             {name for name, entry in actions.ACTIONS.items() if entry.status == "current"},
             {
                 "rebuild-step",
+                "phone-content-fixture",
+                "phone-content-check",
+                "phone-content-build",
                 "assembly-transforms-check",
                 "asset-transforms-check",
                 "authored-additions-check",

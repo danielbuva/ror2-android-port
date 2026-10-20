@@ -18498,7 +18498,10 @@ The clone-local `./dev preflight --host-only` refuses missing game inventory;
 `./dev doctor --device <alpha> --json` remains unready for the full game
 bootstrap. These refusals remain evidence and are not relabelled as passes.
 The isolated fixture's source/hash checks, exact-editor check/build and device
-contract pass independently. Host tests, Ruff, README/journal freshness,
+contract pass independently. First fresh-clone CI refuses the three missing
+CLI action expectations; update the independent dispatch fixture and current
+action list, then rerun it. The failed CI log remains preserved. Host tests,
+Ruff, README/journal freshness,
 whitespace, staged privacy and manual provenance review qualify the tooling
 checkpoint; final CI receipts stay private under the evidence directory.
 PORTING_STATE replaces its alpha installation facts while preserving the
