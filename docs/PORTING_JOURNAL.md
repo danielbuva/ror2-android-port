@@ -19491,3 +19491,111 @@ pipeline under matched pins/workloads. Preserve Route A, the working Android
 renderer/runtime and desktop fallback. Revisit when assembly/source/metadata,
 converter host/options, compiler/linker/sysroot or engine/content contracts change.
 This generic authored probe adds no RoR2-specific runtime or reconstruction.
+
+## J844 — Reach Ship Graveyard but retain the unarmed Siren navigation observation
+
+2026-10-20. Hypothesis: J825's bounded, read-only recorder can distinguish
+route requests from applied input and motor response during the existing
+Siren approach. Use J840's frozen APK
+`8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770`,
+source `a4664d702b6910f905d529ced5a0e6d5e5fdbeda`, with the same ten
+Siren-source hashes. The prior editor guard is a source-continuity witness,
+not a new editor acceptance for this player. J840 independently supplies both
+default checks. No runtime source changes for this attempt.
+
+The first Root wrapper refuses before wake, selector or launch because it
+calls a nonexistent device helper. Preserve that pre-launch failure under
+`work/coordination/codex-siren-8357-device-root-r1/`; the separate corrected
+wrapper uses the ownership receipt's freshly verified package path. Both
+wrappers require the exact assigned device, adopted-storage policy, frozen
+APK and manifest, live Root claim and absence of Claude leases. No other
+device is used. The observation retains the existing 180-second source-stage
+limit and stops before autonomous Moon progression.
+
+The corrected attempt is
+`work/experiments/siren-native-continuation/20261020T222420.007688Z/`.
+Huntress completes three original stage exits and reaches Ship Graveyard.
+After 666.066 host seconds, the run reports the existing first failure:
+native Siren encounter start and exact boss identity are not both observed
+within the source-stage input budget. Across 7,091 selected-egg samples over
+178.000671 seconds, the active native tracker never matches that egg;
+137 samples identify another target and 6,954 identify none. Two eligibility
+snapshots place the selected visible egg at 170.464752 and 168.570602 m,
+outside the observed 60 m tracker range. This does not establish a tracker bug.
+
+The navigation observation remains unstarted, with zero captured samples;
+its eight default array entries are not telemetry. Source inspection finds
+the additional `navigationObjectiveStalledSeconds > 6` trigger. The final
+observed value is 0, with 17 navigation recoveries. The navigator can reset
+its progress clock after 0.5 m improvement toward its current destination,
+so intermittent route progress can suppress this recorder while the egg
+remains distant. The complete trigger history is absent; this is a supported
+trigger-policy explanation, not proof of every earlier operand or the route's
+underlying fault. Preserve the distinction between objective progress distance
+170.053497 m and current waypoint progress distance 7.055945 m.
+
+Root result SHA-256
+`c643c3063517a534c86e2fc1960c8619bfa687b01b27053519096f85e84ddf6b`
+is under `work/coordination/codex-siren-8357-device-root-r2/`; the attempt
+preserves the final report, exact navigation export and same-process log.
+The profile is unchanged at 13 applied runs. The selector is removed, the
+game is stopped and display sleep is verified. Forced stop does not prove
+native encounter teardown; that terminal gate remains unobserved. J840's
+installed/default-qualified player remains current.
+
+Prior art remains J825's pinned DebugToolkit player-ownership observation
+technique, identified in `community-prior-art.md`; it provides no navigation
+policy. Revisit with the existing eight-sample/eight-second recorder armed
+after a continuous same-egg out-of-range interval, retaining stall as observed
+data. Review and host-test that read-only change before another player build;
+do not alter movement tolerance, tracking range, combat or the encounter from
+these missing samples. No new runtime, reconstruction or replay input is added
+by this experiment.
+
+## J847 — Arm the bounded Siren approach recorder without requiring a stall
+
+2026-10-20. J844 reaches the selected egg's approach but captures no navigation
+samples. Its final objective-stall value is zero despite the egg remaining
+outside native tracker range. Hypothesis: require the existing continuous
+same-egg range mismatch, and observe stall as data, so intermittent forward
+progress cannot suppress all diagnostic evidence.
+
+`SirenNavigationObservationPolicy` now arms after 0.5 seconds of a valid same
+selected egg outside the active native tracker's range. It no longer requires
+six seconds of objective stall. `SirenEggDiagnosticInput` copies objective
+stall into each queued observation request; trigger and sample values carry
+explicit finite/unavailable flags. The recorder remains default-off, read-only
+and one-shot, with eight samples/eight seconds, later fixed-tick pairing,
+identity/clock/dependency/manual-yield guards and the existing teardown.
+Movement, aiming, skills, tracker range and encounter state are unchanged.
+
+The initial host draft passes its recorder harness but independent review
+finds three old six-argument calls in the actual exact-editor fixture. Preserve
+that unapplied failure. The corrected draft updates the fixture and compiles
+the complete current 111-source runtime plus six support/fixture sources
+against 264 pinned references, including the actual input owner, world context
+and exact-editor fixture. Compile exit is zero. The fixture is compiled, not
+executed. The production-declaration host test also passes after Root
+integration; it covers progressing zero stall, unavailable stall, identity and
+tracker loss, invalid/rolled-back clocks, exact request pairing, sample/window
+bounds and cleanup.
+
+Candidate patch SHA-256
+`97129a41214c1febd9d5ca2284bff4bcb78c46004964e0c69ddc664ca9093e69`
+and full compile evidence are under
+`work/coordination/siren-8357-navigation-triage/r3/`.
+The independent review closes the fixture-compile hold at
+`work/coordination/siren-8357-navigation-triage-review/r3/`, review SHA-256
+`af023ad77b25bd406cd17caedb9f8d2309e956bb1c7006c064026905bb3c2eea`.
+Root's actual integrated host test is retained under
+`work/coordination/codex-siren-observation-integration-root-r1/`.
+J825's pinned DebugToolkit ownership observation remains the prior-art basis;
+no community navigation implementation is copied.
+
+This is a source checkpoint before a new player build. It has no new APK,
+editor execution, device trace or encounter acceptance. J840's frozen 8357db8b
+player stays installed/default-qualified. Revisit on the next default-qualified
+player with this exact source and a bounded Siren trace; do not infer the
+underlying route fault before the paired samples exist. R8/R9 replay the two
+changed authored runtime sources and updated exact-editor fixture. No new
+required local input or build-time source replacement is introduced.
