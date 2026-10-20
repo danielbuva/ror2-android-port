@@ -1,7 +1,7 @@
 # Porting state
 
-Last updated 2026-10-20 after **J797** (primary-witness player passes both defaults;
-the stock MUL-T retry identifies a live locator with a null primary slot).
+Last updated 2026-10-20 after **J798** (the current native Normal attempt remains
+live at its deadline; default acceptance remains J797).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -87,8 +87,10 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
 - Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
 - Native first-stage loss/restart passes on J752's APK in J753, including genuine
-  defeat, strict cleanup and a healthy same-process second session. Native stage
-  transport, repeated long sessions and ordinary difficulty remain open.
+  defeat, strict cleanup and a healthy same-process second session. J798's current
+  native Normal attempt remains live without error at its 900 s host deadline;
+  no defeat or restart is accepted. Native stage transport, repeated long sessions
+  and ordinary difficulty remain open.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across
   sessions. J773 releases completed session references. J775 and J787 prune
   destroyed entries from original static registries (depossession, item display

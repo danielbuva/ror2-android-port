@@ -16346,7 +16346,8 @@ placement policy. Its bootstrap/sync pass and the plain control reaches
 applied runs unchanged. Final-report SHA-256:
 `31a49e27fe1e5c573d125e49bcdfa87dc1c937e23d31784e59ed2f68dbfca621`.
 Its separate stock four-slot MUL-T trial then fails at observer sequence 1,042,
-world time 180.177673 s. The preserved first operand is
+Unity realtime 180.177673 s (the report world clock is 18.033737 s). The
+preserved first operand is
 `skillLocator.primary:clr-null`, with live body and live SkillLocator; machine,
 state and stock are correctly not read after the unavailable prerequisite.
 The native loadout inventory still records five selected live components, which
@@ -16372,3 +16373,59 @@ work/experiments/baseline/{20261020T123313.132557Z,
 work/experiments/survivor-check/20261020T124928.350849Z/Toolbot/.
 This entry changes no runtime/rebuild source; R8 replay requirements remain
 J796's three existing authored owners. No new required local build input is added.
+
+
+## J798 — Bound a native Normal session without observing defeat
+
+Date: 2026-10-20. Hypothesis: a 900 s host observation budget leaves room for
+native defeat and same-process restart after the earlier Thor retry reached
+its restart tap at 566.038 s of a 600 s deadline. This changes only the private
+host observation budget and menu/receipt attribution, not gameplay timings.
+
+The Root runner pins J797's APK 40299fc59da8d6553bbd6681a4515ad4281b4ef6bcd33ac75012dce3c7a952b1,
+source c191ddc and the accepted two-mode baseline status before device access.
+It validates the selected owned artifact, uses the native first-stage lifecycle
+marker, selects Commando and proves Normal from the matching current first-live
+session. The recovered menu already holds Normal, so no difficulty tap is sent.
+All five gameplay debug assists are false; automatic input remains explicitly
+assisted and permanent progression is excluded. No profile or game source is
+edited to force an outcome.
+
+At the 900 s host deadline, session 1 remains in integrated-world-playing at
+world time 742.843262 s, with health 162.4/209, 55 kills, 16 live enemies,
+1,703 observed damage events and 611 projectiles. There is no first failure or
+collected runtime error. The launch-to-first-live interval is 150.903 s; this
+is host startup time, not a frame-rate measurement. No player defeat, completed
+current-launch session or restart input is observed. A result field named
+restarted_session contains the latest session-1 report and does not establish a
+second session. Both strict terminal gates correctly remain false.
+
+The existing runner removes its selector, stops the owned game and sleeps the
+selected display. The profile's live applied-run count remains 13; there is no
+completed-session profile result to accept. Classify this as deadline before
+defeat, not a runtime first failure or a cleanup regression. The trace does not
+sample enough incoming-damage/health history to explain survival. Extending the
+timeout again is not justified without a new hypothesis and observation.
+
+The earlier Thor first-live report does prove Normal. Its old wrapper's
+normal_verified=false field was an attribution error: it read the empty
+objective of the later session-2 initialization report. That attempt validates
+session-1 defeat and sends a restart tap, but still has no live second session
+or current-launch completed-session receipt at its deadline. Different APK,
+device, profile and duration prevent a causal comparison. J753 remains the
+accepted native loss/cleanup/restart evidence on its own earlier APK.
+
+Result SHA-256:
+`be70a3ce4b748dbc7da8e598b9010639d015dfddca67203d9c5ac1e855afb51e`.
+First-live report SHA-256:
+`92b46b9573ae2c9a1c43afcd1b6c38d5c4b42bd0efc8fd7acb3293ac9be27749`.
+Root terminal validation SHA-256:
+`7b96894e47ee6b7430f2030225f7296b54e1cd20a310168b91e300ed36555009`.
+Evidence is in the selected default device's ignored session-cleanup directory
+`20261020T124700.970594Z/`; host bindings and interpretation are under
+work/coordination/{codex-4029-native-loss-normal-root-r1/,
+native-loss-normal-retry-r2/,native-loss-4029-normal-first-failure-triage/}.
+The private classification is reviewed against the actual first-live and latest
+reports, preserving prior-session files as historical only. J797's operand
+clock wording is corrected to distinguish Unity realtime from world elapsed.
+No runtime, pipeline, required local build input or rebuild source changes.
