@@ -59,6 +59,16 @@ code, permissions or network. Setup and device cleanup are described in its
 two launches, report/backing collection and ownership-checked teardown through
 the current experimental `phone-host-check` action.
 
+`phone_native.py` owns experimental **support** for replaying the authored
+content fixture's native graph. `phone-native-fixture` verifies an explicit
+project/APK request, copies supplied runtime/NDK and generated source inputs
+unchanged, regenerates only include wrappers from their ordered dependency
+descriptions, and records structured compile/link arguments plus input hashes.
+Its standalone Android driver checks those hashes, builds into a new output
+directory and retains each command/log and the first failure. Clang/LLD host
+changes are explicit; desktop stripping/code generation and private Unity
+inputs remain dependencies. No game build uses this path.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

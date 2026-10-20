@@ -300,5 +300,20 @@
     "effects": [],
     "stdout": "",
     "exit": null
+  },
+  "phone-native-fixture": {
+    "calls": [
+      {
+        "module": "phone_native",
+        "function": "stage_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
   }
 }

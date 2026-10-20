@@ -151,6 +151,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "phone-apk-fixture",
                 "phone-package-check",
                 "phone-host-check",
+                "phone-native-fixture",
                 "assembly-transforms-check",
                 "asset-transforms-check",
                 "authored-additions-check",

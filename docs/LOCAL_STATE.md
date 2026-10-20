@@ -52,6 +52,16 @@ required local replay support; no game build reads it.
 `phone_host_check` generates private device results under
 `work/experiments/phone-host/`; its ignored request binds the exact APK path/hash.
 
+`phone_native.stage_action` generates `work/rebuild/phone-native/<attempt>/`
+from an explicit authored fixture project/APK/hash request. It copies supplied
+SDK/runtime source, the NDK target headers/libraries, generated C++ and its build
+graph; all remain private owner inputs. The tracked generator emits relative
+include wrappers, a structured plan, source hashes and a stage receipt. The
+private `native-on-android.py` replay adapter under the phone proof root binds
+the existing device/workspace receipt, checks capacity and stages those inputs;
+its Android driver creates new output/log directories without editor mutation.
+This is required local experimental replay support, not a game-build input.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.

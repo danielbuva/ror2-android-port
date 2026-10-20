@@ -136,6 +136,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-native-fixture",
+        "phone_native",
+        "stage_action",
+        {},
+        "current",
+        "Experimental: stage only the hash-bound authored content fixture's native graph from --target REQUEST.json, supplied Unity runtime and original NDK target inputs. No device or game build access; desktop stripping/code-generation remain explicit inputs.",
+        handler=_target,
+    ),
+    Action(
         "phone-host-check",
         "phone_host_check",
         "check_action",
