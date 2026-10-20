@@ -100,6 +100,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action phone-host-check` | Experimental: explicit --device and hash-bound --target REQUEST.json install only the authored sandbox fixture, verify installed native execution and writable-code refusal twice, then remove the owned package and sleep the display. |
 | `./dev prototype --action phone-package-check` | Experimental: explicit --device and hash-bound --target REQUEST.json check the separate phone content fixture, candidate refusal, two native reload cycles, increasing-version data retention and owned cleanup; never installs the game. |
 | `./dev prototype --action phone-apk-fixture` | Experimental: repackage only the authored content fixture from hash-bound --target REQUEST.json; writes a new unsigned APK, requiring later alignment/signing. No device or game build access. |
 | `./dev prototype --action phone-content-check` | Experimental: check generated --target PROJECT in the exact editor under the primary checkout build mutex; no game project or device access. |

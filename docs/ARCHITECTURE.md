@@ -50,6 +50,9 @@ background check of PackageManager-installed native execution and a writable
 copy's refusal, then writes `files/host-report.json`. It uses no Unity/game
 code, permissions or network. Setup and device cleanup are described in its
 [README](../tools/phone-build/host/README.md); no game build calls it.
+`phone_host_check.py` owns its explicit-device, hash-bound installation,
+two launches, report/backing collection and ownership-checked teardown through
+the current experimental `phone-host-check` action.
 
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the

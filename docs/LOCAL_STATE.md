@@ -44,6 +44,8 @@ root copies inputs unchanged, binds hashes and invokes the tracked Android
 driver inside the existing receipt-owned shell workspace. Its per-attempt
 build outputs, encrypted disposable key and reports remain ignored. This is
 required local replay support; no game build reads it.
+`phone_host_check` generates private device results under
+`work/experiments/phone-host/`; its ignored request binds the exact APK path/hash.
 
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads

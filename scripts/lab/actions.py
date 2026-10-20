@@ -136,6 +136,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-host-check",
+        "phone_host_check",
+        "check_action",
+        {},
+        "current",
+        "Experimental: explicit --device and hash-bound --target REQUEST.json install only the authored sandbox fixture, verify installed native execution and writable-code refusal twice, then remove the owned package and sleep the display.",
+        handler=_target,
+    ),
+    Action(
         "phone-package-check",
         "phone_package_check",
         "check_action",

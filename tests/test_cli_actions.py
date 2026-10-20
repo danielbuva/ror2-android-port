@@ -150,6 +150,7 @@ class PrototypeActionTests(unittest.TestCase):
                 "phone-content-build",
                 "phone-apk-fixture",
                 "phone-package-check",
+                "phone-host-check",
                 "assembly-transforms-check",
                 "asset-transforms-check",
                 "authored-additions-check",
