@@ -13626,3 +13626,48 @@ entries 187, R8 runtime sources 130, importer identities 286, and validate-bindi
 in the throwaway checkout `.claude/worktrees/rebuild-head` as the input for the next R9.
 Revisit: run R9 on that destination (editor and device, operator approval). The known R9 gaps are
 `BlueNoise_R8_1.png.meta` drift (J592) and `Hidden/Compositing` (J598).
+
+## J751 — R9 from the clean gated rebuild: no new reimport error, both device checks first time
+
+Phase 2, from-scratch rebuild (run by Claude with the operator's approval; Codex paused). Hypothesis:
+R9 on the J750 destination (clean checkout of the gated `069eab7` baseline, fresh Library) builds
+an APK that passes both device checks, and leaves only the known R9 gaps. Claude held
+`work/coordination/claude-r9.lock`. The lab MCP editor was stopped through the bridge and
+restarted afterwards. Codex's idle Wwise-fixture editor was left running (R9 only refuses the
+working-project and destination editors).
+
+First attempt: refused before Unity with "Project layout missing staged .meta" for
+`SirenEggDiagnosticInput.cs`. The layout recipe pins GUIDs for Codex's new runtime sources, but
+`recipe/importer-identities.json` had no rows for 13 of them, nor for 17 new editor hosts and
+fixtures, so their importers were never placed. Unity would have minted new GUIDs for the editor
+ones. Fix (`9e7fc0d`): 13 `runtime_source` rows (GUID from the layout) and 17 explicit editor
+GUIDs, taken from the working project's importers. The importer step then renders 316
+importers byte-identically, and validate-bindings passes.
+
+R9 (run `20261019T233235.206175Z`, receipt copied to `work/receipts/rebuild-069eab7/`): 1,864 s,
+zero counted errors, `source.commit` `9e7fc0d` recorded by the J738 gate. Pass 2 reimported
+14,383 dependents in 40 layers. The only reimport error is the Sky Meadow director-weight
+message pass 1 also logs, so `new` is empty. The script audit is valid (251 missing-script
+references, equal to the working project). Gate: 2 R9 obligations, 28 deferred graphs, 316
+importers and 1,514 unity-generated files identical. `Lab.unity` is `local_ids_renumbered` and the
+two render textures are `serialized_version_moved`. One file is different:
+`BlueNoise_R8_1.png.meta`, the J592 working-project drift. No minted-folder reference.
+APK `01f2b6cb55f686aa73e5401560a0a0cc3355d523b587d012a9b60f73a51e3cb1` against the baseline
+`771fc752…`: 564 of 574 entries identical. The ten that differ: `unity_builtin_extra`
+(`Hidden/Compositing`, J598); the Burst library (embeds the longer checkout path);
+`libil2cpp.so` (same size; build-id and CRC bytes, J583); `level0` (re-saved Lab scene, same size);
+build metadata (`globalgamemanagers`, `boot.config`, `unity_app_guid`); and three signing entries.
+
+Device (baseline Nova selected explicitly, since more devices are now attached; installed in
+place on adopted storage, destination payload synced): `./dev check-baseline` passed (35.2 s on
+Lakes, `work/experiments/baseline/20261020T005215.777164Z`). `--stage-exit` passed on its first
+run, one genuine exit to Goolake with 11.3 s of next-stage play (`…20261020T005601.033860Z`).
+Restore: `771fc752…` reinstalled, default payload synced, both modes passed again (35.2 s;
+Goolake 12.6 s; `…010318.904958Z`, `…010700.793606Z`). App stopped, OLED asleep, lab editor
+restarted and connected. The destination (about 25 GB with its Library) is kept in the throwaway
+checkout `.claude/worktrees/rebuild-head` for inspection.
+
+So public source, recipes, the legitimate installation and 47 hash-pinned inputs (the 14
+inherited-store files and the provenance map's selection role aside) rebuild an APK that runs
+both standard checks. Revisit: the BlueNoise drift (re-stage the working project from the export
+form, or classify it); `Hidden/Compositing` (J598); the remaining local inputs.

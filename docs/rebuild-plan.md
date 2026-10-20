@@ -518,7 +518,9 @@ but J547 supplies a checker rather than a complete initializer. No game readines
 ## R9: isolated Unity import/build (current; not yet equivalent)
 
 Host steps (J750): from a clean checkout of a gated build commit (J738), R1–R8 and
-validate-bindings reproduce the accepted working project byte for byte (87,184 files).
+validate-bindings reproduce the accepted working project byte for byte (87,184 files). R9 on
+that destination (J751) logs no new reimport error, leaves one differing gate file
+(`BlueNoise_R8_1.png.meta`, J592), and its APK passed both device checks first time.
 
 Status (J582–J586, J592): from a fresh Library, R9 builds an APK that passed both device checks
 (J586: first time). With the Timeline pin (J584) and the layered reimport (J585) it logs no new
