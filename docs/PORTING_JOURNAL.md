@@ -18303,3 +18303,34 @@ no runtime fact. Nothing is pushed, published or sent to a tracker.
 Revisit after the user selects a route and authorizes its first bounded proof;
 resolve the alpha device assignment before any hardware work. Preserve the
 main session's runtime, packages, build mutex and rollback receipts.
+
+## J829 — Accept owner-built Route A and isolate the alpha environment
+
+2026-10-20, decision and environment inspection only. The user selects Route A
+from ADR-002: each owner supplies legitimate game files, reconstructs content
+and builds their own IL2CPP APK. ADR-001 retains architecture C; this delivery
+choice does not select its controlled-source-reconstruction architecture A.
+ADR-002 records the accepted boundary and the alpha checklist removes the open
+route decision. Runtime replacement and outward publication remain unapproved.
+
+Rebase onto current origin/main 06244fe preserves J818's gameplay/device
+handoff. Its journal number supersedes the isolated proposal's old J818, which
+moves to J820 and has its index/checklist references regenerated. The original
+proposal receipts remain local historical evidence, not current commit proof.
+
+Resolve internal Nova uniquely from the configured authorized internal-storage
+Nova profile, following J818's exclusive alpha assignment. Write an independent
+ignored work/config/local.json containing only that device in its allowlist;
+keep the legitimate game path and device settings. No main configuration or
+original installation is changed. Run ./dev doctor with that explicit serial;
+its read-only device selection, ARM64 and live storage checks pass. The overall
+doctor fails on missing clone-local AssetRipper/SteamCMD/MCP support, smoke/editor
+exercise receipts, inventory/acceptance and generated-project/checkpoint state.
+Do not copy a readiness receipt or call this isolated checkout build-ready.
+
+Evidence: work/coordination/public-alpha-route-a/doctor.json and doctor.stderr.
+The private configuration retains the actual serial and input location; public
+summaries contain neither. No install, app launch/stop, display change, Unity
+mutation, APK or payload is produced. PORTING_STATE's main device facts remain
+unchanged. Revisit the missing owner-build prerequisites through public
+producers, retaining J818's device roles and the shared build mutex.

@@ -15,3 +15,9 @@ J61 invokes condition (4): the preserved Steam binding has no compatible Android
 Historical follow-up (superseded for these bounded failures by J11–J20): the full exported closure fails IL2CPP VTable construction in Rewired_Core and Rewired_Windows, and editor Play Mode crashes through Burst/Collections. The next gate at that time was a lawful Android-capable Rewired boundary plus compatible Burst/Collections handling, followed by a repeated minimal closure build. Preserve type identities and measure the next failure. Do not begin a broad game-source rewrite to solve an unmeasured hypothesis.
 
 J430: the user approves Steam build 25475991 and its matching Unity 2021.3.45f2 (88f88f591b2e). Architecture C is unchanged; environment/toolchain.json records the current pin. Retain the old 21587608 input,33f1 editor and existing accepted APK/payload rollbacks. Updated-input host or catalog registration is separate from composed Android gameplay acceptance.
+
+2026-10-20: the user selects [ADR-002's Route A](ADR-002-public-alpha-distribution.md),
+owner-built IL2CPP APKs and locally reconstructed content, for public alpha delivery.
+This retains architecture C; it does not select the source-reconstruction
+architecture A above. Public-input bootstrap and device/gameplay gates remain open;
+no game-derived APK or payload is approved for publication.

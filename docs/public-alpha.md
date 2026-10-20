@@ -1,17 +1,17 @@
 # Public alpha checklist
 
 Open work only. Remove completed items and record their results in the journal.
-The [distribution proposal](ADR-002-public-alpha-distribution.md) awaits the user;
-[ADR-001](ADR-001-port-architecture.md) remains authoritative. This checklist
+The user accepts [owner-built Route A](ADR-002-public-alpha-distribution.md);
+[ADR-001](ADR-001-port-architecture.md) retains architecture C. This checklist
 makes no alpha-readiness claim.
 
 Decision preparation: [J825](PORTING_JOURNAL.md#j825--research-public-alpha-distribution-before-choosing-a-launcher).
 
 ## Decision and reproducibility
 
-- [ ] User selects the distribution route before launcher/runtime implementation.
-- [ ] Resolve the alpha device's authorized serial and exclusive role; select it
-      explicitly and install only an explicit alpha-built APK.
+- [ ] Qualify the isolated owner-build environment; internal Nova is alpha's
+      exclusive device per [J818](PORTING_JOURNAL.md#j818--qualify-thor-and-preserve-the-siren-guard-across-device-reassignment).
+      Select it explicitly and install only an explicit alpha-built APK.
 - [ ] Complete a public-input bootstrap with no private recipes, inherited
       workstation-only assets or analysis receipts
       ([structural blockers](execution-backlog.md#structural-cleanup),

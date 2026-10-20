@@ -1,17 +1,19 @@
-# ADR-002 proposal — Public alpha distribution
+# ADR-002 — Owner-built public alpha distribution
 
-Status: **proposed; user decision required**, 2026-10-20. Proposed amendment
-to [ADR-001](ADR-001-port-architecture.md); Architecture C remains accepted.
-This note authorizes no runtime change, launcher implementation or publication.
+Status: **accepted for Route A by the user**, 2026-10-20. Amendment to
+[ADR-001](ADR-001-port-architecture.md); Architecture C remains accepted.
+Route A here means owner-side delivery, not ADR-001's source-reconstruction
+architecture A. Runtime replacement and external publication are not approved.
 Open work: [public-alpha.md](public-alpha.md).
 
 ## Decision
 
-Choose **A, owner-built IL2CPP**, or approve a bounded **B, interpreter**, or
-**C, native Mono bridge** investigation before choosing a downloadable runtime.
-Recommendation for discussion: A preserves the strongest existing device
-evidence; investigate B separately if a prebuilt APK is essential. No option
-is selected here.
+The user selects **A, owner-built IL2CPP**. Public users obtain their legitimate
+PC game files, reconstruct Android content locally and build/install their own
+APK with the pinned desktop editor. The project publishes reviewed tooling,
+recipes and instructions. This preserves the existing device-tested runtime;
+public-input bootstrap and ordinary gameplay acceptance remain open.
+The B/C runtime investigations below remain unselected alternatives.
 
 The repository distributes reviewed tooling and recipes; owners supply their
 legitimate files and generate all game-derived outputs locally. The current
@@ -128,9 +130,9 @@ from query parameters. Offer a separate bounded, allowlisted, redacted report
 preview/export only with consent; attachments are manual. No relay or public
 issue-template change is authorized by this proposal.
 
-## Approval and first proof
+## First proof and remaining approvals
 
-After A approval, prove a clean checkout plus documented legitimate inputs can
+Prove a clean checkout plus documented legitimate inputs can
 rebuild/install on the assigned alpha device without workstation-only state.
 After B/C approval, use a separate project for a bounded content-free-player
 proof: import an owner's assembly and converted prefab, execute lifecycle
@@ -138,10 +140,11 @@ callbacks, retire/reload, and retain missing-input/type/version negative control
 Audit the APK's actual contents. Synthetic callbacks or a loaded bundle alone
 do not prove the original RoR2 contract or alpha readiness.
 
-The alpha serial is still a placeholder in the handoff; resolve the authorized
-assignment before device work. Shared gameplay/editor state, locks and installed
-packages remain untouched. Runtime/package changes and external publication
-await the user's decision.
+J818 assigns internal Nova exclusively to alpha; its configured serial is kept
+in ignored local configuration and must be explicit on every device action.
+Shared gameplay/editor state and the main device retain their existing owners.
+Any B/C architecture experiment or external publication still needs separate
+user approval. Device/build qualification is not implied by accepting Route A.
 
 [unity-il2cpp]: https://docs.unity3d.com/2021.3/Documentation/Manual/IL2CPP.html
 [unity-backends]: https://docs.unity3d.com/Manual/scripting-backends-intro.html

@@ -6,10 +6,10 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
-Public alpha planning: [ADR-002 proposal](ADR-002-public-alpha-distribution.md)
-compares delivery routes; [public-alpha.md](public-alpha.md) holds open release
-work. Both are planning documents. ADR-001 and the pipeline below remain current
-until the user accepts an amendment.
+Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
+owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
+holds open release work. ADR-001's architecture C and the runtime pipeline below
+remain current. Public-input bootstrap and device acceptance remain open.
 
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
