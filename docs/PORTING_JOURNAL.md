@@ -15665,3 +15665,83 @@ work/experiments/survivor-check/20261020T095148.549727Z/Toolbot/
 (report SHA-256 `7bc849fbd42097bfd9a852e9dd99fe02dfa07c8c5c2af19daac8c43545cb6251`);
 work/coordination/codex-be26-toolbot-root-validation.json.
 Raw device, source and storage identities remain ignored.
+
+
+## J789 — Initialize the owned equipment mask before native survivor state entry
+
+Date: 2026-10-20. Hypothesis: J788's MUL-T spawn exception comes from an
+existing Run availability owner starting too late; initialize its exact mask
+before native stance callbacks and reuse it for the later reward/rule path.
+
+The accepted Run source reaches expansionLockedEquipment.Contains through
+Inventory.SetEquipmentInternal when native Toolbot stance entry switches
+its equipment slot. The Android inactive Run context deliberately clears its
+serialized masks; EnemyRewardSession rents and populates its equipment mask
+only after survivor spawn. Run.instance is already present. This explains the
+specific null-mask failure without changing native state-machine scheduling,
+readiness, stock, equipment identity or network roster.
+
+EnemyRewardSession now owns one RewardEquipmentExpansionMaskLease. Integrated
+state-spawn setup acquires it before SpawnBoundary for every survivor. The
+pre-rule refresh retains the existing policy: equipment requiring an expansion
+is locked, with no speculative native expansion query. Later reward setup
+accepts only this exact Run/mask or an empty slot, reuses the same lease, and
+keeps the existing native-rule refresh. Item-mask and RNG timing are unchanged.
+Acquisition retains the exact lease before catalog population so partial
+failure remains cleanable. Ordinary cleanup returns it before Run.OnDisable,
+even when no reward report/locator was prepared; repeated disposal is harmless,
+foreign replacements are preserved and source-stage recovery retains ownership.
+No Run Awake/Start/OnDestroy, new RuleBook, waiver or entitlement result is added.
+
+Prior art: inspected pinned R2API ItemAPI and DirectorAPIinternal at f539511e.
+Item registration retains typed catalog identity; director pool backups preserve
+requiredExpansions rather than treating catalog membership as availability.
+Accepted native Run/Inventory/Toolbot source and the existing Android reward
+owner determine this initialization boundary. No protected or community
+implementation is copied into public source.
+
+The same J788 player also retries native Siren source entry with a new
+source/host/exact-editor/default-control-bound guard receipt. It completes two
+exits and passes the former temporary-Stage precondition, then refuses before
+registration while transporting into Ship Graveyard. At 341.014587 s world
+time and 513.494 s host duration, the first failure is the imported source
+NetworkIdentity ID 2 identity/name/active/registration guard. Source-entry and
+encounter arrays remain empty; egg input stays off, the profile remains at
+13 applied runs, recovery is false and current-process error logs are clear.
+The report preserves the native refusal, which is authoritative here.
+Cleanup removes the selector, stops the owned app and sleeps the display.
+Final report SHA-256:
+`7d4f47209d8edc483a8b2ae389c4e46939c90594ae38151175d2c24bf2a8daef`.
+
+The receipt row expects the inactive Director identity; the failed report does
+not identify which operand differed. A bounded read-only refusal now includes
+match count, expected/actual name and activeSelf, plus current registration.
+The strict predicate stays intact, with no activation, reset, registration,
+spawn or fallback. Pinned accepted HLAPI SpawnObjects validates scene identities
+before activation/spawn, so the next evidence must identify the mismatch before
+changing ownership. No Siren registration, egg cohort, encounter or Moon
+acceptance follows.
+
+Independent lifecycle review and the extracted production lease cover reuse,
+wrong owner, pre-existing/foreign masks, fake-null refusal, catalog and population
+failure cleanup, destroyed-Run release, one return, preserved replacements and
+recovery retention. Root adapts the four tests and authored host doubles to
+read public production sources directly. All 1,127 host tests pass, zero skips,
+in 30.432 s with all 567 recorded inputs and HEAD 21bfee2 unchanged. Complete
+106-runtime/four-support-source compilation against 264 exact references has
+zero errors, with unchanged source/compiler/reference hashes; output assembly
+SHA-256 `9d51167152ac7561b2936f3aa6c2e1635db12ba78afe0180253df6348db55ae4`.
+Formatting changes only whitespace. The new player and targeted acceptance are
+pending; the accepted baseline remains J788. Rebuild source staging reads the
+three changed owners and needs replay on the parallel rebuild track.
+LOCAL_STATE also identifies the reviewed private capture-finalization support
+inputs before their next isolated audio build; game-audio gates stay closed.
+
+Evidence: work/coordination/toolbot-be26-spawn-first-failure/draft-r2/ and
+independent-early-mask-review/; siren-be26-identity-first-failure/;
+codex-equipment-siren-owner-format-r1/; codex-equipment-siren-owner-host-r1/;
+codex-equipment-siren-owner-compile-r1/;
+work/experiments/siren-route/20261020T100035.676897Z/;
+work/coordination/codex-be26-siren-root-validation.json and
+native-owner-fixes-guard-qualification/accepted-be26-guard-root-r1.json.
+Raw game/API, device and storage evidence remain ignored.

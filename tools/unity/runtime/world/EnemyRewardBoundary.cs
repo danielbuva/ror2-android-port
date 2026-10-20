@@ -96,6 +96,15 @@ public sealed partial class PortSession
     {
         GetEnemyRewardSession().VerifyEnemyRewardDelivery();
     }
+    void PrepareEquipmentExpansionMaskBeforeSpawn()
+    {
+        GetEnemyRewardSession().PrepareEquipmentExpansionMaskBeforeSpawn();
+    }
+    void CleanupEquipmentExpansionMaskBeforeRunTeardown()
+    {
+        if (enemyRewardSession != null)
+            enemyRewardSession.CleanupEquipmentExpansionMaskBeforeRunTeardown();
+    }
     void CleanupRewardHosts()
     {
         GetEnemyRewardSession().Dispose();
@@ -103,6 +112,68 @@ public sealed partial class PortSession
     IEnumerator CleanupEnemyRewards()
     {
         return GetEnemyRewardSession().CleanupEnemyRewards();
+    }
+
+    // One owner for the exact equipment expansion mask shared by integrated gameplay
+    // survivor state setup and the later enemy-reward / native-rule refresh.
+    internal sealed class RewardEquipmentExpansionMaskLease
+    {
+        readonly Action<bool, string> check;
+        Run run;
+        EquipmentMask mask;
+        public EquipmentMask Mask => mask;
+        public RewardEquipmentExpansionMaskLease(Action<bool, string> check)
+        {
+            this.check = check;
+        }
+        public bool Owns(Run candidate)
+        {
+            return mask != null && ReferenceEquals(run, candidate) && candidate &&
+                   ReferenceEquals(candidate.expansionLockedEquipment, mask);
+        }
+        public void Acquire(Run candidate)
+        {
+            check(candidate, "Native Run context missing for equipment expansion mask");
+            if (mask != null)
+            {
+                check(Owns(candidate), "Equipment expansion mask belongs to a different Run/owner");
+                return;
+            }
+            check(candidate.expansionLockedEquipment == null, "Existing unowned equipment expansion mask");
+            var rented = EquipmentMask.Rent();
+            run = candidate;
+            mask = rented; // Retain before population so partial catalog failure remains cleanable.
+            candidate.expansionLockedEquipment = rented;
+            Refresh(false);
+        }
+        public int Refresh(bool rulesReady)
+        {
+            check(mask != null && run && ReferenceEquals(run.expansionLockedEquipment, mask),
+                  "Original equipment expansion mask is unowned");
+            mask.Clear();
+            int locked = 0;
+            foreach (var index in EquipmentCatalog.allEquipment)
+            {
+                var definition = EquipmentCatalog.GetEquipmentDef(index);
+                check(definition && definition.equipmentIndex == index, "Original equipment catalog identity missing");
+                if (definition.requiredExpansion && (!rulesReady || !run.IsExpansionEnabled(definition.requiredExpansion)))
+                {
+                    mask.Add(index);
+                    locked++;
+                }
+            }
+            return locked;
+        }
+        public void Release()
+        {
+            if (mask == null)
+                return;
+            if (run && ReferenceEquals(run.expansionLockedEquipment, mask))
+                run.expansionLockedEquipment = null;
+            EquipmentMask.Return(mask);
+            mask = null;
+            run = null;
+        }
     }
 
     // Create on first use and retain for partial setup, repeated cleanup and later
@@ -125,14 +196,23 @@ public sealed partial class PortSession
         Run rewardRun;
         TeamComponent rewardFixtureTeam;
         TeamIndex priorRewardFixtureTeam;
-        EquipmentMask ownedRewardEquipmentMask;
+        readonly RewardEquipmentExpansionMaskLease equipmentMaskLease;
         public EnemyRewardSession(PortSession coordinator)
         {
             this.coordinator = coordinator;
+            equipmentMaskLease = new RewardEquipmentExpansionMaskLease(coordinator.Check);
         }
         public static FieldInfo RewardField(Type type, string name)
         {
             return type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
+        }
+        public void PrepareEquipmentExpansionMaskBeforeSpawn()
+        {
+            equipmentMaskLease.Acquire(Run.instance);
+        }
+        public void CleanupEquipmentExpansionMaskBeforeRunTeardown()
+        {
+            equipmentMaskLease.Release();
         }
         public IEnumerator PrepareEnemyRewards(CharacterBody player, SessionConfig cfg)
         {
@@ -204,12 +284,12 @@ public sealed partial class PortSession
                 rewardRun.selectedDifficulty = coordinator.SelectedOfflineDifficulty();
                 player.RecalculateStats();
             }
-            coordinator.Check(rewardRun && rewardRun.expansionLockedItems == null && rewardRun.expansionLockedEquipment == null,
-                              "Existing expansion item/equipment mask");
+            coordinator.Check(rewardRun && rewardRun.expansionLockedItems == null &&
+                                  (rewardRun.expansionLockedEquipment == null || equipmentMaskLease.Owns(rewardRun)),
+                              "Existing expansion item/equipment mask is not owned by this reward session");
             ownedRewardMask = ItemMask.Rent();
             rewardRun.expansionLockedItems = ownedRewardMask;
-            ownedRewardEquipmentMask = EquipmentMask.Rent();
-            rewardRun.expansionLockedEquipment = ownedRewardEquipmentMask;
+            equipmentMaskLease.Acquire(rewardRun);
             RefreshRewardEquipmentMask(false);
             var internalItems = new[] { RoR2Content.Items.UseAmbientLevel, RoR2Content.Items.BoostHp, RoR2Content.Items.BoostDamage };
             if (cfg.originalItemPickup)
@@ -307,21 +387,8 @@ public sealed partial class PortSession
         }
         public void RefreshRewardEquipmentMask(bool rulesReady)
         {
-            coordinator.Check(rewardRun && ownedRewardEquipmentMask != null &&
-                                  rewardRun.expansionLockedEquipment == ownedRewardEquipmentMask,
-                              "Original equipment expansion mask is unowned");
-            ownedRewardEquipmentMask.Clear();
-            int locked = 0;
-            foreach (var index in EquipmentCatalog.allEquipment)
-            {
-                var definition = EquipmentCatalog.GetEquipmentDef(index);
-                coordinator.Check(definition && definition.equipmentIndex == index, "Original equipment catalog identity missing");
-                if (definition.requiredExpansion && (!rulesReady || !rewardRun.IsExpansionEnabled(definition.requiredExpansion)))
-                {
-                    ownedRewardEquipmentMask.Add(index);
-                    locked++;
-                }
-            }
+            coordinator.Check(rewardRun && equipmentMaskLease.Owns(rewardRun), "Original equipment expansion mask is unowned");
+            int locked = equipmentMaskLease.Refresh(rulesReady);
             coordinator.r.rewards.equipmentDefinitions = EquipmentCatalog.equipmentCount;
             coordinator.r.rewards.expansionLockedEquipment = locked;
             coordinator.r.rewards.equipmentMaskReady = true;
@@ -523,19 +590,13 @@ public sealed partial class PortSession
                 }
                 if (ownedRewardMask != null && rewardRun.expansionLockedItems == ownedRewardMask)
                     rewardRun.expansionLockedItems = null;
-                if (ownedRewardEquipmentMask != null && rewardRun.expansionLockedEquipment == ownedRewardEquipmentMask)
-                    rewardRun.expansionLockedEquipment = null;
             }
             if (ownedRewardMask != null)
             {
                 ItemMask.Return(ownedRewardMask);
                 ownedRewardMask = null;
             }
-            if (ownedRewardEquipmentMask != null)
-            {
-                EquipmentMask.Return(ownedRewardEquipmentMask);
-                ownedRewardEquipmentMask = null;
-            }
+            equipmentMaskLease.Release();
         }
         public IEnumerator CleanupEnemyRewards()
         {

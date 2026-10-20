@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J789](PORTING_JOURNAL.md#j789--initialize-the-owned-equipment-mask-before-native-survivor-state-entry) | 2026-10-20 | Initialize the owned equipment mask before native survivor state entry | Date: 2026-10-20. |
 | [J788](PORTING_JOURNAL.md#j788--accept-both-default-controls-and-preserve-the-earlier-mul-t-spawn-failure) | 2026-10-20 | Accept both default controls and preserve the earlier MUL-T spawn failure | Date: 2026-10-20. |
 | [J787](PORTING_JOURNAL.md#j787--root-attribution-names-original-static-registries-that-keep-unloaded-assets) | 2026-10-20 | Root attribution names original static registries that keep unloaded assets | Hypothesis (J782): the retained item-display-rule graphs, and the rest of the ~57 MB per session, are held by a small number of named roots. |
 | [J786](PORTING_JOURNAL.md#j786--complete-the-managed-original-event-but-refuse-its-capture-evidence) | 2026-10-20 | Complete the managed original event but refuse its capture evidence | Date: 2026-10-20. |

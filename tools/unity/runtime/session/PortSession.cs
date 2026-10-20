@@ -2367,6 +2367,8 @@ public sealed partial class PortSession : MonoBehaviour
             }
             if (r.id.StartsWith("body-state-spawn-"))
             {
+                if (cfg.integratedWorld && r.id.StartsWith("body-state-spawn-state-"))
+                    PrepareEquipmentExpansionMaskBeforeSpawn();
                 var spawnRoutine = SpawnBoundary(body, cfg);
                 while (spawnRoutine.MoveNext())
                     yield return spawnRoutine.Current;
@@ -2444,6 +2446,7 @@ public sealed partial class PortSession : MonoBehaviour
                         Call(artifacts, "OnDestroy");
                     }
                 }
+                CleanupEquipmentExpansionMaskBeforeRunTeardown();
                 if (run && Run.instance == run)
                     Call(run, "OnDisable");
                 if (runStaging)

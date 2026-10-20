@@ -256,9 +256,16 @@ public sealed class SirenSourceEntrySession : IDisposable
         {
             uint sceneId = (uint)row["scene_id"];
             var matches = sourceIdentities.Where(identity => identity.sceneId.Value == sceneId).ToArray();
-            Require(matches.Length == 1 && matches[0].gameObject.name == (string)row["name"] &&
-                        matches[0].gameObject.activeSelf == (bool)row["active_self"] && !IsRegistered(matches[0]),
-                    "Imported source NetworkIdentity differs from receipt identity/name/active state at ID " + sceneId);
+            bool hasSingleIdentity = matches.Length == 1;
+            string expectedName = (string)row["name"];
+            bool expectedActiveSelf = (bool)row["active_self"];
+            string actualName = hasSingleIdentity ? matches[0].gameObject.name : "<not-one>";
+            bool actualActiveSelf = hasSingleIdentity && matches[0].gameObject.activeSelf;
+            bool registered = hasSingleIdentity && IsRegistered(matches[0]);
+            Require(hasSingleIdentity && actualName == expectedName && actualActiveSelf == expectedActiveSelf && !registered,
+                    "Imported source NetworkIdentity differs from receipt at ID " + sceneId + ": matches=" + matches.Length +
+                        ", expectedName='" + expectedName + "', actualName='" + actualName + "', expectedActiveSelf=" + expectedActiveSelf +
+                        ", actualActiveSelf=" + actualActiveSelf + ", registered=" + registered);
             bool nativeToggleTarget = toggleTargetStates.Any(target => ReferenceEquals(target.target, matches[0].gameObject));
             if (sceneId != ControllerSceneId && !nativeToggleTarget)
                 foreignSourceIdentities.Add(new SourceIdentityState { identity = matches[0], activeSelf = matches[0].gameObject.activeSelf });
