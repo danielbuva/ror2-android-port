@@ -14329,3 +14329,37 @@ Root verification: work/coordination/codex-toolbot-family-baseline-root-validati
 host draft/review: work/coordination/toolbot-input-edge-fix/;
 host suite: work/coordination/codex-toolbot-edge-full.*.
 Both runners stop owned packages and sleep their panels; no Moon route is used.
+
+## J765 — Bound full IL2CPP debugging symbols separately from the player library
+
+Build committed 17dab3497b9b30fe19335ae9f9a6937b438dd7f5 with J764's
+durable edge witness and J763's optional debugging symbols after host preflight.
+The serialized exact 2021.3.45f2 IL2CPP ARM64 Vulkan build succeeds in
+370.464903 seconds with zero errors. Its request-owned ZIP contains a full
+813,870,368-byte libil2cpp debugging ELF. The canonical host validator then
+refuses publication at its shared 512 MiB uncompressed-member bound. No device
+action is dispatched, current-build stays on J764, and no new baseline is
+accepted. Preserve the APK, ZIP, terminal editor result, original frozen input
+hashes and refusal logs.
+
+Hypothesis: the full DWARF library needs a larger bounded archive read than
+the stripped player library. Keep the APK limit at 512 MiB and allow up to
+2 GiB for the debugging member only. The focused 15 artifact/dispatch/cache
+tests pass, including a metadata-size contract for the observed output, refusal
+before read for oversize or empty members, and the unchanged stricter APK
+bound. Root then validates the actual preserved artifacts with this correction:
+matching ARM64 GNU Build ID a355f66dff0068de08fd26679ca8955755aecae4,
+named symbols and valid DWARF. APK:
+d81637f6e376e143bbb93b14c3d20cff5e2f38211464996ce55c27b34822ecb0.
+ZIP: 69c5871449c5d9665f18707b039c1dadaf45858eca4704fe281fed4face7d849.
+This is a host-only post-refusal check, not canonical build publication,
+device acceptance, managed attribution or a performance improvement.
+
+Evidence: work/experiments/toolbot-edge-symbols/
+host-size-refusal-20261020T054523.597027Z/ (artifacts, terminal result and
+root-host-pair-validation.json); work/coordination/
+codex-toolbot-edge-symbols-{build,coordinator}.*. The validator hash already
+separates symbol cache keys, so the corrected canonical retry uses a new cache
+identity and preserves the incomplete prior cache. No runtime, payload, R8
+membership or device receipt is changed. Next freeze the corrected committed
+sources, rebuild, run both defaults and repeat bounded MUL-T input coverage.

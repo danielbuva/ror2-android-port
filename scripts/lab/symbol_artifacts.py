@@ -204,12 +204,15 @@ def elf_build_id(data: bytes) -> str:
     return elf_metadata(data, include_sections=False)["build_id"]
 
 
-def _one_member(archive: zipfile.ZipFile, predicate, description: str) -> tuple[str, bytes]:
+def _one_member(
+    archive: zipfile.ZipFile, predicate, description: str, *,
+    max_uncompressed_bytes: int = 512 * 1024 * 1024,
+) -> tuple[str, bytes]:
     names = [name for name in archive.namelist() if not name.endswith("/") and predicate(name)]
     if len(names) != 1:
         raise SymbolArtifactError(f"Expected exactly one {description}; found {len(names)}")
     info = archive.getinfo(names[0])
-    if info.file_size <= 0 or info.file_size > 512 * 1024 * 1024:
+    if info.file_size <= 0 or info.file_size > max_uncompressed_bytes:
         raise SymbolArtifactError(f"{description} has invalid uncompressed size")
     return names[0], archive.read(info)
 
@@ -243,6 +246,9 @@ def verify_apk_symbol_pair(
                 symbols,
                 lambda name: Path(name).name in ("libil2cpp.so", "libil2cpp.dbg.so", "libil2cpp.sym.so"),
                 "ARM64 libil2cpp symbol ELF",
+                # Full Unity DWARF is substantially larger than the stripped
+                # player library. Keep a finite, separate archive-read bound.
+                max_uncompressed_bytes=2 * 1024 * 1024 * 1024,
             )
     except (OSError, zipfile.BadZipFile, KeyError) as error:
         raise SymbolArtifactError("Could not read APK or symbols ZIP") from error

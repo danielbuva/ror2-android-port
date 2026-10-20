@@ -3,12 +3,13 @@ import json
 import struct
 import tempfile
 import unittest
+from unittest.mock import Mock
 import zipfile
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts/lab"))
-from symbol_artifacts import SymbolArtifactError, elf_build_id, validate_fresh_symbol_package, verify_apk_symbol_pair, verify_cached_symbol_receipt
+from symbol_artifacts import SymbolArtifactError, _one_member, elf_build_id, validate_fresh_symbol_package, verify_apk_symbol_pair, verify_cached_symbol_receipt
 
 
 def elf_with_build_id(build_id: bytes, *, debug_sections: bool = True) -> bytes:
@@ -95,6 +96,30 @@ class SymbolArtifactTests(unittest.TestCase):
         self.assertEqual(result["apk_sha256"], hashlib.sha256(self.apk.read_bytes()).hexdigest())
         self.assertTrue(result["symbols_has_symtab"])
         self.assertTrue(result["symbols_has_debug_info"])
+
+    def test_debug_symbol_member_has_a_separate_bounded_read(self):
+        # Model the central-directory size of the first exact-editor output
+        # without allocating hundreds of MiB in this host contract.
+        archive = Mock()
+        archive.namelist.return_value = ["arm64-v8a/libil2cpp.so"]
+        archive.getinfo.return_value.file_size = 813870368
+        archive.read.return_value = self.symbol_elf
+        predicate = lambda name: name.endswith("libil2cpp.so")
+        with self.assertRaisesRegex(SymbolArtifactError, "invalid uncompressed size"):
+            _one_member(archive, predicate, "APK library")
+        archive.read.assert_not_called()
+        self.assertEqual(
+            _one_member(archive, predicate, "debug symbols",
+                        max_uncompressed_bytes=2 * 1024 * 1024 * 1024),
+            ("arm64-v8a/libil2cpp.so", self.symbol_elf),
+        )
+        archive.read.reset_mock()
+        for size in (0, 2 * 1024 * 1024 * 1024 + 1):
+            archive.getinfo.return_value.file_size = size
+            with self.assertRaisesRegex(SymbolArtifactError, "invalid uncompressed size"):
+                _one_member(archive, predicate, "debug symbols",
+                            max_uncompressed_bytes=2 * 1024 * 1024 * 1024)
+        archive.read.assert_not_called()
 
     def test_accepts_nobits_memory_extent_without_file_payload(self):
         image = bytearray(self.symbol_elf)

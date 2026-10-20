@@ -47,10 +47,13 @@ select `Disabled`. Its `finally` restores the prior editor setting.
 APK/ZIP/library hashes, matching ARM64 ELF GNU Build IDs, named symbols and
 DWARF information. The symbol-mode cache includes the validator hash and retains
 both artifacts; missing, ambiguous or altered artifacts refuse reuse. These
-files are generated build outputs, not new required local input. Host contracts:
-`test_symbol_artifacts.py` and `test_symbol_build_mode.py`. Exact-editor output
-layout still requires the first selected build; retention alone does not
-symbolicate the existing `performance_capture.py` report.
+files are generated build outputs, not new required local input. Archive reads
+are bounded separately: 512 MiB for the stripped APK library and 2 GiB for the
+full debugging library. Host contracts: `test_symbol_artifacts.py` and
+`test_symbol_build_mode.py`. J765 validates the first exact-editor ZIP and
+matching ELF identities after correcting the debugging size bound; canonical
+build publication and device qualification still require the retry. Retention
+alone does not symbolicate the existing `performance_capture.py` report.
 
 `whole_catalog.analyze` owns the host dependency closure. Audit, reconciliation
 and root-binding repair supply the accepted decompile root to
