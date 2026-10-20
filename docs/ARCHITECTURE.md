@@ -744,6 +744,19 @@ recorded without replacing a primary iterator exception.
 `test_automatic_spawn_cleanup_lease.py` executes these production helpers with
 synthetic lifetime, partial-subscription and remapping cases (J792).
 
+`PrimaryFireSession` reuses one scalar operand snapshot during observation and
+freezes a separate first-failure snapshot only on refusal or accessor exception.
+It captures the live body, locator, primary slot, state machine and state in
+order; healthy ticks add no snapshot allocation, identity query or diagnostic
+string construction. No native slot, state, stock or readiness is repaired.
+The coordinator's `RecordPrimarySessionFailure` preserves the first error;
+`AutomaticSpawnBoundary` uses a non-reporting strict cleanup validator and
+records secondary detail in `automaticSpawnCleanupError`. These diagnostics
+share the existing session report lifetime and retain no Unity references.
+`test_primary_operand_witness.py` executes the production observer and guarded
+iterator with fake-null, single-read, thrown-accessor and cleanup-failure cases
+(J796). The exact MUL-T operand still requires device evidence.
+
 Only an explicit Siren source-entry diagnostic entering Ship Graveyard wraps
 the existing population and original-stage iterators with
 `SirenSourceEntryObservedRoutine` in the existing source-entry owner file.

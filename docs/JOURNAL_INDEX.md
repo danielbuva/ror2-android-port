@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J796](PORTING_JOURNAL.md#j796--preserve-primary-operand-failure-and-separate-strict-cleanup-attribution) | 2026-10-20 | Preserve primary operand failure and separate strict cleanup attribution | Date: 2026-10-20. |
 | [J795](PORTING_JOURNAL.md#j795--accept-native-siren-source-entry-and-cleanup-despite-a-missed-host-stop) | 2026-10-20 | Accept native Siren source entry and cleanup despite a missed host stop | Date: 2026-10-20. |
 | [J794](PORTING_JOURNAL.md#j794--link-and-statically-qualify-the-same-library-wwise-monitor-extension) | 2026-10-20 | Link and statically qualify the same-library Wwise monitor extension | Date: 2026-10-20. |
 | [J793](PORTING_JOURNAL.md#j793--accept-the-lifecycle-owner-baseline-and-expose-mul-ts-primary-observer-failure) | 2026-10-20 | Accept the lifecycle-owner baseline and expose MUL-T's primary observer failure | Date: 2026-10-20. |

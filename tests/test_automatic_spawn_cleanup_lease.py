@@ -187,7 +187,7 @@ class AutomaticSpawnCleanupLeaseTests(unittest.TestCase):
         for flag in ("observedSubscriptionAttempted", "masterSubscriptionAttempted", "bodySubscriptionAttempted", "statsSubscriptionAttempted"):
             self.assertIn("ref " + flag, iterator)
         self.assertIn("r.playerDefeat.bodyDestroyed", iterator)
-        self.assertIn("currentCanonical = CaptureCanonicalSkillMachines(body.skillLocator, Check);", iterator)
+        self.assertIn("currentCanonical = CaptureCanonicalSkillMachinesForCleanup(body.skillLocator);", iterator)
 
 
 if __name__ == "__main__":

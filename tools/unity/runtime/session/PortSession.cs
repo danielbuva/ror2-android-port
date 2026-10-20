@@ -248,7 +248,7 @@ public sealed partial class PortSession : MonoBehaviour
         public WorldReport world;
         public SurvivorSkillObserver.Report survivorSkills;
         public CommerceReport commerce;
-        public string firstFailure, firstFailurePhase;
+        public string firstFailure, firstFailurePhase, automaticSpawnCleanupError;
         public ChestEjectionReport chestEjection;
         public bool originalChestEjection;
         public DefaultPickupReport defaultPickup;
@@ -405,6 +405,23 @@ public sealed partial class PortSession : MonoBehaviour
     ArtifactDef priorFallArtifact;
     AssetBundle artifactBundle;
     RunArtifactManager artifactManager;
+    internal static void RecordAutomaticSpawnCleanupFailure(SessionReport report, Exception error)
+    {
+        report.success = false;
+        report.cleanup = false;
+        report.automaticSpawnCleanupError = error.ToString();
+    }
+    internal static void RecordPrimarySessionFailure(SessionReport report, Exception error)
+    {
+        if (string.IsNullOrEmpty(report.error))
+            report.error = error.ToString();
+        if (string.IsNullOrEmpty(report.firstFailure))
+        {
+            report.firstFailure = error.GetBaseException().Message;
+            report.firstFailurePhase = report.phase;
+        }
+        report.success = false;
+    }
     void Check(bool value, string message)
     {
         r.assertions++;
@@ -685,13 +702,7 @@ public sealed partial class PortSession : MonoBehaviour
         for (var step = RunGuarded(selected,
                                    e =>
                                    {
-                                       r.error = e.ToString();
-                                       if (string.IsNullOrEmpty(r.firstFailure))
-                                       {
-                                           r.firstFailure = e.GetBaseException().Message;
-                                           r.firstFailurePhase = r.phase;
-                                       }
-                                       r.success = false;
+                                       RecordPrimarySessionFailure(r, e);
                                        Save();
                                    });
              step.MoveNext();)

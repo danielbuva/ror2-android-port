@@ -50,6 +50,15 @@ public sealed partial class PortSession
         return captured;
     }
 
+    internal static EntityStateMachine[] CaptureCanonicalSkillMachinesForCleanup(SkillLocator skills)
+    {
+        return CaptureCanonicalSkillMachines(skills, (valid, message) =>
+                                                     {
+                                                         if (!valid)
+                                                             throw new InvalidOperationException(message);
+                                                     });
+    }
+
     internal static bool ContainsStateMachineReference(EntityStateMachine[] candidates, EntityStateMachine sought)
     {
         if (candidates == null)
@@ -515,7 +524,7 @@ public sealed partial class PortSession
                             () =>
                             {
                                 currentRootMachines = body.GetComponents<EntityStateMachine>();
-                                currentCanonical = CaptureCanonicalSkillMachines(body.skillLocator, Check);
+                                currentCanonical = CaptureCanonicalSkillMachinesForCleanup(body.skillLocator);
                             },
                             ref automaticSpawnCleanupFailure);
                     }
@@ -541,9 +550,7 @@ public sealed partial class PortSession
             }
             if (automaticSpawnCleanupFailure != null)
             {
-                r.success = false;
-                r.cleanup = false;
-                r.error += " Automatic spawn cleanup: " + automaticSpawnCleanupFailure;
+                RecordAutomaticSpawnCleanupFailure(r, automaticSpawnCleanupFailure);
             }
         }
         if (r.sourceStageLifecycleRecoveryRequired)

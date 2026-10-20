@@ -16236,3 +16236,75 @@ director-cleanup-next-guard-qualification/accepted-2391-guard-root-r1.json,
 siren-2391-terminal-review/}. The latter contains the independent review,
 private predicate patch, tests and root-acceptance.json. No current game or
 rebuild source changes; default baseline acceptance remains J793.
+
+
+## J796 — Preserve primary operand failure and separate strict cleanup attribution
+
+Date: 2026-10-20. Hypothesis: J793's stock MUL-T exception can be attributed
+without repairing or replacing native gameplay, while cleanup's independent
+canonical-slot refusal remains visible without becoming the primary failure.
+The exact unavailable operand is not yet known.
+
+PrimaryFireSession now keeps one reused scalar snapshot of its ordered body,
+SkillLocator, primary GenericSkill, state machine and state reads. Healthy
+observation adds no snapshot allocation, identity query or diagnostic string
+construction. The first unavailable operand or thrown accessor freezes one
+separate failure snapshot, with CLR-null versus Unity fake-null, phase/time,
+read stage and available instance identities. Each captured operand is read
+once; conditional spread and stock stay in their existing order. Thrown
+accessors retain their exception identity. No native skill, machine, cooldown,
+stock, input or readiness is changed, and missing operands still refuse.
+
+AutomaticSpawnBoundary retains the strict cleanup validator but routes it
+through an exception callback rather than Check, which previously set
+firstFailure while the primary iterator was unwinding. Secondary detail now
+survives in SessionReport.automaticSpawnCleanupError. PortSession's existing
+guarded iterator records the first primary exception without overwriting an
+already recorded error. Cleanup-only failures still refuse. Existing native
+body-destruction and foreign-machine boundaries remain intact.
+
+Independent review clears the private R3 overlay. Root verifies every source
+preimage, integrates its three existing-owner patches and adds the production-
+extracted host contract to the public suite. The host test executes the real
+observer, strict cleanup validator, failure recorders and guarded iterator with
+synthetic Unity lifetime/accessor fixtures. It checks single reads, healthy
+snapshot reuse, no healthy identity queries, fake-null, first-failure freeze,
+thrown-accessor identity and simultaneous primary/cleanup failures.
+
+The first complete host run finds one older source assertion still requiring
+the reporting cleanup call. Updating that assertion to the new non-reporting
+validator preserves the contract; the behavioral tests remain unchanged.
+The final full suite passes 1,136 tests with zero skips in 32.933 s, with all
+410 frozen inputs unchanged. Log SHA-256:
+`52498da73bbe3b93a33f16577f17df99e6c6758742c3647273837536f4688386`.
+The exact saved editor closure compiles all 106 current runtime sources plus
+four support sources against 264 references with zero errors and no drift.
+Assembly SHA-256:
+`0e1eafb1ec2c17e38fd4de3a7f7db1dc81aee138796813c845c64d28d76d2111`.
+Touched Python passes Ruff; changed C# ranges are formatted with a byte-backed
+whitespace-only equivalence receipt. The selected default device doctor and
+host preflight pass. A separately selected Thor doctor only lacks its historical
+separate bootstrap-smoke receipt; this does not negate its game baseline.
+
+No new player/device result follows from these host checks. The installed and
+accepted game remains J793's 23916334 APK; J795's bounded Siren result belongs
+to that source. Next build this committed diagnostic, pass both standard modes,
+then repeat the stock MUL-T trial and inspect the first preserved operand.
+Do not infer an original slot-rebind cause from the synthetic tests.
+
+Prior art: pinned Starstorm2 SS2VanillaSurvivor at a9a4badd preserves named
+state-machine/network/death/hurt relationships. Accepted native GenericSkill
+and Toolbot resolver inspection supplies the actual current-pointer contract;
+Toolbot's secondary resolver does not identify a primary failure. The Android
+change observes those relationships and preserves their ownership. No protected
+or community implementation is copied into public source.
+
+Evidence: work/coordination/{toolbot-2391-primary-observer-triage/r3/,
+toolbot-2391-primary-observer-independent-review/,
+codex-primary-witness-format-root-r1/,
+codex-primary-witness-compile-root-r1/,
+codex-primary-witness-host-root-r1/,codex-primary-witness-host-root-r2/,
+codex-default-doctor-after-siren-root-r1/}. R8 replay must restage the changed
+PrimaryFireBoundary, AutomaticSpawnBoundary and PortSession authored sources.
+The runtime manifest remains 106 files; no asset GUID, content payload or new
+required game-local input is added.

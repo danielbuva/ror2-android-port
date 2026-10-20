@@ -13,8 +13,43 @@ using UnityEngine;
 public sealed partial class PortSession
 {
     [Serializable]
+    public class PrimaryFireOperandSnapshot
+    {
+        public int sequence, bodyInstanceId, skillLocatorInstanceId, primaryInstanceId, stateMachineInstanceId;
+        public int stock;
+        public float seconds;
+        public string phase, bodyStatus, skillLocatorStatus, primaryStatus, stateMachineStatus, stateMachineCustomName, stateStatus,
+            stockStatus;
+        public string firstUnavailable, exceptionStage, exceptionType, exceptionMessage;
+        public PrimaryFireOperandSnapshot Clone()
+        {
+            return new PrimaryFireOperandSnapshot { sequence = sequence,
+                                                    bodyInstanceId = bodyInstanceId,
+                                                    skillLocatorInstanceId = skillLocatorInstanceId,
+                                                    primaryInstanceId = primaryInstanceId,
+                                                    stateMachineInstanceId = stateMachineInstanceId,
+                                                    stock = stock,
+                                                    seconds = seconds,
+                                                    phase = phase,
+                                                    bodyStatus = bodyStatus,
+                                                    skillLocatorStatus = skillLocatorStatus,
+                                                    primaryStatus = primaryStatus,
+                                                    stateMachineStatus = stateMachineStatus,
+                                                    stateMachineCustomName = stateMachineCustomName,
+                                                    stateStatus = stateStatus,
+                                                    stockStatus = stockStatus,
+                                                    firstUnavailable = firstUnavailable,
+                                                    exceptionStage = exceptionStage,
+                                                    exceptionType = exceptionType,
+                                                    exceptionMessage = exceptionMessage };
+        }
+    }
+    [Serializable]
     public class PrimaryFireReport
     {
+        public int observerTicks;
+        public PrimaryFireOperandSnapshot lastOperands, firstFailureOperands;
+        public string observerExceptionStage, observerExceptionType, observerExceptionMessage;
         public string skill, state, firstFailure, audioException, weaponInitialState, definitionType;
         public bool weaponEnabled, slotWeaponMatched, rootActive;
         public int stockBefore, stockAfter, stepBefore, stepAfter, authorityEvents, serverEvents;
@@ -87,7 +122,7 @@ public sealed partial class PortSession
             int index = Array.FindIndex(spineReload.serializedFieldsCollection.serializedFields, x => x.fieldName == "enterSoundString");
             coordinator.Check(index >= 0, "Spine reload sound field missing");
             spineReload.serializedFieldsCollection.serializedFields[index].fieldValue.stringValue = "";
-            coordinator.r.primary = new PrimaryFireReport { silentFixture = true };
+            coordinator.r.primary = new PrimaryFireReport { silentFixture = true, lastOperands = new PrimaryFireOperandSnapshot() };
             var configs = new[] { spawn, fire, spineReload };
             return cfg.combatSpine ? configs.Concat(coordinator.PrepareCombatConfigs(cfg)).ToArray() : configs;
         }
@@ -110,25 +145,154 @@ public sealed partial class PortSession
                 EntityStates.Commando.DodgeState.jetEffect = null;
             }
         }
+        static string UnityOperandStatus(UnityEngine.Object value)
+        {
+            if (ReferenceEquals(value, null))
+                return "clr-null";
+            return value ? "live" : "unity-fake-null";
+        }
+        static int FailureInstanceId(UnityEngine.Object value)
+        {
+            if (ReferenceEquals(value, null) || !value)
+                return 0;
+            try
+            {
+                return value.GetInstanceID();
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+        static void ResetPrimaryOperandSnapshot(PrimaryFireOperandSnapshot snapshot, int sequence, float seconds, string phase)
+        {
+            snapshot.sequence = sequence;
+            snapshot.seconds = seconds;
+            snapshot.phase = phase;
+            snapshot.bodyInstanceId = snapshot.skillLocatorInstanceId = snapshot.primaryInstanceId = snapshot.stateMachineInstanceId = 0;
+            snapshot.stock = 0;
+            snapshot.bodyStatus = null;
+            snapshot.skillLocatorStatus = snapshot.primaryStatus = snapshot.stateMachineStatus = snapshot.stateMachineCustomName =
+                snapshot.stateStatus = snapshot.stockStatus = "not-read-prerequisite-unavailable";
+            snapshot.firstUnavailable = snapshot.exceptionStage = snapshot.exceptionType = snapshot.exceptionMessage = null;
+        }
+        void FreezePrimaryOperandFailure(PrimaryFireReport report, PrimaryFireOperandSnapshot snapshot, CharacterBody body,
+                                         SkillLocator locator, GenericSkill primary, EntityStateMachine machine)
+        {
+            if (report.firstFailureOperands != null)
+                return;
+            snapshot.bodyInstanceId = FailureInstanceId(body);
+            snapshot.skillLocatorInstanceId = FailureInstanceId(locator);
+            snapshot.primaryInstanceId = FailureInstanceId(primary);
+            snapshot.stateMachineInstanceId = FailureInstanceId(machine);
+            report.firstFailureOperands = snapshot.Clone();
+        }
+        void RecordPrimaryOperandException(PrimaryFireReport report, PrimaryFireOperandSnapshot snapshot, string stage, Exception error,
+                                           CharacterBody body, SkillLocator locator, GenericSkill primary, EntityStateMachine machine)
+        {
+            snapshot.exceptionStage = stage;
+            snapshot.exceptionType = error.GetType().FullName;
+            snapshot.exceptionMessage = error.Message.Length > 256 ? error.Message.Substring(0, 256) : error.Message;
+            if (string.IsNullOrEmpty(report.observerExceptionStage))
+            {
+                report.observerExceptionStage = snapshot.exceptionStage;
+                report.observerExceptionType = snapshot.exceptionType;
+                report.observerExceptionMessage = snapshot.exceptionMessage;
+            }
+            FreezePrimaryOperandFailure(report, snapshot, body, locator, primary, machine);
+        }
+        void RefuseUnavailablePrimaryOperands(PrimaryFireReport report, PrimaryFireOperandSnapshot snapshot, CharacterBody body,
+                                              SkillLocator locator, GenericSkill primary, EntityStateMachine machine)
+        {
+            FreezePrimaryOperandFailure(report, snapshot, body, locator, primary, machine);
+            coordinator.Check(false, "Primary observer required operand unavailable: " + snapshot.firstUnavailable +
+                                         " (body=" + snapshot.bodyStatus + ", locator=" + snapshot.skillLocatorStatus +
+                                         ", primary=" + snapshot.primaryStatus + ", machine=" + snapshot.stateMachineStatus +
+                                         ", state=" + snapshot.stateStatus + ")");
+        }
         public void ObserveSpinePrimary(CharacterBody body)
         {
-            var weapon = body.skillLocator.primary.stateMachine;
-            var state = weapon.state;
-            if (state != lastSpineWeaponState)
+            var report = coordinator.r.primary;
+            if (report == null)
+                coordinator.Check(false, "Primary observer report is unavailable");
+            if (report.lastOperands == null)
+                report.lastOperands = new PrimaryFireOperandSnapshot();
+            var snapshot = report.lastOperands;
+            ResetPrimaryOperandSnapshot(snapshot, ++report.observerTicks, Time.realtimeSinceStartup, coordinator.r.phase);
+            CharacterBody bodyRef = body;
+            SkillLocator locator = null;
+            GenericSkill primary = null;
+            EntityStateMachine weapon = null;
+            string operandStage = "body";
+            try
             {
-                if (state is FirePistol2)
+                snapshot.bodyStatus = UnityOperandStatus(bodyRef);
+                if (snapshot.bodyStatus != "live")
                 {
-                    coordinator.r.primary.shots++;
-                    coordinator.r.primary.entered = true;
-                    coordinator.r.primary.firingAvailable = true;
-                    coordinator.r.primary.spreadAfter = body.spreadBloomAngle;
+                    snapshot.firstUnavailable = "body:" + snapshot.bodyStatus;
+                    RefuseUnavailablePrimaryOperands(report, snapshot, bodyRef, locator, primary, weapon);
                 }
-                if (state is ReloadPistols)
-                    coordinator.r.primary.reloads++;
-                lastSpineWeaponState = state;
+                operandStage = "body.skillLocator";
+                locator = bodyRef.skillLocator;
+                snapshot.skillLocatorStatus = UnityOperandStatus(locator);
+                if (snapshot.skillLocatorStatus != "live")
+                {
+                    snapshot.firstUnavailable = "body.skillLocator:" + snapshot.skillLocatorStatus;
+                    RefuseUnavailablePrimaryOperands(report, snapshot, bodyRef, locator, primary, weapon);
+                }
+                operandStage = "skillLocator.primary";
+                primary = locator.primary;
+                snapshot.primaryStatus = UnityOperandStatus(primary);
+                if (snapshot.primaryStatus != "live")
+                {
+                    snapshot.firstUnavailable = "skillLocator.primary:" + snapshot.primaryStatus;
+                    RefuseUnavailablePrimaryOperands(report, snapshot, bodyRef, locator, primary, weapon);
+                }
+                operandStage = "primary.stateMachine";
+                weapon = primary.stateMachine;
+                snapshot.stateMachineStatus = UnityOperandStatus(weapon);
+                if (snapshot.stateMachineStatus != "live")
+                {
+                    snapshot.firstUnavailable = "primary.stateMachine:" + snapshot.stateMachineStatus;
+                    RefuseUnavailablePrimaryOperands(report, snapshot, bodyRef, locator, primary, weapon);
+                }
+                operandStage = "stateMachine.state";
+                EntityState state = weapon.state;
+                snapshot.stateStatus = ReferenceEquals(state, null) ? "clr-null" : "live";
+                if (snapshot.stateStatus != "live")
+                {
+                    snapshot.firstUnavailable = "stateMachine.state:clr-null";
+                    RefuseUnavailablePrimaryOperands(report, snapshot, bodyRef, locator, primary, weapon);
+                }
+                if (state != lastSpineWeaponState)
+                {
+                    if (state is FirePistol2)
+                    {
+                        report.shots++;
+                        report.entered = true;
+                        report.firingAvailable = true;
+                        operandStage = "body.spreadBloomAngle";
+                        report.spreadAfter = bodyRef.spreadBloomAngle;
+                    }
+                    if (state is ReloadPistols)
+                        report.reloads++;
+                    lastSpineWeaponState = state;
+                }
+                operandStage = "primary.stock";
+                snapshot.stock = primary.stock;
+                snapshot.stockStatus = "read";
+                report.stockAfter = snapshot.stock;
+                report.state = state.GetType().FullName;
             }
-            coordinator.r.primary.stockAfter = body.skillLocator.primary.stock;
-            coordinator.r.primary.state = state.GetType().FullName;
+            catch (Exception error)
+            {
+                if (report.firstFailureOperands == null)
+                {
+                    string stage = operandStage;
+                    RecordPrimaryOperandException(report, snapshot, stage, error, bodyRef, locator, primary, weapon);
+                }
+                throw;
+            }
         }
         public void Dispose()
         {
