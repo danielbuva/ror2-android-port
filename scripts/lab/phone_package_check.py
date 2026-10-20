@@ -12,7 +12,7 @@ import zipfile
 from phone_apk import PACKAGE, update_manifest
 
 
-def bind_runtime(device, paths, storage):
+def bind_runtime(device, paths, storage, *, observed=None):
     if set(paths) != {"persistentDataPath", "filesDir", "externalFilesDir"}:
         raise ValueError("Runtime path report fields differ")
     for path in paths.values():
@@ -23,6 +23,8 @@ def bind_runtime(device, paths, storage):
     external = device.sh("readlink", "-f", paths["externalFilesDir"]).strip()
     private = device.sh("run-as", PACKAGE, "readlink", "-f", paths["filesDir"]).strip()
     data = device.sh("run-as", PACKAGE, "pwd").strip()
+    if observed is not None:
+        observed.update(paths=paths, canonical_persistent=persistent, canonical_external=external, canonical_private=private, data_directory=data)
     prefix = "/data/" if storage["mode"] == "internal" else "/mnt/expand/" + storage["uuid"] + "/"
     if not persistent or persistent != external or private != data + "/files" or not private.startswith(prefix):
         raise ValueError("Runtime paths do not match Android storage observations")
@@ -131,7 +133,7 @@ def check_action(request):
                     time.sleep(1)
             else:
                 raise RuntimeError(label + ": runtime path discovery deadline")
-            runtime.update(bind_runtime(device, paths, result["installs"][-1]["storage"]))
+            runtime.update(bind_runtime(device, paths, result["installs"][-1]["storage"], observed=entry.setdefault("runtime_observations", {})))
             entry["runtime"] = dict(runtime)
             while time.monotonic() < deadline:
                 try:
