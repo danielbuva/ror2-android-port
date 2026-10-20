@@ -15258,3 +15258,64 @@ budget, then fix only the named owner.
 
 Evidence: work/device/<serial>/experiments/session-memory/20261020T082722.064780Z/ (three sessions)
 and .../20261020T083843.116471Z/ (five sessions). Thor has 6d9a46ae… installed.
+
+
+## J783 — Accept the survivor/Siren APK with matching debugging symbols
+
+Date: 2026-10-20. Hypothesis: J779's Captain readiness and Siren exception
+changes, plus J780's terminal MUL-T observation, preserve both default controls
+and can be tested together without changing the established content payload.
+
+The shared code-only player from committed source
+`144b051106e009234fe7bec90e8c2c52e89b6ff2` builds in 178.565077 s with zero
+errors. APK SHA-256:
+`1311f1057275ef2a34a3fc964a6f79e033086243d066deea40775b9178d2bba5`.
+All 251 frozen source inputs match the committed snapshot before and after;
+all 266 payload hashes equal J776. The player retains matching debugging
+symbols: ZIP SHA-256
+`0f796d0e87e19a61c9a5aad625471ebc8707ad88a89b07315f95976ab88e1bbb`,
+IL2CPP build ID `38f025128139107c82f1fb02c774b8532a8288a3`.
+These symbols qualify only this player, not J761's earlier performance trace.
+
+The adopted-storage Nova updates in place under its adopted-only policy,
+with fresh placement/free-space checks, then bootstraps and syncs successfully.
+Both standard checks pass against this APK while it is the current build:
+plain reaches 35.420670 s; stage-exit observes exactly one completed transition
+to Goolake and 10.198303 s there, at 141.067383 s world time. Both current-process
+logs contain no error; report error/firstFailure are empty, native lifecycle
+and Siren diagnostics are off, recovery is false and the profile stays at
+13 applied runs. The owned game is force-stopped and the display sleeps.
+
+An initial wrapper passes an unsupported expected-APK option to check-baseline
+and refuses in host argument parsing before a runtime test. The corrected
+standard invocations both pass. After the final successful result and Root
+log validation, a wrapper guard notices the parallel session's new scoped
+build lease and refuses its final bookkeeping step. The complete passing
+receipts are preserved, independently revalidated and accepted; no runtime
+failure is hidden by that host bookkeeping refusal. Subsequent explicitly
+hash-bound survivor trials remain separate from baseline acceptance.
+
+A fresh archive of this commit passes 1,116 host tests with zero skips in
+29.443 s under the configured SDK environment. Root executes the existing
+input-sink fixture in the exact idle editor under the shared mutex. All
+17 input-sink booleans pass, nativeSkillExecutionTested remains false, and
+all four guard/fixture source hashes match this APK before and after. The
+first invocation has only a CodeDom generic-delegate inference error;
+explicit generic arguments in the invocation resolve it without changing
+any authored source. This qualifies the input-sink/manual boundary only,
+not Siren entry, a fourth transition, native skill execution or Moon navigation.
+The old APK's guard receipt is not reused.
+
+First failure: none within either default control. Targeted Captain and MUL-T
+behavior, native Siren transport, ordinary difficulty, audio and performance
+still require their own device evidence. The later parallel root-attribution
+source is outside this APK. Existing named runtime owners and rebuild staging
+are unchanged; the source-staging steps need replay for J779/J780 and remain
+with the parallel session.
+
+Evidence: work/experiments/survivor-siren-next/candidate-20261020T084242.281050Z/;
+work/experiments/baseline/20261020T084905.352957Z/ and
+20261020T085246.468787Z/; work/coordination/codex-1311-baseline-root-acceptance.json;
+the initial baseline-wrapper attempt and
+codex-survivor-siren-next-baseline-resume-r2/;
+siren-1311-guard-qualification/ and editor-root-r2/. Raw device evidence stays ignored.

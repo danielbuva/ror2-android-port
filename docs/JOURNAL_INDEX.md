@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J783](PORTING_JOURNAL.md#j783--accept-the-survivorsiren-apk-with-matching-debugging-symbols) | 2026-10-20 | Accept the survivor/Siren APK with matching debugging symbols | Date: 2026-10-20. |
 | [J782](PORTING_JOURNAL.md#j782--reachable-type-census-points-at-retained-item-display-rule-sets) | 2026-10-20 | Reachable-type census points at retained item display rule sets | Hypothesis (J775): the remaining ~57 MB per session is reachable from managed roots, and the types that scale with session count identify the holder. |
 | [J781](PORTING_JOURNAL.md#j781--reproduce-the-exact-android-wwise-byte-string-decoder-correction) | 2026-10-20 | Reproduce the exact Android Wwise byte-string decoder correction | Date: 2026-10-20. |
 | [J780](PORTING_JOURNAL.md#j780--separate-mul-t-first-refusal-and-terminal-readiness-evidence) | 2026-10-20 | Separate MUL-T first-refusal and terminal readiness evidence | Date: 2026-10-20. |
