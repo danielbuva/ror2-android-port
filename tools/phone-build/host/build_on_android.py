@@ -68,6 +68,7 @@ def build(tool_root, output):
                 "8",
                 "-target",
                 "8",
+                "-parameters",
                 "-bootclasspath",
                 source / "android.jar",
                 "-d",
