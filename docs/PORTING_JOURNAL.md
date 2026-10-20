@@ -14363,3 +14363,42 @@ separates symbol cache keys, so the corrected canonical retry uses a new cache
 identity and preserves the incomplete prior cache. No runtime, payload, R8
 membership or device receipt is changed. Next freeze the corrected committed
 sources, rebuild, run both defaults and repeat bounded MUL-T input coverage.
+
+## J766 — Hidden/Compositing: R9 builds before Unity's startup callback records it
+
+Phase 2, from-scratch rebuild (diagnosed by Claude; host only: no editor stop, build, install or
+working-project change). Follow-up to J583 item 2 and J598. Hypothesis: the shader's inclusion is
+decided by editor process state, not by project or Library content, and a read-only look at the
+exact editor binary (Unity 2021.3.45f2 ARM64, `nm`/`llvm-objdump`) can name the condition.
+
+Evidence. `GraphicsSettings::AddHiddenInternalShaders` appends the video shaders
+(`video_YUV420_convert::GetShadersForCurrentBuildPlatform`), then appends
+`TextureMixerPlayable::GetShader()` only if that pointer resolves. `GetShader` returns a static
+that only `TextureMixerPlayable::Initialize` writes, from `ShaderNameRegistry::FindShader("Hidden/Compositing")`.
+`Initialize` is called by the playable's constructor (managed `TextureMixerPlayable.Create`, which
+nothing in the editor, packages or project calls) and is registered by the Director module's static
+initializer on `GlobalCallbacks::editorAfterEverythingLoaded`. The batch startup order is
+`InitializeProject → FinishLoadingProject → AfterEverythingLoaded → tick loop`, and
+`-executeMethod` runs inside `FinishLoadingProject` (`ParseARGVCommands`); with `-quit` the
+process exits there. R9's pass 2 (`LabBuild.BuildDestination`) and J598's warm-clone build
+(`LabBuild.Build`) were both direct `-executeMethod … -quit` calls, so they built before the
+callback ran. Every working-project build is queued (`QueueBuild` → `DispatchBuild` on
+`EditorApplication.update`) in the resident editor, after the callback, and includes it. In both
+editor logs the always-included shader lists match except this one entry, right after
+`Hidden/VideoDecodeAndroid`. Correction to J598: both `Library/ScriptMapper` files do map
+`Hidden/Compositing` (built-in extra, path ID 17000); the two maps are semantically equal (only
+external file indices are ordered differently).
+
+Candidate fix (not on main, not run): `LabBuild.QueueDestinationBuild` queues the unchanged
+`BuildDestination` onto the editor loop once scripts and imports are settled, and R9 runs pass 2
+without `-quit` (`BuildDestination` exits itself; the runner's 4 h timeout still bounds it).
+Host tests pin the queued entry and the pass-2 command line; all 1,066 host tests pass. Local
+branch `claude/r9-compositing-fix` (`c6e4e58`, on `38687e9`); the R9 variant on the kept
+destination's commit `9e7fc0d` was `c5a5642` and is discarded with the throwaway checkout.
+Device impact remains nil: the game does not use `TextureMixerPlayable`, and R9's APKs without
+the shader passed both checks (J582, J586, J751).
+
+Phase 2 is paused by operator decision before any R9 run; the kept destination is deleted.
+Revisit (release prerequisite): land the fix, prove it with a working-project build and both
+`./dev check-baseline` modes, then a fresh R1–R8 replay and R9 whose APK `unity_builtin_extra`
+should equal the baseline's.
