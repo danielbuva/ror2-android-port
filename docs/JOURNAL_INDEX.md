@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J851](PORTING_JOURNAL.md#j851--measure-sdk-metadata-coverage-and-identify-the-native-registry-gap) | 2026-10-20 | Measure SDK metadata coverage and identify the native registry gap | 2026-10-20. |
 | [J845](PORTING_JOURNAL.md#j845--play-the-original-named-pickup-event-through-the-android-managed-api) | 2026-10-20 | Play the original named pickup event through the Android managed API | 2026-10-20. |
 | [J849](PORTING_JOURNAL.md#j849--feed-actual-phone-stripping-output-into-the-exact-converter) | 2026-10-20 | Feed actual phone stripping output into the exact converter | 2026-10-20. |
 | [J846](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android) | 2026-10-20 | Capture authored stripping inputs and replay UnityLinker on Android | 2026-10-20. |

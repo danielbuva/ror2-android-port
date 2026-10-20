@@ -1,7 +1,7 @@
 # Porting state
 
-Last updated 2026-10-20 after **J845** (the named pickup audio fixture passes;
-main’s frozen f1550ce0 player is installed with default checks in progress).
+Last updated 2026-10-20 after **J851** (SDK root-contract gaps are measured;
+main’s f1550ce0 player remains in its separate device qualification).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the

@@ -19915,3 +19915,103 @@ music, spatialization or the original game lifecycle. Game audio stays
 unavailable. Next integrate the original startup/initializer/controller/bank
 loaders as the sole owners, using current-input source contracts and explicit
 payload preparation. No R8/R9 game rebuild recipe changes in this checkpoint.
+
+## J851 — Measure SDK metadata coverage and identify the native registry gap
+
+2026-10-20. Hypothesis: managed SDK metadata might supply the native-type
+identity/hierarchy required to replace captured editor roots. Integrate main
+through J845 `6818778` before this entry; main's f1550ce0 candidate is installed
+with its standard checks in progress. Preserve its pending qualification and
+original gameplay/audio ownership. No Unity mutation, APK build/install, game
+input, runtime change or device action occurs in this investigation.
+
+**Owner and input contract.** `phone_roots.py` and
+`tools/phone-build/metadata/` own current experimental read-only host support.
+`phone-root-contract` verifies the authored fixture/APK and matching capture/
+final BuildReport identity, then inventories explicit editor SDK and captured
+player SDK UnityEngine assemblies. The authored Cecil reader parses metadata,
+never loads the inspected assemblies, hashes inputs before/after, rejects
+output overwrite and retains raw reports/failures. SDK-derived reports stay
+ignored; no captured root row or SDK implementation is embedded in public code.
+Host .NET 10 is an observation tool, not a phone-tool qualification or gameplay
+backend. Exact SDK Cecil SHA-256 remains the existing public recipe pin.
+
+The root oracle is J846's hash-bound EditorToUnityLinkerData.json. It contains
+43 scene-usage records, 318 native-type records and 33 excluded modules; the
+SDK modules.asset describes module controls/dependencies rather than that
+complete native class hierarchy. Both remain private data inputs to this study.
+Inspect pinned reference-only
+[UnityType binding](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.bindings.cs),
+[managed registry wrapper](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/TypeSystem/UnityType.cs)
+and [root producer](https://github.com/Unity-Technologies/UnityCsReference/blob/b052b1fe38b45d5aefa609a115c626ed2e74f3a6/Editor/Mono/BuildPipeline/AssemblyStripper.cs).
+The registry is populated by a native call; managed inheritance and binding
+attributes are not the same contract as native namespace/module/base identity
+or scene usage. Use this as API knowledge, not copied implementation or proof
+of exact-patch data completeness.
+
+**Measured managed coverage.** From committed `9b0af6f`, inventory 132 SDK
+assemblies: 86 editor SDK files and 46 UnityEngine files in this authored
+fixture's captured player inputs. These player inputs are not a claim to cover
+every available Android SDK variation. The reader sees 3,598 editor managed
+types and 3,291 player types. NativeClass/NativeType attributes occur on 103 and
+97 types respectively; header/codegen attributes do not establish native names.
+Both groups yield only 17 unique exact qualified NativeClass-name matches
+against the 318-entry oracle, and no additional unique explicit short-name-only
+match. Complete native module/base identity is unproven.
+
+Both groups have 171 unique managed short-name candidates. Nine editor and six
+player names are ambiguous; 138 editor and 141 player native names have no
+managed short-name candidate. Even among unique candidates with comparable base
+labels, 57 managed/native base labels differ and 111 agree. Label agreement is
+still not identity. Report these guesses separately and keep
+root_generation_qualified false. Do not silently fill missing rows, substitute
+managed inheritance or loosen stripping to obtain a passing output.
+
+**Native SDK lead.** Read-only symbol inspection of the pinned ARM64 editor
+binary first finds no relevant registration symbols in the global-only view;
+that view cannot establish absence. The complete local-symbol view exposes
+native registry/module-registration entries and static TypeRegistrationDesc
+data. Inspect the supplied file using Apple's public
+[64-bit Mach-O layout](https://github.com/apple-oss-distributions/cctools/blob/main/include/mach-o/loader.h)
+for bounded virtual-address/file-offset mapping; do not execute the binary or
+copy its implementation into tooling.
+
+A local byte-level observation finds 305 static registration records with unique
+self pointers. Their class/namespace fields reproduce 305 oracle qualified
+names exactly. Parent-pointer links reproduce 280 base names; 25 links do not
+resolve inside that subset. The descriptor module slot is the placeholder
+undefined in all 305 records. Thirteen oracle types are outside that static
+record set. Native module-assignment functions are visible as local symbols,
+but no qualified decoder or complete root producer exists. This is a promising
+owner-SDK data source, not proof that the editor can already be removed.
+The supplied editor binary SHA-256 is
+`906123118e45d56c6bcf20f3776ed2373417553042500714023daeb9e53058e8`.
+All symbol addresses, raw SDK data and derived record tables remain ignored.
+
+**Checks and evidence.** Authored host contracts distinguish explicit identity,
+short-name ambiguity and base-label contradictions across SDK groups. A separate
+C# fixture gives its attribute constructor a throwing body; the reader still
+recovers its metadata, verifies inheritance/arguments and refuses overwrite.
+It therefore does not execute that input attribute constructor. The four
+focused tests pass with the exact supplied Cecil. Fresh-clone CI on `a6becaa`
+passes 1,222 tests, 55 optional skips, Ruff, public audit and documentation
+freshness; the extra optional SDK-dependent fixture skips when the SDK/Cecil
+are absent. Whole-project doctor continues to refuse this isolated worktree's
+absent game inventory/bootstrap; no public-bootstrap acceptance is inferred.
+
+Private `root-contract-selection.json` selects the original report and immutable
+coverage-v2 comparison. `root-contract-proof-receipt.json` binds 11 inventory/
+comparison/native-observation/test/CI/doctor artifacts; SHA-256
+`4f74c214b96d08e073e25aae939a0e063410942efe7954ee52828545a662b704`.
+ARCHITECTURE names owners/setup/teardown; LOCAL_STATE lists private input/output
+roles. The authored fixture's desktop APK/oracle identity is unchanged from J846;
+no new native loading, game rendering or performance result is claimed.
+
+**Next gate.** Investigate an independently authored, version-bound reader of
+owner-supplied native registry data, including module assignment, remaining
+native types and exact base links; then address scene usage and project module
+policy. No captured table may become a public constant or hidden build input.
+Rich content/import/shader production, permitted tool delivery, normal app-host
+policy and installer/benchmark gates remain open. Keep Route A and the desktop
+fallback. Revisit on SDK/binary/schema/attribute or native-registry contract
+changes. This generic SDK study adds no RoR2-specific reconstruction or runtime.
