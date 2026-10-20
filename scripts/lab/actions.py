@@ -152,7 +152,7 @@ _ENTRIES = (
         "stage_action",
         {},
         "current",
-        "Experimental: stage the hash-bound authored player's complete stripped assembly closure and supplied exact Unity converter from --target REQUEST.json. Android build-tool host only; desktop stripping remains an input; no game, editor mutation or installation.",
+        "Experimental: stage the authored player's hash-bound stripped closure and exact supplied Unity converter from --target REQUEST.json. An optional linker selector consumes verified phone stripping output; desktop editor roots remain inputs. Build-tool host only; no game, editor mutation or installation.",
         handler=_target,
     ),
     Action(

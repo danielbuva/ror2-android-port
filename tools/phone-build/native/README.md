@@ -59,6 +59,15 @@ classify report differences without editing outputs. Scene/editor roots and
 tool delivery remain explicit dependencies; a successful stripping command does
 not qualify a complete player or game. No current game build uses this owner.
 
+To connect actual phone stripping outputs, the converter request may add
+`linker` with explicit `stage`, `output` and `result_sha256`. The converter
+verifies the same fixture, tool/input/result/output hashes and exact assembly/
+symbol closure against its control. Editor-report module order may differ only
+when complete entries and all other fields match; its raw bytes are preserved.
+The stage declares its phone-stripping origin and retains desktop editor roots
+as an input. The downstream native-source validator follows this same lineage.
+This does not select a final installer or establish game performance.
+
 The Android driver verifies the entire staged input manifest and replays each
 compile followed by the link. It preserves target/optimization/ABI defines and
 the original NDK target sysroot/C++ libraries and supplied Baselib archive.

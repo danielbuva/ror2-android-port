@@ -188,6 +188,43 @@ def stage_action(request):
     print(json.dumps(result, indent=2))
 
 
+def stripped_input(request, fixture):
+    """Verify the emitted stripping closure before a converter consumes it."""
+    if set(request) != {"stage", "output", "result_sha256"}:
+        raise ValueError("Expected explicit linker stage/output/result hash")
+    stage_root, output = (Path(request[key]).resolve() for key in ("stage", "output"))
+    receipt = json.loads((stage_root / "stage-receipt.json").read_text())
+    if {key: receipt["request"][key] for key in ("project", "apk", "sha256")} != {key: fixture[key] for key in ("project", "apk", "sha256")}:
+        raise ValueError("Linker belongs to another fixture")
+    if sha(output / "result.json") != request["result_sha256"]:
+        raise ValueError("Linker result drift")
+    result = json.loads((output / "result.json").read_text())
+    if result.get("success") is not True or result.get("exit_code") != 0 or result.get("input_manifest_sha256") != sha(stage_root / "input-manifest.json"):
+        raise ValueError("Linker result/manifest failed")
+    for name, digest in json.loads((stage_root / "input-manifest.json").read_text()).items():
+        if sha(bounded(stage_root, name)) != digest:
+            raise ValueError("Linker staged input drift")
+    stripped = output / "stripped"
+    actual = {p.relative_to(stripped).as_posix(): sha(p) for p in stripped.rglob("*") if p.is_file()}
+    if actual != result["outputs"]:
+        raise ValueError("Linker output drift")
+    original = Path(fixture["project"]) / "Library/Bee/artifacts/Android/ManagedStripped"
+    expected = {p.relative_to(original).as_posix(): sha(p) for p in original.rglob("*") if p.is_file()}
+    diagnostics = {"analytics.json", "UnityLinkerToEditorData.json"}
+    if not any(name.endswith(".dll") for name in expected) or {k: v for k, v in actual.items() if k not in diagnostics} != {
+        k: v for k, v in expected.items() if k not in diagnostics
+    }:
+        raise ValueError("Phone stripped assembly/symbol closure differs")
+    # This report is not a converter assembly input. Verify only the previously
+    # observed order difference; copy its actual bytes without normalization.
+    reports = [json.loads((root / "UnityLinkerToEditorData.json").read_text()) for root in (original, stripped)]
+    for report in reports:
+        report["report"]["modules"] = sorted(report["report"]["modules"], key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")))
+    if reports[0] != reports[1]:
+        raise ValueError("Phone linker editor-report entries differ")
+    return stripped
+
+
 def strip(stage_root, tool_root, output):
     stage_root, tool_root, output = (Path(p).resolve() for p in (stage_root, tool_root, output))
     output.mkdir(parents=True, exist_ok=False)

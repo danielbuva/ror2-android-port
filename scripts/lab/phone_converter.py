@@ -78,7 +78,7 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def stage(project, editor, destination):
+def stage(project, editor, destination, *, managed_stripped=None):
     project, editor, destination = map(Path, (project, editor, destination))
     launcher = editor / "il2cpp/build/deploy/il2cpp"
     nodes = []
@@ -94,7 +94,7 @@ def stage(project, editor, destination):
     if set(assemblies) != actual:
         raise ValueError("Converter graph/stripped assembly closure differs")
     destination.mkdir(parents=True, exist_ok=False)
-    shutil.copytree(project / STRIPPED, destination / "project" / STRIPPED)
+    shutil.copytree(Path(managed_stripped) if managed_stripped else project / STRIPPED, destination / "project" / STRIPPED)
     managed = destination / "managed"
     managed.mkdir()
     for source in launcher.parent.iterdir():
@@ -121,7 +121,9 @@ def stage(project, editor, destination):
         "assemblies": assemblies,
         "graph_sha256": sha(graph),
         "game_inputs": False,
-        "desktop_stripping_inputs": True,
+        "desktop_stripping_inputs": managed_stripped is None,
+        "desktop_editor_roots": True,
+        "stripping_origin": "phone-unitylinker" if managed_stripped else "desktop",
         "changes": ["Android .NET 8.0.32 build-tool host replaces the desktop launcher", "Output paths relocated; unnecessary tool analytics disabled"],
     }
     (destination / "plan.json").write_text(json.dumps(plan, indent=2) + "\n")
@@ -140,9 +142,16 @@ def stage_action(request):
     from common import ROOT, WORK, now
     from phone_native import fixture_request
 
-    value, project = fixture_request(request)
+    value, project = fixture_request(request, optional_fields=("linker",))
+    managed_stripped = None
+    if "linker" in value:
+        from phone_linker import stripped_input
+
+        if any(not Path(value["linker"][key]).resolve().is_relative_to(WORK.resolve()) for key in ("stage", "output")):
+            raise ValueError("Linker inputs must remain ignored local state")
+        managed_stripped = stripped_input(value["linker"], value)
     destination = WORK / "rebuild/phone-converter" / now()
-    result = stage(project, Path(os.environ["UNITY_EDITOR"]).parent.parent, destination)
+    result = stage(project, Path(os.environ["UNITY_EDITOR"]).parent.parent, destination, managed_stripped=managed_stripped)
     result.update(stage=str(destination), request=value, source_commit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip())
     (destination / "stage-receipt.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))
@@ -154,7 +163,9 @@ def cpp_input(request, fixture):
         raise ValueError("Expected explicit converter stage/output/result hash")
     stage_root, output = (Path(request[key]).resolve() for key in ("stage", "output"))
     receipt = json.loads((stage_root / "stage-receipt.json").read_text())
-    if receipt["request"] != {key: fixture[key] for key in ("project", "apk", "sha256")}:
+    if set(receipt["request"]) - {"linker"} != {"project", "apk", "sha256"} or {key: receipt["request"][key] for key in ("project", "apk", "sha256")} != {
+        key: fixture[key] for key in ("project", "apk", "sha256")
+    }:
         raise ValueError("Converter belongs to another fixture")
     result_file = output / "result.json"
     if sha(result_file) != request["result_sha256"]:
@@ -167,7 +178,12 @@ def cpp_input(request, fixture):
         if sha(bounded(stage_root, path)) != digest:
             raise ValueError("Converter input drift")
     project = Path(fixture["project"])
-    original = {p.relative_to(project).as_posix(): sha(p) for p in (project / STRIPPED).rglob("*") if p.is_file()}
+    selected = project / STRIPPED
+    if "linker" in receipt["request"]:
+        from phone_linker import stripped_input
+
+        selected = stripped_input(receipt["request"]["linker"], fixture)
+    original = {STRIPPED + "/" + p.relative_to(selected).as_posix(): sha(p) for p in selected.rglob("*") if p.is_file()}
     staged = {path.removeprefix("project/"): digest for path, digest in manifest.items() if path.startswith("project/" + STRIPPED + "/")}
     if original != staged:
         raise ValueError("Converter stripped input closure differs")
@@ -193,7 +209,12 @@ def convert(stage_root, tool_root, output):
             if sha(bounded(stage_root, relative)) != expected:
                 raise ValueError("Converter staged input drift: " + relative)
         plan = json.loads((stage_root / "plan.json").read_text())
-        if plan["game_inputs"] is not False or plan["desktop_stripping_inputs"] is not True:
+        origin = plan.get("stripping_origin", "desktop")
+        if (
+            plan["game_inputs"] is not False
+            or (origin, plan["desktop_stripping_inputs"]) not in {("desktop", True), ("phone-unitylinker", False)}
+            or (origin == "phone-unitylinker" and plan.get("desktop_editor_roots") is not True)
+        ):
             raise ValueError("Expected isolated authored converter inputs")
         argv = [
             str(tool_root / "usr/lib/dotnet/dotnet"),

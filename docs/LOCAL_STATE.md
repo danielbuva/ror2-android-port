@@ -124,6 +124,17 @@ selectors bind exact outputs; old J839 selectors/evidence are not overwritten.
 None is a game-build
 input; the original smaller converter attempts remain retained.
 
+The proof root's `strip-converter-request.json` optionally binds the actual
+phone stripping stage/output/result into `phone_converter.stage_action`.
+`strip-converter-stage-selection.json` and `strip-converter-run-selection.json`
+select that exact new converter attempt; no older selector is overwritten.
+`strip-converter-native-handoff.json` records its validated downstream selector;
+the desktop and J842 boundary comparisons are review evidence, not rewritten
+source inputs. The final `strip-converter-proof-receipt.json` binds those results.
+`strip-converter-on-android.py` is required local replay support for tool/workspace
+ownership, fresh capacity, isolated execution and collection. It does not read
+or modify installed game data beyond read-only APK hash observations.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.

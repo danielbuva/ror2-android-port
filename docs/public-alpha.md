@@ -21,7 +21,7 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
 - [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
       tools beyond the authored converter proof; extend
       [J842’s converter/native fixture proof](PORTING_JOURNAL.md#j842--run-the-full-authored-converter-and-load-its-phone-compiled-native-output)
-      through connected [J846 stripping](PORTING_JOURNAL.md#j846--capture-authored-stripping-inputs-and-replay-unitylinker-on-android), editor-root production and the complete accepted game,
+      through [J849's connected stripping/conversion](PORTING_JOURNAL.md#j849--feed-actual-phone-stripping-output-into-the-exact-converter), editor-root production and the complete accepted game,
       app sandbox execution (including [J836’s unresolved refusal control](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution)), complete packaging, durable owner signing-key
       custody and user-mediated installer/update flows beyond the fixture proof.
 - [ ] Present bounded proof findings before changing the working build or choosing
