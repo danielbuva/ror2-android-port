@@ -18216,3 +18216,43 @@ build with J825's recorder and J823's linker receipt, pass both default checks,
 then explicitly request the native skin lifecycle on a source-selected survivor.
 Native callback order, provider settlement, animation/material appearance,
 teardown timing and matched PC parity remain open.
+
+## J827 — Repair the Siren editor fixture before dispatching the owning build
+
+2026-10-20. The first owning code-build attempt from committed `87fe9c4` passes
+Main doctor/preflight and stages 110 runtime sources, then refuses before player
+build dispatch: the refreshed editor is not compiled and idle. The first errors
+are CS0535 in the existing tracked SirenEggDiagnosticInputExactEditorFixture
+context, which lacks J825's three new observation interface members. Runtime
+compilation itself succeeds. The old started receipt names a different request;
+there is no player build or APK from this attempt. Do not infer a runtime failure
+or change navigation to resolve a fixture compilation contract.
+
+Add inert false/NaN/null implementations for trigger, stall and reader in that
+synthetic context. It cannot publish a live world sample. Three synthetic policy
+cases cover valid geometry, zero egg identity and NaN distance; existing fixture
+assertions remain intact. Root and independent review verify the patched fixture
+hash `041db831fb44d43b8868e4dd47dd771e74726700b54c2b06f0d51103288fc25e`.
+The saved-reference compilation includes all 110 runtime sources, four supports
+and two editor fixtures against 264 references. It passes; Root also reruns the
+existing native-target witness tests and production recorder host contract.
+This is a host compile, not an exact-editor fixture execution or native-route
+acceptance.
+
+Record the three new authored sources' actual first-import GUIDs after Unity's
+refresh, with staged/authored byte equality and metadata hashes. These replace
+only the documented null first-import placeholders; no original game GUID is
+invented or changed. Recipe membership remains 110. R8/R9 must replay the updated
+tracked fixture and recorded authored layout metadata.
+
+Private first refusal and import records:
+`work/coordination/codex-skin-siren-build-root-r1/first-failure.json` and
+`first-import-guids.json`; attempted request
+`20261020T202741.719338Z-a4218a752cd94f52867913ee352ed083`, 301 frozen authored
+inputs. The updated fixture and pinned saved-reference qualification live in
+`work/coordination/siren-navigation-new-player-guard/r1/`; independent review
+`bffd20014bc05965498f6a8752dfc0417025ef42b01641b281656317d06f7966`.
+Raw editor inspection remains ignored. No game install, device run, restart or
+cache clearing occurs. Accepted/installed game remains `107718f8…`, with Main
+asleep. Next commit the repair, refresh the editor and retry through a new owning
+request; both default checks and the targeted animation/Siren gates remain open.

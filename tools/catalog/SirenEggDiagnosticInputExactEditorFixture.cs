@@ -64,6 +64,18 @@ public static class SirenEggDiagnosticInputExactEditorFixture
             visible = visibleTargets.Count == 0 || visibleTargets.Contains(body);
             return body.transform.position + Vector3.up;
         }
+        // The exact-editor source-contract fixture never arms navigation observation.
+        // These stubs satisfy the integrated production context without fabricating
+        // a live tracker, stage stall clock, or read-only world sampler.
+        public bool TryReadNavigationTrigger(CharacterBody player, CharacterBody egg, out float eggDistance,
+                                             out float trackerMaximumDistance)
+        {
+            eggDistance = trackerMaximumDistance = float.NaN;
+            return false;
+        }
+        public float NavigationObjectiveStalledSeconds => float.NaN;
+        public ISirenNavigationObservationReader CreateNavigationObservationReader(CharacterBody player,
+                                                                                    NovaInputBridge bridge) => null;
     }
 
     public static object Run()
@@ -72,6 +84,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                     !UnityEngine.Networking.NetworkClient.active,
                 "Fixture requires idle editor with no game/network session");
         VerifyImportedSourceEggPrefab();
+        VerifyNavigationObservationSeams();
         VerifyNativeListeningRegistrationFieldContract();
         VerifyNativeRegisteredMemberContract();
         VerifyCandidateContract();
@@ -94,7 +107,9 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                      defaultOffInputNoninterference = true,
                      selectionDisabledOutstandingLeaseReleased = true,
                      freshSameValueTerminalProducerPreserved = true,
-                     noProfileServerOrCombatCalls = true };
+                     noProfileServerOrCombatCalls = true,
+                     navigationObservationContextRemainsInert = true,
+                     navigationObservationPolicyCases = 3 };
     }
 
     static void VerifyImportedSourceEggPrefab()
@@ -143,6 +158,22 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                 return true;
         }
         return false;
+    }
+
+    static void VerifyNavigationObservationSeams()
+    {
+        var context = new Context();
+        float distance, trackerMaximumDistance;
+        Require(!context.TryReadNavigationTrigger(null, null, out distance, out trackerMaximumDistance) &&
+                    float.IsNaN(distance) && float.IsNaN(trackerMaximumDistance),
+                "Synthetic fixture must not publish a live navigation trigger");
+        Require(float.IsNaN(context.NavigationObjectiveStalledSeconds) &&
+                    context.CreateNavigationObservationReader(null, null) == null,
+                "Synthetic fixture must not claim live stage or world observation");
+        Require(SirenNavigationObservationPolicy.ShouldStart(true, 398, 167f, 60f, .5f, 6.1f) &&
+                    !SirenNavigationObservationPolicy.ShouldStart(true, 0, 167f, 60f, .5f, 6.1f) &&
+                    !SirenNavigationObservationPolicy.ShouldStart(true, 398, float.NaN, 60f, .5f, 6.1f),
+                "Compiled observation policy synthetic guards changed");
     }
 
     static void VerifyCandidateContract()
