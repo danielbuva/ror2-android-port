@@ -540,6 +540,15 @@ never reads this test directory.
 
 ### Current gameplay qualification support
 
+`work/coordination/codex-poststrip-build-root-r1/` and
+`work/experiments/player-il2cpp-capture/candidate-20261020T221724.572459Z/`
+retain J843’s build driver, actual request/source/APK/symbol outputs, incomplete
+capture witness, bounded log segment and host first failure. They are required
+private diagnostic/rollback support, not current player inputs. The collector
+and normal receipt producers live in tracked source; no build reads this run
+folder. The `audio-poststrip-owning-build-triage/` proposals remain host-only.
+
+
 `work/coordination/codex-native-inventory-build-root-r{1..2}/`,
 `work/coordination/codex-native-inventory-device-root-r1/` and
 `work/experiments/native-skin-siren-next/candidate-20261020T214442.277797Z/`

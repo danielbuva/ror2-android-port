@@ -19325,3 +19325,64 @@ Primary references: Android's [external build-system guide](https://developer.an
 and [C++ runtime selection](https://developer.android.com/ndk/guides/cpp-support).
 This generic authored build experiment introduces no RoR2-specific reconstruction,
 content-loader, shader, middleware or gameplay mechanism.
+
+## J843 — Retain the successful player but refuse the legacy IL2CPP invocation receipt
+
+2026-10-20. Hypothesis: a default-off, BuildReport-bound log collector can join
+J823’s pre-strip capture to the actual IL2CPP managed input directory. Offline
+inspection identified a legacy `UnityEditorInternal.IL2CPPBuilder` log seam;
+this was not evidence that the active Android pipeline used it. Review the
+normal MCP work-root/session contract before integration and correct the
+unapplied first draft, stale documentation hunk and generated help row.
+
+Committed source `83636c88666ef0326c2512af51a3ebb50e5ce8f4` adds explicit
+`--capture-il2cpp-invocation`, requiring the existing pre-strip flag, with no
+player-runtime change. The editor owner and host verifier retain exact
+request/source/input/Android/BuildReport GUID and successful APK joins;
+ordinary editor builds return before request access without a live lab session.
+This minimal shared-build receipt change serves original audio. Alpha retains
+launcher/packaging behavior ownership. Full local host checks pass: 1,217
+tests, one optional-tool skip. Two old fixture contracts initially fail because
+the stub lacks the new GUID field and the audited Build body gains its one
+reviewed GUID assignment; correct both without relaxing their contracts.
+Fresh-clone pre-push checks pass with 1,185 tests and 54 optional-tool skips.
+
+Doctor, preflight and exact Main-editor inspection pass. Under the host mutex,
+request `20261020T221516.176802Z-ac2da562d72a49f4aefe86cc419eb40e` builds in
+34.019573 seconds, zero Unity errors, GUID
+`54dcd30b011d943c2a42075404e42f3d`. Actual APK
+`089bcf228455be0e505b4e2f195e99936b14fcdbfdbf125862644682af1f0c07`,
+matching-request symbol output, 308 frozen authored inputs and raw terminal
+result are preserved at
+`work/experiments/player-il2cpp-capture/candidate-20261020T221724.572459Z/`.
+The fresh pre-strip callback records the same GUID and all 330 saved DLLs;
+every name, size and hash matches J840’s input set.
+
+The postprocess collector writes an incomplete witness with no snapshots:
+`same_build_invocation_or_snapshot_incomplete`. The host refuses the requested
+enriched receipt instead of promoting it to current build. The successful
+Unity player and failed host qualification are separate facts. The active
+request’s saved editor-log segment contains no legacy invocation prefix;
+indeed, that prefix is absent from the retained active-editor log. The current
+Android path uses Bee’s `IL2CPP_CodeGen` response-file node. Available saved
+DAG/trace files predate this request and cannot supply a same-build proof.
+Neither cached input reuse nor native callback delivery is inferred from the
+missing line alone. No cache is cleared and no forced repeat build is run.
+
+Full Root evidence and first failure are in
+`work/coordination/codex-poststrip-build-root-r1/`; the offline active-pipeline
+triage is in `work/coordination/audio-poststrip-owning-build-triage/`.
+`prestrip-comparison.json` retains the exact 330-file equality. The enriched
+receipt remains unaccepted, with no argv-vector, transformed-stage equivalence
+or runtime-audio claim. Revisit on a real runtime-code candidate with a
+version-pinned fresh Bee execution/response-file collector, capturing baseline
+and request scope before the build; stale DAG/trace bytes remain schema examples
+only. The editor returns idle after this terminal build.
+
+This APK is not installed or default-qualified. The mutable current-build
+pointer and installed gameplay APK remain J840’s `8357db8b…`; no device command
+is part of this build qualification. A separately authorized bounded Siren run
+uses that frozen APK. No original input, storage configuration, alpha/spare
+device or audio availability is changed. R8/R9 must replay the new authored
+editor instrumentation, but invocation capture is unsupported on destination
+builds and remains an independent opt-in.
