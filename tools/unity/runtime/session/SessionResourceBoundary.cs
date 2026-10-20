@@ -29,7 +29,7 @@ public sealed partial class PortSession
         public string[] bundleNames;
         public int catalogGenerations, catalogLocatorsAlive, catalogManifestsAlive, activeLocators, detachedCatalogOperations;
         public string[] ownedCallbackRoots, callbackRootReadFailures, callbackOwnerScope, statQueueCounts;
-        // Opt-in completed-session root walk (diagnosticCompletedRootWalk selector); empty otherwise.
+        // Opt-in completed-session root walk (diagnosticCompletedRootWalkSession selector); empty otherwise.
         public bool rootWalkRan, rootWalkTruncated;
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
@@ -39,10 +39,12 @@ public sealed partial class PortSession
     class RootWalkSelection
     {
         public string attempt;
-        public bool diagnosticCompletedRootWalk;
+        public int diagnosticCompletedRootWalkSession;
     }
     const int RootWalkNodeBudget = 1000000;
-    // Reads only the launch selector's opt-in flag; the coordinator's own parsing is unchanged.
+    // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
+    // unchanged. Reading an uninitialized static field runs that type's static constructor, which
+    // can register original callbacks (J770), so the walk runs only at the requested final menu.
     bool CompletedRootWalkRequested()
     {
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
@@ -51,7 +53,8 @@ public sealed partial class PortSession
         try
         {
             var selection = JsonUtility.FromJson<RootWalkSelection>(System.IO.File.ReadAllText(path));
-            return selection != null && selection.diagnosticCompletedRootWalk && selection.attempt == r.attempt;
+            return selection != null && selection.attempt == r.attempt && selection.diagnosticCompletedRootWalkSession > 1 &&
+                   selection.diagnosticCompletedRootWalkSession == sessionIndex;
         }
         catch (Exception)
         {

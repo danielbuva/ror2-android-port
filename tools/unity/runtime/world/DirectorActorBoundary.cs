@@ -57,6 +57,9 @@ public sealed partial class PortSession
         public Vector3 previous;
         public DirectorActorReport report;
         public Action<CharacterBody> motorStarted;
+        // The exact motor that received motorStarted, kept as a managed reference so
+        // cleanup can remove the closure after Unity has destroyed the body (J770).
+        public CharacterMotor motor;
         public float nextMoonMotion;
         public string previousMoonState;
     }
@@ -123,7 +126,10 @@ public sealed partial class PortSession
             row.motorStarts++;
         };
         if (body.characterMotor)
-            body.characterMotor.onMotorStart += actor.motorStarted;
+        {
+            actor.motor = body.characterMotor;
+            actor.motor.onMotorStart += actor.motorStarted;
+        }
         if (row.itemGhost)
             Check(origin == "item-ghost" && worldPlayer && master.minionOwnership.ownerMaster == worldPlayer.master &&
                       row.ambientItems == expectedAmbient && OriginalActorEquipment(body),
@@ -328,12 +334,13 @@ public sealed partial class PortSession
     {
         foreach (var actor in directorActors)
         {
+            // A body killed during play is already destroyed, but its managed motor can stay
+            // reachable from original static AI subscriptions; the closure captures this session.
+            if (!ReferenceEquals(actor.motor, null))
+                actor.motor.onMotorStart -= actor.motorStarted;
+            actor.motor = null;
             if (actor.body)
-            {
-                if (actor.body.characterMotor)
-                    actor.body.characterMotor.onMotorStart -= actor.motorStarted;
                 NetworkServer.Destroy(actor.body.gameObject);
-            }
             if (actor.master)
                 NetworkServer.Destroy(actor.master.gameObject);
             if (actor.model)

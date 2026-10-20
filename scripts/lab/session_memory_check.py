@@ -187,8 +187,9 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     value = selection(attempt, survivor)
     value["debugOptions"]["purpose"] = "Repeated UI-abandon sessions for resource observation; automatic input is diagnostic and assisted"
     if root_walk:
-        # Opt-in menu-only reachability walk in SessionResourceBoundary (J770).
-        value["diagnosticCompletedRootWalk"] = True
+        # Opt-in reachability walk in SessionResourceBoundary, only at the final menu: it may run
+        # unrelated static constructors, so it must follow every measured session (J770).
+        value["diagnosticCompletedRootWalkSession"] = sessions + 1
     write(out / "selection.json", value)
     frozen = {
         "sessions": sessions,
