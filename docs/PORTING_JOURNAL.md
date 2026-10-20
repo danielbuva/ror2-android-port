@@ -15226,3 +15226,35 @@ wwise-abi-monitor-decoder-public-draft/, r2/ and independent-review/;
 codex-public-abi-decoder-generation-r2/. The initial source-only extraction
 lookup found no native library; the separate authorized binary extraction is
 selected by the previously pinned hash before the successful generation.
+
+## J782 — Reachable-type census points at retained item display rule sets
+
+Hypothesis (J775): the remaining ~57 MB per session is reachable from managed
+roots, and the types that scale with session count identify the holder.
+
+Change (b240e93): the final-menu walk records the 60 most frequent reachable
+types with object counts and primitive-array bytes (`rootWalkCensus`). Two runs
+on Thor, APK `6d9a46aef7d5cc909d22b86a849ae7b93d4d92fcd6d839d551743719e2c27ffc`
+(code-only from 096fc47), all sessions passing the abandon contract:
+
+- three sessions: final-menu managed 270 MiB, walk 752,792 objects in 1.8 s,
+  untruncated; primitive arrays total only about 1.4 MB;
+- five sessions: managed 389 MiB, walk truncated at its 1,000,000-object budget.
+
+Despite the truncation (which only lowers counts), types grow with session
+count: `DisplayRuleGroup` 154,627 → 257,711; `ItemDisplayRule`,
+`AssetReferenceGameObject` about 25,200 → 42,000; `IDRSKeyAssetReference`,
+`ItemDisplayRuleSet+KeyAssetRuleGroup` and `ItemDisplayRule[]` 21,501 → 35,835;
+`AsyncOperationHandle` 50,524 → 81,444; `ItemDisplayRuleSet` reaches the top
+list at 665. That is roughly one full item-display-rule-set graph per session
+(about 7,200 key-asset groups and 51,500 display rule groups). Catalog-sized
+types that should be constant do not grow. Managed growth is about 57 MB per
+session (173, 229, 285, 339, 396 MiB).
+
+First failure: each session retains another copy of the item display rule set
+graph; its holder is not named. Next (this change): attribute objects to the
+root that first reached them (`rootWalkRootAttribution`) with a 2,000,000-object
+budget, then fix only the named owner.
+
+Evidence: work/device/<serial>/experiments/session-memory/20261020T082722.064780Z/ (three sessions)
+and .../20261020T083843.116471Z/ (five sessions). Thor has 6d9a46ae… installed.

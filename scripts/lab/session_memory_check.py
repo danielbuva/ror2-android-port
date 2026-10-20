@@ -70,6 +70,7 @@ SAMPLE_FIELDS = (
     "rootWalkPaths",
     "rootWalkFailureSamples",
     "rootWalkCensus",
+    "rootWalkRootAttribution",
     "staticCallbackCounts",
     "prunedDestroyedDepossessionSubscribers",
 )

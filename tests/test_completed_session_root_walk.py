@@ -103,6 +103,7 @@ public static class Program
         Roots.holder.items.Add(new byte[100]);
         var census = CompletedSessionRootWalk.Find(Types(), empty, new KeyValuePair<string, object>[0], 1000, 8, 10).census;
         output["census"] = census;
+        output["attribution"] = CompletedSessionRootWalk.Find(Types(), empty, new KeyValuePair<string, object>[0], 1000, 8, 10).rootAttribution;
 
         var parts = new List<string>();
         foreach (var entry in output)
@@ -183,6 +184,11 @@ class CompletedSessionRootWalkTests(unittest.TestCase):
         self.assertIn("Probe:3:0", census)
         self.assertIn("System.Byte[]:1:100", census)
         self.assertEqual(census[0], "Probe:3:0")
+
+    def test_root_attribution_names_the_static_holder(self):
+        top = self.result["attribution"][0]
+        self.assertTrue(top.startswith("Roots.holder (Holder):"), top)
+        self.assertGreaterEqual(int(top.rsplit(":", 1)[1]), 6)
 
     def test_budget_truncates_without_inventing_a_path(self):
         self.assertIs(self.result["budget_truncated"], True)

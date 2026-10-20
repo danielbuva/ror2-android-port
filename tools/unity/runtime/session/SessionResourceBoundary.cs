@@ -37,7 +37,7 @@ public sealed partial class PortSession
         public bool rootWalkRan, rootWalkTruncated;
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
         public float rootWalkSeconds;
-        public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus;
+        public string[] rootWalkPaths, rootWalkFailureSamples, rootWalkCensus, rootWalkRootAttribution;
     }
     [Serializable]
     class RootWalkSelection
@@ -45,7 +45,7 @@ public sealed partial class PortSession
         public string attempt;
         public int diagnosticCompletedRootWalkSession;
     }
-    const int RootWalkNodeBudget = 1000000;
+    const int RootWalkNodeBudget = 2000000;
     // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
     // unchanged. Reading an uninitialized static field runs that type's static constructor, which
     // can register original callbacks (J773), so the walk runs only at the requested final menu.
@@ -110,6 +110,7 @@ public sealed partial class PortSession
         sample.rootWalkPaths = result.paths;
         sample.rootWalkFailureSamples = result.failureSamples;
         sample.rootWalkCensus = result.census;
+        sample.rootWalkRootAttribution = result.rootAttribution;
     }
     static readonly System.Collections.Generic.List<WeakReference[]> completedSessionReferences =
         new System.Collections.Generic.List<WeakReference[]>();
@@ -360,6 +361,8 @@ public static class CompletedSessionRootWalk
         public string[] failureSamples = new string[0];
         // "Type:objects:primitiveArrayBytes", largest first by objects then bytes (census).
         public string[] census = new string[0];
+        // "root label (type):objects first reached from it", largest first.
+        public string[] rootAttribution = new string[0];
     }
     sealed class Identity : System.Collections.Generic.IEqualityComparer<object>
     {
@@ -386,6 +389,7 @@ public static class CompletedSessionRootWalk
         var parents = new System.Collections.Generic.List<int>();
         // Edge: root label string, FieldInfo, boxed element index or delegate MethodInfo.
         var edges = new System.Collections.Generic.List<object>();
+        var rootOf = new System.Collections.Generic.List<int>();
         var targetNames = new System.Collections.Generic.Dictionary<object, string>(new Identity());
         foreach (var target in targets)
             if (target.Value != null && !targetNames.ContainsKey(target.Value))
@@ -402,6 +406,7 @@ public static class CompletedSessionRootWalk
                 return;
             }
             visited.Add(value, nodes.Count);
+            rootOf.Add(parent < 0 ? nodes.Count : rootOf[parent]);
             nodes.Add(value);
             parents.Add(parent);
             edges.Add(edge);
@@ -503,6 +508,16 @@ public static class CompletedSessionRootWalk
         result.nodes = nodes.Count;
         result.paths = found.ToArray();
         result.census = Census(nodes, censusTop);
+        if (censusTop > 0)
+        {
+            var perRoot = new System.Collections.Generic.Dictionary<int, int>();
+            foreach (var root in rootOf)
+                perRoot[root] = perRoot.TryGetValue(root, out var count) ? count + 1 : 1;
+            result.rootAttribution = perRoot.OrderByDescending(x => x.Value)
+                                         .Take(25)
+                                         .Select(x => Edge(edges[x.Key]) + " (" + nodes[x.Key].GetType().Name + "):" + x.Value)
+                                         .ToArray();
+        }
         result.failureSamples = failures.ToArray();
         return result;
     }
