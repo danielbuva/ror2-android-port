@@ -19761,3 +19761,78 @@ no new game-performance measurement exists. Keep Route A and the desktop
 fallback. Revisit when the callback/SDK/options/input descriptors or downstream
 report consumers change. This generic authored build probe adds no RoR2-specific
 reconstruction or runtime mechanism.
+
+## J849 — Feed actual phone stripping output into the exact converter
+
+2026-10-20. Hypothesis: J846's actual phone-stripped assembly/symbol set can
+feed the Android converter and reach the already qualified native-source
+boundary without substituting desktop stripping outputs. Integrate accepted
+PR #6/main `502767b` before this entry; J848's frozen uninstalled f1550ce0 player
+and main's original gameplay/audio/animation work remain separate. No original
+installation, game-runtime source, working build or other device is changed.
+
+**Handoff owner and contract.** Committed `3c64919` extends the current
+`phone-converter-fixture` request with an explicit optional `linker` selector:
+source stage, output and result hash. `phone_linker.stripped_input` verifies
+fixture identity, successful result/manifest, every input/output hash and the
+complete non-diagnostic output set against that fixture's desktop control.
+Assemblies and symbols must match exactly. The previously observed editor-report
+module order is the only permitted report difference: compare complete records
+and all other fields in memory, then copy actual bytes unchanged. Do not edit
+or normalize inputs or outputs. The source plan declares phone stripping and
+retains desktop scene/editor-root production as a prerequisite.
+
+`phone_converter.cpp_input` also follows that explicit handoff when validating a
+later native-source selection. It binds the actual selected stripping closure,
+converter inputs/results/outputs and exact data/metadata. Legacy explicit
+desktop-stripping requests retain their original contract. The standalone driver
+accepts only the declared desktop or phone-stripping origin; it is still a
+separate .NET 8.0.32 build-tool host, not a gameplay backend. ARCHITECTURE names
+the owners and LOCAL_STATE lists exact selectors/private replay support.
+
+**Actual connected run.** Use J846's successful Android stripping attempt, whose
+36 DLLs and 30 PDBs match the desktop control. Stage its actual 67 output files,
+including the raw reordered editor report, through the new selector. The
+manifest contains those file hashes; no desktop stripped directory is used as
+the converter's assembly source. Keep the original assembly order/profile/checks
+and exact Unity 2021.3.45f2 converter DLLs/icalls. Only build-tool host/output
+paths and unnecessary tool analytics differ from the desktop invocation.
+
+The Android converter exits 0 in 6.429 seconds excluding staging/collection.
+Both data files match the fresh desktop oracle exactly, including metadata
+SHA-256 `d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+Its 126 generated source files retain J842's classified source-comment
+relationship to the desktop output. Independently compare this actual output
+with J842's phone-generated output: all 126 files match byte for byte, with no
+additional or missing file. The actual native-handoff validator passes.
+
+This connects phone stripping to phone code generation and verifies equality at
+the previously device-qualified native-source/metadata boundary. Native
+compilation, packaging and installation are not repeated; J842 remains that
+separate loading/update qualification. No new game acceptance or performance
+claim follows from equal generated files. Keep both raw comparisons and the
+original J846 missing-default-descriptor failure. All supplied SDK data,
+assemblies, generated files and raw device identities remain ignored.
+
+The private `strip-converter-proof-receipt.json` under the phone proof root
+binds 13 stage/result/comparison/prior-proof/CI artifacts; SHA-256
+`1d9b8954a59f00da0720326a297d02f8387fba6b629e984460eff13b9803a60f`.
+`strip-converter-run-selection.json` selects the exact owned Android attempt;
+`strip-converter-native-handoff.json` records the validated downstream selector.
+Workspace/tool hashes and fresh capacity/backing are verified before execution;
+read-only game hashes are unchanged and display sleep is verified afterward.
+No APK is installed and no main/spare-device action occurs.
+
+**Checks and remaining gate.** Fresh-clone CI on `3c64919` passes 1,214 tests,
+54 optional skips, Ruff, public audit and documentation freshness. Independent
+contracts reject another fixture, result/input/output drift, changed assembly or
+symbol closure, and editor-report entry changes while retaining raw report bytes.
+Existing converter/native contracts and actual downstream validation pass.
+
+Next investigate independent production of the scene/editor roots and richer
+rendered content/import/shaders, plus permitted tool acquisition/delivery,
+app-host execution policy, durable owner signing and user-mediated installation.
+J836's sandbox control remains failed. Full accepted-game construction and
+matched-pipeline performance benchmarks remain required. Preserve Route A and
+the desktop fallback; revisit on input/tool/profile/descriptor or downstream
+consumer changes. No RoR2-specific reconstruction/runtime mechanism is added.
