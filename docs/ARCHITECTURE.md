@@ -86,6 +86,18 @@ failures remain under `work/experiments/phone-roots/`; it generates no roots,
 installs no package and performs no editor mutation. Host .NET 10 qualification
 does not establish an Android implementation or native hierarchy completeness.
 
+`phone_registry.py` owns separate experimental static SDK metadata support.
+The current `phone-native-registry` action accepts an explicit owner binary,
+requires the pinned SDK hash, and stages an unchanged private copy with the
+standalone standard-library Python reader. Bounded Mach-O symbols/data and
+straight-line ARM64 constant propagation identify partial registration records,
+parent pointers and generated module-registration arguments. Unknown layouts,
+instructions and calls refuse; absent records/module assignments remain
+unresolved. It neither executes SDK instructions nor supplies an execution
+backend. Source/input hashes, metadata and failures remain under
+`work/experiments/phone-registry/`; exclusive output creation preserves attempts.
+No build consumes its partial registry, and no editor or game state changes.
+
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
 signing from explicitly supplied local tools. `HostProbeActivity` owns one

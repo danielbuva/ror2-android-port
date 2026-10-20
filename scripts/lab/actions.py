@@ -138,6 +138,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-native-registry",
+        "phone_registry",
+        "inspect_action",
+        {},
+        "current",
+        "Experimental read-only metadata support: --target REQUEST.json selects the exact owner SDK binary, stages a standalone Python reader and reports partial native registration/module coverage. Executes no SDK code, generates no linker roots and changes no editor, package or runtime.",
+        handler=_target,
+    ),
+    Action(
         "phone-root-contract",
         "phone_roots",
         "inspect_action",

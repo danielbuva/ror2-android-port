@@ -361,6 +361,21 @@
     "stdout": "",
     "exit": null
   },
+  "phone-native-registry": {
+    "calls": [
+      {
+        "module": "phone_registry",
+        "function": "inspect_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  },
   "phone-root-contract": {
     "calls": [
       {
