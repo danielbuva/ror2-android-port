@@ -19836,3 +19836,82 @@ J836's sandbox control remains failed. Full accepted-game construction and
 matched-pipeline performance benchmarks remain required. Preserve Route A and
 the desktop fallback; revisit on input/tool/profile/descriptor or downstream
 consumer changes. No RoR2-specific reconstruction/runtime mechanism is added.
+
+
+## J845 — Play the original named pickup event through the Android managed API
+
+2026-10-20. Hypothesis: resolving the source event name and checking its exact
+ID before string-based PostEvent can establish the retained Android ABI for
+`Play_UI_item_pickup`, beyond J837's numeric menu event. Consult the current
+accepted API and pinned R2API.Sound's initialized-engine, bank-result and owner
+lifecycle contracts (see community-prior-art); no community implementation is
+copied. This remains an isolated diagnostic, not the game's audio owner.
+
+**Change and build.** Change only the existing owner, bootstrap and generation
+manifest. Require GetIDFromString to equal `3141848185` before dispatch and
+check the completion identity. The exact-editor assembly and host fixture have
+identical 421-instruction methods after resolving metadata-token references;
+three guard-removal/bypass mutants refuse. Raw token differences are retained.
+The native library, original Global bank and explicitly J744-adapted Init bank
+remain unchanged. SDK/Integration are the authorized Wwise 2023.1.8.8601 pair;
+Unity's pinned NDK is unchanged.
+
+Request `910310b8be3d4693af4e66a97a6353d4` succeeds in 36.0585109 seconds with
+zero Unity errors. APK SHA-256 is
+`d78912a4914c692577d7410cf713567dded3d9a3e4a5825d50394c640b0c7cb8`.
+The packaged native library matches
+`bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304`.
+The ledger retains 148 rows / 35 project paths and the exact three-file delta.
+
+**Preserved first failures.** The initial stage adapter lacks a Python import;
+its pre-write refusal leaves the parent intact. A transient refresh transport
+response is reconciled against the actual compiled assembly. The first build
+prequeue check omits four existing fixture inputs; its corrected read-only
+inventory passes without restaging. Unity then succeeds, but the coordinator's
+post-build snapshot follows the newly active request and demands the receipt
+it has not written yet. Preserve that raw false terminal unchanged. Root's
+separate R9 qualification recomputes every live input, reconstructs the exact
+148-row lineage from the frozen parent, verifies the successful raw Unity
+result and APK, and creates a distinctly derived terminal/freeze. No repeat
+build is required. The first device wrapper then refuses before fixture
+installation because its timestamp helper is on the raw runner, not the
+orchestrator. Preserve that attempt; the next Root composition binds the
+existing helper correctly. No failed receipt is rewritten into a pass.
+
+**Device result.** On the primary gameplay device, the same APK passes the
+negative control first, then the named positive event. The negative run records
+the exact formatted monitor marker and only the expected missing-event error,
+then returned Terms, monitor disarm and owned cleanup. The positive run resolves
+ID `3141848185`, returns playing ID 1, receives one EndOfEvent and records zero
+post-Init/post-event native errors. Native capture observes 80,640 finite
+PCM-container words, 67,636 nonzero, with no nonfinite or rejected buffer.
+The separately finalized 48 kHz stereo signed-16-bit WAV contains 71,424
+container words, 60,944 nonzero. Effective precision remains unknown.
+Both Terms return, monitor disarm and owned cleanup complete. Each install
+checks fresh adopted placement/reserves; both fixture installs are removed.
+Root verifies the game APK still exactly J840's `8357db8b…`, its ownership
+receipt unchanged, the fixture absent and display asleep after 162 live guards.
+There is no alpha or spare-device action.
+
+**Evidence, local only.** Root build/qualification producers and preserved
+failures are `work/coordination/codex-named-pickup-fixture-root-r{1..9}/`.
+R9 qualification SHA-256 is
+`0fe18f0d4f1e87902ade0aa94c6296252f9f2ba8f8b4243ab06ece86b36f165d`;
+the raw failed terminal remains
+`57c296548ee55014ea0806f8f1ef9470b0c6551d30074a2c5411501db31b2b1c`.
+Root device result is `codex-named-pickup-device-root-r2/device-result.json`,
+SHA-256 `4dce701ef4be0f420dc904e97ffc777732eaaea9fb13f9e1597a4f26714b0fc1`;
+its post-run verification is
+`f8225c1226a07fccd82915e9fa143f1939d60b6f39a4ab36f108e6b3262f1679`.
+Negative and positive attempts are `20261020T232618.072888Z` and
+`20261020T232700.380207Z` under the primary device's private fixture evidence.
+Reviewed producers, normalized-IL analysis and device adapter are listed in
+LOCAL_STATE; their inputs remain ignored and outside the game build.
+
+**Limits and revisit.** This proves one named original event through this
+isolated managed/native fixture with the unchanged Global bank and explicitly
+adapted Init. It does not prove physical audibility, other banks/effects,
+music, spatialization or the original game lifecycle. Game audio stays
+unavailable. Next integrate the original startup/initializer/controller/bank
+loaders as the sole owners, using current-input source contracts and explicit
+payload preparation. No R8/R9 game rebuild recipe changes in this checkpoint.
