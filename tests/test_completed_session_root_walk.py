@@ -22,6 +22,7 @@ using System.Reflection;
 public sealed class Probe { public object report; public Probe previous; }
 public sealed class Holder { public List<object> items = new List<object>(); public Dictionary<string, object> byName = new Dictionary<string, object>(); }
 public struct Pair { public object value; }
+public sealed class Subscriber { public bool destroyed; public void On(int x) { } public static void Static(int x) { } }
 public static class Roots
 {
     public static Holder holder;
@@ -81,6 +82,19 @@ public static class Program
         output["budget_truncated"] = bounded.truncated;
         output["budget_paths"] = bounded.paths.Length;
         output["budget_nodes"] = bounded.nodes;
+
+        Reset();
+        var dead = new Subscriber { destroyed = true };
+        var alive = new Subscriber();
+        Action<int> handler = dead.On;
+        handler += alive.On;
+        handler += Subscriber.Static;
+        int removed;
+        var kept = (Action<int>)CompletedSessionRootWalk.RemoveTargets(handler, target => target is Subscriber && ((Subscriber)target).destroyed, out removed);
+        output["prune_removed"] = removed;
+        output["prune_remaining"] = kept.GetInvocationList().Length;
+        int none;
+        output["prune_null"] = CompletedSessionRootWalk.RemoveTargets(null, target => true, out none) == null && none == 0;
 
         var parts = new List<string>();
         foreach (var entry in output)
@@ -150,6 +164,11 @@ class CompletedSessionRootWalkTests(unittest.TestCase):
     def test_extra_named_roots(self):
         (path,) = self.result["extra_root"]
         self.assertTrue(path.startswith("completed[0].probe <= live:Holder@menu (Holder) -> .items"))
+
+    def test_remove_targets_keeps_other_and_static_entries(self):
+        self.assertEqual(self.result["prune_removed"], 1)
+        self.assertEqual(self.result["prune_remaining"], 2)
+        self.assertIs(self.result["prune_null"], True)
 
     def test_budget_truncates_without_inventing_a_path(self):
         self.assertIs(self.result["budget_truncated"], True)

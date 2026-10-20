@@ -70,6 +70,7 @@ SAMPLE_FIELDS = (
     "rootWalkPaths",
     "rootWalkFailureSamples",
     "staticCallbackCounts",
+    "prunedDestroyedDepossessionSubscribers",
 )
 WAITING = (
     "live world report is shorter than the 60 second observation interval",
@@ -133,6 +134,7 @@ def growth_summary(sessions):
                 "menu_pss_kib": entry.get("menu_pss_kib"),
                 "root_walk_paths_at_start": _phase_value(samples, "before-presentation", "rootWalkPaths"),
                 "static_callback_counts_at_start": _phase_value(samples, "before-presentation", "staticCallbackCounts"),
+                "pruned_destroyed_depossession": _phase_value(samples, "completed-before-reclaim", "prunedDestroyedDepossessionSubscribers"),
             }
         )
 

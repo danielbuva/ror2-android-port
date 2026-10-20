@@ -1308,6 +1308,15 @@ final menu and stays off by default. Host contract:
 `tests/test_completed_session_root_walk.py` compiles the production block with
 the pinned Mono/Roslyn.
 
+`ReclaimCompletedSessionResources` also owns one adapted Android lifecycle
+step (J775). Original `BaseAI.Awake` subscribes to the static
+`GlobalEventManager.onCharacterDepossessed` and never unsubscribes, so every
+spawned AI stays reachable. After the world is cleaned, with no Run or network,
+the owner removes only entries whose `BaseAI` Unity has already destroyed,
+through the Unity-free `CompletedSessionRootWalk.RemoveTargets`. It records the
+count on the `completed-before-reclaim` sample. Live subscribers and accumulation
+within one run are unchanged.
+
 `AndroidProfileSession` also owns the exact native timed-chest `Opening.onOpened`
 subscription. That event has no sender or chest identity; it is recorded as a
 global native observation for the sole owned offline profile. Setup captures

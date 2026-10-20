@@ -14853,3 +14853,38 @@ review-r1/; toolbot-offhand-readiness/r2/, r3/ and review-r1/;
 codex-captain-toolbot-readiness-compile/r2/;
 codex-captain-toolbot-final-host-r1/ through r4/. The merged owner SHA-256 is
 1a02b44457fd905aa1f585c52c8f98a2f5d4a00a8070b1ca304bd65448c678e1.
+
+## J775 — Original depossession subscribers track the remaining growth; prune destroyed AIs
+
+Hypothesis (J773): after the director-callback fix, the remaining ~54 MiB per
+session is held by original `BaseAI` subscriptions to the static
+`GlobalEventManager.onCharacterDepossessed`, which `BaseAI.Awake` adds and never
+removes (accepted decompiled source). Prior art: J391/J417/J773 and the R2Wiki
+memory notes in community-prior-art.md; none covers this event.
+
+Observation run: Thor, APK `bbd1f3c15958ee42d272d58770a8caa2a73e327354bc668d9564bbd595656eb9`
+(code-only, committed 7423ff6, which includes 85fa871's `staticCallbackCounts`),
+`session-memory-check`, five sessions, all assists off. Success: every session
+passes the abandon contract and no completed session stays alive.
+
+| Menu before session | 2 | 3 | 4 | 5 | 6 |
+| --- | --- | --- | --- | --- | --- |
+| `onCharacterDepossessed` subscribers / destroyed targets | 13/13 | 26/26 | 37/37 | 50/50 | 63/63 |
+| Managed after previous session's collection (MiB) | 220 | 277 | 331 | 385 | 440 |
+
+All 18 other non-empty scanned static callbacks stay constant (for example
+`RoR2Application.onUpdate` 10/0). Every growing entry targets a destroyed
+`BaseAI`; managed usage rises 57,208,422 bytes per session (least squares
+from session 2). This is a correlation, not yet proof that these entries hold
+the growth.
+
+Change (adapted Android lifecycle, `SessionResourceBoundary`): at completed-session
+reclamation, after the world is cleaned and with no Run or network, remove from
+that one original event only the entries whose target is a Unity-destroyed
+`BaseAI`. Live subscribers and the original handler are untouched; the removed
+count is recorded on the `completed-before-reclaim` sample. The pure
+`RemoveTargets` helper has a host test. Within-run accumulation across stages is
+unchanged and remains open. Device result: pending.
+
+Evidence: work/device/<serial>/experiments/session-memory/20261020T073248.170048Z/
+(bbd1f3c1 run). Thor has bbd1f3c1… installed.

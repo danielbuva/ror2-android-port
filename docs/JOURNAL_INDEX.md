@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J775](PORTING_JOURNAL.md#j775--original-depossession-subscribers-track-the-remaining-growth-prune-destroyed-ais) | 2026-10-20 | Original depossession subscribers track the remaining growth; prune destroyed AIs | Hypothesis (J773): after the director-callback fix, the remaining ~54 MiB per session is held by original `BaseAI` subscriptions to the static `GlobalEventMana… |
 | [J774](PORTING_JOURNAL.md#j774--correct-captain-activation-identity-and-expose-mul-t-readiness-operands) | 2026-10-20 | Correct Captain activation identity and expose MUL-T readiness operands | Hypothesis: J771's Captain refusal comes from the authored machine-name assumption, while J767's MUL-T refusal needs the actual native readiness operands befor… |
 | [J773](PORTING_JOURNAL.md#j773--root-walk-names-the-completed-session-retention-director-cleanup-fix-releases-it) | 2026-10-20 | Root walk names the completed-session retention; director cleanup fix releases it | Hypothesis: J769's retained `PortSession`/`SessionReport` pairs have one authored reference path outside the existing 15-owner delegate scan. |
 | [J772](PORTING_JOURNAL.md#j772--managed-wwise-control-exposes-pre-initialization-callback-setup) | 2026-10-20 | Managed Wwise control exposes pre-initialization callback setup | Hypothesis: the J759 managed ABI can deliver a real monitor control and then one original Global event using J744's adapted Init. |

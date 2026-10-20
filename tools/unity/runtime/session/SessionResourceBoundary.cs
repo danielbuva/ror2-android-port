@@ -31,6 +31,8 @@ public sealed partial class PortSession
         public string[] ownedCallbackRoots, callbackRootReadFailures, callbackOwnerScope, statQueueCounts;
         // "Owner.field:subscribers/destroyedTargets" for nonempty scanned static callbacks.
         public string[] staticCallbackCounts;
+        // Destroyed-BaseAI depossession entries removed before this sample (J775); -1 if not run.
+        public int prunedDestroyedDepossessionSubscribers = -1;
         // Opt-in completed-session root walk (diagnosticCompletedRootWalkSession selector); empty otherwise.
         public bool rootWalkRan, rootWalkTruncated;
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
@@ -299,13 +301,34 @@ public sealed partial class PortSession
         }
         return null;
     }
+    // Adapted Android lifecycle (J775): original BaseAI.Awake subscribes to the static
+    // GlobalEventManager.onCharacterDepossessed and never unsubscribes, so every AI ever
+    // spawned, with the graph it references, stays reachable for the process (J773).
+    // Remove only entries whose BaseAI Unity has already destroyed, outside any Run;
+    // live subscribers and the original handler's behaviour are unchanged.
+    int PruneDestroyedDepossessionSubscribers()
+    {
+        var field = typeof(GlobalEventManager).GetField("onCharacterDepossessed",
+                                                        BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+        Check(field != null && typeof(Delegate).IsAssignableFrom(field.FieldType),
+              "Original depossession event field changed");
+        int removed;
+        var kept = CompletedSessionRootWalk.RemoveTargets(
+            field.GetValue(null) as Delegate,
+            target => target is RoR2.CharacterAI.BaseAI && !(UnityEngine.Object)target, out removed);
+        if (removed > 0)
+            field.SetValue(null, kept);
+        return removed;
+    }
     IEnumerator ReclaimCompletedSessionResources()
     {
         Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
               "Refuse resource reclamation in a live session");
         // Let deferred destruction finish before Unity's ordinary unused-asset sweep.
         yield return null;
+        int pruned = PruneDestroyedDepossessionSubscribers();
         ObserveSessionResources("completed-before-reclaim");
+        r.sessionResources.Last().prunedDestroyedDepossessionSubscribers = pruned;
         yield return Resources.UnloadUnusedAssets();
         ObserveSessionResources("completed-after-reclaim");
         // Attribute remaining managed growth after teardown, without changing GC mode.
@@ -477,6 +500,21 @@ public static class CompletedSessionRootWalk
         result.paths = found.ToArray();
         result.failureSamples = failures.ToArray();
         return result;
+    }
+    // Removes every invocation entry whose target matches; returns the remaining delegate.
+    public static Delegate RemoveTargets(Delegate callback, Func<object, bool> remove, out int removed)
+    {
+        removed = 0;
+        if (callback == null)
+            return null;
+        var kept = callback;
+        foreach (var entry in callback.GetInvocationList())
+            if (entry.Target != null && remove(entry.Target))
+            {
+                kept = Delegate.Remove(kept, entry);
+                removed++;
+            }
+        return kept;
     }
     static void Fail(Result result, System.Collections.Generic.List<string> failures, string failure)
     {
