@@ -140,6 +140,29 @@ public sealed partial class PortSession
         return restored;
     }
 
+    // Capture only enabled TeamComponents on this owned body root. Unity's component
+    // query excludes nested children and never reaches another body's root.
+    internal static TeamComponent[] CaptureEnabledRootTeamComponents(CharacterBody body)
+    {
+        if (!body)
+            return Array.Empty<TeamComponent>();
+        return body.GetComponents<TeamComponent>().Where(component => component && component.enabled).ToArray();
+    }
+
+    internal static int RestoreCapturedEnabledRootTeamComponents(TeamComponent[] captured, bool integratedWorld)
+    {
+        if (!integratedWorld || captured == null)
+            return 0;
+        int restored = 0;
+        foreach (var teamComponent in captured)
+            if (teamComponent && !teamComponent.enabled)
+            {
+                teamComponent.enabled = true;
+                restored++;
+            }
+        return restored;
+    }
+
     IEnumerator AutomaticSpawnBoundary(CharacterBody body, SessionConfig cfg)
     {
         if (!ownsStateCatalog)
@@ -155,6 +178,7 @@ public sealed partial class PortSession
         var spawnedMaster = body.master;
         var rootEntityStateMachines = body.GetComponents<EntityStateMachine>();
         var sourceEnabledRootStateMachines = rootEntityStateMachines.Where(stateMachine => stateMachine && stateMachine.enabled).ToArray();
+        var sourceEnabledRootTeamComponents = CaptureEnabledRootTeamComponents(body);
         EntityStateMachine[] playableSkillMachines = null;
         if (IsPlayableSpine())
         {
@@ -246,11 +270,14 @@ public sealed partial class PortSession
             int restoredSourceEnabledStateMachines =
                 RestoreCapturedEnabledRootStateMachines(sourceEnabledRootStateMachines, cfg.integratedWorld);
             sourceEnabledRootStateMachines = null;
+            int restoredSourceEnabledRootTeamComponents =
+                RestoreCapturedEnabledRootTeamComponents(sourceEnabledRootTeamComponents, cfg.integratedWorld);
+            sourceEnabledRootTeamComponents = null;
             r.automaticCallbacks = body.GetComponents<MonoBehaviour>().Where(x => x.enabled).Select(x => x.GetType().FullName).ToArray();
             if (!cfg.combatSpine)
                 Check(r.automaticCallbacks.Length == (movingMotor ? 2 : 1) + (automaticBody ? 1 : 0) + (automaticDirection ? 1 : 0) +
                                                          (automaticModel ? 1 : 0) + AutomaticSkillCount() + (IsPlayableSpine() ? 2 : 0) +
-                                                         restoredSourceEnabledStateMachines,
+                                                         restoredSourceEnabledStateMachines + restoredSourceEnabledRootTeamComponents,
                       "Unexpected enabled root callback");
             Physics.gravity = Vector3.zero;
             solver.SetGroundSolvingActivation(false);

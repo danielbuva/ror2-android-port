@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J804](PORTING_JOURNAL.md#j804--preserve-optional-combat-samples-and-restore-native-team-indicator-lifecycle) | 2026-10-20 | Preserve optional combat samples and restore native team-indicator lifecycle | Date: 2026-10-20. |
+| [J803](PORTING_JOURNAL.md#j803--reach-native-siren-egg-input-and-stop-at-the-source-stage-budget) | 2026-10-20 | Reach native Siren egg input and stop at the source-stage budget | Date: 2026-10-20. |
 | [J802](PORTING_JOURNAL.md#j802--load-the-native-monitor-bridge-and-reject-its-pre-init-callback-assumption) | 2026-10-20 | Load the native monitor bridge and reject its pre-init callback assumption | Date: 2026-10-20. |
 | [J801](PORTING_JOURNAL.md#j801--accept-the-siren-continuation-player-defaults-and-isolate-mul-ts-next-observer-failure) | 2026-10-20 | Accept the Siren-continuation player defaults and isolate MUL-T's next observer failure | Date: 2026-10-20. |
 | [J800](PORTING_JOURNAL.md#j800--continue-exact-siren-registration-through-native-encounter-start) | 2026-10-20 | Continue exact Siren registration through native encounter start | Date: 2026-10-20. |

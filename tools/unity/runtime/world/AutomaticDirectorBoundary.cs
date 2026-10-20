@@ -81,6 +81,7 @@ public sealed partial class PortSession
     }
     void FixedUpdate()
     {
+        TickTeamIndicatorQueue();
         GetAutomaticDirectorSession().FixedUpdate();
     }
     void ObserveOriginalNavigation()

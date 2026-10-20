@@ -21,6 +21,9 @@ public sealed partial class PortSession
         public int secondaryEntries, utilityEntries, specialEntries, projectiles, projectileSoundGuards, damageEvents;
         public float healthBefore, healthAfter, damageDealt, lastDamage;
         public string bodyState, weaponState, secondaryDefinition, utilityDefinition, specialDefinition;
+        public string primaryStateUnavailableReason, bodyStateUnavailableReason;
+        public int primaryStateUnavailableObservations, bodyStateUnavailableObservations;
+        public bool primaryStateAvailable, bodyStateAvailable;
         public bool targetServer, targetHurtBox, cleaned;
         public Vector3 targetCenter, aimOrigin;
         public int hurtBoxLayer, hurtBoxes;
@@ -250,11 +253,103 @@ public sealed partial class PortSession
             coordinator.r.combat.lastDamage = report.damageDealt;
             coordinator.r.combat.damageDealt += report.damageDealt;
         }
+        static bool TryReadPrimaryWeaponState(CharacterBody player, out EntityState state, out string unavailable)
+        {
+            state = null;
+            if (ReferenceEquals(player, null))
+            {
+                unavailable = "body:clr-null";
+                return false;
+            }
+            if (!player)
+            {
+                unavailable = "body:unity-fake-null";
+                return false;
+            }
+            SkillLocator locator = player.skillLocator;
+            if (ReferenceEquals(locator, null))
+            {
+                unavailable = "skillLocator:clr-null";
+                return false;
+            }
+            if (!locator)
+            {
+                unavailable = "skillLocator:unity-fake-null";
+                return false;
+            }
+            GenericSkill primary = locator.primary;
+            if (ReferenceEquals(primary, null))
+            {
+                unavailable = "skillLocator.primary:clr-null";
+                return false;
+            }
+            if (!primary)
+            {
+                unavailable = "skillLocator.primary:unity-fake-null";
+                return false;
+            }
+            EntityStateMachine stateMachine = primary.stateMachine;
+            if (ReferenceEquals(stateMachine, null))
+            {
+                unavailable = "primary.stateMachine:clr-null";
+                return false;
+            }
+            if (!stateMachine)
+            {
+                unavailable = "primary.stateMachine:unity-fake-null";
+                return false;
+            }
+            state = stateMachine.state;
+            if (ReferenceEquals(state, null))
+            {
+                unavailable = "primary.stateMachine.state:clr-null";
+                return false;
+            }
+            unavailable = null;
+            return true;
+        }
+        static bool TryReadBodyState(EntityStateMachine machine, out EntityState state, out string unavailable)
+        {
+            state = null;
+            if (ReferenceEquals(machine, null))
+            {
+                unavailable = "bodyStateMachine:clr-null";
+                return false;
+            }
+            if (!machine)
+            {
+                unavailable = "bodyStateMachine:unity-fake-null";
+                return false;
+            }
+            state = machine.state;
+            if (ReferenceEquals(state, null))
+            {
+                unavailable = "bodyStateMachine.state:clr-null";
+                return false;
+            }
+            unavailable = null;
+            return true;
+        }
+        static void CaptureCombatStateOperands(CharacterBody player, EntityStateMachine machine, CombatReport report,
+                                               out EntityState weapon, out EntityState bodyState)
+        {
+            string unavailable;
+            report.primaryStateAvailable = TryReadPrimaryWeaponState(player, out weapon, out unavailable);
+            report.primaryStateUnavailableReason = unavailable;
+            if (!report.primaryStateAvailable && report.primaryStateUnavailableObservations < int.MaxValue)
+                report.primaryStateUnavailableObservations++;
+            report.weaponState = report.primaryStateAvailable ? weapon.GetType().FullName : "unavailable";
+
+            report.bodyStateAvailable = TryReadBodyState(machine, out bodyState, out unavailable);
+            report.bodyStateUnavailableReason = unavailable;
+            if (!report.bodyStateAvailable && report.bodyStateUnavailableObservations < int.MaxValue)
+                report.bodyStateUnavailableObservations++;
+            report.bodyState = report.bodyStateAvailable ? bodyState.GetType().FullName : "unavailable";
+        }
         public void ObserveCombat(CharacterBody player, EntityStateMachine machine)
         {
-            var weapon = player.skillLocator.primary.stateMachine.state;
-            coordinator.r.combat.weaponState = weapon.GetType().FullName;
-            coordinator.r.combat.bodyState = machine.state.GetType().FullName;
+            EntityState weapon, bodyState;
+            CaptureCombatStateOperands(player, machine, coordinator.r.combat, out weapon, out bodyState);
             var melee = weapon as BasicMeleeAttack;
             if (melee != null)
             {
@@ -293,7 +388,7 @@ public sealed partial class PortSession
                             }
                 }
             }
-            if (weapon != lastCombatWeapon)
+            if (weapon != null && weapon != lastCombatWeapon)
             {
                 if (weapon is FireFMJ)
                     coordinator.r.combat.secondaryEntries++;
@@ -301,11 +396,11 @@ public sealed partial class PortSession
                     coordinator.r.combat.specialEntries++;
                 lastCombatWeapon = weapon;
             }
-            if (machine.state != lastCombatBody)
+            if (bodyState != null && bodyState != lastCombatBody)
             {
-                if (machine.state is DodgeState)
+                if (bodyState is DodgeState)
                     coordinator.r.combat.utilityEntries++;
-                lastCombatBody = machine.state;
+                lastCombatBody = bodyState;
             }
             // The local server owns every spawned original projectile. Its live identity
             // registry avoids traversing the complete Unity object graph each frame.

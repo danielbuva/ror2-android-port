@@ -16686,3 +16686,136 @@ is unchanged evidence on its own APK. All five composed-audio gates remain
 closed; audio is unavailable in the game. LOCAL_STATE records the private
 fixture inputs. No default game transform, runtime source, recipe or R8 replay
 input changes in this entry.
+
+
+## J803 — Reach native Siren egg input and stop at the source-stage budget
+
+Date: 2026-10-20. Hypothesis: J800's continuation on the J801 default-qualified
+player can reach the original encounter using ordinary navigation, aim and
+primary requests after exact source entry, without forced state or damage.
+APK: `319a39871c3bcf43760b0d2a96a9634d859149699da1c2ca0c9944c40bc881e3`,
+source 1efe5427bd54f625a675b0c74cb2b4d94bcb0d96.
+
+Before device use, Root qualifies the frozen source/archive, all 1,139 host
+contracts without skips, the exact APK/artifact chain and both fresh defaults.
+The first editor helper refuses before selection because it renders JSON arrays
+as C#. Root preserves that attempt, fixes typed array rendering in a new helper,
+and compiles both generated snippets against the exact saved editor references.
+Independent review and 13 helper tests pass. The exact-editor input-sink fixture
+then passes with all six source hashes unchanged. It explicitly reports
+nativeSkillExecutionTested=false; it is no native skill or gameplay proof.
+Root accepts only the source/input-sink guard, retaining the pending manual-Moon
+fourth-transition gate. Guard receipt SHA-256:
+`5f09974a6e4826ee02e732eb22855ea932fbbd7cb0ff7cc14711a2b30f69ceb1`.
+
+Independent route-runner review requires finite stage clocks, the exact frozen
+candidate/guard/default-control identity and unchanged profile as terminal gates.
+All 20 host tests pass, including refusal before Device construction. A Root
+wrapper adds per-action scoped-Claude-lease and exclusive device-claim checks.
+The runtime's existing continuation branch withholds the next transport after
+exact source registration. The host's transition-4/Moon stop is a report-based
+watchdog, not an independently qualified preventive interlock.
+
+The assisted ordinary Huntress selection reaches Ship Graveyard after three
+native exits. The original encounter remains Listening with the exact 12-egg
+registration and native source/encounter ownership. The continuation arms and
+samples targets 8,349 times, issuing 36 fixed-tick primary requests. The last
+recorded target reports source-aim-occluded. No native encounter start or exact
+boss identity is observed before the existing 180 s source-stage budget.
+The cached terminal world/stage clocks are 504.690369 / 324.716797 s; the
+separately armed egg-input lease records 177.955566 s. The first failure is the
+bounded continuation timeout, not a demonstrated cause of the blocked input.
+Occlusion, reachability and survivor targeting require source/evidence triage;
+no longer blind retry or deadline extension is accepted.
+
+The host freezes that first failure and stops after 673.776 s. The egg-input
+lease reports inactive/cleaned, but source/encounter cleanup, disarm and retirement
+are not observed before the first-failure stop. Those are separate ownership
+facts; no native cleanup pass is claimed. The selector is removed, the owned
+app is stopped and the display sleeps without host cleanup errors. Profile
+snapshot remains unchanged at 13 applied runs; no permanent grant, transition 4
+or Moon scene is observed. The native Siren encounter and full mission remain
+open. No game source, bank, payload or native object is changed in this run.
+
+Evidence: work/coordination/{siren-continuation-next-guard-qualification/,
+siren-continuation-next-guard-review/,siren-native-continuation-device-runner-draft/r2/,
+siren-native-continuation-device-runner-review/r2/,
+codex-319a-siren-continuation-root-r1/}; device run
+work/experiments/siren-native-continuation/20261020T141419.262218Z/.
+Final/first-failure report SHA-256:
+`f6fa78766e028bf84abecb8664632a6959f48913601ada0dd2a0706ff5ad2415`;
+summary SHA-256:
+`3ef199ebe57d5897bbffbad9980144e99e60c2f07c2117fe755a3389d3778ce4`.
+Prior art remains J800's pinned R2API population/completion distinction and the
+accepted native Listening/HLAPI/source-handoff contracts. Device evidence now
+narrows the open gate to ordinary egg interaction and complete owned teardown.
+
+
+## J804 — Preserve optional combat samples and restore native team-indicator lifecycle
+
+Date: 2026-10-20. Hypothesis: an optional observer must tolerate source-valid
+missing sample operands without changing native skill state, while restoring
+source-enabled TeamComponents and their original queue consumer can recover
+native indicator behavior in the integrated world. This is a source checkpoint;
+the installed/default-qualified game player remains J801's 319a3987.
+
+J801's method-only IL2CPP stack does not identify the exact null combat operand.
+The unguarded primary-state chain and body-state chain are both unsafe reads;
+J797's live-body/live-locator CLR-null primary and the separate canonical-slot
+cleanup refusal support the former as a candidate. CombatSpineSession now reads
+each prerequisite once, distinguishes CLR-null and Unity fake-null, and records
+unavailable primary/body samples independently. Other combat observations
+continue. A gap retains the last known state identity; transitions during the
+gap cannot be reconstructed or counted as proven entries. Unexpected accessor
+exceptions still propagate. Native slots, machines, stock, overrides and strict
+cleanup are unchanged; the full MUL-T kit is not accepted by this change.
+
+A named TeamIndicatorQueueSession caches only the original queue processor and
+first dispatch failure. AutomaticSpawnBoundary captures source-enabled root
+TeamComponents before its existing disable loop, restores only those still-live
+references in the integrated-world path, clears the capture and lets Unity run
+the native lifecycle. It enables no source-disabled, nested or foreign component.
+The existing fixed tick calls the original queue processor only while the native
+application dispatcher is inactive. It does not call Init/Start/OnDestroy itself.
+Native teardown and J787's destroyed-entry pruning remain owners. Dispatch failure
+is latched and recorded; session completion refuses to overwrite it with success.
+
+Independent reviews clear both narrow overlays. The indicator draft's earlier
+protected-method fixture is replaced by an authored synthetic lifecycle contract;
+public tests extract only authored production helpers. Root adapts test paths to
+the public repository and keeps compiler scratch under ignored work/host-tests.
+Private preimage/inventory assertions are not promoted as runtime tests. Five
+public contracts pass, including fake-null/single-read/exception preservation,
+source-enabled capture/restore and first-failure behavior. C# formatting preserves
+byte backups and whitespace-only equivalence for all six touched/new C# files.
+Ruff passes for the two Python contracts.
+
+The sourced-environment full suite passes all 1,144 tests without skips in
+35.349 s; all 433 frozen host inputs remain unchanged during the run. Log SHA-256:
+`15fe8c9709441285ca314c4e09f71f567d699977f390becf3246424c3193e421`.
+The combined runtime compiles with 107 authored sources, four support sources
+and 264 exact saved references, zero errors and no drift. Assembly SHA-256:
+`d64cd1f347339c71915cc580f3f3f9ca4224549f0164ae24a9275fc859cde9c7`.
+
+Root imports only the new authored indicator script in the exact Unity editor.
+The source bytes match, Unity generates its GUID, all 115 existing metadata files
+in that runtime folder remain unchanged, and the actual identity is recorded in
+project-layout.json. The 73 focused source/layout/rebuild contracts pass after
+the identity is recorded.
+The runtime manifest increases from 106 to 107. No protected content, new runtime
+work input or build-time source text replacement is introduced. R8 replay must
+restage PortSession, AutomaticSpawnBoundary, AutomaticDirectorBoundary and
+CombatSpineBoundary, add TeamIndicatorQueueBoundary and seed its recorded identity.
+
+Evidence: work/coordination/{toolbot-319a-combat-observer-triage/,
+toolbot-319a-combat-observer-review/r1/,
+team-position-indicator-integration-draft/r2-current/,
+team-position-indicator-independent-review/r2/,
+codex-observer-indicator-format-root-r1/,codex-observer-indicator-host-root-r1/,
+codex-observer-indicator-compile-root-r1/,codex-team-indicator-guid-root-r1/}.
+Prior art: J799/J801's accepted native Toolbot swap context, pinned Starstorm2's
+machine/ownership relationships, and current accepted TeamComponent lifecycle
+with J787's queue evidence. No protected implementation is copied. Next build
+committed source, pass both defaults, repeat the stock MUL-T case and observe
+actual indicator rendering/lifecycle. IL2CPP reflection, native teardown, full
+skill semantics and visual parity remain device gates.

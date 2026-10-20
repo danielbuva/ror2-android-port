@@ -434,6 +434,12 @@ public sealed partial class PortSession : MonoBehaviour
         }
         report.success = false;
     }
+    internal static void CompleteSuccessfulSession(SessionReport report)
+    {
+        if (!string.IsNullOrEmpty(report.firstFailure))
+            throw new InvalidOperationException("Session owner failure was recorded before completion: " + report.firstFailure);
+        report.success = true;
+    }
     void Check(bool value, string message)
     {
         r.assertions++;
@@ -849,7 +855,7 @@ public sealed partial class PortSession : MonoBehaviour
             session = IsPlayableSpine() ? GameSession() : LabExperiment(catalogFixture);
             while (session.MoveNext())
                 yield return session.Current;
-            r.success = true;
+            CompleteSuccessfulSession(r);
         }
         finally
         {

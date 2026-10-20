@@ -95,6 +95,7 @@
   "runtime/world/StagePopulationBoundary.cs",
   "runtime/world/SurvivorCombatOutputObserver.cs",
   "runtime/world/SurvivorSkillObserver.cs",
+  "runtime/world/TeamIndicatorQueueBoundary.cs",
   "runtime/world/WholeInteractableBoundary.cs",
   "runtime/world/WholePopulationBoundary.cs",
   "runtime/world/WorldDotBoundary.cs",

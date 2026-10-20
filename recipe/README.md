@@ -1262,3 +1262,15 @@ or private source input is added. The host contract exercises source cohort
 refusal and cleanup null/destroyed-object distinctions. Provenance/privacy review
 covers this authored code and minimum identity metadata only. Editor import,
 R8 reproduction and device behavior remain separate acceptance gates.
+
+
+### Team position-indicator owner (2026-10-20)
+
+`runtime/world/TeamIndicatorQueueBoundary.cs` is repository-authored runtime
+source, explicitly listed in runtime-sources.json (107 entries). The exact
+Unity import generates the identity recorded in project-layout.json. The owner
+calls the original queue processor only while the native application dispatcher
+is inactive and retains native TeamComponent lifecycle ownership. No game
+implementation, serialized content, device data or third-party source is included.
+Authored host tests use a synthetic lifecycle contract and do not extract
+protected methods. J804 records the provenance audit and remaining device gates.
