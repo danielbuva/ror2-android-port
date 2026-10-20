@@ -18005,3 +18005,95 @@ run preflight and make one owning build under the shared Unity mutex, then
 compare its same-request linker and IL2CPP inputs. Missing capture or an
 incomplete closure remains a refusal. The accepted game APK stays `107718f8…`;
 current-player audio staging, dispatch and playback acceptance remain closed.
+
+
+## J824 — Recover fixture focus and observe the formatted native control message
+
+2026-10-20. Hypothesis: J821's pre-bootstrap gap must be observed at the
+foreground/window boundary before changing Wwise. Reuse its exact isolated
+R6 APK `b4237cbe52b6102ff52b4b61c509c3ec6d0713137c648c2d47646457826d650d`
+and native library `ff07e292…`; no Unity rebuild, bank or native change.
+
+Root retains the first host-only dispatch refusal for missing
+`UNITY_ANDROID_ROOT`, before device construction or install, under
+`work/coordination/codex-audio-message-main-root-r3/`. The corrected launch
+sources `scripts/env.sh` and explicitly validates the pinned toolchain before
+its next dispatch. Prior dispatch markers are not reused.
+
+The Main run `20261020T194939.604613Z` under per-device
+`experiments/wwise-managed-fixture/` repeats the no-report deadline. Bounded
+startup captures at 0, 10 and 30 s establish a system alert holds window focus
+while the fixture activity is resumed with `mHasWindowFocus=false`. They retain
+activity/window/surface/current-PID logs. Screenshot capture separately fails
+because the wrapper selected a fixture CLI named `run` instead of the binary
+transport; that error does not replace the raw deadline or cleanup evidence.
+The corrected R13 wrapper binds the actual pinned `common.run`, with a
+host fake-executable test of binary PNG transport, explicit selected-device
+guard, local exclusive write, no remote temporary and unchanged raw deadline.
+Its 22 host tests pass; independent review clears the narrow correction.
+
+Root's ordinary Main UI observation identifies the handheld's A-key unlock
+screen and the blocking “Use USB for” dialog with “No data transfer” selected.
+A gamepad-source A unlocks the vendor screen. Back cancels the observed USB
+dialog; its mode is not changed, and storage configuration/data are untouched.
+A post-cancel capture verifies launcher focus and no modal. Every observation
+sleeps the display in finally. One earlier cancel attempt is withheld when
+focus is still transitioning; its refusal is retained. This is device setup
+for this audio fixture, not a change to alpha-owned game controls or UI.
+
+Root then makes a fresh absent-package/game-hash/sleep query and runs the same
+b423 APK with R13. Its narrow reviewed shim replaces only the raw runner's
+pre-launch A request with the same key using a gamepad source, after a bounded
+wake wait. The 210-second report window begins later, after `am start`, and
+all native/scenario gates remain unchanged. The private Root producer is
+`work/coordination/codex-audio-message-main-root-r5/`.
+
+The actual run `20261020T200014.981285Z` reaches Unity, fixture bootstrap and
+successful engine initialization. It services PostCallbacks and RenderAudio
+for 152 frames, last `AK_Success`, and captures exactly one monitor callback:
+`ErrorCode_GameMessage`, `ErrorLevel_Message`, full untruncated 47-character
+`WwiseManagedNativeMonitorControl (Game Message)`, playing ID 0 and invalid
+game-object ID. Native and managed exact-control counters remain zero: both
+expect the base posted token with an immediate terminator. Inspection confirms
+the native recorder and managed callback receive the same formatted payload;
+the serializer does not add the suffix. The SDK implementation responsible
+for upstream formatting is unavailable, so the exact observed callback is the
+contract evidence. This is not an arbitrary callback-as-success substitution.
+
+First failure is `post_init_exact_monitor_control_timeout`. The native slot-22
+control gate remains closed, so Init-bank/event/negative-event/capture work
+stays withheld. There is no event playing ID, EndOfEvent or PCM result. Owner
+Engine Term and CallbackManager Term return, native monitor disarm and owned
+cleanup complete, the installed fixture is byte-verified and removed, and
+runner cleanup errors are empty. No current-process fatal is observed.
+The earlier focus captures plus changed setup support a foreground hypothesis;
+they do not independently prove which startup action was necessary.
+
+Evidence SHA-256 (raw device evidence stays private):
+
+- First observed startup run's `runner-result.json`:
+  `65fd7eb1f71fc5cfec3eec61ae6b7e8a56594e3fb82f57102c67ce38f1d9aab2`;
+  startup summary `a218fb58d532add7692bb32863d4df0d7bc682c53fda2b2d53c0a46a5b81aff6`.
+- Actual callback run's `runner-result.json`:
+  `428c7cf7865fdea7577f83c91e5dcf80e60483a7b068c20cc888c842c65c5fbf`;
+  `player-report.json`:
+  `97c136a05830bd9fd559f6f03de8ba6459f372017ecfa1fe14593431a476621f`;
+  startup summary `9ce10abec6d2d97bf8e5bc6ad7486bef7dff2b6da887661e36ea33461b353366`.
+- Independent actual-result classification:
+  `work/coordination/audio-r6-formatted-monitor-control-review/r1/actual-result.json`,
+  `f4a1b135452cac35cec7af9f6802fccf5781668af0a0c68c2f911aa2fbaf1e25`.
+- Fresh post-run proof:
+  `work/coordination/codex-audio-message-main-root-r6/post-run-verification.json`,
+  `87d6e95081c61dc1e1bf7955cd7428f913a1d82bb941d21543916af948705bf9`.
+  It verifies the fixture absent, game ownership unchanged, actual installed
+  game still `107718f8…` and display asleep.
+
+Next rebuild the bridge with an exact full formatted-message/code/level/ID
+comparison, preserving the distinct raw posted token, slot-22 phase gate and
+all failure mutants. No substring/prefix matching or generic Message callback
+may pass control. The host-reviewed private candidate is
+`work/coordination/audio-r6-formatted-monitor-control/r1/`, manifest
+`bb57c514643ed2ff67f61aecaa9bb48fd143374d1c70c8cc80f4db6078228589`;
+its native build and runtime gates remain closed. Current game source/GUIDs
+and R8/R9 membership are unchanged by this experiment. Audio remains
+unavailable in the game; this establishes callback identity, not playback.
