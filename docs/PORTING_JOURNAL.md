@@ -18270,7 +18270,7 @@ risk references, and J586/J595/J738/J755/J762 before reviewing the pinned
 Rimdroid source. Consult the existing community profile/platform analysis;
 inspect acquisition, native runtime packaging, feedback and cloud source,
 plus official Unity and versioned HybridCLR documentation. The resulting
-[ADR-002 proposal](ADR-002-public-alpha-distribution.md) contains the source
+[ADR-002 proposal](history/public-alpha-distribution-options-2026-10-20.md) contains the source
 permalinks, applicability limits, alternatives and estimated effort. It
 remains proposed. [public-alpha.md](public-alpha.md) owns open alpha work;
 ARCHITECTURE links these planning documents without changing the pipeline.

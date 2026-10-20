@@ -9,7 +9,10 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
 holds open release work. ADR-001's architecture C and the runtime pipeline below
-remain current. Public-input bootstrap and device acceptance remain open.
+remain current. [phone-owner-build.md](phone-owner-build.md) assesses build stages
+for phone-only delivery while retaining the desktop workflow as fallback; no
+replacement runtime or build pipeline is implemented. Public-input bootstrap,
+performance equivalence and device acceptance remain open.
 
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the

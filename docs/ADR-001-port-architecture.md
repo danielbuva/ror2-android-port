@@ -18,6 +18,9 @@ J430: the user approves Steam build 25475991 and its matching Unity 2021.3.45f2 
 
 2026-10-20: the user selects [ADR-002's Route A](ADR-002-public-alpha-distribution.md),
 owner-built IL2CPP APKs and locally reconstructed content, for public alpha delivery.
-This retains architecture C; it does not select the source-reconstruction
-architecture A above. Public-input bootstrap and device/gameplay gates remain open;
-no game-derived APK or payload is approved for publication.
+The clarified direction investigates a phone-only build while retaining the desktop
+workflow as fallback, with no execution-backend migration. This retains architecture C;
+it does not select the source-reconstruction architecture A above. Present build-stage
+findings before altering the working Android build. Public-input bootstrap,
+performance equivalence and device/gameplay gates remain open; no game-derived APK
+or payload is approved for publication.

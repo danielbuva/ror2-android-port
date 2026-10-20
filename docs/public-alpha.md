@@ -5,10 +5,22 @@ The user accepts [owner-built Route A](ADR-002-public-alpha-distribution.md);
 [ADR-001](ADR-001-port-architecture.md) retains architecture C. This checklist
 makes no alpha-readiness claim.
 
+Phone-only owner builds are the installation research target; retain native
+IL2CPP ARM64 and the current renderer, with desktop builds as fallback.
+The [stage assessment](phone-owner-build.md) precedes build-pipeline changes.
+
 Decision preparation: [J825](PORTING_JOURNAL.md#j825--research-public-alpha-distribution-before-choosing-a-launcher).
 
 ## Decision and reproducibility
 
+- [ ] Resolve the editor-equivalent Android content/shader production gate without
+      consuming desktop-generated game data as a hidden prerequisite.
+- [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
+      tools; qualify native compilation, packaging/signing and installer updates.
+- [ ] Present bounded proof findings before changing the working build or choosing
+      the final installation experience. Keep other execution backends excluded.
+- [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
+      matched device workloads; IL2CPP alone does not prove equivalent performance.
 - [ ] Qualify the isolated owner-build environment; internal Nova is alpha's
       exclusive device per [J818](PORTING_JOURNAL.md#j818--qualify-thor-and-preserve-the-siren-guard-across-device-reassignment).
       Select it explicitly and install only an explicit alpha-built APK.
