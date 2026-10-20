@@ -75,6 +75,7 @@ public sealed partial class PortSession
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
         public bool commandoPrimaryDiagnostic;
+        public AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinLifecycle;
         public string inputSource;
         public bool physicalInputAvailable, mappingAvailable;
         public bool automaticDiagnosticInputHeldAtBoundary;
@@ -264,6 +265,14 @@ public sealed partial class PortSession
                                                   physicalInputAvailable = physicalInputAvailable,
                                                   spawnedBodyId = body.netId.Value,
                                                   masterId = body.master.netId.Value };
+            bool nativeSourceSkinRequested = coordinator.r.nativeSourceSkinLifecycleDiagnosticRequested;
+            if (nativeSourceSkinRequested)
+            {
+                coordinator.r.nova.nativeSourceSkinLifecycle =
+                    new AndroidNativeSourceSkinLifecycle.Report { requested = true };
+                coordinator.Check(spine && cfg.integratedWorld && coordinator.SelectedSourceSurvivor(),
+                                  "Native source skin lifecycle request requires an integrated run and an actual source-selected player model");
+            }
             NovaInputBridge.Mapping mapping = null;
             if (physicalInputAvailable)
             {
@@ -332,7 +341,31 @@ public sealed partial class PortSession
                 body.SetAimTimer(130);
                 display = new NovaDiagnosticDisplay(body.modelLocator.modelTransform, coordinator.artifactBundle, cfg.displayAssets,
                                                     coordinator.obstacle, spine, cfg.originalAimPresentation ? body : null,
-                                                    coordinator.SelectedSourceSurvivor() ? coordinator.r.selectedSurvivor : null);
+                                                    coordinator.SelectedSourceSurvivor() ? coordinator.r.selectedSurvivor : null,
+                                                    nativeSourceSkinRequested, body, coordinator.r.nova.nativeSourceSkinLifecycle);
+                if (nativeSourceSkinRequested)
+                {
+                    float assetDeadline = Time.realtimeSinceStartup + 15f;
+                    while (!display.NativeSourceSkinAssetsReady && Time.realtimeSinceStartup < assetDeadline)
+                        yield return null;
+                    display.CaptureNativeSourceSkinReport();
+                    bool skinReady = display.NativeSourceSkinAssetsReady;
+                    if (!skinReady)
+                        coordinator.r.nova.nativeSourceSkinLifecycle.Fail("Native selected-skin controller/avatar/renderer readiness is not yet established");
+                    coordinator.Check(skinReady,
+                                      "Original native selected skin did not provide matching controller/avatar/renderer records within 15 seconds");
+                    display.EnableNativeSourceAnimatorAfterSkinReady();
+                    float animatorDeadline = Time.realtimeSinceStartup + 3f;
+                    while (!display.NativeSourceSkinAnimatorReady && Time.realtimeSinceStartup < animatorDeadline)
+                        yield return null;
+                    display.CaptureNativeSourceSkinReport();
+                    bool animatorReady = display.NativeSourceSkinAnimatorReady;
+                    if (!animatorReady)
+                        coordinator.r.nova.nativeSourceSkinLifecycle.Fail("Original Animator initialization was not observed after native controller/avatar readiness");
+                    coordinator.Check(animatorReady,
+                                      "Original Animator did not initialize after native selected controller/avatar readiness");
+                    display.EnableNativeAimAfterAnimatorReady();
+                }
                 coordinator.r.framePacing = display.presentationCamera.report;
                 if (cfg.stageGeometry)
                     display.camera.cullingMask |= LayerIndex.world.mask;

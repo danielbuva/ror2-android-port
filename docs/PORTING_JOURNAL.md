@@ -18156,3 +18156,63 @@ remains accepted `107718f8…`; no trace from this new recorder exists yet. Next
 commit, preflight and build, pass both default checks, qualify the new Siren
 source guard and observe the same bounded original route. Keep native teardown,
 encounter execution and normal-difficulty acceptance open.
+
+## J826 — Restore the original selected-skin lifecycle behind a per-run gate
+
+2026-10-20. Hypothesis: the source-selected survivor's missing controller/avatar
+should be resolved by its original asynchronous ModelSkinController/SkinDef
+lifecycle. Explicit Android controller assignments bypass that selection and its
+provider lifetime. Inspect the pinned R2API.Skins, Starstorm2 and RoRSkinBuilder
+sources through the community map for skin/provider relationships; the accepted
+input's native callbacks and current device evidence remain authoritative.
+J453's CharacterModel.OnEnable Wwise failure is guarded by the current exact-input
+OptionalPresentationGuard, but activation still needs an opt-in runtime test.
+
+Add named AndroidNativeSourceSkinLifecycle and AndroidNativeSkinActivationPolicy
+owners. The absent per-run SessionReport selector stays false. Only an integrated
+Nova source-selected player may request activation; the owner requires an actual
+body/model link, inactive model, guarded no-audio boundary and both native owners
+authored enabled. Subscribe before activation. Native ModelSkinController and
+SkinDef retain selection, controller/avatar assignments and provider lifetimes.
+Wait up to 15 seconds for the matching selected index and real renderer/controller/
+avatar state, then up to three seconds for Animator initialization before native
+aim. Preserve source root-motion/culling settings on this path. Refuse truthfully
+on missing state; do not grant a skin, unlock or profile change.
+
+The adapter copies native renderer records, replacing only their material
+references with Android-owned copies; CharacterModel performs its normal update.
+Superseded copies wait until native records and renderer slots release them.
+Display deactivation is recorded separately from native-owner destruction; only
+the adapter's own clones/subscription are released at body/model destruction.
+The report contains bounded scalar evidence for actual attachment, native state,
+readiness, failure and copy lifetime. Existing display copies have a distinct
+owner. A minimal material-registry release seam supports this animation owner;
+no settings/UI/control flow or generic alpha playtest tooling is added.
+
+Root integrates the reviewed r6 patch, removes two stale draft comments, records
+the two null first-import GUIDs and 110-source manifest, and ships the synthetic
+stub/assertion fixtures with their public test. Root catches and corrects the
+supplement's draft-relative repository lookup after relocation. The production
+owner/policy execute all 30 host assertions; four source contracts pass. The
+exact saved-reference compile passes with 110 runtime sources, four supports and
+264 references, output `d31799da49072dbc71ea2cede41256a5f4060abe9f04584d498fa569bd7a90dd`.
+The full suite passes all 1,181 tests with the pinned toolchain environment.
+Its result is retained under
+`work/coordination/codex-animation-native-root-r1/full-host-r2/`.
+
+Private candidate patch
+`cb16899bcaf1fad65983c866aeb8d91d274e2f443abafde8fd80cd4d47a09321`;
+independent r3 review
+`d621edcf6e86f76b9fb459603da05773e200d6ef1a0023bd9ff0c518a9ae69b7`;
+host-test supplement
+`2a7d5237dc3dce7928332824226fc2c4d03b254048481abc4d1513ed1a27b421`.
+Root compile/input hashes are in
+`work/coordination/codex-animation-native-root-r1/compile-result.json`.
+
+This changes authored runtime source and recipe membership: R8/R9 must replay
+both owners and their manifest/layout entries. No new Unity/device result is
+claimed. Installed and accepted game remains `107718f8…`. Next commit/preflight,
+build with J825's recorder and J823's linker receipt, pass both default checks,
+then explicitly request the native skin lifecycle on a source-selected survivor.
+Native callback order, provider settlement, animation/material appearance,
+teardown timing and matched PC parity remain open.

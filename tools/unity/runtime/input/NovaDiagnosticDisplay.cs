@@ -21,6 +21,31 @@ public sealed class NovaDiagnosticDisplay : IDisposable
     public AndroidPresentationCamera presentationCamera;
     RoR2.AimAnimator nativeAim;
     Animator nativeAnimator;
+    AndroidNativeSourceSkinLifecycle nativeSourceSkinLifecycle;
+    bool sourceSkinLifecycleDiagnostic;
+    AndroidNativeSourceSkinLifecycle.Report sourceSkinReport;
+    public bool NativeSourceSkinAssetsReady => sourceSkinLifecycleDiagnostic && nativeSourceSkinLifecycle &&
+                                               nativeSourceSkinLifecycle.NativeSelectedSkinReady;
+    public bool NativeSourceSkinAnimatorReady => sourceSkinLifecycleDiagnostic && nativeSourceSkinLifecycle &&
+                                                 nativeSourceSkinLifecycle.NativeAnimatorInitialized;
+    public void CaptureNativeSourceSkinReport()
+    {
+        if (nativeSourceSkinLifecycle)
+            nativeSourceSkinLifecycle.CaptureNativeState();
+    }
+    public void EnableNativeSourceAnimatorAfterSkinReady()
+    {
+        if (!NativeSourceSkinAssetsReady || !nativeAnimator || !nativeAnimator.runtimeAnimatorController || !nativeAnimator.avatar)
+            throw new Exception("Original selected-skin controller/avatar is not ready");
+        nativeAnimator.enabled = true;
+    }
+    public void EnableNativeAimAfterAnimatorReady()
+    {
+        if (!NativeSourceSkinAnimatorReady)
+            throw new Exception("Original Animator is not initialized for native aim");
+        if (nativeAim)
+            nativeAim.enabled = true;
+    }
     public void ObserveNativeAim(PortSession.NovaReport report)
     {
         if (!nativeAim)
@@ -45,28 +70,43 @@ public sealed class NovaDiagnosticDisplay : IDisposable
         return t;
     }
     public NovaDiagnosticDisplay(Transform model, AssetBundle bundle, string[] assets, GameObject floor, bool actual = false,
-                                 RoR2.CharacterBody aimingBody = null, string sourceSurvivor = null)
+                                 RoR2.CharacterBody aimingBody = null, string sourceSurvivor = null,
+                                 bool nativeSourceSkinLifecycleDiagnostic = false, RoR2.CharacterBody selectedBody = null,
+                                 AndroidNativeSourceSkinLifecycle.Report nativeSourceSkinReport = null)
     {
         actualModel = actual;
         bool sourceSelected = !string.IsNullOrEmpty(sourceSurvivor);
+        sourceSkinLifecycleDiagnostic = sourceSelected && actual && nativeSourceSkinLifecycleDiagnostic;
+        sourceSkinReport = nativeSourceSkinReport;
+        if (nativeSourceSkinLifecycleDiagnostic && (!sourceSkinLifecycleDiagnostic || sourceSkinReport == null))
+            throw new InvalidOperationException("Requested native source skin lifecycle requires an actual source-selected model and report");
         source = model;
         root = new GameObject("Nova recovered survivor display");
         var map = new Dictionary<Transform, Transform>();
         if (!actual)
             copy = Copy(model, root.transform, map);
         else
+        {
+            if (sourceSkinLifecycleDiagnostic)
+                nativeSourceSkinLifecycle = AndroidNativeSourceSkinLifecycle.PrepareInactive(model.gameObject, selectedBody, sourceSkinReport);
             foreach (var component in model.GetComponentsInChildren<MonoBehaviour>(true))
             {
                 // The source model owns original melee hitboxes and incoming hurtboxes.
                 // Preserve those gameplay components and animation-event receivers; the
                 // unrelated model callbacks remain isolated from unavailable middleware.
+                bool authoredEnabled = component.enabled;
+                bool nativeSkinOwner = sourceSkinLifecycleDiagnostic && authoredEnabled &&
+                                       nativeSourceSkinLifecycle && component.gameObject == nativeSourceSkinLifecycle.gameObject &&
+                                       (component is RoR2.ModelSkinController || component is RoR2.CharacterModel);
+                bool nativeSkinAdapter = sourceSkinLifecycleDiagnostic && component == nativeSourceSkinLifecycle;
                 bool nativeGameplay = component is RoR2.AnimationEvents || component is RoR2.HitBox || component is RoR2.HitBoxGroup ||
                                       component is RoR2.HurtBox || component is RoR2.HurtBoxGroup;
-                component.enabled = sourceSelected && nativeGameplay && component.enabled;
+                component.enabled = sourceSelected && (nativeSkinOwner || nativeSkinAdapter || nativeGameplay && authoredEnabled);
                 // Optional native sound producers cannot enter Awake on this silent Android instance.
                 if (component.GetType().Name.StartsWith("Ak", StringComparison.Ordinal))
                     UnityEngine.Object.DestroyImmediate(component);
             }
+        }
         var shader = Resources.Load<Shader>("CommandoMaterialPreview");
         var simple = Resources.Load<Shader>("CommandoPreview");
         if ((!sourceSelected && (assets == null || assets.Length != 6)) || !shader || !shader.isSupported || !simple)
@@ -157,32 +197,40 @@ public sealed class NovaDiagnosticDisplay : IDisposable
             var animator = model.GetComponent<Animator>();
             if (!animator)
                 throw new Exception("Original survivor Animator missing");
-            if (sourceSelected)
+            nativeAnimator = animator;
+            if (sourceSelected && !sourceSkinLifecycleDiagnostic)
             {
+                // Preserve the existing diagnostic path only when the new opt-in is off.
                 var rootPath = "Assets/WholeGame/RoR2/Base/Characters/" + sourceSurvivor + "/";
                 animator.runtimeAnimatorController =
                     WholeCatalogComposed.LoadOwnedContent<RuntimeAnimatorController>(rootPath + "anim" + sourceSurvivor + ".controller");
                 animator.avatar = WholeCatalogComposed.LoadOwnedContent<Avatar>(rootPath + "mdl" + sourceSurvivor + "Avatar.asset");
             }
-            else
+            else if (!sourceSelected)
             {
                 animator.runtimeAnimatorController = bundle.LoadAsset<RuntimeAnimatorController>(assets[0]);
                 animator.avatar = bundle.LoadAsset<Avatar>(assets[1]);
             }
-            animator.applyRootMotion = false;
-            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            animator.enabled = true;
+            // Opt-in source models leave both controller/avatar fields native-owned.
+            // ModelSkinController's typed async provider supplies them through the selected SkinDef.
+            if (!sourceSkinLifecycleDiagnostic)
+            {
+                animator.applyRootMotion = false;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            }
+            animator.enabled = !sourceSkinLifecycleDiagnostic;
             if (aimingBody)
             {
                 nativeAim = model.GetComponent<RoR2.AimAnimator>();
-                nativeAnimator = animator;
                 if (!nativeAim || nativeAim.inputBank != aimingBody.inputBank ||
                     nativeAim.directionComponent != aimingBody.characterDirection ||
                     (!sourceSelected && nativeAim.aimType != RoR2.AimAnimator.AimType.Direct))
                     throw new Exception("Original Commando aim links/layers unavailable");
             }
             model.gameObject.SetActive(true);
-            if (nativeAim)
+            if (sourceSkinLifecycleDiagnostic)
+                CaptureNativeSourceSkinReport();
+            if (nativeAim && !sourceSkinLifecycleDiagnostic)
             {
                 animator.Update(0);
                 if (!sourceSelected && (animator.GetLayerIndex("AimPitch") < 0 || animator.GetLayerIndex("AimYaw") < 0))
@@ -248,7 +296,11 @@ public sealed class NovaDiagnosticDisplay : IDisposable
         if (nativeAim)
             nativeAim.enabled = false;
         if (actualModel && source)
+        {
             source.gameObject.SetActive(false);
+            if (nativeSourceSkinLifecycle)
+                nativeSourceSkinLifecycle.RecordDisplayDeactivated();
+        }
         if (root)
             UnityEngine.Object.Destroy(root);
         if (material)

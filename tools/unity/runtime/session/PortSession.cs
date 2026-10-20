@@ -184,6 +184,8 @@ public sealed partial class PortSession : MonoBehaviour
         public bool diagnosticToolbotOffhand;
         // Default-off, one-run Captain supply-drop input/state/output diagnostic.
         public bool diagnosticCaptainSupplyBeacon;
+        // Per-run opt-in for the native selected-skin lifecycle diagnostic; absent JSON is false.
+        public bool nativeSourceSkinLifecycleDiagnosticRequested;
         // Explicit source-entry-only mode; omitted attempt JSON remains false.
         public bool sirenSourceEntryDiagnosticAttempt, sirenSourceEntryDiagnosticRegistrationObserved,
             sirenSourceEntryDiagnosticCleanupObserved;
@@ -645,6 +647,17 @@ public sealed partial class PortSession : MonoBehaviour
                    JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath)).attempt != config.attempt)
                 yield return new WaitForSeconds(1);
             r = new SessionReport { attempt = config.attempt, id = "body-state-spawn-state-auto-nova-spine", freePlay = true };
+        }
+        if (r.nativeSourceSkinLifecycleDiagnosticRequested &&
+            (!config.integratedWorld || (r.id != "body-state-spawn-state-auto-nova-spine" &&
+                                         r.id != "body-state-spawn-state-auto-nova-spine-bringup") ||
+             string.IsNullOrEmpty(r.selectedSurvivor)))
+        {
+            r.phase = "native-source-skin-lifecycle-refused";
+            r.firstFailure = "Native source skin lifecycle request requires the integrated Nova source-selected player route";
+            r.firstFailurePhase = r.phase;
+            Save();
+            yield break;
         }
 #if UNITY_ANDROID && !UNITY_EDITOR
         using (var process = new AndroidJavaClass("android.os.Process")) r.pid = process.CallStatic<int>("myPid");

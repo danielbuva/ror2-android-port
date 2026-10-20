@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J826](PORTING_JOURNAL.md#j826--restore-the-original-selected-skin-lifecycle-behind-a-per-run-gate) | 2026-10-20 | Restore the original selected-skin lifecycle behind a per-run gate | 2026-10-20. |
 | [J825](PORTING_JOURNAL.md#j825--bind-a-bounded-siren-approach-trace-to-its-real-input-owner) | 2026-10-20 | Bind a bounded Siren approach trace to its real input owner | 2026-10-20. |
 | [J824](PORTING_JOURNAL.md#j824--recover-fixture-focus-and-observe-the-formatted-native-control-message) | 2026-10-20 | Recover fixture focus and observe the formatted native control message | 2026-10-20. |
 | [J823](PORTING_JOURNAL.md#j823--add-an-opt-in-current-player-linker-input-receipt-for-audio) | 2026-10-20 | Add an opt-in current-player linker input receipt for audio | 2026-10-20. |

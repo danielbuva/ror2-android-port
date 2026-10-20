@@ -63,6 +63,8 @@
     "runtime/commerce/PickupDropletLoadBoundary.cs": "19df9535963e44b1fb04dfc962bffcab",
     "runtime/commerce/WorldChestBreadthBoundary.cs": "7c11bf3c561274bfd972fe670972fa8a",
     "runtime/commerce/WorldCommerceBoundary.cs": "b7508373f768140b6b471276b69cdcda",
+    "runtime/input/AndroidNativeSkinActivationPolicy.cs": null,
+    "runtime/input/AndroidNativeSourceSkinLifecycle.cs": null,
     "runtime/input/AndroidOfflineSettings.cs": "66a562b7a60954d15b7fd42fa573e597",
     "runtime/input/AndroidPresentationCamera.cs": "d4a46649b8851464ca49e269f75fa517",
     "runtime/input/NovaDiagnosticDisplay.cs": "5daf75ba9ec1543c8b38ee0934ea5b65",

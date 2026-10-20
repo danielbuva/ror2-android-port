@@ -199,6 +199,13 @@ public static class AndroidMaterialPresentation
         if (!report.enabled)
             copy.shader = fallback;
     }
+    // Remove an adapter-owned material copy before the adapter releases it.
+    public static void Release(Material material)
+    {
+        for (int i = bindings.Count - 1; i >= 0; i--)
+            if (ReferenceEquals(bindings[i].material, material))
+                bindings.RemoveAt(i);
+    }
     public static void Finish()
     {
         AndroidNativeDeferredPresentation.Finish();

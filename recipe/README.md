@@ -1288,3 +1288,16 @@ public APIs contain no copied game/community implementation. This membership
 and provenance/privacy audit adds no private build input or text replacement;
 R8/R9 must replay the new authored source. J825 records host qualification and
 keeps Unity/device execution unaccepted.
+
+### Native selected-skin lifecycle (2026-10-20)
+
+`runtime/input/AndroidNativeSourceSkinLifecycle.cs` and
+`AndroidNativeSkinActivationPolicy.cs` are repository-authored owners listed in
+the 110-entry runtime manifest. Their layout GUIDs start null under the existing
+first-import contract. They preserve native skin selection/provider lifetime and
+adapt copied material references only on an explicit per-run request. The small
+material-registry release method removes only adapter-owned copies. Public
+synthetic C# fixtures/assertions contain no game/community implementation. This
+provenance/privacy audit adds no protected asset, SDK source or private input;
+R8/R9 must replay the authored sources and membership. J826 records qualification
+and the still-open Unity/device/parity gates.
