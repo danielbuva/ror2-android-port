@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J854](PORTING_JOURNAL.md#j854--observe-invisible-native-huntress-renderers-and-correct-the-menu-timeout-diagnosis) | 2026-10-20 | Observe invisible native Huntress renderers and correct the menu-timeout diagnosis | 2026-10-20. |
 | [J851](PORTING_JOURNAL.md#j851--measure-sdk-metadata-coverage-and-identify-the-native-registry-gap) | 2026-10-20 | Measure SDK metadata coverage and identify the native registry gap | 2026-10-20. |
 | [J850](PORTING_JOURNAL.md#j850--accept-both-default-checks-on-the-native-visualsiren-observer-build) | 2026-10-20 | Accept both default checks on the native visual/Siren observer build | 2026-10-20. |
 | [J852](PORTING_JOURNAL.md#j852--replace-legacy-il2cpp-log-capture-with-the-pinned-bee-build-owner) | 2026-10-20 | Replace legacy IL2CPP log capture with the pinned Bee build owner | 2026-10-20. |

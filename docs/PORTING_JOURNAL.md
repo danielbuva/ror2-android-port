@@ -20122,3 +20122,64 @@ Rich content/import/shader production, permitted tool delivery, normal app-host
 policy and installer/benchmark gates remain open. Keep Route A and the desktop
 fallback. Revisit on SDK/binary/schema/attribute or native-registry contract
 changes. This generic SDK study adds no RoR2-specific reconstruction or runtime.
+
+## J854 — Observe invisible native Huntress renderers and correct the menu-timeout diagnosis
+
+2026-10-20. Hypothesis: J848's bounded snapshots distinguish the anomalous
+Huntress frame in J841 without changing rendering. Use J850's frozen,
+both-default-qualified APK
+`f1550ce0ff030ea0fa7a1ab66de19d54ee7894a7ae2f5b344f993157d6713949`,
+source `1780ea9545f1597c033a8d32e08074b03c7f38c8`. No build or install occurs.
+The reviewed R10 runner binds that exact candidate, default-check receipts,
+fresh Root claim and adopted-only main gameplay device. Its 600-second
+observation budget reserves bounded cleanup; it selects no Moon route.
+Prior art and the accepted CharacterModel/SceneCamera ownership contract are
+recorded in J848 and `community-prior-art.md`.
+
+The actual attempt is
+`work/experiments/native-source-skin-lifecycle/20261020T233948.685867Z/`.
+At 35.205154 seconds of original Lakes play, the captured report identifies an
+active model and initialized Animator with original `animHuntress` controller
+and `mdlHuntressAvatar`. CharacterModel visibility is `Invisible`,
+invisibilityCount is 0 and forceUpdate is true. All 12 recorded renderers are
+disabled/invisible; seven renderer GameObjects are active. The passed Nova
+camera is active/enabled and has neither SceneCamera nor CameraRigController.
+The snapshot has no capture error or omitted renderer entries. Material-slot
+count is deliberately unknown; a zero sampled-slot count does not establish
+missing materials. Root inspects the saved Android PNG, which does not show a
+clearly visible Huntress body. No matching original PC capture is available,
+so this is not visual or animation parity acceptance. The evidence supports
+investigating the original camera/rig update path but does not establish that
+no other camera delivers native callbacks.
+
+The retained completed session report is `complete`, cleanup true, with no
+error or firstFailure. Settings pauses advances to 1; the ordinary end-run
+path deactivates the display and destroys its owner. Five material copies are
+created and all five receive release calls; actual Unity-null destruction is
+not measured. The visual record is the last live snapshot retained through
+teardown, not a new read of destroyed objects. The runner then fails waiting
+for the next offline menu. Preserve that raw failure, but do not infer a game
+return failure: a separate post-stop collection finds the exact same process,
+session 2, at `offline-start-menu` with no error under the selected bringup
+report identity. Its SHA-256 is
+`8f8b3bac70f69779eab9aaad2eaff2558ca67edd43ce9d937deb05a73714bfbf`.
+The runner watches the base-spine report instead, which belongs to an older
+process. Alpha confirms the current source contract: the next PortSession
+rereads the still-present diagnostic selector, so the base-id reset in the
+no-selector branch does not apply. This establishes next-menu return, not a
+second playable run. The complete profile hash is unchanged and appliedRuns
+remains 13. Alpha receives and independently checks the diagnosis; no UI or
+runtime fix follows. Future runner polling must use the validated selected
+report identity and retain same-process/session checks and last observations.
+
+Preserve the runner's failed `result.json`, SHA-256
+`2bf8fa4e6d02e88986c925c7f78aa421965d135c94610d5502527af343512cb6`,
+its live/completed reports and decoded PNG. Cleanup reports no error. Root's
+separate fresh, guarded read-only verification under
+`work/coordination/codex-main-f155-device-root-r2/` confirms selector absent,
+process absent, display asleep with its physical panel off, and actual
+installed APK hash still f1550ce0 on adopted storage. No alpha/spare device
+or original input is changed. J850 remains the default baseline. No authored
+runtime or recipe changes occur; the next visual candidate must restore the
+original camera/rig semantics and then confront the first runtime failure,
+without forcing visibility or inventing presentation.
