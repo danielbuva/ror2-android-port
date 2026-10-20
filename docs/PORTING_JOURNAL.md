@@ -18775,6 +18775,65 @@ tool delivery, durable owner signing, user-mediated installation and performance
 comparison remain open. Revisit on a storage/path regression or a changed tool,
 editor, fixture or input contract; no runtime migration is authorized.
 
+## J835 — Reach native Huntress skin readiness, then refuse the older display-owner invariant
+
+**Hypothesis.** J826's opt-in owner can let the selected source skin settle and
+initialize its real Animator without the diagnostic display assigning a controller
+or avatar. The bounded next check must also enter play and return through native
+session cleanup before accepting the lifecycle.
+
+**Change and prior art.** No new game APK or runtime source was introduced. Root
+selected the existing diagnostic on J828's frozen player, source `72f9b2ea`, APK
+`922cfb86e895118285d8c93f588ff57c4052154d15e88688bf7b46f357474112`, after its
+both-default acceptance. The host runner's first pre-launch refusal exposed a
+schema mistake: persisted `Generation.appliedRuns` is a list of unique canonical
+run IDs, while the report exposes its count. R5 validates that list and compares
+its length; 21 host tests and independent review pass. J826's inspected typed skin
+references and native selection/lifetime prior art remain applicable. Current
+input `CharacterModel` source separately establishes that `OnEnable` subscribes
+its native inventory writer and `OnDisable` removes it; a second reflected writer
+in the Android display adapter would duplicate native factory updates.
+
+**Actual result.** On the primary gameplay device, the selected Huntress skin
+index settled at 0, matching the native controller. The source controller and
+avatar were present, `Animator.isInitialized` became true, and five Android
+material copies were created. No live-world 35-second acceptance or completed
+session report was reached. The first failure was
+`Original disabled model/display rule context absent` during world loot setup:
+the existing item-display adapter requires the character model to be disabled,
+whereas the opt-in native owner has enabled that exact model. No unexplained
+same-process exception was found in the captured log. This is a cross-owner
+contract failure, not full animation or visual-parity acceptance.
+
+Cleanup removed the owned selector, stopped the package and verified display
+sleep. The final report observes display deactivation, but not model-owner
+destruction or material release; native teardown is therefore unaccepted.
+The persisted profile remained byte-identical with 13 applied runs. The installed
+game remains J828's accepted APK; no alpha or spare-device action occurred.
+
+**Evidence, local only.**
+
+- `work/experiments/native-source-skin-lifecycle/20261020T211023.456185Z/result.json`,
+  SHA-256 `dcf761aac7b881dd8523d2d92a533c754e292f4903de21a7c6a080a4e2a04a2e`.
+- `work/coordination/codex-native-skin-device-root-r2/last-report.txt`, SHA-256
+  `62df53a2316310a26352428a4ffda48a83e486418be8870e768bd1c1d33490bf`;
+  the same directory retains progress/final logs, runner and cleanup proof.
+- `root-cleanup.json` in that directory, SHA-256
+  `095a8c10d9f5d372fc299b0341bd4b848318b9a23f51dd8fc3322218337ee5e3`.
+- `work/coordination/codex-native-skin-device-root-r1/` retains the earlier
+  pre-launch schema refusal and read-only profile verification.
+- `work/coordination/animation-native-skin-device-plan/r5/` and
+  `animation-native-skin-device-review/r5/` retain the host runner/tests/review.
+- `work/coordination/animation-native-skin-runtime-triage/r1/` retains exact
+  source ownership analysis. Its initial guard-only patch is explicitly withdrawn:
+  accepting an enabled model alone would introduce duplicate inventory writers.
+
+**Next gate.** Bind an exclusive native inventory owner for this exact opt-in
+model while retaining the same eligible rules and Android material presentation.
+Keep the disabled-model default path. Rebuild committed sources, rerun both
+baseline modes, then repeat the bounded gameplay and native teardown check.
+No source, recipe or rebuild step changed in this experiment.
+
 ## J836 — Build an authored APK on Android and test app-host execution
 
 2026-10-20. Hypothesis: Android-host open tool components can compile and package
