@@ -1,6 +1,6 @@
 """Stage/replay only the authored fixture's native compilation graph.
 
-Android: python3 -I -S phone_native.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT
+Android: python3 -I -S phone_native.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT [REUSE.json]
 This copies supplied inputs, never edits Unity/game source, and is not a player builder.
 """
 
@@ -108,6 +108,7 @@ def stage(project, destination, editor, android):
     for source in (sysroot / arch).iterdir():
         if source.is_file():
             shutil.copy2(source, destination / "ndk/sysroot" / arch / source.name)
+    shutil.copy2(android / "NDK/toolchains/llvm/prebuilt/darwin-x86_64/lib/gcc/aarch64-linux-android/4.9.x/libgcc.a", destination / "ndk/libgcc.a")
     baseline = android / "Variations/il2cpp/Development/StaticLibs/arm64-v8a/baselib.a"
     target = destination / path_argument(str(baseline), roots)["path"]
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +142,7 @@ def stage(project, destination, editor, android):
             "LLD replaces the recorded BFD linker",
             "Explicit original NDK target sysroot and C++ headers/libraries",
             "Fresh relative include wrappers preserve original lump input order",
+            "Explicit original static C++/ABI/GCC archives replace compiler implicit C++/unwind selection",
         ],
         "game_inputs": False,
         "desktop_stripping_and_codegen_inputs": True,
@@ -198,16 +200,7 @@ def stage_action(request):
     print(json.dumps(result, indent=2))
 
 
-def build(stage_root, tool_root, output_root):
-    stage_root, tool_root, output_root = (Path(value).resolve() for value in (stage_root, tool_root, output_root))
-    output_root.mkdir(mode=0o700, exist_ok=False)
-    result = {"schema": 1, "success": False, "completed": 0, "commands": []}
-    started = time.monotonic()
-
-    def save():
-        result["elapsed_seconds"] = time.monotonic() - started
-        (output_root / "result.json").write_text(json.dumps(result, indent=2) + "\n")
-
+def compiler_arguments(stage_root, tool_root, output_root, arguments, *, link=False):
     def render(item):
         if isinstance(item, str):
             return item
@@ -217,19 +210,81 @@ def build(stage_root, tool_root, output_root):
             return item["prefix"] + str(stage_root / relative(item["path"]))
         raise ValueError("Unrecognized native argument record")
 
-    def run(arguments, label, *, link=False):
-        argv = [
-            str(tool_root / "usr/bin/clang-21"),
-            "--driver-mode=g++",
-            "--sysroot=" + str(stage_root / "ndk/sysroot"),
-            "-resource-dir=" + str(tool_root / "usr/lib/clang/21"),
+    argv = [
+        str(tool_root / "usr/bin/clang-21"),
+        "--driver-mode=g++",
+        "--sysroot=" + str(stage_root / "ndk/sysroot"),
+        "-resource-dir=" + str(tool_root / "usr/lib/clang/21"),
+    ]
+    if link or "-std=c++11" in arguments:
+        argv += ["-nostdinc++", "-isystem", str(stage_root / "ndk/sysroot/usr/include/c++/v1")]
+    argv += [render(item) for item in arguments if item != "-fuse-ld=bfd"]
+    if link:
+        arch = stage_root / "ndk/sysroot/usr/lib/aarch64-linux-android"
+        argv += [
+            "--ld-path=" + str(tool_root / "usr/bin/ld.lld"),
+            "-B" + str(arch / "22"),
+            "-L" + str(arch / "22"),
+            "-L" + str(arch),
+            "-nostdlib++",
+            "--unwindlib=none",
+            str(arch / "libc++_static.a"),
+            str(arch / "libc++abi.a"),
+            str(stage_root / "ndk/libgcc.a"),
         ]
-        if link or "-std=c++11" in arguments:
-            argv += ["-nostdinc++", "-isystem", str(stage_root / "ndk/sysroot/usr/include/c++/v1")]
-        argv += [render(item) for item in arguments if item != "-fuse-ld=bfd"]
-        if link:
-            arch = stage_root / "ndk/sysroot/usr/lib/aarch64-linux-android"
-            argv += ["--ld-path=" + str(tool_root / "usr/bin/ld.lld"), "-B" + str(arch / "22"), "-L" + str(arch / "22"), "-L" + str(arch)]
+    return argv
+
+
+def reuse_objects(stage_root, tool_root, output_root, request):
+    prior, old_stage = Path(request["output"]).resolve(), Path(request["stage"]).resolve()
+    raw = (prior / "result.json").read_bytes()
+    if hashlib.sha256(raw).hexdigest() != request["result_sha256"]:
+        raise ValueError("Prior native result drift")
+    result = json.loads(raw)
+    old_manifest = json.loads((old_stage / "input-manifest.json").read_text())
+    new_manifest = json.loads((stage_root / "input-manifest.json").read_text())
+    if result["input_manifest_sha256"] != hashlib.sha256((old_stage / "input-manifest.json").read_bytes()).hexdigest():
+        raise ValueError("Prior native manifest drift")
+    metadata = {"plan.json", "phone_native.py", "ndk/libgcc.a"}
+    if {k: v for k, v in old_manifest.items() if k not in metadata} != {k: v for k, v in new_manifest.items() if k not in metadata}:
+        raise ValueError("Native source/target inputs differ; recompile")
+    plan = json.loads((stage_root / "plan.json").read_text())
+    if json.loads((old_stage / "plan.json").read_text())["compile"] != plan["compile"]:
+        raise ValueError("Native compile plan differs; recompile")
+    commands = [item for item in result["commands"] if item["label"].startswith("compile-")]
+    outputs = {task["output"] for task in plan["compile"]}
+    if result["completed"] != len(outputs) or set(request["objects"]) != outputs or len(commands) != len(outputs):
+        raise ValueError("Prior native object set is incomplete")
+    for index, task in enumerate(plan["compile"]):
+        command = commands[index]
+        if (
+            command["exit"] != 0
+            or command["label"] != f"compile-{index:03}"
+            or command["args"] != compiler_arguments(old_stage, tool_root, prior, task["arguments"])
+        ):
+            raise ValueError("Native compiler arguments differ; recompile")
+        source = prior / relative(task["output"])
+        if hashlib.sha256(source.read_bytes()).hexdigest() != request["objects"][task["output"]]:
+            raise ValueError("Prior native object drift")
+    for name in sorted(outputs):
+        target = output_root / relative(name)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(prior / name, target)
+    return request["objects"]
+
+
+def build(stage_root, tool_root, output_root, reuse_request=None):
+    stage_root, tool_root, output_root = (Path(value).resolve() for value in (stage_root, tool_root, output_root))
+    output_root.mkdir(mode=0o700, exist_ok=False)
+    result = {"schema": 1, "success": False, "completed": 0, "commands": []}
+    started = time.monotonic()
+
+    def save():
+        result["elapsed_seconds"] = time.monotonic() - started
+        (output_root / "result.json").write_text(json.dumps(result, indent=2) + "\n")
+
+    def run(arguments, label, *, link=False):
+        argv = compiler_arguments(stage_root, tool_root, output_root, arguments, link=link)
         env = dict(os.environ)
         env["LD_LIBRARY_PATH"] = str(tool_root / "usr/lib") + ":" + str(tool_root / "python/usr/lib")
         process = subprocess.run(argv, cwd=stage_root / "project", env=env, capture_output=True, text=True, timeout=180)
@@ -247,12 +302,18 @@ def build(stage_root, tool_root, output_root):
                 raise ValueError("Native staged input drift: " + name)
         plan = json.loads((stage_root / "plan.json").read_text())
         result["changes"] = plan["changes"]
-        for index, task in enumerate(plan["compile"]):
-            (output_root / relative(task["output"])).parent.mkdir(parents=True, exist_ok=True)
-            result["active"] = index
-            save()
-            run(task["arguments"], f"compile-{index:03}")
-            result["completed"] += 1
+        if reuse_request:
+            reuse = json.loads(Path(reuse_request).read_text())
+            result["reused_objects"] = reuse_objects(stage_root, tool_root, output_root, reuse)
+            result["completed"] = len(result["reused_objects"])
+            result["reuse_request_sha256"] = hashlib.sha256(Path(reuse_request).read_bytes()).hexdigest()
+        else:
+            for index, task in enumerate(plan["compile"]):
+                (output_root / relative(task["output"])).parent.mkdir(parents=True, exist_ok=True)
+                result["active"] = index
+                save()
+                run(task["arguments"], f"compile-{index:03}")
+                result["completed"] += 1
         run(plan["link"], "link", link=True)
         library = output_root / relative(plan["library"])
         result.update(success=True, library=str(library), library_sha256=hashlib.sha256(library.read_bytes()).hexdigest())
@@ -265,6 +326,6 @@ def build(stage_root, tool_root, output_root):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 5):
         raise SystemExit(__doc__)
     raise SystemExit(0 if build(*sys.argv[1:]) else 1)

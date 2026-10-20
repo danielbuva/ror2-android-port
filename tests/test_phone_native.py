@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from phone_native import build, command_arguments, lump_includes, path_argument
+from phone_native import build, command_arguments, compiler_arguments, lump_includes, path_argument, reuse_objects
 
 
 class PhoneNativeTests(unittest.TestCase):
@@ -53,3 +53,48 @@ class PhoneNativeTests(unittest.TestCase):
             self.assertIn("input drift", result["failure"])
             self.assertFalse(result["success"])
             self.assertEqual(result["commands"], [])
+
+    def test_link_uses_explicit_pinned_static_libraries_without_implicit_runtime(self):
+        argv = compiler_arguments(Path("/stage"), Path("/tools"), Path("/out"), ["-shared", "-fuse-ld=bfd"], link=True)
+        self.assertIn("-nostdlib++", argv)
+        self.assertIn("--unwindlib=none", argv)
+        self.assertIn("/stage/ndk/libgcc.a", argv)
+        self.assertNotIn("-fuse-ld=bfd", argv)
+
+    def test_relink_reuses_only_exact_objects_sources_and_compile_arguments(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            old, new, prior, output = (root / name for name in ("old", "new", "prior", "output"))
+            for path in (old, new, prior, output):
+                path.mkdir()
+            plan = {"compile": [{"arguments": ["-c", {"path": "source.cpp", "prefix": ""}], "output": "sample.o"}]}
+            for path in (old, new):
+                (path / "plan.json").write_text(json.dumps(plan))
+                (path / "input-manifest.json").write_text(json.dumps({"source.cpp": "same-source-hash"}))
+            (prior / "sample.o").write_bytes(b"compiled-object")
+            result = {
+                "completed": 1,
+                "input_manifest_sha256": hashlib.sha256((old / "input-manifest.json").read_bytes()).hexdigest(),
+                "commands": [{"label": "compile-000", "exit": 0, "args": compiler_arguments(old, root, prior, plan["compile"][0]["arguments"])}],
+            }
+            (prior / "result.json").write_text(json.dumps(result))
+            request = {
+                "output": str(prior),
+                "stage": str(old),
+                "result_sha256": hashlib.sha256((prior / "result.json").read_bytes()).hexdigest(),
+                "objects": {"sample.o": hashlib.sha256(b"compiled-object").hexdigest()},
+            }
+            self.assertEqual(len(reuse_objects(new, root, output, request)), 1)
+            self.assertEqual((output / "sample.o").read_bytes(), b"compiled-object")
+            (prior / "sample.o").write_bytes(b"different")
+            with self.assertRaisesRegex(ValueError, "object drift"):
+                reuse_objects(new, root, output, request)
+            (prior / "sample.o").write_bytes(b"compiled-object")
+            (new / "input-manifest.json").write_text(json.dumps({"source.cpp": "different-source-hash"}))
+            with self.assertRaisesRegex(ValueError, "source/target inputs differ"):
+                reuse_objects(new, root, output, request)
+            (new / "input-manifest.json").write_text((old / "input-manifest.json").read_text())
+            plan["compile"][0]["arguments"].append("-O3")
+            (new / "plan.json").write_text(json.dumps(plan))
+            with self.assertRaisesRegex(ValueError, "compile plan differs"):
+                reuse_objects(new, root, output, request)

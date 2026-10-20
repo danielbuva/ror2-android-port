@@ -6,7 +6,7 @@ it implements no runtime and changes no game build.
 
 ```sh
 ./dev prototype --action phone-native-fixture --target REQUEST.json
-python3 -I -S phone_native.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT
+python3 -I -S phone_native.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT [REUSE.json]
 ```
 
 The ignored host request selects `project`, `apk` and `sha256` for the committed
@@ -32,6 +32,14 @@ metadata identity, content lifecycle, a full phone build or game performance.
 Any subsequent fixture packaging/install must bind its exact metadata/base APK
 and native library, use private signing, fresh selected-device capacity/storage
 and ownership-checked cleanup. No Unity/tool redistribution grant is inferred.
+
+The explicit optional reuse request binds prior stage/output paths, the exact
+prior result hash and every object hash. Reuse requires the same compile plan,
+source/target manifest and actual recorded compiler arguments. Only driver/plan
+metadata and the added original NDK GCC link archive may differ. A link-only
+repair copies proven objects into a new attempt; it preserves the failed link
+and avoids recompiling unchanged code. The linker uses explicit original static
+C++/ABI/GCC archives rather than the host compiler's implicit library choices.
 
 References: Android's [external build-system guide](https://developer.android.com/ndk/guides/other_build_systems)
 and [C++ runtime selection](https://developer.android.com/ndk/guides/cpp-support).
