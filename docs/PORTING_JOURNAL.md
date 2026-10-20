@@ -17568,3 +17568,58 @@ marker authoritative and leaves bank/event work blocked until that gate passes.
 Its source-only compile/contracts/review do not qualify a player. LOCAL_STATE
 lists the private support inputs. No public runtime, default audio transform,
 recipe or R8 input changes; game audio and composed gates remain unavailable.
+
+## J817 — Accept the Siren eligibility witness player on both Nova defaults
+
+Date: 2026-10-20. Hypothesis: J815's bounded read-only witness can preserve the
+default route while preparing a source-bound explanation of J812's target
+mismatch. Target eligibility itself remains untested by these controls.
+
+The code-only build uses committed source
+`0a89064f3db55d93b2b114fcf16ebe5a867af5d4`, 107 runtime sources and 252 frozen
+inputs. Unity request `20261020T174302.765050Z` succeeds in 186.506055 s with
+zero errors. The host turn is interrupted after Unity completion; Root verifies
+the exact request/start/result, clean committed source, all frozen Git bytes
+and terminal APK/symbols, then recovers the unfinished host collection without
+dispatching another build. The original refusal and recovery evidence remain
+preserved. All 266 payload hashes match J813. APK SHA-256:
+`107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb`;
+matching debugging-symbol archive:
+`0b24fd1637cde77459ef9cdb440a4d26c7e950fcce20cf59e56e8a777eb4d4f0`;
+libil2cpp build ID: `ed951689d2a21aad81787f4c38bf757bc3816354`.
+J815 records the full host suite and runtime compile.
+
+Root's selected-device helper admits each device's actual owned predecessor
+only during onboarding. Its ten host contracts reject cross-device and later
+phase substitutions. After doctor passes, adopted Nova installs the exact APK
+in place with fresh adopted-only reserve/placement checks, bootstraps and syncs
+the unchanged payload. Both default modes pass: 35.239639 s on Lakes, then one
+original exit and 10.981506 s on Goolake. Both report current-build true, no
+report error/first failure or current-process classified error, and profile
+applied runs unchanged at thirteen. Owned artifact identity remains unchanged
+before/after each check. Native lifecycle and Siren diagnostic flags stay off.
+Every finally path removes its selector, stops the owned app and sleeps the
+display. These are assisted default-route controls, not native egg targeting,
+encounter execution, complete kit semantics or ordinary-difficulty acceptance.
+Thor is independently qualifying the same candidate; no pending result is
+included in this acceptance. Internal Nova's game rollback remains untouched.
+
+Evidence: work/experiments/siren-target-eligibility-next/candidate-20261020T175109.539545Z/;
+work/experiments/baseline/{20261020T175501.857404Z,20261020T175847.945181Z}/;
+work/coordination/{codex-siren-eligibility-build-root-r1/,
+codex-siren-eligibility-device-root-r1/}. Frozen device-candidate proof:
+`52cda023c356484299cffadd5e46ca9420de24231b4354961108d049a3132ad7`;
+Root Nova acceptance:
+`af6eda67a50e4807acc74322c67f01ce892901ef80a8c0f4304cdb22297baee8`.
+Plain result/report:
+`4b842c148636c49fe2e8a6f4c96511614cf1de8e46bd6f35d99eda0de8150a52` /
+`b64038438643259ada3d641f39f7ed05cbdb5a0467b1fe5b693ede7fcf6cfaa4`;
+stage-exit result/report:
+`6d598e4b8d024353f75a8de441bd093ae98e312731a5d65b645c70a221959621` /
+`f72a938f6b56edab53b6542c0a9874d5192ef9d9cc26721277b194d6aba68505`.
+
+Prior art, named ownership and R8 replay scope remain J815. No further source,
+GUID, build membership or required local input changes here. Next: freshly
+qualify the exact-source Siren guard before the bounded retry, retaining its
+180 s egg-input budget and manual-only Moon/finale boundary. Preserve J813 and
+all listed executable rollbacks. Isolated audio retains J816's separate refusal.

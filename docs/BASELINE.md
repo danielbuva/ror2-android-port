@@ -74,12 +74,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `91b0b7c93e03772d5eafb26e059a3f942be7f28563d2a07b98607f43710c7e50`, code-only build from committed source b68eb8e3; J811's opt-in shared combat-input first-NRE witness; all 266 payload hashes unchanged; matching debugging symbols retained |
-| Check | Both modes pass on Thor without report/current-process error or applied-run change: 35.330978 s and one exit plus 12.131714 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Full evidence is recorded once in J813. |
-| Placement | Thor updates under its internal-reserve policy and passes both checks. Adopted Nova retains J809's accepted 4c37596c…; internal Nova retains be26c21c… while isolated audio uses disposable packages. |
-| Rollbacks | Previous baseline J809 `4c37596c…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
+| APK | `107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb`, code-only build from committed source 0a89064f; J815's bounded Siren eligibility witness; all 266 payload hashes unchanged; matching debugging symbols retained |
+| Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.239639 s and one exit plus 10.981506 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Full evidence is recorded once in J817. |
+| Placement | Adopted Nova updates in place with fresh adopted-only placement checks. Thor is qualifying the same candidate under its internal-reserve policy; internal Nova retains be26c21c… while isolated audio uses disposable packages. |
+| Rollbacks | Previous baseline J813 `91b0b7c9…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
-J813 qualifies J811 on the default route. J814 separately passes a stock MUL-T
+J817 qualifies J815 on the default route. J814 separately passes a stock MUL-T
 four-callback retry without reproducing the earlier NRE, and a Commando
 loss/restart observer lifecycle. The NRE cause, MUL-T teardown, native Huntress
 target updates/Siren execution, indicator rendering/teardown and special
