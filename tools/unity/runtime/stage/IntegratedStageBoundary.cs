@@ -195,7 +195,8 @@ public sealed partial class PortSession
     public bool SirenNativeEncounterBossIdentityObserved => GetIntegratedStageSession().SirenNativeEncounterBossIdentityObserved;
     public uint[] SirenNativeEncounterBossNetworkIds => GetIntegratedStageSession().SirenNativeEncounterBossNetworkIds;
     public bool SirenDiagnosticStageTransporting => GetIntegratedStageSession().SirenDiagnosticStageTransporting;
-    public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) => GetIntegratedStageSession().NearestSirenDiagnosticEgg(position);
+    public bool RevalidatedSirenDiagnosticEggs(Vector3 position, List<CharacterBody> destination) =>
+        GetIntegratedStageSession().RevalidatedSirenDiagnosticEggs(position, destination);
     public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) => GetIntegratedStageSession().IsCurrentSirenDiagnosticEgg(body);
 
     // Create on first use and retain for partial setup, repeated cleanup and stage
@@ -243,9 +244,13 @@ public sealed partial class PortSession
             sirenEncounter != null ? sirenEncounter.ExactNativeBossNetworkIds : Array.Empty<uint>();
         public bool SirenDiagnosticStageTransporting =>
             transportingStage || coordinator.r.stageProgress != null && coordinator.r.stageProgress.transporting;
-        public CharacterBody NearestSirenDiagnosticEgg(Vector3 position) => sirenEncounter != null
-                                                                                ? sirenEncounter.NearestRevalidatedDiagnosticEgg(position)
-                                                                                : null;
+        public bool RevalidatedSirenDiagnosticEggs(Vector3 position, List<CharacterBody> destination)
+        {
+            if (sirenEncounter != null)
+                return sirenEncounter.CollectRevalidatedDiagnosticEggs(destination);
+            destination?.Clear();
+            return false;
+        }
         public bool IsCurrentSirenDiagnosticEgg(CharacterBody body) => sirenEncounter != null
                                                                        && sirenEncounter.IsCurrentDiagnosticSourceEgg(body);
         public void ObserveStageEntry(CharacterMotor motor, string tag = "settling")

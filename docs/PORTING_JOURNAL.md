@@ -16865,3 +16865,124 @@ Root acceptance SHA-256:
 Adopted-Nova final report SHA-256 values, plain then stage-exit:
 `ca43bcf4319bc27cfc051bdace9232cba35029bd29fbde1629ac56461d19dee8`,
 `9df6d6d9ffec7c6256f4a7063a1d3de36061a19679b15a428193ce553c653ef1`.
+
+
+## J806 — Stop the stock MUL-T trial on an early TMP settings exception
+
+Date: 2026-10-20. Hypothesis: J805's default-qualified 66c8162d player can reach
+and exercise the stock MUL-T kit after J804's optional observer correction.
+The explicitly bound owned artifact and default controls qualify dispatch,
+not the targeted result.
+
+The internal-storage Thor trial stops at the first current-process runtime log
+error before world setup. The trace starts in TMP_Settings.get_defaultStyleSheet,
+then TMP_Text.GetStyle / textStyle / PopulateTextProcessingArray / ParseInputText,
+TextMeshPro.OnPreRenderObject / Rebuild and TMP_UpdateManager.DoRebuilds. The last
+report is run-scene-catalog, with world time 0 and no player, native activation or
+valid skill inventory witness. Its firstFailure/error fields are empty because
+the asynchronous text rebuild logged the exception before a later report save.
+The first-report file is null. The runner honestly refuses timing, assistance,
+profile-comparison and inventory gates; their absence is not an additional native
+skill failure. No stock-kit or repaired combat-observer result is accepted.
+
+Source/evidence triage identifies an initialization gap: this attempt enables
+recovered HUD text and uses the developer survivor override, which bypasses the
+offline menu. PrepareRecoveredMenu was the only early caller of the owned
+PrepareRecoveredText bootstrap. The current TMP getter dereferences its lazily
+loaded settings; matching pinned TMP 3.0.6 source confirms that contract. The
+run does not expose the singleton, rebuilding text object or failed lazy-load
+operation. No TeamIndicator method appears in the trace, so no causality is
+assigned to J804. J581 is a separate editor-time settings case, not a runtime
+proof. Community prior-art has no TMP-specific Android workaround; accepted
+input and package evidence control the narrow fix.
+
+The runner removes its selector, force-stops the owned game and sleeps both
+panels. The cached profile count is 0, but no initial live-world profile sample
+exists for this trial. The APK remains J805's
+`66c8162dbdc97b86486b7a748b3da26887cf7399571a4724d31704b9c4ca8e66`;
+its successful default checks are separate. Do not retry this unchanged case
+without correcting or measuring the text precondition.
+
+Evidence: work/experiments/survivor-check/20261020T150249.686596Z/Toolbot/;
+work/coordination/{codex-66c8-toolbot-root-r1/,
+codex-66c8-toolbot-first-failure-root-r1/,
+toolbot-66c8-tmp-first-failure-triage/,toolbot-66c8-tmp-first-failure-review/r2/}.
+Root classification SHA-256:
+`f6b5a1d2933adc4b1481244ea668f7ca23a97245def2c6a247def4420ae19b7b`.
+
+
+## J807 — Bootstrap recovered text before catalogs and witness native Siren targets
+
+Date: 2026-10-20. Hypothesis: the existing strict recovered-text owner must run
+before presentation/catalog callbacks on every enabled path, and bounded source
+input should choose visible registered Siren eggs while observing whether the
+native Huntress tracker selected the same target. This source checkpoint does
+not change the installed/default-qualified J805 player.
+
+PortSession now calls the existing PrepareRecoveredText owner after prior-session
+collection and before presentation/catalog work, under recoveredHudEnabled.
+The setup phase is explicit. Menu entry remains idempotent; unowned singleton
+refusal, original Resources identity and later BodyCatalog teardown are unchanged.
+An earlier proposed borrowed-singleton branch is rejected because it conflicts
+with the existing objective-settings ownership contract. Independent review and
+the extracted authored owner contract cover disabled no-op, acquisition,
+idempotence, strict refusal, menu-independent ordering and teardown placement.
+Expected Check refusals preserve the first failure; unexpected exceptions are
+not converted into setup or cleanup success. Actual callback timing and text
+consumer retirement remain device gates.
+
+The existing Siren input/encounter owners freshly revalidate exact native
+Listening membership, body/catalog/asset/network/scene identity, living health
+and HurtBox linkage. A cache above 12 refuses before aim queries. Selection ranks
+visible eggs first and distance second. If all are occluded, the nearest remains
+an ordinary navigation target with primary released. A read-only native
+HuntressTracker.GetTrackingTarget witness records separate unavailable/null/
+destroyed/health/identity/zero-ID states, native/selected IDs, match and primary
+counters, actual teams, live tracker settings and finite current geometry.
+It does not refresh native tracking, prove the age of its retained target or
+reconstruct its last LOS/range/cone decision. Scalars and saturating counters
+bound storage; no per-sample list, reflection or extra witness physics query is
+added. For the inspected original egg shape, candidate aim can issue at most
+24 linecasts per active sample. Default-off paths do no witness work. Native
+eggs, health, registration, state, skills and spawn remain unchanged. Manual
+takeover, combat yield, input leases, stage/failure/budget stops, source teardown
+and the manual-only Moon barrier remain in place.
+
+Independent review clears both drafts at source level. Root adapts four public
+host contracts to repository source and ignored scratch. They execute authored
+production helpers and synthetic fixtures, without protected implementation
+bodies. Changed C# ranges retain byte backups and whitespace-equivalence proofs
+for six files. The first full suite finds a whitespace-sensitive source-wiring
+assertion after formatting; Root normalizes that check. The final sourced suite
+passes 1,148 tests without skips in 35.947 s, with all 476 frozen host inputs
+unchanged. Log SHA-256:
+`32debd84d8960e8016bec637dc4a5013abb075a2d2071c6c0c9131d0760ab4e3`.
+The runtime compiles with 107 sources, four support sources and 264 exact saved
+references, zero errors and no drift. Assembly SHA-256:
+`a98ce9b2c87d0d3f67ca2a09b40cd16fe83d781ff0d0e136dda4274e9271aa61`.
+An initial compile wrapper used the wrong relative-reference base and refused
+metadata resolution; the corrected project working directory uses unchanged
+native/reference inputs. Both attempts remain local.
+
+One TMP draft generated host executable is rewritten by its independent test
+rerun after freezing. Root records that drift, verifies every authored source,
+patch and full-compile proof still matches, and recompiles the public contract
+outside that bundle. No game APK, source witness or native receipt is overwritten.
+
+Evidence: work/coordination/{siren-107-native-target-witness-draft/r2/,
+siren-107-native-target-witness-review/r2/,
+toolbot-66c8-tmp-first-failure-triage/r2/,
+toolbot-66c8-tmp-first-failure-review/r2/,
+codex-siren-r2-integration-root-r1/,codex-tmp-siren-source-root-r1/}.
+Prior art: J626/J795/J800's source ownership and pinned R2API population-versus-
+completion distinction; accepted HuntressTracker/BullseyeSearch/FireSeekingArrow
+contracts and the current TMP package/settings ownership. Registered eggs in
+J803 are not evidence that all stayed alive. These changes qualify no native
+Siren encounter, stock skill kit, rendered indicator or composed audio.
+
+R8 replay must restage PortSession, SirenEggDiagnosticInput,
+SirenEncounterEggTargets, IntegratedStageBoundary and IntegratedWorldBoundary;
+the catalog editor fixture also changes. No runtime file, GUID, work input or
+build-time authored-source text replacement is added. Build the committed
+candidate, pass both defaults, repeat stock MUL-T, then qualify a bounded Siren
+trial with the new native-target witness.

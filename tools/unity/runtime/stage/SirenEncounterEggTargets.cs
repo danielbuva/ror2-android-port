@@ -132,6 +132,35 @@ public sealed partial class SirenEncounterSession
         return observedEggCount;
     }
 
+    public bool CollectRevalidatedDiagnosticEggs(List<CharacterBody> destination)
+    {
+        if (destination == null)
+            throw new ArgumentNullException(nameof(destination));
+        destination.Clear();
+        if (!DiagnosticListenerActive || NativeEncounterStarted)
+            return true;
+        if (!SirenEggTargetSelectionPolicy.IsCandidateCountSupported(diagnosticSourceEggCache.Count))
+        {
+            if (Report != null)
+                Report.diagnosticSourceEggCandidatesObserved = diagnosticSourceEggCache.Count;
+            return false;
+        }
+        for (int i = diagnosticSourceEggCache.Count - 1; i >= 0; i--)
+        {
+            DiagnosticEggCandidate cached = diagnosticSourceEggCache[i];
+            CharacterBody candidate = cached.body;
+            if (!IsCurrentDiagnosticSourceEgg(candidate, cached.nativeListenerName))
+            {
+                diagnosticSourceEggCache.RemoveAt(i);
+                continue;
+            }
+            destination.Add(candidate);
+        }
+        if (Report != null)
+            Report.diagnosticSourceEggCandidatesObserved = diagnosticSourceEggCache.Count;
+        return true;
+    }
+
     public CharacterBody NearestRevalidatedDiagnosticEgg(Vector3 position)
     {
         if (!DiagnosticListenerActive || NativeEncounterStarted)

@@ -18,6 +18,9 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         public int sceneHandle = 41, targetQueries, navigations;
         public float elapsed = 1;
         public CharacterBody target;
+        public readonly List<CharacterBody> targets = new List<CharacterBody>();
+        public readonly List<CharacterBody> visibleTargets = new List<CharacterBody>();
+        public Vector3 lastDestination;
         public bool Selected => selected;
         public bool Assisted => assisted;
         public bool ManualTakeover => manual;
@@ -29,22 +32,36 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         public bool FirstFailure => failed;
         public int StageSceneHandle => sceneHandle;
         public float StageElapsed => elapsed;
-        public CharacterBody NearestRevalidatedSourceEgg(Vector3 position)
+        public bool RevalidatedSourceEggs(Vector3 position, List<CharacterBody> destination)
         {
             targetQueries++;
-            return eligibleTarget ? target : null;
+            destination.Clear();
+            if (!SirenEggTargetSelectionPolicy.IsCandidateCountSupported(targets.Count))
+                return false;
+            if (!eligibleTarget)
+                return true;
+            if (targets.Count == 0)
+            {
+                if (target)
+                    destination.Add(target);
+                return true;
+            }
+            destination.AddRange(targets);
+            return true;
         }
-        public bool IsCurrentSourceEgg(CharacterBody candidate) => eligibleTarget && candidate && candidate == target;
+        public bool IsCurrentSourceEgg(CharacterBody candidate) => eligibleTarget && candidate &&
+                                                                   (candidate == target || targets.Contains(candidate));
         public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => yieldCombat;
         public void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 destination, float stopDistance,
                                        string targetName, float time)
         {
             navigations++;
+            lastDestination = destination;
             bridge.movement = Vector2.right;
         }
         public Vector3 WorldCombatAimPoint(CharacterBody body, Vector3 origin, out bool visible)
         {
-            visible = true;
+            visible = visibleTargets.Count == 0 || visibleTargets.Contains(body);
             return body.transform.position + Vector3.up;
         }
     }
@@ -60,6 +77,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         VerifyCandidateContract();
         VerifyCombatThreatPolicy();
         VerifyTemporaryYieldRecoveryAndNativeStartLatch();
+        VerifyVisibleRegisteredEggPreference();
         VerifyProducerFramePreparationAndDefaultOff();
         VerifyJumpLeaseOwnership();
         VerifySelectionDisableTransition();
@@ -71,6 +89,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
                      combatThreatPredicateCases = 6,
                      temporaryNoTargetAndCombatYieldRecover = true,
                      nativeStartStopsOnLiveGateAndLatches = true,
+                     visibleRegisteredEggPreferredOverOccludedNearest = true,
                      terminalStopReasonsTested = 8,
                      defaultOffInputNoninterference = true,
                      selectionDisabledOutstandingLeaseReleased = true,
@@ -425,6 +444,38 @@ public static class SirenEggDiagnosticInputExactEditorFixture
         }
     }
 
+    static void VerifyVisibleRegisteredEggPreference()
+    {
+        var objects = new FixtureObjects();
+        var context = new Context();
+        var report = new SirenEggInputReport();
+        var owner = new SirenEggDiagnosticInput(context, report);
+        GameObject visibleObject = null;
+        try
+        {
+            objects.Setup();
+            context.target = objects.target;
+            objects.target.transform.position = new Vector3(1, 0, 0);
+            visibleObject = FixtureObjects.NewBodyObject("VultureEggBody visible candidate");
+            var visibleBody = visibleObject.GetComponent<CharacterBody>();
+            visibleObject.transform.position = new Vector3(8, 0, 0);
+            context.targets.Add(objects.target);
+            context.targets.Add(visibleBody);
+            context.visibleTargets.Add(visibleBody);
+            Require(owner.Apply(objects.player, objects.bridge, true) && report.active,
+                    "Visible registered-source candidate did not receive ordinary input");
+            Require(context.lastDestination == visibleObject.transform.position && objects.bridge.diagnosticPrimary,
+                    "Closer occluded egg displaced the farther visible native source target");
+        }
+        finally
+        {
+            owner.Dispose();
+            objects.Dispose();
+            if (visibleObject)
+                UnityEngine.Object.DestroyImmediate(visibleObject);
+        }
+    }
+
     static void VerifyProducerFramePreparationAndDefaultOff()
     {
         var objects = new FixtureObjects();
@@ -649,7 +700,7 @@ public static class SirenEggDiagnosticInputExactEditorFixture
             bridge.diagnosticInput = true;
         }
 
-        static GameObject NewBodyObject(string name)
+        public static GameObject NewBodyObject(string name)
         {
             var go = new GameObject(name);
             go.SetActive(false);

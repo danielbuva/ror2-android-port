@@ -10,6 +10,8 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J807](PORTING_JOURNAL.md#j807--bootstrap-recovered-text-before-catalogs-and-witness-native-siren-targets) | 2026-10-20 | Bootstrap recovered text before catalogs and witness native Siren targets | Date: 2026-10-20. |
+| [J806](PORTING_JOURNAL.md#j806--stop-the-stock-mul-t-trial-on-an-early-tmp-settings-exception) | 2026-10-20 | Stop the stock MUL-T trial on an early TMP settings exception | Date: 2026-10-20. |
 | [J805](PORTING_JOURNAL.md#j805--accept-the-optional-observer-and-native-indicator-player-on-both-defaults) | 2026-10-20 | Accept the optional-observer and native-indicator player on both defaults | Date: 2026-10-20. |
 | [J804](PORTING_JOURNAL.md#j804--preserve-optional-combat-samples-and-restore-native-team-indicator-lifecycle) | 2026-10-20 | Preserve optional combat samples and restore native team-indicator lifecycle | Date: 2026-10-20. |
 | [J803](PORTING_JOURNAL.md#j803--reach-native-siren-egg-input-and-stop-at-the-source-stage-budget) | 2026-10-20 | Reach native Siren egg input and stop at the source-stage budget | Date: 2026-10-20. |

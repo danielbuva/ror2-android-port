@@ -19,7 +19,7 @@ public interface ISirenEggDiagnosticContext
     bool FirstFailure { get; }
     int StageSceneHandle { get; }
     float StageElapsed { get; }
-    CharacterBody NearestRevalidatedSourceEgg(Vector3 position);
+    bool RevalidatedSourceEggs(Vector3 position, List<CharacterBody> destination);
     bool IsCurrentSourceEgg(CharacterBody candidate);
     bool ShouldYieldToExistingWorldCombat(CharacterBody player);
     void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 target, float stopDistance, string targetName,
@@ -68,6 +68,28 @@ public static class SirenEggSourceContract
     }
 }
 
+public static class SirenEggTargetSelectionPolicy
+{
+    public const int MaximumCandidates = 12;
+
+    public static bool IsCandidateCountSupported(int count) => count >= 0 && count <= MaximumCandidates;
+
+    // Selection changes only which already validated original egg receives the
+    // ordinary movement/aim request. Visibility wins over proximity; distance
+    // breaks ties. When every candidate is occluded, the nearest one remains a
+    // navigation target and the caller must keep primary released.
+    public static bool Prefer(bool candidateVisible, float candidateDistanceSqr, bool bestExists, bool bestVisible, float bestDistanceSqr)
+    {
+        if (float.IsNaN(candidateDistanceSqr) || float.IsInfinity(candidateDistanceSqr) || candidateDistanceSqr < 0f)
+            return false;
+        if (!bestExists)
+            return true;
+        if (candidateVisible != bestVisible)
+            return candidateVisible;
+        return candidateDistanceSqr < bestDistanceSqr;
+    }
+}
+
 public struct SirenCombatThreatEvidence
 {
     public bool bodyLive, masterLive, healthAlive, playerTeamKnown, hostileTeam, insideSourceBounds;
@@ -93,6 +115,138 @@ public sealed class SirenEggInputReport
     public string stopReason;
     public uint lastTargetNetworkId;
     public string lastTargetScene, lastTargetBody;
+
+    // Read-only witness of the native HuntressTracker target at the same input
+    // owner's sample. These counters intentionally distinguish an absent
+    // tracker, an empty/fake-null target and a known target identity.
+    public int nativeTrackerWitnessSamples, nativeTrackerUnavailableSamples, nativeTargetNullSamples;
+    public int nativeTargetDestroyedSamples, nativeTargetHealthUnavailableSamples;
+    public int nativeTargetIdentityUnavailableSamples, nativeTargetZeroNetworkIdSamples;
+    public int nativeTargetIdentifiedSamples, nativeTargetMatchesSelectedSamples, nativeTargetDiffersSelectedSamples;
+    public int primaryRequestedSamples, primaryReleasedSamples, primaryRequestedNativeMatchSamples;
+    public int primaryRequestedNativeMismatchSamples, primaryRequestedNativeUnknownSamples;
+    public uint firstSelectedEggNetworkId, lastSelectedEggNetworkId;
+    public uint firstNativeHuntressTargetNetworkId, lastNativeHuntressTargetNetworkId;
+    public bool nativeTrackerConfigurationObserved, lastNativeTrackerAvailable, lastNativeTargetAvailable;
+    public bool lastNativeTargetIdentityAvailable, lastNativeTargetMatchesSelected, lastNativeTargetHealthAlive;
+    public bool lastNativePlayerTeamObserved, lastNativeTargetTeamObserved;
+    public int lastNativePlayerTeamIndex, lastNativeTargetTeamIndex;
+    public float nativeTrackerMaxTrackingDistance, nativeTrackerMaxTrackingAngle, nativeTrackerUpdateFrequency;
+    public float lastNativeTargetCurrentDistance, lastNativeTargetCurrentAimDot;
+    public bool lastNativeTargetCurrentDistanceObserved, lastNativeTargetCurrentAimDotObserved;
+    public bool lastNativeTargetCurrentGeometryObserved;
+    public string lastNativeTargetObservation = "not-sampled";
+    public string lastPrimaryRequestReason = "not-sampled";
+}
+
+public enum SirenNativeTargetObservation
+{
+    TrackerUnavailable,
+    NoTarget,
+    DestroyedTarget,
+    HealthUnavailable,
+    IdentityUnavailable,
+    ZeroNetworkId,
+    IdentifiedTarget
+}
+
+public static class SirenNativeTargetWitnessPolicy
+{
+    static int Increment(int value) => value < int.MaxValue ? value + 1 : value;
+
+    static string Name(SirenNativeTargetObservation observation)
+    {
+        switch (observation)
+        {
+        case SirenNativeTargetObservation.TrackerUnavailable:
+            return "tracker-unavailable";
+        case SirenNativeTargetObservation.NoTarget:
+            return "no-target";
+        case SirenNativeTargetObservation.DestroyedTarget:
+            return "destroyed-target";
+        case SirenNativeTargetObservation.HealthUnavailable:
+            return "health-unavailable";
+        case SirenNativeTargetObservation.IdentityUnavailable:
+            return "identity-unavailable";
+        case SirenNativeTargetObservation.ZeroNetworkId:
+            return "zero-network-id";
+        case SirenNativeTargetObservation.IdentifiedTarget:
+            return "identified-target";
+        default:
+            return "unknown-observation";
+        }
+    }
+
+    // A fixed set of scalar first/last values and saturating counters keeps
+    // instrumentation bounded and allocation-free on the normal input path.
+    public static void Record(SirenEggInputReport report, SirenNativeTargetObservation observation, uint selectedEggNetworkId,
+                              uint nativeTargetNetworkId, bool primaryRequested)
+    {
+        if (report == null)
+            return;
+        report.nativeTrackerWitnessSamples = Increment(report.nativeTrackerWitnessSamples);
+        report.lastNativeTargetObservation = Name(observation);
+        report.lastPrimaryRequestReason = primaryRequested ? "visible-egg-requested-primary" : "no-visible-egg-primary-released";
+        report.lastNativeHuntressTargetNetworkId = 0;
+        report.lastNativeTargetAvailable = observation == SirenNativeTargetObservation.IdentifiedTarget;
+        report.lastNativeTargetIdentityAvailable = report.lastNativeTargetAvailable;
+        report.lastNativeTargetMatchesSelected =
+            report.lastNativeTargetAvailable && selectedEggNetworkId != 0 && nativeTargetNetworkId == selectedEggNetworkId;
+        if (selectedEggNetworkId != 0)
+        {
+            if (report.firstSelectedEggNetworkId == 0)
+                report.firstSelectedEggNetworkId = selectedEggNetworkId;
+            report.lastSelectedEggNetworkId = selectedEggNetworkId;
+        }
+
+        switch (observation)
+        {
+        case SirenNativeTargetObservation.TrackerUnavailable:
+            report.nativeTrackerUnavailableSamples = Increment(report.nativeTrackerUnavailableSamples);
+            break;
+        case SirenNativeTargetObservation.NoTarget:
+            report.nativeTargetNullSamples = Increment(report.nativeTargetNullSamples);
+            break;
+        case SirenNativeTargetObservation.DestroyedTarget:
+            report.nativeTargetDestroyedSamples = Increment(report.nativeTargetDestroyedSamples);
+            break;
+        case SirenNativeTargetObservation.HealthUnavailable:
+            report.nativeTargetHealthUnavailableSamples = Increment(report.nativeTargetHealthUnavailableSamples);
+            break;
+        case SirenNativeTargetObservation.IdentityUnavailable:
+            report.nativeTargetIdentityUnavailableSamples = Increment(report.nativeTargetIdentityUnavailableSamples);
+            break;
+        case SirenNativeTargetObservation.ZeroNetworkId:
+            report.nativeTargetZeroNetworkIdSamples = Increment(report.nativeTargetZeroNetworkIdSamples);
+            break;
+        case SirenNativeTargetObservation.IdentifiedTarget:
+            report.nativeTargetIdentifiedSamples = Increment(report.nativeTargetIdentifiedSamples);
+            if (report.lastNativeTargetMatchesSelected)
+                report.nativeTargetMatchesSelectedSamples = Increment(report.nativeTargetMatchesSelectedSamples);
+            else
+                report.nativeTargetDiffersSelectedSamples = Increment(report.nativeTargetDiffersSelectedSamples);
+            if (report.firstNativeHuntressTargetNetworkId == 0)
+                report.firstNativeHuntressTargetNetworkId = nativeTargetNetworkId;
+            report.lastNativeHuntressTargetNetworkId = nativeTargetNetworkId;
+            break;
+        }
+
+        if (primaryRequested)
+        {
+            report.primaryRequestedSamples = Increment(report.primaryRequestedSamples);
+            if (observation == SirenNativeTargetObservation.IdentifiedTarget)
+            {
+                if (report.lastNativeTargetMatchesSelected)
+                    report.primaryRequestedNativeMatchSamples = Increment(report.primaryRequestedNativeMatchSamples);
+                else
+                    report.primaryRequestedNativeMismatchSamples = Increment(report.primaryRequestedNativeMismatchSamples);
+            }
+            else
+                report.primaryRequestedNativeUnknownSamples = Increment(report.primaryRequestedNativeUnknownSamples);
+        }
+        else
+            report.primaryReleasedSamples = Increment(report.primaryReleasedSamples);
+    }
 }
 
 // A value-type exact-value lease. `CaptureProducerValues(..., true)` is called
@@ -185,6 +339,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     readonly ISirenEggDiagnosticContext context;
     readonly SirenEggInputReport report;
     readonly SirenEggInputLease inputLease = new SirenEggInputLease();
+    readonly List<CharacterBody> sourceEggCandidates = new List<CharacterBody>();
     NovaInputBridge ownedBridge;
     float beganAt = float.NaN;
     int startedSceneHandle;
@@ -313,7 +468,38 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             return false;
         }
 
-        CharacterBody egg = context.NearestRevalidatedSourceEgg(player.corePosition);
+        if (!context.RevalidatedSourceEggs(player.corePosition, sourceEggCandidates))
+        {
+            Yield("native-source-egg-candidate-limit-exceeded");
+            return false;
+        }
+        CharacterBody nearestEgg = null, visibleEgg = null;
+        Vector3 nearestPoint = Vector3.zero, visiblePoint = Vector3.zero;
+        float nearestDistanceSqr = float.PositiveInfinity, visibleDistanceSqr = float.PositiveInfinity;
+        bool hasNearest = false, hasVisible = false;
+        for (int i = 0; i < sourceEggCandidates.Count; i++)
+        {
+            CharacterBody candidate = sourceEggCandidates[i];
+            if (!candidate || !context.IsCurrentSourceEgg(candidate))
+                continue;
+            float distanceSqr = (candidate.corePosition - player.corePosition).sqrMagnitude;
+            Vector3 candidatePoint = context.WorldCombatAimPoint(candidate, player.inputBank.aimOrigin, out bool candidateVisible);
+            if (SirenEggTargetSelectionPolicy.Prefer(false, distanceSqr, hasNearest, false, nearestDistanceSqr))
+            {
+                nearestEgg = candidate;
+                nearestPoint = candidatePoint;
+                nearestDistanceSqr = distanceSqr;
+                hasNearest = true;
+            }
+            if (candidateVisible && SirenEggTargetSelectionPolicy.Prefer(true, distanceSqr, hasVisible, true, visibleDistanceSqr))
+            {
+                visibleEgg = candidate;
+                visiblePoint = candidatePoint;
+                visibleDistanceSqr = distanceSqr;
+                hasVisible = true;
+            }
+        }
+        CharacterBody egg = hasVisible ? visibleEgg : nearestEgg;
         if (!egg || !context.IsCurrentSourceEgg(egg))
         {
             Yield("no-current-source-egg-target");
@@ -348,7 +534,11 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         }
 
         context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
-        Vector3 point = context.WorldCombatAimPoint(egg, player.inputBank.aimOrigin, out bool visible);
+        bool visible = hasVisible;
+        Vector3 point = visible ? visiblePoint : nearestPoint;
+        var identity = egg.GetComponent<UnityEngine.Networking.NetworkIdentity>();
+        uint selectedEggNetworkId = identity ? identity.netId.Value : 0;
+        ObserveNativeHuntressTarget(player, selectedEggNetworkId, visible);
         Vector3 aim = point - player.inputBank.aimOrigin;
         bridge.aim = new Vector2(aim.x, aim.z).normalized;
         bridge.diagnosticAim = aim.normalized;
@@ -359,11 +549,107 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         report.targetSamples++;
         report.lastTargetScene = egg.gameObject.scene.name;
         report.lastTargetBody = egg.name;
-        var identity = egg.GetComponent<UnityEngine.Networking.NetworkIdentity>();
-        report.lastTargetNetworkId = identity ? identity.netId.Value : 0;
+        report.lastTargetNetworkId = selectedEggNetworkId;
         lastSubmittedPrimary = visible;
         report.stopReason = visible ? "ordinary-primary-requested" : "source-aim-occluded";
         return true;
+    }
+
+    void ObserveNativeHuntressTarget(CharacterBody player, uint selectedEggNetworkId, bool primaryRequested)
+    {
+        SirenNativeTargetObservation observation;
+        uint nativeTargetNetworkId = 0;
+        report.lastNativeTrackerAvailable = false;
+        report.lastNativeTargetAvailable = false;
+        report.lastNativeTargetIdentityAvailable = false;
+        report.lastNativeTargetMatchesSelected = false;
+        report.lastNativeTargetHealthAlive = false;
+        report.lastNativeTargetCurrentDistanceObserved = false;
+        report.lastNativeTargetCurrentAimDotObserved = false;
+        report.lastNativeTargetCurrentGeometryObserved = false;
+        report.lastNativePlayerTeamObserved = false;
+        report.lastNativeTargetTeamObserved = false;
+        report.lastNativePlayerTeamIndex = -1;
+        report.lastNativeTargetTeamIndex = -1;
+
+        HuntressTracker tracker = player.GetComponent<HuntressTracker>();
+        if (!tracker)
+        {
+            observation = SirenNativeTargetObservation.TrackerUnavailable;
+        }
+        else
+        {
+            report.lastNativeTrackerAvailable = true;
+            report.nativeTrackerConfigurationObserved = true;
+            report.nativeTrackerMaxTrackingDistance = tracker.maxTrackingDistance;
+            report.nativeTrackerMaxTrackingAngle = tracker.maxTrackingAngle;
+            report.nativeTrackerUpdateFrequency = tracker.trackerUpdateFrequency;
+            if (player.teamComponent)
+            {
+                report.lastNativePlayerTeamIndex = (int)player.teamComponent.teamIndex;
+                report.lastNativePlayerTeamObserved = true;
+            }
+
+            HurtBox nativeTarget = tracker.GetTrackingTarget();
+            if (ReferenceEquals(nativeTarget, null))
+            {
+                observation = SirenNativeTargetObservation.NoTarget;
+            }
+            else if (!nativeTarget)
+            {
+                observation = SirenNativeTargetObservation.DestroyedTarget;
+            }
+            else
+            {
+                report.lastNativeTargetTeamIndex = (int)nativeTarget.teamIndex;
+                report.lastNativeTargetTeamObserved = true;
+                HealthComponent targetHealth = nativeTarget.healthComponent;
+                if (!targetHealth)
+                {
+                    observation = SirenNativeTargetObservation.HealthUnavailable;
+                }
+                else
+                {
+                    report.lastNativeTargetHealthAlive = targetHealth.alive;
+                    UnityEngine.Networking.NetworkIdentity targetIdentity =
+                        targetHealth.gameObject.GetComponent<UnityEngine.Networking.NetworkIdentity>();
+                    if (!targetIdentity)
+                    {
+                        observation = SirenNativeTargetObservation.IdentityUnavailable;
+                    }
+                    else if (targetIdentity.netId.Value == 0)
+                    {
+                        observation = SirenNativeTargetObservation.ZeroNetworkId;
+                    }
+                    else
+                    {
+                        observation = SirenNativeTargetObservation.IdentifiedTarget;
+                        nativeTargetNetworkId = targetIdentity.netId.Value;
+                        Vector3 toTarget = nativeTarget.transform.position - player.inputBank.aimOrigin;
+                        float distanceSqr = toTarget.sqrMagnitude;
+                        Vector3 aimDirection = player.inputBank.aimDirection;
+                        if (distanceSqr > 0f && !float.IsNaN(distanceSqr) && !float.IsInfinity(distanceSqr))
+                        {
+                            report.lastNativeTargetCurrentDistance = Mathf.Sqrt(distanceSqr);
+                            report.lastNativeTargetCurrentDistanceObserved = true;
+                            float aimSqr = aimDirection.sqrMagnitude;
+                            if (!float.IsNaN(aimSqr) && !float.IsInfinity(aimSqr))
+                            {
+                                float aimDot = Vector3.Dot(aimDirection, toTarget / Mathf.Sqrt(distanceSqr));
+                                if (!float.IsNaN(aimDot) && !float.IsInfinity(aimDot))
+                                {
+                                    report.lastNativeTargetCurrentAimDot = aimDot;
+                                    report.lastNativeTargetCurrentAimDotObserved = true;
+                                    report.lastNativeTargetCurrentGeometryObserved = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        SirenNativeTargetWitnessPolicy.Record(report, observation, selectedEggNetworkId, nativeTargetNetworkId, primaryRequested);
     }
 
     bool OwnsDiagnosticInput(CharacterBody player, NovaInputBridge bridge)

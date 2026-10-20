@@ -656,6 +656,11 @@ public sealed partial class PortSession : MonoBehaviour
         if (r.recoveredHudEnabled)
             r.hud = new RecoveredHudPresentation.Observation();
         CollectPriorSessionGarbage();
+        if (r.recoveredHudEnabled)
+        {
+            r.phase = "tmp-settings-bootstrap";
+            PrepareRecoveredText();
+        }
         ObserveSessionResources("before-presentation");
         AndroidMaterialPresentation.Begin(config.enhancedPresentation);
         r.enhancedPresentation = config.enhancedPresentation;

@@ -2044,7 +2044,9 @@ public sealed partial class PortSession
                                : float.NaN;
                 }
             }
-            public CharacterBody NearestRevalidatedSourceEgg(Vector3 position) => coordinator.NearestSirenDiagnosticEgg(position);
+            public bool RevalidatedSourceEggs(Vector3 position,
+                                              List<CharacterBody> destination) => coordinator.RevalidatedSirenDiagnosticEggs(position,
+                                                                                                                             destination);
             public bool IsCurrentSourceEgg(CharacterBody candidate) => coordinator.IsCurrentSirenDiagnosticEgg(candidate);
             public bool ShouldYieldToExistingWorldCombat(CharacterBody player) => coordinator.r.combatPerformanceFocus
                                                                                   || coordinator.HasNearbyHostileDirectorThreat(player);
