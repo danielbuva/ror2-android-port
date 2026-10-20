@@ -29,6 +29,15 @@ def coordinated_editor_operation():
         _build_dispatch_state.active = previous
 
 
+def sha256_file_member(archive_path, member):
+    import zipfile
+    h = hashlib.sha256()
+    with zipfile.ZipFile(archive_path) as archive, archive.open(member) as stream:
+        for block in iter(lambda: stream.read(4 * 1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
 def copy_build_artifact(source, destination):
     # Independent copy-on-write snapshots prevent repeated payloads exhausting host space.
     # Fall back to ordinary copies off APFS; artifact identity is always byte-checked.
@@ -415,7 +424,7 @@ def validate_staged_runtime_sources(project, work=None):
     validate_content_recipe(work=work)
 
 
-def build_cache_key(project, api):
+def build_cache_key(project, api, android_symbols="none"):
     project = Path(project)
     inputs = {
         str(p.relative_to(project)): sha(p) for sub in ["Assets", "Packages", "ProjectSettings"] for p in sorted((project / sub).rglob("*")) if p.is_file()
@@ -432,9 +441,12 @@ def build_cache_key(project, api):
         if not manifest.is_file():
             raise RuntimeError("Whole-catalog build manifest is missing")
         external["whole_catalog_manifest"] = sha(manifest)
-    return digest(
-        {"inputs": inputs, "external": external, "api": api, "editor": toolchain(), "backend": "IL2CPP-ARM64", "tool": sha(ROOT / "scripts/lab/build.py")}
-    )
+    identity = {"inputs": inputs, "external": external, "api": api, "editor": toolchain(), "backend": "IL2CPP-ARM64", "tool": sha(ROOT / "scripts/lab/build.py")}
+    if android_symbols != "none":
+        identity["android_symbols"] = android_symbols
+        if android_symbols == "debugging":
+            identity["symbol_validator"] = sha(ROOT / "scripts/lab/symbol_artifacts.py")
+    return digest(identity)
 
 
 def stage_android_assets(project, io=None):
@@ -464,9 +476,13 @@ def build_source_identity():
     return dict(commit=git("rev-parse", "HEAD").strip(), clean_paths=list(BUILD_SOURCE_PATHS))
 
 
-def build(api="gles", force=False, reuse_payload=False, destination=None, work=None, source=None):
+def build(api="gles", force=False, reuse_payload=False, destination=None, work=None, source=None, android_symbols="none"):
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
+    if android_symbols not in {"none", "debugging"}:
+        raise RuntimeError("Android symbols mode must be none or debugging")
+    if destination is not None and android_symbols != "none":
+        raise RuntimeError("Debugging symbols are supported only by the normal lab build path")
     if api == "lab":
         api = "gles"
     assert_build_unblocked()
@@ -488,12 +504,21 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         stage_android_assets(project)
         if reuse_payload:
             validate_whole_payload_reuse(project)
-        key = build_cache_key(project, api)
+        key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
         dest = WORK / "build-cache" / key
         receipt = dest / "result.json"
+        if android_symbols == "debugging" and dest.exists():
+            if force:
+                raise RuntimeError("Refuse to overwrite an existing symbol build cache")
+            if not receipt.is_file():
+                raise RuntimeError("Refuse to reuse or overwrite an incomplete symbol build cache")
+            from symbol_artifacts import verify_cached_symbol_receipt
+            verify_cached_symbol_receipt(receipt, dest)
         if receipt.exists() and not force:
             r = read(receipt)
             if r.get("success") and r.get("errors", 0) == 0 and Path(r["apk"]).exists() and sha(r["apk"]) == r["apk_sha256"]:
+                if android_symbols == "none" and r.get("android_symbols", "none") != "none":
+                    raise RuntimeError("Build cache symbol mode does not match the requested normal build")
                 for name, h in r.get("payload", {}).items():
                     source = dest / "payload" / name
                     if not source.is_file() or sha(source) != h:
@@ -507,7 +532,10 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         if result.exists():
             result.rename(result.with_name("previous-" + now() + ".json"))
         request_id = now()
-        write(WORK / "build-request.json", {"request_id": request_id, "api": api, "reusePayload": reuse_payload})
+        request = {"request_id": request_id, "api": api, "reusePayload": reuse_payload}
+        if android_symbols != "none":
+            request["androidSymbols"] = android_symbols
+        write(WORK / "build-request.json", request)
         print(editor("lab", "refresh"), flush=True)
         with coordinated_editor_operation():
             print(editor("lab", "build"), flush=True)
@@ -528,13 +556,23 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
         r = read(result)
         if not r["success"] or r.get("errors", 0) > 0:
             raise RuntimeError(r["result"] + "; build errors=" + str(r.get("errors", 0)))
-        key = build_cache_key(project, api)
+        key = build_cache_key(project, api) if android_symbols == "none" else build_cache_key(project, api, android_symbols)
         dest = WORK / "build-cache" / key
         receipt = dest / "result.json"
         dest.mkdir(parents=True, exist_ok=True)
         apk = dest / Path(r["apk"]).name
         copy_build_artifact(r["apk"], apk)
-        r.update({"apk": str(apk), "apk_sha256": sha(apk), "key": key, "graphics_api": api, "input_id": read(WORK / "inventory/files.json")["input_id"]})
+        r.update({"apk": str(apk), "apk_sha256": sha(apk), "apk_cache_path": apk.name, "key": key, "graphics_api": api, "input_id": read(WORK / "inventory/files.json")["input_id"], "android_symbols": android_symbols})
+        if android_symbols == "debugging":
+            from symbol_artifacts import validate_fresh_symbol_package, verify_apk_symbol_pair
+            expected_symbol_dir = WORK / "lab-build" / ("symbols-" + request_id)
+            source_symbols = validate_fresh_symbol_package(r.get("symbolPackage"), expected_symbol_dir, request_id)
+            symbols_zip = dest / "symbols.zip"
+            copy_build_artifact(source_symbols, symbols_zip)
+            symbols_hash = sha(symbols_zip)
+            libil2cpp_hash = sha256_file_member(apk, "lib/arm64-v8a/libil2cpp.so")
+            pair = verify_apk_symbol_pair(apk, symbols_zip, expected_apk_sha256=sha(apk), expected_symbols_sha256=symbols_hash, expected_libil2cpp_sha256=libil2cpp_hash)
+            r.update({"symbolPackage": str(symbols_zip), "symbols_zip_cache_path": symbols_zip.name, "symbols_zip_sha256": symbols_hash, "libil2cpp_sha256": pair["libil2cpp_sha256"], "libil2cpp_build_id": pair["libil2cpp_build_id"], "symbol_sections": {"symtab": pair["symbols_has_symtab"], "debug_info": pair["symbols_has_debug_info"]}})
         payload = dest / "payload"
         shutil.copytree(WORK / "generated-android-data", payload, dirs_exist_ok=True, copy_function=copy_build_artifact)
         r["payload"] = {p.name: sha(p) for p in payload.glob("*") if p.is_file()}

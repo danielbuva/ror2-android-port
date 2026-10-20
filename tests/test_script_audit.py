@@ -89,9 +89,12 @@ class ScriptAuditTests(unittest.TestCase):
                 destination[field] = value
             self.assertFalse(script_audit.compare(self.report(), destination)["equal"])
 
-    def test_real_build_body_is_byte_identical_to_main_before_this_fix(self):
+    def test_real_build_body_matches_reviewed_symbol_build_revision(self):
         body = SOURCE.read_bytes().split(b" public static void Build(){", 1)[1].split(b" [Serializable] class SceneProbeConfig", 1)[0]
-        self.assertEqual(hashlib.sha256(body).hexdigest(), "e4d2710868d12a1e853f7074b0a7af55ef8151f937aa130d6517114828eb240b")
+        # The script-audit change preserved this body. J763 adds the separately
+        # reviewed, request-scoped symbols mode; keep destination audits from
+        # silently changing that build path again.
+        self.assertEqual(hashlib.sha256(body).hexdigest(), "f070230a2f15817211db553cb2123a3efbf7d7dfde9c9746f9eef5b4f2eae09a")
 
     def test_destination_gates_before_calling_unchanged_build_and_never_filters_messages(self):
         source = SOURCE.read_text()

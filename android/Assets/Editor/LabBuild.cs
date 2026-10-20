@@ -8,8 +8,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 public static class LabBuild {
  const string PendingBuild="PortingLab.ARM64Pending",RunningBuild="PortingLab.ARM64Running";
- [Serializable] class Request {public string request_id,api,output;public bool presentationOnly,stagePresentation,reusePayload;public string[] reflectionTextureGuids;}
- [Serializable] class Result {public bool success; public string result,apk,backend,request_id;public double seconds;public int errors;}
+ [Serializable] class Request {public string request_id,api,output,androidSymbols;public bool presentationOnly,stagePresentation,reusePayload;public string[] reflectionTextureGuids;}
+ [Serializable] class Result {public bool success; public string result,apk,backend,request_id,symbolPackage;public double seconds;public int errors;}
  [Serializable] class NativeVariant {public string resource;}
  [Serializable] class NativeManifest {public NativeVariant[] variants;}
  [Serializable] class NativeFamily {public NativeVariant[] variants;}
@@ -276,7 +276,20 @@ public static class LabBuild {
 
  public static void Build(){
   string root=BuildRoot();string outDir=Path.Combine(root,"lab-build");Directory.CreateDirectory(outDir);var start=DateTime.UtcNow;var result=new Result{request_id=SessionState.GetString(RunningBuild,"")};
+  var previousAndroidSymbols=EditorUserBuildSettings.androidCreateSymbols;
+  string artifactDir=outDir;
   try{
+   var request=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
+   if(request.request_id!=result.request_id)throw new InvalidOperationException("Build request changed before dispatch");
+   string symbolsMode=string.IsNullOrEmpty(request.androidSymbols)?"none":request.androidSymbols;
+   if(symbolsMode!="none"&&symbolsMode!="debugging")throw new InvalidOperationException("Unsupported Android symbols mode");
+   EditorUserBuildSettings.androidCreateSymbols=symbolsMode=="debugging"?AndroidCreateSymbols.Debugging:AndroidCreateSymbols.Disabled;
+   if(symbolsMode=="debugging"){
+    if(!System.Text.RegularExpressions.Regex.IsMatch(request.request_id,"^[A-Za-z0-9._-]{1,80}$"))throw new InvalidOperationException("Unsafe symbol build request identity");
+    artifactDir=Path.Combine(outDir,"symbols-"+request.request_id);
+    if(Directory.Exists(artifactDir))throw new InvalidOperationException("Symbol build output already exists; preserving prior artifacts");
+    Directory.CreateDirectory(artifactDir);
+   }
    PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android,"dev.ror2lab.arm64");PlayerSettings.companyName="PortingLab";PlayerSettings.productName="RoR2 Porting Lab";
    PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android,ScriptingImplementation.IL2CPP);PlayerSettings.Android.targetArchitectures=AndroidArchitecture.ARM64;
    PlayerSettings.Android.minSdkVersion=AndroidSdkVersions.AndroidApiLevel23;PlayerSettings.Android.targetSdkVersion=AndroidSdkVersions.AndroidApiLevel30;
@@ -372,7 +385,7 @@ public static class LabBuild {
    if(mesh==null)throw new Exception("Recovered mesh missing; prototype preparation required");
    bundleBuilds.Add(new AssetBundleBuild{assetBundleName="labgeometry",assetNames=new[]{"Assets/Recovered/geometry.obj"}});
    var currentRequest=JsonUtility.FromJson<Request>(File.ReadAllText(Path.Combine(root,"build-request.json")));
-   if(currentRequest.request_id!=result.request_id)throw new InvalidOperationException("Build request changed after dispatch");
+   if(currentRequest.request_id!=result.request_id||currentRequest.androidSymbols!=request.androidSymbols)throw new InvalidOperationException("Build request changed after dispatch");
    if(!currentRequest.reusePayload){
     var wholeBuilder=File.Exists(Path.Combine(root,"whole-catalog-build.json"))?Type.GetType("WholeCatalogBuild, Assembly-CSharp-Editor",true):null;
     if(wholeBuilder!=null)wholeBuilder.GetMethod("Append").Invoke(null,new object[]{root,bundleBuilds});
@@ -386,10 +399,12 @@ public static class LabBuild {
    var light=new GameObject("Lab Light").AddComponent<Light>();light.type=LightType.Directional;light.transform.rotation=Quaternion.Euler(35,40,0);
    var cube=GameObject.CreatePrimitive(PrimitiveType.Cube);cube.name="G1 reference cube";cube.transform.position=new Vector3(3,0,0);
    EditorSceneManager.SaveScene(scene,"Assets/Lab.unity");EditorUserBuildSettings.buildAppBundle=false;
-   result.apk=Path.Combine(outDir,"lab-"+api+".apk");result.backend="IL2CPP ARM64 "+api;
+   result.apk=Path.Combine(artifactDir,"lab-"+api+".apk");result.backend="IL2CPP ARM64 "+api;
    var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{"Assets/Lab.unity"},locationPathName=result.apk,target=BuildTarget.Android,options=BuildOptions.Development});
    result.result=report.summary.result.ToString();result.errors=(int)report.summary.totalErrors;result.success=report.summary.result==BuildResult.Succeeded&&result.errors==0;
-  }catch(Exception e){result.result=e.ToString();Debug.LogException(e);}
+   if(result.success&&symbolsMode=="debugging"){var symbolZips=Directory.GetFiles(artifactDir,"*.zip");if(symbolZips.Length!=1)throw new InvalidOperationException("Expected exactly one Unity Android symbols ZIP");result.symbolPackage=Path.GetFullPath(symbolZips[0]);}
+  }catch(Exception e){result.success=false;result.result=e.ToString();Debug.LogException(e);}
+  finally{EditorUserBuildSettings.androidCreateSymbols=previousAndroidSymbols;}
   result.seconds=(DateTime.UtcNow-start).TotalSeconds;File.WriteAllText(Path.Combine(outDir,"result.json"),JsonUtility.ToJson(result,true));SessionState.SetString(RunningBuild,"");Debug.Log("LAB_BUILD_RESULT "+JsonUtility.ToJson(result));
  }
  [Serializable] class SceneProbeConfig {public string scene,prefab,teleportMaterial,barrierEffect,stageScene,nextStageScene,playerDeathEffect,pickupDroplet,genericPickup,teleporterIndicator,objectiveTMPSettings;public string[] prefabAssets,enemyRewardAssets,objectiveSupportAssets,nextStageScenes,sourceStageScenes;}

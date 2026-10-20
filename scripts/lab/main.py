@@ -47,6 +47,7 @@ p.add_argument("--full", action="store_true")
 p.add_argument("--device", help="Current: explicit allowlisted serial (or LAB_DEVICE); required when several devices are attached")
 p.add_argument("--host-only", action="store_true", help="Current: preflight host/input gates without device access")
 p.add_argument("--force", action="store_true")
+p.add_argument("--debug-symbols", action="store_true", help="Current: opt-in Unity Android Debugging symbols for the exact main APK build")
 p.add_argument("--json", action="store_true")
 p.add_argument("--assembly")
 p.add_argument("--target", default="lab")
@@ -75,6 +76,8 @@ from device_context import set_command_selector
 set_command_selector(a.device, os.environ.get("LAB_DEVICE"))
 if a.host_only and a.command != "preflight":
     p.error("--host-only requires preflight")
+if a.debug_symbols and not (a.command == "build" or (a.command == "prototype" and a.action == "whole-catalog-code-build")):
+    p.error("--debug-symbols requires build or prototype --action whole-catalog-code-build")
 # Device operations explicitly select the existing local receipt/config tree.
 # Rebuild --work-dir remains a read-only input boundary.
 if a.work_dir and a.command in {"install", "sync-data", "run", "check-baseline"}:
@@ -182,7 +185,7 @@ try:
     elif a.command == "build":
         from build import build
 
-        build(a.target, a.force)
+        build(a.target, a.force, android_symbols="debugging" if a.debug_symbols else "none")
     elif a.command == "editor":
         from build import editor
 

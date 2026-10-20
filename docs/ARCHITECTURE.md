@@ -38,6 +38,20 @@ attempt-bound `movement-batch-selection.json` and then launches the app.
 The exact editor is started with `./dev editor --target lab --action open`; send it one
 mutation at a time. Device acceptance is always the real device, never the editor.
 
+Current optional debugging symbols (`--debug-symbols` on `build` or
+`whole-catalog-code-build`) flow through `main.py`/`actions.py` to
+`whole_catalog.py` and `build.py`. `LabBuild.cs` requests
+`AndroidCreateSymbols.Debugging` in a fresh request directory; ordinary requests
+select `Disabled`. Its `finally` restores the prior editor setting.
+`scripts/lab/symbol_artifacts.py` verifies the sole request-owned ZIP, mandatory
+APK/ZIP/library hashes, matching ARM64 ELF GNU Build IDs, named symbols and
+DWARF information. The symbol-mode cache includes the validator hash and retains
+both artifacts; missing, ambiguous or altered artifacts refuse reuse. These
+files are generated build outputs, not new required local input. Host contracts:
+`test_symbol_artifacts.py` and `test_symbol_build_mode.py`. Exact-editor output
+layout still requires the first selected build; retention alone does not
+symbolicate the existing `performance_capture.py` report.
+
 `whole_catalog.analyze` owns the host dependency closure. Audit, reconciliation
 and root-binding repair supply the accepted decompile root to
 `entity_state_gameobject_fields`, a scoped field reader checked against the

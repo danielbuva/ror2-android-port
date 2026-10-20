@@ -119,7 +119,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action whole-catalog-host-providers` | Run the whole-catalog native-provider host fixture. |
 | `./dev prototype --action whole-catalog-repair-bindings` | Repair recorded whole-catalog root bindings. |
 | `./dev prototype --action whole-catalog-build` | Compose content and build the whole-catalog player. |
-| `./dev prototype --action whole-catalog-code-build` | Build player code while verifying and reusing the frozen payload. |
+| `./dev prototype --action whole-catalog-code-build` | Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. |
 | `./dev prototype --action whole-catalog-run` | Install, sync and run the catalog-registration check. |
 
 <!-- prototype-actions:end -->
@@ -142,6 +142,13 @@ contract):
 ```
 
 Both build actions need the exact editor open and connected (`./dev editor --target lab --action open`).
+
+For a current code build with matching IL2CPP debugging symbols, add
+`--debug-symbols` to `whole-catalog-code-build`. This opt-in mode retains the
+APK and symbols ZIP together, verifies their ARM64 library Build IDs and
+debug information, and uses a separate cache. Ordinary builds request symbols
+off. Retained symbols support later offline attribution; CPU capture does not
+automatically use them.
 
 `./dev build` refuses to package when authored runtime sources differ from the staged copies,
 so a stale APK cannot pass as feature evidence. Gameplay runs on the device are currently

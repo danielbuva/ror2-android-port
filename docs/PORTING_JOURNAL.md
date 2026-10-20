@@ -14235,3 +14235,40 @@ J757/J758 change existing R8 sources only; no new private game-build input.
 Generic controllers, ordinary difficulty, full ability semantics, audio and
 visual parity remain open. Next build the committed J760 correction and run
 its bounded offhand case alongside both default controls.
+
+## J763 — Retain exact optional IL2CPP debugging artifacts for future attribution
+
+J761's stripped managed frames cannot identify the recurring enumeration caller.
+Hypothesis: retain an opt-in Unity Debugging symbols ZIP with the exact APK and
+validate both native identities before using it for later offline attribution.
+No speculative gameplay optimization follows from the unsymbolized trace.
+
+Add current `--debug-symbols` dispatch for `build` and
+`whole-catalog-code-build`. The editor uses a fresh request directory, selects
+Debugging only for that request (Disabled for ordinary builds), and restores its
+previous setting in `finally`. Host validation requires the sole returned ZIP
+under that directory, exact APK/ZIP/library hashes, matching ARM64 GNU Build IDs,
+named symbols and a plausible DWARF unit. Symbol-mode cache keys include the
+validator hash; missing, ambiguous or changed artifacts refuse reuse, with no
+APK-only fallback. Preserve the original ordinary build call/producer order.
+The generic ELF reader correctly permits SHT_NOBITS memory extents without file
+bytes, while rejecting equivalent out-of-file file-backed sections.
+
+Independent draft reviews found and corrected inherited editor settings,
+unbound ZIP paths, optional receipt digests, stripped-only positive fixtures and
+the NOBITS error. Root's 14 focused artifact/dispatch/cache contracts and full
+1,064-test host suite pass (65.650 seconds). The first full run exposed existing
+default-call assertions, generated README help and the historical build-body
+fingerprint; restore default call shape, regenerate help and explicitly repin
+the reviewed editor body. No check is suppressed. Public tests use authored
+synthetic data only. Build lock ownership and per-device runs are unchanged.
+
+APK: none for this tooling change. Exact-editor ZIP layout, symbols contents and
+later useful managed attribution remain unqualified until a selected build.
+`performance_capture.py` still emits its existing report without a symbol tree;
+retention alone does not claim a symbolicated report or better frame time.
+Evidence: work/coordination/il2cpp-symbol-retention-draft/r2/,
+il2cpp-symbol-retention-review/r2/ and codex-symbols-root-suite-r2.*.
+The public generator owns all new optional work outputs; no private input is
+introduced. This changes the existing R7 LabBuild source and build dispatcher;
+R8 runtime membership and payload are unchanged.

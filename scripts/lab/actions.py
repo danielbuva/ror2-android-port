@@ -44,6 +44,13 @@ def _compare(function, kwargs, args):
     sys.exit(0 if result["equal"] else 1)
 
 
+def _whole_catalog_code_build(function, kwargs, args):
+    selected = dict(kwargs)
+    if getattr(args, "debug_symbols", False):
+        selected["android_symbols"] = "debugging"
+    return function(**selected)
+
+
 def _json_result(function, kwargs, args, **formatting):
     print(json.dumps(function(**kwargs), **formatting))
 
@@ -240,7 +247,8 @@ _ENTRIES = (
         "build_integration",
         {"code_only": True},
         "current",
-        "Build player code while verifying and reusing the frozen payload.",
+        "Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK.",
+        handler=_whole_catalog_code_build,
     ),
     Action("whole-catalog-run", "whole_catalog", "run_integration", {}, "current", "Install, sync and run the catalog-registration check."),
     Action("shader-recovery", "shader_recovery", "recover", {}, "historical", "Recover shaders for --target.", handler=_target),

@@ -1746,7 +1746,7 @@ def generate_build_bootstrap(io, manifest, closure):
     )
 
 
-def build_integration(code_only=False, destination=None, work=None):
+def build_integration(code_only=False, destination=None, work=None, android_symbols="none"):
     from build import build_source_identity
     from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
 
@@ -1755,18 +1755,20 @@ def build_integration(code_only=False, destination=None, work=None):
         assert_build_unblocked()
         # Stage and build only committed sources, and record the commit (J738).
         identity = build_source_identity()
-        result = _build_integration(code_only=code_only, destination=destination, work=work, source_identity=identity)
+        result = _build_integration(code_only=code_only, destination=destination, work=work, source_identity=identity, android_symbols=android_symbols)
         if build_source_identity() != identity:
             raise RuntimeError("Build sources changed during the build; its receipt names " + identity["commit"])
         return result
 
 
-def _build_integration(code_only=False, destination=None, work=None, source_identity=None):
+def _build_integration(code_only=False, destination=None, work=None, source_identity=None, android_symbols="none"):
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
 
     if destination is not None:
         # R1–R8 already supplied the host products. Share the Unity half only.
+        if android_symbols != "none":
+            raise RuntimeError("Debugging symbol builds are supported only by the current local whole-catalog build")
         result = build("vulkan", force=True, reuse_payload=code_only, destination=destination, work=work)
         if isinstance(result, dict):
             result["source"] = source_identity
@@ -1801,7 +1803,10 @@ def _build_integration(code_only=False, destination=None, work=None, source_iden
     previous = attempt / "build.json"
     if previous.exists():
         previous.rename(attempt / ("build-previous-" + now() + ".json"))
-    result = build("vulkan", force=True, reuse_payload=code_only, source=source_identity)
+    if android_symbols == "none":
+        result = build("vulkan", force=True, reuse_payload=code_only, source=source_identity)
+    else:
+        result = build("vulkan", force=False, reuse_payload=code_only, source=source_identity, android_symbols=android_symbols)
     write(attempt / "build.json", result)
     if not code_only:
         freeze_whole_payload(project, result)
