@@ -475,6 +475,15 @@ never reads this test directory.
 
 ### Current gameplay qualification support
 
+`work/coordination/codex-native-inventory-build-root-r{1..2}/`,
+`work/coordination/codex-native-inventory-device-root-r1/` and
+`work/experiments/native-skin-siren-next/candidate-20261020T214442.277797Z/`
+retain J840’s serialized build producer, frozen source/APK/symbol/capture receipts,
+selected-device qualification driver and both-default acceptance proof. They are
+required private diagnostic/rollback support; the game reads tracked sources and
+regenerated payloads, never these timestamped evidence directories.
+
+
 `work/coordination/codex-skin-siren-*`,
 `work/coordination/siren-navigation-new-player-guard/` and
 `work/coordination/animation-native-skin-device-plan/` retain hash-bound source

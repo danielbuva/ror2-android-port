@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J840](PORTING_JOURNAL.md#j840--accept-the-exclusive-native-inventory-owner-player-on-both-default-modes) | 2026-10-20 | Accept the exclusive native inventory-owner player on both default modes | 2026-10-20. |
 | [J837](PORTING_JOURNAL.md#j837--pass-the-formatted-native-monitor-control-and-one-original-ui-event-in-the-isolated-player) | 2026-10-20 | Pass the formatted native monitor control and one original UI event in the isolated player | **Hypothesis.** |
 | [J838](PORTING_JOURNAL.md#j838--keep-the-enabled-source-model-as-the-exclusive-item-display-inventory-writer) | 2026-10-20 | Keep the enabled source model as the exclusive item-display inventory writer | **Hypothesis.** |
 | [J835](PORTING_JOURNAL.md#j835--reach-native-huntress-skin-readiness-then-refuse-the-older-display-owner-invariant) | 2026-10-20 | Reach native Huntress skin readiness, then refuse the older display-owner invariant | **Hypothesis.** |

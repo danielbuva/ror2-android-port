@@ -1306,7 +1306,8 @@ and the still-open Unity/device/parity gates.
 
 `runtime/input/AndroidNativeItemDisplayDispatch.cs` is repository-authored pure
 ownership/dispatch policy in the 111-entry runtime manifest. Its layout identity
-starts null under the existing first-import contract. The native skin owner
+was first imported under the existing null-identity contract; J840 records the
+actual authored Unity importer GUID for subsequent replay. The native skin owner
 validates exact live body/model/report identity and readiness; the world display
 session keeps its eligible rule copy and Android presentation while avoiding a
 second native inventory writer. Public synthetic event and actual-owner fixtures
