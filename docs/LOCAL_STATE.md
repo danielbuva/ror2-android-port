@@ -98,7 +98,13 @@ selects that explicit attempt for independent comparison. The private
 fixture for native recompilation; the emitted C++ is copied without editing.
 `full-converter-output-comparison.json` and
 `full-converter-comment-classification.json` retain the original byte comparison
-and narrow missing-source-comment classification. None is a game-build
+and narrow missing-source-comment classification. The private
+`full-converter-native-on-android.py`, `full-converter-inspect-on-host.py` and
+`full-converter-package-on-android.py` adapters select the resulting native stage,
+verify ELF/API/dependencies and package/sign fresh fixture versions using the
+unchanged authored native APK driver. Their named stage/run/comparison/package
+selectors bind exact outputs; old J839 selectors/evidence are not overwritten.
+None is a game-build
 input; the original smaller converter attempts remain retained.
 
 The public scaffold and its generators are described in

@@ -161,7 +161,7 @@ _ENTRIES = (
         "stage_action",
         {},
         "current",
-        "Experimental: stage only the hash-bound authored content fixture's native graph from --target REQUEST.json, supplied Unity runtime and original NDK target inputs. No device or game build access; desktop stripping/code-generation remain explicit inputs.",
+        "Experimental: stage only the hash-bound authored content fixture's native graph from --target REQUEST.json, supplied Unity runtime and original NDK target inputs. An explicit converter selector may bind verified phone-generated C++; desktop stripping remains an input. No device or game build access.",
         handler=_target,
     ),
     Action(

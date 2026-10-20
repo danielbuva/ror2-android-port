@@ -11,12 +11,34 @@ python3 -I -S phone_native.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT [REUSE.json]
 
 The ignored host request selects `project`, `apk` and `sha256` for the committed
 authored fixture. Its native Bee graph, managed stripping, generated C++/metadata,
-base player/data and supplied Unity inputs still originate on the desktop.
+base player/data and supplied Unity inputs originate on the desktop by default.
 These dependencies stay explicit. The stage generator reads no game source and
 refuses other input roots, shell command composition, output traversal and
 unknown lump directives. It copies underlying inputs unchanged and generates
 fresh relative-include wrappers in the original include order. It never edits
 authored/runtime sources by text replacement.
+
+The complete authored converter is separate experimental support:
+
+```sh
+./dev prototype --action phone-converter-fixture --target REQUEST.json
+python3 -I -S phone_converter.py STAGE OWNED_TOOL_ROOT NEW_OUTPUT
+```
+
+It stages the original stripped assembly closure, supplied exact converter DLLs
+and icall data, preserving assembly order and code-generation flags. Its separate
+Android .NET build-tool host does not execute gameplay. Output paths are relocated
+and unnecessary tool analytics are disabled. Compare emitted files against the
+original oracle without editing either result; source-comment/debug differences
+must be classified explicitly. Successful process exit alone is insufficient.
+
+The native request may explicitly add `converter` with `stage`, `output` and
+`result_sha256`. Before selecting that emitted C++ directory, the native stager
+requires the same fixture, verified converter input/result/output hashes, the
+complete original stripped input closure and byte-identical data/metadata.
+It copies the selected files unchanged; recompilation is required if any source
+differs. Desktop stripping, engine/content production and tool-delivery rights
+remain separate dependencies.
 
 The Android driver verifies the entire staged input manifest and replays each
 compile followed by the link. It preserves target/optimization/ABI defines and
