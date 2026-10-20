@@ -64,6 +64,16 @@ a fixture build. This does not establish Android stripping or input consumption
 by itself; the fresh graph and emitted outputs still need independent binding.
 It is never staged into the game project.
 
+`phone_linker.py` owns experimental stripping **support** for that captured
+authored fixture. The current `phone-linker-fixture` action verifies the explicit
+fixture/callback/final-build identities, maps only known linker flags/input roots,
+and stages unchanged captured files plus supplied SDK descriptors/tool DLLs.
+Its standalone Android driver verifies input hashes, uses the separate .NET
+build-tool host, retains output/log/failure receipts and disables unnecessary
+tool analytics. Desktop-generated scene/editor root production remains an input;
+matching output hashes and fresh execution evidence are separate acceptance
+checks. No whole-catalog build or game runtime calls it.
+
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
 signing from explicitly supplied local tools. `HostProbeActivity` owns one

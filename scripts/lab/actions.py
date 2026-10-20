@@ -138,6 +138,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-linker-fixture",
+        "phone_linker",
+        "stage_action",
+        {},
+        "current",
+        "Experimental: --target REQUEST.json binds the authored fixture APK/project and its exact editor callback capture for Android UnityLinker replay. Supplied tools and desktop-generated scene/editor roots remain private inputs. No editor mutation, installation or game build.",
+        handler=_target,
+    ),
+    Action(
         "phone-converter-fixture",
         "phone_converter",
         "stage_action",

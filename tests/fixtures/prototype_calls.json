@@ -345,5 +345,20 @@
     "effects": [],
     "stdout": "",
     "exit": null
+  },
+  "phone-linker-fixture": {
+    "calls": [
+      {
+        "module": "phone_linker",
+        "function": "stage_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
   }
 }
