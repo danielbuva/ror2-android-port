@@ -16308,3 +16308,67 @@ codex-default-doctor-after-siren-root-r1/}. R8 replay must restage the changed
 PrimaryFireBoundary, AutomaticSpawnBoundary and PortSession authored sources.
 The runtime manifest remains 106 files; no asset GUID, content payload or new
 required game-local input is added.
+
+
+## J797 — Accept the operand-witness player and identify MUL-T's null primary slot
+
+Date: 2026-10-20. Hypothesis: J796's observation-only primary witness preserves
+the default controls and identifies J793's stock MUL-T first failure without
+changing native skill behavior or weakening cleanup.
+
+Root builds committed source c191ddcaa1706a44aa2c850485d262817e2858ff in the exact
+editor under the host build mutex. The code-only player succeeds in 179.840443 s
+with zero errors; all 251 frozen inputs remain identical before/after, the
+runtime manifest remains 106 files and all 266 content payload hashes match the
+previous baseline. APK SHA-256:
+`40299fc59da8d6553bbd6681a4515ad4281b4ef6bcd33ac75012dce3c7a952b1`.
+Exact debugging symbols are retained, SHA-256:
+`f224e17038ee44e48864a9a5786ddfbce38d7d1829fc3d77e720fb626178f664`.
+IL2CPP Build ID: `ed5957904447f01e5aaf88e579499a64d9eac465`.
+Build receipt SHA-256:
+`582f06f2893901e463973060fe2bdd3f6eb58e758d7a0110c6fccf58a3cd62af`.
+
+The selected default doctor passes. The APK installs in place on adopted Nova;
+bootstrap and payload sync pass with fresh storage/placement checks. Both
+standard modes pass with current-build true, no report or current-process
+runtime error, unchanged owned artifact identity and 13 applied runs before and
+after. Plain reaches 35.218658 s; one-exit records exactly one original exit,
+Goolake and 12.396393 s after entry at world time 156.142715 s. The latter is a
+route duration, not a performance comparison. Final-report hashes respectively:
+`d96c87fb42734a68fc10fb22d0f6c2144ba8f6bf1135cfd67eab6781a004dc63` and
+`ba0d6a6f8c07b576c65145974f8f49a94b053e700bc87380f593fa314fce6a78`.
+Selectors are removed, the package stops and the display sleeps in cleanup.
+This establishes the new default baseline only.
+
+Thor separately installs the same artifact under its fresh internal-reserve and
+placement policy. Its bootstrap/sync pass and the plain control reaches
+35.074982 s with no report/current-process error, current-build true and zero
+applied runs unchanged. Final-report SHA-256:
+`31a49e27fe1e5c573d125e49bcdfa87dc1c937e23d31784e59ed2f68dbfca621`.
+Its separate stock four-slot MUL-T trial then fails at observer sequence 1,042,
+world time 180.177673 s. The preserved first operand is
+`skillLocator.primary:clr-null`, with live body and live SkillLocator; machine,
+state and stock are correctly not read after the unavailable prerequisite.
+The native loadout inventory still records five selected live components, which
+does not establish a valid canonical locator slot at the later failure.
+
+The primary error survives unchanged. Separate automaticSpawnCleanupError
+retains the missing canonical slot and incomplete live-body skill-machine lease
+refusals. No slot is repaired, no cleanup gate is relaxed and no full-kit result
+is accepted. Final-report SHA-256:
+`e3b49f0d789811e5be74b65260c5b27171789c840288af38665f6367be29b152`;
+current-process log SHA-256:
+`7828c0f72d1a1c3604758c854ad95dc94ce24090a1ff168bd79851382c4045ac`.
+Next trace the native Toolbot slot's mutation/lifecycle against this exact
+operand before proposing a behavior change. J796's prior-art and host contracts
+apply; this experiment adds device attribution, not a new gameplay workaround.
+
+Evidence: work/experiments/primary-witness-next/candidate-20261020T123101.251520Z/;
+work/coordination/{codex-primary-witness-build-root-r1/,
+codex-4029-baselines-root-r1/,codex-4029-device-root-r1/,
+codex-4029-toolbot-default-root-r1/};
+work/experiments/baseline/{20261020T123313.132557Z,
+20261020T123655.319885Z,20261020T124547.044648Z}/;
+work/experiments/survivor-check/20261020T124928.350849Z/Toolbot/.
+This entry changes no runtime/rebuild source; R8 replay requirements remain
+J796's three existing authored owners. No new required local build input is added.
