@@ -6,10 +6,58 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from phone_linker import LITERALS, arguments, strip
+from phone_linker import LITERALS, arguments, sha, strip, stripped_input
 
 
 class PhoneLinkerTests(unittest.TestCase):
+    def test_converter_handoff_binds_outputs_exact_assemblies_and_report_entries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            project, stage, output = (root / name for name in ("project", "stage", "output"))
+            original = project / "Library/Bee/artifacts/Android/ManagedStripped"
+            stripped = output / "stripped"
+            for path in (original, stripped, stage):
+                path.mkdir(parents=True)
+            for path in (original, stripped):
+                (path / "Fixture.dll").write_bytes(b"fixture assembly")
+                (path / "Fixture.pdb").write_bytes(b"fixture symbols")
+            reports = [
+                {"report": {"modules": [{"name": "Alpha", "kept": True}, {"name": "Beta", "kept": False}]}},
+                {"report": {"modules": [{"name": "Beta", "kept": False}, {"name": "Alpha", "kept": True}]}},
+            ]
+            for path, report in zip((original, stripped), reports):
+                (path / "UnityLinkerToEditorData.json").write_text(json.dumps(report))
+            (original / "analytics.json").write_text("desktop diagnostic")
+            (stage / "tool.dll").write_bytes(b"supplied tool")
+            (stage / "input-manifest.json").write_text(json.dumps({"tool.dll": sha(stage / "tool.dll")}))
+            fixture = {"project": str(project), "apk": str(root / "fixture.apk"), "sha256": "fixture-apk"}
+            (stage / "stage-receipt.json").write_text(json.dumps({"request": fixture | {"capture": str(root / "capture")}}))
+            result = {"success": True, "exit_code": 0, "input_manifest_sha256": sha(stage / "input-manifest.json")}
+
+            def save_result():
+                result["outputs"] = {p.relative_to(stripped).as_posix(): sha(p) for p in stripped.rglob("*") if p.is_file()}
+                (output / "result.json").write_text(json.dumps(result))
+                return {"stage": str(stage), "output": str(output), "result_sha256": sha(output / "result.json")}
+
+            request = save_result()
+            before = (stripped / "UnityLinkerToEditorData.json").read_bytes()
+            self.assertEqual(stripped_input(request, fixture), stripped)
+            self.assertEqual((stripped / "UnityLinkerToEditorData.json").read_bytes(), before)
+            (stripped / "Fixture.dll").write_bytes(b"changed assembly")
+            with self.assertRaisesRegex(ValueError, "output drift"):
+                stripped_input(request, fixture)
+            request = save_result()
+            with self.assertRaisesRegex(ValueError, "closure differs"):
+                stripped_input(request, fixture)
+            (stripped / "Fixture.dll").write_bytes(b"fixture assembly")
+            reports[1]["report"]["modules"][0]["kept"] = True
+            (stripped / "UnityLinkerToEditorData.json").write_text(json.dumps(reports[1]))
+            request = save_result()
+            with self.assertRaisesRegex(ValueError, "report entries differ"):
+                stripped_input(request, fixture)
+            with self.assertRaisesRegex(ValueError, "another fixture"):
+                stripped_input(request, fixture | {"sha256": "other-apk"})
+
     def test_mapping_preserves_flags_and_order_and_refuses_foreign_roots_or_output(self):
         project, input_root, capture, android, launcher = map(
             Path, ("/fixture", "/fixture/Temp/Managed", "/attempt/linker-capture", "/sdk/android", "/sdk/deploy/UnityLinker")

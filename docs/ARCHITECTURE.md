@@ -114,12 +114,17 @@ guard, requires the exact assembly closure and known options, copies supplied
 stripped assemblies/tool DLLs/icalls unchanged, and records their hashes.
 The standalone Android driver uses a separate .NET build-tool host, verifies
 inputs before execution, relocates only output paths, disables unnecessary
-tool analytics and retains fresh output/log/failure directories. An explicit
+tool analytics and retains fresh output/log/failure directories. An optional
+`linker` selector in its request binds the actual Android stripping stage/result,
+all emitted hashes and exact DLL/symbol closure against the same fixture. Only
+the recorded editor-report module order may differ; complete entries/other fields
+are checked in memory and the actual report bytes are copied unchanged.
+An explicit
 optional `converter` selector in a native-fixture request binds that converter's
 stage/result/output hashes, original stripped input closure and byte-identical
 data/metadata before choosing its emitted C++ for native compilation. The game
-runtime is still IL2CPP; desktop stripping and permitted proprietary tool
-delivery remain gates. No whole-catalog game build calls this owner.
+runtime is still IL2CPP; desktop scene/editor-root production and permitted
+proprietary tool delivery remain gates. No whole-catalog game build calls this owner.
 
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
