@@ -763,8 +763,9 @@ General playable-spine setup and survivor skill coverage retain their existing
 scope, as does strict canonical-machine cleanup. The identity policy executes
 in `test_toolbot_commando_observer_scope.py`; consumer wiring is checked from
 source, while the observer's strict missing-operand behavior is executed by the
-existing operand test. Device acceptance of this scope correction remains open
-(J799).
+existing operand test. J801 verifies the scope correction on device: both
+Commando defaults retain the observer, while MUL-T bypasses it and then reaches
+a separate shared combat-observer failure. Full-kit acceptance remains open.
 
 Only an explicit Siren source-entry diagnostic entering Ship Graveyard wraps
 the existing population and original-stage iterators with

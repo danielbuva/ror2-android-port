@@ -16555,3 +16555,59 @@ codex-siren-continuation-compile-root-r1/}. R8 replay must restage PortSession,
 NovaInputBoundary, IntegratedWorldBoundary, SirenEncounterBoundary and
 IntegratedStageBoundary. No new runtime GUID, payload or required local build
 input is added.
+
+
+## J801 — Accept the Siren-continuation player defaults and isolate MUL-T's next observer failure
+
+Date: 2026-10-20. Hypothesis: committed J799/J800 preserves the two ordinary
+baseline controls while the Commando-only observer remains active for Commando
+and no longer runs for MUL-T. Targeted native Siren and full survivor semantics
+remain separate gates.
+
+Root builds committed source 1efe5427bd54f625a675b0c74cb2b4d94bcb0d96 after
+passing doctor/preflight. Unity completes in 178.839296 s with zero errors.
+All 251 frozen source inputs remain unchanged before/after; the player contains
+106 runtime sources and all 266 payload hashes match the preceding baseline.
+APK SHA-256:
+`319a39871c3bcf43760b0d2a96a9634d859149699da1c2ca0c9944c40bc881e3`.
+Matching symbols SHA-256:
+`f8f6d74810a677b451e1ef7400f3621cdf0a4901b0296d3abc66f8a03b4f15f9`;
+libil2cpp Build ID: `a66dfc23bbf4b7bf48be9923692758e54a926269`.
+
+Fresh storage queries retain adopted-only placement on the first Nova and
+internal-reserve placement on Thor. Both receive this exact APK, bootstrap and
+payload sync without changing their separate ownership identities. The Nova
+passes plain at 35.207733 s and stage-exit at one transition plus 10.074402 s on
+Goolake, with current-build true, no report/current-process errors and applied
+runs unchanged at 13. Both keep the Siren selectors off. The Commando primary
+diagnostic remains active: 3,572 and 8,878 observer ticks respectively, without
+its first failure. Thor independently passes plain at 35.096786 s with applied
+runs unchanged at zero. Root accepts the player for these default controls.
+
+The separate stock MUL-T trial then stops at world 18.060089 s with a null
+reference in CombatSpineSession.ObserveCombat. The report proves the J799 scope
+switch is off and primary observer ticks remain zero. It does not identify the
+exact dereferenced combat operand; that first-failure triage is open. Strict
+spawn teardown separately refuses a missing canonical skill slot and incomplete
+live-body cleanup lease. Those errors remain separate from the original
+observer exception. No slot, machine, stock or native state is repaired, and the
+stock four-slot kit is not accepted. J790's earlier offhand activation remains
+bounded evidence on its own APK.
+
+Evidence: work/experiments/siren-continuation-next/
+candidate-20261020T133407.870223Z/; work/coordination/
+{codex-siren-continuation-build-root-r1/,codex-319a-baselines-root-r1/,
+codex-319a-device-root-r1/,codex-319a-toolbot-default-root-r1/,
+codex-319a-acceptance-root-r1/}; plain and stage runs
+work/experiments/baseline/{20261020T133710.828477Z/,
+20261020T134054.864505Z/}; survivor run work/experiments/survivor-check/
+20261020T134903.532060Z/Toolbot/. Root acceptance SHA-256:
+`1d537524a7c91eb32bbf07c990cc6326b6d31259e8108e26bd77ff5ce6a7c1b7`.
+All apps are stopped and idle OLED displays sleep, including both Thor panels.
+Internal Nova retains its prior game player while isolated audio stays separate.
+
+Revisit MUL-T with the current native swap/source contract and a corrected
+observer policy before another player trial. Qualify the exact source guard
+before the opt-in Siren continuation; Moon remains manual-only. J799/J800 list
+the authored files that R8 replay must restage. This entry changes no runtime,
+recipe, payload or required local build input.

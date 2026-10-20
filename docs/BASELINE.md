@@ -74,16 +74,16 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `40299fc59da8d6553bbd6681a4515ad4281b4ef6bcd33ac75012dce3c7a952b1`, code-only build from committed source c191ddc; J796 primary operand witness and separate strict cleanup attribution; all 266 payload hashes unchanged; matching debugging symbols retained |
-| Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.218658 s and one exit plus 12.396393 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Thor separately passes 35.074982 s. Full evidence is recorded once in J797. |
+| APK | `319a39871c3bcf43760b0d2a96a9634d859149699da1c2ca0c9944c40bc881e3`, code-only build from committed source 1efe5427; J799 Commando diagnostic scope and J800 opt-in native Siren continuation; all 266 payload hashes unchanged; matching debugging symbols retained |
+| Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.207733 s and one exit plus 10.074402 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Thor separately passes 35.096786 s. Full evidence is recorded once in J801. |
 | Placement | Adopted Nova updates in place and qualifies both defaults. Thor updates under its internal-reserve policy and passes a separate plain check. Internal Nova retains be26c21c… while isolated audio uses disposable packages. |
-| Rollbacks | Previous baseline J793 `23916334…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
+| Rollbacks | Previous baseline J797 `40299fc5…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
-J797's separate stock MUL-T retry identifies a CLR-null primary slot on a live
-body and locator; the independent cleanup refusal is retained. This result does
-not qualify the stock kit. J790's earlier native offhand activation and J795's
-bounded native Siren registration/cleanup remain evidence on their recorded
-APKs. Siren encounter execution is open.
+J801 verifies Commando-only observer scoping. The separate stock MUL-T retry
+then fails in the shared combat observer and retains the independent strict
+cleanup refusal; it does not qualify the stock kit. J790's earlier native
+offhand activation and J795's bounded native Siren registration/cleanup remain
+evidence on their recorded APKs. Siren encounter execution is open.
 
 The default checks keep native diagnostic flags off. Native first-stage defeat,
 strict cleanup and healthy same-process restart previously pass on J752's APK
