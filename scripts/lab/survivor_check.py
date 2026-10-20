@@ -91,12 +91,23 @@ def read_skill_variant_selection(path, survivor):
     return {"survivor": survivor, "entries": normalized}
 
 
-def survivor_selection(attempt, survivor, skill_variant_override=None, skill_slot=None):
+def survivor_selection(attempt, survivor, skill_variant_override=None, skill_slot=None, toolbot_offhand=False):
     if survivor not in BASE_SURVIVORS:
         raise ValueError("Unsupported base survivor")
     value = selection(attempt)
     value.update(selectedSurvivor=survivor, developerSurvivorOverride=survivor not in FREE_SURVIVORS, diagnosticSkillCoverage=True)
+    if toolbot_offhand:
+        expected = [
+            {"componentIndex": 1, "familyCatalogIndex": 142, "variantIndex": 3, "skillCatalogIndex": 193},
+            {"componentIndex": 4, "familyCatalogIndex": 144, "variantIndex": 1, "skillCatalogIndex": 201},
+        ]
+        if survivor != "Toolbot" or skill_variant_override is None or skill_variant_override.get("entries") != expected:
+            raise ValueError("Toolbot offhand requires --target Toolbot and the exact Buzzsaw/Dual Wield selector")
+        value["diagnosticToolbotOffhand"] = True
+        value["debugOptions"]["purpose"] = "Assisted MUL-T Buzzsaw offhand input-sequence diagnostic; no permanent progression"
     if skill_slot is not None:
+        if toolbot_offhand:
+            raise ValueError("Toolbot offhand mode cannot be combined with --skill-slot")
         if skill_slot not in SLOTS:
             raise ValueError("skill slot must be one of: " + ",".join(SLOTS))
         value["diagnosticSkillIsolationSlot"] = skill_slot
@@ -107,9 +118,9 @@ def survivor_selection(attempt, survivor, skill_variant_override=None, skill_slo
         if skill_variant_override.get("survivor") != survivor:
             raise ValueError("skill-variant selection survivor differs")
         value["developerSkillVariantOverride"] = skill_variant_override
-        if skill_slot is None:
+        if skill_slot is None and not toolbot_offhand:
             value["debugOptions"]["purpose"] = "Assisted per-run base-survivor skill-variant check; no profile or unlock changes"
-    elif skill_slot is None:
+    elif skill_slot is None and not toolbot_offhand:
         value["debugOptions"]["purpose"] = "Original base-survivor skill integration; diagnostic selection/input, no permanent progression"
     return value
 
@@ -534,13 +545,100 @@ def assess(survivor, stop, first, final, errors, skill_variant_override=None):
     return failures
 
 
-def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_override=None, skill_slot=None):
+def toolbot_offhand_stop_reason(report):
+    if report.get("error") or report.get("firstFailure"):
+        return "first-failure"
+    progress = report.get("stageProgress") or {}
+    if (type(progress.get("transitions", 0)) is not int or progress.get("transitions", 0) != 0 or
+            progress.get("transporting") or (report.get("stage") or {}).get("scene") not in (None, "", FIRST_STAGE)):
+        return "left-first-stage"
+    coverage = report.get("skillInputCoverage") or {}
+    if coverage.get("mode") == "toolbot-offhand-sequence" and coverage.get("completed") is True:
+        return coverage.get("toolbotOffhandOutcome") or "toolbot-offhand-ended-without-outcome"
+    if report.get("phase") in ("commando-defeated", "complete"):
+        return "ordinary-result"
+    return None
+
+
+def assess_toolbot_offhand(stop, first, final, runtime_errors, skill_variant_override):
+    failures = []
+    if first is None or final is None:
+        return ["missing first-world or final report"]
+    if stop != "toolbot-offhand-activation-observed":
+        failures.append("exact Toolbot offhand activation sequence was not observed")
+    if final.get("phase") != "integrated-world-playing":
+        failures.append("Toolbot offhand observation did not remain in integrated world play")
+    if final.get("error") or final.get("firstFailure"):
+        failures.append("final Toolbot offhand report contains a runtime failure")
+    progress = final.get("stageProgress") or {}
+    if (type(progress.get("transitions")) is not int or progress.get("transitions") != 0 or
+            progress.get("transporting") or (final.get("stage") or {}).get("scene") != FIRST_STAGE):
+        failures.append("final Toolbot offhand report left the first stage")
+    coverage = final.get("skillInputCoverage") or {}
+    if (coverage.get("mode") != "toolbot-offhand-sequence" or coverage.get("toolbotOffhandRequested") is not True or
+            coverage.get("completed") is not True or coverage.get("toolbotOffhandOutcome") != "toolbot-offhand-activation-observed" or
+            coverage.get("toolbotOffhandPhase") != 6 or coverage.get("toolbotOffhandRequests") != 2):
+        failures.append("Toolbot offhand sequence report is missing exact completed phase/request evidence")
+    if (coverage.get("toolbotOffhandStanceObserved") is not True or
+            coverage.get("toolbotOffhandOverrideObserved") is not True or
+            coverage.get("toolbotOffhandWeapon2Observed") is not True or
+            coverage.get("toolbotOffhandBuzzsawStateObserved") is not True):
+        failures.append("native Dual Wield override/Weapon2 Buzzsaw state evidence is incomplete")
+    slots = coverage.get("slots") or []
+    if (len(slots) != 4 or slots[1].get("inputBankEdges", 0) < 1 or
+            slots[1].get("requests", 0) != 1 or slots[3].get("inputBankEdges", 0) < 1 or
+            slots[3].get("requests", 0) != 1):
+        failures.append("special and secondary offhand input-bank edges/requests were not both observed")
+    observation = final.get("survivorSkills") or {}
+    rows = observation.get("slots") or []
+    special = next((row for row in rows if row.get("slot") == "special"), {})
+    secondary = next((row for row in rows if row.get("slot") == "secondary"), {})
+    if (special.get("authorityActivations", 0) <= coverage.get("toolbotOffhandSpecialAuthorityBefore", 0) or
+            special.get("serverActivations", 0) <= coverage.get("toolbotOffhandSpecialServerBefore", 0) or
+            secondary.get("authorityActivations", 0) <= coverage.get("toolbotOffhandSecondaryAuthorityBefore", 0) or
+            secondary.get("serverActivations", 0) <= coverage.get("toolbotOffhandSecondaryServerBefore", 0)):
+        failures.append("fresh native special and secondary callback pairs were not both observed")
+    if (coverage.get("toolbotOffhandBodyState") != "EntityStates.Toolbot.ToolbotDualWield" or
+            coverage.get("toolbotOffhandSpecialDefinition") != "ToolbotCancelDualWield" or
+            coverage.get("toolbotOffhandSecondaryDefinition") != "ToolbotBodyFireBuzzsaw" or
+            coverage.get("toolbotOffhandSecondaryActivationMachine") != "Weapon"):
+        failures.append("final native stance/effective-definition report does not match source contract")
+    if skill_variant_override is None or skill_variant_override.get("survivor") != "Toolbot" or skill_variant_override.get("entries") != [
+        {"componentIndex": 1, "familyCatalogIndex": 142, "variantIndex": 3, "skillCatalogIndex": 193},
+        {"componentIndex": 4, "familyCatalogIndex": 144, "variantIndex": 1, "skillCatalogIndex": 201},
+    ]:
+        failures.append("exact Buzzsaw/Dual Wield selector is missing")
+    inventory = post_spawn_skill_variant_catalog_inventory(final)
+    if inventory.get("status") != "valid" or inventory.get("selectionSource") != "native-master-loadout-live":
+        failures.append("live native Toolbot loadout inventory is unavailable")
+    else:
+        live = {row["componentIndex"]: row for row in inventory["components"]}
+        for entry in skill_variant_override.get("entries", []):
+            row = live.get(entry["componentIndex"])
+            if (row is None or row["familyCatalogIndex"] != entry["familyCatalogIndex"] or
+                    row["selectedLoadoutVariantIndex"] != entry["variantIndex"] or
+                    row["selectedLoadoutSkillCatalogIndex"] != entry["skillCatalogIndex"] or
+                    row["runtimeSkillCatalogIndex"] != entry["skillCatalogIndex"] or
+                    row["runtimeDefinitionStatus"] != "matches-selected-native-loadout"):
+                failures.append("post-spawn native Toolbot loadout differs from selected variants")
+                break
+    if not (final.get("debugAcceleration") or {}).get("everAssisted"):
+        failures.append("diagnostic sequence was not marked assisted")
+    before_runs = ((first or {}).get("profile") or {}).get("appliedRuns")
+    if type(before_runs) is not int or (final.get("profile") or {}).get("appliedRuns") != before_runs:
+        failures.append("profile run count changed or is missing")
+    if runtime_errors:
+        failures.append("unexpected current-process Unity/Android errors")
+    return failures
+
+
+def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_override=None, skill_slot=None, toolbot_offhand=False):
     out.mkdir()
     selector = runtime + "/movement-batch-selection.json"
     report_path = runtime + "/movement-batch-" + SPINE_ID + ".json"
     if device.sh("sh", "-c", "test -e " + selector + " && echo present", check=False).strip():
         raise RuntimeError("Existing diagnostic selector; preserve it")
-    write(out / "selection.json", survivor_selection(attempt, survivor, skill_variant_override, skill_slot))
+    write(out / "selection.json", survivor_selection(attempt, survivor, skill_variant_override, skill_slot, toolbot_offhand))
     pid, first, final = None, None, None
     stop, started = "deadline", False
     runtime_errors, first_failure = [], None
@@ -565,7 +663,8 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
                 if phase == "integrated-world-playing" and first is None:
                     first = report
                     device.collect("screenshot", out / "first-world-capture")
-                stop = (isolated_stop_reason(report, skill_slot) if skill_slot else stop_reason(report)) or "deadline"
+                stop = (toolbot_offhand_stop_reason(report) if toolbot_offhand else
+                        isolated_stop_reason(report, skill_slot) if skill_slot else stop_reason(report)) or "deadline"
                 if stop == "first-failure":
                     first_failure = report.get("firstFailure") or report.get("error")
                     break
@@ -601,7 +700,8 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
             first_failure = runtime_errors[0]
         elif first_failure is None and final and (final.get("firstFailure") or final.get("error")):
             first_failure = final.get("firstFailure") or final.get("error")
-        failures = (assess_isolated_skill(survivor, skill_slot, stop, first, final, runtime_errors, skill_variant_override)
+        failures = (assess_toolbot_offhand(stop, first, final, runtime_errors, skill_variant_override) if toolbot_offhand else
+                    assess_isolated_skill(survivor, skill_slot, stop, first, final, runtime_errors, skill_variant_override)
                     if skill_slot else assess(survivor, stop, first, final, runtime_errors, skill_variant_override))
         isolated_identity = isolated_skill_identity(final or {}, skill_slot) if skill_slot else None
         inventory_fields = skill_variant_inventory_report_fields(final or {})
@@ -617,10 +717,11 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
             "component_inventory": component_inventory(final or {}, survivor),
             **inventory_fields,
             "skill_variant_override": skill_variant_override,
-            "mode": "isolated-skill-slot-diagnostic" if skill_slot else "four-slot-survivor-kit-check",
+            "mode": "toolbot-offhand-diagnostic" if toolbot_offhand else "isolated-skill-slot-diagnostic" if skill_slot else "four-slot-survivor-kit-check",
             "selected_skill_slot": isolated_identity,
+            "toolbot_offhand_sequence": (final or {}).get("skillInputCoverage", {}).get("toolbotOffhandOutcome") if toolbot_offhand else None,
             "ability_effects": {"status": "not-attributed-by-slot-callback-check",
-                                "complete_skill_semantics": "not-established"} if skill_slot else None,
+                                "complete_skill_semantics": "not-established"} if (skill_slot or toolbot_offhand) else None,
             "apk_sha256": installed["apk_sha256"],
             "evidence": str(out.relative_to(WORK.parent)),
         }
@@ -636,9 +737,13 @@ def check_one(device, survivor, attempt, runtime, out, installed, skill_variant_
                 device.display(False)
 
 
-def check_survivors(target, skill_variants=None, skill_slot=None, expected_apk_sha256=None):
+def check_survivors(target, skill_variants=None, skill_slot=None, expected_apk_sha256=None, toolbot_offhand=False):
     expected_apk_sha256 = validate_expected_apk_sha256(expected_apk_sha256)
     names = targets(target)
+    if toolbot_offhand and skill_slot is not None:
+        raise ValueError("Toolbot offhand cannot be combined with --skill-slot")
+    if toolbot_offhand and (names != ("Toolbot",) or skill_variants is None):
+        raise ValueError("Toolbot offhand requires exactly --target Toolbot and --skill-variants")
     if skill_slot is not None and skill_slot not in SLOTS:
         raise ValueError("skill slot must be one of: " + ",".join(SLOTS))
     if skill_slot is not None and len(names) != 1:
@@ -646,6 +751,8 @@ def check_survivors(target, skill_variants=None, skill_slot=None, expected_apk_s
     if skill_variants is not None and len(names) != 1:
         raise ValueError("per-run skill variants require exactly one --target survivor")
     variant_selection = read_skill_variant_selection(skill_variants, names[0]) if skill_variants is not None else None
+    if toolbot_offhand:
+        survivor_selection("contract", "Toolbot", variant_selection, toolbot_offhand=True)
     device = SurvivorCheckDevice()
     installed = device.owned()
     mode = device.settings["storage_mode"]
@@ -685,7 +792,7 @@ def check_survivors(target, skill_variants=None, skill_slot=None, expected_apk_s
     for survivor in names:
         result = check_one(device, survivor, attempt, runtime, out / survivor, installed,
                            skill_variant_override=variant_selection if survivor == names[0] else None,
-                           skill_slot=skill_slot)
+                           skill_slot=skill_slot, toolbot_offhand=toolbot_offhand)
         result["apk_sha256"] = apk_sha256
         result["apk_binding_mode"] = apk_binding_mode
         results.append(result)

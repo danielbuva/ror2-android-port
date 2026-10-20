@@ -35,6 +35,22 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         public string outcome, mode, isolationSlot, selectedDefinition, selectedActivationState, selectedMachineState;
         public int selectedComponentIndex = -1, selectedFamilyCatalogIndex = -1, selectedVariantIndex = -1,
                    selectedSkillCatalogIndex = -1, runtimeSkillCatalogIndex = -1;
+        // False/zero/empty in ordinary checks. This subreport is populated only
+        // by the explicit Toolbot offhand selector.
+        public bool toolbotOffhandRequested, toolbotOffhandStanceObserved, toolbotOffhandOverrideObserved,
+                    toolbotOffhandWeapon2Observed, toolbotOffhandBuzzsawStateObserved;
+        public int toolbotOffhandPhase, toolbotOffhandRequests, toolbotOffhandSpecialAuthorityBefore,
+                   toolbotOffhandSpecialServerBefore, toolbotOffhandSecondaryAuthorityBefore,
+                   toolbotOffhandSecondaryServerBefore, toolbotOffhandBodyDamageEventsBeforeSecondary,
+                   toolbotOffhandBodyDamageEventsAtStop, toolbotOffhandDamageFactsBeforeSecondary,
+                   toolbotOffhandDamageFactsAtStop;
+        public float toolbotOffhandSpecialRequestSeconds, toolbotOffhandSpecialEdgeSeconds,
+                     toolbotOffhandStanceSeconds, toolbotOffhandReadySeconds,
+                     toolbotOffhandSecondaryRequestSeconds, toolbotOffhandSecondaryEdgeSeconds,
+                     toolbotOffhandBuzzsawStateSeconds;
+        public string toolbotOffhandOutcome, toolbotOffhandBodyState, toolbotOffhandSpecialDefinition,
+                      toolbotOffhandSecondaryDefinition, toolbotOffhandSecondaryActivationMachine,
+                      toolbotOffhandWeapon2State;
         public SlotCoverage[] slots;
     }
 
@@ -43,6 +59,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     CharacterBody body;
     NovaInputBridge bridge;
     SurvivorSkillObserver.Report observed;
+    SurvivorCombatOutputObserver.Report combatOutput;
     readonly Report report;
     readonly bool[] producerRequests = new bool[4];
     readonly bool[] lastOverlay = new bool[4];
@@ -56,6 +73,14 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     bool pulseActive;
     int isolationTarget = -1;
     int selectedComponentInstanceId;
+    readonly bool toolbotOffhandMode;
+    GenericSkill[] toolbotSkillComponents;
+    float toolbotPhaseBeganAt, toolbotPhaseEnteredAt, toolbotDeadline, toolbotPulseUntil;
+    int toolbotPulseStartTick;
+    int toolbotSpecialAuthorityBefore, toolbotSpecialServerBefore;
+    int toolbotSecondaryAuthorityBefore, toolbotSecondaryServerBefore;
+    bool toolbotPulseActive, toolbotSpecialEdgeObserved, toolbotSecondaryEdgeObserved,
+         toolbotSpecialPulseStarted, toolbotSecondaryPulseStarted;
     int lastNeutralRevision;
     int requestEdgeCount;
     bool isolationRequestPending;
@@ -77,8 +102,25 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         return selectedCallbacksObserved ? "isolated-slot-observation-complete" : "duration-exhausted";
     }
 
+    // Shared source policy used by the live sequence and extracted host fixture.
+    // Phases: special-ready, special-callback, stance-ready, secondary-ready,
+    // secondary-callback, Buzzsaw-state, complete. No phase manufactures an event.
+    public static int AdvanceToolbotOffhandPhase(int phase, bool specialPulseStarted, bool specialInputEdge,
+        bool specialCallbacks, bool exactDualWieldState, bool effectiveOffhandOverride, bool weapon2Present,
+        bool secondaryPulseStarted, bool secondaryInputEdge, bool secondaryCallbacks, bool buzzsawOnWeapon2)
+    {
+        if (phase == 0 && specialPulseStarted) return 1;
+        if (phase == 1 && specialInputEdge && specialCallbacks) return 2;
+        if (phase == 2 && exactDualWieldState && effectiveOffhandOverride && weapon2Present) return 3;
+        if (phase == 3 && secondaryPulseStarted) return 4;
+        if (phase == 4 && secondaryInputEdge && secondaryCallbacks) return 5;
+        if (phase == 5 && buzzsawOnWeapon2) return 6;
+        return phase;
+    }
+
     public SurvivorSkillInputCoverage(CharacterBody ownedBody, NovaInputBridge ownedBridge,
-                                      SurvivorSkillObserver.Report observerReport, string isolatedSlot = null)
+                                      SurvivorSkillObserver.Report observerReport, string isolatedSlot = null,
+                                      bool toolbotOffhand = false, SurvivorCombatOutputObserver.Report combatReport = null)
     {
         if (!ownedBody || !ownedBody.skillLocator || !ownedBridge || observerReport == null || observerReport.slots == null ||
             observerReport.slots.Length != 4)
@@ -88,11 +130,17 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
 
         body = ownedBody;
         bridge = ownedBridge;
+        toolbotOffhandMode = toolbotOffhand;
         observed = observerReport;
+        combatOutput = combatReport;
         isolationTarget = string.IsNullOrEmpty(isolatedSlot) ? -1 : ParseIsolationSlot(isolatedSlot);
+        if (toolbotOffhandMode && isolationTarget >= 0)
+            throw new ArgumentException("Toolbot offhand diagnostic cannot be combined with a single-slot isolation selector");
         report = new Report { active = false, outcome = "waiting-for-diagnostic-input",
-                              mode = isolationTarget < 0 ? "all-four-slots" : "isolated-slot",
+                              mode = toolbotOffhandMode ? "toolbot-offhand-sequence" : isolationTarget < 0 ? "all-four-slots" : "isolated-slot",
                               isolationSlot = isolationTarget < 0 ? "" : SlotNames[isolationTarget],
+                              toolbotOffhandRequested = toolbotOffhandMode,
+                              toolbotOffhandOutcome = toolbotOffhandMode ? "waiting-for-owned-live-diagnostic-input" : "",
                               slots = new SlotCoverage[4] };
         for (int i = 0; i < 4; i++)
         {
@@ -104,6 +152,13 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                                                  serverAfter = slot.serverActivations };
         }
         lastNeutralRevision = ownedBridge.inputNeutralRevision;
+        if (toolbotOffhandMode)
+        {
+            CaptureToolbotOffhandIdentity();
+            ownedBridge.isolatedDiagnosticSkillInput = true;
+            ownedBridge.isolatedDiagnosticSkillSlot = -1;
+            ownedBridge.isolatedDiagnosticSkillPulse = false;
+        }
         if (isolationTarget >= 0)
         {
             CaptureSelectedIdentity(observerReport, SlotNames[isolationTarget]);
@@ -120,6 +175,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         if (report.cleaned || report.completed)
             return;
         SyncNativeCallbacks();
+        if (toolbotOffhandMode)
+        {
+            ApplyToolbotOffhand(elapsed);
+            return;
+        }
         if (float.IsNaN(elapsed) || float.IsInfinity(elapsed) || elapsed < 0)
         {
             Stop("invalid-elapsed-time");
@@ -289,6 +349,297 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             current.skillDef.skillIndex != report.selectedSkillCatalogIndex ||
             SkillCatalog.GetSkillDef(report.selectedSkillCatalogIndex) != current.skillDef)
             throw new ArgumentException("Isolated slot does not match the exact current post-spawn GenericSkill/loadout identity");
+    }
+
+    void CaptureToolbotOffhandIdentity()
+    {
+        var inventory = observed.skillVariantInventory;
+        if (combatOutput == null)
+            throw new ArgumentException("Toolbot offhand sequence requires the existing owned combat-output observer report");
+        if (!body || body.bodyIndex != BodyCatalog.FindBodyIndex("ToolbotBody") || inventory == null ||
+            inventory.status != "available" || inventory.bodyIndex != (int)body.bodyIndex || inventory.components == null ||
+            inventory.components.Length != 5)
+            throw new ArgumentException("Toolbot offhand requires the exact live five-component native loadout inventory");
+        toolbotSkillComponents = body.GetComponents<GenericSkill>();
+        if (toolbotSkillComponents == null || toolbotSkillComponents.Length != 5 ||
+            toolbotSkillComponents[1] == null || toolbotSkillComponents[2] == null ||
+            toolbotSkillComponents[4] == null || body.skillLocator.primary != toolbotSkillComponents[0] ||
+            body.skillLocator.secondary != toolbotSkillComponents[2] || body.skillLocator.special != toolbotSkillComponents[4])
+            throw new ArgumentException("Toolbot auxiliary primary or native special component is missing or ambiguous");
+        if (!ToolbotSelectedComponentMatches(0, "ToolbotBodyPrimary1", "ToolbotBodyFireNailgun", 141, 0, 195) ||
+            !ToolbotSelectedComponentMatches(1, "ToolbotBodyPrimary2", "ToolbotBodyFireBuzzsaw", 142, 3, 193) ||
+            !ToolbotSelectedComponentMatches(4, "ToolbotBodySpecialFamily", "ToolbotDualWield", 144, 1, 201) ||
+            !toolbotSkillComponents[0].skillDef || ((ScriptableObject)toolbotSkillComponents[0].skillDef).name != "ToolbotBodyFireNailgun" ||
+            !toolbotSkillComponents[1].skillDef || ((ScriptableObject)toolbotSkillComponents[1].skillDef).name != "ToolbotBodyFireBuzzsaw" ||
+            !toolbotSkillComponents[4].skillDef || ((ScriptableObject)toolbotSkillComponents[4].skillDef).name != "ToolbotDualWield")
+            throw new ArgumentException("Toolbot offhand diagnostic requires the exact selected Buzzsaw and Dual Wield native variants");
+        var primary = toolbotSkillComponents[0];
+        if (!primary || !primary.skillDef || ((ScriptableObject)primary.skillDef).name != "ToolbotBodyFireNailgun")
+            throw new ArgumentException("Toolbot offhand diagnostic requires the retained Nailgun primary");
+        toolbotDeadline = float.NaN;
+        toolbotPhaseEnteredAt = float.NaN;
+        report.toolbotOffhandPhase = 0;
+        report.toolbotOffhandOutcome = "waiting-for-owned-live-diagnostic-input";
+    }
+
+    bool ToolbotSelectedComponentMatches(int componentIndex, string familyName, string skillName,
+                                        int familyIndex, int variantIndex, int skillIndex)
+    {
+        var skill = toolbotSkillComponents[componentIndex];
+        var row = observed.skillVariantInventory.components[componentIndex];
+        var expectedDefinition = SkillCatalog.GetSkillDef(skillIndex);
+        // During Dual Wield the native special slot legitimately returns its
+        // contextual Cancel SkillDef; compare the selected loadout row/family,
+        // not GenericSkill.skillDef, after initial live-identity validation.
+        return skill && skill.skillFamily && skill.skillFamily.name == familyName && expectedDefinition &&
+               ((ScriptableObject)expectedDefinition).name == skillName && row != null && row.componentIndex == componentIndex &&
+               row.familyCatalogIndex == familyIndex && row.selectedLoadoutVariantIndex == variantIndex &&
+               row.selectedLoadoutSkillCatalogIndex == skillIndex && row.runtimeSkillCatalogIndex == skillIndex &&
+               row.runtimeDefinitionStatus == "matches-selected-native-loadout" && row.variants != null &&
+               variantIndex < row.variants.Length && row.variants[variantIndex] != null &&
+               row.variants[variantIndex].skillCatalogIndex == skillIndex && row.variants[variantIndex].skillName == skillName;
+    }
+
+    void ApplyToolbotOffhand(float elapsed)
+    {
+        if (float.IsNaN(elapsed) || float.IsInfinity(elapsed) || elapsed < 0)
+        {
+            StopToolbotOffhand("invalid-elapsed-time");
+            return;
+        }
+        if (float.IsNaN(toolbotDeadline))
+        {
+            toolbotPhaseBeganAt = elapsed;
+            toolbotPhaseEnteredAt = elapsed;
+            toolbotDeadline = elapsed + IsolationMaximumSeconds;
+        }
+        report.elapsedSeconds = Mathf.Max(0, elapsed - toolbotPhaseBeganAt);
+        SampleToolbotDamageCounts();
+        if (!OwnsLiveDiagnosticInput())
+        {
+            StopToolbotOffhand("diagnostic-input-yielded");
+            return;
+        }
+        if (elapsed >= toolbotDeadline)
+        {
+            StopToolbotOffhand("toolbot-offhand-deadline");
+            return;
+        }
+        if (bridge.inputNeutralRevision != lastNeutralRevision)
+        {
+            lastNeutralRevision = bridge.inputNeutralRevision;
+            StopToolbotOffhand("neutralized-request-cancelled");
+            return;
+        }
+        if (body.skillLocator.primary != toolbotSkillComponents[0] ||
+            body.skillLocator.secondary != toolbotSkillComponents[2] ||
+            body.skillLocator.special != toolbotSkillComponents[4] ||
+            !ToolbotSelectedComponentMatches(0, "ToolbotBodyPrimary1", "ToolbotBodyFireNailgun", 141, 0, 195) ||
+            !ToolbotSelectedComponentMatches(1, "ToolbotBodyPrimary2", "ToolbotBodyFireBuzzsaw", 142, 3, 193) ||
+            !ToolbotSelectedComponentMatches(4, "ToolbotBodySpecialFamily", "ToolbotDualWield", 144, 1, 201))
+        {
+            StopToolbotOffhand("selected-native-identity-changed");
+            return;
+        }
+        report.active = true;
+        bridge.isolatedDiagnosticSkillInput = true;
+
+        if (report.toolbotOffhandPhase < 6 && elapsed - toolbotPhaseEnteredAt >=
+            (report.toolbotOffhandPhase == 5 ? 4f : 8f))
+        {
+            string timeout = report.toolbotOffhandPhase == 0 ? "special-not-native-ready" :
+                report.toolbotOffhandPhase == 1 ? "special-input-without-callback-pair" :
+                report.toolbotOffhandPhase == 2 ? "dual-wield-state-or-offhand-override-not-observed" :
+                report.toolbotOffhandPhase == 3 ? "offhand-secondary-not-native-ready" :
+                report.toolbotOffhandPhase == 4 ? "secondary-edge-without-callback-pair" :
+                "offhand-callback-without-weapon2-buzzsaw-state";
+            StopToolbotOffhand(timeout);
+            return;
+        }
+        if (toolbotPulseActive)
+        {
+            ObserveInputBankEdge();
+            if (elapsed >= toolbotPulseUntil)
+            {
+                bridge.isolatedDiagnosticSkillPulse = false;
+                toolbotPulseActive = false;
+                target = -1;
+            }
+            else
+            {
+                bridge.isolatedDiagnosticSkillPulse = true;
+                return;
+            }
+        }
+
+        bool specialCallbacks = observed.slots[3].authorityActivations > toolbotSpecialAuthorityBefore &&
+                               observed.slots[3].serverActivations > toolbotSpecialServerBefore;
+        bool secondaryCallbacks = observed.slots[1].authorityActivations > toolbotSecondaryAuthorityBefore &&
+                                 observed.slots[1].serverActivations > toolbotSecondaryServerBefore;
+        var bodyMachine = EntityStateMachine.FindByCustomName(body.gameObject, "Body");
+        var weapon2 = EntityStateMachine.FindByCustomName(body.gameObject, "Weapon2");
+        string bodyState = bodyMachine && bodyMachine.state != null ? bodyMachine.state.GetType().FullName : "";
+        string weapon2State = weapon2 && weapon2.state != null ? weapon2.state.GetType().FullName : "";
+        bool dualWield = bodyState == "EntityStates.Toolbot.ToolbotDualWield";
+        var secondary = body.skillLocator.secondary;
+        var offhand = toolbotSkillComponents[1];
+        bool effectiveOverride = secondary && offhand && secondary.skillDef == offhand.skillDef &&
+                                 secondary.skillDef && offhand.skillDef.skillIndex == 193 &&
+                                 ((ScriptableObject)offhand.skillDef).name == "ToolbotBodyFireBuzzsaw" &&
+                                 secondary.skillDef.activationStateMachineName == "Weapon";
+        bool sawState = weapon2 && weapon2.state != null && weapon2.state.GetType().FullName == "EntityStates.Toolbot.FireBuzzsaw";
+        if (dualWield && !report.toolbotOffhandStanceObserved)
+            report.toolbotOffhandStanceSeconds = report.elapsedSeconds;
+        report.toolbotOffhandStanceObserved |= dualWield;
+        report.toolbotOffhandOverrideObserved |= effectiveOverride;
+        report.toolbotOffhandWeapon2Observed |= (bool)weapon2;
+        report.toolbotOffhandBuzzsawStateObserved |= sawState;
+        report.toolbotOffhandBodyState = bodyState;
+        var special = body.skillLocator.special;
+        report.toolbotOffhandSpecialDefinition = special && special.skillDef
+            ? ((ScriptableObject)special.skillDef).name : "";
+        report.toolbotOffhandSecondaryDefinition = secondary && secondary.skillDef
+            ? ((ScriptableObject)secondary.skillDef).name : "";
+        report.toolbotOffhandSecondaryActivationMachine = secondary && secondary.skillDef
+            ? secondary.skillDef.activationStateMachineName : "";
+        report.toolbotOffhandWeapon2State = weapon2State;
+
+        if (report.toolbotOffhandPhase == 0)
+        {
+            var specialSkill = body.skillLocator.special;
+            if (specialSkill && specialSkill.enabled && specialSkill.skillDef && specialSkill.CanExecute())
+            {
+                toolbotSpecialAuthorityBefore = observed.slots[3].authorityActivations;
+                toolbotSpecialServerBefore = observed.slots[3].serverActivations;
+                report.toolbotOffhandSpecialAuthorityBefore = toolbotSpecialAuthorityBefore;
+                report.toolbotOffhandSpecialServerBefore = toolbotSpecialServerBefore;
+                BeginToolbotPulse(3, elapsed);
+                toolbotSpecialPulseStarted = true;
+                toolbotPhaseEnteredAt = elapsed;
+                report.toolbotOffhandSpecialRequestSeconds = report.elapsedSeconds;
+                report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(0, true, false, false, false, false,
+                    false, false, false, false, false);
+                report.toolbotOffhandOutcome = "special-pulse-requested";
+            }
+            return;
+        }
+        if (report.toolbotOffhandPhase == 1)
+        {
+            report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(1, toolbotSpecialPulseStarted,
+                toolbotSpecialEdgeObserved, specialCallbacks, false, false, false, false,
+                false, false, false);
+            if (report.toolbotOffhandPhase == 2)
+            {
+                toolbotPhaseEnteredAt = elapsed;
+                report.toolbotOffhandOutcome = "waiting-for-dual-wield-state-and-offhand-override";
+            }
+            return;
+        }
+        if (report.toolbotOffhandPhase == 2)
+        {
+            report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(2, true, true, true, dualWield,
+                effectiveOverride, weapon2, false, false, false, false);
+            if (report.toolbotOffhandPhase == 3)
+            {
+                toolbotPhaseEnteredAt = elapsed;
+                report.toolbotOffhandReadySeconds = report.elapsedSeconds;
+                report.toolbotOffhandOutcome = "offhand-ready";
+            }
+            return;
+        }
+        if (report.toolbotOffhandPhase == 3)
+        {
+            if (!dualWield || !effectiveOverride || !weapon2)
+            {
+                StopToolbotOffhand("dual-wield-offhand-contract-lost-before-secondary-pulse");
+                return;
+            }
+            if (secondary && secondary.enabled && secondary.skillDef && secondary.CanExecute())
+            {
+                toolbotSecondaryAuthorityBefore = observed.slots[1].authorityActivations;
+                toolbotSecondaryServerBefore = observed.slots[1].serverActivations;
+                report.toolbotOffhandSecondaryAuthorityBefore = toolbotSecondaryAuthorityBefore;
+                report.toolbotOffhandSecondaryServerBefore = toolbotSecondaryServerBefore;
+                report.toolbotOffhandBodyDamageEventsBeforeSecondary = combatOutput.bodyDamageEvents;
+                report.toolbotOffhandDamageFactsBeforeSecondary = combatOutput.damageFactCount;
+                BeginToolbotPulse(1, elapsed);
+                toolbotSecondaryPulseStarted = true;
+                report.toolbotOffhandSecondaryRequestSeconds = report.elapsedSeconds;
+                report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(3, true, true, true, true,
+                    true, true, toolbotSecondaryPulseStarted, false, false, false);
+                toolbotPhaseEnteredAt = elapsed;
+                report.toolbotOffhandOutcome = "secondary-offhand-pulse-requested";
+            }
+            return;
+        }
+        if (report.toolbotOffhandPhase == 4)
+        {
+            report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(4, toolbotSpecialPulseStarted,
+                toolbotSpecialEdgeObserved, specialCallbacks, dualWield, effectiveOverride, weapon2,
+                toolbotSecondaryPulseStarted, toolbotSecondaryEdgeObserved, secondaryCallbacks, false);
+            if (report.toolbotOffhandPhase == 5)
+            {
+                toolbotPhaseEnteredAt = elapsed;
+                report.toolbotOffhandOutcome = "offhand-callback-observed-waiting-for-weapon2-state";
+            }
+            return;
+        }
+        if (report.toolbotOffhandPhase == 5)
+        {
+            report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(5, toolbotSpecialPulseStarted,
+                toolbotSpecialEdgeObserved, specialCallbacks, dualWield, effectiveOverride, weapon2,
+                toolbotSecondaryPulseStarted, toolbotSecondaryEdgeObserved, secondaryCallbacks,
+                report.toolbotOffhandBuzzsawStateObserved);
+            if (report.toolbotOffhandPhase == 6)
+            {
+                report.toolbotOffhandBuzzsawStateSeconds = report.elapsedSeconds;
+                StopToolbotOffhand("toolbot-offhand-activation-observed");
+            }
+        }
+    }
+
+    void BeginToolbotPulse(int slot, float elapsed)
+    {
+        if (report.toolbotOffhandRequests >= 2)
+        {
+            StopToolbotOffhand("toolbot-offhand-request-budget-exhausted");
+            return;
+        }
+        pulseActive = toolbotPulseActive = true;
+        target = slot;
+        lastEdgeTick = bridge.fixedTicks;
+        toolbotPulseStartTick = bridge.fixedTicks;
+        toolbotPulseUntil = elapsed + PulseSeconds;
+        bridge.isolatedDiagnosticSkillSlot = slot;
+        bridge.isolatedDiagnosticSkillPulse = true;
+        report.requests++;
+        report.toolbotOffhandRequests++;
+        report.slots[slot].requests++;
+        report.slots[slot].eligibleSamples++;
+    }
+
+    void SampleToolbotDamageCounts()
+    {
+        if (combatOutput == null) return;
+        report.toolbotOffhandBodyDamageEventsAtStop = combatOutput.bodyDamageEvents;
+        report.toolbotOffhandDamageFactsAtStop = combatOutput.damageFactCount;
+    }
+
+    void StopToolbotOffhand(string outcome)
+    {
+        SampleToolbotDamageCounts();
+        if (bridge)
+        {
+            bridge.isolatedDiagnosticSkillPulse = false;
+            bridge.isolatedDiagnosticSkillSlot = -1;
+        }
+        pulseActive = toolbotPulseActive = false;
+        target = -1;
+        SyncNativeCallbacks();
+        report.completed = true;
+        report.active = false;
+        report.outcome = outcome;
+        report.toolbotOffhandOutcome = outcome;
     }
 
     void ApplyIsolated(float elapsed, int requestLimit)
@@ -469,7 +820,22 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                     : target == 2 ? bank.skill3.justPressed
                                   : bank.skill4.justPressed;
         if (edge)
+        {
             report.slots[target].inputBankEdges++;
+            if (toolbotOffhandMode && bridge.fixedTicks > toolbotPulseStartTick)
+            {
+                if (target == 3)
+                {
+                    toolbotSpecialEdgeObserved = true;
+                    report.toolbotOffhandSpecialEdgeSeconds = report.elapsedSeconds;
+                }
+                else if (target == 1)
+                {
+                    toolbotSecondaryEdgeObserved = true;
+                    report.toolbotOffhandSecondaryEdgeSeconds = report.elapsedSeconds;
+                }
+            }
+        }
     }
 
     void SyncNativeCallbacks()
@@ -510,8 +876,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     void Stop(string outcome)
     {
         ReleasePulse(true);
-        if (isolationTarget >= 0 && bridge)
+        if ((isolationTarget >= 0 || toolbotOffhandMode) && bridge)
+        {
             bridge.isolatedDiagnosticSkillPulse = false;
+            if (toolbotOffhandMode) bridge.isolatedDiagnosticSkillSlot = -1;
+        }
         SyncNativeCallbacks();
         report.completed = true;
         report.active = false;
@@ -531,10 +900,17 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         ReleaseAll();
         if (isolationTarget >= 0)
             ReleaseIsolationSink();
+        if (toolbotOffhandMode && bridge)
+        {
+            bridge.isolatedDiagnosticSkillPulse = false;
+            bridge.isolatedDiagnosticSkillInput = false;
+            bridge.isolatedDiagnosticSkillSlot = -1;
+        }
         report.active = false;
         report.cleaned = true;
         body = null;
         bridge = null;
         observed = null;
+        combatOutput = null;
     }
 }

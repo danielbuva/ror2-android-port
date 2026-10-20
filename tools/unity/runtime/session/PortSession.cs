@@ -170,6 +170,8 @@ public sealed partial class PortSession : MonoBehaviour
         // Durable session-level provenance survives replacement of debugAcceleration reports.
         public bool developerSkillVariantAssisted;
         public bool diagnosticSkillCoverage;
+        // Explicit, one-run MUL-T offhand input sequence; absent JSON remains false.
+        public bool diagnosticToolbotOffhand;
         public string diagnosticSkillIsolationSlot;
         public bool developerSkillIsolationAssisted;
         public bool diagnosticSirenEggInput;
@@ -487,6 +489,37 @@ public sealed partial class PortSession : MonoBehaviour
                 r.firstFailurePhase = r.phase;
                 Save();
                 yield break;
+            }
+            if (r.diagnosticToolbotOffhand)
+            {
+                try
+                {
+                    var request = r.developerSkillVariantOverride;
+                    if (!config.integratedWorld || !r.diagnosticSkillCoverage || r.selectedSurvivor != "Toolbot" ||
+                        !string.IsNullOrEmpty(r.diagnosticSkillIsolationSlot) || request == null || request.survivor != "Toolbot" || request.entries == null || request.entries.Length != 2)
+                        throw new ArgumentException("Toolbot offhand diagnostic requires one integrated Toolbot case and exact Buzzsaw/Dual Wield variants");
+                    bool buzzsaw = false, dualWield = false;
+                    foreach (var entry in request.entries)
+                    {
+                        if (entry == null) throw new ArgumentException("Toolbot offhand variant entry is missing");
+                        buzzsaw |= entry.componentIndex == 1 && entry.familyCatalogIndex == 142 &&
+                                   entry.variantIndex == 3 && entry.skillCatalogIndex == 193;
+                        dualWield |= entry.componentIndex == 4 && entry.familyCatalogIndex == 144 &&
+                                     entry.variantIndex == 1 && entry.skillCatalogIndex == 201;
+                    }
+                    if (!buzzsaw || !dualWield)
+                        throw new ArgumentException("Toolbot offhand diagnostic requires the exact native Buzzsaw and Dual Wield tuples");
+                    // The owner uses the same enforced isolated-slot input sink.
+                    r.developerSkillIsolationAssisted = true;
+                }
+                catch (Exception error)
+                {
+                    r.phase = "toolbot-offhand-diagnostic-refused";
+                    r.firstFailure = "Toolbot offhand diagnostic refused: " + error.Message;
+                    r.firstFailurePhase = r.phase;
+                    Save();
+                    yield break;
+                }
             }
             if (!string.IsNullOrEmpty(r.diagnosticSkillIsolationSlot))
             {

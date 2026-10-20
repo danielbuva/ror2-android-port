@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J754](PORTING_JOURNAL.md#j754--request-the-original-mul-t-offhand-sequence-through-the-bounded-input-owner) | 2026-10-19 | Request the original MUL-T offhand sequence through the bounded input owner | Hypothesis: J735's missing Buzzsaw activation follows from the canonical secondary pulse occurring before native Dual Wield applies its offhand override. |
 | [J753](PORTING_JOURNAL.md#j753--native-first-stage-defeat-cleans-up-and-restarts-after-the-callback-fence) | 2026-10-19 | Native first-stage defeat cleans up and restarts after the callback fence | Hypothesis: J748's exact-owned callback/frame fence permits native loss cleanup without releasing uncertain effect assets. |
 | [J752](PORTING_JOURNAL.md#j752--working-project-rebuilt-with-the-export-form-bluenoise-importer-r9-reports-equal) | 2026-10-19 | Working project rebuilt with the export-form BlueNoise importer; R9 reports equal | Phase 2, from-scratch rebuild (operator decision on J751; run by Claude; Codex paused; Claude held `work/coordination/claude-bluenoise.lock`). |
 | [J751](PORTING_JOURNAL.md#j751--r9-from-the-clean-gated-rebuild-no-new-reimport-error-both-device-checks-first-time) | 2026-10-19 | R9 from the clean gated rebuild: no new reimport error, both device checks first time | Phase 2, from-scratch rebuild (run by Claude with the operator's approval; Codex paused). |

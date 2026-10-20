@@ -2313,14 +2313,18 @@ public sealed partial class PortSession
                 coordinator.Check(survivorSkills != null && coordinator.r.debugAcceleration != null,
                                   "Diagnostic skill coverage requires prepared observation and assist tracking");
                 skillInputCoverage = new SurvivorSkillInputCoverage(player, bridge, survivorSkills.report,
-                                                                    coordinator.r.diagnosticSkillIsolationSlot);
+                    coordinator.r.diagnosticSkillIsolationSlot, coordinator.r.diagnosticToolbotOffhand,
+                    survivorCombatOutputs != null ? survivorCombatOutputs.report : null);
                 coordinator.r.skillInputCoverage = skillInputCoverage.reportData;
                 coordinator.DebugToggle("diagnosticSkillCoverage", true, "explicit launch selection");
-                if (skillInputCoverage.reportData.mode == "isolated-slot")
+                if (skillInputCoverage.reportData.mode == "isolated-slot" ||
+                    skillInputCoverage.reportData.mode == "toolbot-offhand-sequence")
                 {
                     coordinator.Check(coordinator.r.developerSkillIsolationAssisted,
-                                      "Isolated skill-slot assistance was not validated before native setup");
-                    coordinator.DebugToggle("diagnosticSkillIsolation", true, "explicit launch selector");
+                                      "Isolated skill-input assistance was not validated before native setup");
+                    coordinator.DebugToggle("diagnosticSkillIsolation", true,
+                        skillInputCoverage.reportData.mode == "toolbot-offhand-sequence" ?
+                            "explicit Toolbot offhand selector" : "explicit launch selector");
                 }
             }
             skillInputCoverage.Apply(elapsed);

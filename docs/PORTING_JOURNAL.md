@@ -13760,3 +13760,51 @@ deferred native branch supplied that earlier residual. Default baseline
 acceptance remains J752, native UI abandonment remains separate J730 evidence,
 and native stage transport, repeated sessions and ordinary difficulty remain
 open. No runtime source or rebuild input changes for this checkpoint.
+
+## J754 — Request the original MUL-T offhand sequence through the bounded input owner
+
+Hypothesis: J735's missing Buzzsaw activation follows from the canonical
+secondary pulse occurring before native Dual Wield applies its offhand
+override. Selection/inventory alone was not activation evidence. Consult
+community-prior-art.md and pinned R2API.Loadout/LoadoutAPI.cs: family/catalog
+registration and live EntityState execution are separate contracts. Inspect
+the accepted ToolbotDualWieldBase/Start and FireBuzzsaw sources for the actual
+secondary override, Weapon-to-Weapon2 routing and cancel-special identity.
+No community/game implementation is copied.
+
+Change: explicit --toolbot-offhand on the current survivor-kit-check action
+requires one Toolbot target and the exact J735 Buzzsaw/Dual Wield loadout.
+PortSession validates it and marks assistance before setup. Existing
+SurvivorSkillInputCoverage validates the live five-component native loadout,
+requests special once, observes its later input-bank edge/native callback pair,
+requires the native Dual Wield state, exact contextual secondary override and
+Weapon2, then requests secondary once. It requires a fresh second edge/callback
+pair and actual FireBuzzsaw on Weapon2 before completion. Requests, phases and
+time are bounded; default mode is off. Native state, stock, cooldown, damage
+and loadout are never forced. The world owns setup/tick/disposal before its
+observer/body; manual takeover, neutralization or identity loss stops the
+diagnostic. Aggregate damage counters are context, not causal Buzzsaw proof.
+
+The host assessor checks the terminal report as well as the polling sample:
+a late report failure, transport or departure from Lakes cannot pass after
+a previously successful sequence sample. The new synthetic contract has a
+passing control and late-failure/scene/transport/type refusal cases.
+
+Validation: 1,047 host tests pass in 47.135 seconds, including eight focused
+sequence/runner tests and the extracted actual production phase-policy
+compile/execution. An earlier suite caught only the stale generated README
+action row, which was regenerated with scripts/readme-actions.py. The revised
+full suite passes. Private full-runtime candidate compile/review confirms
+105 runtime sources, zero compile errors and no conflict with J748's callback
+fence. The final independent review checks selected loadout identity against
+the live native contextual override and reports no blocker. Evidence:
+work/coordination/post-refresh-gameplay-batch-review/ and
+work/coordination/codex-postrefresh-toolbot-host-v3.*.
+
+This is source/host qualification, not device activation acceptance. Commit
+these authored owners before J738's gated code build, retain J752's accepted
+APK/payload, then install in place and run both defaults plus the bounded
+offhand case. The exact device sequence/state lifetime remains to be measured.
+Three runtime source owners affect R8 replay. No new runtime file/importer,
+private build input or build-step text replacement is introduced. The separate
+Siren cleanup candidate remains unapplied.

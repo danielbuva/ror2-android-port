@@ -884,6 +884,19 @@ ability-output acceptance. The special-slot request does not synthesize a
 contextual primary input for Huntress Snipe. Omitting `--skill-slot` retains the
 all-four behavior above.
 
+The explicit `--toolbot-offhand` option requires one Toolbot target and the
+exact native Buzzsaw/Dual Wield variant tuples. The same input owner validates
+the live five-component loadout, requests special once, observes native Dual
+Wield with its contextual secondary override and Weapon2, then requests
+secondary once. It requires later input-bank edges, both native callback pairs
+and FireBuzzsaw on Weapon2. The isolated input sink masks competing automatic
+skill requests; manual input, identity loss, neutralization or the bounded
+deadline stops the sequence. Disposal releases the owned input state before
+the observer/body. The default selector remains false. Aggregate damage
+counters provide context only; this mode establishes no slot-specific damage
+or complete ability semantics. Host contracts extract the production phase
+policy and check selector/refusal routing.
+
 Siren egg diagnostic input (`SirenEggDiagnosticInput.cs`, explicit default-off
 per-attempt selection): `SessionReport.diagnosticSirenEggInput` constructs an
 independent world-owned input lease only when selected. Jump snapshots carry a

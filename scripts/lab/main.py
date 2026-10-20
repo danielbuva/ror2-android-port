@@ -64,6 +64,8 @@ p.add_argument("--skill-variants", help="Current: ignored local JSON for one bas
 p.add_argument("--expected-apk-sha256", help="Current: optional exact SHA-256 of the APK already in the selected device ownership receipt for diagnostic checks; omission requires current-build equality at check start and never installs or labels the receipt APK current")
 p.add_argument("--skill-slot", choices=("primary", "secondary", "utility", "special"),
                help="Current: bounded assisted isolated slot diagnostic for one base survivor via survivor-kit-check")
+p.add_argument("--toolbot-offhand", action="store_true",
+               help="Current: bounded assisted MUL-T Buzzsaw offhand sequence; requires --target Toolbot and exact --skill-variants")
 p.add_argument("--debug-options", help="Ignored local JSON for one integrated run; all acceleration defaults off")
 p.add_argument("--stage-exit", action="store_true", help="Current: check-baseline through one original stage exit and 10 s of next-stage play")
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
@@ -115,8 +117,8 @@ if a.expected_apk_sha256 is not None and (
     or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}
 ):
     p.error("--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
-if a.skill_slot and (a.command != "prototype" or a.action != "survivor-kit-check"):
-    p.error("--skill-slot requires prototype --action survivor-kit-check")
+if (a.skill_slot or a.toolbot_offhand) and (a.command != "prototype" or a.action != "survivor-kit-check"):
+    p.error("--skill-slot and --toolbot-offhand require prototype --action survivor-kit-check")
 if a.debug_options and (a.command != "prototype" or a.action not in ["movement-batch-run", "movement-batch-retry"]):
     p.error("--debug-options requires movement-batch-run or movement-batch-retry")
 if bool(a.compare) != (a.command == "prototype" and a.action == "project-manifest-compare"):

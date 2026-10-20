@@ -1208,3 +1208,16 @@ code is included. The portable host fixture contains authored lifecycle
 collaborators and executes the public production owner methods. Compile inputs,
 raw evidence and generated outputs remain ignored. The runtime changes affect
 R8 source staging and add no private production input or build-step text patch.
+
+## MUL-T offhand input-sequence audit
+
+The three existing runtime owners add authored diagnostic selection, bounded
+input scheduling and native-state observation. The exact component/family/skill
+tuples and minimum state/type/member names identify the user's accepted native
+loadout and contextual override; they reproduce no original implementation,
+serialized content, animation or media. The host runner and portable fixture
+are independently authored. Pinned R2API.LoadoutAPI distinguishes catalog and
+family registration from live ability execution; the accepted local native
+state and skill sources supply the actual contract. No community source is
+copied. This changes R8 runtime staging, adds no private build input and does
+not change the normal selected loadout, unlocks or entitlement behavior.

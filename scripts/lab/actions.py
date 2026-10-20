@@ -63,11 +63,14 @@ def _target(function, kwargs, args):
 def _survivor_target(function, kwargs, args):
     path = getattr(args, "skill_variants", None)
     slot = getattr(args, "skill_slot", None)
+    offhand = getattr(args, "toolbot_offhand", False)
     selected = dict(kwargs)
     if path is not None:
         selected["skill_variants"] = path
     if slot is not None:
         selected["skill_slot"] = slot
+    if offhand:
+        selected["toolbot_offhand"] = True
     expected_apk_sha256 = getattr(args, "expected_apk_sha256", None)
     if expected_apk_sha256 is not None:
         selected["expected_apk_sha256"] = expected_apk_sha256
@@ -207,7 +210,7 @@ _ENTRIES = (
         "check_survivors",
         {},
         "current",
-        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector; --skill-slot primary|secondary|utility|special runs one bounded isolated native-input diagnostic for exactly one target and may compose with --skill-variants. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it selects only a matching selected-device ownership receipt and its byte-verified APK, without calling it current.",
+        "Assisted world skill check: --target all or comma-separated base survivor keys; optional --skill-variants supplies one strict per-run catalog selector; --skill-slot primary|secondary|utility|special runs one bounded isolated native-input diagnostic; --toolbot-offhand runs the exact MUL-T Buzzsaw/Dual Wield sequence and requires --target Toolbot plus --skill-variants. Omit --expected-apk-sha256 to require current-build equality at check start; supplying it selects only a matching selected-device ownership receipt and its byte-verified APK, without calling it current.",
         handler=_survivor_target,
     ),
     Action(
