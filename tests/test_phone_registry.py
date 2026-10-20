@@ -41,7 +41,7 @@ def fixture():
     for offset, text in ((512, b"FixtureChild\0"), (544, b"FixtureParent\0"), (576, b"Native\0"), (608, b"undefined\0")):
         data[offset : offset + len(text)] = text
     struct.pack_into("<14Q", data, 768, vm + 1280, 0, vm + 512, vm + 576, vm + 608, 0, 0, 0, 0, 0, vm + 1152, 0, 0, 0)
-    struct.pack_into("<14Q", data, 896, 0, 0, vm + 544, vm + 576, vm + 608, 0, 0, 0, 0, 0, vm + 1280, 0, 0, 0)
+    struct.pack_into("<14Q", data, 896, 0, 0, vm + 544, vm + 640, vm + 608, 0, 0, 0, 0, 0, vm + 1280, 0, 0, 0)
     strings = b"\0"
     for index, (name, address) in enumerate(((b"__ZL32FixtureChild_TypeRegistrationDesc", vm + 768), (b"__ZL33FixtureParent_TypeRegistrationDesc", vm + 896))):
         struct.pack_into("<IBBHQ", data, 2048 + index * 16, len(strings), 0x0E, 1, 0, address)
@@ -98,6 +98,9 @@ class PhoneRegistryTests(unittest.TestCase):
         self.assertEqual(child["baseName"], "FixtureParent")
         self.assertTrue(child["base_resolved"])
         self.assertIsNone(child["module"])
+        parent = next(row for row in records if row["name"] == "FixtureParent")
+        self.assertEqual(parent["nativeNamespace"], "")
+        self.assertEqual(parent["qualifiedName"], "FixtureParent")
         self.assertEqual(image.string(0x100000000 + 576), "Native")
         with self.assertRaises(ValueError):
             image.at(0x100000000 + 4090, 16)

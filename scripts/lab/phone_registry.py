@@ -111,7 +111,7 @@ def static_records(image):
             "self": words[10],
             "parent": words[0],
             "name": name,
-            "nativeNamespace": namespace or None,
+            "nativeNamespace": namespace,
             "qualifiedName": (namespace + "::" if namespace else "") + name,
             "module": None,
         }
