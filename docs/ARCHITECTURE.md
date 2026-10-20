@@ -1213,6 +1213,19 @@ getter still propagates its original exception before any input action.
 Snapshot data survives the existing stop/disposal path; no engine reference
 is retained by the report. `test_siren_target_eligibility_witness.py` executes
 the authored membership, geometry-policy and getter-rethrow contracts.
+`SirenNavigationObservation.cs` is the same world's bounded, read-only
+approach recorder. After a stable selected egg remains outside the active
+native tracker range and objective movement stalls, it pairs a previous owned
+bridge request with a later bridge fixed tick. At most eight samples over eight
+seconds record copied input-bank movement, motor/position, source path node and
+real path-request identity; labels are capped at 64 characters. It closes on
+manual/owner/bridge/egg change, unavailable operands, clock rollback, yield,
+terminal stop or disposal. No normal run or inactive Siren selection starts it.
+The context reads native state; route cadence, movement and gameplay remain
+owned by the existing navigator/motor. Reports contain no Unity references.
+`test_siren_navigation_observation.py` executes the production recorder with a
+tracked synthetic reader/contract fixture; the original native-target test
+includes the new report types without replacing its witness assertions.
 The existing aim helper can issue at most 24 linecasts per active
 sample for the inspected original egg shape; inactive selection does no witness
 work. It yields to manual control and nearby hostile combat. Native encounter start, source/stage

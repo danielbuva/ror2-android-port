@@ -50,12 +50,19 @@ class SirenNativeTargetWitnessTests(unittest.TestCase):
         ranking = declaration(text, "public static class SirenEggTargetSelectionPolicy")
         observation = declaration(text, "public enum SirenNativeTargetObservation")
         witness = declaration(text, "public static class SirenNativeTargetWitnessPolicy")
+        navigation = (SOURCE_ROOT / "input/SirenNavigationObservation.cs").read_text()
+        navigation_sample = declaration(navigation, "public struct SirenNavigationObservationSample")
+        navigation_report = declaration(navigation, "public sealed class SirenNavigationObservationReport")
         source = (
             "using System;\nusing UnityEngine;\n"
-            + "namespace UnityEngine { public struct Vector3 { } }\n"
+            + "namespace UnityEngine { public struct Vector2 { } public struct Vector3 { } }\n"
             + "public class HurtBox { }\n"
             + "public class HuntressTracker { public HurtBox GetTrackingTarget() => null; }\n"
             + eligibility
+            + "\n"
+            + navigation_sample
+            + "\n"
+            + navigation_report
             + "\n"
             + report
             + "\n"

@@ -25,6 +25,9 @@ public interface ISirenEggDiagnosticContext
     void NavigateWorldInput(CharacterBody player, NovaInputBridge bridge, Vector3 target, float stopDistance, string targetName,
                             float elapsed);
     Vector3 WorldCombatAimPoint(CharacterBody target, Vector3 origin, out bool visible);
+    bool TryReadNavigationTrigger(CharacterBody player, CharacterBody egg, out float eggDistance, out float trackerMaximumDistance);
+    float NavigationObjectiveStalledSeconds { get; }
+    ISirenNavigationObservationReader CreateNavigationObservationReader(CharacterBody player, NovaInputBridge bridge);
 }
 
 // Evidence values are populated from the actual source scene, source body,
@@ -146,6 +149,7 @@ public sealed class SirenEggInputReport
     public int eligibilitySnapshotAttempts, eligibilitySnapshotErrors;
     public string lastEligibilitySnapshotErrorType;
     public SirenTargetEligibilitySnapshot firstMismatchEligibilitySnapshot, delayedNullEligibilitySnapshot;
+    public SirenNavigationObservationReport navigationObservation = new SirenNavigationObservationReport();
 }
 
 public enum SirenNativeTargetObservation
@@ -500,6 +504,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
 
     readonly ISirenEggDiagnosticContext context;
     readonly SirenEggInputReport report;
+    readonly SirenNavigationObservationRecorder navigationObservation;
     readonly SirenEggInputLease inputLease = new SirenEggInputLease();
     readonly List<CharacterBody> sourceEggCandidates = new List<CharacterBody>();
     NovaInputBridge ownedBridge;
@@ -515,6 +520,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     {
         this.context = context ?? throw new ArgumentNullException(nameof(context));
         this.report = report ?? throw new ArgumentNullException(nameof(report));
+        navigationObservation = new SirenNavigationObservationRecorder(report.navigationObservation);
     }
 
     public bool HasOutstandingInputLease => ownedBridge && inputLease.HasOutstandingLease;
@@ -533,6 +539,12 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     {
         if (disposed || terminal || !ownedBridge)
             return;
+        if (ownedBridge != bridge)
+        {
+            navigationObservation.OnBridgeIdentityChanged();
+            ReleaseIfStillOwned();
+            return;
+        }
         ObservePreviousRequest(ownedBridge);
         ReleaseIfStillOwned();
     }
@@ -543,11 +555,16 @@ public sealed class SirenEggDiagnosticInput : IDisposable
         if (disposed || terminal)
             return false;
         if (ownedBridge && ownedBridge != bridge)
+        {
+            navigationObservation.OnBridgeIdentityChanged();
             ReleaseIfStillOwned();
+        }
         if (bridge && producerFrameFresh)
             inputLease.CaptureProducerValues(bridge, true);
         if (bridge)
             ObservePreviousRequest(bridge);
+        float observationRealtime = Time.realtimeSinceStartup;
+        navigationObservation.Maintain(observationRealtime, true);
         if (!context.Selected)
         {
             if (started)
@@ -698,17 +715,35 @@ public sealed class SirenEggDiagnosticInput : IDisposable
             return false;
         }
 
-        context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
         bool visible = hasVisible;
         Vector3 point = visible ? visiblePoint : nearestPoint;
         var identity = egg.GetComponent<UnityEngine.Networking.NetworkIdentity>();
         uint selectedEggNetworkId = identity ? identity.netId.Value : 0;
+        if (navigationObservation.report.started && !navigationObservation.report.completed)
+        {
+            if (!OwnsDiagnosticInput(player, bridge))
+            {
+                Yield(context.ManualTakeover ? "manual-input-takeover" : "diagnostic-input-not-owned");
+                return false;
+            }
+            navigationObservation.ObservePending(selectedEggNetworkId, Time.realtimeSinceStartup, OwnsDiagnosticInput(player, bridge),
+                                                  bridge.fixedTicks, context.CreateNavigationObservationReader(player, bridge));
+        }
+        float selectedEggDistance, trackerMaximumDistance;
+        if (context.TryReadNavigationTrigger(player, egg, out selectedEggDistance, out trackerMaximumDistance))
+            navigationObservation.ObserveTrigger(true, true, selectedEggNetworkId, selectedEggDistance, trackerMaximumDistance,
+                                                  context.NavigationObjectiveStalledSeconds, Time.realtimeSinceStartup);
+        else
+            navigationObservation.ResetTriggerContinuity();
+
+        context.NavigateWorldInput(player, bridge, egg.transform.position, StopDistance, "Original Vulture egg", stageElapsed);
         ObserveNativeHuntressTarget(player, egg, selectedEggNetworkId, visible, point);
         Vector3 aim = point - player.inputBank.aimOrigin;
         bridge.aim = new Vector2(aim.x, aim.z).normalized;
         bridge.diagnosticAim = aim.normalized;
         bridge.diagnosticPrimary = visible;
         inputLease.CaptureOwnedOverlay(bridge);
+        navigationObservation.QueueRequest(bridge.movement, bridge.fixedTicks);
         ownedBridge = bridge;
         report.active = true;
         report.targetSamples++;
@@ -1065,6 +1100,8 @@ public sealed class SirenEggDiagnosticInput : IDisposable
 
     void Yield(string reason)
     {
+        navigationObservation.ResetTriggerContinuity();
+        navigationObservation.Complete(reason);
         ReleaseIfStillOwned();
         report.stopReason = reason;
     }
@@ -1073,6 +1110,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     {
         if (terminal)
             return;
+        navigationObservation.Complete(reason);
         ReleaseIfStillOwned();
         terminal = true;
         report.terminal = true;
@@ -1092,6 +1130,7 @@ public sealed class SirenEggDiagnosticInput : IDisposable
     {
         if (disposed)
             return;
+        navigationObservation.Dispose();
         ReleaseIfStillOwned();
         report.cleaned = true;
         disposed = true;

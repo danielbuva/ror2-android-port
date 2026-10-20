@@ -32,6 +32,7 @@
   "runtime/input/NovaThirdPersonView.cs",
   "runtime/input/OfflineSettingsBoundary.cs",
   "runtime/input/SirenEggDiagnosticInput.cs",
+  "runtime/input/SirenNavigationObservation.cs",
   "runtime/input/SurvivorSkillInputCoverage.cs",
   "runtime/presentation/MoonPillarPresentation.cs",
   "runtime/presentation/RecoveredHudBoundary.cs",

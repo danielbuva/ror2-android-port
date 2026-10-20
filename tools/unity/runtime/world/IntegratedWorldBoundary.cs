@@ -465,6 +465,8 @@ public sealed partial class PortSession
         NetworkSoundEventDef[] worldOfflineNetworkSoundDefs;
         Vector3 worldPathTarget;
         float worldPathRequested = -100;
+        int worldPathRequestId;
+        string worldPathRequestReason = "unavailable";
         RoR2.Navigation.NodeGraph worldElevatedApproachGraph;
         Vector3 worldElevatedApproachObjective, worldElevatedApproachDestination;
         bool worldElevatedApproachActive;
@@ -2015,7 +2017,7 @@ public sealed partial class PortSession
         {
             if (sirenEggDiagnosticInput == null && coordinator.SirenEggInputSelected && coordinator.r.sirenEggInput != null)
                 sirenEggDiagnosticInput =
-                    new SirenEggDiagnosticInput(new IntegratedWorldSirenContext(coordinator), coordinator.r.sirenEggInput);
+                    new SirenEggDiagnosticInput(new IntegratedWorldSirenContext(coordinator, this), coordinator.r.sirenEggInput);
             return sirenEggDiagnosticInput;
         }
         public void PrepareSirenEggDiagnosticInputFrame(CharacterBody player, NovaInputBridge bridge)
@@ -2034,9 +2036,11 @@ public sealed partial class PortSession
         sealed class IntegratedWorldSirenContext : ISirenEggDiagnosticContext
         {
             readonly PortSession coordinator;
-            public IntegratedWorldSirenContext(PortSession owner)
+            readonly IntegratedWorldSession session;
+            public IntegratedWorldSirenContext(PortSession owner, IntegratedWorldSession session)
             {
                 coordinator = owner;
+                this.session = session;
             }
             public bool Selected => coordinator.SirenEggInputSelected;
             public bool Assisted => coordinator.IsRunAssisted();
@@ -2059,6 +2063,34 @@ public sealed partial class PortSession
                                ? stageElapsed
                                : float.NaN;
                 }
+            }
+            public float NavigationObjectiveStalledSeconds =>
+                coordinator.r.world == null ? float.NaN : coordinator.r.world.navigationObjectiveStalledSeconds;
+            public bool TryReadNavigationTrigger(CharacterBody player, CharacterBody egg, out float eggDistance,
+                                                 out float trackerMaximumDistance)
+            {
+                eggDistance = trackerMaximumDistance = float.NaN;
+                if (!player || !egg || !player.inputBank)
+                    return false;
+                var tracker = player.GetComponent<HuntressTracker>();
+                if (!tracker || !tracker.isActiveAndEnabled)
+                    return false;
+                eggDistance = Vector3.Distance(player.corePosition, egg.corePosition);
+                trackerMaximumDistance = tracker.maxTrackingDistance;
+                return IntegratedWorldSession.Finite(eggDistance) && IntegratedWorldSession.Finite(trackerMaximumDistance) &&
+                       trackerMaximumDistance >= 0;
+            }
+            public ISirenNavigationObservationReader CreateNavigationObservationReader(CharacterBody player, NovaInputBridge bridge)
+            {
+                float stageSeconds = StageElapsed;
+                float requestAge = stageSeconds - session.worldPathRequested;
+                bool requestExists = session.worldPathRequestId > 0 && session.worldPathRequested >= 0 &&
+                                     !string.IsNullOrEmpty(session.worldPathRequestReason) &&
+                                     coordinator.worldPathFollower.nodeGraph != null &&
+                                     IntegratedWorldSession.Finite(stageSeconds) && IntegratedWorldSession.Finite(requestAge) && requestAge >= 0;
+                return new SirenNavigationObservationApi(player, bridge, coordinator.worldPathFollower,
+                    session.worldPathRequestId, requestExists, session.worldPathRequested, requestAge,
+                    session.worldPathRequestReason, coordinator.r.world == null ? null : coordinator.r.world.movementState);
             }
             public bool RevalidatedSourceEggs(Vector3 position,
                                               List<CharacterBody> destination) => coordinator.RevalidatedSirenDiagnosticEggs(position,
@@ -2448,9 +2480,15 @@ public sealed partial class PortSession
                                                QueryTriggerInteraction.Ignore);
             if (graph && needsRoute)
             {
-                if (coordinator.worldPathFollower.nodeGraph != graph || Vector3.Distance(routeDestination, worldPathTarget) > 2 ||
-                    elapsed - worldPathRequested > 8)
+                bool pathGraphChanged = coordinator.worldPathFollower.nodeGraph != graph;
+                bool pathDestinationMoved = Vector3.Distance(routeDestination, worldPathTarget) > 2;
+                bool pathIntervalExpired = elapsed - worldPathRequested > 8;
+                if (pathGraphChanged || pathDestinationMoved || pathIntervalExpired)
                 {
+                    string requestReason = worldPathRequestId > 0 && worldPathRequested < 0
+                                               ? "recovery-invalidated"
+                                               : pathGraphChanged ? "graph-changed"
+                                               : pathDestinationMoved ? "destination-moved" : "interval-expired";
                     coordinator.r.world.navigationHull = player.hullClassification.ToString();
                     coordinator.r.world.navigationJumpHeight =
                         player.maxJumpHeight.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
@@ -2517,6 +2555,8 @@ public sealed partial class PortSession
                     }
                     worldPathTarget = routeDestination;
                     worldPathRequested = elapsed;
+                    worldPathRequestId++;
+                    worldPathRequestReason = requestReason;
                 }
                 coordinator.worldPathFollower.UpdatePosition(position);
                 var next = coordinator.worldPathFollower.GetNextPosition();
@@ -2632,6 +2672,7 @@ public sealed partial class PortSession
                 worldNavigationRecoveryUntil = elapsed + 3;
                 coordinator.r.world.navigationRecoveries++;
                 worldPathRequested = -100;
+                worldPathRequestReason = "recovery-invalidated";
             }
         }
         public bool FindSourceWorldApproach(CharacterBody player, RoR2.Navigation.NodeGraph graph, RoR2.Path path, Vector3 position,

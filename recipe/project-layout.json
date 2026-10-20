@@ -71,6 +71,7 @@
     "runtime/input/NovaThirdPersonView.cs": "a0979b7433378447e92dfa06c70fbe8f",
     "runtime/input/OfflineSettingsBoundary.cs": "fa7cfe85111b94105bcfe7779fa9dc46",
     "runtime/input/SirenEggDiagnosticInput.cs": "f28bff1bb7bf54141a177979135ba7c9",
+    "runtime/input/SirenNavigationObservation.cs": null,
     "runtime/input/SurvivorSkillInputCoverage.cs": "93644143347274ff0a0f1bae1f1d9fbd",
     "runtime/presentation/MoonPillarPresentation.cs": "d7661005d5f4a476aaf4faf65285d735",
     "runtime/presentation/RecoveredHudBoundary.cs": "e1a53a7a1d7ac4242a3570e625e5ba7e",

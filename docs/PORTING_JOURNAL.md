@@ -18097,3 +18097,62 @@ may pass control. The host-reviewed private candidate is
 its native build and runtime gates remain closed. Current game source/GUIDs
 and R8/R9 membership are unchanged by this experiment. Audio remains
 unavailable in the game; this establishes callback identity, not playback.
+
+
+## J825 — Bind a bounded Siren approach trace to its real input owner
+
+2026-10-20. Hypothesis: J822's distant visible egg plus repeated approach
+recovery cannot distinguish source-path backtracking from input/motor delivery.
+Inspect the community map and pinned DebugToolkit `Code/Util.cs` at
+`d1e2f0aa…` for typed current-user/master/body relationships; do not adopt its
+mutation commands or capture account names. J295–J298 and exact shipped
+PathFollower/LocalNavigator contracts remain the traversal authority. The final
+J822 position is 2.537 m from the first path point, beyond its ordinary 2 m
+threshold; that snapshot does not prove oscillation or justify new tolerances.
+
+Add the world-owned `SirenNavigationObservation` recorder, nested copied report
+and a read-only existing-owner context. Only the explicit assisted Siren path
+can start it, after a stable current egg exceeds the active native tracker
+range and objective stall exceeds six seconds. It captures at most eight
+samples over eight seconds, at most one per second, pairing the previous
+owned bridge request with a later fixed tick. Actual input-bank move vector,
+motor/ground state, body/foot position, source next node/waypoint, movement state
+and real path request ID/reason/time are copied. Labels cap at 64 characters;
+unavailable paths remain unavailable. No gameplay request, navigation cadence,
+tracker range/refresh, aim, jump, sprint, skill, damage or budget changes.
+
+Manual/owner/egg/bridge change, yield, invalid operands, nonmonotonic time,
+terminal stop and disposal close or reset the bounded trace. Host review catches
+and corrects stale pending requests across identity changes, weaker owner gates
+and clock rollback. The public test ships its synthetic C# fixture, so a fresh
+checkout needs no ignored contract file; only a missing pinned compiler skips.
+The named owner is in ARCHITECTURE and the source manifest grows to 108 with a
+null first-import GUID. The recipe audit records authored-code provenance;
+R8/R9 must replay this source and its manifest/layout membership.
+
+This is a minimal Siren gameplay diagnostic exception to alpha's generic
+playtest-tooling ownership. It adds no game UI/control surface and leaves Moon
+manual-only. All seven applied source/manifest/test files match the reviewed
+candidate hashes. Its exact saved-reference compile passes with 108 runtime
+sources, four supports and 264 references. The production recorder host contract
+passes. The first full suite reveals that the pre-existing native-target test
+also needs the newly nested report types; Root includes their actual authored
+declarations and its three existing witness tests pass unchanged in meaning.
+Ruff format/check passes on changed Python tests. The final full suite passes
+all 1,176 tests with the pinned toolchain environment. Its result is retained under `work/coordination/codex-siren-navigation-root-r1/full-host-r2/`.
+
+Private qualification:
+`work/coordination/siren-navigation-advancement-draft/r4/qualification.json`
+`6f403f243b315a543f5b6c7d664909a410b14b7c27d3372a356c7727b0020baf`;
+complete candidate patch
+`b3e7aee99a0eae969a7e2cf147ec9152e56ddd511d9166689057c1b7b762064b`;
+compile/host result
+`cde9020752d123b9128a09c1f8bbbe7b1d95b4e6be89f8be700bbe86c6c92bce`.
+Root applied-source bindings live in
+`work/coordination/codex-siren-navigation-root-r1/production-source-bindings.json`.
+
+This checkpoint has no new Unity build or device evidence. The installed game
+remains accepted `107718f8…`; no trace from this new recorder exists yet. Next
+commit, preflight and build, pass both default checks, qualify the new Siren
+source guard and observe the same bounded original route. Keep native teardown,
+encounter execution and normal-difficulty acceptance open.

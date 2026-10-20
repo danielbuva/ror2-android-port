@@ -1274,3 +1274,17 @@ is inactive and retains native TeamComponent lifecycle ownership. No game
 implementation, serialized content, device data or third-party source is included.
 Authored host tests use a synthetic lifecycle contract and do not extract
 protected methods. J804 records the provenance audit and remaining device gates.
+
+
+### Bounded Siren approach observation (2026-10-20)
+
+`runtime/input/SirenNavigationObservation.cs` is repository-authored diagnostic
+source, listed in `runtime-sources.json` (108 entries). Its layout GUID starts
+null under the documented first-import contract; record Unity's generated GUID
+after import. The owner reads existing source input/motor/path state and stores
+only bounded copied values. It changes no original navigation, targeting,
+damage, entitlement, profile or scene content. The synthetic host fixture and
+public APIs contain no copied game/community implementation. This membership
+and provenance/privacy audit adds no private build input or text replacement;
+R8/R9 must replay the new authored source. J825 records host qualification and
+keeps Unity/device execution unaccepted.
