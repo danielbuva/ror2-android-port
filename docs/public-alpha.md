@@ -1,0 +1,63 @@
+# Public alpha checklist
+
+Open work only. Remove completed items and record their results in the journal.
+The [distribution proposal](ADR-002-public-alpha-distribution.md) awaits the user;
+[ADR-001](ADR-001-port-architecture.md) remains authoritative. This checklist
+makes no alpha-readiness claim.
+
+## Decision and reproducibility
+
+- [ ] User selects the distribution route before launcher/runtime implementation.
+- [ ] Resolve the alpha device's authorized serial and exclusive role; select it
+      explicitly and install only an explicit alpha-built APK.
+- [ ] Complete a public-input bootstrap with no private recipes, inherited
+      workstation-only assets or analysis receipts
+      ([structural blockers](execution-backlog.md#structural-cleanup),
+      [J586](PORTING_JOURNAL.md#j586--r9-rerun-no-new-reimport-errors-one-gate-file-and-one-apk-shader-left)).
+- [ ] Bind builds to committed source, accepted input and toolchain receipts
+      ([J738](PORTING_JOURNAL.md#j738--whole-catalog-builds-stage-only-committed-sources-and-record-the-commit));
+      qualify fresh owner-generated outputs on the alpha device.
+- [ ] Audit public artifacts for game-derived material and separately licensed
+      dependencies; keep all owner-generated content private.
+
+## Packaging and acquisition
+
+- [ ] Decide release package identity, increasing version code, private signing
+      custody and update/rollback policy; prove profile/settings update retention.
+- [ ] Implement approved local-file validation and, if selected, owned-account
+      downloads with Steam Guard, cancellation, secret-safe logs and honest
+      unknown-version refusals. Preserve the source installation.
+- [ ] Keep Steam identity, unavailable services and expansion access truthful
+      ([L5/L9](milestones.md)); record the Steam Cloud inclusion/deferral decision.
+- [ ] Verify fresh capacity, package placement and runtime backing per device
+      ([J595](PORTING_JOURNAL.md#j595--verify-the-scoped-current-nova-path-and-harden-receipt-cleanup),
+      [J755](PORTING_JOURNAL.md#j755--onboard-the-additional-devices-with-separate-storage-ownership-and-roles)).
+
+## Controls, UI and sessions
+
+- [ ] Qualify ordinary physical input, original/native mappings and rebinding;
+      automatic diagnostics do not qualify ordinary control
+      ([J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls)).
+- [ ] Device-test touch movement, aim/camera, skills, equipment, interaction and
+      menus, including pause/resume and held-input release.
+- [ ] Inventory original screens against [subsystem coverage](subsystem-coverage.md);
+      qualify menus, settings persistence and touch/controller navigation.
+- [ ] Qualify end-run confirmation, teardown, results/return-menu and same-process
+      restart with ordinary input ([session owners](ARCHITECTURE.md#ownership)).
+- [ ] Coordinate gameplay/audio/animation prerequisites with the main session;
+      acceptance follows [capability gates](milestones.md), including an
+      unassisted run. Keep Moon/finale manual.
+
+## Stability and playtests
+
+- [ ] Attribute and bound repeated-session managed growth, then qualify a long
+      device series ([open evidence](execution-backlog.md#stability-and-performance)).
+- [ ] Qualify crash/ANR recovery, background/resume, interrupted writes, storage
+      failure, sustained performance and thermals on supported hardware.
+- [ ] Add tokenless feedback from settings: browser issue draft, separate redacted
+      report preview/export and explicit attachment consent. Obtain approval
+      before public issue-template or tracker changes.
+- [ ] Provide a short owner-build/install/playtest checklist with artifact
+      identity, known limits, rollback and consented feedback steps.
+- [ ] Obtain explicit user approval for outward-facing pushes/PRs, releases,
+      repository settings and issue templates after preparing reviewable changes.
