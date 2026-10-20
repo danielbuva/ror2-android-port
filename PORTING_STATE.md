@@ -84,12 +84,13 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   because its pre-Init test message produces no observed callback. Registration
   succeeds; engine playback, capture and through-Term continuity are untested
   there. J810's replacement reaches successful engine Init, then times out
-  waiting for its exact post-Init monitor marker before any bank/event/capture
-  work. Both Terms return and monitor disarm/owned cleanup complete; the failed
+  waiting for its exact post-Init monitor marker after loading adapted Init;
+  Global, event and capture work remain blocked. Both Terms return and monitor
+  disarm/owned cleanup complete; the failed
   fixture is removed and the game APK is untouched. The missing marker's cause
   remains unresolved; exact retained-API inspection separates native marker
-  recording from managed filtering. A bounded service-only measurement follows
-  without relaxing the gate.
+  recording from managed filtering. A bounded serviced wait that also defers
+  Init-bank loading follows without relaxing the gate.
   J627/J640 record the limits of a simple clip fallback.
 - Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.

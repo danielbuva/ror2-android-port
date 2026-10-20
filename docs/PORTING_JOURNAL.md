@@ -17156,8 +17156,9 @@ On the internal-storage Nova, fresh absence, reserve and ownership checks pass.
 The selected library maps, activity is verified, pre-Init registration succeeds
 and the official engine Init succeeds. First failure is
 `post_init_exact_monitor_control_timeout`: the bounded Update window observes
-zero exact marker callbacks. The barrier holds before any bank/event/capture
-work; RenderAudio calls, playing ID and EndOfEvent count remain zero. No Global
+zero exact marker callbacks. The R4 owner has already loaded adapted Init and
+invoked its initialization delegate; Global loading, event posting and capture
+remain blocked. RenderAudio calls, playing ID and EndOfEvent count remain zero. No Global
 event attempt follows this failed negative-control startup. Three cumulative
 native callbacks include two errors and one warning, but the managed callback
 count is zero. Their phases and messages are not identified. The report's
@@ -17177,16 +17178,19 @@ waits before callback/render service. Direct IL inspection of the exact retained
 API confirms its callback-manager helper is a no-op, while the owner's separate
 serializer call sets the managed Error mask. Native exact-marker recording
 precedes that managed filter, so the filter does not explain the missing marker.
-A bounded service-only measurement is the next hypothesis, not a proven fix.
-Preserve the exact marker gate and correct cumulative/event-phase report names. J772/J778/
-J791 and the official serializer remain prior art. Audio is unavailable in the
+A bounded serviced wait that also defers Init-bank loading and the initialization
+delegate is the next candidate. It changes two startup boundaries; a pass cannot
+attribute delivery to servicing alone. Preserve the exact marker gate and correct
+cumulative/event-phase report names. J772/J778/J791 and the official serializer
+remain prior art. Audio is unavailable in the
 game and all five composed-audio gates remain closed.
 
 Evidence: work/coordination/{codex-audio-native-r9-root-r1/,
 audio-r9-native-root-build-plan-draft/,audio-r9-native-elf-audit-draft/,
 audio-r9-unity-root-plan-draft/,audio-r9-unity-root-plan-review/,
 audio-r9-fixture-manifest-generator/,audio-r9-postinit-control-triage/,
-audio-r9-postinit-managed-flow/,audio-r9-raw-api-monitor-contract/}; the native and managed source revisions remain
+audio-r9-postinit-managed-flow/,audio-r9-raw-api-monitor-contract/}; the native
+and managed source revisions remain
 under the J802 triage directories. Player-report SHA-256:
 `1592944a4e6a1989bb255827c9b141eff6ed619786f34caa7bfeec02fc72e0fb`;
 runner result:

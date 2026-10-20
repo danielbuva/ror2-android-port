@@ -274,8 +274,9 @@ conservative latch precedes the actual engine Init attempt; pre-Init registratio
 does not imply callback coverage. An exact native control marker gates bank and
 event work after Init. Both actual Term returns gate disarm; post-Term message
 delivery is explicitly unsupported. J810 records the loaded candidate's missing
-marker and completed cleanup. Per-frame callback/render service before that gate
-is a pending measurement, not an established SDK requirement. The isolated
+marker and completed cleanup. The next candidate services callbacks/rendering
+while waiting and moves Init-bank loading after the marker; neither change is
+an established SDK requirement. The isolated
 stage/build adapter pins the editor instance, current managed sources, historical
 provenance and importer metadata separately; partial reload responses and terminal
 build requests remain preserved. These private support producers are listed in
