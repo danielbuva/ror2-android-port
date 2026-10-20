@@ -19035,3 +19035,56 @@ native source/prior-art reasoning and host contracts once. The new helper’s
 actual first-import authored GUID is recorded in `recipe/project-layout.json`
 for deterministic replay; it adds no runtime change after the frozen APK.
 R8/R9 must replay J838’s authored sources/membership and this layout metadata.
+
+## J841 — Observe native Huntress skin teardown and retain the next-menu timeout
+
+2026-10-20. Hypothesis: J838’s exclusive native inventory owner resolves J835’s
+pre-play refusal while preserving selected skin and owned teardown. Keep J840’s
+frozen APK `8357db8b6ef29f8958c5f4207ad2207f214ee60ae4923cc68f6de55fe55f6770`,
+source `a4664d7`, matching symbols and both-default proof unchanged. Root reviews
+the R6 host runner and corrected Root wrapper before one Main-only attempt;
+all device calls bind the exact frozen APK, whole fresh Root claim, adopted
+storage and absence of other-session leases. No build or install occurs.
+
+The actual attempt is
+`work/experiments/native-source-skin-lifecycle/20261020T220055.108515Z/`, PID
+26150, ordinary selected Huntress, diagnostic invincibility, no damage/transport
+boost and no stage exit. Its capture hook reaches at least 35 seconds of live
+Lakes play. Settings pause and the ordinary end-run action initiate cleanup.
+The runner then times out waiting for the next offline menu under its shared
+observation deadline. Root’s final report is session 2 at body-catalog
+initialization with no error; a healthy returned menu/restart is not observed.
+This is a host stop, not evidence of a native crash or a successful restart.
+
+Preserve the failed runner, raw report/log and sleep evidence under
+`work/coordination/codex-native-skin-device-root-r3/attempts/`.
+A separate fresh guarded read-only collection obtains the completed session-1
+report before another run. It is `complete`, cleanup true, no error/firstFailure,
+37.125458 world seconds and appliedRuns 13. The selected/current native skin
+indexes both remain 0, the original Huntress controller/avatar and initialized
+Animator are recorded, displayDeactivated/ownerDestroyed are true, and
+attached/nativeOwnersActive are false. Five material copies are created and all
+five receive release calls; actual Unity-null material destruction is not
+measured. The same-PID Unity log contains no error. Persisted profile count is
+13 and its complete file hash matches the earlier Root pre-run artifact.
+The current game is stopped, selector absent and display verified asleep;
+no alpha/spare-device action occurs. Completed report, exact raw profile/hash
+and placement/cleanup evidence remain in `post-failure-collection/`.
+`root-classification.json` records the bounded distinctions without changing
+the failed runner’s result.
+
+Root decodes and inspects
+`live-world-35s-before-settings-pause.png`: the weapon is visible while the body
+is largely obscured/absent and a large icon overlaps the model. This single
+Android frame does not establish whether the cause is native visibility,
+an active ability, renderer/material ownership or another presentation issue.
+Earlier Android Huntress captures are not PC authority; no matching local PC
+Huntress capture is available. Investigate source-owned visibility and material
+updates before changing behavior or claiming visual/animation parity.
+
+The native selected-skin and completed owner teardown are directly observed;
+the full runner, healthy restart and visual acceptance remain open. Next retain
+live/completed snapshots before waiting for the next menu so a host timeout
+cannot hide already-written teardown evidence, then address only a demonstrated
+presentation mismatch. No authored runtime or recipe change occurs here;
+J840 remains the default baseline. Moon stays manual and audio remains off.

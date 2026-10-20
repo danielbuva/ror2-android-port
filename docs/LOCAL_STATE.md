@@ -492,10 +492,10 @@ qualification inputs for J828/J835 and the next targeted runs. They are required
 diagnostic support; the game build reads the tracked fixture/runtime sources,
 not these run directories. No game-derived material is public.
 
-`work/coordination/codex-native-skin-device-root-r{1..2}/` and
+`work/coordination/codex-native-skin-device-root-r{1..3}/` and
 `work/coordination/animation-native-skin-runtime-triage/` retain J835's bounded
-runner, strict persisted-profile schema check, failed live attempt and exclusive
-inventory-owner analysis. They are required local diagnostic support and are
+runner, strict persisted-profile schema check, failed live attempt, J841’s
+completed native teardown/host deadline and exclusive inventory-owner analysis. They are required local diagnostic support and are
 not game build inputs.
 
 ### Isolated Wwise diagnostic inputs
