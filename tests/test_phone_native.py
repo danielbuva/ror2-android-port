@@ -5,11 +5,37 @@ import shlex
 import tempfile
 import unittest
 from unittest.mock import patch
+import zipfile
 
-from phone_native import build, command_arguments, compiler_arguments, lump_includes, path_argument, reuse_objects
+from phone_bundle import make_bundle
+from phone_content import stage as stage_content
+from phone_native import build, command_arguments, compiler_arguments, fixture_request, lump_includes, path_argument, reuse_objects
+from tests.test_phone_apk import manifest
 
 
 class PhoneNativeTests(unittest.TestCase):
+    def test_shared_fixture_guard_binds_actual_authored_sources_not_only_the_receipt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            work = Path(temporary).resolve() / "work"
+            project = work / "rebuild/phone-content/authored/project"
+            stage_content(project)
+            apk = project.parent / "fixture.apk"
+            with zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr("AndroidManifest.xml", manifest())
+                archive.writestr("assets/phone-fixture.bundle", make_bundle())
+            value = {"project": str(project), "apk": str(apk), "sha256": hashlib.sha256(apk.read_bytes()).hexdigest()}
+            request = work / "request.json"
+            request.write_text(json.dumps(value))
+            with patch("common.WORK", work):
+                self.assertEqual(fixture_request(request), (value, project))
+                request.write_text(json.dumps(value | {"unknown": {}}))
+                with self.assertRaisesRegex(ValueError, "Expected explicit"):
+                    fixture_request(request)
+                request.write_text(json.dumps(value))
+                (project / "Assets/ContentFixture.cs").write_text("unrecorded source change")
+                with self.assertRaisesRegex(ValueError, "Staged fixture source drift"):
+                    fixture_request(request)
+
     def test_lump_regeneration_preserves_order_and_refuses_extra_directives(self):
         node = {"WriteTextFilePayload": '// generated\n#include "second.cpp"\n#include "first.cpp"\n', "FilesThatMightBeIncluded": ["first.cpp", "second.cpp"]}
         self.assertEqual(lump_includes(node), ["second.cpp", "first.cpp"])
