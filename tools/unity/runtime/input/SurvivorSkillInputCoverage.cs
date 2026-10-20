@@ -366,13 +366,26 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             toolbotSkillComponents[4] == null || body.skillLocator.primary != toolbotSkillComponents[0] ||
             body.skillLocator.secondary != toolbotSkillComponents[2] || body.skillLocator.special != toolbotSkillComponents[4])
             throw new ArgumentException("Toolbot auxiliary primary or native special component is missing or ambiguous");
-        if (!ToolbotSelectedComponentMatches(0, "ToolbotBodyPrimary1", "ToolbotBodyFireNailgun", 141, 0, 195) ||
-            !ToolbotSelectedComponentMatches(1, "ToolbotBodyPrimary2", "ToolbotBodyFireBuzzsaw", 142, 3, 193) ||
-            !ToolbotSelectedComponentMatches(4, "ToolbotBodySpecialFamily", "ToolbotDualWield", 144, 1, 201) ||
-            !toolbotSkillComponents[0].skillDef || ((ScriptableObject)toolbotSkillComponents[0].skillDef).name != "ToolbotBodyFireNailgun" ||
-            !toolbotSkillComponents[1].skillDef || ((ScriptableObject)toolbotSkillComponents[1].skillDef).name != "ToolbotBodyFireBuzzsaw" ||
-            !toolbotSkillComponents[4].skillDef || ((ScriptableObject)toolbotSkillComponents[4].skillDef).name != "ToolbotDualWield")
-            throw new ArgumentException("Toolbot offhand diagnostic requires the exact selected Buzzsaw and Dual Wield native variants");
+        bool primarySelected = ToolbotSelectedComponentMatches(
+            0, "ToolbotBodyPrimary1", "ToolbotBodyFireNailgun", 141, 0, 195);
+        bool buzzsawSelected = ToolbotSelectedComponentMatches(
+            1, "ToolbotBodyPrimary2", "ToolbotBodyFireBuzzsaw", 142, 3, 193);
+        bool dualWieldSelected = ToolbotSelectedComponentMatches(
+            4, "ToolbotBodySpecialFamily", "ToolbotDualWield", 144, 1, 201);
+        bool primaryDefinition = toolbotSkillComponents[0].skillDef &&
+            ((ScriptableObject)toolbotSkillComponents[0].skillDef).name == "ToolbotBodyFireNailgun";
+        bool buzzsawDefinition = toolbotSkillComponents[1].skillDef &&
+            ((ScriptableObject)toolbotSkillComponents[1].skillDef).name == "ToolbotBodyFireBuzzsaw";
+        bool dualWieldDefinition = toolbotSkillComponents[4].skillDef &&
+            ((ScriptableObject)toolbotSkillComponents[4].skillDef).name == "ToolbotDualWield";
+        if (!primarySelected || !buzzsawSelected || !dualWieldSelected ||
+            !primaryDefinition || !buzzsawDefinition || !dualWieldDefinition)
+            throw new ArgumentException("Toolbot offhand selected-identity refusal: " +
+                "primarySelected=" + primarySelected + ", buzzsawSelected=" + buzzsawSelected +
+                ", dualWieldSelected=" + dualWieldSelected + ", primaryDefinition=" + primaryDefinition +
+                ", buzzsawDefinition=" + buzzsawDefinition + ", dualWieldDefinition=" + dualWieldDefinition +
+                "; " + DescribeToolbotComponent(0) + "; " + DescribeToolbotComponent(1) +
+                "; " + DescribeToolbotComponent(4));
         var primary = toolbotSkillComponents[0];
         if (!primary || !primary.skillDef || ((ScriptableObject)primary.skillDef).name != "ToolbotBodyFireNailgun")
             throw new ArgumentException("Toolbot offhand diagnostic requires the retained Nailgun primary");
@@ -380,6 +393,29 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         toolbotPhaseEnteredAt = float.NaN;
         report.toolbotOffhandPhase = 0;
         report.toolbotOffhandOutcome = "waiting-for-owned-live-diagnostic-input";
+    }
+
+    string DescribeToolbotComponent(int componentIndex)
+    {
+        var skill = toolbotSkillComponents != null && componentIndex >= 0 &&
+                    componentIndex < toolbotSkillComponents.Length
+            ? toolbotSkillComponents[componentIndex] : null;
+        var inventory = observed != null ? observed.skillVariantInventory : null;
+        var rows = inventory != null ? inventory.components : null;
+        var row = rows != null && componentIndex >= 0 && componentIndex < rows.Length
+            ? rows[componentIndex] : null;
+        string familyName = skill && skill.skillFamily ? skill.skillFamily.name : "";
+        string familyCatalogIndex = skill && skill.skillFamily ? skill.skillFamily.catalogIndex.ToString() : "missing";
+        string definitionName = skill && skill.skillDef ? ((ScriptableObject)skill.skillDef).name : "";
+        string definitionIndex = skill && skill.skillDef ? skill.skillDef.skillIndex.ToString() : "missing";
+        string serializedSkillName = skill ? (skill.skillName ?? "") : "";
+        return "component[" + componentIndex + "]{genericSkillName=" + serializedSkillName +
+               ",familyName=" + familyName + ",familyCatalogIndex=" + familyCatalogIndex +
+               ",skillDefName=" + definitionName + ",skillDefIndex=" + definitionIndex +
+               ",selectedVariant=" + (row != null ? row.selectedLoadoutVariantIndex.ToString() : "missing") +
+               ",selectedSkillIndex=" + (row != null ? row.selectedLoadoutSkillCatalogIndex.ToString() : "missing") +
+               ",runtimeSkillIndex=" + (row != null ? row.runtimeSkillCatalogIndex.ToString() : "missing") +
+               ",runtimeStatus=" + (row != null ? (row.runtimeDefinitionStatus ?? "") : "missing") + "}";
     }
 
     bool ToolbotSelectedComponentMatches(int componentIndex, string familyName, string skillName,

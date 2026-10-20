@@ -1234,3 +1234,9 @@ Rewired pins remain in place. Host collaborators and guard checks are authored.
 R8 stages the changed sources through its existing generator; no new GUID,
 content selector, protected input or private build dependency is introduced.
 Reviewed 2026-10-19; host results and device limits are recorded in J757.
+
+J758 extends the existing MUL-T owner's refusal with minimum family/SkillDef
+and selected-row identity observations. These authored diagnostic strings copy
+no original implementation or serialized data, retain every acceptance guard,
+and add no content input. Runtime results and raw evidence remain ignored;
+R8 reproduces the source change through its existing staging step.

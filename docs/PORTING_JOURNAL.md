@@ -13963,3 +13963,56 @@ unaccepted. This changes R8 authored-source staging through the existing
 generator, adds no file/GUID/private build input and leaves source game assets
 and the Moon pause untouched. Recipe provenance/privacy review is recorded in
 recipe/README.md.
+
+## J758 — Accept default controls while preserving the MUL-T identity refusal
+
+Build J754's committed source ba5aff74bb56316756dc98fec9124b98f4c2dee5
+after host preflight, with the mandatory serialized Unity build lock. Exact
+Unity 2021.3.45f2 IL2CPP ARM64 Vulkan code build succeeds in 233.363690 seconds
+with zero errors. All 247 frozen authored/toolchain/recipe inputs remain equal
+to the committed bytes, and all 266 actual payload hashes plus the build receipt
+match J752. APK:
+aabf41ab5ece8a34d9ac4b70946dad5d8b827baa40e4dd927afd98e6ff15deee.
+Preserve the frozen APK, receipt, source snapshot and payload comparison at
+work/experiments/toolbot-offhand/candidate-20261020T043145.752213Z/.
+
+Install in place and synchronize through the canonical selected-device paths
+on both Novas, retaining their separate adopted/internal placement receipts.
+The adopted Nova passes both defaults: 35.188507 seconds on Lakes, then exactly
+one exit to Goolake and 10.229004 seconds there (151.089066 world seconds).
+Applied runs remains 13. Root independently verifies empty report firstFailure/
+error and empty current-process runtime errors; native lifecycle diagnostics
+remain off. This APK is accepted for default baseline controls. Evidence:
+work/experiments/baseline/20261020T043259.504349Z/ and
+20261020T043647.693280Z/; Root validation is
+work/coordination/codex-aabf-baseline-root-validation.json.
+
+The parallel internal-Nova MUL-T case correctly refuses in
+CaptureToolbotOffhandIdentity before any diagnostic pulse or native stance
+transition. Live native-master-loadout inventory has the expected five rows
+and matching selected/runtime tuples: component 0 family 141/variant 0/skill 195;
+component 1 family 142/variant 3/skill 193; component 4 family 144/variant 1/skill
+201. The combined exception does not reveal which live family/SkillDef predicate
+is false. GenericSkill.skillName is a separate serialized label: component 1's
+FireSpear label is not evidence that selected Buzzsaw failed. No activation,
+FireBuzzsaw, offhand output or damage is accepted. Preserve the first failure at
+work/experiments/survivor-check/20261020T043242.238848Z/Toolbot/.
+
+Prior art remains pinned R2API.LoadoutAPI and exact accepted native Toolbot
+state/loadout sources. Integrate only reviewed refusal diagnostics: name each
+of the six existing boolean predicates and describe live family/catalog,
+SkillDef/index, serialized label and selected/runtime rows. Every acceptance
+predicate and early body/component guard remains unchanged; no substitute
+definition, direct state/stock/cooldown write or guessed name repair. Exact-
+reference offline compilation succeeds (one added diagnostic-only allocation
+warning); independent review is clear. The existing host source assertion now
+allows whitespace between the same exact call arguments. Device diagnosis
+requires a fresh build and bounded retry. The complete host suite passes
+1,046 tests with one environment-dependent skip in 49.779 seconds.
+
+Private triage/review: work/coordination/toolbot-offhand-identity-triage/.
+Baseline and failed-case finally blocks stop their owned package and sleep
+the selected screens. Thor retains J752's APK. J757's portable input source
+and this diagnostic amendment are not in the accepted aabf41ab APK. They change
+existing R8 authored inputs only, with no new local build dependency. Ordinary
+difficulty, complete ability semantics, audio and performance remain open.
