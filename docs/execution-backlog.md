@@ -21,9 +21,9 @@ result in the journal.
 - [ ] Identify the intermittent LightningStake nonfinite transition across projectile
       identity turnover; retain native elite behavior while collecting evidence (J667).
 - [ ] Play the nine staged DLC scenes once a truthful expansion-availability path exists (J488).
-- [ ] Complete Siren's source controller/toggle/spawn lifecycle and exact egg
-      retirement ownership before native listener registration (J723), then validate
-      boss start/defeat, rewards, disabled MapZones and stage teardown.
+- [ ] Resolve native Siren egg targeting/interaction after source entry and exact
+      Listening registration (J812); validate boss start/defeat, rewards, disabled
+      MapZones, exact egg retirement and stage teardown.
 - [ ] Moon/finale/escape: manual sessions only, never navigated autonomously.
 
 ## Stability and performance

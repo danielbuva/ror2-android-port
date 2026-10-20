@@ -17267,3 +17267,72 @@ compile receipt:
 The named owner and contract live in ARCHITECTURE. No runtime file, GUID or
 required local game input is added. R8 must restage the two changed authored
 runtime sources; the accepted APK and executable rollbacks remain unchanged.
+
+## J812 — Observe active Huntress tracking without native Siren egg selection
+
+Date: 2026-10-20. Hypothesis: J807's visible-egg input policy and J808's
+source-enabled tracker restoration can admit ordinary native Huntress targeting
+and Siren encounter start on J809's accepted player. The existing 180-second
+input budget and pre-Moon transport hold remain unchanged.
+
+Root qualifies the exact f94 source and APK
+`4c37596cd5828047a5cb19bc2df8c5c6913333cce01104d3f0b1e4bf748dccb9`.
+The frozen guard pack binds both fresh default controls, the 1,152-test source
+checkpoint, thirteen helper contracts and the saved 264-reference snippet
+compile. Its fresh exact-editor fixture passes all input-sink assertions with
+nativeSkillExecutionTested=false. Root separately accepts the source/input guard,
+not native skills or Moon progression, then verifies the strict route adapter's
+candidate/control identities and seven host refusal/readback contracts. The
+adapter changes frozen pins, explicit host-log paths and current-build before/
+after hash validation; route, timeout, selector and cleanup behavior are unchanged.
+
+The adopted-storage Nova completes three assisted natural transitions to Ship
+Graveyard. The source controller drains its queues, maps twelve eggs bijectively
+and registers those same twelve native network identities with the original
+Listening state. The native Huntress tracker is available, enabled and active
+through all 9,314 samples; disabled/inactive counts are zero. Its observed
+configuration is 60 units, 30 degrees and 10 Hz. Ordinary primary input is
+requested for 8,879 fixed ticks, so J803's blocked-aim-only observation is no
+longer the complete account of the current failure.
+
+No cached native target matches the selected egg. There are 61 identified
+mismatch samples, one destroyed-target sample and 9,252 null-target samples.
+The first cached target's identity is outside the twelve registered egg IDs;
+its concrete body type is not established by that fact. The selected egg and
+the native target are separate observations. Stale distance/dot values whose
+availability flags are false do not establish current native target geometry.
+The source observer repeatedly reports twelve egg bodies; this is not proof
+that all twelve remain alive. No encounter start or exact boss identity is
+observed. First failure is the bounded native-continuation timeout, with the
+last player lease observation at 177.971893 s and 722.587 s total host time.
+
+The source report has cleanup=false and both Siren teardown witnesses false.
+Source/encounter teardown is therefore unobserved, not accepted. The host
+finally removes the selector, force-stops the owned app and sleeps the display
+with no cleanup error; applied runs remain 13. No fourth transition or Moon
+navigation occurs. Root views the Siren-entry capture as composition evidence;
+it is not an egg-hit witness or matched PC visual comparison.
+
+Next isolate exact native search eligibility, egg HurtBox/registry lifecycle and
+aim geometry from current-input source plus the frozen report. An active tracker
+alone does not justify a team-mask change, target override, direct egg damage or
+larger input budget. Prior art remains J807/J808 and the pinned community/native
+ownership seams recorded there. Keep the exact registered-egg set authoritative.
+
+Evidence: work/experiments/siren-native-continuation/20261020T164747.284021Z/;
+work/coordination/{siren-4c37-guard-qualification/,siren-4c37-dispatch-prep/,
+codex-siren-4c37-continuation-root-r1/}. Accepted guard receipt SHA-256:
+`e84a80ac3631fdbfe110ee51ccf55419bfe66649403b22beea74a3111e93d0e0`;
+exact-editor result:
+`0979adfecdad9741390f2511671530cc914bdc630331f6af1ac4d2f0b234c99f`.
+Summary SHA-256:
+`51240ad64606dafac67f0f67bcfeb2f775b9afa3c4ce46c47b54efb61e8098a4`;
+final report/first failure:
+`3a99fbaf98731f21419cb7cd2ed9c96bc9eba16df3c2937816b2e14dedd3d3ac`;
+Siren-entry report:
+`2cd0a0247e28fe91ec2025fe281e9b5bc30da353c4a9c4b8335f0c77e84891d0`;
+host cleanup:
+`50f79eb8d6dbbf42b7c9747dc4a00ec66e9362c6d3869576f428714dec0e1016`.
+No source, runtime file, required local build input or R8 replay step changes.
+The separate J811 diagnostic candidate is being default-qualified on Thor;
+this result concerns only the frozen accepted 4c37 player.
