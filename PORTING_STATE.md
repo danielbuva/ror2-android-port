@@ -1,7 +1,7 @@
 # Porting state
 
-Last updated 2026-10-20 after **J809** (J807/J808 are now in the accepted
-player; targeted native skill, tracker and Siren gates remain open).
+Last updated 2026-10-20 after **J810** (J809's game baseline is unchanged;
+the isolated audio monitor gate fails after Init and cleans up completely).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -83,8 +83,13 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   native monitor/capture library in a fresh player, then fails before engine Init
   because its pre-Init test message produces no observed callback. Registration
   succeeds; engine playback, capture and through-Term continuity are untested
-  there. The failed fixture is removed and the game APK is untouched. The next
-  contract separates registration from correlated post-Init callback delivery.
+  there. J810's replacement reaches successful engine Init, then times out
+  waiting for its exact post-Init monitor marker before any bank/event/capture
+  work. Both Terms return and monitor disarm/owned cleanup complete; the failed
+  fixture is removed and the game APK is untouched. The missing marker's cause
+  remains unresolved; exact retained-API inspection separates native marker
+  recording from managed filtering. A bounded service-only measurement follows
+  without relaxing the gate.
   J627/J640 record the limits of a simple clip fallback.
 - Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.

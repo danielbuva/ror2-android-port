@@ -269,6 +269,18 @@ return witnesses and disarm state; its injected API is a host contract seam,
 not native callback evidence. First failure and uncertain outcomes remain
 visible through owner teardown.
 
+The next private monitor protocol uses schema 3 with 24 snapshot slots. A
+conservative latch precedes the actual engine Init attempt; pre-Init registration
+does not imply callback coverage. An exact native control marker gates bank and
+event work after Init. Both actual Term returns gate disarm; post-Term message
+delivery is explicitly unsupported. J810 records the loaded candidate's missing
+marker and completed cleanup. Per-frame callback/render service before that gate
+is a pending measurement, not an established SDK requirement. The isolated
+stage/build adapter pins the editor instance, current managed sources, historical
+provenance and importer metadata separately; partial reload responses and terminal
+build requests remain preserved. These private support producers are listed in
+LOCAL_STATE and do not enable audio in the game.
+
 `tools/wwise-android-abi/generate.py` is a current, explicitly invoked host
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the
 exact policy-bound accepted managed API, authorized local Wwise Android

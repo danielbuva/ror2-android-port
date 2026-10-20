@@ -17117,3 +17117,82 @@ Prior art and replay scope remain J807/J808: the current native component
 lifecycle, exact source prefab and pinned community ownership/population seams.
 No runtime source, GUID or build-input membership changes in this acceptance
 checkpoint. Preserve J805 and all listed executable rollbacks.
+
+## J810 — Initialize the revised audio fixture, then refuse its missing monitor marker
+
+Date: 2026-10-20. Hypothesis: separating pre-Init registration from observed
+post-Init callback delivery can preserve strict monitor ownership through both
+Terms without J802's unsupported pre-Init message assumption. An exact marker
+must pass before the negative event control, followed by a separate original
+Global-event attempt.
+
+The private native revision retains the full-width output identity and uses
+snapshot schema 3 with 24 slots: exact control callbacks and the conservative
+Init-attempt latch have separate fields. It does not claim pre-Init callback
+coverage or post-Term message support. Root builds the pinned authorized source
+with isolated NDK r25c; Unity retains r21. Native SHA-256:
+`ff07e292a6fcd012322d0013148864dab2472d498f85d9f764d1b37c24790281`.
+The ELF audit resolves all 182 imports, seven dependencies, 1,280 managed
+exports and twelve diagnostic exports. This is a static binary contract only.
+The reviewed managed R4 owner/lease preserves actual Term return witnesses and
+retains uncertain native outcomes. Its eighteen host contracts and saved
+202-reference compile pass; Root's exact-instance guard adds four passing
+contracts and routes every build action to the isolated editor.
+
+Root stages the exact current sources and native library while preserving all
+46 importer metadata files. The fixture manifest retains historical provenance
+separately from the current managed manifest; neither is relabelled as the
+other. Earlier readiness syntax, refresh-response, package-response and frozen
+input refusals remain preserved. Root reconciles the actual compiled source,
+single package change and terminal build request instead of repeating unknown
+actions. Request `376b9ba900e04f1a99878079114af54a` succeeds in 35.681755 s with
+zero errors and five warnings; all 129 frozen inputs match. APK SHA-256:
+`4815e9b28fe0a76e0bdd90eea07942a8bb2bc35cfd3c473ca198d4a19cc81d35`.
+Host APK checks bind the exact library, managed closure, J744-adapted Init and
+unchanged Global before device access. Build-freeze SHA-256:
+`691491caf1e7351fe76876d2621e41da1867488d3ec385fb9271f22c70f38a1c`.
+
+On the internal-storage Nova, fresh absence, reserve and ownership checks pass.
+The selected library maps, activity is verified, pre-Init registration succeeds
+and the official engine Init succeeds. First failure is
+`post_init_exact_monitor_control_timeout`: the bounded Update window observes
+zero exact marker callbacks. The barrier holds before any bank/event/capture
+work; RenderAudio calls, playing ID and EndOfEvent count remain zero. No Global
+event attempt follows this failed negative-control startup. Three cumulative
+native callbacks include two errors and one warning, but the managed callback
+count is zero. Their phases and messages are not identified. The report's
+`postEventNativeErrorCount=2` is actually the latest cumulative snapshot;
+it does not show post-event errors because that phase was never reached.
+
+Both actual engine and callback-manager Terms return, monitor disarm completes,
+owned cleanup is complete and the native outcome is known. The host removes
+only the newly owned fixture, records no cleanup errors or Android runtime
+fatal, and sleeps the display. Complete cleanup does not qualify monitor
+coverage. The game installation and J809 baseline remain unchanged.
+
+Official SDK header/source and read-only Profile-library inspection establish
+an asynchronous PostString queue that reaches local output, without a delivery
+deadline or a demonstrated Unity-service requirement. Managed Update currently
+waits before callback/render service. Direct IL inspection of the exact retained
+API confirms its callback-manager helper is a no-op, while the owner's separate
+serializer call sets the managed Error mask. Native exact-marker recording
+precedes that managed filter, so the filter does not explain the missing marker.
+A bounded service-only measurement is the next hypothesis, not a proven fix.
+Preserve the exact marker gate and correct cumulative/event-phase report names. J772/J778/
+J791 and the official serializer remain prior art. Audio is unavailable in the
+game and all five composed-audio gates remain closed.
+
+Evidence: work/coordination/{codex-audio-native-r9-root-r1/,
+audio-r9-native-root-build-plan-draft/,audio-r9-native-elf-audit-draft/,
+audio-r9-unity-root-plan-draft/,audio-r9-unity-root-plan-review/,
+audio-r9-fixture-manifest-generator/,audio-r9-postinit-control-triage/,
+audio-r9-postinit-managed-flow/,audio-r9-raw-api-monitor-contract/}; the native and managed source revisions remain
+under the J802 triage directories. Player-report SHA-256:
+`1592944a4e6a1989bb255827c9b141eff6ed619786f34caa7bfeec02fc72e0fb`;
+runner result:
+`3031ac0c35e947c4c909ce3fad3d960d3f57fed938166814e9bd819ef6f6ed9e`.
+Root's new classification binds the selected-device evidence path and all
+earlier immutable receipts; its SHA-256 is
+`94f222d34ef95603471feadb78b0b64d7b1b995f9ff1d0d40ca3bd8272b6b7bb`.
+LOCAL_STATE lists the required private support producers. No public runtime,
+default audio transform, recipe or R8 replay input changes here.
