@@ -109,6 +109,7 @@ def stage(project, destination, editor, android):
         if source.is_file():
             shutil.copy2(source, destination / "ndk/sysroot" / arch / source.name)
     shutil.copy2(android / "NDK/toolchains/llvm/prebuilt/darwin-x86_64/lib/gcc/aarch64-linux-android/4.9.x/libgcc.a", destination / "ndk/libgcc.a")
+    shutil.copy2(android / "NDK/toolchains/llvm/prebuilt/darwin-x86_64/lib/gcc/aarch64-linux-android/4.9.x/libgcc_real.a", destination / "ndk/libgcc_real.a")
     baseline = android / "Variations/il2cpp/Development/StaticLibs/arm64-v8a/baselib.a"
     target = destination / path_argument(str(baseline), roots)["path"]
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -218,7 +219,7 @@ def compiler_arguments(stage_root, tool_root, output_root, arguments, *, link=Fa
     ]
     if link or "-std=c++11" in arguments:
         argv += ["-nostdinc++", "-isystem", str(stage_root / "ndk/sysroot/usr/include/c++/v1")]
-    argv += [render(item) for item in arguments if item != "-fuse-ld=bfd"]
+    argv += [render(item) for item in arguments if item != "-fuse-ld=bfd" and not (link and item == "-static-libstdc++")]
     if link:
         arch = stage_root / "ndk/sysroot/usr/lib/aarch64-linux-android"
         argv += [
@@ -226,6 +227,7 @@ def compiler_arguments(stage_root, tool_root, output_root, arguments, *, link=Fa
             "-B" + str(arch / "22"),
             "-L" + str(arch / "22"),
             "-L" + str(arch),
+            "-L" + str(stage_root / "ndk"),
             "-nostdlib++",
             "--unwindlib=none",
             str(arch / "libc++_static.a"),
@@ -245,7 +247,7 @@ def reuse_objects(stage_root, tool_root, output_root, request):
     new_manifest = json.loads((stage_root / "input-manifest.json").read_text())
     if result["input_manifest_sha256"] != hashlib.sha256((old_stage / "input-manifest.json").read_bytes()).hexdigest():
         raise ValueError("Prior native manifest drift")
-    metadata = {"plan.json", "phone_native.py", "ndk/libgcc.a"}
+    metadata = {"plan.json", "phone_native.py", "ndk/libgcc.a", "ndk/libgcc_real.a"}
     if {k: v for k, v in old_manifest.items() if k not in metadata} != {k: v for k, v in new_manifest.items() if k not in metadata}:
         raise ValueError("Native source/target inputs differ; recompile")
     plan = json.loads((stage_root / "plan.json").read_text())
@@ -321,7 +323,7 @@ def build(stage_root, tool_root, output_root, reuse_request=None):
         result["failure"] = str(error)
     finally:
         save()
-    print(json.dumps({key: value for key, value in result.items() if key != "commands"}))
+    print(json.dumps({key: value for key, value in result.items() if key not in {"commands", "reused_objects"}}))
     return result["success"]
 
 
