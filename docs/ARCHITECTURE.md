@@ -1246,6 +1246,20 @@ and certifies no leak fix. It binds only an explicit owned APK hash, refuses a
 `--target`, and keeps evidence under `work/device/<serial>/experiments/session-memory/`.
 Host contracts: `tests/test_session_memory_check.py`.
 
+`session-memory-root-check` is the same runner with the launch selector's
+`diagnosticCompletedRootWalk` flag. `SessionResourceBoundary` reads only that
+flag (and the attempt) from the selector itself. At each later
+`before-presentation` sample, outside live gameplay, it runs the Unity-free
+`CompletedSessionRootWalk` over static fields of every loaded type plus live
+`MonoBehaviour`/`ScriptableObject` objects as named roots. The walk is a bounded
+(1,000,000 objects) breadth-first, read-only field/array/delegate-target walk
+that skips weak references and reflection metadata. It records up to 16
+shortest paths to completed probes/reports, its node count, truncation and read
+failures in the sample. Reading an uninitialized static field can run that
+type's static constructor, so this mode is diagnostic only and stays off by
+default. Host contract: `tests/test_completed_session_root_walk.py` compiles
+the production block with the pinned Mono/Roslyn.
+
 `AndroidProfileSession` also owns the exact native timed-chest `Opening.onOpened`
 subscription. That event has no sender or chest identity; it is recorded as a
 global native observation for the sole owned offline profile. Setup captures

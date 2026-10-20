@@ -209,5 +209,6 @@
     "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_cleanup_check.check_session_cleanup\"\n}\n",
     "exit": null
   },
-  "session-memory-check": {"calls": [{"module": "session_memory_check", "function": "check_session_memory", "args": [], "kwargs": {}}], "effects": [], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_memory_check.check_session_memory\"\n}\n", "exit": null}
+  "session-memory-check": {"calls": [{"module": "session_memory_check", "function": "check_session_memory", "args": [], "kwargs": {}}], "effects": [], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_memory_check.check_session_memory\"\n}\n", "exit": null},
+  "session-memory-root-check": {"calls": [{"module": "session_memory_check", "function": "check_session_memory", "args": [], "kwargs": {"root_walk": true}}], "effects": [], "stdout": "{\n  \"equal\": true,\n  \"synthetic\": \"session_memory_check.check_session_memory\"\n}\n", "exit": null}
 }

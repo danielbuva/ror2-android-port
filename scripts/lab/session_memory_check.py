@@ -41,11 +41,34 @@ MIN_SESSIONS = 3
 MAX_SESSIONS = 8
 SESSION_BUDGET_SECONDS = 300
 SAMPLE_FIELDS = (
-    "phase", "seconds", "allocated", "reserved", "managed", "managedTotal", "collections",
-    "trackedCompletedSessions", "liveCompletedProbes", "liveCompletedReports",
-    "materials", "textures", "shaders", "gameObjects", "bundles",
-    "catalogGenerations", "catalogLocatorsAlive", "catalogManifestsAlive", "activeLocators",
+    "phase",
+    "seconds",
+    "allocated",
+    "reserved",
+    "managed",
+    "managedTotal",
+    "collections",
+    "trackedCompletedSessions",
+    "liveCompletedProbes",
+    "liveCompletedReports",
+    "materials",
+    "textures",
+    "shaders",
+    "gameObjects",
+    "bundles",
+    "catalogGenerations",
+    "catalogLocatorsAlive",
+    "catalogManifestsAlive",
+    "activeLocators",
     "detachedCatalogOperations",
+    "rootWalkRan",
+    "rootWalkTruncated",
+    "rootWalkNodes",
+    "rootWalkRoots",
+    "rootWalkReadFailures",
+    "rootWalkSeconds",
+    "rootWalkPaths",
+    "rootWalkFailureSamples",
 )
 WAITING = (
     "live world report is shorter than the 60 second observation interval",
@@ -96,17 +119,20 @@ def growth_summary(sessions):
     rows = []
     for entry in sessions:
         samples = entry.get("samples") or []
-        rows.append({
-            "session": entry["session"],
-            "managed_after_collection": _phase_value(samples, "completed-after-managed-collection", "managed"),
-            "reserved_after_collection": _phase_value(samples, "completed-after-managed-collection", "reserved"),
-            "game_objects_after_reclaim": _phase_value(samples, "completed-after-reclaim", "gameObjects"),
-            "textures_after_reclaim": _phase_value(samples, "completed-after-reclaim", "textures"),
-            "bundles_after_reclaim": _phase_value(samples, "completed-after-reclaim", "bundles"),
-            "live_completed_probes_at_start": _phase_value(samples, "before-presentation", "liveCompletedProbes"),
-            "managed_at_start": _phase_value(samples, "before-presentation", "managed"),
-            "menu_pss_kib": entry.get("menu_pss_kib"),
-        })
+        rows.append(
+            {
+                "session": entry["session"],
+                "managed_after_collection": _phase_value(samples, "completed-after-managed-collection", "managed"),
+                "reserved_after_collection": _phase_value(samples, "completed-after-managed-collection", "reserved"),
+                "game_objects_after_reclaim": _phase_value(samples, "completed-after-reclaim", "gameObjects"),
+                "textures_after_reclaim": _phase_value(samples, "completed-after-reclaim", "textures"),
+                "bundles_after_reclaim": _phase_value(samples, "completed-after-reclaim", "bundles"),
+                "live_completed_probes_at_start": _phase_value(samples, "before-presentation", "liveCompletedProbes"),
+                "managed_at_start": _phase_value(samples, "before-presentation", "managed"),
+                "menu_pss_kib": entry.get("menu_pss_kib"),
+                "root_walk_paths_at_start": _phase_value(samples, "before-presentation", "rootWalkPaths"),
+            }
+        )
 
     def slope(key):
         # Exclude session 1, whose first collection includes one-time warmup.
@@ -130,7 +156,7 @@ def growth_summary(sessions):
     }
 
 
-def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None):
+def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, root_walk=False):
     if type(sessions) is not int or not MIN_SESSIONS <= sessions <= MAX_SESSIONS:
         raise ValueError("Use %d to %d sessions" % (MIN_SESSIONS, MAX_SESSIONS))
     survivor = DEFAULT_SURVIVOR
@@ -159,12 +185,14 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None):
     out = device.evidence_directory("experiments", "session-memory", now())
     out.mkdir(parents=True, exist_ok=False)
     value = selection(attempt, survivor)
-    value["debugOptions"]["purpose"] = (
-        "Repeated UI-abandon sessions for resource observation; automatic input is diagnostic and assisted"
-    )
+    value["debugOptions"]["purpose"] = "Repeated UI-abandon sessions for resource observation; automatic input is diagnostic and assisted"
+    if root_walk:
+        # Opt-in menu-only reachability walk in SessionResourceBoundary (J770).
+        value["diagnosticCompletedRootWalk"] = True
     write(out / "selection.json", value)
     frozen = {
         "sessions": sessions,
+        "root_walk": bool(root_walk),
         "package": PACKAGE,
         "apk_sha256": artifact_hash,
         "apk_binding_mode": apk_binding_mode,
@@ -282,15 +310,15 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None):
                     if (
                         live_at is None
                         and world.get("ready") is True
-                        and cleanup._finite_number(world.get("health")) and world["health"] > 0
-                        and cleanup._finite_number(world.get("maxHealth")) and world["maxHealth"] > 0
+                        and cleanup._finite_number(world.get("health"))
+                        and world["health"] > 0
+                        and cleanup._finite_number(world.get("maxHealth"))
+                        and world["maxHealth"] > 0
                         and world.get("diagnosticInputEver") is True
                     ):
                         live_at = time.monotonic()
                     view = as_session_one(current, session)
-                    failures = abandon_observation_failures(
-                        view, survivor, time.monotonic() - live_at if live_at is not None else 0.0, live_at
-                    )
+                    failures = abandon_observation_failures(view, survivor, time.monotonic() - live_at if live_at is not None else 0.0, live_at)
                     blocking = [failure for failure in failures if failure not in WAITING]
                     if blocking:
                         fail("abandon-observation-contract-failed", "session %d: %s" % (session, blocking[0]))
@@ -306,9 +334,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None):
                         elif settings.get("visible") is True and settings.get("canEndRun") is True:
                             key = "endRunButton"
                         if key:
-                            coords = abandon_control_coordinates(
-                                current, key, device.sh("wm", "size"), device.sh("dumpsys", "window", "displays")
-                            )
+                            coords = abandon_control_coordinates(current, key, device.sh("wm", "size"), device.sh("dumpsys", "window", "displays"))
                             if coords is None:
                                 fail("abandon-control-geometry-unavailable", "session %d %s" % (session, key))
                                 break

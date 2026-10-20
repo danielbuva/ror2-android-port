@@ -29,6 +29,78 @@ public sealed partial class PortSession
         public string[] bundleNames;
         public int catalogGenerations, catalogLocatorsAlive, catalogManifestsAlive, activeLocators, detachedCatalogOperations;
         public string[] ownedCallbackRoots, callbackRootReadFailures, callbackOwnerScope, statQueueCounts;
+        // Opt-in completed-session root walk (diagnosticCompletedRootWalk selector); empty otherwise.
+        public bool rootWalkRan, rootWalkTruncated;
+        public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
+        public float rootWalkSeconds;
+        public string[] rootWalkPaths, rootWalkFailureSamples;
+    }
+    [Serializable]
+    class RootWalkSelection
+    {
+        public string attempt;
+        public bool diagnosticCompletedRootWalk;
+    }
+    const int RootWalkNodeBudget = 1000000;
+    // Reads only the launch selector's opt-in flag; the coordinator's own parsing is unchanged.
+    bool CompletedRootWalkRequested()
+    {
+        var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
+        if (r == null || !System.IO.File.Exists(path))
+            return false;
+        try
+        {
+            var selection = JsonUtility.FromJson<RootWalkSelection>(System.IO.File.ReadAllText(path));
+            return selection != null && selection.diagnosticCompletedRootWalk && selection.attempt == r.attempt;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+    void WalkCompletedSessionRoots(SessionResourceSample sample)
+    {
+        var targets = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>();
+        for (int i = 0; i < completedSessionReferences.Count; i++)
+        {
+            var probe = completedSessionReferences[i][0].Target;
+            var report = completedSessionReferences[i][1].Target;
+            if (probe != null)
+                targets.Add(new System.Collections.Generic.KeyValuePair<string, object>("completed[" + i + "].probe", probe));
+            if (report != null)
+                targets.Add(new System.Collections.Generic.KeyValuePair<string, object>("completed[" + i + "].report", report));
+        }
+        if (targets.Count == 0 || Run.instance || NetworkServer.active || NetworkClient.active)
+            return;
+        // Live engine-held managed objects (including this coordinator) are roots too.
+        var extra = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, object>>();
+        foreach (var behaviour in Resources.FindObjectsOfTypeAll<MonoBehaviour>())
+            extra.Add(new System.Collections.Generic.KeyValuePair<string, object>(
+                "live:" + behaviour.GetType().FullName + "@" + (behaviour ? behaviour.gameObject.name : "destroyed"), behaviour));
+        foreach (var asset in Resources.FindObjectsOfTypeAll<ScriptableObject>())
+            extra.Add(new System.Collections.Generic.KeyValuePair<string, object>("asset:" + asset.GetType().FullName, asset));
+        var types = new System.Collections.Generic.List<Type>();
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            try
+            {
+                types.AddRange(assembly.GetTypes());
+            }
+            catch (ReflectionTypeLoadException e)
+            {
+                types.AddRange(e.Types.Where(x => x != null));
+            }
+        }
+        var began = Time.realtimeSinceStartup;
+        var result = CompletedSessionRootWalk.Find(types, extra, targets, RootWalkNodeBudget, 16);
+        sample.rootWalkRan = true;
+        sample.rootWalkSeconds = Time.realtimeSinceStartup - began;
+        sample.rootWalkNodes = result.nodes;
+        sample.rootWalkRoots = result.roots;
+        sample.rootWalkTruncated = result.truncated;
+        sample.rootWalkReadFailures = result.readFailures;
+        sample.rootWalkPaths = result.paths;
+        sample.rootWalkFailureSamples = result.failureSamples;
     }
     static readonly System.Collections.Generic.List<WeakReference[]> completedSessionReferences =
         new System.Collections.Generic.List<WeakReference[]>();
@@ -163,6 +235,8 @@ public sealed partial class PortSession
             bundles = AssetBundle.GetAllLoadedAssetBundles().Count(),
             bundleNames = AssetBundle.GetAllLoadedAssetBundles().Select(x => x.name).OrderBy(x => x).ToArray()
         });
+        if (phase == "before-presentation" && completedSessionReferences.Count > 0 && CompletedRootWalkRequested())
+            WalkCompletedSessionRoots(r.sessionResources.Last());
     }
     static string[] ReadStatQueueCounts()
     {
@@ -233,5 +307,228 @@ public sealed partial class PortSession
             r.sessionResources.Last().collectionSeconds = seconds;
         }
         Save();
+    }
+}
+
+// Unity-free bounded reachability walk used only by the opt-in completed-session
+// root diagnostic. It reads fields; it never invokes members, clears references or
+// changes state. Host contract: tests/test_completed_session_root_walk.py.
+public static class CompletedSessionRootWalk
+{
+    public sealed class Result
+    {
+        public string[] paths = new string[0];
+        public int nodes, roots, readFailures;
+        public bool truncated;
+        public string[] failureSamples = new string[0];
+    }
+    sealed class Identity : System.Collections.Generic.IEqualityComparer<object>
+    {
+        public new bool Equals(object x, object y) => ReferenceEquals(x, y);
+        public int GetHashCode(object value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value);
+    }
+    const BindingFlags InstanceFields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    const BindingFlags StaticFields = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+    static readonly System.Collections.Generic.Dictionary<Type, FieldInfo[]> fieldCache =
+        new System.Collections.Generic.Dictionary<Type, FieldInfo[]>();
+
+    // Names the first reference path from a static field (or an extra named root)
+    // to each target. Targets are expanded too, so a path may pass through another
+    // completed session; such hops are labelled with the target's name.
+    public static Result Find(System.Collections.Generic.IEnumerable<Type> types,
+                              System.Collections.Generic.IList<System.Collections.Generic.KeyValuePair<string, object>> extraRoots,
+                              System.Collections.Generic.IList<System.Collections.Generic.KeyValuePair<string, object>> targets,
+                              int nodeBudget, int maxPaths)
+    {
+        var result = new Result();
+        var failures = new System.Collections.Generic.List<string>();
+        var visited = new System.Collections.Generic.Dictionary<object, int>(new Identity());
+        var nodes = new System.Collections.Generic.List<object>();
+        var parents = new System.Collections.Generic.List<int>();
+        // Edge: root label string, FieldInfo, boxed element index or delegate MethodInfo.
+        var edges = new System.Collections.Generic.List<object>();
+        var targetNames = new System.Collections.Generic.Dictionary<object, string>(new Identity());
+        foreach (var target in targets)
+            if (target.Value != null && !targetNames.ContainsKey(target.Value))
+                targetNames.Add(target.Value, target.Key);
+        var found = new System.Collections.Generic.List<string>();
+        var reached = new System.Collections.Generic.HashSet<object>(new Identity());
+        Action<object, int, object> enqueue = (value, parent, edge) =>
+        {
+            if (value == null || visited.ContainsKey(value) || Skip(value.GetType()))
+                return;
+            if (nodes.Count >= nodeBudget)
+            {
+                result.truncated = true;
+                return;
+            }
+            visited.Add(value, nodes.Count);
+            nodes.Add(value);
+            parents.Add(parent);
+            edges.Add(edge);
+        };
+        foreach (var root in extraRoots)
+            enqueue(root.Value, -1, root.Key);
+        foreach (var type in types)
+        {
+            if (type == null || type.IsGenericTypeDefinition || type.ContainsGenericParameters)
+                continue;
+            FieldInfo[] statics;
+            try
+            {
+                statics = type.GetFields(StaticFields);
+            }
+            catch (Exception e)
+            {
+                Fail(result, failures, type.FullName + ":" + e.GetType().Name);
+                continue;
+            }
+            foreach (var field in statics)
+            {
+                if (field.IsLiteral || Leaf(field.FieldType))
+                    continue;
+                object value;
+                try
+                {
+                    value = field.GetValue(null);
+                }
+                catch (Exception e)
+                {
+                    Fail(result, failures, type.FullName + "." + field.Name + ":" + e.GetType().Name);
+                    continue;
+                }
+                enqueue(value, -1, type.FullName + "." + field.Name);
+            }
+        }
+        result.roots = nodes.Count;
+        for (int index = 0; index < nodes.Count && found.Count < maxPaths; index++)
+        {
+            var value = nodes[index];
+            string name;
+            if (targetNames.TryGetValue(value, out name) && reached.Add(value))
+                found.Add(name + " <= " + Render(nodes, parents, edges, targetNames, index));
+            var type = value.GetType();
+            var callback = value as Delegate;
+            if (callback != null)
+            {
+                Delegate[] list;
+                try
+                {
+                    list = callback.GetInvocationList();
+                }
+                catch (Exception e)
+                {
+                    Fail(result, failures, "delegate:" + e.GetType().Name);
+                    continue;
+                }
+                for (int i = 0; i < list.Length; i++)
+                    enqueue(list[i].Target, index, list[i].Method);
+                continue;
+            }
+            var array = value as Array;
+            if (array != null)
+            {
+                if (array.Rank != 1 || Leaf(type.GetElementType()))
+                    continue;
+                for (int i = 0; i < array.Length; i++)
+                {
+                    object element;
+                    try
+                    {
+                        element = array.GetValue(i);
+                    }
+                    catch (Exception e)
+                    {
+                        Fail(result, failures, type.FullName + "[]:" + e.GetType().Name);
+                        break;
+                    }
+                    enqueue(element, index, i);
+                }
+                continue;
+            }
+            foreach (var field in Fields(type))
+            {
+                object child;
+                try
+                {
+                    child = field.GetValue(value);
+                }
+                catch (Exception e)
+                {
+                    Fail(result, failures, type.FullName + "." + field.Name + ":" + e.GetType().Name);
+                    continue;
+                }
+                enqueue(child, index, field);
+            }
+        }
+        result.nodes = nodes.Count;
+        result.paths = found.ToArray();
+        result.failureSamples = failures.ToArray();
+        return result;
+    }
+    static void Fail(Result result, System.Collections.Generic.List<string> failures, string failure)
+    {
+        result.readFailures++;
+        if (failures.Count < 20)
+            failures.Add(failure);
+    }
+    static bool Skip(Type type)
+    {
+        // Leaves and reflection metadata hold no session state.
+        return type == null || type.IsPrimitive || type.IsEnum || type.IsPointer || type == typeof(string) ||
+               type == typeof(decimal) || typeof(MemberInfo).IsAssignableFrom(type) || typeof(Assembly).IsAssignableFrom(type) ||
+               typeof(Module).IsAssignableFrom(type) || type == typeof(IntPtr) || type == typeof(UIntPtr) ||
+               typeof(WeakReference).IsAssignableFrom(type);
+    }
+    static bool Leaf(Type type)
+    {
+        return type.IsPrimitive || type.IsEnum || type.IsPointer || type == typeof(string);
+    }
+    static FieldInfo[] Fields(Type type)
+    {
+        FieldInfo[] fields;
+        if (fieldCache.TryGetValue(type, out fields))
+            return fields;
+        var list = new System.Collections.Generic.List<FieldInfo>();
+        for (var current = type; current != null && current != typeof(object); current = current.BaseType)
+            foreach (var field in current.GetFields(InstanceFields | BindingFlags.DeclaredOnly))
+                if (!Leaf(field.FieldType))
+                    list.Add(field);
+        fields = list.ToArray();
+        fieldCache.Add(type, fields);
+        return fields;
+    }
+    static string Edge(object edge)
+    {
+        var field = edge as FieldInfo;
+        if (field != null)
+            return "." + field.Name;
+        var method = edge as MethodInfo;
+        if (method != null)
+            return "(" + method.DeclaringType?.Name + "." + method.Name + ").Target";
+        if (edge is int)
+            return "[" + edge + "]";
+        return edge as string ?? "?";
+    }
+    static string Render(System.Collections.Generic.List<object> nodes, System.Collections.Generic.List<int> parents,
+                         System.Collections.Generic.List<object> edges, System.Collections.Generic.Dictionary<object, string> targets,
+                         int index)
+    {
+        var parts = new System.Collections.Generic.List<string>();
+        for (int i = index; i >= 0; i = parents[i])
+        {
+            string name;
+            var label = Edge(edges[i]) + " (" + nodes[i].GetType().Name + ")";
+            if (i != index && targets.TryGetValue(nodes[i], out name))
+                label += " [" + name + "]";
+            parts.Add(label);
+            if (parts.Count > 64)
+            {
+                parts.Add("...");
+                break;
+            }
+        }
+        parts.Reverse();
+        return string.Join(" -> ", parts.ToArray());
     }
 }

@@ -62,11 +62,20 @@ p.add_argument("--subtree", default="")
 p.add_argument("--fields", action="store_true")
 p.add_argument("--disable", action="store_true")
 p.add_argument("--skill-variants", help="Current: ignored local JSON for one base-survivor skill or cleanup check; per-run native skill catalog indices only")
-p.add_argument("--expected-apk-sha256", help="Current: optional exact SHA-256 of the APK already in the selected device ownership receipt for diagnostic checks; omission requires current-build equality at check start and never installs or labels the receipt APK current")
-p.add_argument("--skill-slot", choices=("primary", "secondary", "utility", "special"),
-               help="Current: bounded assisted isolated slot diagnostic for one base survivor via survivor-kit-check")
-p.add_argument("--toolbot-offhand", action="store_true",
-               help="Current: bounded assisted MUL-T Buzzsaw offhand sequence; requires --target Toolbot and exact --skill-variants")
+p.add_argument(
+    "--expected-apk-sha256",
+    help="Current: optional exact SHA-256 of the APK already in the selected device ownership receipt for diagnostic checks; omission requires current-build equality at check start and never installs or labels the receipt APK current",
+)
+p.add_argument(
+    "--skill-slot",
+    choices=("primary", "secondary", "utility", "special"),
+    help="Current: bounded assisted isolated slot diagnostic for one base survivor via survivor-kit-check",
+)
+p.add_argument(
+    "--toolbot-offhand",
+    action="store_true",
+    help="Current: bounded assisted MUL-T Buzzsaw offhand sequence; requires --target Toolbot and exact --skill-variants",
+)
 p.add_argument("--debug-options", help="Ignored local JSON for one integrated run; all acceleration defaults off")
 p.add_argument("--stage-exit", action="store_true", help="Current: check-baseline through one original stage exit and 10 s of next-stage play")
 p.add_argument("--compare", nargs=2, metavar=("A", "B"), help="Current: compare two project-manifest receipts")
@@ -107,21 +116,15 @@ if (a.step or a.compare_only or (a.dest and not is_destination_preflight)) and n
     p.error("--step, --dest and --compare-only require prototype --action rebuild-step")
 if a.stage_exit and a.command != "check-baseline":
     p.error("--stage-exit requires check-baseline")
-if a.skill_variants and (
-    a.command != "prototype"
-    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}
-):
-    p.error(
-        "--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check "
-        "or session-abandon-check"
-    )
+if a.skill_variants and (a.command != "prototype" or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check"}):
+    p.error("--skill-variants requires prototype --action survivor-kit-check, session-cleanup-check or session-abandon-check")
 if a.expected_apk_sha256 is not None and (
     a.command != "prototype"
-    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check"}
+    or a.action not in {"survivor-kit-check", "session-cleanup-check", "session-abandon-check", "session-memory-check", "session-memory-root-check"}
 ):
     p.error(
         "--expected-apk-sha256 requires prototype --action survivor-kit-check, session-cleanup-check, "
-        "session-abandon-check or session-memory-check"
+        "session-abandon-check, session-memory-check or session-memory-root-check"
     )
 if (a.skill_slot or a.toolbot_offhand) and (a.command != "prototype" or a.action != "survivor-kit-check"):
     p.error("--skill-slot and --toolbot-offhand require prototype --action survivor-kit-check")
