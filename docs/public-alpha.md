@@ -9,13 +9,13 @@ Phone-only owner builds are the installation research target; retain native
 IL2CPP ARM64 and the current renderer, with desktop builds as fallback.
 The [stage assessment](phone-owner-build.md) precedes build-pipeline changes.
 
-Decision preparation: [J825](PORTING_JOURNAL.md#j825--research-public-alpha-distribution-before-choosing-a-launcher).
+Decision preparation: [J826](PORTING_JOURNAL.md#j826--research-public-alpha-distribution-before-choosing-a-launcher).
 
 ## Decision and reproducibility
 
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
       consuming desktop-generated game data as a hidden prerequisite; extend
-      [J828's precursor](PORTING_JOURNAL.md#j828--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
+      [J829's precursor](PORTING_JOURNAL.md#j828--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
       to phone-side generation and the full rendered/script-bound fixture.
 - [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
       tools beyond the authored converter proof; qualify full native linking,

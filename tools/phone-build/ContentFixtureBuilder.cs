@@ -24,6 +24,8 @@ public static class ContentFixtureBuilder
         if (Application.unityVersion != "2021.3.45f2") throw new Exception("Exact editor required");
         PlayerSettings.companyName = "Porting Laboratory";
         PlayerSettings.productName = "Phone Content Fixture";
+        PlayerSettings.bundleVersion = "0.0.2";
+        PlayerSettings.Android.bundleVersionCode = 2;
         PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "dev.ror2lab.phonecontentfixture");
         PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
         PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;

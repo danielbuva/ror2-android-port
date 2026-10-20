@@ -14,11 +14,14 @@ for phone-only delivery while retaining the desktop workflow as fallback; no
 replacement game runtime or working build pipeline is selected. Public-input bootstrap,
 performance equivalence and device acceptance remain open.
 
-Phone build **support**: `scripts/lab/phone_content.py` owns generation and
-source/bundle hash checks for an isolated authored TextAsset fixture.
+Phone build **support**: `scripts/lab/phone_bundle.py` writes the isolated authored
+TextAsset bundle with only Python's standard library; its versioned native
+schemas consume no class database or generated asset. `phone_content.py` owns
+project staging and source/bundle hash checks for that fixture.
 `tools/phone-build/ContentFixtureBuilder.cs` owns its exact-editor check and
-separate player build; `ContentFixture.cs` copies, loads, checks and unloads
-the bundle, then writes a private report. The three `phone-content-*` prototype
+separate player build; `ContentFixture.cs` loads either its embedded bundle or
+a hash-bound candidate at a fixed path in its own data directory. It checks two
+load/unload cycles and writes a private report. The three `phone-content-*` prototype
 actions stage/check/build only this fixture under the primary checkout mutex.
 See [probe setup and boundaries](../tools/phone-build/README.md). No game-runtime
 owner or whole-catalog build calls this support path.

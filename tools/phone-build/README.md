@@ -17,8 +17,11 @@ baseline. A shell test does not qualify an app sandbox or a complete player.
 ```
 
 The generator constructs a UnityFS archive and Android serialized file from
-authored values and UnityPy's public native type schemas. It reads no editor
-output or game-derived template. The two types are AssetBundle and TextAsset.
+authored values and versioned native wire schemas using Python's standard
+library. It reads no class database, editor output or game-derived template.
+The two types are AssetBundle and TextAsset. UnityPy supplies an independent
+host parser, not a dependency of the standalone writer. Run the same writer
+on Android with `python3 -I -S phone_bundle.py NEW_OUTPUT.bundle`.
 Each generated project binds source and bundle hashes. Staging refuses an
 existing attempt, checks reject source drift, and builds require committed
 fixture sources. The runner locates the primary checkout through Git's common
@@ -28,8 +31,11 @@ refuses promptly. No existing editor is stopped or reused.
 The exact-editor check independently loads the bundle, reads the expected
 TextAsset and verifies its destruction on unload. The separate player uses
 `dev.ror2lab.phonecontentfixture`, ARM64 IL2CPP and Vulkan. It copies the bundle
-from StreamingAssets and writes `phone-content-report.json` in its own
-persistent data directory. Before installation, require explicit alpha device
+from StreamingAssets, or reads `phone-candidate.bundle` from its own persistent
+data directory when `phone-fixture-selection.json` supplies the exact `sha256`.
+A mismatch refuses; no arbitrary input path is accepted. It checks two native
+load/unload cycles and writes `phone-content-report.json` with the actual hash
+and source selection. Before installation, require explicit alpha device
 selection, fresh capacity/storage checks and package absence. Retain ownership,
 actual APK hash, package placement and runtime data backing. Remove only the
 owned disposable fixture and put the display to sleep.

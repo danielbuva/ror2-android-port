@@ -1,4 +1,4 @@
-"""Authored, from-scratch TextAsset bundle probe, never a game content builder."""
+"""Stage/check the authored native content probe without touching the game."""
 
 import hashlib
 import json
@@ -6,134 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from UnityPy.helpers.Tpk import get_typetree_node
-from UnityPy.helpers.TypeTreeHelper import write_typetree
-from UnityPy.helpers.TypeTreeNode import TypeTreeNode
-from UnityPy.helpers.UnityVersion import UnityVersion
-from UnityPy.streams import EndianBinaryWriter
-
-
-VERSION = "2021.3.45f2"
-PAYLOAD = "phone-owned-content-fixture-v1\n"
-ASSET = "assets/phone-fixture.txt"
-
-
-def _object(class_id, value):
-    writer = EndianBinaryWriter(endian="<")
-    tree = get_typetree_node(class_id, UnityVersion.from_str(VERSION))
-    write_typetree(value, tree, writer)
-    return writer.bytes
-
-
-def _type_tree(class_id):
-    nodes = get_typetree_node(class_id, UnityVersion.from_str(VERSION)).to_dict_list()
-    tree = TypeTreeNode.from_list([{k: v for k, v in node.items() if k != "m_Children"} for node in nodes])
-    for node in tree.traverse():
-        node.m_TypeFlags = 1 if node.m_Type == "Array" else 0
-        node.m_RefTypeHash = 0
-    return tree
-
-
-def make_bundle():
-    """Build only two native object types, using public UnityPy type schemas.
-
-    No editor output, game input, template bundle or imported type hash is read.
-    Zero type hashes are experimental inputs; embedded public type trees let
-    Unity independently check the resulting native object serialization.
-    """
-    pointer = {"m_FileID": 0, "m_PathID": 2}
-    info = {"preloadIndex": 0, "preloadSize": 1, "asset": pointer}
-    values = [
-        (
-            142,
-            {
-                "m_Name": "phone-fixture",
-                "m_PreloadTable": [pointer],
-                "m_Container": [(ASSET, info)],
-                "m_MainAsset": {"preloadIndex": 0, "preloadSize": 0, "asset": {"m_FileID": 0, "m_PathID": 0}},
-                "m_RuntimeCompatibility": 1,
-                "m_AssetBundleName": "phone-fixture",
-                "m_Dependencies": [],
-                "m_IsStreamedSceneAssetBundle": False,
-                "m_ExplicitDataLayout": 0,
-                "m_PathFlags": 0,
-                "m_SceneHashes": [],
-            },
-        ),
-        (49, {"m_Name": "phone-fixture", "m_Script": PAYLOAD}),
-    ]
-    body = EndianBinaryWriter(endian="<")
-    objects = []
-    for class_id, value in values:
-        body.align_stream(8)
-        raw = _object(class_id, value)
-        objects.append((body.Position, len(raw)))
-        body.write_bytes(raw)
-
-    meta = EndianBinaryWriter(endian="<")
-    meta.write_string_to_null(VERSION)
-    meta.write_int(13)  # BuildTarget.Android, not a change to the game target.
-    meta.write_boolean(True)
-    meta.write_int(len(values))
-    for class_id, _ in values:
-        meta.write_int(class_id)
-        meta.write_boolean(False)
-        meta.write_short(-1)
-        meta.write_bytes(bytes(16))
-        _type_tree(class_id).dump_blob(meta, 22)
-        meta.write_int(0)  # Type dependencies are present with type trees only.
-    meta.write_int(len(objects))
-    for index, (offset, size) in enumerate(objects):
-        # Alignment is relative to the serialized file, whose header is 48 B.
-        meta.align_stream(4)
-        meta.write_long(index + 1)
-        meta.write_long(offset)
-        meta.write_u_int(size)
-        meta.write_int(index)
-    for _ in range(3):
-        meta.write_int(0)  # Script types, externals, reference types.
-    meta.write_string_to_null("")
-    data_offset = (48 + meta.Length + 15) // 16 * 16
-    serialized = EndianBinaryWriter()
-    for value in (0, 0, 22, 0):
-        serialized.write_u_int(value)
-    serialized.write_bytes(bytes(4))  # Little-endian metadata, reserved.
-    serialized.write_u_int(meta.Length)
-    serialized.write_long(data_offset + body.Length)
-    serialized.write_long(data_offset)
-    serialized.write_long(0)
-    serialized.write_bytes(meta.bytes)
-    serialized.align_stream(16)
-    serialized.write_bytes(body.bytes)
-
-    directory = EndianBinaryWriter()
-    directory.write_bytes(bytes(16))
-    directory.write_int(1)
-    directory.write_u_int(serialized.Length)
-    directory.write_u_int(serialized.Length)
-    directory.write_u_short(0)  # Uncompressed data block.
-    directory.write_int(1)
-    directory.write_long(0)
-    directory.write_long(serialized.Length)
-    directory.write_u_int(4)  # Serialized file node.
-    directory.write_string_to_null("CAB-phone-build-fixture")
-    bundle = EndianBinaryWriter()
-    bundle.write_string_to_null("UnityFS")
-    bundle.write_u_int(7)
-    bundle.write_string_to_null("5.x.x")
-    bundle.write_string_to_null(VERSION)
-    size_position = bundle.Position
-    bundle.write_long(0)
-    bundle.write_u_int(directory.Length)
-    bundle.write_u_int(directory.Length)
-    bundle.write_u_int(0x40)
-    bundle.align_stream(16)
-    bundle.write_bytes(directory.bytes)
-    bundle.write_bytes(serialized.bytes)
-    total = bundle.Length
-    bundle.Position = size_position
-    bundle.write_long(total)
-    return bundle.bytes
+from phone_bundle import VERSION, make_bundle
 
 
 def stage(destination):
@@ -167,7 +40,12 @@ def stage(destination):
         "device_accepted": False,
         "sources": {
             name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-            for name in ("scripts/lab/phone_content.py", "tools/phone-build/ContentFixture.cs", "tools/phone-build/ContentFixtureBuilder.cs")
+            for name in (
+                "scripts/lab/phone_content.py",
+                "scripts/lab/phone_bundle.py",
+                "tools/phone-build/ContentFixture.cs",
+                "tools/phone-build/ContentFixtureBuilder.cs",
+            )
         },
     }
     (destination / "fixture-inputs.json").write_text(json.dumps(receipt, indent=2) + "\n")
@@ -198,7 +76,9 @@ def run_editor(project, *, build=False):
             raise RuntimeError("Staged fixture source changed: " + name)
     if hashlib.sha256((project / "Assets/StreamingAssets/phone-fixture.bundle").read_bytes()).hexdigest() != receipt["bundle_sha256"]:
         raise RuntimeError("Generated fixture bundle changed")
-    if build and subprocess.check_output(["git", "status", "--porcelain", "--", "tools/phone-build", "scripts/lab/phone_content.py"], cwd=ROOT):
+    if build and subprocess.check_output(
+        ["git", "status", "--porcelain", "--", "tools/phone-build", "scripts/lab/phone_content.py", "scripts/lab/phone_bundle.py"], cwd=ROOT
+    ):
         raise RuntimeError("Commit the fixture sources before building")
     common_dir = Path(subprocess.check_output(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=ROOT, text=True).strip())
     if common_dir.name != ".git":
