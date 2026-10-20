@@ -15564,7 +15564,26 @@ completed-session reclamation, with no Run or network, remove only Unity-destroy
 entries from those two lists and from the indicator queue (live entries keep
 their order). These are exactly the entries the original `OnDisable` or queue
 processor would remove or skip. Removed/remaining counts are recorded per
-registry. Host test covers `RemoveWhere`. Device result: pending.
+registry. Host test covers `RemoveWhere`.
+
+Result: Thor, APK `2679a11a5aa0f5e0429e37db6151cde776667f42cd155c56d096579952628dc1`
+(code-only from 0abae2e), five sessions, all passing the abandon contract with
+no runtime error. Every session removes 133 `ItemDisplayRuleSet`, 126
+`PickupDropTable` and 32 `TeamComponent` destroyed entries; all three registries
+are then empty, and 13 depossession entries are pruned as before. Managed usage
+after collection is 162, 214, 263, 311 and 363 MiB: 52,072,858 bytes per
+session, against J775's 57,380,454. The retention is real but small. Menu PSS is
+not monotonic (2.73, 2.47, 2.63, 3.16 and 2.78 GiB), so the reported Boehm
+"used" growth does not translate one-for-one into resident memory over five
+sessions.
+
+First failure: about 50 MB per session of managed growth is not reached from
+static fields of enumerable types or from live MonoBehaviour/ScriptableObject
+roots. The walk does not see statics of constructed generic types (pools and
+caches), native GC handles or conservative roots. Next: a longer session series
+on a constrained device (internal Nova) to see whether PSS or Boehm usage
+reaches a limit, before more attribution.
+Evidence: work/device/<serial>/experiments/session-memory/20261020T095116.706504Z/.
 
 Evidence: work/device/<serial>/experiments/session-memory/20261020T093235.358679Z/;
 J667 stops: .../20261020T090209.568874Z/, .../20261020T090901.284133Z/,

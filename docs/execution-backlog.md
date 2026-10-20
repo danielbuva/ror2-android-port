@@ -28,7 +28,11 @@ result in the journal.
 
 ## Stability and performance
 
-- [ ] Attribute managed-memory growth across repeated sessions.
+- [ ] Attribute the remaining ~52 MB/session managed growth (J787): not reachable
+      from enumerable static/live roots; next a long session series on the
+      internal Nova to test whether PSS or Boehm usage reaches a limit.
+- [ ] Integrate original position indicators (`TeamComponent.Init`, player/NPC/boss
+      indicator prefabs and Nameplate text), compared against PC captures (J787).
 - [ ] Attribute the crowded-stage enumeration hot path from the app-scope trace
   (J761), then reduce measured frame time; 60 FPS is release acceptance.
 

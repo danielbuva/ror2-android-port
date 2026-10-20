@@ -107,9 +107,13 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   defeat, strict cleanup and a healthy same-process second session. Native stage
   transport, repeated long sessions and ordinary difficulty remain open.
 - PC visual parity, sustained 60 FPS and thermals, managed-memory growth across
-  sessions. J773 releases completed session references; J775 adapts destroyed-AI
-  subscriber retirement. J782 narrows the remaining growth to repeated item-display
-  rule-set graphs; owner attribution is in progress.
+  sessions. J773 releases completed session references. J775 and J787 prune
+  destroyed entries from original static registries (depossession, item display
+  rules, drop tables, the never-drained team indicator queue); managed growth
+  falls only from ~57 to ~52 MB per session on Thor, and the rest is not
+  reachable from enumerable roots. Menu PSS is not monotonic over five sessions.
+  Original position indicators are unavailable: the port does not run
+  `TeamComponent.Init`.
 
 ## Next actions
 
