@@ -13705,3 +13705,58 @@ classifications), 3,229 minted folder GUIDs, no new reimport error and no folder
 claimed: payload bytes. Only 103 of 266 payload files match between R9's build and this one,
 because bundles, manifests and the catalog differ between any two full builds. The APK still
 differs in `Hidden/Compositing` (J598) and the path-dependent Burst library.
+
+## J753 — Native first-stage defeat cleans up and restarts after the callback fence
+
+Hypothesis: J748's exact-owned callback/frame fence permits native loss cleanup
+without releasing uncertain effect assets. The user completed the provenance
+refresh and resumed work; no new APK is needed. Use accepted J752 APK
+aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159,
+whose build receipt binds committed source 5f5d1b3 and J749's runtime from
+069eab7. The selected baseline Nova ownership receipt and exact APK bytes
+are checked through the explicit owned-APK diagnostic binding. No install,
+payload mutation, native state shortcut or profile edit is part of this run.
+
+The current session-cleanup runner receives the same explicit native first-stage
+selector as J739/J746, ordinary Commando, seed 2 and all five gameplay debug
+assists off. Automatic input remains assisted diagnostic input, so this is
+not normal-difficulty or ordinary progression acceptance. Prior art remains
+J748's exact native EffectPool return/OnDestroy contract and the pinned
+R2API handle/ownership boundary cited there; no community gameplay algorithm
+is introduced.
+
+The check passes. Session 1 reaches 278.721741 seconds of live Lakes play and
+one genuine Commando DeathState event, health -12.289894, fourteen ragdoll
+bodies, observed corpse, matching death effect, destroyed body and retained
+master. The host sends the loss restart input. The completed report is session
+1/complete, cleanup=true, original Stage begin count 1, asyncAssetsReleased=true,
+with no report firstFailure/error and no unexpected current-process runtime
+error. The effect-loan sample before returns is 27; it is not a residual count
+or a fabricated count of successful callbacks. The unchanged strict production
+retirement gate must complete before asynchronous assets are released.
+
+The same PID reaches session 2/integrated-world-playing, with 4.998230 seconds
+of fresh world play, one original Stage begin, fresh native skill/authority
+and combat-output observation. The first observer is attached/healthy, its
+completed counterpart cleaned/detached, and the restarted observer freshly
+attached/healthy. Both terminal reports retain the explicit native selector
+and sourceStageLifecycleRecoveryRequired=false. The standard runner plus Root's
+native validation have empty failure lists. Profile snapshots remain
+13 applied runs and one earned/available unlock throughout; result assistance
+does not grant permanent awards.
+
+Evidence: work/device/<serial>/experiments/session-cleanup/20261020T040244.312384Z/
+(result.json, completed/restarted reports, logs, frozen selector and Root's
+native validation). Root's wrapper/output is under
+work/coordination/native-loss-postrefresh-plan/ and
+work/coordination/codex-aa732-native-loss-restart.*. Host observations: first
+live world at 148.845925 seconds, restart tap at 433.425094 and healthy second
+world at 551.319902. These are host timings, not CPU or frame-rate measures.
+The runner removes its selector, stops the owned app and sleeps the OLED.
+
+Accept this native first-stage defeat/cleanup/restart case. J746's earlier
+first failure remains preserved; this pass does not identify which exact
+deferred native branch supplied that earlier residual. Default baseline
+acceptance remains J752, native UI abandonment remains separate J730 evidence,
+and native stage transport, repeated sessions and ordinary difficulty remain
+open. No runtime source or rebuild input changes for this checkpoint.

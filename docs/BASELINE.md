@@ -101,8 +101,10 @@ player defeat; no restarted session is accepted. J745 includes J741
 component-lifetime guards and passes both defaults. J746 reaches genuine
 native defeat and the restart request, then stops at effect-loan retirement;
 no completed or restarted native-loss session is accepted. J749 includes J748’s
-native callback frame fence and passes both defaults; targeted loss retry remains
-open while work pauses for the user’s provenance-map refresh. Prior
+native callback frame fence and passes both defaults. After the provenance
+refresh, J753 passes the targeted native Commando loss, completed cleanup and
+healthy same-process restart on J752's aa732f88 APK. Native stage transport and
+ordinary-difficulty acceptance remain open. Prior
 source-table readiness/actor-event evidence is J678 on e09920fd…; native rewards,
 timed-chest delivery and ordinary saved awards remain unverified.
 
