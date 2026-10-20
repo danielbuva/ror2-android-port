@@ -1221,3 +1221,16 @@ family registration from live ability execution; the accepted local native
 state and skill sources supply the actual contract. No community source is
 copied. This changes R8 runtime staging, adds no private build input and does
 not change the normal selected loadout, unlocks or entitlement behavior.
+
+## Explicit Thor diagnostic-input audit
+
+Five existing authored owners add an exact-model/session policy and scoped
+automatic input availability. The model names are public product identities,
+not device serials. No observed axis/button values, mapping contents,
+proprietary input implementation, game source or middleware is copied.
+The pinned Starstorm2 main-state input-bank observation informs the seam;
+it supplies no Android backend or Thor mapping. Nova mapping validation and
+Rewired pins remain in place. Host collaborators and guard checks are authored.
+R8 stages the changed sources through its existing generator; no new GUID,
+content selector, protected input or private build dependency is introduced.
+Reviewed 2026-10-19; host results and device limits are recorded in J757.

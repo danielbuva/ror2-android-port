@@ -134,15 +134,18 @@ public sealed partial class PortSession
         }
         public bool OfflineUiControllerPresent()
         {
+            var map = offlineMenuMapping ?? (coordinator.r != null && coordinator.r.nova != null ? coordinator.r.nova.mapping : null);
+            if (map == null)
+            {
+                offlineUiPresence?.Suspend();
+                return false;
+            }
             var names = UnityEngine.Input.GetJoystickNames();
             if (names.Length == 0 || string.IsNullOrEmpty(names[0]) || names.Skip(1).Any(name => !string.IsNullOrEmpty(name)))
             {
                 offlineUiPresence?.Suspend();
                 return false;
             }
-            var map = offlineMenuMapping ?? (coordinator.r != null && coordinator.r.nova != null ? coordinator.r.nova.mapping : null);
-            if (map == null)
-                return false;
             if (offlineUiPresence == null)
                 offlineUiPresence = new NovaInputBridge.ControllerPresence(names[0]);
             var raw = NovaInputBridge.ReadRaw();
@@ -198,9 +201,21 @@ public sealed partial class PortSession
             }
             if (!choices.Any(value => value.cachedName == coordinator.r.selectedSurvivor))
                 coordinator.r.selectedSurvivor = choices[0].cachedName;
-            offlineMenuMapping = JsonUtility.FromJson<NovaInputBridge.Mapping>(
-                File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json")));
-            offlineMenuMapping.Validate(coordinator.r.attempt);
+            if (coordinator.IsNovaInput())
+            {
+                var mode = InputSessionPolicy.Resolve(PortSession.CurrentDeviceModel(),
+                                                     coordinator.r.id != null && coordinator.r.id.EndsWith("-bringup", StringComparison.Ordinal));
+                coordinator.Check(mode != InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput,
+                                  "Unmeasured physical input is unavailable outside Nova or an explicit Thor bringup diagnostic");
+            }
+            if (coordinator.UsesDiagnosticWithoutPhysicalInput())
+                offlineMenuMapping = null;
+            else
+            {
+                offlineMenuMapping = JsonUtility.FromJson<NovaInputBridge.Mapping>(
+                    File.ReadAllText(System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json")));
+                offlineMenuMapping.Validate(coordinator.r.attempt);
+            }
             coordinator.PrepareRecoveredMenu();
             coordinator.offlineStartVisible = true;
             coordinator.r.phase = "offline-start-menu";
@@ -221,7 +236,7 @@ public sealed partial class PortSession
         {
             if (coordinator.offlineStartVisible)
             {
-                if (OfflineUiControllerPresent())
+                if (offlineMenuMapping != null && OfflineUiControllerPresent())
                 {
                     var raw = NovaInputBridge.ReadRaw();
                     var horizontal = raw.axes[offlineMenuMapping.moveX];
@@ -253,6 +268,7 @@ public sealed partial class PortSession
             coordinator.ObserveOfflineSettingsControllerInput();
             if (coordinator.r != null && coordinator.r.phase != "commando-defeated" && coordinator.r.freePlay &&
                 coordinator.r.results != null && coordinator.r.results.persisted && coordinator.r.nova != null &&
+                coordinator.r.nova.mapping != null && coordinator.r.nova.physicalInputAvailable &&
                 !coordinator.offlineSettingsVisible && OfflineUiControllerPresent() &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
                 RequestResultsMenu();
@@ -279,7 +295,9 @@ public sealed partial class PortSession
                     coordinator.DrawOfflineLoadout();
                 GUI.Label(
                     new Rect(20, Screen.height - 58, Screen.width - 40, 55),
-                    "Left stick: survivor · Right stick: difficulty · A: start · audio/Steam profiles unavailable · roster/UI rendering approximation");
+                    coordinator.UsesDiagnosticWithoutPhysicalInput()
+                        ? "Touch controls: survivor, difficulty, and start · physical input unavailable · roster/UI rendering approximation"
+                        : "Left stick: survivor · Right stick: difficulty · A: start · audio/Steam profiles unavailable · roster/UI rendering approximation");
                 return true;
             }
             var style = new GUIStyle(GUI.skin.label) { fontSize = 30, wordWrap = true };
@@ -287,13 +305,15 @@ public sealed partial class PortSession
             GUI.Label(
                 new Rect(45, 100, 800, 220),
                 selected + " · " + OfflineDifficultyName() +
-                    "\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nLeft stick: survivor · Right stick: difficulty · A: start.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable.",
+                    (coordinator.UsesDiagnosticWithoutPhysicalInput()
+                         ? "\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nUse the touch controls below; physical input is unavailable.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable."
+                         : "\nExplore, earn items, defeat each teleporter boss, then reach the Moon.\nLeft stick: survivor · Right stick: difficulty · A: start.\nOriginal profile data and results stay on this Android device. Audio and Steam/cloud profiles are unavailable."),
                 style);
             if (GUI.Button(new Rect(45, 270, 370, 55), "Survivor: " + selected + "  ◀  ▶"))
                 coordinator.CycleOrdinarySurvivor(1);
             if (GUI.Button(new Rect(440, 270, 370, 55), "Difficulty: " + OfflineDifficultyName() + "  ◀  ▶"))
                 CycleOfflineDifficulty();
-            if (GUI.Button(new Rect(45, 340, 370, 65), "Start run (A)"))
+            if (GUI.Button(new Rect(45, 340, 370, 65), coordinator.UsesDiagnosticWithoutPhysicalInput() ? "Start run" : "Start run (A)"))
                 coordinator.offlineStartSelected = true;
             if (GUI.Button(new Rect(440, 340, 370, 65), "Quit"))
                 Application.Quit();

@@ -132,6 +132,21 @@ device runs may overlap; each device has one runner, and the shared Unity build
 lock still serializes builds. These roles do not imply generic-controller,
 normal-game or performance acceptance on the additional devices.
 
+`InputSessionPolicy` in `NovaInputBoundary.cs` owns the explicit game-input
+choice. The exact Nova model retains measured, attempt-bound physical input.
+Only the observed Thor model with the existing `-bringup` selector permits
+automatic diagnostic input without a physical mapping. Ordinary Thor, missing
+and unknown model identities refuse. `NovaInputBridge.automaticDiagnosticOnly`
+defaults false, so legacy mapped and null-mapping behavior is retained.
+The validated diagnostic path reports its source and unavailable physical
+input, bypasses raw joystick/presence reads, and feeds the existing input bank.
+The offline application/settings and integrated-world owners retain touch
+menus, hide physical takeover and guard physical restart/settings consumers.
+Their existing iterator cleanup and bridge disable neutralize input and
+release session ownership. `test_portable_diagnostic_input.py` executes the
+production policy/predicates and checks consumer guards; device acceptance is
+separate. This changes existing R8 sources without adding a runtime file/GUID.
+
 CPU capture (`scripts/lab/performance_capture.py`, current host implementation):
 `./dev perf --action cpu --target LABEL` takes a 15 s system simpleperf call graph
 from the selected device's already running, owned foreground lab process. Setup

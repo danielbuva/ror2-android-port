@@ -13922,3 +13922,44 @@ Next discriminate filename/streaming I/O from the measured native memory-view
 path with exact ABI and buffer-lifetime/alignment contracts. No audible output,
 cumulative plugin-error acceptance, full-bank compatibility or composed-game
 audio is established by this result. No R8 production-source change.
+
+## J757 — Permit explicit automatic Thor diagnostics without claiming physical input
+
+Hypothesis: Thor can exercise the integrated game using the existing automatic
+input-bank producers when the session explicitly selects bringup, while its
+unmeasured physical controller remains unavailable. Prior art: the input section
+of community-prior-art.md and pinned Starstorm2 BorgMain.cs at a9a4badd observe
+native inputBank/main-state consumption, but establish no Android backend or
+Thor bindings. Retain the passed Nova mapping and Rewired contracts.
+
+Review and integrate the host-only v3 draft in five existing owners. The pure
+InputSessionPolicy recognizes exact Nova for the existing attempt-bound mapping
+route and exact Thor plus -bringup for automatic diagnostics. Ordinary Thor,
+null/blank, unknown, differently cased and Nova-like model identities refuse.
+The bridge's explicit automaticDiagnosticOnly flag defaults false; legacy mapped
+callers retain physical availability and legacy null mappings still neutralize.
+Only the validated automatic diagnostic path permits a null mapping. It returns
+before raw/presence reads and uses the existing input-bank requests. Report
+source/physical/mapping availability are explicit; no axes/buttons or measured
+mapping is fabricated. Touch menus remain usable; takeover, physical restart
+and settings consumers require mapping and availability. Existing focus/pause,
+OnDisable and iterator-finally teardown keep input ownership/neutralization.
+
+Independent review's v2 unknown-model and legacy-caller findings are addressed
+in v3; touch labels no longer direct unavailable physical buttons. Root reviews
+the final five-owner diff. Two authored host tests execute extracted production
+policy/predicates across model, mode and mapping combinations and check consumer
+guards. The full host suite passes 1,049 tests in 51.807 seconds. Full offline
+Assembly-CSharp exact-reference compilation reports no errors; this is separate
+from an editor/player build.
+
+Private draft, compiler output and review are under
+work/coordination/controllers-postrefresh-readiness/portable-diagnostic-v3/ and
+multi-device-onboarding-host-review/portable-review/; Root host results are
+codex-portable-diagnostic-host-v1.stdout/stderr. No device action or new APK
+belongs to this source checkpoint. Both baseline modes on Nova and Thor remain
+required after the next build; physical Thor controls and ordinary play remain
+unaccepted. This changes R8 authored-source staging through the existing
+generator, adds no file/GUID/private build input and leaves source game assets
+and the Moon pause untouched. Recipe provenance/privacy review is recorded in
+recipe/README.md.

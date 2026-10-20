@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J757](PORTING_JOURNAL.md#j757--permit-explicit-automatic-thor-diagnostics-without-claiming-physical-input) | 2026-10-19 | Permit explicit automatic Thor diagnostics without claiming physical input | Hypothesis: Thor can exercise the integrated game using the existing automatic input-bank producers when the session explicitly selects bringup, while its unme… |
 | [J756](PORTING_JOURNAL.md#j756--managed-wwise-initializes-on-thor-then-refuses-init-filename-loading) | 2026-10-19 | Managed Wwise initializes on Thor, then refuses Init filename loading | Hypothesis: replacing the v3 runtime metadata query guard with the source-pinned direct initialized query, plus a file-backed hash-referenced report, can expos… |
 | [J755](PORTING_JOURNAL.md#j755--onboard-the-additional-devices-with-separate-storage-ownership-and-roles) | 2026-10-19 | Onboard the additional devices with separate storage, ownership and roles | The user explicitly authorizes Root to discover serials and onboard the second Nova and Ayn Thor after the provenance refresh. |
 | [J754](PORTING_JOURNAL.md#j754--request-the-original-mul-t-offhand-sequence-through-the-bounded-input-owner) | 2026-10-19 | Request the original MUL-T offhand sequence through the bounded input owner | Hypothesis: J735's missing Buzzsaw activation follows from the canonical secondary pulse occurring before native Dual Wield applies its offhand override. |

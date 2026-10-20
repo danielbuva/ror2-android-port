@@ -11,8 +11,40 @@ using KinematicCharacterController;
 using RoR2;
 using UnityEngine;
 
+public static class InputSessionPolicy
+{
+    public enum Mode { RefuseUnmeasuredPhysicalInput, MeasuredNovaPhysicalInput, AutomaticDiagnosticWithoutPhysicalInput }
+    public const string NovaModel = "Retroid Pocket Nova";
+    public const string ThorModel = "AYN Thor";
+    public static Mode Resolve(string model, bool explicitBringup)
+    {
+        if (string.Equals(model, NovaModel, StringComparison.Ordinal))
+            return Mode.MeasuredNovaPhysicalInput;
+        return explicitBringup && string.Equals(model, ThorModel, StringComparison.Ordinal)
+                   ? Mode.AutomaticDiagnosticWithoutPhysicalInput
+                   : Mode.RefuseUnmeasuredPhysicalInput;
+    }
+}
+
 public sealed partial class PortSession
 {
+    static string cachedInputDeviceModel;
+    static string CurrentDeviceModel()
+    {
+        if (!string.IsNullOrEmpty(cachedInputDeviceModel))
+            return cachedInputDeviceModel;
+#if UNITY_ANDROID && !UNITY_EDITOR
+        using (var build = new AndroidJavaClass("android.os.Build")) cachedInputDeviceModel = build.GetStatic<string>("MODEL");
+#else
+        cachedInputDeviceModel = SystemInfo.deviceModel;
+#endif
+        return cachedInputDeviceModel;
+    }
+    bool UsesDiagnosticWithoutPhysicalInput()
+    {
+        return r != null && InputSessionPolicy.Resolve(CurrentDeviceModel(), r.id != null && r.id.EndsWith("-bringup", StringComparison.Ordinal)) ==
+                               InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput;
+    }
     [Serializable]
     public class PerformanceReport
     {
@@ -42,6 +74,8 @@ public sealed partial class PortSession
         public float aimPitchCycle, aimYawCycle;
         public Vector3 modelForward;
         public bool novaOnly, originalInputConsumer, stopped, aimConsumed, rendersOriginalModel, diagnosticInput;
+        public string inputSource;
+        public bool physicalInputAvailable, mappingAvailable;
         public bool automaticDiagnosticInputHeldAtBoundary;
         public int automaticDiagnosticHoldFixedTicks, automaticDiagnosticHoldTransitions;
         public string automaticDiagnosticHoldStage, automaticDiagnosticHoldScope;
@@ -210,18 +244,31 @@ public sealed partial class PortSession
         }
         public IEnumerator NovaInputBoundary(CharacterBody body, EntityStateMachine machine, SessionConfig cfg)
         {
-            bool spine = coordinator.IsPlayableSpine(), bringup = coordinator.r.id.EndsWith("-bringup");
+            bool spine = coordinator.IsPlayableSpine(), bringup = coordinator.r.id.EndsWith("-bringup", StringComparison.Ordinal);
             coordinator.r.integratedWorld = cfg.integratedWorld;
             coordinator.r.teleporterLoop = cfg.teleporterLoop;
-            NovaInputBridge.RequireNova();
-            coordinator.r.nova = new NovaReport { rendersOriginalModel = spine, diagnosticInput = bringup, novaOnly = true,
-                                                  spawnedBodyId = body.netId.Value, masterId = body.master.netId.Value };
-            var mappingPath = System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json");
-            coordinator.Check(File.Exists(mappingPath), "Measured Nova mapping required before physical Commando test");
-            var mapping = JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));
-            mapping.Validate(coordinator.r.attempt);
-            coordinator.Check(!mapping.enableSkills, "Ability execution is a separate probe");
-            coordinator.r.nova.mapping = mapping;
+            var inputMode = InputSessionPolicy.Resolve(CurrentDeviceModel(), bringup);
+            coordinator.Check(inputMode != InputSessionPolicy.Mode.RefuseUnmeasuredPhysicalInput,
+                              "Unmeasured physical input is unavailable outside an explicit bringup diagnostic");
+            bool physicalInputAvailable = inputMode == InputSessionPolicy.Mode.MeasuredNovaPhysicalInput;
+            bool automaticDiagnosticOnly = inputMode == InputSessionPolicy.Mode.AutomaticDiagnosticWithoutPhysicalInput;
+            if (physicalInputAvailable)
+                NovaInputBridge.RequireNova();
+            coordinator.r.nova = new NovaReport { rendersOriginalModel = spine, diagnosticInput = bringup || automaticDiagnosticOnly,
+                                                  novaOnly = physicalInputAvailable, inputSource = physicalInputAvailable ? "measured-nova" : "automatic-diagnostic",
+                                                  physicalInputAvailable = physicalInputAvailable, spawnedBodyId = body.netId.Value,
+                                                  masterId = body.master.netId.Value };
+            NovaInputBridge.Mapping mapping = null;
+            if (physicalInputAvailable)
+            {
+                var mappingPath = System.IO.Path.Combine(Application.persistentDataPath, "nova-input-mapping.json");
+                coordinator.Check(File.Exists(mappingPath), "Measured Nova mapping required before physical Commando test");
+                mapping = JsonUtility.FromJson<NovaInputBridge.Mapping>(File.ReadAllText(mappingPath));
+                mapping.Validate(coordinator.r.attempt);
+                coordinator.Check(!mapping.enableSkills, "Ability execution is a separate probe");
+                coordinator.r.nova.mapping = mapping;
+                coordinator.r.nova.mappingAvailable = true;
+            }
             var motor = body.characterMotor;
             var solver = motor.Motor;
             var state = machine.state;
@@ -336,6 +383,16 @@ public sealed partial class PortSession
                 bridge = body.gameObject.AddComponent<NovaInputBridge>();
                 bridge.bank = bank;
                 bridge.mapping = mapping;
+                bridge.automaticDiagnosticOnly = automaticDiagnosticOnly;
+                if (!physicalInputAvailable)
+                {
+                    coordinator.worldManualTakeover = false;
+                    if (coordinator.r.world != null)
+                    {
+                        coordinator.r.world.manualTakeover = false;
+                        coordinator.r.world.diagnosticInput = true;
+                    }
+                }
                 bridge.enablePrimary = spine;
                 bridge.enableAllSkills = cfg.combatSpine;
                 bridge.diagnosticInput = bringup;
@@ -573,7 +630,7 @@ public sealed partial class PortSession
                         if ((coordinator.r.freePlay || cfg.integratedWorld) && coordinator.r.nova.observations.Count >= 900)
                             coordinator.r.nova.observations.RemoveAt(0);
                         coordinator.r.nova.observations.Add(
-                            new NovaSample { seconds = elapsed, raw = NovaInputBridge.ReadRaw(), input = bank.moveVector,
+                            new NovaSample { seconds = elapsed, raw = physicalInputAvailable ? NovaInputBridge.ReadRaw() : null, input = bank.moveVector,
                                              aim = bank.aimDirection, stateAim = stateAim, velocity = motor.velocity, position = position,
                                              grounded = solver.GroundingStatus.IsStableOnGround, jump = bank.jump.down,
                                              jumpCount = motor.jumpCount });

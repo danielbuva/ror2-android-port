@@ -103,6 +103,10 @@ public sealed class NovaInputBridge : MonoBehaviour
     public NovaThirdPersonView thirdPerson;
     public bool diagnosticEquipment, touchEquipment;
     public bool enablePrimary, enableAllSkills, diagnosticInput;
+    // Opt-in only for the exact unsupported-model bringup diagnostic owner.
+    // Legacy bridge callers default false and retain mapped/null-map behavior.
+    public bool automaticDiagnosticOnly;
+    public bool physicalInputAvailable => IsPhysicalInputAvailable(automaticDiagnosticOnly, mapping);
     // Owned only by SurvivorSkillInputCoverage; the sink enforces the mode on
     // every FixedUpdate, independent of ordinary producer timing.
     public bool isolatedDiagnosticSkillInput, isolatedDiagnosticSkillPulse;
@@ -200,6 +204,18 @@ public sealed class NovaInputBridge : MonoBehaviour
             throw new Exception("Require one controller in Unity joystick slot 1");
         requiredControllerName = names[0];
     }
+    public static bool IsAutomaticDiagnosticWithoutPhysicalInput(bool diagnosticMode, bool automaticDiagnosticOnly)
+    {
+        return diagnosticMode && automaticDiagnosticOnly;
+    }
+    public static bool IsPhysicalInputAvailable(bool automaticDiagnosticOnly, Mapping mapping)
+    {
+        return !automaticDiagnosticOnly && mapping != null;
+    }
+    public static bool MissingMappingRequiresNeutral(bool mappingMissing, bool diagnosticMode, bool automaticDiagnosticOnly)
+    {
+        return mappingMissing && !IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticMode, automaticDiagnosticOnly);
+    }
     public static Raw ReadRaw()
     {
         var raw = new Raw();
@@ -230,7 +246,20 @@ public sealed class NovaInputBridge : MonoBehaviour
     {
         try
         {
-            if (!bank || mapping == null || !focused)
+            if (!bank || !focused)
+            {
+                presence?.Suspend();
+                SetManualMoonAutomaticHold(false);
+                Neutral();
+                return;
+            }
+            if (IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly))
+            {
+                presence?.Suspend();
+                SetManualMoonAutomaticHold(false);
+                return;
+            }
+            if (mapping == null)
             {
                 presence?.Suspend();
                 SetManualMoonAutomaticHold(false);
@@ -288,17 +317,19 @@ public sealed class NovaInputBridge : MonoBehaviour
     }
     void FixedUpdate()
     {
-        if (!bank || mapping == null || !focused || Time.timeScale == 0)
+        bool noPhysicalDiagnostic = IsAutomaticDiagnosticWithoutPhysicalInput(diagnosticInput, automaticDiagnosticOnly);
+        if (!bank || !focused || Time.timeScale == 0 ||
+            MissingMappingRequiresNeutral(mapping == null, diagnosticInput, automaticDiagnosticOnly))
         {
             Neutral();
             return;
         }
-        if (!diagnosticInput && (presence == null || !presence.connected))
+        if (!noPhysicalDiagnostic && !diagnosticInput && (presence == null || !presence.connected))
         {
             Neutral();
             return;
         }
-        if (!diagnosticInput && !presence.Matches(UnityEngine.Input.GetJoystickNames()))
+        if (!noPhysicalDiagnostic && !diagnosticInput && !presence.Matches(UnityEngine.Input.GetJoystickNames()))
         {
             presence.Suspend();
             Neutral();
@@ -340,7 +371,7 @@ public sealed class NovaInputBridge : MonoBehaviour
         var raw = diagnosticInput ? null : ReadRaw();
         bank.interact.PushState(diagnosticInput ? (!holdAutomatic && diagnosticInteract)
                                                   : mapping.enableInteraction && raw.buttons[mapping.interact]);
-        bool all = mapping.enableSkills || enableAllSkills;
+        bool all = !automaticDiagnosticOnly && mapping != null && mapping.enableSkills || enableAllSkills;
         bank.skill1.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 0, diagnosticPrimary,
                                                 !diagnosticInput && (all || enablePrimary) && raw.buttons[mapping.primary]));

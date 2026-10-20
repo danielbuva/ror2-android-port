@@ -136,7 +136,8 @@ public sealed partial class PortSession
                     Show(true);
                 }
             }
-            if (coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.mapping != null &&
+            if (coordinator.offlineSettingsVisible && coordinator.r.nova != null && coordinator.r.nova.physicalInputAvailable &&
+                coordinator.r.nova.mapping != null &&
                 UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
             {
                 coordinator.offlineSettings.Save();
@@ -159,7 +160,9 @@ public sealed partial class PortSession
             if (!coordinator.offlineSettingsVisible)
                 return;
             GUI.Box(new Rect(Screen.width * .5f - 240, Screen.height * .5f - 200, 480, 400),
-                    "Android offline input settings · B back · A save");
+                    coordinator.UsesDiagnosticWithoutPhysicalInput()
+                        ? "Android offline settings · touch controls"
+                        : "Android offline input settings · B back · A save");
             var x = Screen.width * .5f - 210;
             var y = Screen.height * .5f - 155;
             GUI.Label(new Rect(x, y, 420, 28), "Stick deadzone: " + coordinator.offlineSettings.values.deadzone.ToString("F2"));

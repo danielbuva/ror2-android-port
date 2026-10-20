@@ -2078,6 +2078,8 @@ public sealed partial class PortSession
             // Explicit automation for integrated validation only; direct app launches use physical controls.
             bridge.touchEquipment |= coordinator.worldEquipmentTouch;
             coordinator.worldEquipmentTouch = false;
+            if (!bridge.physicalInputAvailable)
+                coordinator.worldManualTakeover = false;
             bridge.diagnosticInput = !coordinator.worldManualTakeover;
             coordinator.r.world.manualTakeover = coordinator.worldManualTakeover;
             if (coordinator.worldManualTakeover)
@@ -2845,7 +2847,8 @@ public sealed partial class PortSession
                 GUI.Button(new Rect(coordinator.recoveredHud ? 20 : Screen.width - 270, 555, 250, 42),
                            AndroidMaterialPresentation.report.enabled ? "Graphics: approximation" : "Graphics: legacy preview"))
                 AndroidMaterialPresentation.SetEnabled(!AndroidMaterialPresentation.report.enabled);
-            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 &&
+            var inputBridge = coordinator.worldPlayer ? coordinator.worldPlayer.GetComponent<NovaInputBridge>() : null;
+            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && inputBridge && inputBridge.physicalInputAvailable &&
                 GUI.Button(new Rect(coordinator.recoveredHud ? 20 : Screen.width - 210, coordinator.recoveredHud ? Screen.height - 195 : 20,
                                     190, 48),
                            coordinator.worldManualTakeover ? "Resume auto route" : "Take control"))
@@ -2863,6 +2866,8 @@ public sealed partial class PortSession
                     coordinator.Save();
                 }
             }
+            if (coordinator.r.id.EndsWith("-bringup") && world.health > 0 && (!inputBridge || !inputBridge.physicalInputAvailable))
+                GUI.Label(new Rect(20, Screen.height - 60, Screen.width - 40, 28), "Automatic diagnostic input · physical controller unavailable");
             var style = new GUIStyle(GUI.skin.label) { fontSize = 22 };
             var shadow = new GUIStyle(style);
             shadow.normal.textColor = Color.black;
@@ -2879,8 +2884,12 @@ public sealed partial class PortSession
                           world.kills + "    Enemies " + world.liveEnemies + "    Chests " + world.openedChests + " / " + world.chests +
                           "\nSyringe " + world.syringe + " · Glasses " + world.glasses + " · Slug " + world.slug + " · Ukulele " +
                           world.lightning + "\n" + world.lastPickup + "    Crit " + world.crit.ToString("F0") + "% · Regen " +
-                          world.regen.ToString("F1") + "\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n" +
-                          (string.IsNullOrEmpty(world.target) ? "Explore, fight and earn money" : "B: " + world.target) +
+                          world.regen.ToString("F1") +
+                          (inputBridge && inputBridge.automaticDiagnosticOnly
+                               ? "\nAutomatic diagnostic route · physical controller unavailable\n" +
+                                     (string.IsNullOrEmpty(world.target) ? "Explore, fight and earn money" : "Target: " + world.target)
+                               : "\nA jump · B interact · X primary · Y secondary · LB roll · RB barrage\n" +
+                                     (string.IsNullOrEmpty(world.target) ? "Explore, fight and earn money" : "B: " + world.target)) +
                           "\nAudio, stock startup and profiles unavailable";
             if (world.lootDomain > 4)
                 text += "\nEnergy Drink " + world.drink + " · Steak " + world.steak + " · Move speed " + world.moveSpeed.ToString("F1");
@@ -2898,8 +2907,10 @@ public sealed partial class PortSession
                                                                     coordinator.r.objective.bossMaxHealth.ToString("F0"));
             if (world.health <= 0)
             {
-                text += "\nCommando defeated. Press A to restart a fresh run.";
-                if (GUI.Button(new Rect(20, 420, 240, 48), "Restart run (A)"))
+                text += inputBridge && inputBridge.automaticDiagnosticOnly
+                            ? "\nCommando defeated. Start a fresh run from the touch button."
+                            : "\nCommando defeated. Press A to restart a fresh run.";
+                if (GUI.Button(new Rect(20, 420, 240, 48), inputBridge && inputBridge.automaticDiagnosticOnly ? "Restart run" : "Restart run (A)"))
                     RequestWorldRestart();
                 if (GUI.Button(new Rect(280, 420, 180, 48), "Close session"))
                     Application.Quit();
@@ -2924,7 +2935,8 @@ public sealed partial class PortSession
             if (coordinator.r == null || !coordinator.r.freePlay || !coordinator.r.integratedWorld ||
                 coordinator.r.phase != "commando-defeated" || coordinator.r.nova == null)
                 return;
-            if (UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
+            if (coordinator.r.nova.mapping != null && coordinator.r.nova.physicalInputAvailable &&
+                UnityEngine.Input.GetKeyDown((KeyCode)((int)KeyCode.Joystick1Button0 + coordinator.r.nova.mapping.jump)))
                 RequestWorldRestart();
         }
         public void RestartWorldAfterCleanup()
