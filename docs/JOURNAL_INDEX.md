@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J761](PORTING_JOURNAL.md#j761--capture-the-internal-novas-crowded-stage-cpu-work-without-bypassing-permissions) | 2026-10-19 | Capture the internal Nova's crowded-stage CPU work without bypassing permissions | Hypothesis: Android's explicitly selected app-scoped task-clock capture can work on internal storage even though J610's hardware path and J636's adopted run-as… |
 | [J760](PORTING_JOURNAL.md#j760--correct-the-mul-t-family-name-guard-at-the-accepted-native-api-boundary) | 2026-10-19 | Correct the MUL-T family-name guard at the accepted native API boundary | Hypothesis: the combined identity refusal is caused by reading the hidden SkillFamily name property instead of Unity's base-object name. |
 | [J759](PORTING_JOURNAL.md#j759--load-the-original-init-through-the-managed-android-filename-resolver) | 2026-10-19 | Load the original Init through the managed Android filename resolver | Hypothesis: J756's AK_FileNotFound comes from using SetBasePath for an app-private filesystem directory. |
 | [J758](PORTING_JOURNAL.md#j758--accept-default-controls-while-preserving-the-mul-t-identity-refusal) | 2026-10-19 | Accept default controls while preserving the MUL-T identity refusal | Build J754's committed source ba5aff74bb56316756dc98fec9124b98f4c2dee5 after host preflight, with the mandatory serialized Unity build lock. |

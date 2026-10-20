@@ -177,6 +177,12 @@ root, launch, restart, profiler installation or settings change. Device syntax
 and permission support remain measured gates. Any denial is preserved without
 retry or fallback; default PID mode remains unchanged. This mode is not a
 successful trace until the selected device produces one.
+J761 records a selected internal-storage device's app-scope capture. Its
+qualification includes stable run/stage endpoints; it supplies no exact-PID,
+managed-caller, frame-window or sustained-frame-rate guarantee. Camera frame
+counters are cumulative, while timing recorder averages reset on each sample;
+compare their actual intervals rather than treating a cumulative maximum as a
+new stall in every report.
 
 Bare `./dev perf` retains the existing dumpsys capture behavior.
 

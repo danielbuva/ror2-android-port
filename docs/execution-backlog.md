@@ -29,7 +29,8 @@ result in the journal.
 ## Stability and performance
 
 - [ ] Attribute managed-memory growth across repeated sessions.
-- [ ] Crowded later-stage frame time (main thread over budget); 60 FPS is release acceptance.
+- [ ] Attribute the crowded-stage enumeration hot path from the app-scope trace
+  (J761), then reduce measured frame time; 60 FPS is release acceptance.
 
 ## Structural cleanup
 

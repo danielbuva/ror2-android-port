@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J760** (MUL-T family-name guard has a source-backed correction awaiting a build).
+Last updated 2026-10-19 after **J761** (internal Nova supplies a crowded-stage CPU trace; performance attribution is open).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -54,8 +54,9 @@ they are not normal-difficulty acceptance.
   (profile holds 13 applied runs).
 - **Performance:** 120 Hz display with a 300 FPS request; first stage about 116 FPS under a
   firing workload; crowded later stages fall below 60 FPS with the main thread over budget.
-  Hardware profiling is permission-denied (J610); explicit software app profiling
-  is separately refused by Android run-as on adopted storage (J636).
+  Hardware profiling refuses (J610), as does app profiling on adopted storage
+  (J636). J761 obtains a 15 s app-scope trace on internal Nova in Ship Graveyard;
+  enumeration dominates the native call tree, with managed attribution open.
 
 Per-subsystem detail and vocabulary (original / recovered / adapted / approximate /
 unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).

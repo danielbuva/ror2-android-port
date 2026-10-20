@@ -14114,3 +14114,71 @@ The corrected source requires its own committed build, both baseline modes
 and the bounded receipt-bound offhand retry. This changes one existing R8
 authored source; no new file/GUID, protected implementation or private build
 input. Recipe provenance/privacy review is recorded in recipe/README.md.
+
+## J761 — Capture the internal Nova's crowded-stage CPU work without bypassing permissions
+
+Hypothesis: Android's explicitly selected app-scoped task-clock capture can
+work on internal storage even though J610's hardware path and J636's adopted
+run-as path refuse. Use the existing canonical capture owner, with no root,
+profiling installation, settings change or permission bypass. Prior art remains
+the documented native stage/Director separation and existing J504 assisted
+Huntress route. Root reviews and corrects the private host runner's menu phase
+ordering, late profile fields, terminal-stop propagation and freeze/stop-before-
+collection. Fifteen host tests pass; only Root dispatches the device run.
+
+On the internal Nova's exact owned
+aabf41ab5ece8a34d9ac4b70946dad5d8b827baa40e4dd927afd98e6ff15deee,
+select Huntress through the ordinary menu, seed 2, with invincibility/high damage/
+fast charge and baseline movement/jump. The runner binds the attempt to those
+verified APK bytes, refuses a foreign selector, confirms pauseBeforeMoon before
+Start and freezes the first appliedRuns count at live world entry.
+The original route completes Lakes → Goolake → Wisp Graveyard → Ship Graveyard
+→ Sky Meadow: four recorded boss/charge/exits, 719.532532 world seconds. The
+first two boss rewards are collected; the later two are explicitly uncollected.
+No report/current-process runtime error, appliedRuns stays 0, and Moon is not
+loaded. Stop immediately at four transitions; Root independently verifies
+the owned process is stopped and sleeps the screen.
+
+The strict host protocol reports success=false because the first four-transition
+report has no subsequent fixed-tick automatic hold witness. Preserve its
+moon-boundary-gate first failure; do not claim the full witness protocol passed
+or that a runtime boundary defect was demonstrated. The host stops before a
+later observation could discriminate timing. The baked pause flag is true and
+no Moon/finale navigation occurs. The frozen runner also mistakenly names
+frozenwall for Wisp; actual wispgraveyard is therefore not profiled. Ship
+Graveyard is correctly eligible, so neither issue invalidates its earlier trace.
+
+At settled Ship Graveyard, transitions 3, stage age 80.441711 seconds and six
+reported live enemies, capture exactly one 15 s software app-scope call graph.
+Pull a nonempty raw profile and generate the symbol report. Endpoint identity,
+Huntress, session, scene and count remain stable; afterward stage age is
+105.595947 seconds with the same reported cohort size. Collect the next camera
+sample. The trace covers the owned package process set, not exactly one PID;
+the receipt says pid_attribution_exact=false. Android internally uses the
+debuggable app helper; no permissions were changed. Remove only its unique
+remote output after the verified pull.
+
+The 17,836-sample report places UnityMain at 71.09% inclusive and the global
+object-enumeration path at about 56.46% inclusive, with ResourcesAPIInternal's
+FindObjectsOfTypeAll and instance-ID sorting prominent. Nested percentages
+overlap. Managed caller frames are libil2cpp offsets without a symbol table;
+an exact build-ID/symbol match is required before attribution or optimization.
+No code change or sustained 60 FPS result follows from this capture.
+
+Frame counters/means/thresholds/maxima are cumulative. Timing-recorder samples
+reset per append and have irregular windows. The 47,402.8 ms maximum first
+appears near startup and persists; it is not a repeated later-stage stall.
+The fresh sample at 710.218750 seconds reports 25 timing observations averaging
+37.313217 ms CPU, 21.562695 ms GPU and 37.249573 ms main active, but no device
+monotonic recording markers align that camera interval to the 15 s trace.
+The wrapper endpoints span setup/collection as well as recording, and reports
+can lag the live loop. Three offline analyzer contracts pass.
+
+Evidence: work/device/<serial>/experiments/stage-performance/20261020T044654.381359Z/
+and performance/cpu-20261020T045931.983269Z-57d3f0404d-steady-crowded-stage/.
+Frozen runner, Root closure and authored interval analysis are under
+work/coordination/internal-nova-stage-perf-plan/,
+codex-internal-nova-stage-perf-root-closure.json and
+internal-nova-stage-perf-analysis/. No runtime, payload or R8 build-input
+change. Next resolve the exact managed enumeration caller and preserve native
+observation/cleanup semantics before a measured optimization candidate.
