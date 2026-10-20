@@ -207,8 +207,8 @@ class ObjectiveCombatInputFailureWitnessTests(unittest.TestCase):
     def test_extracted_production_wrapper_and_witness(self) -> None:
         teleporter, integrated = source_paths(SOURCE_ROOT)
         program = build_harness(teleporter, integrated)
-        self.assertTrue(MONO.is_file(), f"Unity Mono runtime missing: {MONO}")
-        self.assertTrue(CSC.is_file(), f"Roslyn compiler missing: {CSC}")
+        if not (MONO.is_file() and CSC.is_file()):
+            self.skipTest("pinned Unity Mono/Roslyn host compiler is unavailable")
         SCRATCH.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="compile-", dir=SCRATCH) as tmp:
             source = Path(tmp) / "ObjectiveCombatInputWitness.cs"

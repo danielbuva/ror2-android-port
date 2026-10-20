@@ -28,6 +28,8 @@ def extract_method(text: str, signature: str) -> str:
 
 class ActivationContractTests(unittest.TestCase):
     def test_exact_production_capture_restore_helpers_with_synthetic_components(self) -> None:
+        if not (MONO.is_file() and CSC.is_file()):
+            self.skipTest("pinned Unity Mono/Roslyn host compiler is unavailable")
         methods = [
             extract_method(SOURCE.read_text(), "internal static HuntressTracker[] CaptureEnabledRootHuntressTrackers"),
             extract_method(SOURCE.read_text(), "internal static int RestoreCapturedEnabledRootHuntressTrackers"),
@@ -93,6 +95,8 @@ class Test
             self.assertIn("capture/restore synthetic tests passed", result.stdout)
 
     def test_actual_read_eligibility_helper_truth_table(self) -> None:
+        if not (MONO.is_file() and CSC.is_file()):
+            self.skipTest("pinned Unity Mono/Roslyn host compiler is unavailable")
         method = extract_method(WITNESS.read_text(), "public static bool IsTrackerReadEligible")
         program = r"""
 using System;
