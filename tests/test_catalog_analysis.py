@@ -20,7 +20,10 @@ class CatalogAnalysisTests(unittest.TestCase):
         self.work = self.root / "work"
         self.dest = self.root / "destination"
         self.recipe = self.root / "recipe"
-        write(self.recipe / "catalog-typed-corrections.json", dict(schema=1, input_id=INPUT, catalog_sha256="c" * 64, conversions={"7": dict(source="Assets/A.mat")}))
+        write(
+            self.recipe / "catalog-typed-corrections.json",
+            dict(schema=1, input_id=INPUT, catalog_sha256="c" * 64, conversions={"7": dict(source="Assets/A.mat")}),
+        )
         patcher = patch.object(catalog_analysis, "RECIPE", self.recipe)
         patcher.start()
         self.addCleanup(patcher.stop)

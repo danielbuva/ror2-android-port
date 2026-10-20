@@ -61,8 +61,7 @@ class SurvivorSelectionTests(unittest.TestCase):
             self.assertIn("no permanent progression", value["debugOptions"]["purpose"])
 
     def test_isolated_slot_selector_composes_with_existing_variant_selector(self):
-        variants = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 17,
-                    "variantIndex": 4, "skillCatalogIndex": 807}]}
+        variants = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 17, "variantIndex": 4, "skillCatalogIndex": 807}]}
         value = check.survivor_selection("attempt", "Mage", variants, "utility")
         self.assertEqual(value["diagnosticSkillIsolationSlot"], "utility")
         self.assertEqual(value["developerSkillVariantOverride"], variants)
@@ -101,13 +100,18 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
         device.storage.return_value = live
         device.read_receipt.return_value = {"persistentDataPath": "/fixture-runtime"}
         with tempfile.TemporaryDirectory() as directory:
+
             def read(path):
                 return {"success": True, "apk_sha256": digest} if path.name == "current-build.json" else {"attempt": "mutable-project-attempt"}
 
-            with patch.object(check, "WORK", Path(directory)), patch.object(check, "SurvivorCheckDevice", return_value=device), \
-                 patch.object(check, "read", side_effect=read), patch.object(check, "check_one", return_value={"success": True}) as case, \
-                 patch.object(check, "attempt_from_installed", return_value="fixture-attempt") as attempt, \
-                 redirect_stdout(io.StringIO()):
+            with (
+                patch.object(check, "WORK", Path(directory)),
+                patch.object(check, "SurvivorCheckDevice", return_value=device),
+                patch.object(check, "read", side_effect=read),
+                patch.object(check, "check_one", return_value={"success": True}) as case,
+                patch.object(check, "attempt_from_installed", return_value="fixture-attempt") as attempt,
+                redirect_stdout(io.StringIO()),
+            ):
                 if refused:
                     with self.assertRaises(RuntimeError):
                         check.check_survivors("Huntress")
@@ -115,10 +119,16 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
                     device.read_receipt.assert_not_called()
                     attempt.assert_not_called()
                 else:
-                    self.assertEqual(check.check_survivors("Huntress"), [{
-                        "success": True, "apk_sha256": digest,
-                        "apk_binding_mode": "current-build-at-start",
-                    }])
+                    self.assertEqual(
+                        check.check_survivors("Huntress"),
+                        [
+                            {
+                                "success": True,
+                                "apk_sha256": digest,
+                                "apk_binding_mode": "current-build-at-start",
+                            }
+                        ],
+                    )
                     case.assert_called_once()
                     attempt.assert_called_once_with(installed)
                     self.assertEqual(case.call_args.args[2], "fixture-attempt")
@@ -127,27 +137,26 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
 
     def test_selected_internal_and_adopted_devices_reach_the_existing_case_runner(self):
         self.run_selected("internal", "internal", {"mode": "internal"}, "package:/data/app/fixture/base.apk")
-        self.run_selected("adopted", "adopted", {"mode": "adopted", "uuid": "live-volume"},
-                          "package:/mnt/expand/live-volume/app/fixture/base.apk")
+        self.run_selected("adopted", "adopted", {"mode": "adopted", "uuid": "live-volume"}, "package:/mnt/expand/live-volume/app/fixture/base.apk")
 
     def test_explicit_owned_apk_binds_the_whole_batch_without_current_build_reads(self):
         digest = "a" * 64
         device = Mock()
         device.settings = {"storage_mode": "internal"}
-        installed = {"storage": {"mode": "internal"},
-                     "package_path": "package:/data/app/fixture/base.apk",
-                     "apk_sha256": digest}
+        installed = {"storage": {"mode": "internal"}, "package_path": "package:/data/app/fixture/base.apk", "apk_sha256": digest}
         device.owned.return_value = installed
         device.storage.return_value = {"mode": "internal"}
         device.read_receipt.return_value = {"persistentDataPath": "/fixture-runtime"}
         for requested in (digest, "b" * 64):
             with self.subTest(matching=requested == digest), tempfile.TemporaryDirectory() as directory:
-                with patch.object(check, "WORK", Path(directory)), \
-                     patch.object(check, "SurvivorCheckDevice", return_value=device), \
-                     patch.object(check, "read", side_effect=AssertionError("no current-build read")), \
-                     patch.object(check, "attempt_from_installed", return_value="owned-attempt") as attempt, \
-                     patch.object(check, "check_one", side_effect=lambda *a, **kw: {"success": True}) as case, \
-                     redirect_stdout(io.StringIO()):
+                with (
+                    patch.object(check, "WORK", Path(directory)),
+                    patch.object(check, "SurvivorCheckDevice", return_value=device),
+                    patch.object(check, "read", side_effect=AssertionError("no current-build read")),
+                    patch.object(check, "attempt_from_installed", return_value="owned-attempt") as attempt,
+                    patch.object(check, "check_one", side_effect=lambda *a, **kw: {"success": True}) as case,
+                    redirect_stdout(io.StringIO()),
+                ):
                     if requested != digest:
                         with self.assertRaisesRegex(RuntimeError, "does not match"):
                             check.check_survivors("Croco,Merc", expected_apk_sha256=requested)
@@ -158,8 +167,7 @@ class SurvivorStoragePolicyTests(unittest.TestCase):
                         attempt.assert_called_once_with(installed)
                         self.assertEqual([call.args[1] for call in case.call_args_list], ["Croco", "Merc"])
                         self.assertTrue(all(call.args[2] == "owned-attempt" for call in case.call_args_list))
-                        self.assertEqual(results, [{"success": True, "apk_sha256": digest,
-                            "apk_binding_mode": "explicit-owned-apk-sha256"}] * 2)
+                        self.assertEqual(results, [{"success": True, "apk_sha256": digest, "apk_binding_mode": "explicit-owned-apk-sha256"}] * 2)
 
     def test_storage_drift_or_missing_placement_refuses_before_launch(self):
         cases = (
@@ -343,28 +351,48 @@ class SurvivorAssessmentTests(unittest.TestCase):
 
 class IsolatedSkillAssessmentTests(unittest.TestCase):
     def fixture(self, slot="utility"):
-        value = report(selectedSurvivor="Mage", developerSkillIsolationAssisted=True,
-                       diagnosticSkillIsolationSlot=slot)
+        value = report(selectedSurvivor="Mage", developerSkillIsolationAssisted=True, diagnosticSkillIsolationSlot=slot)
         value["survivorSkills"]["slots"] = [
-            {"slot": name, "authorityActivations": 1, "serverActivations": 1,
-             "definition": "Native" + name.title(), "declaredActivationState": "EntityStates.Native.Activate",
-             "machineState": "EntityStates.GenericCharacterMain"} for name in check.SLOTS]
+            {
+                "slot": name,
+                "authorityActivations": 1,
+                "serverActivations": 1,
+                "definition": "Native" + name.title(),
+                "declaredActivationState": "EntityStates.Native.Activate",
+                "machineState": "EntityStates.GenericCharacterMain",
+            }
+            for name in check.SLOTS
+        ]
         value["survivorSkills"]["components"] = [
             {"present": True, "canonicalSlot": name.title(), "componentIndex": index, "definition": "Native" + name.title()}
-            for index, name in enumerate(check.SLOTS)]
-        value["survivorSkills"]["skillVariantInventory"] = {"status": "available", "bodyIndex": 0,
-            "selectionSource": "native-master-loadout-live", "components": [
-            {"componentIndex": index, "familyCatalogIndex": 100 + index, "selectedLoadoutVariantIndex": 0,
-             "selectedLoadoutSkillCatalogIndex": 200 + index, "runtimeSkillCatalogIndex": 200 + index,
-             "runtimeDefinitionStatus": "matches-selected-native-loadout", "variants": [
-                 {"variantIndex": 0, "skillCatalogIndex": 200 + index, "skillName": "Native" + name.title()}]}
-            for index, name in enumerate(check.SLOTS)]}
-        value["skillInputCoverage"] = {"mode": "isolated-slot", "isolationSlot": slot,
-            "outcome": "isolated-slot-observation-complete", "completed": True,
-            "selectedCallbacksObserved": True, "elapsedSeconds": check.ISOLATED_SKILL_MAX_SECONDS,
-            "slots": [{"slot": slot,
-                "authorityBefore": 0, "serverBefore": 0, "authorityAfter": 1, "serverAfter": 1,
-                "inputBankEdges": 1}]}
+            for index, name in enumerate(check.SLOTS)
+        ]
+        value["survivorSkills"]["skillVariantInventory"] = {
+            "status": "available",
+            "bodyIndex": 0,
+            "selectionSource": "native-master-loadout-live",
+            "components": [
+                {
+                    "componentIndex": index,
+                    "familyCatalogIndex": 100 + index,
+                    "selectedLoadoutVariantIndex": 0,
+                    "selectedLoadoutSkillCatalogIndex": 200 + index,
+                    "runtimeSkillCatalogIndex": 200 + index,
+                    "runtimeDefinitionStatus": "matches-selected-native-loadout",
+                    "variants": [{"variantIndex": 0, "skillCatalogIndex": 200 + index, "skillName": "Native" + name.title()}],
+                }
+                for index, name in enumerate(check.SLOTS)
+            ],
+        }
+        value["skillInputCoverage"] = {
+            "mode": "isolated-slot",
+            "isolationSlot": slot,
+            "outcome": "isolated-slot-observation-complete",
+            "completed": True,
+            "selectedCallbacksObserved": True,
+            "elapsedSeconds": check.ISOLATED_SKILL_MAX_SECONDS,
+            "slots": [{"slot": slot, "authorityBefore": 0, "serverBefore": 0, "authorityAfter": 1, "serverAfter": 1, "inputBankEdges": 1}],
+        }
         value["world"] = {"seconds": check.ISOLATED_SKILL_MAX_SECONDS}
         return value
 
@@ -392,8 +420,7 @@ class IsolatedSkillAssessmentTests(unittest.TestCase):
 
     def test_outer_world_deadline_waits_for_owner_elapsed_bound(self):
         value = self.fixture()
-        value["skillInputCoverage"].update(completed=False, outcome="duration-exhausted",
-                                            elapsedSeconds=check.ISOLATED_SKILL_MAX_SECONDS - .01)
+        value["skillInputCoverage"].update(completed=False, outcome="duration-exhausted", elapsedSeconds=check.ISOLATED_SKILL_MAX_SECONDS - 0.01)
         self.assertIsNone(check.isolated_stop_reason(value, "utility"))
         value["skillInputCoverage"]["elapsedSeconds"] = check.ISOLATED_SKILL_MAX_SECONDS
         self.assertEqual(check.isolated_stop_reason(value, "utility"), "isolated-slot-deadline")
@@ -413,37 +440,30 @@ class IsolatedSkillAssessmentTests(unittest.TestCase):
 
     def test_combined_variant_request_requires_exact_post_spawn_live_contract(self):
         value = self.fixture()
-        selector = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 102,
-                    "variantIndex": 1, "skillCatalogIndex": 802}]}
+        selector = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 102, "variantIndex": 1, "skillCatalogIndex": 802}]}
         live = value["survivorSkills"]["skillVariantInventory"]["components"][2]
-        live.update(selectedLoadoutVariantIndex=1, selectedLoadoutSkillCatalogIndex=802,
-                    runtimeSkillCatalogIndex=802)
+        live.update(selectedLoadoutVariantIndex=1, selectedLoadoutSkillCatalogIndex=802, runtimeSkillCatalogIndex=802)
         live["variants"].append({"variantIndex": 1, "skillCatalogIndex": 802, "skillName": "MageUtilityAlt"})
         value["survivorSkills"]["slots"][2]["definition"] = "MageUtilityAlt"
         value["survivorSkills"]["components"][2]["definition"] = "MageUtilityAlt"
         value["developerSkillVariantOverride"] = selector
         value["developerSkillVariantAssisted"] = True
-        value["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": True,
-            "effectiveSkillVariants": [0, 0, 1, 0]}
-        self.assertEqual(check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete",
-                                                     value, value, [], selector), [])
+        value["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": True, "effectiveSkillVariants": [0, 0, 1, 0]}
+        self.assertEqual(check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete", value, value, [], selector), [])
         value["survivorSkills"]["skillVariantInventory"]["components"][2]["runtimeSkillCatalogIndex"] = 201
-        self.assertTrue(check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete",
-                                                    value, value, [], selector))
+        self.assertTrue(check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete", value, value, [], selector))
         value = self.fixture()
         primary_catalog = value["survivorSkills"]["skillVariantInventory"]["components"][0]
-        primary_catalog.update(selectedLoadoutVariantIndex=1, selectedLoadoutSkillCatalogIndex=201,
-                               runtimeSkillCatalogIndex=201)
+        primary_catalog.update(selectedLoadoutVariantIndex=1, selectedLoadoutSkillCatalogIndex=201, runtimeSkillCatalogIndex=201)
         primary_catalog["variants"].append({"variantIndex": 1, "skillCatalogIndex": 201, "skillName": "OtherPrimary"})
-        selector = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 102,
-                    "variantIndex": 0, "skillCatalogIndex": 202}]}
+        selector = {"survivor": "Mage", "entries": [{"componentIndex": 2, "familyCatalogIndex": 102, "variantIndex": 0, "skillCatalogIndex": 202}]}
         value["developerSkillVariantOverride"] = selector
         value["developerSkillVariantAssisted"] = True
-        value["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": True,
-            "effectiveSkillVariants": [0, 0, 0, 0]}
-        self.assertIn("post-spawn effective native loadout differs from selected native variants",
-                      check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete",
-                                                  value, value, [], selector))
+        value["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": True, "effectiveSkillVariants": [0, 0, 0, 0]}
+        self.assertIn(
+            "post-spawn effective native loadout differs from selected native variants",
+            check.assess_isolated_skill("Mage", "utility", "isolated-slot-observation-complete", value, value, [], selector),
+        )
 
     def test_default_four_slot_contract_remains_separate(self):
         value = self.fixture()
@@ -506,7 +526,12 @@ class SurvivorRunnerTests(unittest.TestCase):
             device.collect.side_effect = RuntimeError("capture transfer failed")
         clock = FakeClock()
         device.fake_clock = clock
-        with patch.object(check, "WORK", root), patch.object(check.time, "sleep", side_effect=clock.sleep), patch.object(check.time, "monotonic", side_effect=clock.monotonic), patch.object(check, "HOST_DEADLINE_SECONDS", host_deadline_seconds):
+        with (
+            patch.object(check, "WORK", root),
+            patch.object(check.time, "sleep", side_effect=clock.sleep),
+            patch.object(check.time, "monotonic", side_effect=clock.monotonic),
+            patch.object(check, "HOST_DEADLINE_SECONDS", host_deadline_seconds),
+        ):
             try:
                 result = check.check_one(device, "Huntress", "fixture", "/owned/runtime", root / "case", {"apk_sha256": "a" * 64})
             except RuntimeError:
@@ -582,35 +607,63 @@ class SurvivorRunnerTests(unittest.TestCase):
 class SkillVariantSelectionTests(unittest.TestCase):
     def valid_catalog_inventory(self):
         return {
-            "status": "available", "bodyIndex": 7, "selectionSource": "native-master-loadout-live",
+            "status": "available",
+            "bodyIndex": 7,
+            "selectionSource": "native-master-loadout-live",
             "components": [
-                {"componentIndex": 0, "familyCatalogIndex": 299, "selectedLoadoutVariantIndex": 0,
-                 "selectedLoadoutSkillCatalogIndex": 155, "runtimeSkillCatalogIndex": 155,
-                 "runtimeDefinitionStatus": "matches-selected-native-loadout", "skillName": "Primary",
-                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 155, "skillName": "PrimaryA",
-                               "unlockableName": "", "expansionGated": False}]},
-                {"componentIndex": 1, "familyCatalogIndex": 300, "selectedLoadoutVariantIndex": 0,
-                 "selectedLoadoutSkillCatalogIndex": 160, "runtimeSkillCatalogIndex": -1,
-                 "runtimeDefinitionStatus": "uninitialized-or-unassigned", "skillName": "ToolbotBackup",
-                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 160, "skillName": "Backup",
-                               "unlockableName": "", "expansionGated": False}]},
-                {"componentIndex": 2, "familyCatalogIndex": 299, "selectedLoadoutVariantIndex": 0,
-                 "selectedLoadoutSkillCatalogIndex": 155, "runtimeSkillCatalogIndex": 180,
-                 "runtimeDefinitionStatus": "differs-from-selected-native-loadout", "skillName": "ToolbotPrimary",
-                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 155, "skillName": "PrimaryA",
-                               "unlockableName": "", "expansionGated": False}]},
-                {"componentIndex": 3, "familyCatalogIndex": 302, "selectedLoadoutVariantIndex": 0,
-                 "selectedLoadoutSkillCatalogIndex": 161, "runtimeSkillCatalogIndex": 161,
-                 "runtimeDefinitionStatus": "matches-selected-native-loadout", "skillName": "ToolbotUtility",
-                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 161, "skillName": "Utility",
-                               "unlockableName": "", "expansionGated": False}]},
-                {"componentIndex": 4, "familyCatalogIndex": 301, "selectedLoadoutVariantIndex": 0,
-                 "selectedLoadoutSkillCatalogIndex": 806, "runtimeSkillCatalogIndex": 806,
-                 "runtimeDefinitionStatus": "matches-selected-native-loadout", "skillName": "ToolbotArm",
-                 "variants": [{"variantIndex": 0, "skillCatalogIndex": 806, "skillName": "ArmA",
-                               "unlockableName": "", "expansionGated": False},
-                              {"variantIndex": 1, "skillCatalogIndex": 807, "skillName": "ArmB",
-                               "unlockableName": "", "expansionGated": False}]},
+                {
+                    "componentIndex": 0,
+                    "familyCatalogIndex": 299,
+                    "selectedLoadoutVariantIndex": 0,
+                    "selectedLoadoutSkillCatalogIndex": 155,
+                    "runtimeSkillCatalogIndex": 155,
+                    "runtimeDefinitionStatus": "matches-selected-native-loadout",
+                    "skillName": "Primary",
+                    "variants": [{"variantIndex": 0, "skillCatalogIndex": 155, "skillName": "PrimaryA", "unlockableName": "", "expansionGated": False}],
+                },
+                {
+                    "componentIndex": 1,
+                    "familyCatalogIndex": 300,
+                    "selectedLoadoutVariantIndex": 0,
+                    "selectedLoadoutSkillCatalogIndex": 160,
+                    "runtimeSkillCatalogIndex": -1,
+                    "runtimeDefinitionStatus": "uninitialized-or-unassigned",
+                    "skillName": "ToolbotBackup",
+                    "variants": [{"variantIndex": 0, "skillCatalogIndex": 160, "skillName": "Backup", "unlockableName": "", "expansionGated": False}],
+                },
+                {
+                    "componentIndex": 2,
+                    "familyCatalogIndex": 299,
+                    "selectedLoadoutVariantIndex": 0,
+                    "selectedLoadoutSkillCatalogIndex": 155,
+                    "runtimeSkillCatalogIndex": 180,
+                    "runtimeDefinitionStatus": "differs-from-selected-native-loadout",
+                    "skillName": "ToolbotPrimary",
+                    "variants": [{"variantIndex": 0, "skillCatalogIndex": 155, "skillName": "PrimaryA", "unlockableName": "", "expansionGated": False}],
+                },
+                {
+                    "componentIndex": 3,
+                    "familyCatalogIndex": 302,
+                    "selectedLoadoutVariantIndex": 0,
+                    "selectedLoadoutSkillCatalogIndex": 161,
+                    "runtimeSkillCatalogIndex": 161,
+                    "runtimeDefinitionStatus": "matches-selected-native-loadout",
+                    "skillName": "ToolbotUtility",
+                    "variants": [{"variantIndex": 0, "skillCatalogIndex": 161, "skillName": "Utility", "unlockableName": "", "expansionGated": False}],
+                },
+                {
+                    "componentIndex": 4,
+                    "familyCatalogIndex": 301,
+                    "selectedLoadoutVariantIndex": 0,
+                    "selectedLoadoutSkillCatalogIndex": 806,
+                    "runtimeSkillCatalogIndex": 806,
+                    "runtimeDefinitionStatus": "matches-selected-native-loadout",
+                    "skillName": "ToolbotArm",
+                    "variants": [
+                        {"variantIndex": 0, "skillCatalogIndex": 806, "skillName": "ArmA", "unlockableName": "", "expansionGated": False},
+                        {"variantIndex": 1, "skillCatalogIndex": 807, "skillName": "ArmB", "unlockableName": "", "expansionGated": False},
+                    ],
+                },
             ],
         }
 
@@ -694,25 +747,33 @@ class SkillVariantSelectionTests(unittest.TestCase):
         inventory["selectionSource"] = "native-master-loadout-pre-spawn"
         effective = [0, 0, 0, 0, 1]
         live_inventory = self.matching_live_inventory(effective)
-        final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
-                       developerSkillVariantAssisted=True,
-                       developerSkillVariantOverride=expected,
-                       developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True, "assisted": True,
-                                                            "effectiveSkillVariants": effective,
-                                                            "skillVariantInventory": inventory},
-                       survivorSkills={**report()["survivorSkills"], "skillVariantInventory": live_inventory})
+        final = report(
+            selectedSurvivor="Toolbot",
+            developerSurvivorOverride=True,
+            developerSkillVariantAssisted=True,
+            developerSkillVariantOverride=expected,
+            developerSkillVariantOverrideReport={
+                "requested": True,
+                "status": "applied",
+                "applied": True,
+                "assisted": True,
+                "effectiveSkillVariants": effective,
+                "skillVariantInventory": inventory,
+            },
+            survivorSkills={**report()["survivorSkills"], "skillVariantInventory": live_inventory},
+        )
         self.assertEqual(check.assess("Toolbot", "four-slots-activated", final, final, [], expected), [])
         final["developerSkillVariantOverrideReport"]["effectiveSkillVariants"][4] = 0
-        self.assertIn("per-run effective native loadout differs from the requested skill variants",
-                      check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+        self.assertIn(
+            "per-run effective native loadout differs from the requested skill variants",
+            check.assess("Toolbot", "four-slots-activated", final, final, [], expected),
+        )
         final["developerSkillVariantOverrideReport"]["effectiveSkillVariants"][4] = 1
         final["developerSkillVariantAssisted"] = False
-        self.assertIn("per-run skill-variant assisted session marker is absent",
-                      check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+        self.assertIn("per-run skill-variant assisted session marker is absent", check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
         final["developerSkillVariantAssisted"] = True
         final["developerSkillVariantOverrideReport"] = {"status": "applied", "applied": True, "assisted": False}
-        self.assertIn("per-run skill-variant override was not applied as assisted",
-                      check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
+        self.assertIn("per-run skill-variant override was not applied as assisted", check.assess("Toolbot", "four-slots-activated", final, final, [], expected))
 
     def test_full_variant_contract_rejects_wrong_post_spawn_definition(self):
         selector = self.valid_selector()
@@ -721,11 +782,21 @@ class SkillVariantSelectionTests(unittest.TestCase):
         pre_spawn = copy.deepcopy(self.valid_catalog_inventory())
         pre_spawn["selectionSource"] = "native-master-loadout-pre-spawn"
         live = self.matching_live_inventory(effective)
-        final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
-                       developerSkillVariantAssisted=True, developerSkillVariantOverride=expected,
-                       developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True,
-                           "assisted": True, "effectiveSkillVariants": effective, "skillVariantInventory": pre_spawn},
-                       survivorSkills={**report()["survivorSkills"], "skillVariantInventory": live})
+        final = report(
+            selectedSurvivor="Toolbot",
+            developerSurvivorOverride=True,
+            developerSkillVariantAssisted=True,
+            developerSkillVariantOverride=expected,
+            developerSkillVariantOverrideReport={
+                "requested": True,
+                "status": "applied",
+                "applied": True,
+                "assisted": True,
+                "effectiveSkillVariants": effective,
+                "skillVariantInventory": pre_spawn,
+            },
+            survivorSkills={**report()["survivorSkills"], "skillVariantInventory": live},
+        )
         # Unrequested component 1 is intentionally unassigned; this contract checks the selected alternates only.
         live["components"][1]["runtimeSkillCatalogIndex"] = -1
         live["components"][1]["runtimeDefinitionStatus"] = "uninitialized-or-unassigned"
@@ -741,16 +812,24 @@ class SkillVariantSelectionTests(unittest.TestCase):
         effective = [0, 0, 0, 0, 1]
         pre_spawn = copy.deepcopy(self.valid_catalog_inventory())
         pre_spawn["selectionSource"] = "native-master-loadout-pre-spawn"
-        final = report(selectedSurvivor="Toolbot", developerSurvivorOverride=True,
-                       developerSkillVariantAssisted=True, developerSkillVariantOverride=expected,
-                       developerSkillVariantOverrideReport={"requested": True, "status": "applied", "applied": True,
-                           "assisted": True, "effectiveSkillVariants": effective, "skillVariantInventory": pre_spawn},
-                       survivorSkills={**report()["survivorSkills"], "skillVariantInventory": self.matching_live_inventory(effective)})
+        final = report(
+            selectedSurvivor="Toolbot",
+            developerSurvivorOverride=True,
+            developerSkillVariantAssisted=True,
+            developerSkillVariantOverride=expected,
+            developerSkillVariantOverrideReport={
+                "requested": True,
+                "status": "applied",
+                "applied": True,
+                "assisted": True,
+                "effectiveSkillVariants": effective,
+                "skillVariantInventory": pre_spawn,
+            },
+            survivorSkills={**report()["survivorSkills"], "skillVariantInventory": self.matching_live_inventory(effective)},
+        )
         fields = check.skill_variant_inventory_report_fields(final)
-        self.assertEqual(fields["pre_spawn_skill_variant_catalog_inventory"]["selectionSource"],
-                         "native-master-loadout-pre-spawn")
-        self.assertEqual(fields["post_spawn_skill_variant_catalog_inventory"]["selectionSource"],
-                         "native-master-loadout-live")
+        self.assertEqual(fields["pre_spawn_skill_variant_catalog_inventory"]["selectionSource"], "native-master-loadout-pre-spawn")
+        self.assertEqual(fields["post_spawn_skill_variant_catalog_inventory"]["selectionSource"], "native-master-loadout-live")
         self.assertEqual(fields["skill_variant_catalog_inventory"], fields["pre_spawn_skill_variant_catalog_inventory"])
         del final["survivorSkills"]["skillVariantInventory"]
         fields = check.skill_variant_inventory_report_fields(final)
@@ -759,9 +838,7 @@ class SkillVariantSelectionTests(unittest.TestCase):
         self.assertIn("post-spawn native skill-variant inventory unavailable or not live", failures)
 
     def test_catalog_inventory_exposes_exact_indexes_and_refuses_unbounded_or_ambiguous_shapes(self):
-        report_value = {"developerSkillVariantOverrideReport": {
-            "requested": True,
-            "skillVariantInventory": self.valid_catalog_inventory()}}
+        report_value = {"developerSkillVariantOverrideReport": {"requested": True, "skillVariantInventory": self.valid_catalog_inventory()}}
         parsed = check.skill_variant_catalog_inventory(report_value)
         self.assertEqual(parsed["status"], "valid")
         self.assertEqual(parsed["components"][4]["familyCatalogIndex"], 301)
@@ -778,10 +855,12 @@ class SkillVariantSelectionTests(unittest.TestCase):
         self.assertEqual(check.skill_variant_catalog_inventory(report_value)["status"], "invalid")
 
     def test_default_inline_override_report_does_not_hide_live_inventory(self):
-        value = {"developerSkillVariantOverrideReport": {
-            "requested": False, "skillVariantInventory": {"status": "", "components": []}},
-            "survivorSkills": {"skillVariantInventory": self.valid_catalog_inventory()}}
+        value = {
+            "developerSkillVariantOverrideReport": {"requested": False, "skillVariantInventory": {"status": "", "components": []}},
+            "survivorSkills": {"skillVariantInventory": self.valid_catalog_inventory()},
+        }
         self.assertEqual(check.skill_variant_catalog_inventory(value)["status"], "valid")
+
 
 if __name__ == "__main__":
     unittest.main()

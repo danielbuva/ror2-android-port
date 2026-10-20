@@ -1,4 +1,5 @@
 """Read the diagnostic attempt embedded in the exact installed lab APK."""
+
 from __future__ import annotations
 
 import hashlib
@@ -20,8 +21,7 @@ def validate_expected_apk_sha256(value: str | None) -> str | None:
     """Validate an optional explicit hash without consulting a build pointer."""
     if value is None:
         return None
-    if (not isinstance(value, str) or len(value) != 64
-            or any(ch not in "0123456789abcdef" for ch in value)):
+    if not isinstance(value, str) or len(value) != 64 or any(ch not in "0123456789abcdef" for ch in value):
         raise ValueError("Expected APK SHA-256 must be 64 lowercase hexadecimal characters")
     return value
 
@@ -36,8 +36,7 @@ def bind_installed_apk(installed: dict, *, expected_sha256=None, current_build_s
     if not isinstance(installed, dict):
         raise RuntimeError("Installed ownership receipt is invalid")
     actual = installed.get("apk_sha256")
-    if (not isinstance(actual, str) or len(actual) != 64
-            or any(ch not in "0123456789abcdef" for ch in actual)):
+    if not isinstance(actual, str) or len(actual) != 64 or any(ch not in "0123456789abcdef" for ch in actual):
         raise RuntimeError("Installed ownership receipt lacks a valid APK SHA-256")
     if expected_sha256 is not None:
         if actual != expected_sha256:
@@ -58,9 +57,13 @@ def attempt_from_installed(installed: dict, *, loader=None) -> str:
         raise RuntimeError("Installed ownership receipt is invalid")
     apk_hash = installed.get("apk_sha256")
     apk_value = installed.get("apk")
-    if (not isinstance(apk_hash, str) or len(apk_hash) != 64
-            or any(ch not in "0123456789abcdef" for ch in apk_hash)
-            or not isinstance(apk_value, str) or not apk_value):
+    if (
+        not isinstance(apk_hash, str)
+        or len(apk_hash) != 64
+        or any(ch not in "0123456789abcdef" for ch in apk_hash)
+        or not isinstance(apk_value, str)
+        or not apk_value
+    ):
         raise RuntimeError("Installed ownership receipt lacks APK path/hash")
     apk = Path(apk_value).expanduser()
     if not apk.is_file() or apk.is_symlink():

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Public synthetic contracts and host execution of the extracted production lease."""
+
 import json
 import os
 from pathlib import Path
@@ -26,7 +27,7 @@ def production_lease_source():
         elif source[index] == "}":
             depth -= 1
             if depth == 0:
-                return source[start:index + 1]
+                return source[start : index + 1]
     raise AssertionError("production lease class has unbalanced braces")
 
 
@@ -50,18 +51,19 @@ class NativeSourceLootContract(unittest.TestCase):
         self.assertEqual(lakes["PickupPickerController"]["count"], 2)
         self.assertEqual(lakes["PickupPickerController"]["tables"], ["Chest2:null/null", "Scrapper:pdtUnscrappableItems/null"])
         self.assertEqual(lakes["CreatePickupsFromDropTable"]["tables"], [None])
-        self.assertIn('GetComponentsInChildren<ChestBehavior>(true)', self.world)
-        self.assertIn('GetComponentsInChildren<WakeController>(true)', self.world)
-        self.assertIn('sourceDropTable == null', self.world)
-        self.assertIn('pickers.Length == 2', self.world)
+        self.assertIn("GetComponentsInChildren<ChestBehavior>(true)", self.world)
+        self.assertIn("GetComponentsInChildren<WakeController>(true)", self.world)
+        self.assertIn("sourceDropTable == null", self.world)
+        self.assertIn("pickers.Length == 2", self.world)
         self.assertIn('component.excludedItemsDropTable.name == "pdtUnscrappableItems"', self.world)
-        self.assertIn('!component.includedItemsDropTable', self.world)
-        self.assertIn('pickupCreators.Length == 1', self.world)
-        self.assertIn('ReferenceEquals(pickupCreators[0], wake.shamanPickupCreator)', self.world)
+        self.assertIn("!component.includedItemsDropTable", self.world)
+        self.assertIn("pickupCreators.Length == 1", self.world)
+        self.assertIn("ReferenceEquals(pickupCreators[0], wake.shamanPickupCreator)", self.world)
 
     def test_owned_tables_clone_and_regenerate_from_current_run_without_rolls(self):
-        prepare = self.world[self.world.index("public void PrepareNativeSourceInteractableTables"):
-                             self.world.index("public void RestoreNativeSourceInteractableTables")]
+        prepare = self.world[
+            self.world.index("public void PrepareNativeSourceInteractableTables") : self.world.index("public void RestoreNativeSourceInteractableTables")
+        ]
         self.assertEqual(prepare.count("PrepareNativeBasicTable(scene,"), 4)
         self.assertIn("coordinator.ObjectiveDropTable(source)", prepare)
         self.assertIn("owned.RegenerateDropTable(Run.instance)", prepare)
@@ -74,23 +76,20 @@ class NativeSourceLootContract(unittest.TestCase):
         self.assertNotIn("onRunStartGlobal", prepare)
 
     def test_resources_and_borrowed_fields_are_transactionally_ordered(self):
-        prepare = self.world[self.world.index("void PrepareNativeBasicTable"):
-                             self.world.index("static bool IsSupportedNativeBasicTable")]
+        prepare = self.world[self.world.index("void PrepareNativeBasicTable") : self.world.index("static bool IsSupportedNativeBasicTable")]
         self.assertLess(prepare.index("coordinator.ObjectiveDropTable"), prepare.index("nativeSourceDropTableBindings.Add(binding)"))
         self.assertLess(prepare.index("nativeSourceDropTableBindings.Add(binding)"), prepare.index("binding.lease.Bind()"))
-        restore = self.world[self.world.index("public void RestoreNativeSourceInteractableTables"):
-                             self.world.index("public GameObject WholeInteractableTemplate")]
+        restore = self.world[
+            self.world.index("public void RestoreNativeSourceInteractableTables") : self.world.index("public GameObject WholeInteractableTemplate")
+        ]
         self.assertIn("for (int i = nativeSourceDropTableBindings.Count - 1", restore)
         self.assertLess(restore.index("binding.lease.Restore()"), restore.index("nativeSourceDropTableBindings.Clear()"))
-        teardown = LIFECYCLE[LIFECYCLE.index("public void Dispose()"):
-                              LIFECYCLE.index("void ValidateGlobalSceneIdentityCohort")]
+        teardown = LIFECYCLE[LIFECYCLE.index("public void Dispose()") : LIFECYCLE.index("void ValidateGlobalSceneIdentityCohort")]
         self.assertLess(teardown.index("RollbackOwnedIdentities();"), teardown.index("RestoreSourceInteractableTables(scene);"))
         self.assertLess(teardown.index("RestoreSourceInteractableTables(scene);"), teardown.index("foreach (var target in toggleStates)"))
 
     def test_extracted_production_lease_executes_bind_restore_refusal_and_partial_rollback(self):
-        editor = Path(os.environ.get(
-            "UNITY_EDITOR_PATH",
-            "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"))
+        editor = Path(os.environ.get("UNITY_EDITOR_PATH", "/Applications/Unity/Hub/Editor/2021.3.45f2/Unity.app/Contents"))
         compiler = editor / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
         runtime = editor / "MonoBleedingEdge/bin/mono"
         if not compiler.is_file() or not runtime.is_file():
@@ -100,12 +99,15 @@ class NativeSourceLootContract(unittest.TestCase):
             helper = root / "NativeBorrowedFieldLease.cs"
             executable = root / "lease-tests.exe"
             helper.write_text("using System;\n" + production_lease_source() + "\n")
-            result = subprocess.run([str(runtime), str(compiler), "-nologo", "-out:" + str(executable),
-                                     str(helper), str(HARNESS)], cwd=root, text=True,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            result = subprocess.run(
+                [str(runtime), str(compiler), "-nologo", "-out:" + str(executable), str(helper), str(HARNESS)],
+                cwd=root,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
             self.assertEqual(result.returncode, 0, result.stdout)
-            result = subprocess.run([str(runtime), str(executable)], cwd=root, text=True,
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            result = subprocess.run([str(runtime), str(executable)], cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.assertEqual(result.returncode, 0, result.stdout)
             self.assertIn("partial rollback passed", result.stdout)
 

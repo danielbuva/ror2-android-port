@@ -49,8 +49,7 @@ class ManualMoonBoundaryPolicyTests(unittest.TestCase):
             output = directory / "manual-moon-boundary.exe"
             source.write_text("using System;\n" + production + "\n")
             compiled = subprocess.run(
-                [str(mono), str(compiler), "-nologo", "-langversion:latest", "-target:exe",
-                 "-out:" + str(output), str(source), str(HARNESS)],
+                [str(mono), str(compiler), "-nologo", "-langversion:latest", "-target:exe", "-out:" + str(output), str(source), str(HARNESS)],
                 cwd=directory,
                 text=True,
                 stdout=subprocess.PIPE,

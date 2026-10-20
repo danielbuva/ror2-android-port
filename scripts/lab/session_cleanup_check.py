@@ -81,10 +81,7 @@ class HostMilestoneTiming:
             self.events[name] = self.clock() if observed_at is None else observed_at
 
     def report(self):
-        offsets = {
-            name: round(value - self.origin, 6) if value is not None and self.origin is not None else None
-            for name, value in self.events.items()
-        }
+        offsets = {name: round(value - self.origin, 6) if value is not None and self.origin is not None else None for name, value in self.events.items()}
         intervals = {}
         for name, (begin, end) in self.INTERVALS.items():
             left, right = self.events[begin], self.events[end]
@@ -144,8 +141,7 @@ def selection(attempt, survivor=DEFAULT_SURVIVOR, skill_variant_override=None):
     if skill_variant_override is not None:
         value["developerSkillVariantOverride"] = skill_variant_override
         value["debugOptions"]["purpose"] = (
-            "Native cleanup/restart with a per-run skill variant; automatic input is diagnostic and assisted; "
-            "no profile or unlock changes"
+            "Native cleanup/restart with a per-run skill variant; automatic input is diagnostic and assisted; no profile or unlock changes"
         )
     return value
 
@@ -349,9 +345,7 @@ def skill_variant_failures(report, requested):
         failures.append("pre-mutation and live native catalog inventories identify different bodies/components")
         return failures
     effective = override.get("effectiveSkillVariants")
-    if not isinstance(effective, list) or len(effective) != len(pre_rows) or any(
-        type(index) is not int or index < 0 for index in effective
-    ):
+    if not isinstance(effective, list) or len(effective) != len(pre_rows) or any(type(index) is not int or index < 0 for index in effective):
         failures.append("effective native loadout variant vector is missing or invalid")
         return failures
     for entry in requested.get("entries", []):
@@ -389,36 +383,20 @@ def skill_variant_failures(report, requested):
 def combat_output_lifecycle(report, expect_cleaned, label=None):
     """Classify J642 observer teardown/setup, preserving older APK unavailability."""
     if not isinstance(report, dict):
-        return {"status": "invalid", "reason": "session report is not an object"}, [
-            "survivor combat-output session report is invalid"
-        ]
+        return {"status": "invalid", "reason": "session report is not an object"}, ["survivor combat-output session report is invalid"]
     world = report.get("world") or {}
     if not isinstance(world, dict):
-        return {"status": "invalid", "reason": "world report is not an object"}, [
-            "survivor combat-output world report is invalid"
-        ]
+        return {"status": "invalid", "reason": "world report is not an object"}, ["survivor combat-output world report is invalid"]
     observer = world.get("survivorCombatOutputs")
     if observer is None:
         return {"status": "unavailable", "reason": "survivorCombatOutputs instrumentation missing"}, []
     if not isinstance(observer, dict):
-        return {"status": "invalid", "reason": "observer report is not an object"}, [
-            "survivor combat-output observer report is invalid"
-        ]
+        return {"status": "invalid", "reason": "observer report is not an object"}, ["survivor combat-output observer report is invalid"]
     if expect_cleaned:
-        valid = (
-            observer.get("cleaned") is True
-            and observer.get("attached") is False
-            and observer.get("inert") is False
-            and not observer.get("observerError")
-        )
+        valid = observer.get("cleaned") is True and observer.get("attached") is False and observer.get("inert") is False and not observer.get("observerError")
         expectation = "completed-session combat-output observer did not cleanly detach"
     else:
-        valid = (
-            observer.get("attached") is True
-            and observer.get("cleaned") is False
-            and observer.get("inert") is False
-            and not observer.get("observerError")
-        )
+        valid = observer.get("attached") is True and observer.get("cleaned") is False and observer.get("inert") is False and not observer.get("observerError")
         expectation = "%s combat-output observer is not freshly healthy" % (label or "restarted-session")
     if not valid:
         return {"status": "invalid", "reason": expectation}, [expectation]
@@ -731,9 +709,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         raise ValueError("Use ending loss or abandon")
     if survivor not in BASE_SURVIVORS:
         raise ValueError("Use a base survivor catalog name: " + ",".join(BASE_SURVIVORS))
-    skill_variant_override = (
-        read_skill_variant_selection(skill_variants, survivor) if skill_variants is not None else None
-    )
+    skill_variant_override = read_skill_variant_selection(skill_variants, survivor) if skill_variants is not None else None
     device = SessionCleanupDevice()
     installed = device.owned()
     storage = device.storage()
@@ -750,11 +726,9 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         artifact_hash = sha(build["apk"])
         if artifact_hash != build.get("apk_sha256"):
             raise RuntimeError("Current APK artifact hash differs from current-build receipt")
-        artifact_hash, apk_binding_mode = bind_installed_apk(
-            installed, current_build_sha256=artifact_hash)
+        artifact_hash, apk_binding_mode = bind_installed_apk(installed, current_build_sha256=artifact_hash)
     else:
-        artifact_hash, apk_binding_mode = bind_installed_apk(
-            installed, expected_sha256=expected_apk_sha256)
+        artifact_hash, apk_binding_mode = bind_installed_apk(installed, expected_sha256=expected_apk_sha256)
     attempt = attempt_from_installed(installed)
     runtime = device.read_receipt("runtime.json")["persistentDataPath"]
     if not runtime.endswith("/Android/data/" + PACKAGE + "/files"):
@@ -778,8 +752,8 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         "apk_binding_mode": apk_binding_mode,
         "apk_identity_evidence": (
             "current APK artifact hash matches build and installed ownership receipts; installed package bytes are receipt-backed, not independently rehashed"
-            if apk_binding_mode == "current-build-at-start" else
-            "explicit SHA-256 matches selected-device ownership receipt; receipt APK bytes are verified before attempt extraction; installed package bytes are receipt-backed, not independently rehashed"
+            if apk_binding_mode == "current-build-at-start"
+            else "explicit SHA-256 matches selected-device ownership receipt; receipt APK bytes are verified before attempt extraction; installed package bytes are receipt-backed, not independently rehashed"
         ),
         "attempt": attempt,
         "storage_mode": mode,
@@ -887,9 +861,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                             if not isinstance(completed, dict):
                                 fail("completed-session-report-unavailable-before-session-2-menu")
                                 break
-                            failures = abandon_contract(
-                                completed, pid, attempt, profile_baseline, survivor, skill_variant_override
-                            )
+                            failures = abandon_contract(completed, pid, attempt, profile_baseline, survivor, skill_variant_override)
                             if failures:
                                 fail("completed-session-cleanup-failed-before-session-2-menu")
                                 first_failure = failures[0]
@@ -1052,9 +1024,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                 if current.get("session") == 2 and phase == "integrated-world-playing" and session2_ready(current):
                     host_timing.mark("second_world_healthy_observed")
                     completed = _read_json(device, completed_path)
-                    failures = ending_contract(
-                        completed or {}, pid, attempt, profile_baseline, survivor, ending, skill_variant_override
-                    )
+                    failures = ending_contract(completed or {}, pid, attempt, profile_baseline, survivor, ending, skill_variant_override)
                     if not failures:
                         host_timing.mark("completed_cleanup_observed")
                     if failures:
@@ -1070,9 +1040,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
                     elif survivor not in FREE_SURVIVORS and not direct_start_observed:
                         fail("direct-diagnostic-start-not-observed")
                     else:
-                        failures = restart_contract(
-                            current, pid, attempt, profile_baseline, survivor, skill_variant_override
-                        )
+                        failures = restart_contract(current, pid, attempt, profile_baseline, survivor, skill_variant_override)
                         if failures:
                             fail("restart-contract-failed")
                         else:
@@ -1149,9 +1117,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
     if not completed or not pid:
         failures.append("no current-launch completed-session report")
     else:
-        failures.extend(
-            ending_contract(completed, pid, attempt, profile_baseline, survivor, ending, skill_variant_override)
-        )
+        failures.extend(ending_contract(completed, pid, attempt, profile_baseline, survivor, ending, skill_variant_override))
     if not final or not pid:
         failures.append("no current-launch restarted-session report")
     else:
@@ -1172,11 +1138,7 @@ def check_session_cleanup(survivor=DEFAULT_SURVIVOR, ending="loss", skill_varian
         "selected_survivor": survivor,
         "developer_survivor_override": survivor not in FREE_SURVIVORS,
         "skill_variant_override": skill_variant_override,
-        "skill_variant_evidence": (
-            {"type": "post-spawn-setup-snapshot", "continuous": False}
-            if skill_variant_override is not None
-            else None
-        ),
+        "skill_variant_evidence": ({"type": "post-spawn-setup-snapshot", "continuous": False} if skill_variant_override is not None else None),
         "abandon_ui": {"settings_open_sent": settings_open_sent, "end_run_sent": abandon_input_sent},
         "session2_menu_ui": {"observed": session2_menu_observed, "start_sent": session2_menu_start_sent},
         "host_timing": host_timing.report(),

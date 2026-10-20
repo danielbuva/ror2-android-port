@@ -36,7 +36,9 @@ class ManualMoonBoundaryPatchTests(unittest.TestCase):
 
     def test_report_witness_requires_a_real_held_fixed_tick(self):
         source = (CANDIDATE / "tools/unity/runtime/input/NovaInputBoundary.cs").read_text()
-        method = source[source.index("void ObserveManualMoonHold"):source.index("public IEnumerator NovaInputBoundary", source.index("void ObserveManualMoonHold"))]
+        method = source[
+            source.index("void ObserveManualMoonHold") : source.index("public IEnumerator NovaInputBoundary", source.index("void ObserveManualMoonHold"))
+        ]
         self.assertIn("bridge.manualMoonNeutralFixedTicks <= 0", method)
         self.assertIn("automaticDiagnosticInputHeldAtBoundary = true", method)
         self.assertIn("automaticDiagnosticHoldTransitions", method)

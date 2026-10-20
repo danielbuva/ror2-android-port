@@ -99,9 +99,7 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
         result["package_path"] = device.sh("pm", "path", PACKAGE)
         details = device.sh("dumpsys", "package", PACKAGE)
         result["package_details"] = "\n".join(
-            line.strip()
-            for line in details.splitlines()
-            if any(key in line for key in ("codePath=", "volumeUuid=", "primaryCpuAbi=", "installLocation="))
+            line.strip() for line in details.splitlines() if any(key in line for key in ("codePath=", "volumeUuid=", "primaryCpuAbi=", "installLocation="))
         )
         result["placement_verified"] = _placement_matches(storage, result["package_path"])
         if not result["placement_verified"]:
@@ -114,8 +112,14 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
         sleep(8)
         pid = device.sh("pidof", PACKAGE).split()[0]
         logs = device.cmd(
-            "logcat", "-d", "--pid=" + pid, "-v", "threadtime",
-            "Unity:I", "AndroidRuntime:E", "*:S",
+            "logcat",
+            "-d",
+            "--pid=" + pid,
+            "-v",
+            "threadtime",
+            "Unity:I",
+            "AndroidRuntime:E",
+            "*:S",
         )
         log_path = receipt_dir / "logcat.txt"
         log_path.write_text(logs + "\n")
@@ -142,9 +146,7 @@ def run(argv=None, *, device_factory=None, sleep=time.sleep, timestamp=None):
             try:
                 cleanup_package = _package_exists(device)
                 result["install_outcome"] = (
-                    "package present after failed install dispatch"
-                    if cleanup_package
-                    else "package absent after failed install dispatch"
+                    "package present after failed install dispatch" if cleanup_package else "package absent after failed install dispatch"
                 )
             except Exception as exc:
                 # The install outcome is uncertain. Never guess and uninstall

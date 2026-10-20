@@ -68,7 +68,6 @@ class HostMilestoneTimingTests(unittest.TestCase):
         self.assertIsNone(report["events"]["first_world_observed"])
         self.assertIsNone(report["intervals"]["launch_to_first_world"])
 
-
     def test_fake_same_process_run_records_only_observed_runtime_milestones(self):
         import importlib.util
 
@@ -115,9 +114,7 @@ class HostMilestoneTimingTests(unittest.TestCase):
             fixtures.live_report(session=1, world={"seconds": 60.0, "ready": True, "health": 100.0, "diagnosticInputEver": True}),
             fixtures.live_report(session=2),
         ]
-        temp, _device, result, error, evidence = fixtures.run_fake_check(
-            reports, ending="abandon", completed_override="{malformed", clock_step=0.1
-        )
+        temp, _device, result, error, evidence = fixtures.run_fake_check(reports, ending="abandon", completed_override="{malformed", clock_step=0.1)
         try:
             self.assertIsNone(result)
             self.assertIsNotNone(error)
@@ -131,7 +128,7 @@ class HostMilestoneTimingTests(unittest.TestCase):
 
     def test_checker_wires_timings_to_report_and_real_observation_points(self):
         source = (CANDIDATE_LAB / "session_cleanup_check.py").read_text()
-        self.assertIn('host_timing.start()', source)
+        self.assertIn("host_timing.start()", source)
         for milestone in (
             "first_menu_observed",
             "first_world_observed",

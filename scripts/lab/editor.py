@@ -144,9 +144,7 @@ async def main():
     assert_build_unblocked()
     if action == "minimal-build":
         raise RuntimeError("The historical minimal-build editor action is unsupported; use ./dev build")
-    if action in {"build", "presentation-payload"} and (
-        os.environ.get("ROR2LAB_COORDINATED_BUILD") != "1" or INHERITED_FD_ENV not in os.environ
-    ):
+    if action in {"build", "presentation-payload"} and (os.environ.get("ROR2LAB_COORDINATED_BUILD") != "1" or INHERITED_FD_ENV not in os.environ):
         raise RuntimeError("Direct editor build dispatch is disabled; use the build coordinator")
     with host_build_lock(HOST_BUILD_LOCK, operation=f"editor:{target}:{action}"):
         assert_build_unblocked()

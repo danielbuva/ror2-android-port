@@ -114,8 +114,10 @@ class BootstrapDeviceTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             code = smoke_device.run(
-                list(args), device_factory=lambda **kwargs: device,
-                sleep=lambda _seconds: None, timestamp=timestamp,
+                list(args),
+                device_factory=lambda **kwargs: device,
+                sleep=lambda _seconds: None,
+                timestamp=timestamp,
             )
         return code, json.loads(output.getvalue())
 
@@ -216,8 +218,18 @@ class BootstrapDeviceTests(unittest.TestCase):
         self.assertTrue(Path(result_a["screenshot"]).is_file())
         self.assertTrue(Path(result_b["logcat"]).is_file())
         self.assertTrue(Path(result_b["screenshot"]).is_file())
-        self.assertTrue(any(call == ("cmd", "install", "--force-uuid", first.storage_result["uuid"], str(self.root / "builds" / "bootstrap-arm64.apk")) for call in first.calls))
-        self.assertTrue(any(call == ("cmd", "install", "--force-uuid", second.storage_result["uuid"], str(self.root / "builds" / "bootstrap-arm64.apk")) for call in second.calls))
+        self.assertTrue(
+            any(
+                call == ("cmd", "install", "--force-uuid", first.storage_result["uuid"], str(self.root / "builds" / "bootstrap-arm64.apk"))
+                for call in first.calls
+            )
+        )
+        self.assertTrue(
+            any(
+                call == ("cmd", "install", "--force-uuid", second.storage_result["uuid"], str(self.root / "builds" / "bootstrap-arm64.apk"))
+                for call in second.calls
+            )
+        )
         self.assertIn(("display", False), first.calls)
         self.assertIn(("display", False), second.calls)
         self.assertTrue(any(call[:3] == ("sh", "am", "force-stop") for call in first.calls))

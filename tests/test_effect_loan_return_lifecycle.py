@@ -1,4 +1,5 @@
 """Execute production effect-loan retirement owners against authored lifecycle contracts."""
+
 import os
 from pathlib import Path
 import re
@@ -33,7 +34,7 @@ def braced_block(source, declaration):
         elif masked[end] == "}":
             depth -= 1
             if depth == 0:
-                return source[start:end + 1]
+                return source[start : end + 1]
     raise AssertionError("Unclosed production block: " + declaration)
 
 
@@ -41,18 +42,29 @@ def production_host(stage_source=None, clock_source=None, reward_source=None):
     stage = STAGE.read_text() if stage_source is None else stage_source
     clock = CLOCK.read_text() if clock_source is None else clock_source
     reward = REWARD.read_text() if reward_source is None else reward_source
-    methods = [braced_block(stage, signature) for signature in (
-        "sealed class EffectLoanReturnBatch", "void CheckEffectLoanPoolOwnership(EffectLoanReturnBatch batch)",
-        "EffectLoanReturnBatch BeginIntegratedStageEffectReturns()", "void CompleteIntegratedStageEffectReturns(EffectLoanReturnBatch batch)",
-        "public void ReturnIntegratedStageEffects()", "public IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks()")]
+    methods = [
+        braced_block(stage, signature)
+        for signature in (
+            "sealed class EffectLoanReturnBatch",
+            "void CheckEffectLoanPoolOwnership(EffectLoanReturnBatch batch)",
+            "EffectLoanReturnBatch BeginIntegratedStageEffectReturns()",
+            "void CompleteIntegratedStageEffectReturns(EffectLoanReturnBatch batch)",
+            "public void ReturnIntegratedStageEffects()",
+            "public IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks()",
+        )
+    ]
     field = re.search(r"EffectLoanReturnBatch pendingEffectLoanReturns;", stage)
     reward_seam = re.search(
         r"            var asyncRelease = coordinator.ReleaseCompletedRunAsyncAssets\(\);\n"
-        r"            while \(asyncRelease.MoveNext\(\)\)\n                yield return asyncRelease.Current;", reward)
+        r"            while \(asyncRelease.MoveNext\(\)\)\n                yield return asyncRelease.Current;",
+        reward,
+    )
     transport_seam = re.search(
         r"            var effectReturns = ReturnIntegratedStageEffectsAfterNativeCallbacks\(\);\n"
         r"            while \(effectReturns.MoveNext\(\)\)\n                yield return effectReturns.Current;\n"
-        r"            coordinator.ReleaseObjectiveOrbCache\(\);", stage)
+        r"            coordinator.ReleaseObjectiveOrbCache\(\);",
+        stage,
+    )
     if not field or not reward_seam or not transport_seam:
         raise AssertionError("Production retained-owner or coroutine caller seams changed")
     host = FIXTURE.read_text() + "\npublic partial class PortSession {\n"
@@ -85,16 +97,28 @@ def compile_and_execute(source):
         environment = os.environ.copy()
         environment.update(TMPDIR=str(scratch), TMP=str(scratch), TEMP=str(scratch))
         compiled = subprocess.run(
-            [str(mono), str(compiler), "-nologo", "-langversion:9", "-target:exe",
-             "-out:" + str(executable), "-debug:portable", "-pdb:" + str(pdb),
-             "-refout:" + str(reference), str(production)],
-            cwd=scratch, env=environment, capture_output=True, text=True)
+            [
+                str(mono),
+                str(compiler),
+                "-nologo",
+                "-langversion:9",
+                "-target:exe",
+                "-out:" + str(executable),
+                "-debug:portable",
+                "-pdb:" + str(pdb),
+                "-refout:" + str(reference),
+                str(production),
+            ],
+            cwd=scratch,
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
         if compiled.returncode:
             raise AssertionError(compiled.stdout + compiled.stderr)
         if not all(path.is_file() for path in (executable, pdb, reference)):
             raise AssertionError("Explicit private compiler outputs missing")
-        return subprocess.run([str(mono), str(executable)], cwd=scratch,
-                              env=environment, capture_output=True, text=True)
+        return subprocess.run([str(mono), str(executable)], cwd=scratch, env=environment, capture_output=True, text=True)
 
 
 class NativeEffectLoanReturnLifecycleTests(unittest.TestCase):
@@ -106,8 +130,9 @@ class NativeEffectLoanReturnLifecycleTests(unittest.TestCase):
     def test_synchronous_guard_mutant_fails_the_deferred_native_contract(self):
         source = production_host()
         fence = braced_block(source, "public IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks()")
-        mutant = source.replace(fence,
-            "public IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks() { ReturnIntegratedStageEffects(); yield break; }", 1)
+        mutant = source.replace(
+            fence, "public IEnumerator ReturnIntegratedStageEffectsAfterNativeCallbacks() { ReturnIntegratedStageEffects(); yield break; }", 1
+        )
         executed = compile_and_execute(mutant)
         self.assertNotEqual(executed.returncode, 0)
         self.assertIn("Owned stage effect loans survived original return callbacks", executed.stdout + executed.stderr)

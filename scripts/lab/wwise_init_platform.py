@@ -1,4 +1,5 @@
 """Create the authored Android Init metadata variant from one accepted bank."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ import struct
 from common import ROOT, WORK, game, read
 
 DEFAULT_RECIPE = ROOT / "recipe/wwise-init-android.json"
+
 
 class Refusal(ValueError):
     pass
@@ -44,8 +46,9 @@ def _reject_symlink_components(path: Path) -> None:
             raise Refusal(f"output path contains a symlink: {cursor}")
 
 
-def validate_output_paths(source: Path, destination: Path, receipt_path: Path | None = None,
-                          *, repository_root: Path | None = None) -> tuple[Path, Path | None]:
+def validate_output_paths(
+    source: Path, destination: Path, receipt_path: Path | None = None, *, repository_root: Path | None = None
+) -> tuple[Path, Path | None]:
     """Require new output paths under ignored repository work, before any reads/writes."""
     repository_root = (repository_root or _repository_root()).resolve(strict=True)
     work_root = repository_root / "work"
@@ -74,9 +77,7 @@ def validate_output_paths(source: Path, destination: Path, receipt_path: Path | 
         if not _is_within(parent.resolve(strict=True), work_root):
             raise Refusal(f"{name} parent resolves outside repository work")
         relative = canonical.relative_to(repository_root).as_posix()
-        ignored = subprocess.run(
-            ["git", "check-ignore", "--quiet", "--no-index", "--", relative],
-            cwd=repository_root, check=False).returncode == 0
+        ignored = subprocess.run(["git", "check-ignore", "--quiet", "--no-index", "--", relative], cwd=repository_root, check=False).returncode == 0
         if not ignored:
             raise Refusal(f"{name} is not ignored by Git")
         resolved[name] = canonical
@@ -99,9 +100,9 @@ def _write_new_file(path: Path, data: bytes) -> None:
         raise
 
 
-def verify_accepted_source(source: Path, expected_sha256: str, configured_game: Path,
-                           accepted: dict, inventory: dict, contract: "Contract",
-                           input_relative_path: str) -> tuple[str, int, bytes]:
+def verify_accepted_source(
+    source: Path, expected_sha256: str, configured_game: Path, accepted: dict, inventory: dict, contract: "Contract", input_relative_path: str
+) -> tuple[str, int, bytes]:
     if len(expected_sha256) != 64 or any(ch not in "0123456789abcdef" for ch in expected_sha256):
         raise Refusal("expected source SHA-256 must be 64 lowercase hexadecimal characters")
     accepted_id = accepted.get("input_id")
@@ -116,8 +117,7 @@ def verify_accepted_source(source: Path, expected_sha256: str, configured_game: 
         raise Refusal("configured accepted source bank is unavailable") from exc
     if selected != configured:
         raise Refusal("source must be the recipe's bank in the configured accepted game")
-    matching = [row for row in inventory.get("files", [])
-                if row.get("path") == input_relative_path]
+    matching = [row for row in inventory.get("files", []) if row.get("path") == input_relative_path]
     if len(matching) != 1:
         raise Refusal("accepted full inventory must contain exactly one recipe source")
     row = matching[0]
@@ -125,9 +125,12 @@ def verify_accepted_source(source: Path, expected_sha256: str, configured_game: 
     # installation path after verifying it.
     data = selected.read_bytes()
     actual_sha256 = hashlib.sha256(data).hexdigest()
-    if (actual_sha256 != expected_sha256 or row.get("sha256") != expected_sha256
-            or row.get("size") != contract.bank_size_bytes
-            or len(data) != contract.bank_size_bytes):
+    if (
+        actual_sha256 != expected_sha256
+        or row.get("sha256") != expected_sha256
+        or row.get("size") != contract.bank_size_bytes
+        or len(data) != contract.bank_size_bytes
+    ):
         raise Refusal("source bytes differ from the accepted full inventory/hash/size")
     return actual_sha256, len(data), data
 
@@ -154,14 +157,10 @@ def load_contract(path: Path = DEFAULT_RECIPE) -> Contract:
         format_version=int(recipe["format_version"]),
         bank_id=int(recipe["bank_id"]),
         bank_size_bytes=int(recipe["bank_size_bytes"]),
-        plugin_entries=tuple((int(row["id"]), row["library_name"])
-                             for row in recipe["plugin_entries"]),
-        device_effects={int(key): int(value)
-                        for key, value in recipe["audio_device_plugin_ids"].items()},
-        root_bus_map={int(key): int(value)
-                      for key, value in recipe["top_level_bus_device_ids"].items()},
-        controller_bus_map={int(key): int(value)
-                            for key, value in recipe["controller_bus_to_system"].items()},
+        plugin_entries=tuple((int(row["id"]), row["library_name"]) for row in recipe["plugin_entries"]),
+        device_effects={int(key): int(value) for key, value in recipe["audio_device_plugin_ids"].items()},
+        root_bus_map={int(key): int(value) for key, value in recipe["top_level_bus_device_ids"].items()},
+        controller_bus_map={int(key): int(value) for key, value in recipe["controller_bus_to_system"].items()},
         system_device=int(recipe["system_device_id"]),
         remove_plugin=int(recipe["remove_plugin_id"]),
         remove_devices=tuple(int(value) for value in recipe["remove_audio_device_ids"]),
@@ -187,12 +186,12 @@ def _chunks(data: bytes, expected_tags: tuple[bytes, ...]) -> list[tuple[bytes, 
     while at < len(data):
         if at + 8 > len(data):
             raise Refusal("truncated top-level bank chunk header")
-        tag = data[at:at + 4]
+        tag = data[at : at + 4]
         size = _u32(data, at + 4)
         end = at + 8 + size
         if end > len(data):
             raise Refusal(f"chunk {tag!r} overruns bank")
-        result.append((tag, data[at + 8:end]))
+        result.append((tag, data[at + 8 : end]))
         at = end
     tags = tuple(tag for tag, _ in result)
     if tags != expected_tags:
@@ -221,12 +220,12 @@ def _parse_plugin_chunk(payload: bytes) -> tuple[list[tuple[int, str, bytes]], b
         end = payload.find(b"\0", at + 4)
         if end < 0:
             raise Refusal("unterminated INIT plugin library name")
-        raw_name = payload[at + 4:end]
+        raw_name = payload[at + 4 : end]
         try:
             name = raw_name.decode("ascii")
         except UnicodeDecodeError as exc:
             raise Refusal("non-ASCII plugin library name") from exc
-        entry_bytes = payload[at:end + 1]
+        entry_bytes = payload[at : end + 1]
         entries.append((plugin_id, name, entry_bytes))
         at = end + 1
     if at != len(payload):
@@ -334,8 +333,7 @@ def _rewrite_hirc(payload: bytes, contract: Contract) -> bytes:
     if set(removed_ids) != remove or len(removed_ids) != len(remove):
         raise Refusal("not all exact target CAkAudioDevice records were removed")
     # Check the transformed structural graph before serialization.
-    remaining_devices = {device_id: plugin_id for device_id, plugin_id in device_records.items()
-                         if device_id not in remove}
+    remaining_devices = {device_id: plugin_id for device_id, plugin_id in device_records.items() if device_id not in remove}
     if any(plugin_id == contract.remove_plugin for plugin_id in remaining_devices.values()):
         raise Refusal("unsupported plugin still referenced by a remaining audio device")
     output_top_bus = dict(bus_sharesets)
@@ -351,8 +349,7 @@ def rewrite_bank(data: bytes, contract: Contract) -> bytes:
     chunks = _chunks(data, contract.expected_tags)
     by_tag = dict(chunks)
     header = by_tag[b"BKHD"]
-    if (len(header) != 48 or _u32(header, 0) != contract.format_version
-            or _u32(header, 4) != contract.bank_id):
+    if len(header) != 48 or _u32(header, 0) != contract.format_version or _u32(header, 4) != contract.bank_id:
         raise Refusal("unexpected format-150 bank header")
     rewritten = []
     for tag, payload in chunks:
@@ -380,8 +377,7 @@ def rewrite_bank(data: bytes, contract: Contract) -> bytes:
             output_devices[_record_id(kind, record)] = _u32(body, 4)
         elif kind == 8 and _u32(body, 4) == 0:
             output_buses[_record_id(kind, record)] = _u32(body, 8)
-    expected_devices = {device: plugin for device, plugin in contract.device_effects.items()
-                        if device not in contract.remove_devices}
+    expected_devices = {device: plugin for device, plugin in contract.device_effects.items() if device not in contract.remove_devices}
     expected_buses = dict(contract.root_bus_map)
     for bus_id in contract.controller_bus_map:
         expected_buses[bus_id] = contract.system_device
@@ -393,14 +389,19 @@ def rewrite_bank(data: bytes, contract: Contract) -> bytes:
     return result
 
 
-def transform_file(source: Path, destination: Path, receipt_path: Path,
-                   expected_sha256: str, contract: Contract,
-                   configured_game: Path, accepted: dict, inventory: dict,
-                   input_relative_path: str) -> dict:
+def transform_file(
+    source: Path,
+    destination: Path,
+    receipt_path: Path,
+    expected_sha256: str,
+    contract: Contract,
+    configured_game: Path,
+    accepted: dict,
+    inventory: dict,
+    input_relative_path: str,
+) -> dict:
     destination, receipt_path = validate_output_paths(source, destination, receipt_path)
-    digest, input_size, data = verify_accepted_source(
-        source, expected_sha256, configured_game, accepted, inventory, contract,
-        input_relative_path)
+    digest, input_size, data = verify_accepted_source(source, expected_sha256, configured_game, accepted, inventory, contract, input_relative_path)
     output = rewrite_bank(data, contract)
     output_sha = hashlib.sha256(output).hexdigest()
     receipt = {
@@ -445,8 +446,14 @@ def main() -> int:
         accepted = read(WORK / "config/accepted-input.json")
         inventory = read(WORK / "inventory/files.json")
         receipt = transform_file(
-            args.source, args.destination, args.receipt, args.expected_sha256,
-            contract, game_root, accepted, inventory,
+            args.source,
+            args.destination,
+            args.receipt,
+            args.expected_sha256,
+            contract,
+            game_root,
+            accepted,
+            inventory,
             recipe["input_relative_path"],
         )
     except (OSError, Refusal) as exc:

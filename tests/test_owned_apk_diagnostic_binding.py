@@ -3,6 +3,7 @@
 Set PORTING_LAB_SOURCE_ROOT only when exercising an unapplied candidate tree;
 normal repository runs use the public scripts/lab sources.
 """
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -107,7 +108,8 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
             apk.write_bytes(b"receipt-selected APK")
             digest = hashlib.sha256(apk.read_bytes()).hexdigest()
             receipt = {
-                "apk": str(apk), "apk_sha256": digest,
+                "apk": str(apk),
+                "apk_sha256": digest,
                 "storage": {"mode": "internal"},
                 "package_path": "package:/data/app/fixture/base.apk",
             }
@@ -116,13 +118,14 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
             loader = fake_unitypy([json.dumps({"attempt": "receipt-attempt"}).encode()])
             real_attempt_reader = attempt.attempt_from_installed
 
-            with patch.object(cleanup, "SessionCleanupDevice", return_value=device), \
-                    patch.object(cleanup, "WORK", root / "work"), \
-                    patch.object(cleanup, "read", side_effect=AssertionError("must not read current-build.json")), \
-                    patch.object(cleanup, "attempt_from_installed",
-                                 side_effect=lambda installed: real_attempt_reader(installed, loader=loader)), \
-                    patch.object(cleanup, "_remote_path_state", return_value="absent"), \
-                    patch.object(cleanup, "now", return_value="fixture-run"):
+            with (
+                patch.object(cleanup, "SessionCleanupDevice", return_value=device),
+                patch.object(cleanup, "WORK", root / "work"),
+                patch.object(cleanup, "read", side_effect=AssertionError("must not read current-build.json")),
+                patch.object(cleanup, "attempt_from_installed", side_effect=lambda installed: real_attempt_reader(installed, loader=loader)),
+                patch.object(cleanup, "_remote_path_state", return_value="absent"),
+                patch.object(cleanup, "now", return_value="fixture-run"),
+            ):
                 # The fake display intentionally refuses after launch. This proves
                 # the explicit flow reached push/launch from the receipt path.
                 with self.assertRaisesRegex(RuntimeError, "display cannot be awakened"):
@@ -138,19 +141,22 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
         with candidate_modules() as (_, cleanup), tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cases = (
-                ({"storage": {"mode": "internal"}, "package_path": "package:/data/app/fixture/base.apk"},
-                 "b" * 64, "lacks a valid APK SHA-256"),
-                ({"apk_sha256": "c" * 64, "storage": {"mode": "internal"},
-                 "package_path": "package:/data/app/fixture/base.apk"}, "d" * 64,
-                 "does not match --expected-apk-sha256"),
+                ({"storage": {"mode": "internal"}, "package_path": "package:/data/app/fixture/base.apk"}, "b" * 64, "lacks a valid APK SHA-256"),
+                (
+                    {"apk_sha256": "c" * 64, "storage": {"mode": "internal"}, "package_path": "package:/data/app/fixture/base.apk"},
+                    "d" * 64,
+                    "does not match --expected-apk-sha256",
+                ),
             )
             for index, (receipt, expected, error) in enumerate(cases):
                 with self.subTest(error=error):
                     device = DeviceFixture(receipt, root / f"evidence-{index}")
                     device.evidence.mkdir()
-                    with patch.object(cleanup, "SessionCleanupDevice", return_value=device), \
-                            patch.object(cleanup, "WORK", root / f"work-{index}"), \
-                            patch.object(cleanup, "attempt_from_installed", side_effect=AssertionError("must refuse first")):
+                    with (
+                        patch.object(cleanup, "SessionCleanupDevice", return_value=device),
+                        patch.object(cleanup, "WORK", root / f"work-{index}"),
+                        patch.object(cleanup, "attempt_from_installed", side_effect=AssertionError("must refuse first")),
+                    ):
                         with self.assertRaisesRegex(RuntimeError, error):
                             cleanup.check_session_cleanup(ending="abandon", expected_apk_sha256=expected)
                     self.assertFalse(any(call[0] in ("launch", "cmd", "read_receipt") for call in device.calls))
@@ -159,8 +165,7 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
         with candidate_modules() as (_, cleanup), tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             device = DeviceFixture(None, root / "evidence", owned_error=RuntimeError("ownership receipt unavailable"))
-            with patch.object(cleanup, "SessionCleanupDevice", return_value=device), \
-                    patch.object(cleanup, "WORK", root / "work"):
+            with patch.object(cleanup, "SessionCleanupDevice", return_value=device), patch.object(cleanup, "WORK", root / "work"):
                 with self.assertRaisesRegex(RuntimeError, "ownership receipt unavailable"):
                     cleanup.check_session_cleanup(ending="abandon", expected_apk_sha256="b" * 64)
             self.assertEqual(device.calls, [("owned",)])
@@ -172,8 +177,7 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
     def test_default_cleanup_still_uses_current_build_gate(self):
         with candidate_modules() as (_, cleanup), tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            receipt = {"apk_sha256": "c" * 64, "storage": {"mode": "internal"},
-                       "package_path": "package:/data/app/fixture/base.apk"}
+            receipt = {"apk_sha256": "c" * 64, "storage": {"mode": "internal"}, "package_path": "package:/data/app/fixture/base.apk"}
             device = DeviceFixture(receipt, root / "evidence")
             build_reads = []
 
@@ -181,10 +185,13 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
                 build_reads.append(Path(path).name)
                 return {"success": True, "apk": "fixture.apk", "apk_sha256": "d" * 64}
 
-            with patch.object(cleanup, "SessionCleanupDevice", return_value=device), \
-                    patch.object(cleanup, "WORK", root / "work"), patch.object(cleanup, "read", side_effect=read), \
-                    patch.object(cleanup, "sha", return_value="d" * 64), \
-                    patch.object(cleanup, "attempt_from_installed", side_effect=AssertionError("must refuse first")):
+            with (
+                patch.object(cleanup, "SessionCleanupDevice", return_value=device),
+                patch.object(cleanup, "WORK", root / "work"),
+                patch.object(cleanup, "read", side_effect=read),
+                patch.object(cleanup, "sha", return_value="d" * 64),
+                patch.object(cleanup, "attempt_from_installed", side_effect=AssertionError("must refuse first")),
+            ):
                 with self.assertRaisesRegex(RuntimeError, "supply --expected-apk-sha256"):
                     cleanup.check_session_cleanup(ending="abandon")
             self.assertEqual(build_reads, ["current-build.json"])
@@ -196,26 +203,29 @@ class OwnedApkDiagnosticBindingTests(unittest.TestCase):
             original = b"receipt-owned APK bytes"
             cases = (
                 ("drift", original, fake_unitypy([json.dumps({"attempt": "x"}).encode()]), "bytes changed"),
-                ("ambiguous", original,
-                 fake_unitypy([json.dumps({"attempt": "x"}).encode(), json.dumps({"attempt": "y"}).encode()]),
-                 "exactly one MovementBatchProbe"),
+                (
+                    "ambiguous",
+                    original,
+                    fake_unitypy([json.dumps({"attempt": "x"}).encode(), json.dumps({"attempt": "y"}).encode()]),
+                    "exactly one MovementBatchProbe",
+                ),
             )
             for name, bytes_value, loader, error in cases:
                 with self.subTest(case=name):
                     apk = root / (name + ".apk")
                     apk.write_bytes(original)
                     digest = hashlib.sha256(original).hexdigest()
-                    receipt = {"apk": str(apk), "apk_sha256": digest, "storage": {"mode": "internal"},
-                               "package_path": "package:/data/app/fixture/base.apk"}
+                    receipt = {"apk": str(apk), "apk_sha256": digest, "storage": {"mode": "internal"}, "package_path": "package:/data/app/fixture/base.apk"}
                     if name == "drift":
                         apk.write_bytes(b"replacement bytes")
                     device = DeviceFixture(receipt, root / ("evidence-" + name))
                     device.evidence.mkdir()
                     reader = attempt.attempt_from_installed
-                    with patch.object(cleanup, "SessionCleanupDevice", return_value=device), \
-                            patch.object(cleanup, "WORK", root / ("work-" + name)), \
-                            patch.object(cleanup, "attempt_from_installed",
-                                         side_effect=lambda installed: reader(installed, loader=loader)):
+                    with (
+                        patch.object(cleanup, "SessionCleanupDevice", return_value=device),
+                        patch.object(cleanup, "WORK", root / ("work-" + name)),
+                        patch.object(cleanup, "attempt_from_installed", side_effect=lambda installed: reader(installed, loader=loader)),
+                    ):
                         with self.assertRaisesRegex(RuntimeError, error):
                             cleanup.check_session_cleanup(ending="abandon", expected_apk_sha256=digest)
                     self.assertFalse(any(call[0] in ("cmd", "launch", "read_receipt") for call in device.calls))

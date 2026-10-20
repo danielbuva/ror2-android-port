@@ -1,4 +1,5 @@
 """Execute the extracted production ObserveEnemy body against native-lifetime doubles."""
+
 import subprocess
 import tempfile
 import unittest
@@ -23,7 +24,7 @@ def extract_method(source, declaration):
     raise AssertionError("unclosed production method")
 
 
-STUBS = r'''
+STUBS = r"""
 using System;
 using UnityEngine;
 using RoR2;
@@ -59,7 +60,7 @@ public sealed class Coordinator {
 }
 public sealed class EnemySpineHost {
  public Coordinator coordinator=new Coordinator(); public RoR2.EntityState priorEnemyState; public UnityEngine.Vector3 priorEnemyPosition; public UnityEngine.GameObject enemyDetachedModel;
-'''
+"""
 
 
 class ProductionObserverHostTests(unittest.TestCase):
@@ -72,7 +73,10 @@ class ProductionObserverHostTests(unittest.TestCase):
         if not self.mono.exists() or not self.csc.exists():
             self.skipTest("pinned Unity Mono compiler unavailable")
         method = extract_method(SOURCE.read_text(), "public void ObserveEnemy()")
-        harness = STUBS + method + r'''
+        harness = (
+            STUBS
+            + method
+            + r"""
 }
 public static class Program {
  static void Need(bool ok,string message){if(!ok)throw new Exception(message);}
@@ -129,17 +133,21 @@ public static class Program {
   Console.WriteLine("production_observer_native_retirement_cases=5; live_sample_preserved=true; native_execution_claimed=false");
  }
 }
-'''
+"""
+        )
         with tempfile.TemporaryDirectory() as temp:
             scratch = Path(temp)
             source = scratch / "ObserverHost.cs"
             output = scratch / "ObserverHost.exe"
             source.write_text(harness)
-            compiled = subprocess.run([str(self.mono),str(self.csc),"-nologo","-langversion:9","-out:"+str(output),str(source)],cwd=scratch,capture_output=True,text=True)
-            self.assertEqual(compiled.returncode,0,compiled.stdout+compiled.stderr)
-            executed = subprocess.run([str(self.mono),str(output)],cwd=scratch,capture_output=True,text=True)
-            self.assertEqual(executed.returncode,0,executed.stdout+executed.stderr)
-            self.assertIn("production_observer_native_retirement_cases=5",executed.stdout)
+            compiled = subprocess.run(
+                [str(self.mono), str(self.csc), "-nologo", "-langversion:9", "-out:" + str(output), str(source)], cwd=scratch, capture_output=True, text=True
+            )
+            self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
+            executed = subprocess.run([str(self.mono), str(output)], cwd=scratch, capture_output=True, text=True)
+            self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
+            self.assertIn("production_observer_native_retirement_cases=5", executed.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

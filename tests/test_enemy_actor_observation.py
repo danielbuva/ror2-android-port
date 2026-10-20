@@ -38,13 +38,7 @@ def production_host():
     context = source_method(source, "public IEnumerator PrepareEnemyContext(")
     gate_start = context.index("if (coordinator.r.nativeFirstStageLifecycleDiagnosticAttempt)")
     gate_end = context.index("SubscribeEnemyActorEvents();", gate_start) + len("SubscribeEnemyActorEvents();")
-    owner = (
-        "public partial class FixtureOwner {\n"
-        + "\n".join(methods)
-        + "\n public void NativeContextTail() { "
-        + context[gate_start:gate_end]
-        + " }\n}\n"
-    )
+    owner = "public partial class FixtureOwner {\n" + "\n".join(methods) + "\n public void NativeContextTail() { " + context[gate_start:gate_end] + " }\n}\n"
     observation = (ROOT / "tools/unity/runtime/world/DirectorActorBoundary.cs").read_text()
     callbacks = [source_method(observation, name) for name in ("void ObserveDirectorDamage(", "void ObserveDirectorDeath(")]
     reports = "public partial class FixtureCoordinator {\n" + "\n".join("public " + callback for callback in callbacks) + "\n}\n"

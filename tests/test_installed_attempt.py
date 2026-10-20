@@ -31,18 +31,22 @@ class InstalledAttemptTests(unittest.TestCase):
         objects = []
         for config in configs:
             raw = json.dumps(config).encode("utf-8")
-            objects.append(SimpleNamespace(
-                type=SimpleNamespace(name="TextAsset"),
-                read=lambda raw=raw: SimpleNamespace(m_Name="MovementBatchProbe", m_Script=raw),
-            ))
+            objects.append(
+                SimpleNamespace(
+                    type=SimpleNamespace(name="TextAsset"),
+                    read=lambda raw=raw: SimpleNamespace(m_Name="MovementBatchProbe", m_Script=raw),
+                )
+            )
         return lambda path: SimpleNamespace(objects=objects)
 
     def test_reads_unique_attempt_from_hash_verified_receipt_apk(self):
         seen = []
         expected_bytes = self.apk.read_bytes()
+
         def load(data):
             seen.append(data)
             return self.loader([{"attempt": "attempt-in-apk"}])(data)
+
         self.assertEqual(attempt_from_installed(self.receipt, loader=load), "attempt-in-apk")
         self.assertEqual(seen, [expected_bytes])
 
@@ -53,12 +57,13 @@ class InstalledAttemptTests(unittest.TestCase):
 
     def test_parser_receives_verified_snapshot_if_file_changes_after_hashing(self):
         original = self.apk.read_bytes()
+
         def mutate_after_snapshot(data):
             self.assertEqual(data, original)
             self.apk.write_bytes(b"replacement bytes after digest check")
             return self.loader([{"attempt": "attempt-from-verified-snapshot"}])(data)
-        self.assertEqual(attempt_from_installed(self.receipt, loader=mutate_after_snapshot),
-                         "attempt-from-verified-snapshot")
+
+        self.assertEqual(attempt_from_installed(self.receipt, loader=mutate_after_snapshot), "attempt-from-verified-snapshot")
         self.assertNotEqual(hashlib.sha256(self.apk.read_bytes()).hexdigest(), self.receipt["apk_sha256"])
 
     def test_rejects_missing_or_ambiguous_textasset(self):
@@ -67,10 +72,14 @@ class InstalledAttemptTests(unittest.TestCase):
                 attempt_from_installed(self.receipt, loader=self.loader(configs))
 
     def test_rejects_invalid_json_or_missing_attempt(self):
-        invalid = lambda _: SimpleNamespace(objects=[SimpleNamespace(
-            type=SimpleNamespace(name="TextAsset"),
-            read=lambda: SimpleNamespace(m_Name="MovementBatchProbe", m_Script=b"not-json"),
-        )])
+        invalid = lambda _: SimpleNamespace(
+            objects=[
+                SimpleNamespace(
+                    type=SimpleNamespace(name="TextAsset"),
+                    read=lambda: SimpleNamespace(m_Name="MovementBatchProbe", m_Script=b"not-json"),
+                )
+            ]
+        )
         with self.assertRaisesRegex(RuntimeError, "Cannot read"):
             attempt_from_installed(self.receipt, loader=invalid)
         with self.assertRaisesRegex(RuntimeError, "no valid attempt"):

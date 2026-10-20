@@ -41,6 +41,22 @@ SOURCE_SHA256 = {
 }
 
 
+def existing_path(root, relative):
+    """The file `relative` names under `root`, matching each component case-insensitively
+    when no exact name exists; None if absent or ambiguous (Unity lowercases asset paths)."""
+    path = Path(root)
+    for part in Path(relative).parts:
+        exact = path / part
+        if exact.exists():
+            path = exact
+            continue
+        matches = [child for child in path.iterdir() if child.name.casefold() == part.casefold()] if path.is_dir() else []
+        if len(matches) != 1:
+            return None
+        path = matches[0]
+    return path
+
+
 def scene_root(name):
     return SCENES[name]
 
@@ -166,9 +182,10 @@ def stage(io=None):
             for kind in ("groundGraph", "airGraph"):
                 if not spec[kind].startswith(prefix):
                     raise RuntimeError("Unexpected graph import location: " + name)
-                imported = project / ("Assets/WholeGame/" + spec[kind][len(prefix) :])
-                staged = project / spec[kind]
-                if not imported.is_file() or not staged.is_file():
+                # Unity reports lowercased asset paths; resolve them on case-sensitive hosts too.
+                imported = existing_path(project, "Assets/WholeGame/" + spec[kind][len(prefix) :])
+                staged = existing_path(project, spec[kind])
+                if imported is None or staged is None or not imported.is_file() or not staged.is_file():
                     raise RuntimeError("Original stage graph is missing: " + name + "/" + kind)
                 # The imported graph is the accepted compact conversion, so its
                 # bytes differ from the raw exported graph while the GUID agrees.

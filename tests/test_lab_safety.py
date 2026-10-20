@@ -16,6 +16,7 @@ import device
 import device_context
 import common
 from common import write
+
 REAL_REQUIRE_DEVICE_ACCESS = device.require_device_access
 DEFAULT_TEST_SERIAL = "synthetic-default"
 SECOND_TEST_SERIAL = "synthetic-secondary"
@@ -169,14 +170,14 @@ class SafetyTests(unittest.TestCase):
                 SECOND_TEST_SERIAL: {"storage_mode": "internal", "internal_reserve_mib": 3072, "display_count": 2},
             },
         }
-        attached = (
-            "List of devices attached\n"
-            + f"{DEFAULT_TEST_SERIAL}\tdevice\n{SECOND_TEST_SERIAL}\tdevice\n"
-        ).encode()
+        attached = ("List of devices attached\n" + f"{DEFAULT_TEST_SERIAL}\tdevice\n{SECOND_TEST_SERIAL}\tdevice\n").encode()
         write(self.root / "config/local.json", configuration)
-        with patch.object(common, "WORK", self.root), patch.object(
-            device, "run", return_value=types.SimpleNamespace(stdout=attached)
-        ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+        with (
+            patch.object(common, "WORK", self.root),
+            patch.object(device, "run", return_value=types.SimpleNamespace(stdout=attached)),
+            patch.object(device_context, "_COMMAND_SELECTORS", (None, None)),
+            patch.dict(os.environ, {}, clear=True),
+        ):
             first = device.Device(selector=DEFAULT_TEST_SERIAL, work_root=self.root)
             second = device.Device(selector=SECOND_TEST_SERIAL, work_root=self.root)
 
@@ -200,9 +201,12 @@ class SafetyTests(unittest.TestCase):
         attached = ("List of devices attached\n" + DEFAULT_TEST_SERIAL + "\tdevice\n").encode()
         elsewhere = self.root / "later-work-tree"
         write(elsewhere / "config/local.json", {**configuration, "device_serial": SECOND_TEST_SERIAL})
-        with patch.object(common, "WORK", self.root), patch.object(
-            device, "run", return_value=types.SimpleNamespace(stdout=attached)
-        ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+        with (
+            patch.object(common, "WORK", self.root),
+            patch.object(device, "run", return_value=types.SimpleNamespace(stdout=attached)),
+            patch.object(device_context, "_COMMAND_SELECTORS", (None, None)),
+            patch.dict(os.environ, {}, clear=True),
+        ):
             selected = device.Device()
 
         write(selected.receipt("installed.json"), {"serial": DEFAULT_TEST_SERIAL, "package": device.PACKAGE})
@@ -224,9 +228,12 @@ class SafetyTests(unittest.TestCase):
                 },
             )
             attached = ("List of devices attached\n" + DEFAULT_TEST_SERIAL + "\tdevice\n").encode()
-            with patch.object(common, "WORK", self.root), patch.object(
-                device, "run", return_value=types.SimpleNamespace(stdout=attached)
-            ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+            with (
+                patch.object(common, "WORK", self.root),
+                patch.object(device, "run", return_value=types.SimpleNamespace(stdout=attached)),
+                patch.object(device_context, "_COMMAND_SELECTORS", (None, None)),
+                patch.dict(os.environ, {}, clear=True),
+            ):
                 selected = device.Device(work_root=relative_root)
 
             absolute_root = Path(temp).absolute()
@@ -297,10 +304,13 @@ class SafetyTests(unittest.TestCase):
         self.d.owned = lambda: {}
         with self.assertRaisesRegex(RuntimeError, "not backed by the selected internal"):
             self.d.sync()
-        self.assertEqual(calls, [
-            ("df", "-k", runtime["persistentDataPath"]),
-            ("df", "-k", runtime["persistentDataPath"]),
-        ])
+        self.assertEqual(
+            calls,
+            [
+                ("df", "-k", runtime["persistentDataPath"]),
+                ("df", "-k", runtime["persistentDataPath"]),
+            ],
+        )
 
     def test_internal_and_adopted_runtime_snapshots_validate_on_their_own_serials(self):
         configuration = {
@@ -310,24 +320,27 @@ class SafetyTests(unittest.TestCase):
             "device_settings": {SECOND_TEST_SERIAL: {"storage_mode": "adopted"}},
         }
         write(self.root / "config/local.json", configuration)
-        attached = (
-            "List of devices attached\n"
-            + DEFAULT_TEST_SERIAL + "\tdevice\n"
-            + SECOND_TEST_SERIAL + "\tdevice\n"
-        ).encode()
-        with patch.object(common, "WORK", self.root), patch.object(
-            device, "run", return_value=types.SimpleNamespace(stdout=attached)
-        ), patch.object(device_context, "_COMMAND_SELECTORS", (None, None)), patch.dict(os.environ, {}, clear=True):
+        attached = ("List of devices attached\n" + DEFAULT_TEST_SERIAL + "\tdevice\n" + SECOND_TEST_SERIAL + "\tdevice\n").encode()
+        with (
+            patch.object(common, "WORK", self.root),
+            patch.object(device, "run", return_value=types.SimpleNamespace(stdout=attached)),
+            patch.object(device_context, "_COMMAND_SELECTORS", (None, None)),
+            patch.dict(os.environ, {}, clear=True),
+        ):
             internal = device.Device(selector=DEFAULT_TEST_SERIAL)
             adopted = device.Device(selector=SECOND_TEST_SERIAL)
 
         internal_total = 4096 * 1024
         adopted_total = 8192 * 1024
         internal.storage = lambda: {
-            "mode": "internal", "internal": {"total_bytes": internal_total}, "adopted": None,
+            "mode": "internal",
+            "internal": {"total_bytes": internal_total},
+            "adopted": None,
         }
         adopted.storage = lambda: {
-            "mode": "adopted", "internal": {"total_bytes": 1024}, "adopted": {"total_bytes": adopted_total},
+            "mode": "adopted",
+            "internal": {"total_bytes": 1024},
+            "adopted": {"total_bytes": adopted_total},
         }
         observed = []
 
@@ -337,6 +350,7 @@ class SafetyTests(unittest.TestCase):
                 observed.append((args[2], total_bytes))
                 blocks = total_bytes // 1024
                 return f"Filesystem 1K-blocks Used Available Use% Mounted on\nselected {blocks} 1 {blocks - 1} 1% /selected"
+
             return shell
 
         internal.sh = df_for(internal_total)
@@ -358,12 +372,15 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(adopted_read["marker"], "adopted")
         self.assertEqual(internal_read["serial"], DEFAULT_TEST_SERIAL)
         self.assertEqual(adopted_read["serial"], SECOND_TEST_SERIAL)
-        self.assertEqual(observed, [
-            (internal_runtime["persistentDataPath"], internal_total),
-            (adopted_runtime["persistentDataPath"], adopted_total),
-            (internal_runtime["persistentDataPath"], internal_total),
-            (adopted_runtime["persistentDataPath"], adopted_total),
-        ])
+        self.assertEqual(
+            observed,
+            [
+                (internal_runtime["persistentDataPath"], internal_total),
+                (adopted_runtime["persistentDataPath"], adopted_total),
+                (internal_runtime["persistentDataPath"], internal_total),
+                (adopted_runtime["persistentDataPath"], adopted_total),
+            ],
+        )
 
     def test_internal_reserve_override_blocks_before_any_device_operation(self):
         self.d.settings.update({"storage_mode": "internal", "internal_reserve_mib": 1536})

@@ -11,7 +11,10 @@ from catalog_reader import dumps, read_object, read_shipped
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSEMBLY = "Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null"
-NAMES = dict(labels=[dict(name="itemDef", key="ItemDef")], providers=[dict(identifier="Example.Base", type="Example.Content, Example, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null")])
+NAMES = dict(
+    labels=[dict(name="itemDef", key="ItemDef")],
+    providers=[dict(identifier="Example.Base", type="Example.Content, Example, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null")],
+)
 
 
 def ascii_key(text):
@@ -72,8 +75,10 @@ class CatalogReaderTests(unittest.TestCase):
     def test_mirrors_create_locator_and_editor_query(self):
         record = self.build()
         self.assertEqual(record["schemaVersion"], 2)
-        self.assertEqual([(k["key"], k["keyType"], k["locations"]) for k in record["keys"]],
-                         [("a.bundle", "System.String", [0]), ("Prefé", "System.String", [1]), ("Assets/B.asset", "System.String", [2]), ("42", "System.Int32", [2, 1])])
+        self.assertEqual(
+            [(k["key"], k["keyType"], k["locations"]) for k in record["keys"]],
+            [("a.bundle", "System.String", [0]), ("Prefé", "System.String", [1]), ("Assets/B.asset", "System.String", [2]), ("42", "System.Int32", [2, 1])],
+        )
         bundle, prefab, asset = record["locations"]
         self.assertEqual(bundle["internalId"], "/lab/Assets/StreamingAssets/aa\\Win\\a.bundle")
         self.assertEqual(bundle["provider"], "Provider.Bundlewhole-source-audit")
@@ -94,7 +99,7 @@ class CatalogReaderTests(unittest.TestCase):
         self.assertEqual(record["dependencySets"], [[]])
 
     def test_newtonsoft_indented_form(self):
-        text = dumps(dict(a=[], b=[1, 2], c=None, d="é/\"x\""))
+        text = dumps(dict(a=[], b=[1, 2], c=None, d='é/"x"'))
         self.assertEqual(text, '{\n  "a": [],\n  "b": [\n    1,\n    2\n  ],\n  "c": null,\n  "d": "é/\\"x\\""\n}')
 
     def test_refuses_unmeasured_shapes(self):

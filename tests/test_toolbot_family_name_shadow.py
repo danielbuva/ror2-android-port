@@ -35,7 +35,8 @@ class ToolbotSkillFamilyNameShadowTests(unittest.TestCase):
         describe = extract_method(source, "    string DescribeToolbotComponent(int componentIndex)")
         matches = extract_method(source, "    bool ToolbotSelectedComponentMatches(int componentIndex,")
 
-        host = r'''using System;
+        host = (
+            r"""using System;
 using UnityEngine;
 namespace UnityEngine {
  public class Object { public static implicit operator bool(Object value) => value != null; }
@@ -72,7 +73,13 @@ public sealed class SurvivorSkillInputCoverage {
  public ObserverReport observed; public object combatOutput; public CharacterBody body;
  public GenericSkill[] toolbotSkillComponents; public float toolbotDeadline, toolbotPhaseEnteredAt;
  public Result report = new Result();
-''' + capture + "\n" + describe + "\n" + matches + r'''
+"""
+            + capture
+            + "\n"
+            + describe
+            + "\n"
+            + matches
+            + r"""
  public static SurvivorSkillInputCoverage Make() {
   var c = new SurvivorSkillInputCoverage { combatOutput = new object() };
   c.body = new CharacterBody { bodyIndex = 258, skillLocator = new Locator() };
@@ -145,14 +152,16 @@ public sealed class SurvivorSkillInputCoverage {
   Console.WriteLine("Toolbot family-name shadow, selected identity and refusal passed");
  }
 }
-'''
+"""
+        )
         with tempfile.TemporaryDirectory() as directory:
             source_path = Path(directory) / "ToolbotFamilyNameHost.cs"
             output_path = Path(directory) / "ToolbotFamilyNameHost.exe"
             source_path.write_text(host)
             compiled = subprocess.run(
                 [str(mono), str(compiler), "-nologo", "-langversion:9", "-out:" + str(output_path), str(source_path)],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             executed = subprocess.run([str(mono), str(output_path)], capture_output=True, text=True)

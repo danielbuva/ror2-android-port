@@ -372,16 +372,10 @@ namespace Fixture.States {
     def test_fields_are_scoped_inherited_nested_and_shadowed(self):
         with tempfile.TemporaryDirectory() as temporary:
             fields = entity_state_gameobject_fields(self.write_state_sources(Path(temporary)))
-        self.assertEqual(fields["Fixture.States.BaseState"], {
-            "inheritedCharge", "wrongType", "ambiguous", "missing", "unconverted", "orphaned"
-        })
-        self.assertEqual(fields["Fixture.States.DerivedState"], {
-            "inheritedCharge", "wrongType", "ambiguous", "missing", "unconverted", "orphaned", "beam"
-        })
+        self.assertEqual(fields["Fixture.States.BaseState"], {"inheritedCharge", "wrongType", "ambiguous", "missing", "unconverted", "orphaned"})
+        self.assertEqual(fields["Fixture.States.DerivedState"], {"inheritedCharge", "wrongType", "ambiguous", "missing", "unconverted", "orphaned", "beam"})
         self.assertEqual(fields["Fixture.States.BaseState+NestedState"], {"nestedOnly"})
-        self.assertEqual(fields["Fixture.States.SiblingState"], {
-            "inheritedCharge", "wrongType", "ambiguous", "missing", "unconverted", "orphaned"
-        })
+        self.assertEqual(fields["Fixture.States.SiblingState"], {"inheritedCharge", "wrongType", "ambiguous", "missing", "unconverted", "orphaned"})
         self.assertNotIn("beam", fields["Fixture.States.BaseState"])
         self.assertNotIn("inheritedCharge", fields["Fixture.States.HiddenState"])
 
@@ -389,23 +383,27 @@ namespace Fixture.States {
         with tempfile.TemporaryDirectory() as temporary:
             fields = entity_state_gameobject_fields(self.write_state_sources(Path(temporary)))
         guid = "a" * 32
-        config = self.state_config("Fixture.States.DerivedState", [
-            ("inheritedCharge", "stringValue", guid),
-            ("beam", "stringValue", "not-a-guid"),
-            ("wrongType", "objectValue", "{fileID: 0}"),
-            ("ordinaryText", "stringValue", guid),
-            ("ordinaryDerivedText", "stringValue", guid),
-        ])
+        config = self.state_config(
+            "Fixture.States.DerivedState",
+            [
+                ("inheritedCharge", "stringValue", guid),
+                ("beam", "stringValue", "not-a-guid"),
+                ("wrongType", "objectValue", "{fileID: 0}"),
+                ("ordinaryText", "stringValue", guid),
+                ("ordinaryDerivedText", "stringValue", guid),
+            ],
+        )
         catalog_keys = {guid: [1]}
         converted = {1: {"source": "Charge.prefab"}}
-        locations = {1: {
-            "type": "UnityEngine.GameObject, UnityEngine.CoreModule",
-            "provider": "fixture-provider", "internalId": "Assets/Charge.prefab",
-            "primaryKey": "Fixture/Charge.prefab",
-        }}
-        edges, pending, issues = entity_state_reference_closure(
-            config, "Assets/State.asset", fields, catalog_keys, converted, locations
-        )
+        locations = {
+            1: {
+                "type": "UnityEngine.GameObject, UnityEngine.CoreModule",
+                "provider": "fixture-provider",
+                "internalId": "Assets/Charge.prefab",
+                "primaryKey": "Fixture/Charge.prefab",
+            }
+        }
+        edges, pending, issues = entity_state_reference_closure(config, "Assets/State.asset", fields, catalog_keys, converted, locations)
         self.assertEqual([edge["field"] for edge in edges], ["inheritedCharge"])
         self.assertEqual(pending, ["Charge.prefab"])
         self.assertEqual(issues, [])
@@ -434,34 +432,40 @@ namespace Other {
     def test_exact_gameobject_identity_and_every_refusal_mode(self):
         with tempfile.TemporaryDirectory() as temporary:
             fields = entity_state_gameobject_fields(self.write_state_sources(Path(temporary)))
-        good, wrong, ambiguous, missing, unconverted, orphaned = (
-            "a" * 32, "b" * 32, "c" * 32, "d" * 32, "e" * 32, "f" * 32
+        good, wrong, ambiguous, missing, unconverted, orphaned = ("a" * 32, "b" * 32, "c" * 32, "d" * 32, "e" * 32, "f" * 32)
+        config = self.state_config(
+            "Fixture.States.BaseState",
+            [
+                ("inheritedCharge", "stringValue", good),
+                ("wrongType", "stringValue", wrong),
+                ("ambiguous", "stringValue", ambiguous),
+                ("missing", "stringValue", missing),
+                ("unconverted", "stringValue", unconverted),
+                ("orphaned", "stringValue", orphaned),
+            ],
         )
-        config = self.state_config("Fixture.States.BaseState", [
-            ("inheritedCharge", "stringValue", good),
-            ("wrongType", "stringValue", wrong),
-            ("ambiguous", "stringValue", ambiguous),
-            ("missing", "stringValue", missing),
-            ("unconverted", "stringValue", unconverted),
-            ("orphaned", "stringValue", orphaned),
-        ])
         keys = {good: [10, 11], wrong: [20], ambiguous: [30, 31], missing: [], unconverted: [40], orphaned: [50]}
         locations = {
             10: {"type": "UnityEngine.Mesh, UnityEngine.CoreModule", "provider": "wrong-provider", "internalId": "Assets/Wrong.asset"},
-            11: {"type": "UnityEngine.GameObject, UnityEngine.CoreModule", "provider": "fixture-provider", "internalId": "Assets/Good.prefab", "primaryKey": "Fixture/Good.prefab"},
+            11: {
+                "type": "UnityEngine.GameObject, UnityEngine.CoreModule",
+                "provider": "fixture-provider",
+                "internalId": "Assets/Good.prefab",
+                "primaryKey": "Fixture/Good.prefab",
+            },
             20: {"type": "UnityEngine.Mesh, UnityEngine.CoreModule", "provider": "fixture-provider", "internalId": "Assets/Mesh.asset"},
             30: {"type": "UnityEngine.GameObject, UnityEngine.CoreModule", "provider": "fixture-provider", "internalId": "Assets/A.prefab"},
             31: {"type": "UnityEngine.GameObject, UnityEngine.CoreModule", "provider": "fixture-provider", "internalId": "Assets/B.prefab"},
             40: {"type": "UnityEngine.GameObject, UnityEngine.CoreModule", "provider": "fixture-provider", "internalId": "Assets/Unconverted.prefab"},
         }
         converted = {
-            10: {"source": "Wrong.asset"}, 11: {"source": "Good.prefab"},
-            20: {"source": "Mesh.asset"}, 30: {"source": "A.prefab"},
+            10: {"source": "Wrong.asset"},
+            11: {"source": "Good.prefab"},
+            20: {"source": "Mesh.asset"},
+            30: {"source": "A.prefab"},
             31: {"source": "B.prefab"},
         }
-        edges, pending, issues = entity_state_reference_closure(
-            config, "Assets/State.asset", fields, keys, converted, locations
-        )
+        edges, pending, issues = entity_state_reference_closure(config, "Assets/State.asset", fields, keys, converted, locations)
         by_field = {edge["field"]: edge for edge in edges}
         self.assertEqual(by_field["inheritedCharge"]["locations"], [10, 11])
         self.assertEqual(by_field["inheritedCharge"]["matchingLocations"], [11])
@@ -495,10 +499,7 @@ namespace Other {
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(contents)
             categories = ["category" + str(index) for index in range(29)]
-            helper = "\n".join(
-                "FindLocationsThenAddLoadOperation(AddressablesLabels." + name + ")"
-                for name in categories
-            )
+            helper = "\n".join("FindLocationsThenAddLoadOperation(AddressablesLabels." + name + ")" for name in categories)
             catalog = {
                 "providers": [{"identifier": "fixture"}],
                 "labels": [{"name": name, "key": name} for name in categories],
@@ -508,23 +509,34 @@ namespace Other {
                     {"key": guid, "keyType": "System.String", "locations": [2]},
                 ],
                 "locations": [
-                    {"id": 1, "internalId": "Assets/State.asset", "type": "RoR2.EntityStateConfiguration, RoR2", "dependencies": [], "provider": "state-provider"},
-                    {"id": 2, "internalId": "Assets/Beam.prefab", "primaryKey": "Fixture/Beam.prefab", "type": "UnityEngine.GameObject, UnityEngine.CoreModule", "dependencies": [], "provider": "gameobject-provider"},
+                    {
+                        "id": 1,
+                        "internalId": "Assets/State.asset",
+                        "type": "RoR2.EntityStateConfiguration, RoR2",
+                        "dependencies": [],
+                        "provider": "state-provider",
+                    },
+                    {
+                        "id": 2,
+                        "internalId": "Assets/Beam.prefab",
+                        "primaryKey": "Fixture/Beam.prefab",
+                        "type": "UnityEngine.GameObject, UnityEngine.CoreModule",
+                        "dependencies": [],
+                        "provider": "gameobject-provider",
+                    },
                 ],
             }
             catalog_path = root / "catalog.json"
             catalog_path.write_text(json.dumps(catalog))
             result = analyze(
-                catalog_path, export,
+                catalog_path,
+                export,
                 {"state-guid": "Assets/State.asset", "beam-guid": "Assets/Beam.prefab"},
-                helper, state_source_root=source_root,
+                helper,
+                state_source_root=source_root,
             )
             staged = set(result["files"])
-            selected = {
-                int(identity): conversion["source"]
-                for identity, conversion in result["converted"].items()
-                if conversion["source"] in staged
-            }
+            selected = {int(identity): conversion["source"] for identity, conversion in result["converted"].items() if conversion["source"] in staged}
             self.assertIn("Assets/Beam.prefab", staged)
             self.assertEqual(selected[2], "Assets/Beam.prefab")
             self.assertNotIn(2, result["roots"])

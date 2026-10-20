@@ -4,6 +4,7 @@ Helper for scripts/lab/build.py. It reads APK and symbol ZIP members in
 place, never extracts an archive, and fails closed on missing/ambiguous ELF
 identities.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -165,14 +166,16 @@ def elf_metadata(data: bytes, *, include_sections: bool = True) -> dict:
         sections[name] = section_size
         if name == ".debug_info":
             debug_info_data = data[section_offset : section_offset + section_size]
-        section_rows.append({
-            "name": name,
-            "type": section_type,
-            "offset": section_offset,
-            "size": section_size,
-            "link": section_link,
-            "entry_size": section_entry_size,
-        })
+        section_rows.append(
+            {
+                "name": name,
+                "type": section_type,
+                "offset": section_offset,
+                "size": section_size,
+                "link": section_link,
+                "entry_size": section_entry_size,
+            }
+        )
     symbol_tables = [row for row in section_rows if row["name"] == ".symtab" and row["type"] == 2]
     named_symbols = 0
     for symtab in symbol_tables:
@@ -205,7 +208,10 @@ def elf_build_id(data: bytes) -> str:
 
 
 def _one_member(
-    archive: zipfile.ZipFile, predicate, description: str, *,
+    archive: zipfile.ZipFile,
+    predicate,
+    description: str,
+    *,
     max_uncompressed_bytes: int = 512 * 1024 * 1024,
 ) -> tuple[str, bytes]:
     names = [name for name in archive.namelist() if not name.endswith("/") and predicate(name)]
@@ -239,9 +245,7 @@ def verify_apk_symbol_pair(
         raise SymbolArtifactError("symbols ZIP hash does not match the expected build receipt")
     try:
         with zipfile.ZipFile(apk_path) as apk, zipfile.ZipFile(symbols_zip_path) as symbols:
-            apk_member, apk_elf = _one_member(
-                apk, lambda name: name == "lib/arm64-v8a/libil2cpp.so", "ARM64 APK libil2cpp.so"
-            )
+            apk_member, apk_elf = _one_member(apk, lambda name: name == "lib/arm64-v8a/libil2cpp.so", "ARM64 APK libil2cpp.so")
             symbols_member, symbols_elf = _one_member(
                 symbols,
                 lambda name: Path(name).name in ("libil2cpp.so", "libil2cpp.dbg.so", "libil2cpp.sym.so"),

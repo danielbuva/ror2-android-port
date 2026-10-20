@@ -178,6 +178,7 @@ class HostBuildLockTests(unittest.TestCase):
                 patch.object(build_lock, "HOST_BUILD_LOCK", lock),
                 patch.object(build, "assert_build_unblocked"),
             ):
+
                 def fake_run(*args, **kwargs):
                     self.assertEqual(json.loads(lock.read_text())["status"], "held")
                     self.assertEqual(len(kwargs["pass_fds"]), 1)

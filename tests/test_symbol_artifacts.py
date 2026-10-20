@@ -109,24 +109,21 @@ class SymbolArtifactTests(unittest.TestCase):
             _one_member(archive, predicate, "APK library")
         archive.read.assert_not_called()
         self.assertEqual(
-            _one_member(archive, predicate, "debug symbols",
-                        max_uncompressed_bytes=2 * 1024 * 1024 * 1024),
+            _one_member(archive, predicate, "debug symbols", max_uncompressed_bytes=2 * 1024 * 1024 * 1024),
             ("arm64-v8a/libil2cpp.so", self.symbol_elf),
         )
         archive.read.reset_mock()
         for size in (0, 2 * 1024 * 1024 * 1024 + 1):
             archive.getinfo.return_value.file_size = size
             with self.assertRaisesRegex(SymbolArtifactError, "invalid uncompressed size"):
-                _one_member(archive, predicate, "debug symbols",
-                            max_uncompressed_bytes=2 * 1024 * 1024 * 1024)
+                _one_member(archive, predicate, "debug symbols", max_uncompressed_bytes=2 * 1024 * 1024 * 1024)
         archive.read.assert_not_called()
 
     def test_accepts_nobits_memory_extent_without_file_payload(self):
         image = bytearray(self.symbol_elf)
         shoff = struct.unpack_from("<Q", image, 40)[0]
         # Add an unnamed .bss-style section whose memory extent has no file bytes.
-        section = struct.pack("<IIQQQQIIQQ", 0, 8, 3, 0x4000,
-                              len(image) + 4096, 16384, 0, 0, 8, 0)
+        section = struct.pack("<IIQQQQIIQQ", 0, 8, 3, 0x4000, len(image) + 4096, 16384, 0, 0, 8, 0)
         image.extend(section)
         struct.pack_into("<H", image, 60, 6)
         write_zip(self.symbols, [("arm64-v8a/libil2cpp.so", bytes(image))])

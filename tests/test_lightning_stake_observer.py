@@ -37,12 +37,7 @@ def production_host():
     policy = extract_block(source, "public sealed class LightningStakeSamplingPolicy : IDisposable")
     retirement = extract_block(source, "void RetireTrackedAt(int index)")
     fixture = (ROOT / "tests/fixtures/lightning_stake_observer_host.cs").read_text(encoding="utf-8")
-    return (
-        "using System;\nusing System.Collections.Generic;\n"
-        + policy
-        + "\n"
-        + fixture.replace("__EXTRACTED_RETIREMENT_METHOD__", retirement)
-    )
+    return "using System;\nusing System.Collections.Generic;\n" + policy + "\n" + fixture.replace("__EXTRACTED_RETIREMENT_METHOD__", retirement)
 
 
 class LightningStakeObserverContracts(unittest.TestCase):
@@ -69,9 +64,16 @@ class LightningStakeObserverContracts(unittest.TestCase):
             environment.update(TMPDIR=str(scratch), TMP=str(scratch), TEMP=str(scratch))
             compiled = subprocess.run(
                 [
-                    str(mono), str(csc), "-nologo", "-langversion:9", "-target:exe",
-                    "-out:" + str(output), "-debug:portable", "-pdb:" + str(pdb),
-                    "-refout:" + str(refout), str(source),
+                    str(mono),
+                    str(csc),
+                    "-nologo",
+                    "-langversion:9",
+                    "-target:exe",
+                    "-out:" + str(output),
+                    "-debug:portable",
+                    "-pdb:" + str(pdb),
+                    "-refout:" + str(refout),
+                    str(source),
                 ],
                 cwd=scratch,
                 env=environment,
@@ -80,8 +82,7 @@ class LightningStakeObserverContracts(unittest.TestCase):
             )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             self.assertTrue(output.is_file() and pdb.is_file() and refout.is_file())
-            executed = subprocess.run([str(mono), str(output)], cwd=scratch, env=environment,
-                                      capture_output=True, text=True)
+            executed = subprocess.run([str(mono), str(output)], cwd=scratch, env=environment, capture_output=True, text=True)
             self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
             self.assertEqual(executed.stdout.strip(), "PASS: rolling observer policy contracts")
 

@@ -103,14 +103,7 @@ class Device:
         if not components:
             raise ValueError("At least one evidence directory component is required")
         for component in components:
-            if (
-                not isinstance(component, str)
-                or not component
-                or component in (".", "..")
-                or "/" in component
-                or "\\" in component
-                or "\x00" in component
-            ):
+            if not isinstance(component, str) or not component or component in (".", "..") or "/" in component or "\\" in component or "\x00" in component:
                 raise ValueError("Evidence directory components must be safe names")
         root = self._validated_receipt_root()
         candidate = root.joinpath(*components)
@@ -159,8 +152,11 @@ class Device:
             raise RuntimeError("Only the legacy configured default needs receipt migration")
         proof = self.owned()
         result = migrate_legacy_receipts(
-            self.receipt_root, self.work_root / "device" / self.serial, serial=self.serial,
-            ownership_proof=proof, coordination_lock=ROOT / "work/coordination/claude-r9.lock",
+            self.receipt_root,
+            self.work_root / "device" / self.serial,
+            serial=self.serial,
+            ownership_proof=proof,
+            coordination_lock=ROOT / "work/coordination/claude-r9.lock",
             install_counter=self.install_counter(),
         )
         self.receipt_root = result["directory"]

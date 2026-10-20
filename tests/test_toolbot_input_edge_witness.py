@@ -5,10 +5,8 @@ import subprocess
 import tempfile
 import unittest
 
-REPO_ROOT = next(parent for parent in Path(__file__).resolve().parents
-                 if (parent / "tools/unity/runtime/input/NovaInputBridge.cs").is_file())
-DRAFT_ROOT = next((parent for parent in Path(__file__).resolve().parents
-                   if (parent / "source/tools/unity/runtime/input/NovaInputBridge.cs").is_file()), None)
+REPO_ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "tools/unity/runtime/input/NovaInputBridge.cs").is_file())
+DRAFT_ROOT = next((parent for parent in Path(__file__).resolve().parents if (parent / "source/tools/unity/runtime/input/NovaInputBridge.cs").is_file()), None)
 SOURCE_ROOT = DRAFT_ROOT / "source" if DRAFT_ROOT else REPO_ROOT
 BRIDGE = SOURCE_ROOT / "tools/unity/runtime/input/NovaInputBridge.cs"
 OWNER = SOURCE_ROOT / "tools/unity/runtime/input/SurvivorSkillInputCoverage.cs"
@@ -25,7 +23,7 @@ def method(source, signature):
         elif source[index] == "}":
             depth -= 1
             if depth == 0:
-                return source[start:index + 1]
+                return source[start : index + 1]
     raise AssertionError("unbalanced method: " + signature)
 
 
@@ -58,21 +56,22 @@ class InputEdgeWitness(unittest.TestCase):
         self.assertIn('"multiple-toolbot-input-edges-for-pulse"', observe)
         offhand = method(self.owner, "void ApplyToolbotOffhand(float elapsed)")
         self.assertLess(offhand.index("inputNeutralRevision != lastNeutralRevision"), offhand.index("ObserveInputBankEdge()"))
-        self.assertIn("StopToolbotOffhand(\"neutralized-request-cancelled\")", offhand)
+        self.assertIn('StopToolbotOffhand("neutralized-request-cancelled")', offhand)
         self.assertIn("bridge.isolatedDiagnosticSkillPulse = false", method(self.owner, "void StopToolbotOffhand(string outcome)"))
         constructor = method(self.owner, "public SurvivorSkillInputCoverage(")
-        self.assertRegex(constructor, r"if \(toolbotOffhandMode\)\s*\{\s*CaptureToolbotOffhandIdentity\(\);\s*ownedBridge.SetDiagnosticInputEdgeWitness\(true\)")
+        self.assertRegex(
+            constructor, r"if \(toolbotOffhandMode\)\s*\{\s*CaptureToolbotOffhandIdentity\(\);\s*ownedBridge.SetDiagnosticInputEdgeWitness\(true\)"
+        )
 
     @unittest.skipUnless(
-        (UNITY / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe").is_file() and
-        (UNITY / "MonoBleedingEdge/bin/mono").is_file(),
+        (UNITY / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe").is_file() and (UNITY / "MonoBleedingEdge/bin/mono").is_file(),
         "pinned Unity Mono compiler/runtime unavailable",
     )
     def test_extracted_production_witness_survives_late_sampling_and_refuses_bad_deltas(self):
         bridge_helper = method(self.bridge, "public static long AdvanceDiagnosticInputEdgeCount(")
         enum = re.search(r"public enum DiagnosticInputEdgeStatus\s*\{[^}]+\}", self.owner).group(0)
         classifier = method(self.owner, "public static DiagnosticInputEdgeStatus ClassifyDiagnosticInputEdge(")
-        harness = r'''using System;
+        harness = r"""using System;
 public static class Program
 {
     ENUM
@@ -128,7 +127,7 @@ public static class Program
              "counter saturation stays monotonic and fails closed");
         Console.WriteLine("production input-edge witness passed");
     }
-}'''
+}"""
         harness = harness.replace("ENUM", enum).replace("BRIDGE_HELPER", bridge_helper).replace("OWNER_HELPER", classifier)
         with tempfile.TemporaryDirectory(prefix="toolbot-input-edge-") as temp:
             temp = Path(temp)
@@ -136,11 +135,11 @@ public static class Program
             source.write_text(harness)
             runtime = UNITY / "MonoBleedingEdge/bin/mono"
             compiler = UNITY / "MonoBleedingEdge/lib/mono/msbuild/Current/bin/Roslyn/csc.exe"
-            compiled = subprocess.run([str(runtime), str(compiler), "-nologo", "-out:" + str(exe), str(source)],
-                                      cwd=temp, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            compiled = subprocess.run(
+                [str(runtime), str(compiler), "-nologo", "-out:" + str(exe), str(source)], cwd=temp, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            )
             self.assertEqual(compiled.returncode, 0, compiled.stdout)
-            run = subprocess.run([str(runtime), str(exe)], cwd=temp, text=True,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            run = subprocess.run([str(runtime), str(exe)], cwd=temp, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.assertEqual(run.returncode, 0, run.stdout)
             self.assertIn("production input-edge witness passed", run.stdout)
 

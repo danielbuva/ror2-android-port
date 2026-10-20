@@ -122,9 +122,11 @@ class RecipeGenerationTests(unittest.TestCase):
                     build.validate_content_recipe()
                     raise StopBeforeBuild
 
-                with patch.object(build, "build_source_identity", return_value={"commit": "fixture-commit"}), patch.object(
-                    build, "validate_runtime_source_membership", side_effect=validate
-                ), patch.object(build, "build") as invoke:
+                with (
+                    patch.object(build, "build_source_identity", return_value={"commit": "fixture-commit"}),
+                    patch.object(build, "validate_runtime_source_membership", side_effect=validate),
+                    patch.object(build, "build") as invoke,
+                ):
                     with self.assertRaises(StopBeforeBuild):
                         whole_catalog.build_integration(code_only=code_only)
                     invoke.assert_not_called()

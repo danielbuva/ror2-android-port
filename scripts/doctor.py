@@ -18,6 +18,7 @@ parser.add_argument("--json", action="store_true")
 args = parser.parse_args()
 sys.path.insert(0, str(root / "scripts/lab"))
 from device_context import select_device, storage_policy, receipt_directory
+
 pin = json.loads((root / "environment/toolchain.json").read_text())
 checks = []
 

@@ -45,13 +45,22 @@ class PortableInputPolicyTests(unittest.TestCase):
         owner = (RUNTIME_ROOT / "input/NovaInputBoundary.cs").read_text()
         bridge = (RUNTIME_ROOT / "input/NovaInputBridge.cs").read_text()
         policy = extract_class(owner, "public static class InputSessionPolicy")
-        host = """using System;
-""" + policy + """
+        host = (
+            """using System;
+"""
+            + policy
+            + """
 public sealed class NovaInputBridge {
  public sealed class Mapping {}
-""" + extract_method(bridge, "public static bool IsAutomaticDiagnosticWithoutPhysicalInput(") + """
-""" + extract_method(bridge, "public static bool IsPhysicalInputAvailable(") + """
-""" + extract_method(bridge, "public static bool MissingMappingRequiresNeutral(") + """
+"""
+            + extract_method(bridge, "public static bool IsAutomaticDiagnosticWithoutPhysicalInput(")
+            + """
+"""
+            + extract_method(bridge, "public static bool IsPhysicalInputAvailable(")
+            + """
+"""
+            + extract_method(bridge, "public static bool MissingMappingRequiresNeutral(")
+            + """
 }
 public static class Program {
  static void Check(bool value, string name) { if (!value) throw new Exception(name); }
@@ -86,11 +95,14 @@ public static class Program {
  }
 }
 """
+        )
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "InputRouteHost.cs"
             output = Path(directory) / "InputRouteHost.exe"
             source.write_text(host)
-            compiled = subprocess.run([str(mono), str(compiler), "-nologo", "-langversion:9", "-out:" + str(output), str(source)], capture_output=True, text=True)
+            compiled = subprocess.run(
+                [str(mono), str(compiler), "-nologo", "-langversion:9", "-out:" + str(output), str(source)], capture_output=True, text=True
+            )
             self.assertEqual(compiled.returncode, 0, compiled.stdout + compiled.stderr)
             executed = subprocess.run([str(mono), str(output)], capture_output=True, text=True)
             self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
@@ -139,8 +151,9 @@ public static class Program {
         settings = (RUNTIME_ROOT / "input/OfflineSettingsBoundary.cs").read_text()
         self.assertIn("coordinator.r.nova.physicalInputAvailable", settings)
         self.assertIn("Touch controls: survivor, difficulty, and start", offline)
-        self.assertIn('Start run\" : \"Start run (A)', offline)
+        self.assertIn('Start run" : "Start run (A)', offline)
         self.assertIn("Android offline settings · touch controls", settings)
+
 
 if __name__ == "__main__":
     unittest.main()

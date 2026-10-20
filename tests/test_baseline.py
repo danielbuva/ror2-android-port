@@ -75,7 +75,10 @@ class BaselinePlacementTests(unittest.TestCase):
             pass
 
         for stage_exit in (False, True):
-            for mode, path, uuid in (("internal", "package:/data/app/fixture/base.apk", None), ("adopted", "package:/mnt/expand/live-volume/app/base.apk", "live-volume")):
+            for mode, path, uuid in (
+                ("internal", "package:/data/app/fixture/base.apk", None),
+                ("adopted", "package:/mnt/expand/live-volume/app/base.apk", "live-volume"),
+            ):
                 with self.subTest(mode=mode, stage_exit=stage_exit):
                     d = SimpleNamespace(
                         settings={"storage_mode": mode},

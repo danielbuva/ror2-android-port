@@ -1,4 +1,5 @@
 """Opt-in dispatch and cache contracts without Unity or legitimate game input."""
+
 from pathlib import Path
 import sys
 import tempfile
@@ -41,7 +42,11 @@ class SymbolBuildModeTests(unittest.TestCase):
             project = root / "work/lab-project"
             for child in ["Assets", "Packages", "ProjectSettings"]:
                 (project / child).mkdir(parents=True)
-            with patch.object(build, "ROOT", root), patch.object(build, "WORK", root / "work"), patch.object(build, "toolchain", return_value={"editor": "synthetic"}):
+            with (
+                patch.object(build, "ROOT", root),
+                patch.object(build, "WORK", root / "work"),
+                patch.object(build, "toolchain", return_value={"editor": "synthetic"}),
+            ):
                 ordinary = build.build_cache_key(project, "vulkan")
                 symbols = build.build_cache_key(project, "vulkan", "debugging")
                 self.assertNotEqual(ordinary, symbols)
