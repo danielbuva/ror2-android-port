@@ -18381,8 +18381,8 @@ handoff. Its journal number supersedes the isolated proposal's old J818, which
 moves to J820 and has its index/checklist references regenerated. The original
 proposal receipts remain local historical evidence, not current commit proof.
 
-Resolve internal Nova uniquely from the configured authorized internal-storage
-Nova profile, following J818's exclusive alpha assignment. Write an independent
+Resolve the alpha device uniquely from the configured authorized internal-storage
+device profile, following J818's exclusive alpha assignment. Write an independent
 ignored work/config/local.json containing only that device in its allowlist;
 keep the legitimate game path and device settings. No main configuration or
 original installation is changed. Run ./dev doctor with that explicit serial;
@@ -18488,7 +18488,7 @@ exact converter then succeeds on the host. A local mixed newer-host/BCL control
 also refuses with TypeLoadException; this is not a supported general rehosting
 recipe.
 
-On the explicitly selected internal alpha Nova, Termux .NET 8.0.32's Android
+On the explicitly selected internal-storage alpha device, Termux .NET 8.0.32's Android
 build-tool host starts the exact managed converter DLLs with a separate runtime
 configuration. This host does not execute game code. `--help` passes, but the
 first conversion fails in ICallMappingComponent because the copied support root
@@ -18536,7 +18536,7 @@ failure. Package placement, app data and persistent-data backing are recorded on
 internal storage. Verify actual installed APK bytes, collect process logs,
 remove only the owned fixture package, and verify display sleep. The existing
 alpha game APK remains `be26c21c…` before and after; no game install, stop or
-runtime qualification occurs. No operation targets Main or Thor. The isolated
+runtime qualification occurs. No operation targets the other device roles. The isolated
 shell tool workspace is retained by its private ownership receipt for replay.
 
 **Evidence and limits.** `work/coordination/phone-proof/proof-receipt.json` binds
@@ -18589,7 +18589,7 @@ correct that version alone. Exact Unity then loads, reads and unloads it.
 Preserve the failed candidate and log. A separate check attempt refuses the
 held main build mutex; retry only after the owning build releases it.
 
-Termux Python 3.14.8 runs the same source with `-I -S` on internal alpha Nova,
+Termux Python 3.14.8 runs the same source with `-I -S` on internal-storage alpha device,
 without site packages. Its 3,118-byte output matches host bytes:
 `6c4ce15b5d766a99284e2488d10c22902c5d231389b357abefdc06dfddddb313`.
 The source is portable here for this two-type contract, not a general Unity
@@ -18670,7 +18670,7 @@ and Vulkan with matching candidate hashes; the refusal reports zero cycles.
 Collect PID-scoped logs, remove only the hash-proven owned fixture, verify
 package absence and display sleep. Read-only before/after checks keep the
 existing alpha game APK at `be26c21c…`; no game install, stop or qualification
-occurs. Main and Thor receive no operation. Cleanup guard tests refuse unknown
+occurs. Other devices receive no operation. Cleanup guard tests refuse unknown
 installed bytes before stop/uninstall and require explicit device selection.
 
 **Evidence and remaining gates.** The successful result lives under

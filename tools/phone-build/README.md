@@ -40,6 +40,14 @@ selection, fresh capacity/storage checks and package absence. Retain ownership,
 actual APK hash, package placement and runtime data backing. Remove only the
 owned disposable fixture and put the display to sleep.
 
+Both editor entry points require the pinned version; each launch writes a fresh
+oracle report whose actual Unity version and content checks are required by the
+launcher even after exit code zero. The player publishes Android's actual
+private/external files directories and Unity's persistent directory in its own
+private bootstrap report. The device checker canonicalizes and binds these
+observations before selecting report/candidate paths, checks private backing
+against freshly selected storage and records the separate runtime backing.
+
 This tiny contract establishes no mesh, texture, material, animation, script
 binding, shader compilation, catalog, game or performance acceptance. The larger
 fixture and owner-build gates remain in
