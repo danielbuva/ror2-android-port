@@ -1755,7 +1755,14 @@ def generate_build_bootstrap(io, manifest, closure):
     )
 
 
-def build_integration(code_only=False, destination=None, work=None, android_symbols="none", capture_player_linker_inputs=False):
+def build_integration(
+    code_only=False,
+    destination=None,
+    work=None,
+    android_symbols="none",
+    capture_player_linker_inputs=False,
+    capture_il2cpp_invocation=False,
+):
     from build import build_source_identity
     from build_lock import HOST_BUILD_LOCK, assert_build_unblocked, host_build_lock
 
@@ -1771,18 +1778,29 @@ def build_integration(code_only=False, destination=None, work=None, android_symb
             source_identity=identity,
             android_symbols=android_symbols,
             capture_player_linker_inputs=capture_player_linker_inputs,
+            capture_il2cpp_invocation=capture_il2cpp_invocation,
         )
         if build_source_identity() != identity:
             raise RuntimeError("Build sources changed during the build; its receipt names " + identity["commit"])
         return result
 
 
-def _build_integration(code_only=False, destination=None, work=None, source_identity=None, android_symbols="none", capture_player_linker_inputs=False):
+def _build_integration(
+    code_only=False,
+    destination=None,
+    work=None,
+    source_identity=None,
+    android_symbols="none",
+    capture_player_linker_inputs=False,
+    capture_il2cpp_invocation=False,
+):
     from build import build, freeze_whole_payload, generate_content_recipe, generate_runtime_config, validate_runtime_source_membership
     from composition_io import StageIO
 
+    if capture_il2cpp_invocation and not capture_player_linker_inputs:
+        raise RuntimeError("IL2CPP invocation capture requires --capture-player-linker-inputs for the pre-strip join")
     if destination is not None:
-        if capture_player_linker_inputs:
+        if capture_player_linker_inputs or capture_il2cpp_invocation:
             raise RuntimeError("UnityLinker input capture is supported only for the current local whole-catalog build")
         # R1–R8 already supplied the host products. Share the Unity half only.
         if android_symbols != "none":
@@ -1829,6 +1847,7 @@ def _build_integration(code_only=False, destination=None, work=None, source_iden
             source=source_identity,
             android_symbols=android_symbols,
             capture_player_linker_inputs=True,
+            capture_il2cpp_invocation=capture_il2cpp_invocation,
         )
     elif android_symbols == "none":
         result = build("vulkan", force=True, reuse_payload=code_only, source=source_identity)

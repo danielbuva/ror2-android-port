@@ -28,6 +28,13 @@ class LinkerReceiptTests(unittest.TestCase):
         function.reset_mock()
         actions._whole_catalog_code_build(function, options, SimpleNamespace(capture_player_linker_inputs=True, debug_symbols=True))
         function.assert_called_once_with(code_only=True, capture_player_linker_inputs=True, android_symbols="debugging")
+        function.reset_mock()
+        actions._whole_catalog_code_build(
+            function,
+            options,
+            SimpleNamespace(capture_player_linker_inputs=True, capture_il2cpp_invocation=True),
+        )
+        function.assert_called_once_with(code_only=True, capture_player_linker_inputs=True, capture_il2cpp_invocation=True)
         self.assertEqual(options, {"code_only": True})
 
     def setUp(self):
@@ -121,12 +128,23 @@ class LinkerReceiptTests(unittest.TestCase):
             request_capture_fields(True, {"commit": self.commit}, self.input_id),
             {
                 "capturePlayerLinkerInputs": True,
+                "captureIl2CppInvocation": False,
                 "sourceCommit": self.commit,
                 "inputId": self.input_id,
             },
         )
+        self.assertTrue(
+            request_capture_fields(
+                True,
+                {"commit": self.commit},
+                self.input_id,
+                capture_il2cpp_invocation=True,
+            )["captureIl2CppInvocation"]
+        )
         with self.assertRaises(LinkerCaptureError):
             request_capture_fields(True, None, self.input_id)
+        with self.assertRaisesRegex(LinkerCaptureError, "requires the pre-strip linker capture"):
+            request_capture_fields(False, None, None, capture_il2cpp_invocation=True)
 
     def test_refuses_request_source_and_input_mismatch(self):
         for key, value in (

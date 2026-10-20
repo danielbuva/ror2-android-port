@@ -16,15 +16,24 @@ class LinkerCaptureError(ValueError):
     pass
 
 
-def request_capture_fields(enabled: bool, source: dict | None, input_id: str | None) -> dict:
+def request_capture_fields(
+    enabled: bool,
+    source: dict | None,
+    input_id: str | None,
+    *,
+    capture_il2cpp_invocation: bool = False,
+) -> dict:
     """Keep the extra build inputs absent by default; bind identity when enabled."""
     if not enabled:
+        if capture_il2cpp_invocation:
+            raise LinkerCaptureError("IL2CPP invocation capture requires the pre-strip linker capture")
         return {}
     commit = source.get("commit") if isinstance(source, dict) else None
     if not _HEX40.fullmatch(commit or "") or not _HEX64.fullmatch(input_id or ""):
         raise LinkerCaptureError("opted-in request requires committed source and accepted input identities")
     return {
         "capturePlayerLinkerInputs": True,
+        "captureIl2CppInvocation": bool(capture_il2cpp_invocation),
         "sourceCommit": commit,
         "inputId": input_id,
     }

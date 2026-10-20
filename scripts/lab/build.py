@@ -486,21 +486,38 @@ def build_source_identity():
     return dict(commit=git("rev-parse", "HEAD").strip(), clean_paths=list(BUILD_SOURCE_PATHS))
 
 
-def build(api="gles", force=False, reuse_payload=False, destination=None, work=None, source=None, android_symbols="none", capture_player_linker_inputs=False):
+def build(
+    api="gles",
+    force=False,
+    reuse_payload=False,
+    destination=None,
+    work=None,
+    source=None,
+    android_symbols="none",
+    capture_player_linker_inputs=False,
+    capture_il2cpp_invocation=False,
+):
     if api not in ["gles", "vulkan", "lab"]:
         raise RuntimeError("Build target must be gles or vulkan")
     if android_symbols not in {"none", "debugging"}:
         raise RuntimeError("Android symbols mode must be none or debugging")
     if destination is not None and android_symbols != "none":
         raise RuntimeError("Debugging symbols are supported only by the normal lab build path")
-    if capture_player_linker_inputs and destination is not None:
-        raise RuntimeError("Linker input capture requires the current local Unity project")
+    if capture_il2cpp_invocation and not capture_player_linker_inputs:
+        raise RuntimeError("IL2CPP invocation capture requires the pre-strip UnityLinker capture for a same-build join")
+    if (capture_player_linker_inputs or capture_il2cpp_invocation) and destination is not None:
+        raise RuntimeError("Unity linker/IL2CPP capture requires the current local Unity project")
     capture_request = {}
     request_id = now()
     if capture_player_linker_inputs:
         from player_linker_receipt import request_capture_fields
 
-        capture_request = request_capture_fields(True, source, read(WORK / "inventory/files.json")["input_id"])
+        capture_request = request_capture_fields(
+            True,
+            source,
+            read(WORK / "inventory/files.json")["input_id"],
+            capture_il2cpp_invocation=capture_il2cpp_invocation,
+        )
         # Opt-in captures always get a fresh receipt namespace; cached player
         # results cannot stand in for a capture made by this exact request.
         request_id = request_id + "-" + uuid.uuid4().hex
@@ -620,6 +637,22 @@ def build(api="gles", force=False, reuse_payload=False, destination=None, work=N
                 r,
                 read(capture_path),
                 work_root=WORK,
+                request_id=request_id,
+                source_commit=source["commit"],
+                input_id=capture_request["inputId"],
+            )
+        if capture_il2cpp_invocation:
+            poststrip_path = WORK / "lab-build/player-linker-inputs" / (request_id + ".il2cpp.json")
+            if not poststrip_path.is_file():
+                raise RuntimeError("Opted-in build lacks its same-request IL2CPP invocation capture")
+            from player_il2cpp_receipt import verify_poststrip
+
+            r["player_il2cpp_inputs"] = verify_poststrip(
+                read(poststrip_path),
+                prestrip=read(capture_path),
+                work_root=WORK,
+                project_root=project,
+                result=r,
                 request_id=request_id,
                 source_commit=source["commit"],
                 input_id=capture_request["inputId"],

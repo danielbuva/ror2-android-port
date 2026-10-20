@@ -148,7 +148,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 | `./dev prototype --action whole-catalog-host-providers` | Run the whole-catalog native-provider host fixture. |
 | `./dev prototype --action whole-catalog-repair-bindings` | Repair recorded whole-catalog root bindings. |
 | `./dev prototype --action whole-catalog-build` | Compose content and build the whole-catalog player. |
-| `./dev prototype --action whole-catalog-code-build` | Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into a request/source/input-bound pre-strip UnityLinker inventory in the APK receipt. |
+| `./dev prototype --action whole-catalog-code-build` | Build player code while verifying and reusing the frozen payload. Optional --debug-symbols retains matching Unity IL2CPP symbols for this exact APK. --capture-player-linker-inputs opts into the request/source/input-bound pre-strip UnityLinker inventory. Add --capture-il2cpp-invocation to capture the same request's pre-launch rendered IL2CPP line and input directory; it requires --capture-player-linker-inputs and does not claim exact argv or composed-audio stage equivalence. |
 | `./dev prototype --action whole-catalog-run` | Install, sync and run the catalog-registration check. |
 
 <!-- prototype-actions:end -->
