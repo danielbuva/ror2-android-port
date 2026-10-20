@@ -248,6 +248,16 @@ Their setup/input boundaries are listed in
 acceptance and limits are recorded once in J740/J742. Neither diagnostic owner
 changes the default assembly transforms or the current game build pipeline.
 
+`tools/wwise-android-abi/generate.py` is a current, explicitly invoked host
+support tool with policy in `recipe/wwise-android-abi.json`. It reads the
+accepted managed API, authorized local Wwise Android declarations and ARM64
+Release plugin, and Unity-bundled Cecil; it publishes only new plans and
+candidates under ignored `work/`. It remains separate from the default
+assembly-transform and game-build paths. Its incomplete Android ABI candidate
+has 11 unavailable imports and does not enable production audio. The authored
+tool and policy are audited in `recipe/README.md`; synthetic host contracts
+are in `tools/wwise-android-abi/test_synthetic.py`.
+
 `scripts/lab/wwise_init_platform.py` is a current, explicitly invoked support
 tool for those isolated diagnostics, with its metadata contract in
 `recipe/wwise-init-android.json`. It requires the configured legitimate source,

@@ -14573,3 +14573,52 @@ Revisit if a session stays alive under the existing scan's types.
 
 Evidence: work/device/<serial>/experiments/session-memory/20261020T061101.783242Z/.
 No install, payload or profile change; Thor display slept and the process stopped.
+
+## J770 — Publish the exact-input Android Wwise ABI support generator
+
+Hypothesis: the private reviewed ABI candidate can be reproduced from public
+metadata tooling, the accepted installation and authorized local Integration
+inputs without adding middleware or game binaries to the repository. Consult
+J722/J743/J747 and community-prior-art.md; inspect pinned R2API.Sound at
+f539511e, SoundAPI.AddBanksAfterEngineInit. Its lifecycle ordering confirms
+that a bank registration or managed import map is not initialized native audio.
+The exact local official Android declarations and plugin exports govern this
+metadata adaptation; no community or protected implementation is copied.
+
+Promote the authored Cecil inspector/writer, generator and six synthetic
+contracts to tools/wwise-android-abi, separate from the default assembly-transform
+project. The recipe pins accepted input, source API, official declarations,
+Android ARM64 Release library/export identities and minimal reviewed selectors.
+The writer preserves original IL, metadata, resources, layout and identity
+outside the explicit 28 entrypoint remaps and 88 string-parameter marshal
+annotations. Unsupported marshal/array/security shapes refuse. Output names
+have a portable lowercase ASCII contract; parent aliases, symlinks, overwrites,
+nonignored outputs and the legitimate installation refuse. Candidate publication
+is exclusive and follows reopening/verification. Generated material stays local.
+
+Root reviews the 13 authored files and an independent reviewer clears the
+promotion. Correct absolute documentation-patch headers by integrating the
+paragraphs explicitly, place test scratch in ignored work/tests, and run CI's
+Ruff formatter/checks. All six synthetic tests pass in 34.415 seconds with the
+selected dotnet and pinned Unity Cecil. Fresh public-path generation reads the
+accepted API and authorized Android source/plugin and reproduces:
+
+- Plan: ff029a7da73bc1219a84f203c25344abb30532346c48904c799a7309a5a86764.
+- Candidate: 32d6e8f54700511bdc7d30276b633353a830ea2efa77e022eed0242dd59795ee.
+- 1,280 imports, 1,269 mapped, 11 unavailable; 28 remaps and 88 string rewrites
+  across 84 imports. full_enable_ready remains false.
+
+The first Root generation refuses ambiguous bundled Cecil selection before
+publishing a plan/candidate; the explicit documented 0.11.1 selection succeeds.
+Preserve that refusal and the fresh generation. No APK, editor, device or default
+transform changes. This support tool does not establish native ABI behavior,
+callback correctness, event playback or composed game audio. The existing game
+NoAudio outputs remain the production path. Revisit the 11 imports only with
+new exact Android API evidence; enablement requires separate device/lifecycle
+acceptance. The recipe audit and named owner/local inputs are documented.
+
+Evidence: work/coordination/wwise-abi-generator-public-draft/v6/;
+wwise-abi-generator-public-promotion/r1/ and review-r1/;
+codex-public-abi-synthetic-r1.*; codex-public-abi-generation-r1/ (refusal),
+codex-public-abi-generation-r2/ (exact public-tool reproduction). These private
+outputs are not inputs to the current game build or the from-scratch rebuild.

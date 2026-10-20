@@ -1,0 +1,666 @@
+{
+  "schema": 1,
+  "profile": "wwise-2023.1.8.3208-android-arm64-release",
+  "status": "draft-incomplete-android-only",
+  "enable_production_audio": false,
+  "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
+  "retained_managed_sha256": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
+  "official_android_declaration_source_sha256": "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242",
+  "android_arm64_release_plugin_sha256": "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca",
+  "android_arm64_release_build_id": "81bdfcbdc5b4f942543fb9fdbab0b569ccced37c",
+  "android_arm64_release_soname": "libAkSoundEngine.so",
+  "android_arm64_export_count": 1746,
+  "android_arm64_export_set_sha256": "1595a576edc694da66e3ba593a0f4b82212219bf2a4b959b4cbb0390db122d31",
+  "counts": {
+    "source_declarations": 1280,
+    "source_imports": 1280,
+    "mapped_imports": 1269,
+    "entrypoint_remaps": 28,
+    "lpwstr_to_lpstr_parameter_rewrites": 88,
+    "imports_with_string_rewrite": 84,
+    "unavailable_imports": 11
+  },
+  "entrypoint_remaps": [
+    {
+      "source": "CSharp_GetIDFromString__SWIG_0",
+      "target": "CSharp_GetIDFromString"
+    },
+    {
+      "source": "CSharp_LoadBank__SWIG_10",
+      "target": "CSharp_LoadBank__SWIG_6"
+    },
+    {
+      "source": "CSharp_LoadBank__SWIG_11",
+      "target": "CSharp_LoadBank__SWIG_7"
+    },
+    {
+      "source": "CSharp_LoadBank__SWIG_4",
+      "target": "CSharp_LoadBank__SWIG_2"
+    },
+    {
+      "source": "CSharp_LoadBank__SWIG_5",
+      "target": "CSharp_LoadBank__SWIG_3"
+    },
+    {
+      "source": "CSharp_LoadBank__SWIG_6",
+      "target": "CSharp_LoadBank__SWIG_4"
+    },
+    {
+      "source": "CSharp_LoadBank__SWIG_7",
+      "target": "CSharp_LoadBank__SWIG_5"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_10",
+      "target": "CSharp_PrepareBank__SWIG_7"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_11",
+      "target": "CSharp_PrepareBank__SWIG_8"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_15",
+      "target": "CSharp_PrepareBank__SWIG_9"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_16",
+      "target": "CSharp_PrepareBank__SWIG_10"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_17",
+      "target": "CSharp_PrepareBank__SWIG_11"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_6",
+      "target": "CSharp_PrepareBank__SWIG_3"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_7",
+      "target": "CSharp_PrepareBank__SWIG_4"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_8",
+      "target": "CSharp_PrepareBank__SWIG_5"
+    },
+    {
+      "source": "CSharp_PrepareBank__SWIG_9",
+      "target": "CSharp_PrepareBank__SWIG_6"
+    },
+    {
+      "source": "CSharp_SeekOnEvent__SWIG_10",
+      "target": "CSharp_SeekOnEvent__SWIG_7"
+    },
+    {
+      "source": "CSharp_SeekOnEvent__SWIG_11",
+      "target": "CSharp_SeekOnEvent__SWIG_8"
+    },
+    {
+      "source": "CSharp_SeekOnEvent__SWIG_12",
+      "target": "CSharp_SeekOnEvent__SWIG_9"
+    },
+    {
+      "source": "CSharp_SeekOnEvent__SWIG_13",
+      "target": "CSharp_SeekOnEvent__SWIG_10"
+    },
+    {
+      "source": "CSharp_SeekOnEvent__SWIG_14",
+      "target": "CSharp_SeekOnEvent__SWIG_11"
+    },
+    {
+      "source": "CSharp_SeekOnEvent__SWIG_9",
+      "target": "CSharp_SeekOnEvent__SWIG_6"
+    },
+    {
+      "source": "CSharp_UnloadBank__SWIG_10",
+      "target": "CSharp_UnloadBank__SWIG_6"
+    },
+    {
+      "source": "CSharp_UnloadBank__SWIG_11",
+      "target": "CSharp_UnloadBank__SWIG_7"
+    },
+    {
+      "source": "CSharp_UnloadBank__SWIG_4",
+      "target": "CSharp_UnloadBank__SWIG_2"
+    },
+    {
+      "source": "CSharp_UnloadBank__SWIG_5",
+      "target": "CSharp_UnloadBank__SWIG_3"
+    },
+    {
+      "source": "CSharp_UnloadBank__SWIG_6",
+      "target": "CSharp_UnloadBank__SWIG_4"
+    },
+    {
+      "source": "CSharp_UnloadBank__SWIG_7",
+      "target": "CSharp_UnloadBank__SWIG_5"
+    }
+  ],
+  "lpwstr_to_lpstr": [
+    {
+      "entrypoint": "CSharp_AddBasePath",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_AkDeviceDescription_deviceName_set",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_AkExternalSourceInfo_szFile_set",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_AkInitSettings_szPluginDLLPath_set",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ExecuteActionOnEvent__SWIG_5",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ExecuteActionOnEvent__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ExecuteActionOnEvent__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ExecuteActionOnEvent__SWIG_8",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ExecuteActionOnEvent__SWIG_9",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_GetIDFromString__SWIG_0",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_GetRTPCValue__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_GetState__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_GetSwitch__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadAndDecodeBank",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadAndDecodeBankFromMemory",
+      "parameter_indices": [
+        3
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadBank__SWIG_0",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadBank__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadBank__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadBank__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_LoadFilePackage",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_MonitorErrorInfo_m_message_set",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_MonitorErrorInfo_m_name_set",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PinEventInStreamCache__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostEvent__SWIG_4",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostEvent__SWIG_5",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostEvent__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostEvent__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostString__SWIG_0",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostString__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostString__SWIG_2",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostString__SWIG_3",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostString__SWIG_4",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PostTrigger__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareBank__SWIG_0",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareBank__SWIG_1",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareBank__SWIG_10",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareBank__SWIG_11",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareBank__SWIG_2",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareBank__SWIG_9",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareGameSyncs__SWIG_0",
+      "parameter_indices": [
+        2
+      ]
+    },
+    {
+      "entrypoint": "CSharp_PrepareGameSyncs__SWIG_2",
+      "parameter_indices": [
+        2
+      ]
+    },
+    {
+      "entrypoint": "CSharp_QueryAudioObjectIDs__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_RegisterGameObjInternal_WithName",
+      "parameter_indices": [
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_RegisterPluginDLL__SWIG_0",
+      "parameter_indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_RegisterPluginDLL__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ResetRTPCValue__SWIG_5",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ResetRTPCValue__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ResetRTPCValue__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ResetRTPCValue__SWIG_8",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_ResetRTPCValue__SWIG_9",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SeekOnEvent__SWIG_12",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SeekOnEvent__SWIG_13",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SeekOnEvent__SWIG_14",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SeekOnEvent__SWIG_3",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SeekOnEvent__SWIG_4",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SeekOnEvent__SWIG_5",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetBasePath",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetBusConfig__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetBusEffect__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetCurrentLanguage",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetDecodedBankPath",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetGameName",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetMixer__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValueByPlayingID__SWIG_4",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValueByPlayingID__SWIG_5",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValueByPlayingID__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValueByPlayingID__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValue__SWIG_5",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValue__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValue__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValue__SWIG_8",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetRTPCValue__SWIG_9",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetState__SWIG_1",
+      "parameter_indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_SetSwitch__SWIG_1",
+      "parameter_indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_StartOutputCapture",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_StartProfilerCapture",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_UnloadBank__SWIG_0",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_UnloadBank__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_UnloadBank__SWIG_6",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_UnloadBank__SWIG_7",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_UnpinEventInStreamCache__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_new_AkExternalSourceInfo__SWIG_2",
+      "parameter_indices": [
+        0
+      ]
+    },
+    {
+      "entrypoint": "CSharp_new_MonitorErrorInfo__SWIG_0",
+      "parameter_indices": [
+        0,
+        1
+      ]
+    },
+    {
+      "entrypoint": "CSharp_new_MonitorErrorInfo__SWIG_1",
+      "parameter_indices": [
+        0
+      ]
+    }
+  ],
+  "unavailable": [
+    "CSharp_AkPlatformInitSettings_bEnableAvxSupport_get",
+    "CSharp_AkPlatformInitSettings_bEnableAvxSupport_set",
+    "CSharp_AkPlatformInitSettings_bEnableDirectInputSupport_get",
+    "CSharp_AkPlatformInitSettings_bEnableDirectInputSupport_set",
+    "CSharp_AkPlatformInitSettings_uMaxSystemAudioObjects_get",
+    "CSharp_AkPlatformInitSettings_uMaxSystemAudioObjects_set",
+    "CSharp_GetDeviceIDFromName",
+    "CSharp_GetWindowsDeviceCount__SWIG_0",
+    "CSharp_GetWindowsDeviceCount__SWIG_1",
+    "CSharp_GetWindowsDeviceName__SWIG_0",
+    "CSharp_GetWindowsDeviceName__SWIG_1"
+  ],
+  "unavailable_count": 11,
+  "limitations": [
+    "metadata compatibility only",
+    "11 imports have no verified Android counterpart",
+    "no platform/output/audio readiness claim"
+  ]
+}

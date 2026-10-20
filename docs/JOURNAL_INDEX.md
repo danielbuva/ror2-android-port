@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J770](PORTING_JOURNAL.md#j770--publish-the-exact-input-android-wwise-abi-support-generator) | 2026-10-19 | Publish the exact-input Android Wwise ABI support generator | Hypothesis: the private reviewed ABI candidate can be reproduced from public metadata tooling, the accepted installation and authorized local Integration input… |
 | [J769](PORTING_JOURNAL.md#j769--five-repeated-ui-abandon-sessions-retain-every-completed-session) | 2026-10-19 | Five repeated UI-abandon sessions retain every completed session | Hypothesis: J417's growth of completed probes/reports (1→2→3) and of managed usage per session persists on the current composition. |
 | [J768](PORTING_JOURNAL.md#j768--integrate-native-captain-supply-beacon-and-siren-source-entry-owners) | 2026-10-19 | Integrate native Captain supply-beacon and Siren source-entry owners | Hypothesis: the missing Captain auxiliary activation and Siren source-spawner lifecycle can run through their original owners when the existing integrated worl… |
 | [J767](PORTING_JOURNAL.md#j767--accept-the-exact-symbol-apk-and-observe-native-mul-t-readiness-refusal) | 2026-10-19 | Accept the exact-symbol APK and observe native MUL-T readiness refusal | Repeat J765 with committed 38687e96d368f31013cd5c52fec23aba63f30fd3 and host preflight. |
