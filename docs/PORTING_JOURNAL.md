@@ -14734,3 +14734,70 @@ work/coordination/wwise-managed-event-startup-triage/r1/, r2/host-test8/ and
 review-r2/; wwise-managed-monitor-r4-prep/prepared-javafirst06-r4/.
 Private source drafts remain outside the default build; no protected SDK,
 banks, generated candidates, raw logs or receipts are published.
+
+## J773 — Root walk names the completed-session retention; director cleanup fix releases it
+
+Hypothesis: J769's retained `PortSession`/`SessionReport` pairs have one
+authored reference path outside the existing 15-owner delegate scan. Prior art:
+J391/J417 and the R2Wiki memory-optimization notes cited in
+community-prior-art.md; neither covers this event.
+
+Change 1 (0475ba8): `CompletedSessionRootWalk` in `SessionResourceBoundary`, a
+Unity-free bounded read-only breadth-first walk over static fields of all loaded
+types plus live MonoBehaviour/ScriptableObject roots. It is opt-in through the
+launch selector and has a host test compiling the production block. Run on Thor
+with Codex's 97462c9 build `0dd3f57328883d9dd927362775277b876cbf59ddaa17e0a9d0e719a15094684d`:
+the walk visits 403,217 objects from 4,468 roots in 1.3 s, untruncated, with 35
+read failures (post-processing ConVar type initializers). It names one path:
+
+`GlobalEventManager.onCharacterDepossessed` → `BaseAI.HandleCharacterDepossessed`
+target → `BaseAI.enemySearch.viewer` (a dead enemy `CharacterBody`) →
+`characterMotor.onMotorStart` → `DirectorActorBoundary.RecordDirectorActor`
+closure → completed `PortSession` → `.r` (`SessionReport`).
+
+Original `BaseAI.Awake` subscribes to that static event and never unsubscribes
+(accepted decompiled source), so every AI and the body it last viewed stay
+reachable for the process lifetime. That is shipped behaviour and is left
+unchanged. The authored defect: `CleanupDirectorActors` removed the
+`onMotorStart` closure only while the body was still alive.
+
+Session 2 of that run then stopped: `Unowned achievement-registration callback`
+in `AndroidProgressionBoundary.Prepare`. The walk read an uninitialized static
+field, which ran an original static constructor that registered an achievement
+callback; the progression owner correctly refused it. The walk is therefore a
+final-menu-only diagnostic.
+
+Change 2 (763be73): `DirectorActor` keeps the exact subscribed `CharacterMotor`
+and cleanup always removes the closure, even after the body is destroyed. The
+walk runs only when `diagnosticCompletedRootWalkSession` equals the session
+index of the runner's final menu.
+
+Run: Thor, APK `9b107ea0e4e5559b086c86cb4862195a0385dad37b3e2407eff80ec26fbfcec7`
+from 763be73 (code-only; payload unchanged), five sessions, all assists off.
+All five sessions pass the session-abandon contract.
+
+| Completed session | 1 | 2 | 3 | 4 | 5 |
+| --- | --- | --- | --- | --- | --- |
+| Managed after teardown + GC.Collect (MiB) | 218 | 275 | 327 | 383 | 438 |
+| Live completed probes/reports at next start | 0 | 0 | 0 | 0 | 0 |
+| GameObjects after reclaim | 11 | 11 | 11 | 11 | 11 |
+
+Completed sessions are now released (J769: 0→1→2→3). The final-menu walk had no
+retained target, so it did not run. Managed usage still grows about 54 MiB per
+session (least-squares 57,142,067 bytes from session 2; J769 69,402,624). The
+coordinator was part of the growth, not all of it. The runner marked this
+attempt failed only because the final menu's profile is not loaded yet; that
+redundant check is removed, since every completed session already passed the
+frozen-count contract.
+
+First failure: unattributed managed growth that outlives every completed session.
+Hypothesis: the original never-removed `onCharacterDepossessed` subscriptions
+retain each dead AI and its graph. Next: record per-sample subscriber and
+destroyed-target counts for the scanned static callbacks
+(`staticCallbackCounts`) and compare them with the growth before choosing any
+owned adaptation.
+
+Evidence: work/device/<serial>/experiments/session-memory/20261020T065116.926705Z/
+(walk; failed-session-2-report.json) and .../20261020T070450.840578Z/ (fix).
+Thor now has 9b107ea0… installed (previously J762's 96006814…); display slept,
+process stopped. Not normal-difficulty, unlock or baseline acceptance.

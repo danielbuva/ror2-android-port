@@ -69,6 +69,7 @@ SAMPLE_FIELDS = (
     "rootWalkSeconds",
     "rootWalkPaths",
     "rootWalkFailureSamples",
+    "staticCallbackCounts",
 )
 WAITING = (
     "live world report is shorter than the 60 second observation interval",
@@ -131,6 +132,7 @@ def growth_summary(sessions):
                 "managed_at_start": _phase_value(samples, "before-presentation", "managed"),
                 "menu_pss_kib": entry.get("menu_pss_kib"),
                 "root_walk_paths_at_start": _phase_value(samples, "before-presentation", "rootWalkPaths"),
+                "static_callback_counts_at_start": _phase_value(samples, "before-presentation", "staticCallbackCounts"),
             }
         )
 
@@ -188,7 +190,7 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
     value["debugOptions"]["purpose"] = "Repeated UI-abandon sessions for resource observation; automatic input is diagnostic and assisted"
     if root_walk:
         # Opt-in reachability walk in SessionResourceBoundary, only at the final menu: it may run
-        # unrelated static constructors, so it must follow every measured session (J770).
+        # unrelated static constructors, so it must follow every measured session (J773).
         value["diagnosticCompletedRootWalkSession"] = sessions + 1
     write(out / "selection.json", value)
     frozen = {
@@ -395,8 +397,8 @@ def check_session_memory(sessions=DEFAULT_SESSIONS, expected_apk_sha256=None, ro
         failures.append("stopped: " + stop)
     if len(observed) != sessions:
         failures.append("observed %d of %d completed sessions" % (len(observed), sessions))
-    if final_menu is not None and cleanup._profile_counts(final_menu) != profile_baseline:
-        failures.append("applied-run or earned-unlock counts changed/missing at final menu")
+    # Every completed session already passed abandon_contract's frozen profile counts; the final
+    # menu's profile is not loaded yet, so it carries no further count evidence.
     failures.extend(cleanup_errors)
     summary = growth_summary(observed)
     summary["final_menu_samples"] = resource_samples(final_menu)

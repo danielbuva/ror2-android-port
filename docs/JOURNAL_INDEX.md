@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J773](PORTING_JOURNAL.md#j773--root-walk-names-the-completed-session-retention-director-cleanup-fix-releases-it) | 2026-10-20 | Root walk names the completed-session retention; director cleanup fix releases it | Hypothesis: J769's retained `PortSession`/`SessionReport` pairs have one authored reference path outside the existing 15-owner delegate scan. |
 | [J772](PORTING_JOURNAL.md#j772--managed-wwise-control-exposes-pre-initialization-callback-setup) | 2026-10-20 | Managed Wwise control exposes pre-initialization callback setup | Hypothesis: the J759 managed ABI can deliver a real monitor control and then one original Global event using J744's adapted Init. |
 | [J771](PORTING_JOURNAL.md#j771--accept-the-captainsiren-candidate-defaults-reject-the-captain-machine-assumption) | 2026-10-20 | Accept the Captain/Siren candidate defaults; reject the Captain machine assumption | Hypothesis: J768's default-off source-entry/beacon integration preserves both ordinary baseline controls and can admit Captain's exact native sequence. |
 | [J770](PORTING_JOURNAL.md#j770--publish-the-exact-input-android-wwise-abi-support-generator) | 2026-10-20 | Publish the exact-input Android Wwise ABI support generator | Hypothesis: the private reviewed ABI candidate can be reproduced from public metadata tooling, the accepted installation and authorized local Integration input… |

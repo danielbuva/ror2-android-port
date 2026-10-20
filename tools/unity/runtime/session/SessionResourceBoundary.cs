@@ -29,6 +29,8 @@ public sealed partial class PortSession
         public string[] bundleNames;
         public int catalogGenerations, catalogLocatorsAlive, catalogManifestsAlive, activeLocators, detachedCatalogOperations;
         public string[] ownedCallbackRoots, callbackRootReadFailures, callbackOwnerScope, statQueueCounts;
+        // "Owner.field:subscribers/destroyedTargets" for nonempty scanned static callbacks.
+        public string[] staticCallbackCounts;
         // Opt-in completed-session root walk (diagnosticCompletedRootWalkSession selector); empty otherwise.
         public bool rootWalkRan, rootWalkTruncated;
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
@@ -44,7 +46,7 @@ public sealed partial class PortSession
     const int RootWalkNodeBudget = 1000000;
     // Reads only the launch selector's opt-in session index; the coordinator's own parsing is
     // unchanged. Reading an uninitialized static field runs that type's static constructor, which
-    // can register original callbacks (J770), so the walk runs only at the requested final menu.
+    // can register original callbacks (J773), so the walk runs only at the requested final menu.
     bool CompletedRootWalkRequested()
     {
         var path = System.IO.Path.Combine(Application.persistentDataPath, "movement-batch-selection.json");
@@ -126,6 +128,7 @@ public sealed partial class PortSession
         if (r.sessionResources == null)
             r.sessionResources = new System.Collections.Generic.List<SessionResourceSample>();
         var roots = new System.Collections.Generic.List<string>();
+        var callbackCounts = new System.Collections.Generic.List<string>();
         var failures = new System.Collections.Generic.List<string>();
         // Read only already-used gameplay callback owners; never initialize unrelated
         // subsystem types, invoke callbacks or remove original handlers diagnostically.
@@ -161,7 +164,12 @@ public sealed partial class PortSession
                     }
                     if (callback == null)
                         continue;
-                    foreach (var entry in callback.GetInvocationList())
+                    // Count subscribers, and those whose target is a destroyed Unity object, to
+                    // attribute growth that outlives every completed session (J773). Read only.
+                    var entries = callback.GetInvocationList();
+                    int destroyed = entries.Count(x => x.Target is UnityEngine.Object && !(UnityEngine.Object)x.Target);
+                    callbackCounts.Add(type.Name + "." + field.Name + ":" + entries.Length + "/" + destroyed);
+                    foreach (var entry in entries)
                         for (int i = 0; i < completedSessionReferences.Count; i++)
                         {
                             var probe = completedSessionReferences[i][0].Target;
@@ -211,6 +219,7 @@ public sealed partial class PortSession
             phase = phase,
             seconds = Time.realtimeSinceStartup,
             ownedCallbackRoots = roots.ToArray(),
+            staticCallbackCounts = callbackCounts.ToArray(),
             callbackRootReadFailures = failures.ToArray(),
             callbackOwnerScope = callbackOwners.Select(x => x.FullName)
                                      .Concat(new[] { "UnityEngine.ResourceManagement.ResourceManager (instance delegates)" })

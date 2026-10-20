@@ -1284,7 +1284,7 @@ session and outside live gameplay, it runs the Unity-free
 that skips weak references and reflection metadata. It records up to 16
 shortest paths to completed probes/reports, its node count, truncation and read
 failures in the sample. Reading an uninitialized static field runs that type's
-static constructor; J770 saw this register an original achievement callback
+static constructor; J773 saw this register an original achievement callback
 that the progression owner then refused. The walk therefore runs only at the
 final menu and stays off by default. Host contract:
 `tests/test_completed_session_root_walk.py` compiles the production block with

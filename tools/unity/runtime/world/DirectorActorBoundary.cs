@@ -58,7 +58,7 @@ public sealed partial class PortSession
         public DirectorActorReport report;
         public Action<CharacterBody> motorStarted;
         // The exact motor that received motorStarted, kept as a managed reference so
-        // cleanup can remove the closure after Unity has destroyed the body (J770).
+        // cleanup can remove the closure after Unity has destroyed the body (J773).
         public CharacterMotor motor;
         public float nextMoonMotion;
         public string previousMoonState;
