@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J821](PORTING_JOURNAL.md#j821--build-the-first-message-audio-fixture-and-retain-its-startup-deadline) | 2026-10-20 | Build the first-message audio fixture and retain its startup deadline | Date: 2026-10-20. |
 | [J820](PORTING_JOURNAL.md#j820--complete-the-original-api-postevent-host-closure-scan) | 2026-10-20 | Complete the original-API PostEvent host closure scan | Date: 2026-10-20. |
 | [J819](PORTING_JOURNAL.md#j819--reach-ship-graveyard-and-reject-a-stale-transport-clock-snapshot) | 2026-10-20 | Reach Ship Graveyard and reject a stale transport-clock snapshot | Date: 2026-10-20. |
 | [J818](PORTING_JOURNAL.md#j818--qualify-thor-and-preserve-the-siren-guard-across-device-reassignment) | 2026-10-20 | Qualify Thor and preserve the Siren guard across device reassignment | Date: 2026-10-20. |

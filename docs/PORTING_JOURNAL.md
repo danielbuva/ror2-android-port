@@ -17816,3 +17816,70 @@ membership, GUID or R8 replay source changes. Stage-to-APK binding, dispatch
 and runtime acceptance stay false. Next bind the recipe to the current
 player closure and require the separately qualified native fixture/lifecycle
 before any game opt-in. Audio remains unavailable in normal gameplay.
+
+## J821 — Build the first-message audio fixture and retain its startup deadline
+
+Date: 2026-10-20. Hypothesis: exposing the first any-level managed monitor
+message can explain J816's missing exact native marker without admitting bank
+or event work after a failed control. The native ff07 candidate, raw fixture
+API, managed reference closure, adapted Init and unchanged Global stay pinned.
+
+The initial stage reload fails because a scripts-only refresh has not imported
+the new helper asset. Console and AssetDatabase/compiler membership identify
+that missing helper; Root imports only it and requests compilation once.
+Independent reconciliation verifies all 78 project inputs, all 47 importer
+metadata files and unchanged bytes for the original 46. Exact-editor readiness
+loads the five types from one assembly with schema 3 / 24 slots and no pending,
+running, Play Mode or compile failure. The original failed stage is preserved.
+Only the import command's body hash and successful response were retained;
+its raw body is not independently replayable. The subsequent exact source,
+metadata and compiled-state checks establish build readiness separately.
+
+One mutex-protected build succeeds: request
+`29f9a884c58242afab6a980805db2e4a`, 45.1851398 s, zero errors and five warnings,
+with 143 identical frozen inputs before/after. APK SHA-256:
+`b4237cbe52b6102ff52b4b61c509c3ec6d0713137c648c2d47646457826d650d`;
+terminal:
+`e9a4376b748f16b2eb83331129c0b0414aa19ccd35144a064285e9c850e491f7`;
+build freeze:
+`42ec298eb516dd7f4d31c937c1982dcaa6a16ef4a47346ee9a8a972f199b502a`.
+Host preflight and selected-main doctor pass. The reviewed device adapter
+separates the stage's parent request from the successful child, and binds the
+actual APK, request/start/result, native receipt and current manifest view.
+An initial raw-overlay refusal occurs before device access and is preserved;
+the correction exercises both raw manifest/APK paths before dispatch, with
+eleven host checks and a Device-factory sentinel. Staged historical overlays
+are not rewritten or relabelled as new acceptance.
+
+The fresh Main-only attempt installs and byte-verifies that exact fixture on
+the currently queried adopted volume with live reserve/placement gates. It
+launches, but no valid final report arrives within 210 s. The collected PID
+log contains Android activity/surface startup and `IL2CPP JNI_OnLoad`, with no
+Unity initialization banner, output-root marker, report reference, managed
+exception or classified Android-fatal signature. No report file is recovered.
+Therefore bootstrap execution, engine Init, callback delivery, runtime data
+backing, bank/event work and native Term/disarm remain unobserved. This is a
+pre-report startup/logging gap, not J816's measured monitor timeout. The
+positive Global scenario is withheld.
+
+Finally byte-verifies and removes only the just-installed fixture, with no
+cleanup errors. A fresh read-only check confirms fixture absence, unchanged
+game ownership receipt and actual J817 game APK hash, and Main's sleeping
+display. No alpha or spare-device action occurs. Host removal does not prove
+the fixture's unobserved native teardown.
+
+Evidence: work/coordination/{codex-audio-message-root-r1/,
+codex-audio-message-main-root-r1/,codex-audio-message-main-root-r2/,
+audio-r6-fixture-execution-plan/,audio-r6-execution-review/,
+audio-r6-main-no-report-triage/}; selected-main per-device fixture attempt
+`20261020T192220.170982Z`. Runner result/log hashes:
+`0c09ced0a471958d282a980b30c2cbfc2aa7e6e2612015f1a69133a155fab5c1` /
+`6fff7448c2fcc8ea755d8427e0fcd0bc0ecdec73c4e8b9cdface670330579278`;
+post-run verification:
+`29cf26e5ee1cd03ff70345e783d661f6452702b14fb9075117cad2c0c472334b`.
+
+Prior art and native protocol remain J816; no speculative Init reset or
+registration change follows. Current game sources, GUIDs and rebuild
+membership are unchanged. Next observe startup/foreground/surface state on
+the same b423 APK before changing the engine or fixture. Audio remains
+unavailable and all composed-audio runtime gates remain closed.

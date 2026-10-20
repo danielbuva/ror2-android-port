@@ -288,6 +288,12 @@ provenance and importer metadata separately; partial reload responses and termin
 build requests remain preserved. These private support producers are listed in
 LOCAL_STATE and do not enable audio in the game.
 
+J821's first-message player builds with the helper imported and its complete
+source/metadata closure frozen. Its Main attempt produces no bootstrap report,
+so neither monitor delivery nor runtime storage backing is established there.
+Startup observation precedes any further engine change; owned package removal
+is separate from unobserved native owner teardown.
+
 The private composed-audio candidate has separate `GameAudioProcessHost` and
 `GameWwiseRuntime` owners for opt-in startup, bounded native service and owned
 teardown, with an identity-bound `GameAudioPostEventGate` around the recovered
