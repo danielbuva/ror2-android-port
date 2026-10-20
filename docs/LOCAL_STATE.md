@@ -17,6 +17,9 @@ receipts under the phone proof root select one fresh authored project/build and
 its snapshot. The tracked `phone_linker.stage_action` produces
 `work/rebuild/phone-linker/<attempt>/` from an explicit project/APK/capture request;
 its SDK/tool/input copies stay private. `strip-linker-stage-selection.json`
+Includes supplied `il2cpp/LinkerDescriptors` under its original relative tool
+root: command-line descriptors alone do not cover the linker's implicit defaults.
+`strip-linker-stage-selection.json`
 and `strip-linker-run-selection.json` select exact staged/owned Android attempts.
 The private `strip-linker-on-android.py` adapter is required local replay support
 for receipt-bound workspace/tool verification, fresh capacity, staging/execution

@@ -157,6 +157,7 @@ def stage_action(request):
     support = destination / "support/libil2cpp"
     support.mkdir(parents=True)
     shutil.copy2(editor / "il2cpp/libil2cpp/libil2cpp.icalls", support / "libil2cpp.icalls")
+    shutil.copytree(editor / "il2cpp/LinkerDescriptors", destination / "support/LinkerDescriptors")
     (destination / "plan.json").write_text(
         json.dumps(
             {
