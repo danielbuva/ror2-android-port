@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J781](PORTING_JOURNAL.md#j781--reproduce-the-exact-android-wwise-byte-string-decoder-correction) | 2026-10-20 | Reproduce the exact Android Wwise byte-string decoder correction | Date: 2026-10-20. |
 | [J780](PORTING_JOURNAL.md#j780--separate-mul-t-first-refusal-and-terminal-readiness-evidence) | 2026-10-20 | Separate MUL-T first-refusal and terminal readiness evidence | Date: 2026-10-20. |
 | [J779](PORTING_JOURNAL.md#j779--honor-captain-native-readiness-and-preserve-siren-transport-failures) | 2026-10-20 | Honor Captain native readiness and preserve Siren transport failures | Date: 2026-10-20. |
 | [J778](PORTING_JOURNAL.md#j778--managed-wwise-receives-monitor-control-but-not-original-event-completion) | 2026-10-20 | Managed Wwise receives monitor control but not original event completion | Hypothesis: moving callback setup after successful native Init allows a real managed monitor witness, followed by an original Global event through the same ret… |

@@ -15166,3 +15166,63 @@ Evidence: work/coordination/toolbot-bbd-readiness-triage/r2/ and
 independent-review/; codex-survivor-siren-host-r2/;
 codex-survivor-siren-next-compile/r3/. The accepted APK remains J776's bbd1f3c1;
 raw game source, API references and reports stay ignored.
+
+
+## J781 — Reproduce the exact Android Wwise byte-string decoder correction
+
+Date: 2026-10-20. Hypothesis: J778's malformed native monitor text follows the
+retained Windows OS-string helper and can be corrected by the matching official
+Android helper without changing unrelated managed methods or enabling audio.
+
+The accepted API's `AkSoundEngine.StringFromIntPtrOSString(IntPtr)` delegates
+to its wide-string helper. The supplied matching Android Integration instead
+uses its byte-string helper. Reversing the failed report's UTF-16 code units
+recovers the native ASCII error text exactly, supporting the source mismatch.
+This explains message decoding, not the separate missing event completion.
+Pinned R2API.Sound loads banks after native initialization; official Android
+Integration remains the authoritative ABI/update-loop source for this platform.
+
+The public support generator and policy now declare one exact-signature
+call-operand rewrite. The Cecil writer requires the reviewed three-instruction
+body and helper target, rejects unexpected signatures, overloads, instructions
+or operands, and verifies every other method fingerprint, import/marshal
+contract, module identity and reopened serialized output. No SDK implementation
+is copied into the recipe. An independent review also exposed a pre-existing
+plan-only profile gap: mutually consistent local input records could carry a
+different input ID. The generator now requires the exact policy ID before
+validating or publishing either output. Wrong-ID and existing-output refusal
+have dedicated regressions.
+
+Independent review passes all 10 synthetic tests in 47.208 s, including valid
+rewrite, wrong call/body/signature/overload, structural preservation, output
+boundaries and consistent-but-wrong input refusal. Root applies both frozen
+patches, runs Ruff format/check on the changed Python and generates against
+the actual accepted input and authorized local Android source/native library.
+The writer succeeds: 1,280 source imports, 1,269 mapped, 28 entry remaps,
+88 string-parameter rewrites across 84 imports, one managed call rewrite and
+11 explicitly unavailable imports. Full enablement remains false.
+
+Exact reproduced policy SHA-256:
+`1f28d8b071a9e7dd5fe7ade1bd6b7a693df23dbd4d42f4e58241b43377c06676`.
+Plan SHA-256:
+`3f60b5c66aae12be4b5ccfee704f155e4950d0681effcb09e15388de4fbd8222`.
+Generated API SHA-256:
+`2bd973178c99bfcb4d20510e2d1eac7efa9dd6d698237f2edfa486171bc2f272`.
+The authorized Android helper source hash is
+`7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6`.
+All accepted game input is read-only. Generated APIs, plans and SDK material
+stay ignored. The recipe audit records the metadata-only provenance and reader
+boundary; the default game assembly transforms and audio-unavailable behavior
+remain unchanged. This support generator is not a new automatic rebuild step.
+
+No fresh player, native message result, original event completion or PCM
+acceptance follows from this host reproduction. Revisit with the isolated
+fixture's reviewed per-frame audio pump, fresh negative monitor control and
+original-event trial, preserving strict teardown and capture gates. Composed
+game-audio acceptance remains closed.
+
+Evidence: work/coordination/wwise-monitor-encoding-triage/;
+wwise-abi-monitor-decoder-public-draft/, r2/ and independent-review/;
+codex-public-abi-decoder-generation-r2/. The initial source-only extraction
+lookup found no native library; the separate authorized binary extraction is
+selected by the previously pinned hash before the successful generation.

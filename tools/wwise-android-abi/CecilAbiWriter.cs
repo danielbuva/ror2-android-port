@@ -9,8 +9,8 @@ using System.Text.Json.Nodes;
 static string Sha(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 static string ShaText(string text) => Sha(Encoding.UTF8.GetBytes(text));
 const string ReviewedInputSha = "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781";
-const string ReviewedPolicySha = "e7262f4b0eff749021f7514ec0ff01b9740113e1d5d4aed50a8510e14651a46a";
-const string ReviewedPlanSha = "ff029a7da73bc1219a84f203c25344abb30532346c48904c799a7309a5a86764";
+const string ReviewedPolicySha = "1f28d8b071a9e7dd5fe7ade1bd6b7a693df23dbd4d42f4e58241b43377c06676";
+const string ReviewedPlanSha = "3f60b5c66aae12be4b5ccfee704f155e4950d0681effcb09e15388de4fbd8222";
 static string Need(JsonElement e, string key) => e.GetProperty(key).GetString() ?? throw new InvalidDataException(key);
 static string TypeName(TypeReference t) => t switch {
     ByReferenceType x => TypeName(x.ElementType) + "&", PointerType x => TypeName(x.ElementType) + "*",
@@ -273,7 +273,6 @@ var allTypes = AllTypes(assembly.MainModule.Types).ToArray();
 var methods = allTypes.SelectMany(t => t.Methods).ToArray();
 var imports = methods.Where(m => m.PInvokeInfo is not null).ToArray();
 var originalName = assembly.Name.FullName; var originalMvid = assembly.MainModule.Mvid;
-var structureBefore = StructureFingerprint(assembly);
 var identityRows = methods.Select(MethodFingerprint).ToArray();
 var apiRows = allTypes.Select(TypeApiFingerprint).ToArray();
 var sourceRows = root.GetProperty("imports").EnumerateArray().ToArray();
@@ -313,8 +312,52 @@ foreach (var row in unavailableRows) {
 foreach (var item in targetIdentity.Values) {
     VerifyImport(item.Method, item.Row.GetProperty("android"), Need(item.Row, "target_entrypoint") + " Android contract");
 }
+var rewriteRows = root.GetProperty("managed_call_rewrites").EnumerateArray().ToArray();
+var policyRewrites = policy.GetProperty("managed_call_rewrites").EnumerateArray().ToArray();
+Check(rewriteRows.Length == 1 && policyRewrites.Length == 1, "Exactly one reviewed managed call rewrite is required");
+var rewrite = rewriteRows[0];
+var reviewedRewrite = policyRewrites[0];
+foreach (var field in new[] { "assembly", "type", "method", "return_type", "expected_target", "replacement_target", "android_source", "reason" })
+    Check(Need(rewrite, field) == Need(reviewedRewrite, field), "Managed call rewrite differs from policy: " + field);
+Check((syntheticTest ? Need(rewrite, "assembly") == "ShapeFixture" : Need(rewrite, "assembly") == "AK.Wwise.Unity.API") &&
+      Need(rewrite, "type") == "AkSoundEngine" &&
+      Need(rewrite, "method") == "StringFromIntPtrOSString", "Unexpected managed rewrite target");
+Check(Need(rewrite, "return_type") == "System.String" &&
+      rewrite.GetProperty("parameter_types").EnumerateArray().Select(x => x.GetString()).SequenceEqual(new[] { "System.IntPtr" }) &&
+      reviewedRewrite.GetProperty("parameter_types").EnumerateArray().Select(x => x.GetString()).SequenceEqual(new[] { "System.IntPtr" }),
+      "Managed call rewrite signature differs from policy");
+Check(rewrite.GetProperty("expected_instruction_count").GetInt32() == 3 &&
+      reviewedRewrite.GetProperty("expected_instruction_count").GetInt32() == 3, "Managed rewrite instruction count differs from policy");
+Check(Need(rewrite, "expected_target") == "System.String AkSoundEngine::StringFromIntPtrWString(System.IntPtr)" &&
+      Need(rewrite, "replacement_target") == "System.String AkSoundEngine::StringFromIntPtrString(System.IntPtr)",
+      "Managed rewrite call operands differ from reviewed Android OS-string contract");
+Check(Need(root, "android_os_string_source_sha256") == Need(policy, "official_android_os_string_source_sha256"),
+      "Official Android OS-string source pin mismatch");
+Check(assembly.Name.Name == Need(rewrite, "assembly"), "Managed rewrite assembly identity mismatch");
+var rewriteType = allTypes.Single(t => t.FullName == Need(rewrite, "type"));
+var namedRewriteMethods = rewriteType.Methods.Where(m => m.Name == Need(rewrite, "method")).ToArray();
+Check(namedRewriteMethods.Length == 1, "Managed rewrite method has unexpected overloads");
+var rewriteMethod = namedRewriteMethods[0];
+Check(rewriteMethod.IsStatic && rewriteMethod.ReturnType.FullName == Need(rewrite, "return_type") &&
+      rewriteMethod.Parameters.Count == 1 && rewriteMethod.Parameters[0].ParameterType.FullName == "System.IntPtr",
+      "Managed rewrite method signature differs from policy");
+var expectedCall = Need(rewrite, "expected_target");
+var replacementCall = Need(rewrite, "replacement_target");
+Check(rewriteMethod.Body.Instructions.Count == rewrite.GetProperty("expected_instruction_count").GetInt32() &&
+      rewriteMethod.Body.Instructions[0].OpCode == OpCodes.Ldarg_0 &&
+      rewriteMethod.Body.Instructions[1].OpCode == OpCodes.Call &&
+      rewriteMethod.Body.Instructions[1].Operand is MethodReference originalCall && originalCall.FullName == expectedCall &&
+      rewriteMethod.Body.Instructions[2].OpCode == OpCodes.Ret,
+      "Managed OS-string method signature/body/call operand differs from reviewed source contract");
+var helper = rewriteType.Methods.Single(m => m.FullName == replacementCall);
+Check(helper.IsStatic && helper.ReturnType.FullName == "System.String" && helper.Parameters.Count == 1 &&
+      helper.Parameters[0].ParameterType.FullName == "System.IntPtr", "Replacement helper signature mismatch");
+rewriteMethod.Body.Instructions[1].Operand = helper;
+var expectedMethodRows = methods.Select(MethodFingerprint).ToArray();
+var expectedStructure = StructureFingerprint(assembly);
 Check(assembly.Name.FullName == originalName && assembly.MainModule.Mvid == originalMvid, "Assembly/type identity changed");
-Check(methods.Select(MethodFingerprint).SequenceEqual(identityRows), "Method identity or IL changed");
+Check(methods.Length == identityRows.Length && methods.Select((m, i) => m == rewriteMethod || expectedMethodRows[i] == identityRows[i]).All(x => x),
+      "Managed rewrite changed an unrelated method body or metadata");
 assembly.Write(tempOutput);
 Check(File.Exists(tempOutput), "Candidate temporary output was not written");
 using var result = AssemblyDefinition.ReadAssembly(tempOutput, new ReaderParameters { InMemory = true, ReadWrite = false });
@@ -336,16 +379,20 @@ if (mode == "--synthetic-corrupt-reopened-return-array-marshal") {
 #endif
 Check(outImports.Length == imports.Length, "Output P/Invoke count changed");
 Check(result.Name.FullName == originalName && result.MainModule.Mvid == originalMvid, "Written assembly/type identity changed");
-Check(StructureFingerprint(result) == structureBefore, "Non-P/Invoke assembly contract changed during write");
+Check(StructureFingerprint(result) == expectedStructure, "Assembly contract differs from the one declared managed-call rewrite");
 Check(AllTypes(result.MainModule.Types).Select(TypeApiFingerprint).SequenceEqual(apiRows), "Written assembly public/serialized type API changed");
 Check(PInvokeMarshalFingerprint(outMethods) == PInvokeMarshalFingerprint(methods),
     "Written P/Invoke MarshalInfo metadata changed");
 var outFingerprints = outMethods.Select(MethodFingerprint).ToArray();
-if (!outFingerprints.SequenceEqual(identityRows)) {
-    var diffs = identityRows.Zip(outFingerprints).Select((pair, index) => (pair, index)).Where(x => x.pair.First != x.pair.Second).Take(3)
+if (!outFingerprints.SequenceEqual(expectedMethodRows)) {
+    var diffs = expectedMethodRows.Zip(outFingerprints).Select((pair, index) => (pair, index)).Where(x => x.pair.First != x.pair.Second).Take(3)
         .Select(x => $"#{x.index} before={x.pair.First} after={x.pair.Second}");
-    throw new InvalidDataException("Written assembly method identity or IL changed: " + string.Join(" || ", diffs));
+    throw new InvalidDataException("Written assembly differs from declared ABI and managed-call rewrites: " + string.Join(" || ", diffs));
 }
+var persistedRewrite = outMethods.Single(m => m.FullName == rewriteMethod.FullName);
+Check(persistedRewrite.FullName == rewriteMethod.FullName && persistedRewrite.Attributes == rewriteMethod.Attributes &&
+      persistedRewrite.Body.Instructions.Count == 3 && persistedRewrite.Body.Instructions[1].Operand is MethodReference persistedCall &&
+      persistedCall.FullName == replacementCall, "Declared managed-call rewrite did not persist with method identity intact");
 foreach (var pair in mappedIdentity) {
     var found = outMethods.Where(m => m.FullName == pair.Key).ToArray();
     Check(found.Length == 1 && found[0].PInvokeInfo is not null, "Output method identity changed: " + pair.Key);
@@ -358,7 +405,7 @@ foreach (var row in unavailableRows) {
     VerifyImport(found[0], row.GetProperty("game"), sourceName + " remains unavailable");
 }
 File.Move(tempOutput, output, false);
-Console.WriteLine(JsonSerializer.Serialize(new { status = "draft_incomplete_android_candidate", input_sha256 = Need(root, "input_assembly_sha256"), output_sha256 = Sha(File.ReadAllBytes(output)), mapped = sourceRows.Length, unavailable = unresolved.GetArrayLength(), full_enable_ready = false }));
+Console.WriteLine(JsonSerializer.Serialize(new { status = "draft_incomplete_android_candidate", input_sha256 = Need(root, "input_assembly_sha256"), output_sha256 = Sha(File.ReadAllBytes(output)), mapped = sourceRows.Length, unavailable = unresolved.GetArrayLength(), managed_call_rewrites = rewriteRows.Length, full_enable_ready = false }));
 return 0;
 
 sealed class DeletePathOnDispose(string path) : IDisposable {

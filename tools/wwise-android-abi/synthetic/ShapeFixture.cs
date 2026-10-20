@@ -60,3 +60,23 @@ internal static unsafe class ShapeFixture
         catch (Exception) { return -1; }
     }
 }
+
+internal static class AkSoundEngine
+{
+    internal static string StringFromIntPtrWString(nint value) => "wide";
+    internal static string StringFromIntPtrString(nint value) => "bytes";
+#if WRONG_REWRITE_SIGNATURE
+    internal static string StringFromIntPtrOSString(string value) => value;
+#else
+#if WRONG_REWRITE_OPERAND
+    internal static string StringFromIntPtrOSString(nint value) => StringFromIntPtrString(value);
+#elif WRONG_REWRITE_BODY
+    internal static string StringFromIntPtrOSString(nint value) => StringFromIntPtrWString(value) + "!";
+#else
+    internal static string StringFromIntPtrOSString(nint value) => StringFromIntPtrWString(value);
+#endif
+#endif
+#if WRONG_REWRITE_OVERLOAD
+    internal static string StringFromIntPtrOSString(string value) => value;
+#endif
+}

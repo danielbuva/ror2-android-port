@@ -12,18 +12,22 @@ counterparts remain unavailable; full-enable mode is refused.
 `generate.py` verifies the accepted-input record, complete local inventory, authored original-
 assembly recipe, configured legitimate game path, and exact managed assembly hash. It extracts
 retained P/Invoke declarations from that assembly with the authored Cecil inspector, parses
-the reviewed Android declarations from the local Integration, then checks the native plugin
-hash and exported-name set. Export membership does not establish a function prototype or
-implementation behavior.
+the reviewed Android declarations from the local Integration, verifies the hash-pinned
+Android `AkOSChar*` string-decoder source, then checks the native plugin hash and exported-name
+set. Export membership does not establish a function prototype or implementation behavior.
 
 The authored writer pins the source assembly, policy, and deterministic plan. It refuses
 output under the configured game installation, symlinked paths, and overwrites; writes to a
 sibling temporary; reopens and verifies the candidate; and atomically publishes only after
-verification. It changes only reviewed P/Invoke entrypoints and the 88 reviewed
-`LPWStr`-to-`LPStr` parameter annotations. The 11 imports without a verified Android
-counterpart remain unchanged and are reported unavailable. Round-trip verification includes
-the assembly identity/MVID, types, members, layout, field offsets, custom-attribute blobs,
-method bodies, locals, exception handlers, references, and resources.
+verification. It changes reviewed P/Invoke entrypoints, the 88 reviewed
+`LPWStr`-to-`LPStr` parameter annotations, and one policy-declared managed call operand.
+`AkSoundEngine.StringFromIntPtrOSString(IntPtr)` must match its exact reviewed three-instruction
+body and wide-helper operand before that operand is replaced with the Android byte-string
+helper. Unexpected signatures, overloads, bodies or operands refuse generation. The 11 imports
+without a verified Android counterpart remain unchanged and are reported unavailable.
+Round-trip verification includes assembly identity/MVID, types, members, layout, field offsets,
+custom-attribute blobs, all method bodies (allowing only the declared call-operand delta),
+locals, exception handlers, references, imports and resources.
 
 Outputs must be new ignored paths beneath repository `work/`. The policy at `recipe/wwise-
 android-abi.json` is public authored metadata and pins the accepted input and source hashes.
@@ -43,6 +47,7 @@ source scripts/env.sh
 mkdir -p work/coordination/wwise-abi-generator
 python3 tools/wwise-android-abi/generate.py \
   --android-source work/wwise/unity-android-3208-extracted/Wwise/API/Runtime/Generated/Android/AkSoundEnginePINVOKE_Android.cs \
+  --android-os-string-source work/wwise/unity-android-3208-extracted/Wwise/API/Runtime/Handwritten/Android/AkSoundEngine.cs \
   --native-so work/wwise/unity-android-3208-extracted/Wwise/API/Runtime/Plugins/Android/arm64-v8a/Release/libAkSoundEngine.so \
   --llvm-nm "$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-nm" \
   --cecil "$(dirname "$UNITY_EDITOR")/../MonoBleedingEdge/lib/mono/gac/Mono.Cecil/0.11.1.0__0738eb9f132ed756/Mono.Cecil.dll" \
@@ -61,9 +66,10 @@ writer.
 
 ## Offline host tests
 
-Six synthetic tests require no game installation, Wwise SDK, or proprietary input. They check
+Eight synthetic tests require no game installation, Wwise SDK, or proprietary input. They check
 parameter/return `LPArray` contracts, reject changed marshal properties, verify filename and
-path guards, and exercise a transformation plus round-trip verification. Tests use the
+path guards, exercise the declared decoder rewrite and reject wrong operands, body shapes and
+overloads. Tests use the
 selected `dotnet` and Unity-bundled Mono.Cecil. Generated build and fixture scratch is placed
 under ignored `work/tests/wwise-android-abi/` and removed after each test run.
 

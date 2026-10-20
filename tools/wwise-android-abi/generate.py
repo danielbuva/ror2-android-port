@@ -55,6 +55,7 @@ def accepted_managed_input() -> tuple[Path, Path, str]:
     input_id = accepted.get("input_id")
     require(isinstance(input_id, str) and re.fullmatch(r"[0-9a-f]{64}", input_id) is not None, "invalid accepted input identity")
     require(inventory.get("input_id") == input_id and recipe.get("input_id") == input_id, "accepted input, inventory, and assembly recipe disagree")
+    require(input_id == POLICY["accepted_input_id"], "accepted input identity differs from this reviewed Wwise ABI profile")
     row = [x for x in recipe.get("assemblies", []) if x.get("source") == "AK.Wwise.Unity.API.dll"]
     require(len(row) == 1 and row[0].get("sha256") == POLICY["retained_managed_sha256"], "accepted assembly recipe does not match this reviewed API")
     record = [x for x in inventory.get("files", []) if x.get("path") == "Risk of Rain 2_Data/Managed/AK.Wwise.Unity.API.dll"]
@@ -491,6 +492,7 @@ def derive_plan(original: dict, android_rows: list[dict], exports: set[str]) -> 
         "status": "draft_incomplete_android_candidate",
         "full_enable_ready": False,
         "input_assembly_sha256": original["sha256"],
+        "managed_call_rewrites": POLICY["managed_call_rewrites"],
         "counts": POLICY["counts"],
         "imports": mapped,
         "unavailable": unavailable,
@@ -518,6 +520,7 @@ def atomic_new(path: Path, data: bytes) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--android-source", required=True, type=Path)
+    p.add_argument("--android-os-string-source", required=True, type=Path, help="pinned Android AkOSChar decoder implementation source")
     p.add_argument("--native-so", required=True, type=Path)
     p.add_argument("--llvm-nm", required=True, type=Path)
     p.add_argument("--output", required=True, type=Path)
@@ -533,6 +536,7 @@ def main() -> int:
     candidate = assert_output_path(args.candidate, game_root) if args.candidate is not None else None
     assert_distinct_outputs(output, candidate)
     require(sha(args.android_source) == ANDROID_DECL_SHA, "official Android declaration source pin mismatch")
+    require(sha(args.android_os_string_source) == POLICY["official_android_os_string_source_sha256"], "official Android OS-string source pin mismatch")
     require(sha(args.native_so) == POLICY["android_arm64_release_plugin_sha256"], "official native plugin pin mismatch")
     exports = native_exports(args.llvm_nm, args.native_so)
     export_hash = hashlib.sha256(("\n".join(sorted(exports)) + "\n").encode()).hexdigest()
@@ -565,6 +569,7 @@ def main() -> int:
         plan = derive_plan(original, android, exports)
         plan["accepted_input_id"] = input_id
         plan["android_source_sha256"] = sha(args.android_source)
+        plan["android_os_string_source_sha256"] = sha(args.android_os_string_source)
         plan["native_plugin_sha256"] = sha(args.native_so)
         plan["native_export_set_sha256"] = export_hash
         content = (json.dumps(plan, sort_keys=True, indent=2) + "\n").encode()

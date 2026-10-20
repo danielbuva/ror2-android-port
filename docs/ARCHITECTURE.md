@@ -250,9 +250,13 @@ changes the default assembly transforms or the current game build pipeline.
 
 `tools/wwise-android-abi/generate.py` is a current, explicitly invoked host
 support tool with policy in `recipe/wwise-android-abi.json`. It reads the
-accepted managed API, authorized local Wwise Android declarations and ARM64
-Release plugin, and Unity-bundled Cecil; it publishes only new plans and
-candidates under ignored `work/`. It remains separate from the default
+exact policy-bound accepted managed API, authorized local Wwise Android
+declarations, the pinned Android OS-string helper source and ARM64 Release
+plugin, and uses Unity-bundled Cecil. The writer applies the reviewed P/Invoke
+metadata and one exact-signature OS-string call-operand rewrite, refusing
+body/signature/operand drift and verifying every other method and assembly
+contract after reopen. It publishes only new plans and candidates under ignored
+`work/`, refusing overwrite and symlink paths. It remains separate from the default
 assembly-transform and game-build paths. Its incomplete Android ABI candidate
 has 11 unavailable imports and does not enable production audio. The authored
 tool and policy are audited in `recipe/README.md`; synthetic host contracts

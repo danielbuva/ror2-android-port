@@ -17,6 +17,18 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1] / "work/tests/wwise-android-abi"
 DOTNET = Path(os.environ.get("WWISE_DOTNET") or shutil.which("dotnet") or "")
 CECIL = Path(os.environ.get("WWISE_CECIL") or "")
+OS_REWRITE = {
+    "assembly": "ShapeFixture",
+    "type": "AkSoundEngine",
+    "method": "StringFromIntPtrOSString",
+    "return_type": "System.String",
+    "parameter_types": ["System.IntPtr"],
+    "expected_target": "System.String AkSoundEngine::StringFromIntPtrWString(System.IntPtr)",
+    "replacement_target": "System.String AkSoundEngine::StringFromIntPtrString(System.IntPtr)",
+    "expected_instruction_count": 3,
+    "android_source": "synthetic/android/AkSoundEngine.cs",
+    "reason": "synthetic method-body rewrite contract",
+}
 
 
 def digest(data: bytes) -> str:
@@ -141,6 +153,19 @@ class WriterRoundTripTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported extra Android method/return custom attribute"):
             module.parse_android_source(source)
 
+    def test_production_policy_keeps_audio_disabled_and_all_unavailable_imports(self):
+        policy_path = HERE.parents[1] / "recipe/wwise-android-abi.json"
+        policy = json.loads(policy_path.read_text())
+        self.assertEqual(policy["status"], "draft-incomplete-android-only")
+        self.assertFalse(policy["enable_production_audio"])
+        self.assertEqual(policy["counts"]["unavailable_imports"], 11)
+        self.assertEqual(len(policy["unavailable"]), 11)
+        self.assertEqual(len(policy["managed_call_rewrites"]), 1)
+        rewrite = policy["managed_call_rewrites"][0]
+        self.assertEqual(rewrite["method"], "StringFromIntPtrOSString")
+        self.assertEqual(rewrite["expected_target"], "System.String AkSoundEngine::StringFromIntPtrWString(System.IntPtr)")
+        self.assertEqual(rewrite["replacement_target"], "System.String AkSoundEngine::StringFromIntPtrString(System.IntPtr)")
+
     def test_identical_plan_and_candidate_paths_refuse_before_publication(self):
         module = load_generator()
         output = self.repo / "work/same-output.dll"
@@ -174,6 +199,8 @@ class WriterRoundTripTests(unittest.TestCase):
             "generate.py",
             "--android-source",
             "unused.cs",
+            "--android-os-string-source",
+            "unused-os-string.cs",
             "--native-so",
             "unused.so",
             "--llvm-nm",
@@ -241,12 +268,16 @@ class WriterRoundTripTests(unittest.TestCase):
             "counts": {"source_imports": len(mapped), "mapped_imports": len(mapped)},
             "imports": mapped,
             "unavailable": [],
+            "managed_call_rewrites": [OS_REWRITE],
+            "android_os_string_source_sha256": "0" * 64,
         }
         return plan
 
     def invoke_writer(self, plan_path: Path, output: Path, assembly: Path | None = None, mode: str = "--synthetic-test"):
         policy = self.repo / "work/synthetic-policy.json"
-        policy.write_text(json.dumps({"schema": 1, "profile": "synthetic-test"}))
+        policy.write_text(
+            json.dumps({"schema": 1, "profile": "synthetic-test", "official_android_os_string_source_sha256": "0" * 64, "managed_call_rewrites": [OS_REWRITE]})
+        )
         return subprocess.run(
             [str(DOTNET), str(self.writer / "CecilAbiWriter.dll"), mode, str(assembly or self.assembly), str(plan_path), str(policy), str(output)],
             cwd=self.repo,
@@ -263,6 +294,7 @@ class WriterRoundTripTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(candidate.is_file())
         self.assertIn('"mapped":9', result.stdout)
+        self.assertIn('"managed_call_rewrites":1', result.stdout)
         self.assertIn(b"fixture-payload-v1", candidate.read_bytes())
 
         after = {r["entrypoint"]: r for r in self.inspect(candidate)}
@@ -329,6 +361,45 @@ class WriterRoundTripTests(unittest.TestCase):
         self.assertFalse(changed_return_output.exists())
         self.assertFalse(list(changed_return_output.parent.glob("changed-return-marshal.dll.tmp-*")))
 
+    def test_managed_decoder_rewrite_rejects_unexpected_body_call_and_overload(self):
+        plan = self.build_plan()
+        for mode, expected_error in (
+            ("WRONG_REWRITE_OPERAND", "Managed OS-string method signature/body/call operand differs"),
+            ("WRONG_REWRITE_BODY", "Managed OS-string method signature/body/call operand differs"),
+            ("WRONG_REWRITE_SIGNATURE", "Managed rewrite method signature differs from policy"),
+            ("WRONG_REWRITE_OVERLOAD", "Managed rewrite method has unexpected overloads"),
+        ):
+            with self.subTest(mode=mode):
+                variant_dir = self.root / mode
+                built = subprocess.run(
+                    [
+                        str(DOTNET),
+                        "build",
+                        str(HERE / "synthetic/ShapeFixture.csproj"),
+                        "-o",
+                        str(variant_dir),
+                        "-p:BaseIntermediateOutputPath=" + str(self.root / ("obj-" + mode)) + os.sep,
+                        "-p:DefineConstants=" + mode,
+                        "-p:UseSharedCompilation=false",
+                        "--nologo",
+                    ],
+                    cwd=self.root,
+                    text=True,
+                    capture_output=True,
+                )
+                self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
+                variant = variant_dir / "ShapeFixture.dll"
+                variant_plan = json.loads(json.dumps(plan))
+                variant_plan["input_assembly_sha256"] = digest(variant.read_bytes())
+                plan_path = self.repo / "work" / (mode + ".json")
+                plan_path.write_text(json.dumps(variant_plan, sort_keys=True, indent=2))
+                output = self.repo / "work" / (mode + ".dll")
+                refused = self.invoke_writer(plan_path, output, assembly=variant)
+                self.assertNotEqual(refused.returncode, 0, refused.stdout)
+                self.assertIn(expected_error, refused.stderr)
+                self.assertFalse(output.exists())
+                self.assertFalse(list(output.parent.glob(output.name + ".tmp-*")))
+
     def test_nonvector_rank_one_arrays_are_refused(self):
         helper = self.root / "nonvector-helper"
         built = subprocess.run(
@@ -366,6 +437,94 @@ class WriterRoundTripTests(unittest.TestCase):
         writer_refusal = self.invoke_writer(plan_path, candidate, nonvector)
         self.assertNotEqual(writer_refusal.returncode, 0)
         self.assertIn("non-vector rank-one array", writer_refusal.stderr)
+        self.assertFalse(candidate.exists())
+
+
+class AcceptedInputBindingTests(unittest.TestCase):
+    def setUp(self):
+        temp_root = HERE.parents[1] / "work/tests"
+        temp_root.mkdir(parents=True, exist_ok=True)
+        self.temp = tempfile.TemporaryDirectory(prefix="wwise-input-binding-", dir=temp_root)
+        self.base = Path(self.temp.name)
+        self.repo = self.base / "repo"
+        self.work = self.repo / "work"
+        self.game = self.work / "game-install"
+        (self.work / "config").mkdir(parents=True)
+        (self.work / "inventory").mkdir(parents=True)
+        (self.game / "Risk of Rain 2_Data/Managed").mkdir(parents=True)
+        (self.repo / "recipe").mkdir(parents=True)
+        (self.work / "config/local.json").write_text(json.dumps({"game_path": str(self.game)}))
+        self.managed = self.game / "Risk of Rain 2_Data/Managed/AK.Wwise.Unity.API.dll"
+        self.managed.write_bytes(b"synthetic accepted API placeholder")
+        self.module = load_generator()
+        input_id = self.module.POLICY["accepted_input_id"]
+        api_sha = self.module.POLICY["retained_managed_sha256"]
+        self.write_input_records(input_id, api_sha)
+        self.module.ROOT = self.repo
+        self.module.WORK = self.work
+        self.sha_patch = patch.object(self.module, "sha", side_effect=lambda p: api_sha if Path(p) == self.managed else "0" * 64)
+        self.sha_patch.start()
+        self.addCleanup(self.sha_patch.stop)
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def write_input_records(self, input_id, api_sha):
+        (self.work / "config/accepted-input.json").write_text(json.dumps({"input_id": input_id}))
+        (self.work / "inventory/files.json").write_text(
+            json.dumps(
+                {
+                    "input_id": input_id,
+                    "files": [{"path": "Risk of Rain 2_Data/Managed/AK.Wwise.Unity.API.dll", "sha256": api_sha}],
+                }
+            )
+        )
+        (self.repo / "recipe/original-assemblies.json").write_text(
+            json.dumps(
+                {
+                    "input_id": input_id,
+                    "assemblies": [{"source": "AK.Wwise.Unity.API.dll", "sha256": api_sha}],
+                }
+            )
+        )
+
+    def argv(self, output, candidate):
+        return [
+            "generate.py",
+            "--android-source",
+            "unused.cs",
+            "--android-os-string-source",
+            "unused-os-string.cs",
+            "--native-so",
+            "unused.so",
+            "--llvm-nm",
+            "unused-nm",
+            "--output",
+            str(output),
+            "--candidate",
+            str(candidate),
+        ]
+
+    def test_consistent_but_wrong_input_id_refuses_before_output_paths(self):
+        wrong_id = "a" * 64
+        self.write_input_records(wrong_id, self.module.POLICY["retained_managed_sha256"])
+        output = self.work / "must-not-be-created.json"
+        candidate = self.work / "must-not-be-created.dll"
+        with patch("sys.argv", self.argv(output, candidate)):
+            with self.assertRaisesRegex(ValueError, "differs from this reviewed Wwise ABI profile"):
+                self.module.main()
+        self.assertFalse(output.exists())
+        self.assertFalse(candidate.exists())
+
+    def test_correct_input_preserves_existing_output_refusal(self):
+        output = self.work / "existing-plan.json"
+        candidate = self.work / "candidate.dll"
+        original = b"preserve existing bytes\n"
+        output.write_bytes(original)
+        with patch("sys.argv", self.argv(output, candidate)):
+            with self.assertRaisesRegex(ValueError, "refusing to overwrite or follow output"):
+                self.module.main()
+        self.assertEqual(output.read_bytes(), original)
         self.assertFalse(candidate.exists())
 
 

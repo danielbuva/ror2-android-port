@@ -454,10 +454,14 @@ infer full audio readiness from an isolated result.
 
 The current `tools/wwise-android-abi/generate.py` support tool reads the accepted
 `AK.Wwise.Unity.API.dll`, authorized Wwise Unity Integration
-2023.1.8.8601.3208 Android declarations and ARM64 Release plugin from the local
+2023.1.8.8601.3208 Android declarations, handwritten Android OS-string helper
+source and ARM64 Release plugin from the local
 `work/wwise/` extraction. It uses Unity-bundled Mono.Cecil 0.11.1, the documented
 `dotnet` runtime and NDK `llvm-nm`. The protected Integration inputs remain
 local; the public recipe contains hashes, identifiers and authored policy.
+The exact accepted-input ID must match that policy even for plan-only output.
+One declared managed helper call changes to the matching Android byte-string
+decoder; all other method bodies remain unchanged.
 The generator writes new plans/candidates under ignored `work/`; neither SDK
 inputs nor generated candidates enter the default game build. Synthetic test
 scratch stays under ignored `work/tests/wwise-android-abi/`.

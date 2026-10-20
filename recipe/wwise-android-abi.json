@@ -6,6 +6,21 @@
   "accepted_input_id": "6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88",
   "retained_managed_sha256": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781",
   "official_android_declaration_source_sha256": "511f5e1ee552a874850a1fab5f613eeb51e7b6bc706a07bb57418c03e75df242",
+  "official_android_os_string_source_sha256": "7cc79d60937708fd9f34fd67e90a743fe9e03e58c2325bf0f9e9dbbf8be327e6",
+  "managed_call_rewrites": [
+    {
+      "assembly": "AK.Wwise.Unity.API",
+      "type": "AkSoundEngine",
+      "method": "StringFromIntPtrOSString",
+      "return_type": "System.String",
+      "parameter_types": ["System.IntPtr"],
+      "expected_target": "System.String AkSoundEngine::StringFromIntPtrWString(System.IntPtr)",
+      "replacement_target": "System.String AkSoundEngine::StringFromIntPtrString(System.IntPtr)",
+      "expected_instruction_count": 3,
+      "android_source": "Wwise/API/Runtime/Handwritten/Android/AkSoundEngine.cs",
+      "reason": "AkOSChar* strings use the Android byte-string decoder"
+    }
+  ],
   "android_arm64_release_plugin_sha256": "cfec01cb3aab87edbde3db38e3c0bbe6a1d18ffea2a1f831a59cf64a5526daca",
   "android_arm64_release_build_id": "81bdfcbdc5b4f942543fb9fdbab0b569ccced37c",
   "android_arm64_release_soname": "libAkSoundEngine.so",
