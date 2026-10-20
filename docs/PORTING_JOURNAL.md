@@ -14272,3 +14272,60 @@ il2cpp-symbol-retention-review/r2/ and codex-symbols-root-suite-r2.*.
 The public generator owns all new optional work outputs; no private input is
 introduced. This changes the existing R7 LabBuild source and build dispatcher;
 R8 runtime membership and payload are unchanged.
+
+## J764 — Native MUL-T stance exposes a transient input-edge observer gap
+
+Build committed 1e3f75d1aae42e319a74ec27f00e4454ea702f5e with J760's
+base-type family-name correction. Host preflight and the serialized exact
+2021.3.45f2 IL2CPP ARM64 Vulkan build pass: 162.202491 seconds, zero errors.
+All 247 frozen authored/toolchain/recipe inputs match committed bytes; all 266
+actual payload hashes and receipt entries equal J762. APK:
+d7974718a48c008d83ab0bb411a8ea22093cbc23950a76e7cfffa17297285bfa.
+Frozen inputs, source snapshot, receipt, APK and payload comparison:
+work/experiments/toolbot-family-name/candidate-20261020T052210.666555Z/.
+
+Install in place on both Novas through their explicit storage policies and
+separate receipts. On adopted Nova both default modes pass: 35.218277 live
+seconds, then exactly one exit to Goolake with 11.979828 next-stage seconds
+(156.367569 total world seconds). Applied runs stay 13. Root independently
+checks APK/report hashes, empty report/current-PID errors, the current Nova
+mapping and native lifecycle diagnostic off. Doctor reports LAB READY. These
+checks accept this APK as the default baseline; Thor retains J762's APK.
+
+On internal Nova the exact Buzzsaw/Dual Wield selection now passes initial
+identity guards. The genuine special input produces one authority and one
+server callback, native ToolbotDualWield stance, contextual Cancel definition,
+Buzzsaw secondary override and Weapon2 presence. The bounded check nevertheless
+refuses after 8.017059 seconds at special-input-without-callback-pair: callbacks
+are present, but its sampled input-bank edge count is zero. No secondary pulse
+is requested, no Weapon2 Buzzsaw activation is accepted, and there are no report
+or current-process errors. Preserve this refusal rather than weakening its edge
+requirement or inferring the missing input fact from a native callback.
+
+Hypothesis/source: the accepted InputBankTest.ButtonState.PushState updates
+justPressed only until the next push; multiple physics updates can erase that
+transient before the coverage coroutine samples it. Reuse J602/J603's distinction
+between input and callback observations, J754's bounded input-only sequence and
+the pinned community input-bank seam. Add an opt-in per-slot cumulative edge
+witness immediately after the existing real bridge PushState calls. Snapshot
+before each pulse, require one increment after a later fixed tick, and refuse
+counter reset/unavailability or a second edge, including across separate
+samples. No input request, state, stock or cooldown is synthesized. Cancel and
+terminal cleanup disable the witness; ordinary modes keep their existing path.
+
+Independent review clears the source contract. Root's production-method host
+fixture covers late sampling, stale/same-tick edges, duplicate sampling, a
+second fresh edge, reset, disabled observation, release and saturation. The
+12 focused tests and full 1,067-test suite pass (56.580 seconds). This witness
+change remains unbuilt; native Buzzsaw activation, damage and complete ability
+semantics are still open. R8 changes two existing authored owners only, with
+no membership/GUID/payload addition. Next build it with J763's optional symbols
+and repeat the bounded case alongside both default controls.
+
+Baseline evidence: work/experiments/baseline/20261020T052305.427940Z/ and
+20261020T052652.847528Z/. MUL-T refusal:
+work/experiments/survivor-check/20261020T052252.196041Z/Toolbot/.
+Root verification: work/coordination/codex-toolbot-family-baseline-root-validation.json;
+host draft/review: work/coordination/toolbot-input-edge-fix/;
+host suite: work/coordination/codex-toolbot-edge-full.*.
+Both runners stop owned packages and sleep their panels; no Moon route is used.

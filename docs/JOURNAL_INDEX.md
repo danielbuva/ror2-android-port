@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J764](PORTING_JOURNAL.md#j764--native-mul-t-stance-exposes-a-transient-input-edge-observer-gap) | 2026-10-19 | Native MUL-T stance exposes a transient input-edge observer gap | Build committed 1e3f75d1aae42e319a74ec27f00e4454ea702f5e with J760's base-type family-name correction. |
 | [J763](PORTING_JOURNAL.md#j763--retain-exact-optional-il2cpp-debugging-artifacts-for-future-attribution) | 2026-10-19 | Retain exact optional IL2CPP debugging artifacts for future attribution | J761's stripped managed frames cannot identify the recurring enumeration caller. |
 | [J762](PORTING_JOURNAL.md#j762--accept-explicit-thor-game-diagnostics-and-unchanged-nova-controls) | 2026-10-19 | Accept explicit Thor game diagnostics and unchanged Nova controls | Build committed 51338035bfdf08a0a46d42f3f5e2fa9e69fdecaa after host preflight, serializing Unity through the mandatory lock. |
 | [J761](PORTING_JOURNAL.md#j761--capture-the-internal-novas-crowded-stage-cpu-work-without-bypassing-permissions) | 2026-10-19 | Capture the internal Nova's crowded-stage CPU work without bypassing permissions | Hypothesis: Android's explicitly selected app-scoped task-clock capture can work on internal storage even though J610's hardware path and J636's adopted run-as… |

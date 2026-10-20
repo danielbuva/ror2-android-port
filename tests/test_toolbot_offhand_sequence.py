@@ -47,7 +47,7 @@ class ToolbotOffhandSequence(unittest.TestCase):
         self.assertRegex(capture, r'ToolbotSelectedComponentMatches\(\s*1, "ToolbotBodyPrimary2", "ToolbotBodyFireBuzzsaw", 142, 3, 193\)')
         self.assertRegex(capture, r'ToolbotSelectedComponentMatches\(\s*4, "ToolbotBodySpecialFamily", "ToolbotDualWield", 144, 1, 201\)')
         self.assertNotRegex(self.source, r"ExecuteIfReady|SetNextState|\.stock\s*=|cooldown\s*=")
-        start = method(self.source, "void BeginToolbotPulse(int slot, float elapsed)")
+        start = method(self.source, "bool BeginToolbotPulse(int slot, float elapsed)")
         self.assertIn("isolatedDiagnosticSkillSlot = slot", start)
         self.assertIn("isolatedDiagnosticSkillPulse = true", start)
         self.assertIn("report.toolbotOffhandRequests >= 2", self.source)

@@ -165,6 +165,17 @@ can emit default inline mapping/raw placeholders for null runtime references;
 those wire values are not measured input. This changes existing R8 sources
 without adding a runtime file/GUID.
 
+`NovaInputBridge` also owns an opt-in cumulative skill-edge witness at the
+existing `PushState` sink. `SurvivorSkillInputCoverage` enables it only for the
+bounded MUL-T diagnostic, snapshots each request, and requires one fresh edge
+after a later physics tick alongside the native callbacks and stance. It refuses
+missing/reset/ambiguous witnesses and disables observation on stop/dispose;
+neutral cancellation precedes sampling. Ordinary input requests and other
+coverage modes retain their existing paths. Host contracts execute the production
+counter/classifier, including late sampling and a second edge across separate
+samples (`test_toolbot_input_edge_witness.py`). J764 records the motivating
+device failure; the durable witness still needs its own device build.
+
 CPU capture (`scripts/lab/performance_capture.py`, current host implementation):
 `./dev perf --action cpu --target LABEL` takes a 15 s system simpleperf call graph
 from the selected device's already running, owned foreground lab process. Setup

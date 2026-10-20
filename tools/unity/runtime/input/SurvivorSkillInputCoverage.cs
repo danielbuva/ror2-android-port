@@ -77,6 +77,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     GenericSkill[] toolbotSkillComponents;
     float toolbotPhaseBeganAt, toolbotPhaseEnteredAt, toolbotDeadline, toolbotPulseUntil;
     int toolbotPulseStartTick;
+    long toolbotPulseEdgeBaseline;
     int toolbotSpecialAuthorityBefore, toolbotSpecialServerBefore;
     int toolbotSecondaryAuthorityBefore, toolbotSecondaryServerBefore;
     bool toolbotPulseActive, toolbotSpecialEdgeObserved, toolbotSecondaryEdgeObserved,
@@ -118,6 +119,24 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         return phase;
     }
 
+    public enum DiagnosticInputEdgeStatus { None, Fresh, CounterReset, Multiple }
+
+    // A fresh edge is one cumulative bridge-counter increment after this
+    // request's snapshot and a later fixed tick. The request owner advances its
+    // baseline after accepting the increment so it cannot count twice.
+    public static DiagnosticInputEdgeStatus ClassifyDiagnosticInputEdge(long baseline, long current, bool laterFixedTick,
+                                                                      bool observedForPulse = false)
+    {
+        if (baseline < 0 || current < baseline)
+            return DiagnosticInputEdgeStatus.CounterReset;
+        if (!laterFixedTick)
+            return DiagnosticInputEdgeStatus.None;
+        long delta = current - baseline;
+        if (delta == 0)
+            return DiagnosticInputEdgeStatus.None;
+        return delta == 1 && !observedForPulse ? DiagnosticInputEdgeStatus.Fresh : DiagnosticInputEdgeStatus.Multiple;
+    }
+
     public SurvivorSkillInputCoverage(CharacterBody ownedBody, NovaInputBridge ownedBridge,
                                       SurvivorSkillObserver.Report observerReport, string isolatedSlot = null,
                                       bool toolbotOffhand = false, SurvivorCombatOutputObserver.Report combatReport = null)
@@ -155,6 +174,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         if (toolbotOffhandMode)
         {
             CaptureToolbotOffhandIdentity();
+            ownedBridge.SetDiagnosticInputEdgeWitness(true);
             ownedBridge.isolatedDiagnosticSkillInput = true;
             ownedBridge.isolatedDiagnosticSkillSlot = -1;
             ownedBridge.isolatedDiagnosticSkillPulse = false;
@@ -494,7 +514,8 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         }
         if (toolbotPulseActive)
         {
-            ObserveInputBankEdge();
+            if (!ObserveInputBankEdge())
+                return;
             if (elapsed >= toolbotPulseUntil)
             {
                 bridge.isolatedDiagnosticSkillPulse = false;
@@ -549,7 +570,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                 toolbotSpecialServerBefore = observed.slots[3].serverActivations;
                 report.toolbotOffhandSpecialAuthorityBefore = toolbotSpecialAuthorityBefore;
                 report.toolbotOffhandSpecialServerBefore = toolbotSpecialServerBefore;
-                BeginToolbotPulse(3, elapsed);
+                if (!BeginToolbotPulse(3, elapsed)) return;
                 toolbotSpecialPulseStarted = true;
                 toolbotPhaseEnteredAt = elapsed;
                 report.toolbotOffhandSpecialRequestSeconds = report.elapsedSeconds;
@@ -598,7 +619,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                 report.toolbotOffhandSecondaryServerBefore = toolbotSecondaryServerBefore;
                 report.toolbotOffhandBodyDamageEventsBeforeSecondary = combatOutput.bodyDamageEvents;
                 report.toolbotOffhandDamageFactsBeforeSecondary = combatOutput.damageFactCount;
-                BeginToolbotPulse(1, elapsed);
+                if (!BeginToolbotPulse(1, elapsed)) return;
                 toolbotSecondaryPulseStarted = true;
                 report.toolbotOffhandSecondaryRequestSeconds = report.elapsedSeconds;
                 report.toolbotOffhandPhase = AdvanceToolbotOffhandPhase(3, true, true, true, true,
@@ -634,12 +655,17 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         }
     }
 
-    void BeginToolbotPulse(int slot, float elapsed)
+    bool BeginToolbotPulse(int slot, float elapsed)
     {
         if (report.toolbotOffhandRequests >= 2)
         {
             StopToolbotOffhand("toolbot-offhand-request-budget-exhausted");
-            return;
+            return false;
+        }
+        if (toolbotOffhandMode && !bridge.TryGetDiagnosticInputEdgeCount(slot, out toolbotPulseEdgeBaseline))
+        {
+            StopToolbotOffhand("toolbot-input-edge-witness-unavailable");
+            return false;
         }
         pulseActive = toolbotPulseActive = true;
         target = slot;
@@ -652,6 +678,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         report.toolbotOffhandRequests++;
         report.slots[slot].requests++;
         report.slots[slot].eligibleSamples++;
+        return true;
     }
 
     void SampleToolbotDamageCounts()
@@ -666,6 +693,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         SampleToolbotDamageCounts();
         if (bridge)
         {
+            bridge.SetDiagnosticInputEdgeWitness(false);
             bridge.isolatedDiagnosticSkillPulse = false;
             bridge.isolatedDiagnosticSkillSlot = -1;
         }
@@ -845,16 +873,44 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         lastOverlay[3] = bridge.diagnosticSpecial = target == 3;
     }
 
-    void ObserveInputBankEdge()
+    bool ObserveInputBankEdge()
     {
         if (!body || !body.inputBank || !bridge || bridge.fixedTicks == lastEdgeTick || target < 0)
-            return;
+            return true;
         lastEdgeTick = bridge.fixedTicks;
         var bank = body.inputBank;
-        bool edge = target == 0   ? bank.skill1.justPressed
-                    : target == 1 ? bank.skill2.justPressed
-                    : target == 2 ? bank.skill3.justPressed
-                                  : bank.skill4.justPressed;
+        bool edge;
+        if (toolbotOffhandMode)
+        {
+            if (!bridge.TryGetDiagnosticInputEdgeCount(target, out long count))
+            {
+                StopToolbotOffhand("toolbot-input-edge-witness-unavailable");
+                return false;
+            }
+            var status = ClassifyDiagnosticInputEdge(toolbotPulseEdgeBaseline, count,
+                                                   bridge.fixedTicks > toolbotPulseStartTick,
+                                                   report.slots[target].inputBankEdges != 0);
+            if (status == DiagnosticInputEdgeStatus.CounterReset)
+            {
+                StopToolbotOffhand("toolbot-input-edge-counter-reset");
+                return false;
+            }
+            if (status == DiagnosticInputEdgeStatus.Multiple)
+            {
+                StopToolbotOffhand("multiple-toolbot-input-edges-for-pulse");
+                return false;
+            }
+            edge = status == DiagnosticInputEdgeStatus.Fresh;
+            if (edge)
+                toolbotPulseEdgeBaseline = count;
+        }
+        else
+        {
+            edge = target == 0   ? bank.skill1.justPressed
+                   : target == 1 ? bank.skill2.justPressed
+                   : target == 2 ? bank.skill3.justPressed
+                                 : bank.skill4.justPressed;
+        }
         if (edge)
         {
             report.slots[target].inputBankEdges++;
@@ -872,6 +928,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                 }
             }
         }
+        return true;
     }
 
     void SyncNativeCallbacks()
@@ -938,6 +995,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             ReleaseIsolationSink();
         if (toolbotOffhandMode && bridge)
         {
+            bridge.SetDiagnosticInputEdgeWitness(false);
             bridge.isolatedDiagnosticSkillPulse = false;
             bridge.isolatedDiagnosticSkillInput = false;
             bridge.isolatedDiagnosticSkillSlot = -1;

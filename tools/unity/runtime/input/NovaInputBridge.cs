@@ -119,6 +119,31 @@ public sealed class NovaInputBridge : MonoBehaviour
     public bool diagnosticSprint, diagnosticPrimary, diagnosticSecondary, diagnosticUtility, diagnosticSpecial, diagnosticInteract;
     public Vector3 diagnosticAim;
     public bool diagnosticJumpRequest { get; private set; }
+    // Toolbot's bounded offhand diagnostic reads these cumulative witnesses
+    // because Apply may run several frames after the fixed-tick edge.
+    bool diagnosticInputEdgeWitnessEnabled;
+    readonly long[] diagnosticInputEdgeCounts = new long[4];
+
+    public void SetDiagnosticInputEdgeWitness(bool enabled)
+    {
+        diagnosticInputEdgeWitnessEnabled = enabled;
+    }
+
+    public bool TryGetDiagnosticInputEdgeCount(int slot, out long count)
+    {
+        count = 0;
+        if (!diagnosticInputEdgeWitnessEnabled || slot < 0 || slot >= diagnosticInputEdgeCounts.Length)
+            return false;
+        count = diagnosticInputEdgeCounts[slot];
+        return true;
+    }
+
+    // Called immediately after the real InputBankTest.PushState call. Saturation
+    // keeps this diagnostic monotonic; saturation then fails closed as no delta.
+    public static long AdvanceDiagnosticInputEdgeCount(long count, bool enabled, bool justPressed)
+    {
+        return enabled && justPressed && count < long.MaxValue ? count + 1 : count;
+    }
     public static bool SkillInputRequest(bool diagnosticMode, bool isolate, bool pulse, int selectedSlot,
                                          int buttonSlot, bool diagnosticRequest, bool physicalRequest)
     {
@@ -375,15 +400,23 @@ public sealed class NovaInputBridge : MonoBehaviour
         bank.skill1.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 0, diagnosticPrimary,
                                                 !diagnosticInput && (all || enablePrimary) && raw.buttons[mapping.primary]));
+        diagnosticInputEdgeCounts[0] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[0],
+            diagnosticInputEdgeWitnessEnabled, bank.skill1.justPressed);
         bank.skill2.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 1, diagnosticSecondary,
                                                 !diagnosticInput && all && raw.buttons[mapping.secondary]));
+        diagnosticInputEdgeCounts[1] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[1],
+            diagnosticInputEdgeWitnessEnabled, bank.skill2.justPressed);
         bank.skill3.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 2, diagnosticUtility,
                                                 !diagnosticInput && all && raw.buttons[mapping.utility]));
+        diagnosticInputEdgeCounts[2] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[2],
+            diagnosticInputEdgeWitnessEnabled, bank.skill3.justPressed);
         bank.skill4.PushState(!holdAutomatic && SkillInputRequest(diagnosticInput, isolatedSkills, isolatedDiagnosticSkillPulse,
                                                 isolatedDiagnosticSkillSlot, 3, diagnosticSpecial,
                                                 !diagnosticInput && all && raw.buttons[mapping.special]));
+        diagnosticInputEdgeCounts[3] = AdvanceDiagnosticInputEdgeCount(diagnosticInputEdgeCounts[3],
+            diagnosticInputEdgeWitnessEnabled, bank.skill4.justPressed);
         fixedTicks++;
         if (holdAutomatic)
             manualMoonNeutralFixedTicks++;
