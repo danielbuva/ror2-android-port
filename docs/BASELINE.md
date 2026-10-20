@@ -74,12 +74,12 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `4c37596cd5828047a5cb19bc2df8c5c6913333cce01104d3f0b1e4bf748dccb9`, code-only build from committed source f94a1b24; J807 recovered-text startup/native Siren witnesses and J808 source-enabled Huntress tracker restoration; all 266 payload hashes unchanged; matching debugging symbols retained |
-| Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.191437 s and one exit plus 13.371338 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Thor separately passes 35.081497 s. Full evidence is recorded once in J809. |
-| Placement | Adopted Nova updates in place and qualifies both defaults. Thor updates under its internal-reserve policy and passes a separate plain check. Internal Nova retains be26c21c… while isolated audio uses disposable packages. |
-| Rollbacks | Previous baseline J805 `66c8162d…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
+| APK | `91b0b7c93e03772d5eafb26e059a3f942be7f28563d2a07b98607f43710c7e50`, code-only build from committed source b68eb8e3; J811's opt-in shared combat-input first-NRE witness; all 266 payload hashes unchanged; matching debugging symbols retained |
+| Check | Both modes pass on Thor without report/current-process error or applied-run change: 35.330978 s and one exit plus 12.131714 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Full evidence is recorded once in J813. |
+| Placement | Thor updates under its internal-reserve policy and passes both checks. Adopted Nova retains J809's accepted 4c37596c…; internal Nova retains be26c21c… while isolated audio uses disposable packages. |
+| Rollbacks | Previous baseline J809 `4c37596c…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
-J809 qualifies J807/J808 on the default route. The separate stock MUL-T
+J813 qualifies J811 on the default route. The separate stock MUL-T
 regression, native Huntress target updates/Siren execution and native indicator
 rendering/teardown remain pending; the default
 checks do not qualify them. J801's observer and strict cleanup failures remain

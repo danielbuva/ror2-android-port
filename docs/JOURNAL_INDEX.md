@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J813](PORTING_JOURNAL.md#j813--accept-the-shared-input-witness-player-on-both-thor-defaults) | 2026-10-20 | Accept the shared-input witness player on both Thor defaults | Date: 2026-10-20. |
 | [J812](PORTING_JOURNAL.md#j812--observe-active-huntress-tracking-without-native-siren-egg-selection) | 2026-10-20 | Observe active Huntress tracking without native Siren egg selection | Date: 2026-10-20. |
 | [J811](PORTING_JOURNAL.md#j811--reach-stock-mul-t-world-play-and-instrument-its-shared-input-failure) | 2026-10-20 | Reach stock MUL-T world play and instrument its shared input failure | Date: 2026-10-20. |
 | [J810](PORTING_JOURNAL.md#j810--initialize-the-revised-audio-fixture-then-refuse-its-missing-monitor-marker) | 2026-10-20 | Initialize the revised audio fixture, then refuse its missing monitor marker | Date: 2026-10-20. |

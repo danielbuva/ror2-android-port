@@ -17336,3 +17336,53 @@ host cleanup:
 No source, runtime file, required local build input or R8 replay step changes.
 The separate J811 diagnostic candidate is being default-qualified on Thor;
 this result concerns only the frozen accepted 4c37 player.
+
+## J813 — Accept the shared-input witness player on both Thor defaults
+
+Date: 2026-10-20. Hypothesis: J811's opt-in first-NRE witness preserves the
+ordinary default route while making the separate stock MUL-T failure
+attributable on a subsequent targeted run.
+
+Root runs doctor and preflight before the code-only build, then freezes the
+committed b68eb8e3 source, 252 inputs, all 266 unchanged payload hashes and the
+matching debugging symbols. Unity request `20261020T165248.715595Z` succeeds
+in 177.312024 s with zero errors. APK SHA-256:
+`91b0b7c93e03772d5eafb26e059a3f942be7f28563d2a07b98607f43710c7e50`.
+Build receipt:
+`d537def474676ae1778840bd333d12644f53a466b073b9702aa6d62a3704b7df`;
+source snapshot:
+`741b32fe715fb0f732d7809cda1d3800dbe1eb70176d47f43d82b9ebd81b86d7`;
+symbol archive:
+`75ad8fc319b0ac3febfabee29423c540f14dd59de9ca352cc3dbfa54fa601400`.
+The full host suite and 107-runtime-source compile remain J811's evidence.
+
+Thor updates the owned game in place after fresh internal-reserve and placement
+checks, bootstraps and syncs the unchanged payload. Both standard checks pass:
+35.330978 s of Lakes play, then one original exit and 12.131714 s on Goolake.
+Both report current-build true, no report error/first failure, no current-process
+log error and applied runs unchanged at zero. Their owned artifact identity is
+unchanged before/after. Native lifecycle/Siren diagnostic flags remain off.
+Each finally path removes its selector, stops the owned game and sleeps both
+OLEDs. These are assisted default-route results, not native kit or ordinary
+difficulty acceptance. The separate stock MUL-T retry is now running; no
+operand or teardown result is inferred from these checks.
+
+Evidence: work/experiments/toolbot-objective-next/candidate-20261020T165630.507186Z/;
+work/experiments/baseline/{20261020T165915.057506Z,20261020T170254.768025Z}/;
+work/coordination/{codex-toolbot-objective-build-root-r1/,
+codex-toolbot-objective-device-root-r1/}. Frozen device-candidate proof:
+`109249698fc435181d00f0c7b0b2454bd5e7d302a49f9cb863d87aa34aa5a54b`;
+Root default acceptance:
+`3456c499c74febab8f80b8001a3088db07bc9b83b9ce18e3a9468ee91a77fd2a`.
+Plain result/report:
+`41c6b0c45c3a0df526dac302a823150104557bb8a186fec7ae2c15d79743f36a` /
+`d400466db65f7b8ff00a85aed8d32e9ac2b8b319f4d14e2b38f2dbe5196c6408`;
+stage-exit result/report:
+`f3a05401a70b1774489d55026a7da92d8999f03b63d95bb4a2ccf8e9cb3b4835` /
+`3efbc7a2645a11750a53d1ceb018b17dae45011c15eb6adb5c6b2741b4d06d00`.
+
+Prior art, named ownership and replay scope remain J811. No runtime source,
+GUID, required local input or build membership changes in this acceptance
+checkpoint. Adopted Nova retains J809 and internal Nova retains J788; preserve
+both and all listed executable rollbacks. Isolated audio remains unavailable
+in the game and has separate acceptance gates.
