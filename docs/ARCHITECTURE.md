@@ -430,6 +430,16 @@ Their setup/input boundaries are listed in
 acceptance and limits are recorded once in J740/J742 and J791. Neither diagnostic owner
 changes the default assembly transforms or the current game build pipeline.
 
+The private named-event fixture support adds a source-name-to-ID check before
+string PostEvent and validates the matching completion through the same isolated
+owner. Its stage/build adapter binds compiled code and the descendant input map;
+a separate qualification can retain a raw failed host snapshot alongside a
+successful Unity result and independently verified inputs. Device dispatch binds
+both records and runs the negative control before the positive event, with owned
+reverse cleanup. LOCAL_STATE names these private support producers; J845 owns
+their result. They do not replace the original game initializer/controller or
+make the game audio-capable.
+
 The ignored native-build-feasibility producer recompiles the authorized Android
 bridge against its exact SDK with an isolated, process-local NDK r25c. Unity
 keeps its pinned r21 toolchain. Its authored same-library diagnostic bridge and
