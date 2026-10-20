@@ -86,6 +86,17 @@ unsigned outputs; alignment, signing and device checks follow separately.
 The device checker also hashes the actually mapped IL2CPP library inside the
 observed installed code directory, independently of the APK's expected entry.
 
+`phone_converter.py` owns separate experimental **support** for replaying the
+authored player's complete recorded IL2CPP code-generation command. The current
+`phone-converter-fixture` action shares the native fixture's project/APK/source
+guard, requires the exact assembly closure and known options, copies supplied
+stripped assemblies/tool DLLs/icalls unchanged, and records their hashes.
+The standalone Android driver uses a separate .NET build-tool host, verifies
+inputs before execution, relocates only output paths, disables unnecessary
+tool analytics and retains fresh output/log/failure directories. The game
+runtime is still IL2CPP; desktop stripping and permitted proprietary tool
+delivery remain gates. No whole-catalog game build calls this owner.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

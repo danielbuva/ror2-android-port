@@ -138,6 +138,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-converter-fixture",
+        "phone_converter",
+        "stage_action",
+        {},
+        "current",
+        "Experimental: stage the hash-bound authored player's complete stripped assembly closure and supplied exact Unity converter from --target REQUEST.json. Android build-tool host only; desktop stripping remains an input; no game, editor mutation or installation.",
+        handler=_target,
+    ),
+    Action(
         "phone-native-apk-fixture",
         "phone_native_apk",
         "stage_action",

@@ -330,5 +330,20 @@
     "effects": [],
     "stdout": "",
     "exit": null
+  },
+  "phone-converter-fixture": {
+    "calls": [
+      {
+        "module": "phone_converter",
+        "function": "stage_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
   }
 }

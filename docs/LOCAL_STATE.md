@@ -83,6 +83,19 @@ adapter. It binds metadata/native/base hashes and observed ELF/API comparisons.
 the phone signing outputs and explicit device test. Raw evidence and the final
 `native-proof-receipt.json` remain private; none is read by the game build.
 
+`phone_converter.stage_action` generates `work/rebuild/phone-converter/<attempt>/`
+from the same explicit authored project/APK request. Supplied stripped fixture
+assemblies, converter/corelib DLLs and icall data remain private inputs. The
+generator records the full closure/argument plan and input manifest; its Android
+driver creates new output and first-failure receipts. The proof root's
+`full-converter-observation.json` records the original graph and assembly hashes;
+`full-converter-stage-selection.json` selects one exact generated stage.
+`full-converter-on-android.py` is required local replay support: it binds the
+existing device/workspace receipt, checks capacity and tool hashes, stages the
+inputs and collects outputs into a new attempt. `full-converter-run-selection.json`
+selects that explicit attempt for independent comparison. None is a game-build
+input; the original smaller converter attempts remain retained.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.

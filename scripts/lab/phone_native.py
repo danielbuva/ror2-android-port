@@ -162,8 +162,9 @@ def stage(project, destination, editor, android):
     }
 
 
-def stage_action(request):
-    from common import ROOT, WORK, now
+def fixture_request(request):
+    """Bind the shared authored fixture before staging any private build inputs."""
+    from common import ROOT, WORK
     from phone_apk import update_manifest
 
     import zipfile
@@ -188,12 +189,22 @@ def stage_action(request):
         source = ROOT / "tools/phone-build" / name
         if receipt["sources"]["tools/phone-build/" + name] != hashlib.sha256(source.read_bytes()).hexdigest():
             raise ValueError("Fixture source drift")
+        staged = project / ("Assets/Editor" if name.endswith("Builder.cs") else "Assets") / name
+        if staged.read_bytes() != source.read_bytes():
+            raise ValueError("Staged fixture source drift")
     with zipfile.ZipFile(apk) as archive:
         if (
             update_manifest(archive.read("AndroidManifest.xml"), 3)[1] != 2
             or hashlib.sha256(archive.read("assets/phone-fixture.bundle")).hexdigest() != receipt["bundle_sha256"]
         ):
             raise ValueError("Expected the fixture base APK/content")
+    return value, project
+
+
+def stage_action(request):
+    from common import ROOT, WORK, now
+
+    value, project = fixture_request(request)
     destination = WORK / "rebuild/phone-native" / now()
     result = stage(project, destination, Path(os.environ["UNITY_EDITOR"]).parent.parent, Path(os.environ["UNITY_ANDROID_ROOT"]))
     result.update(stage=str(destination), request=value, source_commit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip())

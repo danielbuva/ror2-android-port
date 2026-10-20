@@ -122,6 +122,7 @@ by hand. Regenerate with `python3 scripts/readme-actions.py`; CI checks freshnes
 
 | Command | What it does |
 | --- | --- |
+| `./dev prototype --action phone-converter-fixture` | Experimental: stage the hash-bound authored player's complete stripped assembly closure and supplied exact Unity converter from --target REQUEST.json. Android build-tool host only; desktop stripping remains an input; no game, editor mutation or installation. |
 | `./dev prototype --action phone-native-apk-fixture` | Experimental: --target REQUEST.json pins the authored fixture APK, matching metadata and ARM64 library hashes; writes a new unsigned native-swap fixture for separate alignment/signing and device checks. Never packages the game. |
 | `./dev prototype --action phone-native-fixture` | Experimental: stage only the hash-bound authored content fixture's native graph from --target REQUEST.json, supplied Unity runtime and original NDK target inputs. No device or game build access; desktop stripping/code-generation remain explicit inputs. |
 | `./dev prototype --action phone-host-check` | Experimental: explicit --device and hash-bound --target REQUEST.json install only the authored sandbox fixture, verify installed native execution and writable-code refusal twice, then remove the owned package and sleep the display. |
