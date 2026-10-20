@@ -74,9 +74,17 @@ public sealed partial class PortSession
                               "Existing owned item display context");
             coordinator.worldDisplayBody = body;
             coordinator.worldDisplayModel = body.modelLocator.modelTransform.GetComponent<CharacterModel>();
-            coordinator.Check(coordinator.worldDisplayModel && coordinator.worldDisplayModel.body == body &&
-                                  !coordinator.worldDisplayModel.enabled && coordinator.worldDisplayModel.itemDisplayRuleSet,
-                              "Original disabled model/display rule context absent");
+            var displayModel = coordinator.worldDisplayModel;
+            bool nativeOwnerRequested = coordinator.r.nativeSourceSkinLifecycleDiagnosticRequested;
+            var nativeSkinOwner = displayModel ? displayModel.GetComponent<AndroidNativeSourceSkinLifecycle>() : null;
+            var nativeSkinReport = coordinator.r.nova != null ? coordinator.r.nova.nativeSourceSkinLifecycle : null;
+            bool nativeOwnerActive = nativeOwnerRequested && nativeSkinOwner &&
+                                     nativeSkinOwner.IsActiveInventoryDisplayOwner(body, displayModel, nativeSkinReport);
+            bool modelStateValid = displayModel &&
+                                   (nativeOwnerRequested ? nativeOwnerActive : !displayModel.enabled);
+            coordinator.Check(modelStateValid && displayModel.body == body && displayModel.itemDisplayRuleSet,
+                              nativeOwnerRequested ? "Exact native source-skin item-display owner is not active"
+                                                   : "Original disabled model/display rule context absent");
             worldDisplayPriorRules = coordinator.worldDisplayModel.itemDisplayRuleSet;
             worldDisplayRules = Instantiate(worldDisplayPriorRules);
             var eligible = coordinator.worldLootDefinitions.Cast<UnityEngine.Object>()
@@ -113,8 +121,10 @@ public sealed partial class PortSession
             {
                 try
                 {
-                    native();
-                    PresentWorldItemDisplays();
+                    bool ownerStillActive = nativeOwnerRequested && nativeSkinOwner &&
+                                            nativeSkinOwner.IsActiveInventoryDisplayOwner(body, displayModel, nativeSkinReport);
+                    AndroidNativeItemDisplayDispatch.Dispatch(nativeOwnerRequested, ownerStillActive, native,
+                                                              PresentWorldItemDisplays);
                     coordinator.r.itemDisplays.updates++;
                 }
                 catch (Exception error)
@@ -123,6 +133,11 @@ public sealed partial class PortSession
                     coordinator.Save();
                 }
             };
+            // The source model already subscribed during OnEnable. Seed its native
+            // factories once after installing the filtered rules; later events are
+            // handled by that source owner and this session only presents results.
+            if (nativeOwnerRequested)
+                native();
             body.onInventoryChanged += coordinator.worldDisplayInventoryChanged;
             coordinator.worldDisplayInventoryChanged();
             coordinator.Check(string.IsNullOrEmpty(coordinator.r.itemDisplays.error),

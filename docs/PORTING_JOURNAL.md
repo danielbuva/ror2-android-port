@@ -18833,3 +18833,57 @@ model while retaining the same eligible rules and Android material presentation.
 Keep the disabled-model default path. Rebuild committed sources, rerun both
 baseline modes, then repeat the bounded gameplay and native teardown check.
 No source, recipe or rebuild step changed in this experiment.
+
+## J838 — Keep the enabled source model as the exclusive item-display inventory writer
+
+**Hypothesis.** J835's old disabled-model refusal can be removed without adding
+another native inventory writer: the opt-in live `CharacterModel` already owns
+its original `OnInventoryChanged` subscription, while Android still owns filtered
+eligible rules and material presentation.
+
+**Source authority and change.** The current legitimate `CharacterModel` source
+confirms subscription in `OnEnable`, removal in `OnDisable`, and item/equipment
+factory updates in that listener. J826's skin/provider prior art remains
+applicable; no new community or game implementation is copied. An initial
+proposal to relax the disabled-model check alone was rejected before application
+because the existing adapter also invokes the native listener. Instead, the
+named `WorldItemDisplaySession` accepts only the exact active native skin owner,
+body, model, report, selected index, controller/avatar reference snapshots and
+Animator readiness. Diagnostic capture cannot bless a same-name replacement;
+only an authoritative selected-skin completion refreshes those snapshots.
+It installs the same eligible rule-set copy and refreshes native factories once.
+Subsequent inventory events use the native listener; the Android observer only
+presents results. Loss of exact ownership records failure without taking over
+native writes. The default disabled-model path retains its explicit native call.
+Observer removal still precedes display deactivation/native unsubscription.
+
+The pure authored `AndroidNativeItemDisplayDispatch` policy is explicitly listed
+in the 111-source recipe and architecture ownership map. Its new Unity script
+identity follows the documented null-until-first-import contract. The recipe
+README records the manual provenance/privacy audit: authored call/ownership
+contracts only, no protected implementation or new private build input.
+
+**Host evidence.** Root's focused tests pass: the actual native owner fixture now
+has 49 assertions, including live identity/readiness refusal cases, and the
+exclusive dispatch harness has 18 event/ownership assertions. The full host suite
+passes 1,200 tests with one environment skip on this workstation. The independent
+candidate full-runtime compile uses 111 authored sources, four existing support
+files and 264 saved references, with exit code 0; it is not Unity or device
+acceptance. Python formatting and Ruff checks pass for both changed tests.
+
+Local evidence is retained in
+`work/coordination/animation-native-skin-runtime-triage/r{2..3}/`: the candidate
+source/preimage manifest, initial and compatibility patches, compile result,
+synthetic harness and Root full-suite logs. The independent ownership review is
+under `work/coordination/animation-native-inventory-owner-review/r2/`; its prior
+review rejected name-only controller/avatar equality before this reference fix.
+J835 remains the only record of the preceding device failure.
+
+**Limits and next gate.** No new APK has been built or installed for this change.
+The installed/latest device-verified player remains J828's
+`922cfb86e895118285d8c93f588ff57c4052154d15e88688bf7b46f357474112`.
+Commit these authored inputs before the owning build, freeze its APK/symbols and
+source receipt, run both default checks, then repeat bounded native skin gameplay,
+real inventory-event presentation and ordered teardown. R8/R9 must replay the new
+runtime source/membership; that reproduction is not claimed here. No alpha UI,
+controls, packaging or game-content source changes are included.

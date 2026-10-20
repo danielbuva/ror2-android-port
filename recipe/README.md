@@ -1301,3 +1301,16 @@ synthetic C# fixtures/assertions contain no game/community implementation. This
 provenance/privacy audit adds no protected asset, SDK source or private input;
 R8/R9 must replay the authored sources and membership. J826 records qualification
 and the still-open Unity/device/parity gates.
+
+### Exclusive native item-display inventory dispatch (2026-10-20)
+
+`runtime/input/AndroidNativeItemDisplayDispatch.cs` is repository-authored pure
+ownership/dispatch policy in the 111-entry runtime manifest. Its layout identity
+starts null under the existing first-import contract. The native skin owner
+validates exact live body/model/report identity and readiness; the world display
+session keeps its eligible rule copy and Android presentation while avoiding a
+second native inventory writer. Public synthetic event and actual-owner fixtures
+contain authored contracts only, with minimum existing type/asset names and no
+game/community implementation, serialized content, private paths or new protected
+input. J838 records host qualification; R8/R9 must replay the authored sources
+and membership. Device behavior and visual parity remain separate gates.
