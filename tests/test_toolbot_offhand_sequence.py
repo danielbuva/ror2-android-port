@@ -48,7 +48,9 @@ class ToolbotOffhandSequence(unittest.TestCase):
         self.assertRegex(capture, r'ToolbotSelectedComponentMatches\(\s*0, "ToolbotBodyPrimary1", "ToolbotBodyFireNailgun", 141, 0, 195\)')
         self.assertRegex(capture, r'ToolbotSelectedComponentMatches\(\s*1, "ToolbotBodyPrimary2", "ToolbotBodyFireBuzzsaw", 142, 3, 193\)')
         self.assertRegex(capture, r'ToolbotSelectedComponentMatches\(\s*4, "ToolbotBodySpecialFamily", "ToolbotDualWield", 144, 1, 201\)')
-        self.assertNotRegex(self.source, r"ExecuteIfReady|SetNextState|\.stock\s*=|cooldown\s*=")
+        # Copying native stock into the report is allowed; mutating it is not.
+        without_stock_observation = self.source.replace("observation.stock = secondary.stock;", "", 1)
+        self.assertNotRegex(without_stock_observation, r"ExecuteIfReady|SetNextState|\.stock\s*=|cooldown\s*=")
         start = method(self.source, "bool BeginToolbotPulse(int slot, float elapsed)")
         self.assertIn("isolatedDiagnosticSkillSlot = slot", start)
         self.assertIn("isolatedDiagnosticSkillPulse = true", start)

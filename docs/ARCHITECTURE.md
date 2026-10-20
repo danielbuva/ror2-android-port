@@ -972,6 +972,19 @@ counters provide context only; this mode establishes no slot-specific damage
 or complete ability semantics. Host contracts extract the production phase
 policy and check selector/refusal routing.
 
+The same owner takes three one-shot readiness snapshots only in this Toolbot
+mode: before special, after the native Dual Wield override, and at the first
+secondary-readiness refusal or sequence stop. They read stock, recharge,
+enabled state, both native readiness predicates, the configured machine name,
+the actual resolved machine reference, and the separately named Weapon/Weapon2
+machines. Missing operands and exceptions have explicit status fields;
+`captured` distinguishes a real snapshot from an empty serialized object.
+A missing or destroyed resolved reference stays unavailable rather than
+falling back to an empty-name lookup. No native readiness gate changes.
+The report owns these values for the session; disposal releases input before
+the observer/body. `test_toolbot_readiness_observation.py` exercises the
+production resolver, including Unity-style fake-null references.
+
 The default-off `--captain-supply-beacon` selector composes in this same owner
 for one assisted Captain run with the exact native six-component identity and
 no variant/slot/Toolbot selector. It snapshots the existing bridge's cumulative
@@ -987,6 +1000,11 @@ state, stock, cooldown, placement, deployables, or profile values. The overlay
 remains masked while an original native state is pending and disposes only its
 owned bridge input/witness. This proves neither supply-drop damage/healing nor
 presentation/full ability semantics; those remain separate device gates.
+The setup identity requires the serialized Skillswap activation machine with
+`EntityStates.Captain.Weapon.SetupSupplyDrop`; the state's namespace does not
+name its machine. `test_captain_setup_identity.py` executes this production
+predicate and rejects the former Weapon assumption, other states and missing
+identity.
 Family names use an explicit `ScriptableObject` base-object read: the accepted
 native `SkillFamily` API hides the name property with an unavailable getter.
 The same read supplies refusal details, separately from the serialized

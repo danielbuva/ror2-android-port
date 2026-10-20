@@ -14801,3 +14801,55 @@ Evidence: work/device/<serial>/experiments/session-memory/20261020T065116.926705
 (walk; failed-session-2-report.json) and .../20261020T070450.840578Z/ (fix).
 Thor now has 9b107ea0… installed (previously J762's 96006814…); display slept,
 process stopped. Not normal-difficulty, unlock or baseline acceptance.
+
+## J774 — Correct Captain activation identity and expose MUL-T readiness operands
+
+Hypothesis: J771's Captain refusal comes from the authored machine-name
+assumption, while J767's MUL-T refusal needs the actual native readiness
+operands before any gameplay repair. Consult J625/J764/J767/J768/J771,
+pinned R2API.Loadout and Starstorm2's named-machine relationships in
+community-prior-art.md. Accepted PrepSupplyDrop metadata and the matching
+GenericSkill target lookup remain authoritative; no community or shipped
+implementation is copied.
+
+Change only the existing SurvivorSkillInputCoverage owner. Captain's pure
+identity predicate now requires Skillswap together with
+EntityStates.Captain.Weapon.SetupSupplyDrop. Keep all six native component,
+slot, master, network, input-edge, placement, callback and deployable gates.
+The state's namespace is not a machine name. The current accepted export and
+matching assembly decompile remain separate from composed or historical
+copies; the reviewed private source receipts identify each explicitly.
+
+For MUL-T, add three fixed one-shot observations: before special, after the
+native Dual Wield override, and at the first phase-3 readiness refusal or
+sequence stop. Read the actual GenericSkill/SkillDef readiness, stock,
+recharge, enabled state and interrupt operands, plus resolved and separately
+named Weapon/Weapon2 machines. Missing/exception status is explicit. The
+resolved target has no empty-name fallback, including destroyed Unity
+wrappers. Preserve the native phase-3 CanExecute gate and all input/output
+requirements; do not assign skill state, stock, cooldown or overrides.
+Ordinary runs do not construct these observations.
+
+Independent review accepts both authored changes. Six new host contracts
+exercise the exact production identity/resolver and bounded read-only capture.
+The settled shared source passes all 1,105 host tests in 27.727 seconds;
+source inputs and HEAD remain unchanged throughout. Earlier attempts expose
+old source-spelling assertions and a report-stock false positive, then a
+parallel source change; preserve those attempts rather than claim they bind
+the settled snapshot. A fresh offline exact-reference compile of 106 runtime
+and four support sources against 264 pinned references has zero errors and
+unchanged source/reference/compiler/response hashes. These are host results.
+
+No new game APK is accepted here. The failure APK remains
+0dd3f57328883d9dd927362775277b876cbf59ddaa17e0a9d0e719a15094684d;
+rebuild, run both default controls, and retry the two explicit survivor
+sequences before attributing either native behavior. Revisit MUL-T only from
+its measured operands. This authored runtime file is reproduced by the rebuild
+source-staging step; that separate track must replay it later. No new local
+runtime input or source-membership change is introduced.
+
+Evidence: work/coordination/captain-supply-beacon-first-failure/r2/ and
+review-r1/; toolbot-offhand-readiness/r2/, r3/ and review-r1/;
+codex-captain-toolbot-readiness-compile/r2/;
+codex-captain-toolbot-final-host-r1/ through r4/. The merged owner SHA-256 is
+1a02b44457fd905aa1f585c52c8f98a2f5d4a00a8070b1ca304bd65448c678e1.
