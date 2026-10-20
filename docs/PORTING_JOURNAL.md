@@ -18334,3 +18334,64 @@ summaries contain neither. No install, app launch/stop, display change, Unity
 mutation, APK or payload is produced. PORTING_STATE's main device facts remain
 unchanged. Revisit the missing owner-build prerequisites through public
 producers, retaining J818's device roles and the shared build mutex.
+
+## J830 — Assess phone-only owner builds with the IL2CPP runtime fixed
+
+2026-10-20, host/source inspection only. The user clarifies Route A: retain
+native IL2CPP ARM64 and the existing renderer, investigate a phone-only owner
+build, and keep desktop builds as fallback. HybridCLR, Mono, box64 and other
+execution-backend migrations are excluded. Present findings before changing
+the working build or choosing a desktop-only final experience. Performance
+must be measured even if the runtime backend is unchanged.
+
+Hypothesis: installation/build engineering can be investigated independently
+of gameplay execution. Trace the current R1-R9 producers, RecoveredHudBuilder,
+LabBuild's bundle/player calls and the shader recovery fallback. Compare
+exact installed tool formats/runtime settings with Unity/Android documentation,
+open-tool source licenses and Android packaging/compiler precedents. The
+stage map, source citations, genuine blockers, bootstrap debt and proposed
+content/compiler/packaging/performance gates are in
+[phone-owner-build.md](phone-owner-build.md). ADR-002 records the clarified
+constraints. Earlier runtime-option research moves to the dated history
+reference and J820's link follows it; it is no longer a current proposal.
+
+Read-only tool evidence finds macOS Mach-O IL2CPP/UnityShaderCompiler launchers,
+macOS hostfxr/coreclr and desktop-host NDK/SDK tools. Managed converter/linker
+configuration names .NET 6.0.18; the three inspected managed tool assemblies
+have 23/30/14 assembly references and zero direct P/Invoke rows. This is a
+portability lead, not proof about transitive dependencies or Android execution.
+The selected NDK reports 21.3.6528147 and Clang 9.0.8. Termux tool recipes are
+pinned at d22cd9f98891a21199faf22dd9cc7ba0f67eedc5; their compiler, resource and
+signing precedents do not establish Unity parity or blanket redistribution
+permission. Applicable Unity/component grants remain a separate input boundary.
+
+Before the clarification, a private host-only linker-root investigation matched
+all 1,619 retained contract rows, including one explicitly unavailable script,
+and 1,618 distinct roots. A preliminary R8 integration draft passes thirteen
+synthetic host tests. On the new instruction, preserve that authored draft
+under ignored suspended-host-preservation/ and restore every tracked code,
+recipe and test edit. Nothing stages it into the working Unity project or
+uses it as a build input; no producer is promoted or bootstrap pin retired.
+These exploratory results do not qualify a phone tool or a production change.
+
+Evidence: work/coordination/public-alpha-route-a/phone-build-assessment.json
+binds tool-host-inventory.json, managed-tool-metadata.json,
+android-tool-prior-art.json, clang-version.txt, source-identity comparisons
+and the suspended draft. Protected tools/data remain in their existing local
+locations; no tool binary, game source, account/device identifier or raw
+capture is published. No new build-required local state is introduced.
+
+First blockers: existing editor-dependent target-content generation and the
+unproven exact IL2CPP Android tool host. Neither a native compiler nor APK
+signer supplies those missing stages. No phone build, APK/hash, install,
+runtime benchmark or device acceptance is produced. Tracked scripts, tools,
+android, recipe and tests match origin/main; the shared editor/project and
+installed game are unchanged. PORTING_STATE retains main's device facts.
+Documentation links/freshness, staged privacy and whitespace checks pass;
+there is no changed Python source to format. No outward action occurs.
+
+Revisit after the findings review with separately bounded authored content,
+converter and packaging proofs, respecting tool permissions and exact settings.
+Require real-device matched-workload correctness/performance and memory results
+before adopting an alternative pipeline. Preserve desktop fallback/rollback
+receipts; a failed build-tool gate does not authorize a new game runtime.

@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J830](PORTING_JOURNAL.md#j830--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed) | 2026-10-20 | Assess phone-only owner builds with the IL2CPP runtime fixed | 2026-10-20, host/source inspection only. |
 | [J829](PORTING_JOURNAL.md#j829--accept-owner-built-route-a-and-isolate-the-alpha-environment) | 2026-10-20 | Accept owner-built Route A and isolate the alpha environment | 2026-10-20, decision and environment inspection only. |
 | [J828](PORTING_JOURNAL.md#j828--research-public-alpha-distribution-before-choosing-a-launcher) | 2026-10-20 | Research public alpha distribution before choosing a launcher | 2026-10-20, host/source review only. |
 | [J827](PORTING_JOURNAL.md#j827--repair-the-siren-editor-fixture-before-dispatching-the-owning-build) | 2026-10-20 | Repair the Siren editor fixture before dispatching the owning build | 2026-10-20. |

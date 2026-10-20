@@ -4,6 +4,7 @@
 [ADR-002](ADR-002-public-alpha-distribution.md), keeping the IL2CPP ARM64 game
 and Android renderer fixed. This is source/tool inspection, not a phone build,
 gameplay proof or delivery-date commitment.
+Evidence: [J827](PORTING_JOURNAL.md#j827--assess-phone-only-owner-builds-with-the-il2cpp-runtime-fixed).
 
 **Finding:** this repository has no demonstrated phone-only build path. Many
 preparation and packaging stages have Android-capable open-source building
