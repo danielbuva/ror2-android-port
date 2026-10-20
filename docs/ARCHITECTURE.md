@@ -985,18 +985,26 @@ counters provide context only; this mode establishes no slot-specific damage
 or complete ability semantics. Host contracts extract the production phase
 policy and check selector/refusal routing.
 
-The same owner takes three one-shot readiness snapshots only in this Toolbot
-mode: before special, after the native Dual Wield override, and at the first
-secondary-readiness refusal or sequence stop. They read stock, recharge,
+The same owner takes four one-shot readiness snapshots only in this Toolbot
+mode: before special, after the native Dual Wield override, at the first
+secondary-readiness refusal or sequence stop, and separately at the actual
+terminal stop. The final snapshot retains its own phase, outcome, elapsed time,
+frame count and fixed time without replacing the first refusal. They read stock, recharge,
 enabled state, both native readiness predicates, the configured machine name,
 the actual resolved machine reference, and the separately named Weapon/Weapon2
-machines. Missing operands and exceptions have explicit status fields;
+machines. Each machine also reports enabled/active state, update-transition
+eligibility, pending-main status, configured main type and public networker/index/
+authority values. An assigned index is not proof of private network-array
+membership; the pending target type has no public API and stays unavailable.
+Missing operands and exceptions have explicit status fields;
 `captured` distinguishes a real snapshot from an empty serialized object.
 A missing or destroyed resolved reference stays unavailable rather than
 falling back to an empty-name lookup. No native readiness gate changes.
 The report owns these values for the session; disposal releases input before
 the observer/body. `test_toolbot_readiness_observation.py` exercises the
-production resolver, including Unity-style fake-null references.
+production resolver, including Unity-style fake-null references;
+`test_toolbot_terminal_readiness_capture.py` executes distinct, idempotent
+first-refusal/terminal headers and checks bounded public queries.
 
 The default-off `--captain-supply-beacon` selector composes in this same owner
 for one assisted Captain run with the exact native six-component identity and

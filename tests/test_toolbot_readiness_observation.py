@@ -5,6 +5,7 @@ from __future__ import annotations
 import subprocess
 import tempfile
 import unittest
+import os
 from pathlib import Path
 
 
@@ -61,26 +62,35 @@ class ToolbotReadinessObservationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         root = find_repo_root(Path(__file__).resolve())
-        owner = root / "tools/unity/runtime/input/SurvivorSkillInputCoverage.cs"
+        owner = Path(
+            os.environ.get(
+                "TOOLBOT_READINESS_SOURCE",
+                root / "tools/unity/runtime/input/SurvivorSkillInputCoverage.cs",
+            )
+        )
         cls.source = owner.read_text(encoding="utf-8")
 
     def test_snapshots_are_fixed_and_toolbot_only(self) -> None:
         source = self.source
-        self.assertEqual(source.count("new ToolbotReadinessObservation()"), 3)
+        self.assertEqual(source.count("new ToolbotReadinessObservation()"), 4)
         self.assertIn(
             "if (toolbotOffhandMode)\n        {\n            report.toolbotReadinessBeforeSpecial",
             source,
         )
         capture = method_body(source, "void CaptureToolbotReadinessSnapshot(")
-        self.assertIn("if (observation == null || observation.captured)\n            return;", capture)
-        self.assertIn("observation.captured = true;", capture)
-        self.assertIn("observation.captureCount = 1;", capture)
+        header = method_body(source, "public static bool BeginToolbotReadinessCaptureHeader(")
+        self.assertIn("if (observation == null || observation.captured)", header)
+        self.assertIn("observation.captured = true;", header)
+        self.assertIn("observation.captureCount = 1;", header)
+        self.assertIn("BeginToolbotReadinessCaptureHeader(observation", capture)
         for snapshot in (
             "toolbotReadinessBeforeSpecial",
             "toolbotReadinessAfterOverride",
             "toolbotReadinessAtStop",
+            "toolbotReadinessAtTerminal",
         ):
             self.assertIn(f"CaptureToolbotReadinessSnapshot(report.{snapshot}", source)
+        self.assertIn('"terminal:" + (outcome ?? "unknown")', source)
         self.assertIn("phase-3-secondary-native-readiness-refusal", source)
 
     def test_snapshot_records_native_operands_and_exception_statuses(self) -> None:
@@ -136,7 +146,10 @@ class ToolbotReadinessObservationTests(unittest.TestCase):
             self.source,
             "ToolbotReadinessMachineObservation CaptureToolbotReadinessMachine(",
         )
-        self.assertIn('availability = machine ? "available" : "unavailable"', machine_capture)
+        self.assertIn(
+            "availability = ToolbotObjectAvailability(ReferenceEquals(machine, null), machine)",
+            machine_capture,
+        )
         wrapper = f"""using System;
 namespace UnityEngine {{
     public class Object {{

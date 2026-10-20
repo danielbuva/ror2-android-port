@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J780](PORTING_JOURNAL.md#j780--separate-mul-t-first-refusal-and-terminal-readiness-evidence) | 2026-10-20 | Separate MUL-T first-refusal and terminal readiness evidence | Date: 2026-10-20. |
 | [J779](PORTING_JOURNAL.md#j779--honor-captain-native-readiness-and-preserve-siren-transport-failures) | 2026-10-20 | Honor Captain native readiness and preserve Siren transport failures | Date: 2026-10-20. |
 | [J778](PORTING_JOURNAL.md#j778--managed-wwise-receives-monitor-control-but-not-original-event-completion) | 2026-10-20 | Managed Wwise receives monitor control but not original event completion | Hypothesis: moving callback setup after successful native Init allows a real managed monitor witness, followed by an original Global event through the same ret… |
 | [J777](PORTING_JOURNAL.md#j777--siren-transport-stops-before-source-entry-registration-is-recorded) | 2026-10-20 | Siren transport stops before source-entry registration is recorded | Hypothesis: J768's default-off native source-entry owner can complete a bounded assisted route into Ship Graveyard with egg input off. |

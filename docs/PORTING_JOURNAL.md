@@ -15120,3 +15120,49 @@ toolbot-bbd-readiness-triage/findings.md;
 siren-source-entry-first-failure/r3/ and r2/review/;
 codex-survivor-siren-host-r1/; codex-survivor-siren-next-compile/r1/.
 Raw native input, reports and generated outputs stay ignored.
+
+
+## J780 — Separate MUL-T first-refusal and terminal readiness evidence
+
+Date: 2026-10-20. Hypothesis: J779's first-refusal snapshot cannot explain
+why native offhand readiness remains false at the deadline; a separate final
+observation can distinguish a transient transition from a persistent blocker
+without changing native execution.
+
+`SurvivorSkillInputCoverage` keeps the existing three one-shot observations
+and adds a separate one-shot terminal snapshot in the same default-off Toolbot
+selector. It retains phase, outcome, elapsed seconds, frame count and fixed time.
+Repeated calls return before reading the clock or native operands once captured.
+Each machine also records its public enabled/active state, transition-on-update
+predicate, pending-main query, configured main type and networker/index/authority
+values. Null and Unity fake-null references stay distinct. The private pending
+target type remains explicitly unavailable; networker plus assigned index does
+not claim membership in its private array. No reflection, state transition,
+stock/cooldown assignment, input request, timeout or readiness predicate changes.
+
+Accepted native `ToolbotDualWieldBase` installs the contextual Weapon2 resolver
+and queues both weapon machines to main on authority. `NetworkStateMachine.Awake`
+assigns public networker/index relationships. Pinned Starstorm2's named-machine/
+network setup is useful prior art, while current exact-input references and
+J779's observations remain authoritative. No authored prefab evidence proves a
+composition defect, so no gameplay correction is inferred from pending state.
+The terminal observation is the next runtime discriminator.
+
+Independent review applies both patches in scratch and passes eight focused
+host tests. Root retains the existing early one-shot guard and removes unused
+machine-level clock fields; the snapshot header owns timing. The public tests
+execute distinct/idempotent first-refusal and terminal headers and check the
+bounded public reads, fake-null behavior, defaults and frozen native gate.
+Root's settled full suite passes 1,116 tests in 31.548 s with 431 recorded inputs
+and HEAD unchanged. Offline compilation passes 106 runtime plus four support
+sources and 264 exact references with zero errors and no source/reference drift;
+host DLL SHA-256 `8c2426aa8fef9b672f3cb8440e97e231d9804455cb8a9317b370adb455bb6897`.
+Changed C# ranges are formatted with no non-whitespace change. No new APK or
+native offhand acceptance follows from these host results. The source-staging
+rebuild steps reproduce this owner and need replay; that pipeline remains with
+the parallel session.
+
+Evidence: work/coordination/toolbot-bbd-readiness-triage/r2/ and
+independent-review/; codex-survivor-siren-host-r2/;
+codex-survivor-siren-next-compile/r3/. The accepted APK remains J776's bbd1f3c1;
+raw game source, API references and reports stay ignored.

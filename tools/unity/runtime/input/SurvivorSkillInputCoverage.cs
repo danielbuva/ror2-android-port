@@ -69,19 +69,21 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
                       toolbotOffhandWeapon2State;
         // Fixed Toolbot-only diagnostic snapshots. Each is captured at most once;
         // ordinary skill coverage reports leave these fields null.
-        public ToolbotReadinessObservation toolbotReadinessBeforeSpecial,
-                                            toolbotReadinessAfterOverride,
-                                            toolbotReadinessAtStop;
+        public ToolbotReadinessObservation toolbotReadinessBeforeSpecial, toolbotReadinessAfterOverride, toolbotReadinessAtStop,
+            toolbotReadinessAtTerminal;
         public SlotCoverage[] slots;
     }
 
     [Serializable]
     public sealed class ToolbotReadinessMachineObservation
     {
-        public string role, availability, customNameStatus, stateStatus, pendingStatus, interruptStatus;
-        public int instanceId;
-        public string customName, stateType;
-        public bool pendingState, canInterrupt;
+        public string role, availability, customNameStatus, stateStatus, pendingStatus, interruptStatus, enabledStatus, activeSelfStatus,
+            activeInHierarchyStatus, transitionOnUpdateStatus, pendingMainStateStatus, pendingTargetTypeStatus, networkerStatus,
+            networkIndexStatus, networkAuthorityStatus, configuredMainStateTypeStatus;
+        public int instanceId, networkerInstanceId, networkIndex;
+        public string customName, stateType, pendingTargetType, configuredMainStateType, networkMembership;
+        public bool pendingState, canInterrupt, componentEnabled, activeSelf, activeInHierarchy, transitionOnUpdate, pendingMainState,
+            networkAuthority;
     }
 
     [Serializable]
@@ -90,12 +92,11 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         public bool captured;
         public int captureCount, phase, secondaryInstanceId, stock, requiredStock, maxStock,
                    interruptPriority;
-        public float elapsedSeconds, rechargeStopwatch, finalRechargeInterval;
-        public string outcome, secondaryAvailability, enabledStatus, skillDefStatus,
-                      skillDefNameStatus, configuredMachineStatus, stockStatus,
-                      requiredStockStatus, maxStockStatus, rechargeStopwatchStatus,
-                      finalRechargeIntervalStatus, interruptPriorityStatus,
-                      isReadyStatus, canExecuteStatus, skillDefIsReadyStatus, skillDefCanExecuteStatus;
+        public float elapsedSeconds, rechargeStopwatch, finalRechargeInterval, fixedTime;
+        public int frameCount;
+        public string outcome, secondaryAvailability, enabledStatus, skillDefStatus, clockStatus, skillDefNameStatus,
+            configuredMachineStatus, stockStatus, requiredStockStatus, maxStockStatus, rechargeStopwatchStatus, finalRechargeIntervalStatus,
+            interruptPriorityStatus, isReadyStatus, canExecuteStatus, skillDefIsReadyStatus, skillDefCanExecuteStatus;
         public bool enabled, isReady, canExecute, skillDefIsReady, skillDefCanExecute;
         public string skillDefName, configuredMachineName;
         public ToolbotReadinessMachineObservation resolvedMachine, weaponMachine, weapon2Machine;
@@ -235,6 +236,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
             report.toolbotReadinessBeforeSpecial = new ToolbotReadinessObservation();
             report.toolbotReadinessAfterOverride = new ToolbotReadinessObservation();
             report.toolbotReadinessAtStop = new ToolbotReadinessObservation();
+            report.toolbotReadinessAtTerminal = new ToolbotReadinessObservation();
         }
         for (int i = 0; i < 4; i++)
         {
@@ -909,16 +911,49 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         return "exception:" + (exception != null ? exception.GetType().FullName : "unknown");
     }
 
-    void CaptureToolbotReadinessSnapshot(ToolbotReadinessObservation observation, float elapsed,
-                                         string outcome)
+    public static string ToolbotObjectAvailability(bool referenceIsNull, bool unityObjectAlive)
+    {
+        if (referenceIsNull)
+            return "null";
+        return unityObjectAlive ? "available" : "destroyed-fake-null";
+    }
+
+    public static bool BeginToolbotReadinessCaptureHeader(ToolbotReadinessObservation observation, int phase, float elapsedSeconds,
+                                                          string outcome, int frameCount, float fixedTime, string clockStatus)
+    {
+        if (observation == null || observation.captured)
+            return false;
+        observation.captured = true;
+        observation.captureCount = 1;
+        observation.phase = phase;
+        observation.elapsedSeconds = elapsedSeconds;
+        observation.outcome = outcome;
+        observation.frameCount = frameCount;
+        observation.fixedTime = fixedTime;
+        observation.clockStatus = clockStatus;
+        return true;
+    }
+
+    void CaptureToolbotReadinessSnapshot(ToolbotReadinessObservation observation, float elapsed, string outcome)
     {
         if (observation == null || observation.captured)
             return;
-        observation.captured = true;
-        observation.captureCount = 1;
-        observation.elapsedSeconds = elapsed;
-        observation.phase = report.toolbotOffhandPhase;
-        observation.outcome = outcome;
+        int frameCount = 0;
+        float fixedTime = 0;
+        string clockStatus = "unavailable";
+        try
+        {
+            frameCount = Time.frameCount;
+            fixedTime = Time.fixedTime;
+            clockStatus = "available";
+        }
+        catch (Exception exception)
+        {
+            clockStatus = ToolbotObservationException(exception);
+        }
+        if (!BeginToolbotReadinessCaptureHeader(observation, report.toolbotOffhandPhase, elapsed, outcome, frameCount, fixedTime,
+                                                clockStatus))
+            return;
         observation.secondaryAvailability = "unavailable";
         observation.enabledStatus = observation.skillDefStatus = observation.skillDefNameStatus = "unavailable";
         observation.configuredMachineStatus = observation.stockStatus = observation.requiredStockStatus = "unavailable";
@@ -1136,12 +1171,26 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     ToolbotReadinessMachineObservation CaptureToolbotReadinessMachine(string role,
         InterruptPriority interruptPriority, bool interruptPriorityAvailable, EntityStateMachine machine)
     {
-        ToolbotReadinessMachineObservation observation = new ToolbotReadinessMachineObservation {
-            role = role, availability = machine ? "available" : "unavailable",
-            customNameStatus = "unavailable", stateStatus = "unavailable",
-            pendingStatus = "unavailable",
-            interruptStatus = interruptPriorityAvailable ? "unavailable" : "unavailable-skill-priority"
-        };
+        bool networkIndexAvailable = false;
+        ToolbotReadinessMachineObservation observation =
+            new ToolbotReadinessMachineObservation { role = role,
+                                                     availability = ToolbotObjectAvailability(ReferenceEquals(machine, null), machine),
+                                                     customNameStatus = "unavailable",
+                                                     stateStatus = "unavailable",
+                                                     pendingStatus = "unavailable",
+                                                     interruptStatus =
+                                                         interruptPriorityAvailable ? "unavailable" : "unavailable-skill-priority",
+                                                     enabledStatus = "unavailable",
+                                                     activeSelfStatus = "unavailable",
+                                                     activeInHierarchyStatus = "unavailable",
+                                                     transitionOnUpdateStatus = "unavailable",
+                                                     pendingMainStateStatus = "unavailable",
+                                                     pendingTargetTypeStatus = "unavailable-no-public-api",
+                                                     networkerStatus = "unavailable",
+                                                     networkIndexStatus = "unavailable",
+                                                     networkAuthorityStatus = "unavailable",
+                                                     configuredMainStateTypeStatus = "unavailable",
+                                                     networkMembership = "unavailable" };
         if (!machine)
             return observation;
         try
@@ -1151,6 +1200,94 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         catch (Exception exception)
         {
             observation.availability = ToolbotObservationException(exception);
+        }
+        try
+        {
+            observation.componentEnabled = machine.enabled;
+            observation.enabledStatus = "available";
+        }
+        catch (Exception exception)
+        {
+            observation.enabledStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            observation.activeSelf = machine.gameObject.activeSelf;
+            observation.activeSelfStatus = "available";
+        }
+        catch (Exception exception)
+        {
+            observation.activeSelfStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            observation.activeInHierarchy = machine.gameObject.activeInHierarchy;
+            observation.activeInHierarchyStatus = "available";
+        }
+        catch (Exception exception)
+        {
+            observation.activeInHierarchyStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            observation.transitionOnUpdate = machine.ShouldStateTransitionOnUpdate;
+            observation.transitionOnUpdateStatus = "available";
+        }
+        catch (Exception exception)
+        {
+            observation.transitionOnUpdateStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            observation.pendingMainState = machine.IsPendingMainState();
+            observation.pendingMainStateStatus = "available";
+        }
+        catch (Exception exception)
+        {
+            observation.pendingMainStateStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            var configuredMainState = machine.mainStateType.stateType;
+            observation.configuredMainStateType = configuredMainState != null ? configuredMainState.FullName : "";
+            observation.configuredMainStateTypeStatus = configuredMainState != null ? "available" : "unavailable-main-state-type";
+        }
+        catch (Exception exception)
+        {
+            observation.configuredMainStateTypeStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            observation.networkIndex = machine.networkIndex;
+            observation.networkIndexStatus = "available";
+            networkIndexAvailable = true;
+        }
+        catch (Exception exception)
+        {
+            observation.networkIndexStatus = ToolbotObservationException(exception);
+        }
+        try
+        {
+            NetworkStateMachine networker = machine.networker;
+            observation.networkerStatus = ToolbotObjectAvailability(ReferenceEquals(networker, null), networker);
+            observation.networkMembership = !networker                      ? "networker-unavailable"
+                                            : !networkIndexAvailable        ? "network-index-unavailable"
+                                            : observation.networkIndex >= 0 ? "networker-present-index-assigned"
+                                                                            : "networker-present-index-unassigned";
+            if (networker)
+            {
+                observation.networkerInstanceId = networker.GetInstanceID();
+                observation.networkAuthority = networker.hasAuthority;
+                observation.networkAuthorityStatus = "available";
+            }
+            else
+                observation.networkAuthorityStatus = "unavailable-networker";
+        }
+        catch (Exception exception)
+        {
+            observation.networkerStatus = ToolbotObservationException(exception);
+            observation.networkAuthorityStatus = ToolbotObservationException(exception);
+            observation.networkMembership = "exception";
         }
         try
         {
@@ -1175,6 +1312,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
         {
             observation.pendingState = machine.HasPendingState();
             observation.pendingStatus = "available";
+            observation.pendingTargetTypeStatus = "unavailable-no-public-api";
         }
         catch (Exception exception)
         {
@@ -1441,6 +1579,7 @@ public sealed class SurvivorSkillInputCoverage : IDisposable
     {
         CaptureToolbotReadinessSnapshot(report.toolbotReadinessAtStop, report.elapsedSeconds,
             "offhand-sequence-stop:" + (outcome ?? "unknown"));
+        CaptureToolbotReadinessSnapshot(report.toolbotReadinessAtTerminal, report.elapsedSeconds, "terminal:" + (outcome ?? "unknown"));
         SampleToolbotDamageCounts();
         if (bridge)
         {
