@@ -62,6 +62,20 @@ def package_hash(device, package=PACKAGE):
     return device.sh("sha256sum", paths[0][8:]).split()[0]
 
 
+def loaded_native(device, pid, code_directory, expected):
+    maps = device.sh("run-as", PACKAGE, "cat", "/proc/" + pid + "/maps")
+    paths = {line.split(None, 5)[5] for line in maps.splitlines() if len(line.split(None, 5)) == 6 and line.split(None, 5)[5].endswith("/libil2cpp.so")}
+    if len(paths) != 1:
+        raise RuntimeError("Expected one observed loaded IL2CPP library")
+    path = paths.pop()
+    if not PurePosixPath(path).is_relative_to(PurePosixPath(code_directory)):
+        raise RuntimeError("Loaded native library is outside the installed fixture")
+    digest = device.sh("sha256sum", path).split()[0]
+    if digest != expected:
+        raise RuntimeError("Loaded native library hash differs from the explicit APK")
+    return {"path": path, "sha256": digest}
+
+
 def cleanup_owned(device, hashes):
     actual = package_hash(device)
     if actual is None:
@@ -166,6 +180,10 @@ def check_action(request):
                     device.cmd("logcat", "-d", "--pid=" + pid.split()[0], "-v", "threadtime", "Unity:I", "AndroidRuntime:E", "*:S")
                 )
         save()
+        if not pid:
+            raise RuntimeError(label + ": no live fixture PID")
+        entry["native"] = loaded_native(device, pid.split()[0], result["installs"][-1]["code_directory"], result["installs"][-1]["native_sha256"])
+        save()
         if negative:
             if not report.get("failure", "").startswith("candidate: Candidate hash mismatch") or report.get("bundleLoaded") or report.get("successfulCycles"):
                 raise RuntimeError("Mismatched candidate was not refused before native loading")
@@ -209,6 +227,9 @@ def check_action(request):
             if install["actual_sha256"] != item["sha256"]:
                 raise RuntimeError("Installed fixture hash does not match its explicit APK")
             install["package_path"] = device.sh("pm", "path", PACKAGE)
+            install["code_directory"] = device.sh("readlink", "-f", str(PurePosixPath(install["package_path"].strip()[8:]).parent)).strip()
+            with zipfile.ZipFile(item["path"]) as archive:
+                install["native_sha256"] = hashlib.sha256(archive.read("lib/arm64-v8a/libil2cpp.so")).hexdigest()
             details = device.sh("dumpsys", "package", PACKAGE)
             if not re.search(r"\bversionCode=" + str(item["version_code"]) + r"\b", details):
                 raise RuntimeError("Installed version code mismatch")

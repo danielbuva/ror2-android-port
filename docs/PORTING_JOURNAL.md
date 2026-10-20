@@ -19088,3 +19088,240 @@ live/completed snapshots before waiting for the next menu so a host timeout
 cannot hide already-written teardown evidence, then address only a demonstrated
 presentation mismatch. No authored runtime or recipe change occurs here;
 J840 remains the default baseline. Moon stays manual and audio remains off.
+
+## J836 — Build an authored APK on Android and test app-host execution
+
+2026-10-20. Hypothesis: Android-host open tool components can compile and package
+an independently authored native/Java app without a Unity-built base APK; that
+app can launch an immutable PackageManager-installed executable while refusing
+identical bytes copied to writable private storage. Fetch and integrate accepted
+`origin/main` `d55910f` before this entry. Coordinate J835 and J837 for the main
+session and J836 for this isolated alpha experiment. No Unity/game runtime,
+working game APK, original installation or device security setting changes.
+
+**Owner and inputs.** `tools/phone-build/host/` owns the C arithmetic/context
+probe, Java activity, literal manifest and Android-side standard-library build
+driver. `phone_host_check.py` owns explicit device selection, fixed fixture
+identity, APK/native-control hashes, fresh storage/capacity, actual installation
+placement/backing, report/log collection and hash-proven cleanup. Its current
+experimental `phone-host-check` action takes an ignored exact-artifact request.
+ARCHITECTURE and LOCAL_STATE name these support paths; no game build calls them.
+
+Use the existing receipt-owned Android tool workspace, Termux source/package
+pin from J833, Clang 21.1.8/LLD, Python 3.14.8, OpenJDK 21.0.12,
+aapt/zipalign 16.0.0.4-4 and apksigner 37.0.0. Supply owner SDK API 30
+`android.jar` and build-tools 34.0.0 `d8.jar` as private hash-bound inputs.
+No Unity/editor-generated player or asset is an input. The native link uses the
+phone's system libc; this is not Unity NDK compiler/sysroot equivalence.
+The driver creates a new output directory, retains the first failure and never
+overwrites an earlier attempt. Its disposable signing password exists only in
+process memory/child environment; the encrypted key is not durable owner custody.
+
+**Initial build failures.** Preserve the generic `lld` driver refusal, then
+invoke its `ld.lld` ELF frontend. Native C compile/link and a shell execution
+control pass. Javac next refuses the Android bootclasspath's lambda bootstrap
+method; use ordinary Runnable classes. Pinned D8 then reports an internal null-string
+error while reading an anonymous class. Retaining Java parameter
+names with `-parameters` permits that same D8 input path to complete. This is a
+bounded observed compatibility fix, not a claim to fix arbitrary Java libraries.
+The unchanged authored inputs and all failed build directories remain retained.
+
+**Phone build.** From committed `007c460`, the Android driver completes native
+PIE compilation/linking, javac, D8, resource/manifest packaging, ZIP assembly,
+alignment, key generation, signing, signature verification and post-sign
+alignment checking. The APK contains the same native bytes as an installed
+`lib/arm64-v8a/libtoolprobe.so` and an asset negative control. Its fixture
+package targets API 30, requires API 24+, requests no permissions/network and
+reads no game inputs. First APK:
+`ca46c7881a158a671bd0755656f36db46c9643c8f732e21b713942d1121459a5`.
+This is an entirely phone-built authored app, not a complete phone-built Unity
+or IL2CPP player. Alignment alone does not establish ELF 16 KiB support.
+
+**First device failure.** The immutable installed executable exists, is not
+writable to the app, and returns the authored marker/arithmetic under the app
+UID. The identical writable private copy also executes. The required refusal
+control therefore fails; do not classify the whole sandbox gate as passed.
+The runner removes only the exact owned APK, confirms absence/display sleep and
+checks the existing game APK unchanged. Preserve the result:
+`work/experiments/phone-host/20261020T210213.180078Z/result.json`.
+
+**Bounded diagnosis.** Add only actual API and optional self/child process
+context observations, keeping the same refusal requirement. Committed `53bb492`
+again builds entirely on Android, producing APK
+`f1c13078ea9e8be50978bb9a4a59c41d53249e518ee0aaa8b3996d8c11dc85d0`.
+On device API 33 with target API 30, app and both child processes have the same
+app UID and standard `untrusted_app_30` domain. Installed immutable execution
+passes; writable execution again succeeds, so the overall contract remains
+false. Shell reads of the SELinux enforcement interface are denied. These
+observations do not establish whether enforcement mode, vendor policy or
+another platform difference causes the result; no policy or setting is changed.
+No other device is used to hide that limitation.
+
+The second result is retained at
+`work/experiments/phone-host/20261020T211421.992162Z/result.json`; owned removal,
+display sleep and game APK equality again pass. Private raw contexts/categories,
+UIDs, data paths, supplied tools, signing outputs and logs remain ignored.
+`work/coordination/phone-proof/host-proof-receipt.json` binds builds, original
+failures, tool-input hashes, device results and the denied enforcement query;
+SHA-256 `95cb8d906333bcb651d228aa5b64415092db9e0512d7fe60b0b4e0cf277ebdd2`.
+
+**Validation and classification.** Fresh-clone CI on integrated `5d17b97` passes
+1,174 host tests with 52 optional skips, Ruff, public audit and doc freshness.
+The driver failure contract proves early stop, input hashes, evidence retention,
+no password in outputs and overwrite refusal. Device contracts enforce explicit
+selection, identical native/control bytes and unknown-hash cleanup refusal.
+Full game doctor/preflight still refuse independent clone-local bootstrap debt;
+these app tests do not qualify the game or its installation workflow.
+
+The phone shell can produce this authored APK from source, and installed native
+execution is observed in its app. Expected Android writable-code refusal is not
+qualified here. Revisit with an explicitly assigned platform that demonstrates
+the documented restriction, preserving this failed control; do not lower the
+target SDK, change policy, use privileged execution or execute writable tools to
+claim a general installer. Python/.NET/Clang dependency hosting, exact Unity
+player construction, rich content/shaders, tool-delivery rights, durable signing,
+user-mediated installation and performance remain separate open gates.
+
+References: Android's [execution restriction](https://developer.android.com/about/versions/10/behavior-changes-10#execute-permission),
+[public native library directory](https://developer.android.com/reference/android/content/pm/ApplicationInfo#nativeLibraryDir),
+[Android 13 app policy](https://android.googlesource.com/platform/system/sepolicy/+/refs/heads/android13-release/private/app_neverallows.te)
+and [official D8 invocation](https://r8.googlesource.com/r8/+/refs/heads/main/README.md#Running-D8).
+This generic packaging/tool-host experiment introduces no RoR2-specific content,
+serialization, middleware or gameplay mechanism.
+
+## J839 — Compile and link the authored IL2CPP native library on Android
+
+2026-10-20. Hypothesis: the exact authored content fixture's recorded native
+compilation graph can produce an ARM64 IL2CPP library on Android, and the
+existing Unity player can load it with unchanged metadata/content and Android
+rendering binaries. Fetch/integrate main through J840 `7938fac` before this
+entry; J839 is coordinated with the main session. The main session owns the
+111-source game player and its original gameplay/audio/animation work.
+No original installation, game-runtime source or working game APK changes.
+
+**Inputs and owner.** `phone_native.py` stages only the hash-bound authored
+content fixture. The base APK is J834's
+`339c672442a1ce21c8a31e115986bb9152f8fb80b52e0b7570cd962228f7b17b`.
+Its supplied Unity runtime/Baselib source/archive, original NDK target headers,
+C++ libraries, generated C++, metadata and native Bee graph remain private.
+Desktop managed compilation/stripping/code generation and base engine/player
+content are explicit dependencies, not hidden phone-generated inputs. No game
+assemblies or assets enter this experiment. The original graph has 264 unique
+native compile tasks and one link; the staged input set is about 161 MB.
+
+The generator copies underlying source bytes unchanged. It creates fresh
+relative include wrappers from parsed ordered lump definitions, rejecting
+unknown directives/dependencies, foreign roots and traversal. Command arrays
+preserve target/ABI/optimization/defines; response files are expanded as
+arguments. The Android driver verifies all input hashes, writes to a new output
+and retains each command, log and first failure. ARCHITECTURE names this owner
+and the current experimental `phone-native-fixture` action; LOCAL_STATE lists
+private replay adapters and generated state. No game build calls them.
+
+**Declared tool differences.** The phone uses the J833-pinned Android-host
+Clang 21.1.8 and LLD instead of the desktop NDK Clang 9.0.8 and BFD. Compiler
+resource headers/builtins come from Clang 21; the original NDK 21.3.6528147 target
+sysroot, C++ headers/static C++/ABI libraries and GCC runtime are selected
+explicitly. The recorded target is `aarch64-linux-android22`; it is preserved,
+not inferred from the host. The fixture retains exact Unity 2021.3.45f2,
+IL2CPP ARM64, Vulkan, Development, Low managed stripping and engine stripping
+disabled. These pins do not establish binary or performance equivalence.
+
+**First compilation/link failures.** From committed `363adb3`, every one of the
+264 translation units compiles on the phone. The first compile/link attempt
+takes about 174 seconds excluding staging, then linking fails because the host
+compiler's implicit C++/unwind selection is not satisfied by the relocated
+original target inputs. Compare actual original/new compiler dry runs; do not
+add a newer shared C++ runtime to conceal the mismatch.
+
+Select the original static C++/ABI/GCC libraries explicitly and disable the
+compiler's implicit C++/unwind libraries. The next link exposes the original
+NDK GCC library's forwarding script: it requires `libgcc_real.a` as well as the
+already staged compiler-rt extras. Add the exact original archive/search path.
+Preserve both failed links and all compiled objects. No runtime source is
+patched and no replacement execution backend is introduced.
+
+The optional explicit reuse request binds the prior result and every object
+hash. Reuse requires equal source/target manifests, compile plan and the actual
+recorded compiler argument arrays; only driver/plan metadata and the named GCC
+link inputs may differ. Verify all 264 old objects before copying them into a
+new attempt. Host contracts reject source drift, compile-plan changes and
+object drift. The successful relink uses committed `697c662`; it performs no
+unnecessary recompilation and completes in under 1 second after validation/copy.
+
+**Native output.** The phone-linked unstripped library is 81,040,448 bytes,
+SHA-256 `bbb466f3e7aaeb05e737d7e2aa902dd5b03538b2391bdbef169750ea8245a679`.
+Independent pinned NDK ELF inspection confirms AArch64 shared-library form,
+SONAME `libil2cpp.so`, all 237 expected `il2cpp_` exports and no new shared
+library dependencies. The dependency set remains log, dl, m and libc.
+Total exported symbols differ (2,359 desktop versus 2,353 phone); this is not a
+claim of identical code/ABI for untested consumers. The desktop packaged control
+is stripped (9,362,008 bytes), so that size comparison is not a production
+regression measurement. Retain full debug data for this first loading proof.
+
+**Packaging and metadata binding.** `phone_native_apk.py` accepts only the
+separate authored fixture. It pins base APK, native library and metadata hashes,
+checks the ARM64 shared-library header, increases the version integer and
+replaces that one native ZIP entry. Other payload/notices remain unchanged;
+obsolete signatures are removed. Independent ELF inspection and device loading
+remain required beyond that header check. Its current host interface is
+`phone-native-apk-fixture`; its identical standalone Android writer uses the
+unchanged binary-manifest helper beside it.
+
+The actual metadata SHA-256 stays
+`d515a852e565f151c1ea4f6d0ecb96aab93b8d9b095207df4feebf619e69b9b5`.
+All uncompressed payload entries except manifest/native library match the base,
+including libunity, libmain, shaders, player data, metadata and the authored
+bundle. Android repackaging/alignment/signing produces versions 3 and 4 under
+one new disposable key. Its password exists only in memory/child environment.
+Both signatures verify on Android and independently on the desktop; certificates
+match. Post-sign alignment checks pass. No ELF 16 KiB or release-size claim is made.
+
+- Phone version 3: `9ecf9ec991294afc70cb133ee090f4ad4c16c85409c09fc9ada7af04606fc64b`.
+- Phone version 4: `2991617b7f63369259c49f14ac8627802eaddc50fe451854b248d0b6d585e2f5`.
+
+**Device result.** Committed `db9e9fa` adds an independent consumer check: read
+this fixture process's mapped native path, require it inside the observed
+installed code directory, and hash those actual bytes against the explicit APK.
+Each of the embedded, refused-hash, external phone-generated input and updated
+input phases maps exactly the phone-linked library above. Positive phases each
+pass two native load/read/unload cycles in Unity 2021.3.45f2/Vulkan; the wrong
+candidate hash refuses before loading. The increasing-version update retains
+both private marker and external candidate. Each installation performs fresh
+capacity/storage queries and records actual placement/private/runtime backing.
+Owned teardown removes only the exact fixture, verifies absence/display sleep
+and confirms the existing alpha game APK unchanged. No other device is used.
+
+Successful result:
+`work/experiments/phone-packaging/20261020T215102.878539Z/result.json`.
+`work/coordination/phone-proof/native-proof-receipt.json` binds that result,
+source/target manifests, original failures, object-reuse request, ELF/API
+comparison, signed APK comparisons and host verification/CI; SHA-256
+`05da719334257cf344b2a7cdbdd34fe72151c357657d8baf7e9694d15fc71159`.
+Raw source, command paths, device identities/maps, supplied tools and signing
+outputs remain ignored. The public checkpoint contains authored support only.
+
+**Validation and next gate.** Fresh-clone CI on `869ddbd` passes 1,185 host tests
+with 53 optional skips, Ruff, public audit and developer-doc/journal freshness.
+An earlier integration check correctly refuses the unstaged relocated developer
+command table; preserve that failure and regenerate/stage DEVELOPING.md, keeping
+the landing README player-first. The independent host suite covers argument
+preservation, ordered wrapper generation, path/drift refusals, exact object
+reuse, standalone native repackaging, metadata/notices preservation and actual
+mapped-library ownership/hash refusal.
+
+This proves native compilation/linking and real Unity loading for an authored
+fixture using supplied desktop-generated inputs. It is not a complete
+phone-only owner build, a game port acceptance or a performance benchmark.
+Next qualify the full fixture converter/stripping path and richer target
+content/shaders, permitted tool delivery, normal app-host dependencies/policy,
+durable owner signing and user-mediated installation. Benchmark a resulting
+alternative game pipeline with matched pins/workloads before selecting it;
+IL2CPP alone does not imply identical performance. Keep the desktop fallback
+and working Android renderer/runtime. Revisit this native gate when any source,
+compiler/linker/sysroot, metadata, engine, mode or target contract changes.
+
+Primary references: Android's [external build-system guide](https://developer.android.com/ndk/guides/other_build_systems)
+and [C++ runtime selection](https://developer.android.com/ndk/guides/cpp-support).
+This generic authored build experiment introduces no RoR2-specific reconstruction,
+content-loader, shader, middleware or gameplay mechanism.

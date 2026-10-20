@@ -19,8 +19,10 @@ Decision preparation: [J829](PORTING_JOURNAL.md#j829--research-public-alpha-dist
       to the full rendered/script-bound fixture; phone-side TextAsset generation
       is qualified in [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android).
 - [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
-      tools beyond the authored converter proof; qualify full native linking,
-      app sandbox execution, complete packaging, durable owner signing-key
+      tools beyond the authored converter proof; extend
+      [J839’s native fixture proof](PORTING_JOURNAL.md#j839--compile-and-link-the-authored-il2cpp-native-library-on-android)
+      to the complete accepted game,
+      app sandbox execution (including [J836’s unresolved refusal control](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution)), complete packaging, durable owner signing-key
       custody and user-mediated installer/update flows beyond the fixture proof.
 - [ ] Present bounded proof findings before changing the working build or choosing
       the final installation experience. Keep other execution backends excluded.

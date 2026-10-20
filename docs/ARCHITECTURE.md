@@ -53,6 +53,39 @@ before reading reports or copying candidates. Editor checks/builds each write
 an isolated oracle report and require its pinned actual Unity version and
 native content checks, independently of process exit status.
 
+`tools/phone-build/host/` is separate experimental **support**. Its Android
+driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
+signing from explicitly supplied local tools. `HostProbeActivity` owns one
+background check of PackageManager-installed native execution and a writable
+copy's refusal, then writes `files/host-report.json`. It uses no Unity/game
+code, permissions or network. Setup and device cleanup are described in its
+[README](../tools/phone-build/host/README.md); no game build calls it.
+`phone_host_check.py` owns its explicit-device, hash-bound installation,
+two launches, report/backing collection and ownership-checked teardown through
+the current experimental `phone-host-check` action.
+
+`phone_native.py` owns experimental **support** for replaying the authored
+content fixture's native graph. `phone-native-fixture` verifies an explicit
+project/APK request, copies supplied runtime/NDK and generated source inputs
+unchanged, regenerates only include wrappers from their ordered dependency
+descriptions, and records structured compile/link arguments plus input hashes.
+Its standalone Android driver checks those hashes, builds into a new output
+directory and retains each command/log and the first failure. Clang/LLD host
+changes are explicit; desktop stripping/code generation and private Unity
+inputs remain dependencies. No game build uses this path.
+Relinks may reuse only a hash-bound complete object set with equal source/target
+inputs, compile plan and actual compiler arguments. Link repair selects the
+original NDK static C++/ABI/GCC libraries explicitly and preserves old attempts.
+
+`phone_native_apk.py` is separate packaging **support** for the authored content
+fixture only. It requires base APK, ARM64 shared-library and unchanged metadata
+hashes, substitutes that one native entry plus the version integer, retains
+other entry bytes/notices, and removes obsolete signatures. Its current
+`phone-native-apk-fixture` host action and standalone Android CLI produce new
+unsigned outputs; alignment, signing and device checks follow separately.
+The device checker also hashes the actually mapped IL2CPP library inside the
+observed installed code directory, independently of the APK's expected entry.
+
 Status words used below: **current** (part of the shipped whole-catalog game or the
 commands that build it), **support** (editor builders, host fixtures and tooling around the
 current path) and **historical** (kept for evidence; not reached by current commands).

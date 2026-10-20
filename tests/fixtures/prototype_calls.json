@@ -285,5 +285,50 @@
     "effects": [],
     "stdout": "",
     "exit": null
+  },
+  "phone-host-check": {
+    "calls": [
+      {
+        "module": "phone_host_check",
+        "function": "check_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  },
+  "phone-native-fixture": {
+    "calls": [
+      {
+        "module": "phone_native",
+        "function": "stage_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
+  },
+  "phone-native-apk-fixture": {
+    "calls": [
+      {
+        "module": "phone_native_apk",
+        "function": "stage_action",
+        "args": [
+          "lab"
+        ],
+        "kwargs": {}
+      }
+    ],
+    "effects": [],
+    "stdout": "",
+    "exit": null
   }
 }

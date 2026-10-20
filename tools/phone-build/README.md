@@ -5,6 +5,16 @@ and do not change the working Android project. Generated outputs, supplied
 Unity tools, dependency archives, signing material and raw evidence stay ignored.
 This is experimental tooling, not a supported phone installer.
 
+`host/` is a separate current experimental app-sandbox fixture. Its Android
+driver compiles authored C/Java, packages DEX/resources and aligns/signs an APK
+on the phone using explicit supplied tool roots and owner SDK inputs. It
+refuses an existing output directory and retains the first failing stage.
+`HostProbeActivity` compares a PackageManager-installed immutable native
+executable against the identical bytes copied to writable app storage, under
+target API 30. It uses public APIs and expects writable execution to be refused.
+This tests neither an interpreter host nor the game. See `host/README.md` for
+inputs and invocation.
+
 `ConverterFixture.cs` supplies a small arithmetic assembly for the exact local
 IL2CPP converter. A build-tool .NET host is independent of the game's native
 IL2CPP runtime. Compare all generated C++ and metadata against the desktop
