@@ -33,6 +33,7 @@ def coverage(inventory, oracle):
             exact = explicit.get(native["qualifiedName"], [])
             explicit_short = explicit.get(native["name"], []) if native["qualifiedName"] != native["name"] else []
             inferred = short.get(native["name"], [])
+            inferred_base = inferred[0]["base_type"].rsplit(".", 1)[-1] if len(inferred) == 1 and inferred[0]["base_type"] else None
             rows.append(
                 {
                     "native": native,
@@ -40,6 +41,8 @@ def coverage(inventory, oracle):
                     "explicit_short_candidates": [{"name": x["name"], "assembly": x["assembly"]} for x in explicit_short],
                     "managed_short_name_candidates": [{"name": x["name"], "assembly": x["assembly"], "base_type": x["base_type"]} for x in inferred],
                     "native_module_and_base_proven": False,
+                    "managed_base_label": inferred_base,
+                    "managed_base_label_matches_native": inferred_base == native.get("baseName") if inferred_base and native.get("baseName") else None,
                 }
             )
         reports[group] = {
@@ -51,6 +54,8 @@ def coverage(inventory, oracle):
             "unique_managed_short_name_matches": sum(len(x["managed_short_name_candidates"]) == 1 for x in rows),
             "ambiguous_managed_short_names": sum(len(x["managed_short_name_candidates"]) > 1 for x in rows),
             "missing_managed_short_names": sum(not x["managed_short_name_candidates"] for x in rows),
+            "short_name_base_label_matches": sum(x["managed_base_label_matches_native"] is True for x in rows),
+            "short_name_base_label_mismatches": sum(x["managed_base_label_matches_native"] is False for x in rows),
             "root_generation_qualified": False,
             "rows": rows,
         }

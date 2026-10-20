@@ -52,3 +52,12 @@ class PhoneRootContractTests(unittest.TestCase):
             self.assertEqual(report["unique_managed_short_name_matches"], 1)
             self.assertEqual(report["unique_explicit_qualified_matches"], 0)
             self.assertFalse(report["root_generation_qualified"])
+
+    def test_managed_base_label_cannot_replace_a_different_native_base(self):
+        item = {"name": "Managed.Texture", "base_type": "Managed.Object", "native_attributes": []}
+        inventory = {"assemblies": [{"group": "sdk", "assembly": "Fixture", "types": [item]}]}
+        oracle = {"allNativeTypes": [{"name": "Texture", "qualifiedName": "Native::Texture", "baseName": "NamedObject"}]}
+        report = coverage(inventory, oracle)["sdk"]
+        self.assertEqual(report["short_name_base_label_mismatches"], 1)
+        self.assertEqual(report["short_name_base_label_matches"], 0)
+        self.assertFalse(report["root_generation_qualified"])
