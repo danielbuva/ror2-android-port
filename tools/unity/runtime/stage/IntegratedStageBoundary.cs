@@ -458,6 +458,23 @@ public sealed partial class PortSession
             coordinator.Check(source.name == "Stage" && sourceIdentity && source.GetComponent<Stage>() &&
                                   source.GetComponents<Component>().Length == 3,
                               "Original Stage prefab contract changed");
+            if (coordinator.r.sirenSourceEntryDiagnosticAttempt && coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)
+            {
+                coordinator.Check(sirenSourceEntry == null && sirenEncounter == null && coordinator.stageSourceObjects &&
+                                      !coordinator.r.diagnosticSirenEggInput,
+                                  "Siren source-entry attempt requires a fresh source owner and Siren egg input OFF");
+                // Both owner preflight and ID-11 activation require the exact current
+                // temporary Stage. Retain the owner before its native mutations; this
+                // still precedes the one original Run scene callback.
+                coordinator.Check(ReferenceEquals(Stage.instance, coordinator.objectiveStage),
+                                  "Siren source preflight requires the exact temporary Stage owner");
+                sirenSourceEntry = SirenSourceEntrySession.Prepare(
+                    coordinator.stageGeometryScene, selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
+                coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
+                coordinator.Check(ReferenceEquals(Stage.instance, coordinator.objectiveStage),
+                                  "Siren source activation requires the exact temporary Stage owner");
+                sirenSourceEntry.ActivateAndSpawnController();
+            }
             var prior = coordinator.objectiveStageHost;
             PortSession.Call(coordinator.objectiveStage, "OnDisable");
             coordinator.Check(!Stage.instance, "Temporary Stage singleton survived original handoff");
@@ -471,20 +488,6 @@ public sealed partial class PortSession
             Stage.onServerStageBegin += onBegin;
             try
             {
-                if (coordinator.r.sirenSourceEntryDiagnosticAttempt &&
-                    coordinator.stageGeometryScene.name == SirenEncounterContract.SceneName)
-                {
-                    coordinator.Check(sirenSourceEntry == null && sirenEncounter == null && coordinator.stageSourceObjects &&
-                                          !coordinator.r.diagnosticSirenEggInput,
-                                      "Siren source-entry attempt requires a fresh source owner and Siren egg input OFF");
-                    sirenSourceEntry = SirenSourceEntrySession.Prepare(
-                        coordinator.stageGeometryScene,
-                        selected => coordinator.r.stageProgress.sirenSourceEntries.Add(selected));
-                    // The source owner's preflight passed; retain its recovery
-                    // handle before ID-11 activation or native queue mutation.
-                    coordinator.RetainNativeLifecycleObject(sirenSourceEntry);
-                    sirenSourceEntry.ActivateAndSpawnController();
-                }
                 Run.instance.OnServerSceneChanged(coordinator.stageGeometryScene.name);
                 coordinator.objectiveStage = Stage.instance;
                 coordinator.objectiveStageHost = coordinator.objectiveStage ? coordinator.objectiveStage.gameObject : null;

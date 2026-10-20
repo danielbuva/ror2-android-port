@@ -15379,3 +15379,75 @@ and 20261020T090249.613157Z/Toolbot/
 (report SHA-256 `eb8f0922b9a13c608bdb0a26222a648ec24bc520210fcdddf261dce9998e3558`);
 work/coordination/codex-1311-survivor-root-validation.json and
 captain-1311-acceptance-review/. Raw game/API references and captures stay ignored.
+
+
+## J785 — Restore source-enabled weapon machines and prepare Siren before Stage handoff
+
+Date: 2026-10-20. Hypothesis: J784's disabled MUL-T machine and the preserved
+Siren refusal are Android owner-order defects; restore the original callback
+settings and temporary-stage lifetime without replacing native gameplay.
+
+The source-bound Siren retry on J783's APK
+`1311f1057275ef2a34a3fc964a6f79e033086243d066deea40775b9178d2bba5`
+completes two exits, then refuses during BeginOriginalStage while transporting
+into Ship Graveyard. World time is 399.434021 s; host duration is 570.029 s.
+The J779 observer preserves the original InvalidOperationException before
+outer cleanup: source preflight requires the loaded active scene, server Run,
+Stage and native stage RNG. Source-entry/encounter arrays stay empty, egg input
+stays off, the profile stays at 13, and recovery is false. The host removes
+its selector, force-stops the owned app and sleeps the display without cleanup
+errors. No source-entry registration, cohort, encounter or Moon acceptance
+follows. Final report SHA-256:
+`f8f181c078f9715519cbc15a760485cc8c6d3337681db1b9d82167287d177b1d`.
+
+The concrete contradiction is Stage.instance: BeginOriginalStage first invokes
+the temporary Stage's OnDisable and verifies the singleton is absent, then
+calls source preflight and activation, which both require that singleton.
+The correction performs both operations with reference equality to the exact
+temporary Stage before teardown and retains the source owner before activation.
+The existing one Run scene callback and later complete native multicast stay
+in order. Cleanup, identity, retirement, recovery, egg-input-off and manual-Moon
+gates are unchanged. An initial RNG concern is resolved against accepted native
+source: SceneExitController requests Stage advancement; Stage.Update calls
+Run.AdvanceStage, which generates destination RNG before ServerChangeScene.
+AndroidStageTransport only records that request. It does not bypass native
+advancement or supply a replacement RNG.
+
+For MUL-T, independent source audit follows the actual integrated playable-spine
+path into AutomaticSpawnBoundary. It disables all root MonoBehaviours, then
+restores the current primary Weapon machine. The accepted prefab's enabled
+Weapon2 is omitted from that restoration; native Dual Wield later resolves the
+secondary to it and queues main, leaving the pending-state refusal in J784.
+The original prefab also omits Weapon2 from its network roster; this is preserved.
+The owner now snapshots live enabled root state machines before isolation,
+restores only those on the integrated-world path, counts only newly enabled
+ones in the existing strict callback assertion, and clears the temporary array
+before activation/yield. Source-disabled machines and minimal probes remain
+unchanged. No state, stock, readiness, identity or network roster is assigned.
+
+Prior art: inspected pinned Starstorm2 SS2VanillaSurvivor at a9a4badd, whose
+named state-machine helper explicitly maintains network/death/hurt relationships;
+the accepted current prefab governs which relationships exist here. Pinned
+R2API.Director at f539511e separates scene/catalog settings from native stage
+lifecycle. Neither source establishes Android scheduling or replaces the exact
+native advancement contract. No community or protected implementation is copied.
+
+Independent reviews pass the real restoration helper under Unity-style fake-null
+stubs and 14 Siren source/ownership/retirement contracts. Public tests execute
+the production restoration helper and protect source handoff ordering without
+requiring decompiled inputs. Root adjusts whitespace-sensitive assertions after
+formatting, verifies formatting changes only whitespace, then passes all 1,122
+host tests in 29.573 s with 424 recorded source inputs and HEAD unchanged.
+Offline compilation passes 106 runtime plus four support sources and 264 exact
+references, zero errors and no source/reference/compiler drift; assembly hash
+`2680f1e9f7bdb71bf159f56d1a5ed50f183314ff5867e76964ae4339fbe395c2`.
+The new source is not yet player/device accepted. Rebuild source staging reads
+both existing owners and needs replay; the parallel rebuild track stays separate.
+
+Evidence: work/experiments/siren-route/20261020T090844.862220Z/;
+work/coordination/siren-1311-guard-qualification/;
+siren-1311-first-failure-triage/ and independent-review/;
+toolbot-1311-prefab-audit/; toolbot-1311-terminal-triage/patch-r2/ and
+independent-fix-review/r2/; codex-source-owner-fixes-host-r1/;
+codex-source-owner-fixes-compile-r1/ and codex-source-owner-fixes-format-r1/.
+Raw game source and device evidence remain ignored.

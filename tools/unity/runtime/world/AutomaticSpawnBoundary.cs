@@ -12,6 +12,20 @@ using UnityEngine;
 // Original Unity callbacks; the harness only observes and supplies diagnostic input.
 public sealed partial class PortSession
 {
+    internal static int RestoreCapturedEnabledRootStateMachines(EntityStateMachine[] captured, bool integratedWorld)
+    {
+        if (!integratedWorld || captured == null)
+            return 0;
+        int restored = 0;
+        foreach (var stateMachine in captured)
+            if (stateMachine && !stateMachine.enabled)
+            {
+                stateMachine.enabled = true;
+                restored++;
+            }
+        return restored;
+    }
+
     IEnumerator AutomaticSpawnBoundary(CharacterBody body, SessionConfig cfg)
     {
         if (!ownsStateCatalog)
@@ -25,6 +39,8 @@ public sealed partial class PortSession
         var solver = body.GetComponent<KinematicCharacterMotor>();
         var input = body.inputBank;
         var spawnedMaster = body.master;
+        var sourceEnabledRootStateMachines =
+            body.GetComponents<EntityStateMachine>().Where(stateMachine => stateMachine && stateMachine.enabled).ToArray();
         bool automaticBody = IsAutomaticBody(), automaticDirection = IsAutomaticDirection(), automaticModel = IsAutomaticModel();
         var direction = body.GetComponent<CharacterDirection>();
         if (automaticDirection)
@@ -99,10 +115,14 @@ public sealed partial class PortSession
                     skill.stateMachine.enabled = true;
                 }
             }
+            int restoredSourceEnabledStateMachines =
+                RestoreCapturedEnabledRootStateMachines(sourceEnabledRootStateMachines, cfg.integratedWorld);
+            sourceEnabledRootStateMachines = null;
             r.automaticCallbacks = body.GetComponents<MonoBehaviour>().Where(x => x.enabled).Select(x => x.GetType().FullName).ToArray();
             if (!cfg.combatSpine)
                 Check(r.automaticCallbacks.Length == (movingMotor ? 2 : 1) + (automaticBody ? 1 : 0) + (automaticDirection ? 1 : 0) +
-                                                         (automaticModel ? 1 : 0) + AutomaticSkillCount() + (IsPlayableSpine() ? 2 : 0),
+                                                         (automaticModel ? 1 : 0) + AutomaticSkillCount() + (IsPlayableSpine() ? 2 : 0) +
+                                                         restoredSourceEnabledStateMachines,
                       "Unexpected enabled root callback");
             Physics.gravity = Vector3.zero;
             solver.SetGroundSolvingActivation(false);
