@@ -11,7 +11,7 @@ owner-built APKs and locally reconstructed content; [public-alpha.md](public-alp
 holds open release work. ADR-001's architecture C and the runtime pipeline below
 remain current. [phone-owner-build.md](phone-owner-build.md) assesses build stages
 for phone-only delivery while retaining the desktop workflow as fallback; no
-replacement runtime or build pipeline is implemented. Public-input bootstrap,
+replacement game runtime or working build pipeline is selected. Public-input bootstrap,
 performance equivalence and device acceptance remain open.
 
 Phone build **support**: `scripts/lab/phone_content.py` owns generation and

@@ -18395,3 +18395,111 @@ converter and packaging proofs, respecting tool permissions and exact settings.
 Require real-device matched-workload correctness/performance and memory results
 before adopting an alternative pipeline. Preserve desktop fallback/rollback
 receipts; a failed build-tool gate does not authorize a new game runtime.
+
+## J831 — Run the exact converter on Android and load content built without a template
+
+2026-10-20. Hypothesis: at least the managed IL2CPP conversion stage and a small
+native serialized-content contract can be separated from the desktop editor,
+without changing the game's native ARM64 runtime or rendering pipeline. The
+user authorizes isolated authored proofs after reviewing the phone-build stage
+assessment. Rebase onto `origin/main` `abad028` precedes this entry. Gameplay,
+audio, shared editor state and the working game project remain outside scope.
+
+**Prior art and change.** Inspect UnityPy 1.25.3's public serialized-file,
+UnityFS and native type-schema APIs, plus Termux source pin
+`d22cd9f98891a21199faf22dd9cc7ba0f67eedc5` (including `dotnet8.0/build.sh`).
+The official HTTPS package index binds the downloaded Android packages by
+SHA-256; no signed-index verification or product redistribution clearance is
+claimed. No new RoR2 reconstruction, loader, shader or gameplay diagnostic is
+introduced. The authored sources live under `tools/phone-build/`, with
+`phone_content.py` owning generation/check/build and two host contracts.
+ARCHITECTURE names those support owners. No protected source is copied into
+tracked files. The converter input uses the local authorized Unity corelib,
+not game assemblies. All supplied tools and generated outputs stay private.
+
+**Converter result.** Compile `ConverterFixture.cs` against the exact editor's
+`unityaot-linux/mscorlib.dll`. The desktop converter first refuses an oversized
+input selection because System.Configuration is missing; reduce the authored
+input to its actual two-assembly closure (fixture plus corelib). The unchanged
+exact converter then succeeds on the host. A local mixed newer-host/BCL control
+also refuses with TypeLoadException; this is not a supported general rehosting
+recipe.
+
+On the explicitly selected internal alpha Nova, Termux .NET 8.0.32's Android
+build-tool host starts the exact managed converter DLLs with a separate runtime
+configuration. This host does not execute game code. `--help` passes, but the
+first conversion fails in ICallMappingComponent because the copied support root
+is absent. Supply the exact local `libil2cpp.icalls` and an explicit harness
+support-root setting, preserving every converter DLL. Conversion then exits 0.
+All **96 C++-directory outputs (83 C++ files) and both data outputs** match the
+desktop control byte for byte, including `global-metadata.dat`. This qualifies
+only the small authored closure and selected conversion options; it does not
+qualify UnityLinker, the game's full AOT closure or an app sandbox.
+
+Android-host Clang 21.1.8 initially refuses the emitted fixture because of
+relocated standard include paths, then the missing Baselib include. Correct the
+sysroot/include arguments and supply the exact local Unity Baselib headers.
+The unchanged generated translation unit compiles to an ELF64 AArch64 relocatable
+object, SHA-256 `0ee5bd1778e4bdcd281433319d02c3b504e14bad7a48dfdf1715889c18542286`.
+Fourteen atomic-memory-order warnings remain in the bundled headers and are
+preserved, not suppressed. This is one compiled object, not a linked IL2CPP
+runtime or a performance result. Clang 21 differs from the pinned NDK's Clang 9.
+
+**Content result.** A new generator constructs a UnityFS archive and Android
+serialized file from authored values and public native type schemas. It reads
+no editor-generated asset, template bundle or game input. Its first candidate
+omits type trees: host parsing passes, but the exact editor explicitly rejects
+it. Embed the public type trees; the exact editor now loads the bundle, reads
+the expected TextAsset bytes and destroys the asset on unload. Both candidates
+and their logs remain preserved.
+
+Commit the fixture sources before building (`da4f094` at execution; the rebased
+source-equivalent checkpoint is `6e58d1b`). The isolated batch editor acquires
+the primary checkout's persistent build mutex through Git's common directory;
+it neither reuses nor stops an existing editor. The fixture builds with exact
+Unity 2021.3.45f2, ARM64 IL2CPP, Vulkan, Low managed stripping and engine stripping
+disabled. APK SHA-256:
+`1891410e15b70eb89d74996a40d49303f1775a761c3c4c079318733bb2d29875`.
+The authored bundle hashes to
+`48c186662446ec996b7bbff3dc24afac2ed70e8c8a42adab3394fe287668dee4`.
+
+Before each installation, require the separate fixture package to be absent and
+query live storage/capacity on the explicit alpha serial. The first installation
+attempt stops at a host quoting error in the data-backing query; ownership is
+verified and the fixture is removed without launching it. Correct only that
+query and repeat. The final device report identifies Unity 2021.3.45f2 and
+Vulkan, with `bundleLoaded`, `textMatched` and `unloaded` all true and an empty
+failure. Package placement, app data and persistent-data backing are recorded on
+internal storage. Verify actual installed APK bytes, collect process logs,
+remove only the owned fixture package, and verify display sleep. The existing
+alpha game APK remains `be26c21c…` before and after; no game install, stop or
+runtime qualification occurs. No operation targets Main or Thor. The isolated
+shell tool workspace is retained by its private ownership receipt for replay.
+
+**Evidence and limits.** `work/coordination/phone-proof/proof-receipt.json` binds
+all tool inputs, package manifests, original failures, C++/metadata comparisons,
+compiler output, device report/logs and APK/bundle/editor-report hashes. The
+`content-stage.json` selector identifies its generated project under
+`work/rebuild/phone-content/`; reports and exact-editor logs are adjacent to that
+project. LOCAL_STATE lists required private execution adapters; no game build
+reads them. No raw identifier, tool binary, private path or signing material is
+published. No output is uploaded, pushed or released.
+
+The content generator ran on the host; its output was loaded by the device.
+The fixture APK still used the desktop editor. Therefore this is **not a
+phone-only owner build**. Next gates are phone-side generation, the authored
+mesh/material/texture/animation/script/shader fixture with actual rendering and
+lifecycle checks, complete native IL2CPP linking, Android app sandbox/tool
+acquisition rights, packaging/signing/update tests, then a legitimate input
+slice. Preserve the desktop owner-build fallback. No benchmark or claim of
+performance parity follows from byte-identical converter output.
+
+The clone-local `./dev preflight --host-only` refuses missing game inventory;
+`./dev doctor --device <alpha> --json` remains unready for the full game
+bootstrap. These refusals remain evidence and are not relabelled as passes.
+The isolated fixture's source/hash checks, exact-editor check/build and device
+contract pass independently. Host tests, Ruff, README/journal freshness,
+whitespace, staged privacy and manual provenance review qualify the tooling
+checkpoint; final CI receipts stay private under the evidence directory.
+PORTING_STATE replaces its alpha installation facts while preserving the
+main session's accepted game APK and unresolved gameplay/audio gates.

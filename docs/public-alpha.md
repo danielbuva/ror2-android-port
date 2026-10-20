@@ -14,9 +14,12 @@ Decision preparation: [J825](PORTING_JOURNAL.md#j825--research-public-alpha-dist
 ## Decision and reproducibility
 
 - [ ] Resolve the editor-equivalent Android content/shader production gate without
-      consuming desktop-generated game data as a hidden prerequisite.
+      consuming desktop-generated game data as a hidden prerequisite; extend
+      [J828's precursor](PORTING_JOURNAL.md#j828--run-the-exact-converter-on-android-and-load-content-built-without-a-template)
+      to phone-side generation and the full rendered/script-bound fixture.
 - [ ] Establish permitted acquisition and Android execution of the exact IL2CPP
-      tools; qualify native compilation, packaging/signing and installer updates.
+      tools beyond the authored converter proof; qualify full native linking,
+      app sandbox execution, packaging/signing and installer updates.
 - [ ] Present bounded proof findings before changing the working build or choosing
       the final installation experience. Keep other execution backends excluded.
 - [ ] Benchmark any alternative pipeline with pinned versions/options/shaders and
