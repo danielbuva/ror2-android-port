@@ -18887,3 +18887,98 @@ source receipt, run both default checks, then repeat bounded native skin gamepla
 real inventory-event presentation and ordered teardown. R8/R9 must replay the new
 runtime source/membership; that reproduction is not claimed here. No alpha UI,
 controls, packaging or game-content source changes are included.
+
+## J837 — Pass the formatted native monitor control and one original UI event in the isolated player
+
+**Hypothesis.** J824's observed 47-character callback envelope is the exact
+native marker contract. Matching that complete envelope, including code, level,
+playing ID and game-object ID, should permit the existing negative control and
+then the original Global UI event without accepting prefixes or arbitrary messages.
+
+**Change and build.** Root rebuilt the reviewed native/managed formatted R6
+candidate against the authorized Wwise 2023.1.8 SDK and matching Integration.
+The isolated native toolchain remains r25c; Unity's pinned r21 toolchain is
+unchanged. Static inspection passes for the ARM64 library, its 1,280 wrapper,
+12 diagnostic and 480 additional exports, and all 182 native imports. No game
+runtime or original installation was changed. Native artifact SHA-256 is
+`bb5879b4eb38b81dc3830a1662ba467b60b595e7fedb88a1301d3161f8ab9304`.
+
+The exact editor built request `7775ef7cd3ee43d89eeebde5e89f95bd` in 38.43 s
+with zero errors. APK SHA-256 is
+`48e8236a905f4640d731c960923d81b777dc44591740e739263051fdbcdf79ce`;
+Root independently verifies that it contains the expected native library. The
+frozen ledger has 148 stable inputs, seven source/native/manifest overlay paths
+and 47 unchanged metadata files, preserving the 143-input parent lineage.
+
+**Preserved first failures.** Build-only validation initially demanded the
+pristine ancestor after staging its reviewed child; the descendant validator was
+corrected without restaging. The first device-dispatch wrapper then lacked the
+nested runner's APK bundle key and refused before installation or launch. A
+subsequent negative device run reached the exact native control and expected
+missing-event error, but its host reader referenced a validator in the wrong
+module. It remained failed, with the positive event withheld. R3 binds the pinned
+validator correctly; eight host tests include immutable actual-report replay,
+malformed-envelope refusal and the full nested scenario contract. No failed
+receipt was rewritten into a pass.
+
+**Actual fresh device result.** The same exact APK then passes the two scenarios
+in order on the primary gameplay device:
+
+- Negative control: exact formatted native marker once, zero post-Init native
+  errors, then exactly the expected missing-event error. Both engine and callback
+  manager Term return; monitor disarm and owned cleanup complete.
+- Positive event: the unchanged original Global bank and J744's explicitly
+  metadata-adapted Init bank load. The selected UI event returns a valid playing
+  ID, one EndOfEvent callback and 46,080 finite PCM-container words, of which
+  32,582 are nonzero and none nonfinite. Post-Init and post-event native errors
+  are zero. Post-Init coverage remains observed through returned Terms/disarm,
+  and owned cleanup completes.
+
+Both fixture installs are byte-verified in current adopted storage after fresh
+capacity/reserve queries and runtime-backing checks, then removed. Root's final
+verification observes the game APK still exactly
+`922cfb86e895118285d8c93f588ff57c4052154d15e88688bf7b46f357474112`, its ownership
+receipt byte-identical, the fixture absent and the display asleep. The workflow
+performed 163 live Main/game-owner guards. No alpha or spare action occurred.
+
+**Current managed closure, host only.** Root also refreshed the composed-audio
+analysis against J823/J828's actual 330 pre-strip DLL snapshots. The old authored
+transform assumed a stale generated closure name. Its candidate now binds the
+exact current Assembly-CSharp hash plus the unique contiguous message-57 delegate
+registration shape, retaining ownership, occupancy, notification and save-site
+checks. Positive and wrong-hash/missing/duplicate/wrong-delegate mutants pass.
+The actual transform and scanner complete with 331 rows (330 inputs plus the
+synthesized owner), eight allowed PostEvent P/Invokes and
+`runtime_dispatchable=false`. Accepted original API provenance remains distinct
+from the isolated fixture API. This does not bind post-strip/IL2CPP inputs or the
+transformed assemblies to an APK.
+
+**Evidence, local only.**
+
+- `work/coordination/codex-audio-formatted-device-root-r3/device-result.json`,
+  SHA-256 `1bbd86252906582015d4452ef0eb854cd141fd9765068facd71cb0b2cbb6ee38`.
+- Negative `20261020T213247.494182Z` and positive `20261020T213325.123910Z`
+  runs under `work/device/<primary-device>/experiments/wwise-managed-fixture/`;
+  their binding-summary hashes are respectively
+  `ee4ac6e62396bc10f225a526308146c43593c4a838e1cfc1e4137308a1434a40` and
+  `2651d829b377551ae286f28ccbf4a18d458a0e6eabc907def947e465c876fe0e`.
+- Root's `post-run-verification.json` beside the two-scenario result, SHA-256
+  `1c054e998ac0664235584f7257c2514d177ec52dd7800581d996947ee7c8b9de`.
+- `work/coordination/codex-audio-formatted-native-root-r1/`,
+  `codex-audio-formatted-fixture-root-r{1..2}/` and
+  `codex-audio-formatted-device-root-r{1..3}/` retain Root producers, all prior
+  failures and actual native/build/selected-device proofs. Reviewed plans and
+  tests are under `audio-formatted-*-plan/` and `audio-formatted-*-review/`.
+- `work/coordination/audio-current-player-closure-consumer/r4/` and
+  `audio-current-player-closure-review/r4/` retain the actual current-input scan;
+  report SHA-256 is
+  `1118fe9355fcde13a554bb32f0afdfbc92ab45564e70c81c33f9312a89915c39`.
+
+**Limits and next gate.** This accepts one isolated serviced post-Init monitor,
+negative-control and original-event/container case. Pre-Init callback coverage,
+physical audibility, effective sample precision, broader effects/banks, music,
+spatialization and composed game lifecycle remain unaccepted. All composed-audio
+dispatch/runtime gates remain closed; game audio is still unavailable. Continue
+same-request post-strip/IL2CPP provenance and the composed original-API owner
+integration. No new game source, recipe or R-step input changed here; the
+protected isolated producers remain required local state.

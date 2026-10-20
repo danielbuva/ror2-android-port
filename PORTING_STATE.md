@@ -1,7 +1,7 @@
 # Porting state
 
-Last updated 2026-10-20 after **J838** (the native item-display inventory
-owner correction passes host checks; its owning build is pending).
+Last updated 2026-10-20 after **J837/J838** (the isolated formatted Wwise
+fixture passes; the native inventory-owner correction awaits its player build).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -99,8 +99,12 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   `WwiseManagedNativeMonitorControl (Game Message)` text differs from the
   current marker comparison; slot 22 stays zero. Both Terms/disarm/owned cleanup
   complete, fixture removal and unchanged installed game are freshly verified.
-  A strict full-message correction awaits native rebuild and device testing;
-  the gate remains closed.
+  J837 passes the exact full-message correction in a rebuilt isolated player,
+  including the negative control and one unchanged Global UI event with
+  EndOfEvent, nonzero PCM-container words and complete owned teardown.
+  Pre-Init coverage, physical audibility, wider audio and game integration remain
+  open. Current-player pre-strip transformation/closure passes host analysis;
+  same-request post-strip/IL2CPP and APK binding remain open.
   J627/J640 record the limits of a simple clip fallback.
 - Licensed Rewired and generic physical controllers remain open.
 - Complete skill kits, most positive ordinary unlock grants, DLC scene play.
