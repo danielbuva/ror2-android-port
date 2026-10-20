@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J835](PORTING_JOURNAL.md#j835--reach-native-huntress-skin-readiness-then-refuse-the-older-display-owner-invariant) | 2026-10-20 | Reach native Huntress skin readiness, then refuse the older display-owner invariant | **Hypothesis.** |
 | [J834](PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review) | 2026-10-20 | Bind phone fixture paths and the exact-editor oracle after review | 2026-10-20. |
 | [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android) | 2026-10-20 | Generate content and sign increasing fixture updates on Android | 2026-10-20. |
 | [J832](PORTING_JOURNAL.md#j832--run-the-exact-converter-on-android-and-load-content-built-without-a-template) | 2026-10-20 | Run the exact converter on Android and load content built without a template | 2026-10-20. |

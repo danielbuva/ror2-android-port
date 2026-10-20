@@ -479,9 +479,15 @@ never reads this test directory.
 `work/coordination/siren-navigation-new-player-guard/` and
 `work/coordination/animation-native-skin-device-plan/` retain hash-bound source
 snapshots, saved compiler references, rendered editor guards and selected-device
-qualification inputs for J829 and the next targeted runs. They are required local
+qualification inputs for J828/J835 and the next targeted runs. They are required local
 diagnostic support; the game build reads the tracked fixture/runtime sources,
 not these run directories. No game-derived material is public.
+
+`work/coordination/codex-native-skin-device-root-r{1..2}/` and
+`work/coordination/animation-native-skin-runtime-triage/` retain J835's bounded
+runner, strict persisted-profile schema check, failed live attempt and exclusive
+inventory-owner analysis. They are required local diagnostic support and are
+not game build inputs.
 
 ### Isolated Wwise diagnostic inputs
 
