@@ -1,6 +1,6 @@
 # Porting state
 
-Last updated 2026-10-19 after **J758** (new default baseline passes; MUL-T refuses before offhand activation).
+Last updated 2026-10-19 after **J759** (managed Init filename loading passes; Windows output-plugin errors remain).
 This page is the current snapshot only: replace its
 content on every update. Results are recorded once in the
 [journal](docs/PORTING_JOURNAL.md) (searchable through the
@@ -14,8 +14,8 @@ content on every update. Results are recorded once in the
 | Accepted input | Steam build 25475991, input id `6af7ed94619fe1b4346974b4486afa03a8d1625a7820e92da0ff74d57208fe88` |
 | Toolchain | Unity 2021.3.45f2 (88f88f591b2e), IL2CPP ARM64, Vulkan (`environment/toolchain.json`) |
 | Latest device-verified APK | `aabf41ab5ece8a34d9ac4b70946dad5d8b827baa40e4dd927afd98e6ff15deee` — J758 code-only build from committed source ba5aff74 (J754 MUL-T diagnostic); both default checks pass; all 266 payload hashes match J752 |
-| Installed now | aabf41ab… on both Novas. The adopted Nova passes both defaults; the internal Nova's MUL-T diagnostic refuses its initial identity guard. Thor retains aa732f88… on internal storage; gameplay is input-blocked. Matching payload stays unchanged. |
-| Runtime source since verified APK | Accepted aabf41ab… binds ba5aff74bb56316756dc98fec9124b98f4c2dee5. J757 changes five existing owners for explicit Thor automatic diagnostics; J758 adds exact MUL-T refusal operands. These reviewed changes are unbuilt. Audio remains unavailable in game; private audio/Siren drafts are separate. |
+| Installed now | Candidate 96006814dd2ba80f65cd24413c50c11c3061060f9d90977296f1e00d71ec7fd1 on the adopted Nova and Thor; default/device checks are running. The internal Nova retains accepted aabf41ab… for its bounded stage/performance run. Matching payload stays unchanged. |
+| Runtime source since verified APK | Accepted aabf41ab… binds ba5aff74bb56316756dc98fec9124b98f4c2dee5. Candidate 96006814… binds 51338035bfdf08a0a46d42f3f5e2fa9e69fdecaa and includes J757's explicit Thor automatic input plus J758's exact MUL-T refusal operands. It is built and awaiting device gates. Audio remains unavailable in game; private audio/Siren drafts are separate. |
 | Device tooling | J755 verifies discovery, explicit allowlist/profiles, separate ownership/runtime receipts, fresh storage reserves and idle screens on all three. Second Nova passes both game checks after verified mapping binding. Thor handles isolated audio/compatibility; generic physical input remains unverified. Unity builds stay serialized while different selected-device runs overlap. |
 | Executable rollbacks | J752 `aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159` · J749 `771fc75282b45197d0dd25d3d537a121112ca35830c8d4dd516711aa7aa813cf` · J745 `caeeb62fe45e7b8bad8a89272390a11a392152b975277660675a75e56a230453` · J737 `12d793593d216ea50d6db400fb4e8f7a3258657acd39a382181f0dc6b18035f8` · J728 `885ea2946869ca8a206739cf74acd9bbf75705651d5f3974c30a56724d93e715` · J724 `b32998b87706977e2945ae3b709e26486b76bf9403894262877a9e3829d80b54` · J707 `d545d80048fbc26b882ada5ecb1e38346239f121d8cdb00266ef3d29be703bee` · J702 `efb0ba9354923c1fbe453d28364018e078627cd15c65fc4813dcc3f0c13d577d` · J698 `fe4dc0de0f70ec70b699e9d54e55e3e657c0a89f1f9efb52ee58411ed0bcc383` · J695 `039bc73d59822801da9258a7f90b5bfa7e77080e0c4d49058f81916a61f0cfbc` · J689 `55dee31826b7ecd545488d601490ba92623d6640a711e9a534fdd2c898ede861` · J680 `e09920fd9df2c5b03416b33766fbdaf4c64f2feeeee9b68eff200435c0716ebc` · J670 `ad84d0cb55bc6a18dabf67e90839c78100abcb846c6feaff13c758a6b8a6fb69` · J663 `6506b99bfa5004960721868b222d15010718a81f4c55f28bd29d153976d97cec` · J657 `86d2542aadcc12dbfdb53fe957d7aedf32ebeb8d38c94fbf4732ef5211ed7d03` · J654 `f57e172b9da1a5717144355266cd2e1a1de93fa775c14233a06c93a3a635e2b8` · J647 `9e7c4224896cd9257d102bef728073db0f142269358b42c244ae4e1ec9ac1f82` · J644 `118540ea2cf3f7b3b26979150e44edc54ee3f87cb79da296ca7df21fce70c717` · J637 `03339547317e8d543f65696ac0e6af412778f6bbb62bbdc2ad31cae96c442648` · J585 `da5e495910a6b6f669389bdfd7184960949a62b469d6bbd78f78384e5364b0c0` · J503 `f567e9f6dc606c6a9eceff8dc54ed798c2645536ea47c2e8da42a8bc3867a76e` · J502 `395385929be5b706a079286738f6e47cf73f7694d990ca6fe02c2696d72a7f6c` · J425 pre-migration gameplay `5a25bb9fe001440a01316bbe79f4e8269ac37e6bf33e91d4c20e91f1f9ae63b0` · J323 paused Moon `893b03c4162a79d4cc9b194fb07b412695e34c1b50439434230902289bd385a9` |
 | Retained old input | Steam 21587608 and Unity 2021.3.33f1 under `work/migrations/steam-21587608` (old rollbacks only) |
@@ -82,9 +82,12 @@ unavailable): [docs/subsystem-coverage.md](docs/subsystem-coverage.md).
   to import-metadata validation before the native initialized query; its verbose
   log report is also truncated and rejected. J744 publicly reproduces the tested Init variant; other private fixture
   producers remain unwired.
-  J756's revised managed fixture initializes Wwise on Thor, then reports
-  AK_FileNotFound at Init filename loading and cleans up. Memory loading,
-  streaming I/O, wider bank behavior and composed audio remain open.
+  J756's revised managed fixture initializes Wwise on Thor but refuses Init
+  filename loading. J759 registers the persistent POSIX path with AddBasePath,
+  then loads/unloads the unchanged Init and cleans up. Its current-process log
+  still records five middleware errors for the Windows output plugin/device;
+  no event, PCM, cumulative-error or composed-audio acceptance follows.
+  Wider bank behavior and production lifecycle remain open.
   J627 rejects a proposed static UI fallback; J640 resolves its numeric default
   but leaves native switch/routing semantics unproven.
   Licensed Rewired and generic controllers remain open.

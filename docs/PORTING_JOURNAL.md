@@ -14016,3 +14016,60 @@ the selected screens. Thor retains J752's APK. J757's portable input source
 and this diagnostic amendment are not in the accepted aabf41ab APK. They change
 existing R8 authored inputs only, with no new local build dependency. Ordinary
 difficulty, complete ability semantics, audio and performance remain open.
+
+## J759 — Load the original Init through the managed Android filename resolver
+
+Hypothesis: J756's AK_FileNotFound comes from using SetBasePath for an app-private
+filesystem directory. Inspect the exact official Android AkFileHelpers and
+Unity initialization source: SetBasePath updates APK/OBB roots; AddBasePath
+registers a POSIX location. Pinned R2API.Sound's Init-first lifetime remains the
+community contract. Exact Android generated API and retained-candidate ABI plan
+agree on AddBasePath with LPStr. Keep the unchanged 6,319-byte original Init,
+language, filename load and owner lifecycle; add only separately recorded,
+result-guarded AddBasePath before that load. Memory-view fallback stays held.
+
+V8 source/API contracts pass 3/3 and runner contracts 15/15; offline exact-reference
+C# compilation has zero errors/two existing warnings; independent review is
+clear. Root stages exact source hashes in the existing isolated Java-first
+project and reuses its Library. The first package-only request correctly refuses
+because its prior ID names an earlier package receipt rather than the terminal
+build. Preserve that request; a fresh request binds the actual prior terminal
+build, keeps scene/settings/bank bytes fixed and changes only the disposable
+package. Host invocation/path/schema refusals are preserved separately and
+dispatch no additional device fixture.
+
+The serialized exact-editor build succeeds in 83.786786 seconds, zero errors/
+two warnings. All 41 frozen inputs match before/after. APK:
+f3c54b5aadaf0e45d52b862960d6b5edb5aab2ab1c85dd8cee28a2eb29e17d1d.
+Frozen build/request/coordinator evidence:
+work/coordination/wwise-unity-managed-fixture-generator/project-java-first/build-output/75f9ac288afd45f283ff4b975b162241/.
+
+Run once on explicitly selected Thor after fresh internal capacity, absent
+fixture-package and exact installed-byte checks. The hash-bound full player
+report qualifies the narrow owned Init lifecycle: official library/Activity,
+verified original Init, successful initialization and filename bank load,
+unload and Term, final initialized=false, cleanup complete, no recovery or
+unknown outcome. The runner reports passed_owned_init_bank_and_cleanup,
+removes only its exact fresh fixture and reports no cleanup error/Android fatal.
+Both physical OLED panels sleep. This is the first managed filename-load pass;
+the original bank hash remains
+3182093b59cf48034b2715b224f3f217b34eaecf104d10940528ea20c4baffc6.
+
+Root separately inspects the complete current-process log: five AK Error
+occurrences identify missing plugin 11730951 and audio-device ShareSet
+3859886410, matching the Windows output dependency found by the native audio
+track. A bank return value does not remove those errors. No event was posted
+and no PCM captured; cumulative-error/audio playback acceptance is not granted.
+The next managed event test must use the already tested, explicitly adapted
+Android Init fixture and unchanged original event bank with full monitoring,
+callbacks and nonzero finite PCM, retaining original-Init failure evidence.
+
+Device evidence:
+work/device/<serial>/experiments/wwise-managed-fixture/20261020T044656.500200Z/.
+Private source/API review, corrected package plan and Root orchestration:
+work/coordination/wwise-managed-failure-diagnostics-draft/v8/,
+wwise-managed-v5-prep/prepared-javafirst04-v8-r2/,
+wwise-managed-v5-independent-review/v8-review.md and codex-audio-v8-*.
+LOCAL_STATE lists the private replay gap. No production source, assembly
+transform, current payload or R8 game-build dependency changes in this result;
+audio remains unavailable in the composed game.
