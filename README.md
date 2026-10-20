@@ -56,10 +56,11 @@ Per-device receipts live under `work/device/<serial>/`. The explicit
 retains original flat receipts and writes its activation marker last. The current Nova
 has passed migration, an in-place install and both baseline modes (J595).
 
-Current onboarding remains narrow: the current Nova uses adopted storage only. The second
-Nova and Thor require explicit serial configuration, recorded live internal storage and
-reserve checks before installation. Thor's two-display sleep behavior also needs
-verification. Concurrent runs and extra-device compatibility remain unvalidated.
+J755 records three explicitly selected devices with separate receipts: the baseline
+Nova uses adopted storage only; the second Nova and Thor use internal storage after
+live reserve checks. Both standard checks pass on the second Nova. Thor's two OLED
+panels both sleep; its full-game checks still require a supported input path.
+Independent device runs have overlapped, while Unity builds remain serialized.
 
 `./dev inspect --full` creates a reviewed input identity. New or updated inputs must be
 reviewed before their ID is recorded in `work/config/accepted-input.json`. No Steam

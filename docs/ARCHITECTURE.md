@@ -121,11 +121,16 @@ J595 migrated the configured Nova's receipts and verified both baseline modes af
 in-place adopted-storage install. Legacy receipt bytes remain intact. Extra devices and
 their storage/display contracts remain unvalidated until explicitly allowlisted.
 
-Current onboarding is Nova on adopted storage. Nova and Thor are not yet configured as
-internal-storage devices; onboarding waits for configured serials, recorded live storage,
-and a passing current Nova baseline. Thor's two-display sleep behavior also remains to be
-verified. These are readiness conditions, not evidence that either device currently uses
-the proposed settings.
+J755 records the authorized three-device configuration: baseline Nova uses adopted
+storage only, second Nova and Thor use internal storage with live reserve gates.
+The second Nova passes both standard game checks after the current attempt-bound
+measured Nova mapping is supplied. Thor's two physical panels both verify OFF;
+its full-game input remains unavailable pending a supported path. Root assigns
+baseline regressions/native lifecycle to the adopted Nova, gameplay breadth to
+the internal Nova, and isolated audio/compatibility to Thor. Different selected
+device runs may overlap; each device has one runner, and the shared Unity build
+lock still serializes builds. These roles do not imply generic-controller,
+normal-game or performance acceptance on the additional devices.
 
 CPU capture (`scripts/lab/performance_capture.py`, current host implementation):
 `./dev perf --action cpu --target LABEL` takes a 15 s system simpleperf call graph

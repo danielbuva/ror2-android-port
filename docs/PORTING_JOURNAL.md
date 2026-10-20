@@ -13808,3 +13808,117 @@ offhand case. The exact device sequence/state lifetime remains to be measured.
 Three runtime source owners affect R8 replay. No new runtime file/importer,
 private build input or build-step text replacement is introduced. The separate
 Siren cleanup candidate remains unapplied.
+
+## J755 — Onboard the additional devices with separate storage, ownership and roles
+
+The user explicitly authorizes Root to discover serials and onboard the second
+Nova and Ayn Thor after the provenance refresh. All Claude coordination locks
+are absent. Preserve a private config backup, retain the original default and
+add only the three attached authorized serials to the local allowlist. Query
+exact models, Android/ABI, live private-volume state, physical internal/shared
+capacity and displays. The baseline Nova remains adopted-only; the second Nova
+and Thor have no mounted adopted private volume and use explicit internal
+profiles with a 1,024 MiB minimum reserve. Exact observed display models and
+panel counts configure idle sleep. Both Thor panels verify OFF, as does each
+Nova panel. No serial, storage UUID or display identifier is published.
+
+The second Nova already has the historical J425 lab package. Refuse replacement
+without its local ownership evidence. The preserved
+work/device/installed-other-nova-backup.json has the same serial/package/path;
+Root pulls the live APK, verifies its complete SHA-256 against that unchanged
+receipt and the retained local APK, and verifies signing identity matches the
+new baseline. Only then restore the exact historical identity through
+Device.write_receipt to its scoped namespace. The backup stays unchanged;
+the default Nova's scoped/legacy receipts remain separate. Thor's lab package
+is absent before installation.
+
+Canonical install queries fresh capacity and records placement: aa732f88948062c43a59378bf7dd53f1a473c828a479adbaee32e976207fb159
+updates the second Nova in place and installs freshly on Thor, both under
+physical internal storage. Canonical launch records and validates each runtime
+path's backing; canonical sync transfers the exact J752 payload. Host preflight
+passes for all three. The new-device doctor reports only the missing historical
+bootstrap-smoke receipt; it does not fabricate that separate test. No storage
+configuration, existing game or unrelated data is changed.
+
+First plain game checks fail at the deadline before world play. Preserved
+reports last show original-loadout-initialize, but current-PID logs identify
+the real setup failures: second Nova has a stale input-mapping attempt; Thor
+has no nova-input-mapping.json. This phase snapshot does not establish that
+native Loadout.Init itself blocks. The strict Nova mapping/model contracts
+are retained. Root verifies the existing composition-generated current Nova
+mapping against its original physical observation hash and the installed
+APK attempt, preserves the old second-Nova mapping, and copies the unchanged
+accepted mapping into that Nova's owned runtime path. No new physical mapping
+or Thor binding is invented.
+
+Second Nova retry passes both defaults: 35.066925 seconds on Lakes, then one
+genuine exit to Goolake with 11.638336 seconds of next-stage play
+(155.576431 total world seconds). No report firstFailure/error or unexpected
+current-process runtime error; appliedRuns remains 0 and resultApplied=false.
+Evidence: work/experiments/baseline/20261020T041415.201056Z/ and
+20261020T041758.179350Z/. Original refused runs remain at
+20261020T040424.554923Z/ and 20261020T040605.530106Z/. Private discovery,
+ownership proof, mapping binding, role plan and Root validation are under
+work/coordination/codex-onboarding-*, second-nova-ownership-verification/,
+second-nova-current-mapping-bind/ and codex-second-nova-baseline-root-validation.json.
+
+Roles: adopted Nova handles baseline regression/native lifecycle; internal Nova
+handles gameplay breadth; Thor handles isolated audio/compatibility pending a
+truthful supported game-input path. Independent selected-device work overlaps
+during onboarding; each device has one runner and Unity builds remain serialized.
+Canonical finally blocks stop the relevant package and sleep its configured
+panels. These results qualify per-device storage/ownership and the second Nova's
+assisted game checks, not Thor gameplay, generic controls or ordinary difficulty.
+No runtime source or R1-R9 rebuild input changes in this onboarding checkpoint.
+
+## J756 — Managed Wwise initializes on Thor, then refuses Init filename loading
+
+Hypothesis: replacing the v3 runtime metadata query guard with the source-pinned
+direct initialized query, plus a file-backed hash-referenced report, can expose
+the actual managed/native startup result. V5 also marks failed-Init state
+unknown until a fresh query and binds runner PID to process start time; neither
+changes Wwise initialization semantics. Host diagnostic/runner contracts pass
+4/4 and 15/15, exact-reference offline C# compilation passes with two existing
+unused-field warnings, and independent review finds no blocker. Prior art
+remains pinned R2API.Sound's Init-first/lifetime contract, the exact official
+Android Unity wrapper and the native J732/J740 observations.
+
+Root reuses the existing isolated Java-first project/Library, validates the
+old input snapshot and stages exact reviewed v5 sources. The package-only
+exact-editor helper changes the disposable identity to javafirst03 with scene,
+Wwise settings, original Init and nine-DLL closure unchanged. The serialized
+Unity build succeeds in 93.751506 seconds, zero errors/two warnings, with all
+41 frozen inputs equal before/after. APK:
+58995e9bf3717302b5eb9ec7b36d385152ee8b1e4b541e2a2b0d2a26108c2e1d.
+Frozen build/coordinator evidence:
+work/coordination/wwise-unity-managed-fixture-generator/project-java-first/build-output/6a91ab9602124a83b9458a849fdf83a4/.
+
+Run once on explicitly selected internal-storage Thor after fresh capacity,
+absent-package and exact installed-APK checks. The Java load path maps the
+official ARM64 native library and verifies the Activity. The new compact log
+reference matches the complete pulled JSON. Its failure phase is
+AkSoundEngine.LoadBank_Init, AK_FileNotFound (66), with native initialized=true
+at refusal. This goes beyond J747's pre-query metadata refusal: the owner
+reaches successful native initialization before the bank call. The original
+6,319-byte Init bank still matches its accepted hash; no bank adaptation is
+substituted for this managed test.
+
+The fixture remains failed/ownerReady=false. Captured diagnostics preserve the
+first bank failure separately from rollback: final native initialized=false,
+ownedCleanupComplete=true, recoveryRequired=false and no unknown native
+outcome. The runner correctly rejects required fixture success gates. Its
+record reports no Android fatal error, empty cleanup errors, exact owned
+fixture removal and internal-backed runtime data. Both Thor OLEDs sleep.
+Two earlier host invocations refused before device dispatch because their
+environment lacked required toolchain/coordination settings; those logs are
+preserved separately and are not additional device runs.
+
+Device evidence: work/device/<serial>/experiments/wwise-managed-fixture/20261020T041643.306244Z/
+(runner-result.json, hash-bound player-report.json and current-process log).
+Private plans, source hashes, Root staging/package receipt and build/device
+outputs remain under work/coordination/wwise-managed-v5-prep/ and
+codex-audio-v5-*. No current game-build dependency or transform changes.
+Next discriminate filename/streaming I/O from the measured native memory-view
+path with exact ABI and buffer-lifetime/alignment contracts. No audible output,
+cumulative plugin-error acceptance, full-bank compatibility or composed-game
+audio is established by this result. No R8 production-source change.
