@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the README's current prototype action table from the registry."""
+"""Generate the developer guide's current prototype action table from the registry."""
 
 import argparse
 from pathlib import Path
@@ -9,7 +9,7 @@ from lab.actions import ACTIONS
 
 
 ROOT = Path(__file__).resolve().parents[1]
-README = Path("README.md")
+README = Path("docs/DEVELOPING.md")
 START = "<!-- prototype-actions:start -->"
 END = "<!-- prototype-actions:end -->"
 
@@ -29,17 +29,17 @@ def render_table(actions=None) -> str:
 def render_readme(readme: str) -> str:
     """Replace only the marked section, rejecting ambiguous or missing markers."""
     if readme.count(START) != 1 or readme.count(END) != 1:
-        raise ValueError("README must contain exactly one start marker and one end marker")
+        raise ValueError("Developer guide must contain exactly one start marker and one end marker")
     start = readme.index(START) + len(START)
     end = readme.index(END)
     if start > end:
-        raise ValueError("README action markers are reversed")
+        raise ValueError("Developer guide action markers are reversed")
     return readme[:start] + "\n\n" + render_table() + "\n" + readme[end:]
 
 
 def main(argv: list[str] | None = None, *, root: Path = ROOT) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="fail if the README action table is stale")
+    parser.add_argument("--check", action="store_true", help="fail if the developer guide action table is stale")
     args = parser.parse_args(argv)
     try:
         destination = root / README
@@ -55,7 +55,7 @@ def main(argv: list[str] | None = None, *, root: Path = ROOT) -> int:
                 destination.write_bytes(expected)
             print(f"Generated {README} action table.")
     except (OSError, ValueError) as error:
-        print(f"Cannot generate README action table: {error}", file=sys.stderr)
+        print(f"Cannot generate developer guide action table: {error}", file=sys.stderr)
         return 2
     return 0
 
