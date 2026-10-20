@@ -6,6 +6,11 @@ file, owner or pipeline step is added, moved or retired. Results and evidence li
 [journal](PORTING_JOURNAL.md); the files the build expects under `work/` are listed in
 [LOCAL_STATE.md](LOCAL_STATE.md).
 
+Documentation entry points: [project home](../README.md) and
+[player guide](PLAYER_GUIDE.md) explain availability for players.
+[DEVELOPING.md](DEVELOPING.md) owns contributor setup, the repository map and
+command reference, including the generated prototype-action table.
+
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
 holds open release work. ADR-001's architecture C and the runtime pipeline below
@@ -1691,10 +1696,12 @@ Host CI also runs Ruff (pinned in `tools/lab-requirements.txt`, configured in `r
 `tests/` are ruff-formatted (J518); `ruff.toml` lists the rules still off and why.
 
 `scripts/readme-actions.py` (support) generates the marked current-action table in
-`README.md` from `scripts/lab/actions.py`, preserving registry order and excluding
+`docs/DEVELOPING.md` from `scripts/lab/actions.py`, preserving registry order and excluding
 historical actions. Run it after changing registry names, status or help; host CI runs
 `python scripts/readme-actions.py --check` beside the journal-index freshness check.
-`tests/test_readme_actions.py` covers rendering, idempotence and freshness checks.
+The script name stays stable after relocation from the player-facing README.
+`tests/test_readme_actions.py` covers rendering, idempotence, freshness checks and
+leaving the player landing page untouched.
 
 ## Source folders
 
