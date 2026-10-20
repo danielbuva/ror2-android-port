@@ -149,6 +149,21 @@ evidence, not a qualified root generator or build input. Their supplied editor
 binary and SDK-derived rows must not be copied into public tooling. A later
 decoder needs its own generator/contract before consuming those observations.
 
+`phone_registry.inspect_action` generates
+`work/experiments/phone-registry/<attempt>/` from an explicit JSON request with
+one absolute `binary` path. Only the pinned supplied Unity SDK executable is
+accepted. `reader.py`, the unchanged `owner-sdk`, their `inputs.json` hashes,
+`registry.json`, `host.log` and `result.json` form an isolated metadata attempt.
+This SDK binary and its extracted records are protected local inputs/outputs;
+they cannot be redistributed with the authored reader. The reader consumes no
+earlier symbol dumps, captured native table, oracle or game file. A local device
+replay may copy this explicit stage into a fresh owned workspace child, verify
+all hashes, run the reader with supplied Android Python and collect its result.
+The retained `native-registry-on-android.py` under the phone proof root is
+required local orchestration for selected-device ownership, fresh capacity,
+tool/input verification and read-only game hash observations. No current game
+build consumes these partial records.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.
