@@ -33,6 +33,8 @@ class PhoneNativeTests(unittest.TestCase):
                 command_arguments(command, compiler, roots, set())
         with self.assertRaises(ValueError):
             path_argument("/unknown/source.cpp", roots)
+        with self.assertRaises(ValueError):
+            path_argument("/supplied/sdk/../private.cpp", roots)
 
     def test_staged_input_drift_stops_before_compiler_and_preserves_failure(self):
         with tempfile.TemporaryDirectory() as temporary:

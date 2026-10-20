@@ -43,7 +43,7 @@ def path_argument(value, roots, *, prefix=""):
         return {"path": "project" + ("/" + relative(value.as_posix()) if value.as_posix() != "." else ""), "prefix": prefix}
     for source, destination in roots:
         if value.is_relative_to(source):
-            return {"path": destination + "/" + value.relative_to(source).as_posix(), "prefix": prefix}
+            return {"path": relative(destination + "/" + value.relative_to(source).as_posix()), "prefix": prefix}
     raise ValueError("Native graph references an unrecognized input root")
 
 
