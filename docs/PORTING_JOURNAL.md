@@ -17503,3 +17503,68 @@ The named owner/setup/retirement contract is in ARCHITECTURE. No runtime file,
 GUID, required local build input or source membership is added. R8 must restage
 the changed authored Siren input source. J813 remains the accepted APK; preserve
 all listed executable rollbacks and keep Moon/finale progression manual.
+
+## J816 — Service the audio monitor wait and retain its exact-marker refusal
+
+Date: 2026-10-20. Hypothesis: servicing the retained callback serializer and
+RenderAudio during the post-Init wait, while deferring Init-bank loading and
+the initialization delegate, can expose J810's missing marker without relaxing
+its control. These are two startup changes; any result cannot attribute
+delivery to servicing alone.
+
+The isolated R5 owner retains J810's schema-3/24-slot native library
+`ff07e292a6fcd012322d0013148864dab2472d498f85d9f764d1b37c24790281`,
+raw managed API, 202-reference closure, J744-adapted Init and unchanged Global.
+Root preserves the earlier partial-reload, wrong readiness-type and missing
+helper-input refusals, then reconciles the actually compiled stage without
+repeating a build. The corrected adapter binds both compiled support helpers,
+current managed source hashes and historical overlays separately, preserving
+all 46 importer metadata files. Its nineteen host contracts and readiness
+snippet compile pass. Request `7980a37da8424c16b319219eb06b6992` completes in
+41.6424367 s with zero errors and five warnings; all 136 frozen inputs remain
+identical. APK SHA-256:
+`0c5a7043b6cae088b4840eb15228583cd93d4b9b5e0a4a450fd0ccad6d12c788`.
+The terminal freeze is
+`e72d154006f05e0f891a1b85e53f4a8b5d20e562749526f4d1e81c54dc3a5442`.
+Root's independently reviewed process-local runner adapter binds the actual
+terminal source view without rewriting historical generation fields.
+
+On the internal-storage Nova, fresh package absence, internal reserve and
+owned placement checks pass. The exact APK/library maps and engine Init
+succeeds. First failure remains `post_init_exact_monitor_control_timeout`.
+The report records 152 callback-service and 152 RenderAudio calls, all with
+known successful results, but zero exact native marker callbacks. One native
+Message-level callback is observed, with zero native errors and zero managed
+callbacks. The native snapshot's warning counter includes this message; its
+text and identity are not yet observed. The managed Error filter can exclude
+that message, but native marker recording precedes the filter, so this does
+not explain the missing exact marker. No Init bank, Global event or capture
+phase is reached; playing ID, EndOfEvent and native PCM counts remain zero.
+No separate original-event attempt follows a failed startup control.
+
+Both actual Terms return, native disarm completes, ownership is clean and
+native outcomes are known. The host verifies the installed APK again before
+removing only its newly owned disposable fixture. Removal succeeds, cleanup
+errors are empty, no Android fatal is classified and the finally path sleeps
+the display. The game APK remains untouched. Cleanup is not monitor-coverage,
+audio-playback or physical-audibility acceptance.
+
+Evidence: selected-device Wwise managed-fixture run
+`20261020T173820.710457Z`; work/coordination/{codex-audio-service-root-r1/,
+audio-r9-postinit-service-candidate/,audio-r9-service-unity-plan-draft/r4/,
+audio-r9-service-unity-plan-review/r4/,audio-r5-root-runner-review/}.
+Player report:
+`c7265e74fb1e81e9a33a0d6f15aa49a03d58a0a188f3d2de00bd5ecea1f6a261`;
+runner/removal result:
+`6e871daed22a504a59846d7805b64db8b692e79485d4e705653553d23df8e590`;
+current R5 manifest:
+`e1eb62b79e763c897fae1aea2b467e2e63297c10601e99b6ff96502233fb09d6`.
+
+Prior art remains J810's exact retained-API/official serializer inspection and
+J772/J778/J791; no new SDK servicing requirement is inferred. The next isolated
+candidate requests all message levels during the bounded wait and records the
+first callback's capped UTF-16 text and metadata. It keeps the native exact
+marker authoritative and leaves bank/event work blocked until that gate passes.
+Its source-only compile/contracts/review do not qualify a player. LOCAL_STATE
+lists the private support inputs. No public runtime, default audio transform,
+recipe or R8 input changes; game audio and composed gates remain unavailable.
