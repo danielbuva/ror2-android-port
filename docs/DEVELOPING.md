@@ -208,7 +208,8 @@ Passing an earlier tier never stands in for a later one. Acceptance limits:
 
 ## Scope and distribution
 
-Repository content is original tooling, small transformations and evidence summaries.
+Repository content is original tooling, small transformations and evidence summaries,
+plus the two promotional graphics documented in [branding notes](assets/branding/README.md).
 User-supplied game data and generated proprietary content are Git-ignored. No DRM,
 ownership or authentication bypass is included. Middleware licensing and Android binaries
 remain unresolved. Do not redistribute raw `work/` outputs. Before committing, run

@@ -10,6 +10,8 @@ Documentation entry points: [project home](../README.md) and
 [player guide](PLAYER_GUIDE.md) explain availability for players.
 [DEVELOPING.md](DEVELOPING.md) owns contributor setup, the repository map and
 command reference, including the generated prototype-action table.
+[Branding notes](assets/branding/README.md) record the two repository-only
+promotional graphics and their sources; they are not part of the runtime pipeline.
 
 Public alpha delivery: [ADR-002](ADR-002-public-alpha-distribution.md) accepts
 owner-built APKs and locally reconstructed content; [public-alpha.md](public-alpha.md)
