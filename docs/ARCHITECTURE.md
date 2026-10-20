@@ -143,12 +143,15 @@ storage only, second Nova and Thor use internal storage with live reserve gates.
 The second Nova passes both standard game checks after the current attempt-bound
 measured Nova mapping is supplied. J762 qualifies Thor's explicit automatic
 diagnostic path through both standard checks; physical input remains unavailable.
-Its two physical panels both verify OFF. Root assigns
-baseline regressions/native lifecycle to the adopted Nova, gameplay breadth to
-the internal Nova, and isolated audio/compatibility to Thor. Different selected
-device runs may overlap; each device has one runner, and the shared Unity build
-lock still serializes builds. These roles do not imply generic-controller,
-normal-game or performance acceptance on the additional devices.
+Its two physical panels both verify OFF. Under the J818 session split, this
+gameplay session owns original gameplay, audio and animations on adopted Nova.
+The separate public-alpha session owns launcher/packaging, controls, settings/UI,
+end-run menus, feedback, stability/memory and playtest tooling on internal Nova.
+Thor is an unassigned shared spare and needs explicit agreement before use.
+Each device has one runner; the shared Unity build lock still serializes builds.
+These roles do not imply generic-controller, normal-game or performance
+acceptance on the additional devices. Installs select an explicit device and
+the session's own frozen APK rather than a mutable current-build pointer.
 
 `InputSessionPolicy` in `NovaInputBoundary.cs` owns the explicit game-input
 choice. The exact Nova model retains measured, attempt-bound physical input.

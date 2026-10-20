@@ -17704,3 +17704,52 @@ renumber and regenerate the index if another session takes a journal number.
 Prior art, named ownership and R8 source replay remain J815/J817. No authored
 game-runtime, GUID or build-membership change here. Retry Siren only on the
 main device within the same 180 s egg budget; Moon/finale remain manual.
+
+## J819 — Reach Ship Graveyard and reject a stale transport-clock snapshot
+
+Date: 2026-10-20. Hypothesis: J815's bounded target witness can explain the
+native egg-selection failure once the exact accepted player reaches Siren's
+source entry. J818 owns the source/editor guard; J817 owns the unchanged APK
+`107718f8e318a22a90623ef3895c85ecdd164f4a5f8b3226dd342aaeec9113cb`
+from source 0a89064f and both main-device default controls.
+
+The adopted-Nova retry reaches Lakes → Goolake → Wisp Graveyard → Ship
+Graveyard through three original boss/charge/exit transitions. It stops after
+483.851 host seconds on `siren-stage-clock-missing-or-invalid`. The saved
+report has empty game error/first failure, twelve attached source egg IDs and
+an attached encounter owner still in `EntityStates.Uninitialized`. Native
+Listening registration, input arming and eligibility snapshots have not run;
+there is no new target, boss, reward or teardown acceptance.
+
+The first refusal is in the host timing policy: `world.seconds` is
+310.4174499511719 while the newly written stage `enteredAt` is
+312.0023498535156. Transport completion updates stage identity/entry time and
+saves before the separate world observation refreshes its clock. The finite
+1.58489990234375 s lag therefore makes a negative inferred stage age; it is
+not a measured game-clock or source-owner failure. Preserve the refusal
+rather than replacing this report with a later snapshot.
+
+Finally removes the exact owned selector, force-stops the app and sleeps the
+display without cleanup errors. Applied runs remain thirteen and all recorded
+profile values match the first world report. A later read-only selected-device
+query verifies the installed game APK's actual SHA-256 still matches J817.
+Force-stop cleanup does not prove original encounter or asset teardown.
+
+Evidence: work/experiments/siren-native-continuation/20261020T185334.547939Z/;
+summary SHA-256:
+`7a8327e7484a850e4d7be0b551cc1246cca57d460a5405a04d47fe2d96005d6f`;
+final report:
+`9c8deb799dd3ce00073554c32980f15d70d9c51ca51e6550c970b9f5d803ccc9`;
+cleanup:
+`50f79eb8d6dbbf42b7c9747dc4a00ec66e9362c6d3869576f428714dec0e1016`.
+The host source-order review and timing draft are under
+work/coordination/siren-1077-guard-qualification/r3/; the actual game-hash query
+is under work/coordination/codex-audio-message-main-root-r1/.
+
+Next: make a minimal Siren-specific host timing correction for a newly
+published transport report, preserving immediate native/selector failures,
+strict clock admission and an independent monotonic 180 s cap. This is a
+narrow gameplay-required exception to alpha's playtest-tooling ownership, not
+a general runner change. The game source, named owners, GUIDs and R8 replay
+membership remain unchanged; prior art remains J815. Retry only on main Nova;
+Moon/finale stay manual and all accepted APKs/failed evidence remain retained.
