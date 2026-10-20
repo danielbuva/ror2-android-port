@@ -138,6 +138,15 @@ def _repair_reconstruction(function, kwargs, args):
 # Only the selected action's module is imported by dispatch().
 _ENTRIES = (
     Action(
+        "phone-root-contract",
+        "phone_roots",
+        "inspect_action",
+        {},
+        "current",
+        "Experimental read-only host contract: --target REQUEST.json binds an authored fixture/capture and inventories SDK native-type metadata without executing inspected assemblies. Reports explicit matches separately from name guesses; produces no roots, game build, install or editor mutation.",
+        handler=_target,
+    ),
+    Action(
         "phone-linker-fixture",
         "phone_linker",
         "stage_action",

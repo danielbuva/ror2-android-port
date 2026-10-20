@@ -135,6 +135,20 @@ source inputs. The final `strip-converter-proof-receipt.json` binds those result
 ownership, fresh capacity, isolated execution and collection. It does not read
 or modify installed game data beyond read-only APK hash observations.
 
+`phone_roots.inspect_action` generates `work/experiments/phone-roots/<attempt>/`
+from the same explicit authored project/APK/capture request. The request binds
+SDK metadata and an exact-editor root oracle; these are private observation
+inputs, not a redistributable root table. The authored metadata tool, supplied
+Cecil, isolated .NET 10 compilation, before/after SDK hashes and pure coverage
+comparison produce raw private reports and failure evidence. No inspected DLL
+is executed. No current game build or phone builder consumes those reports.
+`root-contract-selection.json` under the phone proof root selects the original
+inventory and an immutable updated coverage comparison. Raw editor symbol views,
+SDK native record observations and their comparisons remain local research
+evidence, not a qualified root generator or build input. Their supplied editor
+binary and SDK-derived rows must not be copied into public tooling. A later
+decoder needs its own generator/contract before consuming those observations.
+
 The public scaffold and its generators are described in
 [tools/phone-build](../tools/phone-build/README.md). No current game build reads
 these support paths, and no compiler/editor redistribution grant is inferred.

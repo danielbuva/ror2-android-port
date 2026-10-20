@@ -76,6 +76,16 @@ tool analytics. Desktop-generated scene/editor root production remains an input;
 matching output hashes and fresh execution evidence are separate acceptance
 checks. No whole-catalog build or game runtime calls it.
 
+`phone_roots.py` and `tools/phone-build/metadata/` own experimental read-only
+host support for investigating independent root production. The current
+`phone-root-contract` action binds the authored fixture/capture, inventories
+editor/player SDK managed metadata with supplied pinned Cecil, and separates
+explicit native-class attributes from short-name guesses. It executes only the
+authored reader, never the inspected assemblies. Results/source hashes and
+failures remain under `work/experiments/phone-roots/`; it generates no roots,
+installs no package and performs no editor mutation. Host .NET 10 qualification
+does not establish an Android implementation or native hierarchy completeness.
+
 `tools/phone-build/host/` is separate experimental **support**. Its Android
 driver owns compilation of authored C/Java/XML, DEX/APK production and disposable
 signing from explicitly supplied local tools. `HostProbeActivity` owns one
