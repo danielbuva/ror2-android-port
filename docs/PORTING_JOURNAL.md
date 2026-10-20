@@ -14622,3 +14622,115 @@ wwise-abi-generator-public-promotion/r1/ and review-r1/;
 codex-public-abi-synthetic-r1.*; codex-public-abi-generation-r1/ (refusal),
 codex-public-abi-generation-r2/ (exact public-tool reproduction). These private
 outputs are not inputs to the current game build or the from-scratch rebuild.
+
+## J771 — Accept the Captain/Siren candidate defaults; reject the Captain machine assumption
+
+Hypothesis: J768's default-off source-entry/beacon integration preserves both
+ordinary baseline controls and can admit Captain's exact native sequence.
+Build committed 97462c9c3421d6e844dd03e070ef463a249b2fe6 after preflight and
+1,099 host tests. The exact 2021.3.45f2 IL2CPP ARM64 Vulkan build takes
+203.097099 seconds with zero errors. All 250 frozen authored/toolchain/recipe
+inputs match committed bytes; all 266 payload hashes match J767. APK:
+0dd3f57328883d9dd927362775277b876cbf59ddaa17e0a9d0e719a15094684d.
+Matching debugging ZIP: 28fd3e43014785b8deb70c66a59b548847668b318409903a829be074885d926c;
+libil2cpp GNU Build ID: 68969ac0844c1cdac21e434bcffb19214f0bbfba.
+
+Install in place on both Novas using fresh adopted-only/internal policies and
+reserve checks, then synchronize the unchanged payload. Adopted Nova passes
+both standard controls: 35.214081 live seconds on Lakes, then exactly one
+original exit to Goolake with 12.038116 seconds of next-stage play
+(151.114090 world seconds). Both retain 13 applied runs. Root independently
+rechecks every frozen source member against the commit, the exact APK/symbol
+pair, current-attempt mapping, empty report/current-process errors, assisted
+status, all special diagnostic flags off and no source recovery. This is the
+new default baseline; J767 remains executable. Both runners stop the owned
+package and sleep the idle display. These controls do not accept either new
+native diagnostic path.
+
+The internal Nova's Captain sequence refuses before a pulse or first-world
+sample: CaptureCaptainSupplyBeaconIdentity reports that its special/default
+slot identity is not canonical. All six live native loadout rows match the
+expected default definitions, including PrepSupplyDrop. Current accepted
+PrepSupplyDrop metadata explicitly names Skillswap with
+EntityStates.Captain.Weapon.SetupSupplyDrop; the diagnostic instead requires
+Weapon. A state's namespace does not identify its machine. The guard's first
+disjunct therefore rejects the actual source configuration. No native event,
+beacon deployment or ability semantics is accepted by this attempt.
+
+Inspect J625/J768 and pinned R2API.Loadout/Starstorm2 machine relationships;
+current accepted assets remain authoritative. Independent review confirms
+Skillswap in the accepted export and the current assembly's GenericSkill target
+lookup. It also corrects an investigation note that labelled a composed body
+and an older decompile as accepted input. The current export and decompile
+receipts stay distinct. Next change only that exact machine/state identity
+predicate, retain all component/slot/master/network/input/output gates, and
+rebuild before retrying. The parallel actor-retirement fix and its later APK
+are separate from this accepted source.
+
+Evidence: work/experiments/captain-siren/candidate-20261020T064916.427850Z/;
+work/experiments/baseline/20261020T065228.649777Z/ and
+20261020T065611.623850Z/; work/experiments/survivor-check/
+20261020T065218.822787Z/Captain/; work/coordination/
+codex-captain-siren-baseline-root-validation.json;
+captain-supply-beacon-first-failure/r2/ and review-r1/.
+The exact archived 97462c9 source also passes all 1,099 host tests in
+26.842 seconds under siren-guard-receipt-helper/current-0dd-plan/
+host-exact-archive/. Siren's fresh exact-editor input-sink fixture remains
+pending; no unattended Moon/finale work occurs.
+
+## J772 — Managed Wwise control exposes pre-initialization callback setup
+
+Hypothesis: the J759 managed ABI can deliver a real monitor control and then
+one original Global event using J744's adapted Init. The isolated R3 build
+uses the exact editor, IL2CPP ARM64/OpenGLES3 and a fresh disposable package;
+147.170646 seconds, zero build errors. APK:
+3a5b8718cf7ec293d741652bc0e8ba13210c54b2003ac4457bb97d4aa7637d4d.
+Its source manifest is 897f4cdb9b2b9ce9f1ffc2877b98e83a9d994409f4bc01a95473744017f47421;
+Init is 618d1c5d..., Global remains 37756450... unchanged. This is not the game APK.
+
+An interrupted Thor control is unaccepted and receives verified owned cleanup
+when the resource handoff ends. A fresh adopted-Nova control then reaches the
+bounded 210-second deadline without a report. It logs IL2CPP JNI_OnLoad but
+neither Unity managed initialization nor the bootstrap's initial OUTPUT_ROOT
+marker. The process remains alive with no observed Android fatal. This is an
+unlocalized pre-managed startup gap, not evidence of a bank/ABI failure.
+Installation/runtime storage remains adopted; exact-owned cleanup succeeds.
+
+A fresh uninterrupted Thor control produces a hash-bound terminal player
+report. Its first failure is event_scenario_timeout: zero managed monitor
+callbacks/errors although native AKDEBUG logs the intentionally missing event
+ID. The runner correctly refuses fixtureCompleted/status. The owner unloads
+and reports both callback-manager and engine Term completion, then the host
+reverifies the installed APK, removes only its owned fixture and sleeps both
+panels. Cleanup finishes before the parallel session's next Thor lease.
+No global-event scenario or PCM result is accepted.
+
+Current official Android wrapper source guards callback-serializer Init and
+SetLocalOutput on native IsInitialized. The owner called them before engine
+Init, producing explicit AkInitializer/serializer warnings and no configured
+managed monitor. The official Unity initialization order places callback-manager
+Init after successful engine initialization. The smallest reviewed candidate
+moves existing callback setup after Init plus a fresh initialized query and
+before Init-bank loading; it preserves the native callback payload, queue pump,
+negative-control witness and strict teardown. Host tests execute the actual
+registration/accounting/pump methods and reject missing coverage fields.
+
+Coverage must be explicit: engine Init itself remains unobserved by this
+managed monitor. The new report/validator scopes coverage from successful
+post-Init setup through both Term operations. J740/J742's native monitor bridge
+also begins after SoundEngine/MusicEngine Init; it does not prove process-start
+coverage. A zero count without the deliberate native control cannot qualify.
+The corrected fixture still needs a fresh build/control before an event test.
+Game audio remains unavailable and all composed-candidate acceptance pins stay
+empty. Wider banks, authentic audio integration and physical audibility remain
+separate gates.
+
+Evidence: work/coordination/wwise-unity-managed-fixture-generator/
+project-java-first/build-output/309520255bc644bba792f4156afcc599/;
+work/device/<selected-device>/experiments/wwise-managed-fixture/
+20261020T061038.578376Z/ (interrupted), 20261020T064110.591102Z/ (startup gap),
+and 20261020T064859.111128Z/ (terminal control failure);
+work/coordination/wwise-managed-event-startup-triage/r1/, r2/host-test8/ and
+review-r2/; wwise-managed-monitor-r4-prep/prepared-javafirst06-r4/.
+Private source drafts remain outside the default build; no protected SDK,
+banks, generated candidates, raw logs or receipts are published.
