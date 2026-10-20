@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J828](PORTING_JOURNAL.md#j828--research-public-alpha-distribution-before-choosing-a-launcher) | 2026-10-20 | Research public alpha distribution before choosing a launcher | 2026-10-20, host/source review only. |
 | [J827](PORTING_JOURNAL.md#j827--repair-the-siren-editor-fixture-before-dispatching-the-owning-build) | 2026-10-20 | Repair the Siren editor fixture before dispatching the owning build | 2026-10-20. |
 | [J826](PORTING_JOURNAL.md#j826--restore-the-original-selected-skin-lifecycle-behind-a-per-run-gate) | 2026-10-20 | Restore the original selected-skin lifecycle behind a per-run gate | 2026-10-20. |
 | [J825](PORTING_JOURNAL.md#j825--bind-a-bounded-siren-approach-trace-to-its-real-input-owner) | 2026-10-20 | Bind a bounded Siren approach trace to its real input owner | 2026-10-20. |

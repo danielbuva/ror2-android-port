@@ -18256,3 +18256,50 @@ Raw editor inspection remains ignored. No game install, device run, restart or
 cache clearing occurs. Accepted/installed game remains `107718f8…`, with Main
 asleep. Next commit the repair, refresh the editor and retry through a new owning
 request; both default checks and the targeted animation/Siren gates remain open.
+
+## J828 — Research public alpha distribution before choosing a launcher
+
+2026-10-20, host/source review only. Hypothesis: the user-supplied-input
+distribution boundary needs an explicit execution/content-delivery decision
+before launcher work. Work is isolated on `alpha/public-alpha`; rebase onto
+the latest `origin/main` precedes this entry. Main gameplay ownership and all
+shared editor/device state remain untouched.
+
+Read the handoff, current state/architecture, ADR-001, L5/L9, local-state and
+risk references, and J586/J595/J738/J755/J762 before reviewing the pinned
+Rimdroid source. Consult the existing community profile/platform analysis;
+inspect acquisition, native runtime packaging, feedback and cloud source,
+plus official Unity and versioned HybridCLR documentation. The resulting
+[ADR-002 proposal](ADR-002-public-alpha-distribution.md) contains the source
+permalinks, applicability limits, alternatives and estimated effort. It
+remains proposed. [public-alpha.md](public-alpha.md) owns open alpha work;
+ARCHITECTURE links these planning documents without changing the pipeline.
+
+Evidence: `work/reference-repos/RimDroid/` at
+`5071c0ff8e52c3fda3b128aade7551b6ceaf0baa`;
+`work/coordination/public-alpha-step0/source-review.json` records inspected
+source hashes and the read-only exact-editor Android library inventory.
+No community implementation, protected library, credential or raw capture
+enters the tracked change. These research files are not build inputs.
+
+First blocking contract: the existing game-derived APK cannot be a public
+artifact under the repository distribution boundary. The delivery architecture
+requires the user's decision; source research establishes no replacement
+runtime acceptance. No build, APK hash, install or device result is produced.
+`./dev doctor` initially fails before execution because the isolated worktree
+has no lab venv. Clone-local pinned dependencies are then installed; a live
+doctor is not rerun while the alpha serial remains an unresolved placeholder.
+No host or device readiness is claimed.
+
+Validation and local-only checkpoint receipts are retained under
+`work/coordination/public-alpha-step0/`. Documentation link/freshness checks,
+staged privacy audit and whitespace review precede committing. Fresh-clone
+CI on proposal commit `f1fafdd` passes 1,132 host tests with 49 optional skips,
+plus the public audit and journal/README freshness gates. No Python source
+changes require Ruff formatting. PORTING_STATE is unchanged because
+the main session owns its current device snapshot and this proposal changes
+no runtime fact. Nothing is pushed, published or sent to a tracker.
+
+Revisit after the user selects a route and authorizes its first bounded proof;
+resolve the alpha device assignment before any hardware work. Preserve the
+main session's runtime, packages, build mutex and rollback receipts.

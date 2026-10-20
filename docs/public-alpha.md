@@ -5,6 +5,8 @@ The [distribution proposal](ADR-002-public-alpha-distribution.md) awaits the use
 [ADR-001](ADR-001-port-architecture.md) remains authoritative. This checklist
 makes no alpha-readiness claim.
 
+Decision preparation: [J825](PORTING_JOURNAL.md#j825--research-public-alpha-distribution-before-choosing-a-launcher).
+
 ## Decision and reproducibility
 
 - [ ] User selects the distribution route before launcher/runtime implementation.
