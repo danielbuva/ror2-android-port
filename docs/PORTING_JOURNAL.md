@@ -16819,3 +16819,49 @@ with J787's queue evidence. No protected implementation is copied. Next build
 committed source, pass both defaults, repeat the stock MUL-T case and observe
 actual indicator rendering/lifecycle. IL2CPP reflection, native teardown, full
 skill semantics and visual parity remain device gates.
+
+
+## J805 — Accept the optional-observer and native-indicator player on both defaults
+
+Date: 2026-10-20. Hypothesis: J804's narrow combat-sample and native indicator
+lifecycle changes can preserve both standard composed-game routes. This is a
+default-route acceptance, not full stock MUL-T or indicator rendering acceptance.
+
+Doctor and preflight pass. The code-only build stages committed source
+283bb709ac671b7d02b749663f3a03c9d4a7e079, freezes 252 source inputs and all 107
+runtime files, and succeeds in 174.553785 s with zero errors. All 266 payload
+hashes equal J801. APK SHA-256:
+`66c8162dbdc97b86486b7a748b3da26887cf7399571a4724d31704b9c4ca8e66`.
+The exact debugging-symbol archive is retained, SHA-256:
+`9e3cc51d87f59bac1612505f65a262b33f654c70399efdc2bd93f38b84bbda63`;
+IL2CPP Build ID: `bd54243a8d794f35e84715ac0dc66aa5943af818`.
+
+The adopted-storage Nova installs in place after fresh storage/placement checks,
+bootstraps and verifies its unchanged payload. Plain Commando reaches 35.190842 s
+of live Lakes play. The separate stage-exit check records one original exit to
+Goolake and 13.704498 s on the destination at world time 156.158493 s. Both pass,
+record current-build true, retain the same owned artifact before/after and have
+no report or current-process log errors. Assisted profile count stays 13.
+Thor independently installs under its internal-reserve policy and passes the
+plain route at 35.078857 s with profile count 0 unchanged. Each runner removes
+its selector, stops the owned app and sleeps the display; Thor sleeps both panels.
+
+Root freezes acceptance and source/build/payload/ownership identities. Screenshot
+comparison with J801's Thor control shows the same approximate presentation at
+a different camera position; no original indicator-rendering witness is inferred.
+Both defaults retain their normal diagnostic flags. The stock MUL-T retry,
+native indicator rendering/cleanup, native Siren egg interaction and composed
+audio remain separate gates. J801 remains an executable rollback. No additional
+game source or payload changes occur here; J804 already records the R8 replay
+requirements and prior-art sources.
+
+Evidence: work/experiments/observer-indicator-next/candidate-20261020T144225.919183Z/;
+work/coordination/{codex-observer-indicator-build-root-r1/,
+codex-66c8-device-root-r1/,codex-66c8-acceptance-root-r1/}; baseline runs
+work/experiments/baseline/{20261020T145037.163951Z,
+20261020T145421.957723Z,20261020T145029.188399Z}/.
+Root acceptance SHA-256:
+`7fbb59f0aa3cc4e0f3e8ec1a9d4cac065c875836ae4e9855851993cb5c0514ea`.
+Adopted-Nova final report SHA-256 values, plain then stage-exit:
+`ca43bcf4319bc27cfc051bdace9232cba35029bd29fbde1629ac56461d19dee8`,
+`9df6d6d9ffec7c6256f4a7063a1d3de36061a19679b15a428193ce553c653ef1`.

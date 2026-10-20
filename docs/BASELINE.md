@@ -74,14 +74,15 @@ The plain check and its acceptance criteria remain unchanged.
 
 | Item | Value |
 | --- | --- |
-| APK | `319a39871c3bcf43760b0d2a96a9634d859149699da1c2ca0c9944c40bc881e3`, code-only build from committed source 1efe5427; J799 Commando diagnostic scope and J800 opt-in native Siren continuation; all 266 payload hashes unchanged; matching debugging symbols retained |
-| Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.207733 s and one exit plus 10.074402 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Thor separately passes 35.096786 s. Full evidence is recorded once in J801. |
+| APK | `66c8162dbdc97b86486b7a748b3da26887cf7399571a4724d31704b9c4ca8e66`, code-only build from committed source 283bb709; J804 optional combat sampling and native team-indicator lifecycle; all 266 payload hashes unchanged; matching debugging symbols retained |
+| Check | Both modes pass on adopted Nova without report/current-process error or applied-run change: 35.190842 s and one exit plus 13.704498 s on Goolake. Both record current-build true and unchanged owned artifact identity before/after. Thor separately passes 35.078857 s. Full evidence is recorded once in J805. |
 | Placement | Adopted Nova updates in place and qualifies both defaults. Thor updates under its internal-reserve policy and passes a separate plain check. Internal Nova retains be26c21c… while isolated audio uses disposable packages. |
-| Rollbacks | Previous baseline J797 `40299fc5…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
+| Rollbacks | Previous baseline J801 `319a3987…` and all retained executable rollback hashes are listed in [PORTING_STATE.md](../PORTING_STATE.md). |
 
-J801 verifies Commando-only observer scoping. The separate stock MUL-T retry
-then fails in the shared combat observer and retains the independent strict
-cleanup refusal; it does not qualify the stock kit. J790's earlier native
+J805 qualifies the J804 source on the default route. The separate stock MUL-T
+regression and native indicator rendering/teardown remain pending; the default
+checks do not qualify them. J801's observer and strict cleanup failures remain
+evidence on that player. J790's earlier native
 offhand activation and J795's bounded native Siren registration/cleanup remain
 evidence on their recorded APKs. Siren encounter execution is open.
 

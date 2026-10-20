@@ -10,6 +10,7 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J805](PORTING_JOURNAL.md#j805--accept-the-optional-observer-and-native-indicator-player-on-both-defaults) | 2026-10-20 | Accept the optional-observer and native-indicator player on both defaults | Date: 2026-10-20. |
 | [J804](PORTING_JOURNAL.md#j804--preserve-optional-combat-samples-and-restore-native-team-indicator-lifecycle) | 2026-10-20 | Preserve optional combat samples and restore native team-indicator lifecycle | Date: 2026-10-20. |
 | [J803](PORTING_JOURNAL.md#j803--reach-native-siren-egg-input-and-stop-at-the-source-stage-budget) | 2026-10-20 | Reach native Siren egg input and stop at the source-stage budget | Date: 2026-10-20. |
 | [J802](PORTING_JOURNAL.md#j802--load-the-native-monitor-bridge-and-reject-its-pre-init-callback-assumption) | 2026-10-20 | Load the native monitor bridge and reject its pre-init callback assumption | Date: 2026-10-20. |
