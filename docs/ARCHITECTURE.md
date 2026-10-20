@@ -1358,6 +1358,14 @@ the owner removes only entries whose `BaseAI` Unity has already destroyed,
 through the Unity-free `CompletedSessionRootWalk.RemoveTargets`. It records the
 count on the `completed-before-reclaim` sample. Live subscribers and accumulation
 within one run are unchanged. J775 measured no managed-memory effect from it.
+The same step (J787) removes Unity-destroyed entries from the original static
+`ItemDisplayRuleSet.instancesList`, `PickupDropTable.instancesList` and
+`TeamComponent.indicatorSetupQueue`. The first two keep assets from each
+session's unloaded whole-catalog bundle; the queue is never drained because the
+port does not run `TeamComponent.Init`, so position indicators remain
+unavailable. Per-registry removed/remaining counts are recorded.
+The final-menu walk also records a census: the 60 most frequent reachable
+types with object counts and primitive-array bytes (`rootWalkCensus`).
 The final-menu walk also records a census: the 60 most frequent reachable
 types with object counts and primitive-array bytes (`rootWalkCensus`).
 

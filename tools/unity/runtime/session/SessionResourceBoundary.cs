@@ -33,6 +33,8 @@ public sealed partial class PortSession
         public string[] staticCallbackCounts;
         // Destroyed-BaseAI depossession entries removed before this sample (J775); -1 if not run.
         public int prunedDestroyedDepossessionSubscribers = -1;
+        // "Owner.field:removed/remaining" for pruned original static registries (J787).
+        public string[] prunedDestroyedRegistryEntries;
         // Opt-in completed-session root walk (diagnosticCompletedRootWalkSession selector); empty otherwise.
         public bool rootWalkRan, rootWalkTruncated;
         public int rootWalkNodes, rootWalkRoots, rootWalkReadFailures;
@@ -323,6 +325,33 @@ public sealed partial class PortSession
             field.SetValue(null, kept);
         return removed;
     }
+    // Adapted Android lifecycle (J787): each session reloads the whole-catalog bundle, and
+    // the unloaded ItemDisplayRuleSet/PickupDropTable assets never reach the OnDisable that
+    // removes them from their original static lists; the original indicator queue is never
+    // drained because TeamComponent.Init is not run. Remove only entries Unity has already
+    // destroyed, exactly those the original OnDisable or queue processor would drop or skip.
+    string[] PruneDestroyedOriginalRegistries()
+    {
+        var report = new System.Collections.Generic.List<string>();
+        foreach (var owner in new[] { typeof(ItemDisplayRuleSet), typeof(PickupDropTable) })
+        {
+            var field = owner.GetField("instancesList", BindingFlags.Static | BindingFlags.NonPublic);
+            var list = field == null ? null : field.GetValue(null) as System.Collections.IList;
+            Check(list != null, "Original instance registry changed: " + owner.Name);
+            int removed = CompletedSessionRootWalk.RemoveWhere(list, item => !(UnityEngine.Object)item);
+            report.Add(owner.Name + ".instancesList:" + removed + "/" + list.Count);
+        }
+        var queueField = typeof(TeamComponent).GetField("indicatorSetupQueue", BindingFlags.Static | BindingFlags.NonPublic);
+        var queue = queueField == null ? null : queueField.GetValue(null) as System.Collections.Generic.Queue<TeamComponent>;
+        Check(queue != null, "Original indicator setup queue changed");
+        int before = queue.Count;
+        var live = queue.Where(component => component).ToArray();
+        queue.Clear();
+        foreach (var component in live)
+            queue.Enqueue(component);
+        report.Add("TeamComponent.indicatorSetupQueue:" + (before - queue.Count) + "/" + queue.Count);
+        return report.ToArray();
+    }
     IEnumerator ReclaimCompletedSessionResources()
     {
         Check(r.world.cleaned && !Run.instance && !NetworkServer.active && !NetworkClient.active,
@@ -330,8 +359,10 @@ public sealed partial class PortSession
         // Let deferred destruction finish before Unity's ordinary unused-asset sweep.
         yield return null;
         int pruned = PruneDestroyedDepossessionSubscribers();
+        var registries = PruneDestroyedOriginalRegistries();
         ObserveSessionResources("completed-before-reclaim");
         r.sessionResources.Last().prunedDestroyedDepossessionSubscribers = pruned;
+        r.sessionResources.Last().prunedDestroyedRegistryEntries = registries;
         yield return Resources.UnloadUnusedAssets();
         ObserveSessionResources("completed-after-reclaim");
         // Attribute remaining managed growth after teardown, without changing GC mode.
@@ -520,6 +551,18 @@ public static class CompletedSessionRootWalk
         }
         result.failureSamples = failures.ToArray();
         return result;
+    }
+    // Removes matching items in place, preserving order; returns the removed count.
+    public static int RemoveWhere(System.Collections.IList list, Func<object, bool> remove)
+    {
+        int removed = 0;
+        for (int i = list.Count - 1; i >= 0; i--)
+            if (remove(list[i]))
+            {
+                list.RemoveAt(i);
+                removed++;
+            }
+        return removed;
     }
     // Removes every invocation entry whose target matches; returns the remaining delegate.
     public static Delegate RemoveTargets(Delegate callback, Func<object, bool> remove, out int removed)

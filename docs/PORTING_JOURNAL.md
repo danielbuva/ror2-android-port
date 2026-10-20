@@ -15524,3 +15524,48 @@ codex-audio-managed-r5-candidate-root-r1/; codex-audio-r5-device-binding-draft/;
 work/device/<serial>/experiments/wwise-managed-fixture/20261020T092614.235253Z/
 and 20261020T092749.057645Z/. Original data, SDK material, capture and process
 records remain ignored.
+
+## J787 — Root attribution names original static registries that keep unloaded assets
+
+Hypothesis (J782): the retained item-display-rule graphs, and the rest of the
+~57 MB per session, are held by a small number of named roots.
+
+Change (9e9b4d3): the final-menu walk attributes every reached object to the
+root that first reached it (`rootWalkRootAttribution`), with a 2,000,000-object
+budget. Two five-session attempts on Thor with APK
+`c8501568817a93ad5ac5317e4d00df206e561bfa1084ec164aa9dd6201a72162` stopped in
+sessions 2 and 4 on J667's LightningStake error, and a first three-session attempt
+stopped in session 3 the same way. The next three-session attempt passed.
+Managed after collection was 177, 233 and 289 MiB; the walk visited 753,891
+objects in 2.0 s, untruncated. Largest roots:
+
+| Root (original static field) | Objects first reached |
+| --- | --- |
+| `ItemDisplayRuleSet.instancesList` | 398,558 |
+| `TeamComponent.indicatorSetupQueue` | 120,193 |
+| `StatManager.damageEvents` | 49,145 |
+| `StatSheet.fieldsTemplate` | 16,315 |
+| `StatDef.allStatDefs` | 15,660 |
+| `PickupDropTable.instancesList` | 11,706 |
+
+Accepted decompiled source: `ItemDisplayRuleSet` and `PickupDropTable` add
+themselves to their static `instancesList` in `OnEnable` and remove themselves in
+`OnDisable`. The sample's catalog generation rises once per session (1, 2, 3)
+and only `labgeometry` stays loaded at the menu, so every session enables a
+fresh set from the reloaded whole-catalog bundle. The unloaded previous set
+stays listed. `TeamComponent` enqueues itself on team change; only its
+`[SystemInitializer] Init` subscribes the queue processor, which dequeues and
+skips destroyed members. The port never runs that initializer, so the queue
+grows for the whole process. The same omission means the original player/NPC/
+boss position indicators are never set up (a visual-parity gap, separate work).
+
+Change (adapted Android lifecycle, `SessionResourceBoundary`): at
+completed-session reclamation, with no Run or network, remove only Unity-destroyed
+entries from those two lists and from the indicator queue (live entries keep
+their order). These are exactly the entries the original `OnDisable` or queue
+processor would remove or skip. Removed/remaining counts are recorded per
+registry. Host test covers `RemoveWhere`. Device result: pending.
+
+Evidence: work/device/<serial>/experiments/session-memory/20261020T093235.358679Z/;
+J667 stops: .../20261020T090209.568874Z/, .../20261020T090901.284133Z/,
+.../20261020T092224.266530Z/. Thor has c8501568… installed.

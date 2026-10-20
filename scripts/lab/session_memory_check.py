@@ -73,6 +73,7 @@ SAMPLE_FIELDS = (
     "rootWalkRootAttribution",
     "staticCallbackCounts",
     "prunedDestroyedDepossessionSubscribers",
+    "prunedDestroyedRegistryEntries",
 )
 WAITING = (
     "live world report is shorter than the 60 second observation interval",
@@ -137,6 +138,7 @@ def growth_summary(sessions):
                 "root_walk_paths_at_start": _phase_value(samples, "before-presentation", "rootWalkPaths"),
                 "static_callback_counts_at_start": _phase_value(samples, "before-presentation", "staticCallbackCounts"),
                 "pruned_destroyed_depossession": _phase_value(samples, "completed-before-reclaim", "prunedDestroyedDepossessionSubscribers"),
+                "pruned_destroyed_registries": _phase_value(samples, "completed-before-reclaim", "prunedDestroyedRegistryEntries"),
             }
         )
 

@@ -105,6 +105,11 @@ public static class Program
         output["census"] = census;
         output["attribution"] = CompletedSessionRootWalk.Find(Types(), empty, new KeyValuePair<string, object>[0], 1000, 8, 10).rootAttribution;
 
+        var registry = new List<Subscriber> { new Subscriber { destroyed = true }, new Subscriber(), new Subscriber { destroyed = true }, new Subscriber() };
+        var survivor = registry[3];
+        output["registry_removed"] = CompletedSessionRootWalk.RemoveWhere(registry, item => ((Subscriber)item).destroyed);
+        output["registry_order"] = registry.Count == 2 && ReferenceEquals(registry[1], survivor);
+
         var parts = new List<string>();
         foreach (var entry in output)
         {
@@ -189,6 +194,10 @@ class CompletedSessionRootWalkTests(unittest.TestCase):
         top = self.result["attribution"][0]
         self.assertTrue(top.startswith("Roots.holder (Holder):"), top)
         self.assertGreaterEqual(int(top.rsplit(":", 1)[1]), 6)
+
+    def test_remove_where_keeps_live_order(self):
+        self.assertEqual(self.result["registry_removed"], 2)
+        self.assertIs(self.result["registry_order"], True)
 
     def test_budget_truncates_without_inventing_a_path(self):
         self.assertIs(self.result["budget_truncated"], True)
