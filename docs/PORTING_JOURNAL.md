@@ -14888,3 +14888,139 @@ unchanged and remains open. Device result: pending.
 
 Evidence: work/device/<serial>/experiments/session-memory/20261020T073248.170048Z/
 (bbd1f3c1 run). Thor has bbd1f3c1… installed.
+
+## J776 — Accept default controls on the shared Captain and MUL-T build
+
+Hypothesis: J774's native Captain identity correction and bounded MUL-T
+observations preserve the default game path. After host preflight, reuse the
+parallel session's build of the same committed source rather than queue a
+duplicate. Source: 7423ff6b6466f2fd3fdbc9b63edaa25968bbc1c0. Exact Unity
+2021.3.45f2 IL2CPP ARM64 Vulkan build: 113.443027 seconds, zero errors.
+APK: bbd1f3c15958ee42d272d58770a8caa2a73e327354bc668d9564bbd595656eb9.
+Root independently freezes the APK, receipt and 251 authored/toolchain/recipe
+inputs, verifying every snapshot member against committed bytes before and
+after the shared build. All 266 payload hashes equal J771's accepted payload.
+This build has no debugging-symbol package; retain J771's exact APK/symbol pair
+for matching analysis and never attach those symbols to this APK.
+
+Install in place on adopted Nova under its fresh adopted-only placement and
+capacity checks, then bootstrap and sync the unchanged payload. Both standard
+controls pass: 35.184860 seconds on Lakes, then exactly one original exit to
+Goolake with 10.110840 seconds there (126.912552 world seconds). Both retain
+13 applied runs and are assisted. Root rechecks current-process logs, empty
+report errors, current-attempt mapping, every special diagnostic selector off,
+no source recovery and no automatic manual-boundary hold. Both runners stop
+the owned package and sleep the display. This is the new default baseline;
+J771 remains executable. These checks do not accept Captain's beacon, MUL-T's
+Buzzsaw, native Siren entry, audio, normal difficulty or physical controls.
+
+Evidence: work/experiments/captain-toolbot-readiness/
+candidate-20261020T073207.807341Z/; work/experiments/baseline/
+20261020T073404.919693Z/ and 20261020T073746.148465Z/;
+work/coordination/codex-captain-toolbot-shared-build-r1/,
+codex-captain-toolbot-baselines-<selected-device>-r1/ and
+codex-captain-toolbot-baseline-root-validation.json.
+The last path contains authored qualification data, while raw device evidence
+stays ignored. The later parallel AI-retirement adaptation is separate source.
+
+## J777 — Siren transport stops before source-entry registration is recorded
+
+Hypothesis: J768's default-off native source-entry owner can complete a bounded
+assisted route into Ship Graveyard with egg input off. Use J771's accepted APK
+0dd3f57328883d9dd927362775277b876cbf59ddaa17e0a9d0e719a15094684d,
+source 97462c9c3421d6e844dd03e070ef463a249b2fe6. Bind its frozen guard
+sources to the exact archived source's 1,099 passing host tests, the fresh
+pinned-editor input-sink fixture and both J771 default controls. The editor
+fixture uses the exact frozen guard/fixture bytes in an otherwise later
+checkout; it executes no native skill or Moon route. Root's immutable guard
+receipt is 74c2cba46e4f6e9ef7d876cbce79bcd335e69e74e34cd63c470f02f7160a332a.
+Fourth-transition autopause acceptance remains pending and manual-only.
+
+On internal Nova the route completes two exits, then stops during transport
+from Wisp Graveyard into Ship Graveyard after 596.913 host seconds. The active
+scene is verified Ship Graveyard, but current progress still names Wisp
+Graveyard, transport is active and originalStageBegins remains 3. Both native
+source-entry registration/cleanup flags are false, with no source-entry or
+encounter rows. Egg input stays off and the profile remains at zero applied
+runs. No ID-11 activation, ID-10 Listening registration, natural egg mapping,
+owner cleanup or completed fourth stage is accepted.
+
+The first displayed failure says registration was observed but cleanup was
+not. That message is misleading: the finalizer writes it for any false cleanup
+result, including absent registration. The last native population boundary is
+SceneDirector.Start; PopulateWholeStage precedes BeginOriginalStage, which
+contains source-entry Prepare. An exception may be masked while the enclosing
+finalizer saves the generic message before outer exception handling; that is
+a hypothesis, not the identified native cause. Keep the original callbacks,
+identities and strict cleanup gates. The next reviewed draft records the
+operation and actual exception at those existing iterator seams before
+rethrowing, and preserves the first failure through the later finalizer.
+
+The host removes only its unchanged selector, force-stops the owned package
+and sleeps the display with no cleanup errors. The route's exit code is an
+observation result, not a pass. Source recovery is false in the captured
+report; this does not prove an unrecorded native transaction completed.
+No unattended Moon/finale navigation occurs.
+
+Evidence: work/experiments/siren-route/20261020T072524.060498Z/;
+work/coordination/siren-guard-receipt-helper/current-0dd-plan/;
+siren-source-entry-first-failure/r1/ and r2/review/. Consult J402/J403,
+J768/J771 and pinned Director/source-stage prior art before changing this
+lifecycle. The new diagnostic remains an unbuilt private draft here.
+
+## J778 — Managed Wwise receives monitor control but not original event completion
+
+Hypothesis: moving callback setup after successful native Init allows a real
+managed monitor witness, followed by an original Global event through the
+same retained ABI. Stage the reviewed R2 owner/bootstrap in the existing
+isolated audio project, preserving its scene, settings, adapted Init and
+unchanged Global. The package-only helper creates a fresh identity and proves
+only that setting changed. Its receipt SHA-256 is
+7a73e69fb67dfaac7a2f39b5cf467a7cd377b031f0411b0d74036ad88dcc28ae.
+A transient import-readiness refusal settles with no compiler errors; Root
+rechecks the exact compiled-idle editor before resuming the package action.
+
+The retry coordinator initially refuses before creating a request because
+its older entry point reinstalls an obsolete predecessor check. The corrected
+R5 CLI retains the reviewed hooks, mandatory exact package proof, pinned
+helper, terminal predecessor, bank and J744 provenance gates; 23 host
+contracts cover the actual entry path and inherited checks. The resulting
+exact-editor IL2CPP ARM64/OpenGLES3 build takes 36.776824 seconds, zero errors,
+five warnings. APK:
+3ccd314eb139ae40674c84e520065c2fafd891a8ef008749d30c8b3d1906b1a2.
+Request: a18209f1ee4e4e0dbe7a68873cafbaa8; generation manifest:
+5a835712afe15a63ce3da85bbe4de979122b5a3a272e78c66f41f77de0179b89.
+Frozen inputs match before/after. This is a separate fixture APK.
+
+A fresh internal-Nova negative control passes numeric callback and ownership
+contracts: exactly one native EventIDNotFound error for the deliberate missing
+event, the expected object/playing-ID relationship, both Term operations,
+known uninitialized post-Term state and verified owned uninstall. There is no
+Android fatal or host cleanup error. Monitor coverage explicitly starts after
+successful engine Init and extends through teardown; Init itself is unobserved.
+The message text is malformed: the retained OS-string helper decodes Android
+byte strings as UTF-16. Matching official Android source uses the byte-string
+helper, and reconstructing the reported code units recovers the exact native
+message. The numeric witness does not accept complete callback ABI fidelity.
+A narrowly scoped authored decoder transformation is a separate host draft.
+
+Only after that control, a fresh original Global-event trial obtains playing
+ID 1 but no EndOfEvent callback before the fixture deadline. It reports
+zero monitor callbacks/errors in the covered interval, then completes owned
+teardown and uninstall with no fatal. Its first failure is
+event_scenario_timeout. PCM is not validated; zero default report counters do
+not establish silence. Neither a nonzero playing ID nor a quiet monitor
+accepts playback. Preserve the event/render/callback first failure for source
+triage; do not fill composed-audio acceptance pins or restore game producers.
+Game audio remains unavailable.
+
+Evidence: work/coordination/wwise-unity-managed-fixture-generator/
+project-java-first/build-output/a18209f1ee4e4e0dbe7a68873cafbaa8/;
+codex-audio-managed-r4-candidate-root-r1/; wwise-managed-event-coordinator-root-r5/
+and review/; codex-audio-monitor-r4-package-resume-root-r1/;
+wwise-managed-monitor-r4-device-runner-root-r1/;
+work/device/<selected-device>/experiments/wwise-managed-fixture/
+20261020T074926.766702Z/ (control) and 20261020T075512.923743Z/ (event);
+wwise-monitor-encoding-triage/ and wwise-managed-global-timeout-triage/.
+All protected SDK, banks, generated API candidates, raw reports and audio stay
+ignored. The fixtures leave the idle display asleep.
