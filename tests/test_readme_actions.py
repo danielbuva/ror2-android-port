@@ -65,12 +65,20 @@ class ReadmeActionsCommandTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.readme = self.root / "README.md"
+        self.readme = self.root / "docs" / "DEVELOPING.md"
+        self.readme.parent.mkdir()
+        self.landing = self.root / "README.md"
+        self.landing.write_text("Player landing page.\n", encoding="utf-8")
         self.readme.write_bytes(template().encode("utf-8"))
 
     def command(self, *args):
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             return readme_actions.main(list(args), root=self.root)
+
+    def test_generation_leaves_player_landing_untouched(self):
+        self.assertEqual(self.command(), 0)
+        self.assertEqual(self.command("--check"), 0)
+        self.assertEqual(self.landing.read_text(encoding="utf-8"), "Player landing page.\n")
 
     def test_generate_is_idempotent(self):
         self.assertEqual(self.command(), 0)

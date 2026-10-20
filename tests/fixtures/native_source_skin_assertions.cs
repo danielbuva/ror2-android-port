@@ -134,6 +134,87 @@ static class AdapterContractTests
         skin.CompleteNativeSkin(5); // wrong/unselected index must not rewrite the body-selected skin
         Check(ReferenceEquals(model.baseRendererInfos[0].defaultMaterial, firstCopy), "nonselected skin notification ignored");
     }
+    static void TestActiveInventoryDisplayOwnerPredicate()
+    {
+        var adapter = Prepare(out var go, out var model, out var skin, out var renderer, out var source);
+        var body = go.GetComponent<CharacterBody>();
+        var animator = go.GetComponent<Animator>();
+        var report = GetReport(adapter);
+        skin.CompleteNativeSkin(4);
+        go.activeSelf = true;
+        adapter.CaptureNativeState();
+        Check(adapter.IsActiveInventoryDisplayOwner(body, model, report),
+              "exact live source-skin owner and report qualify for exclusive inventory ownership");
+
+        var otherObject = new GameObject("different source");
+        var otherBody = otherObject.AddComponent<CharacterBody>();
+        otherBody.skinIndex = 4;
+        var otherModel = otherObject.AddComponent<CharacterModel>();
+        Check(!adapter.IsActiveInventoryDisplayOwner(otherBody, model, report), "different body identity refuses");
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, otherModel, report), "different model identity refuses");
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, new AndroidNativeSourceSkinLifecycle.Report { requested = true }),
+              "different lifecycle report identity refuses");
+
+        report.currentSkinIndex = 3;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "stale native current skin index refuses");
+        adapter.CaptureNativeState();
+
+        var originalController = animator.runtimeAnimatorController;
+        var originalAvatar = animator.avatar;
+        string controllerName = report.controllerIdentity;
+        string avatarName = report.avatarIdentity;
+        var sameNamedController = new RuntimeAnimatorController { name = originalController.name };
+        animator.runtimeAnimatorController = sameNamedController;
+        adapter.CaptureNativeState();
+        Check(report.controllerIdentity == controllerName &&
+                  !adapter.IsActiveInventoryDisplayOwner(body, model, report),
+              "read-only capture cannot bless a same-type/same-name controller replacement");
+        animator.runtimeAnimatorController = originalController;
+        Check(adapter.IsActiveInventoryDisplayOwner(body, model, report), "restoring exact controller reference restores ownership");
+
+        var sameNamedAvatar = new Avatar { name = originalAvatar.name };
+        animator.avatar = sameNamedAvatar;
+        adapter.CaptureNativeState();
+        Check(report.avatarIdentity == avatarName &&
+                  !adapter.IsActiveInventoryDisplayOwner(body, model, report),
+              "read-only capture cannot bless a same-type/same-name avatar replacement");
+        animator.avatar = originalAvatar;
+        Check(adapter.IsActiveInventoryDisplayOwner(body, model, report), "restoring exact avatar reference restores ownership");
+
+        report.controllerIdentity = "diagnostic-only controller text";
+        report.avatarIdentity = "diagnostic-only avatar text";
+        Check(adapter.IsActiveInventoryDisplayOwner(body, model, report),
+              "report identity strings are diagnostic and do not decide object ownership");
+        adapter.CaptureNativeState();
+
+        // A real native selected-skin completion is allowed to install a new controller/avatar pair.
+        animator.runtimeAnimatorController = new RuntimeAnimatorController { name = originalController.name };
+        animator.avatar = new Avatar { name = originalAvatar.name };
+        skin.CompleteNativeSkin(4);
+        Check(adapter.IsActiveInventoryDisplayOwner(body, model, report),
+              "authoritative selected-skin completion updates the owned object snapshot");
+
+        animator.isInitialized = false;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "uninitialized Animator refuses");
+        animator.isInitialized = true;
+        skin.enabled = false;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "disabled native skin owner refuses");
+        skin.enabled = true;
+        model.enabled = false;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "disabled native CharacterModel refuses");
+        model.enabled = true;
+        go.activeSelf = false;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "inactive source model refuses");
+        go.activeSelf = true;
+        report.displayDeactivated = true;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "display-deactivated lifecycle refuses");
+        report.displayDeactivated = false;
+        report.ownerDestroyed = true;
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "destroyed lifecycle refuses");
+        report.ownerDestroyed = false;
+        report.firstFailure = "prior failure";
+        Check(!adapter.IsActiveInventoryDisplayOwner(body, model, report), "failed lifecycle refuses");
+    }
     static void TestRetirementWaitsForNativeRendererRelease()
     {
         var adapter = Prepare(out var go, out var model, out var skin, out var renderer, out var source);
@@ -174,6 +255,10 @@ static class AdapterContractTests
         Check(!source.destroyed, "body destroy never releases the native source material");
         Check(report.ownerDestroyed && !report.attached && report.materialCopiesReleased == 1,
               "body-owner destruction records actual cleanup and native attachment end");
+        Check((int)adapter.GetType().GetField("selectedSnapshotSkinIndex", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(adapter) == -1 &&
+                  adapter.GetType().GetField("selectedControllerSnapshot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(adapter) == null &&
+                  adapter.GetType().GetField("selectedAvatarSnapshot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(adapter) == null,
+              "owner teardown clears snapshot references without destroying native controller/avatar objects");
     }
     public static int Main()
     {
@@ -181,6 +266,7 @@ static class AdapterContractTests
         TestRefusalDoesNotMutateOwners();
         TestDisabledAuthoredOwnerIsNeverForceEnabled();
         TestNativeSkinEventAndMetadata();
+        TestActiveInventoryDisplayOwnerPredicate();
         TestRetirementWaitsForNativeRendererRelease();
         TestBodyLifetimeCleanupUnsubscribesAndReleasesCopies();
         Console.WriteLine("PASS: " + assertions + " adapter/selection/lifecycle/report assertions");

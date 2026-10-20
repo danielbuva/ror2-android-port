@@ -10,7 +10,9 @@ Git blame author date in the author's timezone. Summaries show the first sentenc
 
 | Entry | Date | Title | First sentence |
 | --- | --- | --- | --- |
+| [J837](PORTING_JOURNAL.md#j837--pass-the-formatted-native-monitor-control-and-one-original-ui-event-in-the-isolated-player) | 2026-10-20 | Pass the formatted native monitor control and one original UI event in the isolated player | **Hypothesis.** |
 | [J836](PORTING_JOURNAL.md#j836--build-an-authored-apk-on-android-and-test-app-host-execution) | 2026-10-20 | Build an authored APK on Android and test app-host execution | 2026-10-20. |
+| [J838](PORTING_JOURNAL.md#j838--keep-the-enabled-source-model-as-the-exclusive-item-display-inventory-writer) | 2026-10-20 | Keep the enabled source model as the exclusive item-display inventory writer | **Hypothesis.** |
 | [J835](PORTING_JOURNAL.md#j835--reach-native-huntress-skin-readiness-then-refuse-the-older-display-owner-invariant) | 2026-10-20 | Reach native Huntress skin readiness, then refuse the older display-owner invariant | **Hypothesis.** |
 | [J834](PORTING_JOURNAL.md#j834--bind-phone-fixture-paths-and-the-exact-editor-oracle-after-review) | 2026-10-20 | Bind phone fixture paths and the exact-editor oracle after review | 2026-10-20. |
 | [J833](PORTING_JOURNAL.md#j833--generate-content-and-sign-increasing-fixture-updates-on-android) | 2026-10-20 | Generate content and sign increasing fixture updates on Android | 2026-10-20. |

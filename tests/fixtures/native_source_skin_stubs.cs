@@ -15,10 +15,14 @@ namespace UnityEngine
     {
         public GameObject gameObject;
         public bool enabled = true;
+        public Transform transform => gameObject.transform;
         public T GetComponent<T>() where T : Component => gameObject.GetComponent<T>();
         public T GetComponentInChildren<T>(bool includeInactive) where T : Component => gameObject.GetComponent<T>();
     }
-    public class Behaviour : Component { }
+    public class Behaviour : Component
+    {
+        public bool isActiveAndEnabled => enabled && gameObject && gameObject.activeInHierarchy;
+    }
     public class MonoBehaviour : Behaviour { }
     public class GameObject : Object
     {

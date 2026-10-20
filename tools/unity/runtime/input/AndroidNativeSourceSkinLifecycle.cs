@@ -24,6 +24,9 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     CharacterModel model;
     ModelSkinController skinController;
     Animator animator;
+    RuntimeAnimatorController selectedControllerSnapshot;
+    Avatar selectedAvatarSnapshot;
+    int selectedSnapshotSkinIndex = -1;
     readonly Dictionary<Material, Material> translatedBySource = new Dictionary<Material, Material>();
     readonly Dictionary<Material, Material> sourceByTranslated = new Dictionary<Material, Material>();
     readonly List<Material> owned = new List<Material>();
@@ -106,6 +109,8 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
         if (!model || !skinController || !model.body || appliedIndex != (int)model.body.skinIndex ||
             skinController.currentSkinIndex != appliedIndex)
             return;
+        if (!CaptureSelectedAnimatorSnapshot(appliedIndex))
+            return;
         report.selectedSkinIndex = appliedIndex;
         CaptureNativeState();
         TranslateCurrentNativeRecords();
@@ -115,9 +120,62 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     {
         if (!NativeSelectedSkinReady)
             return;
+        if (!CaptureSelectedAnimatorSnapshot(skinController.currentSkinIndex))
+            return;
         report.selectedSkinIndex = skinController.currentSkinIndex;
         CaptureNativeState();
         TranslateCurrentNativeRecords();
+    }
+
+    bool CaptureSelectedAnimatorSnapshot(int appliedIndex)
+    {
+        if (!NativeSelectedSkinReady || !model.body || appliedIndex != (int)model.body.skinIndex ||
+            skinController.currentSkinIndex != appliedIndex || !animator.runtimeAnimatorController || !animator.avatar)
+            return false;
+        // This snapshot is written only at the native selected-skin completion boundary.
+        // CaptureNativeState remains diagnostic and cannot bless a later replacement.
+        selectedControllerSnapshot = animator.runtimeAnimatorController;
+        selectedAvatarSnapshot = animator.avatar;
+        selectedSnapshotSkinIndex = appliedIndex;
+        return true;
+    }
+
+    // True only while this exact live owner still owns the selected model's native
+    // inventory callback. Call only at setup and inventory-change boundaries.
+    public bool IsActiveInventoryDisplayOwner(CharacterBody expectedBody, CharacterModel expectedModel, Report expectedReport)
+    {
+        int selectedIndex = expectedBody ? (int)expectedBody.skinIndex : -1;
+        var evidence = new AndroidNativeItemDisplayDispatch.OwnerEvidence {
+            expectedBody = expectedBody,
+            ownerBody = model ? model.body : null,
+            expectedModel = expectedModel,
+            ownerModel = model,
+            expectedReport = expectedReport,
+            ownerReport = report,
+            componentActive = this && isActiveAndEnabled && gameObject.activeInHierarchy &&
+                              expectedModel && gameObject == expectedModel.gameObject,
+            modelEnabled = model && model.enabled,
+            modelActive = model && model.gameObject.activeInHierarchy && expectedBody && expectedBody.modelLocator &&
+                          expectedBody.modelLocator.modelTransform == model.transform,
+            skinControllerEnabled = skinController && skinController.enabled && skinController.gameObject.activeInHierarchy,
+            reportRequested = report != null && report.requested,
+            reportAttached = report != null && report.attached,
+            reportNativeOwnersActive = report != null && report.nativeOwnersActive,
+            selectedSkinReady = NativeSelectedSkinReady,
+            animatorInitialized = NativeAnimatorInitialized && animator && animator.enabled,
+            selectedIndexMatches = selectedIndex >= 0 && skinController && skinController.currentSkinIndex == selectedIndex &&
+                                   report != null && report.selectedSkinIndex == selectedIndex &&
+                                   report.currentSkinIndex == selectedIndex,
+            expectedController = selectedControllerSnapshot,
+            liveController = animator ? animator.runtimeAnimatorController : null,
+            expectedAvatar = selectedAvatarSnapshot,
+            liveAvatar = animator ? animator.avatar : null,
+            expectedSelectedIndex = selectedSnapshotSkinIndex,
+            liveSelectedIndex = skinController ? skinController.currentSkinIndex : -1,
+            notDeactivatedOrDestroyed = report != null && !report.displayDeactivated && !report.ownerDestroyed,
+            noFailure = report != null && string.IsNullOrEmpty(report.firstFailure)
+        };
+        return AndroidNativeItemDisplayDispatch.IsExactReadyOwner(evidence);
     }
 
     public void CaptureNativeState()
@@ -282,6 +340,9 @@ public sealed class AndroidNativeSourceSkinLifecycle : MonoBehaviour
     {
         if (!ReferenceEquals(skinController, null))
             skinController.onSkinApplied -= OnSkinApplied;
+        selectedControllerSnapshot = null;
+        selectedAvatarSnapshot = null;
+        selectedSnapshotSkinIndex = -1;
         if (report != null)
         {
             report.ownerDestroyed = true;
