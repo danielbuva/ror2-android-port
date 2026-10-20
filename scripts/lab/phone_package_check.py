@@ -19,9 +19,10 @@ CANDIDATE = RUNTIME + "/phone-candidate.bundle"
 
 
 def package_hash(device, package=PACKAGE):
-    paths = device.sh("pm", "path", package).splitlines()
-    if not paths:
+    packages = device.sh("pm", "list", "packages", package).splitlines()
+    if "package:" + package not in packages:
         return None
+    paths = device.sh("pm", "path", package).splitlines()
     if len(paths) != 1 or not paths[0].startswith("package:"):
         raise RuntimeError("Expected one installed base APK")
     return device.sh("sha256sum", paths[0][8:]).split()[0]
